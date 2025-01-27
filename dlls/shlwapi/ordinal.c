@@ -289,9 +289,7 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
  */
 HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 {
-  static const WCHAR szProperty[] = { '{','D','0','F','C','A','4','2','0',
-      '-','D','3','F','5','-','1','1','C','F', '-','B','2','1','1','-','0',
-      '0','A','A','0','0','4','A','E','8','3','7','}','\0' };
+  static const WCHAR szProperty[] = L"{D0FCA420-D3F5-11CF-B211-00AA004AE837}";
   BSTR property;
   IEnumFORMATETC* pIEnumFormatEtc = NULL;
   VARIANTARG var;
@@ -491,13 +489,11 @@ INT WINAPI SHStringFromGUIDW(REFGUID guid, LPWSTR lpszDest, INT cchMax)
 {
   WCHAR xguid[40];
   INT iLen;
-  static const WCHAR wszFormat[] = {'{','%','0','8','l','X','-','%','0','4','X','-','%','0','4','X','-',
-      '%','0','2','X','%','0','2','X','-','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2',
-      'X','%','0','2','X','%','0','2','X','}',0};
 
   TRACE("(%s,%p,%d)\n", debugstr_guid(guid), lpszDest, cchMax);
 
-  swprintf(xguid, ARRAY_SIZE(xguid), wszFormat, guid->Data1, guid->Data2, guid->Data3,
+  swprintf(xguid, ARRAY_SIZE(xguid), L"{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+          guid->Data1, guid->Data2, guid->Data3,
           guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
           guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 
@@ -552,31 +548,10 @@ BOOL WINAPI SHAboutInfoA(LPSTR lpszDest, DWORD dwDestLen)
  */
 BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
 {
-  static const WCHAR szIEKey[] = { 'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\','I','n','t','e','r','n','e','t',
-    ' ','E','x','p','l','o','r','e','r','\0' };
-  static const WCHAR szWinNtKey[] = { 'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s',' ',
-    'N','T','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0' };
-  static const WCHAR szWinKey[] = { 'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\0' };
-  static const WCHAR szRegKey[] = { 'S','O','F','T','W','A','R','E','\\',
-    'M','i','c','r','o','s','o','f','t','\\','I','n','t','e','r','n','e','t',
-    ' ','E','x','p','l','o','r','e','r','\\',
-    'R','e','g','i','s','t','r','a','t','i','o','n','\0' };
-  static const WCHAR szVersion[] = { 'V','e','r','s','i','o','n','\0' };
-  static const WCHAR szCustomized[] = { 'C','u','s','t','o','m','i','z','e','d',
-    'V','e','r','s','i','o','n','\0' };
-  static const WCHAR szOwner[] = { 'R','e','g','i','s','t','e','r','e','d',
-    'O','w','n','e','r','\0' };
-  static const WCHAR szOrg[] = { 'R','e','g','i','s','t','e','r','e','d',
-    'O','r','g','a','n','i','z','a','t','i','o','n','\0' };
-  static const WCHAR szProduct[] = { 'P','r','o','d','u','c','t','I','d','\0' };
-  static const WCHAR szUpdate[] = { 'I','E','A','K',
-    'U','p','d','a','t','e','U','r','l','\0' };
-  static const WCHAR szHelp[] = { 'I','E','A','K',
-    'H','e','l','p','S','t','r','i','n','g','\0' };
+  static const WCHAR szIEKey[] = L"SOFTWARE\\Microsoft\\Internet Explorer";
+  static const WCHAR szWinNtKey[] = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+  static const WCHAR szWinKey[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion";
+  static const WCHAR szRegKey[] = L"SOFTWARE\\Microsoft\\Internet Explorer\\Registration";
   WCHAR buff[2084];
   HKEY hReg;
   DWORD dwType, dwLen;
@@ -596,25 +571,25 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
   /* OS Version */
   buff[0] = '\0';
   dwLen = 30;
-  if (!SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey, szVersion, &dwType, buff, &dwLen))
+  if (!SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey, L"Version", &dwType, buff, &dwLen))
   {
     DWORD dwStrLen = lstrlenW(buff);
     dwLen = 30 - dwStrLen;
     SHGetValueW(HKEY_LOCAL_MACHINE, szIEKey,
-                szCustomized, &dwType, buff+dwStrLen, &dwLen);
+                L"CustomizedVersion", &dwType, buff+dwStrLen, &dwLen);
   }
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
   /* ~Registered Owner */
   buff[0] = '~';
   dwLen = 256;
-  if (SHGetValueW(hReg, szOwner, 0, &dwType, buff+1, &dwLen))
+  if (SHGetValueW(hReg, L"RegisteredOwner", 0, &dwType, buff+1, &dwLen))
     buff[1] = '\0';
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
   /* ~Registered Organization */
   dwLen = 256;
-  if (SHGetValueW(hReg, szOrg, 0, &dwType, buff+1, &dwLen))
+  if (SHGetValueW(hReg, L"RegisteredOrganization", 0, &dwType, buff+1, &dwLen))
     buff[1] = '\0';
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
@@ -626,19 +601,19 @@ BOOL WINAPI SHAboutInfoW(LPWSTR lpszDest, DWORD dwDestLen)
 
   /* ~Product Id */
   dwLen = 256;
-  if (SHGetValueW(HKEY_LOCAL_MACHINE, szRegKey, szProduct, &dwType, buff+1, &dwLen))
+  if (SHGetValueW(HKEY_LOCAL_MACHINE, szRegKey, L"ProductId", &dwType, buff+1, &dwLen))
     buff[1] = '\0';
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
   /* ~IE Update Url */
   dwLen = 2048;
-  if(SHGetValueW(HKEY_LOCAL_MACHINE, szWinKey, szUpdate, &dwType, buff+1, &dwLen))
+  if(SHGetValueW(HKEY_LOCAL_MACHINE, szWinKey, L"IEAKUpdateUrl", &dwType, buff+1, &dwLen))
     buff[1] = '\0';
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
   /* ~IE Help String */
   dwLen = 256;
-  if(SHGetValueW(hReg, szHelp, 0, &dwType, buff+1, &dwLen))
+  if(SHGetValueW(hReg, L"IEAKHelpString", 0, &dwType, buff+1, &dwLen))
     buff[1] = '\0';
   StrCatBuffW(lpszDest, buff, dwDestLen);
 
@@ -2117,12 +2092,6 @@ typedef struct tagPOLICYDATA
 
 #define SHELL_NO_POLICY 0xffffffff
 
-/* default shell policy registry key */
-static const WCHAR strRegistryPolicyW[] = {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o',
-                                      's','o','f','t','\\','W','i','n','d','o','w','s','\\',
-                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n',
-                                      '\\','P','o','l','i','c','i','e','s',0};
-
 /*************************************************************************
  * @                          [SHLWAPI.271]
  *
@@ -2142,7 +2111,7 @@ DWORD WINAPI SHGetRestriction(LPCWSTR lpSubKey, LPCWSTR lpSubName, LPCWSTR lpVal
 	HKEY hKey;
 
 	if (!lpSubKey)
-	  lpSubKey = strRegistryPolicyW;
+	  lpSubKey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies";
 
 	retval = RegOpenKeyW(HKEY_LOCAL_MACHINE, lpSubKey, &hKey);
         if (retval != ERROR_SUCCESS)
@@ -3660,8 +3629,7 @@ HRESULT WINAPI SHCoCreateInstanceAC(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
  */
 BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
 {
-  static WCHAR szSkipBinding[] = { 'S','k','i','p',' ',
-    'B','i','n','d','i','n','g',' ','C','L','S','I','D','\0' };
+  static WCHAR szSkipBinding[] = L"Skip Binding CLSID";
   BOOL bRet = FALSE;
 
   if (pbc)
@@ -4304,9 +4272,6 @@ INT WINAPI SHFormatDateTimeW(const FILETIME *fileTime, DWORD *flags,
     /* first of all date */
     if (fmt_flags & (FDTF_LONGDATE | FDTF_SHORTDATE))
     {
-        static const WCHAR sep1[] = {',',' ',0};
-        static const WCHAR sep2[] = {' ',0};
-
         DWORD date = fmt_flags & FDTF_LONGDATE ? DATE_LONGDATE : DATE_SHORTDATE;
         ret = GetDateFormatW(LOCALE_USER_DEFAULT, date, &st, NULL, buf, size);
         if (ret >= size) return ret;
@@ -4316,12 +4281,12 @@ INT WINAPI SHFormatDateTimeW(const FILETIME *fileTime, DWORD *flags,
         {
             if ((fmt_flags & FDTF_LONGDATE) && (ret < size + 2))
             {
-                lstrcatW(&buf[ret-1], sep1);
+                lstrcatW(&buf[ret-1], L", ");
                 ret += 2;
             }
             else
             {
-                lstrcatW(&buf[ret-1], sep2);
+                lstrcatW(&buf[ret-1], L" ");
                 ret++;
             }
         }
@@ -4487,34 +4452,23 @@ struct objcompat_entry {
 };
 
 /* expected to be sorted by name */
+#define OBJCOMPAT_ENTRY(name) { L""#name, OBJCOMPAT_##name }
 static const struct objcompat_entry objcompat_table[] = {
-    { {'C','O','C','R','E','A','T','E','S','H','E','L','L','F','O','L','D','E','R','O','N','L','Y',0},
-      OBJCOMPAT_COCREATESHELLFOLDERONLY },
-    { {'C','T','X','M','E','N','U','_','L','I','M','I','T','E','D','Q','I',0},
-      OBJCOMPAT_CTXMENU_LIMITEDQI },
-    { {'C','T','X','M','E','N','U','_','N','O','V','E','R','B','S',0},
-      OBJCOMPAT_CTXMENU_LIMITEDQI },
-    { {'C','T','X','M','E','N','U','_','X','P','Q','C','M','F','L','A','G','S',0},
-      OBJCOMPAT_CTXMENU_XPQCMFLAGS },
-    { {'N','E','E','D','S','F','I','L','E','S','Y','S','A','N','C','E','S','T','O','R',0},
-      OBJCOMPAT_NEEDSFILESYSANCESTOR },
-    { {'N','E','E','D','S','S','T','O','R','A','G','E','A','N','C','E','S','T','O','R',0},
-      OBJCOMPAT_NEEDSSTORAGEANCESTOR },
-    { {'N','O','I','P','R','O','P','E','R','T','Y','S','T','O','R','E',0},
-      OBJCOMPAT_NOIPROPERTYSTORE },
-    { {'N','O','L','E','G','A','C','Y','W','E','B','V','I','E','W',0},
-      OBJCOMPAT_NOLEGACYWEBVIEW },
-    { {'N','O','T','A','F','I','L','E','S','Y','S','T','E','M',0},
-      OBJCOMPAT_NOTAFILESYSTEM },
-    { {'N','O','_','W','E','B','V','I','E','W',0},
-      OBJCOMPAT_NO_WEBVIEW },
-    { {'O','T','N','E','E','D','S','S','F','C','A','C','H','E',0},
-      OBJCOMPAT_OTNEEDSSFCACHE },
-    { {'P','I','N','D','L','L',0},
-      OBJCOMPAT_PINDLL },
-    { {'U','N','B','I','N','D','A','B','L','E',0},
-      OBJCOMPAT_UNBINDABLE }
+    OBJCOMPAT_ENTRY(COCREATESHELLFOLDERONLY),
+    OBJCOMPAT_ENTRY(CTXMENU_LIMITEDQI),
+    OBJCOMPAT_ENTRY(CTXMENU_NOVERBS),
+    OBJCOMPAT_ENTRY(CTXMENU_XPQCMFLAGS),
+    OBJCOMPAT_ENTRY(NEEDSFILESYSANCESTOR),
+    OBJCOMPAT_ENTRY(NEEDSSTORAGEANCESTOR),
+    OBJCOMPAT_ENTRY(NOIPROPERTYSTORE),
+    OBJCOMPAT_ENTRY(NOLEGACYWEBVIEW),
+    OBJCOMPAT_ENTRY(NOTAFILESYSTEM),
+    OBJCOMPAT_ENTRY(NO_WEBVIEW),
+    OBJCOMPAT_ENTRY(OTNEEDSSFCACHE),
+    OBJCOMPAT_ENTRY(PINDLL),
+    OBJCOMPAT_ENTRY(UNBINDABLE),
 };
+#undef OBJCOMPAT_ENTRY
 
 /**************************************************************************
  *  SHGetObjectCompatFlags (SHLWAPI.476)
@@ -4532,10 +4486,7 @@ static const struct objcompat_entry objcompat_table[] = {
 DWORD WINAPI SHGetObjectCompatFlags(IUnknown *pUnk, const CLSID *clsid)
 {
     static const WCHAR compatpathW[] =
-        {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'S','h','e','l','l','C','o','m','p','a','t','i','b','i','l','i','t','y','\\',
-         'O','b','j','e','c','t','s','\\','%','s',0};
+        L"Software\\Microsoft\\Windows\\CurrentVersion\\ShellCompatibility\\Objects\\%s";
     WCHAR strW[ARRAY_SIZE(compatpathW) + 38 /* { CLSID } */];
     DWORD ret, length = ARRAY_SIZE(strW);
     OLECHAR *clsid_str;
