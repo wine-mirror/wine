@@ -698,7 +698,7 @@ static HRESULT WINAPI MetadataHandlerEnum_Next(IWICEnumMetadataItem *iface,
     ULONG i;
     ULONG fetched;
 
-    TRACE("(%p,%li)\n", iface, celt);
+    TRACE("%p, %lu, %p, %p, %p, %p.\n", iface, celt, rgeltSchema, rgeltId, rgeltValue, pceltFetched);
 
     if (!pceltFetched)
         pceltFetched = &fetched;
@@ -745,6 +745,8 @@ static HRESULT WINAPI MetadataHandlerEnum_Skip(IWICEnumMetadataItem *iface,
 {
     MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
 
+    TRACE("%p, %lu.\n", iface, celt);
+
     EnterCriticalSection(&This->parent->lock);
 
     This->index += celt;
@@ -757,6 +759,8 @@ static HRESULT WINAPI MetadataHandlerEnum_Skip(IWICEnumMetadataItem *iface,
 static HRESULT WINAPI MetadataHandlerEnum_Reset(IWICEnumMetadataItem *iface)
 {
     MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
+
+    TRACE("%p.\n", iface);
 
     EnterCriticalSection(&This->parent->lock);
 
@@ -772,6 +776,8 @@ static HRESULT WINAPI MetadataHandlerEnum_Clone(IWICEnumMetadataItem *iface,
 {
     MetadataHandlerEnum *This = impl_from_IWICEnumMetadataItem(iface);
     HRESULT hr;
+
+    TRACE("%p, %p.\n", iface, ppIEnumMetadataItem);
 
     EnterCriticalSection(&This->parent->lock);
 
