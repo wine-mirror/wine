@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Courier Bold Oblique
+ *	Font metric data for Courier-BoldOblique
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -271,26 +271,18 @@ static const AFMMETRICS metrics[243] =
 const AFM PSDRV_Courier_BoldOblique =
 {
     "Courier-BoldOblique",		    /* FontName */
-    L"Courier Bold Oblique",		    /* FullName */
     L"Courier",				    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -12,				    /* ItalicAngle */
     TRUE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -56, -250, 868, 801 },		    /* FontBBox */
-    626,				    /* Ascender */
-    -142,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	833,				    /* WinMetrics.sAscender */
 	-300,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	600,				    /* WinMetrics.sAvgCharWidth */
-	633,				    /* WinMetrics.sTypoAscender */
-	-209,				    /* WinMetrics.sTypoDescender */
-	0,				    /* WinMetrics.sTypoLineGap */
 	833,				    /* WinMetrics.usWinAscent */
 	300				    /* WinMetrics.usWinDescent */
     },

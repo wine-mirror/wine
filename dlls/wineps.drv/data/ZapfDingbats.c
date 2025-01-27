@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Zapf Dingbats
+ *	Font metric data for ZapfDingbats
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -216,26 +216,18 @@ static const AFMMETRICS metrics[188] =
 const AFM PSDRV_ZapfDingbats =
 {
     "ZapfDingbats",			    /* FontName */
-    L"ITC Zapf Dingbats",		    /* FullName */
     L"ITC Zapf Dingbats",		    /* FamilyName */
     L"FontSpecific",			    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -98,				    /* UnderlinePosition */
-    54,					    /* UnderlineThickness */
     { -1, -143, 981, 820 },		    /* FontBBox */
-    820,				    /* Ascender */
-    -143,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	801,				    /* WinMetrics.sAscender */
 	-201,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	740,				    /* WinMetrics.sAvgCharWidth */
-	801,				    /* WinMetrics.sTypoAscender */
-	-201,				    /* WinMetrics.sTypoDescender */
-	68,				    /* WinMetrics.sTypoLineGap */
 	801,				    /* WinMetrics.usWinAscent */
 	201				    /* WinMetrics.usWinDescent */
     },

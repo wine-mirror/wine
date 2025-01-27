@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Bookman Light
+ *	Font metric data for Bookman-Light
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Bookman_Light =
 {
     "Bookman-Light",			    /* FontName */
-    L"ITC Bookman Light",		    /* FullName */
     L"ITC Bookman",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -188, -251, 1266, 908 },		    /* FontBBox */
-    717,				    /* Ascender */
-    -228,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	942,				    /* WinMetrics.sAscender */
 	-232,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	492,				    /* WinMetrics.sAvgCharWidth */
-	716,				    /* WinMetrics.sTypoAscender */
-	-225,				    /* WinMetrics.sTypoDescender */
-	128,				    /* WinMetrics.sTypoLineGap */
 	894,				    /* WinMetrics.usWinAscent */
 	231				    /* WinMetrics.usWinDescent */
     },

@@ -216,26 +216,18 @@ static const AFMMETRICS metrics[188] =
 const AFM PSDRV_Symbol =
 {
     "Symbol",				    /* FontName */
-    L"Symbol",				    /* FullName */
     L"Symbol",				    /* FamilyName */
     L"FontSpecific",			    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -98,				    /* UnderlinePosition */
-    54,					    /* UnderlineThickness */
     { -180, -293, 1090, 1010 },		    /* FontBBox */
-    1010,				    /* Ascender */
-    -293,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	1005,				    /* WinMetrics.sAscender */
 	-220,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	600,				    /* WinMetrics.sAvgCharWidth */
-	693,				    /* WinMetrics.sTypoAscender */
-	-216,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	1005,				    /* WinMetrics.usWinAscent */
 	220				    /* WinMetrics.usWinDescent */
     },

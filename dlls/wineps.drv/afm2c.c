@@ -81,7 +81,7 @@ static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
     	fputc('*', of);
     fprintf(of, "\n"
     	    	" *\n"
-		" *\tFont metric data for %S\n"
+		" *\tFont metric data for %s\n"
 		" *\n"
 		" *\tCopyright 2001 Ian Pilcher\n"
 		" *\n"
@@ -91,7 +91,7 @@ static void writeHeader(FILE *of, const AFM *afm, const char *buffer)
 		" *\n"
 		" */\n"
 		"\n"
-		"#include \"psdrv.h\"\n", afm->FullName);
+		"#include \"psdrv.h\"\n", afm->FontName);
 }
 
 static void writeMetrics(FILE *of, const AFM *afm, const char *buffer)
@@ -118,8 +118,6 @@ static void writeAFM(FILE *of, const AFM *afm, const char *buffer)
     fprintf(of, "const AFM PSDRV_%s =\n{\n", buffer);
     cursorto(of, 44, fprintf(of, "    \"%s\",", afm->FontName));
     fputs("/* FontName */\n", of);
-    cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->FullName));
-    fputs("/* FullName */\n", of);
     cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->FamilyName));
     fputs("/* FamilyName */\n", of);
     cursorto(of, 44, fprintf(of, "    L\"%S\",", afm->EncodingScheme));
@@ -132,17 +130,9 @@ static void writeAFM(FILE *of, const AFM *afm, const char *buffer)
     cursorto(of, 44, fprintf(of, "    %s,",
     	    afm->IsFixedPitch ? "TRUE" : "FALSE"));
     fputs("/* IsFixedPitch */\n", of);
-    cursorto(of, 44, fprintf(of, "    %g,", afm->UnderlinePosition));
-    fputs("/* UnderlinePosition */\n", of);
-    cursorto(of, 44, fprintf(of, "    %g,", afm->UnderlineThickness));
-    fputs("/* UnderlineThickness */\n", of);
     cursorto(of, 44, fprintf(of, "    { %g, %g, %g, %g },", afm->FontBBox.llx,
     	    afm->FontBBox.lly, afm->FontBBox.urx, afm->FontBBox.ury));
     fputs("/* FontBBox */\n", of);
-    cursorto(of, 44, fprintf(of, "    %g,", afm->Ascender));
-    fputs("/* Ascender */\n", of);
-    cursorto(of, 44, fprintf(of, "    %g,", afm->Descender));
-    fputs("/* Descender */\n", of);
     fputs("    {\n", of);
     cursorto(of, 44, 7 + fprintf(of, "\t%u,",
     	    (unsigned int)(afm->WinMetrics.usUnitsPerEm)));
@@ -159,15 +149,6 @@ static void writeAFM(FILE *of, const AFM *afm, const char *buffer)
     cursorto(of, 44, 7 + fprintf(of, "\t%i,",
     	    (int)(afm->WinMetrics.sAvgCharWidth)));
     fputs("/* WinMetrics.sAvgCharWidth */\n", of);
-    cursorto(of, 44, 7 + fprintf(of, "\t%i,",
-    	    (int)(afm->WinMetrics.sTypoAscender)));
-    fputs("/* WinMetrics.sTypoAscender */\n", of);
-    cursorto(of, 44, 7 + fprintf(of, "\t%i,",
-    	    (int)(afm->WinMetrics.sTypoDescender)));
-    fputs("/* WinMetrics.sTypoDescender */\n", of);
-    cursorto(of, 44, 7 + fprintf(of, "\t%i,",
-    	    (int)(afm->WinMetrics.sTypoLineGap)));
-    fputs("/* WinMetrics.sTypoLineGap */\n", of);
     cursorto(of, 44, 7 + fprintf(of, "\t%u,",
     	    (unsigned int)(afm->WinMetrics.usWinAscent)));
     fputs("/* WinMetrics.usWinAscent */\n", of);

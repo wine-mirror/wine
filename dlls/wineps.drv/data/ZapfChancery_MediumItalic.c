@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Zapf Chancery Medium Italic
+ *	Font metric data for ZapfChancery-MediumItalic
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_ZapfChancery_MediumItalic =
 {
     "ZapfChancery-MediumItalic",	    /* FontName */
-    L"ITC Zapf Chancery Medium Italic",	    /* FullName */
     L"ITC Zapf Chancery",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -14,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -181, -314, 1065, 831 },		    /* FontBBox */
-    714,				    /* Ascender */
-    -314,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	790,				    /* WinMetrics.sAscender */
 	-303,				    /* WinMetrics.sDescender */
 	29,				    /* WinMetrics.sLineGap */
 	350,				    /* WinMetrics.sAvgCharWidth */
-	689,				    /* WinMetrics.sTypoAscender */
-	-259,				    /* WinMetrics.sTypoDescender */
-	122,				    /* WinMetrics.sTypoLineGap */
 	790,				    /* WinMetrics.usWinAscent */
 	303				    /* WinMetrics.usWinDescent */
     },

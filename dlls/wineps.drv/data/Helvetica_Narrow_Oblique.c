@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Helvetica Narrow Oblique
+ *	Font metric data for Helvetica-Narrow-Oblique
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_Narrow_Oblique =
 {
     "Helvetica-Narrow-Oblique",		    /* FontName */
-    L"Helvetica Narrow Oblique",	    /* FullName */
     L"Helvetica Narrow",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -12,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -139, -225, 915, 931 },		    /* FontBBox */
-    718,				    /* Ascender */
-    -207,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	936,				    /* WinMetrics.sAscender */
 	-212,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	362,				    /* WinMetrics.sAvgCharWidth */
-	728,				    /* WinMetrics.sTypoAscender */
-	-208,				    /* WinMetrics.sTypoDescender */
-	134,				    /* WinMetrics.sTypoLineGap */
 	915,				    /* WinMetrics.usWinAscent */
 	210				    /* WinMetrics.usWinDescent */
     },

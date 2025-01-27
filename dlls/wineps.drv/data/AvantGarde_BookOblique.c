@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Avant Garde Gothic Book Oblique
+ *	Font metric data for AvantGarde-BookOblique
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_AvantGarde_BookOblique =
 {
     "AvantGarde-BookOblique",		    /* FontName */
-    L"ITC Avant Garde Gothic Book Oblique", /* FullName */
     L"ITC Avant Garde Gothic",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -10.5,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -113, -222, 1279, 955 },		    /* FontBBox */
-    740,				    /* Ascender */
-    -192,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	1006,				    /* WinMetrics.sAscender */
 	-220,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	486,				    /* WinMetrics.sAvgCharWidth */
-	750,				    /* WinMetrics.sTypoAscender */
-	-208,				    /* WinMetrics.sTypoDescender */
-	112,				    /* WinMetrics.sTypoLineGap */
 	971,				    /* WinMetrics.usWinAscent */
 	220				    /* WinMetrics.usWinDescent */
     },

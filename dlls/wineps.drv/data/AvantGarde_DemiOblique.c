@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Avant Garde Gothic Demi Oblique
+ *	Font metric data for AvantGarde-DemiOblique
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_AvantGarde_DemiOblique =
 {
     "AvantGarde-DemiOblique",		    /* FontName */
-    L"ITC Avant Garde Gothic Demi Oblique", /* FullName */
     L"ITC Avant Garde Gothic",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -10.5,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -123, -251, 1256, 1021 },		    /* FontBBox */
-    740,				    /* Ascender */
-    -185,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	1006,				    /* WinMetrics.sAscender */
 	-220,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	485,				    /* WinMetrics.sAvgCharWidth */
-	750,				    /* WinMetrics.sTypoAscender */
-	-208,				    /* WinMetrics.sTypoDescender */
-	112,				    /* WinMetrics.sTypoLineGap */
 	1006,				    /* WinMetrics.usWinAscent */
 	220				    /* WinMetrics.usWinDescent */
     },

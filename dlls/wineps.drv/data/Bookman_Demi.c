@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Bookman Demi
+ *	Font metric data for Bookman-Demi
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Bookman_Demi =
 {
     "Bookman-Demi",			    /* FontName */
-    L"ITC Bookman Demi",		    /* FullName */
     L"ITC Bookman",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -194, -250, 1346, 934 },		    /* FontBBox */
-    725,				    /* Ascender */
-    -212,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	942,				    /* WinMetrics.sAscender */
 	-232,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	527,				    /* WinMetrics.sAvgCharWidth */
-	717,				    /* WinMetrics.sTypoAscender */
-	-223,				    /* WinMetrics.sTypoDescender */
-	130,				    /* WinMetrics.sTypoLineGap */
 	941,				    /* WinMetrics.usWinAscent */
 	231				    /* WinMetrics.usWinDescent */
     },

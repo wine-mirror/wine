@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for New Century Schoolbook Roman
+ *	Font metric data for NewCenturySchlbk-Roman
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_NewCenturySchlbk_Roman =
 {
     "NewCenturySchlbk-Roman",		    /* FontName */
-    L"New Century Schoolbook Roman",	    /* FullName */
     L"New Century Schoolbook",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -195, -250, 1000, 965 },		    /* FontBBox */
-    737,				    /* Ascender */
-    -205,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	986,				    /* WinMetrics.sAscender */
 	-216,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	464,				    /* WinMetrics.sAvgCharWidth */
-	740,				    /* WinMetrics.sTypoAscender */
-	-195,				    /* WinMetrics.sTypoDescender */
-	135,				    /* WinMetrics.sTypoLineGap */
 	986,				    /* WinMetrics.usWinAscent */
 	216				    /* WinMetrics.usWinDescent */
     },

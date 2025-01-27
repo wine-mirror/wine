@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for ITC Avant Garde Gothic Demi
+ *	Font metric data for AvantGarde-Demi
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_AvantGarde_Demi =
 {
     "AvantGarde-Demi",			    /* FontName */
-    L"ITC Avant Garde Gothic Demi",	    /* FullName */
     L"ITC Avant Garde Gothic",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -123, -251, 1222, 1021 },		    /* FontBBox */
-    740,				    /* Ascender */
-    -185,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	1006,				    /* WinMetrics.sAscender */
 	-220,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	486,				    /* WinMetrics.sAvgCharWidth */
-	750,				    /* WinMetrics.sTypoAscender */
-	-208,				    /* WinMetrics.sTypoDescender */
-	112,				    /* WinMetrics.sTypoLineGap */
 	971,				    /* WinMetrics.usWinAscent */
 	220				    /* WinMetrics.usWinDescent */
     },

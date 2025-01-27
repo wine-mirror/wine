@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Helvetica Bold
+ *	Font metric data for Helvetica-Bold
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_Bold =
 {
     "Helvetica-Bold",			    /* FontName */
-    L"Helvetica Bold",			    /* FullName */
     L"Helvetica",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -170, -228, 1003, 962 },		    /* FontBBox */
-    718,				    /* Ascender */
-    -207,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	905,				    /* WinMetrics.sAscender */
 	-212,				    /* WinMetrics.sDescender */
 	33,				    /* WinMetrics.sLineGap */
 	479,				    /* WinMetrics.sAvgCharWidth */
-	728,				    /* WinMetrics.sTypoAscender */
-	-210,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	905,				    /* WinMetrics.usWinAscent */
 	212				    /* WinMetrics.usWinDescent */
     },

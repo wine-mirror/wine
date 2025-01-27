@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Helvetica Narrow
+ *	Font metric data for Helvetica-Narrow
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica_Narrow =
 {
     "Helvetica-Narrow",			    /* FontName */
-    L"Helvetica Narrow",		    /* FullName */
     L"Helvetica Narrow",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -136, -225, 820, 931 },		    /* FontBBox */
-    718,				    /* Ascender */
-    -207,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	936,				    /* WinMetrics.sAscender */
 	-212,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	362,				    /* WinMetrics.sAvgCharWidth */
-	728,				    /* WinMetrics.sTypoAscender */
-	-210,				    /* WinMetrics.sTypoDescender */
-	131,				    /* WinMetrics.sTypoLineGap */
 	922,				    /* WinMetrics.usWinAscent */
 	210				    /* WinMetrics.usWinDescent */
     },

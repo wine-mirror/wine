@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Helvetica =
 {
     "Helvetica",			    /* FontName */
-    L"Helvetica",			    /* FullName */
     L"Helvetica",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -166, -225, 1000, 931 },		    /* FontBBox */
-    718,				    /* Ascender */
-    -207,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	905,				    /* WinMetrics.sAscender */
 	-212,				    /* WinMetrics.sDescender */
 	33,				    /* WinMetrics.sLineGap */
 	441,				    /* WinMetrics.sAvgCharWidth */
-	728,				    /* WinMetrics.sTypoAscender */
-	-210,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	905,				    /* WinMetrics.usWinAscent */
 	212				    /* WinMetrics.usWinDescent */
     },

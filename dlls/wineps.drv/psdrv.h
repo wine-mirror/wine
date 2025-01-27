@@ -97,26 +97,18 @@ typedef struct {
     SHORT   	    	sDescender; 	    	/* hhea:Descender */
     SHORT   	    	sLineGap;   	    	/* hhea:LineGap */
     SHORT   	    	sAvgCharWidth;	    	/* OS/2:xAvgCharWidth */
-    SHORT   	    	sTypoAscender;	    	/* OS/2:sTypoAscender */
-    SHORT   	    	sTypoDescender;     	/* OS/2:sTypoDescender */
-    SHORT   	    	sTypoLineGap;	    	/* OS/2:sTypeLineGap */
     USHORT  	    	usWinAscent;	    	/* OS/2:usWinAscent */
     USHORT  	    	usWinDescent;	    	/* OS/2:usWinDescent */
 } WINMETRICS;
 
 typedef struct _tagAFM {
     const char         *FontName;
-    const WCHAR        *FullName;
     const WCHAR        *FamilyName;
     const WCHAR        *EncodingScheme;
     LONG		Weight;			/* FW_NORMAL etc. */
     float		ItalicAngle;
     BOOL		IsFixedPitch;
-    float		UnderlinePosition;
-    float		UnderlineThickness;
     AFMBBOX		FontBBox;
-    float		Ascender;
-    float		Descender;
     WINMETRICS	    	WinMetrics;
     int			NumofMetrics;
     const AFMMETRICS	*Metrics;

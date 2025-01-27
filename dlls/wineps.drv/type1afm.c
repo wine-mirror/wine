@@ -540,41 +540,7 @@ static BOOL ReadFontMetrics(FILE *file, CHAR buffer[], INT bufsize, AFM **p_afm)
     if (retval == FALSE || found == FALSE)
     	goto cleanup_afm;
 
-    retval = ReadFloat(file, buffer, bufsize, "UnderlinePosition",
-    	    &(afm->UnderlinePosition), &found);
-    if (retval == FALSE || found == FALSE)
-    	goto cleanup_afm;
-
-    retval = ReadFloat(file, buffer, bufsize, "UnderlineThickness",
-    	    &(afm->UnderlineThickness), &found);
-    if (retval == FALSE || found == FALSE)
-    	goto cleanup_afm;
-
-    retval = ReadFloat(file, buffer, bufsize, "Ascender",    	/* optional */
-    	    &(afm->Ascender), &found);
-    if (retval == FALSE)
-    	goto cleanup_afm;
-
-    retval = ReadFloat(file, buffer, bufsize, "Descender",   	/* optional */
-    	    &(afm->Descender), &found);
-    if (retval == FALSE)
-    	goto cleanup_afm;
-
     afm->WinMetrics.usUnitsPerEm = 1000;
-    afm->WinMetrics.sTypoAscender = (SHORT)Round(afm->Ascender);
-    afm->WinMetrics.sTypoDescender = (SHORT)Round(afm->Descender);
-
-    if (afm->WinMetrics.sTypoAscender == 0)
-    	afm->WinMetrics.sTypoAscender = (SHORT)Round(afm->FontBBox.ury);
-
-    if (afm->WinMetrics.sTypoDescender == 0)
-    	afm->WinMetrics.sTypoDescender = (SHORT)Round(afm->FontBBox.lly);
-
-    afm->WinMetrics.sTypoLineGap = 1200 -
-    	    (afm->WinMetrics.sTypoAscender - afm->WinMetrics.sTypoDescender);
-    if (afm->WinMetrics.sTypoLineGap < 0)
-    	afm->WinMetrics.sTypoLineGap = 0;
-
     return TRUE;
 
     cleanup_afm:    	    	    	/* handle fatal or non-fatal errors */
@@ -992,7 +958,7 @@ static BOOL BuildAFM(FILE *file)
     CHAR    	buffer[258];    	/* allow for <cr>, <lf>, and <nul> */
     AFM     	*afm;
     AFMMETRICS	*metrics;
-    WCHAR *full_name, *family_name, *encoding_scheme;
+    WCHAR *family_name, *encoding_scheme;
     char *font_name;
     BOOL retval, added;
 
@@ -1004,14 +970,10 @@ static BOOL BuildAFM(FILE *file)
     if (retval == FALSE || font_name == NULL)
     	goto cleanup_afm;
 
-    retval = ReadStringW(file, buffer, sizeof(buffer), "FullName", &full_name);
-    if (retval == FALSE || full_name == NULL)
-    	goto cleanup_font_name;
-
     retval = ReadStringW(file, buffer, sizeof(buffer), "FamilyName",
     	    &family_name);
     if (retval == FALSE || family_name == NULL)
-    	goto cleanup_full_name;
+    	goto cleanup_font_name;
 
     retval = ReadStringW(file, buffer, sizeof(buffer), "EncodingScheme",
     	    &encoding_scheme);
@@ -1019,7 +981,6 @@ static BOOL BuildAFM(FILE *file)
     	goto cleanup_family_name;
 
     afm->FontName = font_name;
-    afm->FullName = full_name;
     afm->FamilyName = family_name;
     afm->EncodingScheme = encoding_scheme;
 
@@ -1039,8 +1000,6 @@ static BOOL BuildAFM(FILE *file)
     	HeapFree(PSDRV_Heap, 0, encoding_scheme);
     cleanup_family_name:
     	HeapFree(PSDRV_Heap, 0, family_name);
-    cleanup_full_name:
-    	HeapFree(PSDRV_Heap, 0, full_name);
     cleanup_font_name:
     	HeapFree(PSDRV_Heap, 0, font_name);
     cleanup_afm:

@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Palatino Italic
+ *	Font metric data for Palatino-Italic
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Palatino_Italic =
 {
     "Palatino-Italic",			    /* FontName */
-    L"Palatino Italic",			    /* FullName */
     L"Palatino",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -10,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -170, -276, 1010, 918 },		    /* FontBBox */
-    733,				    /* Ascender */
-    -276,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	923,				    /* WinMetrics.sAscender */
 	-282,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	401,				    /* WinMetrics.sAvgCharWidth */
-	725,				    /* WinMetrics.sTypoAscender */
-	-280,				    /* WinMetrics.sTypoDescender */
-	65,				    /* WinMetrics.sTypoLineGap */
 	922,				    /* WinMetrics.usWinAscent */
 	280				    /* WinMetrics.usWinDescent */
     },

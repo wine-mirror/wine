@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Times Bold Italic
+ *	Font metric data for Times-BoldItalic
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_BoldItalic =
 {
     "Times-BoldItalic",			    /* FontName */
-    L"Times Bold Italic",		    /* FullName */
     L"Times",				    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -15,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -200, -218, 996, 921 },		    /* FontBBox */
-    699,				    /* Ascender */
-    -205,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	891,				    /* WinMetrics.sAscender */
 	-216,				    /* WinMetrics.sDescender */
 	42,				    /* WinMetrics.sLineGap */
 	412,				    /* WinMetrics.sAvgCharWidth */
-	677,				    /* WinMetrics.sTypoAscender */
-	-216,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	891,				    /* WinMetrics.usWinAscent */
 	216				    /* WinMetrics.usWinDescent */
     },

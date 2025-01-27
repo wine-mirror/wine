@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Times Italic
+ *	Font metric data for Times-Italic
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_Italic =
 {
     "Times-Italic",			    /* FontName */
-    L"Times Italic",			    /* FullName */
     L"Times",				    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     -15.5,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -169, -217, 1010, 883 },		    /* FontBBox */
-    683,				    /* Ascender */
-    -205,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	891,				    /* WinMetrics.sAscender */
 	-216,				    /* WinMetrics.sDescender */
 	42,				    /* WinMetrics.sLineGap */
 	402,				    /* WinMetrics.sAvgCharWidth */
-	694,				    /* WinMetrics.sTypoAscender */
-	-216,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	891,				    /* WinMetrics.usWinAscent */
 	216				    /* WinMetrics.usWinDescent */
     },

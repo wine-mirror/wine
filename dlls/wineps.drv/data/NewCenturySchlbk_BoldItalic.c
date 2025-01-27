@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for New Century Schoolbook Bold Italic
+ *	Font metric data for NewCenturySchlbk-BoldItalic
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_NewCenturySchlbk_BoldItalic =
 {
     "NewCenturySchlbk-BoldItalic",	    /* FontName */
-    L"New Century Schoolbook Bold Italic",  /* FullName */
     L"New Century Schoolbook",		    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_BOLD,				    /* Weight */
     -16,				    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -205, -250, 1147, 991 },		    /* FontBBox */
-    737,				    /* Ascender */
-    -205,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	986,				    /* WinMetrics.sAscender */
 	-216,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	515,				    /* WinMetrics.sAvgCharWidth */
-	739,				    /* WinMetrics.sTypoAscender */
-	-192,				    /* WinMetrics.sTypoDescender */
-	138,				    /* WinMetrics.sTypoLineGap */
 	985,				    /* WinMetrics.usWinAscent */
 	216				    /* WinMetrics.usWinDescent */
     },

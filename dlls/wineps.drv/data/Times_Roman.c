@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Times Roman
+ *	Font metric data for Times-Roman
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Times_Roman =
 {
     "Times-Roman",			    /* FontName */
-    L"Times Roman",			    /* FullName */
     L"Times",				    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -168, -218, 1000, 898 },		    /* FontBBox */
-    683,				    /* Ascender */
-    -217,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	891,				    /* WinMetrics.sAscender */
 	-216,				    /* WinMetrics.sDescender */
 	42,				    /* WinMetrics.sLineGap */
 	401,				    /* WinMetrics.sAvgCharWidth */
-	693,				    /* WinMetrics.sTypoAscender */
-	-216,				    /* WinMetrics.sTypoDescender */
-	150,				    /* WinMetrics.sTypoLineGap */
 	891,				    /* WinMetrics.usWinAscent */
 	216				    /* WinMetrics.usWinDescent */
     },

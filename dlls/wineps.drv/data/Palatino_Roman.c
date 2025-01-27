@@ -1,6 +1,6 @@
 /*******************************************************************************
  *
- *	Font metric data for Palatino Roman
+ *	Font metric data for Palatino-Roman
  *
  *	Copyright 2001 Ian Pilcher
  *
@@ -256,26 +256,18 @@ static const AFMMETRICS metrics[228] =
 const AFM PSDRV_Palatino_Roman =
 {
     "Palatino-Roman",			    /* FontName */
-    L"Palatino Roman",			    /* FullName */
     L"Palatino",			    /* FamilyName */
     L"AdobeStandardEncoding",		    /* EncodingScheme */
     FW_NORMAL,				    /* Weight */
     0,					    /* ItalicAngle */
     FALSE,				    /* IsFixedPitch */
-    -100,				    /* UnderlinePosition */
-    50,					    /* UnderlineThickness */
     { -166, -283, 1021, 927 },		    /* FontBBox */
-    726,				    /* Ascender */
-    -281,				    /* Descender */
     {
 	1000,				    /* WinMetrics.usUnitsPerEm */
 	923,				    /* WinMetrics.sAscender */
 	-282,				    /* WinMetrics.sDescender */
 	0,				    /* WinMetrics.sLineGap */
 	445,				    /* WinMetrics.sAvgCharWidth */
-	727,				    /* WinMetrics.sTypoAscender */
-	-282,				    /* WinMetrics.sTypoDescender */
-	61,				    /* WinMetrics.sTypoLineGap */
 	960,				    /* WinMetrics.usWinAscent */
 	282				    /* WinMetrics.usWinDescent */
     },
