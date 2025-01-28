@@ -75,6 +75,11 @@ struct bluetooth_adapter_start_discovery_params
     unix_name_t adapter;
 };
 
+struct bluetooth_adapter_stop_discovery_params
+{
+    unix_name_t adapter;
+};
+
 struct bluetooth_get_event_params
 {
     struct winebluetooth_event result;
@@ -88,6 +93,7 @@ enum bluetoothapis_funcs
     unix_bluetooth_adapter_set_prop,
     unix_bluetooth_adapter_get_unique_name,
     unix_bluetooth_adapter_start_discovery,
+    unix_bluetooth_adapter_stop_discovery,
     unix_bluetooth_adapter_free,
 
     unix_bluetooth_device_free,

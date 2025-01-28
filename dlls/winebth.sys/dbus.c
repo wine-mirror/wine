@@ -455,6 +455,39 @@ NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_pa
     return STATUS_SUCCESS;
 }
 
+NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_path )
+{
+    DBusMessage *request, *reply;
+    DBusError error;
+    NTSTATUS status;
+
+    TRACE( "(%p, %s)\n", connection, debugstr_a( adapter_path ) );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, adapter_path, BLUEZ_INTERFACE_ADAPTER,
+                                              "StopDiscovery" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    TRACE( "Stopping discovery on %s\n", debugstr_a( adapter_path ) );
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        ERR( "Failed to stop discovery on adapter %s: %s: %s", debugstr_a( adapter_path ),
+             debugstr_a( error.message ), debugstr_a( error.name ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
 {
     DBusMessage *request, *reply;
@@ -1687,6 +1720,10 @@ NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_
     return STATUS_NOT_SUPPORTED;
 }
 NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_path )
+{
+    return STATUS_NOT_SUPPORTED;
+}
+NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_path )
 {
     return STATUS_NOT_SUPPORTED;
 }

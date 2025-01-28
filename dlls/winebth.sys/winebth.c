@@ -254,6 +254,9 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_WINEBTH_RADIO_START_DISCOVERY:
         status = winebluetooth_radio_start_discovery( ext->radio );
         break;
+    case IOCTL_WINEBTH_RADIO_STOP_DISCOVERY:
+        status = winebluetooth_radio_stop_discovery( ext->radio );
+        break;
     default:
         FIXME( "Unimplemented IOCTL code: %#lx\n", code );
         break;

@@ -197,6 +197,7 @@ NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
                                            ULONG prop_flag,
                                            union winebluetooth_property *property );
 NTSTATUS winebluetooth_radio_start_discovery( winebluetooth_radio_t radio );
+NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio );
 
 void winebluetooth_device_free( winebluetooth_device_t device );
 static inline BOOL winebluetooth_device_equal( winebluetooth_device_t d1, winebluetooth_device_t d2 )

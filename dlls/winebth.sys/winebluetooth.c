@@ -78,6 +78,15 @@ NTSTATUS winebluetooth_radio_start_discovery( winebluetooth_radio_t radio )
     return UNIX_BLUETOOTH_CALL( bluetooth_adapter_start_discovery, &params );
 }
 
+NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio )
+{
+    struct bluetooth_adapter_stop_discovery_params params = {0};
+
+    TRACE( "(%p)\n", (void *)radio.handle );
+    params.adapter = radio.handle;
+    return UNIX_BLUETOOTH_CALL(bluetooth_adapter_stop_discovery, &params);
+}
+
 void winebluetooth_radio_free( winebluetooth_radio_t radio )
 {
     struct bluetooth_adapter_free_params args = { 0 };
