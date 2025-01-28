@@ -115,6 +115,7 @@ static NTSTATUS bluetooth_shutdown( void *params )
     if (!dbus_connection) return STATUS_NOT_SUPPORTED;
 
     bluez_dbus_close( dbus_connection );
+    bluez_watcher_close( dbus_connection, bluetooth_watcher );
     bluez_dbus_free( dbus_connection );
     return STATUS_SUCCESS;
 }

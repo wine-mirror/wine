@@ -525,6 +525,14 @@ struct bluez_watcher_ctx
     struct list event_list;
 };
 
+struct bluez_init_entry
+{
+    union {
+        struct winebluetooth_watcher_event_radio_added radio;
+    } object;
+    struct list entry;
+};
+
 void *bluez_dbus_init( void )
 {
     DBusError error;
@@ -888,6 +896,46 @@ static const char BLUEZ_MATCH_PROPERTIES[] = "type='signal',"
 
 static const char *BLUEZ_MATCH_RULES[] = { BLUEZ_MATCH_OBJECTMANAGER, BLUEZ_MATCH_PROPERTIES };
 
+/* Free up the watcher alongside any remaining events and initial devices and other associated resources. */
+static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
+{
+    struct bluez_watcher_event *event1, *event2;
+    struct bluez_init_entry *entry1, *entry2;
+
+    if (watcher->init_device_list_call)
+    {
+        p_dbus_pending_call_cancel( watcher->init_device_list_call );
+        p_dbus_pending_call_unref( watcher->init_device_list_call );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry1, entry2, &watcher->initial_radio_list, struct bluez_init_entry, entry )
+    {
+        list_remove( &entry1->entry );
+        unix_name_free( (struct unix_name *)entry1->object.radio.radio.handle );
+        free( entry1 );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( event1, event2, &watcher->event_list, struct bluez_watcher_event, entry )
+    {
+        list_remove( &event1->entry );
+        switch (event1->event_type)
+        {
+        case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED:
+            unix_name_free( (struct unix_name *)event1->event.radio_added.radio.handle );
+            break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED:
+            unix_name_free( (struct unix_name *)event1->event.radio_removed.handle );
+            break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED:
+            unix_name_free( (struct unix_name *)event1->event.radio_props_changed.radio.handle );
+            break;
+        }
+        free( event1 );
+    }
+
+    free( watcher );
+}
+
 NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 {
     DBusError err;
@@ -910,7 +958,10 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
 
     list_init( &watcher_ctx->event_list );
 
-    if (!p_dbus_connection_add_filter( connection, bluez_filter, watcher_ctx, free ))
+    /* The bluez_dbus_loop thread will free up the watcher when the disconnect message is processed (i.e,
+     * dbus_connection_read_write_dispatch returns false). Using a free-function with dbus_connection_add_filter
+     * is racy as the filter is removed from a different thread. */
+    if (!p_dbus_connection_add_filter( connection, bluez_filter, watcher_ctx, NULL ))
     {
         p_dbus_pending_call_cancel( call );
         p_dbus_pending_call_unref( call );
@@ -958,14 +1009,6 @@ void bluez_watcher_close( void *connection, void *ctx )
     }
     p_dbus_connection_remove_filter( connection, bluez_filter, ctx );
 }
-
-struct bluez_init_entry
-{
-    union {
-        struct winebluetooth_watcher_event_radio_added radio;
-    } object;
-    struct list entry;
-};
 
 static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct list *adapter_list )
 {
@@ -1078,6 +1121,7 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher,
         }
         else if (!p_dbus_connection_read_write_dispatch( connection, 100 ))
         {
+            bluez_watcher_free( watcher_ctx );
             p_dbus_connection_unref( connection );
             TRACE( "Disconnected from DBus\n" );
             return STATUS_SUCCESS;
@@ -1120,6 +1164,7 @@ void *bluez_dbus_init( void ) { return NULL; }
 void bluez_dbus_close( void *connection ) {}
 void bluez_dbus_free( void *connection ) {}
 NTSTATUS bluez_watcher_init( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
+void bluez_watcher_close( void *connection, void *ctx ) {}
 NTSTATUS bluez_dbus_loop( void *c, void *watcher, struct winebluetooth_event *result )
 {
     return STATUS_NOT_SUPPORTED;
