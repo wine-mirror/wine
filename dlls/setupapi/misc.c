@@ -1354,9 +1354,6 @@ BOOL WINAPI SetupOpenLog(BOOL reserved)
 {
     WCHAR path[MAX_PATH];
 
-    static const WCHAR setupactlog[] = {'\\','s','e','t','u','p','a','c','t','.','l','o','g',0};
-    static const WCHAR setuperrlog[] = {'\\','s','e','t','u','p','e','r','r','.','l','o','g',0};
-
     EnterCriticalSection(&setupapi_cs);
 
     if (setupact != INVALID_HANDLE_VALUE && setuperr != INVALID_HANDLE_VALUE)
@@ -1366,7 +1363,7 @@ BOOL WINAPI SetupOpenLog(BOOL reserved)
     }
 
     GetWindowsDirectoryW(path, MAX_PATH);
-    lstrcatW(path, setupactlog);
+    lstrcatW(path, L"\\setupact.log");
 
     setupact = CreateFileW(path, FILE_GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ,
                            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -1379,7 +1376,7 @@ BOOL WINAPI SetupOpenLog(BOOL reserved)
     SetFilePointer(setupact, 0, NULL, FILE_END);
 
     GetWindowsDirectoryW(path, MAX_PATH);
-    lstrcatW(path, setuperrlog);
+    lstrcatW(path, L"\\setuperr.log");
 
     setuperr = CreateFileW(path, FILE_GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ,
                            NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);

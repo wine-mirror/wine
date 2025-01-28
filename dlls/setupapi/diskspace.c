@@ -163,7 +163,6 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
     unsigned int i;
     LPDISKSPACELIST list = DiskSpace;
     BOOL rc = FALSE;
-    static const WCHAR bkslsh[]= {'\\',0};
 
     if (!DiskSpace)
     {
@@ -185,7 +184,7 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
     }
 
     lstrcpyW(driveW,DriveSpec);
-    lstrcatW(driveW,bkslsh);
+    lstrcatW(driveW,L"\\");
 
     TRACE("Looking for drive %s\n",debugstr_w(driveW));
  

@@ -50,65 +50,20 @@
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 /* Unicode constants */
-static const WCHAR Chicago[]  = {'$','C','h','i','c','a','g','o','$',0};
-static const WCHAR ClassGUID[]  = {'C','l','a','s','s','G','U','I','D',0};
-static const WCHAR Class[]  = {'C','l','a','s','s',0};
-static const WCHAR ClassInstall32[]  = {'C','l','a','s','s','I','n','s','t','a','l','l','3','2',0};
-static const WCHAR NoDisplayClass[]  = {'N','o','D','i','s','p','l','a','y','C','l','a','s','s',0};
-static const WCHAR NoInstallClass[]  = {'N','o','I','n','s','t','a','l','l','C','l','a','s','s',0};
-static const WCHAR NoUseClass[]  = {'N','o','U','s','e','C','l','a','s','s',0};
-static const WCHAR NtExtension[]  = {'.','N','T',0};
 #ifdef __i386__
-static const WCHAR NtPlatformExtension[]  = {'.','N','T','x','8','6',0};
+static const WCHAR NtPlatformExtension[] = L".NTx86";
 #elif defined(__x86_64__)
-static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','m','d','6','4',0};
+static const WCHAR NtPlatformExtension[] = L".NTamd64";
 #elif defined(__arm__)
-static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','r','m',0};
+static const WCHAR NtPlatformExtension[] = L".NTarm";
 #elif defined(__aarch64__)
-static const WCHAR NtPlatformExtension[]  = {'.','N','T','a','r','m','6','4',0};
+static const WCHAR NtPlatformExtension[] = L".NTarm64";
 #endif
-static const WCHAR Signature[]  = {'S','i','g','n','a','t','u','r','e',0};
-static const WCHAR Version[]  = {'V','e','r','s','i','o','n',0};
-static const WCHAR WinExtension[]  = {'.','W','i','n',0};
-static const WCHAR WindowsNT[]  = {'$','W','i','n','d','o','w','s',' ','N','T','$',0};
 
-/* Registry key and value names */
-static const WCHAR ControlClass[] = {'S','y','s','t','e','m','\\',
-                                  'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'C','l','a','s','s',0};
-
-static const WCHAR DeviceClasses[] = {'S','y','s','t','e','m','\\',
-                                  'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-                                  'C','o','n','t','r','o','l','\\',
-                                  'D','e','v','i','c','e','C','l','a','s','s','e','s',0};
-static const WCHAR Enum[] = {'S','y','s','t','e','m','\\',
-                                  'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-				  'E','n','u','m',0};
-static const WCHAR DeviceDesc[] = {'D','e','v','i','c','e','D','e','s','c',0};
-static const WCHAR DeviceInstance[] = {'D','e','v','i','c','e','I','n','s','t','a','n','c','e',0};
-static const WCHAR DeviceParameters[] = {'D','e','v','i','c','e',' ','P','a','r','a','m','e','t','e','r','s',0};
-static const WCHAR HardwareId[] = {'H','a','r','d','w','a','r','e','I','D',0};
-static const WCHAR CompatibleIDs[] = {'C','o','m','p','a','t','i','b','l','e','I','d','s',0};
-static const WCHAR Service[] = {'S','e','r','v','i','c','e',0};
-static const WCHAR Driver[] = {'D','r','i','v','e','r',0};
-static const WCHAR ConfigFlags[] = {'C','o','n','f','i','g','F','l','a','g','s',0};
-static const WCHAR Mfg[] = {'M','f','g',0};
-static const WCHAR FriendlyName[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
-static const WCHAR LocationInformation[] = {'L','o','c','a','t','i','o','n','I','n','f','o','r','m','a','t','i','o','n',0};
-static const WCHAR Capabilities[] = {'C','a','p','a','b','i','l','i','t','i','e','s',0};
-static const WCHAR UINumber[] = {'U','I','N','u','m','b','e','r',0};
-static const WCHAR UpperFilters[] = {'U','p','p','e','r','F','i','l','t','e','r','s',0};
-static const WCHAR LowerFilters[] = {'L','o','w','e','r','F','i','l','t','e','r','s',0};
-static const WCHAR ContainerId[] = {'C','o','n','t','a','i','n','e','r','I','d',0};
-static const WCHAR Phantom[] = {'P','h','a','n','t','o','m',0};
-static const WCHAR SymbolicLink[] = {'S','y','m','b','o','l','i','c','L','i','n','k',0};
-static const WCHAR Control[] = {'C','o','n','t','r','o','l',0};
-static const WCHAR Linked[] = {'L','i','n','k','e','d',0};
-static const WCHAR dotInterfaces[] = {'.','I','n','t','e','r','f','a','c','e','s',0};
-static const WCHAR AddInterface[] = {'A','d','d','I','n','t','e','r','f','a','c','e',0};
-static const WCHAR backslashW[] = {'\\',0};
-static const WCHAR emptyW[] = {0};
+/* Registry key names */
+static const WCHAR ControlClass[] = L"System\\CurrentControlSet\\Control\\Class";
+static const WCHAR DeviceClasses[] = L"System\\CurrentControlSet\\Control\\DeviceClasses";
+static const WCHAR Enum[] = L"System\\CurrentControlSet\\Enum";
 
 #define SERVICE_CONTROL_REENUMERATE_ROOT_DEVICES 128
 
@@ -334,19 +289,14 @@ static struct device *get_devnode_device(DEVINST devnode)
 
 static void SETUPDI_GuidToString(const GUID *guid, LPWSTR guidStr)
 {
-    static const WCHAR fmt[] = {'{','%','0','8','X','-','%','0','4','X','-',
-        '%','0','4','X','-','%','0','2','X','%','0','2','X','-','%','0','2',
-        'X','%','0','2','X','%','0','2','X','%','0','2','X','%','0','2','X','%',
-        '0','2','X','}',0};
-
-    swprintf(guidStr, 39, fmt, guid->Data1, guid->Data2, guid->Data3,
+    swprintf(guidStr, 39, L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        guid->Data1, guid->Data2, guid->Data3,
         guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
         guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
 static WCHAR *get_iface_key_path(struct device_iface *iface)
 {
-    static const WCHAR slashW[] = {'\\',0};
     WCHAR *path, *ptr;
     size_t len = lstrlenW(DeviceClasses) + 1 + 38 + 1 + lstrlenW(iface->symlink);
 
@@ -357,9 +307,9 @@ static WCHAR *get_iface_key_path(struct device_iface *iface)
     }
 
     lstrcpyW(path, DeviceClasses);
-    lstrcatW(path, slashW);
+    lstrcatW(path, L"\\");
     SETUPDI_GuidToString(&iface->class, path + lstrlenW(path));
-    lstrcatW(path, slashW);
+    lstrcatW(path, L"\\");
     ptr = path + lstrlenW(path);
     lstrcatW(path, iface->symlink);
     if (lstrlenW(iface->symlink) > 3)
@@ -373,8 +323,6 @@ static WCHAR *get_iface_key_path(struct device_iface *iface)
 
 static WCHAR *get_refstr_key_path(struct device_iface *iface)
 {
-    static const WCHAR hashW[] = {'#',0};
-    static const WCHAR slashW[] = {'\\',0};
     WCHAR *path, *ptr;
     size_t len = lstrlenW(DeviceClasses) + 1 + 38 + 1 + lstrlenW(iface->symlink) + 1 + 1;
 
@@ -388,9 +336,9 @@ static WCHAR *get_refstr_key_path(struct device_iface *iface)
     }
 
     lstrcpyW(path, DeviceClasses);
-    lstrcatW(path, slashW);
+    lstrcatW(path, L"\\");
     SETUPDI_GuidToString(&iface->class, path + lstrlenW(path));
-    lstrcatW(path, slashW);
+    lstrcatW(path, L"\\");
     ptr = path + lstrlenW(path);
     lstrcatW(path, iface->symlink);
     if (lstrlenW(iface->symlink) > 3)
@@ -399,8 +347,7 @@ static WCHAR *get_refstr_key_path(struct device_iface *iface)
     ptr = wcschr(ptr, '\\');
     if (ptr) *ptr = 0;
 
-    lstrcatW(path, slashW);
-    lstrcatW(path, hashW);
+    lstrcatW(path, L"\\#");
 
     if (iface->refstr)
         lstrcatW(path, iface->refstr);
@@ -433,7 +380,7 @@ static BOOL is_valid_property_type(DEVPROPTYPE prop_type)
 static LPWSTR SETUPDI_CreateSymbolicLinkPath(LPCWSTR instanceId,
         const GUID *InterfaceClassGuid, LPCWSTR ReferenceString)
 {
-    static const WCHAR fmt[] = {'\\','\\','?','\\','%','s','#','%','s',0};
+    static const WCHAR fmt[] = L"\\\\?\\%s#%s";
     WCHAR guidStr[39];
     DWORD len;
     LPWSTR ret;
@@ -474,10 +421,10 @@ static BOOL is_linked(HKEY key)
     HKEY control_key;
     BOOL ret = FALSE;
 
-    if (!RegOpenKeyW(key, Control, &control_key))
+    if (!RegOpenKeyW(key, L"Control", &control_key))
     {
         size = sizeof(DWORD);
-        if (!RegQueryValueExW(control_key, Linked, NULL, &type, (BYTE *)&linked, &size)
+        if (!RegQueryValueExW(control_key, L"Linked", NULL, &type, (BYTE *)&linked, &size)
                 && type == REG_DWORD && linked)
             ret = TRUE;
 
@@ -535,7 +482,7 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
         SetLastError(ret);
         goto err;
     }
-    RegSetValueExW(key, DeviceInstance, 0, REG_SZ, (BYTE *)device->instanceId,
+    RegSetValueExW(key, L"DeviceInstance", 0, REG_SZ, (BYTE *)device->instanceId,
         lstrlenW(device->instanceId) * sizeof(WCHAR));
     free(path);
 
@@ -552,7 +499,7 @@ static struct device_iface *SETUPDI_CreateDeviceInterface(struct device *device,
         SetLastError(ret);
         goto err;
     }
-    RegSetValueExW(key, SymbolicLink, 0, REG_SZ, (BYTE *)iface->symlink,
+    RegSetValueExW(key, L"SymbolicLink", 0, REG_SZ, (BYTE *)iface->symlink,
         lstrlenW(iface->symlink) * sizeof(WCHAR));
 
     if (is_linked(key))
@@ -612,7 +559,7 @@ static LONG open_driver_key(struct device *device, REGSAM access, HKEY *key)
         return l;
     }
 
-    if (!(l = RegGetValueW(device->key, NULL, Driver, RRF_RT_REG_SZ, NULL, path, &size)))
+    if (!(l = RegGetValueW(device->key, NULL, L"Driver", RRF_RT_REG_SZ, NULL, path, &size)))
     {
         if (!(l = RegOpenKeyExW(class_key, path, 0, access, key)))
         {
@@ -628,8 +575,6 @@ static LONG open_driver_key(struct device *device, REGSAM access, HKEY *key)
 
 static LONG create_driver_key(struct device *device, HKEY *key)
 {
-    static const WCHAR formatW[] = {'%','0','4','u',0};
-    static const WCHAR slash[] = { '\\',0 };
     unsigned int i = 0;
     WCHAR path[50];
     HKEY class_key;
@@ -647,17 +592,17 @@ static LONG create_driver_key(struct device *device, HKEY *key)
     }
 
     SETUPDI_GuidToString(&device->class, path);
-    lstrcatW(path, slash);
+    lstrcatW(path, L"\\");
     /* Allocate a new driver key, by finding the first integer value that's not
      * already taken. */
     for (;;)
     {
-        swprintf(path + 39, ARRAY_SIZE(path) - 39, formatW, i++);
+        swprintf(path + 39, ARRAY_SIZE(path) - 39, L"%04u", i++);
         if ((l = RegCreateKeyExW(class_key, path, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, key, &dispos)))
             break;
         else if (dispos == REG_CREATED_NEW_KEY)
         {
-            RegSetValueExW(device->key, Driver, 0, REG_SZ, (BYTE *)path, lstrlenW(path) * sizeof(WCHAR));
+            RegSetValueExW(device->key, L"Driver", 0, REG_SZ, (BYTE *)path, lstrlenW(path) * sizeof(WCHAR));
             RegCloseKey(class_key);
             return ERROR_SUCCESS;
         }
@@ -675,7 +620,7 @@ static LONG delete_driver_key(struct device *device)
 
     if (!(l = open_driver_key(device, KEY_READ | KEY_WRITE, &key)))
     {
-        l = RegDeleteKeyW(key, emptyW);
+        l = RegDeleteKeyW(key, L"");
         RegCloseKey(key);
     }
 
@@ -689,28 +634,30 @@ struct PropertyMapEntry
     LPCWSTR nameW;
 };
 
+#define PROPERTY_MAP_ENTRY(type, name) { type, name, L##name }
 static const struct PropertyMapEntry PropertyMap[] = {
-    { REG_SZ, "DeviceDesc", DeviceDesc },
-    { REG_MULTI_SZ, "HardwareId", HardwareId },
-    { REG_MULTI_SZ, "CompatibleIDs", CompatibleIDs },
+    PROPERTY_MAP_ENTRY(REG_SZ, "DeviceDesc"),
+    PROPERTY_MAP_ENTRY(REG_MULTI_SZ, "HardwareId"),
+    PROPERTY_MAP_ENTRY(REG_MULTI_SZ, "CompatibleIDs"),
     { 0, NULL, NULL }, /* SPDRP_UNUSED0 */
-    { REG_SZ, "Service", Service },
+    PROPERTY_MAP_ENTRY(REG_SZ, "Service"),
     { 0, NULL, NULL }, /* SPDRP_UNUSED1 */
     { 0, NULL, NULL }, /* SPDRP_UNUSED2 */
-    { REG_SZ, "Class", Class },
-    { REG_SZ, "ClassGUID", ClassGUID },
-    { REG_SZ, "Driver", Driver },
-    { REG_DWORD, "ConfigFlags", ConfigFlags },
-    { REG_SZ, "Mfg", Mfg },
-    { REG_SZ, "FriendlyName", FriendlyName },
-    { REG_SZ, "LocationInformation", LocationInformation },
+    PROPERTY_MAP_ENTRY(REG_SZ, "Class"),
+    PROPERTY_MAP_ENTRY(REG_SZ, "ClassGUID"),
+    PROPERTY_MAP_ENTRY(REG_SZ, "Driver"),
+    PROPERTY_MAP_ENTRY(REG_DWORD, "ConfigFlags"),
+    PROPERTY_MAP_ENTRY(REG_SZ, "Mfg"),
+    PROPERTY_MAP_ENTRY(REG_SZ, "FriendlyName"),
+    PROPERTY_MAP_ENTRY(REG_SZ, "LocationInformation"),
     { 0, NULL, NULL }, /* SPDRP_PHYSICAL_DEVICE_OBJECT_NAME */
-    { REG_DWORD, "Capabilities", Capabilities },
-    { REG_DWORD, "UINumber", UINumber },
-    { REG_MULTI_SZ, "UpperFilters", UpperFilters },
-    { REG_MULTI_SZ, "LowerFilters", LowerFilters },
-    [SPDRP_BASE_CONTAINERID] = { REG_SZ, "ContainerId", ContainerId },
+    PROPERTY_MAP_ENTRY(REG_DWORD, "Capabilities"),
+    PROPERTY_MAP_ENTRY(REG_DWORD, "UINumber"),
+    PROPERTY_MAP_ENTRY(REG_MULTI_SZ, "UpperFilters"),
+    PROPERTY_MAP_ENTRY(REG_MULTI_SZ, "LowerFilters"),
+    [SPDRP_BASE_CONTAINERID] = PROPERTY_MAP_ENTRY(REG_SZ, "ContainerId"),
 };
+#undef PROPERTY_MAP_ENTRY
 
 static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
     DWORD prop, const BYTE *buffer, DWORD size)
@@ -730,11 +677,11 @@ static BOOL SETUPDI_SetDeviceRegistryPropertyW(struct device *device,
 static void remove_device_iface(struct device_iface *iface)
 {
     RegDeleteTreeW(iface->refstr_key, NULL);
-    RegDeleteKeyW(iface->refstr_key, emptyW);
+    RegDeleteKeyW(iface->refstr_key, L"");
     RegCloseKey(iface->refstr_key);
     iface->refstr_key = NULL;
     /* Also remove the class key if it's empty. */
-    RegDeleteKeyW(iface->class_key, emptyW);
+    RegDeleteKeyW(iface->class_key, L"");
     RegCloseKey(iface->class_key);
     iface->class_key = NULL;
     iface->flags |= SPINT_REMOVED;
@@ -839,7 +786,7 @@ static void remove_device(struct device *device)
     }
 
     RegDeleteTreeW(device->key, NULL);
-    RegDeleteKeyW(device->key, emptyW);
+    RegDeleteKeyW(device->key, L"");
 
     /* delete all empty parents of the key */
     if (!RegOpenKeyExW(HKEY_LOCAL_MACHINE, Enum, 0, KEY_ENUMERATE_SUB_KEYS, &enum_key))
@@ -936,7 +883,7 @@ static struct device *create_device(struct DeviceInfoSet *set,
     device->params.cbSize = sizeof(SP_DEVINSTALL_PARAMS_W);
 
     if (phantom)
-        RegSetValueExW(device->key, Phantom, 0, REG_DWORD, (const BYTE *)&one, sizeof(one));
+        RegSetValueExW(device->key, L"Phantom", 0, REG_DWORD, (const BYTE *)&one, sizeof(one));
 
     SETUPDI_GuidToString(class, guidstr);
     SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CLASSGUID,
@@ -1102,7 +1049,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 	    }
 
 	    if (!RegQueryValueExW(hClassKey,
-				  NoUseClass,
+				  L"NoUseClass",
 				  NULL,
 				  NULL,
 				  NULL,
@@ -1115,7 +1062,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 
 	    if ((Flags & DIBCI_NOINSTALLCLASS) &&
 		(!RegQueryValueExW(hClassKey,
-				   NoInstallClass,
+				   L"NoInstallClass",
 				   NULL,
 				   NULL,
 				   NULL,
@@ -1128,7 +1075,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 
 	    if ((Flags & DIBCI_NODISPLAYCLASS) &&
 		(!RegQueryValueExW(hClassKey,
-				   NoDisplayClass,
+				   L"NoDisplayClass",
 				   NULL,
 				   NULL,
 				   NULL,
@@ -1303,7 +1250,7 @@ BOOL WINAPI SetupDiClassGuidsFromNameExW(
 
 	    dwLength = sizeof(szClassName);
 	    if (!RegQueryValueExW(hClassKey,
-				  Class,
+				  L"Class",
 				  NULL,
 				  NULL,
 				  (LPBYTE)szClassName,
@@ -1440,7 +1387,7 @@ BOOL WINAPI SetupDiClassNameFromGuidExW(
     {
 	dwLength = 0;
 	if (RegQueryValueExW(hKey,
-			     Class,
+			     L"Class",
 			     NULL,
 			     NULL,
 			     NULL,
@@ -1455,7 +1402,7 @@ BOOL WINAPI SetupDiClassNameFromGuidExW(
 
     dwLength = ClassNameSize * sizeof(WCHAR);
     if (RegQueryValueExW(hKey,
-			 Class,
+			 L"Class",
 			 NULL,
 			 NULL,
 			 (LPBYTE)ClassName,
@@ -1641,7 +1588,7 @@ HKEY WINAPI SetupDiCreateDevRegKeyW(HDEVINFO devinfo, SP_DEVINFO_DATA *device_da
     switch (KeyType)
     {
         case DIREG_DEV:
-            l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
+            l = RegCreateKeyExW(device->key, L"Device Parameters", 0, NULL, 0,
                     KEY_READ | KEY_WRITE, NULL, &key, NULL);
             break;
         case DIREG_DRV:
@@ -1731,7 +1678,6 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
     }
     if ((flags & DICD_GENERATE_ID))
     {
-        static const WCHAR formatW[] = {'R','O','O','T','\\','%','s','\\','%','0','4','u',0};
         unsigned int instance_id;
 
         if (wcschr(name, '\\'))
@@ -1742,7 +1688,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(HDEVINFO devinfo, const WCHAR *name, const 
 
         for (instance_id = 0; ; ++instance_id)
         {
-            if (swprintf(id, ARRAY_SIZE(id), formatW, name, instance_id) == -1)
+            if (swprintf(id, ARRAY_SIZE(id), L"ROOT\\%s\\%04u", name, instance_id) == -1)
             {
                 SetLastError(ERROR_INVALID_DEVINST_NAME);
                 return FALSE;
@@ -1821,7 +1767,7 @@ BOOL WINAPI SetupDiRegisterDeviceInfo(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
     if (device->phantom)
     {
         device->phantom = FALSE;
-        RegDeleteValueW(device->key, Phantom);
+        RegDeleteValueW(device->key, L"Phantom");
     }
     return TRUE;
 }
@@ -2084,14 +2030,14 @@ BOOL WINAPI SetupDiGetActualSectionToInstallExW(HINF hinf, const WCHAR *section,
         if (line_count == -1)
         {
             /* Test section name with '.NT' extension */
-            lstrcpyW(&buffer[len], NtExtension);
+            lstrcpyW(&buffer[len], L".NT");
             line_count = SetupGetLineCountW(hinf, buffer);
         }
     }
     else
     {
         /* Test section name with '.Win' extension */
-        lstrcpyW(&buffer[len], WinExtension);
+        lstrcpyW(&buffer[len], L".Win");
         line_count = SetupGetLineCountW(hinf, buffer);
     }
 
@@ -2333,7 +2279,7 @@ static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key,
                         iface = SETUPDI_CreateDeviceInterface(device, guid, subKeyName + 1);
 
                         len = sizeof(symbolicLink);
-                        l = RegQueryValueExW(subKey, SymbolicLink, NULL, &dataType,
+                        l = RegQueryValueExW(subKey, L"SymbolicLink", NULL, &dataType,
                                 (BYTE *)symbolicLink, &len);
                         if (!l && dataType == REG_SZ)
                             SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
@@ -2376,7 +2322,7 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                 DWORD dataType;
 
                 len = sizeof(deviceInst);
-                l = RegQueryValueExW(subKey, DeviceInstance, NULL, &dataType,
+                l = RegQueryValueExW(subKey, L"DeviceInstance", NULL, &dataType,
                         (BYTE *)deviceInst, &len);
                 if (!l && dataType == REG_SZ)
                 {
@@ -2392,7 +2338,7 @@ static void SETUPDI_EnumerateMatchingInterfaces(HDEVINFO DeviceInfoSet,
                             WCHAR deviceClassStr[40];
 
                             len = sizeof(deviceClassStr);
-                            l = RegQueryValueExW(deviceKey, ClassGUID, NULL,
+                            l = RegQueryValueExW(deviceKey, L"ClassGUID", NULL,
                                     &dataType, (BYTE *)deviceClassStr, &len);
                             if (!l && dataType == REG_SZ &&
                                     deviceClassStr[0] == '{' &&
@@ -2506,7 +2452,7 @@ static void SETUPDI_EnumerateMatchingDeviceInstances(struct DeviceInfoSet *set,
                 DWORD dataType;
 
                 len = sizeof(classGuid);
-                l = RegQueryValueExW(subKey, ClassGUID, NULL, &dataType,
+                l = RegQueryValueExW(subKey, L"ClassGUID", NULL, &dataType,
                         (BYTE *)classGuid, &len);
                 if (!l && dataType == REG_SZ)
                 {
@@ -2844,7 +2790,7 @@ HKEY WINAPI SetupDiCreateDeviceInterfaceRegKeyA(
 
 static LONG create_iface_key(const struct device_iface *iface, REGSAM access, HKEY *key)
 {
-    return RegCreateKeyExW(iface->refstr_key, DeviceParameters, 0, NULL, 0, access, NULL, key, NULL);
+    return RegCreateKeyExW(iface->refstr_key, L"Device Parameters", 0, NULL, 0, access, NULL, key, NULL);
 }
 
 /***********************************************************************
@@ -2894,7 +2840,7 @@ BOOL WINAPI SetupDiDeleteDeviceInterfaceRegKey(HDEVINFO devinfo,
     if (!(iface = get_device_iface(devinfo, iface_data)))
         return FALSE;
 
-    ret = RegDeleteKeyW(iface->refstr_key, DeviceParameters);
+    ret = RegDeleteKeyW(iface->refstr_key, L"Device Parameters");
     if (ret)
     {
         SetLastError(ret);
@@ -3305,7 +3251,6 @@ BOOL WINAPI SetupDiInstallClassA(
 
 static HKEY CreateClassKey(HINF hInf)
 {
-    static const WCHAR slash[] = { '\\',0 };
     WCHAR FullBuffer[MAX_PATH];
     WCHAR Buffer[MAX_PATH];
     DWORD RequiredSize;
@@ -3313,8 +3258,8 @@ static HKEY CreateClassKey(HINF hInf)
 
     if (!SetupGetLineTextW(NULL,
 			   hInf,
-			   Version,
-			   ClassGUID,
+			   L"Version",
+			   L"ClassGUID",
 			   Buffer,
 			   MAX_PATH,
 			   &RequiredSize))
@@ -3323,7 +3268,7 @@ static HKEY CreateClassKey(HINF hInf)
     }
 
     lstrcpyW(FullBuffer, ControlClass);
-    lstrcatW(FullBuffer, slash);
+    lstrcatW(FullBuffer, L"\\");
     lstrcatW(FullBuffer, Buffer);
 
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE,
@@ -3334,8 +3279,8 @@ static HKEY CreateClassKey(HINF hInf)
     {
 	if (!SetupGetLineTextW(NULL,
 			       hInf,
-			       Version,
-			       Class,
+			       L"Version",
+			       L"Class",
 			       Buffer,
 			       MAX_PATH,
 			       &RequiredSize))
@@ -3359,7 +3304,7 @@ static HKEY CreateClassKey(HINF hInf)
     }
 
     if (RegSetValueExW(hClassKey,
-		       Class,
+		       L"Class",
 		       0,
 		       REG_SZ,
 		       (LPBYTE)Buffer,
@@ -3428,7 +3373,7 @@ BOOL WINAPI SetupDiInstallClassW(
 
     /* Retrieve the actual section name */
     SetupDiGetActualSectionToInstallW(hInf,
-				      ClassInstall32,
+				      L"ClassInstall32",
 				      SectionName,
 				      MAX_PATH,
 				      &SectionNameLength,
@@ -3656,12 +3601,12 @@ BOOL WINAPI SetupDiOpenDeviceInfoW(HDEVINFO devinfo, PCWSTR instance_id, HWND hw
 
     /* If it's an unregistered instance, aka phantom instance, report ERROR_NO_SUCH_DEVINST */
     size = sizeof(phantom);
-    if (!RegQueryValueExW(instanceKey, Phantom, NULL, NULL, (BYTE *)&phantom, &size))
+    if (!RegQueryValueExW(instanceKey, L"Phantom", NULL, NULL, (BYTE *)&phantom, &size))
         goto done;
 
     /* Check class GUID */
     size = sizeof(classW);
-    if (RegQueryValueExW(instanceKey, ClassGUID, NULL, NULL, (BYTE *)classW, &size))
+    if (RegQueryValueExW(instanceKey, L"ClassGUID", NULL, NULL, (BYTE *)classW, &size))
         goto done;
 
     classW[37] = 0;
@@ -3735,7 +3680,7 @@ HKEY WINAPI SetupDiOpenDeviceInterfaceRegKey(HDEVINFO devinfo, PSP_DEVICE_INTERF
     if (!(iface = get_device_iface(devinfo, iface_data)))
         return INVALID_HANDLE_VALUE;
 
-    lr = RegOpenKeyExW(iface->refstr_key, DeviceParameters, 0, access, &key);
+    lr = RegOpenKeyExW(iface->refstr_key, L"Device Parameters", 0, access, &key);
     if (lr)
     {
         SetLastError(lr);
@@ -3826,12 +3771,7 @@ static BOOL call_coinstallers(WCHAR *list, DI_FUNCTION function, HDEVINFO devinf
  */
 BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    static const WCHAR class_coinst_pathW[] = {'S','y','s','t','e','m',
-            '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
-            '\\','C','o','n','t','r','o','l',
-            '\\','C','o','D','e','v','i','c','e','I','n','s','t','a','l','l','e','r','s',0};
-    static const WCHAR coinstallers32W[] = {'C','o','I','n','s','t','a','l','l','e','r','s','3','2',0};
-    static const WCHAR installer32W[] = {'I','n','s','t','a','l','l','e','r','3','2',0};
+    static const WCHAR class_coinst_pathW[] = L"System\\CurrentControlSet\\Control\\CoDeviceInstallers";
     DWORD (CALLBACK *classinst_proc)(DI_FUNCTION, HDEVINFO, SP_DEVINFO_DATA *);
     DWORD ret = ERROR_DI_DO_DEFAULT;
     HKEY class_key, coinst_key;
@@ -3866,10 +3806,10 @@ BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP
 
     if (!open_driver_key(device, KEY_READ, &coinst_key))
     {
-        if (!RegGetValueW(coinst_key, NULL, coinstallers32W, RRF_RT_REG_MULTI_SZ, NULL, NULL, &size))
+        if (!RegGetValueW(coinst_key, NULL, L"CoInstallers32", RRF_RT_REG_MULTI_SZ, NULL, NULL, &size))
         {
             path = malloc(size);
-            if (!RegGetValueW(coinst_key, NULL, coinstallers32W, RRF_RT_REG_MULTI_SZ, NULL, path, &size))
+            if (!RegGetValueW(coinst_key, NULL, L"CoInstallers32", RRF_RT_REG_MULTI_SZ, NULL, path, &size))
                 coret = call_coinstallers(path, function, devinfo, device_data);
             free(path);
         }
@@ -3878,10 +3818,10 @@ BOOL WINAPI SetupDiCallClassInstaller(DI_FUNCTION function, HDEVINFO devinfo, SP
 
     if ((class_key = SetupDiOpenClassRegKey(&device->class, KEY_READ)) != INVALID_HANDLE_VALUE)
     {
-        if (!RegGetValueW(class_key, NULL, installer32W, RRF_RT_REG_SZ, NULL, NULL, &size))
+        if (!RegGetValueW(class_key, NULL, L"Installer32", RRF_RT_REG_SZ, NULL, NULL, &size))
         {
             path = malloc(size);
-            if (!RegGetValueW(class_key, NULL, installer32W, RRF_RT_REG_SZ, NULL, path, &size))
+            if (!RegGetValueW(class_key, NULL, L"Installer32", RRF_RT_REG_SZ, NULL, path, &size))
             {
                 TRACE("Found class installer %s.\n", debugstr_w(path));
                 if ((procnameW = wcschr(path, ',')))
@@ -4050,8 +3990,6 @@ BOOL WINAPI SetupDiSetDeviceInstallParamsW(HDEVINFO devinfo,
 BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_data, const DEVPROPKEY *key,
                                       DEVPROPTYPE type, const BYTE *buffer, DWORD size, DWORD flags)
 {
-    static const WCHAR propertiesW[] = {'P', 'r', 'o', 'p', 'e', 'r', 't', 'i', 'e', 's', 0};
-    static const WCHAR formatW[] = {'\\', '%', '0', '4', 'X', 0};
     struct device *device;
     HKEY properties_hkey, property_hkey;
     WCHAR property_hkey_path[44];
@@ -4082,7 +4020,7 @@ BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
         return FALSE;
     }
 
-    ls = RegCreateKeyExW(device->key, propertiesW, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &properties_hkey, NULL);
+    ls = RegCreateKeyExW(device->key, L"Properties", 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &properties_hkey, NULL);
     if (ls)
     {
         SetLastError(ls);
@@ -4090,7 +4028,7 @@ BOOL WINAPI SetupDiSetDevicePropertyW(HDEVINFO devinfo, PSP_DEVINFO_DATA device_
     }
 
     SETUPDI_GuidToString(&key->fmtid, property_hkey_path);
-    swprintf(property_hkey_path + 38, ARRAY_SIZE(property_hkey_path) - 38, formatW, key->pid);
+    swprintf(property_hkey_path + 38, ARRAY_SIZE(property_hkey_path) - 38, L"\\%04X", key->pid);
 
     if (type == DEVPROP_TYPE_EMPTY)
     {
@@ -4163,7 +4101,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data,
     switch (KeyType)
     {
         case DIREG_DEV:
-            l = RegOpenKeyExW(device->key, DeviceParameters, 0, samDesired, &key);
+            l = RegOpenKeyExW(device->key, L"Device Parameters", 0, samDesired, &key);
             break;
         case DIREG_DRV:
             l = open_driver_key(device, samDesired, &key);
@@ -4219,7 +4157,7 @@ BOOL WINAPI SetupDiDeleteDevRegKey(HDEVINFO devinfo, SP_DEVINFO_DATA *device_dat
                 break;
             /* fall through */
         case DIREG_DEV:
-            l = RegDeleteKeyW(device->key, DeviceParameters);
+            l = RegDeleteKeyW(device->key, L"Device Parameters");
             break;
         default:
             FIXME("Unhandled type %#lx.\n", KeyType);
@@ -4366,7 +4304,7 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
         return FALSE;
     }
 
-    if (!SetupFindFirstLineW(hinf, Version, Signature, &inf_ctx))
+    if (!SetupFindFirstLineW(hinf, L"Version", L"Signature", &inf_ctx))
     {
         ERR("INF file %s does not have mandatory [Version].Signature\n", debugstr_w(inf));
         goto out;
@@ -4378,13 +4316,13 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
         goto out;
     }
 
-    if (lstrcmpiW(buffer, Chicago) && lstrcmpiW(buffer, WindowsNT))
+    if (lstrcmpiW(buffer, L"$Chicago$") && lstrcmpiW(buffer, L"$Windows NT$"))
     {
         ERR("INF file %s has invalid [Version].Signature: %s\n", debugstr_w(inf), debugstr_w(buffer));
         goto out;
     }
 
-    have_guid = SetupFindFirstLineW(hinf, Version, ClassGUID, &inf_ctx);
+    have_guid = SetupFindFirstLineW(hinf, L"Version", L"ClassGUID", &inf_ctx);
 
     if (have_guid)
     {
@@ -4403,7 +4341,7 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
         }
     }
 
-    have_name = SetupFindFirstLineW(hinf, Version, Class, &inf_ctx);
+    have_name = SetupFindFirstLineW(hinf, L"Version", L"Class", &inf_ctx);
 
     class_name_len = 0;
     if (have_name)
@@ -4719,8 +4657,8 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
 
     callback_ctx = SetupInitDefaultQueueCallback(NULL);
 
-    lstrcatW(section_ext, dotInterfaces);
-    if (SetupFindFirstLineW(hinf, section_ext, AddInterface, &ctx))
+    lstrcatW(section_ext, L".Interfaces");
+    if (SetupFindFirstLineW(hinf, section_ext, L"AddInterface", &ctx))
     {
         do {
             SetupGetStringFieldW(&ctx, 1, guidstr, ARRAY_SIZE(guidstr), NULL);
@@ -4745,7 +4683,7 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
                     NULL, SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
 
             RegCloseKey(iface_key);
-        } while (SetupFindNextMatchLineW(&ctx, AddInterface, &ctx));
+        } while (SetupFindNextMatchLineW(&ctx, L"AddInterface", &ctx));
     }
 
     SetupTermDefaultQueueCallback(callback_ctx);
@@ -4759,7 +4697,6 @@ BOOL WINAPI SetupDiInstallDeviceInterfaces(HDEVINFO devinfo, SP_DEVINFO_DATA *de
  */
 BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    static const WCHAR coinstallersW[] = {'.','C','o','I','n','s','t','a','l','l','e','r','s',0};
     WCHAR coinst_key_ext[LINE_LEN];
     struct device *device;
     struct driver *driver;
@@ -4784,7 +4721,7 @@ BOOL WINAPI SetupDiRegisterCoDeviceInstallers(HDEVINFO devinfo, SP_DEVINFO_DATA 
         return FALSE;
 
     SetupDiGetActualSectionToInstallW(hinf, driver->section, coinst_key_ext, ARRAY_SIZE(coinst_key_ext), NULL, NULL);
-    lstrcatW(coinst_key_ext, coinstallersW);
+    lstrcatW(coinst_key_ext, L".CoInstallers");
 
     if ((l = create_driver_key(device, &driver_key)))
     {
@@ -4843,16 +4780,16 @@ static BOOL version_is_compatible(const WCHAR *version)
     if ((p = wcschr(version, '.')))
         len = p - version;
 
-    if (!wcsnicmp(version, NtExtension + 1, len))
+    if (!wcsnicmp(version, L"NT", len))
         return TRUE;
 
     if (IsWow64Process(GetCurrentProcess(), &wow64) && wow64)
     {
 #ifdef __i386__
-        static const WCHAR wow_ext[] = {'N','T','a','m','d','6','4',0};
+        static const WCHAR wow_ext[] = L"NTamd64";
         machine_ext = wow_ext;
 #elif defined(__arm__)
-        static const WCHAR wow_ext[] = {'N','T','a','r','m','6','4',0};
+        static const WCHAR wow_ext[] = L"NTarm64";
         machine_ext = wow_ext;
 #endif
     }
@@ -4879,7 +4816,6 @@ static bool any_version_is_compatible(INFCONTEXT *ctx)
 
 static void enum_compat_drivers_from_file(struct device *device, const WCHAR *path)
 {
-    static const WCHAR manufacturerW[] = {'M','a','n','u','f','a','c','t','u','r','e','r',0};
     WCHAR mfg_key[LINE_LEN], id[MAX_DEVICE_ID_LEN];
     DWORD i, j, k, driver_count = device->driver_count;
     struct driver driver, *drivers = device->drivers;
@@ -4894,7 +4830,7 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
 
     lstrcpyW(driver.inf_path, path);
 
-    for (i = 0; SetupGetLineByIndexW(hinf, manufacturerW, i, &ctx); ++i)
+    for (i = 0; SetupGetLineByIndexW(hinf, L"Manufacturer", i, &ctx); ++i)
     {
         SetupGetStringFieldW(&ctx, 0, driver.manufacturer, ARRAY_SIZE(driver.manufacturer), NULL);
         if (!SetupGetStringFieldW(&ctx, 1, mfg_key, ARRAY_SIZE(mfg_key), NULL))
@@ -4915,9 +4851,9 @@ static void enum_compat_drivers_from_file(struct device *device, const WCHAR *pa
             driver.rank = 0;
             for (k = 2, found = FALSE; SetupGetStringFieldW(&ctx, k, id, ARRAY_SIZE(id), NULL); ++k)
             {
-                if ((found = device_matches_id(device, HardwareId, id, &driver.rank))) break;
+                if ((found = device_matches_id(device, L"HardwareId", id, &driver.rank))) break;
                 driver.rank += 0x2000;
-                if ((found = device_matches_id(device, CompatibleIDs, id, &driver.rank))) break;
+                if ((found = device_matches_id(device, L"CompatibleIDs", id, &driver.rank))) break;
                 driver.rank = 0x1000 + min(0x0100 * (k - 2), 0xf00);
             }
 
@@ -4967,8 +4903,6 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
     }
     else
     {
-        static const WCHAR default_path[] = {'C',':','/','w','i','n','d','o','w','s','/','i','n','f',0};
-        static const WCHAR wildcardW[] = {'*',0};
         WCHAR dir[MAX_PATH], file[MAX_PATH];
         WIN32_FIND_DATAW find_data;
         HANDLE find_handle;
@@ -4976,9 +4910,8 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO devinfo, SP_DEVINFO_DATA *device
         if (device->params.DriverPath[0])
             lstrcpyW(dir, device->params.DriverPath);
         else
-            lstrcpyW(dir, default_path);
-        lstrcatW(dir, backslashW);
-        lstrcatW(dir, wildcardW);
+            lstrcpyW(dir, L"C:/windows/inf");
+        lstrcatW(dir, L"\\*");
 
         TRACE("Searching for drivers in %s.\n", debugstr_w(dir));
 
@@ -5346,14 +5279,14 @@ BOOL WINAPI SetupDiInstallDriverFiles(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
     SetupInstallFromInfSectionW(NULL, hinf, section_ext, SPINST_FILES, NULL, NULL,
             SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
 
-    lstrcatW(section_ext, dotInterfaces);
-    if (SetupFindFirstLineW(hinf, section_ext, AddInterface, &ctx))
+    lstrcatW(section_ext, L".Interfaces");
+    if (SetupFindFirstLineW(hinf, section_ext, L"AddInterface", &ctx))
     {
         do {
             SetupGetStringFieldW(&ctx, 3, iface_section, ARRAY_SIZE(iface_section), NULL);
             SetupInstallFromInfSectionW(NULL, hinf, iface_section, SPINST_FILES, NULL, NULL,
                     SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
-        } while (SetupFindNextMatchLineW(&ctx, AddInterface, &ctx));
+        } while (SetupFindNextMatchLineW(&ctx, L"AddInterface", &ctx));
     }
 
     SetupTermDefaultQueueCallback(callback_ctx);
@@ -5367,13 +5300,6 @@ BOOL WINAPI SetupDiInstallDriverFiles(HDEVINFO devinfo, SP_DEVINFO_DATA *device_
  */
 BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
 {
-    static const WCHAR infpathW[] = {'I','n','f','P','a','t','h',0};
-    static const WCHAR infsectionW[] = {'I','n','f','S','e','c','t','i','o','n',0};
-    static const WCHAR infsectionextW[] = {'I','n','f','S','e','c','t','i','o','n','E','x','t',0};
-    static const WCHAR dothwW[] = {'.','H','W',0};
-    static const WCHAR dotservicesW[] = {'.','S','e','r','v','i','c','e','s',0};
-    static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
-    static const WCHAR rootW[] = {'r','o','o','t','\\',0};
     WCHAR section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
     static const DWORD config_flags = 0;
     UINT install_flags = SPINST_ALL;
@@ -5414,7 +5340,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         return FALSE;
     }
 
-    if ((l = RegCreateKeyExW(device->key, DeviceParameters, 0, NULL, 0,
+    if ((l = RegCreateKeyExW(device->key, L"Device Parameters", 0, NULL, 0,
             KEY_READ | KEY_WRITE, NULL, &device_key, NULL)))
     {
         SetLastError(l);
@@ -5436,17 +5362,17 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
             SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
 
     lstrcpyW(subsection, section_ext);
-    lstrcatW(subsection, dothwW);
+    lstrcatW(subsection, L".HW");
 
     SetupInstallFromInfSectionW(NULL, hinf, subsection, install_flags, device_key, NULL,
             SP_COPY_NEWER_ONLY, SetupDefaultQueueCallbackW, callback_ctx, NULL, NULL);
 
     lstrcpyW(subsection, section_ext);
-    lstrcatW(subsection, dotservicesW);
+    lstrcatW(subsection, L".Services");
     SetupInstallServicesFromInfSectionW(hinf, subsection, 0);
 
     svc_name[0] = 0;
-    if (SetupFindFirstLineW(hinf, subsection, addserviceW, &ctx))
+    if (SetupFindFirstLineW(hinf, subsection, L"AddService", &ctx))
     {
         do
         {
@@ -5455,10 +5381,10 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
             if (SetupGetIntField(&ctx, 2, &flags) && (flags & SPSVCINST_ASSOCSERVICE))
             {
                 if (SetupGetStringFieldW(&ctx, 1, svc_name, ARRAY_SIZE(svc_name), NULL) && svc_name[0])
-                    RegSetValueExW(device->key, Service, 0, REG_SZ, (BYTE *)svc_name, lstrlenW(svc_name) * sizeof(WCHAR));
+                    RegSetValueExW(device->key, L"Service", 0, REG_SZ, (BYTE *)svc_name, lstrlenW(svc_name) * sizeof(WCHAR));
                 break;
             }
-        } while (SetupFindNextMatchLineW(&ctx, addserviceW, &ctx));
+        } while (SetupFindNextMatchLineW(&ctx, L"AddService", &ctx));
     }
 
     SetupTermDefaultQueueCallback(callback_ctx);
@@ -5467,15 +5393,15 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     SetupCopyOEMInfW(driver->inf_path, NULL, SPOST_NONE, 0, inf_path, ARRAY_SIZE(inf_path), NULL, &filepart);
     TRACE("Copied INF file %s to %s.\n", debugstr_w(driver->inf_path), debugstr_w(inf_path));
 
-    RegSetValueExW(driver_key, infpathW, 0, REG_SZ, (BYTE *)filepart, lstrlenW(filepart) * sizeof(WCHAR));
-    RegSetValueExW(driver_key, infsectionW, 0, REG_SZ, (BYTE *)driver->section, lstrlenW(driver->section) * sizeof(WCHAR));
+    RegSetValueExW(driver_key, L"InfPath", 0, REG_SZ, (BYTE *)filepart, lstrlenW(filepart) * sizeof(WCHAR));
+    RegSetValueExW(driver_key, L"InfSection", 0, REG_SZ, (BYTE *)driver->section, lstrlenW(driver->section) * sizeof(WCHAR));
     if (extptr)
-        RegSetValueExW(driver_key, infsectionextW, 0, REG_SZ, (BYTE *)extptr, lstrlenW(extptr) * sizeof(WCHAR));
+        RegSetValueExW(driver_key, L"InfSectionExt", 0, REG_SZ, (BYTE *)extptr, lstrlenW(extptr) * sizeof(WCHAR));
 
     RegCloseKey(device_key);
     RegCloseKey(driver_key);
 
-    if (!wcsnicmp(device->instanceId, rootW, lstrlenW(rootW)) && svc_name[0]
+    if (!wcsnicmp(device->instanceId, L"root\\", strlen("root\\")) && svc_name[0]
             && (manager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT)))
     {
         if ((service = OpenServiceW(manager, svc_name, SERVICE_START | SERVICE_USER_DEFINED_CONTROL)))

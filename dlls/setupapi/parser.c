@@ -143,14 +143,6 @@ static const parser_state_func parser_funcs[NB_PARSER_STATES] =
 };
 
 
-/* Unicode string constants */
-static const WCHAR Version[]    = {'V','e','r','s','i','o','n',0};
-static const WCHAR Signature[]  = {'S','i','g','n','a','t','u','r','e',0};
-static const WCHAR Chicago[]    = {'$','C','h','i','c','a','g','o','$',0};
-static const WCHAR WindowsNT[]  = {'$','W','i','n','d','o','w','s',' ','N','T','$',0};
-static const WCHAR Windows95[]  = {'$','W','i','n','d','o','w','s',' ','9','5','$',0};
-static const WCHAR LayoutFile[] = {'L','a','y','o','u','t','F','i','l','e',0};
-
 /* extend an array, allocating more memory if necessary */
 static void *grow_array( void *array, unsigned int *count, size_t elem )
 {
@@ -870,8 +862,6 @@ static void free_inf_file( struct inf_file *file )
 static DWORD parse_buffer( struct inf_file *file, const WCHAR *buffer, const WCHAR *end,
                            UINT *error_line )
 {
-    static const WCHAR Strings[] = {'S','t','r','i','n','g','s',0};
-
     struct parser parser;
     const WCHAR *pos = buffer;
 
@@ -911,7 +901,7 @@ static DWORD parse_buffer( struct inf_file *file, const WCHAR *buffer, const WCH
     }
 
     /* find the [strings] section */
-    file->strings_section = find_section( file, Strings );
+    file->strings_section = find_section( file, L"Strings" );
 
     if (file->strings_section == -1 && parser.broken_line)
     {
@@ -1007,16 +997,16 @@ static struct inf_file *parse_file( HANDLE handle, const WCHAR *class, DWORD sty
 
     if (!err)  /* now check signature */
     {
-        int version_index = find_section( file, Version );
+        int version_index = find_section( file, L"Version" );
         if (version_index != -1)
         {
-            struct line *line = find_line( file, version_index, Signature );
+            struct line *line = find_line( file, version_index, L"Signature" );
             if (line && line->nb_fields > 0)
             {
                 struct field *field = file->fields + line->first_field;
-                if (!wcsicmp( field->text, Chicago )) goto done;
-                if (!wcsicmp( field->text, WindowsNT )) goto done;
-                if (!wcsicmp( field->text, Windows95 )) goto done;
+                if (!wcsicmp( field->text, L"$Chicago$" )) goto done;
+                if (!wcsicmp( field->text, L"$Windows NT$" )) goto done;
+                if (!wcsicmp( field->text, L"$Windows 95$" )) goto done;
             }
         }
         if (error_line) *error_line = 0;
@@ -1119,9 +1109,6 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
     }
     else  /* try Windows directory */
     {
-        static const WCHAR Inf[]      = {'\\','i','n','f','\\',0};
-        static const WCHAR System32[] = {'\\','s','y','s','t','e','m','3','2','\\',0};
-
         len = GetWindowsDirectoryW( NULL, 0 ) + lstrlenW(name) + 12;
         if (!(path = malloc( len * sizeof(WCHAR) )))
         {
@@ -1130,12 +1117,12 @@ HINF WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR class, DWORD style, UINT *err
         }
         GetWindowsDirectoryW( path, len );
         p = path + lstrlenW(path);
-        lstrcpyW( p, Inf );
+        lstrcpyW( p, L"\\inf\\" );
         lstrcatW( p, name );
         handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         if (handle == INVALID_HANDLE_VALUE)
         {
-            lstrcpyW( p, System32 );
+            lstrcpyW( p, L"\\system32\\" );
             lstrcatW( p, name );
             handle = CreateFileW( path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0 );
         }
@@ -1187,7 +1174,7 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
         WCHAR filename[MAX_PATH];
         int idx = 1;
 
-        if (!SetupFindFirstLineW( parent_hinf, Version, LayoutFile, &context )) return FALSE;
+        if (!SetupFindFirstLineW( parent_hinf, L"Version", L"LayoutFile", &context )) return FALSE;
         while (SetupGetStringFieldW( &context, idx++, filename, ARRAY_SIZE( filename ), NULL ))
         {
             child_hinf = SetupOpenInfFileW( filename, NULL, INF_STYLE_WIN4, error );
@@ -1210,11 +1197,10 @@ BOOL WINAPI SetupOpenAppendInfFileW( PCWSTR name, HINF parent_hinf, UINT *error 
  */
 HINF WINAPI SetupOpenMasterInf( VOID )
 {
-    static const WCHAR Layout[] = {'\\','i','n','f','\\', 'l', 'a', 'y', 'o', 'u', 't', '.', 'i', 'n', 'f', 0};
     WCHAR Buffer[MAX_PATH];
 
     GetWindowsDirectoryW( Buffer, MAX_PATH );
-    lstrcatW( Buffer, Layout );
+    lstrcatW( Buffer, L"\\inf\\layout.inf" );
     return SetupOpenInfFileW( Buffer, NULL, INF_STYLE_WIN4, NULL);
 }
 
