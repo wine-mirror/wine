@@ -869,9 +869,9 @@
 @ stub NtUserCreateEmptyCursorObject
 @ stdcall -syscall NtUserCreateInputContext(ptr)
 @ stub NtUserCreateLocalMemHandle
-@ stub NtUserCreateMenu
+@ stdcall -syscall NtUserCreateMenu()
 @ stub NtUserCreatePalmRejectionDelayZone
-@ stub NtUserCreatePopupMenu
+@ stdcall -syscall NtUserCreatePopupMenu()
 @ stub NtUserCreateSyntheticPointerDevice2
 @ stub NtUserCreateSystemThreads
 @ stdcall -syscall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long long long)

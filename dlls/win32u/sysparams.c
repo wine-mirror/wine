@@ -6985,9 +6985,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_CreateCursorIcon:
         return HandleToUlong( alloc_cursoricon_handle( arg ));
 
-    case NtUserCallOneParam_CreateMenu:
-        return HandleToUlong( create_menu( arg ) );
-
     case NtUserCallOneParam_EnableDC:
         return set_dce_flags( UlongToHandle(arg), DCHF_ENABLEDC );
 

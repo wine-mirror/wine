@@ -1251,6 +1251,16 @@ HIMC SYSCALL_API NtUserCreateInputContext( UINT_PTR client_ptr )
     SYSCALL_FUNC( NtUserCreateInputContext );
 }
 
+HMENU SYSCALL_API NtUserCreateMenu(void)
+{
+    SYSCALL_FUNC( NtUserCreateMenu );
+}
+
+HMENU SYSCALL_API NtUserCreatePopupMenu(void)
+{
+    SYSCALL_FUNC( NtUserCreatePopupMenu );
+}
+
 HWND SYSCALL_API NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                        UNICODE_STRING *version, UNICODE_STRING *window_name,
                                        DWORD style, INT x, INT y, INT cx, INT cy,

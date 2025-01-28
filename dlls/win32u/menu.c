@@ -596,7 +596,7 @@ HMENU get_menu( HWND hwnd )
 }
 
 /* see CreateMenu and CreatePopupMenu */
-HMENU create_menu( BOOL is_popup )
+static HMENU create_menu( BOOL is_popup )
 {
     struct menu *menu;
     HMENU handle;
@@ -610,6 +610,22 @@ HMENU create_menu( BOOL is_popup )
 
     TRACE( "return %p\n", handle );
     return handle;
+}
+
+/**********************************************************************
+ *         NtUserCreateMenu   (win32u.@)
+ */
+HMENU WINAPI NtUserCreateMenu(void)
+{
+    return create_menu( FALSE );
+}
+
+/**********************************************************************
+ *         NtUserCreatePopupMenu   (win32u.@)
+ */
+HMENU WINAPI NtUserCreatePopupMenu(void)
+{
+    return create_menu( TRUE );
 }
 
 /**********************************************************************
@@ -1489,7 +1505,7 @@ static HMENU get_sys_menu( HWND hwnd, HMENU popup_menu )
     HMENU handle;
 
     TRACE("loading system menu, hwnd %p, popup_menu %p\n", hwnd, popup_menu);
-    if (!(handle = create_menu( FALSE )))
+    if (!(handle = NtUserCreateMenu()))
     {
         ERR("failed to load system menu!\n");
         return 0;

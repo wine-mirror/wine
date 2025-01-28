@@ -1935,6 +1935,16 @@ NTSTATUS WINAPI wow64_NtUserCreateInputContext( UINT *args )
     return HandleToUlong( NtUserCreateInputContext( client_ptr ));
 }
 
+NTSTATUS WINAPI wow64_NtUserCreateMenu( UINT *args )
+{
+    return HandleToUlong( NtUserCreateMenu() );
+}
+
+NTSTATUS WINAPI wow64_NtUserCreatePopupMenu( UINT *args )
+{
+    return HandleToUlong( NtUserCreatePopupMenu() );
+}
+
 NTSTATUS WINAPI wow64_NtUserCreateWindowEx( UINT *args )
 {
     DWORD ex_style = get_ulong( &args );

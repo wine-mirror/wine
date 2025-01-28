@@ -333,8 +333,8 @@
 @ stdcall CreateIconIndirect(ptr)
 @ stdcall CreateMDIWindowA(str str long long long long long long long long)
 @ stdcall CreateMDIWindowW(wstr wstr long long long long long long long long)
-@ stdcall CreateMenu()
-@ stdcall CreatePopupMenu()
+@ stdcall CreateMenu() NtUserCreateMenu
+@ stdcall CreatePopupMenu() NtUserCreatePopupMenu
 @ stdcall CreateSyntheticPointerDevice(long long long)
 # @ stub CreateSystemThreads
 @ stdcall CreateWindowExA(long str str long long long long long long long long ptr)

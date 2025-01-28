@@ -750,6 +750,8 @@ W32KAPI HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_S
                                               DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
                                               ULONG heap_size );
 W32KAPI HIMC    WINAPI NtUserCreateInputContext( UINT_PTR client_ptr );
+W32KAPI HMENU   WINAPI NtUserCreateMenu(void);
+W32KAPI HMENU   WINAPI NtUserCreatePopupMenu(void);
 W32KAPI HWND    WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                              UNICODE_STRING *version, UNICODE_STRING *window_name,
                                              DWORD style, INT x, INT y, INT cx, INT cy,
@@ -1050,7 +1052,6 @@ enum
 {
     NtUserCallOneParam_BeginDeferWindowPos,
     NtUserCallOneParam_CreateCursorIcon,
-    NtUserCallOneParam_CreateMenu,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
     NtUserCallOneParam_EnumClipboardFormats,
@@ -1086,11 +1087,6 @@ static inline HDWP NtUserBeginDeferWindowPos( INT count )
 static inline HICON NtUserCreateCursorIcon( BOOL is_icon )
 {
     return UlongToHandle( NtUserCallOneParam( is_icon, NtUserCallOneParam_CreateCursorIcon ));
-}
-
-static inline HMENU NtUserCreateMenu( BOOL is_popup )
-{
-    return UlongToHandle( NtUserCallOneParam( is_popup, NtUserCallOneParam_CreateMenu ));
 }
 
 static inline WORD NtUserEnableDC( HDC hdc )
