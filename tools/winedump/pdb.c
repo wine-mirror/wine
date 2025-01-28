@@ -911,7 +911,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     }
     printf("\n\tIndexes => offsets:\n");
     table = (const unsigned*)((const BYTE*)hash + types->search_offset);
-    for (i = 0; i < types->search_size / (2 * sizeof(unsigned)); i += 2)
+    for (i = 0; i < types->search_size / (2 * sizeof(unsigned)); i++)
     {
         printf("\t\t%08x => %08x\n", table[2 * i + 0], table[2 * i + 1]);
     }
