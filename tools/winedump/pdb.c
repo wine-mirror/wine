@@ -579,10 +579,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                        (symbols->sectcontrib_size - sizeof(unsigned)) / size,
                        size,
                        (symbols->sectcontrib_size - sizeof(unsigned)) % size);
-            src += sizeof(unsigned);
-            while (src + size <= last)
+            for (src += sizeof(unsigned); src + size <= last; src += size)
             {
-                range = (const PDB_SYMBOL_RANGE_EX*)(src + sizeof(unsigned));
+                range = (const PDB_SYMBOL_RANGE_EX*)src;
                 printf("\tRange #%tu\n",
                        ((const BYTE*)range - ((const BYTE*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size)) / size);
                 printf("\t\tsegment:         %04x\n"
@@ -607,7 +606,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                        range->unknown);
                 if (version == 0xeffe0000 + 20140516)
                     printf("\t\tcoff_section:    %08x\n", *(unsigned*)(range + 1));
-                src += size;
             }
         }
     }
