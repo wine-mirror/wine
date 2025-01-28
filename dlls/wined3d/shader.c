@@ -3069,21 +3069,6 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
             switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
             {
                 case WINED3D_FOG_NONE:
-                    if (position_transformed || (vs && !vs->is_ffp_vs))
-                    {
-                        args->fog = WINED3D_FFP_PS_FOG_LINEAR;
-                        break;
-                    }
-
-                    switch (state->render_states[WINED3D_RS_FOGVERTEXMODE])
-                    {
-                        case WINED3D_FOG_NONE: /* Fall through. */
-                        case WINED3D_FOG_LINEAR: args->fog = WINED3D_FFP_PS_FOG_LINEAR; break;
-                        case WINED3D_FOG_EXP:    args->fog = WINED3D_FFP_PS_FOG_EXP;    break;
-                        case WINED3D_FOG_EXP2:   args->fog = WINED3D_FFP_PS_FOG_EXP2;   break;
-                    }
-                    break;
-
                 case WINED3D_FOG_LINEAR: args->fog = WINED3D_FFP_PS_FOG_LINEAR; break;
                 case WINED3D_FOG_EXP:    args->fog = WINED3D_FFP_PS_FOG_EXP;    break;
                 case WINED3D_FOG_EXP2:   args->fog = WINED3D_FFP_PS_FOG_EXP2;   break;
