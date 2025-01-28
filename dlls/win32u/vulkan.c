@@ -480,7 +480,8 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
         struct surface *surface = swapchain->surface;
         RECT client_rect;
 
-        driver_funcs->p_vulkan_surface_presented( surface->hwnd, surface->driver_private, swapchain_res );
+        if (surface->hwnd)
+            driver_funcs->p_vulkan_surface_presented( surface->hwnd, surface->driver_private, swapchain_res );
 
         if (swapchain_res < VK_SUCCESS) continue;
         if (!NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ))
