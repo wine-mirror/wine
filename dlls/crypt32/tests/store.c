@@ -2807,7 +2807,7 @@ static DWORD countCRLsInStore(HCERTSTORE store)
 
 static void testEmptyStore(void)
 {
-    const CERT_CONTEXT *cert, *cert2, *cert3;
+    const CERT_CONTEXT *cert, *cert2, *cert3, *copy;
     const CRL_CONTEXT *crl;
     const CTL_CONTEXT *ctl;
     HCERTSTORE store;
@@ -2837,9 +2837,12 @@ static void testEmptyStore(void)
 
     test_store_is_empty(cert->hCertStore);
 
-    res = CertDeleteCertificateFromStore(cert3);
+    copy = CertDuplicateCertificateContext(cert3);
+    ok(copy == cert3, "got %p, %p.\n", copy, cert3);
+    res = CertDeleteCertificateFromStore(copy);
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
-    ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore\n");
+    ok(cert3->hCertStore == cert->hCertStore, "Unexpected hCertStore %p\n", cert3->hCertStore);
+    CertFreeCertificateContext(copy);
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
     ok(store != NULL, "CertOpenStore failed\n");
@@ -2849,9 +2852,12 @@ static void testEmptyStore(void)
     ok(cert3 && cert3 != cert2, "Unexpected cert3\n");
     ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
 
-    res = CertDeleteCertificateFromStore(cert3);
+    copy = CertDuplicateCertificateContext(cert3);
+    ok(copy == cert3, "got %p, %p.\n", copy, cert3);
+    res = CertDeleteCertificateFromStore(copy);
     ok(res, "CertDeleteCertificateContextFromStore failed\n");
     ok(cert3->hCertStore == store, "Unexpected hCertStore\n");
+    CertFreeCertificateContext(copy);
 
     res = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
     ok(res, "got error %#lx.\n", GetLastError());
