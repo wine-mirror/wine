@@ -807,7 +807,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 
             if (msg.message == WM_QUIT)
             {
-                PostQuitMessage( msg.wParam );
+                NtUserPostQuitMessage( msg.wParam );
                 if (!IsWindow( hwnd )) return 0;
                 break;
             }

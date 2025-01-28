@@ -1893,6 +1893,11 @@ BOOL SYSCALL_API NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     SYSCALL_FUNC( NtUserPostMessage );
 }
 
+BOOL SYSCALL_API NtUserPostQuitMessage( INT exit_code )
+{
+    SYSCALL_FUNC( NtUserPostQuitMessage );
+}
+
 BOOL SYSCALL_API NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     SYSCALL_FUNC( NtUserPostThreadMessage );

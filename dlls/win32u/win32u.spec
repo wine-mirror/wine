@@ -1232,7 +1232,7 @@
 @ stub NtUserPlayEventSound
 @ stub NtUserPostKeyboardInputMessage
 @ stdcall -syscall NtUserPostMessage(long long long long)
-@ stub NtUserPostQuitMessage
+@ stdcall -syscall NtUserPostQuitMessage(long)
 @ stdcall -syscall NtUserPostThreadMessage(long long long long)
 @ stub NtUserPrepareForLogoff
 @ stdcall -syscall NtUserPrintWindow(long long long)

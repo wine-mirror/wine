@@ -3856,6 +3856,13 @@ NTSTATUS WINAPI wow64_NtUserPostMessage( UINT *args )
     return NtUserPostMessage( hwnd, msg, wparam, lparam );
 }
 
+NTSTATUS WINAPI wow64_NtUserPostQuitMessage( UINT *args )
+{
+    INT exit_code = get_ulong( &args );
+
+    return NtUserPostQuitMessage( exit_code );
+}
+
 NTSTATUS WINAPI wow64_NtUserPostThreadMessage( UINT *args )
 {
     DWORD thread = get_ulong( &args );

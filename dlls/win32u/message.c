@@ -3766,9 +3766,9 @@ NTSTATUS send_hardware_message( HWND hwnd, UINT flags, const INPUT *input, LPARA
 }
 
 /***********************************************************************
- *		post_quit_message
+ *		NtUserPostQuitMessage  (win32u.@)
  */
-BOOL post_quit_message( int exit_code )
+BOOL WINAPI NtUserPostQuitMessage( INT exit_code )
 {
     SERVER_START_REQ( post_quit_message )
     {

@@ -7026,9 +7026,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
 
-    case NtUserCallOneParam_PostQuitMessage:
-        return post_quit_message( arg );
-
     case NtUserCallOneParam_ReplyMessage:
         return reply_message_result( arg );
 

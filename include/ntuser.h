@@ -897,6 +897,7 @@ W32KAPI HDESK   WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS
 W32KAPI BOOL    WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
 W32KAPI BOOL    WINAPI NtUserPerMonitorDPIPhysicalToLogicalPoint( HWND hwnd, POINT *pt );
 W32KAPI BOOL    WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+W32KAPI BOOL    WINAPI NtUserPostQuitMessage( INT exit_code );
 W32KAPI BOOL    WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
 W32KAPI BOOL    WINAPI NtUserPrintWindow( HWND hwnd, HDC hdc, UINT flags );
 W32KAPI LONG    WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_count, DISPLAYCONFIG_PATH_INFO *paths,
@@ -1066,7 +1067,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_PostQuitMessage,
     NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
@@ -1156,11 +1156,6 @@ static inline HPEN NtUserGetSysColorPen( INT index )
 static inline INT NtUserGetSystemMetrics( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
-}
-
-static inline void NtUserPostQuitMessage( INT exit_code )
-{
-    NtUserCallOneParam( exit_code, NtUserCallOneParam_PostQuitMessage );
 }
 
 static inline UINT NtUserRealizePalette( HDC hdc )

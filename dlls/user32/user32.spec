@@ -906,7 +906,7 @@
 @ stub PlaySoundEvent
 @ stdcall PostMessageA(long long long long)
 @ stdcall PostMessageW(long long long long)
-@ stdcall PostQuitMessage(long)
+@ stdcall PostQuitMessage(long) NtUserPostQuitMessage
 @ stdcall PostThreadMessageA(long long long long)
 @ stdcall PostThreadMessageW(long long long long) NtUserPostThreadMessage
 @ stdcall PrintWindow(long long long) NtUserPrintWindow
