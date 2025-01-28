@@ -882,6 +882,7 @@ W32KAPI BOOL    WINAPI NtUserLockWindowUpdate( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserLogicalToPerMonitorDPIPhysicalPoint( HWND hwnd, POINT *pt );
 W32KAPI UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );
 W32KAPI INT     WINAPI NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, int y );
+W32KAPI BOOL    WINAPI NtUserMessageBeep( UINT type );
 W32KAPI LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                           void *result_info, DWORD type, BOOL ansi );
 W32KAPI BOOL    WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
@@ -1065,7 +1066,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_PostQuitMessage,
     NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_ReplyMessage,
@@ -1156,11 +1156,6 @@ static inline HPEN NtUserGetSysColorPen( INT index )
 static inline INT NtUserGetSystemMetrics( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
-}
-
-static inline BOOL NtUserMessageBeep( UINT i )
-{
-    return NtUserCallOneParam( i, NtUserCallOneParam_MessageBeep );
 }
 
 static inline void NtUserPostQuitMessage( INT exit_code )

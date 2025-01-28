@@ -861,7 +861,7 @@
 @ stdcall MenuItemFromPoint(long long int64)
 @ stub MenuWindowProcA
 @ stub MenuWindowProcW
-@ stdcall MessageBeep(long)
+@ stdcall MessageBeep(long) NtUserMessageBeep
 @ stdcall MessageBoxA(long str str long)
 @ stdcall MessageBoxExA(long str str long long)
 @ stdcall MessageBoxExW(long wstr wstr long long)

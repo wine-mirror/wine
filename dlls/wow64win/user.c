@@ -3304,6 +3304,13 @@ NTSTATUS WINAPI wow64_NtUserMenuItemFromPoint( UINT *args )
     return NtUserMenuItemFromPoint( hwnd, handle, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtUserMessageBeep( UINT *args )
+{
+    UINT type = get_ulong( &args );
+
+    return NtUserMessageBeep( type );
+}
+
 static LRESULT message_call_32to64( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     void *result_info, DWORD type, BOOL ansi )
 {

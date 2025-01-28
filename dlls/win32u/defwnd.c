@@ -434,7 +434,7 @@ static LRESULT handle_set_cursor( HWND hwnd, WPARAM wparam, LPARAM lparam )
             WORD msg = HIWORD( lparam );
             if (msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN ||
                 msg == WM_RBUTTONDOWN || msg == WM_XBUTTONDOWN)
-                message_beep( 0 );
+                NtUserMessageBeep( 0 );
         }
         break;
 
@@ -2795,7 +2795,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                 send_message( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wch );
         }
         else if (wparam != '\x1b')  /* Ctrl-Esc */
-            message_beep(0);
+            NtUserMessageBeep(0);
         break;
 
     case WM_KEYF1:

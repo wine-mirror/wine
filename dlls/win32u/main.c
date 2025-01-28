@@ -1826,6 +1826,11 @@ INT SYSCALL_API NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, int y )
     SYSCALL_FUNC( NtUserMenuItemFromPoint );
 }
 
+BOOL SYSCALL_API NtUserMessageBeep( UINT type )
+{
+    SYSCALL_FUNC( NtUserMessageBeep );
+}
+
 LRESULT SYSCALL_API NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                        void *result_info, DWORD type, BOOL ansi )
 {

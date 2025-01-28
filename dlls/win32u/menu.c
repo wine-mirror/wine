@@ -4302,7 +4302,7 @@ static BOOL track_menu( HMENU hmenu, UINT flags, int x, int y, HWND hwnd, const 
                     pos = find_item_by_key( mt.hOwnerWnd, mt.hCurrentMenu,
                                             LOWORD( msg.wParam ), FALSE );
                     if (pos == -2) exit_menu = TRUE;
-                    else if (pos == -1) message_beep( 0 );
+                    else if (pos == -1) NtUserMessageBeep( 0 );
                     else
                     {
                         select_item( mt.hOwnerWnd, mt.hCurrentMenu, pos, TRUE, 0 );
@@ -4467,7 +4467,7 @@ void track_keyboard_menu_bar( HWND hwnd, UINT wparam, WCHAR ch )
         item = find_item_by_key( hwnd, menu, ch, wparam & HTSYSMENU );
         if (item >= -2)
         {
-            if (item == -1) message_beep( 0 );
+            if (item == -1) NtUserMessageBeep( 0 );
             /* schedule end of menu tracking */
             flags |= TF_ENDMENU;
             goto track_menu;

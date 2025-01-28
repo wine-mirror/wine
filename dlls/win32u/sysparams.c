@@ -6882,7 +6882,10 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
     return context;
 }
 
-BOOL message_beep( UINT i )
+/***********************************************************************
+ *	     NtUserMessageBeep    (win32u.@)
+ */
+BOOL WINAPI NtUserMessageBeep( UINT type )
 {
     BOOL active = TRUE;
     NtUserSystemParametersInfo( SPI_GETBEEP, 0, &active, FALSE );
@@ -7022,9 +7025,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
-
-    case NtUserCallOneParam_MessageBeep:
-        return message_beep( arg );
 
     case NtUserCallOneParam_PostQuitMessage:
         return post_quit_message( arg );

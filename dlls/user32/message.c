@@ -1233,15 +1233,6 @@ BOOL WINAPI SetMessageQueue( INT size )
 }
 
 
-/***********************************************************************
- *		MessageBeep (USER32.@)
- */
-BOOL WINAPI MessageBeep( UINT i )
-{
-    return NtUserMessageBeep( i );
-}
-
-
 /******************************************************************
  *      SetTimer (USER32.@)
  */

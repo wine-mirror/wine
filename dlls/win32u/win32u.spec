@@ -1203,7 +1203,7 @@
 @ stdcall -syscall NtUserMapVirtualKeyEx(long long long)
 @ stub NtUserMarkWindowForRawMouse
 @ stdcall -syscall NtUserMenuItemFromPoint(long long long long)
-@ stub NtUserMessageBeep
+@ stdcall -syscall NtUserMessageBeep(long)
 @ stdcall -syscall NtUserMessageCall(long long long long long long long)
 @ stub NtUserMinInitialize
 @ stub NtUserMinMaximize

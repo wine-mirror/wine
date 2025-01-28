@@ -182,7 +182,6 @@ extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to );
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to );
 extern HRGN map_dpi_region( HRGN region, UINT dpi_from, UINT dpi_to );
 extern struct window_rects map_dpi_window_rects( struct window_rects rects, UINT dpi_from, UINT dpi_to );
-extern BOOL message_beep( UINT i );
 extern RECT map_rect_raw_to_virt( RECT rect, UINT dpi_to );
 extern RECT map_rect_virt_to_raw( RECT rect, UINT dpi_from );
 extern struct window_rects map_window_rects_virt_to_raw( struct window_rects rects, UINT dpi_from );
