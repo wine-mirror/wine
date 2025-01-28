@@ -1,7 +1,7 @@
 /*
  * Bluetooth bus driver
  *
- * Copyright 2024 Vibhav Pant
+ * Copyright 2024-2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,7 @@
 #include <bthioctl.h>
 #include <ddk/wdm.h>
 
+#include <wine/winebth.h>
 #include <wine/debug.h>
 #include <wine/list.h>
 
@@ -84,6 +85,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
     struct bluetooth_radio *ext = (struct bluetooth_radio *)device->DeviceExtension;
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    ULONG insize = stack->Parameters.DeviceIoControl.InputBufferLength;
     ULONG outsize = stack->Parameters.DeviceIoControl.OutputBufferLength;
     NTSTATUS status = irp->IoStatus.Status;
 
@@ -131,6 +133,26 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
 
         irp->IoStatus.Information = sizeof( *info );
         status = STATUS_SUCCESS;
+        break;
+    }
+    case IOCTL_WINEBTH_RADIO_SET_FLAG:
+    {
+        const struct winebth_radio_set_flag_params *params = irp->AssociatedIrp.SystemBuffer;
+        union winebluetooth_property prop_value = {0};
+
+        if (!params)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (insize < sizeof( *params ))
+        {
+            status = STATUS_BUFFER_TOO_SMALL;
+            break;
+        }
+
+        prop_value.boolean = !!params->enable;
+        status = winebluetooth_radio_set_property( ext->radio, params->flag, &prop_value );
         break;
     }
     default:

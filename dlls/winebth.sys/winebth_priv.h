@@ -2,6 +2,7 @@
  * Private winebth.sys defs
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -108,10 +109,6 @@ DEFINE_BTH_RADIO_DEVPROPKEY( HCIVendorFeatures, 8 );               /* DEVPROP_TY
 DEFINE_BTH_RADIO_DEVPROPKEY( MaximumAdvertisementDataLength, 17 ); /* DEVPROP_TYPE_UINT16 */
 DEFINE_BTH_RADIO_DEVPROPKEY( LELocalSupportedFeatures, 22 );       /* DEVPROP_TYPE_UINT64 */
 
-/* Valid masks for the "flags" field in BTH_LOCAL_RADIO_INFO. */
-#define LOCAL_RADIO_DISCOVERABLE 0x0001
-#define LOCAL_RADIO_CONNECTABLE  0x0002
-
 typedef struct
 {
     UINT_PTR handle;
@@ -136,6 +133,14 @@ typedef UINT16 winebluetooth_radio_props_mask_t;
      WINEBLUETOOTH_RADIO_PROPERTY_VERSION | WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING |             \
      WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE)
 
+union winebluetooth_property
+{
+    BOOL boolean;
+    ULONG ulong;
+    BLUETOOTH_ADDRESS address;
+    WCHAR name[BLUETOOTH_MAX_NAME_SIZE];
+};
+
 struct winebluetooth_radio_properties
 {
     BOOL discoverable;
@@ -156,6 +161,9 @@ static inline BOOL winebluetooth_radio_equal( winebluetooth_radio_t r1, wineblue
 {
     return r1.handle == r2.handle;
 }
+NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
+                                           ULONG prop_flag,
+                                           union winebluetooth_property *property );
 
 enum winebluetooth_watcher_event_type
 {

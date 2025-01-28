@@ -958,6 +958,7 @@ SOURCES = \
 	wine/winbase16.h \
 	wine/windef16.h \
 	wine/wine_common_ver.rc \
+	wine/winebth.h \
 	wine/wined3d.h \
 	wine/winedmo.h \
 	wine/winedxgi.idl \

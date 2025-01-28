@@ -2,6 +2,7 @@
  * Bluetoothapis Unix interface
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +48,8 @@ extern void *bluez_dbus_init( void );
 extern void bluez_dbus_close( void *connection );
 extern void bluez_dbus_free( void *connection );
 extern NTSTATUS bluez_dbus_loop( void *connection, void *watcher_ctx, struct winebluetooth_event *result );
+extern NTSTATUS bluez_adapter_set_prop( void *connection,
+                                        struct bluetooth_adapter_set_prop_params *params );
 extern NTSTATUS bluez_watcher_init( void *connection, void **ctx );
 extern void bluez_watcher_close( void *connection, void *ctx );
 #endif /* __WINE_WINEBTH_UNIXLIB_PRIV_H */

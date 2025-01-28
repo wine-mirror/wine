@@ -2,6 +2,7 @@
  * Support for communicating with BlueZ over DBus.
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +30,9 @@
 #include <dlfcn.h>
 #include <assert.h>
 #include <pthread.h>
+#include <semaphore.h>
+#include <errno.h>
+#include <string.h>
 
 #ifdef SONAME_LIBDBUS_1
 #include <dbus/dbus.h>
@@ -41,6 +45,7 @@
 #include <winbase.h>
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
+#include <wine/winebth.h>
 
 #include <wine/debug.h>
 
@@ -262,6 +267,148 @@ static void parse_mac_address( const char *addr_str, BYTE dest[6] )
             &addr[5] );
     for (i = 0 ; i < 6; i++)
         dest[i] = addr[i];
+}
+
+static void bluez_dbus_wait_for_reply_callback( DBusPendingCall *pending_call, void *wait )
+{
+    sem_post( wait );
+}
+
+static NTSTATUS bluez_dbus_pending_call_wait( DBusPendingCall *pending_call, DBusMessage **reply, DBusError *error )
+{
+    sem_t wait;
+
+    sem_init( &wait, 0, 0 );
+    if (!p_dbus_pending_call_set_notify( pending_call, bluez_dbus_wait_for_reply_callback, &wait, NULL ))
+    {
+        sem_destroy( &wait );
+        p_dbus_pending_call_unref( pending_call );
+        return STATUS_NO_MEMORY;
+    }
+    for (;;)
+    {
+        int ret = sem_wait( &wait );
+        if (!ret)
+        {
+            *reply = p_dbus_pending_call_steal_reply( pending_call );
+            if (p_dbus_set_error_from_message( error, *reply ))
+            {
+                p_dbus_message_unref( *reply );
+                *reply = NULL;
+            }
+            p_dbus_pending_call_unref( pending_call );
+            sem_destroy( &wait );
+            return STATUS_SUCCESS;
+        }
+        if (errno == EINTR)
+            continue;
+
+        ERR( "Failed to wait for DBus method reply: %s\n", debugstr_a( strerror( errno ) ) );
+        sem_destroy( &wait );
+        p_dbus_pending_call_cancel( pending_call );
+        p_dbus_pending_call_unref( pending_call );
+        return STATUS_INTERNAL_ERROR;
+    }
+}
+
+/* Like dbus_connection_send_with_reply_and_block, but it does not acquire a lock on the connection, instead relying on
+ * the main loop in bluez_dbus_loop. This is faster than send_with_reply_and_block.
+ * This takes ownership of the request, so there is no need to unref it. */
+static NTSTATUS bluez_dbus_send_and_wait_for_reply( DBusConnection *connection, DBusMessage *request, DBusMessage **reply,
+                                                    DBusError *error )
+{
+    DBusPendingCall *pending_call;
+    dbus_bool_t success;
+
+    success = p_dbus_connection_send_with_reply( connection, request, &pending_call, bluez_timeout );
+    p_dbus_message_unref( request );
+
+    if (!success)
+        return STATUS_NO_MEMORY;
+    return bluez_dbus_pending_call_wait( pending_call, reply, error );
+}
+
+NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
+{
+    DBusMessage *request, *reply;
+    DBusMessageIter iter, sub_iter;
+    DBusError error;
+    DBusBasicValue val;
+    int val_type;
+    static const char *adapter_iface = BLUEZ_INTERFACE_ADAPTER;
+    const char *prop_name;
+    NTSTATUS status;
+
+    TRACE( "(%p, %p)\n", connection, params );
+
+    switch (params->prop_flag)
+    {
+    case LOCAL_RADIO_CONNECTABLE:
+        prop_name = "Discoverable";
+        val.bool_val = params->prop->boolean;
+        val_type = DBUS_TYPE_BOOLEAN;
+        break;
+    case LOCAL_RADIO_DISCOVERABLE:
+        prop_name = "Connectable";
+        val.bool_val = params->prop->boolean;
+        val_type = DBUS_TYPE_BOOLEAN;
+        break;
+    default:
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    TRACE( "Setting property %s for adapter %s\n", debugstr_a( prop_name ), debugstr_a( params->adapter->str ) );
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, params->adapter->str,
+                                              DBUS_INTERFACE_PROPERTIES, "Set" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    p_dbus_message_iter_init_append( request, &iter );
+    if (!p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &adapter_iface ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!p_dbus_message_iter_append_basic( &iter, DBUS_TYPE_STRING, &prop_name ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!p_dbus_message_iter_open_container( &iter, DBUS_TYPE_VARIANT, DBUS_TYPE_BOOLEAN_AS_STRING, &sub_iter ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!p_dbus_message_iter_append_basic( &sub_iter, val_type, &val ))
+    {
+        p_dbus_message_iter_abandon_container( &iter, &sub_iter );
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!p_dbus_message_iter_close_container( &iter, &sub_iter ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        ERR( "Failed to set property %s for adapter %s: %s: %s\n", debugstr_a( prop_name ),
+             debugstr_a( params->adapter->str ), debugstr_a( error.name ), debugstr_a( error.message ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+
+    return STATUS_SUCCESS;
 }
 
 static void bluez_radio_prop_from_dict_entry( const char *prop_name, DBusMessageIter *variant,
@@ -974,6 +1121,10 @@ void bluez_dbus_close( void *connection ) {}
 void bluez_dbus_free( void *connection ) {}
 NTSTATUS bluez_watcher_init( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_dbus_loop( void *c, void *watcher, struct winebluetooth_event *result )
+{
+    return STATUS_NOT_SUPPORTED;
+}
+NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
 {
     return STATUS_NOT_SUPPORTED;
 }

@@ -2,6 +2,7 @@
  * Unix interface definitions
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,6 +57,14 @@ struct bluetooth_adapter_get_unique_name_params
     SIZE_T buf_size;
 };
 
+struct bluetooth_adapter_set_prop_params
+{
+    unix_name_t adapter;
+    ULONG prop_flag;
+
+    union winebluetooth_property *prop;
+};
+
 struct bluetooth_get_event_params
 {
     struct winebluetooth_event result;
@@ -66,6 +75,7 @@ enum bluetoothapis_funcs
     unix_bluetooth_init,
     unix_bluetooth_shutdown,
 
+    unix_bluetooth_adapter_set_prop,
     unix_bluetooth_adapter_get_unique_name,
     unix_bluetooth_adapter_free,
 

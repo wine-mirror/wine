@@ -2,6 +2,7 @@
  * DBus declarations.
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -79,6 +80,7 @@
     DO_FUNC(dbus_message_is_method_call); \
     DO_FUNC(dbus_message_is_signal); \
     DO_FUNC(dbus_message_iter_append_basic); \
+    DO_FUNC(dbus_message_iter_abandon_container); \
     DO_FUNC(dbus_message_iter_close_container); \
     DO_FUNC(dbus_message_iter_get_arg_type); \
     DO_FUNC(dbus_message_iter_get_element_type); \

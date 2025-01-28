@@ -2,6 +2,7 @@
  * Wine bluetooth APIs
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,6 +52,20 @@ NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char 
     if (status == STATUS_BUFFER_TOO_SMALL)
         *size = params.buf_size;
     return status;
+}
+
+NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
+                                           ULONG prop_flag,
+                                           union winebluetooth_property *property )
+{
+    struct bluetooth_adapter_set_prop_params params = { 0 };
+
+    TRACE( "(%p, %#lx, %p)\n", (void *)radio.handle, prop_flag, property );
+
+    params.adapter = radio.handle;
+    params.prop_flag = prop_flag;
+    params.prop = property;
+    return UNIX_BLUETOOTH_CALL( bluetooth_adapter_set_prop, &params );
 }
 
 void winebluetooth_radio_free( winebluetooth_radio_t radio )

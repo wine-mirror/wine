@@ -2,6 +2,7 @@
  * winebluetooth Unix interface
  *
  * Copyright 2024 Vibhav Pant
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -154,6 +155,14 @@ static NTSTATUS bluetooth_adapter_free( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS bluetooth_adapter_set_prop( void *arg )
+{
+    struct bluetooth_adapter_set_prop_params *params = arg;
+
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+    return bluez_adapter_set_prop( dbus_connection, params );
+}
+
 static NTSTATUS bluetooth_get_event( void *args )
 {
     struct bluetooth_get_event_params *params = args;
@@ -167,6 +176,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_init,
     bluetooth_shutdown,
 
+    bluetooth_adapter_set_prop,
     bluetooth_adapter_get_unique_name,
     bluetooth_adapter_free,
 
