@@ -6938,9 +6938,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_GetDialogBaseUnits:
         return get_dialog_base_units();
 
-    case NtUserCallNoParam_GetInputState:
-        return get_input_state();
-
     case NtUserCallNoParam_GetLastInputTime:
         return get_last_input_time();
 

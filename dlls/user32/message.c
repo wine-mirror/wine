@@ -970,7 +970,7 @@ DWORD WINAPI GetMessagePos(void)
  */
 LONG WINAPI GetMessageTime(void)
 {
-    return NtUserGetThreadInfo()->message_time;
+    return NtUserGetThreadState( UserThreadStateMessageTime );
 }
 
 
@@ -980,7 +980,7 @@ LONG WINAPI GetMessageTime(void)
  */
 LPARAM WINAPI GetMessageExtraInfo(void)
 {
-    return NtUserGetThreadInfo()->message_extra;
+    return NtUserGetThreadState( UserThreadStateExtraInfo );
 }
 
 

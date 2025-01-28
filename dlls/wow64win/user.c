@@ -3105,6 +3105,13 @@ NTSTATUS WINAPI wow64_NtUserGetThreadDesktop( UINT *args )
     return HandleToUlong( NtUserGetThreadDesktop( thread ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetThreadState( UINT *args )
+{
+    USERTHREADSTATECLASS cls = get_ulong( &args );
+
+    return NtUserGetThreadState( cls );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetTitleBarInfo( UINT *args )
 {
     HWND hwnd = get_handle( &args );

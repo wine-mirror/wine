@@ -886,6 +886,58 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
     return ret;
 }
 
+/*******************************************************************
+ *           NtUserGetThreadInfo (win32u.@)
+ */
+ULONG_PTR WINAPI NtUserGetThreadState( USERTHREADSTATECLASS cls )
+{
+    GUITHREADINFO info;
+
+    switch (cls)
+    {
+    case UserThreadStateFocusWindow:
+        info.cbSize = sizeof(info);
+        NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info );
+        return (ULONG_PTR)info.hwndFocus;
+
+    case UserThreadStateActiveWindow:
+        info.cbSize = sizeof(info);
+        NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info );
+        return (ULONG_PTR)info.hwndActive;
+
+    case UserThreadStateCaptureWindow:
+        info.cbSize = sizeof(info);
+        NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info );
+        return (ULONG_PTR)info.hwndCapture;
+
+    case UserThreadStateDefaultImeWindow:
+        return (ULONG_PTR)get_default_ime_window( 0 );
+
+    case UserThreadStateDefaultInputContext:
+        return NtUserGetThreadInfo()->default_imc;
+
+    case UserThreadStateInputState:
+        return get_input_state();
+
+    case UserThreadStateCursor:
+        return (ULONG_PTR)NtUserGetCursor();
+
+    case UserThreadStateExtraInfo:
+        return NtUserGetThreadInfo()->message_extra;
+
+    case UserThreadStateInSendMessage:
+        return NtUserGetThreadInfo()->receive_flags;
+
+    case UserThreadStateMessageTime:
+        return NtUserGetThreadInfo()->message_time;
+
+    case UserThreadStateIsForeground:
+    default:
+        WARN( "unsupported class %u\n", cls );
+        return 0;
+    }
+}
+
 /***********************************************************************
  *           get_input_state
  */

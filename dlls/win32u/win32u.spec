@@ -1101,7 +1101,7 @@
 @ stdcall -syscall NtUserGetSystemDpiForProcess(long)
 @ stdcall -syscall NtUserGetSystemMenu(long long)
 @ stdcall -syscall NtUserGetThreadDesktop(long)
-@ stub NtUserGetThreadState
+@ stdcall -syscall NtUserGetThreadState(long)
 @ stdcall -syscall NtUserGetTitleBarInfo(long ptr)
 @ stub NtUserGetTopLevelWindow
 @ stub NtUserGetTouchInputInfo
