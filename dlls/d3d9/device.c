@@ -593,19 +593,27 @@ static void device_reset_viewport_state(struct d3d9_device *device)
     wined3d_stateblock_set_scissor_rect(device->state, &rect);
 }
 
+static struct d3d9_device *impl_from_IDirect3DDevice9On12(IDirect3DDevice9On12 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d9_device, IDirect3DDevice9On12_iface);
+}
+
 static HRESULT WINAPI d3d9on12_QueryInterface(IDirect3DDevice9On12 *iface, REFIID iid, void **out)
 {
-    return IDirect3DDevice9Ex_QueryInterface(iface, iid, out);
+    struct d3d9_device *device = impl_from_IDirect3DDevice9On12(iface);
+    return IDirect3DDevice9Ex_QueryInterface(&device->IDirect3DDevice9Ex_iface, iid, out);
 }
 
 static ULONG WINAPI d3d9on12_AddRef(IDirect3DDevice9On12 *iface)
 {
-    return IDirect3DDevice9Ex_AddRef(iface);
+    struct d3d9_device *device = impl_from_IDirect3DDevice9On12(iface);
+    return IDirect3DDevice9Ex_AddRef(&device->IDirect3DDevice9Ex_iface);
 }
 
 static ULONG WINAPI d3d9on12_Release(IDirect3DDevice9On12 *iface)
 {
-    return IDirect3DDevice9Ex_Release(iface);
+    struct d3d9_device *device = impl_from_IDirect3DDevice9On12(iface);
+    return IDirect3DDevice9Ex_Release(&device->IDirect3DDevice9Ex_iface);
 }
 
 static HRESULT WINAPI d3d9on12_GetD3D12Device(IDirect3DDevice9On12 *iface, REFIID iid, void **out)
