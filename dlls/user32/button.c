@@ -272,7 +272,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         set_button_state( hWnd, state );
         if (!(state & BST_PUSHED))
         {
-            ReleaseCapture();
+            NtUserReleaseCapture();
             break;
         }
         SendMessageW( hWnd, BM_SETSTATE, FALSE, 0 );
@@ -293,12 +293,12 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                                 (state & BST_INDETERMINATE) ? 0 : ((state & 3) + 1), 0 );
                 break;
             }
-            ReleaseCapture();
+            NtUserReleaseCapture();
             BUTTON_NOTIFY_PARENT(hWnd, BN_CLICKED);
         }
         else
         {
-            ReleaseCapture();
+            NtUserReleaseCapture();
         }
         break;
 
@@ -395,7 +395,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 	paint_button( hWnd, btn_type, ODA_FOCUS );
 
         if ((state & BUTTON_BTNPRESSED) && GetCapture() == hWnd)
-            ReleaseCapture();
+            NtUserReleaseCapture();
         if (style & BS_NOTIFY)
             BUTTON_NOTIFY_PARENT(hWnd, BN_KILLFOCUS);
 

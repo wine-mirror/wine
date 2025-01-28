@@ -3931,6 +3931,11 @@ NTSTATUS WINAPI wow64_NtUserRegisterTouchPadCapable( UINT *args )
     return NtUserRegisterTouchPadCapable( capable );
 }
 
+NTSTATUS WINAPI wow64_NtUserReleaseCapture( UINT *args )
+{
+    return NtUserReleaseCapture();
+}
+
 NTSTATUS WINAPI wow64_NtUserReleaseDC( UINT *args )
 {
     HWND hwnd = get_handle( &args );

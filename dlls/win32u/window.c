@@ -6062,7 +6062,7 @@ BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
         {
             if (msg.message == WM_LBUTTONUP)
             {
-                release_capture();
+                NtUserReleaseCapture();
                 return FALSE;
             }
             if (msg.message == WM_MOUSEMOVE)
@@ -6072,7 +6072,7 @@ BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
                 tmp.y = (short)HIWORD( msg.lParam );
                 if (!PtInRect( &rect, tmp ))
                 {
-                    release_capture();
+                    NtUserReleaseCapture();
                     return TRUE;
                 }
             }

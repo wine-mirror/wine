@@ -2123,7 +2123,7 @@ static void track_min_max_box( HWND hwnd, WORD wparam )
 
     if (pressed) paint_button( hwnd, hdc, FALSE, FALSE );
 
-    release_capture();
+    NtUserReleaseCapture();
     NtUserReleaseDC( hwnd, hdc );
 
     /* If the minimize or maximize items of the sysmenu are not there
@@ -2171,7 +2171,7 @@ static void track_close_button( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     if (pressed) draw_close_button( hwnd, hdc, FALSE, FALSE );
 
-    release_capture();
+    NtUserReleaseCapture();
     NtUserReleaseDC( hwnd, hdc );
     if (pressed) send_message( hwnd, WM_SYSCOMMAND, SC_CLOSE, lparam );
 }
@@ -2267,7 +2267,7 @@ static LRESULT handle_nc_rbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
                 break;
             }
         }
-        release_capture();
+        NtUserReleaseCapture();
         if (hittest == HTCAPTION || hittest == HTSYSMENU)
             send_message( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM( msg.pt.x, msg.pt.y ));
         break;
@@ -2603,7 +2603,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_CANCELMODE:
         menu_sys_key = 0;
         end_menu( hwnd );
-        if (get_capture() == hwnd) release_capture();
+        if (get_capture() == hwnd) NtUserReleaseCapture();
         break;
 
     case WM_SETTEXT:

@@ -3643,7 +3643,7 @@ static LRESULT EDIT_WM_LButtonDown(EDITSTATE *es, DWORD keys, INT x, INT y)
 static LRESULT EDIT_WM_LButtonUp(EDITSTATE *es)
 {
 	if (es->bCaptureState) {
-		if (GetCapture() == es->hwndSelf) ReleaseCapture();
+		if (GetCapture() == es->hwndSelf) NtUserReleaseCapture();
 	}
 	es->bCaptureState = FALSE;
 	return 0;

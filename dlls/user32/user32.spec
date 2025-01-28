@@ -982,7 +982,7 @@
 @ stdcall RegisterUserApiHook(ptr ptr)
 @ stdcall RegisterWindowMessageA(str)
 @ stdcall RegisterWindowMessageW(wstr)
-@ stdcall ReleaseCapture()
+@ stdcall ReleaseCapture() NtUserReleaseCapture
 @ stdcall ReleaseDC(long long) NtUserReleaseDC
 # @ stub ReleaseDwmHitTestWaiters
 @ stdcall RemoveClipboardFormatListener(long) NtUserRemoveClipboardFormatListener

@@ -103,15 +103,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 
 
 /**********************************************************************
- *		ReleaseCapture (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH ReleaseCapture(void)
-{
-    return NtUserReleaseCapture();
-}
-
-
-/**********************************************************************
  *		GetCapture (USER32.@)
  */
 HWND WINAPI GetCapture(void)

@@ -584,7 +584,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
             prev_pt = pt;
             break;
         case WM_LBUTTONUP:
-            release_capture();
+            NtUserReleaseCapture();
             g_tracking_info.hit_test = hittest = SCROLL_NOWHERE;
             if (hwnd == get_focus()) NtUserShowCaret( hwnd );
             break;
@@ -671,7 +671,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
 
     case WM_LBUTTONUP:
         hittest = SCROLL_NOWHERE;
-        release_capture();
+        NtUserReleaseCapture();
         /* if scrollbar has focus, show back caret */
         if (hwnd == get_focus()) NtUserShowCaret( hwnd );
         break;
@@ -849,7 +849,7 @@ void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt )
         }
         if (!is_window( hwnd ))
         {
-            release_capture();
+            NtUserReleaseCapture();
             break;
         }
     } while (msg.message != WM_LBUTTONUP && get_capture() == hwnd);

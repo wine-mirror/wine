@@ -1927,6 +1927,11 @@ BOOL SYSCALL_API NtUserRegisterTouchPadCapable( BOOL capable )
     SYSCALL_FUNC( NtUserRegisterTouchPadCapable );
 }
 
+BOOL SYSCALL_API NtUserReleaseCapture(void)
+{
+    SYSCALL_FUNC( NtUserReleaseCapture );
+}
+
 INT SYSCALL_API NtUserReleaseDC( HWND hwnd, HDC hdc )
 {
     SYSCALL_FUNC( NtUserReleaseDC );

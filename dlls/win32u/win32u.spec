@@ -1287,7 +1287,7 @@
 @ stub NtUserRegisterUserHungAppHandlers
 @ stub NtUserRegisterWindowArrangementCallout
 @ stub NtUserRegisterWindowMessage
-@ stub NtUserReleaseCapture
+@ stdcall -syscall NtUserReleaseCapture()
 @ stdcall -syscall NtUserReleaseDC(long long)
 @ stub NtUserReleaseDwmHitTestWaiters
 @ stub NtUserRemoteConnect
