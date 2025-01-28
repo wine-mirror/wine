@@ -174,10 +174,8 @@ static void add_cert_to_view(HWND lv, PCCERT_CONTEXT cert, DWORD *allocatedLen,
 
 static LPSTR get_cert_mgr_usages(void)
 {
-    static const WCHAR keyName[] = { 'S','o','f','t','w','a','r','e','\\','M',
-     'i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r','a',
-     'p','h','y','\\','U','I','\\','C','e','r','t','m','g','r','\\','P','u',
-     'r','p','o','s','e',0 };
+    static const WCHAR keyName[] =
+      L"Software\\Microsoft\\Cryptography\\UI\\Certmgr\\Purpose";
     LPSTR str = NULL;
     HKEY key;
 
@@ -437,15 +435,6 @@ static void show_store_certs(HWND hwnd, HCERTSTORE store)
      (LPARAM)cert_mgr_sort_by_subject);
 }
 
-static const WCHAR my[] = { 'M','y',0 };
-static const WCHAR addressBook[] = {
- 'A','d','d','r','e','s','s','B','o','o','k',0 };
-static const WCHAR ca[] = { 'C','A',0 };
-static const WCHAR root[] = { 'R','o','o','t',0 };
-static const WCHAR trustedPublisher[] = {
- 'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',0 };
-static const WCHAR disallowed[] = { 'D','i','s','a','l','l','o','w','e','d',0 };
-
 struct CertMgrStoreInfo
 {
     LPCWSTR name;
@@ -454,21 +443,21 @@ struct CertMgrStoreInfo
 };
 
 static const struct CertMgrStoreInfo defaultStoreList[] = {
- { my, IDS_WARN_REMOVE_MY, IDS_WARN_REMOVE_PLURAL_MY },
- { addressBook, IDS_WARN_REMOVE_ADDRESSBOOK,
+ { L"My", IDS_WARN_REMOVE_MY, IDS_WARN_REMOVE_PLURAL_MY },
+ { L"AddressBook", IDS_WARN_REMOVE_ADDRESSBOOK,
    IDS_WARN_REMOVE_PLURAL_ADDRESSBOOK },
- { ca, IDS_WARN_REMOVE_CA, IDS_WARN_REMOVE_PLURAL_CA },
- { root, IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
- { trustedPublisher, IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
+ { L"CA", IDS_WARN_REMOVE_CA, IDS_WARN_REMOVE_PLURAL_CA },
+ { L"Root", IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
+ { L"TrustedPublisher", IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
    IDS_WARN_REMOVE_PLURAL_TRUSTEDPUBLISHER },
- { disallowed, IDS_WARN_REMOVE_DEFAULT },
+ { L"Disallowed", IDS_WARN_REMOVE_DEFAULT },
 };
 
 static const struct CertMgrStoreInfo publisherStoreList[] = {
- { root, IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
- { trustedPublisher, IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
+ { L"Root", IDS_WARN_REMOVE_ROOT, IDS_WARN_REMOVE_PLURAL_ROOT },
+ { L"TrustedPublisher", IDS_WARN_REMOVE_TRUSTEDPUBLISHER,
    IDS_WARN_REMOVE_PLURAL_TRUSTEDPUBLISHER },
- { disallowed, IDS_WARN_REMOVE_PLURAL_DEFAULT },
+ { L"Disallowed", IDS_WARN_REMOVE_PLURAL_DEFAULT },
 };
 
 struct CertMgrData
@@ -649,10 +638,8 @@ static LONG_PTR find_oid_in_list(HWND lv, LPCSTR oid)
 
 static void save_cert_mgr_usages(HWND hwnd)
 {
-    static const WCHAR keyName[] = { 'S','o','f','t','w','a','r','e','\\','M',
-     'i','c','r','o','s','o','f','t','\\','C','r','y','p','t','o','g','r','a',
-     'p','h','y','\\','U','I','\\','C','e','r','t','m','g','r','\\','P','u',
-     'r','p','o','s','e',0 };
+    static const WCHAR keyName[] =
+      L"Software\\Microsoft\\Cryptography\\UI\\Certmgr\\Purpose";
     HKEY key;
     HWND lv = GetDlgItem(hwnd, IDC_CERTIFICATE_USAGES);
     int purposes = SendMessageW(lv, LVM_GETITEMCOUNT, 0, 0), i;
@@ -867,7 +854,6 @@ static void get_cert_usages(PCCERT_CONTEXT cert, LPWSTR *str)
     {
         if (usage->cUsageIdentifier)
         {
-            static const WCHAR commaSpace[] = { ',',' ',0 };
             DWORD i, len = 1;
             LPWSTR ptr;
 
@@ -883,7 +869,7 @@ static void get_cert_usages(PCCERT_CONTEXT cert, LPWSTR *str)
                 else
                     len += strlen(usage->rgpszUsageIdentifier[i]);
                 if (i < usage->cUsageIdentifier - 1)
-                    len += lstrlenW(commaSpace);
+                    len += strlen(", ");
             }
             *str = malloc(len * sizeof(WCHAR));
             if (*str)
@@ -910,8 +896,8 @@ static void get_cert_usages(PCCERT_CONTEXT cert, LPWSTR *str)
                     }
                     if (i < usage->cUsageIdentifier - 1)
                     {
-                        lstrcpyW(ptr, commaSpace);
-                        ptr += lstrlenW(commaSpace);
+                        lstrcpyW(ptr, L", ");
+                        ptr += strlen(", ");
                     }
                 }
                 *ptr = 0;
@@ -2560,11 +2546,10 @@ typedef WCHAR * (*field_format_func)(PCCERT_CONTEXT cert);
 
 static WCHAR *field_format_version(PCCERT_CONTEXT cert)
 {
-    static const WCHAR fmt[] = { 'V','%','d',0 };
     WCHAR *buf = malloc(12 * sizeof(WCHAR));
 
     if (buf)
-        swprintf(buf, 12, fmt, cert->pCertInfo->dwVersion);
+        swprintf(buf, 12, L"V%d", cert->pCertInfo->dwVersion);
     return buf;
 }
 
@@ -2574,12 +2559,11 @@ static WCHAR *format_hex_string(void *pb, DWORD cb)
 
     if (buf)
     {
-        static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
         DWORD i;
         WCHAR *ptr;
 
         for (i = 0, ptr = buf; i < cb; i++, ptr += 3)
-            swprintf(ptr, 4, fmt, ((BYTE *)pb)[i]);
+            swprintf(ptr, 4, L"%02x ", ((BYTE *)pb)[i]);
     }
     return buf;
 }
@@ -2860,7 +2844,6 @@ static WCHAR *field_format_extension_hex_with_ascii(const CERT_EXTENSION *ext)
         str = malloc((lines * 8 * 4 + lines * 3 + 1) * sizeof(WCHAR));
         if (str)
         {
-            static const WCHAR fmt[] = { '%','0','2','x',' ',0 };
             DWORD i, j;
             WCHAR *ptr;
 
@@ -2868,7 +2851,7 @@ static WCHAR *field_format_extension_hex_with_ascii(const CERT_EXTENSION *ext)
             {
                 /* Output as hex bytes first */
                 for (j = i; j < min(i + 8, ext->Value.cbData); j++, ptr += 3)
-                    swprintf(ptr, 4, fmt, ext->Value.pbData[j]);
+                    swprintf(ptr, 4, L"%02x ", ext->Value.pbData[j]);
                 /* Pad the hex output with spaces for alignment */
                 if (j == ext->Value.cbData && j % 8)
                 {
@@ -4251,11 +4234,10 @@ static int CALLBACK cert_prop_sheet_proc(HWND hwnd, UINT msg, LPARAM lp)
 static BOOL show_cert_dialog(PCCRYPTUI_VIEWCERTIFICATE_STRUCTW pCertViewInfo,
  CRYPT_PROVIDER_CERT *provCert, BOOL *pfPropertiesChanged)
 {
-    static const WCHAR riched[] = { 'r','i','c','h','e','d','2','0',0 };
     DWORD nPages;
     PROPSHEETPAGEW *pages;
     BOOL ret = FALSE;
-    HMODULE lib = LoadLibraryW(riched);
+    HMODULE lib = LoadLibraryW(L"riched20");
 
     nPages = pCertViewInfo->cPropSheetPages + 1; /* one for the General tab */
     if (!(pCertViewInfo->dwFlags & CRYPTUI_HIDE_DETAILPAGE))
@@ -4500,12 +4482,7 @@ static BOOL is_ca_cert(PCCERT_CONTEXT cert, BOOL defaultIfNotSpecified)
 
 static HCERTSTORE choose_store_for_cert(PCCERT_CONTEXT cert)
 {
-    LPCWSTR storeName;
-
-    if (is_ca_cert(cert, TRUE))
-        storeName = ca;
-    else
-        storeName = addressBook;
+    const WCHAR *storeName = is_ca_cert(cert, TRUE) ? L"CA" : L"AddressBook";
     return CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
      CERT_SYSTEM_STORE_CURRENT_USER, storeName);
 }
@@ -4549,7 +4526,7 @@ static BOOL import_crl(PCCRL_CONTEXT crl, HCERTSTORE hDestCertStore)
     else
     {
         if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, ca)))
+         CERT_SYSTEM_STORE_CURRENT_USER, L"CA")))
         {
             WARN("unable to open certificate store\n");
             return FALSE;
@@ -4574,10 +4551,8 @@ static BOOL import_ctl(PCCTL_CONTEXT ctl, HCERTSTORE hDestCertStore)
     if (hDestCertStore) store = hDestCertStore;
     else
     {
-        static const WCHAR trust[] = { 'T','r','u','s','t',0 };
-
         if (!(store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0,
-         CERT_SYSTEM_STORE_CURRENT_USER, trust)))
+         CERT_SYSTEM_STORE_CURRENT_USER, L"Trust")))
         {
             WARN("unable to open certificate store\n");
             return FALSE;
@@ -4850,30 +4825,19 @@ static INT_PTR CALLBACK import_welcome_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
     return ret;
 }
 
-static const WCHAR filter_cert[] = { '*','.','c','e','r',';','*','.',
- 'c','r','t',0 };
-static const WCHAR filter_pfx[] = { '*','.','p','f','x',';','*','.',
- 'p','1','2',0 };
-static const WCHAR filter_crl[] = { '*','.','c','r','l',0 };
-static const WCHAR filter_ctl[] = { '*','.','s','t','l',0 };
-static const WCHAR filter_serialized_store[] = { '*','.','s','s','t',0 };
-static const WCHAR filter_cms[] = { '*','.','s','p','c',';','*','.',
- 'p','7','b',0 };
-static const WCHAR filter_all[] = { '*','.','*',0 };
-
 static const struct
 {
     int     id;
     DWORD   allowFlags;
     LPCWSTR filter;
 } import_filters[] = {
- { IDS_IMPORT_FILTER_CERT, CRYPTUI_WIZ_IMPORT_ALLOW_CERT, filter_cert },
- { IDS_IMPORT_FILTER_PFX, 0, filter_pfx },
- { IDS_IMPORT_FILTER_CRL, CRYPTUI_WIZ_IMPORT_ALLOW_CRL, filter_crl },
- { IDS_IMPORT_FILTER_CTL, CRYPTUI_WIZ_IMPORT_ALLOW_CTL, filter_ctl },
- { IDS_IMPORT_FILTER_SERIALIZED_STORE, 0, filter_serialized_store },
- { IDS_IMPORT_FILTER_CMS, 0, filter_cms },
- { IDS_IMPORT_FILTER_ALL, 0, filter_all },
+ { IDS_IMPORT_FILTER_CERT, CRYPTUI_WIZ_IMPORT_ALLOW_CERT, L"*.cer;*.crt" },
+ { IDS_IMPORT_FILTER_PFX, 0, L"*.pfx;*.p12" },
+ { IDS_IMPORT_FILTER_CRL, CRYPTUI_WIZ_IMPORT_ALLOW_CRL, L"*.crl" },
+ { IDS_IMPORT_FILTER_CTL, CRYPTUI_WIZ_IMPORT_ALLOW_CTL, L"*.stl" },
+ { IDS_IMPORT_FILTER_SERIALIZED_STORE, 0, L"*.sst" },
+ { IDS_IMPORT_FILTER_CMS, 0, L"*.spc;*.p7b" },
+ { IDS_IMPORT_FILTER_ALL, 0, L"*.*" },
 };
 
 static WCHAR *make_import_file_filter(DWORD dwFlags)
@@ -5975,12 +5939,6 @@ static INT_PTR CALLBACK export_password_dlg_proc(HWND hwnd, UINT msg,
 static LPWSTR export_append_extension(const struct ExportWizData *data,
  LPWSTR fileName)
 {
-    static const WCHAR cer[] = { '.','c','e','r',0 };
-    static const WCHAR crl[] = { '.','c','r','l',0 };
-    static const WCHAR ctl[] = { '.','c','t','l',0 };
-    static const WCHAR p7b[] = { '.','p','7','b',0 };
-    static const WCHAR pfx[] = { '.','p','f','x',0 };
-    static const WCHAR sst[] = { '.','s','s','t',0 };
     LPCWSTR extension;
     LPWSTR dot;
     BOOL appendExtension;
@@ -5988,25 +5946,25 @@ static LPWSTR export_append_extension(const struct ExportWizData *data,
     switch (data->contextInfo.dwExportFormat)
     {
     case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
-        extension = p7b;
+        extension = L".p7b";
         break;
     case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
-        extension = pfx;
+        extension = L".pfx";
         break;
     default:
         switch (data->exportInfo.dwSubjectChoice)
         {
         case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
-            extension = crl;
+            extension = L".crl";
             break;
         case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
-            extension = ctl;
+            extension = L".ctl";
             break;
         case CRYPTUI_WIZ_EXPORT_CERT_STORE:
-            extension = sst;
+            extension = L".sst";
             break;
         default:
-            extension = cer;
+            extension = L".cer";
         }
     }
     dot = wcsrchr(fileName, '.');
@@ -6099,13 +6057,6 @@ static BOOL export_validate_filename(HWND hwnd, struct ExportWizData *data,
     return ret;
 }
 
-static const WCHAR export_filter_cert[] = { '*','.','c','e','r',0 };
-static const WCHAR export_filter_crl[] = { '*','.','c','r','l',0 };
-static const WCHAR export_filter_ctl[] = { '*','.','s','t','l',0 };
-static const WCHAR export_filter_cms[] = { '*','.','p','7','b',0 };
-static const WCHAR export_filter_pfx[] = { '*','.','p','f','x',0 };
-static const WCHAR export_filter_sst[] = { '*','.','s','s','t',0 };
-
 static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
 {
     int baseLen, allLen, totalLen = 2, baseID;
@@ -6116,41 +6067,41 @@ static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
     {
     case CRYPTUI_WIZ_EXPORT_FORMAT_BASE64:
         baseID = IDS_EXPORT_FILTER_BASE64_CERT;
-        filterStr = export_filter_cert;
+        filterStr = L"*.cer";
         break;
     case CRYPTUI_WIZ_EXPORT_FORMAT_PFX:
         baseID = IDS_EXPORT_FILTER_PFX;
-        filterStr = export_filter_pfx;
+        filterStr = L"*.pfx";
         break;
     case CRYPTUI_WIZ_EXPORT_FORMAT_PKCS7:
         baseID = IDS_EXPORT_FILTER_CMS;
-        filterStr = export_filter_cms;
+        filterStr = L"*.p7b";
         break;
     default:
         switch (subjectChoice)
         {
         case CRYPTUI_WIZ_EXPORT_CRL_CONTEXT:
             baseID = IDS_EXPORT_FILTER_CRL;
-            filterStr = export_filter_crl;
+            filterStr = L"*.crl";
             break;
         case CRYPTUI_WIZ_EXPORT_CTL_CONTEXT:
             baseID = IDS_EXPORT_FILTER_CTL;
-            filterStr = export_filter_ctl;
+            filterStr = L"*.stl";
             break;
         case CRYPTUI_WIZ_EXPORT_CERT_STORE:
             baseID = IDS_EXPORT_FILTER_SERIALIZED_CERT_STORE;
-            filterStr = export_filter_sst;
+            filterStr = L"*.sst";
             break;
         default:
             baseID = IDS_EXPORT_FILTER_CERT;
-            filterStr = export_filter_cert;
+            filterStr = L"*.cer";
             break;
         }
     }
     baseLen = LoadStringW(hInstance, baseID, (LPWSTR)&baseFilter, 0);
     totalLen += baseLen + lstrlenW(filterStr) + 2;
     allLen = LoadStringW(hInstance, IDS_IMPORT_FILTER_ALL, (LPWSTR)&all, 0);
-    totalLen += allLen + lstrlenW(filter_all) + 2;
+    totalLen += allLen + ARRAY_SIZE(L"*.*") + 1;
     filter = malloc(totalLen * sizeof(WCHAR));
     if (filter)
     {
@@ -6165,8 +6116,8 @@ static WCHAR *make_export_file_filter(DWORD exportFormat, DWORD subjectChoice)
         memcpy(ptr, all, allLen * sizeof(WCHAR));
         ptr += allLen;
         *ptr++ = 0;
-        lstrcpyW(ptr, filter_all);
-        ptr += lstrlenW(filter_all) + 1;
+        lstrcpyW(ptr, L"*.*");
+        ptr += ARRAY_SIZE(L"*.*");
         *ptr++ = 0;
     }
     return filter;
