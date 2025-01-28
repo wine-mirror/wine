@@ -957,7 +957,7 @@
 @ stdcall -syscall NtUserEndMenu()
 @ stdcall -syscall NtUserEndPaint(long ptr)
 @ stub NtUserEnsureDpiDepSysMetCacheForPlateau
-@ stub NtUserEnumClipboardFormats
+@ stdcall -syscall NtUserEnumClipboardFormats(long)
 @ stdcall -syscall NtUserEnumDisplayDevices(ptr long ptr long)
 @ stdcall -syscall NtUserEnumDisplayMonitors(long ptr ptr long)
 @ stdcall -syscall NtUserEnumDisplaySettings(ptr long ptr long)

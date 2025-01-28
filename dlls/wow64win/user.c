@@ -2191,6 +2191,13 @@ NTSTATUS WINAPI wow64_NtUserEndPaint( UINT *args )
     return NtUserEndPaint( hwnd, paintstruct_32to64( &ps, ps32 ));
 }
 
+NTSTATUS WINAPI wow64_NtUserEnumClipboardFormats( UINT *args )
+{
+    UINT format = get_ulong( &args );
+
+    return NtUserEnumClipboardFormats( format );
+}
+
 NTSTATUS WINAPI wow64_NtUserEnumDisplayDevices( UINT *args )
 {
     UNICODE_STRING32 *device32 = get_ptr( &args );

@@ -589,15 +589,6 @@ HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
 
 
 /**************************************************************************
- *		EnumClipboardFormats (USER32.@)
- */
-UINT WINAPI EnumClipboardFormats( UINT format )
-{
-    return NtUserEnumClipboardFormats( format );
-}
-
-
-/**************************************************************************
  *		GetClipboardData (USER32.@)
  */
 HANDLE WINAPI GetClipboardData( UINT format )

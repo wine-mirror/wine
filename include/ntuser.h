@@ -786,6 +786,7 @@ W32KAPI BOOL    WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags );
 W32KAPI BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );
 W32KAPI BOOL    WINAPI NtUserEndMenu(void);
 W32KAPI BOOL    WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps );
+W32KAPI UINT    WINAPI NtUserEnumClipboardFormats( UINT format );
 W32KAPI NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                                   DISPLAY_DEVICEW *info, DWORD flags );
 W32KAPI BOOL    WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
@@ -1054,7 +1055,6 @@ enum
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
-    NtUserCallOneParam_EnumClipboardFormats,
     NtUserCallOneParam_GetClipCursor,
     NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
@@ -1104,11 +1104,6 @@ struct thunk_lock_params
 static inline void NtUserEnableThunkLock( ntuser_callback thunk_lock_callback )
 {
     NtUserCallOneParam( (UINT_PTR)thunk_lock_callback, NtUserCallOneParam_EnableThunkLock );
-}
-
-static inline UINT NtUserEnumClipboardFormats( UINT format )
-{
-    return NtUserCallOneParam( format, NtUserCallOneParam_EnumClipboardFormats );
 }
 
 static inline BOOL NtUserGetClipCursor( RECT *rect )

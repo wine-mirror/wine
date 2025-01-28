@@ -487,8 +487,10 @@ DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
     return seqno;
 }
 
-/* see EnumClipboardFormats */
-UINT enum_clipboard_formats( UINT format )
+/**************************************************************************
+ *	     NtUserEnumClipboardFormats    (win32u.@)
+ */
+UINT WINAPI NtUserEnumClipboardFormats( UINT format )
 {
     UINT ret = 0;
 

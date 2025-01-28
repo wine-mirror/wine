@@ -34,7 +34,6 @@
 
 
 /* clipboard.c */
-extern UINT enum_clipboard_formats( UINT format );
 extern void release_clipboard_owner( HWND hwnd );
 
 /* cursoricon.c */

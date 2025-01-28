@@ -1400,6 +1400,11 @@ BOOL SYSCALL_API NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
     SYSCALL_FUNC( NtUserEndPaint );
 }
 
+UINT SYSCALL_API NtUserEnumClipboardFormats( UINT format )
+{
+    SYSCALL_FUNC( NtUserEnumClipboardFormats );
+}
+
 NTSTATUS SYSCALL_API NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                                DISPLAY_DEVICEW *info, DWORD flags )
 {

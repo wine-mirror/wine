@@ -466,7 +466,7 @@
 @ stub EndTask
 # @ stub EnterReaderModeHelper
 @ stdcall EnumChildWindows(long ptr long)
-@ stdcall EnumClipboardFormats(long)
+@ stdcall EnumClipboardFormats(long) NtUserEnumClipboardFormats
 @ stdcall EnumDesktopWindows(long ptr ptr)
 @ stdcall EnumDesktopsA(ptr ptr long)
 @ stdcall EnumDesktopsW(ptr ptr long)
