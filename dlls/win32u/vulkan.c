@@ -701,6 +701,7 @@ void vulkan_detach_surfaces( struct list *surfaces )
         driver_funcs->p_vulkan_surface_detach( surface->hwnd, surface->driver_private );
         list_remove( &surface->entry );
         list_init( &surface->entry );
+        surface->hwnd = NULL;
     }
 }
 
