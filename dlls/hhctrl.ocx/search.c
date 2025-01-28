@@ -154,7 +154,6 @@ cleanup:
 static SearchItem *SearchCHM_Storage(SearchItem *item, IStorage *pStorage,
                                      const char *needle)
 {
-    static const WCHAR szHTMext[] = {'.','h','t','m',0};
     IEnumSTATSTG *elem = NULL;
     WCHAR *filename = NULL;
     STATSTG entries;
@@ -177,7 +176,7 @@ static SearchItem *SearchCHM_Storage(SearchItem *item, IStorage *pStorage,
             item = SearchCHM_Folder(item, pStorage, filename, needle);
             break;
         case STGTY_STREAM:
-            if(wcsstr(filename, szHTMext))
+            if(wcsstr(filename, L".htm"))
             {
                 WCHAR *title = SearchCHM_File(pStorage, filename, needle);
 
