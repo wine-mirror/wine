@@ -5014,7 +5014,7 @@ static void send_destroy_message( HWND hwnd, BOOL winevent )
     info.cbSize = sizeof(info);
     if (NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ))
     {
-        if (hwnd == info.hwndCaret) destroy_caret();
+        if (hwnd == info.hwndCaret) NtUserDestroyCaret();
         if (hwnd == info.hwndActive) activate_other_window( hwnd );
     }
 

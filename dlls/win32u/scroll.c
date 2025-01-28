@@ -1347,7 +1347,7 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
             NtUserHideCaret( hwnd );
             NtUserInvalidateRect( hwnd, &rect, 0 );
-            destroy_caret();
+            NtUserDestroyCaret();
         }
         return 0;
 

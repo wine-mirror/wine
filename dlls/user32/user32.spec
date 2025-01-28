@@ -393,7 +393,7 @@
 @ stdcall DeleteMenu(long long long) NtUserDeleteMenu
 @ stdcall DeregisterShellHookWindow(long)
 @ stdcall DestroyAcceleratorTable(long) NtUserDestroyAcceleratorTable
-@ stdcall DestroyCaret()
+@ stdcall DestroyCaret() NtUserDestroyCaret
 @ stdcall DestroyCursor(long)
 # @ stub DestroyDCompositionHwndTarget
 @ stdcall DestroyIcon(long)

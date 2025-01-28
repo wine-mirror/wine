@@ -6932,9 +6932,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
-    case NtUserCallNoParam_DestroyCaret:
-        return destroy_caret();
-
     case NtUserCallNoParam_GetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
 

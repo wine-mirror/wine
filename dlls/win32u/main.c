@@ -1283,6 +1283,11 @@ BOOL SYSCALL_API NtUserDestroyAcceleratorTable( HACCEL handle )
     SYSCALL_FUNC( NtUserDestroyAcceleratorTable );
 }
 
+BOOL SYSCALL_API NtUserDestroyCaret(void)
+{
+    SYSCALL_FUNC( NtUserDestroyCaret );
+}
+
 BOOL SYSCALL_API NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
 {
     SYSCALL_FUNC( NtUserDestroyCursor );

@@ -745,6 +745,7 @@ W32KAPI HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND a
                                                     INT cx, INT cy, UINT flags, UINT unk1, UINT unk2 );
 W32KAPI BOOL    WINAPI NtUserDeleteMenu( HMENU menu, UINT id, UINT flags );
 W32KAPI BOOL    WINAPI NtUserDestroyAcceleratorTable( HACCEL handle );
+W32KAPI BOOL    WINAPI NtUserDestroyCaret(void);
 W32KAPI BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 W32KAPI BOOL    WINAPI NtUserDestroyInputContext( HIMC handle );
 W32KAPI BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
@@ -978,7 +979,6 @@ W32KAPI HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 /* NtUserCallNoParam codes, not compatible with Windows */
 enum
 {
-    NtUserCallNoParam_DestroyCaret,
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetInputState,
@@ -993,11 +993,6 @@ enum
     NtUserExitingThread,
     NtUserThreadDetach,
 };
-
-static inline BOOL NtUserDestroyCaret(void)
-{
-    return NtUserCallNoParam( NtUserCallNoParam_DestroyCaret );
-}
 
 static inline HWND NtUserGetDesktopWindow(void)
 {

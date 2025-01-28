@@ -893,7 +893,7 @@
 @ stdcall -syscall NtUserDestroyAcceleratorTable(long)
 @ stub NtUserDestroyActivationGroup
 @ stub NtUserDestroyActivationObject
-@ stub NtUserDestroyCaret
+@ stdcall -syscall NtUserDestroyCaret()
 @ stdcall -syscall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
 @ stdcall -syscall NtUserDestroyInputContext(long)

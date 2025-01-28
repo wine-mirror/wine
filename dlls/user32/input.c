@@ -123,15 +123,6 @@ HWND WINAPI GetCapture(void)
 
 
 /*****************************************************************
- *		DestroyCaret (USER32.@)
- */
-BOOL WINAPI DestroyCaret(void)
-{
-    return NtUserDestroyCaret();
-}
-
-
-/*****************************************************************
  *		SetCaretPos (USER32.@)
  */
 BOOL WINAPI SetCaretPos( int x, int y )

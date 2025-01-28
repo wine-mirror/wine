@@ -2274,9 +2274,9 @@ BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height 
 }
 
 /*******************************************************************
- *              destroy_caret
+ *              NtUserDestroyCaret  (win32u.@)
  */
-BOOL destroy_caret(void)
+BOOL WINAPI NtUserDestroyCaret(void)
 {
     int old_state = 0;
     int hidden = 0;

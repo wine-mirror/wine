@@ -2016,6 +2016,11 @@ NTSTATUS WINAPI wow64_NtUserDestroyAcceleratorTable( UINT *args )
     return NtUserDestroyAcceleratorTable( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserDestroyCaret( UINT *args )
+{
+    return NtUserDestroyCaret();
+}
+
 NTSTATUS WINAPI wow64_NtUserDestroyCursor( UINT *args )
 {
     HCURSOR cursor = get_handle( &args );
