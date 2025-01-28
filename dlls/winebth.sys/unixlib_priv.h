@@ -50,6 +50,7 @@ extern void bluez_dbus_free( void *connection );
 extern NTSTATUS bluez_dbus_loop( void *connection, void *watcher_ctx, struct winebluetooth_event *result );
 extern NTSTATUS bluez_adapter_set_prop( void *connection,
                                         struct bluetooth_adapter_set_prop_params *params );
+extern NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_path );
 extern NTSTATUS bluez_watcher_init( void *connection, void **ctx );
 extern void bluez_watcher_close( void *connection, void *ctx );
 #endif /* __WINE_WINEBTH_UNIXLIB_PRIV_H */

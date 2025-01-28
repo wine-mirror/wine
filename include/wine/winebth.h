@@ -25,6 +25,8 @@
 /* Set the discoverability or connectable flag for a local radio. Enabling discoverability will also enable incoming
  * connections, while disabling incoming connections disables discoverability as well. */
 #define IOCTL_WINEBTH_RADIO_SET_FLAG CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa3, METHOD_BUFFERED, FILE_ANY_ACCESS)
+/* Start device inquiry for a local radio. */
+#define IOCTL_WINEBTH_RADIO_START_DISCOVERY CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa6, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 #include <pshpack1.h>
 

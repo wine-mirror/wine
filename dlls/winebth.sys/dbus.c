@@ -183,6 +183,39 @@ static const char *bluez_next_dict_entry( DBusMessageIter *iter, DBusMessageIter
     return name;
 }
 
+/* Adds an entry to a dict iterator of type {sv} */
+static BOOL bluez_variant_dict_add_entry( DBusMessageIter *dict, const char *key, int value_type,
+                                          const char *value_type_str, const void *value )
+{
+    DBusMessageIter entry, variant;
+
+    if (!p_dbus_message_iter_open_container( dict, DBUS_TYPE_DICT_ENTRY, NULL, &entry )) return FALSE;
+    if (!p_dbus_message_iter_append_basic( &entry, DBUS_TYPE_STRING, &key ))
+    {
+        p_dbus_message_iter_abandon_container( dict, &entry );
+        return FALSE;
+    }
+
+    if (!p_dbus_message_iter_open_container( &entry, DBUS_TYPE_VARIANT, value_type_str, &variant ))
+    {
+        p_dbus_message_iter_abandon_container( dict, &entry );
+        return FALSE;
+    }
+    if (!p_dbus_message_iter_append_basic( &variant, value_type, value ))
+    {
+        p_dbus_message_iter_abandon_container( &entry, &variant );
+        p_dbus_message_iter_abandon_container( dict, &entry );
+        return FALSE;
+    }
+    if (!p_dbus_message_iter_close_container( &entry, &variant ))
+    {
+        p_dbus_message_iter_abandon_container( dict, &entry );
+        return FALSE;
+    }
+
+    return !!p_dbus_message_iter_close_container( dict, &entry );
+}
+
 static const char *dbgstr_dbus_message( DBusMessage *message )
 {
     const char *interface;
@@ -327,6 +360,99 @@ static NTSTATUS bluez_dbus_send_and_wait_for_reply( DBusConnection *connection, 
     if (!success)
         return STATUS_NO_MEMORY;
     return bluez_dbus_pending_call_wait( pending_call, reply, error );
+}
+
+static NTSTATUS bluez_adapter_set_discovery_filter( void *connection, const char *adapter_path,
+                                                    const char *transport_str )
+{
+    DBusMessage *request, *reply;
+    DBusMessageIter iter, dict_iter;
+    DBusError error;
+    NTSTATUS status;
+
+    TRACE( "(%p, %s, %s)\n", connection, debugstr_a( adapter_path ), debugstr_a( transport_str ) );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, adapter_path, BLUEZ_INTERFACE_ADAPTER,
+                                              "SetDiscoveryFilter" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    p_dbus_message_iter_init_append( request, &iter );
+    if (!p_dbus_message_iter_open_container( &iter, DBUS_TYPE_ARRAY, "{sv}", &dict_iter ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!bluez_variant_dict_add_entry( &dict_iter, "Transport", DBUS_TYPE_STRING,
+                                       DBUS_TYPE_STRING_AS_STRING, &transport_str ))
+    {
+        p_dbus_message_iter_abandon_container( &iter, &dict_iter );
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+    if (!p_dbus_message_iter_close_container( &iter, &dict_iter ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    p_dbus_error_init ( &error );
+
+    TRACE( "Setting discovery filter on %s to use transport %s\n", debugstr_a( adapter_path ),
+           debugstr_a( transport_str ) );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        WARN( "Failed to set discovery filter: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_message_unref( reply );
+    p_dbus_error_free( &error );
+
+    return STATUS_SUCCESS;
+
+}
+
+NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_path )
+{
+    DBusMessage *request, *reply;
+    DBusError error;
+    NTSTATUS status;
+
+    TRACE( "(%p, %s)\n", connection, debugstr_a( adapter_path ) );
+
+    status = bluez_adapter_set_discovery_filter( connection, adapter_path, "bredr" );
+    if (status != STATUS_SUCCESS) return status;
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, adapter_path, BLUEZ_INTERFACE_ADAPTER,
+                                              "StartDiscovery" );
+    if (!request) return STATUS_NO_MEMORY;
+
+    TRACE( "Starting discovery on %s\n", debugstr_a( adapter_path ) );
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        ERR( "Failed to start discovery on adapter %s: %s: %s", debugstr_a( adapter_path ),
+             debugstr_a( error.message ), debugstr_a( error.name ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
@@ -1557,6 +1683,10 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher, struct winebluetooth_event *re
     return STATUS_NOT_SUPPORTED;
 }
 NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
+{
+    return STATUS_NOT_SUPPORTED;
+}
+NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_path )
 {
     return STATUS_NOT_SUPPORTED;
 }
