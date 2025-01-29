@@ -5380,7 +5380,8 @@ BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
     format_vk = wined3d_format_vk(resource->format);
 
     if (wined3d_format_is_typeless(&format_vk->f) || texture_vk->t.swapchain
-            || (texture_vk->t.resource.bind_flags & WINED3D_BIND_UNORDERED_ACCESS))
+            || (texture_vk->t.resource.bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
+            || (format_vk->f.attrs & WINED3D_FORMAT_ATTR_PLANAR))
     {
         /* For UAVs, we need this in case a clear necessitates creation of a new view
          * with a different format. */

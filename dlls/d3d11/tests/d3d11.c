@@ -36374,7 +36374,7 @@ static void test_nv12(void)
     device_context = test_context.immediate_context;
 
     hr = ID3D11Device_CheckFormatSupport(device, DXGI_FORMAT_NV12, &support);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine_if (!damavand) ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     if (!(support & D3D11_FORMAT_SUPPORT_TEXTURE2D))
     {
@@ -36472,7 +36472,6 @@ static void test_nv12(void)
 
         expected_hr = (width & 1 || height & 1) ? E_INVALIDARG : S_OK;
         hr = ID3D11Device_CreateTexture2D(device, &desc, &subresource_data, &texture);
-        todo_wine_if(SUCCEEDED(expected_hr))
         ok(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
 
         if (FAILED(hr))

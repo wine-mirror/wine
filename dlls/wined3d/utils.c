@@ -4243,7 +4243,7 @@ fail:
     return FALSE;
 }
 
-static void init_vulkan_format_info(struct wined3d_format_vk *format,
+static void init_vulkan_format_info(struct wined3d_adapter *adapter, struct wined3d_format_vk *format,
         const struct wined3d_vk_info *vk_info, VkPhysicalDevice vk_physical_device)
 {
     static const struct
@@ -4330,6 +4330,7 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         {WINED3DFMT_R32_FLOAT_X8X24_TYPELESS,   VK_FORMAT_D32_SFLOAT_S8_UINT,      },
         {WINED3DFMT_X32_TYPELESS_G8X24_UINT,    VK_FORMAT_D32_SFLOAT_S8_UINT,      },
         {WINED3DFMT_D24_UNORM_S8_UINT,          VK_FORMAT_D24_UNORM_S8_UINT,       },
+        {WINED3DFMT_NV12_PLANAR,                VK_FORMAT_G8_B8R8_2PLANE_420_UNORM,},
     };
     VkFormat vk_format = VK_FORMAT_UNDEFINED;
     VkImageFormatProperties image_properties;
@@ -4357,6 +4358,10 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         return;
     }
 
+    if ((format->f.attrs & WINED3D_FORMAT_ATTR_PLANAR) && !vk_info->supported[WINED3D_VK_KHR_SAMPLER_YCBCR_CONVERSION]
+            && vk_info->api_version < VK_API_VERSION_1_1)
+        return;
+
     format->vk_format = vk_format;
     if (fixup)
         format->f.color_fixup = create_color_fixup_desc_from_string(fixup);
@@ -4376,13 +4381,45 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
         }
     }
 
+    caps = 0;
+    texture_flags = properties.linearTilingFeatures | properties.optimalTilingFeatures;
+    if ((texture_flags & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT)
+            && (texture_flags & VK_FORMAT_FEATURE_TRANSFER_DST_BIT))
+        caps |= WINED3D_FORMAT_CAP_BLIT;
+
+    if (format->f.attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        /* Direct3D only does planar views, without YCbCr conversion.
+         * In order to query whether this is supported on the Vulkan side,
+         * we need to ignore the feature flags for the planar image,
+         * and instead combine the feature flags for the corresponding format
+         * for each plane.
+         *
+         * Somewhat oddly, Vulkan doesn't distinguish "R8_UNORM (e.g.) views of
+         * a planar image are supported" from "R8_UNORM views are supported in
+         * general", which means that we don't really know through querying if
+         * a given YUV format is supported. Fortunately we need blit support
+         * anyway, and it seems fair to assume that if blit is supported for a
+         * format, then we can also create planar views. */
+        if (!caps)
+        {
+            TRACE("Unsupported format %s (no blit support).\n", debug_d3dformat(format->f.id));
+            return;
+        }
+
+        caps = ~0u;
+        for (unsigned int i = 0; i < 2; ++i)
+            caps &= get_format_internal(adapter, format->f.plane_formats[i])->caps[WINED3D_GL_RES_TYPE_TEX_2D];
+        format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] |= caps;
+        TRACE("Caps %#08x are supported for format %s.\n", caps, debug_d3dformat(format->f.id));
+        return;
+    }
+
     if (properties.bufferFeatures & VK_FORMAT_FEATURE_VERTEX_BUFFER_BIT)
         format->f.caps[WINED3D_GL_RES_TYPE_BUFFER] |= WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE;
     if (properties.bufferFeatures & VK_FORMAT_FEATURE_UNIFORM_TEXEL_BUFFER_BIT)
         format->f.caps[WINED3D_GL_RES_TYPE_BUFFER] |= WINED3D_FORMAT_CAP_TEXTURE;
 
-    caps = 0;
-    texture_flags = properties.linearTilingFeatures | properties.optimalTilingFeatures;
     if (texture_flags & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT)
     {
         caps |= WINED3D_FORMAT_CAP_TEXTURE | WINED3D_FORMAT_CAP_VTF;
@@ -4407,14 +4444,10 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     {
         caps |= WINED3D_FORMAT_CAP_UNORDERED_ACCESS;
     }
-    if ((texture_flags & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT)
-            && (texture_flags & VK_FORMAT_FEATURE_TRANSFER_DST_BIT))
-    {
-        caps |= WINED3D_FORMAT_CAP_BLIT;
-    }
-
     if (!(~caps & (WINED3D_FORMAT_CAP_RENDERTARGET | WINED3D_FORMAT_CAP_FILTERING)))
         caps |= WINED3D_FORMAT_CAP_GEN_MIPMAP;
+
+    TRACE("Caps %#08x are supported for format %s.\n", caps, debug_d3dformat(format->f.id));
 
     format->f.caps[WINED3D_GL_RES_TYPE_TEX_1D] |= caps;
     format->f.caps[WINED3D_GL_RES_TYPE_TEX_2D] |= caps;
@@ -4460,7 +4493,7 @@ BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
         format = wined3d_format_vk_mutable(get_format_by_idx(adapter, i));
 
         if (format->f.id)
-            init_vulkan_format_info(format, vk_info, vk_physical_device);
+            init_vulkan_format_info(adapter, format, vk_info, vk_physical_device);
     }
 
     if (!init_typeless_formats(adapter)) goto fail;
