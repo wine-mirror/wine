@@ -3702,6 +3702,12 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         TRACE("Creating an oversized (%ux%u) surface.\n", desc->width, desc->height);
     }
 
+    if ((format->attrs & WINED3D_FORMAT_ATTR_PLANAR) && ((desc->width & 1) || (desc->height & 1)))
+    {
+        WARN("Attempt to create a planar texture with unaligned size %ux%u.\n", desc->width, desc->height);
+        return WINED3DERR_INVALIDCALL;
+    }
+
     for (i = 0; i < layer_count; ++i)
     {
         for (j = 0; j < level_count; ++j)
