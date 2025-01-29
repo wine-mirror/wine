@@ -930,6 +930,7 @@ W32KAPI HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD for
 W32KAPI UINT     WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size );
 W32KAPI HWND     WINAPI NtUserSetActiveWindow( HWND hwnd );
 W32KAPI HWND     WINAPI NtUserSetCapture( HWND hwnd );
+W32KAPI BOOL     WINAPI NtUserSetCaretBlinkTime( unsigned int time );
 W32KAPI DWORD    WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
 W32KAPI ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
 W32KAPI WORD    WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval );
@@ -1070,7 +1071,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
     NtUserCallOneParam_SetKeyboardAutoRepeat,
     NtUserCallOneParam_SetThreadDpiAwarenessContext,
@@ -1132,11 +1132,6 @@ static inline RECT NtUserGetPrimaryMonitorRect(void)
     RECT primary;
     NtUserCallOneParam( (UINT_PTR)&primary, NtUserCallOneParam_GetPrimaryMonitorRect );
     return primary;
-}
-
-static inline BOOL NtUserSetCaretBlinkTime( unsigned int time )
-{
-    return NtUserCallOneParam( time, NtUserCallOneParam_SetCaretBlinkTime );
 }
 
 static inline COLORREF NtUserGetSysColor( INT index )

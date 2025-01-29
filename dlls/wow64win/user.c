@@ -4130,6 +4130,13 @@ NTSTATUS WINAPI wow64_NtUserSetCapture( UINT *args )
     return HandleToUlong( NtUserSetCapture( hwnd ));
 }
 
+NTSTATUS WINAPI wow64_NtUserSetCaretBlinkTime( UINT *args )
+{
+    unsigned int time = get_ulong( &args );
+
+    return NtUserSetCaretBlinkTime( time );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetClassLong( UINT *args )
 {
     HWND hwnd = get_handle( &args );

@@ -120,15 +120,6 @@ BOOL WINAPI SetCaretPos( int x, int y )
 }
 
 
-/*****************************************************************
- *		SetCaretBlinkTime (USER32.@)
- */
-BOOL WINAPI SetCaretBlinkTime( unsigned int time )
-{
-    return NtUserSetCaretBlinkTime( time );
-}
-
-
 /***********************************************************************
  *		GetInputState   (USER32.@)
  */

@@ -2030,6 +2030,11 @@ HWND SYSCALL_API NtUserSetCapture( HWND hwnd )
     SYSCALL_FUNC( NtUserSetCapture );
 }
 
+BOOL SYSCALL_API NtUserSetCaretBlinkTime( unsigned int time )
+{
+    SYSCALL_FUNC( NtUserSetCaretBlinkTime );
+}
+
 DWORD SYSCALL_API NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserSetClassLong );

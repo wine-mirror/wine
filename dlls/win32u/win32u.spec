@@ -1338,7 +1338,7 @@
 @ stub NtUserSetCalibrationData
 @ stub NtUserSetCancelRotationDelayHintWindow
 @ stdcall -syscall NtUserSetCapture(long)
-@ stub NtUserSetCaretBlinkTime
+@ stdcall -syscall NtUserSetCaretBlinkTime(long)
 @ stub NtUserSetCaretPos
 @ stub NtUserSetChildWindowNoActivate
 @ stdcall -syscall NtUserSetClassLong(long long long long)

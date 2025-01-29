@@ -2369,9 +2369,9 @@ UINT WINAPI NtUserGetCaretBlinkTime(void)
 }
 
 /*******************************************************************
- *              set_caret_blink_time
+ *           NtUserSetCaretBlinkTime  (win32u.@)
  */
-BOOL set_caret_blink_time( unsigned int time )
+BOOL WINAPI NtUserSetCaretBlinkTime( unsigned int time )
 {
     TRACE( "time %u\n", time );
 

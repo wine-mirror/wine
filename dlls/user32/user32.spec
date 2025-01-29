@@ -1017,7 +1017,7 @@
 @ stub ServerSetFunctionPointers
 @ stdcall SetActiveWindow(long) NtUserSetActiveWindow
 @ stdcall -import SetCapture(long) NtUserSetCapture
-@ stdcall SetCaretBlinkTime(long)
+@ stdcall SetCaretBlinkTime(long) NtUserSetCaretBlinkTime
 @ stdcall SetCaretPos(long long)
 @ stdcall SetClassLongA(long long long)
 @ stdcall -arch=win64 SetClassLongPtrA(long long long)
