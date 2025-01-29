@@ -6648,6 +6648,12 @@ static bool vk_blitter_blit_supported(enum wined3d_blit_op op, const struct wine
             TRACE("Format conversion not supported.\n");
             return false;
         }
+
+        if ((src_format->attrs | dst_format->attrs) & WINED3D_FORMAT_ATTR_PLANAR)
+        {
+            TRACE("Planar format conversion is not supported.\n");
+            return false;
+        }
     }
 
     if (wined3d_resource_get_sample_count(dst_resource) > 1)

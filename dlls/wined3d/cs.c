@@ -2779,8 +2779,29 @@ void wined3d_device_context_emit_update_sub_resource(struct wined3d_device_conte
 
     if (context->ops->map_upload_bo(context, resource, sub_resource_idx, &map_desc, box, WINED3D_MAP_WRITE))
     {
-        wined3d_format_copy_data(resource->format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
-                map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
+        const struct wined3d_format *format = resource->format;
+
+        if (format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+        {
+            unsigned int uv_height = format->uv_height;
+            unsigned int uv_width = format->uv_width;
+            const struct wined3d_format *plane_format;
+
+            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[0], 0);
+            wined3d_format_copy_data(plane_format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
+                    map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
+            plane_format = wined3d_get_format(context->device->adapter, format->plane_formats[1], 0);
+            wined3d_format_copy_data(plane_format, (const uint8_t *)data + (row_pitch * (box->bottom - box->top)),
+                    row_pitch * 2 / uv_width, slice_pitch * 2 / uv_width / uv_height,
+                    (uint8_t *)map_desc.data + map_desc.slice_pitch,
+                    map_desc.row_pitch * 2 / uv_width, map_desc.slice_pitch * 2 / uv_width / uv_height,
+                    (box->right - box->left) / uv_width, (box->bottom - box->top) / uv_height, box->back - box->front);
+        }
+        else
+        {
+            wined3d_format_copy_data(format, data, row_pitch, slice_pitch, map_desc.data, map_desc.row_pitch,
+                    map_desc.slice_pitch, box->right - box->left, box->bottom - box->top, box->back - box->front);
+        }
         context->ops->unmap_upload_bo(context, resource, sub_resource_idx, &dummy_box, &bo);
         wined3d_device_context_upload_bo(context, resource, sub_resource_idx,
                 box, &bo, map_desc.row_pitch, map_desc.slice_pitch);
@@ -3074,9 +3095,16 @@ static void get_map_pitch(const struct wined3d_format *format, const struct wine
 
     wined3d_format_calculate_pitch(format, 1, width, height, &map_desc->row_pitch, &map_desc->slice_pitch);
 
-    *size = (depth - 1) * map_desc->slice_pitch
-            + ((height - 1) / format->block_height) * map_desc->row_pitch
-            + ((width + format->block_width - 1) / format->block_width) * format->block_byte_count;
+    if (format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        *size = wined3d_format_calculate_size(format, 1, width, height, 1);
+    }
+    else
+    {
+        *size = (depth - 1) * map_desc->slice_pitch
+                + ((height - 1) / format->block_height) * map_desc->row_pitch
+                + ((width + format->block_width - 1) / format->block_width) * format->block_byte_count;
+    }
 }
 
 static bool wined3d_cs_map_upload_bo(struct wined3d_device_context *context, struct wined3d_resource *resource,

@@ -694,6 +694,33 @@ static const struct wined3d_format_block_info format_block_info[] =
     {WINED3DFMT_R9G9B9E5_SHAREDEXP, 1, 1, 4},
 };
 
+static const struct
+{
+    enum wined3d_format_id id;
+    /* Note that all planar formats supported by Direct3D 10/11 are 2-plane
+     * formats. The documentation does not include any 3-plane formats.
+     * Moreover, Direct3D 10/11 identifies planes by their format (e.g. R8 or
+     * R8G8), which in practice means planes are identified by their component
+     * count, which can only work for formats that pack U and V into the same
+     * plane.
+     *
+     * We assume, in various places, that all formats with
+     * WINED3D_FORMAT_ATTR_PLANAR are 2-plane formats, with a Y plane followed
+     * by a UV plane, and that each component has the same number of bytes per
+     * sample. All planar formats supported by Direct3D 10/11 follow these
+     * restrictions.
+     *
+     * Direct3D 9 does support YV12, a 3-plane format, but it can only be used
+     * for blitting, not texturing.
+     */
+    enum wined3d_format_id plane_formats[2];
+    unsigned int uv_width, uv_height;
+}
+format_plane_info[] =
+{
+    {WINED3DFMT_NV12, {WINED3DFMT_R8_UINT, WINED3DFMT_R8G8_UINT}, 2, 2},
+};
+
 struct wined3d_format_vertex_info
 {
     enum wined3d_format_id id;
@@ -2221,6 +2248,20 @@ static BOOL init_srgb_formats(struct wined3d_adapter *adapter)
     }
 
     return TRUE;
+}
+
+static void init_format_plane_info(struct wined3d_adapter *adapter)
+{
+    for (unsigned int i = 0; i < ARRAY_SIZE(format_plane_info); ++i)
+    {
+        struct wined3d_format *format = get_format_internal(adapter, format_plane_info[i].id);
+
+        format->attrs |= WINED3D_FORMAT_ATTR_PLANAR;
+        format->plane_formats[0] = format_plane_info[i].plane_formats[0];
+        format->plane_formats[1] = format_plane_info[i].plane_formats[1];
+        format->uv_width = format_plane_info[i].uv_width;
+        format->uv_height = format_plane_info[i].uv_height;
+    }
 }
 
 static GLenum wined3d_gl_type_to_enum(enum wined3d_gl_resource_type type)
@@ -4123,6 +4164,7 @@ static BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, si
         goto fail;
     if (!init_srgb_formats(adapter))
         goto fail;
+    init_format_plane_info(adapter);
 
     return TRUE;
 
@@ -4533,6 +4575,9 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
         return width * height * depth * format->byte_count;
 
     wined3d_format_calculate_pitch(format, alignment, width, height, &row_pitch, &slice_pitch);
+
+    if (format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+        return row_pitch * height + (row_pitch * 2 / format->uv_width * height / format->uv_height);
 
     return slice_pitch * depth;
 }
