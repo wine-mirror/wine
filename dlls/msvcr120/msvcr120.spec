@@ -2104,7 +2104,7 @@
 @ stub cproj
 @ stub cprojf
 @ stub cprojl
-@ cdecl creal(int128) MSVCR120_creal
+@ cdecl creal(int128)
 @ stub crealf
 @ stub creall
 @ stub csin

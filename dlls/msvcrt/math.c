@@ -2966,7 +2966,7 @@ _Dcomplex CDECL _Cbuild(double r, double i)
     return ret;
 }
 
-double CDECL MSVCR120_creal(_Dcomplex z)
+double CDECL creal(_Dcomplex z)
 {
     return z._Val[0];
 }
