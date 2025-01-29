@@ -1829,11 +1829,6 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
                 ptr[x] |= alpha_bits;
     }
 
-    if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
-        XPutImage( gdi_display, surface->window, surface->gc, ximage, dirty->left,
-                   dirty->top, rect->left + dirty->left, rect->top + dirty->top,
-                   dirty->right - dirty->left, dirty->bottom - dirty->top );
-
     if (shape_changed)
     {
 #ifdef HAVE_LIBXSHAPE
@@ -1852,6 +1847,11 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
         }
 #endif /* HAVE_LIBXSHAPE */
     }
+
+    if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
+        XPutImage( gdi_display, surface->window, surface->gc, ximage, dirty->left,
+                   dirty->top, rect->left + dirty->left, rect->top + dirty->top,
+                   dirty->right - dirty->left, dirty->bottom - dirty->top );
 
     XFlush( gdi_display );
 
