@@ -4403,6 +4403,12 @@ void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_cont
         WARN("Invalid box %s specified.\n", debug_box(box));
         return;
     }
+    else if ((resource->format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+            && ((box->left & 1) || (box->right & 1) || (box->top & 1) || (box->bottom & 1)))
+    {
+        WARN("Invalid box %s for planar resource.\n", debug_box(box));
+        return;
+    }
 
     wined3d_device_context_lock(context);
     wined3d_device_context_emit_update_sub_resource(context, resource,

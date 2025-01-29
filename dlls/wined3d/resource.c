@@ -502,14 +502,22 @@ HRESULT wined3d_resource_check_box_dimensions(struct wined3d_resource *resource,
         return WINEDDERR_INVALIDRECT;
     }
 
-    if (resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
+    if (resource->format_attrs & (WINED3D_FORMAT_ATTR_BLOCKS | WINED3D_FORMAT_ATTR_PLANAR))
     {
         /* This assumes power of two block sizes, but NPOT block sizes would
          * be silly anyway.
          *
          * This also assumes that the format's block depth is 1. */
-        width_mask = format->block_width - 1;
-        height_mask = format->block_height - 1;
+        if (resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
+        {
+            width_mask = format->block_width - 1;
+            height_mask = format->block_height - 1;
+        }
+        else
+        {
+            width_mask = format->uv_width - 1;
+            height_mask = format->uv_height - 1;
+        }
 
         if ((box->left & width_mask) || (box->top & height_mask)
                 || (box->right & width_mask && box->right != desc.width)
