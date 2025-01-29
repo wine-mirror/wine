@@ -81,11 +81,28 @@ static GLenum get_texture_view_target(const struct wined3d_gl_info *gl_info,
     return texture_gl->target;
 }
 
+static bool find_format_plane_idx(const struct wined3d_format *resource_format,
+        const struct wined3d_format *plane_format, unsigned int *plane_idx)
+{
+    if (plane_format->id == resource_format->plane_formats[0])
+    {
+        *plane_idx = 0;
+        return true;
+    }
+    if (plane_format->id == resource_format->plane_formats[1])
+    {
+        *plane_idx = 1;
+        return true;
+    }
+    return false;
+}
+
 static const struct wined3d_format *validate_resource_view(const struct wined3d_view_desc *desc,
         struct wined3d_resource *resource, BOOL mip_slice, BOOL allow_srgb_toggle)
 {
     const struct wined3d_adapter *adapter = resource->device->adapter;
     const struct wined3d_format *format;
+    unsigned int plane_idx;
 
     format = wined3d_get_format(adapter, desc->format_id, resource->bind_flags);
     if (resource->type == WINED3D_RTYPE_BUFFER && (desc->flags & WINED3D_VIEW_BUFFER_RAW))
@@ -138,7 +155,16 @@ static const struct wined3d_format *validate_resource_view(const struct wined3d_
         struct wined3d_texture *texture = texture_from_resource(resource);
         unsigned int depth_or_layer_count;
 
-        if (resource->format->id != format->id && !wined3d_format_is_typeless(resource->format)
+        if (resource->format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+        {
+            if (!find_format_plane_idx(resource->format, format, &plane_idx))
+            {
+                WARN("Invalid view format %s for planar format %s.\n",
+                        debug_d3dformat(format->id), debug_d3dformat(resource->format->id));
+                return NULL;
+            }
+        }
+        else if (resource->format->id != format->id && !wined3d_format_is_typeless(resource->format)
                 && (!allow_srgb_toggle || !wined3d_formats_are_srgb_variants(resource->format->id, format->id)))
         {
             WARN("Trying to create incompatible view for non typeless format %s.\n",
@@ -175,6 +201,12 @@ static void create_texture_view(struct wined3d_gl_view *view, GLenum view_target
 
     view_format_gl = wined3d_format_gl(view_format);
     view->target = view_target;
+
+    if (texture_gl->t.resource.format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        FIXME("Planar views are not implemented for OpenGL.\n");
+        return;
+    }
 
     context = context_acquire(texture_gl->t.resource.device, NULL, 0);
     context_gl = wined3d_context_gl(context);
@@ -819,6 +851,13 @@ static VkImageView wined3d_view_vk_create_vk_image_view(struct wined3d_context_v
             create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_DEPTH_BIT;
         if (view_format_vk->f.green_size)
             create_info.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+    }
+    else if (resource->format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        unsigned int plane_idx = 0;
+
+        find_format_plane_idx(resource->format, &view_format_vk->f, &plane_idx);
+        create_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT << plane_idx;
     }
     else
     {
