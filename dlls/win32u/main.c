@@ -1992,6 +1992,11 @@ HANDLE SYSCALL_API NtUserRemoveProp( HWND hwnd, const WCHAR *str )
     SYSCALL_FUNC( NtUserRemoveProp );
 }
 
+BOOL SYSCALL_API NtUserReplyMessage( LRESULT result )
+{
+    SYSCALL_FUNC( NtUserReplyMessage );
+}
+
 BOOL SYSCALL_API NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                  HRGN ret_update_rgn, RECT *update_rect )
 {

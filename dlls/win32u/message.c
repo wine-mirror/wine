@@ -2081,11 +2081,11 @@ static void reply_message( struct received_message_info *info, LRESULT result, M
 }
 
 /***********************************************************************
- *           reply_message_result
+ *           NtUserReplyMessage  (win32u.@)
  *
  * Send a reply to a sent message and update thread receive info.
  */
-BOOL reply_message_result( LRESULT result )
+BOOL WINAPI NtUserReplyMessage( LRESULT result )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     struct received_message_info *info = thread_info->receive_info;

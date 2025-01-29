@@ -992,7 +992,7 @@
 @ stdcall RemovePropW(long wstr)
 # @ stub RemoveThreadTSFEventAwareness
 # @ stub RemoveVisualIdentifier
-@ stdcall ReplyMessage(long)
+@ stdcall ReplyMessage(long) NtUserReplyMessage
 @ stub ResetDisplay
 # @ stub ResolveDesktopForWOW
 @ stdcall ReuseDDElParam(long long long long long)

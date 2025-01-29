@@ -920,6 +920,7 @@ W32KAPI INT     WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc );
 W32KAPI BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserRemoveMenu( HMENU menu, UINT id, UINT flags );
 W32KAPI HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
+W32KAPI BOOL    WINAPI NtUserReplyMessage( LRESULT result );
 W32KAPI BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                        HRGN ret_update_rgn, RECT *update_rect );
 W32KAPI INT     WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
@@ -1069,7 +1070,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
     NtUserCallOneParam_SetKeyboardAutoRepeat,
@@ -1157,11 +1157,6 @@ static inline HPEN NtUserGetSysColorPen( INT index )
 static inline INT NtUserGetSystemMetrics( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
-}
-
-static inline BOOL NtUserReplyMessage( LRESULT result )
-{
-    return NtUserCallOneParam( result, NtUserCallOneParam_ReplyMessage );
 }
 
 static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )

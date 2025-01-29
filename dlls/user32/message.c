@@ -658,15 +658,6 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 
 
 /***********************************************************************
- *		ReplyMessage  (USER32.@)
- */
-BOOL WINAPI ReplyMessage( LRESULT result )
-{
-    return NtUserReplyMessage( result );
-}
-
-
-/***********************************************************************
  *		InSendMessage  (USER32.@)
  */
 BOOL WINAPI InSendMessage(void)

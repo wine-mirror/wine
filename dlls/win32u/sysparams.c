@@ -7023,9 +7023,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
 
-    case NtUserCallOneParam_ReplyMessage:
-        return reply_message_result( arg );
-
     case NtUserCallOneParam_SetCaretBlinkTime:
         return set_caret_blink_time( arg );
 

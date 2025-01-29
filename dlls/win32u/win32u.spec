@@ -1312,7 +1312,7 @@
 @ stdcall -syscall NtUserRemoveProp(long wstr)
 @ stub NtUserRemoveQueueCompletion
 @ stub NtUserRemoveVisualIdentifier
-@ stub NtUserReplyMessage
+@ stdcall -syscall NtUserReplyMessage(long)
 @ stub NtUserReportInertia
 @ stub NtUserRequestMoveSizeOperation
 @ stub NtUserResetDblClk

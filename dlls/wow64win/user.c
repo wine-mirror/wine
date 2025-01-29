@@ -4020,6 +4020,13 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
 }
 
+NTSTATUS WINAPI wow64_NtUserReplyMessage( UINT *args )
+{
+    LRESULT result = get_ulong( &args );
+
+    return NtUserReplyMessage( result );
+}
+
 NTSTATUS WINAPI wow64_NtUserScrollDC( UINT *args )
 {
     HDC hdc = get_handle( &args );
