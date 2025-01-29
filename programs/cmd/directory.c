@@ -35,7 +35,8 @@ typedef enum _DISPLAYTIME
 
 typedef enum _DISPLAYORDER
 {
-    Name = 0,
+    Unspecified = 0,
+    Name,
     Extension,
     Size,
     Date
@@ -90,16 +91,37 @@ static int __cdecl WCMD_dir_sort (const void *a, const void *b)
 {
   const WIN32_FIND_DATAW *filea = (const WIN32_FIND_DATAW *)a;
   const WIN32_FIND_DATAW *fileb = (const WIN32_FIND_DATAW *)b;
+  BOOL aDir = filea->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  BOOL bDir = fileb->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
   int result = 0;
 
-  /* If /OG or /O-G supplied, dirs go at the top or bottom, ignoring the
-     requested sort order for the directory components                   */
-  if (orderGroupDirs &&
-      ((filea->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) ||
-       (fileb->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)))
-  {
-    BOOL aDir = filea->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-    if (aDir) result = -1;
+  if (orderGroupDirs && dirOrder == Unspecified) {
+    /* Special case: If ordering groups and not sorting by other criteria, "." and ".." always go first. */
+    if (aDir && !lstrcmpW(filea->cFileName, L".")) {
+      result = -1;
+    } else if (bDir && !lstrcmpW(fileb->cFileName, L".")) {
+      result = 1;
+    } else if (aDir && !lstrcmpW(filea->cFileName, L"..")) {
+      result = -1;
+    } else if (bDir && !lstrcmpW(fileb->cFileName, L"..")) {
+      result = 1;
+    }
+
+    if (result) {
+      if (orderGroupDirsReverse) result = -result;
+      return result;
+    }
+  }
+
+  /* If /OG or /O-G supplied, dirs go at the top or bottom, also sorted
+     if requested sort order is by name.                                */
+  if (orderGroupDirs && (aDir || bDir)) {
+    if (aDir && bDir && dirOrder == Name) {
+      result = lstrcmpiW(filea->cFileName, fileb->cFileName);
+      if (orderReverse) result = -result;
+    } else if (aDir) {
+      result = -1;
+    }
     else result = 1;
     if (orderGroupDirsReverse) result = -result;
     return result;
@@ -674,7 +696,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
   orderByCol = FALSE;
   separator  = TRUE;
   dirTime = Written;
-  dirOrder = Name;
+  dirOrder = Unspecified;
   orderReverse = FALSE;
   orderGroupDirs = FALSE;
   orderGroupDirsReverse = FALSE;
@@ -744,13 +766,16 @@ RETURN_CODE WCMD_directory(WCHAR *args)
               if (*p==':') p++;  /* Skip optional : */
               while (*p && *p != '/') {
                 WINE_TRACE("Processing subparm '%c' (in %s)\n", *p, wine_dbgstr_w(quals));
+                /* Options N,E,S,D are mutually-exclusive, first encountered takes precedence. */
                 switch (*p) {
-                case 'N': dirOrder = Name;       break;
-                case 'E': dirOrder = Extension;  break;
-                case 'S': dirOrder = Size;       break;
-                case 'D': dirOrder = Date;       break;
-                case '-': if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
-                          else orderReverse = TRUE;
+                case 'N': if (dirOrder == Unspecified) dirOrder = Name;       break;
+                case 'E': if (dirOrder == Unspecified) dirOrder = Extension;  break;
+                case 'S': if (dirOrder == Unspecified) dirOrder = Size;       break;
+                case 'D': if (dirOrder == Unspecified) dirOrder = Date;       break;
+                case '-': if (dirOrder == Unspecified) {
+                            if (*(p+1)=='G') orderGroupDirsReverse=TRUE;
+                            else if (*(p+1)=='N'||*(p+1)=='E'||*(p+1)=='S'||*(p+1)=='D') orderReverse = TRUE;
+                          }
                           break;
                 case 'G': orderGroupDirs = TRUE; break;
                 default:
@@ -759,6 +784,13 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                     return errorlevel = ERROR_INVALID_FUNCTION;
                 }
                 p++;
+              }
+              /* Handle default case of /O specified by itself, with no specific options.
+                 This is equivalent to /O:GN. */
+              if (dirOrder == Unspecified && !orderGroupDirs) {
+                orderGroupDirs = TRUE;
+                orderGroupDirsReverse = FALSE;
+                dirOrder = Name;
               }
               p = p - 1; /* So when step on, move to '/' */
               break;
