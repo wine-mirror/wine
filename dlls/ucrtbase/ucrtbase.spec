@@ -21,7 +21,7 @@
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ cdecl _Exit(long) _exit
-@ stub _FCbuild
+@ cdecl -norelay _FCbuild(float float)
 @ stub _FCmulcc
 @ stub _FCmulcr
 @ cdecl _FindAndUnlinkFrame(ptr)

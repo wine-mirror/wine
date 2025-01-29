@@ -825,7 +825,7 @@
 @ stdcall _CxxThrowException(ptr ptr) msvcr120._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() msvcr120._EH_prolog
 @ stub -arch=arm _FPE_Raise
-@ stub _FCbuild
+@ cdecl -norelay _FCbuild(float float) msvcr120._FCbuild
 @ cdecl _FindAndUnlinkFrame(ptr) msvcr120._FindAndUnlinkFrame
 @ stub -arch=win64 _GetImageBase
 @ stub -arch=win64 _GetThrowImageBase

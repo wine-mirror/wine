@@ -830,7 +830,7 @@
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ stub -arch=arm _FPE_Raise
-@ stub _FCbuild
+@ cdecl -norelay _FCbuild(float float)
 @ cdecl _FindAndUnlinkFrame(ptr)
 @ stub -arch=win64 _GetImageBase
 @ stub -arch=win64 _GetThrowImageBase

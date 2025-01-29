@@ -2976,4 +2976,29 @@ double CDECL cimag(_Dcomplex z)
     return z._Val[1];
 }
 
+#ifndef __i386__
+_Fcomplex CDECL _FCbuild(float r, float i)
+{
+    _Fcomplex ret;
+    ret._Val[0] = r;
+    ret._Val[1] = i;
+    return ret;
+}
+#else
+ULONGLONG CDECL _FCbuild(float r, float i)
+{
+    union
+    {
+        _Fcomplex c;
+        ULONGLONG ull;
+    } ret;
+
+    C_ASSERT(sizeof(_Fcomplex) == sizeof(ULONGLONG));
+
+    ret.c._Val[0] = r;
+    ret.c._Val[1] = i;
+    return ret.ull;
+}
+#endif
+
 #endif /* _MSVCR_VER>=120 */

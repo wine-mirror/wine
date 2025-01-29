@@ -155,6 +155,12 @@ typedef struct
     double i;
 } _Dcomplex;
 
+typedef struct
+{
+    float r;
+    float i;
+} _Fcomplex;
+
 typedef void (*vtable_ptr)(void);
 
 typedef struct {
@@ -222,6 +228,7 @@ static void (__cdecl *p_free_locale)(_locale_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
 static int (__cdecl *p_vsscanf)(const char*, const char *, va_list valist);
 static _Dcomplex (__cdecl *p__Cbuild)(double, double);
+static _Fcomplex (__cdecl *p__FCbuild)(float, float);
 static double (__cdecl *p_creal)(_Dcomplex);
 static double (__cdecl *p_cimag)(_Dcomplex);
 static double (__cdecl *p_nexttoward)(double, double);
@@ -276,6 +283,19 @@ static MSVCRT_bool (__thiscall *p__StructuredTaskCollection__IsCanceling)(_Struc
 static _Cancellation_beacon* (__thiscall *p__Cancellation_beacon_ctor)(_Cancellation_beacon*);
 static void (__thiscall *p__Cancellation_beacon_dtor)(_Cancellation_beacon*);
 static MSVCRT_bool (__thiscall *p__Cancellation_beacon__Confirm_cancel)(_Cancellation_beacon*);
+
+#ifdef __i386__
+static ULONGLONG (__cdecl *p_i386_FCbuild)(float, float);
+static _Fcomplex __cdecl i386_FCbuild(float r, float i)
+{
+    union {
+        _Fcomplex c;
+        ULONGLONG ull;
+    } ret;
+    ret.ull = p_i386_FCbuild(r, i);
+    return ret.c;
+}
+#endif
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -335,6 +355,7 @@ static BOOL init(void)
     SET(p__Cbuild, "_Cbuild");
     SET(p_creal, "creal");
     SET(p_cimag, "cimag");
+    SET(p__FCbuild, "_FCbuild");
     SET(p_nexttoward, "nexttoward");
     SET(p_nexttowardf, "nexttowardf");
     SET(p_nexttowardl, "nexttowardl");
@@ -498,6 +519,12 @@ static BOOL init(void)
         SET(p_Context_CurrentContext,
                 "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
     }
+
+#ifdef __i386__
+    SET(p_i386_FCbuild,
+                "_FCbuild");
+    p__FCbuild = i386_FCbuild;
+#endif
 
     init_thiscall_thunk();
     return TRUE;
@@ -1320,6 +1347,23 @@ static void test__Cbuild(void)
     ok(d == 4.0, "cimag returned %lf\n", d);
 }
 
+static void test__FCbuild(void)
+{
+    _Fcomplex c;
+
+    c = p__FCbuild(1.0f, 2.0f);
+    ok(c.r == 1.0f, "c.r = %lf\n", c.r);
+    ok(c.i == 2.0f, "c.i = %lf\n", c.i);
+
+    c = p__FCbuild(3.0f, NAN);
+    ok(c.r == 3.0f, "c.r = %lf\n", c.r);
+    ok(_isnan(c.i), "c.i = %lf\n", c.i);
+
+    c = p__FCbuild(NAN, 4.0f);
+    ok(_isnan(c.r), "c.r = %lf\n", c.r);
+    ok(c.i == 4.0f, "c.i = %lf\n", c.i);
+}
+
 static void test_nexttoward(void)
 {
     errno_t e;
@@ -1913,6 +1957,7 @@ START_TEST(msvcr120)
     test__Condition_variable();
     test_wctype();
     test_vsscanf();
+    test__FCbuild();
     test__Cbuild();
     test_nexttoward();
     test_towctrans();
