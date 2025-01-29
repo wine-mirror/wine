@@ -14,7 +14,7 @@
 @ cdecl -arch=i386 _CIsqrt()
 @ cdecl -arch=i386 _CItan()
 @ cdecl -arch=i386 _CItanh()
-@ cdecl _Cbuild(ptr double double)
+@ cdecl -norelay _Cbuild(double double)
 @ stub _Cmulcc
 @ stub _Cmulcr
 @ cdecl _CreateFrameInfo(ptr ptr)

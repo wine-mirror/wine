@@ -221,7 +221,7 @@ static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
 static void (__cdecl *p_free_locale)(_locale_t);
 static unsigned short (__cdecl *p_wctype)(const char*);
 static int (__cdecl *p_vsscanf)(const char*, const char *, va_list valist);
-static _Dcomplex* (__cdecl *p__Cbuild)(_Dcomplex*, double, double);
+static _Dcomplex (__cdecl *p__Cbuild)(double, double);
 static double (__cdecl *p_creal)(_Dcomplex);
 static double (__cdecl *p_nexttoward)(double, double);
 static float (__cdecl *p_nexttowardf)(float, double);
@@ -1297,18 +1297,21 @@ static void test__Cbuild(void)
     _Dcomplex c;
     double d;
 
-    memset(&c, 0, sizeof(c));
-    p__Cbuild(&c, 1.0, 2.0);
+    c = p__Cbuild(1.0, 2.0);
     ok(c.r == 1.0, "c.r = %lf\n", c.r);
     ok(c.i == 2.0, "c.i = %lf\n", c.i);
     d = p_creal(c);
     ok(d == 1.0, "creal returned %lf\n", d);
 
-    p__Cbuild(&c, 3.0, NAN);
+    c = p__Cbuild(3.0, NAN);
     ok(c.r == 3.0, "c.r = %lf\n", c.r);
     ok(_isnan(c.i), "c.i = %lf\n", c.i);
     d = p_creal(c);
     ok(d == 3.0, "creal returned %lf\n", d);
+
+    c = p__Cbuild(NAN, 4.0);
+    ok(_isnan(c.r), "c.r = %lf\n", c.r);
+    ok(c.i == 4.0, "c.i = %lf\n", c.i);
 }
 
 static void test_nexttoward(void)

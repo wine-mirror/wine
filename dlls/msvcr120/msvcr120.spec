@@ -825,7 +825,7 @@
 @ cdecl -arch=i386 _CItanh()
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
-@ cdecl _Cbuild(ptr double double)
+@ cdecl -norelay _Cbuild(double double)
 @ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()

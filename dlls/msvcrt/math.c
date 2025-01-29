@@ -2958,10 +2958,11 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     return res;
 }
 
-_Dcomplex* CDECL _Cbuild(_Dcomplex *ret, double r, double i)
+_Dcomplex CDECL _Cbuild(double r, double i)
 {
-    ret->_Val[0] = r;
-    ret->_Val[1] = i;
+    _Dcomplex ret;
+    ret._Val[0] = r;
+    ret._Val[1] = i;
     return ret;
 }
 
