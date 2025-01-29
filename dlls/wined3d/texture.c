@@ -5185,8 +5185,37 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
         return;
     }
 
-    wined3d_texture_vk_download_plane(context, aspect_mask, src_texture, src_sub_resource_idx,
-            src_box, dst_bo_addr, dst_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+    if (dst_format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        const struct wined3d_format *plane_format;
+        struct wined3d_bo_address uv_bo_addr;
+        struct wined3d_box uv_box;
+
+        plane_format = wined3d_get_format(context->device->adapter, dst_format->plane_formats[0], 0);
+        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_0_BIT, src_texture, src_sub_resource_idx,
+                src_box, dst_bo_addr, plane_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+
+        uv_bo_addr = *dst_bo_addr;
+        uv_bo_addr.addr += dst_slice_pitch;
+        uv_box = *src_box;
+        uv_box.left /= dst_format->uv_width;
+        uv_box.right /= dst_format->uv_width;
+        uv_box.top /= dst_format->uv_height;
+        uv_box.bottom /= dst_format->uv_height;
+        dst_x /= dst_format->uv_width;
+        dst_y /= dst_format->uv_height;
+        dst_row_pitch = dst_row_pitch * 2 / dst_format->uv_width;
+        dst_slice_pitch = dst_slice_pitch * 2 / dst_format->uv_width / dst_format->uv_height;
+
+        plane_format = wined3d_get_format(context->device->adapter, dst_format->plane_formats[1], 0);
+        wined3d_texture_vk_download_plane(context, VK_IMAGE_ASPECT_PLANE_1_BIT, src_texture, src_sub_resource_idx,
+                &uv_box, &uv_bo_addr, plane_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+    }
+    else
+    {
+        wined3d_texture_vk_download_plane(context, aspect_mask, src_texture, src_sub_resource_idx,
+                src_box, dst_bo_addr, dst_format, dst_x, dst_y, dst_z, dst_row_pitch, dst_slice_pitch);
+    }
 }
 
 static bool wined3d_texture_vk_clear(struct wined3d_texture_vk *texture_vk,
