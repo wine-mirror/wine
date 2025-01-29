@@ -806,6 +806,7 @@ W32KAPI BOOL    WINAPI NtUserGetCaretPos( POINT *point );
 W32KAPI ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                              struct client_menu_name *menu_name, BOOL ansi );
 W32KAPI INT     WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name );
+W32KAPI BOOL    WINAPI NtUserGetClipCursor( RECT *rect );
 W32KAPI HANDLE  WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params );
 W32KAPI INT     WINAPI NtUserGetClipboardFormatName( UINT format, WCHAR *buffer, INT maxlen );
 W32KAPI HWND    WINAPI NtUserGetClipboardOwner(void);
@@ -1063,7 +1064,6 @@ enum
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
-    NtUserCallOneParam_GetClipCursor,
     NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
     NtUserCallOneParam_GetMenuItemCount,
@@ -1106,11 +1106,6 @@ struct thunk_lock_params
 static inline void NtUserEnableThunkLock( ntuser_callback thunk_lock_callback )
 {
     NtUserCallOneParam( (UINT_PTR)thunk_lock_callback, NtUserCallOneParam_EnableThunkLock );
-}
-
-static inline BOOL NtUserGetClipCursor( RECT *rect )
-{
-    return NtUserCallOneParam( (UINT_PTR)rect, NtUserCallOneParam_GetClipCursor );
 }
 
 static inline BOOL NtUserGetCursorPos( POINT *pt )

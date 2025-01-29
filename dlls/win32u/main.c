@@ -1478,6 +1478,11 @@ INT SYSCALL_API NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name )
     SYSCALL_FUNC( NtUserGetClassName );
 }
 
+BOOL SYSCALL_API NtUserGetClipCursor( RECT *rect )
+{
+    SYSCALL_FUNC( NtUserGetClipCursor );
+}
+
 HANDLE SYSCALL_API NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
 {
     SYSCALL_FUNC( NtUserGetClipboardData );

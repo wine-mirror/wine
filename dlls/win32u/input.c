@@ -2659,7 +2659,7 @@ BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_P
     return FALSE;
 }
 
-BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type )
+static BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type )
 {
     struct object_lock lock = OBJECT_LOCK_INIT;
     const desktop_shm_t *desktop_shm;
@@ -2708,6 +2708,14 @@ BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset )
     InterlockedIncrement( &clipping_cursor );
     thread_info->clipping_cursor = TRUE;
     return TRUE;
+}
+
+/**********************************************************************
+ *       NtUserGetClipCursor (win32u.@)
+ */
+BOOL WINAPI NtUserGetClipCursor( RECT *rect )
+{
+    return get_clip_cursor( rect, get_thread_dpi(), MDT_DEFAULT );
 }
 
 /***********************************************************************

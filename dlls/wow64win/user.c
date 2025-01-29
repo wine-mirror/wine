@@ -2386,6 +2386,13 @@ NTSTATUS WINAPI wow64_NtUserGetClassName( UINT *args )
     return NtUserGetClassName( hwnd, real, unicode_str_32to64( &str, str32 ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetClipCursor( UINT *args )
+{
+    RECT *rect = get_ptr( &args );
+
+    return NtUserGetClipCursor( rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetClipboardData( UINT *args )
 {
     UINT format = get_ulong( &args );

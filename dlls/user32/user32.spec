@@ -528,7 +528,7 @@
 @ stdcall GetClassNameW(long ptr long)
 @ stdcall GetClassWord(long long)
 @ stdcall GetClientRect(long long)
-@ stdcall GetClipCursor(ptr)
+@ stdcall GetClipCursor(ptr) NtUserGetClipCursor
 # @ stub GetClipboardAccessToken
 @ stdcall GetClipboardData(long)
 @ stdcall GetClipboardFormatNameA(long ptr long)

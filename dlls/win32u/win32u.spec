@@ -985,7 +985,7 @@
 @ stub NtUserGetClassIcoCur
 @ stdcall -syscall NtUserGetClassInfoEx(ptr ptr ptr ptr long)
 @ stdcall -syscall NtUserGetClassName(long long ptr)
-@ stub NtUserGetClipCursor
+@ stdcall -syscall NtUserGetClipCursor(ptr)
 @ stub NtUserGetClipboardAccessToken
 @ stdcall -syscall NtUserGetClipboardData(long ptr)
 @ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)

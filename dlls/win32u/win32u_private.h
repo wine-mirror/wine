@@ -102,7 +102,6 @@ extern BOOL set_active_window( HWND hwnd, HWND *prev, BOOL mouse, BOOL focus, DW
 extern BOOL set_ime_composition_rect( HWND hwnd, RECT rect );
 extern void toggle_caret( HWND hwnd );
 extern void update_mouse_tracking_info( HWND hwnd );
-extern BOOL get_clip_cursor( RECT *rect, UINT dpi, MONITOR_DPI_TYPE type );
 extern BOOL process_wine_clipcursor( HWND hwnd, UINT flags, BOOL reset );
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout );
