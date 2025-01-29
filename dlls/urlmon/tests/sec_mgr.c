@@ -1157,10 +1157,13 @@ cleanup:
 static void test_GetZoneAttributes(void)
 {
     IInternetZoneManager *zonemgr = NULL;
-    CHAR buffer [sizeof(ZONEATTRIBUTES) + 32];
+    char zone_key_name[MAX_PATH], buffer[sizeof(ZONEATTRIBUTES) + 32];
+    WCHAR name[MAX_ZONE_PATH], desc[MAX_ZONE_DESCRIPTION];
     ZONEATTRIBUTES* pZA = (ZONEATTRIBUTES*) buffer;
+    HKEY zone_key;
+    DWORD size, i;
+    LSTATUS res;
     HRESULT hr;
-    DWORD i;
 
     trace("testing GetZoneAttributes...\n");
 
@@ -1171,9 +1174,39 @@ static void test_GetZoneAttributes(void)
 
     /* native urlmon has Zone "0" up to Zone "4" since IE4 */
     for (i = 0; i < 5; i++) {
+        winetest_push_context("Zone %ld", i);
+
+        sprintf(zone_key_name, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\%ld", i);
+        res = RegOpenKeyExA(HKEY_CURRENT_USER, zone_key_name, 0, KEY_ALL_ACCESS, &zone_key);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        size = sizeof(name);
+        res = RegQueryValueExW(zone_key, L"DisplayName", 0, NULL, (BYTE*)name, &size);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"DisplayName", 0, REG_SZ, (BYTE*)L"Foobar", sizeof(L"Foobar"));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        size = sizeof(desc);
+        res = RegQueryValueExW(zone_key, L"Description", 0, NULL, (BYTE*)desc, &size);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"Description", 0, REG_SZ, (BYTE*)L"Foobar", sizeof(L"Foobar"));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
         memset(buffer, -1, sizeof(buffer));
         hr = IInternetZoneManager_GetZoneAttributes(zonemgr, i, pZA);
-        ok(hr == S_OK, "#%ld: got 0x%lx (expected S_OK)\n", i, hr);
+        ok(hr == S_OK, "got 0x%lx (expected S_OK)\n", res);
+
+        ok(wcscmp(pZA->szDisplayName, L"Foobar"), "got \"Foobar\", expected localized name\n");
+        ok(wcscmp(pZA->szDescription, L"Foobar"), "got \"Foobar\", expected localized description\n");
+
+        res = RegSetValueExW(zone_key, L"DisplayName", 0, REG_SZ, (BYTE*)name, (wcslen(name) + 1) * sizeof(WCHAR));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"Description", 0, REG_SZ, (BYTE*)desc, (wcslen(desc) + 1) * sizeof(WCHAR));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        RegCloseKey(zone_key);
+
+        winetest_pop_context();
     }
 
     /* IE8 no longer set cbSize */

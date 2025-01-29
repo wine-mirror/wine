@@ -166,16 +166,16 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine, HTML'yi gömülü kullanan uygulamaların düzgün çalışması için gerekli "
 "olan Gecko paketini bulamadı. Wine, paketi sizin için otomatik indirip "
 "yükleyebilir.\n"
 "\n"
 "Not: kendi dağıtımınızın paketlerini kullanmanız önerilir. Ayrıntılar için "
-"<a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> adresini ziyaret edin."
+"<a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> adresini ziyaret edin."
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 msgid "&Install"
@@ -10190,7 +10190,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Masaüstü"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Bilgisayarım"
 
@@ -12481,6 +12482,55 @@ msgstr "(%d) Kur"
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
 msgstr "Kur"
+
+#: dlls/urlmon/urlmon.rc:58
+#, fuzzy
+#| msgid "Local Port"
+msgid "Local intranet"
+msgstr "Yerel Bağlantı Noktası"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "Güvenilir Dağıtıcılar"
+
+#: dlls/urlmon/urlmon.rc:62
+#, fuzzy
+#| msgid "Ethernet"
+msgid "Internet"
+msgstr "Ethernet"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+#, fuzzy
+#| msgid "My Computer"
+msgid "Your computer"
+msgstr "Bilgisayarım"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -19129,8 +19179,9 @@ msgid ""
 "Database</a> for tips about running this application."
 msgstr ""
 "Bu durum, programdaki veya Wine'deki bir sorundan dolayı olabilir. Bu "
-"uygulamayı çalıştırma hakkında ipuçları için <a href=\"https://appdb.winehq."
-"org\">Uygulama Veritabanı</a> sayfasını kontrol etmek isteyebilirsiniz."
+"uygulamayı çalıştırma hakkında ipuçları için <a href=\"https://"
+"appdb.winehq.org\">Uygulama Veritabanı</a> sayfasını kontrol etmek "
+"isteyebilirsiniz."
 
 #: programs/winedbg/winedbg.rc:62
 msgid "Show &Details"

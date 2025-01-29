@@ -166,8 +166,8 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine n'a pu trouver de paquet Gecko, qui est nécessaire pour que les "
 "applications incorporant du HTML puissent fonctionner correctement. Wine "
@@ -10261,7 +10261,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Bureau"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Poste de travail"
 
@@ -13001,6 +13002,55 @@ msgstr "Installer (%d)"
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
 msgstr "Installer"
+
+#: dlls/urlmon/urlmon.rc:58
+#, fuzzy
+#| msgid "Local Port"
+msgid "Local intranet"
+msgstr "Port local"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "Éditeurs de confiance"
+
+#: dlls/urlmon/urlmon.rc:62
+#, fuzzy
+#| msgid "Ethernet"
+msgid "Internet"
+msgstr "Ethernet"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+#, fuzzy
+#| msgid "My Computer"
+msgid "Your computer"
+msgstr "Poste de travail"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -19827,9 +19877,9 @@ msgid ""
 msgstr ""
 "Si ce problème ne se produit pas sous Windows et n'a pas déjà été rapporté, "
 "vous pouvez enregistrer les informations détaillées dans un fichier en "
-"utilisant le bouton « Enregistrer sous », et ensuite  <a href=\"https://wiki."
-"winehq.org/Bugs\">soumettre un rapport d'anomalie</a> en y attachant ledit "
-"fichier."
+"utilisant le bouton « Enregistrer sous », et ensuite  <a href=\"https://"
+"wiki.winehq.org/Bugs\">soumettre un rapport d'anomalie</a> en y attachant "
+"ledit fichier."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

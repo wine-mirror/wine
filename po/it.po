@@ -177,16 +177,16 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine non ha trovato un pacchetto Gecko, necessario ad applicazioni che "
 "incorporano HTML per funzionare correttamente. Wine lo può scaricare e "
 "installare automaticamente per te.\n"
 "\n"
 "Nota: è raccomandato usare i pacchetti delle distribuzioni. Leggi <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> per i dettagli."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> per i dettagli."
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 msgid "&Install"
@@ -265,8 +265,8 @@ msgstr ""
 "installare automaticamente per te.\n"
 "\n"
 "Nota: è raccomandato usare i pacchetti delle distribuzioni. Leggi <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> per i dettagli."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> per i dettagli."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -10795,7 +10795,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Scrivania"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Risorse del computer"
 
@@ -13618,6 +13619,55 @@ msgstr "&Installa"
 #| msgid "&Install"
 msgid "Install"
 msgstr "&Installa"
+
+#: dlls/urlmon/urlmon.rc:58
+#, fuzzy
+#| msgid "Local Port"
+msgid "Local intranet"
+msgstr "Porta locale"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "Editori fidati"
+
+#: dlls/urlmon/urlmon.rc:62
+#, fuzzy
+#| msgid "Ethernet"
+msgid "Internet"
+msgstr "Ethernet"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+#, fuzzy
+#| msgid "My Computer"
+msgid "Your computer"
+msgstr "Risorse del computer"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -20283,8 +20333,9 @@ msgid ""
 "Database</a> for tips about running this application."
 msgstr ""
 "Ciò può essere causato da un problema nel programma o da una mancanza di "
-"Wine. Potresti voler consultare il <a href=\"https://appdb.winehq."
-"org\">Database delle applicazioni</a> per consigli su questa applicazione."
+"Wine. Potresti voler consultare il <a href=\"https://"
+"appdb.winehq.org\">Database delle applicazioni</a> per consigli su questa "
+"applicazione."
 
 #: programs/winedbg/winedbg.rc:62
 msgid "Show &Details"

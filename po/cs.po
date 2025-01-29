@@ -171,8 +171,8 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine se nepodařilo najít balíček Gecko potřebný pro správnou funkčnost "
 "aplikací využívajících HTML. Wine ho pro Vás může automaticky stáhnout a "
@@ -243,8 +243,9 @@ msgid ""
 "href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono\">https://"
 "gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a> for details."
 msgstr ""
-"Wine se nepodařilo najít balíček wine-mono potřebný pro správnou funkčnost ."
-"NET aplikací. Wine ho pro Vás může automaticky stáhnout a nainstalovat.\n"
+"Wine se nepodařilo najít balíček wine-mono potřebný pro správnou "
+"funkčnost .NET aplikací. Wine ho pro Vás může automaticky stáhnout a "
+"nainstalovat.\n"
 "\n"
 "Poznámka: Je doporučeno využít namísto toho balíček Vaší distribuce. Pro "
 "více detailů čtěte <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
@@ -10529,7 +10530,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Plocha"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Tento počítač"
 
@@ -13341,6 +13343,55 @@ msgstr "Nainstalovat (%d)"
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
 msgstr "Nainstalovat"
+
+#: dlls/urlmon/urlmon.rc:58
+#, fuzzy
+#| msgid "Local Port"
+msgid "Local intranet"
+msgstr "Místní port"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "Důvěryhodní vydavatelé"
+
+#: dlls/urlmon/urlmon.rc:62
+#, fuzzy
+#| msgid "Ethernet"
+msgid "Internet"
+msgstr "Ethernet"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+#, fuzzy
+#| msgid "My Computer"
+msgid "Your computer"
+msgstr "Tento počítač"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138

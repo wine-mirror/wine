@@ -165,8 +165,8 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://gitlab."
-"winehq.org/wine/wine/-/wikis/Gecko</a> for details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Gecko パッケージを見つけられませんでした。このパッケージは HTML を組み込んだ"
 "アプリケーションが正しく動作するために必要です。Wine で当該パッケージを自動的"
@@ -10158,7 +10158,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "デスクトップ"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "マイ コンピューター"
 
@@ -12451,6 +12452,55 @@ msgstr "インストール (%d)"
 #: dlls/urlmon/urlmon.rc:53
 msgid "Install"
 msgstr "インストール"
+
+#: dlls/urlmon/urlmon.rc:58
+#, fuzzy
+#| msgid "Local Port"
+msgid "Local intranet"
+msgstr "ローカル ポート"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "信頼された発行元"
+
+#: dlls/urlmon/urlmon.rc:62
+#, fuzzy
+#| msgid "Ethernet"
+msgid "Internet"
+msgstr "イーサネット"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+#, fuzzy
+#| msgid "My Computer"
+msgid "Your computer"
+msgstr "マイ コンピューター"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -18994,8 +19044,9 @@ msgid ""
 "Bugs\">file a bug report</a> and attach that file to the report."
 msgstr ""
 "この問題が Windows 上で発生することがなくまだ報告されていない場合は、[保存す"
-"る]ボタンを利用して詳細情報を保存した上で、 <a href=\"https://wiki.winehq."
-"org/Bugs\">バグ レポートを作成</a>し、そのファイルをレポートに添付できます。"
+"る]ボタンを利用して詳細情報を保存した上で、 <a href=\"https://"
+"wiki.winehq.org/Bugs\">バグ レポートを作成</a>し、そのファイルをレポートに添"
+"付できます。"
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""
