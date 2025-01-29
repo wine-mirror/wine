@@ -111,15 +111,6 @@ HWND WINAPI GetCapture(void)
 }
 
 
-/*****************************************************************
- *		SetCaretPos (USER32.@)
- */
-BOOL WINAPI SetCaretPos( int x, int y )
-{
-    return NtUserSetCaretPos( x, y );
-}
-
-
 /***********************************************************************
  *		GetInputState   (USER32.@)
  */

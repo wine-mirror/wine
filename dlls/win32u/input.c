@@ -2413,10 +2413,10 @@ BOOL set_ime_composition_rect( HWND hwnd, RECT rect )
     return user_driver->pSetIMECompositionRect( NtUserGetAncestor( hwnd, GA_ROOT ), rect );
 }
 
-/*******************************************************************
- *              set_caret_pos
+/*****************************************************************
+ *           NtUserSetCaretPos  (win32u.@)
  */
-BOOL set_caret_pos( int x, int y )
+BOOL WINAPI NtUserSetCaretPos( INT x, INT y )
 {
     int old_state = 0;
     int hidden = 0;

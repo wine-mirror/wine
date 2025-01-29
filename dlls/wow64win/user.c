@@ -4137,6 +4137,14 @@ NTSTATUS WINAPI wow64_NtUserSetCaretBlinkTime( UINT *args )
     return NtUserSetCaretBlinkTime( time );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetCaretPos( UINT *args )
+{
+    INT x = get_ulong( &args );
+    INT y = get_ulong( &args );
+
+    return NtUserSetCaretPos( x, y );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetClassLong( UINT *args )
 {
     HWND hwnd = get_handle( &args );

@@ -931,6 +931,7 @@ W32KAPI UINT     WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size );
 W32KAPI HWND     WINAPI NtUserSetActiveWindow( HWND hwnd );
 W32KAPI HWND     WINAPI NtUserSetCapture( HWND hwnd );
 W32KAPI BOOL     WINAPI NtUserSetCaretBlinkTime( unsigned int time );
+W32KAPI BOOL     WINAPI NtUserSetCaretPos( INT x, INT y );
 W32KAPI DWORD    WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
 W32KAPI ULONG_PTR WINAPI NtUserSetClassLongPtr( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
 W32KAPI WORD    WINAPI NtUserSetClassWord( HWND hwnd, INT offset, WORD newval );
@@ -1184,7 +1185,6 @@ enum
     NtUserCallTwoParam_GetMonitorInfo,
     NtUserCallTwoParam_GetSystemMetricsForDpi,
     NtUserCallTwoParam_MonitorFromRect,
-    NtUserCallTwoParam_SetCaretPos,
     NtUserCallTwoParam_SetIconParam,
     NtUserCallTwoParam_SetIMECompositionRect,
     NtUserCallTwoParam_UnhookWindowsHook,
@@ -1220,11 +1220,6 @@ static inline HMONITOR NtUserMonitorFromRect( const RECT *rect, DWORD flags )
 {
     ULONG ret = NtUserCallTwoParam( (LONG_PTR)rect, flags, NtUserCallTwoParam_MonitorFromRect );
     return UlongToHandle( ret );
-}
-
-static inline BOOL NtUserSetCaretPos( int x, int y )
-{
-    return NtUserCallTwoParam( x, y, NtUserCallTwoParam_SetCaretPos );
 }
 
 struct free_icon_params

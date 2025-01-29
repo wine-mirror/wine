@@ -1804,7 +1804,7 @@ static void EDIT_SetCaretPos(EDITSTATE *es, INT pos,
 	{
 		res = EDIT_EM_PosFromChar(es, pos, after_wrap);
 		TRACE("%d - %dx%d\n", pos, (short)LOWORD(res), (short)HIWORD(res));
-		SetCaretPos((short)LOWORD(res), (short)HIWORD(res));
+		NtUserSetCaretPos((short)LOWORD(res), (short)HIWORD(res));
 		EDIT_UpdateImmCompositionWindow(es, (short)LOWORD(res), (short)HIWORD(res));
 	}
 }

@@ -224,11 +224,11 @@ void WINAPI USER_ScrollBarDraw( HWND hwnd, HDC hdc, INT nBar, enum SCROLL_HITTES
     {
         if (!vertical)
         {
-            SetCaretPos(thumbPos + 1, rect->top + 1);
+            NtUserSetCaretPos(thumbPos + 1, rect->top + 1);
         }
         else
         {
-            SetCaretPos(rect->top + 1, thumbPos + 1);
+            NtUserSetCaretPos(rect->top + 1, thumbPos + 1);
         }
     }
 }

@@ -1319,12 +1319,12 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             if (!vertical)
             {
                 NtUserCreateCaret( hwnd, (HBITMAP)1, thumb_size - 2, rect.bottom - rect.top - 2 );
-                set_caret_pos( thumb_pos + 1, rect.top + 1 );
+                NtUserSetCaretPos( thumb_pos + 1, rect.top + 1 );
             }
             else
             {
                 NtUserCreateCaret( hwnd, (HBITMAP)1, rect.right - rect.left - 2, thumb_size - 2 );
-                set_caret_pos( rect.top + 1, thumb_pos + 1 );
+                NtUserSetCaretPos( rect.top + 1, thumb_pos + 1 );
             }
             NtUserShowCaret( hwnd );
         }

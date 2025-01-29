@@ -2035,6 +2035,11 @@ BOOL SYSCALL_API NtUserSetCaretBlinkTime( unsigned int time )
     SYSCALL_FUNC( NtUserSetCaretBlinkTime );
 }
 
+BOOL SYSCALL_API NtUserSetCaretPos( INT x, INT y )
+{
+    SYSCALL_FUNC( NtUserSetCaretPos );
+}
+
 DWORD SYSCALL_API NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserSetClassLong );
