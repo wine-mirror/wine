@@ -35,15 +35,6 @@ HMODULE user32_module = 0;
 extern void WDML_NotifyThreadDetach(void);
 
 
-/***********************************************************************
- *             UserRealizePalette (USER32.@)
- */
-UINT WINAPI UserRealizePalette( HDC hdc )
-{
-    return NtUserRealizePalette( hdc );
-}
-
-
 static NTSTATUS WINAPI User32CopyImage( void *args, ULONG size )
 {
     const struct copy_image_params *params = args;

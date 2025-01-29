@@ -542,9 +542,9 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
 
 
 /***********************************************************************
- *           realize_palette
+ *           NtUserRealizePalette    (win32u.@)
  */
-UINT realize_palette( HDC hdc )
+UINT WINAPI NtUserRealizePalette( HDC hdc )
 {
     BOOL is_primary = FALSE;
     UINT realized = 0;

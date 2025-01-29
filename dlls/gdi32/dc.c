@@ -2389,15 +2389,10 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
     return NtGdiScaleWindowExtEx( hdc, x_num, x_denom, y_num, y_denom, size );
 }
 
-static UINT WINAPI realize_palette( HDC hdc )
-{
-    return NtUserRealizePalette( hdc );
-}
-
 /* Pointers to USER implementation of SelectPalette/RealizePalette */
 /* they will be patched by USER on startup */
 HPALETTE (WINAPI *pfnSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkgnd ) = NtUserSelectPalette;
-UINT (WINAPI *pfnRealizePalette)( HDC hdc ) = realize_palette;
+UINT (WINAPI *pfnRealizePalette)( HDC hdc ) = NtUserRealizePalette;
 
 /***********************************************************************
  *           SelectPalette    (GDI32.@)

@@ -1935,6 +1935,11 @@ HWND SYSCALL_API NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y )
     SYSCALL_FUNC( NtUserRealChildWindowFromPoint );
 }
 
+UINT SYSCALL_API NtUserRealizePalette( HDC hdc )
+{
+    SYSCALL_FUNC( NtUserRealizePalette );
+}
+
 BOOL SYSCALL_API NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 {
     SYSCALL_FUNC( NtUserRedrawWindow );

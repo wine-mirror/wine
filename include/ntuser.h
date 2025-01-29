@@ -907,6 +907,7 @@ W32KAPI LONG    WINAPI NtUserQueryDisplayConfig( UINT32 flags, UINT32 *paths_cou
 W32KAPI UINT_PTR WINAPI NtUserQueryInputContext( HIMC handle, UINT attr );
 W32KAPI HANDLE  WINAPI NtUserQueryWindow( HWND hwnd, WINDOWINFOCLASS cls );
 W32KAPI HWND    WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y );
+W32KAPI UINT    WINAPI NtUserRealizePalette( HDC hdc );
 W32KAPI BOOL    WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
 W32KAPI ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *name, UNICODE_STRING *version,
                                                  struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
@@ -1068,7 +1069,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_ReplyMessage,
     NtUserCallOneParam_SetCaretBlinkTime,
     NtUserCallOneParam_SetProcessDefaultLayout,
@@ -1157,11 +1157,6 @@ static inline HPEN NtUserGetSysColorPen( INT index )
 static inline INT NtUserGetSystemMetrics( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
-}
-
-static inline UINT NtUserRealizePalette( HDC hdc )
-{
-    return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_RealizePalette );
 }
 
 static inline BOOL NtUserReplyMessage( LRESULT result )

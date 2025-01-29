@@ -1251,7 +1251,7 @@
 @ stdcall -syscall NtUserRealChildWindowFromPoint(long long long)
 @ stub NtUserRealInternalGetMessage
 @ stub NtUserRealWaitMessageEx
-@ stub NtUserRealizePalette
+@ stdcall -syscall NtUserRealizePalette(long)
 @ stub NtUserReassociateQueueEventCompletionPacket
 @ stub NtUserRedrawFrame
 @ stub NtUserRedrawFrameAndHook

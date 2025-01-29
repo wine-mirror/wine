@@ -3917,6 +3917,13 @@ NTSTATUS WINAPI wow64_NtUserQueryWindow( UINT *args )
     return HandleToUlong( NtUserQueryWindow( hwnd, cls ));
 }
 
+NTSTATUS WINAPI wow64_NtUserRealizePalette( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+
+    return NtUserRealizePalette( hdc );
+}
+
 NTSTATUS WINAPI wow64_NtUserRedrawWindow( UINT *args )
 {
     HWND hwnd = get_handle( &args );

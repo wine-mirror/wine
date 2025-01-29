@@ -411,7 +411,6 @@ extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 extern HPALETTE PALETTE_Init(void);
 extern UINT get_palette_entries( HPALETTE hpalette, UINT start, UINT count,
                                  PALETTEENTRY *entries );
-extern UINT realize_palette( HDC hdc );
 
 /* pen.c */
 extern HPEN create_pen( INT style, INT width, COLORREF color );

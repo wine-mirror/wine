@@ -7010,9 +7010,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetSysColor:
         return get_sys_color( arg );
 
-    case NtUserCallOneParam_RealizePalette:
-        return realize_palette( UlongToHandle(arg) );
-
     case NtUserCallOneParam_GetPrimaryMonitorRect:
         *(RECT *)arg = get_primary_monitor_rect( 0 );
         return 1;

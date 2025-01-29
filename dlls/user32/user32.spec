@@ -1197,7 +1197,7 @@
 @ stdcall UserHandleGrantAccess(ptr ptr long)
 # @ stub UserLpkPSMTextOut
 # @ stub UserLpkTabbedTextOut
-@ stdcall UserRealizePalette(long)
+@ stdcall UserRealizePalette(long) NtUserRealizePalette
 @ stdcall UserRegisterWowHandlers(ptr ptr)
 @ stdcall UserSignalProc(long long long long)
 # @ stub VRipOutput
