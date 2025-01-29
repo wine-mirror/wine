@@ -5786,46 +5786,6 @@ void get_pointsize_minmax(const struct wined3d_context *context, const struct wi
     *out_max = max.f;
 }
 
-void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,
-        float *start, float *end)
-{
-    union
-    {
-        DWORD d;
-        float f;
-    } tmpvalue;
-
-    switch (context->fog_source)
-    {
-        case FOGSOURCE_VS:
-            *start = 1.0f;
-            *end = 0.0f;
-            break;
-
-        case FOGSOURCE_FFP:
-            tmpvalue.d = state->render_states[WINED3D_RS_FOGSTART];
-            *start = tmpvalue.f;
-            tmpvalue.d = state->render_states[WINED3D_RS_FOGEND];
-            *end = tmpvalue.f;
-            /* Special handling for fog_start == fog_end. In d3d with vertex
-             * fog, everything is fogged. With table fog, everything with
-             * fog_coord < fog_start is unfogged, and fog_coord > fog_start
-             * is fogged. Windows drivers disagree when fog_coord == fog_start. */
-            if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE && *start == *end)
-            {
-                *start = -INFINITY;
-                *end = 0.0f;
-            }
-            break;
-
-        default:
-            /* This should not happen, context->fog_source is set in wined3d, not the app. */
-            ERR("Unexpected fog coordinate source.\n");
-            *start = 0.0f;
-            *end = 0.0f;
-    }
-}
-
 static BOOL wined3d_get_primary_display(WCHAR *display)
 {
     DISPLAY_DEVICEW display_device;

@@ -69,6 +69,7 @@ struct wined3d_saved_states
     uint32_t rasterizer_state : 1;
     uint32_t position_transformed : 1;
     uint32_t bumpenv_constants : 1;
+    uint32_t fog_constants : 1;
 };
 
 struct stage_state
@@ -327,6 +328,7 @@ void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *
     states->rasterizer_state = 1;
     states->position_transformed = 1;
     states->bumpenv_constants = 1;
+    states->fog_constants = 1;
 
     list_init(&stateblock->changed.changed_lights);
     RB_FOR_EACH_ENTRY(light, lights_tree, struct wined3d_light_info, entry)
@@ -1667,8 +1669,6 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_DIFFUSEMATERIALSOURCE:
         case WINED3D_RS_EMISSIVEMATERIALSOURCE:
         case WINED3D_RS_FOGENABLE:
-        case WINED3D_RS_FOGTABLEMODE:
-        case WINED3D_RS_FOGVERTEXMODE:
         case WINED3D_RS_LIGHTING:
         case WINED3D_RS_LOCALVIEWER:
         case WINED3D_RS_NORMALIZENORMALS:
@@ -1693,6 +1693,19 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_SCISSORTESTENABLE:
         case WINED3D_RS_ANTIALIASEDLINEENABLE:
             stateblock->changed.rasterizer_state = 1;
+            break;
+
+        case WINED3D_RS_FOGCOLOR:
+        case WINED3D_RS_FOGDENSITY:
+        case WINED3D_RS_FOGEND:
+        case WINED3D_RS_FOGSTART:
+            stateblock->changed.fog_constants = 1;
+            break;
+
+        case WINED3D_RS_FOGTABLEMODE:
+        case WINED3D_RS_FOGVERTEXMODE:
+            stateblock->changed.ffp_vs_settings = 1;
+            stateblock->changed.fog_constants = 1;
             break;
 
         default:
@@ -2446,6 +2459,7 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     stateblock->changed.ffp_vs_settings = 1;
     stateblock->changed.ffp_ps_settings = 1;
     stateblock->changed.bumpenv_constants = 1;
+    stateblock->changed.fog_constants = 1;
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3182,6 +3196,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_POINTSCALE_C:
                 case WINED3D_RS_TEXTUREFACTOR:
                 case WINED3D_RS_ALPHAREF:
+                case WINED3D_RS_FOGCOLOR:
+                case WINED3D_RS_FOGDENSITY:
+                case WINED3D_RS_FOGEND:
+                case WINED3D_RS_FOGSTART:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3929,6 +3947,46 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         wined3d_device_context_push_constants(context,
                 WINED3D_PUSH_CONSTANTS_PS_FFP, WINED3D_SHADER_CONST_PS_ALPHA_TEST,
                 offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref), sizeof(f), &f);
+    }
+
+    if (changed->fog_constants || changed->ffp_vs_settings || changed->position_transformed)
+    {
+        bool rhw = state->vertex_declaration && state->vertex_declaration->position_transformed;
+        struct wined3d_ffp_fog_constants fog;
+
+        wined3d_color_from_d3dcolor(&fog.colour, state->rs[WINED3D_RS_FOGCOLOR]);
+        fog.density = int_to_float(state->rs[WINED3D_RS_FOGDENSITY]);
+
+        if (state->rs[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE
+                || (state->rs[WINED3D_RS_FOGVERTEXMODE] != WINED3D_FOG_NONE && !state->vs && !rhw))
+        {
+            float start = int_to_float(state->rs[WINED3D_RS_FOGSTART]);
+            float end = int_to_float(state->rs[WINED3D_RS_FOGEND]);
+
+            if (start == end)
+            {
+                /* With vertex fog, everything is fogged.
+                 * With pixel fog, coordinates < start are unfogged,
+                 * and coordinates > start are fogged.
+                 * Windows drivers disagree when coord == start. */
+                fog.end = 0.0f;
+                fog.scale = 0.0f;
+            }
+            else
+            {
+                fog.end = end;
+                fog.scale = 1.0f / (end - start);
+            }
+        }
+        else
+        {
+            fog.end = 0.0f;
+            fog.scale = -1.0f;
+        }
+
+        wined3d_device_context_push_constants(context,
+                WINED3D_PUSH_CONSTANTS_PS_FFP, WINED3D_SHADER_CONST_PS_FOG,
+                offsetof(struct wined3d_ffp_ps_constants, fog), sizeof(fog), &fog);
     }
 
     if (changed->vertexShader)

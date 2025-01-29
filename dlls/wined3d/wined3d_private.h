@@ -1811,11 +1811,6 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_UNORDERED_ACCESS_VIEW_BINDING(a) ((a) == WINED3D_PIPELINE_GRAPHICS ? \
     STATE_GRAPHICS_UNORDERED_ACCESS_VIEW_BINDING : STATE_COMPUTE_UNORDERED_ACCESS_VIEW_BINDING)
 
-enum fogsource {
-    FOGSOURCE_FFP,
-    FOGSOURCE_VS,
-};
-
 /* Direct3D terminology with little modifications. We do not have an issued
  * state because only the driver knows about it, but we have a created state
  * because D3D allows GetData() on a created query, but OpenGL doesn't. */
@@ -1915,8 +1910,6 @@ struct wined3d_context
 
     DWORD constant_update_mask;
     DWORD numbered_array_mask;
-    enum fogsource fog_source;
-
 
     void *shader_backend_data;
 
@@ -2848,7 +2841,13 @@ struct wined3d_ffp_ps_constants
 
     /* States not used by the HLSL pipeline. */
     float alpha_test_ref;
-    float padding[3]; /* to align to 16 bytes */
+    struct wined3d_ffp_fog_constants
+    {
+        float scale;
+        float end;
+        float density;
+        struct wined3d_color colour;
+    } fog;
 };
 
 /* Float/int/bool constants are bound to VKD3D_SHADER_D3DBC_*_CONSTANT_REGISTER
@@ -4465,8 +4464,6 @@ void get_texture_matrix(const struct wined3d_stateblock_state *state,
         const unsigned int tex, struct wined3d_matrix *mat);
 void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
         float *out_min, float *out_max);
-void get_fog_start_end(const struct wined3d_context *context, const struct wined3d_state *state,
-        float *start, float *end);
 
 struct wined3d_palette
 {

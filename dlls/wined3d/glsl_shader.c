@@ -1682,26 +1682,17 @@ static void shader_glsl_pointsize_uniform(struct wined3d_context_gl *context_gl,
     checkGLcall("glUniform1f");
 }
 
-static void shader_glsl_load_fog_uniform(const struct wined3d_context_gl *context_gl,
+static void shader_glsl_load_fog_uniform(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state, struct glsl_shader_prog_link *prog)
 {
+    const struct wined3d_ffp_ps_constants *constants = wined3d_buffer_load_sysmem(
+            context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP], &context_gl->c);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct wined3d_color color;
-    float start, end, scale;
-    union
-    {
-        DWORD d;
-        float f;
-    } tmpvalue;
 
-    wined3d_color_from_d3dcolor(&color, state->render_states[WINED3D_RS_FOGCOLOR]);
-    GL_EXTCALL(glUniform4fv(prog->ps.fog_color_location, 1, &color.r));
-    tmpvalue.d = state->render_states[WINED3D_RS_FOGDENSITY];
-    GL_EXTCALL(glUniform1f(prog->ps.fog_density_location, tmpvalue.f));
-    get_fog_start_end(&context_gl->c, state, &start, &end);
-    scale = 1.0f / (end - start);
-    GL_EXTCALL(glUniform1f(prog->ps.fog_end_location, end));
-    GL_EXTCALL(glUniform1f(prog->ps.fog_scale_location, scale));
+    GL_EXTCALL(glUniform4fv(prog->ps.fog_color_location, 1, &constants->fog.colour.r));
+    GL_EXTCALL(glUniform1f(prog->ps.fog_density_location, constants->fog.density));
+    GL_EXTCALL(glUniform1f(prog->ps.fog_end_location, constants->fog.end));
+    GL_EXTCALL(glUniform1f(prog->ps.fog_scale_location, constants->fog.scale));
     checkGLcall("fog emulation uniforms");
 }
 
@@ -12083,43 +12074,10 @@ static void glsl_fragment_pipe_shader(struct wined3d_context *context,
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
-static void glsl_fragment_pipe_fogparams(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->constant_update_mask |= WINED3D_SHADER_CONST_PS_FOG;
-}
-
 static void glsl_fragment_pipe_fog(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    BOOL use_vshader = use_vs(state) && !state->shader[WINED3D_SHADER_TYPE_VERTEX]->is_ffp_vs;
-    enum fogsource new_source;
-    DWORD fogstart = state->render_states[WINED3D_RS_FOGSTART];
-    DWORD fogend = state->render_states[WINED3D_RS_FOGEND];
-
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
-
-    if (!state->render_states[WINED3D_RS_FOGENABLE])
-        return;
-
-    if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
-    {
-        if (use_vshader || state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE
-                || context->stream_info.position_transformed)
-            new_source = FOGSOURCE_VS;
-        else
-            new_source = FOGSOURCE_FFP;
-    }
-    else
-    {
-        new_source = FOGSOURCE_FFP;
-    }
-
-    if (new_source != context->fog_source || fogstart == fogend)
-    {
-        context->fog_source = new_source;
-        context->constant_update_mask |= WINED3D_SHADER_CONST_PS_FOG;
-    }
 }
 
 static void glsl_fragment_pipe_vdecl(struct wined3d_context *context,
@@ -12130,9 +12088,6 @@ static void glsl_fragment_pipe_vdecl(struct wined3d_context *context,
     /* Because of settings->texcoords_initialized and args->texcoords_initialized. */
     if (!shader_glsl_full_ffp_varyings(gl_info))
         context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
-
-    if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_FOGENABLE)))
-        glsl_fragment_pipe_fog(context, state, state_id);
 }
 
 static void glsl_fragment_pipe_vs(struct wined3d_context *context,
@@ -12211,12 +12166,8 @@ static const struct wined3d_state_entry_template glsl_fragment_pipe_state_templa
     {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                   {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    state_nop                              }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGENABLE),                        {STATE_RENDER(WINED3D_RS_FOGENABLE),                         glsl_fragment_pipe_fog                 }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),                     {STATE_RENDER(WINED3D_RS_FOGTABLEMODE),                      glsl_fragment_pipe_fog                 }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGSTART),                         {STATE_RENDER(WINED3D_RS_FOGSTART),                          glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGEND),                           {STATE_RENDER(WINED3D_RS_FOGSTART),                          NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                   state_srgbwrite                        }, ARB_FRAMEBUFFER_SRGB},
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGCOLOR),                         {STATE_RENDER(WINED3D_RS_FOGCOLOR),                          glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_FOGDENSITY),                       {STATE_RENDER(WINED3D_RS_FOGDENSITY),                        glsl_fragment_pipe_fogparams           }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 glsl_fragment_pipe_shader              }, ARB_POINT_SPRITE    },
     {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                {STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE),                 glsl_fragment_pipe_shader              }, WINED3D_GL_VERSION_2_0},
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG0),             {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    NULL                                   }, WINED3D_GL_EXT_NONE },
