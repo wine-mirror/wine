@@ -1743,7 +1743,7 @@
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
-@ stub cimag
+@ cdecl cimag(int128) msvcr120.cimag
 @ stub cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr) msvcr120.clearerr

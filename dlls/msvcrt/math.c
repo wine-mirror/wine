@@ -2971,4 +2971,9 @@ double CDECL MSVCR120_creal(_Dcomplex z)
     return z._Val[0];
 }
 
+double CDECL cimag(_Dcomplex z)
+{
+    return z._Val[1];
+}
+
 #endif /* _MSVCR_VER>=120 */

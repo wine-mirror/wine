@@ -2076,7 +2076,7 @@
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
-@ stub cimag
+@ cdecl cimag(int128)
 @ stub cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr)

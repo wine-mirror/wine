@@ -223,6 +223,7 @@ static unsigned short (__cdecl *p_wctype)(const char*);
 static int (__cdecl *p_vsscanf)(const char*, const char *, va_list valist);
 static _Dcomplex (__cdecl *p__Cbuild)(double, double);
 static double (__cdecl *p_creal)(_Dcomplex);
+static double (__cdecl *p_cimag)(_Dcomplex);
 static double (__cdecl *p_nexttoward)(double, double);
 static float (__cdecl *p_nexttowardf)(float, double);
 static double (__cdecl *p_nexttowardl)(double, double);
@@ -333,6 +334,7 @@ static BOOL init(void)
     SET(p_vsscanf, "vsscanf");
     SET(p__Cbuild, "_Cbuild");
     SET(p_creal, "creal");
+    SET(p_cimag, "cimag");
     SET(p_nexttoward, "nexttoward");
     SET(p_nexttowardf, "nexttowardf");
     SET(p_nexttowardl, "nexttowardl");
@@ -1302,6 +1304,8 @@ static void test__Cbuild(void)
     ok(c.i == 2.0, "c.i = %lf\n", c.i);
     d = p_creal(c);
     ok(d == 1.0, "creal returned %lf\n", d);
+    d = p_cimag(c);
+    ok(d == 2.0, "cimag returned %lf\n", d);
 
     c = p__Cbuild(3.0, NAN);
     ok(c.r == 3.0, "c.r = %lf\n", c.r);
@@ -1312,6 +1316,8 @@ static void test__Cbuild(void)
     c = p__Cbuild(NAN, 4.0);
     ok(_isnan(c.r), "c.r = %lf\n", c.r);
     ok(c.i == 4.0, "c.i = %lf\n", c.i);
+    d = p_cimag(c);
+    ok(d == 4.0, "cimag returned %lf\n", d);
 }
 
 static void test_nexttoward(void)
