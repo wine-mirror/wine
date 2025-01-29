@@ -10858,6 +10858,9 @@ static void shader_glsl_update_graphics_program(struct shader_glsl_priv *priv,
         current_vertex_color_clamp = glsl_program->vs.vertex_color_clamp;
         if (glsl_program->shader_controlled_clip_distances)
             wined3d_context_gl_enable_clip_distances(context_gl, glsl_program->clip_distance_mask);
+        else if ((context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_VERTEX))
+                && state->render_states[WINED3D_RS_CLIPPING])
+            wined3d_context_gl_enable_clip_distances(context_gl, state->render_states[WINED3D_RS_CLIPPLANEENABLE]);
     }
     else
     {
