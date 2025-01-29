@@ -7090,6 +7090,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
     }
     else
     {
+        const struct wined3d_format *src_format = src_texture_vk->t.resource.format;
         VkImageCopy region;
 
         region.srcSubresource.aspectMask = vk_src_range.aspectMask;
@@ -7110,8 +7111,28 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         region.extent.height = src_rect->bottom - src_rect->top;
         region.extent.depth = 1;
 
-        VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
-                dst_texture_vk->image.vk_image, dst_layout, 1, &region));
+        if (src_format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+        {
+            region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT;
+            region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_0_BIT;
+            VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
+                    dst_texture_vk->image.vk_image, dst_layout, 1, &region));
+            region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_1_BIT;
+            region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_PLANE_1_BIT;
+            region.srcOffset.x /= src_format->uv_width;
+            region.srcOffset.y /= src_format->uv_height;
+            region.dstOffset.x /= src_format->uv_width;
+            region.dstOffset.y /= src_format->uv_height;
+            region.extent.width /= src_format->uv_width;
+            region.extent.height /= src_format->uv_height;
+            VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
+                    dst_texture_vk->image.vk_image, dst_layout, 1, &region));
+        }
+        else
+        {
+            VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
+                    dst_texture_vk->image.vk_image, dst_layout, 1, &region));
+        }
     }
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
