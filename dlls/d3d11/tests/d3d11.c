@@ -22,6 +22,7 @@
 #include <limits.h>
 #include <math.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
@@ -36404,21 +36405,22 @@ static void test_nv12(void)
     for (test_idx = 0; test_idx < ARRAY_SIZE(tests); ++test_idx)
     {
         /* I need only two uints in the cbuffer, but the size must be a multiple of 16. */
+        ID3D11Texture2D *texture, *texture2, *check_texture, *staging_texture;
+        unsigned int i, j, image_size, broken_warp_pitch;
         D3D11_UNORDERED_ACCESS_VIEW_DESC uav_desc = {0};
         D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc = {0};
         D3D11_SUBRESOURCE_DATA subresource_data = {0};
         D3D11_RENDER_TARGET_VIEW_DESC rtv_desc = {0};
-        ID3D11Texture2D *texture, *check_texture;
         char *content, *content2, *copy_source;
         ID3D11UnorderedAccessView *check_uav;
         ID3D11RenderTargetView *rtv1, *rtv2;
         ID3D11ShaderResourceView *srvs[2];
+        D3D11_MAPPED_SUBRESOURCE map_desc;
         D3D11_TEXTURE2D_DESC desc = {0};
         struct resource_readback rb;
         uint32_t cbuffer_data[4];
         ID3D11Buffer *cbuffer;
         HRESULT expected_hr;
-        unsigned int i, j;
         D3D11_BOX box;
 
         const uint32_t width = tests[test_idx].width;
@@ -36479,6 +36481,9 @@ static void test_nv12(void)
             winetest_pop_context();
             continue;
         }
+
+        hr = ID3D11Device_CreateTexture2D(device, &desc, &subresource_data, &texture2);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
         desc.Height += height / 2;
         desc.Format = DXGI_FORMAT_R8_UINT;
@@ -36564,12 +36569,13 @@ static void test_nv12(void)
             }
         }
 
+        set_box(&box, copy_x, copy_y, 0, copy_x + copy_width, copy_y + copy_height, 1);
+
         /* UpdateSubresource() copies the specified box on the luma plane and also the corresponding
          * box on the chroma plane. It does nothing as soon as any coordinate of the box is not a
          * multiple of 2. AMD seems to have a bug and copies data with the wrong pitch. */
         if (!is_amd_device(device))
         {
-            set_box(&box, copy_x, copy_y, 0, copy_x + copy_width, copy_y + copy_height, 1);
             ID3D11DeviceContext_UpdateSubresource(device_context,
                     (ID3D11Resource *)texture, 0, &box, copy_source, copy_width, 0);
 
@@ -36632,13 +36638,154 @@ static void test_nv12(void)
         check_readback_data_u8_with_buffer(&rb, content, width, 0);
         release_resource_readback(&rb);
 
+        /* Staging upload, GPU blit, and staging download tests. */
+        desc.Height = height;
+        desc.Format = DXGI_FORMAT_NV12;
+        desc.BindFlags = 0;
+        desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+        desc.Usage = D3D11_USAGE_STAGING;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &staging_texture);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
+                D3D11_MAP_WRITE, 0, &map_desc);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        /* Row pitch isn't consistent across drivers. Of the machines tested,
+         * row pitch may be aligned to a multiple of 4 (WARP), 128 (NVidia), or
+         * 256 (AMD).
+         *
+         * In all cases it seems to signify both the pitch of the Y plane, and
+         * the pitch of the U/V plane (which is 2x2 subsampled but has 2 bytes
+         * per sample, so has the same number of content bytes in a row).
+         *
+         * Slice pitch is either the size of the Y plane alone (WARP) or the
+         * size of the entire image (AMD, NVidia).
+         *
+         * Older versions of WARP (Windows 10) also calculate the size of the Y
+         * plane incorrectly, by taking the size of the entire image and
+         * multiplying by 2/3. This ends up being incorrect because said
+         * versions apparently add *vertical* alignment to 4 to only one plane,
+         * so the UV plane is not exactly half the size of the Y plane. */
+        ok(map_desc.RowPitch >= width, "Got row pitch %u.\n", map_desc.RowPitch);
+        image_size = (map_desc.RowPitch * (height * 3 / 2));
+        broken_warp_pitch = (map_desc.RowPitch * height) + (map_desc.RowPitch * ((height + 3) & ~3) / 2);
+        broken_warp_pitch = broken_warp_pitch / 3 * 2;
+        ok(map_desc.DepthPitch == image_size
+                || (is_warp_device(device) && map_desc.DepthPitch == (map_desc.RowPitch * height))
+                || broken(is_warp_device(device) && map_desc.DepthPitch == broken_warp_pitch),
+                "Got row pitch %u, slice pitch %u.\n", map_desc.RowPitch, map_desc.DepthPitch);
+
+        for (i = 0; i < height; ++i)
+        {
+            for (j = 0; j < width; ++j)
+            {
+                unsigned int idx = i * map_desc.RowPitch + j;
+                ((uint8_t *)map_desc.pData)[idx] = (j & 7) << 3 | (i & 7);
+                idx = i * width + j;
+                content2[idx] = (j & 7) << 3 | (i & 7);
+            }
+        }
+
+        for (i = 0; i < height / 2; ++i)
+        {
+            for (j = 0; j < width / 2; ++j)
+            {
+                unsigned int idx = map_desc.RowPitch * (height + i) + j * 2;
+                ((uint8_t *)map_desc.pData)[idx] = 1u << 6 | (j & 7) << 3 | (i & 7);
+                ((uint8_t *)map_desc.pData)[idx + 1] = 1u << 7 | (j & 7) << 3 | (i & 7);
+                idx = width * (height + i) + j * 2;
+                content2[idx] = 1u << 6 | (j & 7) << 3 | (i & 7);
+                content2[idx + 1] = 1u << 7 | (j & 7) << 3 | (i & 7);
+            }
+        }
+
+        ID3D11DeviceContext_Unmap(device_context, (ID3D11Resource *)staging_texture, 0);
+
+        ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture2, (ID3D11Resource *)staging_texture);
+        ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture, (ID3D11Resource *)texture2);
+
+        hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
+                D3D11_MAP_WRITE, 0, &map_desc);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        memset(map_desc.pData, 0xfe, map_desc.RowPitch * height);
+        memset((uint8_t *)map_desc.pData + map_desc.RowPitch * height, 0xdc, map_desc.RowPitch * height / 2);
+
+        /* Similarly CopySubresourceRegion() ignores boxes not aligned to 2. */
+        if (copy_x % 2 == 0 && copy_y % 2 == 0 && copy_width % 2 == 0 && copy_height % 2 == 0)
+        {
+            for (i = copy_y; i < copy_y + copy_height; ++i)
+            {
+                memset(content2 + i * width + copy_x, 0xfe, copy_width);
+                if (i % 2 == 0)
+                    memset(content2 + width * (height + i / 2) + copy_x, 0xdc, copy_width);
+            }
+        }
+
+        ID3D11DeviceContext_Unmap(device_context, (ID3D11Resource *)staging_texture, 0);
+
+        ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)texture2, (ID3D11Resource *)staging_texture);
+        ID3D11DeviceContext_CopySubresourceRegion(device_context, (ID3D11Resource *)texture, 0,
+                copy_x, copy_y, 0, (ID3D11Resource *)texture2, 0, &box);
+
+        ID3D11DeviceContext_ClearUnorderedAccessViewUint(device_context, check_uav, clear_values);
+        ID3D11DeviceContext_CSSetShader(device_context, cs, NULL, 0);
+        ID3D11DeviceContext_CSSetShaderResources(device_context, 0, ARRAY_SIZE(srvs), srvs);
+        ID3D11DeviceContext_CSSetUnorderedAccessViews(device_context, 1, 1, &check_uav, NULL);
+        ID3D11DeviceContext_CSSetConstantBuffers(device_context, 0, 1, &cbuffer);
+        ID3D11DeviceContext_Dispatch(device_context, width, height, 1);
+
+        get_texture_readback(check_texture, 0, &rb);
+        check_readback_data_u8_with_buffer(&rb, content2, width, 0);
+        release_resource_readback(&rb);
+
+        ID3D11DeviceContext_CopyResource(device_context, (ID3D11Resource *)staging_texture, (ID3D11Resource *)texture);
+
+        hr = ID3D11DeviceContext_Map(device_context, (ID3D11Resource *)staging_texture, 0,
+                D3D11_MAP_READ, 0, &map_desc);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        for (i = 0; i < height; ++i)
+        {
+            for (j = 0; j < width; ++j)
+            {
+                uint8_t value = ((uint8_t *)map_desc.pData)[i * map_desc.RowPitch + j];
+                uint8_t expect = content2[i * width + j];
+                ok(value == expect, "Got Y %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+            }
+        }
+
+        for (i = 0; i < height / 2; ++i)
+        {
+            for (j = 0; j < width / 2; ++j)
+            {
+                uint8_t value = ((uint8_t *)map_desc.pData)[map_desc.RowPitch * (height + i) + j * 2];
+                uint8_t expect = content2[width * (height + i) + j * 2];
+                ok(value == expect, "Got U %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+                value = ((uint8_t *)map_desc.pData)[map_desc.RowPitch * (height + i) + j * 2 + 1];
+                expect = content2[width * (height + i) + j * 2 + 1];
+                ok(value == expect, "Got V %02x, expected %02x at (%u, %u).\n", value, expect, i, j);
+                if (value != expect)
+                    goto fail_match;
+            }
+        }
+
+fail_match:
+        ID3D11DeviceContext_Unmap(device_context, (ID3D11Resource *)staging_texture, 0);
+
         ID3D11RenderTargetView_Release(rtv2);
         ID3D11RenderTargetView_Release(rtv1);
         ID3D11Buffer_Release(cbuffer);
         ID3D11UnorderedAccessView_Release(check_uav);
         ID3D11ShaderResourceView_Release(srvs[1]);
         ID3D11ShaderResourceView_Release(srvs[0]);
+        ID3D11Texture2D_Release(staging_texture);
         ID3D11Texture2D_Release(check_texture);
+        ID3D11Texture2D_Release(texture2);
         ID3D11Texture2D_Release(texture);
         free(content);
 
