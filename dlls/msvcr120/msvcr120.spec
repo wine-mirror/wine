@@ -2077,7 +2077,7 @@
 @ stub cexpf
 @ stub cexpl
 @ cdecl cimag(int128)
-@ stub cimagf
+@ cdecl cimagf(int64)
 @ stub cimagl
 @ cdecl clearerr(ptr)
 @ cdecl clearerr_s(ptr)
@@ -2105,7 +2105,7 @@
 @ stub cprojf
 @ stub cprojl
 @ cdecl creal(int128)
-@ stub crealf
+@ cdecl crealf(int64)
 @ stub creall
 @ stub csin
 @ stub csinf

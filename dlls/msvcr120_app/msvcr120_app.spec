@@ -1744,7 +1744,7 @@
 @ stub cexpf
 @ stub cexpl
 @ cdecl cimag(int128) msvcr120.cimag
-@ stub cimagf
+@ cdecl cimagf(int64) msvcr120.cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr) msvcr120.clearerr
 @ cdecl clearerr_s(ptr) msvcr120.clearerr_s
@@ -1772,7 +1772,7 @@
 @ stub cprojf
 @ stub cprojl
 @ cdecl creal(int128) msvcr120.creal
-@ stub crealf
+@ cdecl crealf(int64) msvcr120.crealf
 @ stub creall
 @ stub csin
 @ stub csinf

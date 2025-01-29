@@ -3001,4 +3001,14 @@ ULONGLONG CDECL _FCbuild(float r, float i)
 }
 #endif
 
+float CDECL crealf(_Fcomplex z)
+{
+    return z._Val[0];
+}
+
+float CDECL cimagf(_Fcomplex z)
+{
+    return z._Val[1];
+}
+
 #endif /* _MSVCR_VER>=120 */
