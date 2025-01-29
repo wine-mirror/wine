@@ -950,6 +950,7 @@ W32KAPI BOOL    WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id );
 W32KAPI BOOL    WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos );
 W32KAPI BOOL    WINAPI NtUserSetObjectInformation( HANDLE handle, INT index, void *info, DWORD len );
 W32KAPI HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
+W32KAPI BOOL    WINAPI NtUserSetProcessDefaultLayout( ULONG layout );
 W32KAPI BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 W32KAPI BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 W32KAPI BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
@@ -1072,7 +1073,6 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
-    NtUserCallOneParam_SetProcessDefaultLayout,
     NtUserCallOneParam_SetKeyboardAutoRepeat,
     NtUserCallOneParam_SetThreadDpiAwarenessContext,
     NtUserCallOneParam_D3DKMTOpenAdapterFromGdiDisplayName,
@@ -1153,11 +1153,6 @@ static inline HPEN NtUserGetSysColorPen( INT index )
 static inline INT NtUserGetSystemMetrics( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
-}
-
-static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
-{
-    return NtUserCallOneParam( layout, NtUserCallOneParam_SetProcessDefaultLayout );
 }
 
 static inline UINT NtUserSetThreadDpiAwarenessContext( UINT context )

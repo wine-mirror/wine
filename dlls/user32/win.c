@@ -1585,17 +1585,6 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
 }
 
 
-/******************************************************************************
- *                    SetProcessDefaultLayout [USER32.@]
- *
- * Sets the default layout for parentless windows.
- */
-BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
-{
-    return NtUserSetProcessDefaultLayout( layout );
-}
-
-
 /***********************************************************************
  *           UpdateWindow (USER32.@)
  */

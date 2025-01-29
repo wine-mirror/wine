@@ -4359,6 +4359,13 @@ NTSTATUS WINAPI wow64_NtUserSetParent( UINT *args )
     return HandleToUlong( NtUserSetParent( hwnd, parent ));
 }
 
+NTSTATUS WINAPI wow64_NtUserSetProcessDefaultLayout( UINT *args )
+{
+    UINT layout = get_ulong( &args );
+
+    return NtUserSetProcessDefaultLayout( layout );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetProcessDpiAwarenessContext( UINT *args )
 {
     ULONG awareness = get_ulong( &args );

@@ -2126,6 +2126,11 @@ HWND SYSCALL_API NtUserSetParent( HWND hwnd, HWND parent )
     SYSCALL_FUNC( NtUserSetParent );
 }
 
+BOOL SYSCALL_API NtUserSetProcessDefaultLayout( ULONG layout )
+{
+    SYSCALL_FUNC( NtUserSetProcessDefaultLayout );
+}
+
 BOOL SYSCALL_API NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown )
 {
     SYSCALL_FUNC( NtUserSetProcessDpiAwarenessContext );

@@ -6883,6 +6883,15 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
 }
 
 /***********************************************************************
+ *	     NtUserSetProcessDefaultLayout    (win32u.@)
+ */
+BOOL WINAPI NtUserSetProcessDefaultLayout( ULONG layout )
+{
+    process_layout = layout;
+    return TRUE;
+}
+
+/***********************************************************************
  *	     NtUserMessageBeep    (win32u.@)
  */
 BOOL WINAPI NtUserMessageBeep( UINT type )
@@ -7022,10 +7031,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
-
-    case NtUserCallOneParam_SetProcessDefaultLayout:
-        process_layout = arg;
-        return TRUE;
 
     case NtUserCallOneParam_SetKeyboardAutoRepeat:
         return set_keyboard_auto_repeat( arg );

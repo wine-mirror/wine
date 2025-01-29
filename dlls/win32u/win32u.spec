@@ -1397,7 +1397,7 @@
 @ stdcall -syscall NtUserSetObjectInformation(long long ptr long)
 @ stdcall -syscall NtUserSetParent(long long)
 @ stub NtUserSetPrecisionTouchPadConfiguration
-@ stub NtUserSetProcessDefaultLayout
+@ stdcall -syscall NtUserSetProcessDefaultLayout(long)
 @ stdcall -syscall NtUserSetProcessDpiAwarenessContext(long long)
 @ stub NtUserSetProcessInteractionFlags
 @ stub NtUserSetProcessLaunchForegroundPolicy

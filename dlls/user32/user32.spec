@@ -1071,7 +1071,7 @@
 @ stdcall SetPhysicalCursorPos(long long)
 # @ stub SetPointerDeviceInputSpace
 @ stdcall SetProcessDPIAware()
-@ stdcall SetProcessDefaultLayout(long)
+@ stdcall SetProcessDefaultLayout(long) NtUserSetProcessDefaultLayout
 @ stdcall SetProcessDpiAwarenessContext(long)
 @ stdcall SetProcessDpiAwarenessInternal(long)
 # @ stub SetProcessLaunchForegroundPolicy
