@@ -332,15 +332,20 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
 
     for (i = 0;; i++)
     {
-        BYTE magic[4] = {0}, last_status = 0;
+        BYTE magic[4], last_status = 0;
         DWORD length_be;
         ULONG length;
         ULONG read = 0;
         struct midi_event event = {0};
 
         TRACE("Start parsing track %u\n", i);
-        if ((hr = IStream_Read(parser->stream, magic, sizeof(magic), &read)) != S_OK) break;
-        if (read < sizeof(magic)) break;
+        hr = IStream_Read(parser->stream, magic, sizeof(magic), &read);
+        if (read < sizeof(magic))
+        {
+            if (hr == E_FAIL) hr = S_OK;
+            break;
+        }
+        if (FAILED(hr)) break;
         if (memcmp(magic, "MTrk", 4) != 0) break;
 
         if ((hr = IStream_Read(parser->stream, &length_be, sizeof(length_be), &read)) != S_OK)
