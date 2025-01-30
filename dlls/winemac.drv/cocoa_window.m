@@ -3618,7 +3618,9 @@ void macdrv_set_window_alpha(macdrv_window w, CGFloat alpha)
 {
     WineWindow* window = (WineWindow*)w;
 
-    [window setAlphaValue:alpha];
+    OnMainThread(^{
+        [window setAlphaValue:alpha];
+    });
 }
 }
 
