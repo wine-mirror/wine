@@ -219,6 +219,39 @@ static void check_attributes_(const char *file, int line, IMFAttributes *attribu
     }
 }
 
+#define check_platform_lock_count(a) check_platform_lock_count_(__LINE__, a)
+static void check_platform_lock_count_(unsigned int line, unsigned int expected)
+{
+    int i, count = 0;
+    BOOL unexpected;
+    DWORD queue;
+    HRESULT hr;
+
+    for (;;)
+    {
+        if (FAILED(hr = MFAllocateWorkQueue(&queue)))
+        {
+            unexpected = hr != MF_E_SHUTDOWN;
+            break;
+        }
+        MFUnlockWorkQueue(queue);
+
+        hr = MFUnlockPlatform();
+        if ((unexpected = FAILED(hr)))
+            break;
+
+        ++count;
+    }
+
+    for (i = 0; i < count; ++i)
+        MFLockPlatform();
+
+    if (unexpected)
+        count = -1;
+
+    ok_(__FILE__, line)(count == expected, "Unexpected lock count %d.\n", count);
+}
+
 struct d3d9_surface_readback
 {
     IDirect3DSurface9 *surface, *readback_surface;
@@ -3834,10 +3867,7 @@ static void test_startup(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
-    hr = MFAllocateWorkQueue(&queue);
-    ok(hr == S_OK, "Failed to allocate a queue, hr %#lx.\n", hr);
-    hr = MFUnlockWorkQueue(queue);
-    ok(hr == S_OK, "Failed to unlock the queue, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -3852,10 +3882,7 @@ static void test_startup(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
-    hr = MFAllocateWorkQueue(&queue);
-    ok(hr == S_OK, "Failed to allocate a queue, hr %#lx.\n", hr);
-    hr = MFUnlockWorkQueue(queue);
-    ok(hr == S_OK, "Failed to unlock the queue, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -3864,10 +3891,7 @@ static void test_startup(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
-    hr = MFAllocateWorkQueue(&queue);
-    ok(hr == S_OK, "Failed to allocate a queue, hr %#lx.\n", hr);
-    hr = MFUnlockWorkQueue(queue);
-    ok(hr == S_OK, "Failed to unlock the queue, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
 
     /* Unlocking implies shutdown. */
     hr = MFUnlockPlatform();
@@ -3879,10 +3903,7 @@ static void test_startup(void)
     hr = MFLockPlatform();
     ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
 
-    hr = MFAllocateWorkQueue(&queue);
-    ok(hr == S_OK, "Failed to allocate a queue, hr %#lx.\n", hr);
-    hr = MFUnlockWorkQueue(queue);
-    ok(hr == S_OK, "Failed to unlock the queue, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
