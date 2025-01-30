@@ -3783,16 +3783,16 @@ void macdrv_set_view_superview(macdrv_view v, macdrv_view s, macdrv_window w, ma
 {
 @autoreleasepool
 {
-    WineContentView* view = (WineContentView*)v;
-    WineContentView* superview = (WineContentView*)s;
-    WineWindow* window = (WineWindow*)w;
-    WineContentView* prev = (WineContentView*)p;
-    WineContentView* next = (WineContentView*)n;
-
-    if (!superview)
-        superview = [window contentView];
-
     OnMainThreadAsync(^{
+        WineContentView* view = (WineContentView*)v;
+        WineContentView* superview = (WineContentView*)s;
+        WineWindow* window = (WineWindow*)w;
+        WineContentView* prev = (WineContentView*)p;
+        WineContentView* next = (WineContentView*)n;
+
+        if (!superview)
+            superview = [window contentView];
+
         if (superview == [view superview])
         {
             NSArray* subviews = [superview subviews];
