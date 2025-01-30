@@ -4668,6 +4668,7 @@ static void test_event_queue(void)
     ok(ret == 1 || broken(ret == 2) /* Vista */,
        "Unexpected refcount %ld, expected 1.\n", ret);
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
+    IMFAsyncCallback_Release(&callback2->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
