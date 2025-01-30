@@ -3997,7 +3997,6 @@ void test_startup_counts(void)
     hr = MFLockPlatform();
     ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
     hr = MFAllocateWorkQueue(&queue);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = MFUnlockPlatform();
     ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
@@ -4020,7 +4019,6 @@ void test_startup_counts(void)
     hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
     /* Startup only locks once. */
-    todo_wine
     check_platform_lock_count(1);
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -4071,7 +4069,6 @@ void test_startup_counts(void)
 
     /* Platform is in shutdown state if either the lock count or the startup count is <= 0. */
     hr = MFAllocateWorkQueue(&queue);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     /* Platform can be unlocked after shutdown. */
@@ -4155,11 +4152,9 @@ void test_startup_counts(void)
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 
     hr = MFAllocateWorkQueue(&queue);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = MFCancelWorkItem(key);
-    todo_wine
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 0, &result);
@@ -4169,7 +4164,6 @@ void test_startup_counts(void)
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
 
     /* Shutdown while a scheduled item is pending leaks the internal AsyncResult. */
-    todo_wine
     check_platform_lock_count(2);
 
     hr = MFShutdown();

@@ -298,7 +298,6 @@ static void test_work_queue(void)
     hr = RtwqLockPlatform();
     ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
     hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
-    todo_wine
     ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
     hr = RtwqUnlockPlatform();
     ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
@@ -321,7 +320,6 @@ static void test_work_queue(void)
     hr = RtwqStartup();
     ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
     /* Startup only locks once. */
-    todo_wine
     check_platform_lock_count(1);
     hr = RtwqShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
@@ -372,7 +370,6 @@ static void test_work_queue(void)
 
     /* Platform is in shutdown state if either the lock count or the startup count is <= 0. */
     hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
-    todo_wine
     ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     /* Platform can be unlocked after shutdown. */
@@ -469,7 +466,6 @@ static void test_work_queue(void)
     ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     hr = RtwqCancelWorkItem(key);
-    todo_wine
     ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 0, &callback_result);

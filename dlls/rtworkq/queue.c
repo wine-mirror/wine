@@ -66,6 +66,7 @@ static CRITICAL_SECTION_DEBUG queues_critsect_debug =
 };
 static CRITICAL_SECTION queues_section = { &queues_critsect_debug, -1, 0, 0, 0, 0 };
 
+static LONG startup_count;
 static LONG platform_lock;
 static CO_MTA_USAGE_COOKIE mta_cookie;
 
@@ -960,7 +961,7 @@ static HRESULT alloc_user_queue(const struct queue_desc *desc, DWORD *queue_id)
 
     *queue_id = RTWQ_CALLBACK_QUEUE_UNDEFINED;
 
-    if (platform_lock <= 0)
+    if (startup_count <= 0 || platform_lock <= 0)
         return RTWQ_E_SHUTDOWN;
 
     if (!(queue = calloc(1, sizeof(*queue))))
@@ -1212,8 +1213,9 @@ static void init_system_queues(void)
 
 HRESULT WINAPI RtwqStartup(void)
 {
-    if (InterlockedIncrement(&platform_lock) == 1)
+    if (InterlockedIncrement(&startup_count) == 1)
     {
+        RtwqLockPlatform();
         init_system_queues();
     }
 
@@ -1240,12 +1242,13 @@ static void shutdown_system_queues(void)
 
 HRESULT WINAPI RtwqShutdown(void)
 {
-    if (platform_lock <= 0)
+    if (startup_count <= 0)
         return S_OK;
 
-    if (InterlockedExchangeAdd(&platform_lock, -1) == 1)
+    if (InterlockedExchangeAdd(&startup_count, -1) == 1)
     {
         shutdown_system_queues();
+        RtwqUnlockPlatform();
     }
 
     return S_OK;
