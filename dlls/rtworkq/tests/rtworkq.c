@@ -42,6 +42,39 @@ enum rtwq_callback_queue_id
     RTWQ_CALLBACK_QUEUE_ALL           = 0xffffffff,
 };
 
+#define check_platform_lock_count(a) check_platform_lock_count_(__LINE__, a)
+static void check_platform_lock_count_(unsigned int line, unsigned int expected)
+{
+    int i, count = 0;
+    BOOL unexpected;
+    DWORD queue;
+    HRESULT hr;
+
+    for (;;)
+    {
+        if (FAILED(hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue)))
+        {
+            unexpected = hr != RTWQ_E_SHUTDOWN;
+            break;
+        }
+        RtwqUnlockWorkQueue(queue);
+
+        hr = RtwqUnlockPlatform();
+        if ((unexpected = FAILED(hr)))
+            break;
+
+        ++count;
+    }
+
+    for (i = 0; i < count; ++i)
+        RtwqLockPlatform();
+
+    if (unexpected)
+        count = -1;
+
+    ok_(__FILE__, line)(count == expected, "Unexpected lock count %d.\n", count);
+}
+
 struct test_callback
 {
     IRtwqAsyncCallback IRtwqAsyncCallback_iface;
@@ -253,8 +286,201 @@ static void test_undefined_queue_id(void)
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 }
 
+static void test_work_queue(void)
+{
+    IRtwqAsyncResult *result, *result2, *callback_result;
+    struct test_callback *test_callback;
+    RTWQWORKITEM_KEY key, key2;
+    DWORD res, queue;
+    LONG refcount;
+    HRESULT hr;
+
+    hr = RtwqLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
+    todo_wine
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = RtwqUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+
+    test_callback = create_test_callback();
+
+    /* Create async results without startup. */
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    IRtwqAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result2);
+
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    /* Before startup the platform lock count does not track the maximum AsyncResult count. */
+    check_platform_lock_count(1);
+
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    /* Startup only locks once. */
+    todo_wine
+    check_platform_lock_count(1);
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    /* Platform locked by the AsyncResult object. */
+    check_platform_lock_count(2);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    check_platform_lock_count(3);
+
+    IRtwqAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result2);
+    /* Platform lock count for AsyncResult objects does not decrease
+     * unless the platform is in shutdown state. */
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    /* Platform lock count tracks the maximum AsyncResult count plus one for startup. */
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_STANDARD, 0, result);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
+    ok(res == 0, "got %#lx\n", res);
+    /* TODO: Wine often has a release call pending in another thread at this point. */
+    refcount = IRtwqAsyncResult_Release(result);
+    flaky_wine
+    todo_wine
+    ok(!refcount, "Unexpected refcount %ld.\n", refcount);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = RtwqLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = RtwqLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    todo_wine
+    check_platform_lock_count(5);
+
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    /* Platform is in shutdown state if either the lock count or the startup count is <= 0. */
+    hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
+    todo_wine
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    /* Platform can be unlocked after shutdown. */
+    hr = RtwqUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    /* Platform locks for AsyncResult objects were released on shutdown, but the explicit lock was not. */
+    check_platform_lock_count(2);
+    hr = RtwqUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = RtwqUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    /* Zero lock count. */
+    hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = RtwqUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    /* Negative lock count. */
+    hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = RtwqLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = RtwqLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    check_platform_lock_count(2);
+
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    /* Release an AsyncResult object after shutdown. Platform lock count tracks the AsyncResult
+     * count. It's not possible to show if unlock occurs immedately or on the next startup. */
+    IRtwqAsyncResult_Release(result);
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    check_platform_lock_count(2);
+    /* Release an AsyncResult object after shutdown and startup. */
+    IRtwqAsyncResult_Release(result);
+    todo_wine
+    check_platform_lock_count(2);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqScheduleWorkItem(result, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    check_platform_lock_count(2);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqScheduleWorkItem(result2, -5000, &key2);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    check_platform_lock_count(3);
+
+    hr = RtwqCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+    hr = RtwqCancelWorkItem(key2);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+    IRtwqAsyncResult_Release(result);
+    IRtwqAsyncResult_Release(result2);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqScheduleWorkItem(result, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+    /* Shutdown while a scheduled item is pending leaks the AsyncResult. */
+    refcount = IRtwqAsyncResult_Release(result);
+    ok(refcount == 1, "Unexpected refcount %ld.\n", refcount);
+    IRtwqAsyncResult_Release(result);
+
+    hr = RtwqAllocateWorkQueue(RTWQ_STANDARD_WORKQUEUE, &queue);
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = RtwqCancelWorkItem(key);
+    todo_wine
+    ok(hr == RTWQ_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 0, &callback_result);
+    ok(res == WAIT_TIMEOUT, "got res %#lx\n", res);
+
+    IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
+}
+
 START_TEST(rtworkq)
 {
     test_platform_init();
     test_undefined_queue_id();
+    test_work_queue();
 }
