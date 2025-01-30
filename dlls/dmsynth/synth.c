@@ -469,6 +469,8 @@ static void synth_reset_default_values(struct synth *This)
 
     for (chan = 0; chan < 0x10; chan++)
     {
+        fluid_synth_program_select(This->fluid_synth, chan, fluid_sfont_get_id(This->fluid_sfont), 0, 0);
+
         fluid_synth_cc(This->fluid_synth, chan | 0xe0 /* PITCH_BEND */, 0, 0);
         fluid_synth_cc(This->fluid_synth, chan | 0xd0 /* CHANNEL_PRESSURE */, 0, 0);
 
@@ -1139,6 +1141,7 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
     {
         BYTE status = event->midi[0] & 0xf0, chan = event->midi[0] & 0x0f;
         LONGLONG offset = event->position - position;
+        int sfont_id, bank_num, preset_num;
 
         if (offset >= length) break;
         if (offset > 0)
@@ -1163,9 +1166,17 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
             break;
         case MIDI_CONTROL_CHANGE:
             fluid_synth_cc(This->fluid_synth, chan, event->midi[1], event->midi[2]);
+            if (event->midi[1] == MIDI_CC_BANK_LSB || event->midi[1] == MIDI_CC_BANK_MSB)
+            {
+                int bank_lsb, bank_msb;
+                fluid_synth_get_cc(This->fluid_synth, chan, MIDI_CC_BANK_LSB, &bank_lsb);
+                fluid_synth_get_cc(This->fluid_synth, chan, MIDI_CC_BANK_MSB, &bank_msb);
+                fluid_synth_bank_select(This->fluid_synth, chan, bank_lsb | (bank_msb << 7));
+            }
             break;
         case MIDI_PROGRAM_CHANGE:
-            fluid_synth_program_change(This->fluid_synth, chan, event->midi[1]);
+            fluid_synth_get_program(This->fluid_synth, chan, &sfont_id, &bank_num, &preset_num);
+            fluid_synth_program_select(This->fluid_synth, chan, sfont_id, bank_num, event->midi[1]);
             break;
         case MIDI_PITCH_BEND_CHANGE:
             fluid_synth_pitch_bend(This->fluid_synth, chan, event->midi[1] | (event->midi[2] << 7));
@@ -1505,7 +1516,7 @@ static int synth_preset_get_num(fluid_preset_t *fluid_preset)
     return preset->patch;
 }
 
-static void find_region_no_fallback(struct synth *synth, int bank, int patch, int key, int vel,
+static void find_region_no_fallback(struct synth *synth, int patch, int key, int vel,
         struct instrument **out_instrument, struct region **out_region)
 {
     struct instrument *instrument;
@@ -1516,8 +1527,8 @@ static void find_region_no_fallback(struct synth *synth, int bank, int patch, in
 
     LIST_FOR_EACH_ENTRY(instrument, &synth->instruments, struct instrument, entry)
     {
-        if (bank == 128 && instrument->patch == (0x80000000 | patch)) break;
-        else if (instrument->patch == ((bank << 8) | patch)) break;
+        if (instrument->patch == patch)
+            break;
     }
 
     if (&instrument->entry == &synth->instruments)
@@ -1534,12 +1545,12 @@ static void find_region_no_fallback(struct synth *synth, int bank, int patch, in
     }
 }
 
-static void find_region(struct synth *synth, int bank, int patch, int key, int vel,
+static void find_region(struct synth *synth, int patch, int key, int vel,
         struct instrument **out_instrument, struct region **out_region)
 {
-    find_region_no_fallback(synth, bank, patch, key, vel, out_instrument, out_region);
-    if (!*out_region && bank == 128)
-        find_region_no_fallback(synth, bank, 0, key, vel, out_instrument, out_region);
+    find_region_no_fallback(synth, patch, key, vel, out_instrument, out_region);
+    if (!*out_region && (patch & F_INSTRUMENT_DRUMS))
+        find_region_no_fallback(synth, F_INSTRUMENT_DRUMS, key, vel, out_instrument, out_region);
 
     if (!*out_instrument)
         WARN("Could not find instrument with patch %#x\n", patch);
@@ -1900,12 +1911,19 @@ static int synth_preset_noteon(fluid_preset_t *fluid_preset, fluid_synth_t *flui
     struct region *region;
     struct voice *voice;
     struct wave *wave;
+    UINT patch;
 
     TRACE("(%p, %p, %u, %u, %u)\n", fluid_preset, fluid_synth, chan, key, vel);
 
     EnterCriticalSection(&synth->cs);
 
-    find_region(synth, preset->bank, preset->patch, key, vel, &instrument, &region);
+    patch = preset->patch;
+    patch |= (preset->bank << 8) & 0x007f00;
+    patch |= (preset->bank << 9) & 0x7f0000;
+    if (chan == 9)
+        patch |= F_INSTRUMENT_DRUMS;
+
+    find_region(synth, patch, key, vel, &instrument, &region);
     if (!region)
     {
         LeaveCriticalSection(&synth->cs);

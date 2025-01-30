@@ -1927,7 +1927,7 @@ static void test_instrument_selection(void)
     midi.messages[1] = make_program_change(0, 0, 0);
     midi.messages[2] = default_note_on;
     midi.messages[3] = default_note_off;
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     /* there is no bank fallback on melodic channels */
     memset(&midi, 0, sizeof(midi));
@@ -1937,7 +1937,7 @@ static void test_instrument_selection(void)
     midi.messages[3] = default_note_off;
     envelope = default_volume_envelope;
     envelope.gain = -960.;
-    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, TRUE);
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
 
     /* bank select LSB corresponds to the patch number bits 8..14 */
     download = default_instrument_download;
@@ -1947,7 +1947,7 @@ static void test_instrument_selection(void)
     midi.messages[1] = make_program_change(0, 0, 0);
     midi.messages[2] = default_note_on;
     midi.messages[3] = default_note_off;
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     /* drum channel */
 
@@ -1997,7 +1997,7 @@ static void test_instrument_selection(void)
     midi.messages[2] = make_program_change(0, 9, 0);
     midi.messages[3] = make_note_on(0, 9, 60, 127);
     midi.messages[4] = make_note_off(10000000, 9, 60, 127);
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     /* there is a bank fallback on the drum channel */
     download = default_instrument_download;
@@ -2019,7 +2019,7 @@ static void test_instrument_selection(void)
     midi.messages[2] = make_program_change(0, 9, 0);
     midi.messages[3] = make_note_on(0, 9, 60, 127);
     midi.messages[4] = make_note_off(10000000, 9, 60, 127);
-    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, FALSE);
 
     IDirectMusicSynth_Release(synth);
 }
