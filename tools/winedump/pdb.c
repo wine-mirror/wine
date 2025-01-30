@@ -613,7 +613,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     if (symbols->srcmodule_size && globals_dump_sect("DBI"))
     {
         const PDB_SYMBOL_SOURCE*src;
-        int                     i, j, cfile;
+        unsigned int            i, j, cfile;
+        unsigned int            num_source_files;
         const WORD*             indx;
         const DWORD*            offset;
         const char*             start_cstr;
@@ -639,15 +640,23 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
          *    0-terminated string (depending on version)
          */
         indx = &src->table[src->nModules];
+        /* the file format limits the number of source files to 64K... so always
+         * recompute the number of source files and use that result instead of nSrcFiles
+         */
+        num_source_files = 0;
+        for (i = 0; i < src->nModules; i++)
+            num_source_files += indx[i];
+        if (num_source_files != src->nSrcFiles)
+            printf("\t\tnSrcFiles:        %u (overriden by computed value)\n", num_source_files);
         offset = (const DWORD*)&src->table[2 * src->nModules];
-        cstr = (const char*)&src->table[2 * (src->nModules + src->nSrcFiles)];
+        cstr = (const char*)&src->table[2 * (src->nModules + num_source_files)];
         start_cstr = cstr;
 
         for (i = cfile = 0; i < src->nModules; i++)
         {
             printf("\t\tModule[%2d]:\n", i);
             cfile = src->table[i];
-            for (j = cfile; j < src->nSrcFiles && j < cfile + indx[i]; j++)
+            for (j = cfile; j < num_source_files && j < cfile + indx[i]; j++)
             {
                 /* FIXME: in some cases, it's a p_string but WHEN ? */
                 if (cstr + offset[j] >= start_cstr /* wrap around */ &&
