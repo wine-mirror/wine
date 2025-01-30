@@ -2310,6 +2310,7 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     escape.drawable = object->gl->drawable;
     escape.mode = IncludeInferiors;
     SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
+    escape.visual = default_visual;
     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     TRACE( "(%p)->(%p)\n", object, hdc );

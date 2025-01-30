@@ -344,6 +344,7 @@ struct x11drv_escape_set_drawable
     Drawable                 drawable;     /* X drawable */
     int                      mode;         /* ClipByChildren or IncludeInferiors */
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
+    XVisualInfo              visual;       /* X visual used by drawable, may be unspecified if no change is needed */
 };
 
 struct x11drv_escape_get_drawable

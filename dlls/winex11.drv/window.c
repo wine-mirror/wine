@@ -2709,6 +2709,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     if ((data = get_win_data( top )))
     {
         escape.drawable = data->whole_window;
+        escape.visual = data->vis;
         /* special case: when repainting the root window, clip out top-level windows */
         if (top == hwnd && data->whole_window == root_window) escape.mode = ClipByChildren;
         release_win_data( data );
@@ -2716,6 +2717,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     else
     {
         escape.drawable = X11DRV_get_whole_window( top );
+        escape.visual = default_visual; /* FIXME: use the right visual for other process window */
     }
 
     if (!escape.drawable) return; /* don't create a GC for foreign windows */

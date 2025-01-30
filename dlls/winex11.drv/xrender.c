@@ -257,8 +257,8 @@ static BOOL is_wxrformat_compatible_with_visual( const WineXRenderFormatTemplate
     if ((fmt->greenMask << fmt->green) != visual->green_mask) return FALSE;
     if ((fmt->blueMask << fmt->blue) != visual->blue_mask) return FALSE;
 
-    /* We never select a default ARGB visual */
-    if(fmt->alphaMask) return FALSE;
+    /* Non-default visual is only used when alpha is required. */
+    if (fmt->alphaMask && visual->visualid == default_visual.visualid) return FALSE;
     return TRUE;
 }
 
@@ -985,8 +985,25 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
             BOOL ret = dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
             if (ret)
             {
+                const struct x11drv_escape_set_drawable *set = in_data;
+                enum wxr_format format = physdev->format;
+                unsigned int i;
+
+                if (set->visual.visual)
+                {
+                    for (i = 0; i < WXR_NB_FORMATS; ++i)
+                    {
+                        if (!pict_formats[i]) continue;
+                        if (is_wxrformat_compatible_with_visual( &wxr_formats_template[i], &set->visual ))
+                        {
+                            format = i;
+                            break;
+                        }
+                    }
+                    if (i == WXR_NB_FORMATS) WARN( "Format not found for drawable visual.\n" );
+                }
                 free_xrender_picture( physdev );
-                set_physdev_format( physdev, default_format );
+                set_physdev_format( physdev, format );
             }
             return ret;
         }
