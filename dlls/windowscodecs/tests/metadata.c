@@ -4258,26 +4258,35 @@ static HRESULT create_query_writer_from_metadata_reader(IWICComponentFactory *fa
     return hr;
 }
 
-static HRESULT create_query_reader(IWICComponentFactory *factory, const struct metadata *data,
-        IWICMetadataQueryReader **reader)
+static HRESULT create_test_block_writer_init(const struct metadata *data, IWICMetadataBlockWriter **block_writer)
 {
-    IWICMetadataBlockWriter *block_writer;
     IWICMetadataWriter *writer;
     unsigned int i;
     HRESULT hr;
 
-    hr = create_test_block_writer(data->container_format, &block_writer);
+    hr = create_test_block_writer(data->container_format, block_writer);
     if (SUCCEEDED(hr))
     {
         for (i = 0; i < data->count; ++i)
         {
             writer = create_test_writer(&data->block[i]);
             ok(!!writer, "Failed to create a writer.\n");
-            hr = IWICMetadataBlockWriter_AddWriter(block_writer, writer);
+            hr = IWICMetadataBlockWriter_AddWriter(*block_writer, writer);
             ok(hr == S_OK, "Failed to add a writer, hr %#lx.\n", hr);
             IWICMetadataWriter_Release(writer);
         }
     }
+
+    return hr;
+}
+
+static HRESULT create_query_reader(IWICComponentFactory *factory, const struct metadata *data,
+        IWICMetadataQueryReader **reader)
+{
+    IWICMetadataBlockWriter *block_writer;
+    HRESULT hr;
+
+    hr = create_test_block_writer_init(data, &block_writer);
 
     if (SUCCEEDED(hr))
     {
@@ -4337,12 +4346,16 @@ static void test_queryreader(void)
         { TRUE, &data1, L"/ifd/[0]Rating", E_INVALIDARG },
         { TRUE, &data1, L"/ifd/[*]Rating", WINCODEC_ERR_REQUESTONLYVALIDATMETADATAROOT },
     };
+    IWICMetadataBlockWriter *block_writer;
     HRESULT hr;
     IWICComponentFactory *factory;
     IWICMetadataQueryReader *reader;
+    IWICMetadataWriter *writer;
+    IEnumString *enum_string;
     GUID format;
     PROPVARIANT value;
-    UINT i;
+    UINT i, count;
+    WCHAR *str;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICComponentFactory, (void **)&factory);
@@ -4432,6 +4445,71 @@ static void test_queryreader(void)
 
         winetest_pop_context();
     }
+
+    /* Modify block set after query reader was created. */
+    hr = create_test_block_writer_init(&data1, &block_writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataBlockWriter_GetCount(block_writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory,
+            (IWICMetadataBlockReader *)block_writer, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(reader, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatApp1, NULL, 0, &writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataBlockWriter_AddWriter(block_writer, writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IWICMetadataWriter_Release(writer);
+    hr = IWICMetadataBlockWriter_GetCount(block_writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 2, "Unexpected count %u.\n", count);
+
+    /* Existing enumerator does not pick it up. */
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    todo_wine
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    IEnumString_Release(enum_string);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(reader, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(str, L"/app1"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+
+    IEnumString_Release(enum_string);
+
+    IWICMetadataQueryReader_Release(reader);
+
+    IWICMetadataBlockWriter_Release(block_writer);
 
     IWICComponentFactory_Release(factory);
 }
