@@ -337,13 +337,11 @@ static void test_work_queue(void)
     IRtwqAsyncResult_Release(result2);
     /* Platform lock count for AsyncResult objects does not decrease
      * unless the platform is in shutdown state. */
-    todo_wine
     check_platform_lock_count(3);
 
     hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
     /* Platform lock count tracks the maximum AsyncResult count plus one for startup. */
-    todo_wine
     check_platform_lock_count(3);
 
     hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_STANDARD, 0, result);
@@ -353,16 +351,13 @@ static void test_work_queue(void)
     /* TODO: Wine often has a release call pending in another thread at this point. */
     refcount = IRtwqAsyncResult_Release(result);
     flaky_wine
-    todo_wine
     ok(!refcount, "Unexpected refcount %ld.\n", refcount);
-    todo_wine
     check_platform_lock_count(3);
 
     hr = RtwqLockPlatform();
     ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
     hr = RtwqLockPlatform();
     ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
-    todo_wine
     check_platform_lock_count(5);
 
     hr = RtwqShutdown();
@@ -424,7 +419,6 @@ static void test_work_queue(void)
     check_platform_lock_count(2);
     /* Release an AsyncResult object after shutdown and startup. */
     IRtwqAsyncResult_Release(result);
-    todo_wine
     check_platform_lock_count(2);
 
     hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
@@ -445,14 +439,12 @@ static void test_work_queue(void)
     ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
     IRtwqAsyncResult_Release(result);
     IRtwqAsyncResult_Release(result2);
-    todo_wine
     check_platform_lock_count(3);
 
     hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
     ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
     hr = RtwqScheduleWorkItem(result, -5000, &key);
     ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
-    todo_wine
     check_platform_lock_count(3);
 
     hr = RtwqShutdown();

@@ -66,6 +66,16 @@ static CRITICAL_SECTION_DEBUG queues_critsect_debug =
 };
 static CRITICAL_SECTION queues_section = { &queues_critsect_debug, -1, 0, 0, 0, 0 };
 
+static CRITICAL_SECTION async_result_cache_section;
+static CRITICAL_SECTION_DEBUG async_result_cache_critsect_debug =
+{
+    0, 0, &async_result_cache_section,
+    { &async_result_cache_critsect_debug.ProcessLocksList, &async_result_cache_critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": async_result_cache_section") }
+};
+static CRITICAL_SECTION async_result_cache_section = { &async_result_cache_critsect_debug, -1, 0, 0, 0, 0 };
+struct list async_result_cache = LIST_INIT(async_result_cache);
+
 static LONG startup_count;
 static LONG platform_lock;
 static CO_MTA_USAGE_COOKIE mta_cookie;
@@ -1002,11 +1012,74 @@ struct async_result
     LONG refcount;
     IUnknown *object;
     IUnknown *state;
+    struct list entry;
 };
 
 static struct async_result *impl_from_IRtwqAsyncResult(IRtwqAsyncResult *iface)
 {
     return CONTAINING_RECORD(iface, struct async_result, result.AsyncResult);
+}
+
+static void free_async_result(struct async_result *result)
+{
+    free(result);
+    RtwqUnlockPlatform();
+}
+
+/* Async result cache. The main reason for caching is to match the behaviour in Windows.
+ * The platform is locked for each async result created and not unlocked until shutdown.
+ * This is consistent with caching of async results, which is probably done to avoid
+ * frequent heap allocations. It's unclear how much is gained from that here, but there
+ * is probably some benefit. Robustness against use-after-free is not likely to be a
+ * major reason because Windows seems to pop the most recently released object for the
+ * next allocation, as is done here, instead of popping from the tail. */
+
+static BOOL async_result_cache_push(struct async_result *result)
+{
+    BOOL pushed;
+
+    EnterCriticalSection(&async_result_cache_section);
+    if ((pushed = startup_count > 0))
+        list_add_head(&async_result_cache, &result->entry);
+    LeaveCriticalSection(&async_result_cache_section);
+
+    return pushed;
+}
+
+static struct async_result *async_result_cache_pop(void)
+{
+    struct async_result *result;
+    struct list *head;
+
+    EnterCriticalSection(&async_result_cache_section);
+
+    if ((head = list_head(&async_result_cache)))
+        list_remove(head);
+
+    LeaveCriticalSection(&async_result_cache_section);
+
+    if (!head)
+        return NULL;
+
+    result = LIST_ENTRY(head, struct async_result, entry);
+    memset(&result->result, 0, sizeof(result->result));
+
+    return result;
+}
+
+static void async_result_cache_clear(void)
+{
+    struct async_result *cur, *cur2;
+
+    EnterCriticalSection(&async_result_cache_section);
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &async_result_cache, struct async_result, entry)
+    {
+        list_remove(&cur->entry);
+        free_async_result(cur);
+    }
+
+    LeaveCriticalSection(&async_result_cache_section);
 }
 
 static HRESULT WINAPI async_result_QueryInterface(IRtwqAsyncResult *iface, REFIID riid, void **obj)
@@ -1053,9 +1126,9 @@ static ULONG WINAPI async_result_Release(IRtwqAsyncResult *iface)
             IUnknown_Release(result->state);
         if (result->result.hEvent)
             CloseHandle(result->result.hEvent);
-        free(result);
 
-        RtwqUnlockPlatform();
+        if (!async_result_cache_push(result))
+            free_async_result(result);
     }
 
     return refcount;
@@ -1139,10 +1212,12 @@ static HRESULT create_async_result(IUnknown *object, IRtwqAsyncCallback *callbac
     if (!out)
         return E_INVALIDARG;
 
-    if (!(result = calloc(1, sizeof(*result))))
-        return E_OUTOFMEMORY;
-
-    RtwqLockPlatform();
+    if (!(result = async_result_cache_pop()))
+    {
+        if (!(result = calloc(1, sizeof(*result))))
+            return E_OUTOFMEMORY;
+        RtwqLockPlatform();
+    }
 
     result->result.AsyncResult.lpVtbl = &async_result_vtbl;
     result->refcount = 1;
@@ -1248,6 +1323,7 @@ HRESULT WINAPI RtwqShutdown(void)
     if (InterlockedExchangeAdd(&startup_count, -1) == 1)
     {
         shutdown_system_queues();
+        async_result_cache_clear();
         RtwqUnlockPlatform();
     }
 
