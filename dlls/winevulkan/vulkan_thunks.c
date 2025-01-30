@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2024 The Khronos Group Inc.
+ * Copyright 2015-2025 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2024 The Khronos Group Inc.
+ * Copyright 2021-2025 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -982,6 +982,106 @@ typedef struct VkAccelerationStructureInfoNV32
     PTR32 pGeometries;
 } VkAccelerationStructureInfoNV32;
 
+typedef struct VkClusterAccelerationStructureClustersBottomLevelInputNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxTotalClusterCount;
+    uint32_t maxClusterCountPerAccelerationStructure;
+} VkClusterAccelerationStructureClustersBottomLevelInputNV32;
+
+typedef struct VkClusterAccelerationStructureTriangleClusterInputNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkFormat vertexFormat;
+    uint32_t maxGeometryIndexValue;
+    uint32_t maxClusterUniqueGeometryCount;
+    uint32_t maxClusterTriangleCount;
+    uint32_t maxClusterVertexCount;
+    uint32_t maxTotalTriangleCount;
+    uint32_t maxTotalVertexCount;
+    uint32_t minPositionTruncateBitCount;
+} VkClusterAccelerationStructureTriangleClusterInputNV32;
+
+typedef struct VkClusterAccelerationStructureMoveObjectsInputNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkClusterAccelerationStructureTypeNV type;
+    VkBool32 noMoveOverlap;
+    VkDeviceSize DECLSPEC_ALIGN(8) maxMovedBytes;
+} VkClusterAccelerationStructureMoveObjectsInputNV32;
+
+typedef union VkClusterAccelerationStructureOpInputNV32
+{
+    PTR32 pClustersBottomLevel;
+    PTR32 pTriangleClusters;
+    PTR32 pMoveObjects;
+} VkClusterAccelerationStructureOpInputNV32;
+
+typedef struct VkClusterAccelerationStructureInputInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxAccelerationStructureCount;
+    VkBuildAccelerationStructureFlagsKHR flags;
+    VkClusterAccelerationStructureOpTypeNV opType;
+    VkClusterAccelerationStructureOpModeNV opMode;
+    VkClusterAccelerationStructureOpInputNV32 opInput;
+} VkClusterAccelerationStructureInputInfoNV32;
+
+typedef struct VkStridedDeviceAddressRegionKHR32
+{
+    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
+    VkDeviceSize DECLSPEC_ALIGN(8) stride;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+} VkStridedDeviceAddressRegionKHR32;
+
+typedef struct VkClusterAccelerationStructureCommandsInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkClusterAccelerationStructureInputInfoNV32 input;
+    VkDeviceAddress DECLSPEC_ALIGN(8) dstImplicitData;
+    VkDeviceAddress DECLSPEC_ALIGN(8) scratchData;
+    VkStridedDeviceAddressRegionKHR32 DECLSPEC_ALIGN(8) dstAddressesArray;
+    VkStridedDeviceAddressRegionKHR32 DECLSPEC_ALIGN(8) dstSizesArray;
+    VkStridedDeviceAddressRegionKHR32 DECLSPEC_ALIGN(8) srcInfosArray;
+    VkDeviceAddress DECLSPEC_ALIGN(8) srcInfosCount;
+    VkClusterAccelerationStructureAddressResolutionFlagsNV addressResolutionFlags;
+} VkClusterAccelerationStructureCommandsInfoNV32;
+
+typedef struct VkPartitionedAccelerationStructureFlagsNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 enablePartitionTranslation;
+} VkPartitionedAccelerationStructureFlagsNV32;
+
+typedef struct VkPartitionedAccelerationStructureInstancesInputNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBuildAccelerationStructureFlagsKHR flags;
+    uint32_t instanceCount;
+    uint32_t maxInstancePerPartitionCount;
+    uint32_t partitionCount;
+    uint32_t maxInstanceInGlobalPartitionCount;
+} VkPartitionedAccelerationStructureInstancesInputNV32;
+
+typedef struct VkBuildPartitionedAccelerationStructureInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkPartitionedAccelerationStructureInstancesInputNV32 input;
+    VkDeviceAddress DECLSPEC_ALIGN(8) srcAccelerationStructureData;
+    VkDeviceAddress DECLSPEC_ALIGN(8) dstAccelerationStructureData;
+    VkDeviceAddress DECLSPEC_ALIGN(8) scratchData;
+    VkDeviceAddress DECLSPEC_ALIGN(8) srcInfos;
+    VkDeviceAddress DECLSPEC_ALIGN(8) srcInfosCount;
+} VkBuildPartitionedAccelerationStructureInfoNV32;
+
 typedef struct VkVideoEncodeQualityLevelInfoKHR32
 {
     VkStructureType sType;
@@ -995,6 +1095,24 @@ typedef struct VkVideoCodingControlInfoKHR32
     PTR32 pNext;
     VkVideoCodingControlFlagsKHR flags;
 } VkVideoCodingControlInfoKHR32;
+
+typedef struct VkConvertCooperativeVectorMatrixInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 srcSize;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) srcData;
+    PTR32 pDstSize;
+    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) dstData;
+    VkComponentTypeKHR srcComponentType;
+    VkComponentTypeKHR dstComponentType;
+    uint32_t numRows;
+    uint32_t numColumns;
+    VkCooperativeVectorMatrixLayoutNV srcLayout;
+    PTR32 srcStride;
+    VkCooperativeVectorMatrixLayoutNV dstLayout;
+    PTR32 dstStride;
+} VkConvertCooperativeVectorMatrixInfoNV32;
 
 typedef struct VkCopyAccelerationStructureInfoKHR32
 {
@@ -1194,6 +1312,236 @@ typedef struct VkDebugMarkerMarkerInfoEXT32
     float color[4];
 } VkDebugMarkerMarkerInfoEXT32;
 
+typedef struct StdVideoH264SequenceParameterSetVui32
+{
+    StdVideoH264SpsVuiFlags flags;
+    StdVideoH264AspectRatioIdc aspect_ratio_idc;
+    uint16_t sar_width;
+    uint16_t sar_height;
+    uint8_t video_format;
+    uint8_t colour_primaries;
+    uint8_t transfer_characteristics;
+    uint8_t matrix_coefficients;
+    uint32_t num_units_in_tick;
+    uint32_t time_scale;
+    uint8_t max_num_reorder_frames;
+    uint8_t max_dec_frame_buffering;
+    uint8_t chroma_sample_loc_type_top_field;
+    uint8_t chroma_sample_loc_type_bottom_field;
+    uint32_t reserved1;
+    PTR32 pHrdParameters;
+} StdVideoH264SequenceParameterSetVui32;
+
+typedef struct StdVideoH264SequenceParameterSet32
+{
+    StdVideoH264SpsFlags flags;
+    StdVideoH264ProfileIdc profile_idc;
+    StdVideoH264LevelIdc level_idc;
+    StdVideoH264ChromaFormatIdc chroma_format_idc;
+    uint8_t seq_parameter_set_id;
+    uint8_t bit_depth_luma_minus8;
+    uint8_t bit_depth_chroma_minus8;
+    uint8_t log2_max_frame_num_minus4;
+    StdVideoH264PocType pic_order_cnt_type;
+    int32_t offset_for_non_ref_pic;
+    int32_t offset_for_top_to_bottom_field;
+    uint8_t log2_max_pic_order_cnt_lsb_minus4;
+    uint8_t num_ref_frames_in_pic_order_cnt_cycle;
+    uint8_t max_num_ref_frames;
+    uint8_t reserved1;
+    uint32_t pic_width_in_mbs_minus1;
+    uint32_t pic_height_in_map_units_minus1;
+    uint32_t frame_crop_left_offset;
+    uint32_t frame_crop_right_offset;
+    uint32_t frame_crop_top_offset;
+    uint32_t frame_crop_bottom_offset;
+    uint32_t reserved2;
+    PTR32 pOffsetForRefFrame;
+    PTR32 pScalingLists;
+    PTR32 pSequenceParameterSetVui;
+} StdVideoH264SequenceParameterSet32;
+
+typedef struct StdVideoH264PictureParameterSet32
+{
+    StdVideoH264PpsFlags flags;
+    uint8_t seq_parameter_set_id;
+    uint8_t pic_parameter_set_id;
+    uint8_t num_ref_idx_l0_default_active_minus1;
+    uint8_t num_ref_idx_l1_default_active_minus1;
+    StdVideoH264WeightedBipredIdc weighted_bipred_idc;
+    int8_t pic_init_qp_minus26;
+    int8_t pic_init_qs_minus26;
+    int8_t chroma_qp_index_offset;
+    int8_t second_chroma_qp_index_offset;
+    PTR32 pScalingLists;
+} StdVideoH264PictureParameterSet32;
+
+typedef struct StdVideoH265HrdParameters32
+{
+    StdVideoH265HrdFlags flags;
+    uint8_t tick_divisor_minus2;
+    uint8_t du_cpb_removal_delay_increment_length_minus1;
+    uint8_t dpb_output_delay_du_length_minus1;
+    uint8_t bit_rate_scale;
+    uint8_t cpb_size_scale;
+    uint8_t cpb_size_du_scale;
+    uint8_t initial_cpb_removal_delay_length_minus1;
+    uint8_t au_cpb_removal_delay_length_minus1;
+    uint8_t dpb_output_delay_length_minus1;
+    uint8_t cpb_cnt_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
+    uint16_t elemental_duration_in_tc_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
+    uint16_t reserved[3];
+    PTR32 pSubLayerHrdParametersNal;
+    PTR32 pSubLayerHrdParametersVcl;
+} StdVideoH265HrdParameters32;
+
+typedef struct StdVideoH265VideoParameterSet32
+{
+    StdVideoH265VpsFlags flags;
+    uint8_t vps_video_parameter_set_id;
+    uint8_t vps_max_sub_layers_minus1;
+    uint8_t reserved1;
+    uint8_t reserved2;
+    uint32_t vps_num_units_in_tick;
+    uint32_t vps_time_scale;
+    uint32_t vps_num_ticks_poc_diff_one_minus1;
+    uint32_t reserved3;
+    PTR32 pDecPicBufMgr;
+    PTR32 pHrdParameters;
+    PTR32 pProfileTierLevel;
+} StdVideoH265VideoParameterSet32;
+
+typedef struct StdVideoH265SequenceParameterSetVui32
+{
+    StdVideoH265SpsVuiFlags flags;
+    StdVideoH265AspectRatioIdc aspect_ratio_idc;
+    uint16_t sar_width;
+    uint16_t sar_height;
+    uint8_t video_format;
+    uint8_t colour_primaries;
+    uint8_t transfer_characteristics;
+    uint8_t matrix_coeffs;
+    uint8_t chroma_sample_loc_type_top_field;
+    uint8_t chroma_sample_loc_type_bottom_field;
+    uint8_t reserved1;
+    uint8_t reserved2;
+    uint16_t def_disp_win_left_offset;
+    uint16_t def_disp_win_right_offset;
+    uint16_t def_disp_win_top_offset;
+    uint16_t def_disp_win_bottom_offset;
+    uint32_t vui_num_units_in_tick;
+    uint32_t vui_time_scale;
+    uint32_t vui_num_ticks_poc_diff_one_minus1;
+    uint16_t min_spatial_segmentation_idc;
+    uint16_t reserved3;
+    uint8_t max_bytes_per_pic_denom;
+    uint8_t max_bits_per_min_cu_denom;
+    uint8_t log2_max_mv_length_horizontal;
+    uint8_t log2_max_mv_length_vertical;
+    PTR32 pHrdParameters;
+} StdVideoH265SequenceParameterSetVui32;
+
+typedef struct StdVideoH265SequenceParameterSet32
+{
+    StdVideoH265SpsFlags flags;
+    StdVideoH265ChromaFormatIdc chroma_format_idc;
+    uint32_t pic_width_in_luma_samples;
+    uint32_t pic_height_in_luma_samples;
+    uint8_t sps_video_parameter_set_id;
+    uint8_t sps_max_sub_layers_minus1;
+    uint8_t sps_seq_parameter_set_id;
+    uint8_t bit_depth_luma_minus8;
+    uint8_t bit_depth_chroma_minus8;
+    uint8_t log2_max_pic_order_cnt_lsb_minus4;
+    uint8_t log2_min_luma_coding_block_size_minus3;
+    uint8_t log2_diff_max_min_luma_coding_block_size;
+    uint8_t log2_min_luma_transform_block_size_minus2;
+    uint8_t log2_diff_max_min_luma_transform_block_size;
+    uint8_t max_transform_hierarchy_depth_inter;
+    uint8_t max_transform_hierarchy_depth_intra;
+    uint8_t num_short_term_ref_pic_sets;
+    uint8_t num_long_term_ref_pics_sps;
+    uint8_t pcm_sample_bit_depth_luma_minus1;
+    uint8_t pcm_sample_bit_depth_chroma_minus1;
+    uint8_t log2_min_pcm_luma_coding_block_size_minus3;
+    uint8_t log2_diff_max_min_pcm_luma_coding_block_size;
+    uint8_t reserved1;
+    uint8_t reserved2;
+    uint8_t palette_max_size;
+    uint8_t delta_palette_max_predictor_size;
+    uint8_t motion_vector_resolution_control_idc;
+    uint8_t sps_num_palette_predictor_initializers_minus1;
+    uint32_t conf_win_left_offset;
+    uint32_t conf_win_right_offset;
+    uint32_t conf_win_top_offset;
+    uint32_t conf_win_bottom_offset;
+    PTR32 pProfileTierLevel;
+    PTR32 pDecPicBufMgr;
+    PTR32 pScalingLists;
+    PTR32 pShortTermRefPicSet;
+    PTR32 pLongTermRefPicsSps;
+    PTR32 pSequenceParameterSetVui;
+    PTR32 pPredictorPaletteEntries;
+} StdVideoH265SequenceParameterSet32;
+
+typedef struct StdVideoH265PictureParameterSet32
+{
+    StdVideoH265PpsFlags flags;
+    uint8_t pps_pic_parameter_set_id;
+    uint8_t pps_seq_parameter_set_id;
+    uint8_t sps_video_parameter_set_id;
+    uint8_t num_extra_slice_header_bits;
+    uint8_t num_ref_idx_l0_default_active_minus1;
+    uint8_t num_ref_idx_l1_default_active_minus1;
+    int8_t init_qp_minus26;
+    uint8_t diff_cu_qp_delta_depth;
+    int8_t pps_cb_qp_offset;
+    int8_t pps_cr_qp_offset;
+    int8_t pps_beta_offset_div2;
+    int8_t pps_tc_offset_div2;
+    uint8_t log2_parallel_merge_level_minus2;
+    uint8_t log2_max_transform_skip_block_size_minus2;
+    uint8_t diff_cu_chroma_qp_offset_depth;
+    uint8_t chroma_qp_offset_list_len_minus1;
+    int8_t cb_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
+    int8_t cr_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
+    uint8_t log2_sao_offset_scale_luma;
+    uint8_t log2_sao_offset_scale_chroma;
+    int8_t pps_act_y_qp_offset_plus5;
+    int8_t pps_act_cb_qp_offset_plus5;
+    int8_t pps_act_cr_qp_offset_plus3;
+    uint8_t pps_num_palette_predictor_initializers;
+    uint8_t luma_bit_depth_entry_minus8;
+    uint8_t chroma_bit_depth_entry_minus8;
+    uint8_t num_tile_columns_minus1;
+    uint8_t num_tile_rows_minus1;
+    uint8_t reserved1;
+    uint8_t reserved2;
+    uint16_t column_width_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE];
+    uint16_t row_height_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE];
+    uint32_t reserved3;
+    PTR32 pScalingLists;
+    PTR32 pPredictorPaletteEntries;
+} StdVideoH265PictureParameterSet32;
+
+typedef struct StdVideoAV1SequenceHeader32
+{
+    StdVideoAV1SequenceHeaderFlags flags;
+    StdVideoAV1Profile seq_profile;
+    uint8_t frame_width_bits_minus_1;
+    uint8_t frame_height_bits_minus_1;
+    uint16_t max_frame_width_minus_1;
+    uint16_t max_frame_height_minus_1;
+    uint8_t delta_frame_id_length_minus_2;
+    uint8_t additional_frame_id_length_minus_1;
+    uint8_t order_hint_bits_minus_1;
+    uint8_t seq_force_integer_mv;
+    uint8_t seq_force_screen_content_tools;
+    uint8_t reserved1[5];
+    PTR32 pColorConfig;
+    PTR32 pTimingInfo;
+} StdVideoAV1SequenceHeader32;
+
 typedef struct StdVideoAV1TileInfo32
 {
     StdVideoAV1TileInfoFlags flags;
@@ -1245,6 +1593,14 @@ typedef struct VkVideoInlineQueryInfoKHR32
     uint32_t queryCount;
 } VkVideoInlineQueryInfoKHR32;
 
+typedef struct VkVideoDecodeH264InlineSessionParametersInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pStdSPS;
+    PTR32 pStdPPS;
+} VkVideoDecodeH264InlineSessionParametersInfoKHR32;
+
 typedef struct VkVideoDecodeH264PictureInfoKHR32
 {
     VkStructureType sType;
@@ -1254,6 +1610,15 @@ typedef struct VkVideoDecodeH264PictureInfoKHR32
     PTR32 pSliceOffsets;
 } VkVideoDecodeH264PictureInfoKHR32;
 
+typedef struct VkVideoDecodeH265InlineSessionParametersInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pStdVPS;
+    PTR32 pStdSPS;
+    PTR32 pStdPPS;
+} VkVideoDecodeH265InlineSessionParametersInfoKHR32;
+
 typedef struct VkVideoDecodeH265PictureInfoKHR32
 {
     VkStructureType sType;
@@ -1262,6 +1627,13 @@ typedef struct VkVideoDecodeH265PictureInfoKHR32
     uint32_t sliceSegmentCount;
     PTR32 pSliceSegmentOffsets;
 } VkVideoDecodeH265PictureInfoKHR32;
+
+typedef struct VkVideoDecodeAV1InlineSessionParametersInfoKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    PTR32 pStdSequenceHeader;
+} VkVideoDecodeAV1InlineSessionParametersInfoKHR32;
 
 typedef struct VkVideoDecodeAV1PictureInfoKHR32
 {
@@ -1608,6 +1980,14 @@ typedef struct VkImageMemoryBarrier32
     VkImageSubresourceRange subresourceRange;
 } VkImageMemoryBarrier32;
 
+typedef struct VkMemoryBarrierAccessFlags3KHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkAccessFlags3KHR DECLSPEC_ALIGN(8) srcAccessMask3;
+    VkAccessFlags3KHR DECLSPEC_ALIGN(8) dstAccessMask3;
+} VkMemoryBarrierAccessFlags3KHR32;
+
 typedef struct VkMemoryBarrier232
 {
     VkStructureType sType;
@@ -1716,6 +2096,14 @@ typedef struct VkWriteDescriptorSetAccelerationStructureNV32
     uint32_t accelerationStructureCount;
     PTR32 pAccelerationStructures;
 } VkWriteDescriptorSetAccelerationStructureNV32;
+
+typedef struct VkWriteDescriptorSetPartitionedAccelerationStructureNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t accelerationStructureCount;
+    PTR32 pAccelerationStructures;
+} VkWriteDescriptorSetPartitionedAccelerationStructureNV32;
 
 typedef struct VkWriteDescriptorSet32
 {
@@ -1864,13 +2252,6 @@ typedef struct VkShadingRatePaletteNV32
     uint32_t shadingRatePaletteEntryCount;
     PTR32 pShadingRatePaletteEntries;
 } VkShadingRatePaletteNV32;
-
-typedef struct VkStridedDeviceAddressRegionKHR32
-{
-    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
-    VkDeviceSize DECLSPEC_ALIGN(8) stride;
-    VkDeviceSize DECLSPEC_ALIGN(8) size;
-} VkStridedDeviceAddressRegionKHR32;
 
 typedef struct VkCopyImageToImageInfo32
 {
@@ -2461,6 +2842,13 @@ typedef struct VkPhysicalDevicePrivateDataFeatures32
 } VkPhysicalDevicePrivateDataFeatures32;
 typedef VkPhysicalDevicePrivateDataFeatures32 VkPhysicalDevicePrivateDataFeaturesEXT32;
 
+typedef struct VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 clusterAccelerationStructure;
+} VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32;
+
 typedef struct VkPhysicalDeviceFeatures232
 {
     VkStructureType sType;
@@ -2593,6 +2981,13 @@ typedef struct VkPhysicalDeviceMaintenance6Features32
     VkBool32 maintenance6;
 } VkPhysicalDeviceMaintenance6Features32;
 typedef VkPhysicalDeviceMaintenance6Features32 VkPhysicalDeviceMaintenance6FeaturesKHR32;
+
+typedef struct VkPhysicalDeviceMaintenance8FeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 maintenance8;
+} VkPhysicalDeviceMaintenance8FeaturesKHR32;
 
 typedef struct VkPhysicalDeviceShaderDrawParametersFeatures32
 {
@@ -3342,6 +3737,13 @@ typedef struct VkPhysicalDeviceExtendedDynamicState3FeaturesEXT32
     VkBool32 extendedDynamicState3ShadingRateImageEnable;
 } VkPhysicalDeviceExtendedDynamicState3FeaturesEXT32;
 
+typedef struct VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 partitionedAccelerationStructure;
+} VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32;
+
 typedef struct VkPhysicalDeviceDiagnosticsConfigFeaturesNV32
 {
     VkStructureType sType;
@@ -3589,6 +3991,13 @@ typedef struct VkPhysicalDeviceVideoMaintenance1FeaturesKHR32
     VkBool32 videoMaintenance1;
 } VkPhysicalDeviceVideoMaintenance1FeaturesKHR32;
 
+typedef struct VkPhysicalDeviceVideoMaintenance2FeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 videoMaintenance2;
+} VkPhysicalDeviceVideoMaintenance2FeaturesKHR32;
+
 typedef struct VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32
 {
     VkStructureType sType;
@@ -3665,6 +4074,14 @@ typedef struct VkPhysicalDeviceRayTracingValidationFeaturesNV32
     PTR32 pNext;
     VkBool32 rayTracingValidation;
 } VkPhysicalDeviceRayTracingValidationFeaturesNV32;
+
+typedef struct VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 spheres;
+    VkBool32 linearSweptSpheres;
+} VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32;
 
 typedef struct VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT32
 {
@@ -3830,13 +4247,6 @@ typedef struct VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT32
     PTR32 pNext;
     VkBool32 attachmentFeedbackLoopLayout;
 } VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT32;
-
-typedef struct VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32
-{
-    VkStructureType sType;
-    PTR32 pNext;
-    VkBool32 depthClampZeroOne;
-} VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceAddressBindingReportFeaturesEXT32
 {
@@ -4042,6 +4452,13 @@ typedef struct VkPhysicalDeviceRenderPassStripedFeaturesARM32
     VkBool32 renderPassStriped;
 } VkPhysicalDeviceRenderPassStripedFeaturesARM32;
 
+typedef struct VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 pipelineOpacityMicromap;
+} VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32;
+
 typedef struct VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32
 {
     VkStructureType sType;
@@ -4166,6 +4583,22 @@ typedef struct VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32
     PTR32 pNext;
     VkBool32 vertexAttributeRobustness;
 } VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 depthClampZeroOne;
+} VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32;
+typedef VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceCooperativeVectorFeaturesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 cooperativeVector;
+    VkBool32 cooperativeVectorTraining;
+} VkPhysicalDeviceCooperativeVectorFeaturesNV32;
 
 typedef struct VkDeviceCreateInfo32
 {
@@ -5081,6 +5514,13 @@ typedef struct VkRayTracingPipelineInterfaceCreateInfoKHR32
     uint32_t maxPipelineRayHitAttributeSize;
 } VkRayTracingPipelineInterfaceCreateInfoKHR32;
 
+typedef struct VkRayTracingPipelineClusterAccelerationStructureCreateInfoNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 allowClusterAccelerationStructure;
+} VkRayTracingPipelineClusterAccelerationStructureCreateInfoNV32;
+
 typedef struct VkRayTracingPipelineCreateInfoKHR32
 {
     VkStructureType sType;
@@ -5553,70 +5993,6 @@ typedef struct VkVideoSessionCreateInfoKHR32
     PTR32 pStdHeaderVersion;
 } VkVideoSessionCreateInfoKHR32;
 
-typedef struct StdVideoH264SequenceParameterSetVui32
-{
-    StdVideoH264SpsVuiFlags flags;
-    StdVideoH264AspectRatioIdc aspect_ratio_idc;
-    uint16_t sar_width;
-    uint16_t sar_height;
-    uint8_t video_format;
-    uint8_t colour_primaries;
-    uint8_t transfer_characteristics;
-    uint8_t matrix_coefficients;
-    uint32_t num_units_in_tick;
-    uint32_t time_scale;
-    uint8_t max_num_reorder_frames;
-    uint8_t max_dec_frame_buffering;
-    uint8_t chroma_sample_loc_type_top_field;
-    uint8_t chroma_sample_loc_type_bottom_field;
-    uint32_t reserved1;
-    PTR32 pHrdParameters;
-} StdVideoH264SequenceParameterSetVui32;
-
-typedef struct StdVideoH264SequenceParameterSet32
-{
-    StdVideoH264SpsFlags flags;
-    StdVideoH264ProfileIdc profile_idc;
-    StdVideoH264LevelIdc level_idc;
-    StdVideoH264ChromaFormatIdc chroma_format_idc;
-    uint8_t seq_parameter_set_id;
-    uint8_t bit_depth_luma_minus8;
-    uint8_t bit_depth_chroma_minus8;
-    uint8_t log2_max_frame_num_minus4;
-    StdVideoH264PocType pic_order_cnt_type;
-    int32_t offset_for_non_ref_pic;
-    int32_t offset_for_top_to_bottom_field;
-    uint8_t log2_max_pic_order_cnt_lsb_minus4;
-    uint8_t num_ref_frames_in_pic_order_cnt_cycle;
-    uint8_t max_num_ref_frames;
-    uint8_t reserved1;
-    uint32_t pic_width_in_mbs_minus1;
-    uint32_t pic_height_in_map_units_minus1;
-    uint32_t frame_crop_left_offset;
-    uint32_t frame_crop_right_offset;
-    uint32_t frame_crop_top_offset;
-    uint32_t frame_crop_bottom_offset;
-    uint32_t reserved2;
-    PTR32 pOffsetForRefFrame;
-    PTR32 pScalingLists;
-    PTR32 pSequenceParameterSetVui;
-} StdVideoH264SequenceParameterSet32;
-
-typedef struct StdVideoH264PictureParameterSet32
-{
-    StdVideoH264PpsFlags flags;
-    uint8_t seq_parameter_set_id;
-    uint8_t pic_parameter_set_id;
-    uint8_t num_ref_idx_l0_default_active_minus1;
-    uint8_t num_ref_idx_l1_default_active_minus1;
-    StdVideoH264WeightedBipredIdc weighted_bipred_idc;
-    int8_t pic_init_qp_minus26;
-    int8_t pic_init_qs_minus26;
-    int8_t chroma_qp_index_offset;
-    int8_t second_chroma_qp_index_offset;
-    PTR32 pScalingLists;
-} StdVideoH264PictureParameterSet32;
-
 typedef struct VkVideoDecodeH264SessionParametersAddInfoKHR32
 {
     VkStructureType sType;
@@ -5626,154 +6002,6 @@ typedef struct VkVideoDecodeH264SessionParametersAddInfoKHR32
     uint32_t stdPPSCount;
     PTR32 pStdPPSs;
 } VkVideoDecodeH264SessionParametersAddInfoKHR32;
-
-typedef struct StdVideoH265HrdParameters32
-{
-    StdVideoH265HrdFlags flags;
-    uint8_t tick_divisor_minus2;
-    uint8_t du_cpb_removal_delay_increment_length_minus1;
-    uint8_t dpb_output_delay_du_length_minus1;
-    uint8_t bit_rate_scale;
-    uint8_t cpb_size_scale;
-    uint8_t cpb_size_du_scale;
-    uint8_t initial_cpb_removal_delay_length_minus1;
-    uint8_t au_cpb_removal_delay_length_minus1;
-    uint8_t dpb_output_delay_length_minus1;
-    uint8_t cpb_cnt_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
-    uint16_t elemental_duration_in_tc_minus1[STD_VIDEO_H265_SUBLAYERS_LIST_SIZE];
-    uint16_t reserved[3];
-    PTR32 pSubLayerHrdParametersNal;
-    PTR32 pSubLayerHrdParametersVcl;
-} StdVideoH265HrdParameters32;
-
-typedef struct StdVideoH265VideoParameterSet32
-{
-    StdVideoH265VpsFlags flags;
-    uint8_t vps_video_parameter_set_id;
-    uint8_t vps_max_sub_layers_minus1;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint32_t vps_num_units_in_tick;
-    uint32_t vps_time_scale;
-    uint32_t vps_num_ticks_poc_diff_one_minus1;
-    uint32_t reserved3;
-    PTR32 pDecPicBufMgr;
-    PTR32 pHrdParameters;
-    PTR32 pProfileTierLevel;
-} StdVideoH265VideoParameterSet32;
-
-typedef struct StdVideoH265SequenceParameterSetVui32
-{
-    StdVideoH265SpsVuiFlags flags;
-    StdVideoH265AspectRatioIdc aspect_ratio_idc;
-    uint16_t sar_width;
-    uint16_t sar_height;
-    uint8_t video_format;
-    uint8_t colour_primaries;
-    uint8_t transfer_characteristics;
-    uint8_t matrix_coeffs;
-    uint8_t chroma_sample_loc_type_top_field;
-    uint8_t chroma_sample_loc_type_bottom_field;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint16_t def_disp_win_left_offset;
-    uint16_t def_disp_win_right_offset;
-    uint16_t def_disp_win_top_offset;
-    uint16_t def_disp_win_bottom_offset;
-    uint32_t vui_num_units_in_tick;
-    uint32_t vui_time_scale;
-    uint32_t vui_num_ticks_poc_diff_one_minus1;
-    uint16_t min_spatial_segmentation_idc;
-    uint16_t reserved3;
-    uint8_t max_bytes_per_pic_denom;
-    uint8_t max_bits_per_min_cu_denom;
-    uint8_t log2_max_mv_length_horizontal;
-    uint8_t log2_max_mv_length_vertical;
-    PTR32 pHrdParameters;
-} StdVideoH265SequenceParameterSetVui32;
-
-typedef struct StdVideoH265SequenceParameterSet32
-{
-    StdVideoH265SpsFlags flags;
-    StdVideoH265ChromaFormatIdc chroma_format_idc;
-    uint32_t pic_width_in_luma_samples;
-    uint32_t pic_height_in_luma_samples;
-    uint8_t sps_video_parameter_set_id;
-    uint8_t sps_max_sub_layers_minus1;
-    uint8_t sps_seq_parameter_set_id;
-    uint8_t bit_depth_luma_minus8;
-    uint8_t bit_depth_chroma_minus8;
-    uint8_t log2_max_pic_order_cnt_lsb_minus4;
-    uint8_t log2_min_luma_coding_block_size_minus3;
-    uint8_t log2_diff_max_min_luma_coding_block_size;
-    uint8_t log2_min_luma_transform_block_size_minus2;
-    uint8_t log2_diff_max_min_luma_transform_block_size;
-    uint8_t max_transform_hierarchy_depth_inter;
-    uint8_t max_transform_hierarchy_depth_intra;
-    uint8_t num_short_term_ref_pic_sets;
-    uint8_t num_long_term_ref_pics_sps;
-    uint8_t pcm_sample_bit_depth_luma_minus1;
-    uint8_t pcm_sample_bit_depth_chroma_minus1;
-    uint8_t log2_min_pcm_luma_coding_block_size_minus3;
-    uint8_t log2_diff_max_min_pcm_luma_coding_block_size;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint8_t palette_max_size;
-    uint8_t delta_palette_max_predictor_size;
-    uint8_t motion_vector_resolution_control_idc;
-    uint8_t sps_num_palette_predictor_initializers_minus1;
-    uint32_t conf_win_left_offset;
-    uint32_t conf_win_right_offset;
-    uint32_t conf_win_top_offset;
-    uint32_t conf_win_bottom_offset;
-    PTR32 pProfileTierLevel;
-    PTR32 pDecPicBufMgr;
-    PTR32 pScalingLists;
-    PTR32 pShortTermRefPicSet;
-    PTR32 pLongTermRefPicsSps;
-    PTR32 pSequenceParameterSetVui;
-    PTR32 pPredictorPaletteEntries;
-} StdVideoH265SequenceParameterSet32;
-
-typedef struct StdVideoH265PictureParameterSet32
-{
-    StdVideoH265PpsFlags flags;
-    uint8_t pps_pic_parameter_set_id;
-    uint8_t pps_seq_parameter_set_id;
-    uint8_t sps_video_parameter_set_id;
-    uint8_t num_extra_slice_header_bits;
-    uint8_t num_ref_idx_l0_default_active_minus1;
-    uint8_t num_ref_idx_l1_default_active_minus1;
-    int8_t init_qp_minus26;
-    uint8_t diff_cu_qp_delta_depth;
-    int8_t pps_cb_qp_offset;
-    int8_t pps_cr_qp_offset;
-    int8_t pps_beta_offset_div2;
-    int8_t pps_tc_offset_div2;
-    uint8_t log2_parallel_merge_level_minus2;
-    uint8_t log2_max_transform_skip_block_size_minus2;
-    uint8_t diff_cu_chroma_qp_offset_depth;
-    uint8_t chroma_qp_offset_list_len_minus1;
-    int8_t cb_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
-    int8_t cr_qp_offset_list[STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE];
-    uint8_t log2_sao_offset_scale_luma;
-    uint8_t log2_sao_offset_scale_chroma;
-    int8_t pps_act_y_qp_offset_plus5;
-    int8_t pps_act_cb_qp_offset_plus5;
-    int8_t pps_act_cr_qp_offset_plus3;
-    uint8_t pps_num_palette_predictor_initializers;
-    uint8_t luma_bit_depth_entry_minus8;
-    uint8_t chroma_bit_depth_entry_minus8;
-    uint8_t num_tile_columns_minus1;
-    uint8_t num_tile_rows_minus1;
-    uint8_t reserved1;
-    uint8_t reserved2;
-    uint16_t column_width_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE];
-    uint16_t row_height_minus1[STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE];
-    uint32_t reserved3;
-    PTR32 pScalingLists;
-    PTR32 pPredictorPaletteEntries;
-} StdVideoH265PictureParameterSet32;
 
 typedef struct VkVideoDecodeH265SessionParametersAddInfoKHR32
 {
@@ -5786,24 +6014,6 @@ typedef struct VkVideoDecodeH265SessionParametersAddInfoKHR32
     uint32_t stdPPSCount;
     PTR32 pStdPPSs;
 } VkVideoDecodeH265SessionParametersAddInfoKHR32;
-
-typedef struct StdVideoAV1SequenceHeader32
-{
-    StdVideoAV1SequenceHeaderFlags flags;
-    StdVideoAV1Profile seq_profile;
-    uint8_t frame_width_bits_minus_1;
-    uint8_t frame_height_bits_minus_1;
-    uint16_t max_frame_width_minus_1;
-    uint16_t max_frame_height_minus_1;
-    uint8_t delta_frame_id_length_minus_2;
-    uint8_t additional_frame_id_length_minus_1;
-    uint8_t order_hint_bits_minus_1;
-    uint8_t seq_force_integer_mv;
-    uint8_t seq_force_screen_content_tools;
-    uint8_t reserved1[5];
-    PTR32 pColorConfig;
-    PTR32 pTimingInfo;
-} StdVideoAV1SequenceHeader32;
 
 typedef struct VkVideoEncodeH264SessionParametersAddInfoKHR32
 {
@@ -6517,6 +6727,18 @@ typedef struct VkCooperativeMatrixPropertiesNV32
     VkScopeNV scope;
 } VkCooperativeMatrixPropertiesNV32;
 
+typedef struct VkCooperativeVectorPropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkComponentTypeKHR inputType;
+    VkComponentTypeKHR inputInterpretation;
+    VkComponentTypeKHR matrixInterpretation;
+    VkComponentTypeKHR biasInterpretation;
+    VkComponentTypeKHR resultType;
+    VkBool32 transpose;
+} VkCooperativeVectorPropertiesNV32;
+
 typedef struct VkPhysicalDeviceExternalBufferInfo32
 {
     VkStructureType sType;
@@ -6869,6 +7091,20 @@ typedef struct VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV32
     uint32_t minSequencesIndexBufferOffsetAlignment;
     uint32_t minIndirectCommandsBufferOffsetAlignment;
 } VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV32;
+
+typedef struct VkPhysicalDeviceClusterAccelerationStructurePropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxVerticesPerCluster;
+    uint32_t maxTrianglesPerCluster;
+    uint32_t clusterScratchByteAlignment;
+    uint32_t clusterByteAlignment;
+    uint32_t clusterTemplateByteAlignment;
+    uint32_t clusterBottomLevelByteAlignment;
+    uint32_t clusterTemplateBoundsByteAlignment;
+    uint32_t maxClusterGeometryIndex;
+} VkPhysicalDeviceClusterAccelerationStructurePropertiesNV32;
 
 typedef struct VkPhysicalDeviceMultiDrawPropertiesEXT32
 {
@@ -7595,6 +7831,13 @@ typedef struct VkPhysicalDeviceExtendedDynamicState3PropertiesEXT32
     VkBool32 dynamicPrimitiveTopologyUnrestricted;
 } VkPhysicalDeviceExtendedDynamicState3PropertiesEXT32;
 
+typedef struct VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    uint32_t maxPartitionCount;
+} VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV32;
+
 typedef struct VkPhysicalDeviceRobustness2PropertiesEXT32
 {
     VkStructureType sType;
@@ -7965,6 +8208,16 @@ typedef struct VkPhysicalDeviceCooperativeMatrix2PropertiesNV32
     uint32_t cooperativeMatrixFlexibleDimensionsMaxDimension;
     uint32_t cooperativeMatrixWorkgroupScopeReservedSharedMemory;
 } VkPhysicalDeviceCooperativeMatrix2PropertiesNV32;
+
+typedef struct VkPhysicalDeviceCooperativeVectorPropertiesNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkShaderStageFlags cooperativeVectorSupportedStages;
+    VkBool32 cooperativeVectorTrainingFloat16Accumulation;
+    VkBool32 cooperativeVectorTrainingFloat32Accumulation;
+    uint32_t maxCooperativeVectorComponents;
+} VkPhysicalDeviceCooperativeVectorPropertiesNV32;
 
 typedef struct VkPhysicalDeviceProperties232
 {
@@ -11174,6 +11427,289 @@ static inline void convert_uint32_t_array_host_to_win32(const uint32_t * const*i
     }
 }
 
+static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_win32_to_host(const VkClusterAccelerationStructureClustersBottomLevelInputNV32 *in, VkClusterAccelerationStructureClustersBottomLevelInputNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->maxTotalClusterCount = in->maxTotalClusterCount;
+    out->maxClusterCountPerAccelerationStructure = in->maxClusterCountPerAccelerationStructure;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_host_to_win32(const VkClusterAccelerationStructureClustersBottomLevelInputNV *in, VkClusterAccelerationStructureClustersBottomLevelInputNV32 *out)
+{
+    if (!in) return;
+
+    out->maxTotalClusterCount = in->maxTotalClusterCount;
+    out->maxClusterCountPerAccelerationStructure = in->maxClusterCountPerAccelerationStructure;
+}
+
+static inline VkClusterAccelerationStructureClustersBottomLevelInputNV *convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureClustersBottomLevelInputNV32 *in, uint32_t count)
+{
+    VkClusterAccelerationStructureClustersBottomLevelInputNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_host_to_win32(const VkClusterAccelerationStructureClustersBottomLevelInputNV *in, VkClusterAccelerationStructureClustersBottomLevelInputNV32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_host_to_win32(&in[i], &out[i]);
+    }
+}
+
+static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_win32_to_host(const VkClusterAccelerationStructureTriangleClusterInputNV32 *in, VkClusterAccelerationStructureTriangleClusterInputNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->vertexFormat = in->vertexFormat;
+    out->maxGeometryIndexValue = in->maxGeometryIndexValue;
+    out->maxClusterUniqueGeometryCount = in->maxClusterUniqueGeometryCount;
+    out->maxClusterTriangleCount = in->maxClusterTriangleCount;
+    out->maxClusterVertexCount = in->maxClusterVertexCount;
+    out->maxTotalTriangleCount = in->maxTotalTriangleCount;
+    out->maxTotalVertexCount = in->maxTotalVertexCount;
+    out->minPositionTruncateBitCount = in->minPositionTruncateBitCount;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_host_to_win32(const VkClusterAccelerationStructureTriangleClusterInputNV *in, VkClusterAccelerationStructureTriangleClusterInputNV32 *out)
+{
+    if (!in) return;
+
+    out->vertexFormat = in->vertexFormat;
+    out->maxGeometryIndexValue = in->maxGeometryIndexValue;
+    out->maxClusterUniqueGeometryCount = in->maxClusterUniqueGeometryCount;
+    out->maxClusterTriangleCount = in->maxClusterTriangleCount;
+    out->maxClusterVertexCount = in->maxClusterVertexCount;
+    out->maxTotalTriangleCount = in->maxTotalTriangleCount;
+    out->maxTotalVertexCount = in->maxTotalVertexCount;
+    out->minPositionTruncateBitCount = in->minPositionTruncateBitCount;
+}
+
+static inline VkClusterAccelerationStructureTriangleClusterInputNV *convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureTriangleClusterInputNV32 *in, uint32_t count)
+{
+    VkClusterAccelerationStructureTriangleClusterInputNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureTriangleClusterInputNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_host_to_win32(const VkClusterAccelerationStructureTriangleClusterInputNV *in, VkClusterAccelerationStructureTriangleClusterInputNV32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureTriangleClusterInputNV_host_to_win32(&in[i], &out[i]);
+    }
+}
+
+static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_win32_to_host(const VkClusterAccelerationStructureMoveObjectsInputNV32 *in, VkClusterAccelerationStructureMoveObjectsInputNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->type = in->type;
+    out->noMoveOverlap = in->noMoveOverlap;
+    out->maxMovedBytes = in->maxMovedBytes;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_host_to_win32(const VkClusterAccelerationStructureMoveObjectsInputNV *in, VkClusterAccelerationStructureMoveObjectsInputNV32 *out)
+{
+    if (!in) return;
+
+    out->type = in->type;
+    out->noMoveOverlap = in->noMoveOverlap;
+    out->maxMovedBytes = in->maxMovedBytes;
+}
+
+static inline VkClusterAccelerationStructureMoveObjectsInputNV *convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureMoveObjectsInputNV32 *in, uint32_t count)
+{
+    VkClusterAccelerationStructureMoveObjectsInputNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureMoveObjectsInputNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_host_to_win32(const VkClusterAccelerationStructureMoveObjectsInputNV *in, VkClusterAccelerationStructureMoveObjectsInputNV32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkClusterAccelerationStructureMoveObjectsInputNV_host_to_win32(&in[i], &out[i]);
+    }
+}
+
+static inline void convert_VkClusterAccelerationStructureOpInputNV_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureOpInputNV32 *in, VkClusterAccelerationStructureOpInputNV *out, VkFlags selector)
+{
+    if (!in) return;
+
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV)
+        out->pClustersBottomLevel = convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_win32_to_host(ctx, (VkClusterAccelerationStructureClustersBottomLevelInputNV32 *)UlongToPtr(in->pClustersBottomLevel), 1);
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV)
+        out->pTriangleClusters = convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_win32_to_host(ctx, (VkClusterAccelerationStructureTriangleClusterInputNV32 *)UlongToPtr(in->pTriangleClusters), 1);
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV)
+        out->pMoveObjects = convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_win32_to_host(ctx, (VkClusterAccelerationStructureMoveObjectsInputNV32 *)UlongToPtr(in->pMoveObjects), 1);
+}
+
+static inline void convert_VkClusterAccelerationStructureOpInputNV_host_to_win32(const VkClusterAccelerationStructureOpInputNV *in, const VkClusterAccelerationStructureOpInputNV32 *out, VkFlags selector)
+{
+    if (!in) return;
+
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_CLUSTERS_BOTTOM_LEVEL_NV)
+        convert_VkClusterAccelerationStructureClustersBottomLevelInputNV_array_host_to_win32(in->pClustersBottomLevel, (VkClusterAccelerationStructureClustersBottomLevelInputNV32 *)UlongToPtr(out->pClustersBottomLevel), 1);
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_BUILD_TRIANGLE_CLUSTER_TEMPLATE_NV || selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_INSTANTIATE_TRIANGLE_CLUSTER_NV)
+        convert_VkClusterAccelerationStructureTriangleClusterInputNV_array_host_to_win32(in->pTriangleClusters, (VkClusterAccelerationStructureTriangleClusterInputNV32 *)UlongToPtr(out->pTriangleClusters), 1);
+    if (selector == VK_CLUSTER_ACCELERATION_STRUCTURE_OP_TYPE_MOVE_OBJECTS_NV)
+        convert_VkClusterAccelerationStructureMoveObjectsInputNV_array_host_to_win32(in->pMoveObjects, (VkClusterAccelerationStructureMoveObjectsInputNV32 *)UlongToPtr(out->pMoveObjects), 1);
+}
+
+static inline void convert_VkClusterAccelerationStructureInputInfoNV_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureInputInfoNV32 *in, VkClusterAccelerationStructureInputInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->maxAccelerationStructureCount = in->maxAccelerationStructureCount;
+    out->flags = in->flags;
+    out->opType = in->opType;
+    out->opMode = in->opMode;
+    convert_VkClusterAccelerationStructureOpInputNV_win32_to_host(ctx, &in->opInput, &out->opInput, in->opType);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const VkStridedDeviceAddressRegionKHR32 *in, VkStridedDeviceAddressRegionKHR *out)
+{
+    if (!in) return;
+
+    out->deviceAddress = in->deviceAddress;
+    out->stride = in->stride;
+    out->size = in->size;
+}
+
+static inline void convert_VkClusterAccelerationStructureCommandsInfoNV_win32_to_host(struct conversion_context *ctx, const VkClusterAccelerationStructureCommandsInfoNV32 *in, VkClusterAccelerationStructureCommandsInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    convert_VkClusterAccelerationStructureInputInfoNV_win32_to_host(ctx, &in->input, &out->input);
+    out->dstImplicitData = in->dstImplicitData;
+    out->scratchData = in->scratchData;
+    convert_VkStridedDeviceAddressRegionKHR_win32_to_host(&in->dstAddressesArray, &out->dstAddressesArray);
+    convert_VkStridedDeviceAddressRegionKHR_win32_to_host(&in->dstSizesArray, &out->dstSizesArray);
+    convert_VkStridedDeviceAddressRegionKHR_win32_to_host(&in->srcInfosArray, &out->srcInfosArray);
+    out->srcInfosCount = in->srcInfosCount;
+    out->addressResolutionFlags = in->addressResolutionFlags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkPartitionedAccelerationStructureInstancesInputNV_win32_to_host(struct conversion_context *ctx, const VkPartitionedAccelerationStructureInstancesInputNV32 *in, VkPartitionedAccelerationStructureInstancesInputNV *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->flags = in->flags;
+    out->instanceCount = in->instanceCount;
+    out->maxInstancePerPartitionCount = in->maxInstancePerPartitionCount;
+    out->partitionCount = in->partitionCount;
+    out->maxInstanceInGlobalPartitionCount = in->maxInstanceInGlobalPartitionCount;
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_FLAGS_NV:
+        {
+            VkPartitionedAccelerationStructureFlagsNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPartitionedAccelerationStructureFlagsNV32 *in_ext = (const VkPartitionedAccelerationStructureFlagsNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PARTITIONED_ACCELERATION_STRUCTURE_FLAGS_NV;
+            out_ext->pNext = NULL;
+            out_ext->enablePartitionTranslation = in_ext->enablePartitionTranslation;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+
+static inline void convert_VkPartitionedAccelerationStructureInstancesInputNV_host_to_win32(const VkPartitionedAccelerationStructureInstancesInputNV *in, const VkPartitionedAccelerationStructureInstancesInputNV32 *out)
+{
+    if (!in) return;
+
+}
+
+static inline void convert_VkBuildPartitionedAccelerationStructureInfoNV_win32_to_host(struct conversion_context *ctx, const VkBuildPartitionedAccelerationStructureInfoNV32 *in, VkBuildPartitionedAccelerationStructureInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    convert_VkPartitionedAccelerationStructureInstancesInputNV_win32_to_host(ctx, &in->input, &out->input);
+    out->srcAccelerationStructureData = in->srcAccelerationStructureData;
+    out->dstAccelerationStructureData = in->dstAccelerationStructureData;
+    out->scratchData = in->scratchData;
+    out->srcInfos = in->srcInfos;
+    out->srcInfosCount = in->srcInfosCount;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
 static inline void convert_VkVideoCodingControlInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoCodingControlInfoKHR32 *in, VkVideoCodingControlInfoKHR *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -11266,6 +11802,44 @@ static inline void convert_VkVideoCodingControlInfoKHR_win32_to_host(struct conv
             break;
         }
     }
+}
+
+static inline void convert_VkConvertCooperativeVectorMatrixInfoNV_win32_to_host(const VkConvertCooperativeVectorMatrixInfoNV32 *in, VkConvertCooperativeVectorMatrixInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->srcSize = in->srcSize;
+    out->srcData = in->srcData;
+    out->pDstSize = UlongToPtr(in->pDstSize);
+    out->dstData = in->dstData;
+    out->srcComponentType = in->srcComponentType;
+    out->dstComponentType = in->dstComponentType;
+    out->numRows = in->numRows;
+    out->numColumns = in->numColumns;
+    out->srcLayout = in->srcLayout;
+    out->srcStride = in->srcStride;
+    out->dstLayout = in->dstLayout;
+    out->dstStride = in->dstStride;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline const VkConvertCooperativeVectorMatrixInfoNV *convert_VkConvertCooperativeVectorMatrixInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkConvertCooperativeVectorMatrixInfoNV32 *in, uint32_t count)
+{
+    VkConvertCooperativeVectorMatrixInfoNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkConvertCooperativeVectorMatrixInfoNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
 }
 
 static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(const VkCopyAccelerationStructureInfoKHR32 *in, VkCopyAccelerationStructureInfoKHR *out)
@@ -11629,6 +12203,398 @@ static inline void convert_VkDebugMarkerMarkerInfoEXT_win32_to_host(const VkDebu
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_StdVideoH264SequenceParameterSetVui_win32_to_host(const StdVideoH264SequenceParameterSetVui32 *in, StdVideoH264SequenceParameterSetVui *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->aspect_ratio_idc = in->aspect_ratio_idc;
+    out->sar_width = in->sar_width;
+    out->sar_height = in->sar_height;
+    out->video_format = in->video_format;
+    out->colour_primaries = in->colour_primaries;
+    out->transfer_characteristics = in->transfer_characteristics;
+    out->matrix_coefficients = in->matrix_coefficients;
+    out->num_units_in_tick = in->num_units_in_tick;
+    out->time_scale = in->time_scale;
+    out->max_num_reorder_frames = in->max_num_reorder_frames;
+    out->max_dec_frame_buffering = in->max_dec_frame_buffering;
+    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
+    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
+    out->reserved1 = in->reserved1;
+    out->pHrdParameters = UlongToPtr(in->pHrdParameters);
+}
+
+static inline const StdVideoH264SequenceParameterSetVui *convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSetVui32 *in, uint32_t count)
+{
+    StdVideoH264SequenceParameterSetVui *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264SequenceParameterSetVui_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH264SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, StdVideoH264SequenceParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->profile_idc = in->profile_idc;
+    out->level_idc = in->level_idc;
+    out->chroma_format_idc = in->chroma_format_idc;
+    out->seq_parameter_set_id = in->seq_parameter_set_id;
+    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
+    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
+    out->log2_max_frame_num_minus4 = in->log2_max_frame_num_minus4;
+    out->pic_order_cnt_type = in->pic_order_cnt_type;
+    out->offset_for_non_ref_pic = in->offset_for_non_ref_pic;
+    out->offset_for_top_to_bottom_field = in->offset_for_top_to_bottom_field;
+    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
+    out->num_ref_frames_in_pic_order_cnt_cycle = in->num_ref_frames_in_pic_order_cnt_cycle;
+    out->max_num_ref_frames = in->max_num_ref_frames;
+    out->reserved1 = in->reserved1;
+    out->pic_width_in_mbs_minus1 = in->pic_width_in_mbs_minus1;
+    out->pic_height_in_map_units_minus1 = in->pic_height_in_map_units_minus1;
+    out->frame_crop_left_offset = in->frame_crop_left_offset;
+    out->frame_crop_right_offset = in->frame_crop_right_offset;
+    out->frame_crop_top_offset = in->frame_crop_top_offset;
+    out->frame_crop_bottom_offset = in->frame_crop_bottom_offset;
+    out->reserved2 = in->reserved2;
+    out->pOffsetForRefFrame = UlongToPtr(in->pOffsetForRefFrame);
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+    out->pSequenceParameterSetVui = convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
+}
+
+static inline const StdVideoH264SequenceParameterSet *convert_StdVideoH264SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, uint32_t count)
+{
+    StdVideoH264SequenceParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH264PictureParameterSet_win32_to_host(const StdVideoH264PictureParameterSet32 *in, StdVideoH264PictureParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->seq_parameter_set_id = in->seq_parameter_set_id;
+    out->pic_parameter_set_id = in->pic_parameter_set_id;
+    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
+    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
+    out->weighted_bipred_idc = in->weighted_bipred_idc;
+    out->pic_init_qp_minus26 = in->pic_init_qp_minus26;
+    out->pic_init_qs_minus26 = in->pic_init_qs_minus26;
+    out->chroma_qp_index_offset = in->chroma_qp_index_offset;
+    out->second_chroma_qp_index_offset = in->second_chroma_qp_index_offset;
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+}
+
+static inline const StdVideoH264PictureParameterSet *convert_StdVideoH264PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264PictureParameterSet32 *in, uint32_t count)
+{
+    StdVideoH264PictureParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH264PictureParameterSet_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH265HrdParameters_win32_to_host(const StdVideoH265HrdParameters32 *in, StdVideoH265HrdParameters *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->tick_divisor_minus2 = in->tick_divisor_minus2;
+    out->du_cpb_removal_delay_increment_length_minus1 = in->du_cpb_removal_delay_increment_length_minus1;
+    out->dpb_output_delay_du_length_minus1 = in->dpb_output_delay_du_length_minus1;
+    out->bit_rate_scale = in->bit_rate_scale;
+    out->cpb_size_scale = in->cpb_size_scale;
+    out->cpb_size_du_scale = in->cpb_size_du_scale;
+    out->initial_cpb_removal_delay_length_minus1 = in->initial_cpb_removal_delay_length_minus1;
+    out->au_cpb_removal_delay_length_minus1 = in->au_cpb_removal_delay_length_minus1;
+    out->dpb_output_delay_length_minus1 = in->dpb_output_delay_length_minus1;
+    memcpy(out->cpb_cnt_minus1, in->cpb_cnt_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint8_t));
+    memcpy(out->elemental_duration_in_tc_minus1, in->elemental_duration_in_tc_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint16_t));
+    memcpy(out->reserved, in->reserved, 3 * sizeof(uint16_t));
+    out->pSubLayerHrdParametersNal = UlongToPtr(in->pSubLayerHrdParametersNal);
+    out->pSubLayerHrdParametersVcl = UlongToPtr(in->pSubLayerHrdParametersVcl);
+}
+
+static inline const StdVideoH265HrdParameters *convert_StdVideoH265HrdParameters_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265HrdParameters32 *in, uint32_t count)
+{
+    StdVideoH265HrdParameters *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH265HrdParameters_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH265VideoParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, StdVideoH265VideoParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->vps_video_parameter_set_id = in->vps_video_parameter_set_id;
+    out->vps_max_sub_layers_minus1 = in->vps_max_sub_layers_minus1;
+    out->reserved1 = in->reserved1;
+    out->reserved2 = in->reserved2;
+    out->vps_num_units_in_tick = in->vps_num_units_in_tick;
+    out->vps_time_scale = in->vps_time_scale;
+    out->vps_num_ticks_poc_diff_one_minus1 = in->vps_num_ticks_poc_diff_one_minus1;
+    out->reserved3 = in->reserved3;
+    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
+    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
+    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
+}
+
+static inline const StdVideoH265VideoParameterSet *convert_StdVideoH265VideoParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, uint32_t count)
+{
+    StdVideoH265VideoParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH265VideoParameterSet_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH265SequenceParameterSetVui_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, StdVideoH265SequenceParameterSetVui *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->aspect_ratio_idc = in->aspect_ratio_idc;
+    out->sar_width = in->sar_width;
+    out->sar_height = in->sar_height;
+    out->video_format = in->video_format;
+    out->colour_primaries = in->colour_primaries;
+    out->transfer_characteristics = in->transfer_characteristics;
+    out->matrix_coeffs = in->matrix_coeffs;
+    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
+    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
+    out->reserved1 = in->reserved1;
+    out->reserved2 = in->reserved2;
+    out->def_disp_win_left_offset = in->def_disp_win_left_offset;
+    out->def_disp_win_right_offset = in->def_disp_win_right_offset;
+    out->def_disp_win_top_offset = in->def_disp_win_top_offset;
+    out->def_disp_win_bottom_offset = in->def_disp_win_bottom_offset;
+    out->vui_num_units_in_tick = in->vui_num_units_in_tick;
+    out->vui_time_scale = in->vui_time_scale;
+    out->vui_num_ticks_poc_diff_one_minus1 = in->vui_num_ticks_poc_diff_one_minus1;
+    out->min_spatial_segmentation_idc = in->min_spatial_segmentation_idc;
+    out->reserved3 = in->reserved3;
+    out->max_bytes_per_pic_denom = in->max_bytes_per_pic_denom;
+    out->max_bits_per_min_cu_denom = in->max_bits_per_min_cu_denom;
+    out->log2_max_mv_length_horizontal = in->log2_max_mv_length_horizontal;
+    out->log2_max_mv_length_vertical = in->log2_max_mv_length_vertical;
+    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
+}
+
+static inline const StdVideoH265SequenceParameterSetVui *convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, uint32_t count)
+{
+    StdVideoH265SequenceParameterSetVui *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH265SequenceParameterSetVui_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH265SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, StdVideoH265SequenceParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->chroma_format_idc = in->chroma_format_idc;
+    out->pic_width_in_luma_samples = in->pic_width_in_luma_samples;
+    out->pic_height_in_luma_samples = in->pic_height_in_luma_samples;
+    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
+    out->sps_max_sub_layers_minus1 = in->sps_max_sub_layers_minus1;
+    out->sps_seq_parameter_set_id = in->sps_seq_parameter_set_id;
+    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
+    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
+    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
+    out->log2_min_luma_coding_block_size_minus3 = in->log2_min_luma_coding_block_size_minus3;
+    out->log2_diff_max_min_luma_coding_block_size = in->log2_diff_max_min_luma_coding_block_size;
+    out->log2_min_luma_transform_block_size_minus2 = in->log2_min_luma_transform_block_size_minus2;
+    out->log2_diff_max_min_luma_transform_block_size = in->log2_diff_max_min_luma_transform_block_size;
+    out->max_transform_hierarchy_depth_inter = in->max_transform_hierarchy_depth_inter;
+    out->max_transform_hierarchy_depth_intra = in->max_transform_hierarchy_depth_intra;
+    out->num_short_term_ref_pic_sets = in->num_short_term_ref_pic_sets;
+    out->num_long_term_ref_pics_sps = in->num_long_term_ref_pics_sps;
+    out->pcm_sample_bit_depth_luma_minus1 = in->pcm_sample_bit_depth_luma_minus1;
+    out->pcm_sample_bit_depth_chroma_minus1 = in->pcm_sample_bit_depth_chroma_minus1;
+    out->log2_min_pcm_luma_coding_block_size_minus3 = in->log2_min_pcm_luma_coding_block_size_minus3;
+    out->log2_diff_max_min_pcm_luma_coding_block_size = in->log2_diff_max_min_pcm_luma_coding_block_size;
+    out->reserved1 = in->reserved1;
+    out->reserved2 = in->reserved2;
+    out->palette_max_size = in->palette_max_size;
+    out->delta_palette_max_predictor_size = in->delta_palette_max_predictor_size;
+    out->motion_vector_resolution_control_idc = in->motion_vector_resolution_control_idc;
+    out->sps_num_palette_predictor_initializers_minus1 = in->sps_num_palette_predictor_initializers_minus1;
+    out->conf_win_left_offset = in->conf_win_left_offset;
+    out->conf_win_right_offset = in->conf_win_right_offset;
+    out->conf_win_top_offset = in->conf_win_top_offset;
+    out->conf_win_bottom_offset = in->conf_win_bottom_offset;
+    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
+    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+    out->pShortTermRefPicSet = UlongToPtr(in->pShortTermRefPicSet);
+    out->pLongTermRefPicsSps = UlongToPtr(in->pLongTermRefPicsSps);
+    out->pSequenceParameterSetVui = convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
+    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
+}
+
+static inline const StdVideoH265SequenceParameterSet *convert_StdVideoH265SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, uint32_t count)
+{
+    StdVideoH265SequenceParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH265SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoH265PictureParameterSet_win32_to_host(const StdVideoH265PictureParameterSet32 *in, StdVideoH265PictureParameterSet *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->pps_pic_parameter_set_id = in->pps_pic_parameter_set_id;
+    out->pps_seq_parameter_set_id = in->pps_seq_parameter_set_id;
+    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
+    out->num_extra_slice_header_bits = in->num_extra_slice_header_bits;
+    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
+    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
+    out->init_qp_minus26 = in->init_qp_minus26;
+    out->diff_cu_qp_delta_depth = in->diff_cu_qp_delta_depth;
+    out->pps_cb_qp_offset = in->pps_cb_qp_offset;
+    out->pps_cr_qp_offset = in->pps_cr_qp_offset;
+    out->pps_beta_offset_div2 = in->pps_beta_offset_div2;
+    out->pps_tc_offset_div2 = in->pps_tc_offset_div2;
+    out->log2_parallel_merge_level_minus2 = in->log2_parallel_merge_level_minus2;
+    out->log2_max_transform_skip_block_size_minus2 = in->log2_max_transform_skip_block_size_minus2;
+    out->diff_cu_chroma_qp_offset_depth = in->diff_cu_chroma_qp_offset_depth;
+    out->chroma_qp_offset_list_len_minus1 = in->chroma_qp_offset_list_len_minus1;
+    memcpy(out->cb_qp_offset_list, in->cb_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
+    memcpy(out->cr_qp_offset_list, in->cr_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
+    out->log2_sao_offset_scale_luma = in->log2_sao_offset_scale_luma;
+    out->log2_sao_offset_scale_chroma = in->log2_sao_offset_scale_chroma;
+    out->pps_act_y_qp_offset_plus5 = in->pps_act_y_qp_offset_plus5;
+    out->pps_act_cb_qp_offset_plus5 = in->pps_act_cb_qp_offset_plus5;
+    out->pps_act_cr_qp_offset_plus3 = in->pps_act_cr_qp_offset_plus3;
+    out->pps_num_palette_predictor_initializers = in->pps_num_palette_predictor_initializers;
+    out->luma_bit_depth_entry_minus8 = in->luma_bit_depth_entry_minus8;
+    out->chroma_bit_depth_entry_minus8 = in->chroma_bit_depth_entry_minus8;
+    out->num_tile_columns_minus1 = in->num_tile_columns_minus1;
+    out->num_tile_rows_minus1 = in->num_tile_rows_minus1;
+    out->reserved1 = in->reserved1;
+    out->reserved2 = in->reserved2;
+    memcpy(out->column_width_minus1, in->column_width_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE * sizeof(uint16_t));
+    memcpy(out->row_height_minus1, in->row_height_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE * sizeof(uint16_t));
+    out->reserved3 = in->reserved3;
+    out->pScalingLists = UlongToPtr(in->pScalingLists);
+    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
+}
+
+static inline const StdVideoH265PictureParameterSet *convert_StdVideoH265PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265PictureParameterSet32 *in, uint32_t count)
+{
+    StdVideoH265PictureParameterSet *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoH265PictureParameterSet_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_StdVideoAV1SequenceHeader_win32_to_host(const StdVideoAV1SequenceHeader32 *in, StdVideoAV1SequenceHeader *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->seq_profile = in->seq_profile;
+    out->frame_width_bits_minus_1 = in->frame_width_bits_minus_1;
+    out->frame_height_bits_minus_1 = in->frame_height_bits_minus_1;
+    out->max_frame_width_minus_1 = in->max_frame_width_minus_1;
+    out->max_frame_height_minus_1 = in->max_frame_height_minus_1;
+    out->delta_frame_id_length_minus_2 = in->delta_frame_id_length_minus_2;
+    out->additional_frame_id_length_minus_1 = in->additional_frame_id_length_minus_1;
+    out->order_hint_bits_minus_1 = in->order_hint_bits_minus_1;
+    out->seq_force_integer_mv = in->seq_force_integer_mv;
+    out->seq_force_screen_content_tools = in->seq_force_screen_content_tools;
+    memcpy(out->reserved1, in->reserved1, 5 * sizeof(uint8_t));
+    out->pColorConfig = UlongToPtr(in->pColorConfig);
+    out->pTimingInfo = UlongToPtr(in->pTimingInfo);
+}
+
+static inline const StdVideoAV1SequenceHeader *convert_StdVideoAV1SequenceHeader_array_win32_to_host(struct conversion_context *ctx, const StdVideoAV1SequenceHeader32 *in, uint32_t count)
+{
+    StdVideoAV1SequenceHeader *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_StdVideoAV1SequenceHeader_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static inline void convert_StdVideoAV1TileInfo_win32_to_host(const StdVideoAV1TileInfo32 *in, StdVideoAV1TileInfo *out)
 {
     if (!in) return;
@@ -11742,6 +12708,18 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_INLINE_SESSION_PARAMETERS_INFO_KHR:
+        {
+            VkVideoDecodeH264InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoDecodeH264InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeH264InlineSessionParametersInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_INLINE_SESSION_PARAMETERS_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->pStdSPS = convert_StdVideoH264SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPS), 1);
+            out_ext->pStdPPS = convert_StdVideoH264PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH264PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPS), 1);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_H264_PICTURE_INFO_KHR:
         {
             VkVideoDecodeH264PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11755,6 +12733,19 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_INLINE_SESSION_PARAMETERS_INFO_KHR:
+        {
+            VkVideoDecodeH265InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoDecodeH265InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeH265InlineSessionParametersInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_INLINE_SESSION_PARAMETERS_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->pStdVPS = convert_StdVideoH265VideoParameterSet_array_win32_to_host(ctx, (const StdVideoH265VideoParameterSet32 *)UlongToPtr(in_ext->pStdVPS), 1);
+            out_ext->pStdSPS = convert_StdVideoH265SequenceParameterSet_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSet32 *)UlongToPtr(in_ext->pStdSPS), 1);
+            out_ext->pStdPPS = convert_StdVideoH265PictureParameterSet_array_win32_to_host(ctx, (const StdVideoH265PictureParameterSet32 *)UlongToPtr(in_ext->pStdPPS), 1);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_VIDEO_DECODE_H265_PICTURE_INFO_KHR:
         {
             VkVideoDecodeH265PictureInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11764,6 +12755,17 @@ static inline void convert_VkVideoDecodeInfoKHR_win32_to_host(struct conversion_
             out_ext->pStdPictureInfo = UlongToPtr(in_ext->pStdPictureInfo);
             out_ext->sliceSegmentCount = in_ext->sliceSegmentCount;
             out_ext->pSliceSegmentOffsets = UlongToPtr(in_ext->pSliceSegmentOffsets);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_VIDEO_DECODE_AV1_INLINE_SESSION_PARAMETERS_INFO_KHR:
+        {
+            VkVideoDecodeAV1InlineSessionParametersInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkVideoDecodeAV1InlineSessionParametersInfoKHR32 *in_ext = (const VkVideoDecodeAV1InlineSessionParametersInfoKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_VIDEO_DECODE_AV1_INLINE_SESSION_PARAMETERS_INFO_KHR;
+            out_ext->pNext = NULL;
+            out_ext->pStdSequenceHeader = convert_StdVideoAV1SequenceHeader_array_win32_to_host(ctx, (const StdVideoAV1SequenceHeader32 *)UlongToPtr(in_ext->pStdSequenceHeader), 1);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -12536,8 +13538,11 @@ static inline const VkImageMemoryBarrier *convert_VkImageMemoryBarrier_array_win
     return out;
 }
 
-static inline void convert_VkMemoryBarrier2_win32_to_host(const VkMemoryBarrier232 *in, VkMemoryBarrier2 *out)
+static inline void convert_VkMemoryBarrier2_win32_to_host(struct conversion_context *ctx, const VkMemoryBarrier232 *in, VkMemoryBarrier2 *out)
 {
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
@@ -12546,8 +13551,28 @@ static inline void convert_VkMemoryBarrier2_win32_to_host(const VkMemoryBarrier2
     out->srcAccessMask = in->srcAccessMask;
     out->dstStageMask = in->dstStageMask;
     out->dstAccessMask = in->dstAccessMask;
-    if (in->pNext)
-        FIXME("Unexpected pNext\n");
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR:
+        {
+            VkMemoryBarrierAccessFlags3KHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryBarrierAccessFlags3KHR32 *in_ext = (const VkMemoryBarrierAccessFlags3KHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR;
+            out_ext->pNext = NULL;
+            out_ext->srcAccessMask3 = in_ext->srcAccessMask3;
+            out_ext->dstAccessMask3 = in_ext->dstAccessMask3;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
 }
 
 static inline const VkMemoryBarrier2 *convert_VkMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkMemoryBarrier232 *in, uint32_t count)
@@ -12560,7 +13585,7 @@ static inline const VkMemoryBarrier2 *convert_VkMemoryBarrier2_array_win32_to_ho
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkMemoryBarrier2_win32_to_host(&in[i], &out[i]);
+        convert_VkMemoryBarrier2_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -12589,6 +13614,18 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(struct conversio
     {
         switch (in_header->sType)
         {
+        case VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR:
+        {
+            VkMemoryBarrierAccessFlags3KHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryBarrierAccessFlags3KHR32 *in_ext = (const VkMemoryBarrierAccessFlags3KHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR;
+            out_ext->pNext = NULL;
+            out_ext->srcAccessMask3 = in_ext->srcAccessMask3;
+            out_ext->dstAccessMask3 = in_ext->dstAccessMask3;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_ACQUIRE_UNMODIFIED_EXT:
         {
             VkExternalMemoryAcquireUnmodifiedEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -12657,6 +13694,18 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(struct conversion
             out_ext->sampleLocationGridSize = in_ext->sampleLocationGridSize;
             out_ext->sampleLocationsCount = in_ext->sampleLocationsCount;
             out_ext->pSampleLocations = UlongToPtr(in_ext->pSampleLocations);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR:
+        {
+            VkMemoryBarrierAccessFlags3KHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkMemoryBarrierAccessFlags3KHR32 *in_ext = (const VkMemoryBarrierAccessFlags3KHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_ACCESS_FLAGS_3_KHR;
+            out_ext->pNext = NULL;
+            out_ext->srcAccessMask3 = in_ext->srcAccessMask3;
+            out_ext->dstAccessMask3 = in_ext->dstAccessMask3;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -12854,6 +13903,18 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
             VkWriteDescriptorSetAccelerationStructureNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkWriteDescriptorSetAccelerationStructureNV32 *in_ext = (const VkWriteDescriptorSetAccelerationStructureNV32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_NV;
+            out_ext->pNext = NULL;
+            out_ext->accelerationStructureCount = in_ext->accelerationStructureCount;
+            out_ext->pAccelerationStructures = UlongToPtr(in_ext->pAccelerationStructures);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_PARTITIONED_ACCELERATION_STRUCTURE_NV:
+        {
+            VkWriteDescriptorSetPartitionedAccelerationStructureNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkWriteDescriptorSetPartitionedAccelerationStructureNV32 *in_ext = (const VkWriteDescriptorSetPartitionedAccelerationStructureNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_PARTITIONED_ACCELERATION_STRUCTURE_NV;
             out_ext->pNext = NULL;
             out_ext->accelerationStructureCount = in_ext->accelerationStructureCount;
             out_ext->pAccelerationStructures = UlongToPtr(in_ext->pAccelerationStructures);
@@ -13259,15 +14320,6 @@ static inline const VkShadingRatePaletteNV *convert_VkShadingRatePaletteNV_array
     }
 
     return out;
-}
-
-static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const VkStridedDeviceAddressRegionKHR32 *in, VkStridedDeviceAddressRegionKHR *out)
-{
-    if (!in) return;
-
-    out->deviceAddress = in->deviceAddress;
-    out->stride = in->stride;
-    out->size = in->size;
 }
 
 static inline const VkDependencyInfo *convert_VkDependencyInfo_array_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo32 *in, uint32_t count)
@@ -14727,6 +15779,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *in_ext = (const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->clusterAccelerationStructure = in_ext->clusterAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2:
         {
             VkPhysicalDeviceFeatures2 *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -14907,6 +15970,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES;
             out_ext->pNext = NULL;
             out_ext->maintenance6 = in_ext->maintenance6;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR:
+        {
+            VkPhysicalDeviceMaintenance8FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMaintenance8FeaturesKHR *in_ext = (const VkPhysicalDeviceMaintenance8FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maintenance8 = in_ext->maintenance8;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -15923,6 +16997,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->partitionedAccelerationStructure = in_ext->partitionedAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
             VkPhysicalDeviceDiagnosticsConfigFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -16291,6 +17376,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
         {
             VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -16402,6 +17498,18 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->rayTracingValidation = in_ext->rayTracingValidation;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->spheres = in_ext->spheres;
+            out_ext->linearSweptSpheres = in_ext->linearSweptSpheres;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -16652,17 +17760,6 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->attachmentFeedbackLoopLayout = in_ext->attachmentFeedbackLoopLayout;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
-        {
-            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -16994,6 +18091,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM:
+        {
+            VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *in_ext = (const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->pipelineOpacityMicromap = in_ext->pipelineOpacityMicromap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -17179,6 +18287,29 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR:
+        {
+            VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeVectorFeaturesNV *in_ext = (const VkPhysicalDeviceCooperativeVectorFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeVector = in_ext->cooperativeVector;
+            out_ext->cooperativeVectorTraining = in_ext->cooperativeVectorTraining;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -17253,6 +18384,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES;
             out_ext->pNext = NULL;
             out_ext->privateData = in_ext->privateData;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32 *in_ext = (const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->clusterAccelerationStructure = in_ext->clusterAccelerationStructure;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -17437,6 +18579,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES;
             out_ext->pNext = NULL;
             out_ext->maintenance6 = in_ext->maintenance6;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR:
+        {
+            VkPhysicalDeviceMaintenance8FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMaintenance8FeaturesKHR32 *in_ext = (const VkPhysicalDeviceMaintenance8FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maintenance8 = in_ext->maintenance8;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -18453,6 +19606,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32 *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->partitionedAccelerationStructure = in_ext->partitionedAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
             VkPhysicalDeviceDiagnosticsConfigFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -18821,6 +19985,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
         {
             VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -18932,6 +20107,18 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->rayTracingValidation = in_ext->rayTracingValidation;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->spheres = in_ext->spheres;
+            out_ext->linearSweptSpheres = in_ext->linearSweptSpheres;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19182,17 +20369,6 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->attachmentFeedbackLoopLayout = in_ext->attachmentFeedbackLoopLayout;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
-        {
-            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19524,6 +20700,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM:
+        {
+            VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32 *in_ext = (const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->pipelineOpacityMicromap = in_ext->pipelineOpacityMicromap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -19705,6 +20892,29 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR:
+        {
+            VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeVectorFeaturesNV32 *in_ext = (const VkPhysicalDeviceCooperativeVectorFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeVector = in_ext->cooperativeVector;
+            out_ext->cooperativeVectorTraining = in_ext->cooperativeVectorTraining;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -22573,6 +23783,17 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CLUSTER_ACCELERATION_STRUCTURE_CREATE_INFO_NV:
+        {
+            VkRayTracingPipelineClusterAccelerationStructureCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRayTracingPipelineClusterAccelerationStructureCreateInfoNV32 *in_ext = (const VkRayTracingPipelineClusterAccelerationStructureCreateInfoNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CLUSTER_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->allowClusterAccelerationStructure = in_ext->allowClusterAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
             VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -23832,124 +25053,6 @@ static inline void convert_VkVideoSessionCreateInfoKHR_win32_to_host(struct conv
     }
 }
 
-static inline void convert_StdVideoH264SequenceParameterSetVui_win32_to_host(const StdVideoH264SequenceParameterSetVui32 *in, StdVideoH264SequenceParameterSetVui *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->aspect_ratio_idc = in->aspect_ratio_idc;
-    out->sar_width = in->sar_width;
-    out->sar_height = in->sar_height;
-    out->video_format = in->video_format;
-    out->colour_primaries = in->colour_primaries;
-    out->transfer_characteristics = in->transfer_characteristics;
-    out->matrix_coefficients = in->matrix_coefficients;
-    out->num_units_in_tick = in->num_units_in_tick;
-    out->time_scale = in->time_scale;
-    out->max_num_reorder_frames = in->max_num_reorder_frames;
-    out->max_dec_frame_buffering = in->max_dec_frame_buffering;
-    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
-    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
-    out->reserved1 = in->reserved1;
-    out->pHrdParameters = UlongToPtr(in->pHrdParameters);
-}
-
-static inline const StdVideoH264SequenceParameterSetVui *convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSetVui32 *in, uint32_t count)
-{
-    StdVideoH264SequenceParameterSetVui *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264SequenceParameterSetVui_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH264SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, StdVideoH264SequenceParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->profile_idc = in->profile_idc;
-    out->level_idc = in->level_idc;
-    out->chroma_format_idc = in->chroma_format_idc;
-    out->seq_parameter_set_id = in->seq_parameter_set_id;
-    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
-    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
-    out->log2_max_frame_num_minus4 = in->log2_max_frame_num_minus4;
-    out->pic_order_cnt_type = in->pic_order_cnt_type;
-    out->offset_for_non_ref_pic = in->offset_for_non_ref_pic;
-    out->offset_for_top_to_bottom_field = in->offset_for_top_to_bottom_field;
-    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
-    out->num_ref_frames_in_pic_order_cnt_cycle = in->num_ref_frames_in_pic_order_cnt_cycle;
-    out->max_num_ref_frames = in->max_num_ref_frames;
-    out->reserved1 = in->reserved1;
-    out->pic_width_in_mbs_minus1 = in->pic_width_in_mbs_minus1;
-    out->pic_height_in_map_units_minus1 = in->pic_height_in_map_units_minus1;
-    out->frame_crop_left_offset = in->frame_crop_left_offset;
-    out->frame_crop_right_offset = in->frame_crop_right_offset;
-    out->frame_crop_top_offset = in->frame_crop_top_offset;
-    out->frame_crop_bottom_offset = in->frame_crop_bottom_offset;
-    out->reserved2 = in->reserved2;
-    out->pOffsetForRefFrame = UlongToPtr(in->pOffsetForRefFrame);
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pSequenceParameterSetVui = convert_StdVideoH264SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH264SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
-}
-
-static inline const StdVideoH264SequenceParameterSet *convert_StdVideoH264SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264SequenceParameterSet32 *in, uint32_t count)
-{
-    StdVideoH264SequenceParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH264PictureParameterSet_win32_to_host(const StdVideoH264PictureParameterSet32 *in, StdVideoH264PictureParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->seq_parameter_set_id = in->seq_parameter_set_id;
-    out->pic_parameter_set_id = in->pic_parameter_set_id;
-    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
-    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
-    out->weighted_bipred_idc = in->weighted_bipred_idc;
-    out->pic_init_qp_minus26 = in->pic_init_qp_minus26;
-    out->pic_init_qs_minus26 = in->pic_init_qs_minus26;
-    out->chroma_qp_index_offset = in->chroma_qp_index_offset;
-    out->second_chroma_qp_index_offset = in->second_chroma_qp_index_offset;
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-}
-
-static inline const StdVideoH264PictureParameterSet *convert_StdVideoH264PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH264PictureParameterSet32 *in, uint32_t count)
-{
-    StdVideoH264PictureParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH264PictureParameterSet_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
 static inline void convert_VkVideoDecodeH264SessionParametersAddInfoKHR_win32_to_host(struct conversion_context *ctx, const VkVideoDecodeH264SessionParametersAddInfoKHR32 *in, VkVideoDecodeH264SessionParametersAddInfoKHR *out)
 {
     if (!in) return;
@@ -23975,244 +25078,6 @@ static inline const VkVideoDecodeH264SessionParametersAddInfoKHR *convert_VkVide
     for (i = 0; i < count; i++)
     {
         convert_VkVideoDecodeH264SessionParametersAddInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265HrdParameters_win32_to_host(const StdVideoH265HrdParameters32 *in, StdVideoH265HrdParameters *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->tick_divisor_minus2 = in->tick_divisor_minus2;
-    out->du_cpb_removal_delay_increment_length_minus1 = in->du_cpb_removal_delay_increment_length_minus1;
-    out->dpb_output_delay_du_length_minus1 = in->dpb_output_delay_du_length_minus1;
-    out->bit_rate_scale = in->bit_rate_scale;
-    out->cpb_size_scale = in->cpb_size_scale;
-    out->cpb_size_du_scale = in->cpb_size_du_scale;
-    out->initial_cpb_removal_delay_length_minus1 = in->initial_cpb_removal_delay_length_minus1;
-    out->au_cpb_removal_delay_length_minus1 = in->au_cpb_removal_delay_length_minus1;
-    out->dpb_output_delay_length_minus1 = in->dpb_output_delay_length_minus1;
-    memcpy(out->cpb_cnt_minus1, in->cpb_cnt_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint8_t));
-    memcpy(out->elemental_duration_in_tc_minus1, in->elemental_duration_in_tc_minus1, STD_VIDEO_H265_SUBLAYERS_LIST_SIZE * sizeof(uint16_t));
-    memcpy(out->reserved, in->reserved, 3 * sizeof(uint16_t));
-    out->pSubLayerHrdParametersNal = UlongToPtr(in->pSubLayerHrdParametersNal);
-    out->pSubLayerHrdParametersVcl = UlongToPtr(in->pSubLayerHrdParametersVcl);
-}
-
-static inline const StdVideoH265HrdParameters *convert_StdVideoH265HrdParameters_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265HrdParameters32 *in, uint32_t count)
-{
-    StdVideoH265HrdParameters *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265HrdParameters_win32_to_host(&in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265VideoParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, StdVideoH265VideoParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->vps_video_parameter_set_id = in->vps_video_parameter_set_id;
-    out->vps_max_sub_layers_minus1 = in->vps_max_sub_layers_minus1;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->vps_num_units_in_tick = in->vps_num_units_in_tick;
-    out->vps_time_scale = in->vps_time_scale;
-    out->vps_num_ticks_poc_diff_one_minus1 = in->vps_num_ticks_poc_diff_one_minus1;
-    out->reserved3 = in->reserved3;
-    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
-    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
-    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
-}
-
-static inline const StdVideoH265VideoParameterSet *convert_StdVideoH265VideoParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265VideoParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265VideoParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265VideoParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265SequenceParameterSetVui_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, StdVideoH265SequenceParameterSetVui *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->aspect_ratio_idc = in->aspect_ratio_idc;
-    out->sar_width = in->sar_width;
-    out->sar_height = in->sar_height;
-    out->video_format = in->video_format;
-    out->colour_primaries = in->colour_primaries;
-    out->transfer_characteristics = in->transfer_characteristics;
-    out->matrix_coeffs = in->matrix_coeffs;
-    out->chroma_sample_loc_type_top_field = in->chroma_sample_loc_type_top_field;
-    out->chroma_sample_loc_type_bottom_field = in->chroma_sample_loc_type_bottom_field;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->def_disp_win_left_offset = in->def_disp_win_left_offset;
-    out->def_disp_win_right_offset = in->def_disp_win_right_offset;
-    out->def_disp_win_top_offset = in->def_disp_win_top_offset;
-    out->def_disp_win_bottom_offset = in->def_disp_win_bottom_offset;
-    out->vui_num_units_in_tick = in->vui_num_units_in_tick;
-    out->vui_time_scale = in->vui_time_scale;
-    out->vui_num_ticks_poc_diff_one_minus1 = in->vui_num_ticks_poc_diff_one_minus1;
-    out->min_spatial_segmentation_idc = in->min_spatial_segmentation_idc;
-    out->reserved3 = in->reserved3;
-    out->max_bytes_per_pic_denom = in->max_bytes_per_pic_denom;
-    out->max_bits_per_min_cu_denom = in->max_bits_per_min_cu_denom;
-    out->log2_max_mv_length_horizontal = in->log2_max_mv_length_horizontal;
-    out->log2_max_mv_length_vertical = in->log2_max_mv_length_vertical;
-    out->pHrdParameters = convert_StdVideoH265HrdParameters_array_win32_to_host(ctx, (const StdVideoH265HrdParameters32 *)UlongToPtr(in->pHrdParameters), 1);
-}
-
-static inline const StdVideoH265SequenceParameterSetVui *convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSetVui32 *in, uint32_t count)
-{
-    StdVideoH265SequenceParameterSetVui *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265SequenceParameterSetVui_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265SequenceParameterSet_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, StdVideoH265SequenceParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->chroma_format_idc = in->chroma_format_idc;
-    out->pic_width_in_luma_samples = in->pic_width_in_luma_samples;
-    out->pic_height_in_luma_samples = in->pic_height_in_luma_samples;
-    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
-    out->sps_max_sub_layers_minus1 = in->sps_max_sub_layers_minus1;
-    out->sps_seq_parameter_set_id = in->sps_seq_parameter_set_id;
-    out->bit_depth_luma_minus8 = in->bit_depth_luma_minus8;
-    out->bit_depth_chroma_minus8 = in->bit_depth_chroma_minus8;
-    out->log2_max_pic_order_cnt_lsb_minus4 = in->log2_max_pic_order_cnt_lsb_minus4;
-    out->log2_min_luma_coding_block_size_minus3 = in->log2_min_luma_coding_block_size_minus3;
-    out->log2_diff_max_min_luma_coding_block_size = in->log2_diff_max_min_luma_coding_block_size;
-    out->log2_min_luma_transform_block_size_minus2 = in->log2_min_luma_transform_block_size_minus2;
-    out->log2_diff_max_min_luma_transform_block_size = in->log2_diff_max_min_luma_transform_block_size;
-    out->max_transform_hierarchy_depth_inter = in->max_transform_hierarchy_depth_inter;
-    out->max_transform_hierarchy_depth_intra = in->max_transform_hierarchy_depth_intra;
-    out->num_short_term_ref_pic_sets = in->num_short_term_ref_pic_sets;
-    out->num_long_term_ref_pics_sps = in->num_long_term_ref_pics_sps;
-    out->pcm_sample_bit_depth_luma_minus1 = in->pcm_sample_bit_depth_luma_minus1;
-    out->pcm_sample_bit_depth_chroma_minus1 = in->pcm_sample_bit_depth_chroma_minus1;
-    out->log2_min_pcm_luma_coding_block_size_minus3 = in->log2_min_pcm_luma_coding_block_size_minus3;
-    out->log2_diff_max_min_pcm_luma_coding_block_size = in->log2_diff_max_min_pcm_luma_coding_block_size;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    out->palette_max_size = in->palette_max_size;
-    out->delta_palette_max_predictor_size = in->delta_palette_max_predictor_size;
-    out->motion_vector_resolution_control_idc = in->motion_vector_resolution_control_idc;
-    out->sps_num_palette_predictor_initializers_minus1 = in->sps_num_palette_predictor_initializers_minus1;
-    out->conf_win_left_offset = in->conf_win_left_offset;
-    out->conf_win_right_offset = in->conf_win_right_offset;
-    out->conf_win_top_offset = in->conf_win_top_offset;
-    out->conf_win_bottom_offset = in->conf_win_bottom_offset;
-    out->pProfileTierLevel = UlongToPtr(in->pProfileTierLevel);
-    out->pDecPicBufMgr = UlongToPtr(in->pDecPicBufMgr);
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pShortTermRefPicSet = UlongToPtr(in->pShortTermRefPicSet);
-    out->pLongTermRefPicsSps = UlongToPtr(in->pLongTermRefPicsSps);
-    out->pSequenceParameterSetVui = convert_StdVideoH265SequenceParameterSetVui_array_win32_to_host(ctx, (const StdVideoH265SequenceParameterSetVui32 *)UlongToPtr(in->pSequenceParameterSetVui), 1);
-    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
-}
-
-static inline const StdVideoH265SequenceParameterSet *convert_StdVideoH265SequenceParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265SequenceParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265SequenceParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265SequenceParameterSet_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoH265PictureParameterSet_win32_to_host(const StdVideoH265PictureParameterSet32 *in, StdVideoH265PictureParameterSet *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->pps_pic_parameter_set_id = in->pps_pic_parameter_set_id;
-    out->pps_seq_parameter_set_id = in->pps_seq_parameter_set_id;
-    out->sps_video_parameter_set_id = in->sps_video_parameter_set_id;
-    out->num_extra_slice_header_bits = in->num_extra_slice_header_bits;
-    out->num_ref_idx_l0_default_active_minus1 = in->num_ref_idx_l0_default_active_minus1;
-    out->num_ref_idx_l1_default_active_minus1 = in->num_ref_idx_l1_default_active_minus1;
-    out->init_qp_minus26 = in->init_qp_minus26;
-    out->diff_cu_qp_delta_depth = in->diff_cu_qp_delta_depth;
-    out->pps_cb_qp_offset = in->pps_cb_qp_offset;
-    out->pps_cr_qp_offset = in->pps_cr_qp_offset;
-    out->pps_beta_offset_div2 = in->pps_beta_offset_div2;
-    out->pps_tc_offset_div2 = in->pps_tc_offset_div2;
-    out->log2_parallel_merge_level_minus2 = in->log2_parallel_merge_level_minus2;
-    out->log2_max_transform_skip_block_size_minus2 = in->log2_max_transform_skip_block_size_minus2;
-    out->diff_cu_chroma_qp_offset_depth = in->diff_cu_chroma_qp_offset_depth;
-    out->chroma_qp_offset_list_len_minus1 = in->chroma_qp_offset_list_len_minus1;
-    memcpy(out->cb_qp_offset_list, in->cb_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
-    memcpy(out->cr_qp_offset_list, in->cr_qp_offset_list, STD_VIDEO_H265_CHROMA_QP_OFFSET_LIST_SIZE * sizeof(int8_t));
-    out->log2_sao_offset_scale_luma = in->log2_sao_offset_scale_luma;
-    out->log2_sao_offset_scale_chroma = in->log2_sao_offset_scale_chroma;
-    out->pps_act_y_qp_offset_plus5 = in->pps_act_y_qp_offset_plus5;
-    out->pps_act_cb_qp_offset_plus5 = in->pps_act_cb_qp_offset_plus5;
-    out->pps_act_cr_qp_offset_plus3 = in->pps_act_cr_qp_offset_plus3;
-    out->pps_num_palette_predictor_initializers = in->pps_num_palette_predictor_initializers;
-    out->luma_bit_depth_entry_minus8 = in->luma_bit_depth_entry_minus8;
-    out->chroma_bit_depth_entry_minus8 = in->chroma_bit_depth_entry_minus8;
-    out->num_tile_columns_minus1 = in->num_tile_columns_minus1;
-    out->num_tile_rows_minus1 = in->num_tile_rows_minus1;
-    out->reserved1 = in->reserved1;
-    out->reserved2 = in->reserved2;
-    memcpy(out->column_width_minus1, in->column_width_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_COLS_LIST_SIZE * sizeof(uint16_t));
-    memcpy(out->row_height_minus1, in->row_height_minus1, STD_VIDEO_H265_CHROMA_QP_OFFSET_TILE_ROWS_LIST_SIZE * sizeof(uint16_t));
-    out->reserved3 = in->reserved3;
-    out->pScalingLists = UlongToPtr(in->pScalingLists);
-    out->pPredictorPaletteEntries = UlongToPtr(in->pPredictorPaletteEntries);
-}
-
-static inline const StdVideoH265PictureParameterSet *convert_StdVideoH265PictureParameterSet_array_win32_to_host(struct conversion_context *ctx, const StdVideoH265PictureParameterSet32 *in, uint32_t count)
-{
-    StdVideoH265PictureParameterSet *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoH265PictureParameterSet_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -24245,42 +25110,6 @@ static inline const VkVideoDecodeH265SessionParametersAddInfoKHR *convert_VkVide
     for (i = 0; i < count; i++)
     {
         convert_VkVideoDecodeH265SessionParametersAddInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
-    }
-
-    return out;
-}
-
-static inline void convert_StdVideoAV1SequenceHeader_win32_to_host(const StdVideoAV1SequenceHeader32 *in, StdVideoAV1SequenceHeader *out)
-{
-    if (!in) return;
-
-    out->flags = in->flags;
-    out->seq_profile = in->seq_profile;
-    out->frame_width_bits_minus_1 = in->frame_width_bits_minus_1;
-    out->frame_height_bits_minus_1 = in->frame_height_bits_minus_1;
-    out->max_frame_width_minus_1 = in->max_frame_width_minus_1;
-    out->max_frame_height_minus_1 = in->max_frame_height_minus_1;
-    out->delta_frame_id_length_minus_2 = in->delta_frame_id_length_minus_2;
-    out->additional_frame_id_length_minus_1 = in->additional_frame_id_length_minus_1;
-    out->order_hint_bits_minus_1 = in->order_hint_bits_minus_1;
-    out->seq_force_integer_mv = in->seq_force_integer_mv;
-    out->seq_force_screen_content_tools = in->seq_force_screen_content_tools;
-    memcpy(out->reserved1, in->reserved1, 5 * sizeof(uint8_t));
-    out->pColorConfig = UlongToPtr(in->pColorConfig);
-    out->pTimingInfo = UlongToPtr(in->pTimingInfo);
-}
-
-static inline const StdVideoAV1SequenceHeader *convert_StdVideoAV1SequenceHeader_array_win32_to_host(struct conversion_context *ctx, const StdVideoAV1SequenceHeader32 *in, uint32_t count)
-{
-    StdVideoAV1SequenceHeader *out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        convert_StdVideoAV1SequenceHeader_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -26281,6 +27110,62 @@ static inline void convert_VkCooperativeMatrixPropertiesNV_array_host_to_win32(c
     }
 }
 
+static inline void convert_VkCooperativeVectorPropertiesNV_win32_to_host(const VkCooperativeVectorPropertiesNV32 *in, VkCooperativeVectorPropertiesNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->inputType = in->inputType;
+    out->inputInterpretation = in->inputInterpretation;
+    out->matrixInterpretation = in->matrixInterpretation;
+    out->biasInterpretation = in->biasInterpretation;
+    out->resultType = in->resultType;
+    out->transpose = in->transpose;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkCooperativeVectorPropertiesNV_host_to_win32(const VkCooperativeVectorPropertiesNV *in, VkCooperativeVectorPropertiesNV32 *out)
+{
+    if (!in) return;
+
+    out->inputType = in->inputType;
+    out->inputInterpretation = in->inputInterpretation;
+    out->matrixInterpretation = in->matrixInterpretation;
+    out->biasInterpretation = in->biasInterpretation;
+    out->resultType = in->resultType;
+    out->transpose = in->transpose;
+}
+
+static inline VkCooperativeVectorPropertiesNV *convert_VkCooperativeVectorPropertiesNV_array_win32_to_host(struct conversion_context *ctx, const VkCooperativeVectorPropertiesNV32 *in, uint32_t count)
+{
+    VkCooperativeVectorPropertiesNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeVectorPropertiesNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
+static inline void convert_VkCooperativeVectorPropertiesNV_array_host_to_win32(const VkCooperativeVectorPropertiesNV *in, VkCooperativeVectorPropertiesNV32 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCooperativeVectorPropertiesNV_host_to_win32(&in[i], &out[i]);
+    }
+}
+
 static inline void convert_VkPhysicalDeviceExternalBufferInfo_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalBufferInfo32 *in, VkPhysicalDeviceExternalBufferInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -26466,6 +27351,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32 *in_ext = (const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->clusterAccelerationStructure = in_ext->clusterAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES:
         {
             VkPhysicalDeviceVariablePointersFeatures *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -26623,6 +27519,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES;
             out_ext->pNext = NULL;
             out_ext->maintenance6 = in_ext->maintenance6;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR:
+        {
+            VkPhysicalDeviceMaintenance8FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceMaintenance8FeaturesKHR32 *in_ext = (const VkPhysicalDeviceMaintenance8FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->maintenance8 = in_ext->maintenance8;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -27617,6 +28524,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32 *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->partitionedAccelerationStructure = in_ext->partitionedAccelerationStructure;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
             VkPhysicalDeviceDiagnosticsConfigFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -27974,6 +28892,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoMaintenance2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
         {
             VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -28085,6 +29014,18 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
             out_ext->pNext = NULL;
             out_ext->rayTracingValidation = in_ext->rayTracingValidation;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32 *in_ext = (const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->spheres = in_ext->spheres;
+            out_ext->linearSweptSpheres = in_ext->linearSweptSpheres;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28324,17 +29265,6 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->attachmentFeedbackLoopLayout = in_ext->attachmentFeedbackLoopLayout;
-            out_header->pNext = (void *)out_ext;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
-        {
-            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
-            out_ext->pNext = NULL;
-            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28655,6 +29585,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM:
+        {
+            VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32 *in_ext = (const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM;
+            out_ext->pNext = NULL;
+            out_ext->pipelineOpacityMicromap = in_ext->pipelineOpacityMicromap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -28840,6 +29781,29 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR:
+        {
+            VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR;
+            out_ext->pNext = NULL;
+            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorFeaturesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceCooperativeVectorFeaturesNV32 *in_ext = (const VkPhysicalDeviceCooperativeVectorFeaturesNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV;
+            out_ext->pNext = NULL;
+            out_ext->cooperativeVector = in_ext->cooperativeVector;
+            out_ext->cooperativeVectorTraining = in_ext->cooperativeVectorTraining;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -28886,6 +29850,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDevicePrivateDataFeatures *in_ext = (const VkPhysicalDevicePrivateDataFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES;
             out_ext->privateData = in_ext->privateData;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructureFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV);
+            const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *in_ext = (const VkPhysicalDeviceClusterAccelerationStructureFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->clusterAccelerationStructure = in_ext->clusterAccelerationStructure;
             out_header = (void *)out_ext;
             break;
         }
@@ -29019,6 +29992,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceMaintenance6Features *in_ext = (const VkPhysicalDeviceMaintenance6Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_6_FEATURES;
             out_ext->maintenance6 = in_ext->maintenance6;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR:
+        {
+            VkPhysicalDeviceMaintenance8FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR);
+            const VkPhysicalDeviceMaintenance8FeaturesKHR *in_ext = (const VkPhysicalDeviceMaintenance8FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_8_FEATURES_KHR;
+            out_ext->maintenance8 = in_ext->maintenance8;
             out_header = (void *)out_ext;
             break;
         }
@@ -29870,6 +30852,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV);
+            const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructureFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_FEATURES_NV;
+            out_ext->partitionedAccelerationStructure = in_ext->partitionedAccelerationStructure;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
             VkPhysicalDeviceDiagnosticsConfigFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV);
@@ -30165,6 +31156,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR:
+        {
+            VkPhysicalDeviceVideoMaintenance2FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR);
+            const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *in_ext = (const VkPhysicalDeviceVideoMaintenance2FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_MAINTENANCE_2_FEATURES_KHR;
+            out_ext->videoMaintenance2 = in_ext->videoMaintenance2;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR:
         {
             VkPhysicalDeviceVideoEncodeQuantizationMapFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VIDEO_ENCODE_QUANTIZATION_MAP_FEATURES_KHR);
@@ -30257,6 +31257,16 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceRayTracingValidationFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingValidationFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_VALIDATION_FEATURES_NV;
             out_ext->rayTracingValidation = in_ext->rayTracingValidation;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV:
+        {
+            VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV);
+            const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingLinearSweptSpheresFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_LINEAR_SWEPT_SPHERES_FEATURES_NV;
+            out_ext->spheres = in_ext->spheres;
+            out_ext->linearSweptSpheres = in_ext->linearSweptSpheres;
             out_header = (void *)out_ext;
             break;
         }
@@ -30454,15 +31464,6 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT;
             out_ext->attachmentFeedbackLoopLayout = in_ext->attachmentFeedbackLoopLayout;
-            out_header = (void *)out_ext;
-            break;
-        }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
-        {
-            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT);
-            const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
-            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
             out_header = (void *)out_ext;
             break;
         }
@@ -30726,6 +31727,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM:
+        {
+            VkPhysicalDevicePipelineOpacityMicromapFeaturesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM);
+            const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *in_ext = (const VkPhysicalDevicePipelineOpacityMicromapFeaturesARM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_OPACITY_MICROMAP_FEATURES_ARM;
+            out_ext->pipelineOpacityMicromap = in_ext->pipelineOpacityMicromap;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR:
         {
             VkPhysicalDeviceShaderMaximalReconvergenceFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MAXIMAL_RECONVERGENCE_FEATURES_KHR);
@@ -30876,6 +31886,25 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeRobustnessFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_ROBUSTNESS_FEATURES_EXT;
             out_ext->vertexAttributeRobustness = in_ext->vertexAttributeRobustness;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR:
+        {
+            VkPhysicalDeviceDepthClampZeroOneFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR);
+            const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_KHR;
+            out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV);
+            const VkPhysicalDeviceCooperativeVectorFeaturesNV *in_ext = (const VkPhysicalDeviceCooperativeVectorFeaturesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_FEATURES_NV;
+            out_ext->cooperativeVector = in_ext->cooperativeVector;
+            out_ext->cooperativeVectorTraining = in_ext->cooperativeVectorTraining;
             out_header = (void *)out_ext;
             break;
         }
@@ -31590,6 +32619,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
         {
             VkPhysicalDeviceMultiDrawPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -32087,6 +33125,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
         {
             VkPhysicalDeviceRobustness2PropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -32419,6 +33466,15 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV;
+            out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -32453,6 +33509,22 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_ext->minSequencesCountBufferOffsetAlignment = in_ext->minSequencesCountBufferOffsetAlignment;
             out_ext->minSequencesIndexBufferOffsetAlignment = in_ext->minSequencesIndexBufferOffsetAlignment;
             out_ext->minIndirectCommandsBufferOffsetAlignment = in_ext->minIndirectCommandsBufferOffsetAlignment;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceClusterAccelerationStructurePropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV);
+            const VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *in_ext = (const VkPhysicalDeviceClusterAccelerationStructurePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CLUSTER_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->maxVerticesPerCluster = in_ext->maxVerticesPerCluster;
+            out_ext->maxTrianglesPerCluster = in_ext->maxTrianglesPerCluster;
+            out_ext->clusterScratchByteAlignment = in_ext->clusterScratchByteAlignment;
+            out_ext->clusterByteAlignment = in_ext->clusterByteAlignment;
+            out_ext->clusterTemplateByteAlignment = in_ext->clusterTemplateByteAlignment;
+            out_ext->clusterBottomLevelByteAlignment = in_ext->clusterBottomLevelByteAlignment;
+            out_ext->clusterTemplateBoundsByteAlignment = in_ext->clusterTemplateBoundsByteAlignment;
+            out_ext->maxClusterGeometryIndex = in_ext->maxClusterGeometryIndex;
             out_header = (void *)out_ext;
             break;
         }
@@ -33271,6 +34343,15 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV:
+        {
+            VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV);
+            const VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *in_ext = (const VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PARTITIONED_ACCELERATION_STRUCTURE_PROPERTIES_NV;
+            out_ext->maxPartitionCount = in_ext->maxPartitionCount;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
         {
             VkPhysicalDeviceRobustness2PropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
@@ -33704,6 +34785,18 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize = in_ext->cooperativeMatrixWorkgroupScopeMaxWorkgroupSize;
             out_ext->cooperativeMatrixFlexibleDimensionsMaxDimension = in_ext->cooperativeMatrixFlexibleDimensionsMaxDimension;
             out_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory = in_ext->cooperativeMatrixWorkgroupScopeReservedSharedMemory;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV:
+        {
+            VkPhysicalDeviceCooperativeVectorPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV);
+            const VkPhysicalDeviceCooperativeVectorPropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeVectorPropertiesNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_VECTOR_PROPERTIES_NV;
+            out_ext->cooperativeVectorSupportedStages = in_ext->cooperativeVectorSupportedStages;
+            out_ext->cooperativeVectorTrainingFloat16Accumulation = in_ext->cooperativeVectorTrainingFloat16Accumulation;
+            out_ext->cooperativeVectorTrainingFloat32Accumulation = in_ext->cooperativeVectorTrainingFloat32Accumulation;
+            out_ext->maxCooperativeVectorComponents = in_ext->maxCooperativeVectorComponents;
             out_header = (void *)out_ext;
             break;
         }
@@ -38528,6 +39621,32 @@ static void thunk32_vkCmdBuildAccelerationStructuresKHR(void *args)
 }
 
 #ifdef _WIN64
+static void thunk64_vkCmdBuildClusterAccelerationStructureIndirectNV(void *args)
+{
+    struct vkCmdBuildClusterAccelerationStructureIndirectNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkCmdBuildClusterAccelerationStructureIndirectNV(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, params->pCommandInfos);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdBuildClusterAccelerationStructureIndirectNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pCommandInfos;
+    } *params = args;
+    VkClusterAccelerationStructureCommandsInfoNV pCommandInfos_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    init_conversion_context(ctx);
+    convert_VkClusterAccelerationStructureCommandsInfoNV_win32_to_host(ctx, (const VkClusterAccelerationStructureCommandsInfoNV32 *)UlongToPtr(params->pCommandInfos), &pCommandInfos_host);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdBuildClusterAccelerationStructureIndirectNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, &pCommandInfos_host);
+    free_conversion_context(ctx);
+}
+
+#ifdef _WIN64
 static void thunk64_vkCmdBuildMicromapsEXT(void *args)
 {
     struct vkCmdBuildMicromapsEXT_params *params = args;
@@ -38551,6 +39670,32 @@ static void thunk32_vkCmdBuildMicromapsEXT(void *args)
     init_conversion_context(ctx);
     pInfos_host = convert_VkMicromapBuildInfoEXT_array_win32_to_host(ctx, (const VkMicromapBuildInfoEXT32 *)UlongToPtr(params->pInfos), params->infoCount);
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdBuildMicromapsEXT(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, params->infoCount, pInfos_host);
+    free_conversion_context(ctx);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdBuildPartitionedAccelerationStructuresNV(void *args)
+{
+    struct vkCmdBuildPartitionedAccelerationStructuresNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkCmdBuildPartitionedAccelerationStructuresNV(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, params->pBuildInfo);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdBuildPartitionedAccelerationStructuresNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pBuildInfo;
+    } *params = args;
+    VkBuildPartitionedAccelerationStructureInfoNV pBuildInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    init_conversion_context(ctx);
+    convert_VkBuildPartitionedAccelerationStructureInfoNV_win32_to_host(ctx, (const VkBuildPartitionedAccelerationStructureInfoNV32 *)UlongToPtr(params->pBuildInfo), &pBuildInfo_host);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdBuildPartitionedAccelerationStructuresNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, &pBuildInfo_host);
     free_conversion_context(ctx);
 }
 
@@ -38648,6 +39793,33 @@ static void thunk32_vkCmdControlVideoCodingKHR(void *args)
     init_conversion_context(ctx);
     convert_VkVideoCodingControlInfoKHR_win32_to_host(ctx, (const VkVideoCodingControlInfoKHR32 *)UlongToPtr(params->pCodingControlInfo), &pCodingControlInfo_host);
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdControlVideoCodingKHR(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, &pCodingControlInfo_host);
+    free_conversion_context(ctx);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdConvertCooperativeVectorMatrixNV(void *args)
+{
+    struct vkCmdConvertCooperativeVectorMatrixNV_params *params = args;
+
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkCmdConvertCooperativeVectorMatrixNV(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, params->infoCount, params->pInfos);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdConvertCooperativeVectorMatrixNV(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        uint32_t infoCount;
+        PTR32 pInfos;
+    } *params = args;
+    const VkConvertCooperativeVectorMatrixInfoNV *pInfos_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    init_conversion_context(ctx);
+    pInfos_host = convert_VkConvertCooperativeVectorMatrixInfoNV_array_win32_to_host(ctx, (const VkConvertCooperativeVectorMatrixInfoNV32 *)UlongToPtr(params->pInfos), params->infoCount);
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdConvertCooperativeVectorMatrixNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, params->infoCount, pInfos_host);
     free_conversion_context(ctx);
 }
 
@@ -43794,6 +44966,35 @@ static NTSTATUS thunk32_vkCompileDeferredNV(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkConvertCooperativeVectorMatrixNV(void *args)
+{
+    struct vkConvertCooperativeVectorMatrixNV_params *params = args;
+
+    TRACE("%p, %p\n", params->device, params->pInfo);
+
+    params->result = vulkan_device_from_handle(params->device)->p_vkConvertCooperativeVectorMatrixNV(vulkan_device_from_handle(params->device)->host.device, params->pInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkConvertCooperativeVectorMatrixNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pInfo;
+        VkResult result;
+    } *params = args;
+    VkConvertCooperativeVectorMatrixInfoNV pInfo_host;
+
+    TRACE("%#x, %#x\n", params->device, params->pInfo);
+
+    convert_VkConvertCooperativeVectorMatrixInfoNV_win32_to_host((const VkConvertCooperativeVectorMatrixInfoNV32 *)UlongToPtr(params->pInfo), &pInfo_host);
+    params->result = vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkConvertCooperativeVectorMatrixNV(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pInfo_host);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkCopyAccelerationStructureKHR(void *args)
 {
     struct vkCopyAccelerationStructureKHR_params *params = args;
@@ -48348,6 +49549,42 @@ static NTSTATUS thunk32_vkGetCalibratedTimestampsKHR(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetClusterAccelerationStructureBuildSizesNV(void *args)
+{
+    struct vkGetClusterAccelerationStructureBuildSizesNV_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pSizeInfo);
+
+    vulkan_device_from_handle(params->device)->p_vkGetClusterAccelerationStructureBuildSizesNV(vulkan_device_from_handle(params->device)->host.device, params->pInfo, params->pSizeInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetClusterAccelerationStructureBuildSizesNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pInfo;
+        PTR32 pSizeInfo;
+    } *params = args;
+    VkClusterAccelerationStructureInputInfoNV pInfo_host;
+    VkAccelerationStructureBuildSizesInfoKHR pSizeInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pInfo, params->pSizeInfo);
+
+    init_conversion_context(ctx);
+    convert_VkClusterAccelerationStructureInputInfoNV_win32_to_host(ctx, (const VkClusterAccelerationStructureInputInfoNV32 *)UlongToPtr(params->pInfo), &pInfo_host);
+    convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host((VkAccelerationStructureBuildSizesInfoKHR32 *)UlongToPtr(params->pSizeInfo), &pSizeInfo_host);
+    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetClusterAccelerationStructureBuildSizesNV(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pInfo_host, &pSizeInfo_host);
+    convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(&pSizeInfo_host, (VkAccelerationStructureBuildSizesInfoKHR32 *)UlongToPtr(params->pSizeInfo));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetCudaModuleCacheNV(void *args)
 {
     struct vkGetCudaModuleCacheNV_params *params = args;
@@ -50222,6 +51459,43 @@ static NTSTATUS thunk32_vkGetMicromapBuildSizesEXT(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkGetPartitionedAccelerationStructuresBuildSizesNV(void *args)
+{
+    struct vkGetPartitionedAccelerationStructuresBuildSizesNV_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pSizeInfo);
+
+    vulkan_device_from_handle(params->device)->p_vkGetPartitionedAccelerationStructuresBuildSizesNV(vulkan_device_from_handle(params->device)->host.device, params->pInfo, params->pSizeInfo);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPartitionedAccelerationStructuresBuildSizesNV(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 pInfo;
+        PTR32 pSizeInfo;
+    } *params = args;
+    VkPartitionedAccelerationStructureInstancesInputNV pInfo_host;
+    VkAccelerationStructureBuildSizesInfoKHR pSizeInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x\n", params->device, params->pInfo, params->pSizeInfo);
+
+    init_conversion_context(ctx);
+    convert_VkPartitionedAccelerationStructureInstancesInputNV_win32_to_host(ctx, (const VkPartitionedAccelerationStructureInstancesInputNV32 *)UlongToPtr(params->pInfo), &pInfo_host);
+    convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host((VkAccelerationStructureBuildSizesInfoKHR32 *)UlongToPtr(params->pSizeInfo), &pSizeInfo_host);
+    vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->p_vkGetPartitionedAccelerationStructuresBuildSizesNV(vulkan_device_from_handle((VkDevice)UlongToPtr(params->device))->host.device, &pInfo_host, &pSizeInfo_host);
+    convert_VkPartitionedAccelerationStructureInstancesInputNV_host_to_win32(&pInfo_host, (const VkPartitionedAccelerationStructureInstancesInputNV32 *)UlongToPtr(params->pInfo));
+    convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(&pSizeInfo_host, (VkAccelerationStructureBuildSizesInfoKHR32 *)UlongToPtr(params->pSizeInfo));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkGetPerformanceParameterINTEL(void *args)
 {
     struct vkGetPerformanceParameterINTEL_params *params = args;
@@ -50408,6 +51682,41 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(void *a
     pProperties_host = convert_VkCooperativeMatrixPropertiesNV_array_win32_to_host(ctx, (VkCooperativeMatrixPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
     convert_VkCooperativeMatrixPropertiesNV_array_host_to_win32(pProperties_host, (VkCooperativeMatrixPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    free_conversion_context(ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
+static NTSTATUS thunk64_vkGetPhysicalDeviceCooperativeVectorPropertiesNV(void *args)
+{
+    struct vkGetPhysicalDeviceCooperativeVectorPropertiesNV_params *params = args;
+
+    TRACE("%p, %p, %p\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
+    params->result = vulkan_physical_device_from_handle(params->physicalDevice)->instance->p_vkGetPhysicalDeviceCooperativeVectorPropertiesNV(vulkan_physical_device_from_handle(params->physicalDevice)->host.physical_device, params->pPropertyCount, params->pProperties);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkGetPhysicalDeviceCooperativeVectorPropertiesNV(void *args)
+{
+    struct
+    {
+        PTR32 physicalDevice;
+        PTR32 pPropertyCount;
+        PTR32 pProperties;
+        VkResult result;
+    } *params = args;
+    VkCooperativeVectorPropertiesNV *pProperties_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    TRACE("%#x, %#x, %#x\n", params->physicalDevice, params->pPropertyCount, params->pProperties);
+
+    init_conversion_context(ctx);
+    pProperties_host = convert_VkCooperativeVectorPropertiesNV_array_win32_to_host(ctx, (VkCooperativeVectorPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
+    params->result = vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->instance->p_vkGetPhysicalDeviceCooperativeVectorPropertiesNV(vulkan_physical_device_from_handle((VkPhysicalDevice)UlongToPtr(params->physicalDevice))->host.physical_device, (uint32_t *)UlongToPtr(params->pPropertyCount), pProperties_host);
+    convert_VkCooperativeVectorPropertiesNV_array_host_to_win32(pProperties_host, (VkCooperativeVectorPropertiesNV32 *)UlongToPtr(params->pProperties), *(uint32_t *)UlongToPtr(params->pPropertyCount));
     free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
@@ -54838,6 +56147,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_info",
     "VK_AMD_shader_trinary_minmax",
     "VK_AMD_texture_gather_bias_lod",
+    "VK_ARM_pipeline_opacity_micromap",
     "VK_ARM_rasterization_order_attachment_access",
     "VK_ARM_render_pass_striped",
     "VK_ARM_scheduling_controls",
@@ -54977,6 +56287,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_create_renderpass2",
     "VK_KHR_dedicated_allocation",
     "VK_KHR_deferred_host_operations",
+    "VK_KHR_depth_clamp_zero_one",
     "VK_KHR_depth_stencil_resolve",
     "VK_KHR_descriptor_update_template",
     "VK_KHR_device_group",
@@ -55004,6 +56315,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_maintenance4",
     "VK_KHR_maintenance5",
     "VK_KHR_maintenance6",
+    "VK_KHR_maintenance8",
     "VK_KHR_map_memory2",
     "VK_KHR_multiview",
     "VK_KHR_performance_query",
@@ -55056,6 +56368,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_video_encode_quantization_map",
     "VK_KHR_video_encode_queue",
     "VK_KHR_video_maintenance1",
+    "VK_KHR_video_maintenance2",
     "VK_KHR_video_queue",
     "VK_KHR_vulkan_memory_model",
     "VK_KHR_workgroup_memory_explicit_layout",
@@ -55065,10 +56378,12 @@ static const char * const vk_device_extensions[] =
     "VK_NVX_binary_import",
     "VK_NVX_image_view_handle",
     "VK_NV_clip_space_w_scaling",
+    "VK_NV_cluster_acceleration_structure",
     "VK_NV_command_buffer_inheritance",
     "VK_NV_compute_shader_derivatives",
     "VK_NV_cooperative_matrix",
     "VK_NV_cooperative_matrix2",
+    "VK_NV_cooperative_vector",
     "VK_NV_copy_memory_indirect",
     "VK_NV_corner_sampled_image",
     "VK_NV_coverage_reduction_mode",
@@ -55095,11 +56410,13 @@ static const char * const vk_device_extensions[] =
     "VK_NV_memory_decompression",
     "VK_NV_mesh_shader",
     "VK_NV_optical_flow",
+    "VK_NV_partitioned_acceleration_structure",
     "VK_NV_per_stage_descriptor_set",
     "VK_NV_present_barrier",
     "VK_NV_raw_access_chains",
     "VK_NV_ray_tracing",
     "VK_NV_ray_tracing_invocation_reorder",
+    "VK_NV_ray_tracing_linear_swept_spheres",
     "VK_NV_ray_tracing_motion_blur",
     "VK_NV_ray_tracing_validation",
     "VK_NV_representative_fragment_test",
@@ -55278,11 +56595,14 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdBuildAccelerationStructureNV,
     (void *)thunk64_vkCmdBuildAccelerationStructuresIndirectKHR,
     (void *)thunk64_vkCmdBuildAccelerationStructuresKHR,
+    (void *)thunk64_vkCmdBuildClusterAccelerationStructureIndirectNV,
     (void *)thunk64_vkCmdBuildMicromapsEXT,
+    (void *)thunk64_vkCmdBuildPartitionedAccelerationStructuresNV,
     (void *)thunk64_vkCmdClearAttachments,
     (void *)thunk64_vkCmdClearColorImage,
     (void *)thunk64_vkCmdClearDepthStencilImage,
     (void *)thunk64_vkCmdControlVideoCodingKHR,
+    (void *)thunk64_vkCmdConvertCooperativeVectorMatrixNV,
     (void *)thunk64_vkCmdCopyAccelerationStructureKHR,
     (void *)thunk64_vkCmdCopyAccelerationStructureNV,
     (void *)thunk64_vkCmdCopyAccelerationStructureToMemoryKHR,
@@ -55506,6 +56826,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdWriteTimestamp2,
     (void *)thunk64_vkCmdWriteTimestamp2KHR,
     thunk64_vkCompileDeferredNV,
+    thunk64_vkConvertCooperativeVectorMatrixNV,
     thunk64_vkCopyAccelerationStructureKHR,
     thunk64_vkCopyAccelerationStructureToMemoryKHR,
     thunk64_vkCopyImageToImage,
@@ -55651,6 +56972,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     thunk64_vkGetCalibratedTimestampsEXT,
     thunk64_vkGetCalibratedTimestampsKHR,
+    thunk64_vkGetClusterAccelerationStructureBuildSizesNV,
     thunk64_vkGetCudaModuleCacheNV,
     thunk64_vkGetDeferredOperationMaxConcurrencyKHR,
     thunk64_vkGetDeferredOperationResultKHR,
@@ -55707,12 +57029,14 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkGetLatencyTimingsNV,
     thunk64_vkGetMemoryHostPointerPropertiesEXT,
     thunk64_vkGetMicromapBuildSizesEXT,
+    thunk64_vkGetPartitionedAccelerationStructuresBuildSizesNV,
     thunk64_vkGetPerformanceParameterINTEL,
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk64_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk64_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
+    thunk64_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
     thunk64_vkGetPhysicalDeviceExternalBufferProperties,
     thunk64_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
     thunk64_vkGetPhysicalDeviceExternalFenceProperties,
@@ -55920,11 +57244,14 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdBuildAccelerationStructureNV,
     (void *)thunk32_vkCmdBuildAccelerationStructuresIndirectKHR,
     (void *)thunk32_vkCmdBuildAccelerationStructuresKHR,
+    (void *)thunk32_vkCmdBuildClusterAccelerationStructureIndirectNV,
     (void *)thunk32_vkCmdBuildMicromapsEXT,
+    (void *)thunk32_vkCmdBuildPartitionedAccelerationStructuresNV,
     (void *)thunk32_vkCmdClearAttachments,
     (void *)thunk32_vkCmdClearColorImage,
     (void *)thunk32_vkCmdClearDepthStencilImage,
     (void *)thunk32_vkCmdControlVideoCodingKHR,
+    (void *)thunk32_vkCmdConvertCooperativeVectorMatrixNV,
     (void *)thunk32_vkCmdCopyAccelerationStructureKHR,
     (void *)thunk32_vkCmdCopyAccelerationStructureNV,
     (void *)thunk32_vkCmdCopyAccelerationStructureToMemoryKHR,
@@ -56148,6 +57475,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdWriteTimestamp2,
     (void *)thunk32_vkCmdWriteTimestamp2KHR,
     thunk32_vkCompileDeferredNV,
+    thunk32_vkConvertCooperativeVectorMatrixNV,
     thunk32_vkCopyAccelerationStructureKHR,
     thunk32_vkCopyAccelerationStructureToMemoryKHR,
     thunk32_vkCopyImageToImage,
@@ -56293,6 +57621,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     thunk32_vkGetCalibratedTimestampsEXT,
     thunk32_vkGetCalibratedTimestampsKHR,
+    thunk32_vkGetClusterAccelerationStructureBuildSizesNV,
     thunk32_vkGetCudaModuleCacheNV,
     thunk32_vkGetDeferredOperationMaxConcurrencyKHR,
     thunk32_vkGetDeferredOperationResultKHR,
@@ -56349,12 +57678,14 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkGetLatencyTimingsNV,
     thunk32_vkGetMemoryHostPointerPropertiesEXT,
     thunk32_vkGetMicromapBuildSizesEXT,
+    thunk32_vkGetPartitionedAccelerationStructuresBuildSizesNV,
     thunk32_vkGetPerformanceParameterINTEL,
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     thunk32_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     thunk32_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
+    thunk32_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
     thunk32_vkGetPhysicalDeviceExternalBufferProperties,
     thunk32_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
     thunk32_vkGetPhysicalDeviceExternalFenceProperties,

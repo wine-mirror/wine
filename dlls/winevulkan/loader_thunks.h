@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2024 The Khronos Group Inc.
+ * Copyright 2015-2025 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2024 The Khronos Group Inc.
+ * Copyright 2021-2025 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -78,11 +78,14 @@ enum unix_call
     unix_vkCmdBuildAccelerationStructureNV,
     unix_vkCmdBuildAccelerationStructuresIndirectKHR,
     unix_vkCmdBuildAccelerationStructuresKHR,
+    unix_vkCmdBuildClusterAccelerationStructureIndirectNV,
     unix_vkCmdBuildMicromapsEXT,
+    unix_vkCmdBuildPartitionedAccelerationStructuresNV,
     unix_vkCmdClearAttachments,
     unix_vkCmdClearColorImage,
     unix_vkCmdClearDepthStencilImage,
     unix_vkCmdControlVideoCodingKHR,
+    unix_vkCmdConvertCooperativeVectorMatrixNV,
     unix_vkCmdCopyAccelerationStructureKHR,
     unix_vkCmdCopyAccelerationStructureNV,
     unix_vkCmdCopyAccelerationStructureToMemoryKHR,
@@ -306,6 +309,7 @@ enum unix_call
     unix_vkCmdWriteTimestamp2,
     unix_vkCmdWriteTimestamp2KHR,
     unix_vkCompileDeferredNV,
+    unix_vkConvertCooperativeVectorMatrixNV,
     unix_vkCopyAccelerationStructureKHR,
     unix_vkCopyAccelerationStructureToMemoryKHR,
     unix_vkCopyImageToImage,
@@ -451,6 +455,7 @@ enum unix_call
     unix_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     unix_vkGetCalibratedTimestampsEXT,
     unix_vkGetCalibratedTimestampsKHR,
+    unix_vkGetClusterAccelerationStructureBuildSizesNV,
     unix_vkGetCudaModuleCacheNV,
     unix_vkGetDeferredOperationMaxConcurrencyKHR,
     unix_vkGetDeferredOperationResultKHR,
@@ -507,12 +512,14 @@ enum unix_call
     unix_vkGetLatencyTimingsNV,
     unix_vkGetMemoryHostPointerPropertiesEXT,
     unix_vkGetMicromapBuildSizesEXT,
+    unix_vkGetPartitionedAccelerationStructuresBuildSizesNV,
     unix_vkGetPerformanceParameterINTEL,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT,
     unix_vkGetPhysicalDeviceCalibrateableTimeDomainsKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR,
     unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV,
+    unix_vkGetPhysicalDeviceCooperativeVectorPropertiesNV,
     unix_vkGetPhysicalDeviceExternalBufferProperties,
     unix_vkGetPhysicalDeviceExternalBufferPropertiesKHR,
     unix_vkGetPhysicalDeviceExternalFenceProperties,
@@ -1103,11 +1110,23 @@ struct vkCmdBuildAccelerationStructuresKHR_params
     const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos;
 };
 
+struct vkCmdBuildClusterAccelerationStructureIndirectNV_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkClusterAccelerationStructureCommandsInfoNV *pCommandInfos;
+};
+
 struct vkCmdBuildMicromapsEXT_params
 {
     VkCommandBuffer commandBuffer;
     uint32_t infoCount;
     const VkMicromapBuildInfoEXT *pInfos;
+};
+
+struct vkCmdBuildPartitionedAccelerationStructuresNV_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkBuildPartitionedAccelerationStructureInfoNV *pBuildInfo;
 };
 
 struct vkCmdClearAttachments_params
@@ -1143,6 +1162,13 @@ struct vkCmdControlVideoCodingKHR_params
 {
     VkCommandBuffer commandBuffer;
     const VkVideoCodingControlInfoKHR *pCodingControlInfo;
+};
+
+struct vkCmdConvertCooperativeVectorMatrixNV_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t infoCount;
+    const VkConvertCooperativeVectorMatrixInfoNV *pInfos;
 };
 
 struct vkCmdCopyAccelerationStructureKHR_params
@@ -2787,6 +2813,13 @@ struct vkCompileDeferredNV_params
     VkResult result;
 };
 
+struct vkConvertCooperativeVectorMatrixNV_params
+{
+    VkDevice device;
+    const VkConvertCooperativeVectorMatrixInfoNV *pInfo;
+    VkResult result;
+};
+
 struct vkCopyAccelerationStructureKHR_params
 {
     VkDevice device;
@@ -3949,6 +3982,13 @@ struct vkGetCalibratedTimestampsKHR_params
     VkResult result;
 };
 
+struct vkGetClusterAccelerationStructureBuildSizesNV_params
+{
+    VkDevice device;
+    const VkClusterAccelerationStructureInputInfoNV *pInfo;
+    VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo;
+};
+
 struct vkGetCudaModuleCacheNV_params
 {
     VkDevice device;
@@ -4374,6 +4414,13 @@ struct vkGetMicromapBuildSizesEXT_params
     VkMicromapBuildSizesInfoEXT *pSizeInfo;
 };
 
+struct vkGetPartitionedAccelerationStructuresBuildSizesNV_params
+{
+    VkDevice device;
+    const VkPartitionedAccelerationStructureInstancesInputNV *pInfo;
+    VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo;
+};
+
 struct vkGetPerformanceParameterINTEL_params
 {
     VkDevice device;
@@ -4419,6 +4466,14 @@ struct vkGetPhysicalDeviceCooperativeMatrixPropertiesNV_params
     VkPhysicalDevice physicalDevice;
     uint32_t *pPropertyCount;
     VkCooperativeMatrixPropertiesNV *pProperties;
+    VkResult result;
+};
+
+struct vkGetPhysicalDeviceCooperativeVectorPropertiesNV_params
+{
+    VkPhysicalDevice physicalDevice;
+    uint32_t *pPropertyCount;
+    VkCooperativeVectorPropertiesNV *pProperties;
     VkResult result;
 };
 

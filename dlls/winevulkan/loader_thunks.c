@@ -3,14 +3,14 @@
  * This file is generated from Vulkan vk.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2015-2024 The Khronos Group Inc.
+ * Copyright 2015-2025 The Khronos Group Inc.
  *
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  * and from Vulkan video.xml file covered
  * by the following copyright and permission notice:
  *
- * Copyright 2021-2024 The Khronos Group Inc.
+ * Copyright 2021-2025 The Khronos Group Inc.
  * SPDX-License-Identifier: Apache-2.0 OR MIT
  *
  */
@@ -606,6 +606,14 @@ void WINAPI vkCmdBuildAccelerationStructuresKHR(VkCommandBuffer commandBuffer, u
     UNIX_CALL(vkCmdBuildAccelerationStructuresKHR, &params);
 }
 
+void WINAPI vkCmdBuildClusterAccelerationStructureIndirectNV(VkCommandBuffer commandBuffer, const VkClusterAccelerationStructureCommandsInfoNV *pCommandInfos)
+{
+    struct vkCmdBuildClusterAccelerationStructureIndirectNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.pCommandInfos = pCommandInfos;
+    UNIX_CALL(vkCmdBuildClusterAccelerationStructureIndirectNV, &params);
+}
+
 void WINAPI vkCmdBuildMicromapsEXT(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkMicromapBuildInfoEXT *pInfos)
 {
     struct vkCmdBuildMicromapsEXT_params params;
@@ -613,6 +621,14 @@ void WINAPI vkCmdBuildMicromapsEXT(VkCommandBuffer commandBuffer, uint32_t infoC
     params.infoCount = infoCount;
     params.pInfos = pInfos;
     UNIX_CALL(vkCmdBuildMicromapsEXT, &params);
+}
+
+void WINAPI vkCmdBuildPartitionedAccelerationStructuresNV(VkCommandBuffer commandBuffer, const VkBuildPartitionedAccelerationStructureInfoNV *pBuildInfo)
+{
+    struct vkCmdBuildPartitionedAccelerationStructuresNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.pBuildInfo = pBuildInfo;
+    UNIX_CALL(vkCmdBuildPartitionedAccelerationStructuresNV, &params);
 }
 
 void WINAPI vkCmdClearAttachments(VkCommandBuffer commandBuffer, uint32_t attachmentCount, const VkClearAttachment *pAttachments, uint32_t rectCount, const VkClearRect *pRects)
@@ -656,6 +672,15 @@ void WINAPI vkCmdControlVideoCodingKHR(VkCommandBuffer commandBuffer, const VkVi
     params.commandBuffer = commandBuffer;
     params.pCodingControlInfo = pCodingControlInfo;
     UNIX_CALL(vkCmdControlVideoCodingKHR, &params);
+}
+
+void WINAPI vkCmdConvertCooperativeVectorMatrixNV(VkCommandBuffer commandBuffer, uint32_t infoCount, const VkConvertCooperativeVectorMatrixInfoNV *pInfos)
+{
+    struct vkCmdConvertCooperativeVectorMatrixNV_params params;
+    params.commandBuffer = commandBuffer;
+    params.infoCount = infoCount;
+    params.pInfos = pInfos;
+    UNIX_CALL(vkCmdConvertCooperativeVectorMatrixNV, &params);
 }
 
 void WINAPI vkCmdCopyAccelerationStructureKHR(VkCommandBuffer commandBuffer, const VkCopyAccelerationStructureInfoKHR *pInfo)
@@ -2754,6 +2779,17 @@ VkResult WINAPI vkCompileDeferredNV(VkDevice device, VkPipeline pipeline, uint32
     return params.result;
 }
 
+VkResult WINAPI vkConvertCooperativeVectorMatrixNV(VkDevice device, const VkConvertCooperativeVectorMatrixInfoNV *pInfo)
+{
+    struct vkConvertCooperativeVectorMatrixNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    status = UNIX_CALL(vkConvertCooperativeVectorMatrixNV, &params);
+    assert(!status && "vkConvertCooperativeVectorMatrixNV");
+    return params.result;
+}
+
 VkResult WINAPI vkCopyAccelerationStructureKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, const VkCopyAccelerationStructureInfoKHR *pInfo)
 {
     struct vkCopyAccelerationStructureKHR_params params;
@@ -4390,6 +4426,17 @@ VkResult WINAPI vkGetCalibratedTimestampsKHR(VkDevice device, uint32_t timestamp
     return params.result;
 }
 
+void WINAPI vkGetClusterAccelerationStructureBuildSizesNV(VkDevice device, const VkClusterAccelerationStructureInputInfoNV *pInfo, VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo)
+{
+    struct vkGetClusterAccelerationStructureBuildSizesNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    params.pSizeInfo = pSizeInfo;
+    status = UNIX_CALL(vkGetClusterAccelerationStructureBuildSizesNV, &params);
+    assert(!status && "vkGetClusterAccelerationStructureBuildSizesNV");
+}
+
 VkResult WINAPI vkGetCudaModuleCacheNV(VkDevice device, VkCudaModuleNV module, size_t *pCacheSize, void *pCacheData)
 {
     struct vkGetCudaModuleCacheNV_params params;
@@ -5037,6 +5084,17 @@ void WINAPI vkGetMicromapBuildSizesEXT(VkDevice device, VkAccelerationStructureB
     assert(!status && "vkGetMicromapBuildSizesEXT");
 }
 
+void WINAPI vkGetPartitionedAccelerationStructuresBuildSizesNV(VkDevice device, const VkPartitionedAccelerationStructureInstancesInputNV *pInfo, VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo)
+{
+    struct vkGetPartitionedAccelerationStructuresBuildSizesNV_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pInfo = pInfo;
+    params.pSizeInfo = pSizeInfo;
+    status = UNIX_CALL(vkGetPartitionedAccelerationStructuresBuildSizesNV, &params);
+    assert(!status && "vkGetPartitionedAccelerationStructuresBuildSizesNV");
+}
+
 VkResult WINAPI vkGetPerformanceParameterINTEL(VkDevice device, VkPerformanceParameterTypeINTEL parameter, VkPerformanceValueINTEL *pValue)
 {
     struct vkGetPerformanceParameterINTEL_params params;
@@ -5106,6 +5164,18 @@ VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevic
     params.pProperties = pProperties;
     status = UNIX_CALL(vkGetPhysicalDeviceCooperativeMatrixPropertiesNV, &params);
     assert(!status && "vkGetPhysicalDeviceCooperativeMatrixPropertiesNV");
+    return params.result;
+}
+
+VkResult WINAPI vkGetPhysicalDeviceCooperativeVectorPropertiesNV(VkPhysicalDevice physicalDevice, uint32_t *pPropertyCount, VkCooperativeVectorPropertiesNV *pProperties)
+{
+    struct vkGetPhysicalDeviceCooperativeVectorPropertiesNV_params params;
+    NTSTATUS status;
+    params.physicalDevice = physicalDevice;
+    params.pPropertyCount = pPropertyCount;
+    params.pProperties = pProperties;
+    status = UNIX_CALL(vkGetPhysicalDeviceCooperativeVectorPropertiesNV, &params);
+    assert(!status && "vkGetPhysicalDeviceCooperativeVectorPropertiesNV");
     return params.result;
 }
 
@@ -6789,11 +6859,14 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBuildAccelerationStructureNV", vkCmdBuildAccelerationStructureNV},
     {"vkCmdBuildAccelerationStructuresIndirectKHR", vkCmdBuildAccelerationStructuresIndirectKHR},
     {"vkCmdBuildAccelerationStructuresKHR", vkCmdBuildAccelerationStructuresKHR},
+    {"vkCmdBuildClusterAccelerationStructureIndirectNV", vkCmdBuildClusterAccelerationStructureIndirectNV},
     {"vkCmdBuildMicromapsEXT", vkCmdBuildMicromapsEXT},
+    {"vkCmdBuildPartitionedAccelerationStructuresNV", vkCmdBuildPartitionedAccelerationStructuresNV},
     {"vkCmdClearAttachments", vkCmdClearAttachments},
     {"vkCmdClearColorImage", vkCmdClearColorImage},
     {"vkCmdClearDepthStencilImage", vkCmdClearDepthStencilImage},
     {"vkCmdControlVideoCodingKHR", vkCmdControlVideoCodingKHR},
+    {"vkCmdConvertCooperativeVectorMatrixNV", vkCmdConvertCooperativeVectorMatrixNV},
     {"vkCmdCopyAccelerationStructureKHR", vkCmdCopyAccelerationStructureKHR},
     {"vkCmdCopyAccelerationStructureNV", vkCmdCopyAccelerationStructureNV},
     {"vkCmdCopyAccelerationStructureToMemoryKHR", vkCmdCopyAccelerationStructureToMemoryKHR},
@@ -7017,6 +7090,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdWriteTimestamp2", vkCmdWriteTimestamp2},
     {"vkCmdWriteTimestamp2KHR", vkCmdWriteTimestamp2KHR},
     {"vkCompileDeferredNV", vkCompileDeferredNV},
+    {"vkConvertCooperativeVectorMatrixNV", vkConvertCooperativeVectorMatrixNV},
     {"vkCopyAccelerationStructureKHR", vkCopyAccelerationStructureKHR},
     {"vkCopyAccelerationStructureToMemoryKHR", vkCopyAccelerationStructureToMemoryKHR},
     {"vkCopyImageToImage", vkCopyImageToImage},
@@ -7144,6 +7218,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetBufferOpaqueCaptureDescriptorDataEXT", vkGetBufferOpaqueCaptureDescriptorDataEXT},
     {"vkGetCalibratedTimestampsEXT", vkGetCalibratedTimestampsEXT},
     {"vkGetCalibratedTimestampsKHR", vkGetCalibratedTimestampsKHR},
+    {"vkGetClusterAccelerationStructureBuildSizesNV", vkGetClusterAccelerationStructureBuildSizesNV},
     {"vkGetCudaModuleCacheNV", vkGetCudaModuleCacheNV},
     {"vkGetDeferredOperationMaxConcurrencyKHR", vkGetDeferredOperationMaxConcurrencyKHR},
     {"vkGetDeferredOperationResultKHR", vkGetDeferredOperationResultKHR},
@@ -7201,6 +7276,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetLatencyTimingsNV", vkGetLatencyTimingsNV},
     {"vkGetMemoryHostPointerPropertiesEXT", vkGetMemoryHostPointerPropertiesEXT},
     {"vkGetMicromapBuildSizesEXT", vkGetMicromapBuildSizesEXT},
+    {"vkGetPartitionedAccelerationStructuresBuildSizesNV", vkGetPartitionedAccelerationStructuresBuildSizesNV},
     {"vkGetPerformanceParameterINTEL", vkGetPerformanceParameterINTEL},
     {"vkGetPipelineBinaryDataKHR", vkGetPipelineBinaryDataKHR},
     {"vkGetPipelineCacheData", vkGetPipelineCacheData},
@@ -7307,6 +7383,7 @@ static const struct vulkan_func vk_phys_dev_dispatch_table[] =
     {"vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixFlexibleDimensionsPropertiesNV},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR", vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR},
     {"vkGetPhysicalDeviceCooperativeMatrixPropertiesNV", vkGetPhysicalDeviceCooperativeMatrixPropertiesNV},
+    {"vkGetPhysicalDeviceCooperativeVectorPropertiesNV", vkGetPhysicalDeviceCooperativeVectorPropertiesNV},
     {"vkGetPhysicalDeviceExternalBufferProperties", vkGetPhysicalDeviceExternalBufferProperties},
     {"vkGetPhysicalDeviceExternalBufferPropertiesKHR", vkGetPhysicalDeviceExternalBufferPropertiesKHR},
     {"vkGetPhysicalDeviceExternalFenceProperties", vkGetPhysicalDeviceExternalFenceProperties},
