@@ -3985,6 +3985,199 @@ static void test_startup(void)
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 }
 
+void test_startup_counts(void)
+{
+    IMFAsyncResult *result, *result2, *callback_result;
+    struct test_callback *callback;
+    MFWORKITEM_KEY key, key2;
+    DWORD res, queue;
+    LONG refcount;
+    HRESULT hr;
+
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = MFAllocateWorkQueue(&queue);
+    todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+
+    callback = create_test_callback(&test_async_callback_result_vtbl);
+
+    /* Create async results without startup. */
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    IMFAsyncResult_Release(result);
+    IMFAsyncResult_Release(result2);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    /* Before startup the platform lock count does not track the maximum AsyncResult count. */
+    check_platform_lock_count(1);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    /* Startup only locks once. */
+    todo_wine
+    check_platform_lock_count(1);
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    /* Platform locked by the AsyncResult object. */
+    check_platform_lock_count(2);
+
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result2);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    check_platform_lock_count(3);
+
+    IMFAsyncResult_Release(result);
+    IMFAsyncResult_Release(result2);
+    /* Platform lock count for AsyncResult objects does not decrease
+     * unless the platform is in shutdown state. */
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    /* Platform lock count tracks the maximum AsyncResult count plus one for startup. */
+    todo_wine
+    check_platform_lock_count(3);
+    IMFAsyncResult_Release(result);
+
+    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &callback->IMFAsyncCallback_iface, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &callback_result);
+    ok(res == 0, "got %#lx\n", res);
+    refcount = IMFAsyncResult_Release(callback_result);
+    /* Release of an internal lock occurs in a worker thread. */
+    flaky_wine
+    ok(!refcount, "Unexpected refcount %ld.\n", refcount);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    todo_wine
+    check_platform_lock_count(5);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    /* Platform is in shutdown state if either the lock count or the startup count is <= 0. */
+    hr = MFAllocateWorkQueue(&queue);
+    todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    /* Platform can be unlocked after shutdown. */
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    /* Platform locks for AsyncResult objects were released on shutdown, but the explicit lock was not. */
+    check_platform_lock_count(2);
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    /* Zero lock count. */
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = MFUnlockPlatform();
+    ok(hr == S_OK, "Failed to unlock, %#lx.\n", hr);
+    /* Negative lock count. */
+    hr = MFAllocateWorkQueue(&queue);
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    hr = MFLockPlatform();
+    ok(hr == S_OK, "Failed to lock, %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    check_platform_lock_count(2);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    /* Release an AsyncResult object after shutdown. Lock count tracks the AsyncResult count.
+     * It's not possible to show if unlock occurs immedately or on the next startup. */
+    IMFAsyncResult_Release(result);
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    check_platform_lock_count(1);
+
+    hr = MFCreateAsyncResult(NULL, &callback->IMFAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+    check_platform_lock_count(2);
+    /* Release an AsyncResult object after shutdown and startup */
+    IMFAsyncResult_Release(result);
+    todo_wine
+    check_platform_lock_count(2);
+
+    hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    /* The AsyncResult created for the item locks the platform */
+    check_platform_lock_count(2);
+
+    hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key2);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    check_platform_lock_count(3);
+
+    /* Platform locks for scheduled items are not released */
+    hr = MFCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+    hr = MFCancelWorkItem(key2);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    todo_wine
+    check_platform_lock_count(3);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    hr = MFAllocateWorkQueue(&queue);
+    todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCancelWorkItem(key);
+    todo_wine
+    ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
+
+    res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 0, &result);
+    ok(res == WAIT_TIMEOUT, "got res %#lx\n", res);
+
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    /* Shutdown while a scheduled item is pending leaks the internal AsyncResult. */
+    todo_wine
+    check_platform_lock_count(2);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
+}
+
 static void test_allocate_queue(void)
 {
     DWORD queue, queue2;
@@ -13389,6 +13582,7 @@ START_TEST(mfplat)
     CoInitialize(NULL);
 
     test_startup();
+    test_startup_counts();
     test_register();
     test_media_type();
     test_MFCreateMediaEvent();
