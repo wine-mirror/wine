@@ -964,6 +964,230 @@ done:
     pRtlFreeUnicodeString(&ntdirname);
 }
 
+static void set_up_mask_test(const char *testdir)
+{
+    BOOL ret;
+    char buf[MAX_PATH + 5];
+    HANDLE h;
+
+    ret = CreateDirectoryA(testdir, NULL);
+    ok( ret, "couldn't create dir '%s', error %ld\n", testdir, GetLastError() );
+
+    sprintf(buf, "%s\\%s", testdir, "a-file.h");
+    h = CreateFileA(buf, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                    FILE_ATTRIBUTE_NORMAL, 0);
+    ok( h != INVALID_HANDLE_VALUE, "failed to create temp file '%s'\n", buf );
+    CloseHandle(h);
+
+    sprintf(buf, "%s\\%s", testdir, "another-file.h");
+    h = CreateFileA(buf, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                    FILE_ATTRIBUTE_NORMAL, 0);
+    ok( h != INVALID_HANDLE_VALUE, "failed to create temp file '%s'\n", buf );
+    CloseHandle(h);
+}
+
+static void tear_down_mask_test(const char *testdir)
+{
+    int ret;
+    char buf[MAX_PATH];
+
+    sprintf(buf, "%s\\%s", testdir, "a-file.h");
+    ret = DeleteFileA(buf);
+    ok( ret || (GetLastError() == ERROR_FILE_NOT_FOUND) || (GetLastError() == ERROR_PATH_NOT_FOUND),
+       "Failed to rm %s, error %ld\n", buf, GetLastError() );
+
+    sprintf(buf, "%s\\%s", testdir, "another-file.h");
+    ret = DeleteFileA(buf);
+    ok( ret || (GetLastError() == ERROR_FILE_NOT_FOUND) || (GetLastError() == ERROR_PATH_NOT_FOUND),
+       "Failed to rm %s, error %ld\n", buf, GetLastError() );
+
+    RemoveDirectoryA(testdir);
+}
+
+
+/* Performs a query with NtQueryDirectoryFile() */
+static BOOL test_NtQueryDirectoryFile_mask(HANDLE handle, BOOL restart_scan, UNICODE_STRING *mask,
+                                           NTSTATUS expected_status, UNICODE_STRING *match, BOOL validate_only)
+{
+    NTSTATUS status;
+    IO_STATUS_BLOCK io;
+    UINT data_size = sizeof(FILE_DIRECTORY_INFORMATION) + (MAX_PATH * sizeof(wchar_t));
+    BYTE data[8192];
+    FILE_DIRECTORY_INFORMATION *dir_info;
+    WCHAR *name;
+    ULONG name_len;
+    WCHAR *mask_value = {0};
+    ULONG mask_len = 0;
+    WCHAR *match_value = {0};
+    ULONG match_len = 0;
+
+    if (mask)
+    {
+        mask_len = mask->Length / sizeof(WCHAR);
+        mask_value = mask->Buffer;
+    }
+
+    status = pNtQueryDirectoryFile( handle, NULL, NULL, NULL, &io, data, data_size,
+                                    FileDirectoryInformation, TRUE, mask, restart_scan );
+    if (validate_only && status != expected_status) return FALSE;
+
+    todo_wine_if(status != expected_status)
+    ok( status == expected_status, "unexpected status : 0x%lx Test settings: file mask: '%s', restart: %d, expected status: 0x%lx\n",
+            status, wine_dbgstr_wn(mask_value, mask_len), restart_scan, expected_status );
+
+    if (status == STATUS_SUCCESS && match != NULL)
+    {
+        dir_info = (FILE_DIRECTORY_INFORMATION *)data;
+        name = dir_info->FileName;
+        name_len = dir_info->FileNameLength / sizeof(WCHAR);
+        match_len = match->Length / sizeof(WCHAR);
+        match_value = match->Buffer;
+
+        todo_wine_if(name_len != match_len)
+        ok( name_len == match_len, "unexpected filename length %lu, expected %lu\n", name_len, match_len );
+        todo_wine_if(name_len != match_len)
+        ok( !memcmp(name, match_value, match_len * sizeof(WCHAR)), "unexpected filename %s, expected %s\n",
+            wine_dbgstr_wn(name, name_len), wine_dbgstr_wn(match_value, match_len) );
+    }
+    return TRUE;
+}
+
+static void test_NtQueryDirectoryFile_change_mask(void)
+{
+    NTSTATUS status;
+    HANDLE dirh;
+    HANDLE dirh_test_multiple_handles;
+    HANDLE dirh_test_fresh_null;
+    HANDLE dirh_test_fresh_empty;
+    char testdir[MAX_PATH];
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    UNICODE_STRING ntdirname;
+    WCHAR testdir_w[MAX_PATH];
+
+    UNICODE_STRING atestfile;
+    UNICODE_STRING anothertestfile;
+    UNICODE_STRING notatestfile;
+    UNICODE_STRING testmask;
+    UNICODE_STRING emptymask;
+
+    pRtlInitUnicodeString(&atestfile, L"a-file.h");
+    pRtlInitUnicodeString(&anothertestfile, L"another-file.h");
+    pRtlInitUnicodeString(&notatestfile, L"not-a-file.h");
+    pRtlInitUnicodeString(&testmask, L"*.h");
+    pRtlInitUnicodeString(&emptymask, L"");
+
+    ok( GetTempPathA(MAX_PATH, testdir), "couldn't get temp dir\n" );
+    strcat(testdir, "mask.tmp");
+    tear_down_mask_test(testdir);
+    set_up_mask_test(testdir);
+
+    pRtlMultiByteToUnicodeN(testdir_w, sizeof(testdir_w), NULL, testdir, strlen(testdir) + 1);
+    if (!pRtlDosPathNameToNtPathName_U(testdir_w, &ntdirname, NULL, NULL))
+    {
+        ok( 0, "RtlDosPathNametoNtPathName_U failed\n" );
+        goto done;
+    }
+    InitializeObjectAttributes(&attr, &ntdirname, OBJ_CASE_INSENSITIVE, 0, NULL);
+
+    status = pNtOpenFile(&dirh, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE);
+    ok( status == STATUS_SUCCESS, "failed to open dir '%s', ret 0x%lx, error %ld\n", testdir, status, GetLastError() );
+    if (status != STATUS_SUCCESS)
+    {
+       skip("can't test if we can't open the directory\n");
+       goto done;
+    }
+
+    /* Verify that NtQueryDirectoryFile mask reset behaviour introduced in Windows 8 is supported */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &atestfile, STATUS_SUCCESS, &atestfile, TRUE);
+    if (!winetest_platform_is_wine && !test_NtQueryDirectoryFile_mask(dirh, TRUE, &notatestfile, STATUS_NO_MORE_FILES, NULL, TRUE))
+    {
+        skip("Win8+ NtQueryDirectoryFile mask reset behaviour not supported\n");
+        goto done;
+    }
+
+    /* Test that caches for two handles to a single directory do not interfere with each other*/
+    status = pNtOpenFile(&dirh_test_multiple_handles, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE);
+    ok( status == STATUS_SUCCESS, "failed to open second handle to dir '%s', ret 0x%lx, error %ld\n", testdir, status, GetLastError() );
+
+    /* Search for a non-existent file, putting it into a state with an empty cache */
+    /* This also confirms that using a non-existent mask with a fresh handle returns a different status*/
+    test_NtQueryDirectoryFile_mask(dirh_test_multiple_handles, TRUE, &notatestfile, STATUS_NO_SUCH_FILE, &notatestfile, FALSE);
+    /* Confirm that handle is in a state where it fails to find atestfile */
+    test_NtQueryDirectoryFile_mask(dirh_test_multiple_handles, FALSE, &atestfile, STATUS_NO_MORE_FILES, &atestfile, FALSE);
+    /* Confirm that another handle is able to find atestfile */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &atestfile, STATUS_SUCCESS, &atestfile, FALSE);
+    pNtClose(&dirh_test_multiple_handles);
+
+    /* All searches for `notatestfile` are expected to fail */
+    /* Tests should also fail if the scan is not reset, and the mask changes to an incompatible one */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &atestfile, STATUS_SUCCESS, &atestfile, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &anothertestfile, STATUS_SUCCESS, &anothertestfile, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &notatestfile, STATUS_NO_MORE_FILES, NULL, FALSE);
+
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &atestfile, STATUS_SUCCESS, &atestfile, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, &notatestfile, STATUS_NO_MORE_FILES, NULL, FALSE);
+
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &atestfile, STATUS_SUCCESS, &atestfile, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, &anothertestfile, STATUS_NO_MORE_FILES, &anothertestfile, FALSE);
+
+    /* Test mask that matches multiple files, do not check results against the mask */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &testmask, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, &notatestfile, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &notatestfile, STATUS_NO_MORE_FILES, NULL, FALSE);
+
+    /* Test NULL mask with a previously used handle that last returned an error */
+    /* Ensure dirh is in a failure state */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &notatestfile, STATUS_NO_MORE_FILES, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, NULL, STATUS_NO_MORE_FILES, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, NULL, STATUS_NO_MORE_FILES, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, NULL, STATUS_NO_MORE_FILES, NULL, FALSE);
+
+    /* Test NULL mask with a previously used handle that last returned STATUS_SUCCESS */
+    /* Ensure dirh is in a success state */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &testmask, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, NULL, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, NULL, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, NULL, STATUS_SUCCESS, NULL, FALSE);
+
+    /* Test empty mask with a previously used handle that last returned an error */
+    /* Ensure dirh is in a failure state */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &notatestfile, STATUS_NO_MORE_FILES, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &emptymask, STATUS_NO_MORE_FILES, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, &emptymask, STATUS_NO_MORE_FILES, NULL, FALSE);
+
+    /* Test empty mask with a previously used handle that last returned STATUS_SUCCESS */
+    /* Ensure dirh is in a success state */
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &testmask, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, TRUE, &emptymask, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh, FALSE, &emptymask, STATUS_SUCCESS, NULL, FALSE);
+
+    status = pNtOpenFile(&dirh_test_fresh_null, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE);
+    ok( status == STATUS_SUCCESS, "failed to open handle to dir '%s' for testing NULL masks, ret 0x%lx, error %ld\n", testdir, status, GetLastError() );
+
+    /* Test NULL mask with a fresh handle */
+    test_NtQueryDirectoryFile_mask(dirh_test_fresh_null, TRUE, NULL, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh_test_fresh_null, FALSE, NULL, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh_test_fresh_null, TRUE, NULL, STATUS_SUCCESS, NULL, FALSE);
+    pNtClose(&dirh_test_fresh_null);
+
+    status = pNtOpenFile(&dirh_test_fresh_empty, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+                         FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE);
+    ok( status == STATUS_SUCCESS, "failed to open handle to dir '%s' for testing empty masks, ret 0x%lx, error %ld\n", testdir, status, GetLastError() );
+
+    /* Test empty mask with a fresh handle */
+    test_NtQueryDirectoryFile_mask(dirh_test_fresh_empty, TRUE, &emptymask, STATUS_SUCCESS, NULL, FALSE);
+    test_NtQueryDirectoryFile_mask(dirh_test_fresh_empty, FALSE, &emptymask, STATUS_SUCCESS, NULL, FALSE);
+    pNtClose(&dirh_test_fresh_empty);
+
+done:
+    tear_down_mask_test(testdir);
+    pNtClose(&dirh);
+}
+
 static NTSTATUS get_file_id( FILE_INTERNAL_INFORMATION *info, const WCHAR *root, const WCHAR *name )
 {
     OBJECT_ATTRIBUTES attr;
@@ -1157,5 +1381,6 @@ START_TEST(directory)
     test_directory_sort( sysdir );
     test_NtQueryDirectoryFile();
     test_NtQueryDirectoryFile_case();
+    test_NtQueryDirectoryFile_change_mask();
     test_redirection();
 }
