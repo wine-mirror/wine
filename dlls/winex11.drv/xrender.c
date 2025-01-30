@@ -250,12 +250,12 @@ static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPi
     return TRUE;
 }
 
-static BOOL is_wxrformat_compatible_with_default_visual(const WineXRenderFormatTemplate *fmt)
+static BOOL is_wxrformat_compatible_with_visual( const WineXRenderFormatTemplate *fmt, const XVisualInfo *visual )
 {
-    if(fmt->depth != default_visual.depth) return FALSE;
-    if( (fmt->redMask << fmt->red) != default_visual.red_mask) return FALSE;
-    if( (fmt->greenMask << fmt->green) != default_visual.green_mask) return FALSE;
-    if( (fmt->blueMask << fmt->blue) != default_visual.blue_mask) return FALSE;
+    if (fmt->depth != visual->depth) return FALSE;
+    if ((fmt->redMask << fmt->red) != visual->red_mask) return FALSE;
+    if ((fmt->greenMask << fmt->green) != visual->green_mask) return FALSE;
+    if ((fmt->blueMask << fmt->blue) != visual->blue_mask) return FALSE;
 
     /* We never select a default ARGB visual */
     if(fmt->alphaMask) return FALSE;
@@ -278,7 +278,7 @@ static int load_xrender_formats(void)
             TRACE( "Loaded root pict_format with id=%#lx\n", pict_formats[i]->id );
             continue;
         }
-        if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
+        if (is_wxrformat_compatible_with_visual( &wxr_formats_template[i], &default_visual ))
         {
             pict_formats[i] = pXRenderFindVisualFormat(gdi_display, default_visual.visual);
             if (!pict_formats[i])
