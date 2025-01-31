@@ -832,6 +832,9 @@ void __cdecl _Mtx_reset_owner(_Mtx_arg_t mtx)
 
 typedef struct
 {
+#if _MSVCP_VER >= 140
+    ULONG_PTR unknown;
+#endif
     cv cv;
 } *_Cnd_t;
 
@@ -847,6 +850,9 @@ typedef _Cnd_t *_Cnd_arg_t;
 
 void __cdecl _Cnd_init_in_situ(_Cnd_t cnd)
 {
+#if _MSVCP_VER >= 140
+    cnd->unknown = 0;
+#endif
     cv_init(&cnd->cv);
 }
 
