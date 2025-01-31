@@ -4412,8 +4412,6 @@ static void test_scheduled_items(void)
     hr = MFCancelWorkItem(key2);
     ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
 
-    IMFAsyncResult_Release(result);
-
     hr = MFScheduleWorkItem(&callback->IMFAsyncCallback_iface, NULL, -5000, &key);
     ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
 
@@ -4422,6 +4420,13 @@ static void test_scheduled_items(void)
 
     hr = MFShutdown();
     ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    Sleep(20);
+    /* A callback invocation with RTWQ_E_OPERATION_CANCELLED may have been pending
+     * when MFShutdown() was called. Release depends upon its execution. */
+    refcount = IMFAsyncResult_Release(result);
+    flaky_wine
+    ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
 
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 }
