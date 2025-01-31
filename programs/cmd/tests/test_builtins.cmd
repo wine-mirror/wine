@@ -2923,6 +2923,26 @@ popd
 cd
 rd /s/q foobar
 
+echo ------------ Testing dir /o ------------
+mkdir foobar & cd foobar
+echo AAA>a1.aa
+mkdir a1.ab
+echo A>a1.ac
+echo AA>a2.aa
+mkdir a2.ac
+echo ---
+dir /B /O:
+echo ---
+dir /B /O:GN
+echo ---
+dir /B /O:G-N
+echo ---
+dir /B /O:GNE
+echo ---
+dir /B /O:G-NE
+echo ---
+dir /B /O:G-E-N
+cd .. & rd /s/q foobar
 echo ------------ Testing attrib ------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
 mkdir foobar & cd foobar
