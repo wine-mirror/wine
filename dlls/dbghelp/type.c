@@ -159,10 +159,12 @@ BOOL symt_get_address(const struct symt* type, ULONG64* addr)
     case SymTagFuncDebugStart:
     case SymTagFuncDebugEnd:
     case SymTagLabel:
-        if (!((const struct symt_hierarchy_point*)type)->parent ||
-            !symt_get_address(((const struct symt_hierarchy_point*)type)->parent, addr))
-            *addr = 0;
-        *addr += ((const struct symt_hierarchy_point*)type)->loc.offset;
+        *addr = 0;
+        if (SYMT_SYMREF_TO_PTR(((const struct symt_hierarchy_point*)type)->container))
+        {
+            if (symt_get_address(SYMT_SYMREF_TO_PTR(((const struct symt_hierarchy_point*)type)->container), addr))
+                *addr += ((const struct symt_hierarchy_point*)type)->loc.offset;
+        }
         break;
     case SymTagThunk:
         *addr = ((const struct symt_thunk*)type)->address;
@@ -308,13 +310,13 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     m->hash_elt.next = NULL;
 
     m->kind            = DataIsMember;
-    m->container       = &module->top->symt; /* native defines lexical parent as module, not udt... */
+    m->container       = symt_ptr_to_symref(&module->top->symt); /* native defines lexical parent as module, not udt... */
     m->type            = elt_type;
     m->u.member.offset = offset;
     m->u.member.bit_offset = bit_offset;
     m->u.member.bit_length = bit_size;
     p = vector_add(&udt_type->vchildren, &module->pool);
-    *p = &m->symt;
+    if (p) *p = &m->symt;
 
     return TRUE;
 }
@@ -354,7 +356,7 @@ BOOL symt_add_enum_element(struct module* module, struct symt_enum* enum_type,
     e->hash_elt.name = pool_strdup(&module->pool, name);
     e->hash_elt.next = NULL;
     e->kind = DataIsConstant;
-    e->container = &enum_type->symt;
+    e->container = symt_ptr_to_symref(&enum_type->symt);
     e->type = symt_ptr_to_symref(enum_type->base_type);
     e->u.value = *variant;
 
@@ -672,7 +674,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
     case TI_FINDCHILDREN:
         {
             const struct vector*        v;
-            struct symt**               pt;
+            symref_t*                   symref;
             unsigned                    i;
             TI_FINDCHILDREN_PARAMS*     tifp = pInfo;
 
@@ -699,14 +701,14 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                 /* for those, CHILDRENCOUNT returns 0 */
                 return tifp->Count == 0;
             default:
-                FIXME("Unsupported sym-tag %s for find-children\n", 
+                FIXME("Unsupported sym-tag %s for find-children\n",
                       symt_get_tag_str(type->tag));
                 return FALSE;
             }
             for (i = 0; i < tifp->Count; i++)
             {
-                if (!(pt = vector_at(v, tifp->Start + i))) return FALSE;
-                tifp->ChildId[i] = symt_ptr_to_index(module, *pt);
+                if (!(symref = (symref_t *)vector_at(v, tifp->Start + i))) return FALSE;
+                tifp->ChildId[i] = symt_symref_to_index(module, *symref);
             }
         }
         break;
@@ -885,25 +887,25 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
         switch (type->tag)
         {
         case SymTagCompiland:
-            X(DWORD) = symt_ptr_to_index(module, &((const struct symt_compiland*)type)->container->symt);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_compiland*)type)->container);
             break;
         case SymTagBlock:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_block*)type)->container);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_block*)type)->container);
             break;
         case SymTagData:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_data*)type)->container);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_data*)type)->container);
             break;
         case SymTagFunction:
         case SymTagInlineSite:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_function*)type)->container);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_function*)type)->container);
             break;
         case SymTagThunk:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_thunk*)type)->container);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_thunk*)type)->container);
             break;
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
         case SymTagLabel:
-            X(DWORD) = symt_ptr_to_index(module, ((const struct symt_hierarchy_point*)type)->parent);
+            X(DWORD) = symt_symref_to_index(module, ((const struct symt_hierarchy_point*)type)->container);
             break;
         case SymTagUDT:
         case SymTagEnum:
@@ -1086,7 +1088,8 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
                                                            MODULE_FORMAT_VTABLE_INDEX(loc_compute))))
                 {
                     iter.modfmt->vtable->loc_compute(iter.modfmt,
-                                                     (const struct symt_function*)((const struct symt_data*)type)->container, &loc);
+                                                     (const struct symt_function*)SYMT_SYMREF_TO_PTR(((const struct symt_data*)type)->container),
+                                                     &loc);
                     break;
                 }
                 if (loc.kind != loc_absolute) return FALSE;

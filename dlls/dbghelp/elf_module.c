@@ -762,7 +762,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
  */
 static const struct elf_sym *elf_lookup_symtab(const struct module* module,
                                                const struct hash_table* ht_symtab,
-                                               const char* name, const struct symt* compiland)
+                                               const char* name, symref_t symref_compiland)
 {
     struct symtab_elt*          weak_result = NULL; /* without compiland name */
     struct symtab_elt*          result = NULL;
@@ -771,8 +771,9 @@ static const struct elf_sym *elf_lookup_symtab(const struct module* module,
     const char*                 compiland_name;
     const char*                 compiland_basename;
     const char*                 base;
+    struct symt_compiland      *compiland = (struct symt_compiland*)SYMT_SYMREF_TO_PTR(symref_compiland);
 
-    /* we need weak match up (at least) when symbols of same name, 
+    /* we need weak match up (at least) when symbols of same name,
      * defined several times in different compilation units,
      * are merged in a single one (hence a different filename for c.u.)
      */
@@ -856,7 +857,7 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
             {
                 break;
             }
-            symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
+            symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name,
                                      ((struct symt_function*)sym)->container);
             if (symp)
             {
@@ -885,7 +886,7 @@ static void elf_finish_stabs_info(struct module* module, const struct hash_table
                 if (((struct symt_data*)sym)->u.var.kind != loc_absolute ||
                     ((struct symt_data*)sym)->u.var.offset != elf_info->elf_addr)
                     break;
-                symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
+                symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name,
                                          ((struct symt_data*)sym)->container);
                 if (symp)
                 {

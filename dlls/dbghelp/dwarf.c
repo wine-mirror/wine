@@ -2280,7 +2280,7 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                   child->abbrev->tag, dwarf2_debug_di(di));
         }
     }
-    subpgm->current_block = symt_check_tag(subpgm->current_func->container, SymTagBlock) ?
+    subpgm->current_block = symt_check_tag(SYMT_SYMREF_TO_PTR(subpgm->current_func->container), SymTagBlock) ?
         (struct symt_block*)subpgm->current_func->container : NULL;
     subpgm->current_func = (struct symt_function*)symt_get_upper_inlined(subpgm->current_func);
 }
@@ -2924,22 +2924,22 @@ static BOOL dwarf2_parse_line_numbers(dwarf2_parse_context_t* ctx,
     return TRUE;
 }
 
-unsigned dwarf2_cache_cuhead(struct dwarf2_module_info_s* module, struct symt_compiland* c, const dwarf2_cuhead_t* head)
+static unsigned dwarf2_cache_cuhead(struct module *module, struct dwarf2_module_info_s* module_info, struct symt_compiland* c, const dwarf2_cuhead_t* head)
 {
     dwarf2_cuhead_t* ah;
     unsigned i;
-    for (i = 0; i < module->num_cuheads; ++i)
+    for (i = 0; i < module_info->num_cuheads; ++i)
     {
-        if (memcmp(module->cuheads[i], head, sizeof(*head)) == 0)
+        if (memcmp(module_info->cuheads[i], head, sizeof(*head)) == 0)
         {
-            c->user = module->cuheads[i];
+            c->user = module_info->cuheads[i];
             return TRUE;
         }
     }
-    if (!(ah = pool_alloc(&c->container->module->pool, sizeof(*head)))) return FALSE;
+    if (!(ah = pool_alloc(&module->pool, sizeof(*head)))) return FALSE;
     memcpy(ah, head, sizeof(*head));
-    module->cuheads = realloc(module->cuheads, ++module->num_cuheads * sizeof(head));
-    module->cuheads[module->num_cuheads - 1] = ah;
+    module_info->cuheads = realloc(module_info->cuheads, ++module_info->num_cuheads * sizeof(head));
+    module_info->cuheads[module_info->num_cuheads - 1] = ah;
     c->user = ah;
     return TRUE;
 }
@@ -3069,7 +3069,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             ctx->compiland = symt_new_compiland(ctx->module_ctx->module, tmp);
             HeapFree(GetProcessHeap(), 0, tmp);
             ctx->compiland->address = ctx->module_ctx->load_offset + low_pc.u.uvalue;
-            dwarf2_cache_cuhead(ctx->module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx->compiland, &ctx->head);
+            dwarf2_cache_cuhead(ctx->module_ctx->module, ctx->module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx->compiland, &ctx->head);
             di->symt = &ctx->compiland->symt;
             children = dwarf2_get_di_children(di);
             if (children) for (i = 0; i < vector_length(children); i++)
@@ -3121,9 +3121,9 @@ static const dwarf2_cuhead_t* get_cuhead_from_func(const struct symt_function* f
 {
     if (symt_check_tag(&func->symt, SymTagInlineSite))
         func = symt_get_function_from_inlined((struct symt_function*)func);
-    if (symt_check_tag(&func->symt, SymTagFunction) && symt_check_tag(func->container, SymTagCompiland))
+    if (symt_check_tag(&func->symt, SymTagFunction) && symt_check_tag(SYMT_SYMREF_TO_PTR(func->container), SymTagCompiland))
     {
-        struct symt_compiland* c = (struct symt_compiland*)func->container;
+        struct symt_compiland* c = (struct symt_compiland*)SYMT_SYMREF_TO_PTR(func->container);
         return (const dwarf2_cuhead_t*)c->user;
     }
     FIXME("Should have a compilation unit head\n");
@@ -3138,7 +3138,7 @@ static enum location_error loc_compute_frame(const struct module_format* modfmt,
                                              struct location* frame)
 {
     struct process             *pcs = modfmt->module->process;
-    struct symt**               psym = NULL;
+    struct symt*                sym;
     struct location*            pframe;
     dwarf2_traverse_context_t   lctx;
     enum location_error         err;
@@ -3146,10 +3146,10 @@ static enum location_error loc_compute_frame(const struct module_format* modfmt,
 
     for (i=0; i<vector_length(&func->vchildren); i++)
     {
-        psym = vector_at(&func->vchildren, i);
-        if (psym && symt_check_tag(*psym, SymTagCustom))
+        sym = SYMT_SYMREF_TO_PTR(*(symref_t*)vector_at(&func->vchildren, i));
+        if (symt_check_tag(sym, SymTagCustom))
         {
-            pframe = &((struct symt_hierarchy_point*)*psym)->loc;
+            pframe = &((struct symt_hierarchy_point*)sym)->loc;
 
             /* First, recompute the frame information, if needed */
             switch (pframe->kind)
@@ -3173,7 +3173,7 @@ static enum location_error loc_compute_frame(const struct module_format* modfmt,
                 }
                 break;
             case loc_dwarf2_frame_cfa:
-                err = compute_call_frame_cfa(modfmt->module, ip + ((struct symt_compiland*)func->container)->address, frame);
+                err = compute_call_frame_cfa(modfmt->module, ip + ((struct symt_compiland*)SYMT_SYMREF_TO_PTR(func->container))->address, frame);
                 if (err < 0) return err;
                 break;
             default:
@@ -4030,7 +4030,7 @@ static void dwarf2_location_compute(const struct module_format* modfmt,
     {
         struct process *pcs = modfmt->module->process;
         /* instruction pointer relative to compiland's start */
-        ip = pcs->localscope_pc - ((struct symt_compiland*)func->container)->address;
+        ip = pcs->localscope_pc - ((struct symt_compiland*)SYMT_SYMREF_TO_PTR(func->container))->address;
 
         if ((err = loc_compute_frame(modfmt, func, ip, head, &frame)) == 0)
         {

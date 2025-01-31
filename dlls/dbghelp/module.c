@@ -1044,12 +1044,14 @@ BOOL module_remove(struct process* pcs, struct module* module)
             locsym = &symt_get_function_from_inlined((struct symt_function*)locsym)->symt;
         if (symt_check_tag(locsym, SymTagFunction))
         {
-            locsym = ((struct symt_function*)locsym)->container;
-            if (symt_check_tag(locsym, SymTagCompiland) &&
-                module == ((struct symt_compiland*)locsym)->container->module)
+            struct symt_compiland *compiland = (struct symt_compiland*)SYMT_SYMREF_TO_PTR(((struct symt_function*)locsym)->container);
+            if (symt_check_tag(&compiland->symt, SymTagCompiland))
             {
-                pcs->localscope_pc = 0;
-                pcs->localscope_symt = NULL;
+                if (module == ((struct symt_module*)SYMT_SYMREF_TO_PTR(compiland->container))->module)
+                {
+                    pcs->localscope_pc = 0;
+                    pcs->localscope_symt = NULL;
+                }
             }
         }
     }

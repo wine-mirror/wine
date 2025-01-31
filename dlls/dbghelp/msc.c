@@ -1814,8 +1814,9 @@ static BOOL func_has_local(struct symt_function* func, const char* name)
 
     for (i = 0; i < func->vchildren.num_elts; ++i)
     {
-        struct symt* p = *(struct symt**)vector_at(&func->vchildren, i);
-        if (symt_check_tag(p, SymTagData) && !strcmp(((struct symt_data*)p)->hash_elt.name, name))
+        struct symt *lsym = SYMT_SYMREF_TO_PTR(*(symref_t*)vector_at(&func->vchildren, i));
+
+        if (symt_check_tag(lsym, SymTagData) && !strcmp(((struct symt_data*)lsym)->hash_elt.name, name))
             return TRUE;
     }
     return FALSE;
@@ -1865,7 +1866,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
                     if (symdata->kind == (is_local ? DataIsFileStatic : DataIsGlobal) &&
                         symdata->u.var.kind == loc.kind &&
                         symdata->u.var.offset == loc.offset &&
-                        symdata->container == &compiland->symt)
+                        symdata->container == symt_ptr_to_symref(&compiland->symt))
                     {
                         /* We don't compare types yet... Unfortunately, they are not
                          * always the same typeid... it'd require full type equivalence
@@ -2320,9 +2321,9 @@ static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info
      */
     for (i = 0; i < msc_dbg->module->top->vchildren.num_elts; i++)
     {
-        struct symt_compiland** p = vector_at(&msc_dbg->module->top->vchildren, i);
-        if (symt_check_tag(&(*p)->symt, SymTagCompiland) && !strcmp((*p)->filename, objname))
-            return *p;
+        struct symt_compiland* p = (struct symt_compiland*)SYMT_SYMREF_TO_PTR(*(symref_t*)vector_at(&msc_dbg->module->top->vchildren, i));
+        if (symt_check_tag(&p->symt, SymTagCompiland) && !strcmp(p->filename, objname))
+            return p;
     }
     return symt_new_compiland(msc_dbg->module, objname);
 }
@@ -2783,8 +2784,8 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             break;
 
         case S_INLINESITE_END:
-            block = symt_check_tag(curr_func->container, SymTagBlock) ?
-                (struct symt_block*)curr_func->container : NULL;
+            block = symt_check_tag(SYMT_SYMREF_TO_PTR(curr_func->container), SymTagBlock) ?
+                (struct symt_block *)((struct symt_block*)curr_func->container) : NULL;
             curr_func = (struct symt_function*)symt_get_upper_inlined(curr_func);
             break;
 
