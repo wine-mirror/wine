@@ -2223,6 +2223,19 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
 
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
+        /* The actual effect of D3DRS_POINTSPRITEENABLE is more accurately
+         * congruent to GL_COORD_REPLACE_ARB. GL_POINT_SPRITE_ARB, when
+         * disabled, affects point rasterization (which we do not want),
+         * implicitly disables GL_COORD_REPLACE_ARB, and causes gl_PointCoord
+         * to return an undefined value.
+         *
+         * We implement D3DRS_POINTSPRITEENABLE by altering the shader to read
+         * from gl_PointCoord or from the actual texcoord, so we do not need
+         * GL_COORD_REPLACE_ARB, nor do we need to dynamically toggle
+         * GL_POINT_SPRITE_ARB. */
+
+        gl_info->gl_ops.gl.p_glEnable(GL_POINT_SPRITE_ARB);
+
         for (i = 0; i < gl_info->limits.ffp_textures; ++i)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, i);

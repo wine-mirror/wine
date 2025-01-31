@@ -834,35 +834,6 @@ static void state_linepattern_w(struct wined3d_context *context, const struct wi
         FIXME("Setting line patterns is not supported in OpenGL core contexts.\n");
 }
 
-void state_pointsprite_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    static BOOL warned;
-
-    /* TODO: NV_POINT_SPRITE */
-    if (!warned && state->render_states[WINED3D_RS_POINTSPRITEENABLE])
-    {
-        /* A FIXME, not a WARN because point sprites should be software emulated if not supported by HW */
-        FIXME("Point sprites not supported\n");
-        warned = TRUE;
-    }
-}
-
-void state_pointsprite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
-
-    if (state->render_states[WINED3D_RS_POINTSPRITEENABLE])
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glDisable(GL_POINT_SPRITE_ARB)");
-    }
-}
-
 static void state_msaa_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (state->render_states[WINED3D_RS_MULTISAMPLEANTIALIAS])

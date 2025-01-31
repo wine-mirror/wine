@@ -4125,10 +4125,6 @@ void state_clipping(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 void clipplane(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
-void state_pointsprite_w(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id);
-void state_pointsprite(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id);
 void state_shademode(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id);
 
