@@ -3109,7 +3109,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         args->texcoords_initialized = wined3d_mask_from_size(WINED3D_MAX_FFP_TEXTURES);
     }
 
-    args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
+    args->pointsprite = state->extra_ps_args.point_sprite
             && state->primitive_type == WINED3D_PT_POINTLIST;
 
     if (d3d_info->ffp_alpha_test)

@@ -70,6 +70,7 @@ struct wined3d_saved_states
     uint32_t position_transformed : 1;
     uint32_t bumpenv_constants : 1;
     uint32_t fog_constants : 1;
+    uint32_t extra_ps_args : 1;
 };
 
 struct stage_state
@@ -329,6 +330,7 @@ void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *
     states->position_transformed = 1;
     states->bumpenv_constants = 1;
     states->fog_constants = 1;
+    states->extra_ps_args = 1;
 
     list_init(&stateblock->changed.changed_lights);
     RB_FOR_EACH_ENTRY(light, lights_tree, struct wined3d_light_info, entry)
@@ -1706,6 +1708,10 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_FOGVERTEXMODE:
             stateblock->changed.ffp_vs_settings = 1;
             stateblock->changed.fog_constants = 1;
+            break;
+
+        case WINED3D_RS_POINTSPRITEENABLE:
+            stateblock->changed.extra_ps_args = 1;
             break;
 
         default:
@@ -3200,6 +3206,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_FOGDENSITY:
                 case WINED3D_RS_FOGEND:
                 case WINED3D_RS_FOGSTART:
+                case WINED3D_RS_POINTSPRITEENABLE:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3938,6 +3945,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
+    }
+
+    if (changed->extra_ps_args)
+    {
+        struct wined3d_extra_ps_args args;
+
+        args.point_sprite = state->rs[WINED3D_RS_POINTSPRITEENABLE];
+        wined3d_device_context_emit_set_extra_ps_args(context, &args);
     }
 
     if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ALPHAREF))
