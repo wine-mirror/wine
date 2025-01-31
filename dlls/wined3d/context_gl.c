@@ -3190,11 +3190,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
     context_invalidate_state(context, STATE_DEPTH_STENCIL);
-    if (gl_info->supported[ARB_POINT_SPRITE])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE));
-    }
     if (gl_info->supported[ARB_FRAMEBUFFER_SRGB])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
