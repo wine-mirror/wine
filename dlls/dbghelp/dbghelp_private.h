@@ -207,7 +207,7 @@ struct symt_compiland
     struct symt                 symt;
     struct symt_module*         container;      /* symt_module */
     ULONG_PTR                   address;
-    unsigned                    source;
+    const char                 *filename;
     struct vector               vchildren;      /* global variables & functions */
     void*                       user;           /* when debug info provider needs to store information */
 };
@@ -866,6 +866,7 @@ extern BOOL         pe_has_buildid_debug(struct image_file_map *fmap, GUID *guid
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source);
 extern const char*  source_get(const struct module* module, unsigned idx);
 extern int          source_rb_compare(const void *key, const struct wine_rb_entry *entry);
+extern char        *source_build_path(const char *base, const char *name);
 
 /* stabs.c */
 typedef void (*stabs_def_cb)(struct module* module, ULONG_PTR load_offset,
@@ -906,10 +907,10 @@ extern struct symt_ht*
 extern struct symt_module*
                     symt_new_module(struct module* module);
 extern struct symt_compiland*
-                    symt_new_compiland(struct module* module, unsigned src_idx);
+                    symt_new_compiland(struct module* module, const char *filename);
 extern struct symt_public*
-                    symt_new_public(struct module* module, 
-                                    struct symt_compiland* parent, 
+                    symt_new_public(struct module* module,
+                                    struct symt_compiland* parent,
                                     const char* typename,
                                     BOOL is_function,
                                     ULONG_PTR address,

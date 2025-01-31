@@ -2312,7 +2312,6 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
 
 static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info* msc_dbg, const char* objname)
 {
-    unsigned int    src_idx = source_new(msc_dbg->module, NULL, objname);
     unsigned int    i;
 
     /* In some cases MSVC generates several compiland entries with same pathname in PDB file.
@@ -2322,10 +2321,10 @@ static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info
     for (i = 0; i < msc_dbg->module->top->vchildren.num_elts; i++)
     {
         struct symt_compiland** p = vector_at(&msc_dbg->module->top->vchildren, i);
-        if (symt_check_tag(&(*p)->symt, SymTagCompiland) && (*p)->source == src_idx)
+        if (symt_check_tag(&(*p)->symt, SymTagCompiland) && !strcmp((*p)->filename, objname))
             return *p;
     }
-    return symt_new_compiland(msc_dbg->module, src_idx);
+    return symt_new_compiland(msc_dbg->module, objname);
 }
 
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,

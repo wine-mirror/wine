@@ -56,6 +56,21 @@ static unsigned source_find(const char* name)
     return WINE_RB_ENTRY_VALUE(e, struct source_rb, entry)->source;
 }
 
+char *source_build_path(const char *base, const char *name)
+{
+    char *dst;
+    unsigned bsz = strlen(base);
+
+    dst = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
+    if (dst)
+    {
+        strcpy(dst, base);
+        if (bsz && dst[bsz - 1] != '/' && dst[bsz - 1] != '\\') dst[bsz++] = '/';
+        strcpy(&dst[bsz], name);
+    }
+    return dst;
+}
+
 /******************************************************************
  *		source_new
  *
@@ -71,16 +86,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
     if (!base || *name == '/')
         full = name;
     else
-    {
-        unsigned bsz = strlen(base);
-
-        tmp = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
-        if (!tmp) return ret;
-        full = tmp;
-        strcpy(tmp, base);
-        if (bsz && tmp[bsz - 1] != '/') tmp[bsz++] = '/';
-        strcpy(&tmp[bsz], name);
-    }
+        full = source_build_path(base, name);
     rb_module = module;
     if (!module->sources || (ret = source_find(full)) == (unsigned)-1)
     {

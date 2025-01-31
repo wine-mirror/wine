@@ -699,7 +699,7 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
         {
         case ELF_STT_FILE:
             if (symname)
-                compiland = symt_new_compiland(module, source_new(module, NULL, symname));
+                compiland = symt_new_compiland(module, symname);
             else
                 compiland = NULL;
             continue;
@@ -778,12 +778,11 @@ static const struct elf_sym *elf_lookup_symtab(const struct module* module,
      */
     if (compiland)
     {
-        compiland_name = source_get(module,
-                                    ((const struct symt_compiland*)compiland)->source);
+        compiland_name = ((const struct symt_compiland*)compiland)->filename;
         compiland_basename = file_nameA(compiland_name);
     }
     else compiland_name = compiland_basename = NULL;
-    
+
     hash_table_iter_init(ht_symtab, &hti, name);
     while ((ste = hash_table_iter_up(&hti)))
     {
@@ -794,7 +793,7 @@ static const struct elf_sym *elf_lookup_symtab(const struct module* module,
             continue;
         if (ste->compiland && compiland_name)
         {
-            const char* filename = source_get(module, ste->compiland->source);
+            const char* filename = ste->compiland->filename;
             if (strcmp(filename, compiland_name))
             {
                 base = file_nameA(filename);
@@ -805,9 +804,9 @@ static const struct elf_sym *elf_lookup_symtab(const struct module* module,
         {
             FIXME("Already found symbol %s (%s) in symtab %s @%08x and %s @%08x\n",
                   debugstr_a(name), debugstr_a(compiland_name),
-                  debugstr_a(source_get(module, result->compiland->source)),
+                  debugstr_a(result->compiland->filename),
                   (unsigned int)result->sym.st_value,
-                  debugstr_a(source_get(module, ste->compiland->source)),
+                  debugstr_a(ste->compiland->filename),
                   (unsigned int)ste->sym.st_value);
         }
         else

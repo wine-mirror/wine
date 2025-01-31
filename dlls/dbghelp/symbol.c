@@ -231,19 +231,19 @@ struct symt_module* symt_new_module(struct module* module)
     return sym;
 }
 
-struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_idx)
+struct symt_compiland* symt_new_compiland(struct module* module, const char *filename)
 {
     struct symt_compiland*    sym;
     struct symt_compiland**   p;
 
     TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
-                         debugstr_w(module->modulename), debugstr_a(source_get(module, src_idx)));
+                         debugstr_w(module->modulename), debugstr_a(filename));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag  = SymTagCompiland;
         sym->container = module->top;
         sym->address   = 0;
-        sym->source    = src_idx;
+        sym->filename  = pool_strdup(&module->pool, filename);
         vector_init(&sym->vchildren, sizeof(struct symt*), 0);
         sym->user      = NULL;
         p = vector_add(&module->top->vchildren, &module->pool);

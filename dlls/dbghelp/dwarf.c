@@ -3048,6 +3048,7 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
             struct attribute            stmt_list, low_pc;
             struct attribute            comp_dir;
             struct attribute            language;
+            char                       *tmp;
 
             if (!dwarf2_find_attribute(di, DW_AT_name, &name))
                 name.u.string = NULL;
@@ -3064,8 +3065,9 @@ static BOOL dwarf2_parse_compilation_unit(dwarf2_parse_context_t* ctx)
 
             ctx->language = language.u.uvalue;
 
-            ctx->compiland = symt_new_compiland(ctx->module_ctx->module,
-                                                source_new(ctx->module_ctx->module, comp_dir.u.string, name.u.string));
+            tmp = source_build_path(comp_dir.u.string, name.u.string);
+            ctx->compiland = symt_new_compiland(ctx->module_ctx->module, tmp);
+            HeapFree(GetProcessHeap(), 0, tmp);
             ctx->compiland->address = ctx->module_ctx->load_offset + low_pc.u.uvalue;
             dwarf2_cache_cuhead(ctx->module_ctx->module->format_info[DFI_DWARF]->u.dwarf2_info, ctx->compiland, &ctx->head);
             di->symt = &ctx->compiland->symt;

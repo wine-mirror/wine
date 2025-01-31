@@ -1587,7 +1587,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 {
                     stabs_reset_includes();
                     source_idx = source_new(module, srcpath, ptr);
-                    compiland = symt_new_compiland(module, source_idx);
+                    compiland = symt_new_compiland(module, source_get(module, source_idx));
                 }
                 else
                 {
