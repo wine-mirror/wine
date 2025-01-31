@@ -734,7 +734,7 @@ msgid "Font St&yle:"
 msgstr "Betû&stílus:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "&Méret:"
 
@@ -750,7 +750,7 @@ msgstr "Á&thúzott"
 msgid "&Underline"
 msgstr "&Aláhúzott"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "Szín:"
 
@@ -929,7 +929,7 @@ msgstr "Másola&tok száma:"
 msgid "C&ollate"
 msgstr "Le&válogatás"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "&Méret:"
 
@@ -2474,7 +2474,7 @@ msgid "&File name:"
 msgstr "&Fájlnév:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "Tallózás..."
 
@@ -15071,7 +15071,7 @@ msgid "Digi&tal"
 msgstr "Digi&tális"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Betűtípus..."
@@ -19922,78 +19922,84 @@ msgid "Driver diagnostics"
 msgstr "Driver diagnosztika"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "Alapértékek"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "Kimeneti eszköz:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "Hang kimeneti eszköz:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "Bemeneti eszköz:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "Hang bemeneti eszköz:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Teszt hang"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "Alapértékek"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "Kimeneti eszköz:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "Hang kimeneti eszköz:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "Bemeneti eszköz:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "Hang bemeneti eszköz:"
+
+#: programs/winecfg/winecfg.rc:277
+#, fuzzy
+#| msgid "Output device:"
+msgid "MIDI output device:"
+msgstr "Kimeneti eszköz:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 #, fuzzy
 #| msgid "Wine configuration"
 msgid "Speaker configuration"
 msgstr "Wine konfiguráció"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "Megjelenés"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "Téma:"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 #, fuzzy
 #| msgid "&Theme:"
 msgid "&WinRT theme:"
 msgstr "Téma:"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "Téma telepítése..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "&Elem:"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "Szín:"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "Rendszermappák"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "Mappa &útvonal:"
 

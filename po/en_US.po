@@ -707,7 +707,7 @@ msgid "Font St&yle:"
 msgstr "Font St&yle:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "&Size:"
 
@@ -723,7 +723,7 @@ msgstr "Stri&keout"
 msgid "&Underline"
 msgstr "&Underline"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "&Color:"
 
@@ -900,7 +900,7 @@ msgstr "Number of &copies:"
 msgid "C&ollate"
 msgstr "C&ollate"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "Si&ze:"
 
@@ -2432,7 +2432,7 @@ msgid "&File name:"
 msgstr "&File name:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "B&rowse..."
 
@@ -13859,7 +13859,7 @@ msgid "Digi&tal"
 msgstr "Digi&tal"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Font..."
@@ -18693,74 +18693,78 @@ msgid "Driver diagnostics"
 msgstr "Driver diagnostics"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "Defaults"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "Output device:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "Voice output device:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "Input device:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "Voice input device:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Test Sound"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "Defaults"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "Output device:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "Voice output device:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "Input device:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "Voice input device:"
+
+#: programs/winecfg/winecfg.rc:277
+msgid "MIDI output device:"
+msgstr "MIDI output device:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Speaker configuration"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr "Speakers:"
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "Appearance"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "&Theme:"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 msgid "&WinRT theme:"
 msgstr "&WinRT theme:"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "&Install theme..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "It&em:"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "C&olor:"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr "MIME types"
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr "Manage file and protocol &associations"
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "Folders"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "&Link to:"
 

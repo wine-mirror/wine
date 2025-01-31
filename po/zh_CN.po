@@ -700,7 +700,7 @@ msgid "Font St&yle:"
 msgstr "字体样式(&Y):"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "大小(&S):"
 
@@ -716,7 +716,7 @@ msgstr "删除线(&K)"
 msgid "&Underline"
 msgstr "下划线(&U)"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "配色(&C):"
 
@@ -893,7 +893,7 @@ msgstr "份数(&C):"
 msgid "C&ollate"
 msgstr "逐份打印(&O)"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "大小(&Z):"
 
@@ -2427,7 +2427,7 @@ msgid "&File name:"
 msgstr "文件名(&F):"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "浏览(&R)..."
 
@@ -13708,7 +13708,7 @@ msgid "Digi&tal"
 msgstr "数字时钟(&T)"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "字体(&F)..."
@@ -18474,74 +18474,80 @@ msgid "Driver diagnostics"
 msgstr "驱动程序诊断"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "默认值"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "输出设备:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "语音输出设备:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "输入设备:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "语音输入设备:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "测试音频(&T)"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "默认值"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "输出设备:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "语音输出设备:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "输入设备:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "语音输入设备:"
+
+#: programs/winecfg/winecfg.rc:277
+#, fuzzy
+#| msgid "Output device:"
+msgid "MIDI output device:"
+msgstr "输出设备:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "扬声器设置"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr "扬声器:"
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "外观"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "主题(&T):"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 msgid "&WinRT theme:"
 msgstr "WinRT 主题(&W):"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "安装主题(&I)..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "物件(&E):"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "颜色(&O):"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr "MIME 类型"
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr "管理文件和协议关联(&A)"
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "文件夹"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "映射至(&L):"
 

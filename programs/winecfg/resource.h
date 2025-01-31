@@ -156,6 +156,7 @@
 #define IDS_AUDIO_SPEAKER_MONO          1317
 #define IDC_LIST_AUDIO_DEVICES          1318
 #define IDS_AUDIO_SPEAKER_CONFIG        1319
+#define IDC_MIDI_DEVICE                 1320
 
 /* desktop integration tab */
 #define IDC_THEME_COLORCOMBO            1401

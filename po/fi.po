@@ -701,7 +701,7 @@ msgid "Font St&yle:"
 msgstr "Fontin t&yyli:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "&Koko:"
 
@@ -717,7 +717,7 @@ msgstr "Yli&viivaus"
 msgid "&Underline"
 msgstr "A&lleviivaus"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "&Väri:"
 
@@ -894,7 +894,7 @@ msgstr "Kopioiden &määrä:"
 msgid "C&ollate"
 msgstr "&Kokoa"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "&Koko:"
 
@@ -2425,7 +2425,7 @@ msgid "&File name:"
 msgstr "&Tiedostonimi:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "&Selaa..."
 
@@ -13845,7 +13845,7 @@ msgid "Digi&tal"
 msgstr "Di&gitaalinen"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Fontti..."
@@ -18658,74 +18658,80 @@ msgid "Driver diagnostics"
 msgstr "Ajurin diagnostiikka"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "Oletukset"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "Ulostulolaite:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "Äänen ulostulolaite:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "Sisääntulolaite:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "Äänen sisääntulolaite:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Testiääni"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "Oletukset"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "Ulostulolaite:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "Äänen ulostulolaite:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "Sisääntulolaite:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "Äänen sisääntulolaite:"
+
+#: programs/winecfg/winecfg.rc:277
+#, fuzzy
+#| msgid "Output device:"
+msgid "MIDI output device:"
+msgstr "Ulostulolaite:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Kaiutinasetukset"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr "Kaiuttimet:"
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "Ulkonäkö"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "&Teema:"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 msgid "&WinRT theme:"
 msgstr "&WinRT-teema:"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "&Asenna teema..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "Ko&hta:"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "&Väri:"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr "MIME-tyypit"
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr "&Muokkaa tiedosto- ja protokollasidoksia"
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "Kansiot"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "&Linkitä kohteeseen:"
 

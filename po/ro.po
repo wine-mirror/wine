@@ -709,7 +709,7 @@ msgid "Font St&yle:"
 msgstr "&Stil font:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "Mărime:"
 
@@ -725,7 +725,7 @@ msgstr "&Linie mijloc"
 msgid "&Underline"
 msgstr "&Subliniat"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "Culoare:"
 
@@ -904,7 +904,7 @@ msgstr "Număr de &copii:"
 msgid "C&ollate"
 msgstr "C&olaționate"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "Mărime:"
 
@@ -2445,7 +2445,7 @@ msgid "&File name:"
 msgstr "Nume &fișier:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "&Navighează..."
 
@@ -14973,7 +14973,7 @@ msgid "Digi&tal"
 msgstr "Digi&tal"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Font..."
@@ -19682,76 +19682,82 @@ msgid "Driver diagnostics"
 msgstr "Diagnostic driver"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "Implicite"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "Dispozitiv de ieșire:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "Dispozitiv de ieșire voce:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "Dispozitiv de intrare:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "Dispozitiv de intrare voce:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Testează sunetul"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "Implicite"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "Dispozitiv de ieșire:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "Dispozitiv de ieșire voce:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "Dispozitiv de intrare:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "Dispozitiv de intrare voce:"
+
+#: programs/winecfg/winecfg.rc:277
+#, fuzzy
+#| msgid "Output device:"
+msgid "MIDI output device:"
+msgstr "Dispozitiv de ieșire:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Configurare difuzor"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr "Difuzoare:"
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "Aspect"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "Tematică:"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 #, fuzzy
 #| msgid "&Theme:"
 msgid "&WinRT theme:"
 msgstr "Tematică:"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "Instalează o tematică..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "Element:"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "Culoare:"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "Dosare"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "Leagă la:"
 

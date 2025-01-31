@@ -726,7 +726,7 @@ msgid "Font St&yle:"
 msgstr "&Стил фонта:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "&Величина:"
 
@@ -742,7 +742,7 @@ msgstr "&Прецртај"
 msgid "&Underline"
 msgstr "&Подвуци"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "&Боја:"
 
@@ -923,7 +923,7 @@ msgstr "Број &примерака:"
 msgid "C&ollate"
 msgstr "&Сложи"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "&Величина:"
 
@@ -2480,7 +2480,7 @@ msgid "&File name:"
 msgstr "&Датотека"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 #, fuzzy
 msgid "B&rowse..."
 msgstr ""
@@ -14651,7 +14651,7 @@ msgid "Digi&tal"
 msgstr "&Дигитални"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Фонт..."
@@ -19210,80 +19210,85 @@ msgstr ""
 
 #: programs/winecfg/winecfg.rc:271
 #, fuzzy
+msgid "&Test Sound"
+msgstr "звук"
+
+#: programs/winecfg/winecfg.rc:272
+#, fuzzy
 msgid "Defaults"
 msgstr "Подразумевано"
 
-#: programs/winecfg/winecfg.rc:272
+#: programs/winecfg/winecfg.rc:273
 #, fuzzy
 msgid "Output device:"
 msgstr "&Назив одредишне датотеке:"
 
-#: programs/winecfg/winecfg.rc:273
+#: programs/winecfg/winecfg.rc:274
 msgid "Voice output device:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:274
+#: programs/winecfg/winecfg.rc:275
 msgid "Input device:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:275
+#: programs/winecfg/winecfg.rc:276
 msgid "Voice input device:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:280
+#: programs/winecfg/winecfg.rc:277
 #, fuzzy
-msgid "&Test Sound"
-msgstr "звук"
+msgid "MIDI output device:"
+msgstr "&Назив одредишне датотеке:"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 #, fuzzy
 msgid "Speaker configuration"
 msgstr "Подаци"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 msgid "&WinRT theme:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 #, fuzzy
 msgid "&Install theme..."
 msgstr "Инсталирање..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 #, fuzzy
 msgid "C&olor:"
 msgstr "&Колона"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 msgid "Manage file and protocol &associations"
 msgstr ""
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 #, fuzzy
 msgid "Folders"
 msgstr "Нова фасцикла"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 #, fuzzy
 msgid "&Link to:"
 msgstr "Везе"

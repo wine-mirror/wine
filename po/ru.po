@@ -718,7 +718,7 @@ msgid "Font St&yle:"
 msgstr "&Начертание:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:300
+#: programs/winecfg/winecfg.rc:302
 msgid "&Size:"
 msgstr "&Размер:"
 
@@ -734,7 +734,7 @@ msgstr "&Зачёркнутый"
 msgid "&Underline"
 msgstr "Под&чёркнутый"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:300
 msgid "&Color:"
 msgstr "Цвет:"
 
@@ -913,7 +913,7 @@ msgstr "Число &копий:"
 msgid "C&ollate"
 msgstr "&Разбить"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:308
 msgid "Si&ze:"
 msgstr "Размер:"
 
@@ -2452,7 +2452,7 @@ msgid "&File name:"
 msgstr "Имя &файла:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:321
 msgid "B&rowse..."
 msgstr "&Обзор..."
 
@@ -14188,7 +14188,7 @@ msgid "Digi&tal"
 msgstr "&Цифровые"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
-#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:315 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Шрифт..."
@@ -18921,78 +18921,84 @@ msgid "Driver diagnostics"
 msgstr "Диагностика драйвера"
 
 #: programs/winecfg/winecfg.rc:271
-msgid "Defaults"
-msgstr "По умолчанию"
-
-#: programs/winecfg/winecfg.rc:272
-msgid "Output device:"
-msgstr "Устройство вывода:"
-
-#: programs/winecfg/winecfg.rc:273
-msgid "Voice output device:"
-msgstr "Уст-во речевого вывода:"
-
-#: programs/winecfg/winecfg.rc:274
-msgid "Input device:"
-msgstr "Устройство ввода:"
-
-#: programs/winecfg/winecfg.rc:275
-msgid "Voice input device:"
-msgstr "Уст-во речевого ввода:"
-
-#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Проверить звук"
 
-#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:272
+msgid "Defaults"
+msgstr "По умолчанию"
+
+#: programs/winecfg/winecfg.rc:273
+msgid "Output device:"
+msgstr "Устройство вывода:"
+
+#: programs/winecfg/winecfg.rc:274
+msgid "Voice output device:"
+msgstr "Уст-во речевого вывода:"
+
+#: programs/winecfg/winecfg.rc:275
+msgid "Input device:"
+msgstr "Устройство ввода:"
+
+#: programs/winecfg/winecfg.rc:276
+msgid "Voice input device:"
+msgstr "Уст-во речевого ввода:"
+
+#: programs/winecfg/winecfg.rc:277
+#, fuzzy
+#| msgid "Output device:"
+msgid "MIDI output device:"
+msgstr "Устройство вывода:"
+
+#: programs/winecfg/winecfg.rc:283 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Конфигурация каналов"
 
-#: programs/winecfg/winecfg.rc:284
+#: programs/winecfg/winecfg.rc:286
 msgid "Speakers:"
 msgstr "Каналы:"
 
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:294
 msgid "Appearance"
 msgstr "Внешний вид"
 
-#: programs/winecfg/winecfg.rc:293
+#: programs/winecfg/winecfg.rc:295
 msgid "&Theme:"
 msgstr "&Тема:"
 
-#: programs/winecfg/winecfg.rc:295
+#: programs/winecfg/winecfg.rc:297
 #, fuzzy
 #| msgid "&Theme:"
 msgid "&WinRT theme:"
 msgstr "&Тема:"
 
-#: programs/winecfg/winecfg.rc:297
+#: programs/winecfg/winecfg.rc:299
 msgid "&Install theme..."
 msgstr "Установить тему..."
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:304
 msgid "It&em:"
 msgstr "Элемент:"
 
-#: programs/winecfg/winecfg.rc:304
+#: programs/winecfg/winecfg.rc:306
 msgid "C&olor:"
 msgstr "Цвет:"
 
-#: programs/winecfg/winecfg.rc:310
+#: programs/winecfg/winecfg.rc:312
 msgid "MIME types"
 msgstr "Типы MIME"
 
-#: programs/winecfg/winecfg.rc:311
+#: programs/winecfg/winecfg.rc:313
 #, fuzzy
 #| msgid "Manage file &associations"
 msgid "Manage file and protocol &associations"
 msgstr "Управлять &ассоциациями файлов"
 
-#: programs/winecfg/winecfg.rc:314
+#: programs/winecfg/winecfg.rc:316
 msgid "Folders"
 msgstr "Папки"
 
-#: programs/winecfg/winecfg.rc:317
+#: programs/winecfg/winecfg.rc:319
 msgid "&Link to:"
 msgstr "Привязать к:"
 
