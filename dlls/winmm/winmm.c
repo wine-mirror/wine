@@ -1392,7 +1392,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     mosm.wDeviceID  = *lpuDeviceID;
     lpwm = MIDI_OutAlloc(&hMidiOut, &dwCallback, &dwInstance, &fdwOpen, 1, &mosm);
     if (!lpwm) {
-	free(lpMidiStrm);
+	wine_midi_stream_free(lpMidiStrm);
 	return MMSYSERR_NOMEM;
     }
     lpMidiStrm->hDevice = hMidiOut;
@@ -1404,7 +1404,7 @@ MMRESULT WINAPI midiStreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID,
     ret = MMDRV_Open(&lpwm->mld, MODM_OPEN, (DWORD_PTR)&lpwm->mod, CALLBACK_NULL);
     if (ret != MMSYSERR_NOERROR) {
 	MMDRV_Free(hMidiOut, &lpwm->mld);
-	free(lpMidiStrm);
+	wine_midi_stream_free(lpMidiStrm);
 	return ret;
     }
 
