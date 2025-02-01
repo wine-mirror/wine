@@ -205,13 +205,13 @@ extern struct obj_locator get_shared_object_locator( const volatile void *object
         shared_object_t *__obj = CONTAINING_RECORD( shared, shared_object_t, shm );  \
         LONG64 __seq = __obj->seq + 1, __end = __seq + 1;               \
         assert( (__seq & 1) != 0 );                                     \
-        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__seq );             \
+        WriteRelease64( &__obj->seq, __seq );                           \
         do
 
 #define SHARED_WRITE_END                                                \
         while(0);                                                       \
         assert( __seq == __obj->seq );                                  \
-        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__end );             \
+        WriteRelease64( &__obj->seq, __end );                           \
     } while(0)
 
 /* device functions */

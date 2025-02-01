@@ -7081,13 +7081,16 @@ static FORCEINLINE void MemoryBarrier(void)
 #pragma intrinsic(__iso_volatile_load32)
 #pragma intrinsic(__iso_volatile_load64)
 #pragma intrinsic(__iso_volatile_store32)
+#pragma intrinsic(__iso_volatile_store64)
 #define __WINE_LOAD32_NO_FENCE(src) (__iso_volatile_load32(src))
 #define __WINE_LOAD64_NO_FENCE(src) (__iso_volatile_load64(src))
 #define __WINE_STORE32_NO_FENCE(dest, value) (__iso_volatile_store32(dest, value))
+#define __WINE_STORE64_NO_FENCE(dest, value) (__iso_volatile_store64(dest, value))
 #else  /* _MSC_VER >= 1700 */
 #define __WINE_LOAD32_NO_FENCE(src) (*(src))
 #define __WINE_LOAD64_NO_FENCE(src) (*(src))
 #define __WINE_STORE32_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
+#define __WINE_STORE64_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
 #endif  /* _MSC_VER >= 1700 */
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -7139,6 +7142,20 @@ static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
 {
     __wine_memory_barrier_acq_rel();
     __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
+}
+
+static FORCEINLINE void WriteRelease64( LONG64 volatile *dest, LONG64 value )
+{
+#if defined(__i386__) && _MSC_VER < 1700
+    __asm {
+        mov   eax, dest
+        fild  value
+        fistp qword ptr [eax]
+    }
+#else
+    __wine_memory_barrier_acq_rel();
+    __WINE_STORE64_NO_FENCE( (__int64 volatile *)dest, value );
+#endif
 }
 
 static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
@@ -7335,6 +7352,15 @@ static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
 static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
 {
     __WINE_ATOMIC_STORE_RELEASE( dest, &value );
+}
+
+static FORCEINLINE void WriteRelease64( LONG64 volatile *dest, LONG64 value )
+{
+#ifdef __i386__
+    __asm__ __volatile__( "fildq %1\n\tfistpq %0" : "=m" (*dest) : "m" (value) : "memory", "st" );
+#else
+    __WINE_ATOMIC_STORE_RELEASE( dest, &value );
+#endif
 }
 
 static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
