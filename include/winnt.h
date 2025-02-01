@@ -7122,7 +7122,16 @@ static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
 
 static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
 {
-    LONG64 value = __WINE_LOAD64_NO_FENCE( (__int64 const volatile *)src );
+    LONG64 value;
+#if defined(__i386__) && _MSC_VER < 1700
+    __asm {
+        mov   eax, src
+        fild  qword ptr [eax]
+        fistp value
+    }
+#else
+    value = __WINE_LOAD64_NO_FENCE( (__int64 const volatile *)src );
+#endif
     return value;
 }
 
@@ -7315,7 +7324,11 @@ static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
 static FORCEINLINE LONG64 ReadNoFence64( LONG64 const volatile *src )
 {
     LONG64 value;
+#ifdef __i386__
+    __asm__ __volatile__( "fildq %1\n\tfistpq %0" : "=m" (value) : "m" (*src) : "memory", "st" );
+#else
     __WINE_ATOMIC_LOAD_RELAXED( src, &value );
+#endif
     return value;
 }
 
