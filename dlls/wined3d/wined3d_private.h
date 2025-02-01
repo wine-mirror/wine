@@ -2876,6 +2876,7 @@ enum wined3d_push_constants
 struct wined3d_extra_ps_args
 {
     bool point_sprite;
+    bool flat_shading;
 };
 
 struct wined3d_blend_state

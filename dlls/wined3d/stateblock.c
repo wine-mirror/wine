@@ -1711,6 +1711,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             break;
 
         case WINED3D_RS_POINTSPRITEENABLE:
+        case WINED3D_RS_SHADEMODE:
             stateblock->changed.extra_ps_args = 1;
             break;
 
@@ -3952,6 +3953,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_extra_ps_args args;
 
         args.point_sprite = state->rs[WINED3D_RS_POINTSPRITEENABLE];
+        args.flat_shading = state->rs[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
         wined3d_device_context_emit_set_extra_ps_args(context, &args);
     }
 

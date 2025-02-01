@@ -6457,7 +6457,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
                 : WINED3D_CMP_ALWAYS) - 1;
 
     if (d3d_info->emulated_flatshading)
-        settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+        settings->flatshading = state->extra_ps_args.flat_shading;
     else
         settings->flatshading = FALSE;
 }
