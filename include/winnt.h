@@ -7313,10 +7313,10 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #if defined(__x86_64__) || defined(__i386__)
 /* On x86, Support old GCC with either no or buggy (GCC BZ#81316) __atomic_* support */
-#define __WINE_ATOMIC_LOAD_ACQUIRE(ptr, ret) do { *(ret) = *(ptr); __asm__ __volatile__( "" ::: "memory" ); } while (0)
-#define __WINE_ATOMIC_LOAD_RELAXED(ptr, ret) do { *(ret) = *(ptr); } while (0)
-#define __WINE_ATOMIC_STORE_RELEASE(ptr, val) do { __asm__ __volatile__( "" ::: "memory" ); *(ptr) = *(val); } while (0)
-#define __WINE_ATOMIC_STORE_RELAXED(ptr, val) do { *(ptr) = *(val); } while (0)
+#define __WINE_ATOMIC_LOAD_ACQUIRE(ptr, ret) do { C_ASSERT(sizeof(*(ptr)) <= sizeof(void *)); *(ret) = *(ptr); __asm__ __volatile__( "" ::: "memory" ); } while (0)
+#define __WINE_ATOMIC_LOAD_RELAXED(ptr, ret) do { C_ASSERT(sizeof(*(ptr)) <= sizeof(void *)); *(ret) = *(ptr); } while (0)
+#define __WINE_ATOMIC_STORE_RELEASE(ptr, val) do { C_ASSERT(sizeof(*(ptr)) <= sizeof(void *)); __asm__ __volatile__( "" ::: "memory" ); *(ptr) = *(val); } while (0)
+#define __WINE_ATOMIC_STORE_RELAXED(ptr, val) do { C_ASSERT(sizeof(*(ptr)) <= sizeof(void *)); *(ptr) = *(val); } while (0)
 #else
 #define __WINE_ATOMIC_LOAD_ACQUIRE(ptr, ret) __atomic_load(ptr, ret, __ATOMIC_ACQUIRE)
 #define __WINE_ATOMIC_LOAD_RELAXED(ptr, ret) __atomic_load(ptr, ret, __ATOMIC_RELAXED)
