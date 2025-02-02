@@ -31,6 +31,7 @@
 #include <xkbcommon/xkbregistry.h>
 #include "pointer-constraints-unstable-v1-client-protocol.h"
 #include "relative-pointer-unstable-v1-client-protocol.h"
+#include "text-input-unstable-v3-client-protocol.h"
 #include "viewporter-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -111,6 +112,12 @@ struct wayland_pointer
     pthread_mutex_t mutex;
 };
 
+struct wayland_text_input
+{
+    struct zwp_text_input_v3 *zwp_text_input_v3;
+    pthread_mutex_t mutex;
+};
+
 struct wayland_seat
 {
     struct wl_seat *wl_seat;
@@ -132,9 +139,11 @@ struct wayland
     struct wl_subcompositor *wl_subcompositor;
     struct zwp_pointer_constraints_v1 *zwp_pointer_constraints_v1;
     struct zwp_relative_pointer_manager_v1 *zwp_relative_pointer_manager_v1;
+    struct zwp_text_input_manager_v3 *zwp_text_input_manager_v3;
     struct wayland_seat seat;
     struct wayland_keyboard keyboard;
     struct wayland_pointer pointer;
+    struct wayland_text_input text_input;
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
@@ -339,6 +348,13 @@ void WAYLAND_ReleaseKbdTables(const KBDTABLES *);
 void wayland_pointer_init(struct wl_pointer *wl_pointer);
 void wayland_pointer_deinit(void);
 void wayland_pointer_clear_constraint(void);
+
+/**********************************************************************
+ *          Wayland text input
+ */
+
+void wayland_text_input_init(void);
+void wayland_text_input_deinit(void);
 
 /**********************************************************************
  *          OpenGL

@@ -9,6 +9,7 @@ SOURCES = \
 	opengl.c \
 	pointer-constraints-unstable-v1.xml \
 	relative-pointer-unstable-v1.xml \
+	text-input-unstable-v3.xml \
 	version.rc \
 	viewporter.xml \
 	vulkan.c \
@@ -17,6 +18,7 @@ SOURCES = \
 	wayland_output.c \
 	wayland_pointer.c \
 	wayland_surface.c \
+	wayland_text_input.c \
 	waylanddrv_main.c \
 	window.c \
 	window_surface.c \
