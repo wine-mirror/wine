@@ -219,6 +219,35 @@ void test_BluetoothIsDiscoverable( void )
     ok( ret == result, "%d != %d\n", ret, result );
 }
 
+void test_radio_BluetoothEnableIncomingConnections( HANDLE radio, void *data )
+{
+    BOOL connectable;
+    BOOL *result = data;
+
+    *result |= BluetoothEnableIncomingConnections( radio, TRUE );
+    todo_wine ok( *result, "%d != 1\n", *result );
+    if (*result)
+    {
+        connectable = BluetoothIsConnectable( radio );
+        ok( connectable, "%d != 1\n", connectable );
+    }
+    else
+        skip("BluetoothEnableIncomingConnections failed, skipping.\n");
+}
+
+void test_BluetoothEnableIncomingConnections( void )
+{
+    BOOL result = FALSE;
+
+    test_for_all_radios( test_radio_BluetoothEnableIncomingConnections, &result );
+    if (result)
+    {
+        BOOL connectable;
+        connectable = BluetoothIsConnectable( NULL );
+        ok( connectable, "%d != 1\n", connectable );
+    }
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
@@ -228,4 +257,5 @@ START_TEST( radio )
     test_for_all_radios( test_BluetoothGetRadioInfo, NULL );
     test_BluetoothIsDiscoverable();
     test_BluetoothIsConnectable();
+    test_BluetoothEnableIncomingConnections();
 }
