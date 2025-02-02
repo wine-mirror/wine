@@ -157,3 +157,50 @@ void wayland_text_input_deinit(void)
     text_input->wl_surface = NULL;
     pthread_mutex_unlock(&text_input->mutex);
 };
+
+/***********************************************************************
+ *      SetIMECompositionRect (WAYLANDDRV.@)
+ */
+BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect)
+{
+    struct wayland_text_input *text_input = &process_wayland.text_input;
+    struct wayland_win_data *data;
+    struct wayland_surface *surface;
+    int cursor_x, cursor_y, cursor_width, cursor_height;
+    TRACE("hwnd %p, rect %s.\n", hwnd, wine_dbgstr_rect(&rect));
+
+    pthread_mutex_lock(&text_input->mutex);
+
+    if (!text_input->zwp_text_input_v3)
+        goto err;
+
+    if (!(data = wayland_win_data_get(hwnd)))
+        goto err;
+
+    if (!(surface = data->wayland_surface) || surface->wl_surface != text_input->wl_surface)
+    {
+        wayland_win_data_release(data);
+        goto err;
+    }
+
+    wayland_surface_coords_from_window(surface,
+            rect.left - surface->window.rect.left,
+            rect.top - surface->window.rect.top,
+            &cursor_x, &cursor_y);
+    wayland_surface_coords_from_window(surface,
+            rect.right - rect.left,
+            rect.bottom - rect.top,
+            &cursor_width, &cursor_height);
+    wayland_win_data_release(data);
+
+    zwp_text_input_v3_set_cursor_rectangle(text_input->zwp_text_input_v3,
+            cursor_x, cursor_y, cursor_width, cursor_height);
+    zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
+
+    pthread_mutex_unlock(&text_input->mutex);
+    return TRUE;
+
+err:
+    pthread_mutex_unlock(&text_input->mutex);
+    return FALSE;
+}

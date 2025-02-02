@@ -392,6 +392,7 @@ RGNDATA *get_region_data(HRGN region);
 BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset);
 LRESULT WAYLAND_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 void WAYLAND_DestroyWindow(HWND hwnd);
+BOOL WAYLAND_SetIMECompositionRect(HWND hwnd, RECT rect);
 void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor);
 void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text);
 LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos);
