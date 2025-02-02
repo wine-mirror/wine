@@ -115,6 +115,8 @@ struct wayland_pointer
 struct wayland_text_input
 {
     struct zwp_text_input_v3 *zwp_text_input_v3;
+    WCHAR *commit_string;
+    struct wl_surface *wl_surface;
     pthread_mutex_t mutex;
 };
 
