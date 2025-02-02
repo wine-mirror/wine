@@ -225,7 +225,7 @@ void test_radio_BluetoothEnableIncomingConnections( HANDLE radio, void *data )
     BOOL *result = data;
 
     *result |= BluetoothEnableIncomingConnections( radio, TRUE );
-    todo_wine ok( *result, "%d != 1\n", *result );
+    ok( *result, "%d != 1\n", *result );
     if (*result)
     {
         connectable = BluetoothIsConnectable( radio );

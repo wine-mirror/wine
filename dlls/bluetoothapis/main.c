@@ -32,6 +32,7 @@
 #include "bluetoothapis.h"
 #include "setupapi.h"
 #include "winioctl.h"
+#include "wine/winebth.h"
 
 #include "initguid.h"
 #include "bthdef.h"
@@ -213,9 +214,6 @@ DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
     return ERROR_SUCCESS;
 }
 
-#define LOCAL_RADIO_DISCOVERABLE 0x0001
-#define LOCAL_RADIO_CONNECTABLE  0x0002
-
 /*********************************************************************
  *  BluetoothIsConnectable
  */
@@ -269,8 +267,47 @@ BOOL WINAPI BluetoothIsConnectable( HANDLE radio )
  */
 BOOL WINAPI BluetoothEnableIncomingConnections( HANDLE radio, BOOL enable )
 {
-    FIXME( "(%p, %d): stub!\n", radio, enable );
-    return FALSE;
+    TRACE( "(%p, %d)\n", radio, enable );
+    if (!radio)
+    {
+        BLUETOOTH_FIND_RADIO_PARAMS params = {.dwSize = sizeof( params )};
+        HBLUETOOTH_RADIO_FIND find = BluetoothFindFirstRadio( &params, &radio );
+
+        if (!find)
+            return FALSE;
+        for (;;)
+        {
+            if (BluetoothEnableIncomingConnections( radio, enable ))
+            {
+                CloseHandle( radio );
+                BluetoothFindRadioClose( find );
+                return TRUE;
+            }
+
+            CloseHandle(radio );
+            if (!BluetoothFindNextRadio( find, &radio ))
+            {
+                BluetoothFindRadioClose( find );
+                return FALSE;
+            }
+        }
+    }
+    else if (!enable && !BluetoothIsDiscoverable( radio ))
+        /* The local radio can only be made non-connectable if it is non-discoverable. */
+        return FALSE;
+    else
+    {
+        struct winebth_radio_set_flag_params params = {0};
+        BOOL ret;
+        DWORD bytes;
+
+        params.flag = LOCAL_RADIO_CONNECTABLE;
+        params.enable = !!enable;
+        ret = DeviceIoControl( radio, IOCTL_WINEBTH_RADIO_SET_FLAG, &params, sizeof( params ), NULL, 0, &bytes, NULL );
+        if (!ret)
+            ERR("DeviceIoControl failed: %#lx\n", GetLastError());
+        return ret;
+    }
 }
 
 /*********************************************************************
