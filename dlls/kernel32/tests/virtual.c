@@ -4332,7 +4332,7 @@ static void test_PrefetchVirtualMemory(void)
 
     if (!pPrefetchVirtualMemory)
     {
-        skip("no PrefetchVirtualMemory in kernelbase\n");
+        win_skip("no PrefetchVirtualMemory in kernelbase\n");
         return;
     }
 
