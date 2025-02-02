@@ -6,7 +6,7 @@
 @ stub BluetoothDisconnectDevice
 @ stub BluetoothDisplayDeviceProperties
 @ stub BluetoothEnableDiscovery
-@ stub BluetoothEnableIncomingConnections
+@ stdcall -import BluetoothEnableIncomingConnections(ptr long)
 @ stub BluetoothEnumerateInstalledServices
 @ stub BluetoothEnumerateInstalledServicesEx
 @ stub BluetoothFindBrowseGroupClose

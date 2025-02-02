@@ -2,6 +2,7 @@
  * Bluetooth APIs
  *
  * Copyright 2016 Austin English
+ * Copyright 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -261,6 +262,15 @@ BOOL WINAPI BluetoothIsConnectable( HANDLE radio )
         }
         return !!(radio_info.flags & LOCAL_RADIO_CONNECTABLE);
     }
+}
+
+/*********************************************************************
+ *  BluetoothEnableIncomingConnections
+ */
+BOOL WINAPI BluetoothEnableIncomingConnections( HANDLE radio, BOOL enable )
+{
+    FIXME( "(%p, %d): stub!\n", radio, enable );
+    return FALSE;
 }
 
 /*********************************************************************

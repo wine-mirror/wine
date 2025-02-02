@@ -4,7 +4,7 @@
 @ stub BluetoothDisconnectDevice
 @ stub BluetoothDisplayDeviceProperties
 @ stub BluetoothEnableDiscovery
-@ stub BluetoothEnableIncomingConnections
+@ stdcall BluetoothEnableIncomingConnections(ptr long) bthprops.cpl.BluetoothEnableIncomingConnections
 @ stub BluetoothEnumerateInstalledServices
 @ stub BluetoothFindBrowseGroupClose
 @ stub BluetoothFindClassIdClose

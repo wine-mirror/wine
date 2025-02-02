@@ -52,7 +52,7 @@ F:	dlls/xaudio*/
 Bluetooth support
 M:      Vibhav Pant <vibhavp@gmail.com>
 F:      dlls/winebth.sys/
-F:      dlls/bluetoothapis/sdp.c
+F:      dlls/bluetoothapis/
 
 Common Controls Library
 P:	Nikolay Sivov <nsivov@codeweavers.com>
