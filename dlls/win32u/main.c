@@ -1360,6 +1360,11 @@ BOOL SYSCALL_API NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT widt
     SYSCALL_FUNC( NtUserDrawIconEx );
 }
 
+BOOL SYSCALL_API NtUserDrawMenuBar( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserDrawMenuBar );
+}
+
 DWORD SYSCALL_API NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font )
 {
     SYSCALL_FUNC( NtUserDrawMenuBarTemp );

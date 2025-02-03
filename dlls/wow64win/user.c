@@ -2130,6 +2130,13 @@ NTSTATUS WINAPI wow64_NtUserDrawIconEx( UINT *args )
     return NtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserDrawMenuBar( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserDrawMenuBar( hwnd );
+}
+
 NTSTATUS WINAPI wow64_NtUserDrawMenuBarTemp( UINT *args )
 {
     HWND hwnd = get_handle( &args );

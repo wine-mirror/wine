@@ -781,8 +781,10 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
     return oldflags;
 }
 
-/* see DrawMenuBar */
-BOOL draw_menu_bar( HWND hwnd )
+/**********************************************************************
+ *           NtUserDrawMenuBar    (win32u.@)
+ */
+BOOL WINAPI NtUserDrawMenuBar( HWND hwnd )
 {
     HMENU handle;
 

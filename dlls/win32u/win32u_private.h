@@ -107,7 +107,6 @@ extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset );
 extern USHORT map_scan_to_kbd_vkey( USHORT scan, HKL layout );
 
 /* menu.c */
-extern BOOL draw_menu_bar( HWND hwnd );
 extern UINT draw_nc_menu_bar( HDC hdc, RECT *rect, HWND hwnd );
 extern void end_menu( HWND hwnd );
 extern HMENU get_menu( HWND hwnd );

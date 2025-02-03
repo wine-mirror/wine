@@ -434,7 +434,7 @@
 @ stdcall DrawFrameControl(long ptr long long)
 @ stdcall DrawIcon(long long long long)
 @ stdcall DrawIconEx(long long long long long long long long long) NtUserDrawIconEx
-@ stdcall DrawMenuBar(long)
+@ stdcall DrawMenuBar(long) NtUserDrawMenuBar
 @ stdcall DrawMenuBarTemp(long long ptr long long) NtUserDrawMenuBarTemp
 @ stdcall DrawStateA(long long ptr long long long long long long long)
 @ stdcall DrawStateW(long long ptr long long long long long long long)

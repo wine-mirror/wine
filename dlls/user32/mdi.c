@@ -856,7 +856,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     NtUserSetMenuDefaultItem(hSysPopup, SC_CLOSE, FALSE);
 
     /* redraw menu */
-    DrawMenuBar(frame);
+    NtUserDrawMenuBar(frame);
 
     return TRUE;
 }
@@ -910,7 +910,7 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
     /* minimize */
     NtUserDeleteMenu( menu, SC_MINIMIZE, MF_BYCOMMAND );
 
-    DrawMenuBar(frame);
+    NtUserDrawMenuBar(frame);
 
     return TRUE;
 }

@@ -545,15 +545,6 @@ HMENU WINAPI GetSubMenu( HMENU menu, INT pos )
 }
 
 
-/**********************************************************************
- *         DrawMenuBar    (USER32.@)
- */
-BOOL WINAPI DrawMenuBar( HWND hwnd )
-{
-    return NtUserDrawMenuBar( hwnd );
-}
-
-
 /*****************************************************************
  *        LoadMenuA   (USER32.@)
  */

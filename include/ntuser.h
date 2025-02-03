@@ -778,6 +778,7 @@ W32KAPI BOOL    WINAPI NtUserDrawCaptionTemp( HWND hwnd, HDC hdc, const RECT *re
                                               HICON icon, const WCHAR *str, UINT flags );
 W32KAPI BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                          INT height, UINT istep, HBRUSH hbr, UINT flags );
+W32KAPI BOOL    WINAPI NtUserDrawMenuBar( HWND hwnd );
 W32KAPI DWORD   WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
 W32KAPI BOOL    WINAPI NtUserEmptyClipboard(void);
 W32KAPI BOOL    WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags );
@@ -1261,7 +1262,6 @@ static inline RECT NtUserGetVirtualScreenRect( MONITOR_DPI_TYPE type )
 enum
 {
     NtUserCallHwnd_ActivateOtherWindow,
-    NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDialogInfo,
     NtUserCallHwnd_GetDpiForWindow,
     NtUserCallHwnd_GetLastActivePopup,
@@ -1288,11 +1288,6 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
-}
-
-static inline BOOL NtUserDrawMenuBar( HWND hwnd )
-{
-    return NtUserCallHwnd( hwnd, NtUserCallHwnd_DrawMenuBar );
 }
 
 static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )

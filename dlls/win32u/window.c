@@ -5823,9 +5823,6 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         activate_other_window( hwnd );
         return 0;
 
-    case NtUserCallHwnd_DrawMenuBar:
-        return draw_menu_bar( hwnd );
-
     case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );
 
