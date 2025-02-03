@@ -799,7 +799,7 @@
 @ stub NtUserAllowSetForegroundWindow
 @ stub NtUserAlterWindowStyle
 @ stub NtUserApplyWindowAction
-@ stub NtUserArrangeIconicWindows
+@ stdcall -syscall NtUserArrangeIconicWindows(long)
 @ stdcall -syscall NtUserAssociateInputContext(long long long)
 @ stdcall -syscall NtUserAttachThreadInput(long long long)
 @ stub NtUserAutoPromoteMouseInPointer

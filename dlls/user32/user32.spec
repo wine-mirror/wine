@@ -230,7 +230,7 @@
 @ stdcall AppendMenuA(long long long ptr)
 @ stdcall AppendMenuW(long long long ptr)
 @ stdcall AreDpiAwarenessContextsEqual(long long)
-@ stdcall ArrangeIconicWindows(long)
+@ stdcall ArrangeIconicWindows(long) NtUserArrangeIconicWindows
 @ stdcall AttachThreadInput(long long long) NtUserAttachThreadInput
 @ stdcall BeginDeferWindowPos(long)
 @ stdcall BeginPaint(long ptr) NtUserBeginPaint

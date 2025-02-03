@@ -4529,8 +4529,10 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     return swp_flags;
 }
 
-/* see ArrangeIconicWindows */
-static UINT arrange_iconic_windows( HWND parent )
+/***********************************************************************
+ *           NtUserArrangeIconicWindows (win32u.@)
+ */
+UINT WINAPI NtUserArrangeIconicWindows( HWND parent )
 {
     int width, height, count = 0;
     MINIMIZEDMETRICS metrics;
@@ -5820,9 +5822,6 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_ActivateOtherWindow:
         activate_other_window( hwnd );
         return 0;
-
-    case NtUserCallHwnd_ArrangeIconicWindows:
-        return arrange_iconic_windows( hwnd );
 
     case NtUserCallHwnd_DrawMenuBar:
         return draw_menu_bar( hwnd );

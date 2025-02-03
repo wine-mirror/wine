@@ -718,6 +718,7 @@ typedef enum _USERTHREADSTATECLASS
 
 W32KAPI HKL     WINAPI NtUserActivateKeyboardLayout( HKL layout, UINT flags );
 W32KAPI BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
+W32KAPI UINT    WINAPI NtUserArrangeIconicWindows( HWND parent );
 W32KAPI UINT    WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags );
 W32KAPI BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
 W32KAPI HDC     WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps );
@@ -1260,7 +1261,6 @@ static inline RECT NtUserGetVirtualScreenRect( MONITOR_DPI_TYPE type )
 enum
 {
     NtUserCallHwnd_ActivateOtherWindow,
-    NtUserCallHwnd_ArrangeIconicWindows,
     NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDialogInfo,
     NtUserCallHwnd_GetDpiForWindow,
@@ -1288,11 +1288,6 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
-}
-
-static inline UINT NtUserArrangeIconicWindows( HWND parent )
-{
-    return NtUserCallHwnd( parent, NtUserCallHwnd_ArrangeIconicWindows );
 }
 
 static inline BOOL NtUserDrawMenuBar( HWND hwnd )

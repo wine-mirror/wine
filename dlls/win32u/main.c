@@ -1107,6 +1107,11 @@ BOOL SYSCALL_API NtUserAddClipboardFormatListener( HWND hwnd )
     SYSCALL_FUNC( NtUserAddClipboardFormatListener );
 }
 
+UINT SYSCALL_API NtUserArrangeIconicWindows( HWND parent )
+{
+    SYSCALL_FUNC( NtUserArrangeIconicWindows );
+}
+
 UINT SYSCALL_API NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
 {
     SYSCALL_FUNC( NtUserAssociateInputContext );

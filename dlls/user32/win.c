@@ -894,15 +894,6 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
 }
 
 
-/***********************************************************************
- *           ArrangeIconicWindows (USER32.@)
- */
-UINT WINAPI ArrangeIconicWindows( HWND parent )
-{
-    return NtUserArrangeIconicWindows( parent );
-}
-
-
 /**********************************************************************
  *		GetWindowWord (USER32.@)
  */
