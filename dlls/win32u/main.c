@@ -2223,6 +2223,11 @@ HWINEVENTHOOK SYSCALL_API NtUserSetWinEventHook( DWORD event_min, DWORD event_ma
     SYSCALL_FUNC( NtUserSetWinEventHook );
 }
 
+BOOL SYSCALL_API NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
+{
+    SYSCALL_FUNC( NtUserSetWindowContextHelpId );
+}
+
 LONG SYSCALL_API NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     SYSCALL_FUNC( NtUserSetWindowLong );

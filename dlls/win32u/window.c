@@ -4947,8 +4947,10 @@ DWORD WINAPI NtUserGetWindowContextHelpId( HWND hwnd )
     return retval;
 }
 
-/* see SetWindowContextHelpId */
-static BOOL set_window_context_help_id( HWND hwnd, DWORD id )
+/***********************************************************************
+ *           NtUserSetWindowContextHelpId   (win32u.@)
+ */
+BOOL WINAPI NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
 {
     WND *win = get_win_ptr( hwnd );
     if (!win || win == WND_DESKTOP) return FALSE;
@@ -5978,9 +5980,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_SetMDIClientInfo:
         NtUserSetWindowLongPtr( hwnd, sizeof(void *), param, FALSE );
         return win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
-
-    case NtUserCallHwndParam_SetWindowContextHelpId:
-        return set_window_context_help_id( hwnd, param );
 
     case NtUserCallHwndParam_ShowOwnedPopups:
         return show_owned_popups( hwnd, param );

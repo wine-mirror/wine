@@ -1106,7 +1106,7 @@
 # @ stub SetWindowBand
 @ stdcall SetWindowCompositionAttribute(ptr ptr)
 # @ stub SetWindowCompositionTransition
-@ stdcall SetWindowContextHelpId(long long)
+@ stdcall SetWindowContextHelpId(long long) NtUserSetWindowContextHelpId
 @ stdcall SetWindowDisplayAffinity(long long)
 # @ stub SetWindowFeedbackSetting
 @ stdcall SetWindowLongA(long long long)

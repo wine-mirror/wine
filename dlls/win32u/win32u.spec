@@ -1437,7 +1437,7 @@
 @ stub NtUserSetWindowBand
 @ stub NtUserSetWindowCompositionAttribute
 @ stub NtUserSetWindowCompositionTransition
-@ stub NtUserSetWindowContextHelpId
+@ stdcall -syscall NtUserSetWindowContextHelpId(long long)
 @ stub NtUserSetWindowDisplayAffinity
 @ stub NtUserSetWindowFNID
 @ stub NtUserSetWindowFeedbackSetting

@@ -333,7 +333,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
    case WM_INITDIALOG:
    {
        LPMSGBOXPARAMSW mbp = (LPMSGBOXPARAMSW)lParam;
-       SetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
+       NtUserSetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
        MSGBOX_OnInit(hwnd, mbp);
        SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", mbp->lpfnMsgBoxCallback);
        break;

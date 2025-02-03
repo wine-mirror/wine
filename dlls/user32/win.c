@@ -1400,15 +1400,6 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 
 
 /*******************************************************************
- *		SetWindowContextHelpId (USER32.@)
- */
-BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
-{
-    return NtUserSetWindowContextHelpId( hwnd, id );
-}
-
-
-/*******************************************************************
  *		DragDetect (USER32.@)
  */
 BOOL WINAPI DragDetect( HWND hwnd, POINT pt )
