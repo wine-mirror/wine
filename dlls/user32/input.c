@@ -806,15 +806,6 @@ HWND WINAPI GetShellWindow(void)
 
 
 /***********************************************************************
- *           SetProgmanWindow (USER32.@)
- */
-HWND WINAPI SetProgmanWindow( HWND hwnd )
-{
-    return NtUserSetProgmanWindow( hwnd );
-}
-
-
-/***********************************************************************
  *           GetProgmanWindow (USER32.@)
  */
 HWND WINAPI GetProgmanWindow(void)
@@ -822,14 +813,6 @@ HWND WINAPI GetProgmanWindow(void)
     return NtUserGetProgmanWindow();
 }
 
-
-/***********************************************************************
- *           SetTaskmanWindow (USER32.@)
- */
-HWND WINAPI SetTaskmanWindow( HWND hwnd )
-{
-    return NtUserSetTaskmanWindow( hwnd );
-}
 
 /***********************************************************************
  *           GetTaskmanWindow (USER32.@)

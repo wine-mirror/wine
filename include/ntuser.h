@@ -957,12 +957,14 @@ W32KAPI HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 W32KAPI BOOL    WINAPI NtUserSetProcessDefaultLayout( ULONG layout );
 W32KAPI BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 W32KAPI BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
+W32KAPI HWND    WINAPI NtUserSetProgmanWindow( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
 W32KAPI INT     WINAPI NtUserSetScrollInfo( HWND hwnd, INT bar, const SCROLLINFO *info, BOOL redraw );
 W32KAPI BOOL    WINAPI NtUserSetShellWindowEx( HWND shell, HWND list_view );
 W32KAPI BOOL    WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values );
 W32KAPI BOOL    WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu );
 W32KAPI UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout );
+W32KAPI HWND    WINAPI NtUserSetTaskmanWindow( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );
 W32KAPI UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, ULONG tolerance );
 W32KAPI LONG    WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );
@@ -1277,8 +1279,6 @@ enum
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
     NtUserCallHwnd_SetForegroundWindow,
-    NtUserCallHwnd_SetProgmanWindow,
-    NtUserCallHwnd_SetTaskmanWindow,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrentProcessWindow,
@@ -1358,16 +1358,6 @@ static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 static inline BOOL NtUserSetForegroundWindow( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindow );
-}
-
-static inline HWND NtUserSetProgmanWindow( HWND hwnd )
-{
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_SetProgmanWindow ));
-}
-
-static inline HWND NtUserSetTaskmanWindow( HWND hwnd )
-{
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_SetTaskmanWindow ));
 }
 
 /* NtUserCallHwndParam codes, not compatible with Windows */

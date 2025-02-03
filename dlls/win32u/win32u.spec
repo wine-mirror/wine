@@ -1405,7 +1405,7 @@
 @ stub NtUserSetProcessRestrictionExemption
 @ stub NtUserSetProcessUIAccessZorder
 @ stdcall -syscall NtUserSetProcessWindowStation(long)
-@ stub NtUserSetProgmanWindow
+@ stdcall -syscall NtUserSetProgmanWindow(long)
 @ stdcall -syscall NtUserSetProp(long wstr ptr)
 @ stub NtUserSetProp2
 @ stdcall -syscall NtUserSetScrollInfo(long long ptr long)
@@ -1421,7 +1421,7 @@
 @ stdcall -syscall NtUserSetSystemTimer(long long long)
 @ stub NtUserSetTSFEventState
 @ stub NtUserSetTargetForResourceBrokering
-@ stub NtUserSetTaskmanWindow
+@ stdcall -syscall NtUserSetTaskmanWindow(long)
 @ stdcall -syscall NtUserSetThreadDesktop(long)
 @ stub NtUserSetThreadInputBlocked
 @ stub NtUserSetThreadLayoutHandles

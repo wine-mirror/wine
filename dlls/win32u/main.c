@@ -2161,6 +2161,11 @@ BOOL SYSCALL_API NtUserSetProcessWindowStation( HWINSTA handle )
     SYSCALL_FUNC( NtUserSetProcessWindowStation );
 }
 
+HWND SYSCALL_API NtUserSetProgmanWindow( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserSetProgmanWindow );
+}
+
 BOOL SYSCALL_API NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle )
 {
     SYSCALL_FUNC( NtUserSetProp );
@@ -2189,6 +2194,11 @@ BOOL SYSCALL_API NtUserSetSystemMenu( HWND hwnd, HMENU menu )
 UINT_PTR SYSCALL_API NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout )
 {
     SYSCALL_FUNC( NtUserSetSystemTimer );
+}
+
+HWND SYSCALL_API NtUserSetTaskmanWindow( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserSetTaskmanWindow );
 }
 
 BOOL SYSCALL_API NtUserSetThreadDesktop( HDESK handle )

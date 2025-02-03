@@ -1077,7 +1077,7 @@
 # @ stub SetProcessLaunchForegroundPolicy
 # @ stub SetProcessRestrictionExemption
 @ stdcall SetProcessWindowStation(long) NtUserSetProcessWindowStation
-@ stdcall SetProgmanWindow(long)
+@ stdcall SetProgmanWindow(long) NtUserSetProgmanWindow
 @ stdcall SetPropA(long str long)
 @ stdcall SetPropW(long wstr long)
 @ stdcall SetRect(ptr long long long long)
@@ -1093,7 +1093,7 @@
 @ stdcall SetSystemCursor(long long)
 @ stdcall SetSystemMenu(long long) NtUserSetSystemMenu
 @ stdcall SetSystemTimer(long long long ptr)
-@ stdcall SetTaskmanWindow(long)
+@ stdcall SetTaskmanWindow(long) NtUserSetTaskmanWindow
 @ stdcall SetThreadDesktop(long) NtUserSetThreadDesktop
 @ stdcall SetThreadDpiAwarenessContext(ptr)
 @ stdcall SetThreadDpiHostingBehavior(long)

@@ -4409,6 +4409,13 @@ NTSTATUS WINAPI wow64_NtUserSetProcessWindowStation( UINT *args )
     return NtUserSetProcessWindowStation( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetProgmanWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return HandleToUlong( NtUserSetProgmanWindow( hwnd ));
+}
+
 NTSTATUS WINAPI wow64_NtUserSetProp( UINT *args )
 {
     HWND hwnd = get_handle( &args );
@@ -4460,6 +4467,13 @@ NTSTATUS WINAPI wow64_NtUserSetSystemTimer( UINT *args )
     UINT timeout = get_ulong( &args );
 
     return NtUserSetSystemTimer( hwnd, id, timeout );
+}
+
+NTSTATUS WINAPI wow64_NtUserSetTaskmanWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return HandleToUlong( NtUserSetTaskmanWindow( hwnd ));
 }
 
 NTSTATUS WINAPI wow64_NtUserSetThreadDesktop( UINT *args )

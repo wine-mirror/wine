@@ -5868,12 +5868,6 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_SetForegroundWindow:
         return set_foreground_window( hwnd, FALSE );
 
-    case NtUserCallHwnd_SetProgmanWindow:
-        return HandleToUlong( set_progman_window( hwnd ));
-
-    case NtUserCallHwnd_SetTaskmanWindow:
-        return HandleToUlong( set_taskman_window( hwnd ));
-
     /* temporary exports */
     case NtUserGetFullWindowHandle:
         return HandleToUlong( get_full_window_handle( hwnd ));
@@ -6208,7 +6202,10 @@ HWND get_progman_window(void)
     return ret;
 }
 
-HWND set_progman_window( HWND hwnd )
+/***********************************************************************
+ *            NtUserSetProgmanWindow (win32u.@)
+ */
+HWND WINAPI NtUserSetProgmanWindow( HWND hwnd )
 {
     SERVER_START_REQ(set_desktop_shell_windows)
     {
@@ -6234,7 +6231,10 @@ HWND get_taskman_window(void)
     return ret;
 }
 
-HWND set_taskman_window( HWND hwnd )
+/***********************************************************************
+ *            NtUserSetTaskmanWindow (win32u.@)
+ */
+HWND WINAPI NtUserSetTaskmanWindow( HWND hwnd )
 {
     /* hwnd = MSTaskSwWClass
      *        |-> SysTabControl32

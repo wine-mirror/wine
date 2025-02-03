@@ -274,9 +274,7 @@ extern void update_window_state( HWND hwnd );
 extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest );
 extern HWND get_shell_window(void);
 extern HWND get_progman_window(void);
-extern HWND set_progman_window( HWND hwnd );
 extern HWND get_taskman_window(void);
-extern HWND set_taskman_window( HWND hwnd );
 
 /* to release pointers retrieved by win_get_ptr */
 static inline void release_win_ptr( struct tagWND *ptr )
