@@ -54,6 +54,7 @@ static NTSTATUS (WINAPI *pNtProtectVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULO
 static NTSTATUS (WINAPI *pNtReadVirtualMemory)(HANDLE,const void *,void *,SIZE_T, SIZE_T *);
 static NTSTATUS (WINAPI *pNtWriteVirtualMemory)(HANDLE, void *, const void *, SIZE_T, SIZE_T *);
 static BOOL  (WINAPI *pPrefetchVirtualMemory)(HANDLE, ULONG_PTR, PWIN32_MEMORY_RANGE_ENTRY, ULONG);
+static void  (WINAPI *pFlushProcessWriteBuffers)(void);
 
 /* ############################### */
 
@@ -4408,6 +4409,23 @@ static void test_ReadProcessMemory(void)
     free(buf);
 }
 
+static void test_FlushProcessWriteBuffers(void)
+{
+    unsigned int i;
+
+    if (!pFlushProcessWriteBuffers)
+    {
+        win_skip("no FlushProcessWriteBuffers in kernel32\n");
+        return;
+    }
+
+    /* simple stress test */
+    for (i = 0; i < 128; i++)
+    {
+        pFlushProcessWriteBuffers();
+    }
+}
+
 START_TEST(virtual)
 {
     int argc;
@@ -4465,6 +4483,7 @@ START_TEST(virtual)
     pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
     pNtWriteVirtualMemory = (void *)GetProcAddress( hntdll, "NtWriteVirtualMemory" );
     pPrefetchVirtualMemory = (void *)GetProcAddress( hkernelbase, "PrefetchVirtualMemory" );
+    pFlushProcessWriteBuffers = (void *)GetProcAddress( hkernel32, "FlushProcessWriteBuffers" );
 
     GetSystemInfo(&si);
     trace("system page size %#lx\n", si.dwPageSize);
@@ -4490,6 +4509,7 @@ START_TEST(virtual)
     test_write_watch();
     test_PrefetchVirtualMemory();
     test_ReadProcessMemory();
+    test_FlushProcessWriteBuffers();
 #if defined(__i386__) || defined(__x86_64__)
     test_stack_commit();
 #endif
