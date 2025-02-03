@@ -449,13 +449,14 @@
     SYSCALL_ENTRY( 0x01bd, NtUserUpdateInputContext, 12 ) \
     SYSCALL_ENTRY( 0x01be, NtUserUpdateLayeredWindow, 40 ) \
     SYSCALL_ENTRY( 0x01bf, NtUserValidateRect, 8 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserVkKeyScanEx, 8 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWaitForInputIdle, 12 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromDC, 4 ) \
-    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromPoint, 8 ) \
-    SYSCALL_ENTRY( 0x01c5, __wine_get_file_outline_text_metric, 16 ) \
-    SYSCALL_ENTRY( 0x01c6, __wine_get_icm_profile, 16 )
+    SYSCALL_ENTRY( 0x01c0, NtUserValidateRgn, 8 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserVkKeyScanEx, 8 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWaitForInputIdle, 12 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromDC, 4 ) \
+    SYSCALL_ENTRY( 0x01c5, NtUserWindowFromPoint, 8 ) \
+    SYSCALL_ENTRY( 0x01c6, __wine_get_file_outline_text_metric, 16 ) \
+    SYSCALL_ENTRY( 0x01c7, __wine_get_icm_profile, 16 )
 
 #define ALL_SYSCALLS64 \
     SYSCALL_ENTRY( 0x0000, NtGdiAbortDoc, 8 ) \
@@ -906,10 +907,11 @@
     SYSCALL_ENTRY( 0x01bd, NtUserUpdateInputContext, 24 ) \
     SYSCALL_ENTRY( 0x01be, NtUserUpdateLayeredWindow, 80 ) \
     SYSCALL_ENTRY( 0x01bf, NtUserValidateRect, 16 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserVkKeyScanEx, 16 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWaitForInputIdle, 24 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromDC, 8 ) \
-    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromPoint, 16 ) \
-    SYSCALL_ENTRY( 0x01c5, __wine_get_file_outline_text_metric, 32 ) \
-    SYSCALL_ENTRY( 0x01c6, __wine_get_icm_profile, 32 )
+    SYSCALL_ENTRY( 0x01c0, NtUserValidateRgn, 16 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserVkKeyScanEx, 16 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWaitForInputIdle, 24 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromDC, 8 ) \
+    SYSCALL_ENTRY( 0x01c5, NtUserWindowFromPoint, 16 ) \
+    SYSCALL_ENTRY( 0x01c6, __wine_get_file_outline_text_metric, 32 ) \
+    SYSCALL_ENTRY( 0x01c7, __wine_get_icm_profile, 32 )

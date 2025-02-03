@@ -1203,7 +1203,7 @@
 # @ stub VRipOutput
 # @ stub VTagOutput
 @ stdcall ValidateRect(long ptr) NtUserValidateRect
-@ stdcall ValidateRgn(long long)
+@ stdcall ValidateRgn(long long) NtUserValidateRgn
 @ stdcall VkKeyScanA(long)
 @ stdcall VkKeyScanExA(long long)
 @ stdcall VkKeyScanExW(long long) NtUserVkKeyScanEx

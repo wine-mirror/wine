@@ -1009,6 +1009,7 @@ W32KAPI BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const 
                                                   HDC hdc_src, const POINT *pts_src, COLORREF key,
                                                   const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty );
 W32KAPI BOOL    WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect );
+W32KAPI BOOL    WINAPI NtUserValidateRgn( HWND hwnd, HRGN hrgn );
 W32KAPI WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 W32KAPI DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
 W32KAPI BOOL    WINAPI NtUserWaitMessage(void);

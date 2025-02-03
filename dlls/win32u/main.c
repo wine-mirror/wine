@@ -2390,6 +2390,11 @@ BOOL SYSCALL_API NtUserValidateRect( HWND hwnd, const RECT *rect )
     SYSCALL_FUNC( NtUserValidateRect );
 }
 
+BOOL SYSCALL_API NtUserValidateRgn( HWND hwnd, HRGN hrgn )
+{
+    SYSCALL_FUNC( NtUserValidateRgn );
+}
+
 WORD SYSCALL_API NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
     SYSCALL_FUNC( NtUserVkKeyScanEx );

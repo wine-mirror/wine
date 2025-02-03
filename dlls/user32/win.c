@@ -1555,21 +1555,6 @@ BOOL WINAPI UpdateWindow( HWND hwnd )
 }
 
 
-/***********************************************************************
- *           ValidateRgn (USER32.@)
- */
-BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
-{
-    if (!hwnd)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-
-    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
-}
-
-
 /*************************************************************************
  *           ScrollWindow (USER32.@)
  */

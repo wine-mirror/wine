@@ -1856,6 +1856,20 @@ BOOL WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect )
 }
 
 /***********************************************************************
+ *           NtUserValidateRgn (win32u.@)
+ */
+BOOL WINAPI NtUserValidateRgn( HWND hwnd, HRGN hrgn )
+{
+    if (!hwnd)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
+}
+
+/***********************************************************************
  *           NtUserGetUpdateRgn (win32u.@)
  */
 INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )

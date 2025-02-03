@@ -1521,7 +1521,7 @@
 @ stub NtUserUserPowerCalloutWorker
 @ stub NtUserValidateHandleSecure
 @ stdcall -syscall NtUserValidateRect(long ptr)
-@ stub NtUserValidateRgn
+@ stdcall -syscall NtUserValidateRgn(long long)
 @ stub NtUserValidateTimerCallback
 @ stdcall -syscall NtUserVkKeyScanEx(long long)
 @ stub NtUserWOWCleanup
