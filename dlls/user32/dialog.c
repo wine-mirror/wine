@@ -599,7 +599,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (IsWindowEnabled( owner ))
         {
             disabled_owner = owner;
-            EnableWindow( disabled_owner, FALSE );
+            NtUserEnableWindow( disabled_owner, FALSE );
         }
     }
 
@@ -641,7 +641,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         if (hUserFont) DeleteObject( hUserFont );
         if (hMenu) NtUserDestroyMenu( hMenu );
-        if (disabled_owner) EnableWindow( disabled_owner, TRUE );
+        if (disabled_owner) NtUserEnableWindow( disabled_owner, TRUE );
         return 0;
     }
 
@@ -707,7 +707,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         }
         return hwnd;
     }
-    if (disabled_owner) EnableWindow( disabled_owner, TRUE );
+    if (disabled_owner) NtUserEnableWindow( disabled_owner, TRUE );
     if (IsWindow(hwnd)) NtUserDestroyWindow( hwnd );
     return 0;
 }
@@ -923,7 +923,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 
     owner = (HWND)GetWindowLongPtrA( hwnd, GWLP_HWNDPARENT );
     if (owner)
-        EnableWindow( owner, TRUE );
+        NtUserEnableWindow( owner, TRUE );
 
     /* Windows sets the focus to the dialog itself in EndDialog */
 

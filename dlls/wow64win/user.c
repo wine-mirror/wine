@@ -2183,6 +2183,14 @@ NTSTATUS WINAPI wow64_NtUserEnableScrollBar( UINT *args )
     return NtUserEnableScrollBar( hwnd, bar, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserEnableWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    BOOL enable = get_ulong( &args );
+
+    return NtUserEnableWindow( hwnd, enable );
+}
+
 NTSTATUS WINAPI wow64_NtUserEndDeferWindowPosEx( UINT *args )
 {
     HDWP hdwp = get_handle( &args );

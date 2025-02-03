@@ -457,7 +457,7 @@
 # @ stub EnableOneCoreTransformMode
 @ stdcall -import EnableScrollBar(long long long) NtUserEnableScrollBar
 # @ stub EnableSessionForMMCSS
-@ stdcall EnableWindow(long long)
+@ stdcall EnableWindow(long long) NtUserEnableWindow
 @ stdcall EndDeferWindowPos(long)
 # @ stub EndDeferWindowPosEx
 @ stdcall EndDialog(long long)

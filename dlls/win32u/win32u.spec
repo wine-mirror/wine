@@ -948,7 +948,7 @@
 @ stub NtUserEnableShellWindowManagementBehavior
 @ stub NtUserEnableSoftwareCursorForScreenCapture
 @ stub NtUserEnableTouchPad
-@ stub NtUserEnableWindow
+@ stdcall -syscall NtUserEnableWindow(long long)
 @ stub NtUserEnableWindowGDIScaledDpiMessage
 @ stub NtUserEnableWindowGroupPolicy
 @ stub NtUserEnableWindowResizeOptimization

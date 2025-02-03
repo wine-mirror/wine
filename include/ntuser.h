@@ -785,6 +785,7 @@ W32KAPI BOOL    WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
 W32KAPI BOOL    WINAPI NtUserEnableMouseInPointer( BOOL );
 W32KAPI BOOL    WINAPI NtUserEnableMouseInPointerForThread(void);
 W32KAPI BOOL    WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags );
+W32KAPI BOOL    WINAPI NtUserEnableWindow( HWND hwnd, BOOL enable );
 W32KAPI BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );
 W32KAPI BOOL    WINAPI NtUserEndMenu(void);
 W32KAPI BOOL    WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps );
@@ -1364,7 +1365,6 @@ static inline BOOL NtUserSetForegroundWindow( HWND hwnd )
 enum
 {
     NtUserCallHwndParam_ClientToScreen,
-    NtUserCallHwndParam_EnableWindow,
     NtUserCallHwndParam_GetChildRect,
     NtUserCallHwndParam_GetClassLongA,
     NtUserCallHwndParam_GetClassLongW,
@@ -1409,11 +1409,6 @@ struct get_window_rects_params
 static inline BOOL NtUserClientToScreen( HWND hwnd, POINT *pt )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserCallHwndParam_ClientToScreen );
-}
-
-static inline BOOL NtUserEnableWindow( HWND hwnd, BOOL enable )
-{
-    return NtUserCallHwndParam( hwnd, enable, NtUserCallHwndParam_EnableWindow );
 }
 
 static inline BOOL NtUserGetChildRect( HWND hwnd, RECT *rect )

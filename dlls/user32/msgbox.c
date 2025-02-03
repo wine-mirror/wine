@@ -45,7 +45,7 @@ static BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
 {
     struct ThreadWindows *threadWindows = (struct ThreadWindows *)lParam;
 
-    if (!EnableWindow(hwnd, FALSE))
+    if (!NtUserEnableWindow(hwnd, FALSE))
     {
         if(threadWindows->numHandles >= threadWindows->numAllocs)
         {
@@ -546,7 +546,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     if ((msgbox->dwStyle & MB_TASKMODAL) && (msgbox->hwndOwner==NULL))
     {
         for (i = 0; i < threadWindows.numHandles; i++)
-            EnableWindow(threadWindows.handles[i], TRUE);
+            NtUserEnableWindow(threadWindows.handles[i], TRUE);
         HeapFree(GetProcessHeap(), 0, threadWindows.handles);
     }
     return ret;

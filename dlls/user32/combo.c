@@ -982,7 +982,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
    if( !(lphc->wState & CBF_NOREDRAW) )
      NtUserRedrawWindow( lphc->self, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW );
 
-   EnableWindow( lphc->hWndLBox, TRUE );
+   NtUserEnableWindow( lphc->hWndLBox, TRUE );
    if (GetCapture() != lphc->self)
       NtUserSetCapture(lphc->hWndLBox);
 }
@@ -1816,8 +1816,8 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		return COMBO_ItemOp(lphc, message, lParam);
 	case WM_ENABLE:
 		if( lphc->wState & CBF_EDIT )
-		    EnableWindow( lphc->hWndEdit, (BOOL)wParam );
-		EnableWindow( lphc->hWndLBox, (BOOL)wParam );
+		    NtUserEnableWindow( lphc->hWndEdit, (BOOL)wParam );
+		NtUserEnableWindow( lphc->hWndLBox, (BOOL)wParam );
 
 		/* Force the control to repaint when the enabled state changes. */
 		NtUserInvalidateRect(lphc->self, NULL, TRUE);

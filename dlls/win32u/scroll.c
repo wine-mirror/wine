@@ -999,7 +999,7 @@ static int set_scroll_info( HWND hwnd, int bar, const SCROLLINFO *info, BOOL red
             (new_flags == ESB_ENABLE_BOTH || new_flags == ESB_DISABLE_BOTH))
         {
             release_scroll_info_ptr( scroll );
-            enable_window( hwnd, new_flags == ESB_ENABLE_BOTH );
+            NtUserEnableWindow( hwnd, new_flags == ESB_ENABLE_BOTH );
             if (!(scroll = get_scroll_info_ptr( hwnd, bar, FALSE ))) return 0;
         }
 

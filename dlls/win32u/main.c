@@ -1395,6 +1395,11 @@ BOOL SYSCALL_API NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags )
     SYSCALL_FUNC( NtUserEnableScrollBar );
 }
 
+BOOL SYSCALL_API NtUserEnableWindow( HWND hwnd, BOOL enable )
+{
+    SYSCALL_FUNC( NtUserEnableWindow );
+}
+
 BOOL SYSCALL_API NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
 {
     SYSCALL_FUNC( NtUserEndDeferWindowPosEx );

@@ -232,7 +232,6 @@ extern HDWP begin_defer_window_pos( INT count );
 extern BOOL client_to_screen( HWND hwnd, POINT *pt );
 extern void destroy_thread_windows(void);
 extern LRESULT destroy_window( HWND hwnd );
-extern BOOL enable_window( HWND hwnd, BOOL enable );
 extern BOOL get_client_rect( HWND hwnd, RECT *rect, UINT dpi );
 extern HWND get_desktop_window(void);
 extern UINT get_dpi_for_window( HWND hwnd );

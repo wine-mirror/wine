@@ -788,8 +788,10 @@ BOOL is_window_unicode( HWND hwnd )
     return ret;
 }
 
-/* see EnableWindow */
-BOOL enable_window( HWND hwnd, BOOL enable )
+/*****************************************************************
+ *           NtUserEnableWindow (win32u.@)
+ */
+BOOL WINAPI NtUserEnableWindow( HWND hwnd, BOOL enable )
 {
     BOOL ret;
 
@@ -5893,9 +5895,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     {
     case NtUserCallHwndParam_ClientToScreen:
         return client_to_screen( hwnd, (POINT *)param );
-
-    case NtUserCallHwndParam_EnableWindow:
-        return enable_window( hwnd, param );
 
     case NtUserCallHwndParam_GetChildRect:
         return get_window_rect_rel( hwnd, COORDS_PARENT, (RECT *)param, get_thread_dpi() );

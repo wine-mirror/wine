@@ -588,15 +588,6 @@ HWND WINAPI GetDesktopWindow(void)
 }
 
 
-/*******************************************************************
- *		EnableWindow (USER32.@)
- */
-BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
-{
-    return NtUserEnableWindow( hwnd, enable );
-}
-
-
 /***********************************************************************
  *		IsWindowEnabled (USER32.@)
  */
