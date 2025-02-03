@@ -1283,15 +1283,6 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 
 
 /*******************************************************************
- *		ShowOwnedPopups (USER32.@)
- */
-BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL show )
-{
-    return NtUserShowOwnedPopups( owner, show );
-}
-
-
-/*******************************************************************
  *		GetLastActivePopup (USER32.@)
  */
 HWND WINAPI GetLastActivePopup( HWND hwnd )

@@ -1464,7 +1464,7 @@
 @ stub NtUserShellSetWindowPos
 @ stdcall -syscall NtUserShowCaret(long)
 @ stdcall -syscall NtUserShowCursor(long)
-@ stub NtUserShowOwnedPopups
+@ stdcall -syscall NtUserShowOwnedPopups(long long)
 @ stdcall -syscall NtUserShowScrollBar(long long long)
 @ stub NtUserShowStartGlass
 @ stub NtUserShowSystemCursor

@@ -4625,6 +4625,14 @@ NTSTATUS WINAPI wow64_NtUserShowCursor( UINT *args )
     return NtUserShowCursor( show );
 }
 
+NTSTATUS WINAPI wow64_NtUserShowOwnedPopups( UINT *args )
+{
+    HWND owner = get_handle( &args );
+    BOOL show = get_ulong( &args );
+
+    return NtUserShowOwnedPopups( owner, show );
+}
+
 NTSTATUS WINAPI wow64_NtUserShowScrollBar( UINT *args )
 {
     HWND hwnd = get_handle( &args );

@@ -268,7 +268,6 @@ extern LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newv
                                  BOOL ansi );
 extern BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y );
 extern ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits );
-extern BOOL show_owned_popups( HWND owner, BOOL show );
 extern void update_window_state( HWND hwnd );
 extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest );
 extern HWND get_shell_window(void);

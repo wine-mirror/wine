@@ -1129,7 +1129,7 @@
 # @ stub ShellSetWindowPos
 @ stdcall ShowCaret(long) NtUserShowCaret
 @ stdcall -import ShowCursor(long) NtUserShowCursor
-@ stdcall ShowOwnedPopups(long long)
+@ stdcall ShowOwnedPopups(long long) NtUserShowOwnedPopups
 @ stdcall ShowScrollBar(long long long) NtUserShowScrollBar
 @ stub ShowStartGlass
 # @ stub ShowSystemCursor

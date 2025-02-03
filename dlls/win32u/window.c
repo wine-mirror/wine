@@ -4831,8 +4831,10 @@ BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
     return send_message( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
-/* see ShowOwnedPopups */
-BOOL show_owned_popups( HWND owner, BOOL show )
+/***********************************************************************
+ *           NtUserShowOwnedPopups (win32u.@)
+ */
+BOOL WINAPI NtUserShowOwnedPopups( HWND owner, BOOL show )
 {
     int count = 0;
     HWND *win_array = list_window_children( 0 );
@@ -5980,9 +5982,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_SetMDIClientInfo:
         NtUserSetWindowLongPtr( hwnd, sizeof(void *), param, FALSE );
         return win_set_flags( hwnd, WIN_ISMDICLIENT, 0 );
-
-    case NtUserCallHwndParam_ShowOwnedPopups:
-        return show_owned_popups( hwnd, param );
 
     case NtUserCallHwndParam_SendHardwareInput:
     {

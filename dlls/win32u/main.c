@@ -2274,6 +2274,11 @@ INT SYSCALL_API NtUserShowCursor( BOOL show )
     SYSCALL_FUNC( NtUserShowCursor );
 }
 
+BOOL SYSCALL_API NtUserShowOwnedPopups( HWND owner, BOOL show )
+{
+    SYSCALL_FUNC( NtUserShowOwnedPopups );
+}
+
 BOOL SYSCALL_API NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
 {
     SYSCALL_FUNC( NtUserShowScrollBar );

@@ -982,6 +982,7 @@ W32KAPI HWINEVENTHOOK WINAPI NtUserSetWinEventHook( DWORD event_min, DWORD event
                                                     DWORD pid, DWORD tid, DWORD flags );
 W32KAPI BOOL    WINAPI NtUserShowCaret( HWND hwnd );
 W32KAPI INT     WINAPI NtUserShowCursor( BOOL show );
+W32KAPI BOOL    WINAPI NtUserShowOwnedPopups( HWND owner, BOOL show );
 W32KAPI BOOL    WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show );
 W32KAPI BOOL    WINAPI NtUserShowWindow( HWND hwnd, INT cmd );
 W32KAPI BOOL    WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd );
@@ -1390,7 +1391,6 @@ enum
     NtUserCallHwndParam_ScreenToClient,
     NtUserCallHwndParam_SetDialogInfo,
     NtUserCallHwndParam_SetMDIClientInfo,
-    NtUserCallHwndParam_ShowOwnedPopups,
     NtUserCallHwndParam_SendHardwareInput,
     NtUserCallHwndParam_ExposeWindowSurface,
     NtUserCallHwndParam_GetWinMonitorDpi,
@@ -1559,11 +1559,6 @@ static inline void NtUserSetDialogInfo( HWND hwnd, void *info )
 static inline void NtUserSetMDIClientInfo( HWND hwnd, void *info )
 {
     NtUserCallHwndParam( hwnd, (UINT_PTR)info, NtUserCallHwndParam_SetMDIClientInfo );
-}
-
-static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )
-{
-    return NtUserCallHwndParam( hwnd, show, NtUserCallHwndParam_ShowOwnedPopups );
 }
 
 struct hid_input

@@ -427,33 +427,34 @@
     SYSCALL_ENTRY( 0x01a7, NtUserSetWindowsHookEx, 24 ) \
     SYSCALL_ENTRY( 0x01a8, NtUserShowCaret, 4 ) \
     SYSCALL_ENTRY( 0x01a9, NtUserShowCursor, 4 ) \
-    SYSCALL_ENTRY( 0x01aa, NtUserShowScrollBar, 12 ) \
-    SYSCALL_ENTRY( 0x01ab, NtUserShowWindow, 8 ) \
-    SYSCALL_ENTRY( 0x01ac, NtUserShowWindowAsync, 8 ) \
-    SYSCALL_ENTRY( 0x01ad, NtUserSwitchDesktop, 4 ) \
-    SYSCALL_ENTRY( 0x01ae, NtUserSystemParametersInfo, 16 ) \
-    SYSCALL_ENTRY( 0x01af, NtUserSystemParametersInfoForDpi, 20 ) \
-    SYSCALL_ENTRY( 0x01b0, NtUserThunkedMenuInfo, 8 ) \
-    SYSCALL_ENTRY( 0x01b1, NtUserThunkedMenuItemInfo, 24 ) \
-    SYSCALL_ENTRY( 0x01b2, NtUserToUnicodeEx, 28 ) \
-    SYSCALL_ENTRY( 0x01b3, NtUserTrackMouseEvent, 4 ) \
-    SYSCALL_ENTRY( 0x01b4, NtUserTrackPopupMenuEx, 24 ) \
-    SYSCALL_ENTRY( 0x01b5, NtUserTranslateAccelerator, 12 ) \
-    SYSCALL_ENTRY( 0x01b6, NtUserTranslateMessage, 8 ) \
-    SYSCALL_ENTRY( 0x01b7, NtUserUnhookWinEvent, 4 ) \
-    SYSCALL_ENTRY( 0x01b8, NtUserUnhookWindowsHookEx, 4 ) \
-    SYSCALL_ENTRY( 0x01b9, NtUserUnregisterClass, 12 ) \
-    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterHotKey, 8 ) \
-    SYSCALL_ENTRY( 0x01bb, NtUserUpdateInputContext, 12 ) \
-    SYSCALL_ENTRY( 0x01bc, NtUserUpdateLayeredWindow, 40 ) \
-    SYSCALL_ENTRY( 0x01bd, NtUserValidateRect, 8 ) \
-    SYSCALL_ENTRY( 0x01be, NtUserVkKeyScanEx, 8 ) \
-    SYSCALL_ENTRY( 0x01bf, NtUserWaitForInputIdle, 12 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWindowFromDC, 4 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromPoint, 8 ) \
-    SYSCALL_ENTRY( 0x01c3, __wine_get_file_outline_text_metric, 16 ) \
-    SYSCALL_ENTRY( 0x01c4, __wine_get_icm_profile, 16 )
+    SYSCALL_ENTRY( 0x01aa, NtUserShowOwnedPopups, 8 ) \
+    SYSCALL_ENTRY( 0x01ab, NtUserShowScrollBar, 12 ) \
+    SYSCALL_ENTRY( 0x01ac, NtUserShowWindow, 8 ) \
+    SYSCALL_ENTRY( 0x01ad, NtUserShowWindowAsync, 8 ) \
+    SYSCALL_ENTRY( 0x01ae, NtUserSwitchDesktop, 4 ) \
+    SYSCALL_ENTRY( 0x01af, NtUserSystemParametersInfo, 16 ) \
+    SYSCALL_ENTRY( 0x01b0, NtUserSystemParametersInfoForDpi, 20 ) \
+    SYSCALL_ENTRY( 0x01b1, NtUserThunkedMenuInfo, 8 ) \
+    SYSCALL_ENTRY( 0x01b2, NtUserThunkedMenuItemInfo, 24 ) \
+    SYSCALL_ENTRY( 0x01b3, NtUserToUnicodeEx, 28 ) \
+    SYSCALL_ENTRY( 0x01b4, NtUserTrackMouseEvent, 4 ) \
+    SYSCALL_ENTRY( 0x01b5, NtUserTrackPopupMenuEx, 24 ) \
+    SYSCALL_ENTRY( 0x01b6, NtUserTranslateAccelerator, 12 ) \
+    SYSCALL_ENTRY( 0x01b7, NtUserTranslateMessage, 8 ) \
+    SYSCALL_ENTRY( 0x01b8, NtUserUnhookWinEvent, 4 ) \
+    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHookEx, 4 ) \
+    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterClass, 12 ) \
+    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterHotKey, 8 ) \
+    SYSCALL_ENTRY( 0x01bc, NtUserUpdateInputContext, 12 ) \
+    SYSCALL_ENTRY( 0x01bd, NtUserUpdateLayeredWindow, 40 ) \
+    SYSCALL_ENTRY( 0x01be, NtUserValidateRect, 8 ) \
+    SYSCALL_ENTRY( 0x01bf, NtUserVkKeyScanEx, 8 ) \
+    SYSCALL_ENTRY( 0x01c0, NtUserWaitForInputIdle, 12 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromDC, 4 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromPoint, 8 ) \
+    SYSCALL_ENTRY( 0x01c4, __wine_get_file_outline_text_metric, 16 ) \
+    SYSCALL_ENTRY( 0x01c5, __wine_get_icm_profile, 16 )
 
 #define ALL_SYSCALLS64 \
     SYSCALL_ENTRY( 0x0000, NtGdiAbortDoc, 8 ) \
@@ -882,30 +883,31 @@
     SYSCALL_ENTRY( 0x01a7, NtUserSetWindowsHookEx, 48 ) \
     SYSCALL_ENTRY( 0x01a8, NtUserShowCaret, 8 ) \
     SYSCALL_ENTRY( 0x01a9, NtUserShowCursor, 8 ) \
-    SYSCALL_ENTRY( 0x01aa, NtUserShowScrollBar, 24 ) \
-    SYSCALL_ENTRY( 0x01ab, NtUserShowWindow, 16 ) \
-    SYSCALL_ENTRY( 0x01ac, NtUserShowWindowAsync, 16 ) \
-    SYSCALL_ENTRY( 0x01ad, NtUserSwitchDesktop, 8 ) \
-    SYSCALL_ENTRY( 0x01ae, NtUserSystemParametersInfo, 32 ) \
-    SYSCALL_ENTRY( 0x01af, NtUserSystemParametersInfoForDpi, 40 ) \
-    SYSCALL_ENTRY( 0x01b0, NtUserThunkedMenuInfo, 16 ) \
-    SYSCALL_ENTRY( 0x01b1, NtUserThunkedMenuItemInfo, 48 ) \
-    SYSCALL_ENTRY( 0x01b2, NtUserToUnicodeEx, 56 ) \
-    SYSCALL_ENTRY( 0x01b3, NtUserTrackMouseEvent, 8 ) \
-    SYSCALL_ENTRY( 0x01b4, NtUserTrackPopupMenuEx, 48 ) \
-    SYSCALL_ENTRY( 0x01b5, NtUserTranslateAccelerator, 24 ) \
-    SYSCALL_ENTRY( 0x01b6, NtUserTranslateMessage, 16 ) \
-    SYSCALL_ENTRY( 0x01b7, NtUserUnhookWinEvent, 8 ) \
-    SYSCALL_ENTRY( 0x01b8, NtUserUnhookWindowsHookEx, 8 ) \
-    SYSCALL_ENTRY( 0x01b9, NtUserUnregisterClass, 24 ) \
-    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterHotKey, 16 ) \
-    SYSCALL_ENTRY( 0x01bb, NtUserUpdateInputContext, 24 ) \
-    SYSCALL_ENTRY( 0x01bc, NtUserUpdateLayeredWindow, 80 ) \
-    SYSCALL_ENTRY( 0x01bd, NtUserValidateRect, 16 ) \
-    SYSCALL_ENTRY( 0x01be, NtUserVkKeyScanEx, 16 ) \
-    SYSCALL_ENTRY( 0x01bf, NtUserWaitForInputIdle, 24 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWindowFromDC, 8 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromPoint, 16 ) \
-    SYSCALL_ENTRY( 0x01c3, __wine_get_file_outline_text_metric, 32 ) \
-    SYSCALL_ENTRY( 0x01c4, __wine_get_icm_profile, 32 )
+    SYSCALL_ENTRY( 0x01aa, NtUserShowOwnedPopups, 16 ) \
+    SYSCALL_ENTRY( 0x01ab, NtUserShowScrollBar, 24 ) \
+    SYSCALL_ENTRY( 0x01ac, NtUserShowWindow, 16 ) \
+    SYSCALL_ENTRY( 0x01ad, NtUserShowWindowAsync, 16 ) \
+    SYSCALL_ENTRY( 0x01ae, NtUserSwitchDesktop, 8 ) \
+    SYSCALL_ENTRY( 0x01af, NtUserSystemParametersInfo, 32 ) \
+    SYSCALL_ENTRY( 0x01b0, NtUserSystemParametersInfoForDpi, 40 ) \
+    SYSCALL_ENTRY( 0x01b1, NtUserThunkedMenuInfo, 16 ) \
+    SYSCALL_ENTRY( 0x01b2, NtUserThunkedMenuItemInfo, 48 ) \
+    SYSCALL_ENTRY( 0x01b3, NtUserToUnicodeEx, 56 ) \
+    SYSCALL_ENTRY( 0x01b4, NtUserTrackMouseEvent, 8 ) \
+    SYSCALL_ENTRY( 0x01b5, NtUserTrackPopupMenuEx, 48 ) \
+    SYSCALL_ENTRY( 0x01b6, NtUserTranslateAccelerator, 24 ) \
+    SYSCALL_ENTRY( 0x01b7, NtUserTranslateMessage, 16 ) \
+    SYSCALL_ENTRY( 0x01b8, NtUserUnhookWinEvent, 8 ) \
+    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHookEx, 8 ) \
+    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterClass, 24 ) \
+    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterHotKey, 16 ) \
+    SYSCALL_ENTRY( 0x01bc, NtUserUpdateInputContext, 24 ) \
+    SYSCALL_ENTRY( 0x01bd, NtUserUpdateLayeredWindow, 80 ) \
+    SYSCALL_ENTRY( 0x01be, NtUserValidateRect, 16 ) \
+    SYSCALL_ENTRY( 0x01bf, NtUserVkKeyScanEx, 16 ) \
+    SYSCALL_ENTRY( 0x01c0, NtUserWaitForInputIdle, 24 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromDC, 8 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromPoint, 16 ) \
+    SYSCALL_ENTRY( 0x01c4, __wine_get_file_outline_text_metric, 32 ) \
+    SYSCALL_ENTRY( 0x01c5, __wine_get_icm_profile, 32 )
