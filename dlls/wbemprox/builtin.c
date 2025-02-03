@@ -3320,7 +3320,7 @@ static struct record_pnpentity *get_pnp_entities( UINT *count )
                             if (++i > nb_allocated)
                             {
                                 nb_allocated *= 2;
-                                if ((tmp = realloc( ret, nb_allocated ))) ret = tmp;
+                                if ((tmp = realloc( ret, nb_allocated * sizeof(*ret) ))) ret = tmp;
                                 else
                                 {
                                     while (--i)
