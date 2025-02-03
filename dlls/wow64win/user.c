@@ -4954,6 +4954,14 @@ NTSTATUS WINAPI wow64_NtUserUnhookWinEvent( UINT *args )
     return NtUserUnhookWinEvent( handle );
 }
 
+NTSTATUS WINAPI wow64_NtUserUnhookWindowsHook( UINT *args )
+{
+    INT id = get_ulong( &args );
+    HOOKPROC proc = get_ptr( &args );
+
+    return NtUserUnhookWindowsHook( id, proc );
+}
+
 NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
 {
     HHOOK handle = get_handle( &args );

@@ -7079,9 +7079,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserCallTwoParam_SetIMECompositionRect:
         return set_ime_composition_rect( UlongToHandle(arg1), *(const RECT *)arg2 );
 
-    case NtUserCallTwoParam_UnhookWindowsHook:
-        return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
-
     case NtUserCallTwoParam_AdjustWindowRect:
     {
         struct adjust_window_rect_params *params = (void *)arg2;

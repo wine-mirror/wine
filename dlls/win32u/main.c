@@ -2352,6 +2352,11 @@ BOOL SYSCALL_API NtUserUnhookWinEvent( HWINEVENTHOOK handle )
     SYSCALL_FUNC( NtUserUnhookWinEvent );
 }
 
+BOOL SYSCALL_API NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
+{
+    SYSCALL_FUNC( NtUserUnhookWindowsHook );
+}
+
 BOOL SYSCALL_API NtUserUnhookWindowsHookEx( HHOOK handle )
 {
     SYSCALL_FUNC( NtUserUnhookWindowsHookEx );

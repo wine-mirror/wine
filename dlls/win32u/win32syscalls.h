@@ -442,19 +442,20 @@
     SYSCALL_ENTRY( 0x01b6, NtUserTranslateAccelerator, 12 ) \
     SYSCALL_ENTRY( 0x01b7, NtUserTranslateMessage, 8 ) \
     SYSCALL_ENTRY( 0x01b8, NtUserUnhookWinEvent, 4 ) \
-    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHookEx, 4 ) \
-    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterClass, 12 ) \
-    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterHotKey, 8 ) \
-    SYSCALL_ENTRY( 0x01bc, NtUserUpdateInputContext, 12 ) \
-    SYSCALL_ENTRY( 0x01bd, NtUserUpdateLayeredWindow, 40 ) \
-    SYSCALL_ENTRY( 0x01be, NtUserValidateRect, 8 ) \
-    SYSCALL_ENTRY( 0x01bf, NtUserVkKeyScanEx, 8 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserWaitForInputIdle, 12 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromDC, 4 ) \
-    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromPoint, 8 ) \
-    SYSCALL_ENTRY( 0x01c4, __wine_get_file_outline_text_metric, 16 ) \
-    SYSCALL_ENTRY( 0x01c5, __wine_get_icm_profile, 16 )
+    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHook, 8 ) \
+    SYSCALL_ENTRY( 0x01ba, NtUserUnhookWindowsHookEx, 4 ) \
+    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterClass, 12 ) \
+    SYSCALL_ENTRY( 0x01bc, NtUserUnregisterHotKey, 8 ) \
+    SYSCALL_ENTRY( 0x01bd, NtUserUpdateInputContext, 12 ) \
+    SYSCALL_ENTRY( 0x01be, NtUserUpdateLayeredWindow, 40 ) \
+    SYSCALL_ENTRY( 0x01bf, NtUserValidateRect, 8 ) \
+    SYSCALL_ENTRY( 0x01c0, NtUserVkKeyScanEx, 8 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserWaitForInputIdle, 12 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromDC, 4 ) \
+    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromPoint, 8 ) \
+    SYSCALL_ENTRY( 0x01c5, __wine_get_file_outline_text_metric, 16 ) \
+    SYSCALL_ENTRY( 0x01c6, __wine_get_icm_profile, 16 )
 
 #define ALL_SYSCALLS64 \
     SYSCALL_ENTRY( 0x0000, NtGdiAbortDoc, 8 ) \
@@ -898,16 +899,17 @@
     SYSCALL_ENTRY( 0x01b6, NtUserTranslateAccelerator, 24 ) \
     SYSCALL_ENTRY( 0x01b7, NtUserTranslateMessage, 16 ) \
     SYSCALL_ENTRY( 0x01b8, NtUserUnhookWinEvent, 8 ) \
-    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHookEx, 8 ) \
-    SYSCALL_ENTRY( 0x01ba, NtUserUnregisterClass, 24 ) \
-    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterHotKey, 16 ) \
-    SYSCALL_ENTRY( 0x01bc, NtUserUpdateInputContext, 24 ) \
-    SYSCALL_ENTRY( 0x01bd, NtUserUpdateLayeredWindow, 80 ) \
-    SYSCALL_ENTRY( 0x01be, NtUserValidateRect, 16 ) \
-    SYSCALL_ENTRY( 0x01bf, NtUserVkKeyScanEx, 16 ) \
-    SYSCALL_ENTRY( 0x01c0, NtUserWaitForInputIdle, 24 ) \
-    SYSCALL_ENTRY( 0x01c1, NtUserWaitMessage, 0 ) \
-    SYSCALL_ENTRY( 0x01c2, NtUserWindowFromDC, 8 ) \
-    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromPoint, 16 ) \
-    SYSCALL_ENTRY( 0x01c4, __wine_get_file_outline_text_metric, 32 ) \
-    SYSCALL_ENTRY( 0x01c5, __wine_get_icm_profile, 32 )
+    SYSCALL_ENTRY( 0x01b9, NtUserUnhookWindowsHook, 16 ) \
+    SYSCALL_ENTRY( 0x01ba, NtUserUnhookWindowsHookEx, 8 ) \
+    SYSCALL_ENTRY( 0x01bb, NtUserUnregisterClass, 24 ) \
+    SYSCALL_ENTRY( 0x01bc, NtUserUnregisterHotKey, 16 ) \
+    SYSCALL_ENTRY( 0x01bd, NtUserUpdateInputContext, 24 ) \
+    SYSCALL_ENTRY( 0x01be, NtUserUpdateLayeredWindow, 80 ) \
+    SYSCALL_ENTRY( 0x01bf, NtUserValidateRect, 16 ) \
+    SYSCALL_ENTRY( 0x01c0, NtUserVkKeyScanEx, 16 ) \
+    SYSCALL_ENTRY( 0x01c1, NtUserWaitForInputIdle, 24 ) \
+    SYSCALL_ENTRY( 0x01c2, NtUserWaitMessage, 0 ) \
+    SYSCALL_ENTRY( 0x01c3, NtUserWindowFromDC, 8 ) \
+    SYSCALL_ENTRY( 0x01c4, NtUserWindowFromPoint, 16 ) \
+    SYSCALL_ENTRY( 0x01c5, __wine_get_file_outline_text_metric, 32 ) \
+    SYSCALL_ENTRY( 0x01c6, __wine_get_icm_profile, 32 )

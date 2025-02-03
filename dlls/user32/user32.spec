@@ -1168,7 +1168,7 @@
 @ stdcall TranslateMessage(ptr)
 # @ stub TranslateMessageEx
 @ stdcall UnhookWinEvent(long) NtUserUnhookWinEvent
-@ stdcall UnhookWindowsHook(long ptr)
+@ stdcall UnhookWindowsHook(long ptr) NtUserUnhookWindowsHook
 @ stdcall UnhookWindowsHookEx(long) NtUserUnhookWindowsHookEx
 @ stdcall UnionRect(ptr ptr ptr)
 @ stdcall UnloadKeyboardLayout(long)

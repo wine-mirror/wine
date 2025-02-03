@@ -76,7 +76,6 @@ extern LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam,
 extern LRESULT call_message_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam,
                                    size_t lparam_size, size_t message_size, BOOL ansi );
 extern BOOL is_hooked( INT id );
-extern BOOL unhook_windows_hook( INT id, HOOKPROC proc );
 
 /* imm.c */
 extern void cleanup_imm_thread(void);

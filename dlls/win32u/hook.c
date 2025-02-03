@@ -161,8 +161,10 @@ BOOL WINAPI NtUserUnhookWindowsHookEx( HHOOK handle )
     return !status;
 }
 
-/* see UnhookWindowsHook */
-BOOL unhook_windows_hook( INT id, HOOKPROC proc )
+/***********************************************************************
+ *	     NtUserUnhookWindowsHook   (win32u.@)
+ */
+BOOL WINAPI NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
 {
     NTSTATUS status;
 
