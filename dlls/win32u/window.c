@@ -4927,8 +4927,10 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
     }
 }
 
-/* see GetWindowContextHelpId */
-DWORD get_window_context_help_id( HWND hwnd )
+/***********************************************************************
+ *           NtUserGetWindowContextHelpId   (win32u.@)
+ */
+DWORD WINAPI NtUserGetWindowContextHelpId( HWND hwnd )
 {
     DWORD retval;
     WND *win = get_win_ptr( hwnd );
@@ -5838,9 +5840,6 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_GetMDIClientInfo:
         if (!(win_get_flags( hwnd ) & WIN_ISMDICLIENT)) return 0;
         return get_window_long_ptr( hwnd, sizeof(void *), FALSE );
-
-    case NtUserCallHwnd_GetWindowContextHelpId:
-        return get_window_context_help_id( hwnd );
 
     case NtUserCallHwnd_GetWindowDpiAwarenessContext:
         return get_window_dpi_awareness_context( hwnd );

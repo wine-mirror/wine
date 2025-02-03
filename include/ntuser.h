@@ -867,6 +867,7 @@ W32KAPI BOOL    WINAPI NtUserGetTitleBarInfo( HWND hwnd, TITLEBARINFO *info );
 W32KAPI INT     WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase );
 W32KAPI BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
 W32KAPI BOOL    WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase );
+W32KAPI DWORD   WINAPI NtUserGetWindowContextHelpId( HWND hwnd );
 W32KAPI HDC     WINAPI NtUserGetWindowDC( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement );
 W32KAPI int     WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk );
@@ -1267,7 +1268,6 @@ enum
     NtUserCallHwnd_GetLastActivePopup,
     NtUserCallHwnd_GetMDIClientInfo,
     NtUserCallHwnd_GetParent,
-    NtUserCallHwnd_GetWindowContextHelpId,
     NtUserCallHwnd_GetWindowDpiAwarenessContext,
     NtUserCallHwnd_GetWindowInputContext,
     NtUserCallHwnd_GetWindowSysSubMenu,
@@ -1288,11 +1288,6 @@ enum
 static inline void NtUserActivateOtherWindow( HWND hwnd )
 {
     NtUserCallHwnd( hwnd, NtUserCallHwnd_ActivateOtherWindow );
-}
-
-static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )
-{
-    return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowContextHelpId );
 }
 
 static inline void *NtUserGetDialogInfo( HWND hwnd )

@@ -1409,15 +1409,6 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 
 
 /*******************************************************************
- *		GetWindowContextHelpId (USER32.@)
- */
-DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
-{
-    return NtUserGetWindowContextHelpId( hwnd );
-}
-
-
-/*******************************************************************
  *		SetWindowContextHelpId (USER32.@)
  */
 BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )

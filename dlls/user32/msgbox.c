@@ -365,7 +365,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
         HELPINFO hi;
 
         memcpy(&hi, (void *)lParam, sizeof(hi));
-        hi.dwContextId = GetWindowContextHelpId(hwnd);
+        hi.dwContextId = NtUserGetWindowContextHelpId(hwnd);
 
         if (callback)
             callback(&hi);

@@ -2819,7 +2819,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                 hi.iContextType = HELPINFO_WINDOW;
                 hi.hItemHandle = hwnd;
                 hi.iCtrlId = get_window_long_ptr( hwnd, GWLP_ID, FALSE );
-                hi.dwContextId = get_window_context_help_id( hwnd );
+                hi.dwContextId = NtUserGetWindowContextHelpId( hwnd );
             }
             send_message( hwnd, WM_HELP, 0, (LPARAM)&hi );
             break;

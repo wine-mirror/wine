@@ -1759,6 +1759,11 @@ BOOL SYSCALL_API NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UIN
     SYSCALL_FUNC( NtUserGetUpdatedClipboardFormats );
 }
 
+DWORD SYSCALL_API NtUserGetWindowContextHelpId( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserGetWindowContextHelpId );
+}
+
 HDC SYSCALL_API NtUserGetWindowDC( HWND hwnd )
 {
     SYSCALL_FUNC( NtUserGetWindowDC );
