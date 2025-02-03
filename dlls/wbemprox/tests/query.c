@@ -90,7 +90,7 @@ static void test_select( IWbemServices *services )
         L"SELECT\na\rFROM\tb",
         L"SELECT * FROM Win32_Process WHERE Caption LIKE \"%firefox.exe\"",
         L"SELECT * FROM Win32_VideoController where availability = '3'",
-        L"SELECT * FROM Win3_BIOS WHERE NAME <> NULL",
+        L"SELECT * FROM Win32_BIOS WHERE NAME <> NULL",
         L"SELECT * FROM Win32_BIOS WHERE NULL = NAME",
         L"SELECT * FROM Win32_LogicalDiskToPartition",
         L"SELECT * FROM Win32_DiskDriveToDiskPartition",
