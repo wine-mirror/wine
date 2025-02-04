@@ -297,7 +297,6 @@ static char **test_argv;
 static int test_argc;
 static HWND child = 0;
 static HWND parent = 0;
-static HANDLE child_process;
 
 #define PROC_INIT (WM_USER+1)
 
@@ -394,14 +393,19 @@ static void do_child(void)
     }
 }
 
-static void do_parent(void)
+static void test_child_process(void)
 {
+    static const BYTE bmp_bits[4096];
     char path_name[MAX_PATH];
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
+    ICONINFO cursorInfo;
+    UINT display_bpp;
     WNDCLASSA class;
-    MSG msg;
+    HCURSOR cursor;
     BOOL ret;
+    HDC hdc;
+    MSG msg;
 
     /* Register a new class. */
     class.style = CS_GLOBALCLASS;
@@ -432,7 +436,6 @@ static void do_parent(void)
 
     sprintf(path_name, "%s cursoricon %Ix", test_argv[0], (INT_PTR)parent);
     ok(CreateProcessA(NULL, path_name, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed.\n");
-    child_process = info.hProcess;
 
     /* Wait for child window handle. */
     while ((child == 0) && (ret = GetMessageA(&msg, parent, 0, 0)))
@@ -441,22 +444,6 @@ static void do_parent(void)
         TranslateMessage(&msg);
         DispatchMessageA(&msg);
     }
-}
-
-static void finish_child_process(void)
-{
-    SendMessageA(child, WM_CLOSE, 0, 0);
-    wait_child_process( child_process );
-    CloseHandle(child_process);
-}
-
-static void test_child_process(void)
-{
-    static const BYTE bmp_bits[4096];
-    HCURSOR cursor;
-    ICONINFO cursorInfo;
-    UINT display_bpp;
-    HDC hdc;
 
     /* Create and set a dummy cursor. */
     hdc = GetDC(0);
@@ -476,6 +463,10 @@ static void test_child_process(void)
 
     /* Destroy the cursor. */
     SendMessageA(child, WM_USER+1, 0, (LPARAM) cursor);
+
+    SendMessageA(child, WM_CLOSE, 0, 0);
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hProcess );
 }
 
 static BOOL color_match(COLORREF a, COLORREF b)
@@ -3159,7 +3150,5 @@ START_TEST(cursoricon)
     test_DestroyCursor();
     test_PrivateExtractIcons();
     test_monochrome_icon();
-    do_parent();
     test_child_process();
-    finish_child_process();
 }
