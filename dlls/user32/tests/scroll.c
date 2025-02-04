@@ -944,9 +944,7 @@ static void test_cross_process(const char* argv0)
     ok(ret, "CreateProcess \"%s\" failed err %lu.\n", path, GetLastError());
 
     /* Messages do not need to be processed to read info. */
-    winetest_wait_child_process(process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    winetest_wait_child_process(&process_info);
 
     sprintf( path, "%s scroll write_process %p", argv0, hMainWnd );
     ret = CreateProcessA( NULL, path, NULL, NULL, FALSE, 0, NULL, NULL, &startup_info, &process_info );
@@ -963,9 +961,7 @@ static void test_cross_process(const char* argv0)
         }
     }
 
-    winetest_wait_child_process(process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    winetest_wait_child_process(&process_info);
 
     DestroyWindow( hScroll );
     DestroyWindow( hMainWnd );

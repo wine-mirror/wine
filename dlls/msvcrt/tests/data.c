@@ -217,7 +217,7 @@ static void test___getmainargs_parent(char *name)
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS, NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
+    wait_child_process(&proc);
 
     _unlink(filepath);
     sprintf(filepath, "%swine_test\\a", tmppath);

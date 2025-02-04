@@ -2003,9 +2003,7 @@ static void test_internet_features(void) {
         sprintf(cmdline, "\"%s\" %s internet_features", argv[0], argv[1]);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "Could not create process: %lu\n", GetLastError());
-        wait_child_process( pi.hProcess );
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        wait_child_process(&pi);
 
         RegDeleteKeyA(HKEY_CURRENT_USER, szFeatureControlKey);
         return;

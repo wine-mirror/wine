@@ -505,5 +505,5 @@ START_TEST(toolhelp)
     test_module(info.dwProcessId, sub_expected_modules, ARRAY_SIZE(sub_expected_modules));
 
     SetEvent(ev2);
-    wait_child_process( info.hProcess );
+    wait_child_process( &info );
 }

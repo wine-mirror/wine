@@ -228,9 +228,7 @@ static void run_process( const char *args )
     ok( CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ),
         "CreateProcess %s failed\n", cmd );
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hProcess );
-    CloseHandle( info.hThread );
+    wait_child_process( &info );
 }
 
 static WNDPROC old_proc;

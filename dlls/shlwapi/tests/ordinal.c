@@ -481,9 +481,7 @@ static void test_alloc_shared(int argc, char **argv)
     ok(ret, "could not create child process error: %lu\n", GetLastError());
     if (ret)
     {
-        wait_child_process(pi.hProcess);
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        wait_child_process(&pi);
 
         p = pSHLockShared(hmem, procid);
         ok(p != NULL,"SHLockShared failed: %lu\n", GetLastError());

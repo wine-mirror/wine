@@ -18629,7 +18629,7 @@ static void launch_test_process(const char *name, const char *test_name)
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
+    wait_child_process(&proc);
 }
 
 START_TEST(uiautomation)

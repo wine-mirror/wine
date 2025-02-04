@@ -93,7 +93,7 @@ extern int winetest_vprintf( const char *msg, va_list args );
 extern int winetest_get_time(void);
 
 extern int winetest_get_mainargs( char*** pargv );
-extern void winetest_wait_child_process( HANDLE process );
+extern void winetest_wait_child_process( const PROCESS_INFORMATION *info );
 
 #ifdef STANDALONE
 #define START_TEST(name) \
@@ -681,14 +681,14 @@ int winetest_get_mainargs( char ***pargv )
     return winetest_argc;
 }
 
-void winetest_wait_child_process( HANDLE process )
+void winetest_wait_child_process( const PROCESS_INFORMATION *info )
 {
     DWORD ret;
 
-    winetest_ok( process != NULL, "No child process handle (CreateProcess failed?)\n" );
-    if (!process) return;
+    winetest_ok( info->hProcess != NULL, "No child process handle (CreateProcess failed?)\n" );
+    if (!info->hProcess) return;
 
-    ret = WaitForSingleObject( process, 30000 );
+    ret = WaitForSingleObject( info->hProcess, 30000 );
     if (ret == WAIT_TIMEOUT)
         winetest_ok( 0, "Timed out waiting for the child process\n" );
     else if (ret != WAIT_OBJECT_0)
@@ -697,13 +697,12 @@ void winetest_wait_child_process( HANDLE process )
     else
     {
         DWORD exit_code;
-        GetExitCodeProcess( process, &exit_code );
+        GetExitCodeProcess( info->hProcess, &exit_code );
         if (exit_code > 255)
         {
-            DWORD pid = GetProcessId( process );
             winetest_print_lock();
             if (winetest_color) winetest_printf( winetest_color_bright_red );
-            winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)pid );
+            winetest_print_location( "unhandled exception %08x in child process %04x\n", (UINT)exit_code, (UINT)info->dwProcessId );
             if (winetest_color) winetest_printf( winetest_color_reset );
             winetest_print_unlock();
             InterlockedIncrement( &winetest_failures );
@@ -715,6 +714,11 @@ void winetest_wait_child_process( HANDLE process )
             winetest_print_unlock();
             while (exit_code-- > 0) InterlockedIncrement( &winetest_failures );
         }
+
+        if (!CloseHandle( info->hProcess ))
+            ok( 0, "failed to close process handle, error %lu\n", GetLastError() );
+        if (!CloseHandle( info->hThread ))
+            ok( 0, "failed to close thread handle, error %lu\n", GetLastError() );
     }
 }
 

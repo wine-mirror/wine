@@ -1722,7 +1722,7 @@ static void test_stdout_handle( STARTUPINFOA *startup, char *cmdline, HANDLE hst
 
     CreateProcessA( NULL, cmdline, NULL, NULL, TRUE,
                     CREATE_DEFAULT_ERROR_MODE | NORMAL_PRIORITY_CLASS, NULL, NULL, startup, &proc );
-    wait_child_process( proc.hProcess );
+    wait_child_process( &proc );
 
     data = read_file( hErrorFile );
     if (expect_stdout)
@@ -2002,7 +2002,7 @@ static void test_invalid_stdin( const char* selfname )
     sprintf(cmdline, "%s file stdin", selfname);
     CreateProcessA(NULL, cmdline, NULL, NULL, TRUE,
             CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS, NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
+    wait_child_process(&proc);
 
     ret = RegCloseKey(key);
     ok(!ret, "RegCloseKey failed: %lx\n", ret);

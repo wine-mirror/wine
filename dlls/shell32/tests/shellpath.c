@@ -1838,7 +1838,7 @@ static void test_NonExistentPath(void)
                 startup.wShowWindow = SW_SHOWNORMAL;
                 CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL,
                  &startup, &info);
-                wait_child_process( info.hProcess );
+                wait_child_process( &info );
 
                 /* restore original values: */
                 trace("Restoring CSIDL_FAVORITES to %s\n", originalPath);

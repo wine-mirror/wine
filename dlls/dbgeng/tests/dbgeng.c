@@ -307,12 +307,7 @@ static void test_attach(void)
     ok(hr == S_OK, "Failed to end session, hr %#lx.\n", hr);
 
     SetEvent(event);
-
-    wait_child_process(info.hProcess);
-
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
-
+    wait_child_process(&info);
     CloseHandle(event);
 
     client->lpVtbl->Release(client);
@@ -473,10 +468,7 @@ static void test_module_information(void)
     ok(hr == S_OK, "Failed to detach, hr %#lx.\n", hr);
 
     SetEvent(event);
-    wait_child_process(info.hProcess);
-
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
     CloseHandle(event);
 
     client->lpVtbl->Release(client);

@@ -465,8 +465,7 @@ static void test_child_process(void)
     SendMessageA(child, WM_USER+1, 0, (LPARAM) cursor);
 
     SendMessageA(child, WM_CLOSE, 0, 0);
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 }
 
 static BOOL color_match(COLORREF a, COLORREF b)

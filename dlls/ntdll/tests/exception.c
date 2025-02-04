@@ -1548,13 +1548,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
-    wait_child_process( pi.hProcess );
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "error %lu\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "error %lu\n", GetLastError());
-
-    return;
+    wait_child_process( &pi );
 }
 
 static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
@@ -4136,11 +4130,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
-    wait_child_process( pi.hProcess );
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "error %lu\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "error %lu\n", GetLastError());
+    wait_child_process( &pi );
 }
 
 static void test_thread_context(void)
@@ -6717,11 +6707,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
-    wait_child_process( pi.hProcess );
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "error %lu\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "error %lu\n", GetLastError());
+    wait_child_process( &pi );
 }
 
 static void test_debug_service(DWORD numexc)
@@ -7884,11 +7870,7 @@ static void test_debugger(DWORD cont_status, BOOL with_WaitForDebugEventEx)
 
     } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
 
-    wait_child_process( pi.hProcess );
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "error %lu\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "error %lu\n", GetLastError());
+    wait_child_process( &pi );
 }
 
 static void test_debug_service(DWORD numexc)
@@ -9568,11 +9550,7 @@ static void subtest_fastfail(unsigned int code)
 
     ok(had_ff || broken(had_se) /* Win7 */, "fast fail did not occur\n");
 
-    wait_child_process( pi.hProcess );
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "error %lu\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "error %lu\n", GetLastError());
+    wait_child_process( &pi );
 
     return;
 }
@@ -10179,10 +10157,7 @@ static void test_suspend_process(void)
 
     SetEvent(event);
 
-    wait_child_process(info.hProcess);
-
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process( &info );
 
     CloseHandle(event);
     CloseHandle(event2);

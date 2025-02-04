@@ -481,9 +481,7 @@ static void run_in_process_( const char *file, int line, char **argv, const char
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 }
 
 #define run_in_desktop( a, b, c ) run_in_desktop_( __FILE__, __LINE__, a, b, c )
@@ -513,9 +511,7 @@ static void run_in_desktop_( const char *file, int line, char **argv,
     ok_(file, line)( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
     if (!ret) return;
 
-    wait_child_process( info.hProcess );
-    CloseHandle( info.hThread );
-    CloseHandle( info.hProcess );
+    wait_child_process( &info );
 
     if (input)
     {
@@ -3162,9 +3158,7 @@ static void test_rawinput(const char* argv0)
     }
 
     SetEvent(process_ready);
-    winetest_wait_child_process(process_info.hProcess);
-    CloseHandle(process_info.hProcess);
-    CloseHandle(process_info.hThread);
+    winetest_wait_child_process(&process_info);
     CloseHandle(process_done);
     CloseHandle(process_start);
     CloseHandle(process_ready);

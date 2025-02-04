@@ -2825,9 +2825,7 @@ static void run_child_process(void)
     sprintf(cmdline, "\"%s\" %s manifest1", argv[0], argv[1]);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
-    wait_child_process( pi.hProcess );
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    wait_child_process( &pi );
     DeleteFileA(path);
 }
 
@@ -4507,10 +4505,7 @@ static void run_child_process_two_dll(int run)
     ret = CreateProcessA(exe, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
-    wait_child_process( pi.hProcess );
-
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    wait_child_process( &pi );
 }
 
 static const detailed_info_t detailed_info3 =

@@ -1764,11 +1764,10 @@ static void child_process(HANDLE pipe)
     CloseHandle(input);
 }
 
-static HANDLE run_child(HANDLE console, HANDLE pipe)
+static void run_child(HANDLE console, HANDLE pipe, PROCESS_INFORMATION *info)
 {
     STARTUPINFOEXA startup = {{ sizeof(startup) }};
     char **argv, cmdline[MAX_PATH];
-    PROCESS_INFORMATION info;
     SIZE_T size;
     BOOL ret;
 
@@ -1781,15 +1780,13 @@ static HANDLE run_child(HANDLE console, HANDLE pipe)
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" %s child %p", argv[0], argv[1], pipe);
     ret = CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, EXTENDED_STARTUPINFO_PRESENT, NULL, NULL,
-                         &startup.StartupInfo, &info);
+                         &startup.StartupInfo, info);
     ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
 
-    CloseHandle(info.hThread);
     HeapFree(GetProcessHeap(), 0, startup.lpAttributeList);
-    return info.hProcess;
 }
 
-static HPCON create_pseudo_console(HANDLE *console_pipe_end, HANDLE *child_process)
+static HPCON create_pseudo_console(HANDLE *console_pipe_end, PROCESS_INFORMATION *process_info)
 {
     SECURITY_ATTRIBUTES sec_attr = { sizeof(sec_attr), NULL, TRUE };
     HANDLE child_pipe_end;
@@ -1823,18 +1820,19 @@ static HPCON create_pseudo_console(HANDLE *console_pipe_end, HANDLE *child_proce
     hres = pCreatePseudoConsole(size, *console_pipe_end, *console_pipe_end, 0, &console);
     ok(hres == S_OK, "CreatePseudoConsole failed: %08lx\n", hres);
 
-    *child_process = run_child(console, child_pipe_end);
+    run_child(console, child_pipe_end, process_info);
     CloseHandle(child_pipe_end);
     return console;
 }
 
 static void test_pseudoconsole(void)
 {
-    HANDLE console_pipe_end, child_process;
+    PROCESS_INFORMATION process_info;
+    HANDLE console_pipe_end;
     BOOL broken_version;
     HPCON console;
 
-    console = create_pseudo_console(&console_pipe_end, &child_process);
+    console = create_pseudo_console(&console_pipe_end, &process_info);
 
     child_string_request(REQ_SET_TITLE, L"test title");
     expect_output_sequence("\x1b[2J");   /* erase display */
@@ -1862,8 +1860,7 @@ static void test_pseudoconsole(void)
     else win_skip("Skipping tty tests on broken Windows version\n");
 
     CloseHandle(child_pipe);
-    wait_child_process(child_process);
-    CloseHandle(child_process);
+    wait_child_process(&process_info);
 
     /* native sometimes clears the screen here */
     if (skip_sequence("\x1b[25l"))

@@ -3046,11 +3046,9 @@ static void test_process_security(void)
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     TEST_GRANTED_ACCESS2( info.hThread, THREAD_ALL_ACCESS_NT4,
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
-    wait_child_process( info.hProcess );
+    wait_child_process( &info );
 
     FreeSid(EveryoneSid);
-    CloseHandle( info.hProcess );
-    CloseHandle( info.hThread );
     CloseHandle( event );
     free(group);
     free(owner);
@@ -7370,9 +7368,7 @@ static void test_token_security_descriptor(void)
     sprintf(buffer, "%s security test_token_sd", myARGV[0]);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess failed with error %lu\n", GetLastError());
-    wait_child_process(info.hProcess);
-    CloseHandle(info.hProcess);
-    CloseHandle(info.hThread);
+    wait_child_process(&info);
 
     LocalFree(acl_child);
     free(sd2);

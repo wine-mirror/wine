@@ -495,9 +495,7 @@ static void test__get_narrow_winmain_command_line(char *path)
     CreateProcessA(path, cmd, NULL, NULL, TRUE,
             CREATE_DEFAULT_ERROR_MODE|NORMAL_PRIORITY_CLASS,
             NULL, NULL, &startup, &proc);
-    wait_child_process(proc.hProcess);
-    CloseHandle(proc.hProcess);
-    CloseHandle(proc.hThread);
+    wait_child_process(&proc);
 }
 
 static void test__sopen_dispatch(void)

@@ -838,9 +838,7 @@ static void run_child_process(void)
     sprintf(cmdline, "\"%s\" %s domain_tests", argv[0], argv[1]);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Failed to spawn child process: %lu\n", GetLastError());
-    wait_child_process(pi.hProcess);
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    wait_child_process(&pi);
 }
 
 typedef struct {
