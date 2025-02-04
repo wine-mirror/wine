@@ -43,6 +43,7 @@ typedef struct MetadataHandler {
     DWORD item_count;
     DWORD persist_options;
     IStream *stream;
+    ULARGE_INTEGER origin;
     CRITICAL_SECTION lock;
 } MetadataHandler;
 
@@ -510,15 +511,20 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
     HRESULT hr = S_OK;
     MetadataItem *new_items=NULL;
     DWORD item_count=0;
+    LARGE_INTEGER move;
 
     TRACE("(%p,%p,%s,%lx)\n", iface, stream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
 
     EnterCriticalSection(&This->lock);
 
+    This->origin.QuadPart = 0;
     if (stream)
     {
-        hr = This->vtable->fnLoad(stream, pguidPreferredVendor, dwPersistOptions,
-                &new_items, &item_count);
+        move.QuadPart = 0;
+        hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, &This->origin);
+        if (SUCCEEDED(hr))
+            hr = This->vtable->fnLoad(stream, pguidPreferredVendor, dwPersistOptions,
+                    &new_items, &item_count);
     }
 
     if (This->stream)
@@ -597,8 +603,11 @@ static HRESULT WINAPI metadatahandler_stream_provider_GetStream(IWICStreamProvid
 
     if (handler->stream)
     {
-        *stream = handler->stream;
-        IStream_AddRef(*stream);
+        if (SUCCEEDED(hr = IStream_Seek(handler->stream, *(LARGE_INTEGER *)&handler->origin, STREAM_SEEK_SET, NULL)))
+        {
+            *stream = handler->stream;
+            IStream_AddRef(*stream);
+        }
     }
     else
     {

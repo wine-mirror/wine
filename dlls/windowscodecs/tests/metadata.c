@@ -5132,7 +5132,6 @@ static void test_metadata_App1(void)
     move.QuadPart = 0;
     hr = IStream_Seek(ifd_stream, move, STREAM_SEEK_CUR, &pos);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(pos.QuadPart == 8, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
 
     hr = CoCreateInstance(&CLSID_WICIfdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
@@ -5159,7 +5158,6 @@ static void test_metadata_App1(void)
     /* GetStream() is what triggers position reset. */
     hr = IStream_Seek(ifd_stream, move, STREAM_SEEK_CUR, &pos);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(pos.QuadPart == 8, "Unexpected position %s.\n", wine_dbgstr_longlong(pos.QuadPart));
 
     hr = IWICComponentFactory_CreateMetadataWriterFromReader(factory, reader2, NULL, &writer);
