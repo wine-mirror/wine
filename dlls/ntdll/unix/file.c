@@ -225,6 +225,7 @@ struct dir_data
     struct file_identity    id;      /* directory file identity */
     struct dir_data_names  *names;   /* directory file names */
     struct dir_data_buffer *buffer;  /* head of data buffers list */
+    UNICODE_STRING          mask;    /* the mask used when creating the cache entry */
 };
 
 static const unsigned int dir_data_buffer_initial_size = 4096;
@@ -565,6 +566,7 @@ static void free_dir_data( struct dir_data *data )
         free( buffer );
     }
     free( data->names );
+    free( data->mask.Buffer );
     free( data );
 }
 
@@ -2632,6 +2634,17 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
         return status;
     }
 
+    if (mask)
+    {
+        data->mask.Length = data->mask.MaximumLength = mask->Length;
+        if (!(data->mask.Buffer = malloc( mask->Length )))
+        {
+            free_dir_data( data );
+            return STATUS_NO_MEMORY;
+        }
+        memcpy(data->mask.Buffer, mask->Buffer, mask->Length);
+    }
+
     /* sort filenames, but not "." and ".." */
     i = 0;
     if (i < data->count && !strcmp( data->names[i].unix_name, "." )) i++;
@@ -2655,16 +2668,33 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
 
 
 /***********************************************************************
+ *           ustring_equal
+ *
+ * Simplified version of RtlEqualUnicodeString that performs only case-sensitive comparisons.
+ */
+static BOOLEAN ustring_equal( const UNICODE_STRING *a, const UNICODE_STRING *b )
+{
+    USHORT length_a = (a ? a->Length : 0);
+    USHORT length_b = (b ? b->Length : 0);
+
+    if (length_a != length_b) return FALSE;
+    if (length_a == 0) return TRUE;
+    return !memcmp(a->Buffer, b->Buffer, a->Length);
+}
+
+
+/***********************************************************************
  *           get_cached_dir_data
  *
  * Retrieve the cached directory data, or initialize it if necessary.
  */
 static unsigned int get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, int fd,
-                                         const UNICODE_STRING *mask )
+                                         const UNICODE_STRING *mask, BOOLEAN restart_scan )
 {
     unsigned int i;
     int entry = -1, free_entries[16];
     unsigned int status;
+    BOOLEAN fresh_handle;
 
     SERVER_START_REQ( get_directory_cache_entry )
     {
@@ -2701,9 +2731,25 @@ static unsigned int get_cached_dir_data( HANDLE handle, struct dir_data **data_r
         dir_data_cache_size = size;
     }
 
-    if (!dir_data_cache[entry]) status = init_cached_dir_data( &dir_data_cache[entry], fd, mask );
+    fresh_handle = !dir_data_cache[entry];
+
+    if (dir_data_cache[entry] && restart_scan && mask &&
+        !ustring_equal(&dir_data_cache[entry]->mask, mask))
+    {
+        TRACE( "invalidating existing cache entry for handle %p, old mask: \"%s\", new mask: \"%s\"\n",
+               handle, debugstr_us(&(dir_data_cache[entry]->mask)), debugstr_us(mask));
+        free_dir_data( dir_data_cache[entry] );
+        dir_data_cache[entry] = NULL;
+    }
+
+    if (!dir_data_cache[entry])
+    {
+        status = init_cached_dir_data( &dir_data_cache[entry], fd, mask );
+        if (status == STATUS_NO_SUCH_FILE && !fresh_handle) status = STATUS_NO_MORE_FILES;
+    }
 
     *data_ret = dir_data_cache[entry];
+    if (restart_scan) (*data_ret)->pos = 0;
     return status;
 }
 
@@ -2766,17 +2812,16 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     }
 
     io->Information = 0;
+    if (mask && mask->Length == 0) mask = NULL;
 
     mutex_lock( &dir_mutex );
 
     cwd = open( ".", O_RDONLY );
     if (fchdir( fd ) != -1)
     {
-        if (!(status = get_cached_dir_data( handle, &data, fd, mask )))
+        if (!(status = get_cached_dir_data( handle, &data, fd, mask, restart_scan )))
         {
             union file_directory_info *last_info = NULL;
-
-            if (restart_scan) data->pos = 0;
 
             while (!status && data->pos < data->count)
             {
@@ -2787,12 +2832,12 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
             if (!last_info) status = STATUS_NO_MORE_FILES;
             else if (status == STATUS_MORE_ENTRIES) status = STATUS_SUCCESS;
-
-            io->Status = status;
         }
         if (cwd == -1 || fchdir( cwd ) == -1) chdir( "/" );
     }
     else status = errno_to_status( errno );
+
+    if (status != STATUS_NO_SUCH_FILE) io->Status = status;
 
     mutex_unlock( &dir_mutex );
 

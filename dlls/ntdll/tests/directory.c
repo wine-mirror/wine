@@ -1031,7 +1031,6 @@ static BOOL test_NtQueryDirectoryFile_mask(HANDLE handle, BOOL restart_scan, UNI
                                     FileDirectoryInformation, TRUE, mask, restart_scan );
     if (validate_only && status != expected_status) return FALSE;
 
-    todo_wine_if(status != expected_status)
     ok( status == expected_status, "unexpected status : 0x%lx Test settings: file mask: '%s', restart: %d, expected status: 0x%lx\n",
             status, wine_dbgstr_wn(mask_value, mask_len), restart_scan, expected_status );
 
@@ -1043,9 +1042,7 @@ static BOOL test_NtQueryDirectoryFile_mask(HANDLE handle, BOOL restart_scan, UNI
         match_len = match->Length / sizeof(WCHAR);
         match_value = match->Buffer;
 
-        todo_wine_if(name_len != match_len)
         ok( name_len == match_len, "unexpected filename length %lu, expected %lu\n", name_len, match_len );
-        todo_wine_if(name_len != match_len)
         ok( !memcmp(name, match_value, match_len * sizeof(WCHAR)), "unexpected filename %s, expected %s\n",
             wine_dbgstr_wn(name, name_len), wine_dbgstr_wn(match_value, match_len) );
     }
