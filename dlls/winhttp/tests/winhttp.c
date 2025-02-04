@@ -2202,7 +2202,7 @@ static const char okmsg[] =
 "\r\n";
 
 static const char okmsg_length0[] =
-"HTTP/1.1 200 OK\r\n"
+"HTTP/1.1  200  OK\r\n"
 "Server: winetest\r\n"
 "Content-length: 0\r\n"
 "\r\n";
@@ -2296,6 +2296,10 @@ static const char badreplyheadermsg[] =
 "Server: winetest\r\n"
 "SpaceAfterHdr  :   bad\r\n"
 "OkHdr: ok\r\n"
+"\r\n";
+
+static const char nostatustext[] =
+"HTTP/1.1 200\r\n"
 "\r\n";
 
 static const char proxy_pac[] =
@@ -2607,6 +2611,12 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "GET /notcached"))
         {
             send(c, okmsg, sizeof okmsg - 1, 0);
+            r = server_receive_request(c, buffer, sizeof(buffer));
+            ok(!r, "got %d, buffer[0] %d.\n", r, buffer[0] );
+        }
+        if (strstr(buffer, "GET /nostatustext"))
+        {
+            send(c, nostatustext, sizeof nostatustext - 1, 0);
             r = server_receive_request(c, buffer, sizeof(buffer));
             ok(!r, "got %d, buffer[0] %d.\n", r, buffer[0] );
         }
@@ -3128,7 +3138,8 @@ static void test_large_data_authentication(int port)
 static void test_no_headers(int port)
 {
     HINTERNET ses, con, req;
-    DWORD error;
+    DWORD error, size;
+    WCHAR buf[10];
     BOOL ret;
 
     ses = WinHttpOpen(L"winetest", WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
@@ -3154,6 +3165,23 @@ static void test_no_headers(int port)
         ok(!ret, "expected failure\n");
         ok(error == ERROR_WINHTTP_INVALID_SERVER_RESPONSE, "got %lu\n", error);
     }
+
+    WinHttpCloseHandle(req);
+
+    req = WinHttpOpenRequest(con, NULL, L"/nostatustext", NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %lu\n", GetLastError());
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "got %lu\n", GetLastError());
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "got %lu\n", GetLastError());
+
+    memset(buf, 0xcc, sizeof(buf));
+    size = sizeof(buf);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_TEXT, NULL, buf, &size, NULL);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(!buf[0], "got %x\n", buf[0]);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);

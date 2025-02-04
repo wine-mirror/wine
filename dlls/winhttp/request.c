@@ -2622,9 +2622,9 @@ static DWORD read_reply( struct request *request )
 {
     char buffer[MAX_REPLY_LEN];
     DWORD ret, buflen, len, offset, crlf_len = 2; /* lstrlenW(crlf) */
-    char *status_code, *status_text;
+    const char *status_text, *ptr;
     WCHAR *versionW, *status_textW, *raw_headers;
-    WCHAR status_codeW[4]; /* sizeof("nnn") */
+    WCHAR status_code[4]; /* sizeof("nnn") */
 
     if (!request->netconn) return ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
 
@@ -2634,34 +2634,35 @@ static DWORD read_reply( struct request *request )
         if ((ret = read_line( request, buffer, &buflen ))) return ret;
 
         /* first line should look like 'HTTP/1.x nnn OK' where nnn is the status code */
-        if (!(status_code = strchr( buffer, ' ' ))) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-        status_code++;
-        if (!(status_text = strchr( status_code, ' ' ))) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-        if ((len = status_text - status_code) != sizeof("nnn") - 1) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
-        status_text++;
+        if (!(ptr = strchr( buffer, ' ' ))) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        len = ptr - buffer;
 
-        TRACE("version [%s] status code [%s] status text [%s]\n",
-              debugstr_an(buffer, status_code - buffer - 1),
-              debugstr_an(status_code, len),
-              debugstr_a(status_text));
+        while (*ptr == ' ') ptr++;
+        if (!isdigit( ptr[0] ) || !isdigit( ptr[1] ) || !isdigit( ptr[2] )) return ERROR_WINHTTP_INVALID_SERVER_RESPONSE;
+        status_code[0] = *ptr++;
+        status_code[1] = *ptr++;
+        status_code[2] = *ptr++;
+        status_code[3] = 0;
 
-    } while (!memcmp( status_code, "100", len )); /* ignore "100 Continue" responses */
+        while (*ptr == ' ') ptr++;
+        status_text = ptr;
 
-    /*  we rely on the fact that the protocol is ascii */
-    MultiByteToWideChar( CP_ACP, 0, status_code, len, status_codeW, len );
-    status_codeW[len] = 0;
-    if ((ret = process_header( request, L"Status", status_codeW,
+        TRACE( "version [%s] status code [%s] status text [%s]\n", debugstr_an(buffer, len),
+               debugstr_w(status_code), debugstr_a(status_text) );
+
+    } while (!wcscmp( status_code, L"100" )); /* ignore "100 Continue" responses */
+
+    if ((ret = process_header( request, L"Status", status_code,
                                WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE, FALSE ))) return ret;
 
-    len = status_code - buffer;
-    if (!(versionW = malloc( len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
-    MultiByteToWideChar( CP_ACP, 0, buffer, len - 1, versionW, len -1 );
-    versionW[len - 1] = 0;
+    if (!(versionW = malloc( (len + 1) * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
+    MultiByteToWideChar( CP_ACP, 0, buffer, len, versionW, len );
+    versionW[len] = 0;
 
     free( request->version );
     request->version = versionW;
 
-    len = buflen - (status_text - buffer);
+    len = strlen( status_text ) + 1;
     if (!(status_textW = malloc( len * sizeof(WCHAR) ))) return ERROR_OUTOFMEMORY;
     MultiByteToWideChar( CP_ACP, 0, status_text, len, status_textW, len );
 
