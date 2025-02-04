@@ -211,6 +211,9 @@ food2
 food21
 foo7@space@@space@@or_broken@not supported@space@
 foo@or_broken@not supported
+--- right-to-left redirection
+good
+foo
 --- redirect at beginning of line
 foo
 foo1

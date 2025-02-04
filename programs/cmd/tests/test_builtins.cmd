@@ -226,6 +226,11 @@ del foo
 echo foo> foo
 echo foo7 7>> foo || (echo not supported & del foo)
 if exist foo (type foo) else echo not supported
+echo --- right-to-left redirection
+1>foo-out 2>foo-err 1<&2 echo foo
+type foo-out 2>NUL || echo good
+type foo-err 2>NUL || echo bad
+erase /q foo-out foo-err
 echo --- redirect at beginning of line
 >foo (echo foo)
 type foo
