@@ -6362,11 +6362,11 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
     for (; i < WINED3D_MAX_FFP_TEXTURES; ++i)
         memset(&settings->op[i], 0xff, sizeof(settings->op[i]));
 
-    if (!state->render_states[WINED3D_RS_FOGENABLE])
+    if (!state->extra_ps_args.fog_enable)
     {
         settings->fog = WINED3D_FFP_PS_FOG_OFF;
     }
-    else if (state->render_states[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
+    else if (state->extra_ps_args.fog_mode == WINED3D_FOG_NONE)
     {
         if (use_vs(state) || state->vertex_declaration->position_transformed)
         {
@@ -6391,7 +6391,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
     }
     else
     {
-        switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
+        switch (state->extra_ps_args.fog_mode)
         {
             case WINED3D_FOG_LINEAR:
                 settings->fog = WINED3D_FFP_PS_FOG_LINEAR;
@@ -6401,6 +6401,9 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
                 break;
             case WINED3D_FOG_EXP2:
                 settings->fog = WINED3D_FFP_PS_FOG_EXP2;
+                break;
+            case WINED3D_FOG_NONE:
+                /* unreachable */
                 break;
         }
     }

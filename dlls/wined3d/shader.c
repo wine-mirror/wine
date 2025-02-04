@@ -3064,9 +3064,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     else
     {
         args->vp_mode = WINED3D_VP_MODE_SHADER;
-        if (state->render_states[WINED3D_RS_FOGENABLE])
+        if (state->extra_ps_args.fog_enable)
         {
-            switch (state->render_states[WINED3D_RS_FOGTABLEMODE])
+            switch (state->extra_ps_args.fog_mode)
             {
                 case WINED3D_FOG_NONE:
                 case WINED3D_FOG_LINEAR: args->fog = WINED3D_FFP_PS_FOG_LINEAR; break;

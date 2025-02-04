@@ -1670,7 +1670,6 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_COLORVERTEX:
         case WINED3D_RS_DIFFUSEMATERIALSOURCE:
         case WINED3D_RS_EMISSIVEMATERIALSOURCE:
-        case WINED3D_RS_FOGENABLE:
         case WINED3D_RS_LIGHTING:
         case WINED3D_RS_LOCALVIEWER:
         case WINED3D_RS_NORMALIZENORMALS:
@@ -1704,7 +1703,6 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             stateblock->changed.fog_constants = 1;
             break;
 
-        case WINED3D_RS_FOGTABLEMODE:
         case WINED3D_RS_FOGVERTEXMODE:
             stateblock->changed.ffp_vs_settings = 1;
             stateblock->changed.fog_constants = 1;
@@ -1712,6 +1710,17 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
 
         case WINED3D_RS_POINTSPRITEENABLE:
         case WINED3D_RS_SHADEMODE:
+            stateblock->changed.extra_ps_args = 1;
+            break;
+
+        case WINED3D_RS_FOGENABLE:
+            stateblock->changed.ffp_vs_settings = 1;
+            stateblock->changed.extra_ps_args = 1;
+            break;
+
+        case WINED3D_RS_FOGTABLEMODE:
+            stateblock->changed.ffp_vs_settings = 1;
+            stateblock->changed.fog_constants = 1;
             stateblock->changed.extra_ps_args = 1;
             break;
 
@@ -3954,6 +3963,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         args.point_sprite = state->rs[WINED3D_RS_POINTSPRITEENABLE];
         args.flat_shading = state->rs[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+        args.fog_enable = state->rs[WINED3D_RS_FOGENABLE];
+        args.fog_mode = state->rs[WINED3D_RS_FOGTABLEMODE];
         wined3d_device_context_emit_set_extra_ps_args(context, &args);
     }
 

@@ -2877,6 +2877,8 @@ struct wined3d_extra_ps_args
 {
     bool point_sprite;
     bool flat_shading;
+    bool fog_enable;
+    enum wined3d_fog_mode fog_mode;
 };
 
 struct wined3d_blend_state
