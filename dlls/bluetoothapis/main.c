@@ -359,6 +359,15 @@ BOOL WINAPI BluetoothIsDiscoverable( HANDLE radio )
 }
 
 /*********************************************************************
+ *  BluetoothEnableDiscovery
+ */
+BOOL WINAPI BluetoothEnableDiscovery( HANDLE radio, BOOL enabled )
+{
+    FIXME("(%p %d): stub!\n", radio, enabled);
+    return FALSE;
+}
+
+/*********************************************************************
  *  BluetoothFindNextDevice
  */
 BOOL WINAPI BluetoothFindNextDevice(HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVICE_INFO *info)

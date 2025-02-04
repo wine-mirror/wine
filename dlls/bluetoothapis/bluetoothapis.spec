@@ -1,6 +1,6 @@
 @ stub BluetoothAddressToString
 @ stub BluetoothDisconnectDevice
-@ stub BluetoothEnableDiscovery
+@ stdcall BluetoothEnableDiscovery(ptr long)
 @ stdcall BluetoothEnableIncomingConnections(ptr long)
 @ stub BluetoothEnumerateInstalledServices
 @ stub BluetoothEnumerateInstalledServicesEx
