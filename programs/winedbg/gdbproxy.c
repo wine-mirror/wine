@@ -1631,9 +1631,6 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
         packet_reply_add(gdbctx, "O");
         packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
-
-        if (addr + mbi.RegionSize < addr) /* wrap around ? */
-            break;
         addr += mbi.RegionSize;
     }
     packet_reply(gdbctx, "OK");

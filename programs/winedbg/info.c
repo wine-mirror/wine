@@ -913,8 +913,6 @@ void info_win32_virtual(DWORD pid)
         }
         dbg_printf("%0*Ix %0*Ix %s %s %s\n",
                    ADDRWIDTH, (DWORD_PTR)addr, ADDRWIDTH, (DWORD_PTR)addr + mbi.RegionSize - 1, state, type, prot);
-        if (addr + mbi.RegionSize < addr) /* wrap around ? */
-            break;
         addr += mbi.RegionSize;
     }
     if (pid != dbg_curr_pid) CloseHandle(hProc);
