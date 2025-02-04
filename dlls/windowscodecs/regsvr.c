@@ -828,8 +828,8 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
 
         if (list->specversion) {
 	    res = RegSetValueExA(clsid_key, specversion_valuename, 0, REG_SZ,
-                                 (const BYTE*)list->version,
-				 strlen(list->version) + 1);
+                                 (const BYTE*)list->specversion,
+				 strlen(list->specversion) + 1);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
 
