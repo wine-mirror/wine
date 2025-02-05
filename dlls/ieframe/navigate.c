@@ -678,8 +678,6 @@ static BOOL try_application_url(LPCWSTR url)
     DWORD res, type;
     HRESULT hres;
 
-    static const WCHAR wszURLProtocol[] = {'U','R','L',' ','P','r','o','t','o','c','o','l',0};
-
     hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, app, ARRAY_SIZE(app), NULL, 0);
     if(FAILED(hres))
         return FALSE;
@@ -688,7 +686,7 @@ static BOOL try_application_url(LPCWSTR url)
     if(res != ERROR_SUCCESS)
         return FALSE;
 
-    res = RegQueryValueExW(hkey, wszURLProtocol, NULL, &type, NULL, NULL);
+    res = RegQueryValueExW(hkey, L"URL Protocol", NULL, &type, NULL, NULL);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS || type != REG_SZ)
         return FALSE;
@@ -1102,22 +1100,16 @@ HRESULT go_home(DocHost *This)
     HKEY hkey;
     DWORD res, type, size;
     WCHAR wszPageName[MAX_PATH];
-    static const WCHAR wszAboutBlank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-    static const WCHAR wszStartPage[] = {'S','t','a','r','t',' ','P','a','g','e',0};
-    static const WCHAR wszSubKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                      'M','i','c','r','o','s','o','f','t','\\',
-                                      'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
-                                      'M','a','i','n',0};
 
-    res = RegOpenKeyW(HKEY_CURRENT_USER, wszSubKey, &hkey);
+    res = RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Internet Explorer\\Main", &hkey);
     if (res != ERROR_SUCCESS)
-        return navigate_url(This, wszAboutBlank, NULL, NULL, NULL, NULL);
+        return navigate_url(This, L"about:blank", NULL, NULL, NULL, NULL);
 
     size = sizeof(wszPageName);
-    res = RegQueryValueExW(hkey, wszStartPage, NULL, &type, (LPBYTE)wszPageName, &size);
+    res = RegQueryValueExW(hkey, L"Start Page", NULL, &type, (LPBYTE)wszPageName, &size);
     RegCloseKey(hkey);
     if (res != ERROR_SUCCESS || type != REG_SZ)
-        return navigate_url(This, wszAboutBlank, NULL, NULL, NULL, NULL);
+        return navigate_url(This, L"about:blank", NULL, NULL, NULL, NULL);
 
     return navigate_url(This, wszPageName, NULL, NULL, NULL, NULL);
 }

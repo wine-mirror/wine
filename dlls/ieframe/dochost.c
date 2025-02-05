@@ -365,13 +365,11 @@ static LRESULT WINAPI doc_view_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM l
 {
     DocHost *This;
 
-    static const WCHAR wszTHIS[] = {'T','H','I','S',0};
-
     if(msg == WM_CREATE) {
         This = *(DocHost**)lParam;
-        SetPropW(hwnd, wszTHIS, This);
+        SetPropW(hwnd, L"THIS", This);
     }else {
-        This = GetPropW(hwnd, wszTHIS);
+        This = GetPropW(hwnd, L"THIS");
     }
 
     switch(msg) {
@@ -485,9 +483,6 @@ void create_doc_view_hwnd(DocHost *This)
 {
     RECT rect;
 
-    static const WCHAR wszShell_DocObject_View[] =
-        {'S','h','e','l','l',' ','D','o','c','O','b','j','e','c','t',' ','V','i','e','w',0};
-
     if(!doc_view_atom) {
         static WNDCLASSEXW wndclass = {
             sizeof(wndclass),
@@ -495,7 +490,7 @@ void create_doc_view_hwnd(DocHost *This)
             doc_view_proc,
             0, 0 /* native uses 4*/, NULL, NULL, NULL,
             (HBRUSH)(COLOR_WINDOW + 1), NULL,
-            wszShell_DocObject_View,
+            L"Shell DocObject View",
             NULL
         };
 
@@ -505,8 +500,8 @@ void create_doc_view_hwnd(DocHost *This)
     }
 
     This->container_vtbl->get_docobj_rect(This, &rect);
-    This->hwnd = CreateWindowExW(0, wszShell_DocObject_View,
-         wszShell_DocObject_View,
+    This->hwnd = CreateWindowExW(0, L"Shell DocObject View",
+         L"Shell DocObject View",
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
          rect.left, rect.top, rect.right, rect.bottom, This->frame_hwnd,
          NULL, ieframe_instance, This);
