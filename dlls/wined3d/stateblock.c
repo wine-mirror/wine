@@ -326,6 +326,7 @@ void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *
     states->ffp_ps_settings = 1;
     states->rasterizer_state = 1;
     states->position_transformed = 1;
+    states->bumpenv_constants = 1;
 
     list_init(&stateblock->changed.changed_lights);
     RB_FOR_EACH_ENTRY(light, lights_tree, struct wined3d_light_info, entry)
