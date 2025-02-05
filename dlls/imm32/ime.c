@@ -205,7 +205,11 @@ static void ime_ui_paint( HIMC himc, HWND hwnd )
     WCHAR *str;
     UINT len;
 
-    if (!(ctx = ImmLockIMC( himc ))) return;
+    if (!(ctx = ImmLockIMC( himc )))
+    {
+        ValidateRect( hwnd, NULL );
+        return;
+    }
 
     hdc = BeginPaint( hwnd, &ps );
 
