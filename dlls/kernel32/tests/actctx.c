@@ -3868,9 +3868,7 @@ static void test_manifest_lang(void)
     dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     dll.handle_context = CreateActCtxA(&dll.context);
-    todo_wine
     ok( dll.handle_context == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "wrong error %ld\n", GetLastError() );
 
     clean_sxs_info( &dll );
@@ -3886,7 +3884,6 @@ static void test_manifest_lang(void)
     dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     dll.handle_context = CreateActCtxA(&dll.context);
-    todo_wine
     ok( dll.handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError() );
 
     clean_sxs_info( &dll );
@@ -3914,9 +3911,7 @@ static void test_manifest_lang(void)
     dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     dll.handle_context = CreateActCtxA(&dll.context);
-    todo_wine
     ok( dll.handle_context == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "wrong error %ld\n", GetLastError() );
 
     clean_sxs_info( &dll );
@@ -3945,7 +3940,6 @@ static void test_manifest_lang(void)
     dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     dll.handle_context = CreateActCtxA(&dll.context);
-    todo_wine
     ok( dll.handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError() );
 
     clean_sxs_info( &dll );

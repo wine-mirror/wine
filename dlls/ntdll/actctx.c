@@ -3311,30 +3311,69 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
     return io.Status;
 }
 
+static NTSTATUS open_manifest_file( struct actctx_loader *acl, struct assembly_identity *ai,
+                                    const WCHAR *lang, const WCHAR *directory, WCHAR *buffer, DWORD len )
+{
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+    HANDLE file;
+    WCHAR *p = buffer + wcslen(buffer);
+
+    nameW.Buffer = NULL;
+    if (*lang) p += swprintf( p, len - (p - buffer), L"%s\\", lang );
+
+    swprintf( p, len - (p - buffer), L"%s.dll", ai->name );
+    if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
+    {
+        status = open_nt_file( &file, &nameW );
+        if (!status)
+        {
+            status = get_manifest_in_pe_file( acl, ai, nameW.Buffer, directory, FALSE, file, NULL, 0 );
+            NtClose( file );
+            if (status == STATUS_SUCCESS) goto done;
+        }
+        RtlFreeUnicodeString( &nameW );
+    }
+
+    swprintf( p, len - (p - buffer), L"%s.manifest", ai->name );
+    if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
+    {
+        status = open_nt_file( &file, &nameW );
+        if (!status)
+        {
+            status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, directory, FALSE, file );
+            NtClose( file );
+            goto done;
+        }
+        RtlFreeUnicodeString( &nameW );
+    }
+    status = STATUS_SXS_ASSEMBLY_NOT_FOUND;
+done:
+    RtlFreeUnicodeString( &nameW );
+    return status;
+}
+
 static NTSTATUS lookup_assembly(struct actctx_loader* acl,
                                 struct assembly_identity* ai)
 {
-    unsigned int i;
     WCHAR *buffer, *p, *directory;
+    const WCHAR *lang = ai->language;
     NTSTATUS status;
-    UNICODE_STRING nameW;
-    HANDLE file;
-    DWORD len;
+    DWORD len, total;
 
-    TRACE( "looking for name=%s version=%s arch=%s\n",
-           debugstr_w(ai->name), debugstr_version(&ai->version), debugstr_w(ai->arch) );
+    TRACE( "looking for name=%s version=%s arch=%s lang=%s\n",
+           debugstr_w(ai->name), debugstr_version(&ai->version),
+           debugstr_w(ai->arch), debugstr_w(ai->language) );
 
     if ((status = lookup_winsxs(acl, ai)) != STATUS_NO_SUCH_FILE) return status;
 
-    /* FIXME: add support for language specific lookup */
+    if (!lang || !wcsicmp( lang, L"neutral" ) || !wcscmp( lang, L"*")) lang = L"";
 
     len = max(RtlGetFullPathName_U(acl->actctx->assemblies->manifest.info, 0, NULL, NULL) / sizeof(WCHAR),
         wcslen(acl->actctx->appdir.info));
+    total = len + 2 * wcslen(ai->name) + wcslen(lang) + 12;
 
-    nameW.Buffer = NULL;
-    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0,
-                                    (len + 2 * wcslen(ai->name) + 2) * sizeof(WCHAR) + sizeof(L".manifest") )))
-        return STATUS_NO_MEMORY;
+    if (!(buffer = RtlAllocateHeap( GetProcessHeap(), 0, total * sizeof(WCHAR) ))) return STATUS_NO_MEMORY;
 
     if (!(directory = build_assembly_dir( ai )))
     {
@@ -3352,47 +3391,25 @@ static NTSTATUS lookup_assembly(struct actctx_loader* acl,
      */
     wcscpy( buffer, acl->actctx->appdir.info );
     p = buffer + wcslen(buffer);
-    for (i = 0; i < 4; i++)
+
+    status = open_manifest_file( acl, ai, lang, directory, buffer, total );
+    if (status != STATUS_SXS_ASSEMBLY_NOT_FOUND) goto done;
+
+    swprintf( buffer, total, L"%s%s\\", acl->actctx->appdir.info, ai->name );
+    status = open_manifest_file( acl, ai, lang, directory, buffer, total );
+    if (status != STATUS_SXS_ASSEMBLY_NOT_FOUND) goto done;
+
+    if (RtlGetFullPathName_U( acl->actctx->assemblies->manifest.info, len * sizeof(WCHAR), buffer, &p ))
     {
-        if (i == 2)
-        {
-            struct assembly *assembly = acl->actctx->assemblies;
-            if (!RtlGetFullPathName_U(assembly->manifest.info, len * sizeof(WCHAR), buffer, &p)) break;
-        }
-        else *p++ = '\\';
+        *p = 0;
+        status = open_manifest_file( acl, ai, lang, directory, buffer, total );
+        if (status != STATUS_SXS_ASSEMBLY_NOT_FOUND) goto done;
 
-        wcscpy( p, ai->name );
-        p += wcslen(p);
-
-        wcscpy( p, L".dll" );
-        if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
-        {
-            status = open_nt_file( &file, &nameW );
-            if (!status)
-            {
-                status = get_manifest_in_pe_file( acl, ai, nameW.Buffer, directory, FALSE, file, NULL, 0 );
-                NtClose( file );
-                if (status == STATUS_SUCCESS)
-                    break;
-            }
-            RtlFreeUnicodeString( &nameW );
-        }
-
-        wcscpy( p, L".manifest" );
-        if (RtlDosPathNameToNtPathName_U( buffer, &nameW, NULL, NULL ))
-        {
-            status = open_nt_file( &file, &nameW );
-            if (!status)
-            {
-                status = get_manifest_in_manifest_file( acl, ai, nameW.Buffer, directory, FALSE, file );
-                NtClose( file );
-                break;
-            }
-            RtlFreeUnicodeString( &nameW );
-        }
-        status = STATUS_SXS_ASSEMBLY_NOT_FOUND;
+        swprintf( p, total - (p - buffer), L"%s\\", ai->name );
+        status = open_manifest_file( acl, ai, lang, directory, buffer, total );
     }
-    RtlFreeUnicodeString( &nameW );
+
+done:
     RtlFreeHeap( GetProcessHeap(), 0, directory );
     RtlFreeHeap( GetProcessHeap(), 0, buffer );
     return status;
