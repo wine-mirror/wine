@@ -2880,6 +2880,9 @@ struct wined3d_extra_ps_args
     bool fog_enable;
     enum wined3d_fog_mode fog_mode;
     enum wined3d_cmp_func alpha_func;
+    uint32_t texcoord_index[WINED3D_MAX_FFP_TEXTURES];
+    /* These flags are only relevant to 1.1-1.3, which only allow 4 textures. */
+    uint32_t texture_transform_flags[4];
 };
 
 struct wined3d_blend_state

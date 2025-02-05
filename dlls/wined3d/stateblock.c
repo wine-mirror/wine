@@ -1781,6 +1781,7 @@ void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock 
         case WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS:
             stateblock->changed.texture_matrices = 1;
             stateblock->changed.ffp_ps_settings = 1;
+            stateblock->changed.extra_ps_args = 1;
             break;
 
         case WINED3D_TSS_ALPHA_ARG0:
@@ -3970,6 +3971,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         args.fog_enable = state->rs[WINED3D_RS_FOGENABLE];
         args.fog_mode = state->rs[WINED3D_RS_FOGTABLEMODE];
         args.alpha_func = state->rs[WINED3D_RS_ALPHATESTENABLE] ? state->rs[WINED3D_RS_ALPHAFUNC] : WINED3D_CMP_ALWAYS;
+        for (unsigned int i = 0; i < 4; ++i)
+        {
+            args.texture_transform_flags[i] = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
+            args.texcoord_index[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
+        }
         wined3d_device_context_emit_set_extra_ps_args(context, &args);
     }
 
