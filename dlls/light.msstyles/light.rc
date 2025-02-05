@@ -122,7 +122,7 @@ BLUE_INI TEXTFILE
 "InfoText = 0 0 0\r\n"
 "InfoBk = 255 255 255\r\n"
 "ButtonAlternateFace = 255 255 255\r\n"
-"HotTracking = 224 224 224\r\n"
+"HotTracking = 48 150 250\r\n"
 "GradientActiveCaption = 50 150 250\r\n"
 "GradientInactiveCaption = 128 128 128\r\n"
 "MenuHilight = 48 150 250\r\n"
