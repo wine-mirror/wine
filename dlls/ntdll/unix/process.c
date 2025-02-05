@@ -1456,19 +1456,22 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     case ProcessImageFileNameWin32:
         SERVER_START_REQ( get_process_image_name )
         {
+            const unsigned int min_size = sizeof(UNICODE_STRING) + sizeof(WCHAR);
             UNICODE_STRING *str = info;
 
             req->handle = wine_server_obj_handle( handle );
             req->win32  = (class == ProcessImageFileNameWin32);
             wine_server_set_reply( req, str ? str + 1 : NULL,
-                                   size > sizeof(UNICODE_STRING) ? size - sizeof(UNICODE_STRING) : 0 );
+                                   size > min_size ? size - min_size : 0 );
             ret = wine_server_call( req );
             if (ret == STATUS_BUFFER_TOO_SMALL) ret = STATUS_INFO_LENGTH_MISMATCH;
-            len = sizeof(UNICODE_STRING) + reply->len;
+            len = min_size + reply->len;
             if (ret == STATUS_SUCCESS)
             {
-                str->MaximumLength = str->Length = reply->len;
+                str->Length = reply->len;
+                str->MaximumLength = str->Length + sizeof(WCHAR);
                 str->Buffer = (PWSTR)(str + 1);
+                str->Buffer[str->Length / sizeof(WCHAR)] = 0;
             }
         }
         SERVER_END_REQ;
