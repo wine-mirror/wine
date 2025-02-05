@@ -473,6 +473,60 @@ void WINAPI RtlDeleteNoSplay(RTL_SPLAY_LINKS *links, RTL_SPLAY_LINKS **root)
 }
 
 /******************************************************************************
+ *  RtlDelete           [NTDLL.@]
+ */
+RTL_SPLAY_LINKS * WINAPI RtlDelete(RTL_SPLAY_LINKS *links)
+{
+    RTL_SPLAY_LINKS *root, *to_splay;
+
+    TRACE("(%p)\n", links);
+
+    if (RtlIsRoot(links) && !RtlLeftChild(links) && !RtlRightChild(links))
+    {
+        return NULL;
+    }
+    else if (!links->LeftChild)
+    {
+        rtl_splay_replace(links, links->RightChild, &root);
+        if (RtlIsRoot(links))
+            return links->RightChild;
+
+        to_splay = links->Parent;
+    }
+    else if (!links->RightChild)
+    {
+        rtl_splay_replace(links, links->LeftChild, &root);
+        if (RtlIsRoot(links))
+            return links->LeftChild;
+
+        to_splay = links->Parent;
+    }
+    else
+    {
+        RTL_SPLAY_LINKS *predecessor = RtlSubtreePredecessor(links);
+        if (predecessor->Parent != links)
+        {
+            rtl_splay_replace(predecessor, predecessor->LeftChild, &root);
+            RtlInsertAsLeftChild(predecessor, links->LeftChild);
+            /* Delete operation first swap the value of node to delete and that of the predecessor
+             * and then delete the predecessor instead. Finally, the parent of the actual deleted
+             * node, which is the predecessor, is splayed afterwards */
+            to_splay = predecessor->Parent;
+        }
+        else
+        {
+            /* links is the parent of predecessor. So after swapping, the parent of links is in
+             * fact the predecessor. So predecessor gets splayed */
+            to_splay = predecessor;
+        }
+        rtl_splay_replace(links, predecessor, &root);
+        RtlInsertAsRightChild(predecessor, links->RightChild);
+    }
+
+    return RtlSplay(to_splay);
+}
+
+/******************************************************************************
  *  RtlInitializeGenericTable           [NTDLL.@]
  */
 void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COMPARE_ROUTINE compare,

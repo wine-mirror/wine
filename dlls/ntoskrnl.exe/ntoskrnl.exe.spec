@@ -1051,7 +1051,7 @@
 @ stdcall RtlDecompressBuffer(long ptr long ptr long ptr)
 @ stub RtlDecompressChunks
 @ stdcall RtlDecompressFragment(long ptr long ptr long long ptr ptr)
-@ stub RtlDelete
+@ stdcall RtlDelete(ptr)
 @ stdcall RtlDeleteAce(ptr long)
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)
 @ stub RtlDeleteElementGenericTable
