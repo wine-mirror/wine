@@ -534,11 +534,26 @@ static const char two_dll_manifest_dll[] =
 "  <file name=\"sxs_dll.dll\"></file>"
 "</assembly>";
 
+static const char two_dll_manifest_dll_fr[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v3\" manifestVersion=\"1.0\">"
+"  <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\" language=\"fr-FR\"/>"
+"  <file name=\"sxs_dll.dll\"></file>"
+"</assembly>";
+
 static const char two_dll_manifest_exe[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "  <dependency>"
 "    <dependentAssembly>"
 "      <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\" language=\"*\"/>"
+"    </dependentAssembly>"
+"  </dependency>"
+"</assembly>";
+
+static const char two_dll_manifest_exe_fr[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"  <dependency>"
+"    <dependentAssembly>"
+"      <assemblyIdentity type=\"win32\" name=\"sxs_dll\" version=\"1.0.0.0\" processorArchitecture=\"x86\" publicKeyToken=\"0000000000000000\" language=\"fr-FR\"/>"
 "    </dependentAssembly>"
 "  </dependency>"
 "</assembly>";
@@ -3536,6 +3551,7 @@ static void test_settings(void)
 typedef struct
 {
     char path_tmp[MAX_PATH];
+    char path_lang[MAX_PATH];
     char path_dll[MAX_PATH + 11];
     char path_manifest_exe[MAX_PATH + 12];
     char path_manifest_dll[MAX_PATH + 16];
@@ -3546,24 +3562,35 @@ typedef struct
     void (WINAPI *get_path)(char *buffer, int buffer_size);
 } sxs_info;
 
-static void fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest, const char *dll_manifest, BOOL do_load)
+static void fill_sxs_paths(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest,
+                           const char *dll_manifest, const char *lang)
 {
-    BOOL success;
-
-    GetTempPathA(MAX_PATH, info->path_tmp);
     strcat(info->path_tmp, temp);
     strcat(info->path_tmp, "\\");
     CreateDirectoryA(info->path_tmp, NULL);
 
-    sprintf(info->path_dll, "%s%s", info->path_tmp, "sxs_dll.dll");
+    if (lang)
+    {
+        sprintf( info->path_lang, "%s%s\\", info->path_tmp, lang );
+        CreateDirectoryA(info->path_lang, NULL);
+    }
+    else info->path_lang[0] = 0;
+
+    sprintf(info->path_dll, "%s%s", lang ? info->path_lang : info->path_tmp, "sxs_dll.dll");
     extract_resource(path_dll, "TESTDLL", info->path_dll);
 
     sprintf(info->path_manifest_exe, "%s%s", info->path_tmp, "exe.manifest");
     create_manifest_file(info->path_manifest_exe, exe_manifest, -1, NULL, NULL);
 
-    sprintf(info->path_manifest_dll, "%s%s", info->path_tmp, "sxs_dll.manifest");
+    sprintf(info->path_manifest_dll, "%s%s", lang ? info->path_lang : info->path_tmp, "sxs_dll.manifest");
     create_manifest_file(info->path_manifest_dll, dll_manifest, -1, NULL, NULL);
+}
 
+static void fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest,
+                          const char *dll_manifest, BOOL do_load)
+{
+    GetTempPathA(MAX_PATH, info->path_tmp);
+    fill_sxs_paths( info, temp, path_dll, exe_manifest, dll_manifest, NULL );
     info->context.cbSize = sizeof(ACTCTXA);
     info->context.lpSource = info->path_manifest_exe;
     info->context.lpAssemblyDirectory = info->path_tmp;
@@ -3574,7 +3601,7 @@ static void fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll
 
     if (do_load)
     {
-        success = ActivateActCtx(info->handle_context, &info->cookie);
+        BOOL success = ActivateActCtx(info->handle_context, &info->cookie);
         ok(success, "ActivateActCtx failed: %ld\n", GetLastError());
 
         info->module = LoadLibraryA("sxs_dll.dll");
@@ -3605,6 +3632,11 @@ static void clean_sxs_info(sxs_info *info)
     {
         BOOL ret = DeleteFileA(info->path_manifest_dll);
         ok(ret, "DeleteFileA failed for %s: %ld\n", info->path_manifest_dll, GetLastError());
+    }
+    if (*info->path_lang)
+    {
+        BOOL ret = RemoveDirectoryA(info->path_lang);
+        ok(ret, "RemoveDirectoryA failed for %s: %ld\n", info->path_lang, GetLastError());
     }
     if (*info->path_tmp)
     {
@@ -3818,6 +3850,105 @@ cleanup:
         success = DeleteFileA(path_manifest);
         ok(success, "DeleteFileA failed for %s: %ld\n", path_manifest, GetLastError());
     }
+}
+
+static void test_manifest_lang(void)
+{
+    sxs_info dll;
+    char *p;
+
+    /* tmp path without language prefix */
+
+    GetTempPathA(MAX_PATH, dll.path_tmp);
+    fill_sxs_paths( &dll, "1", "dummy.dll", two_dll_manifest_exe_fr, two_dll_manifest_dll_fr, NULL );
+
+    dll.context.cbSize = sizeof(ACTCTXA);
+    dll.context.lpSource = dll.path_manifest_exe;
+    dll.context.lpAssemblyDirectory = dll.path_tmp;
+    dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    dll.handle_context = CreateActCtxA(&dll.context);
+    todo_wine
+    ok( dll.handle_context == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "wrong error %ld\n", GetLastError() );
+
+    clean_sxs_info( &dll );
+
+    /* tmp path with language prefix */
+
+    GetTempPathA(MAX_PATH, dll.path_tmp);
+    fill_sxs_paths( &dll, "1", "dummy.dll", two_dll_manifest_exe_fr, two_dll_manifest_dll_fr, "fr-FR" );
+
+    dll.context.cbSize = sizeof(ACTCTXA);
+    dll.context.lpSource = dll.path_manifest_exe;
+    dll.context.lpAssemblyDirectory = dll.path_tmp;
+    dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    dll.handle_context = CreateActCtxA(&dll.context);
+    todo_wine
+    ok( dll.handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError() );
+
+    clean_sxs_info( &dll );
+
+    /* exe path without language prefix */
+
+    GetModuleFileNameA(0, dll.path_tmp, MAX_PATH);
+    if ((p = strrchr( dll.path_tmp, '\\' ))) p[1] = 0;
+    dll.path_lang[0] = 0;
+
+    sprintf(dll.path_manifest_exe, "%s%s", dll.path_tmp, "exe.manifest");
+    create_manifest_file(dll.path_manifest_exe, two_dll_manifest_exe_fr, -1, NULL, NULL);
+
+    strcat(dll.path_tmp, "sxs_dll\\");
+    CreateDirectoryA(dll.path_tmp, NULL);
+    sprintf(dll.path_dll, "%s%s", dll.path_tmp, "sxs_dll.dll");
+    extract_resource("dummy.dll", "TESTDLL", dll.path_dll);
+
+    sprintf(dll.path_manifest_dll, "%s%s", dll.path_tmp, "sxs_dll.manifest");
+    create_manifest_file(dll.path_manifest_dll, two_dll_manifest_dll_fr, -1, NULL, NULL);
+
+    dll.context.cbSize = sizeof(ACTCTXA);
+    dll.context.lpSource = dll.path_manifest_exe;
+    dll.context.lpAssemblyDirectory = dll.path_tmp;
+    dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    dll.handle_context = CreateActCtxA(&dll.context);
+    todo_wine
+    ok( dll.handle_context == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "wrong error %ld\n", GetLastError() );
+
+    clean_sxs_info( &dll );
+
+    /* exe path with language prefix */
+
+    GetModuleFileNameA(0, dll.path_tmp, MAX_PATH);
+    if ((p = strrchr( dll.path_tmp, '\\' ))) p[1] = 0;
+
+    sprintf(dll.path_manifest_exe, "%s%s", dll.path_tmp, "exe.manifest");
+    create_manifest_file(dll.path_manifest_exe, two_dll_manifest_exe_fr, -1, NULL, NULL);
+
+    strcat(dll.path_tmp, "sxs_dll\\");
+    CreateDirectoryA(dll.path_tmp, NULL);
+    sprintf(dll.path_lang,"%sfr-FR\\", dll.path_tmp);
+    CreateDirectoryA(dll.path_lang, NULL);
+    sprintf(dll.path_dll, "%s%s", dll.path_lang, "sxs_dll.dll");
+    extract_resource("dummy.dll", "TESTDLL", dll.path_dll);
+
+    sprintf(dll.path_manifest_dll, "%s%s", dll.path_lang, "sxs_dll.manifest");
+    create_manifest_file(dll.path_manifest_dll, two_dll_manifest_dll_fr, -1, NULL, NULL);
+
+    dll.context.cbSize = sizeof(ACTCTXA);
+    dll.context.lpSource = dll.path_manifest_exe;
+    dll.context.lpAssemblyDirectory = dll.path_tmp;
+    dll.context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
+
+    dll.handle_context = CreateActCtxA(&dll.context);
+    todo_wine
+    ok( dll.handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError() );
+
+    clean_sxs_info( &dll );
 }
 
 struct manifest_res_spec
@@ -4256,6 +4387,9 @@ static void run_sxs_test(int run)
     case 5:
        test_builtin_sxs();
        break;
+    case 6:
+       test_manifest_lang();
+       break;
     }
 }
 
@@ -4402,9 +4536,5 @@ START_TEST(actctx)
     run_child_process();
     test_compatibility();
     test_settings();
-    run_child_process_two_dll(1);
-    run_child_process_two_dll(2);
-    run_child_process_two_dll(3);
-    run_child_process_two_dll(4);
-    run_child_process_two_dll(5);
+    for (int i = 1; i <= 6; i++) run_child_process_two_dll(i);
 }
