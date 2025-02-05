@@ -17,6 +17,16 @@
 #ifndef _SECURITY_H
 #define _SECURITY_H
 
+#ifndef NEGOSSP_NAME
+#define NEGOSSP_NAME_A "Negotiate"
+#if defined(_MSC_VER) || defined(__MINGW32__)
+#define NEGOSSP_NAME_W L"Negotiate"
+#else
+static const WCHAR NEGOSSP_NAME_W[] = { 'N','e','g','o','t','i','a','t','e',0 };
+#endif
+#define NEGOSSP_NAME WINELIB_NAME_AW(NEGOSSP_NAME_)
+#endif /* NEGOSSP_NAME */
+
 #include <sspi.h>
 
 #if defined(SECURITY_WIN32) || defined(SECURITY_KERNEL)
