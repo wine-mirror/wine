@@ -102,14 +102,11 @@ static void check_persist_classid_(unsigned int line, void *iface_ptr, const CLS
     ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICPersistStream_GetClassID(persist_stream, NULL);
-    todo_wine
     ok_(__FILE__, line)(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IWICPersistStream_GetClassID(persist_stream, &clsid);
-    todo_wine
     ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok_(__FILE__, line)(IsEqualCLSID(&clsid, check_clsid), "Unexpected class id %s vs %s.\n",
-                wine_dbgstr_guid(&clsid), wine_dbgstr_guid(check_clsid));
+    ok_(__FILE__, line)(IsEqualCLSID(&clsid, check_clsid), "Unexpected class id %s vs %s.\n",
+            wine_dbgstr_guid(&clsid), wine_dbgstr_guid(check_clsid));
 
     IWICPersistStream_Release(persist_stream);
 }

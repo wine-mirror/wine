@@ -469,11 +469,18 @@ static ULONG WINAPI MetadataHandler_PersistStream_Release(IWICPersistStream *ifa
     return IWICMetadataWriter_Release(&This->IWICMetadataWriter_iface);
 }
 
-static HRESULT WINAPI MetadataHandler_GetClassID(IWICPersistStream *iface,
-    CLSID *pClassID)
+static HRESULT WINAPI MetadataHandler_GetClassID(IWICPersistStream *iface, CLSID *clsid)
 {
-    FIXME("(%p,%p): stub\n", iface, pClassID);
-    return E_NOTIMPL;
+    MetadataHandler *handler = impl_from_IWICPersistStream(iface);
+
+    TRACE("(%p,%p)\n", iface, clsid);
+
+    if (!clsid)
+        return E_INVALIDARG;
+
+    *clsid = *handler->vtable->clsid;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MetadataHandler_IsDirty(IWICPersistStream *iface)
