@@ -955,7 +955,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
  */
 extern void DECLSPEC_NORETURN user_mode_abort_thread( NTSTATUS status, struct syscall_frame *frame );
 __ASM_GLOBAL_FUNC( user_mode_abort_thread,
-                   "ldr x1, [x1, #0x110]\n\t"    /* frame->syscall_cfa */
+                   "ldr x1, [x1, #0x118]\n\t"    /* frame->syscall_cfa */
                    "sub x29, x1, #0xc0\n\t"
                    /* switch to kernel stack */
                    "mov sp, x29\n\t"
