@@ -1088,9 +1088,10 @@ void * WINAPI RtlFindExportedRoutineByName( HMODULE module, const char *name )
  * Import the dll specified by the given import descriptor.
  * The loader_section must be locked while calling this function.
  */
-static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path, WINE_MODREF **pwm )
+static BOOL import_dll( WINE_MODREF *wm, const IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path, WINE_MODREF **pwm )
 {
-    BOOL system = current_modref->system || (current_modref->ldr.Flags & LDR_WINE_INTERNAL);
+    HMODULE module = wm->ldr.DllBase;
+    BOOL system = wm->system || (wm->ldr.Flags & LDR_WINE_INTERNAL);
     NTSTATUS status;
     WINE_MODREF *wmImp;
     HMODULE imp_mod;
@@ -1125,10 +1126,10 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
     {
         if (status == STATUS_DLL_NOT_FOUND)
             ERR("Library %s (which is needed by %s) not found\n",
-                name, debugstr_w(current_modref->ldr.FullDllName.Buffer));
+                name, debugstr_w(wm->ldr.FullDllName.Buffer));
         else
             ERR("Loading library %s (which is needed by %s) failed (error %lx).\n",
-                name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
+                name, debugstr_w(wm->ldr.FullDllName.Buffer), status);
         return FALSE;
     }
 
@@ -1161,7 +1162,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
                 thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
             }
             WARN(" imported from %s, allocating stub %p\n",
-                 debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                 debugstr_w(wm->ldr.FullDllName.Buffer),
                  (void *)thunk_list->u1.Function );
             import_list++;
             thunk_list++;
@@ -1181,7 +1182,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
             {
                 thunk_list->u1.Function = allocate_stub( name, IntToPtr(ordinal) );
                 WARN("No implementation for %s.%d imported from %s, setting to %p\n",
-                     name, ordinal, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                     name, ordinal, debugstr_w(wm->ldr.FullDllName.Buffer),
                      (void *)thunk_list->u1.Function );
             }
             TRACE_(imports)("--- Ordinal %s.%d = %p\n", name, ordinal, (void *)thunk_list->u1.Function );
@@ -1197,7 +1198,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
             {
                 thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
                 WARN("No implementation for %s.%s imported from %s, setting to %p\n",
-                     name, pe_name->Name, debugstr_w(current_modref->ldr.FullDllName.Buffer),
+                     name, pe_name->Name, debugstr_w(wm->ldr.FullDllName.Buffer),
                      (void *)thunk_list->u1.Function );
             }
             TRACE_(imports)("--- %s %s.%d = %p\n",
@@ -1469,7 +1470,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     for (i = 0; i < nb_imports; i++)
     {
         dep_after = wm->ldr.DdagNode->Dependencies.Tail;
-        if (!import_dll( wm->ldr.DllBase, &imports[i], load_path, &imp ))
+        if (!import_dll( wm, &imports[i], load_path, &imp ))
             status = STATUS_DLL_NOT_FOUND;
         else if (imp && imp->ldr.DdagNode != node_ntdll && imp->ldr.DdagNode != node_kernel32)
             add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, dep_after );
