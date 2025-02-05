@@ -2317,10 +2317,7 @@ static void test_actctx(void)
     }
 
     handle = test_create("test3.manifest");
-    ok(handle != INVALID_HANDLE_VALUE || broken(handle == INVALID_HANDLE_VALUE) /* XP pre-SP2, win2k3 w/o SP */,
-        "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError());
-    if (handle == INVALID_HANDLE_VALUE)
-        win_skip("Some activation context features not supported, skipping a test (possibly old XP/Win2k3 system\n");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %lu\n", GetLastError());
     DeleteFileA("test3.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         static const WCHAR nameW[] = {'t','e','s','t','s','u','r','r','o','g','a','t','e',0};
@@ -2373,15 +2370,11 @@ static void test_actctx(void)
 
     if(create_manifest_file("test6.manifest", manifest6, -1, NULL, NULL)) {
         handle = test_create("test6.manifest");
-        ok(handle != INVALID_HANDLE_VALUE || broken(handle == INVALID_HANDLE_VALUE) /* WinXP */,
-            "Unexpected context handle %p.\n", handle);
+        ok(handle != INVALID_HANDLE_VALUE, "Unexpected context handle %p.\n", handle);
         DeleteFileA("test6.manifest");
         DeleteFileA("testdep.manifest");
-        if(handle != INVALID_HANDLE_VALUE)
-        {
-            test_runlevel_info(handle, &runlevel_info6, __LINE__);
-            ReleaseActCtx(handle);
-        }
+        test_runlevel_info(handle, &runlevel_info6, __LINE__);
+        ReleaseActCtx(handle);
     }
     else
         skip("Could not create manifest file 6\n");
@@ -2989,9 +2982,7 @@ todo_wine {
     SetLastError(0xdeadbeef);
     handle = CreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-    ok(GetLastError()==ERROR_PATH_NOT_FOUND ||
-            broken(GetLastError()==ERROR_FILE_NOT_FOUND) /* WinXP */,
-            "got error %ld\n", GetLastError());
+    ok(GetLastError()==ERROR_PATH_NOT_FOUND, "got error %ld\n", GetLastError());
 
     CreateDirectoryA(dir, NULL);
     memset(&actctx, 0, sizeof(actctx));
@@ -3555,7 +3546,7 @@ typedef struct
     void (WINAPI *get_path)(char *buffer, int buffer_size);
 } sxs_info;
 
-static BOOL fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest, const char *dll_manifest, BOOL do_load)
+static void fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll, const char *exe_manifest, const char *dll_manifest, BOOL do_load)
 {
     BOOL success;
 
@@ -3579,14 +3570,7 @@ static BOOL fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll
     info->context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     info->handle_context = CreateActCtxA(&info->context);
-    ok((info->handle_context != NULL && info->handle_context != INVALID_HANDLE_VALUE )
-            || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX), /* XP doesn't support manifests outside of PE files */
-            "CreateActCtxA failed: %ld\n", GetLastError());
-    if (GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX)
-    {
-        skip("Failed to create activation context.\n");
-        return FALSE;
-    }
+    ok(info->handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError());
 
     if (do_load)
     {
@@ -3601,7 +3585,6 @@ static BOOL fill_sxs_info(sxs_info *info, const char *temp, const char *path_dll
 
         DeactivateActCtx(0, info->cookie);
     }
-    return TRUE;
 }
 
 static void clean_sxs_info(sxs_info *info)
@@ -3645,10 +3628,8 @@ static void test_two_dlls_at_same_time(void)
     sxs_info dll_2;
     char path1[MAX_PATH], path2[MAX_PATH];
 
-    if (!fill_sxs_info(&dll_1, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup1;
-    if (!fill_sxs_info(&dll_2, "2", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup2;
+    fill_sxs_info(&dll_1, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE);
+    fill_sxs_info(&dll_2, "2", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE);
 
     ok(dll_1.module != dll_2.module, "Libraries are the same\n");
     dll_1.get_path(path1, sizeof(path1));
@@ -3656,11 +3637,9 @@ static void test_two_dlls_at_same_time(void)
     dll_2.get_path(path2, sizeof(path2));
     ok(strcmp(path2, dll_2.path_dll) == 0, "Got '%s', expected '%s'\n", path2, dll_2.path_dll);
 
-cleanup2:
     if (dll_2.module)
         FreeLibrary(dll_2.module);
     clean_sxs_info(&dll_2);
-cleanup1:
     if (dll_1.module)
         FreeLibrary(dll_1.module);
     clean_sxs_info(&dll_1);
@@ -3684,16 +3663,13 @@ static void test_one_sxs_and_one_local_1(void)
     module = LoadLibraryA(path_dll_local);
     get_path = (void *)GetProcAddress(module, "get_path");
 
-    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup;
-
+    fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE);
     ok(dll.module != module, "Libraries are the same\n");
     dll.get_path(path1, sizeof(path1));
     ok(strcmp(path1, dll.path_dll) == 0, "Got '%s', expected '%s'\n", path1, dll.path_dll);
     get_path(path2, sizeof(path2));
     ok(strcmp(path2, path_dll_local) == 0, "Got '%s', expected '%s'\n", path2, path_dll_local);
 
-cleanup:
     if (module)
         FreeLibrary(module);
     if (dll.module)
@@ -3721,9 +3697,7 @@ static void test_one_sxs_and_one_local_2(void)
     sprintf(path_dll_local, "%s%s", path_application, "sxs_dll.dll");
     extract_resource("dummy.dll", "TESTDLL", path_dll_local);
 
-    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE))
-        goto cleanup;
-
+    fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, TRUE);
     module = LoadLibraryA(path_dll_local);
     get_path = (void *)GetProcAddress(module, "get_path");
 
@@ -3733,7 +3707,6 @@ static void test_one_sxs_and_one_local_2(void)
     get_path(path2, sizeof(path2));
     ok(strcmp(path2, path_dll_local) == 0, "Got '%s', expected '%s'\n", path2, path_dll_local);
 
-cleanup:
     if (module)
         FreeLibrary(module);
     if (dll.module)
@@ -3763,9 +3736,7 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
 
     module = LoadLibraryA(path_dll_local);
 
-    if (!fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, FALSE))
-       goto cleanup;
-
+    fill_sxs_info(&dll, "1", "dummy.dll", two_dll_manifest_exe, two_dll_manifest_dll, FALSE);
     success = ActivateActCtx(dll.handle_context, &dll.cookie);
     ok(success, "ActivateActCtx failed: %ld\n", GetLastError());
 
@@ -3774,7 +3745,6 @@ static void test_one_with_sxs_and_GetModuleHandleA(void)
 
     DeactivateActCtx(0, dll.cookie);
 
-cleanup:
     if (module)
         FreeLibrary(module);
     if (dll.module)
@@ -3810,9 +3780,7 @@ static void test_builtin_sxs(void)
     context.dwFlags = ACTCTX_FLAG_ASSEMBLY_DIRECTORY_VALID;
 
     handle_context = CreateActCtxA(&context);
-    ok((handle_context != NULL && handle_context != INVALID_HANDLE_VALUE )
-        || broken(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX), /* XP doesn't support manifests outside of PE files */
-        "CreateActCtxA failed: %ld\n", GetLastError());
+    ok(handle_context != INVALID_HANDLE_VALUE, "CreateActCtxA failed: %ld\n", GetLastError());
     if (GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX)
     {
         skip("Failed to create activation context.\n");
