@@ -12111,7 +12111,7 @@ static void glsl_fragment_pipe_alpha_test_func(struct wined3d_context_gl *contex
     GLfloat ref;
     GLint func;
 
-    if ((func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC])))
+    if ((func = wined3d_gl_compare_func(state->extra_ps_args.alpha_func)))
     {
         if ((buffer = context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP]))
             ref = (constants = wined3d_buffer_load_sysmem(buffer, &context_gl->c))->alpha_test_ref;
@@ -12122,36 +12122,11 @@ static void glsl_fragment_pipe_alpha_test_func(struct wined3d_context_gl *contex
     }
 }
 
-static void glsl_fragment_pipe_core_alpha_test(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
-}
-
-static void glsl_fragment_pipe_alpha_test(struct wined3d_context_gl *context_gl,
-        const struct wined3d_state *state)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-
-    if (state->render_states[WINED3D_RS_ALPHATESTENABLE])
-    {
-        gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
-        checkGLcall("glEnable(GL_ALPHA_TEST)");
-    }
-    else
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        checkGLcall("glDisable(GL_ALPHA_TEST)");
-    }
-}
-
 static const struct wined3d_state_entry_template glsl_fragment_pipe_state_template[] =
 {
     {STATE_VDECL,                                               {STATE_VDECL,                                                glsl_fragment_pipe_vdecl               }, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                  {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_fragment_pipe_vs                  }, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                   {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_fragment_pipe_shader              }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_ALPHAFUNC),                        {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                   NULL                                   }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                  {STATE_RENDER(WINED3D_RS_ALPHATESTENABLE),                   glsl_fragment_pipe_core_alpha_test     }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                   {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    state_nop                              }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                   state_srgbwrite                        }, ARB_FRAMEBUFFER_SRGB},
     {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
@@ -12271,10 +12246,7 @@ static void shader_glsl_update_legacy_states(struct wined3d_context_gl *context_
         return;
 
     if (context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_PIXEL))
-    {
-        glsl_fragment_pipe_alpha_test(context_gl, state);
         glsl_fragment_pipe_alpha_test_func(context_gl, state);
-    }
 
     if (context_gl->c.constant_update_mask & WINED3D_SHADER_CONST_PS_ALPHA_TEST)
         glsl_fragment_pipe_alpha_test_func(context_gl, state);

@@ -3192,7 +3192,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
+        context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
     }
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);

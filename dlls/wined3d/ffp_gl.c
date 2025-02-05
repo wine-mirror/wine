@@ -1560,8 +1560,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     rs_holes[] =
     {
         {  1,   8},
-        { 11,  14},
-        { 16,  24},
+        { 11,  25},
         { 27,  27},
         { 30,  34},
         { 36,  40},

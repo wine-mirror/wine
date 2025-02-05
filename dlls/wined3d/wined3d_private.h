@@ -2879,6 +2879,7 @@ struct wined3d_extra_ps_args
     bool flat_shading;
     bool fog_enable;
     enum wined3d_fog_mode fog_mode;
+    enum wined3d_cmp_func alpha_func;
 };
 
 struct wined3d_blend_state

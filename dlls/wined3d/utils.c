@@ -6455,9 +6455,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_state *state,
     if (d3d_info->ffp_alpha_test)
         settings->alpha_test_func = WINED3D_CMP_ALWAYS - 1;
     else
-        settings->alpha_test_func = (state->render_states[WINED3D_RS_ALPHATESTENABLE]
-                ? wined3d_sanitize_cmp_func(state->render_states[WINED3D_RS_ALPHAFUNC])
-                : WINED3D_CMP_ALWAYS) - 1;
+        settings->alpha_test_func = state->extra_ps_args.alpha_func - 1;
 
     if (d3d_info->emulated_flatshading)
         settings->flatshading = state->extra_ps_args.flat_shading;

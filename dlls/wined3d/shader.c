@@ -3115,9 +3115,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     if (d3d_info->ffp_alpha_test)
         args->alpha_test_func = WINED3D_CMP_ALWAYS - 1;
     else
-        args->alpha_test_func = (state->render_states[WINED3D_RS_ALPHATESTENABLE]
-                ? wined3d_sanitize_cmp_func(state->render_states[WINED3D_RS_ALPHAFUNC])
-                : WINED3D_CMP_ALWAYS) - 1;
+        args->alpha_test_func = state->extra_ps_args.alpha_func - 1;
 
     if (d3d_info->emulated_flatshading)
         args->flatshading = state->extra_ps_args.flat_shading;

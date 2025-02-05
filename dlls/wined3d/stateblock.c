@@ -1708,6 +1708,8 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
             stateblock->changed.fog_constants = 1;
             break;
 
+        case WINED3D_RS_ALPHAFUNC:
+        case WINED3D_RS_ALPHATESTENABLE:
         case WINED3D_RS_POINTSPRITEENABLE:
         case WINED3D_RS_SHADEMODE:
             stateblock->changed.extra_ps_args = 1;
@@ -3217,6 +3219,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_FOGEND:
                 case WINED3D_RS_FOGSTART:
                 case WINED3D_RS_POINTSPRITEENABLE:
+                case WINED3D_RS_ALPHAFUNC:
+                case WINED3D_RS_ALPHATESTENABLE:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3965,6 +3969,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         args.flat_shading = state->rs[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
         args.fog_enable = state->rs[WINED3D_RS_FOGENABLE];
         args.fog_mode = state->rs[WINED3D_RS_FOGTABLEMODE];
+        args.alpha_func = state->rs[WINED3D_RS_ALPHATESTENABLE] ? state->rs[WINED3D_RS_ALPHAFUNC] : WINED3D_CMP_ALWAYS;
         wined3d_device_context_emit_set_extra_ps_args(context, &args);
     }
 
