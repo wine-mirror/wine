@@ -995,11 +995,14 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
         strarray_add(&spec_args, "-E");
         strarray_add(&spec_args, spec_file);
     }
-
-    if (!opts->shared)
+    else
     {
         strarray_add(&spec_args, "-F");
         strarray_add(&spec_args, output_name);
+    }
+
+    if (!opts->shared)
+    {
         strarray_add(&spec_args, "--subsystem");
         strarray_add(&spec_args, opts->gui_app ? "windows" : "console");
         if (opts->large_address_aware) strarray_add( &spec_args, "--large-address-aware" );
