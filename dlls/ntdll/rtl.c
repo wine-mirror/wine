@@ -236,6 +236,19 @@ NTSTATUS WINAPI RtlResetNtUserPfn(void)
     return STATUS_SUCCESS;
 }
 
+static void rtl_splay_replace(RTL_SPLAY_LINKS *x, RTL_SPLAY_LINKS *y, RTL_SPLAY_LINKS **root)
+{
+    if (RtlIsRoot(x))
+        *root = y;
+    else if (RtlIsLeftChild(x))
+        x->Parent->LeftChild = y;
+    else
+        x->Parent->RightChild = y;
+
+    if (y)
+        y->Parent = RtlIsRoot(x) ? y : x->Parent;
+}
+
 static void rtl_splay_left_rotate(RTL_SPLAY_LINKS *x)
 {
     RTL_SPLAY_LINKS *y = x->RightChild;
@@ -425,6 +438,38 @@ RTL_SPLAY_LINKS * WINAPI RtlSplay(RTL_SPLAY_LINKS *links)
     }
 
     return links;
+}
+
+/******************************************************************************
+ *  RtlDeleteNoSplay           [NTDLL.@]
+ */
+void WINAPI RtlDeleteNoSplay(RTL_SPLAY_LINKS *links, RTL_SPLAY_LINKS **root)
+{
+    TRACE("(%p, %p)\n", links, root);
+
+    if (RtlIsRoot(links) && !RtlLeftChild(links) && !RtlRightChild(links))
+    {
+        *root = NULL;
+    }
+    else  if (!links->LeftChild)
+    {
+        rtl_splay_replace(links, links->RightChild, root);
+    }
+    else if (!links->RightChild)
+    {
+        rtl_splay_replace(links, links->LeftChild, root);
+    }
+    else
+    {
+        RTL_SPLAY_LINKS *predecessor = RtlSubtreePredecessor(links);
+        if (predecessor->Parent != links)
+        {
+            rtl_splay_replace(predecessor, predecessor->LeftChild, root);
+            RtlInsertAsLeftChild(predecessor, links->LeftChild);
+        }
+        rtl_splay_replace(links, predecessor, root);
+        RtlInsertAsRightChild(predecessor, links->RightChild);
+    }
 }
 
 /******************************************************************************

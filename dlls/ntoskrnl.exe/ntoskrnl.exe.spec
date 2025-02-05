@@ -1056,7 +1056,7 @@
 @ stdcall RtlDeleteAtomFromAtomTable(ptr long)
 @ stub RtlDeleteElementGenericTable
 @ stub RtlDeleteElementGenericTableAvl
-@ stub RtlDeleteNoSplay
+@ stdcall RtlDeleteNoSplay(ptr ptr)
 @ stub RtlDeleteOwnersRanges
 @ stub RtlDeleteRange
 @ stdcall RtlDeleteRegistryValue(long ptr ptr)
