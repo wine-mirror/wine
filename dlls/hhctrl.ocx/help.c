@@ -1657,7 +1657,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     caption = info->WinType.pszCaption;
     if (!*caption) caption = info->pCHMInfo->defTitle;
 
-    hWnd = CreateWindowExW(dwExStyles, L"HH Popup", caption, dwStyles, x, y, width, height,
+    hWnd = CreateWindowExW(dwExStyles, L"HH Parent", caption, dwStyles, x, y, width, height,
                            info->WinType.hwndCaller, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
