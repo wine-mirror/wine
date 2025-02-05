@@ -781,7 +781,6 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
 			      KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 
-	StringFromGUID2(list->clsid, buf, 39);
 	res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
 			      KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
 	if (res == ERROR_SUCCESS) {
