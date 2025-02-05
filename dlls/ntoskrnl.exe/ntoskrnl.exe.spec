@@ -1265,7 +1265,7 @@
 @ stdcall RtlSetSaclSecurityDescriptor(ptr long ptr long)
 @ stdcall RtlSetTimeZoneInformation(ptr)
 @ stdcall RtlSizeHeap(long long ptr)
-@ stub RtlSplay
+@ stdcall RtlSplay(ptr)
 @ stdcall RtlStringFromGUID(ptr ptr)
 @ stdcall RtlSubAuthorityCountSid(ptr)
 @ stdcall RtlSubAuthoritySid(ptr long)

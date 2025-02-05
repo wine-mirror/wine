@@ -236,6 +236,58 @@ NTSTATUS WINAPI RtlResetNtUserPfn(void)
     return STATUS_SUCCESS;
 }
 
+static void rtl_splay_left_rotate(RTL_SPLAY_LINKS *x)
+{
+    RTL_SPLAY_LINKS *y = x->RightChild;
+
+    if (y)
+    {
+        x->RightChild = y->LeftChild;
+        if (y->LeftChild)
+            y->LeftChild->Parent = x;
+
+        y->Parent = RtlIsRoot(x) ? y : x->Parent;
+    }
+
+    if (!RtlIsRoot(x))
+    {
+        if (RtlIsLeftChild(x))
+            x->Parent->LeftChild = y;
+        else
+            x->Parent->RightChild = y;
+    }
+
+    if (y)
+        y->LeftChild = x;
+    x->Parent = y;
+}
+
+static void rtl_splay_right_rotate(RTL_SPLAY_LINKS *x)
+{
+    RTL_SPLAY_LINKS *y = x->LeftChild;
+
+    if (y)
+    {
+        x->LeftChild = y->RightChild;
+        if (y->RightChild)
+            y->RightChild->Parent = x;
+
+        y->Parent = RtlIsRoot(x) ? y : x->Parent;
+    }
+
+    if (!RtlIsRoot(x))
+    {
+        if (RtlIsLeftChild(x))
+            x->Parent->LeftChild = y;
+        else
+            x->Parent->RightChild = y;
+    }
+
+    if (y)
+        y->RightChild = x;
+    x->Parent = y;
+}
+
 /******************************************************************************
  *  RtlSubtreePredecessor           [NTDLL.@]
  */
@@ -326,6 +378,53 @@ RTL_SPLAY_LINKS * WINAPI RtlRealSuccessor(RTL_SPLAY_LINKS *links)
         return RtlParent(child);
 
     return NULL;
+}
+
+/******************************************************************************
+ *  RtlSplay           [NTDLL.@]
+ */
+RTL_SPLAY_LINKS * WINAPI RtlSplay(RTL_SPLAY_LINKS *links)
+{
+    TRACE("(%p)\n", links);
+
+    while (!RtlIsRoot(links))
+    {
+        if (RtlIsRoot(links->Parent))
+        {
+            /* Zig */
+            if (RtlIsLeftChild(links))
+                rtl_splay_right_rotate(links->Parent);
+            /* Zag */
+            else
+                rtl_splay_left_rotate(links->Parent);
+        }
+        /* Zig-Zig */
+        else if (RtlIsLeftChild(links->Parent) && RtlIsLeftChild(links))
+        {
+            rtl_splay_right_rotate(links->Parent->Parent);
+            rtl_splay_right_rotate(links->Parent);
+        }
+        /* Zag-Zag */
+        else if (RtlIsRightChild(links->Parent) && RtlIsRightChild(links))
+        {
+            rtl_splay_left_rotate(links->Parent->Parent);
+            rtl_splay_left_rotate(links->Parent);
+        }
+        /* Zig-Zag */
+        else if (RtlIsRightChild(links->Parent) && RtlIsLeftChild(links))
+        {
+            rtl_splay_right_rotate(links->Parent);
+            rtl_splay_left_rotate(links->Parent);
+        }
+        /* Zag-Zig */
+        else
+        {
+            rtl_splay_left_rotate(links->Parent);
+            rtl_splay_right_rotate(links->Parent);
+        }
+    }
+
+    return links;
 }
 
 /******************************************************************************

@@ -1043,7 +1043,7 @@
 @ stdcall RtlSizeHeap(long long ptr)
 @ stdcall RtlSleepConditionVariableCS(ptr ptr ptr)
 @ stdcall RtlSleepConditionVariableSRW(ptr ptr ptr long)
-@ stub RtlSplay
+@ stdcall RtlSplay(ptr)
 @ stub RtlStartRXact
 # @ stub RtlStatMemoryStream
 @ stdcall RtlStringFromGUID(ptr ptr)
