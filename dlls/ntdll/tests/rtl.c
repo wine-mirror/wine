@@ -107,6 +107,7 @@ static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExA)(PCSTR, struct in6_addr *, 
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExW)(PCWSTR, struct in6_addr *, PULONG, PUSHORT);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(CRITICAL_SECTION *);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(CRITICAL_SECTION *);
+static BOOLEAN   (WINAPI *pRtlIsGenericTableEmpty)(PRTL_GENERIC_TABLE);
 static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, ULONG, ULONG);
 static void      (WINAPI *pRtlInitializeGenericTable)(RTL_GENERIC_TABLE *, PRTL_GENERIC_COMPARE_ROUTINE,
                                                       PRTL_GENERIC_ALLOCATE_ROUTINE, PRTL_GENERIC_FREE_ROUTINE,
@@ -172,6 +173,7 @@ static void InitFunctionPtrs(void)
         pRtlIpv6StringToAddressExW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExW");
         pRtlIsCriticalSectionLocked = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLocked");
         pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
+        pRtlIsGenericTableEmpty = (void *)GetProcAddress(hntdll, "RtlIsGenericTableEmpty");
         pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
         pRtlInitializeGenericTable = (void *)GetProcAddress(hntdll, "RtlInitializeGenericTable");
         pRtlFindExportedRoutineByName = (void *)GetProcAddress(hntdll, "RtlFindExportedRoutineByName");
@@ -4915,6 +4917,29 @@ static void test_RtlNumberGenericTableElements(void)
     ok(count == table.NumberGenericTableElements, "Got unexpected count.\n");
 }
 
+static void test_RtlIsGenericTableEmpty(void)
+{
+    RTL_GENERIC_TABLE table;
+    BOOLEAN empty;
+
+    if (!pRtlIsGenericTableEmpty)
+    {
+        win_skip("RtlIsGenericTableEmpty is unavailable.\n");
+        return;
+    }
+
+    /* Test that RtlIsGenericTableEmpty() uses TableRoot to check if a generic table is empty */
+    table.TableRoot = NULL;
+    table.NumberGenericTableElements = 1;
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(empty, "Expected empty.\n");
+
+    table.TableRoot = (RTL_SPLAY_LINKS *)1;
+    table.NumberGenericTableElements = 0;
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(!empty, "Expected not empty.\n");
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -4976,4 +5001,5 @@ START_TEST(rtl)
     test_RtlDelete();
     test_RtlInitializeGenericTable();
     test_RtlNumberGenericTableElements();
+    test_RtlIsGenericTableEmpty();
 }
