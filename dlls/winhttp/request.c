@@ -497,7 +497,7 @@ DWORD add_request_headers( struct request *request, const WCHAR *headers, DWORD 
         for (q = p; q < headers + len && *q != '\r' && *q != '\n'; ++q)
             ;
         end = q;
-        while (*q == '\r' || *q == '\n')
+        while (q < headers + len && (*q == '\r' || *q == '\n'))
             ++q;
 
         if ((header = parse_header( p, end - p, FALSE )))
