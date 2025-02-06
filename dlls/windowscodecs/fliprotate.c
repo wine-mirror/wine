@@ -1,5 +1,6 @@
 /*
  * Copyright 2010 Vincent Povirk for CodeWeavers
+ * Copyright 2024 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,7 @@ typedef struct FlipRotator {
     int flip_x;
     int flip_y;
     int swap_xy;
+    UINT bpp;
     CRITICAL_SECTION lock; /* must be held when initialized */
 } FlipRotator;
 
@@ -154,7 +156,7 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
 {
     FlipRotator *This = impl_from_IWICBitmapFlipRotator(iface);
     HRESULT hr;
-    UINT y;
+    UINT y, width, height;
     UINT srcy, srcwidth, srcheight;
     WICRect rc;
     WICRect rect;
@@ -163,26 +165,69 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
 
     if (!This->source) return WINCODEC_ERR_WRONGSTATE;
 
-    if (This->swap_xy || This->flip_x)
-    {
-        /* This requires knowledge of the pixel format. */
-        FIXME("flipping x and rotating are not implemented\n");
-        return E_NOTIMPL;
-    }
-
     hr = IWICBitmapSource_GetSize(This->source, &srcwidth, &srcheight);
+    if (FAILED(hr)) return hr;
+
+    hr = IWICBitmapFlipRotator_GetSize(iface, &width, &height);
     if (FAILED(hr)) return hr;
 
     if (!prc)
     {
-        UINT width, height;
-        hr = IWICBitmapFlipRotator_GetSize(iface, &width, &height);
-        if (FAILED(hr)) return hr;
         rect.X = 0;
         rect.Y = 0;
         rect.Width = width;
         rect.Height = height;
         prc = &rect;
+    }
+
+    if (This->swap_xy || This->flip_x)
+    {
+        UINT bytes_per_pixel = This->bpp / 8;
+        UINT srcx, x;
+
+        if (This->bpp < 8)
+        {
+            FIXME("Flipping x and rotating are not implemented for %u bpp bitmap\n", This->bpp);
+            return E_NOTIMPL;
+        }
+
+        if (This->swap_xy)
+        {
+            FIXME("Rotating is not implemented\n");
+            return E_NOTIMPL;
+        }
+
+        for (y = prc->Y; y - prc->Y < prc->Height; y++)
+        {
+            BYTE *dst = pbBuffer;
+
+            if (This->flip_y)
+                srcy = srcheight - 1 - y;
+            else
+                srcy = y;
+
+            for (x = prc->X; x - prc->X < prc->Width; x++)
+            {
+                if (This->flip_x)
+                    srcx = srcwidth - 1 - x;
+                else
+                    srcx = x;
+
+                rc.X = srcx;
+                rc.Y = srcy;
+                rc.Width = 1;
+                rc.Height = 1;
+
+                hr = IWICBitmapSource_CopyPixels(This->source, &rc, cbStride, cbStride, dst);
+                if (FAILED(hr)) return hr;
+
+                dst += bytes_per_pixel;
+            }
+
+            pbBuffer += cbStride;
+        }
+
+        return hr;
     }
 
     for (y=prc->Y; y - prc->Y < prc->Height; y++)
@@ -212,6 +257,7 @@ static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
     IWICBitmapSource *pISource, WICBitmapTransformOptions options)
 {
     FlipRotator *This = impl_from_IWICBitmapFlipRotator(iface);
+    GUID pf;
     HRESULT hr=S_OK;
 
     TRACE("(%p,%p,%u)\n", iface, pISource, options);
@@ -241,6 +287,10 @@ static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
 
     if (options&WICBitmapTransformFlipVertical)
         This->flip_y = !This->flip_y;
+
+    hr = IWICBitmapSource_GetPixelFormat(pISource, &pf);
+    if (SUCCEEDED(hr))
+        hr = get_pixelformat_bpp(&pf, &This->bpp);
 
     IWICBitmapSource_AddRef(pISource);
     This->source = pISource;

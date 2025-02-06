@@ -1503,13 +1503,13 @@ static void test_FlipRotator(void)
         { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal, 2, 3, dst_data_rotate90_flip_h, TRUE },
         { WICBitmapTransformRotate90 | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_v, TRUE },
         { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_hv, TRUE },
-        { WICBitmapTransformRotate180, 3, 2, dst_data_rotate180, TRUE },
+        { WICBitmapTransformRotate180, 3, 2, dst_data_rotate180 },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipHorizontal, 3, 2, dst_data_rotate180_flip_h },
-        { WICBitmapTransformRotate180 | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_v, TRUE },
+        { WICBitmapTransformRotate180 | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_v },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_hv },
-        { WICBitmapTransformFlipHorizontal, 3, 2, dst_data_flip_h, TRUE },
+        { WICBitmapTransformFlipHorizontal, 3, 2, dst_data_flip_h },
         { WICBitmapTransformFlipVertical, 3, 2, dst_data_flip_v },
-        { WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 3, 2, dst_data_flip_hv, TRUE },
+        { WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 3, 2, dst_data_flip_hv },
     };
     HRESULT hr;
     IWICBitmap *bitmap;
