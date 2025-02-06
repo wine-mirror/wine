@@ -112,6 +112,7 @@ static void      (WINAPI *pRtlInitializeGenericTable)(RTL_GENERIC_TABLE *, PRTL_
                                                       PRTL_GENERIC_ALLOCATE_ROUTINE, PRTL_GENERIC_FREE_ROUTINE,
                                                       void *);
 static void *    (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char *);
+static ULONG     (WINAPI *pRtlNumberGenericTableElements)(PRTL_GENERIC_TABLE);
 static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
 static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
@@ -174,6 +175,7 @@ static void InitFunctionPtrs(void)
         pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
         pRtlInitializeGenericTable = (void *)GetProcAddress(hntdll, "RtlInitializeGenericTable");
         pRtlFindExportedRoutineByName = (void *)GetProcAddress(hntdll, "RtlFindExportedRoutineByName");
+        pRtlNumberGenericTableElements = (void *)GetProcAddress(hntdll, "RtlNumberGenericTableElements");
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
@@ -4897,6 +4899,22 @@ static void test_RtlInitializeGenericTable(void)
     ok(table.TableContext == (void *)0xdeadbeef, "Got unexpected TableContext.\n");
 }
 
+static void test_RtlNumberGenericTableElements(void)
+{
+    RTL_GENERIC_TABLE table;
+    ULONG count;
+
+    if (!pRtlNumberGenericTableElements)
+    {
+        win_skip("RtlNumberGenericTableElements is unavailable.\n");
+        return;
+    }
+
+    table.NumberGenericTableElements = 0xdeadbeef;
+    count = pRtlNumberGenericTableElements(&table);
+    ok(count == table.NumberGenericTableElements, "Got unexpected count.\n");
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -4957,4 +4975,5 @@ START_TEST(rtl)
     test_RtlDeleteNoSplay();
     test_RtlDelete();
     test_RtlInitializeGenericTable();
+    test_RtlNumberGenericTableElements();
 }
