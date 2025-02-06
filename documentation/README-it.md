@@ -37,7 +37,7 @@ Per compilare ed eseguire Wine, è necessario avere uno dei seguenti sistemi:
 - FreeBSD 12.4 o successiva
 - Solaris x86 9 o successiva
 - NetBSD-current
-- Mac OS X 10.12 o successiva
+- macOS 10.12 o successiva
 
 Poiché Wine richiede il supporto dei thread a livello kernel per funzionare,
 solo i sistemi operativi sopra mentionati sono supportati. Altri sistemi

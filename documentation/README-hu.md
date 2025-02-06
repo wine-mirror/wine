@@ -37,7 +37,7 @@ egynek:
 - FreeBSD 12.4, vagy késõbbi
 - Solaris x86 9, vagy késõbbi
 - NetBSD-current
-- Mac OS X 10.12, vagy késõbbi
+- macOS 10.12, vagy késõbbi
 
 Mivel a Wine-nak kükséges kernelszintû futási szál támogatás a futtatáshoz, csak
 a fent említett operációs rendszerek támogatottak.

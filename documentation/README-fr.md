@@ -37,7 +37,7 @@ d'exploitation suivants :
 - FreeBSD 12.4 ou ultérieur
 - Solaris x86 9 ou ultérieur
 - NetBSD-current
-- Mac OS X 10.12 ou ultérieur
+- macOS 10.12 ou ultérieur
 
 Étant donné que Wine nécessite une implémentation des « threads »
 (processus légers) au niveau du noyau, seuls les systèmes d'exploitation

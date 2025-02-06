@@ -34,7 +34,7 @@ Para compilar e correr o Wine, deves ter o seguinte:
 - FreeBSD 12.4 ou seguinte
 - Solaris x86 9 ou seguinte
 - NetBSD-current
-- Mac OS X 10.12 ou seguinte
+- macOS 10.12 ou seguinte
 
 Como o Wine requer sequências kernel-level para poder correr, apenas
 os sistemas operativos acima mencionados são suportados.
