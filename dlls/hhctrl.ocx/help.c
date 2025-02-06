@@ -1394,6 +1394,7 @@ static BOOL AddIndexPopup(HHInfo *info)
 {
     HWND hwndList, hwndPopup, hwndCallback;
     char hidden_column[] = "Column";
+    WCHAR *window_title;
     WNDCLASSEXW wcex;
     LVCOLUMNA lvc;
 
@@ -1428,13 +1429,15 @@ static BOOL AddIndexPopup(HHInfo *info)
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     RegisterClassExW(&wcex);
 
+    window_title = HH_LoadString(IDS_SELECT_TOPIC);
     hwndPopup = CreateWindowExW(WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_APPWINDOW
                                  | WS_EX_WINDOWEDGE | WS_EX_RIGHTSCROLLBAR,
-                                L"HH Popup", L"Select Topic:", WS_POPUPWINDOW
+                                L"HH Popup", window_title, WS_POPUPWINDOW
                                  | WS_OVERLAPPEDWINDOW | WS_VISIBLE
                                  | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, CW_USEDEFAULT,
                                 CW_USEDEFAULT, 300, 200, info->WinType.hwndHelp,
                                 NULL, hhctrl_hinstance, NULL);
+    free(window_title);
     if (!hwndPopup)
         return FALSE;
 
