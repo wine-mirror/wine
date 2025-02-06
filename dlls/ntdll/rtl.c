@@ -548,6 +548,15 @@ void WINAPI RtlInitializeGenericTable(RTL_GENERIC_TABLE *table, PRTL_GENERIC_COM
 }
 
 /******************************************************************************
+ *  RtlIsGenericTableEmpty           [NTDLL.@]
+ */
+BOOLEAN WINAPI RtlIsGenericTableEmpty(RTL_GENERIC_TABLE *table)
+{
+    TRACE("(%p)\n", table);
+    return !table->TableRoot;
+}
+
+/******************************************************************************
  *  RtlEnumerateGenericTableWithoutSplaying           [NTDLL.@]
  */
 void * WINAPI RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, PVOID *previous)

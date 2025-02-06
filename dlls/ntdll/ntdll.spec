@@ -855,7 +855,7 @@
 @ stdcall RtlIsCurrentThread(long)
 @ stdcall RtlIsDosDeviceName_U(wstr)
 @ stdcall -arch=x86_64 -norelay RtlIsEcCode(ptr)
-@ stub RtlIsGenericTableEmpty
+@ stdcall RtlIsGenericTableEmpty(ptr)
 # @ stub RtlIsGenericTableEmptyAvl
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
 @ stdcall RtlIsNormalizedString(long wstr long ptr)

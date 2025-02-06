@@ -1176,7 +1176,7 @@
 @ stdcall RtlIpv6StringToAddressExA(str ptr ptr ptr)
 @ stdcall RtlIpv6StringToAddressExW(wstr ptr ptr ptr)
 @ stdcall RtlIpv6StringToAddressW(wstr ptr ptr)
-@ stub RtlIsGenericTableEmpty
+@ stdcall RtlIsGenericTableEmpty(ptr)
 @ stub RtlIsGenericTableEmptyAvl
 @ stdcall RtlIsNameLegalDOS8Dot3(ptr ptr ptr)
 @ stdcall RtlIsNormalizedString(long wstr long ptr)
