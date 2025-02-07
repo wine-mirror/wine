@@ -15057,7 +15057,7 @@ static void test_TrackMouseEvent(void)
     ret = pTrackMouseEvent(&tme);
     ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
     flush_events();
-    ok_sequence(WmMouseLeaveSeq, "WmMouseLeaveSeq", TRUE);
+    ok_sequence(WmMouseLeaveSeq, "WmMouseLeaveSeq", FALSE);
 
     DestroyWindow(hwnd2);
     DestroyWindow(hwnd);

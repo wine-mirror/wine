@@ -1813,6 +1813,17 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     }
     else
     {
+        /* If TME_LEAVE is set and the mouse is not in the tracking window, post WM_MOUSELEAVE
+         * now and don't overwrite the current tracking information */
+        if (info->dwFlags & TME_LEAVE && !hwnd)
+        {
+            if (info->dwFlags & TME_NONCLIENT)
+                NtUserPostMessage( info->hwndTrack, WM_NCMOUSELEAVE, 0, 0 );
+            else
+                NtUserPostMessage( info->hwndTrack, WM_MOUSELEAVE, 0, 0 );
+            return TRUE;
+        }
+
         /* In our implementation, it's possible that another window will receive
          * WM_MOUSEMOVE and call TrackMouseEvent before TrackMouseEventProc is
          * called. In such a situation, post the WM_MOUSELEAVE now. */
