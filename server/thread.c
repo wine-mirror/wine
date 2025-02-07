@@ -2023,9 +2023,9 @@ DECL_HANDLER(get_next_thread)
     while (ptr)
     {
         thread = LIST_ENTRY( ptr, struct thread, entry );
-        if (thread->process == process)
+        if (thread->process == process &&
+            (reply->handle = alloc_handle( current->process, thread, req->access, req->attributes )))
         {
-            reply->handle = alloc_handle( current->process, thread, req->access, req->attributes );
             release_object( process );
             return;
         }
