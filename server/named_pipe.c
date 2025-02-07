@@ -1586,6 +1586,13 @@ DECL_HANDLER(create_named_pipe)
         return;
     }
 
+    if (!req->access)
+    {
+        if (root) release_object( root );
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+
     if (!name.len)  /* pipes need a root directory even without a name */
     {
         if (!objattr->rootdir)

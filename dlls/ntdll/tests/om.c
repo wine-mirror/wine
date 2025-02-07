@@ -3644,8 +3644,7 @@ static void test_zero_access(void)
     status = pNtCreateNamedPipeFile( &h1, 0, &attr, &iosb,
                                      FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE,
                                      FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
-    todo_wine ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
-    if (NT_SUCCESS(status)) CloseHandle( h1 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
     status = pNtCreateNamedPipeFile( &h1, GENERIC_READ | GENERIC_WRITE, &attr, &iosb,
                                      FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE,
                                      FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
@@ -3657,8 +3656,7 @@ static void test_zero_access(void)
     status = pNtCreateNamedPipeFile( &h2, 0, &attr, &iosb,
                                      FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
                                      FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
-    todo_wine ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
-    if (NT_SUCCESS(status)) CloseHandle( h2 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
     CloseHandle( h1 );
 
     pRtlInitUnicodeString( &str, L"\\REGISTRY\\Machine" );
