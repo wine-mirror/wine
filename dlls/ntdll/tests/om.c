@@ -3631,14 +3631,13 @@ static void test_zero_access(void)
 
     pRtlInitUnicodeString( &str, L"\\Device\\MailSlot\\abc" );
     status = pNtCreateMailslotFile( &h1, 0, &attr, &iosb, 0, 0, 0, NULL );
-    todo_wine ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
-    if (NT_SUCCESS(status)) CloseHandle( h1 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
     status = pNtCreateMailslotFile( &h1, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
     ok( !status, "got %#lx.\n", status );
     status = pNtCreateMailslotFile( &h2, GENERIC_READ, &attr, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_OBJECT_NAME_COLLISION, "got %#lx.\n", status );
     status = pNtCreateMailslotFile( &h2, 0, &attr, &iosb, 0, 0, 0, NULL );
-    todo_wine ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
     CloseHandle( h1 );
 
     pRtlInitUnicodeString( &str, L"\\??\\PIPE\\test\\pipe" );

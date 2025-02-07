@@ -654,6 +654,13 @@ DECL_HANDLER(create_mailslot)
         if (!(root = get_directory_obj( current->process, objattr->rootdir ))) return;
     }
 
+    if (!req->access)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        if (root) release_object( root );
+        return;
+    }
+
     if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->options, req->max_msgsize,
                                      req->read_timeout, sd )))
     {
