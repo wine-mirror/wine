@@ -65,11 +65,11 @@ support kernel threads may be supported in the future.
   Make sure you have the USER_LDT, SYSVSHM, SYSVSEM, and SYSVMSG options
   turned on in your kernel.
 
-**Mac OS X info**:
+**macOS info**:
   You need Xcode/Xcode Command Line Tools or Apple cctools.  The
   minimum requirements for compiling Wine are clang 3.8 with the
-  MacOSX10.10.sdk and mingw-w64 v8.  The MacOSX10.14.sdk and later can
-  only build wine64.
+  MacOSX10.13.sdk and mingw-w64 v12 for 32-bit wine.  The
+  MacOSX10.14.sdk and later can build 64-bit wine.
 
 **Supported file systems**:
   Wine should run on most file systems. A few compatibility problems
