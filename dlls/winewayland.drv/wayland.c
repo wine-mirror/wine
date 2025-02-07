@@ -145,6 +145,9 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         wl_seat_add_listener(seat->wl_seat, &seat_listener, NULL);
         pthread_mutex_unlock(&seat->mutex);
         if (process_wayland.zwp_text_input_manager_v3) wayland_text_input_init();
+        /* Recreate the data device for the new seat. */
+        if (process_wayland.data_device.zwlr_data_control_device_v1)
+            wayland_data_device_init();
     }
     else if (strcmp(interface, "wp_viewporter") == 0)
     {
@@ -171,6 +174,11 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.zwp_text_input_manager_v3 =
             wl_registry_bind(registry, id, &zwp_text_input_manager_v3_interface, 1);
         if (process_wayland.seat.wl_seat) wayland_text_input_init();
+    }
+    else if (strcmp(interface, "zwlr_data_control_manager_v1") == 0)
+    {
+        process_wayland.zwlr_data_control_manager_v1 =
+            wl_registry_bind(registry, id, &zwlr_data_control_manager_v1_interface, 1);
     }
 }
 

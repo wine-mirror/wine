@@ -14,6 +14,7 @@ SOURCES = \
 	viewporter.xml \
 	vulkan.c \
 	wayland.c \
+	wayland_data_device.c \
 	wayland_keyboard.c \
 	wayland_output.c \
 	wayland_pointer.c \
@@ -22,5 +23,6 @@ SOURCES = \
 	waylanddrv_main.c \
 	window.c \
 	window_surface.c \
+	wlr-data-control-unstable-v1.xml \
 	xdg-output-unstable-v1.xml \
 	xdg-shell.xml
