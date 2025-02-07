@@ -819,7 +819,7 @@
 @ stdcall RtlInitializeSRWLock(ptr)
 @ stdcall RtlInitializeSid(ptr ptr long)
 # @ stub RtlInitializeStackTraceDataBase
-@ stub RtlInsertElementGenericTable
+@ stdcall RtlInsertElementGenericTable(ptr ptr long ptr)
 @ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr)
 @ cdecl -arch=!i386 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
 @ stdcall RtlInt64ToUnicodeString(int64 long ptr)

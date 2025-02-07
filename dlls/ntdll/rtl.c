@@ -236,6 +236,24 @@ NTSTATUS WINAPI RtlResetNtUserPfn(void)
     return STATUS_SUCCESS;
 }
 
+/* data is a place holder to align stored data on a 8 byte boundary */
+struct rtl_generic_table_entry
+{
+    RTL_SPLAY_LINKS splay_links;
+    LIST_ENTRY list_entry;
+    LONGLONG data;
+};
+
+static void *get_data_from_splay_links(RTL_SPLAY_LINKS *links)
+{
+    return (unsigned char *)links + FIELD_OFFSET(struct rtl_generic_table_entry, data);
+}
+
+static LIST_ENTRY *get_list_entry_from_splay_links(RTL_SPLAY_LINKS *links)
+{
+    return (LIST_ENTRY *)((unsigned char *)links + FIELD_OFFSET(struct rtl_generic_table_entry, list_entry));
+}
+
 static void rtl_splay_replace(RTL_SPLAY_LINKS *x, RTL_SPLAY_LINKS *y, RTL_SPLAY_LINKS **root)
 {
     if (RtlIsRoot(x))
@@ -554,6 +572,63 @@ BOOLEAN WINAPI RtlIsGenericTableEmpty(RTL_GENERIC_TABLE *table)
 {
     TRACE("(%p)\n", table);
     return !table->TableRoot;
+}
+
+/***********************************************************************
+ *           RtlInsertElementGenericTable  (NTDLL.@)
+ */
+void * WINAPI RtlInsertElementGenericTable(RTL_GENERIC_TABLE *table, void *value, CLONG size, BOOLEAN *new_element)
+{
+    RTL_SPLAY_LINKS *child, *parent = NULL;
+    RTL_GENERIC_COMPARE_RESULTS result;
+    void *buffer;
+
+    TRACE("(%p, %p, %lu, %p)\n", table, value, size, new_element);
+
+    child = table->TableRoot;
+    while (child)
+    {
+        buffer = get_data_from_splay_links(child);
+        result = table->CompareRoutine(table, buffer, value);
+        parent = child;
+        if (result == GenericLessThan)
+        {
+            child = child->RightChild;
+        }
+        else if (result == GenericGreaterThan)
+        {
+            child = child->LeftChild;
+        }
+        else
+        {
+            if (new_element)
+                *new_element = FALSE;
+            return buffer;
+        }
+    }
+
+    /* data should be stored on a 8 byte boundary */
+    child = (RTL_SPLAY_LINKS *)table->AllocateRoutine(table, size + FIELD_OFFSET(struct rtl_generic_table_entry, data));
+    RtlInitializeSplayLinks(child);
+    InsertTailList(&table->InsertOrderList, get_list_entry_from_splay_links(child));
+    buffer = get_data_from_splay_links(child);
+    memcpy(buffer, value, size);
+
+    if (parent)
+    {
+        buffer = get_data_from_splay_links(parent);
+        result = table->CompareRoutine(table, buffer, value);
+        if (result == GenericLessThan)
+            RtlInsertAsRightChild(parent, child);
+        else
+            RtlInsertAsLeftChild(parent, child);
+    }
+
+    if (new_element)
+        *new_element = TRUE;
+    table->TableRoot = RtlSplay(child);
+    table->NumberGenericTableElements++;
+    return get_data_from_splay_links(child);
 }
 
 /******************************************************************************

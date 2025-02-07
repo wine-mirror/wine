@@ -1150,7 +1150,7 @@
 @ stub RtlInitializeRangeList
 @ stdcall RtlInitializeSid(ptr ptr long)
 @ stub RtlInitializeUnicodePrefix
-@ stub RtlInsertElementGenericTable
+@ stdcall RtlInsertElementGenericTable(ptr ptr long ptr)
 @ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr)
 @ stub RtlInsertElementGenericTableFull
 @ stub RtlInsertElementGenericTableFullAvl
