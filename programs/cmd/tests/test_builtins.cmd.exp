@@ -147,8 +147,8 @@ ECHO_IS_ON
 ECHO_IS_OFF
 ECHO_IS_ON
 ECHO_IS_OFF
-@todo_wine@ECHO_IS_ON
-@todo_wine@ECHO_IS_OFF
+ECHO_IS_ON
+ECHO_IS_OFF
 ------------ Testing parameterization ------------
 'a', 'b', 'c'
 '"a b c"', '', ''

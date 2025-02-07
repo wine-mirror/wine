@@ -1903,8 +1903,11 @@ RETURN_CODE WCMD_call_command(WCHAR *command)
   return_code = search_command(command, &sc, FALSE);
   if (return_code == NO_ERROR)
   {
+      unsigned old_echo_mode = echo_mode;
       if (!*sc.path) return NO_ERROR;
-      return run_full_path(sc.path, command, TRUE);
+      return_code = run_full_path(sc.path, command, TRUE);
+      if (interactive) echo_mode = old_echo_mode;
+      return return_code;
   }
 
   if (sc.cmd_index <= WCMD_EXIT)
