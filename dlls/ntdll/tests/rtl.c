@@ -5058,6 +5058,50 @@ static void test_RtlInsertElementGenericTable(void)
     }
 }
 
+static void test_RtlDeleteElementGenericTable(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    BOOLEAN success, new_element, empty;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+
+    if (!pRtlDeleteElementGenericTable)
+    {
+        win_skip("RtlDeleteElementGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    success = pRtlDeleteElementGenericTable(&table, NULL);
+    ok(!success, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+        ok(table.NumberGenericTableElements == ARRAY_SIZE(elements) - i - 1,
+           "Got unexpected NumberGenericTableElements %lu.\n", table.NumberGenericTableElements);
+    }
+
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(empty, "Expected empty.\n");
+
+    /* Delete non-existent element */
+    value = elements[0];
+    success = pRtlDeleteElementGenericTable(&table, &value);
+    ok(!success, "RtlDeleteElementGenericTable succeeded.\n");
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -5121,4 +5165,5 @@ START_TEST(rtl)
     test_RtlNumberGenericTableElements();
     test_RtlIsGenericTableEmpty();
     test_RtlInsertElementGenericTable();
+    test_RtlDeleteElementGenericTable();
 }
