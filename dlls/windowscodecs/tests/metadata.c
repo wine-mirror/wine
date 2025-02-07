@@ -4221,9 +4221,7 @@ static void test_metadata_App1(void)
 
     hr = CoCreateInstance(&CLSID_WICApp1MetadataWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataWriter, (void **)&writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     check_interface(writer, &IID_IWICMetadataWriter, TRUE);
     check_interface(writer, &IID_IWICMetadataReader, TRUE);
@@ -4487,7 +4485,6 @@ static void test_CreateMetadataWriter(void)
     check_persist_options(writer, 0);
     hr = IWICMetadataWriter_GetMetadataFormat(writer, &format);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&format, &GUID_MetadataFormatApp1), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataWriter_Release(writer);
 

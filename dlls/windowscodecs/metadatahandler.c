@@ -870,6 +870,41 @@ static HRESULT create_stream_wrapper(IStream *input, ULONG offset, IStream **wra
     return hr;
 }
 
+static HRESULT create_metadata_handler(IStream *stream, const GUID *format, const GUID *vendor,
+        DWORD options, bool is_writer, IWICMetadataReader **handler)
+{
+    IWICPersistStream *persist_stream = NULL;
+    IWICMetadataReader *reader = NULL;
+    HRESULT hr;
+
+    if (is_writer)
+        hr = create_metadata_writer(format, vendor, options | WICMetadataCreationFailUnknown,
+                (IWICMetadataWriter **)&reader);
+    else
+        hr = create_metadata_reader(format, vendor, options | WICMetadataCreationFailUnknown,
+                  NULL, &reader);
+
+    if (SUCCEEDED(hr))
+        hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist_stream);
+
+    if (SUCCEEDED(hr))
+        hr = IWICPersistStream_LoadEx(persist_stream, stream, vendor, options);
+
+    if (persist_stream)
+        IWICPersistStream_Release(persist_stream);
+
+    if (SUCCEEDED(hr))
+    {
+        *handler = reader;
+        IWICMetadataReader_AddRef(*handler);
+    }
+
+    if (reader)
+        IWICMetadataReader_Release(reader);
+
+    return hr;
+}
+
 static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options, const struct IFD_entry *entry,
         MetadataItem *item, bool resolve_pointer_tags, bool is_writer)
 {
@@ -1154,7 +1189,6 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
         case IFD_EXIF_TAG:
         case IFD_GPS_TAG:
         {
-           IWICPersistStream *persist_stream = NULL;
            IWICMetadataReader *sub_reader = NULL;
 
            if (!resolve_pointer_tags)
@@ -1173,34 +1207,18 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
            {
                const GUID *format = item->id.uiVal == IFD_EXIF_TAG ? &GUID_MetadataFormatExif : &GUID_MetadataFormatGps;
 
-               if (is_writer)
-                   hr = create_metadata_writer(format, vendor, options | WICMetadataCreationFailUnknown,
-                           (IWICMetadataWriter **)&sub_reader);
-               else
-                   hr = create_metadata_reader(format, vendor, options | WICMetadataCreationFailUnknown,
-                           NULL, &sub_reader);
+               hr = create_metadata_handler(sub_stream, format, vendor, options | WICMetadataCreationFailUnknown,
+                       is_writer, &sub_reader);
            }
-
-           if (SUCCEEDED(hr))
-               hr = IWICMetadataReader_QueryInterface(sub_reader, &IID_IWICPersistStream, (void **)&persist_stream);
-
-           if (SUCCEEDED(hr))
-               hr = IWICPersistStream_LoadEx(persist_stream, sub_stream, vendor, options);
-
-           if (persist_stream)
-               IWICPersistStream_Release(persist_stream);
 
            if (SUCCEEDED(hr))
            {
                item->value.vt = VT_UNKNOWN;
                item->value.punkVal = (IUnknown *)sub_reader;
-               IUnknown_AddRef(item->value.punkVal);
            }
 
            if (sub_stream)
                IStream_Release(sub_stream);
-           if (sub_reader)
-               IWICMetadataReader_Release(sub_reader);
 
            break;
         }
@@ -1354,10 +1372,11 @@ static HRESULT LoadGpsMetadataWriter(IStream *input, const GUID *vendor,
     return load_ifd_metadata_internal(input, vendor, options, false, true, items, item_count);
 }
 
-static HRESULT LoadApp1Metadata(IStream *input, const GUID *vendor, DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT load_app1_metadata_internal(IStream *input, const GUID *vendor, DWORD options,
+        bool is_writer, MetadataItem **items, DWORD *item_count)
 {
     static const char exif_header[] = {'E','x','i','f',0,0};
-    IWICMetadataReader *ifd_reader;
+    IWICMetadataReader *ifd_reader = NULL;
     BOOL native_byte_order;
     LARGE_INTEGER move;
 
@@ -1414,7 +1433,9 @@ static HRESULT LoadApp1Metadata(IStream *input, const GUID *vendor, DWORD option
         return hr;
     }
 
-    hr = create_metadata_reader(&GUID_MetadataFormatIfd, vendor, options, ifd_stream, &ifd_reader);
+    if (SUCCEEDED(hr))
+        hr = create_metadata_handler(ifd_stream, &GUID_MetadataFormatIfd, vendor, options, is_writer, &ifd_reader);
+
     IStream_Release(ifd_stream);
 
     if (FAILED(hr))
@@ -1436,6 +1457,18 @@ static HRESULT LoadApp1Metadata(IStream *input, const GUID *vendor, DWORD option
     *item_count = 1;
 
     return S_OK;
+}
+
+static HRESULT LoadApp1MetadataReader(IStream *input, const GUID *vendor, DWORD options,
+        MetadataItem **items, DWORD *item_count)
+{
+    return load_app1_metadata_internal(input, vendor, options, false, items, item_count);
+}
+
+static HRESULT LoadApp1MetadataWriter(IStream *input, const GUID *vendor, DWORD options,
+        MetadataItem **items, DWORD *item_count)
+{
+    return load_app1_metadata_internal(input, vendor, options, true, items, item_count);
 }
 
 static const MetadataHandlerVtbl IfdMetadataReader_Vtbl = {
@@ -1513,10 +1546,22 @@ static const MetadataHandlerVtbl App1MetadataReader_Vtbl =
 {
     0,
     &CLSID_WICApp1MetadataReader,
-    LoadApp1Metadata
+    LoadApp1MetadataReader
 };
 
 HRESULT App1MetadataReader_CreateInstance(REFIID iid, void **ppv)
 {
     return MetadataReader_Create(&App1MetadataReader_Vtbl, iid, ppv);
+}
+
+static const MetadataHandlerVtbl App1MetadataWriter_Vtbl =
+{
+    .is_writer = true,
+    &CLSID_WICApp1MetadataWriter,
+    LoadApp1MetadataWriter
+};
+
+HRESULT App1MetadataWriter_CreateInstance(REFIID iid, void **ppv)
+{
+    return MetadataReader_Create(&App1MetadataWriter_Vtbl, iid, ppv);
 }

@@ -210,6 +210,13 @@ coclass WICExifMetadataWriter { interface IWICMetadataWriter; }
 coclass WICApp1MetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC App1 Metadata Writer"),
+    threading(both),
+    uuid(ee366069-1832-420f-b381-0479ad066f19)
+]
+coclass WICApp1MetadataWriter { interface IWICMetadataWriter; }
+
+[
     helpstring("WIC Png cHRM Metadata Reader"),
     threading(both),
     uuid(f90b5f36-367b-402a-9dd1-bc0fd59d8f62)
