@@ -254,6 +254,25 @@ static LIST_ENTRY *get_list_entry_from_splay_links(RTL_SPLAY_LINKS *links)
     return (LIST_ENTRY *)((unsigned char *)links + FIELD_OFFSET(struct rtl_generic_table_entry, list_entry));
 }
 
+static RTL_SPLAY_LINKS *rtl_splay_find(RTL_GENERIC_TABLE *table, void *value)
+{
+    RTL_GENERIC_COMPARE_RESULTS result;
+    RTL_SPLAY_LINKS *child;
+
+    child = table->TableRoot;
+    while (child)
+    {
+        result = table->CompareRoutine(table, get_data_from_splay_links(child), value);
+        if (result == GenericLessThan)
+            child = child->RightChild;
+        else if (result == GenericGreaterThan)
+            child = child->LeftChild;
+        else
+            return child;
+    }
+    return NULL;
+}
+
 static void rtl_splay_replace(RTL_SPLAY_LINKS *x, RTL_SPLAY_LINKS *y, RTL_SPLAY_LINKS **root)
 {
     if (RtlIsRoot(x))
@@ -629,6 +648,25 @@ void * WINAPI RtlInsertElementGenericTable(RTL_GENERIC_TABLE *table, void *value
     table->TableRoot = RtlSplay(child);
     table->NumberGenericTableElements++;
     return get_data_from_splay_links(child);
+}
+
+BOOLEAN WINAPI RtlDeleteElementGenericTable(RTL_GENERIC_TABLE *table, void *value)
+{
+    RTL_SPLAY_LINKS *child;
+
+    TRACE("(%p, %p)\n", table, value);
+
+    child = rtl_splay_find(table, value);
+    if (!child)
+        return FALSE;
+
+    table->TableRoot = RtlDelete(child);
+    RemoveEntryList(get_list_entry_from_splay_links(child));
+    table->NumberGenericTableElements--;
+    table->OrderedPointer = &table->InsertOrderList;
+    table->WhichOrderedElement = 0;
+    table->FreeRoutine(table, child);
+    return TRUE;
 }
 
 /******************************************************************************
