@@ -78,20 +78,15 @@ static HRESULT (WINAPI *pCoInternetParseIUri)(IUri*,PARSEACTION,DWORD,LPWSTR,DWO
 static HRESULT (WINAPI *pCreateURLMonikerEx)(IMoniker*,LPCWSTR,IMoniker**,DWORD);
 static HRESULT (WINAPI *pCreateURLMonikerEx2)(IMoniker*,IUri*,IMoniker**,DWORD);
 
-static const WCHAR http_urlW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
-        '.','o','r','g','/',0};
-static const WCHAR http_url_fragW[] = { 'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q',
-        '.','o','r','g','/','#','F','r','a','g',0};
+static const WCHAR http_urlW[] = L"http://www.winehq.org/";
+static const WCHAR http_url_fragW[] = L"http://www.winehq.org/#Frag";
 
-static const WCHAR combine_baseW[] = {'w','i','n','e','t','e','s','t',':','?','t',
-        'e','s','t','i','n','g',0};
-static const WCHAR combine_relativeW[] = {'?','t','e','s','t',0};
-static const WCHAR combine_resultW[] = {'z','i','p',':','t','e','s','t',0};
+static const WCHAR combine_baseW[] = L"winetest:?testing";
+static const WCHAR combine_relativeW[] = L"?test";
+static const WCHAR combine_resultW[] = L"zip:test";
 
-static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
-
-static const WCHAR parse_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t',0};
-static const WCHAR parse_resultW[] = {'z','i','p',':','t','e','s','t',0};
+static const WCHAR parse_urlW[] = L"winetest:test";
+static const WCHAR parse_resultW[] = L"zip:test";
 
 static PARSEACTION parse_action;
 static DWORD parse_flags;
@@ -8242,9 +8237,6 @@ static void test_CreateUri_InvalidArgs(void) {
     HRESULT hr;
     IUri *uri = (void*) 0xdeadbeef;
 
-    const WCHAR invalidW[] = {'i','n','v','a','l','i','d',0};
-    static const WCHAR emptyW[] = {0};
-
     hr = pCreateUri(http_urlW, 0, 0, NULL);
     ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08lx, expected 0x%08lx\n", hr, E_INVALIDARG);
 
@@ -8253,12 +8245,12 @@ static void test_CreateUri_InvalidArgs(void) {
     ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
 
     uri = (void*) 0xdeadbeef;
-    hr = pCreateUri(invalidW, 0, 0, &uri);
+    hr = pCreateUri(L"invalid", 0, 0, &uri);
     ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08lx, expected 0x%08lx.\n", hr, E_INVALIDARG);
     ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
 
     uri = (void*) 0xdeadbeef;
-    hr = pCreateUri(emptyW, 0, 0, &uri);
+    hr = pCreateUri(L"", 0, 0, &uri);
     ok(hr == E_INVALIDARG, "Error: CreateUri returned 0x%08lx, expected 0x%08lx.\n", hr, E_INVALIDARG);
     ok(uri == NULL, "Error: Expected the IUri to be NULL, but it was %p instead\n", uri);
 }
@@ -11237,7 +11229,7 @@ static void register_protocols(void)
         return;
 
     hres = IInternetSession_RegisterNameSpace(session, &protocol_cf, &IID_NULL,
-            winetestW, 0, NULL, 0);
+            L"winetest", 0, NULL, 0);
     ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
 
     IInternetSession_Release(session);
@@ -11252,7 +11244,7 @@ static void unregister_protocols(void) {
     if(FAILED(hr))
         return;
 
-    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, winetestW);
+    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, L"winetest");
     ok(hr == S_OK, "UnregisterNameSpace failed: 0x%08lx\n", hr);
 
     IInternetSession_Release(session);
