@@ -14796,6 +14796,12 @@ static const struct message WmMouseHoverSeq[] = {
     { 0 }
 };
 
+static const struct message WmMouseLeaveSeq[] =
+{
+    { WM_MOUSELEAVE, sent | wparam | lparam, 0, 0 },
+    { 0 }
+};
+
 static void pump_msg_loop_timeout(DWORD timeout, BOOL inject_mouse_move)
 {
     MSG msg;
@@ -14844,9 +14850,10 @@ static void test_TrackMouseEvent(void)
 {
     TRACKMOUSEEVENT tme;
     BOOL ret;
-    HWND hwnd, hchild;
+    HWND hwnd, hwnd2, hchild;
     RECT rc_parent, rc_child;
     UINT default_hover_time, hover_width = 0, hover_height = 0;
+    POINT old_pt;
 
 #define track_hover(track_hwnd, track_hover_time) \
     tme.cbSize = sizeof(tme); \
@@ -15018,6 +15025,83 @@ static void test_TrackMouseEvent(void)
     track_hover_cancel(hwnd);
 
     DestroyWindow(hwnd);
+
+    /* Test that tracking a new window with TME_LEAVE and when the cursor is not in the new window,
+     * WM_MOUSELEAVE is immediately posted to the window */
+    hwnd = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 100,
+                         100, 0, NULL, NULL, 0);
+    ok(!!hwnd, "Failed to create window, error %lu.\n", GetLastError());
+    hwnd2 = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 50, 50,
+                          0, NULL, NULL, 0);
+    ok(!!hwnd2, "Failed to create window, error %lu.\n", GetLastError());
+
+    GetCursorPos(&old_pt);
+    SetCursorPos(150, 150);
+
+    flush_events();
+    flush_sequence();
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd;
+    tme.dwHoverTime = HOVER_DEFAULT;
+    SetLastError(0xdeadbeef);
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd2;
+    tme.dwHoverTime = HOVER_DEFAULT;
+    SetLastError(0xdeadbeef);
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
+    flush_events();
+    ok_sequence(WmMouseLeaveSeq, "WmMouseLeaveSeq", TRUE);
+
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd);
+    SetCursorPos(old_pt.x, old_pt.y);
+
+    /* Test that tracking a new window with TME_LEAVE and when the cursor is not in the new window,
+     * the original tracking window is not changed */
+    hwnd = CreateWindowA("TestWindowClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 100, 100, 100,
+                         100, 0, NULL, NULL, 0);
+    ok(!!hwnd, "Failed to create window, error %lu.\n", GetLastError());
+    hwnd2 = CreateWindowA("static", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 50, 50, 0, NULL,
+                          NULL, 0);
+    ok(!!hwnd2, "Failed to create window, error %lu.\n", GetLastError());
+
+    GetCursorPos(&old_pt);
+    SetCursorPos(150, 150);
+
+    flush_events();
+    flush_sequence();
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd;
+    tme.dwHoverTime = HOVER_DEFAULT;
+    SetLastError(0xdeadbeef);
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
+
+    tme.cbSize = sizeof(tme);
+    tme.dwFlags = TME_LEAVE;
+    tme.hwndTrack = hwnd2;
+    tme.dwHoverTime = HOVER_DEFAULT;
+    SetLastError(0xdeadbeef);
+    ret = pTrackMouseEvent(&tme);
+    ok(ret, "TrackMouseEvent(TME_LEAVE) failed, error %ld\n", GetLastError());
+
+    SetCursorPos(500, 500);
+    Sleep(default_hover_time);
+    flush_events();
+    ok_sequence(WmMouseLeaveSeq, "WmMouseLeaveSeq", FALSE);
+
+    DestroyWindow(hwnd2);
+    DestroyWindow(hwnd);
+    SetCursorPos(old_pt.x, old_pt.y);
 
 #undef track_hover
 #undef track_query
