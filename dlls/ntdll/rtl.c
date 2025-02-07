@@ -702,10 +702,18 @@ void * WINAPI RtlGetElementGenericTable(RTL_GENERIC_TABLE *table, ULONG index)
 /******************************************************************************
  *  RtlLookupElementGenericTable           [NTDLL.@]
  */
-void * WINAPI RtlLookupElementGenericTable(RTL_GENERIC_TABLE *table, void *buffer)
+void * WINAPI RtlLookupElementGenericTable(RTL_GENERIC_TABLE *table, void *value)
 {
-    FIXME("(%p, %p) stub!\n", table, buffer);
-    return NULL;
+    RTL_SPLAY_LINKS *child;
+
+    TRACE("(%p, %p)\n", table, value);
+
+    child = rtl_splay_find(table, value);
+    if (!child)
+        return FALSE;
+
+    table->TableRoot = RtlSplay(child);
+    return get_data_from_splay_links(child);
 }
 
 /******************************************************************************
