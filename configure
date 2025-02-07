@@ -9171,7 +9171,7 @@ case $host_os in
     with_pthread=${with_pthread:-no}
     ;;
 
-  darwin*|macosx*)
+  darwin*)
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
@@ -16602,7 +16602,7 @@ then :
 
 else case e in #(
   e) case $host_os in
-                    darwin*|macosx*) PCSCLITE_LIBS="-framework PCSC"
+                    darwin*) PCSCLITE_LIBS="-framework PCSC"
  ;;
                   esac ;;
 esac
@@ -16825,7 +16825,7 @@ CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
 case $host_os in
-  darwin*|macosx*) ;;
+  darwin*) ;;
   *) if test "x$ac_cv_lib_soname_dbus_1" = "x"
 then :
   case "x$with_dbus" in
@@ -23315,7 +23315,7 @@ programs/winepath/winepath \
 server/wineserver"
 
     case $host_os in
-      cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
+      cygwin*|mingw32*|darwin*|linux-android*) ;;
       *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi

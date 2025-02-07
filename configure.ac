@@ -613,7 +613,7 @@ case $host_os in
     with_pthread=${with_pthread:-no}
     ;;
 
-  darwin*|macosx*)
+  darwin*)
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
@@ -1433,7 +1433,7 @@ if test "x$with_pcsclite" != "xno"
 then
     AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])],
                  [case $host_os in
-                    darwin*|macosx*) AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
+                    darwin*) AC_SUBST(PCSCLITE_LIBS,"-framework PCSC") ;;
                   esac])
 fi
 WINE_NOTICE_WITH(pcsclite,[test "x$PCSCLITE_LIBS" = x],
@@ -1459,7 +1459,7 @@ then
             [DBUS_CFLAGS=""])])
 fi
 case $host_os in
-  darwin*|macosx*) ;;
+  darwin*) ;;
   *) WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x"],
                       [libdbus ${notice_platform}development files not found, no dynamic device support.]) ;;
 esac
@@ -3686,7 +3686,7 @@ programs/winepath/winepath \
 server/wineserver"
 
     case $host_os in
-      cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
+      cygwin*|mingw32*|darwin*|linux-android*) ;;
       *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi
