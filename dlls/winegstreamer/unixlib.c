@@ -300,6 +300,10 @@ NTSTATUS wg_init_gstreamer(void *arg)
 
     GST_INFO("GStreamer library version %s; wine built with %d.%d.%d.",
             gst_version_string(), GST_VERSION_MAJOR, GST_VERSION_MINOR, GST_VERSION_MICRO);
+
+    if (!GST_ELEMENT_REGISTER(winegstreamerstepper, NULL))
+        GST_ERROR("Failed to register the stepper element");
+
     return STATUS_SUCCESS;
 }
 

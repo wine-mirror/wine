@@ -41,6 +41,12 @@ extern GList *find_element_factories(GstElementFactoryListType type, GstRank min
         GstCaps *element_sink_caps, GstCaps *element_src_caps);
 extern GstElement *find_element(GstElementFactoryListType type,
         GstCaps *element_sink_caps, GstCaps *element_src_caps);
+/*
+ * Append `element` to `container`, updates the pointer to the first and last elements in the
+ * pipeline. Returns whether the operation succeeded.
+ *
+ * This takes the ownership of `element` whether it succeeded or not.
+ */
 extern bool append_element(GstElement *container, GstElement *element, GstElement **first, GstElement **last);
 extern bool link_src_to_sink(GstPad *src_pad, GstPad *sink_pad);
 extern bool link_src_to_element(GstPad *src_pad, GstElement *element);
@@ -103,5 +109,7 @@ extern void wg_allocator_destroy(GstAllocator *allocator);
 extern void wg_allocator_provide_sample(GstAllocator *allocator, struct wg_sample *sample);
 extern void wg_allocator_release_sample(GstAllocator *allocator, struct wg_sample *sample,
         bool discard_data);
+
+GST_ELEMENT_REGISTER_DECLARE(winegstreamerstepper);
 
 #endif /* __WINE_WINEGSTREAMER_UNIX_PRIVATE_H */
