@@ -133,6 +133,8 @@ struct wayland_seat
 struct wayland_data_device
 {
     struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1;
+    struct zwlr_data_control_source_v1 *zwlr_data_control_source_v1;
+    pthread_mutex_t mutex;
 };
 
 struct wayland
