@@ -545,17 +545,29 @@ void wayland_data_device_init(void)
     TRACE("\n");
 
     pthread_mutex_lock(&data_device->mutex);
-    if (data_device->zwlr_data_control_device_v1)
-        zwlr_data_control_device_v1_destroy(data_device->zwlr_data_control_device_v1);
-    data_device->zwlr_data_control_device_v1 =
-        zwlr_data_control_manager_v1_get_data_device(
-            process_wayland.zwlr_data_control_manager_v1,
-            process_wayland.seat.wl_seat);
-    if (data_device->zwlr_data_control_device_v1)
+    if (process_wayland.zwlr_data_control_manager_v1)
     {
-        zwlr_data_control_device_v1_add_listener(
-            data_device->zwlr_data_control_device_v1, &data_control_device_listener,
-            data_device);
+        if (data_device->zwlr_data_control_device_v1)
+            zwlr_data_control_device_v1_destroy(data_device->zwlr_data_control_device_v1);
+        data_device->zwlr_data_control_device_v1 =
+            zwlr_data_control_manager_v1_get_data_device(
+                process_wayland.zwlr_data_control_manager_v1,
+                process_wayland.seat.wl_seat);
+        if (data_device->zwlr_data_control_device_v1)
+        {
+            zwlr_data_control_device_v1_add_listener(
+                data_device->zwlr_data_control_device_v1, &data_control_device_listener,
+                data_device);
+        }
+    }
+    else if (process_wayland.wl_data_device_manager)
+    {
+        if (data_device->wl_data_device)
+            wl_data_device_release(data_device->wl_data_device);
+        data_device->wl_data_device =
+            wl_data_device_manager_get_data_device(
+                process_wayland.wl_data_device_manager,
+                process_wayland.seat.wl_seat);
     }
     pthread_mutex_unlock(&data_device->mutex);
 
@@ -671,16 +683,35 @@ static void destroy_clipboard(void)
     pthread_mutex_unlock(&data_device->mutex);
 }
 
+static BOOL is_winewayland_clipboard_hwnd(HWND hwnd)
+{
+    static const WCHAR clipboard_classnameW[] = {
+        '_','_','w','i','n','e','w','a','y','l','a','n','d','_',
+        'c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r'};
+    WCHAR buffer[64];
+    UNICODE_STRING name = {.Buffer = buffer, .MaximumLength = sizeof(buffer)};
+
+    if (!NtUserGetClassName(hwnd, FALSE, &name)) return FALSE;
+    return !wcscmp(buffer, clipboard_classnameW);
+}
+
 LRESULT WAYLAND_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
     {
     case WM_NCCREATE:
+        /* Disable the default clipboard window in the desktop process if we are
+         * using the core wl_data_device protocol. */
+        if (!process_wayland.zwlr_data_control_manager_v1 &&
+            process_wayland.wl_data_device_manager &&
+            !is_winewayland_clipboard_hwnd(hwnd))
+        {
+            return FALSE;
+        }
         clipboard_hwnd = hwnd;
         NtUserAddClipboardFormatListener(hwnd);
         pthread_mutex_lock(&process_wayland.seat.mutex);
-        if (process_wayland.seat.wl_seat && process_wayland.zwlr_data_control_manager_v1)
-            wayland_data_device_init();
+        if (process_wayland.seat.wl_seat) wayland_data_device_init();
         pthread_mutex_unlock(&process_wayland.seat.mutex);
         return TRUE;
     case WM_CLIPBOARDUPDATE:

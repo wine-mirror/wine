@@ -110,10 +110,20 @@ static NTSTATUS waylanddrv_unix_read_events(void *arg)
     return STATUS_UNSUCCESSFUL;
 }
 
+static NTSTATUS waylanddrv_unix_init_clipboard(void *arg)
+{
+    /* If the compositor supports zwlr_data_control_manager_v1, we don't need
+     * per-process clipboard window and handling, we can use the default clipboard
+     * window from the desktop process. */
+    if (process_wayland.zwlr_data_control_manager_v1) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     waylanddrv_unix_init,
     waylanddrv_unix_read_events,
+    waylanddrv_unix_init_clipboard,
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == waylanddrv_unix_func_count);
@@ -124,6 +134,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     waylanddrv_unix_init,
     waylanddrv_unix_read_events,
+    waylanddrv_unix_init_clipboard,
 };
 
 C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == waylanddrv_unix_func_count);
