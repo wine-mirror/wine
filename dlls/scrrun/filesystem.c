@@ -682,9 +682,17 @@ static HRESULT WINAPI textstream_WriteLine(ITextStream *iface, BSTR text)
 
 static HRESULT WINAPI textstream_WriteBlankLines(ITextStream *iface, LONG lines)
 {
-    FIXME("%p, %ld stub\n", iface, lines);
+    struct textstream *stream = impl_from_ITextStream(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %ld.\n", iface, lines);
+
+    if (lines < 0)
+        return E_INVALIDARG;
+    for (; lines > 0 && SUCCEEDED(hr); lines--) {
+        hr = textstream_writecrlf(stream);
+    }
+    return hr;
 }
 
 static HRESULT WINAPI textstream_Skip(ITextStream *iface, LONG count)
