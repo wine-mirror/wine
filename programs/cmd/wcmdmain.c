@@ -514,6 +514,13 @@ WCHAR *WCMD_strip_quotes(WCHAR *cmd) {
   return lastquote;
 }
 
+static inline int read_int_in_range(const WCHAR *from, WCHAR **after, int low, int high)
+{
+    int val = wcstol(from, after, 10);
+    val += (val < 0) ? high : low;
+    return val <= low ? low : (val >= high ? high : val);
+}
+
 /*************************************************************************
  * WCMD_expand_envvar
  *
@@ -598,34 +605,21 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
      */
 
     /* ~ is substring manipulation */
-    if (colonpos[1] == L'~') {
+    if (colonpos[1] == L'~')
+    {
+        int   substr_beg, substr_end;
+        WCHAR *ptr;
 
-      int   substrposition, substrlength = 0;
-      WCHAR *commapos = wcschr(colonpos+2, L',');
-      WCHAR *startCopy;
-
-      substrposition = wcstol(colonpos+2, NULL, 10);
-      if (commapos) substrlength = wcstol(commapos+1, NULL, 10);
-
-      /* Check bounds */
-      if (substrposition >= 0) {
-        startCopy = &thisVarContents[min(substrposition, len - 1)];
-      } else {
-        startCopy = &thisVarContents[max(0, len + substrposition)];
-      }
-
-      if (commapos == NULL)
-        /* Copy the lot */
-        return WCMD_strsubstW(start, endOfVar + 1, startCopy, -1);
-      if (substrlength < 0) {
-
-        int copybytes = len + substrlength - (startCopy - thisVarContents);
-        if (copybytes >= len) copybytes = len - 1;
-        else if (copybytes < 0) copybytes = 0;
-        return WCMD_strsubstW(start, endOfVar + 1, startCopy, copybytes);
-      }
-      substrlength = min(substrlength, len - (startCopy - thisVarContents));
-      return WCMD_strsubstW(start, endOfVar + 1, startCopy, substrlength);
+        substr_beg = read_int_in_range(colonpos + 2, &ptr, 0, len);
+        if (*ptr == L',')
+            substr_end = read_int_in_range(ptr + 1, &ptr, substr_beg, len);
+        else
+            substr_end = len;
+        if (*ptr == L'\0')
+            return WCMD_strsubstW(start, endOfVar + 1, &thisVarContents[substr_beg], substr_end - substr_beg);
+        /* error, remove enclosing % pair (in place) */
+        memmove(start, start + 1, (endOfVar - start - 1) * sizeof(WCHAR));
+        return WCMD_strsubstW(endOfVar - 1, endOfVar + 1, NULL, 0);
     /* search and replace manipulation */
     } else {
       WCHAR *equalspos = wcschr(colonpos, L'=');

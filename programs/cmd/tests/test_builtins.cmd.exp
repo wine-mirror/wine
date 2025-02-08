@@ -778,16 +778,16 @@ e@or_broken@qwerty
 r@or_broken@qwerty
 ty
 'y'
-@todo_wine@''
-@todo_wine@''
+''
+''
 'qwerty'
 ''
 'qw'
-@todo_wine@'WINE_VAR:~2a'
-@todo_wine@'WINE_VAR:~2a,2'
-@todo_wine@'WINE_VAR:~a,2'
-@todo_wine@'WINE_VAR:~2,2a'
-@todo_wine@'WINE_VAR:~-'
+'WINE_VAR:~2a'
+'WINE_VAR:~2a,2'
+'WINE_VAR:~a,2'
+'WINE_VAR:~2,2a'
+'WINE_VAR:~-'
 ------------ Testing variable partial replacement ------------
 azertyazERTY
 ertyERTY
