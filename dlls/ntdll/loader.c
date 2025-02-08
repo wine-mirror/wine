@@ -2040,8 +2040,8 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
     else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
                                                       IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
-        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL, current_modref )
-                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL, current_modref );
+        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL, NULL )
+                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL, NULL );
         if (proc)
         {
             *address = proc;
