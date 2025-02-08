@@ -903,7 +903,7 @@ static NTSTATUS walk_node_dependencies( LDR_DDAG_NODE *node, void *context,
  * Find the final function pointer for a forwarded function.
  * The loader_section must be locked while calling this function.
  */
-static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path )
+static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path, WINE_MODREF *importer )
 {
     const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
@@ -922,9 +922,9 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
         if (load_dll( load_path, mod_name, 0, &wm, imp->system ) == STATUS_SUCCESS &&
             !(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS))
         {
-            if (!imports_fixup_done && current_modref)
+            if (!imports_fixup_done && importer)
             {
-                add_module_dependency( current_modref->ldr.DdagNode, wm->ldr.DdagNode );
+                add_module_dependency( importer->ldr.DdagNode, wm->ldr.DdagNode );
             }
             else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
             {
@@ -947,9 +947,9 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
 
         if (*name == '#') { /* ordinal */
             proc = find_ordinal_export( wm->ldr.DllBase, exports, exp_size,
-                                        atoi(name+1) - exports->Base, load_path, current_modref );
+                                        atoi(name+1) - exports->Base, load_path, importer );
         } else
-            proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path, current_modref );
+            proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path, importer );
     }
 
     if (!proc)
@@ -988,7 +988,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     /* if the address falls into the export dir, it's a forward */
     if (((const char *)proc >= (const char *)exports) && 
         ((const char *)proc < (const char *)exports + exp_size))
-        return find_forwarded_export( module, (const char *)proc, load_path );
+        return find_forwarded_export( module, (const char *)proc, load_path, importer );
 
     if (TRACE_ON(snoop))
     {
