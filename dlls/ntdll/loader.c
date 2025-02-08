@@ -184,7 +184,6 @@ static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 
 static WINE_MODREF *cached_modref;
-static WINE_MODREF *current_modref;
 static WINE_MODREF *last_failed_modref;
 
 static LDR_DDAG_NODE *node_ntdll, *node_kernel32;
@@ -1400,18 +1399,15 @@ static NTSTATUS fixup_imports_ilonly( WINE_MODREF *wm, LPCWSTR load_path, void *
     NTSTATUS status;
     void *proc;
     const char *name;
-    WINE_MODREF *prev, *imp;
+    WINE_MODREF *imp;
 
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
-    prev = current_modref;
-    current_modref = wm;
     assert( !wm->ldr.DdagNode->Dependencies.Tail );
     if (!(status = load_dll( load_path, L"mscoree.dll", 0, &imp, FALSE ))
           && !add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, NULL ))
         status = STATUS_NO_MEMORY;
-    current_modref = prev;
     if (status)
     {
         ERR( "mscoree.dll not found, IL-only binary %s cannot be loaded\n",
@@ -1438,7 +1434,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
 {
     const IMAGE_IMPORT_DESCRIPTOR *imports;
     SINGLE_LIST_ENTRY *dep_after;
-    WINE_MODREF *prev, *imp;
+    WINE_MODREF *imp;
     int i, nb_imports;
     DWORD size;
     NTSTATUS status;
@@ -1464,8 +1460,6 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     /* load the imported modules. They are automatically
      * added to the modref list of the process.
      */
-    prev = current_modref;
-    current_modref = wm;
     status = STATUS_SUCCESS;
     for (i = 0; i < nb_imports; i++)
     {
@@ -1475,7 +1469,6 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
         else if (imp && imp->ldr.DdagNode != node_ntdll && imp->ldr.DdagNode != node_kernel32)
             add_module_dependency_after( wm->ldr.DdagNode, imp->ldr.DdagNode, dep_after );
     }
-    current_modref = prev;
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     return status;
 }
@@ -1756,9 +1749,6 @@ static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved )
     /* Call DLL entry point */
     if (status == STATUS_SUCCESS)
     {
-        WINE_MODREF *prev = current_modref;
-        current_modref = wm;
-
         call_ldr_notifications( LDR_DLL_NOTIFICATION_REASON_LOADED, &wm->ldr );
         status = MODULE_InitDLL( wm, DLL_PROCESS_ATTACH, lpReserved );
         if (status == STATUS_SUCCESS)
@@ -1774,7 +1764,6 @@ static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved )
             last_failed_modref = wm;
             WARN("Initialization of %s failed\n", debugstr_w(wm->ldr.BaseDllName.Buffer));
         }
-        current_modref = prev;
     }
 
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
