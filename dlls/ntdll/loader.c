@@ -734,11 +734,11 @@ static NTSTATUS get_apiset_target( const API_SET_NAMESPACE *map, const API_SET_N
 /**********************************************************************
  *	    build_import_name
  */
-static NTSTATUS build_import_name( WCHAR buffer[256], const char *import, int len )
+static NTSTATUS build_import_name( WINE_MODREF *importer, WCHAR buffer[256], const char *import, int len )
 {
     const API_SET_NAMESPACE *map = NtCurrentTeb()->Peb->ApiSetMap;
     const API_SET_NAMESPACE_ENTRY *entry;
-    const WCHAR *host = current_modref ? current_modref->ldr.BaseDllName.Buffer : NULL;
+    const WCHAR *host = importer ? importer->ldr.BaseDllName.Buffer : NULL;
     UNICODE_STRING str;
 
     while (len && import[len-1] == ' ') len--;  /* remove trailing spaces */
@@ -913,7 +913,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     FARPROC proc = NULL;
 
     if (!end) return NULL;
-    if (build_import_name( mod_name, forward, end - forward )) return NULL;
+    if (build_import_name( importer, mod_name, forward, end - forward )) return NULL;
 
     if (!(wm = find_basename_module( mod_name )))
     {
@@ -1119,7 +1119,7 @@ static BOOL import_dll( WINE_MODREF *wm, const IMAGE_IMPORT_DESCRIPTOR *descr, L
         return TRUE;
     }
 
-    status = build_import_name( buffer, name, len );
+    status = build_import_name( wm, buffer, name, len );
     if (!status) status = load_dll( load_path, buffer, 0, &wmImp, system );
 
     if (status)
