@@ -2716,9 +2716,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
         /* ReplaceFile() can replace an open target. To do this, we need to move
          * it out of the way first. */
         WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
+        WCHAR* filePart;
+        DWORD cnt = GetFullPathNameW(replaced, ARRAY_SIZE( temp_path ), temp_path, &filePart);
+        if (!cnt) return FALSE;
+        if (cnt >= ARRAY_SIZE( temp_path ) || !filePart)
+        {
+            SetLastError( ERROR_PATH_NOT_FOUND );
+            return FALSE;
+        }
+        *filePart = 0;
 
-        lstrcpynW( temp_path, replaced, ARRAY_SIZE( temp_path ) );
-        PathRemoveFileSpecW( temp_path );
         if (!GetTempFileNameW( temp_path, L"rf", 0, temp_file ) ||
             !MoveFileExW( replaced, temp_file, MOVEFILE_REPLACE_EXISTING ))
             return FALSE;

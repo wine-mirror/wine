@@ -4222,7 +4222,6 @@ static void test_ReplaceFileW(void)
     ret = GetTempFileNameW(temp_path, prefix, 0, replacement);
     ok(ret, "GetTempFileNameW error (replacement) %ld\n", GetLastError());
     ret = pReplaceFileW(replaced, replacement, NULL, 0, 0, 0);
-    todo_wine
     ok(ret, "ReplaceFileW: error %ld\n", GetLastError());
 
     DeleteFileW(replaced);
