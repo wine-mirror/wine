@@ -1030,6 +1030,19 @@ echo %WINE_VAR:~2,-3%
 echo '%WINE_VAR:~-2,-4%'
 echo %WINE_VAR:~-3,-2%
 echo %WINE_VAR:~4,4%
+echo '%WINE_VAR:~5%'
+echo '%WINE_VAR:~6%'
+echo '%WINE_VAR:~7%'
+echo '%WINE_VAR:~-0%'
+echo '%WINE_VAR:~,%'
+echo '%WINE_VAR:~,2%'
+echo '%WINE_VAR:~2a%'
+echo '%WINE_VAR:~2a,2%'
+echo '%WINE_VAR:~a,2%'
+echo '%WINE_VAR:~2,2a%'
+echo '%WINE_VAR:~-%'
+
+echo ------------ Testing variable partial replacement ------------
 set WINE_VAR=qwertyQWERTY
 echo %WINE_VAR:qw=az%
 echo %WINE_VAR:qw=%
