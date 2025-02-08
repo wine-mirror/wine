@@ -84,6 +84,56 @@ type mixedEchoModes.cmd
 cmd /c mixedEchoModes.cmd
 del mixedEchoModes.cmd
 
+echo ------------ Testing call and echo modes ------------
+rem echo on/off is propagated back to caller (except in interactive mode)
+@echo off
+@FOR /F "tokens=* usebackq" %%F IN (`echo`) DO SET "wine_echo_on=%%F"
+goto :hopCallEchoModes
+
+rem ensure comparison isn't locale dependant
+:showEchoMode
+@FOR /F "tokens=*" %%F IN (%1) DO @IF "%%F"=="%wine_echo_on%" (@echo ECHO_IS_ON) else (@echo ECHO_IS_OFF)
+@del %1
+@exit /b 0
+:hopCallEchoModes
+
+echo %%*> callme.cmd
+rem ensure that :showEchoMode works as expected
+@echo on
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo off
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+rem test inside a batch file, that caller keeps callee echo on/off status
+@echo off
+@call callme.cmd @echo on
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo on
+@call callme.cmd @echo off
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo off
+
+rem test in interactive mode... echo is always preserved after a call
+@echo echo on>foo.txt
+@echo call callme.cmd @echo off>>foo.txt
+@echo echo^>foo.tmp>>foo.txt
+type foo.txt | cmd.exe > NULL
+@call :showEchoMode foo.tmp
+
+@echo echo off>foo.txt
+@echo call callme.cmd @echo on>>foo.txt
+@echo echo^>foo.tmp>>foo.txt
+type foo.txt | cmd.exe > NULL
+@call :showEchoMode foo.tmp
+
+rem cleanup
+del foo.txt
+del callme.cmd
+set wine_echo_on=
+@echo off
 echo ------------ Testing parameterization ------------
 call :TestParm a b c
 call :TestParm "a b c"
