@@ -78,11 +78,15 @@ static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_inpu
         struct wl_surface *surface)
 {
     struct wayland_text_input *text_input = data;
+    HWND hwnd;
     TRACE("data %p, text_input %p, surface %p.\n", data, zwp_text_input_v3, surface);
 
     pthread_mutex_lock(&text_input->mutex);
     zwp_text_input_v3_disable(text_input->zwp_text_input_v3);
     zwp_text_input_v3_commit(text_input->zwp_text_input_v3);
+    assert(text_input->wl_surface);
+    hwnd = wl_surface_get_user_data(text_input->wl_surface);
+    post_ime_update(hwnd, 0, NULL, NULL);
     text_input->wl_surface = NULL;
     pthread_mutex_unlock(&text_input->mutex);
 }
@@ -90,6 +94,17 @@ static void text_input_leave(void *data, struct zwp_text_input_v3 *zwp_text_inpu
 static void text_input_preedit_string(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
         const char *text, int32_t cursor_begin, int32_t cursor_end)
 {
+    struct wayland_text_input *text_input = data;
+    TRACE("data %p, text_input %p, text %s, cursor_begin %d.\n", data, zwp_text_input_v3,
+            debugstr_a(text), cursor_begin);
+
+    pthread_mutex_lock(&text_input->mutex);
+    if ((text_input->preedit_string = strdupUtoW(text)) && cursor_begin > 0)
+    {
+        RtlUTF8ToUnicodeN(NULL, 0, &text_input->preedit_cursor_pos, text, cursor_begin);
+        text_input->preedit_cursor_pos /= sizeof(WCHAR);
+    }
+    pthread_mutex_unlock(&text_input->mutex);
 }
 
 static void text_input_commit_string(void *data, struct zwp_text_input_v3 *zwp_text_input_v3,
@@ -119,8 +134,12 @@ static void text_input_done(void *data, struct zwp_text_input_v3 *zwp_text_input
     assert(text_input->wl_surface);
     hwnd = wl_surface_get_user_data(text_input->wl_surface);
 
-    post_ime_update(hwnd, 0, NULL, text_input->commit_string);
+    post_ime_update(hwnd, text_input->preedit_cursor_pos, text_input->preedit_string,
+            text_input->commit_string);
 
+    free(text_input->preedit_string);
+    text_input->preedit_string = NULL;
+    text_input->preedit_cursor_pos = 0;
     free(text_input->commit_string);
     text_input->commit_string = NULL;
     pthread_mutex_unlock(&text_input->mutex);
