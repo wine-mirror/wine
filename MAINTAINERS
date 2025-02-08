@@ -295,6 +295,10 @@ P:	Huw Davies <huw@codeweavers.com>
 P:	Elizabeth Figura <zfigura@codeweavers.com>
 F:	dlls/rpcrt4/
 
+Scripting runtime components
+P:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/scrrun/
+
 Theming
 M:	Zhiyi Zhang <zzhang@codeweavers.com>
 F:	dlls/light.msstyles/
