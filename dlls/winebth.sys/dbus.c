@@ -443,7 +443,7 @@ static BOOL bluez_event_list_queue_new_event_with_call(
     event_entry->event_type = event_type;
     event_entry->event = event;
     event_entry->pending_call = call;
-    if (!call)
+    if (call && callback)
         p_dbus_pending_call_set_notify( call, callback, &event_entry->event, NULL );
     list_add_tail( event_list, &event_entry->entry );
 
