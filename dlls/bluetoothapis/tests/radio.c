@@ -248,6 +248,33 @@ void test_BluetoothEnableIncomingConnections( void )
     }
 }
 
+void test_radio_BluetoothEnableDiscovery( HANDLE radio, void *data )
+{
+    BOOL ret;
+
+    if (BluetoothIsDiscoverable( radio ))
+    {
+        ret = BluetoothEnableDiscovery( radio, FALSE );
+        todo_wine ok( ret, "%d != 1\n", ret );
+    }
+
+    /* Enabling discovery requires incoming connections to be enabled as well, so this should result in an error. */
+    BluetoothEnableIncomingConnections( radio, FALSE );
+    ret = BluetoothEnableDiscovery( radio, TRUE );
+    ok( !ret, "%d != 0\n", ret );
+
+    BluetoothEnableIncomingConnections( radio, TRUE );
+    ret = BluetoothEnableDiscovery( radio, TRUE );
+    todo_wine ok( ret, "%d != 1\n", ret );
+    ret = BluetoothIsDiscoverable( radio );
+    todo_wine ok ( ret, "%d != 1\n", ret );
+}
+
+void test_BluetoothEnableDiscovery( void )
+{
+    test_for_all_radios( test_radio_BluetoothEnableDiscovery, NULL );
+}
+
 START_TEST( radio )
 {
     test_BluetoothFindFirstRadio();
@@ -258,4 +285,5 @@ START_TEST( radio )
     test_BluetoothIsDiscoverable();
     test_BluetoothIsConnectable();
     test_BluetoothEnableIncomingConnections();
+    test_BluetoothEnableDiscovery();
 }
