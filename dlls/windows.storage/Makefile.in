@@ -1,0 +1,5 @@
+MODULE  = windows.storage.dll
+IMPORTS = combase
+
+SOURCES = \
+	main.c
