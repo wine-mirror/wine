@@ -303,6 +303,7 @@ void      WINAPI RtlCopyString(STRING*,const STRING*);
 PRTL_SPLAY_LINKS WINAPI RtlDelete(PRTL_SPLAY_LINKS);
 BOOLEAN   WINAPI RtlDeleteElementGenericTable(PRTL_GENERIC_TABLE,PVOID);
 void      WINAPI RtlDeleteNoSplay(PRTL_SPLAY_LINKS,PRTL_SPLAY_LINKS *);
+void *    WINAPI RtlEnumerateGenericTable(PRTL_GENERIC_TABLE,BOOLEAN);
 void *    WINAPI RtlEnumerateGenericTableWithoutSplaying(PRTL_GENERIC_TABLE,PVOID*);
 void *    WINAPI RtlEnumerateGenericTableWithoutSplayingAvl(PRTL_AVL_TABLE,PVOID*);
 BOOLEAN   WINAPI RtlEqualString(const STRING*,const STRING*,BOOLEAN);

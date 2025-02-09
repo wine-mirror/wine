@@ -701,6 +701,42 @@ void * WINAPI RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, 
 }
 
 /******************************************************************************
+ *  RtlEnumerateGenericTable           [NTDLL.@]
+ *
+ * RtlEnumerateGenericTable() uses TableRoot to keep track of enumeration status according to tests.
+ * This also means that other functions that change TableRoot should not be used during enumerations.
+ * Otherwise, RtlEnumerateGenericTable() won't be able to find the correct next element when restart
+ * is FALSE. This is also the case on Windows.
+ */
+void * WINAPI RtlEnumerateGenericTable(RTL_GENERIC_TABLE *table, BOOLEAN restart)
+{
+    RTL_SPLAY_LINKS *child;
+
+    TRACE("(%p, %d)\n", table, restart);
+
+    if (RtlIsGenericTableEmpty(table))
+        return NULL;
+
+    if (restart)
+    {
+        /* Find the smallest element */
+        child = table->TableRoot;
+        while (RtlLeftChild(child))
+            child = RtlLeftChild(child);
+    }
+    else
+    {
+        /* Find the successor of the root */
+        child = RtlRealSuccessor(table->TableRoot);
+        if (!child)
+            return NULL;
+    }
+
+    table->TableRoot = RtlSplay(child);
+    return get_data_from_splay_links(child);
+}
+
+/******************************************************************************
  *  RtlNumberGenericTableElements           [NTDLL.@]
  */
 ULONG WINAPI RtlNumberGenericTableElements(RTL_GENERIC_TABLE *table)

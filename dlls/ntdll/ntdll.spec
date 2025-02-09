@@ -659,7 +659,7 @@
 @ stdcall -arch=win32 -ret64 RtlEnlargedUnsignedMultiply(long long)
 @ stdcall RtlEnterCriticalSection(ptr)
 @ stub RtlEnumProcessHeaps
-@ stub RtlEnumerateGenericTable
+@ stdcall RtlEnumerateGenericTable(ptr long)
 # @ stub RtlEnumerateGenericTableAvl
 # @ stub RtlEnumerateGenericTableLikeADirectory
 @ stdcall RtlEnumerateGenericTableWithoutSplaying(ptr ptr)

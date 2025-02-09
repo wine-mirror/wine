@@ -1070,7 +1070,7 @@
 @ stdcall -arch=win32 -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall -arch=win32 RtlEnlargedUnsignedDivide(int64 long ptr)
 @ stdcall -arch=win32 -ret64 RtlEnlargedUnsignedMultiply(long long)
-@ stub RtlEnumerateGenericTable
+@ stdcall RtlEnumerateGenericTable(ptr long)
 @ stub RtlEnumerateGenericTableAvl
 @ stub RtlEnumerateGenericTableLikeADirectory
 @ stdcall RtlEnumerateGenericTableWithoutSplaying(ptr ptr)
