@@ -674,11 +674,30 @@ BOOLEAN WINAPI RtlDeleteElementGenericTable(RTL_GENERIC_TABLE *table, void *valu
  */
 void * WINAPI RtlEnumerateGenericTableWithoutSplaying(RTL_GENERIC_TABLE *table, PVOID *previous)
 {
-    static int warn_once;
+    RTL_SPLAY_LINKS *child;
 
-    if (!warn_once++)
-        FIXME("(%p, %p) stub!\n", table, previous);
-    return NULL;
+    TRACE("(%p, %p)\n", table, previous);
+
+    if (RtlIsGenericTableEmpty(table))
+        return NULL;
+
+    if (!*previous)
+    {
+        /* Find the smallest element */
+        child = table->TableRoot;
+        while (RtlLeftChild(child))
+            child = RtlLeftChild(child);
+    }
+    else
+    {
+        /* Find the successor of the previous element */
+        child = RtlRealSuccessor(*previous);
+        if (!child)
+            return NULL;
+    }
+
+    *previous = child;
+    return get_data_from_splay_links(child);
 }
 
 /******************************************************************************
