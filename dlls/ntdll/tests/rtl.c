@@ -92,6 +92,7 @@ static HMODULE hntdll = 0;
 static PRTL_SPLAY_LINKS (WINAPI *pRtlDelete)(PRTL_SPLAY_LINKS);
 static void      (WINAPI  *pRtlDeleteNoSplay)(PRTL_SPLAY_LINKS, PRTL_SPLAY_LINKS *);
 static BOOLEAN   (WINAPI  *pRtlDeleteElementGenericTable)(PRTL_GENERIC_TABLE,PVOID);
+static void *    (WINAPI  *pRtlEnumerateGenericTableWithoutSplaying)(PRTL_GENERIC_TABLE, PVOID *);
 static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
 static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
 static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
@@ -161,6 +162,7 @@ static void InitFunctionPtrs(void)
         pRtlDelete = (void *)GetProcAddress(hntdll, "RtlDelete");
         pRtlDeleteElementGenericTable = (void *)GetProcAddress(hntdll, "RtlDeleteElementGenericTable");
         pRtlDeleteNoSplay = (void *)GetProcAddress(hntdll, "RtlDeleteNoSplay");
+        pRtlEnumerateGenericTableWithoutSplaying = (void *)GetProcAddress(hntdll, "RtlEnumerateGenericTableWithoutSplaying");
 	pRtlMoveMemory = (void *)GetProcAddress(hntdll, "RtlMoveMemory");
 	pRtlFillMemory = (void *)GetProcAddress(hntdll, "RtlFillMemory");
 	pRtlFillMemoryUlong = (void *)GetProcAddress(hntdll, "RtlFillMemoryUlong");
@@ -5150,6 +5152,70 @@ static void test_RtlLookupElementGenericTable(void)
     }
 }
 
+static void test_RtlEnumerateGenericTableWithoutSplaying(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    static const int expected_elements[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RTL_SPLAY_LINKS *old_table_root;
+    BOOLEAN new_element, success;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+    void *restart_key;
+
+    if (!pRtlEnumerateGenericTableWithoutSplaying)
+    {
+        win_skip("RtlEnumerateGenericTableWithoutSplaying is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    /* Test that restart key is a pointer to RTL_SPLAY_LINKS pointing to returned element */
+    restart_key = NULL;
+    ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key);
+    ok(ret && *ret == expected_elements[0], "Expected %d at %d, got %d.\n",
+       expected_elements[0], 0, ret ? *ret : -1);
+    ok(restart_key == get_splay_links_from_data(ret), "Got unexpected restart key %p.\n", restart_key);
+
+    /* Test enumeration */
+    old_table_root = table.TableRoot;
+    restart_key = NULL;
+    for (i = 0, ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key); ret != NULL;
+         ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n",
+           expected_elements[i], i, ret ? *ret : -1);
+        ok(table.TableRoot == old_table_root, "Got unexpected TableRoot.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    /* Test restarting enumeration */
+    restart_key = NULL;
+    for (i = 0, ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key); ret != NULL;
+         ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n",
+           expected_elements[i], i, ret ? *ret : -1);
+        ok(table.TableRoot == old_table_root, "Got unexpected TableRoot.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable %d failed.\n", elements[i]);
+    }
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -5215,4 +5281,5 @@ START_TEST(rtl)
     test_RtlInsertElementGenericTable();
     test_RtlDeleteElementGenericTable();
     test_RtlLookupElementGenericTable();
+    test_RtlEnumerateGenericTableWithoutSplaying();
 }
