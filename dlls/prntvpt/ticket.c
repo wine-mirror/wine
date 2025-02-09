@@ -1511,7 +1511,7 @@ static HRESULT write_PageImageableSize_caps(const WCHAR *device, IXMLDOMElement 
     IXMLDOMElement *page, *area, *property;
 
     hdc = CreateDCW(NULL, device, NULL, NULL);
-    if (!hdc) HRESULT_FROM_WIN32(GetLastError());
+    if (!hdc) return HRESULT_FROM_WIN32(GetLastError());
 
     res_x = GetDeviceCaps(hdc, LOGPIXELSX);
     res_y = GetDeviceCaps(hdc, LOGPIXELSY);
