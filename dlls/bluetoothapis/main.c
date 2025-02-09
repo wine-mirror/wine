@@ -363,8 +363,47 @@ BOOL WINAPI BluetoothIsDiscoverable( HANDLE radio )
  */
 BOOL WINAPI BluetoothEnableDiscovery( HANDLE radio, BOOL enabled )
 {
-    FIXME("(%p %d): stub!\n", radio, enabled);
-    return FALSE;
+    TRACE( "(%p, %d)\n", radio, enabled );
+    if (!radio)
+    {
+        BLUETOOTH_FIND_RADIO_PARAMS params = {.dwSize = sizeof( params )};
+        HBLUETOOTH_RADIO_FIND find = BluetoothFindFirstRadio( &params, &radio );
+
+        if (!find)
+            return FALSE;
+        for (;;)
+        {
+            if (BluetoothEnableDiscovery( radio, enabled ))
+            {
+                CloseHandle( radio );
+                BluetoothFindRadioClose( find );
+                return TRUE;
+            }
+
+            CloseHandle(radio );
+            if (!BluetoothFindNextRadio( find, &radio ))
+            {
+                BluetoothFindRadioClose( find );
+                return FALSE;
+            }
+        }
+    }
+    else if (enabled && !BluetoothIsConnectable( radio ))
+        /* The local radio can only be made discoverable if it is connectable. */
+        return FALSE;
+    else
+    {
+        struct winebth_radio_set_flag_params params = {0};
+        BOOL ret;
+        DWORD bytes;
+
+        params.flag = LOCAL_RADIO_DISCOVERABLE;
+        params.enable = !!enabled;
+        ret = DeviceIoControl( radio, IOCTL_WINEBTH_RADIO_SET_FLAG, &params, sizeof( params ), NULL, 0, &bytes, NULL );
+        if (!ret)
+            ERR("DeviceIoControl failed: %#lx\n", GetLastError());
+        return ret;
+    }
 }
 
 /*********************************************************************
