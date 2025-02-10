@@ -288,6 +288,59 @@ static UINT32 get_premultiplied_argb(UINT32 pixel)
             | (((pixel & 0x000000ff) * alpha / 0xff)));
 }
 
+/* Remember to free the bits after usage. */
+static void bitmap_get_bits(HBITMAP bitmap, UINT32 **bits)
+{
+    BITMAPINFO bitmap_info;
+    UINT32 image_size;
+    BITMAP bm;
+    HDC hdc;
+    int ret;
+
+    ret = GetObjectW(bitmap, sizeof(bm), &bm);
+    ok(ret, "GetObjectW failed.\n");
+
+    image_size = bm.bmWidth * bm.bmHeight * 4;
+    *bits = calloc(1, image_size);
+    ok(!!*bits, "Failed to allocate buffer of %u bytes.\n", image_size);
+
+    bitmap_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bitmap_info.bmiHeader.biWidth = bm.bmWidth;
+    bitmap_info.bmiHeader.biHeight = -bm.bmHeight;
+    bitmap_info.bmiHeader.biPlanes = 1;
+    bitmap_info.bmiHeader.biBitCount = 32;
+    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    bitmap_info.bmiHeader.biSizeImage = image_size;
+    bitmap_info.bmiHeader.biXPelsPerMeter = 0;
+    bitmap_info.bmiHeader.biYPelsPerMeter = 0;
+    bitmap_info.bmiHeader.biClrUsed = 0;
+    bitmap_info.bmiHeader.biClrImportant = 0;
+
+    hdc = CreateCompatibleDC(NULL);
+    ok(!!hdc, "CreateCompatibleDC failed.\n");
+    ret = GetDIBits(hdc, bitmap, 0, bm.bmHeight, *bits, &bitmap_info, DIB_RGB_COLORS);
+    ok(ret, "GetDIBits failed.\n");
+
+    DeleteDC(hdc);
+}
+
+static void image_list_get_image_bits_by_bitmap(HIMAGELIST image_list, int index, UINT32 *bits)
+{
+    int ret, width, height;
+    IMAGEINFO image_info;
+    UINT32 *image_bits;
+
+    ret = pImageList_GetImageInfo(image_list, index, &image_info);
+    ok(ret, "ImageList_GetImageInfo failed.\n");
+    ret = pImageList_GetIconSize(image_list, &width, &height);
+    ok(ret, "ImageList_GetIconSize failed.\n");
+
+    bitmap_get_bits(image_info.hbmImage, &image_bits);
+    memcpy(bits, image_bits + width * height * index, width * height * 4);
+
+    free(image_bits);
+}
+
 static void image_list_get_image_bits_by_draw(HIMAGELIST image_list, int index, UINT32 *bits)
 {
     BITMAPINFO bitmap_info = {};
@@ -2477,6 +2530,12 @@ static void test_alpha(void)
             expected[1] = (bitmap_bits[1] == 0x654321 ? 0 : bitmap_bits[1]);
         }
 
+        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
+        todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 12 && i != 18)
+        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
+                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
+                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+
         image_list_get_image_bits_by_draw(himl, i / 2, bits);
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
                 "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
@@ -2504,6 +2563,12 @@ static void test_alpha(void)
             expected[0] = 0;
             expected[1] = bitmap_bits[1];
         }
+
+        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
+        todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
+        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
+                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
+                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
 
         image_list_get_image_bits_by_draw(himl, i / 2, bits);
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
