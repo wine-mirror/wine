@@ -1495,14 +1495,13 @@ static void test_FlipRotator(void)
         WICBitmapTransformOptions options;
         UINT dst_width, dst_height;
         const BYTE *dst_data;
-        BOOL todo;
     } td[] =
     {
         { WICBitmapTransformRotate0, 3, 2, src_data },
-        { WICBitmapTransformRotate90, 2, 3, dst_data_rotate90, TRUE },
-        { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal, 2, 3, dst_data_rotate90_flip_h, TRUE },
-        { WICBitmapTransformRotate90 | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_v, TRUE },
-        { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_hv, TRUE },
+        { WICBitmapTransformRotate90, 2, 3, dst_data_rotate90 },
+        { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal, 2, 3, dst_data_rotate90_flip_h },
+        { WICBitmapTransformRotate90 | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_v },
+        { WICBitmapTransformRotate90 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate90_flip_hv },
         { WICBitmapTransformRotate180, 3, 2, dst_data_rotate180 },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipHorizontal, 3, 2, dst_data_rotate180_flip_h },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_v },
@@ -1557,10 +1556,8 @@ static void test_FlipRotator(void)
         rc.Height = height;
         memset(buf, 0, sizeof(buf));
         hr = IWICBitmapFlipRotator_CopyPixels(fr, &rc, width, sizeof(buf), buf);
-        todo_wine_if(td[i].todo)
         ok(hr == S_OK, "got %#lx\n", hr);
         ret = !memcmp(buf, td[i].dst_data, sizeof(src_data));
-        todo_wine_if(td[i].todo)
         ok(ret, "data mismatch\n");
         if (!ret && winetest_debug > 1)
         {

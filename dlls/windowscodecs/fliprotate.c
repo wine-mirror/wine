@@ -191,34 +191,27 @@ static HRESULT WINAPI FlipRotator_CopyPixels(IWICBitmapFlipRotator *iface,
             return E_NOTIMPL;
         }
 
-        if (This->swap_xy)
-        {
-            FIXME("Rotating is not implemented\n");
-            return E_NOTIMPL;
-        }
-
         for (y = prc->Y; y - prc->Y < prc->Height; y++)
         {
             BYTE *dst = pbBuffer;
 
             if (This->flip_y)
-                srcy = srcheight - 1 - y;
+                srcy = height - 1 - y;
             else
                 srcy = y;
 
             for (x = prc->X; x - prc->X < prc->Width; x++)
             {
                 if (This->flip_x)
-                    srcx = srcwidth - 1 - x;
+                    srcx = width - 1 - x;
                 else
                     srcx = x;
 
-                rc.X = srcx;
-                rc.Y = srcy;
+                rc.X = This->swap_xy ? srcy : srcx;
+                rc.Y = This->swap_xy ? srcx : srcy;
                 rc.Width = 1;
                 rc.Height = 1;
-
-                hr = IWICBitmapSource_CopyPixels(This->source, &rc, cbStride, cbStride, dst);
+                hr = IWICBitmapSource_CopyPixels(This->source, &rc, bytes_per_pixel, bytes_per_pixel, dst);
                 if (FAILED(hr)) return hr;
 
                 dst += bytes_per_pixel;
@@ -283,10 +276,20 @@ static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
     }
 
     if (options&WICBitmapTransformFlipHorizontal)
-        This->flip_x = !This->flip_x;
+    {
+        if (This->swap_xy)
+            This->flip_y = !This->flip_y;
+        else
+            This->flip_x = !This->flip_x;
+    }
 
     if (options&WICBitmapTransformFlipVertical)
-        This->flip_y = !This->flip_y;
+    {
+        if (This->swap_xy)
+            This->flip_x = !This->flip_x;
+        else
+            This->flip_y = !This->flip_y;
+    }
 
     hr = IWICBitmapSource_GetPixelFormat(pISource, &pf);
     if (SUCCEEDED(hr))
