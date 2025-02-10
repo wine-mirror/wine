@@ -50,6 +50,7 @@ static void test_RandomAccessStreamReference(void)
 {
     static const WCHAR *random_access_stream_reference_statics_name = L"Windows.Storage.Streams.RandomAccessStreamReference";
     IRandomAccessStreamReferenceStatics *random_access_stream_reference_statics = (void *)0xdeadbeef;
+    IRandomAccessStreamReference *random_access_stream_reference = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str = NULL;
     HRESULT hr;
@@ -72,6 +73,10 @@ static void test_RandomAccessStreamReference(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IRandomAccessStreamReferenceStatics, (void **)&random_access_stream_reference_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IRandomAccessStreamReferenceStatics_CreateFromStream( random_access_stream_reference_statics, NULL, &random_access_stream_reference );
+    ok( hr == E_POINTER, "got hr %#lx.\n", hr );
+    ok( random_access_stream_reference == NULL, "IRandomAccessStreamReferenceStatics_CreateFromStream returned %p.\n", random_access_stream_reference );
 
     ref = IRandomAccessStreamReferenceStatics_Release( random_access_stream_reference_statics );
     ok( ref == 1, "got ref %ld.\n", ref );

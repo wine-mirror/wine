@@ -134,6 +134,10 @@ static HRESULT WINAPI random_access_stream_reference_statics_CreateFromStream( I
                                                                                IRandomAccessStreamReference **stream_reference )
 {
     FIXME( "iface %p, stream %p, stream_reference %p stub!\n", iface, stream, stream_reference );
+
+    *stream_reference = NULL;
+
+    if (!stream) return E_POINTER;
     return E_NOTIMPL;
 }
 
