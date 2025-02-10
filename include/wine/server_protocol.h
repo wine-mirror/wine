@@ -1148,8 +1148,10 @@ struct init_first_thread_reply
     thread_id_t  tid;
     timeout_t    server_start;
     unsigned int session_id;
+    obj_handle_t inproc_device;
     data_size_t  info_size;
     /* VARARG(machines,ushorts); */
+    char __pad_36[4];
 };
 
 
@@ -6861,6 +6863,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 890
+#define SERVER_PROTOCOL_VERSION 891
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

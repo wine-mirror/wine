@@ -1709,6 +1709,7 @@ static int init_thread( struct thread *thread, int reply_fd, int wait_fd )
 DECL_HANDLER(init_first_thread)
 {
     struct process *process = current->process;
+    int fd;
 
     if (!init_thread( current, req->reply_fd, req->wait_fd )) return;
 
@@ -1731,6 +1732,12 @@ DECL_HANDLER(init_first_thread)
     reply->server_start = server_start_time;
     set_reply_data( supported_machines,
                     min( supported_machines_count * sizeof(unsigned short), get_reply_max_size() ));
+
+    if ((fd = get_inproc_device_fd()) >= 0)
+    {
+        reply->inproc_device = get_process_id( process ) | 1;
+        send_client_fd( process, fd, reply->inproc_device );
+    }
 }
 
 /* initialize a new thread */

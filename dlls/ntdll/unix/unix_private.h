@@ -197,6 +197,7 @@ extern unsigned int supported_machines_count;
 extern USHORT supported_machines[8];
 extern BOOL process_exiting;
 extern HANDLE keyed_event;
+extern int inproc_device_fd;
 extern timeout_t server_start_time;
 extern sigset_t server_block_set;
 extern struct _KUSER_SHARED_DATA *user_shared_data;
@@ -233,6 +234,7 @@ extern unsigned int server_queue_process_apc( HANDLE process, const union apc_ca
 extern int server_get_unix_fd( HANDLE handle, unsigned int wanted_access, int *unix_fd,
                                int *needs_close, enum server_fd_type *type, unsigned int *options );
 extern void wine_server_send_fd( int fd );
+extern int wine_server_receive_fd( obj_handle_t *handle );
 extern void process_exit_wrapper( int status ) DECLSPEC_NORETURN;
 extern size_t server_init_process(void);
 extern void server_init_process_done(void);

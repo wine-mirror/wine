@@ -16,6 +16,7 @@ SOURCES = \
 	file.c \
 	handle.c \
 	hook.c \
+	inproc_sync.c \
 	mach.c \
 	mailslot.c \
 	main.c \

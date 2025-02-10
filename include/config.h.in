@@ -198,6 +198,9 @@
 /* Define to 1 if you have the <linux/major.h> header file. */
 #undef HAVE_LINUX_MAJOR_H
 
+/* Define to 1 if you have the <linux/ntsync.h> header file. */
+#undef HAVE_LINUX_NTSYNC_H
+
 /* Define to 1 if you have the <linux/param.h> header file. */
 #undef HAVE_LINUX_PARAM_H
 

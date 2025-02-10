@@ -9999,6 +9999,12 @@ then :
   printf "%s\n" "#define HAVE_LINUX_MAJOR_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "linux/ntsync.h" "ac_cv_header_linux_ntsync_h" "$ac_includes_default"
+if test "x$ac_cv_header_linux_ntsync_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_LINUX_NTSYNC_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "linux/param.h" "ac_cv_header_linux_param_h" "$ac_includes_default"
 if test "x$ac_cv_header_linux_param_h" = xyes
 then :

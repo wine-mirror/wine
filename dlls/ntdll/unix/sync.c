@@ -57,6 +57,9 @@
 #ifdef HAVE_KQUEUE
 # include <sys/event.h>
 #endif
+#ifdef HAVE_LINUX_NTSYNC_H
+# include <linux/ntsync.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -70,6 +73,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(sync);
 
 HANDLE keyed_event = 0;
+int inproc_device_fd = -1;
 
 static const char *debugstr_timeout( const LARGE_INTEGER *timeout )
 {
@@ -305,53 +309,63 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
 
 static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATION *info )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *info )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
                              BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
                                         BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
+    if (inproc_device_fd < 0) return STATUS_NOT_IMPLEMENTED;
     return STATUS_NOT_IMPLEMENTED;
 }
 
