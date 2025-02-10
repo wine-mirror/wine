@@ -17,8 +17,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <windows.h>
 #include <commctrl.h>
+
+#include <initguid.h>
+#include <oleacc.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -275,6 +279,50 @@ static void test_link_id(void)
     DestroyWindow(hwnd);
 }
 
+static void test_msaa(void)
+{
+    HWND hwnd;
+    HRESULT hr;
+    LRESULT lr;
+    IAccessible *acc;
+    VARIANT varChild, varResult;
+
+    hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
+    ok(hwnd != NULL, "Failed to create SysLink window.\n");
+
+    lr = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_CLIENT);
+    todo_wine ok(lr != 0, "No IAccessible object\n");
+    if (lr == 0)
+    {
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    hr = ObjectFromLresult(lr, &IID_IAccessible, 0, (void**)&acc);
+    ok(hr == S_OK, "ObjectFromLresult failed, hr=%lx", hr);
+
+    VariantInit(&varChild);
+    VariantInit(&varResult);
+
+    V_VT(&varChild) = VT_I4;
+    V_I4(&varChild) = CHILDID_SELF;
+
+    hr = IAccessible_get_accRole(acc, varChild, &varResult);
+    ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == ROLE_SYSTEM_CLIENT, "accRole returned %li\n", V_I4(&varResult));
+
+    VariantClear(&varResult);
+    hr = IAccessible_get_accState(acc, varChild, &varResult);
+    ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == STATE_SYSTEM_FOCUSABLE, "accState returned %li\n", V_I4(&varResult));
+
+    IAccessible_Release(acc);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(syslink)
 {
     ULONG_PTR ctx_cookie;
@@ -304,6 +352,7 @@ START_TEST(syslink)
     test_LM_GETIDEALHEIGHT();
     test_LM_GETIDEALSIZE();
     test_link_id();
+    test_msaa();
 
     DestroyWindow(hWndParent);
     unload_v6_module(ctx_cookie, hCtx);
