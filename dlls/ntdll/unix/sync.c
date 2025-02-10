@@ -303,6 +303,59 @@ static unsigned int validate_open_object_attributes( const OBJECT_ATTRIBUTES *at
 }
 
 
+static NTSTATUS inproc_release_semaphore( HANDLE handle, ULONG count, ULONG *prev_count )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_query_semaphore( HANDLE handle, SEMAPHORE_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_set_event( HANDLE handle, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_reset_event( HANDLE handle, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_pulse_event( HANDLE handle, LONG *prev_state )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_query_event( HANDLE handle, EVENT_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_release_mutex( HANDLE handle, LONG *prev_count )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_query_mutex( HANDLE handle, MUTANT_BASIC_INFORMATION *info )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_wait( DWORD count, const HANDLE *handles, BOOLEAN wait_any,
+                             BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS inproc_signal_and_wait( HANDLE signal, HANDLE wait,
+                                        BOOLEAN alertable, const LARGE_INTEGER *timeout )
+{
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
 /******************************************************************************
  *              NtCreateSemaphore (NTDLL.@)
  */
@@ -382,6 +435,12 @@ NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS cla
 
     if (len != sizeof(SEMAPHORE_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
 
+    if ((ret = inproc_query_semaphore( handle, out )) != STATUS_NOT_IMPLEMENTED)
+    {
+        if (!ret && ret_len) *ret_len = sizeof(SEMAPHORE_BASIC_INFORMATION);
+        return ret;
+    }
+
     SERVER_START_REQ( query_semaphore )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -405,6 +464,9 @@ NTSTATUS WINAPI NtReleaseSemaphore( HANDLE handle, ULONG count, ULONG *previous 
     unsigned int ret;
 
     TRACE( "handle %p, count %u, prev_count %p\n", handle, count, previous );
+
+    if ((ret = inproc_release_semaphore( handle, count, previous )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
 
     SERVER_START_REQ( release_semaphore )
     {
@@ -489,6 +551,9 @@ NTSTATUS WINAPI NtSetEvent( HANDLE handle, LONG *prev_state )
 
     TRACE( "handle %p, prev_state %p\n", handle, prev_state );
 
+    if ((ret = inproc_set_event( handle, prev_state )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
+
     SERVER_START_REQ( event_op )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -509,6 +574,9 @@ NTSTATUS WINAPI NtResetEvent( HANDLE handle, LONG *prev_state )
     unsigned int ret;
 
     TRACE( "handle %p, prev_state %p\n", handle, prev_state );
+
+    if ((ret = inproc_reset_event( handle, prev_state )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
 
     SERVER_START_REQ( event_op )
     {
@@ -541,6 +609,9 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, LONG *prev_state )
 
     TRACE( "handle %p, prev_state %p\n", handle, prev_state );
 
+    if ((ret = inproc_pulse_event( handle, prev_state )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
+
     SERVER_START_REQ( event_op )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -571,6 +642,12 @@ NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
     }
 
     if (len != sizeof(EVENT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    if ((ret = inproc_query_event( handle, out )) != STATUS_NOT_IMPLEMENTED)
+    {
+        if (!ret && ret_len) *ret_len = sizeof(EVENT_BASIC_INFORMATION);
+        return ret;
+    }
 
     SERVER_START_REQ( query_event )
     {
@@ -654,6 +731,9 @@ NTSTATUS WINAPI NtReleaseMutant( HANDLE handle, LONG *prev_count )
 
     TRACE( "handle %p, prev_count %p\n", handle, prev_count );
 
+    if ((ret = inproc_release_mutex( handle, prev_count )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
+
     SERVER_START_REQ( release_mutex )
     {
         req->handle = wine_server_obj_handle( handle );
@@ -683,6 +763,12 @@ NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
     }
 
     if (len != sizeof(MUTANT_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    if ((ret = inproc_query_mutex( handle, out )) != STATUS_NOT_IMPLEMENTED)
+    {
+        if (!ret && ret_len) *ret_len = sizeof(MUTANT_BASIC_INFORMATION);
+        return ret;
+    }
 
     SERVER_START_REQ( query_mutex )
     {
@@ -1619,6 +1705,12 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles, BO
         TRACE( "}, timeout %s\n", debugstr_timeout(timeout) );
     }
 
+    if ((ret = inproc_wait( count, handles, wait_any, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
+    {
+        TRACE( "-> %#x\n", ret );
+        return ret;
+    }
+
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.wait.op = wait_any ? SELECT_WAIT : SELECT_WAIT_ALL;
     for (i = 0; i < count; i++) select_op.wait.handles[i] = wine_server_obj_handle( handles[i] );
@@ -1645,10 +1737,14 @@ NTSTATUS WINAPI NtSignalAndWaitForSingleObject( HANDLE signal, HANDLE wait,
 {
     union select_op select_op;
     UINT flags = SELECT_INTERRUPTIBLE;
+    NTSTATUS ret;
 
     TRACE( "signal %p, wait %p, alertable %u, timeout %s\n", signal, wait, alertable, debugstr_timeout(timeout) );
 
     if (!signal) return STATUS_INVALID_HANDLE;
+
+    if ((ret = inproc_signal_and_wait( signal, wait, alertable, timeout )) != STATUS_NOT_IMPLEMENTED)
+        return ret;
 
     if (alertable) flags |= SELECT_ALERTABLE;
     select_op.signal_and_wait.op = SELECT_SIGNAL_AND_WAIT;
