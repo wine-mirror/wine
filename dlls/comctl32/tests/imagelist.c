@@ -288,6 +288,32 @@ static UINT32 get_premultiplied_argb(UINT32 pixel)
             | (((pixel & 0x000000ff) * alpha / 0xff)));
 }
 
+static UINT32 get_alpha_blended(UINT32 dst, UINT32 src)
+{
+    UINT32 src_a, src_r, src_g, src_b;
+    UINT32 dst_a, dst_r, dst_g, dst_b;
+    UINT32 ret_a, ret_r, ret_g, ret_b;
+
+    src = get_premultiplied_argb(src);
+
+    src_a = (src & 0xff000000) >> 24;
+    src_r = (src & 0x00ff0000) >> 16;
+    src_g = (src & 0x0000ff00) >> 8;
+    src_b = (src & 0x000000ff);
+
+    dst_a = (dst & 0xff000000) >> 24;
+    dst_r = (dst & 0x00ff0000) >> 16;
+    dst_g = (dst & 0x0000ff00) >> 8;
+    dst_b = (dst & 0x000000ff);
+
+    ret_a = dst_a ? (src_a + (0xff - src_a) * dst_a / 0xff) : 0;
+    ret_r = src_r + (0xff - src_a) * dst_r / 0xff;
+    ret_g = src_g + (0xff - src_a) * dst_g / 0xff;
+    ret_b = src_b + (0xff - src_a) * dst_b / 0xff;
+
+    return (ret_a << 24) | (ret_r << 16) | (ret_g << 8) | ret_b;
+}
+
 /* Remember to free the bits after usage. */
 static void bitmap_get_bits(HBITMAP bitmap, UINT32 **bits)
 {
@@ -2510,6 +2536,8 @@ static void test_alpha(void)
     HDC hdc;
 
     hdc = CreateCompatibleDC(0);
+
+    /* Test ImageList_AddMasked with alpha. */
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
@@ -2543,6 +2571,8 @@ static void test_alpha(void)
     }
 
     pImageList_Destroy(himl);
+
+    /* Test ImageList_Add with alpha. */
     hbm_mask = CreateBitmap(2, 1, 1, 1, &mask_bits);
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
 
@@ -2578,6 +2608,42 @@ static void test_alpha(void)
 
     pImageList_Destroy(himl);
     DeleteObject(hbm_mask);
+
+    /* Test adding 32bpp images with alpha to 24bpp image list. */
+    himl = pImageList_Create(2, 1, ILC_COLOR24 | ILC_MASK, 0, 15);
+
+    for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
+    {
+        bitmap_bits = test_bitmaps + i;
+
+        hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
+        ret = pImageList_Add(himl, hbm_test, NULL);
+        ok(ret == i / 2, "ImageList_Add returned %d, expected %d\n", ret, i / 2);
+        DeleteObject(hbm_test);
+
+        expected[0] = bitmap_bits[0];
+        expected[1] = bitmap_bits[1];
+        if (get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]))
+        {
+            expected[0] = get_alpha_blended(0x00ffffff, bitmap_bits[0]);
+            expected[1] = get_alpha_blended(0x00ffffff, bitmap_bits[1]);
+        }
+
+        image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
+        todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
+        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
+                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
+                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+
+        image_list_get_image_bits_by_draw(himl, i / 2, bits);
+        todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
+        ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
+                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
+                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+    }
+
+    pImageList_Destroy(himl);
+
     DeleteDC(hdc);
 }
 
