@@ -312,7 +312,7 @@ NTSTATUS demuxer_seek( void *arg )
 
     TRACE( "demuxer %p, timestamp 0x%s\n", demuxer, wine_dbgstr_longlong( params->timestamp ) );
 
-    if ((ret = av_seek_frame( demuxer->ctx, -1, timestamp, AVSEEK_FLAG_ANY )) < 0)
+    if ((ret = avformat_seek_file( demuxer->ctx, -1, 0, timestamp, timestamp, 0 )) < 0)
     {
         ERR( "Failed to seek demuxer %p, error %s.\n", demuxer, debugstr_averr(ret) );
         return STATUS_UNSUCCESSFUL;
