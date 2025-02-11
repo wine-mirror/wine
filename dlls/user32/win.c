@@ -72,7 +72,11 @@ static BOOL enum_windows( HDESK desktop, HWND hwnd, DWORD tid, BOOL children,
         status = NtUserBuildHwndList( desktop, hwnd, children, TRUE, tid, size, list, &size );
         if (!status) break;
         HeapFree( GetProcessHeap(), 0, list );
-        if (status != STATUS_BUFFER_TOO_SMALL) return FALSE;
+        if (status != STATUS_BUFFER_TOO_SMALL)
+        {
+            SetLastError( RtlNtStatusToDosError( status ));
+            return FALSE;
+        }
     }
     for (i = 0; i < size && list[i] != HWND_BOTTOM; i++)
     {
