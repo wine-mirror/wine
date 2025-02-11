@@ -2544,6 +2544,8 @@ static void test_alpha(void)
     {
         bitmap_bits = test_bitmaps + i;
 
+        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
+
         hbm_test = create_test_bitmap(hdc, 2, 1, 32, bitmap_bits);
         ret = pImageList_AddMasked(himl, hbm_test, RGB(0x65, 0x43, 0x21));
         ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
@@ -2561,13 +2563,15 @@ static void test_alpha(void)
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 12 && i != 18)
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
 
         image_list_get_image_bits_by_draw(himl, i / 2, bits);
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
+
+        winetest_pop_context();
     }
 
     pImageList_Destroy(himl);
@@ -2579,6 +2583,8 @@ static void test_alpha(void)
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
         bitmap_bits = test_bitmaps + i;
+
+        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
 
         hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
         ret = pImageList_Add(himl, hbm_test, hbm_mask);
@@ -2597,13 +2603,15 @@ static void test_alpha(void)
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
 
         image_list_get_image_bits_by_draw(himl, i / 2, bits);
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
+
+        winetest_pop_context();
     }
 
     pImageList_Destroy(himl);
@@ -2615,6 +2623,8 @@ static void test_alpha(void)
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
         bitmap_bits = test_bitmaps + i;
+
+        winetest_push_context("Bitmap [%08X, %08X]", bitmap_bits[0], bitmap_bits[1]);
 
         hbm_test = create_test_bitmap(hdc, 2, 1, 32, test_bitmaps + i);
         ret = pImageList_Add(himl, hbm_test, NULL);
@@ -2632,14 +2642,16 @@ static void test_alpha(void)
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
 
         image_list_get_image_bits_by_draw(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
-                "Bitmap [%08X, %08X] returned bits [%08X, %08X], expected [%08X, %08X].\n",
-                bitmap_bits[0], bitmap_bits[1], bits[0], bits[1], expected[0], expected[1]);
+                "Got bits [%08X, %08X], expected [%08X, %08X].\n",
+                bits[0], bits[1], expected[0], expected[1]);
+
+        winetest_pop_context();
     }
 
     pImageList_Destroy(himl);
