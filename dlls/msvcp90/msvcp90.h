@@ -27,8 +27,8 @@
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 #if _MSVCP_VER >= 100
-typedef __int64 DECLSPEC_ALIGN(8) streamoff;
-typedef __int64 DECLSPEC_ALIGN(8) streamsize;
+typedef INT64 streamoff;
+typedef INT64 streamsize;
 #else
 typedef SSIZE_T streamoff;
 typedef SSIZE_T streamsize;

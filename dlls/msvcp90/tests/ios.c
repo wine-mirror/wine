@@ -425,7 +425,7 @@ typedef struct
 
 typedef struct {
     streamoff off;
-    __int64 DECLSPEC_ALIGN(8) pos;
+    INT64 pos;
     int state;
 } fpos_int;
 
