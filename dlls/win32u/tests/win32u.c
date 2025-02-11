@@ -499,6 +499,7 @@ static void test_NtUserBuildHwndList(void)
     ULONG i, size, count, desktop_windows_cnt;
     HWND buf[512], hwnd, msg, msg_window, child, child2, grandchild;
     NTSTATUS status;
+    HDESK desktop;
     BOOL ret;
 
     size = 0xdeadbeef;
@@ -581,6 +582,14 @@ static void test_NtUserBuildHwndList(void)
     ok( !status, "NtUserBuildHwndList failed: %#lx\n", status );
     ok( size == 1, "size = %lu\n", size );
     ok( buf[size - 1] == HWND_BOTTOM, "buf[size - 1] = %p\n", buf[size - 1] );
+
+    desktop = OpenDesktopW( L"Default", 0, FALSE, 0 );
+    ok( desktop != 0, "OpenDesktopW failed %lu\n", GetLastError() );
+    size = 0xdeadbeef;
+    status = NtUserBuildHwndList( desktop, 0, FALSE, TRUE, 0, ARRAYSIZE(buf), buf, &size );
+    ok( !status, "NtUserBuildHwndList failed: %#lx\n", status );
+    ok( size == desktop_windows_cnt + 1, "size = %lu, expected %lu\n", size, desktop_windows_cnt + 1 );
+    CloseHandle( desktop );
 
     size = 0xdeadbeef;
     status = NtUserBuildHwndList( 0, 0, TRUE, TRUE, 0, ARRAYSIZE(buf), buf, &size );

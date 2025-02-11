@@ -2427,7 +2427,7 @@ DECL_HANDLER(get_window_list)
         set_error( STATUS_INVALID_HANDLE );
         return;
     }
-    if (req->desktop && !(desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_ENUMERATE )))
+    if (req->desktop && !(desktop = get_desktop_obj( current->process, req->desktop, DESKTOP_READOBJECTS )))
     {
         if (thread) release_object( thread );
         return;
