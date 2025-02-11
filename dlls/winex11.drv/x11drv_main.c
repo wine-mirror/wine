@@ -126,6 +126,7 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "_ICC_PROFILE",
     "_KDE_NET_WM_STATE_SKIP_SWITCHER",
     "_MOTIF_WM_HINTS",
+    "_NET_ACTIVE_WINDOW",
     "_NET_STARTUP_INFO_BEGIN",
     "_NET_STARTUP_INFO",
     "_NET_SUPPORTED",
@@ -755,6 +756,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (use_xim) xim_thread_attach( data );
     x11drv_xinput2_init( data );
     net_supported_init( data );
+    net_active_window_init( data );
 
     return data;
 }

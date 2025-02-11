@@ -381,6 +381,11 @@ extern RECT host_window_configure_child( struct host_window *win, Window window,
 extern POINT host_window_map_point( struct host_window *win, int x, int y );
 extern struct host_window *get_host_window( Window window, BOOL create );
 
+struct display_state
+{
+    Window net_active_window;
+};
+
 struct x11drv_thread_data
 {
     Display *display;
@@ -403,6 +408,11 @@ struct x11drv_thread_data
     XIValuatorClassInfo y_valuator;
     int      xinput2_pointer;      /* XInput2 master pointer device id */
 #endif /* HAVE_X11_EXTENSIONS_XINPUT2_H */
+
+    struct display_state desired_state;       /* display state tracking the desired / win32 state */
+    struct display_state pending_state;       /* display state tracking the pending / requested state */
+    struct display_state current_state;       /* display state tracking the current X11 state */
+    unsigned long net_active_window_serial;   /* serial of last pending _NET_ACTIVE_WINDOW request */
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void);
@@ -485,6 +495,7 @@ enum x11drv_atoms
     XATOM__ICC_PROFILE,
     XATOM__KDE_NET_WM_STATE_SKIP_SWITCHER,
     XATOM__MOTIF_WM_HINTS,
+    XATOM__NET_ACTIVE_WINDOW,
     XATOM__NET_STARTUP_INFO_BEGIN,
     XATOM__NET_STARTUP_INFO,
     XATOM__NET_SUPPORTED,
@@ -665,8 +676,10 @@ extern BOOL window_has_pending_wm_state( HWND hwnd, UINT state );
 extern void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value );
 extern void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *rect );
-extern BOOL get_window_state_updates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect );
 
+extern Window get_net_active_window( Display *display );
+extern void net_active_window_notify( unsigned long serial, Window window, Time time );
+extern void net_active_window_init( struct x11drv_thread_data *data );
 extern void net_supported_init( struct x11drv_thread_data *data );
 
 extern Window init_clip_window(void);
@@ -705,7 +718,6 @@ extern void ungrab_clipping_window(void);
 extern void move_resize_window( HWND hwnd, int dir, POINT pos );
 extern void X11DRV_InitKeyboard( Display *display );
 extern BOOL X11DRV_ProcessEvents( DWORD mask );
-extern HWND *build_hwnd_list(void);
 
 typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
 

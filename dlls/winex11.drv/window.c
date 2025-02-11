@@ -250,7 +250,6 @@ void host_window_set_parent( struct host_window *win, Window parent )
     host_window_reparent( &win->parent, parent, win->window );
 }
 
-
 /***********************************************************************
  * http://standards.freedesktop.org/startup-notification-spec
  */
@@ -316,7 +315,7 @@ static BOOL is_managed( HWND hwnd )
     return ret;
 }
 
-HWND *build_hwnd_list(void)
+static HWND *build_hwnd_list(void)
 {
     NTSTATUS status;
     HWND *list;
@@ -351,6 +350,28 @@ static BOOL has_owned_popups( HWND hwnd )
     return ret;
 }
 
+/* returns the HWND for the X11 window, or the desktop window if it isn't a Wine window */
+static HWND hwnd_from_window( Display *display, Window window )
+{
+    HWND hwnd, desktop = NtUserGetDesktopWindow();
+    HWND *list;
+    UINT i;
+
+    if (!window) return 0;
+    if (window == root_window) return desktop;
+    if (!XFindContext( display, window, winContext, (char **)&hwnd )) return hwnd;
+
+    if (!(list = build_hwnd_list())) return desktop;
+
+    for (i = 0; list[i] != HWND_BOTTOM; i++)
+        if (window == X11DRV_get_whole_window( list[i] ))
+            break;
+    hwnd = list[i] == HWND_BOTTOM ? desktop : list[i];
+
+    free( list );
+
+    return hwnd;
+}
 
 /***********************************************************************
  *              alloc_win_data
@@ -1709,6 +1730,50 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
 
     handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
                          current, expected, prefix, received, NULL );
+}
+
+void net_active_window_notify( unsigned long serial, Window value, Time time )
+{
+    struct x11drv_thread_data *data = x11drv_thread_data();
+    Window *desired = &data->desired_state.net_active_window, *pending = &data->pending_state.net_active_window, *current = &data->current_state.net_active_window;
+    unsigned long *expect_serial = &data->net_active_window_serial;
+    const char *expected, *received;
+    HWND current_hwnd, pending_hwnd;
+
+    current_hwnd = hwnd_from_window( data->display, value );
+    pending_hwnd = hwnd_from_window( data->display, *pending );
+
+    received = wine_dbg_sprintf( "_NET_ACTIVE_WINDOW %p/%lx serial %lu time %lu", current_hwnd, value, serial, time );
+    expected = *expect_serial ? wine_dbg_sprintf( ", expected %p/%lx serial %lu", pending_hwnd, *pending, *expect_serial ) : "";
+    handle_state_change( serial, expect_serial, sizeof(value), &value, desired, pending,
+                         current, expected, "", received, NULL );
+}
+
+Window get_net_active_window( Display *display )
+{
+    unsigned long count, remaining;
+    Window window = None, *value;
+    int format;
+    Atom type;
+
+    if (!XGetWindowProperty( display, DefaultRootWindow( display ), x11drv_atom(_NET_ACTIVE_WINDOW), 0,
+                             65536 / sizeof(Window), False, XA_WINDOW, &type, &format, &count,
+                             &remaining, (unsigned char **)&value ))
+    {
+        if (type == XA_WINDOW && format == 32) window = *value;
+        XFree( value );
+    }
+
+    return window;
+}
+
+void net_active_window_init( struct x11drv_thread_data *data )
+{
+    Window window = get_net_active_window( data->display );
+
+    data->desired_state.net_active_window = window;
+    data->pending_state.net_active_window = window;
+    data->current_state.net_active_window = window;
 }
 
 BOOL window_has_pending_wm_state( HWND hwnd, UINT state )

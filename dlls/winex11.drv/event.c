@@ -1272,6 +1272,14 @@ static void handle_net_supported_notify( XPropertyEvent *event )
     if (event->state == PropertyNewValue) net_supported_init( data );
 }
 
+static void handle_net_active_window( XPropertyEvent *event )
+{
+    Window window = 0;
+
+    if (event->state == PropertyNewValue) window = get_net_active_window( event->display );
+    net_active_window_notify( event->serial, window, event->time );
+}
+
 /***********************************************************************
  *           X11DRV_PropertyNotify
  */
@@ -1284,6 +1292,7 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
     if (event->atom == x11drv_atom(_XEMBED_INFO)) handle_xembed_info_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_WM_STATE)) handle_net_wm_state_notify( hwnd, event );
     if (event->atom == x11drv_atom(_NET_SUPPORTED)) handle_net_supported_notify( event );
+    if (event->atom == x11drv_atom(_NET_ACTIVE_WINDOW)) handle_net_active_window( event );
 
     return TRUE;
 }
