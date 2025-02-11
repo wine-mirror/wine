@@ -1174,14 +1174,12 @@ static void test_D3DKMTQueryAdapterInfo(void)
         query_adapter_info.pPrivateDriverData = buffer;
         query_adapter_info.PrivateDriverDataSize = tests[i].size - 1;
         status = pD3DKMTQueryAdapterInfo(&query_adapter_info);
-        todo_wine_if(tests[i].type != KMTQAITYPE_CHECKDRIVERUPDATESTATUS)
         ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
 
         /* Normal */
         query_adapter_info.pPrivateDriverData = buffer;
         query_adapter_info.PrivateDriverDataSize = tests[i].size;
         status = pD3DKMTQueryAdapterInfo(&query_adapter_info);
-        todo_wine_if(tests[i].type != KMTQAITYPE_CHECKDRIVERUPDATESTATUS)
         ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
         if (status != STATUS_SUCCESS)
         {
