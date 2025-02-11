@@ -2528,10 +2528,14 @@ static void test_alpha(void)
     };
     const static BYTE mask_bits = 0xAA;
 
+    IImageList2 *image_list_iface;
     UINT32 bits[2], expected[2];
     HBITMAP hbm_test, hbm_mask;
     const UINT32 *bitmap_bits;
+    DWORD flag, expected_flag;
     HIMAGELIST himl;
+    BOOL has_alpha;
+    HRESULT hr;
     int i, ret;
     HDC hdc;
 
@@ -2539,6 +2543,9 @@ static void test_alpha(void)
 
     /* Test ImageList_AddMasked with alpha. */
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
+
+    hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
+    ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
@@ -2551,14 +2558,21 @@ static void test_alpha(void)
         ok(ret == i / 2, "ImageList_AddMasked returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
 
+        has_alpha = get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]);
         expected[0] = get_premultiplied_argb(bitmap_bits[0]);
         expected[1] = get_premultiplied_argb(bitmap_bits[1]);
+        expected_flag = ILIF_ALPHA;
         /* If all alpha values are zero, the image is considered to have no alpha and gets masked. */
-        if (!get_alpha(bitmap_bits[0]) && !get_alpha(bitmap_bits[1]))
+        if (!has_alpha)
         {
             expected[0] = (bitmap_bits[0] == 0x654321 ? 0 : bitmap_bits[0]);
             expected[1] = (bitmap_bits[1] == 0x654321 ? 0 : bitmap_bits[1]);
+            expected_flag = 0;
         }
+
+        hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
+        ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
+        ok(flag == expected_flag, "Unexpected flag %#lx, expected %#lx.\n", flag, expected_flag);
 
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 12 && i != 18)
@@ -2574,11 +2588,15 @@ static void test_alpha(void)
         winetest_pop_context();
     }
 
+    IImageList2_Release(image_list_iface);
     pImageList_Destroy(himl);
 
     /* Test ImageList_Add with alpha. */
     hbm_mask = CreateBitmap(2, 1, 1, 1, &mask_bits);
     himl = pImageList_Create(2, 1, ILC_COLOR32 | ILC_MASK, 0, 15);
+
+    hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
+    ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
@@ -2591,14 +2609,21 @@ static void test_alpha(void)
         ok(ret == i / 2, "ImageList_Add returned %d, expected %d\n", ret, i / 2);
         DeleteObject(hbm_test);
 
+        has_alpha = get_alpha(bitmap_bits[0]) || get_alpha(bitmap_bits[1]);
         expected[0] = get_premultiplied_argb(bitmap_bits[0]);
         expected[1] = get_premultiplied_argb(bitmap_bits[1]);
+        expected_flag = ILIF_ALPHA;
         /* If all alpha values are zero, the image is considered to have no alpha and gets masked. */
-        if (!get_alpha(bitmap_bits[0]) && !get_alpha(bitmap_bits[1]))
+        if (!has_alpha)
         {
             expected[0] = 0;
             expected[1] = bitmap_bits[1];
+            expected_flag = 0;
         }
+
+        hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
+        ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
+        ok(flag == expected_flag, "Unexpected flag %#lx, expected %#lx.\n", flag, expected_flag);
 
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
@@ -2614,11 +2639,15 @@ static void test_alpha(void)
         winetest_pop_context();
     }
 
+    IImageList2_Release(image_list_iface);
     pImageList_Destroy(himl);
     DeleteObject(hbm_mask);
 
     /* Test adding 32bpp images with alpha to 24bpp image list. */
     himl = pImageList_Create(2, 1, ILC_COLOR24 | ILC_MASK, 0, 15);
+
+    hr = pHIMAGELIST_QueryInterface(himl, &IID_IImageList2, (void **)&image_list_iface);
+    ok(hr == S_OK, "QueryInterface returned %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(test_bitmaps); i += 2)
     {
@@ -2639,6 +2668,10 @@ static void test_alpha(void)
             expected[1] = get_alpha_blended(0x00ffffff, bitmap_bits[1]);
         }
 
+        hr = IImageList2_GetItemFlags(image_list_iface, i / 2, &flag);
+        ok(hr == S_OK, "GetItemFlags returned %#lx.\n", hr);
+        ok(flag == 0, "Unexpected flag %#lx.\n", flag);
+
         image_list_get_image_bits_by_bitmap(himl, i / 2, bits);
         todo_wine_if(i != 0 && i != 2 && i != 4 && i != 6 && i != 18)
         ok(colour_match(bits[0], expected[0]) && colour_match(bits[1], expected[1]),
@@ -2654,6 +2687,7 @@ static void test_alpha(void)
         winetest_pop_context();
     }
 
+    IImageList2_Release(image_list_iface);
     pImageList_Destroy(himl);
 
     DeleteDC(hdc);
