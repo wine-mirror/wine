@@ -128,6 +128,7 @@ static void detach_inner_window(HTMLInnerWindow *window)
 
     LIST_FOR_EACH_ENTRY(doc_iter, &window->documents, HTMLDocumentNode, script_global_entry)
         doc_iter->script_global = NULL;
+    list_init(&window->documents);
     if(doc)
         detach_document_node(doc);
 
