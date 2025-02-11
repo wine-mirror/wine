@@ -333,10 +333,29 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc )
 {
-    if (!desc) return STATUS_INVALID_PARAMETER;
+    TRACE( "(%p).\n", desc );
 
-    FIXME( "desc %p, type %d stub\n", desc, desc->Type );
-    return STATUS_NOT_IMPLEMENTED;
+    if (!desc || !desc->hAdapter || !desc->pPrivateDriverData)
+        return STATUS_INVALID_PARAMETER;
+
+    switch (desc->Type)
+    {
+    case KMTQAITYPE_CHECKDRIVERUPDATESTATUS:
+    {
+        BOOL *value = desc->pPrivateDriverData;
+
+        if (desc->PrivateDriverDataSize < sizeof(*value))
+            return STATUS_INVALID_PARAMETER;
+
+        *value = FALSE;
+        return STATUS_SUCCESS;
+    }
+    default:
+    {
+        FIXME( "type %d not handled.\n", desc->Type );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    }
 }
 
 /******************************************************************************
