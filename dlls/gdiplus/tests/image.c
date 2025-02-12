@@ -568,7 +568,7 @@ static void test_LoadingImages(void)
 
     stat = GdipGetImageRawFormat((GpImage*)bm, &format);
     expect(Ok, stat);
-    expect_guid(&format_ico, &format, __LINE__, TRUE);
+    expect_guid(&format_ico, &format, __LINE__, FALSE);
 
 cleanup:
     if (bm)
