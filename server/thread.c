@@ -42,6 +42,7 @@
 #endif
 #ifdef __APPLE__
 #include <mach/mach_init.h>
+#include <mach/mach_time.h>
 #include <mach/mach_port.h>
 #include <mach/thread_act.h>
 #endif
@@ -258,9 +259,20 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
 }
 
 #elif defined(__APPLE__)
+static unsigned int mach_ticks_per_second;
 
 void init_threading(void)
 {
+    struct mach_timebase_info tb_info;
+    if (mach_timebase_info( &tb_info ) == KERN_SUCCESS)
+    {
+        mach_ticks_per_second = (tb_info.denom * 1000000000U) / tb_info.numer;
+    }
+    else
+    {
+        const unsigned int best_guess = 24000000U;
+        mach_ticks_per_second = best_guess;
+    }
 }
 
 static int get_mach_importance( int base_priority )
@@ -327,6 +339,33 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
                        THREAD_EXTENDED_POLICY_COUNT );
     thread_policy_set( thread_port, THREAD_PRECEDENCE_POLICY, (thread_policy_t)&thread_precedence_policy,
                        THREAD_PRECEDENCE_POLICY_COUNT );
+    if (base_priority > THREAD_BASE_PRIORITY_LOWRT)
+    {
+        /* For realtime threads we are requesting from the scheduler to be moved
+         * into the Mach realtime band (96-127) above the kernel.
+         * The scheduler will bump us back into the application band though if we
+         * lie too much about our computation constraints...
+         * The maximum available amount of resources granted in that band is using
+         * half of the available bus cycles, and computation (nominally 1/10 of
+         * the time constraint) is a hint to the scheduler where to place our
+         * realtime threads relative to each other.
+         * If someone is violating the time contraint policy, they will be moved
+         * back where they were (non-timeshare application band with very high
+         * importance), which is on XNU equivalent to setting SCHED_RR with the
+         * pthread API. */
+        struct thread_time_constraint_policy thread_time_constraint_policy;
+        int realtime_priority = base_priority - THREAD_BASE_PRIORITY_LOWRT;
+        unsigned int max_constraint = mach_ticks_per_second / 2;
+        unsigned int max_computation = max_constraint / 10;
+        /* unfortunately we can't give a hint for the periodicity of calculations */
+        thread_time_constraint_policy.period = 0;
+        thread_time_constraint_policy.constraint = max_constraint;
+        thread_time_constraint_policy.computation = realtime_priority * max_computation / 16;
+        thread_time_constraint_policy.preemptible = thread->priority == THREAD_PRIORITY_TIME_CRITICAL ? 0 : 1;
+        thread_policy_set( thread_port, THREAD_TIME_CONSTRAINT_POLICY,
+                           (thread_policy_t)&thread_time_constraint_policy,
+                           THREAD_TIME_CONSTRAINT_POLICY_COUNT );
+    }
     mach_port_deallocate( mach_task_self(), thread_port );
 }
 
