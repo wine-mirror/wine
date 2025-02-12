@@ -281,11 +281,15 @@ static void test_link_id(void)
 
 static void test_msaa(void)
 {
-    HWND hwnd;
+    HWND hwnd, ret_hwnd;
     HRESULT hr;
     LRESULT lr;
     IAccessible *acc;
     VARIANT varChild, varResult;
+    BSTR name;
+    LONG left, top, width, height, count=0;
+    IDispatch *child;
+    IOleWindow *ole_window;
 
     hwnd = create_syslink(WS_CHILD | WS_TABSTOP | WS_VISIBLE, hWndParent);
     ok(hwnd != NULL, "Failed to create SysLink window.\n");
@@ -317,6 +321,109 @@ static void test_msaa(void)
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == STATE_SYSTEM_FOCUSABLE, "accState returned %li\n", V_I4(&varResult));
+
+    hr = IAccessible_get_accName(acc, varChild, &name);
+    ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr)) {
+        ok(!!name && !wcscmp(name, L"Head Name1 Middle Name2 Tail"),
+            "unexpected name %s\n", debugstr_w(name));
+        SysFreeString(name);
+    }
+
+    hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
+    ok(hr == S_FALSE, "accDefaultAction failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr))
+        ok(!name, "unexpected default action %s\n", debugstr_w(name));
+
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
+    ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+
+    hr = IAccessible_get_accChildCount(acc, &count);
+    ok(hr == S_OK, "accChildCount failed, hr=%lx\n", hr);
+    ok(count == 2, "accChildCount returned %li\n", count);
+
+    /* child 1 */
+    V_I4(&varChild) = 1;
+    hr = IAccessible_get_accChild(acc, varChild, &child);
+    ok(hr == S_FALSE, "accChild hr=%lx\n", hr);
+    ok(!child, "accChild returned IDispatch\n");
+
+    hr = IAccessible_get_accRole(acc, varChild, &varResult);
+    ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
+
+    VariantClear(&varResult);
+    hr = IAccessible_get_accState(acc, varChild, &varResult);
+    ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_LINKED), "accState returned %li\n", V_I4(&varResult));
+
+    hr = IAccessible_get_accName(acc, varChild, &name);
+    ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr)) {
+        ok(!!name && !wcscmp(name, L"Name1"),
+            "unexpected name %s\n", debugstr_w(name));
+        SysFreeString(name);
+    }
+
+    hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
+    ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(!!name && !wcscmp(name, L"Click"),
+            "unexpected name %s\n", debugstr_w(name));
+        SysFreeString(name);
+    }
+
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
+    ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+
+    /* child 2 */
+    V_I4(&varChild) = 2;
+    hr = IAccessible_get_accChild(acc, varChild, &child);
+    ok(hr == S_FALSE, "accChild hr=%lx\n", hr);
+    ok(!child, "accChild returned IDispatch\n");
+
+    hr = IAccessible_get_accRole(acc, varChild, &varResult);
+    ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
+
+    VariantClear(&varResult);
+    hr = IAccessible_get_accState(acc, varChild, &varResult);
+    ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
+    ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
+    ok(V_I4(&varResult) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_LINKED), "accState returned %li\n", V_I4(&varResult));
+
+    hr = IAccessible_get_accName(acc, varChild, &name);
+    ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr)) {
+        ok(!!name && !wcscmp(name, L"Name2"),
+            "unexpected name %s\n", debugstr_w(name));
+        SysFreeString(name);
+    }
+
+    hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
+    ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(!!name && !wcscmp(name, L"Click"),
+            "unexpected name %s\n", debugstr_w(name));
+        SysFreeString(name);
+    }
+
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
+    ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+
+    hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ole_window);
+    ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
+
+    hr = IOleWindow_GetWindow(ole_window, &ret_hwnd);
+    ok(hr == S_OK, "GetWindow failed, hr=%lx\n", hr);
+    ok(ret_hwnd == hwnd, "GetWindow returned wrong hwnd\n");
+
+    IOleWindow_Release(ole_window);
 
     IAccessible_Release(acc);
 
