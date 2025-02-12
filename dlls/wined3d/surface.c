@@ -1498,6 +1498,15 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     {
         blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
     }
+    else if ((src_sub_resource->locations & WINED3D_LOCATION_CLEARED)
+            && wined3d_texture_is_full_rect(dst_texture, dst_sub_resource_idx % dst_texture->level_count, &dst_rect))
+    {
+        TRACE("Source is cleared.\n");
+        wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_CLEARED);
+        wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_CLEARED);
+        dst_sub_resource->clear_value.colour = src_sub_resource->clear_value.colour;
+        return WINED3D_OK;
+    }
     else if (sub_resource_is_on_cpu(src_texture, src_sub_resource_idx)
             && !sub_resource_is_on_cpu(dst_texture, dst_sub_resource_idx)
             && (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
