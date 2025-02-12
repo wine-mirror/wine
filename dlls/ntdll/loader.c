@@ -1026,12 +1026,12 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
 
     if (TRACE_ON(snoop))
     {
-        const WCHAR *user = importer ? importer->ldr.BaseDllName.Buffer : NULL;
+        const WCHAR *user = !is_dynamic ? importer->ldr.BaseDllName.Buffer : NULL;
         proc = SNOOP_GetProcAddress( module, exports, exp_size, proc, ordinal, user );
     }
     if (TRACE_ON(relay))
     {
-        const WCHAR *user = importer ? importer->ldr.BaseDllName.Buffer : NULL;
+        const WCHAR *user = !is_dynamic ? importer->ldr.BaseDllName.Buffer : NULL;
         proc = RELAY_GetProcAddress( module, exports, exp_size, proc, ordinal, user );
     }
     return proc;
