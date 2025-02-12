@@ -311,12 +311,12 @@ static void test_msaa(void)
     V_VT(&varChild) = VT_I4;
     V_I4(&varChild) = CHILDID_SELF;
 
-todo_wine {
     hr = IAccessible_get_accRole(acc, varChild, &varResult);
     ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_CLIENT, "accRole returned %li\n", V_I4(&varResult));
 
+todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
@@ -348,12 +348,14 @@ todo_wine {
     hr = IAccessible_get_accChild(acc, varChild, &child);
     ok(hr == S_FALSE, "accChild hr=%lx\n", hr);
     ok(!child, "accChild returned IDispatch\n");
+}
 
     hr = IAccessible_get_accRole(acc, varChild, &varResult);
     ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
 
+todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
@@ -385,12 +387,14 @@ todo_wine {
     hr = IAccessible_get_accChild(acc, varChild, &child);
     ok(hr == S_FALSE, "accChild hr=%lx\n", hr);
     ok(!child, "accChild returned IDispatch\n");
+}
 
     hr = IAccessible_get_accRole(acc, varChild, &varResult);
     ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
 
+todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);

@@ -177,6 +177,45 @@ static HRESULT WINAPI Accessible_GetTypeInfoCount(IAccessible *iface, UINT *coun
     return E_NOTIMPL;
 }
 
+static HRESULT Accessible_FindChild(SYSLINK_ACC *This, VARIANT childid, DOC_ITEM** result)
+{
+    DOC_ITEM *current;
+    int index;
+
+    if (!This->infoPtr)
+    {
+        WARN("control was destroyed\n");
+        return E_FAIL;
+    }
+
+    if (V_VT(&childid) == VT_EMPTY)
+        index = 0;
+    else if (V_VT(&childid) == VT_I4)
+        index = V_I4(&childid);
+    else {
+        WARN("not implemented for vt %s\n", debugstr_vt(V_VT(&childid)));
+        return E_INVALIDARG;
+    }
+
+    if (index == 0)
+    {
+        *result = NULL;
+        return S_OK;
+    }
+
+    LIST_FOR_EACH_ENTRY(current, &This->infoPtr->Items, DOC_ITEM, entry)
+    {
+        if (!--index)
+        {
+            *result = current;
+            return S_OK;
+        }
+    }
+
+    WARN("index out of range\n");
+    return E_INVALIDARG;
+}
+
 static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch** disp)
 {
     FIXME("%p\n", iface);
@@ -215,8 +254,24 @@ static HRESULT WINAPI Accessible_get_accDescription(IAccessible *iface, VARIANT 
 
 static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT childid, VARIANT *role)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    V_VT(role) = VT_I4;
+
+    if (item)
+        V_I4(role) = ROLE_SYSTEM_LINK;
+    else
+        V_I4(role) = ROLE_SYSTEM_CLIENT;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT childid, VARIANT *state)
