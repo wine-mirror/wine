@@ -3753,6 +3753,7 @@ static void test_ExitProcess(void)
     struct PROCESS_BASIC_INFORMATION_PRIVATE pbi;
     MEMORY_BASIC_INFORMATION mbi;
     DWORD_PTR affinity;
+    PROCESS_PRIORITY_CLASS ppc;
     void *addr;
     LARGE_INTEGER offset;
     SIZE_T size;
@@ -4092,6 +4093,10 @@ static void test_ExitProcess(void)
     affinity = 1;
     ret = pNtSetInformationProcess(pi.hProcess, ProcessAffinityMask, &affinity, sizeof(affinity));
     ok(ret == STATUS_PROCESS_IS_TERMINATING, "expected STATUS_PROCESS_IS_TERMINATING, got %#lx\n", ret);
+    ppc.Foreground = FALSE;
+    ppc.PriorityClass = PROCESS_PRIOCLASS_BELOW_NORMAL;
+    ret = pNtSetInformationProcess(pi.hProcess, ProcessPriorityClass, &ppc, sizeof(ppc));
+    ok(ret == STATUS_SUCCESS, "expected STATUS_SUCCESS, got status %#lx\n", ret);
 
     SetLastError(0xdeadbeef);
     ctx.ContextFlags = CONTEXT_INTEGER;
