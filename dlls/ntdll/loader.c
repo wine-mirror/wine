@@ -191,9 +191,11 @@ static LDR_DDAG_NODE *node_ntdll, *node_kernel32;
 static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD flags, WINE_MODREF** pwm, BOOL system );
 static NTSTATUS process_attach( LDR_DDAG_NODE *node, LPVOID lpReserved );
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path, WINE_MODREF *importer );
+                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path,
+                                    WINE_MODREF *importer, BOOL is_dynamic );
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
-                                  const char *name, int hint, LPCWSTR load_path, WINE_MODREF *importer );
+                                  const char *name, int hint, LPCWSTR load_path,
+                                  WINE_MODREF *importer, BOOL is_dynamic );
 
 /* check whether the file name contains a path */
 static inline BOOL contains_path( LPCWSTR name )
@@ -926,7 +928,7 @@ static NTSTATUS walk_node_dependencies( LDR_DDAG_NODE *node, void *context,
  * Find the final function pointer for a forwarded function.
  * The loader_section must be locked while calling this function.
  */
-static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path, WINE_MODREF *importer )
+static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWSTR load_path, WINE_MODREF *importer, BOOL is_dynamic )
 {
     const IMAGE_EXPORT_DIRECTORY *exports;
     DWORD exp_size;
@@ -960,7 +962,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
             if (!wm_loaded && wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
             add_module_dependency( importer->ldr.DdagNode, wm->ldr.DdagNode );
         }
-        else if (wm_loaded && process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
+        if (is_dynamic && wm_loaded && process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
         {
             ERR( "process_attach failed for forward '%s' used by %s\n",
                  forward, debugstr_w(get_modref( module )->ldr.FullDllName.Buffer) );
@@ -976,9 +978,11 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
 
         if (*name == '#') { /* ordinal */
             proc = find_ordinal_export( wm->ldr.DllBase, exports, exp_size,
-                                        atoi(name+1) - exports->Base, load_path, importer );
+                                        atoi(name+1) - exports->Base, load_path,
+                                        importer, is_dynamic );
         } else
-            proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path, importer );
+            proc = find_named_export( wm->ldr.DllBase, exports, exp_size, name, -1, load_path,
+                                      importer, is_dynamic );
     }
 
     if (!proc)
@@ -1000,7 +1004,8 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
  * The loader_section must be locked while calling this function.
  */
 static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path, WINE_MODREF *importer )
+                                    DWORD exp_size, DWORD ordinal, LPCWSTR load_path,
+                                    WINE_MODREF *importer, BOOL is_dynamic )
 {
     FARPROC proc;
     const DWORD *functions = get_rva( module, exports->AddressOfFunctions );
@@ -1017,7 +1022,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
     /* if the address falls into the export dir, it's a forward */
     if (((const char *)proc >= (const char *)exports) && 
         ((const char *)proc < (const char *)exports + exp_size))
-        return find_forwarded_export( module, (const char *)proc, load_path, importer );
+        return find_forwarded_export( module, (const char *)proc, load_path, importer, is_dynamic );
 
     if (TRACE_ON(snoop))
     {
@@ -1063,7 +1068,8 @@ static int find_name_in_exports( HMODULE module, const IMAGE_EXPORT_DIRECTORY *e
  * The loader_section must be locked while calling this function.
  */
 static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports, DWORD exp_size,
-                                  const char *name, int hint, LPCWSTR load_path, WINE_MODREF *importer )
+                                  const char *name, int hint, LPCWSTR load_path, WINE_MODREF *importer,
+                                  BOOL is_dynamic )
 {
     const WORD *ordinals = get_rva( module, exports->AddressOfNameOrdinals );
     const DWORD *names = get_rva( module, exports->AddressOfNames );
@@ -1074,12 +1080,12 @@ static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *
     {
         char *ename = get_rva( module, names[hint] );
         if (!strcmp( ename, name ))
-            return find_ordinal_export( module, exports, exp_size, ordinals[hint], load_path, importer );
+            return find_ordinal_export( module, exports, exp_size, ordinals[hint], load_path, importer, is_dynamic );
     }
 
     /* then do a binary search */
     if ((ordinal = find_name_in_exports( module, exports, name )) == -1) return NULL;
-    return find_ordinal_export( module, exports, exp_size, ordinal, load_path, importer );
+    return find_ordinal_export( module, exports, exp_size, ordinal, load_path, importer, is_dynamic );
 
 }
 
@@ -1206,7 +1212,7 @@ static BOOL import_dll( WINE_MODREF *wm, const IMAGE_IMPORT_DESCRIPTOR *descr, L
             int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
             thunk_list->u1.Function = (ULONG_PTR)find_ordinal_export( imp_mod, exports, exp_size,
-                                                                      ordinal - exports->Base, load_path, wm );
+                                                                      ordinal - exports->Base, load_path, wm, FALSE );
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, IntToPtr(ordinal) );
@@ -1222,7 +1228,7 @@ static BOOL import_dll( WINE_MODREF *wm, const IMAGE_IMPORT_DESCRIPTOR *descr, L
             pe_name = get_rva( module, (DWORD)import_list->u1.AddressOfData );
             thunk_list->u1.Function = (ULONG_PTR)find_named_export( imp_mod, exports, exp_size,
                                                                     (const char*)pe_name->Name,
-                                                                    pe_name->Hint, load_path, wm );
+                                                                    pe_name->Hint, load_path, wm, FALSE );
             if (!thunk_list->u1.Function)
             {
                 thunk_list->u1.Function = allocate_stub( name, (const char*)pe_name->Name );
@@ -2063,8 +2069,8 @@ NTSTATUS WINAPI LdrGetProcedureAddress(HMODULE module, const ANSI_STRING *name,
     else if ((exports = RtlImageDirectoryEntryToData( module, TRUE,
                                                       IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
-        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL, NULL )
-                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL, NULL );
+        void *proc = name ? find_named_export( module, exports, exp_size, name->Buffer, -1, NULL, NULL, TRUE )
+                          : find_ordinal_export( module, exports, exp_size, ord - exports->Base, NULL, NULL, TRUE );
         if (proc)
         {
             *address = proc;
