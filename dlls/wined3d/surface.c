@@ -1532,7 +1532,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
             return WINED3D_OK;
         }
     }
-    else if (!sub_resource_is_on_cpu(src_texture, src_sub_resource_idx)
+    else if (!(src_sub_resource->locations & (WINED3D_LOCATION_BUFFER | WINED3D_LOCATION_SYSMEM))
             && !(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {
         /* Download */
