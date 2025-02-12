@@ -31,3 +31,6 @@
 /* Generated with: fonttools ttx wine_unicode_mac.ttx */
 /* @makedep: wine_unicode_mac.ttf */
 4 RCDATA wine_unicode_mac.ttf
+
+/* Copied from shell32/blank.ico */
+5 RCDATA wine_test.ico
