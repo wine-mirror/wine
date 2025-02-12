@@ -554,7 +554,7 @@ msgstr "Detalji"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
 #: programs/regedit/regedit.rc:291 programs/taskmgr/taskmgr.rc:434
-#: programs/winedbg/winedbg.rc:61 programs/winedbg/winedbg.rc:76
+#: programs/winedbg/winedbg.rc:62 programs/winedbg/winedbg.rc:77
 #: programs/wordpad/wordpad.rc:180
 msgid "Close"
 msgstr "Zatvori"
@@ -8731,7 +8731,7 @@ msgstr "Cela mreža"
 msgid "Sound Selection"
 msgstr "Izbor zvuka"
 
-#: dlls/msacm32/msacm32.rc:39 programs/winedbg/winedbg.rc:77
+#: dlls/msacm32/msacm32.rc:39 programs/winedbg/winedbg.rc:78
 msgid "&Save As..."
 msgstr "&Sačuvaj kao..."
 
@@ -19774,11 +19774,11 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 
-#: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
+#: programs/winedbg/winedbg.rc:51 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
 msgstr "Programska greška"
 
-#: programs/winedbg/winedbg.rc:55
+#: programs/winedbg/winedbg.rc:56
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -19786,7 +19786,7 @@ msgstr ""
 "Program %s je naišao na ozbiljan problem i mora biti zatvoren. Izvinjavamo "
 "se zbog neprijatnosti."
 
-#: programs/winedbg/winedbg.rc:59
+#: programs/winedbg/winedbg.rc:60
 #, fuzzy
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
@@ -19799,17 +19799,17 @@ msgstr ""
 "Ako ovaj problem nije prisutan pod Windows-om i još uvek nije prijavljen, "
 "prijavite ga na https://bugs.winehq.org."
 
-#: programs/winedbg/winedbg.rc:62
+#: programs/winedbg/winedbg.rc:63
 #, fuzzy
 msgid "Show &Details"
 msgstr "&Detalji"
 
-#: programs/winedbg/winedbg.rc:67
+#: programs/winedbg/winedbg.rc:68
 #, fuzzy
 msgid "Program Error Details"
 msgstr "Programska greška"
 
-#: programs/winedbg/winedbg.rc:74
+#: programs/winedbg/winedbg.rc:75
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
