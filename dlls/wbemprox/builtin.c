@@ -3317,7 +3317,7 @@ static struct record_pnpentity *get_pnp_entities( UINT *count )
                             ret[i].name = get_reg_value( key_instance, L"DeviceDesc" );
                             ret[i].service = get_reg_value( key_instance, L"Service" );
                             RegCloseKey( key_instance );
-                            if (++i > nb_allocated)
+                            if (++i >= nb_allocated)
                             {
                                 nb_allocated *= 2;
                                 if ((tmp = realloc( ret, nb_allocated * sizeof(*ret) ))) ret = tmp;
