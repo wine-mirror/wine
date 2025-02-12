@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdarg.h>
 #include <string.h>
 #include "windef.h"
@@ -27,6 +28,9 @@
 #include "winnls.h"
 #include "commctrl.h"
 #include "comctl32.h"
+#include "oaidl.h"
+#include "initguid.h"
+#include "oleacc.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -70,7 +74,16 @@ typedef struct _DOC_ITEM
     WCHAR Text[1];          /* Text of the document item */
 } DOC_ITEM, *PDOC_ITEM;
 
+typedef struct SYSLINK_INFO SYSLINK_INFO;
+
 typedef struct
+{
+    IAccessible IAccessible_iface;
+    struct SYSLINK_INFO *infoPtr;
+    LONG refcount;
+} SYSLINK_ACC;
+
+struct SYSLINK_INFO
 {
     HWND      Self;         /* The window handle for this control */
     HWND      Notify;       /* The parent handle to receive notifications */
@@ -85,7 +98,8 @@ typedef struct
     COLORREF  VisitedColor; /* Color of visited links */
     WCHAR     BreakChar;    /* Break Character for the current font */
     BOOL      IgnoreReturn; /* (infoPtr->Style & LWS_IGNORERETURN) on creation */
-} SYSLINK_INFO;
+    SYSLINK_ACC *AccessibleImpl; /* IAccessible implementation */
+};
 
 /* Control configuration constants */
 
@@ -93,6 +107,251 @@ typedef struct
 #define SL_TOPMARGIN    (0)
 #define SL_RIGHTMARGIN  (0)
 #define SL_BOTTOMMARGIN (0)
+
+static inline SYSLINK_ACC *impl_from_IAccessible(IAccessible *iface)
+{
+    return CONTAINING_RECORD(iface, SYSLINK_ACC, IAccessible_iface);
+}
+
+static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID iid, void **ppv)
+{
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(iid), ppv);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_IAccessible, iid))
+    {
+        *ppv = &This->IAccessible_iface;
+    }
+    else
+    {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI Accessible_AddRef(IAccessible *iface)
+{
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    return InterlockedIncrement(&This->refcount);
+}
+
+static ULONG WINAPI Accessible_Release(IAccessible *iface)
+{
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    ULONG ref = InterlockedDecrement(&This->refcount);
+
+    if (ref == 0)
+        Free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI Accessible_GetTypeInfo(IAccessible *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_GetIDsOfNames(IAccessible *iface, REFIID iid, LPOLESTR *names, UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_Invoke(IAccessible *iface, DISPID dispid, REFIID iid, LCID lcid,
+    WORD flags, DISPPARAMS *dispparams, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_GetTypeInfoCount(IAccessible *iface, UINT *count)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch** disp)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *count)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT childid, IDispatch **disp)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT childid, BSTR *name)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accValue(IAccessible *iface, VARIANT childid, BSTR *value)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accDescription(IAccessible *iface, VARIANT childid, BSTR *description)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT childid, VARIANT *role)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT childid, VARIANT *state)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accHelp(IAccessible *iface, VARIANT childid, BSTR *help)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accHelpTopic(IAccessible *iface, BSTR *helpFile, VARIANT childid, LONG *topic)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accKeyboardShortcut(IAccessible *iface, VARIANT childid, BSTR *shortcut)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accFocus(IAccessible *iface, VARIANT *childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accSelection(IAccessible *iface, VARIANT *childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accDefaultAction(IAccessible *iface, VARIANT childid, BSTR *action)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG flags, VARIANT childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *left, LONG *top, LONG *width, LONG *height, VARIANT childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG dir, VARIANT start, VARIANT *end)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accHitTest(IAccessible *iface, LONG left, LONG top, VARIANT* childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accDoDefaultAction(IAccessible *iface, VARIANT childid)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_put_accName(IAccessible *iface, VARIANT childid, BSTR name)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_put_accValue(IAccessible *iface, VARIANT childid, BSTR value)
+{
+    FIXME("%p\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IAccessibleVtbl Accessible_Vtbl = {
+    Accessible_QueryInterface,
+    Accessible_AddRef,
+    Accessible_Release,
+    Accessible_GetTypeInfoCount,
+    Accessible_GetTypeInfo,
+    Accessible_GetIDsOfNames,
+    Accessible_Invoke,
+    Accessible_get_accParent,
+    Accessible_get_accChildCount,
+    Accessible_get_accChild,
+    Accessible_get_accName,
+    Accessible_get_accValue,
+    Accessible_get_accDescription,
+    Accessible_get_accRole,
+    Accessible_get_accState,
+    Accessible_get_accHelp,
+    Accessible_get_accHelpTopic,
+    Accessible_get_accKeyboardShortcut,
+    Accessible_get_accFocus,
+    Accessible_get_accSelection,
+    Accessible_get_accDefaultAction,
+    Accessible_accSelect,
+    Accessible_accLocation,
+    Accessible_accNavigate,
+    Accessible_accHitTest,
+    Accessible_accDoDefaultAction,
+    Accessible_put_accName,
+    Accessible_put_accValue
+};
+
+static void Accessible_Create(SYSLINK_INFO* infoPtr)
+{
+    SYSLINK_ACC *This;
+
+    This = Alloc(sizeof(*This));
+    if (!This) return;
+
+    This->IAccessible_iface.lpVtbl = &Accessible_Vtbl;
+    This->infoPtr = infoPtr;
+    This->refcount = 1;
+    infoPtr->AccessibleImpl = This;
+}
+
+static void Accessible_WindowDestroyed(SYSLINK_ACC *This)
+{
+    This->infoPtr = NULL;
+    IAccessible_Release(&This->IAccessible_iface);
+}
 
 /***********************************************************************
  * SYSLINK_FreeDocItem
@@ -1713,8 +1972,21 @@ static LRESULT WINAPI SysLinkWindowProc(HWND hwnd, UINT message,
         SYSLINK_ClearDoc(infoPtr);
         if(infoPtr->LinkFont != 0) DeleteObject(infoPtr->LinkFont);
         SetWindowLongPtrW(hwnd, 0, 0);
+        if(infoPtr->AccessibleImpl) Accessible_WindowDestroyed(infoPtr->AccessibleImpl);
         Free (infoPtr);
         return 0;
+
+    case WM_GETOBJECT:
+    {
+        if ((DWORD)lParam == (DWORD)OBJID_CLIENT) {
+            if (!infoPtr->AccessibleImpl)
+                Accessible_Create(infoPtr);
+
+            if (infoPtr->AccessibleImpl)
+                return LresultFromObject(&IID_IAccessible, wParam, (IUnknown*)&infoPtr->AccessibleImpl->IAccessible_iface);
+        }
+        return DefWindowProcW(hwnd, message, wParam, lParam);
+    }
 
     case WM_SYSCOLORCHANGE:
         COMCTL32_RefreshSysColors();

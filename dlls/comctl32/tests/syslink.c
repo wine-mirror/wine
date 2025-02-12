@@ -295,7 +295,7 @@ static void test_msaa(void)
     ok(hwnd != NULL, "Failed to create SysLink window.\n");
 
     lr = SendMessageA(hwnd, WM_GETOBJECT, 0, OBJID_CLIENT);
-    todo_wine ok(lr != 0, "No IAccessible object\n");
+    ok(lr != 0, "No IAccessible object\n");
     if (lr == 0)
     {
         DestroyWindow(hwnd);
@@ -311,6 +311,7 @@ static void test_msaa(void)
     V_VT(&varChild) = VT_I4;
     V_I4(&varChild) = CHILDID_SELF;
 
+todo_wine {
     hr = IAccessible_get_accRole(acc, varChild, &varResult);
     ok(hr == S_OK, "accRole failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
@@ -418,12 +419,15 @@ static void test_msaa(void)
 
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ole_window);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
+}
 
-    hr = IOleWindow_GetWindow(ole_window, &ret_hwnd);
-    ok(hr == S_OK, "GetWindow failed, hr=%lx\n", hr);
-    ok(ret_hwnd == hwnd, "GetWindow returned wrong hwnd\n");
+    if (SUCCEEDED(hr)) {
+        hr = IOleWindow_GetWindow(ole_window, &ret_hwnd);
+        ok(hr == S_OK, "GetWindow failed, hr=%lx\n", hr);
+        ok(ret_hwnd == hwnd, "GetWindow returned wrong hwnd\n");
 
-    IOleWindow_Release(ole_window);
+        IOleWindow_Release(ole_window);
+    }
 
     IAccessible_Release(acc);
 
