@@ -2702,11 +2702,15 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
                                  struct get_message_reply *reply )
 {
     struct thread_input *input = thread->queue->input;
+    const struct rawinput_device *device;
     struct thread *win_thread;
     struct list *ptr;
     user_handle_t win;
     int clear_bits, got_one = 0;
     unsigned int msg_code;
+    int no_legacy;
+
+    no_legacy = (device = thread->process->rawinput_mouse) && (device->flags & RIDEV_NOLEGACY);
 
     ptr = list_head( &input->msg_list );
     if (hw_id)
@@ -2732,6 +2736,12 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
         struct hardware_msg_data *data = msg->data;
 
         ptr = list_next( &input->msg_list, ptr );
+        if (no_legacy && msg->msg == WM_MOUSEMOVE && msg->type == MSG_HARDWARE)
+        {
+            list_remove( &msg->entry );
+            free_message( msg );
+            continue;
+        }
         win = find_hardware_message_window( input->desktop, input, msg, &msg_code, &win_thread );
         if (!win || !win_thread)
         {

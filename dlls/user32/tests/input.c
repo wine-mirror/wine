@@ -6186,7 +6186,7 @@ static void test_system_messages_with_rawinput_nolegacy(void)
     ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
     empty_message_queue();
     pump_messages();
-    todo_wine ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
 
     raw_devices[0].dwFlags = RIDEV_REMOVE;
     raw_devices[0].hwndTarget = NULL;
@@ -6204,7 +6204,7 @@ static void test_system_messages_with_rawinput_nolegacy(void)
     raw_devices[0].hwndTarget = hwnd;
     ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
     empty_message_queue();
-    flaky_wine ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
+    todo_wine ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
 
     raw_devices[0].dwFlags = RIDEV_REMOVE;
     raw_devices[0].hwndTarget = NULL;
@@ -6225,7 +6225,7 @@ static void test_system_messages_with_rawinput_nolegacy(void)
     ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
     empty_message_queue();
     pump_messages();
-    todo_wine ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
 
     memset(&inp, 0, sizeof(inp));
     inp.type = INPUT_MOUSE;
