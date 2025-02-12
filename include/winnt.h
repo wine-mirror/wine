@@ -734,10 +734,11 @@ typedef DWORD FLONG;
 #define PROCESSOR_OPTIL          18767
 
 #ifdef _WIN64
-#define MAXIMUM_PROCESSORS       64
+#define MAXIMUM_PROC_PER_GROUP   64
 #else
-#define MAXIMUM_PROCESSORS       32
+#define MAXIMUM_PROC_PER_GROUP   32
 #endif
+#define MAXIMUM_PROCESSORS       MAXIMUM_PROC_PER_GROUP
 
 typedef struct _MEMORY_BASIC_INFORMATION
 {
@@ -6680,8 +6681,13 @@ typedef struct _PROCESSOR_RELATIONSHIP
 typedef struct _NUMA_NODE_RELATIONSHIP
 {
     DWORD NodeNumber;
-    BYTE Reserved[20];
-    GROUP_AFFINITY GroupMask;
+    BYTE Reserved[18];
+    WORD GroupCount;
+    union
+    {
+        GROUP_AFFINITY GroupMask;
+        GROUP_AFFINITY GroupMasks[ANYSIZE_ARRAY];
+    };
 } NUMA_NODE_RELATIONSHIP, *PNUMA_NODE_RELATIONSHIP;
 
 typedef struct _CACHE_RELATIONSHIP
@@ -6691,8 +6697,13 @@ typedef struct _CACHE_RELATIONSHIP
     WORD LineSize;
     DWORD CacheSize;
     PROCESSOR_CACHE_TYPE Type;
-    BYTE Reserved[20];
-    GROUP_AFFINITY GroupMask;
+    BYTE Reserved[18];
+    WORD GroupCount;
+    union
+    {
+        GROUP_AFFINITY GroupMask;
+        GROUP_AFFINITY GroupMasks[ANYSIZE_ARRAY];
+    };
 } CACHE_RELATIONSHIP, *PCACHE_RELATIONSHIP;
 
 typedef struct _GROUP_RELATIONSHIP
