@@ -20,6 +20,28 @@ import "unknwn.idl";
 import "oaidl.idl";
 import "propidl.idl";
 
+typedef struct _WIA_DITHER_PATTERN_DATA
+{
+    LONG lSize;
+    BSTR bstrPatternName;
+    LONG lPatternWidth;
+    LONG lPatternLength;
+    LONG cbPattern;
+    [size_is(cbPattern)] BYTE *pbPattern;
+} WIA_DITHER_PATTERN_DATA, *PWIA_DITHER_PATTERN_DATA;
+
+typedef struct _WIA_PROPID_TO_NAME
+{
+    PROPID propid;
+    LPOLESTR pszName;
+} WIA_PROPID_TO_NAME, *PWIA_PROPID_TO_NAME;
+
+typedef struct _WIA_FORMAT_INFO
+{
+    GUID guidFormatID;
+    LONG lTymed;
+} WIA_FORMAT_INFO, *PWIA_FORMAT_INFO;
+
 cpp_quote("#include <wiadef.h>")
 
 interface IEnumWIA_DEV_INFO;
