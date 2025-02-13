@@ -3739,7 +3739,7 @@ void* WINAPI LdrResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIP
     HMODULE *phmod;
     NTSTATUS nts;
     FARPROC fp;
-    DWORD id;
+    INT_PTR id;
 
     TRACE( "(%p, %p, %p, %p, %p, 0x%08lx)\n", base, desc, dllhook, syshook, addr, flags );
 
