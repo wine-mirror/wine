@@ -3240,8 +3240,6 @@ static void test_SetEntriesInAclW(void)
     SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     EXPLICIT_ACCESSW ExplicitAccess;
-    static const WCHAR wszEveryone[] = {'E','v','e','r','y','o','n','e',0};
-    static const WCHAR wszCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
 
     NewAcl = (PACL)0xdeadbeef;
     res = SetEntriesInAclW(0, NULL, NULL, &NewAcl);
@@ -3297,7 +3295,7 @@ static void test_SetEntriesInAclW(void)
     else
     {
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
-        ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszEveryone;
+        ExplicitAccess.Trustee.ptstrName = (WCHAR *)L"Everyone";
         res = SetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %lu\n", res);
         ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -3327,7 +3325,7 @@ static void test_SetEntriesInAclW(void)
     }
 
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
-    ExplicitAccess.Trustee.ptstrName = (LPWSTR)wszCurrentUser;
+    ExplicitAccess.Trustee.ptstrName = (WCHAR *)L"CURRENT_USER";
     res = SetEntriesInAclW(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %lu\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -3354,8 +3352,6 @@ static void test_SetEntriesInAclA(void)
     SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     EXPLICIT_ACCESSA ExplicitAccess;
-    static const CHAR szEveryone[] = {'E','v','e','r','y','o','n','e',0};
-    static const CHAR szCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
 
     NewAcl = (PACL)0xdeadbeef;
     res = SetEntriesInAclA(0, NULL, NULL, &NewAcl);
@@ -3417,7 +3413,7 @@ static void test_SetEntriesInAclA(void)
     else
     {
         ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
-        ExplicitAccess.Trustee.ptstrName = (LPSTR)szEveryone;
+        ExplicitAccess.Trustee.ptstrName = (char*)"Everyone";
         res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
         ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %lu\n", res);
         ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -3447,7 +3443,7 @@ static void test_SetEntriesInAclA(void)
     }
 
     ExplicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
-    ExplicitAccess.Trustee.ptstrName = (LPSTR)szCurrentUser;
+    ExplicitAccess.Trustee.ptstrName = (char *)"CURRENT_USER";
     res = SetEntriesInAclA(1, &ExplicitAccess, OldAcl, &NewAcl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclA failed: %lu\n", res);
     ok(NewAcl != NULL, "returned acl was NULL\n");
@@ -6757,8 +6753,7 @@ static void test_AddMandatoryAce(void)
 
 static void test_system_security_access(void)
 {
-    static const WCHAR testkeyW[] =
-        {'S','O','F','T','W','A','R','E','\\','W','i','n','e','\\','S','A','C','L','t','e','s','t',0};
+    static const WCHAR testkeyW[] = L"SOFTWARE\\Wine\\SACLtest";
     LONG res;
     HKEY hkey;
     PSECURITY_DESCRIPTOR sd;
@@ -7475,7 +7470,6 @@ static void test_child_token_sd(void)
 
 static void test_GetExplicitEntriesFromAclW(void)
 {
-    static const WCHAR wszCurrentUser[] = { 'C','U','R','R','E','N','T','_','U','S','E','R','\0'};
     SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
     SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     PSID everyone_sid = NULL, users_sid = NULL;
@@ -7557,7 +7551,7 @@ static void test_GetExplicitEntriesFromAclW(void)
     LocalFree(new_acl);
 
     access.Trustee.TrusteeForm = TRUSTEE_IS_NAME;
-    access.Trustee.ptstrName = (LPWSTR)wszCurrentUser;
+    access.Trustee.ptstrName = (WCHAR *)L"CURRENT_USER";
     res = SetEntriesInAclW(1, &access, old_acl, &new_acl);
     ok(res == ERROR_SUCCESS, "SetEntriesInAclW failed: %lu\n", res);
     ok(new_acl != NULL, "returned acl was NULL\n");
