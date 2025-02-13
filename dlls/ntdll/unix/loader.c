@@ -366,6 +366,17 @@ static const char *get_pe_dir( WORD machine )
     }
 }
 
+static WORD get_alt_machine( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return IMAGE_FILE_MACHINE_AMD64;
+    case IMAGE_FILE_MACHINE_AMD64: return IMAGE_FILE_MACHINE_I386;
+    case IMAGE_FILE_MACHINE_ARMNT: return IMAGE_FILE_MACHINE_ARM64;
+    case IMAGE_FILE_MACHINE_ARM64: return IMAGE_FILE_MACHINE_ARMNT;
+    default: return machine;
+    }
+}
 
 static void set_dll_path(void)
 {
@@ -509,23 +520,24 @@ char *get_alternate_wineloader( WORD machine )
 {
     char *ret = NULL;
 
-    if (machine == current_machine) return NULL;
-
-    /* try the 64-bit loader */
-    if (current_machine == IMAGE_FILE_MACHINE_I386 && machine == IMAGE_FILE_MACHINE_AMD64)
+    if (is_win64)
+    {
+        if (machine != get_alt_machine( current_machine )) return NULL;
+        ret = remove_tail( wineloader, "64" );
+    }
+    else
     {
         size_t len = strlen(wineloader);
 
+        if (machine == current_machine) return NULL;
         if (len <= 2 || strcmp( wineloader + len - 2, "64" ))
         {
             ret = malloc( len + 3 );
             strcpy( ret, wineloader );
             strcat( ret, "64" );
         }
-        return ret;
     }
-
-    return remove_tail( wineloader, "64" );
+    return ret;
 }
 
 
