@@ -34,28 +34,47 @@ WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static const WCHAR *map_shortname_to_schema(const GUID *format, const WCHAR *name);
 
-typedef struct {
-    IWICMetadataQueryReader IWICMetadataQueryReader_iface;
-    LONG ref;
-    IWICMetadataBlockReader *block;
-    WCHAR *root;
-} QueryReader;
-
-static inline QueryReader *impl_from_IWICMetadataQueryReader(IWICMetadataQueryReader *iface)
+enum metadata_object_type
 {
-    return CONTAINING_RECORD(iface, QueryReader, IWICMetadataQueryReader_iface);
+    BLOCK_READER,
+    BLOCK_WRITER,
+};
+
+struct query_handler
+{
+    IWICMetadataQueryWriter IWICMetadataQueryWriter_iface;
+    LONG ref;
+    union
+    {
+        IUnknown *handler;
+        IWICMetadataBlockReader *block_reader;
+        IWICMetadataBlockWriter *block_writer;
+    } object;
+    enum metadata_object_type object_type;
+    WCHAR *root;
+};
+
+static bool is_writer_handler(const struct query_handler *handler)
+{
+    return handler->object_type == BLOCK_WRITER;
 }
 
-static HRESULT WINAPI mqr_QueryInterface(IWICMetadataQueryReader *iface, REFIID riid,
+static inline struct query_handler *impl_from_IWICMetadataQueryWriter(IWICMetadataQueryWriter *iface)
+{
+    return CONTAINING_RECORD(iface, struct query_handler, IWICMetadataQueryWriter_iface);
+}
+
+static HRESULT WINAPI query_handler_QueryInterface(IWICMetadataQueryWriter *iface, REFIID riid,
         void **ppvObject)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
 
-    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p,%s,%p)\n", iface, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_IUnknown) ||
-            IsEqualGUID(riid, &IID_IWICMetadataQueryReader))
-        *ppvObject = &This->IWICMetadataQueryReader_iface;
+            IsEqualGUID(riid, &IID_IWICMetadataQueryReader) ||
+            (is_writer_handler(handler) && IsEqualGUID(riid, &IID_IWICMetadataQueryWriter)))
+        *ppvObject = &handler->IWICMetadataQueryWriter_iface;
     else
         *ppvObject = NULL;
 
@@ -68,48 +87,48 @@ static HRESULT WINAPI mqr_QueryInterface(IWICMetadataQueryReader *iface, REFIID 
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI mqr_AddRef(IWICMetadataQueryReader *iface)
+static ULONG WINAPI query_handler_AddRef(IWICMetadataQueryWriter *iface)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p) refcount=%lu\n", This, ref);
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
+    ULONG ref = InterlockedIncrement(&handler->ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
     return ref;
 }
 
-static ULONG WINAPI mqr_Release(IWICMetadataQueryReader *iface)
+static ULONG WINAPI query_handler_Release(IWICMetadataQueryWriter *iface)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
-    TRACE("(%p) refcount=%lu\n", This, ref);
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
+    ULONG ref = InterlockedDecrement(&handler->ref);
+    TRACE("(%p) refcount=%lu\n", iface, ref);
     if (!ref)
     {
-        IWICMetadataBlockReader_Release(This->block);
-        free(This->root);
-        free(This);
+        IUnknown_Release(handler->object.handler);
+        free(handler->root);
+        free(handler);
     }
     return ref;
 }
 
-static HRESULT WINAPI mqr_GetContainerFormat(IWICMetadataQueryReader *iface, GUID *format)
+static HRESULT WINAPI query_handler_GetContainerFormat(IWICMetadataQueryWriter *iface, GUID *format)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
 
-    TRACE("(%p,%p)\n", This, format);
+    TRACE("(%p,%p)\n", iface, format);
 
-    return IWICMetadataBlockReader_GetContainerFormat(This->block, format);
+    return IWICMetadataBlockReader_GetContainerFormat(handler->object.block_reader, format);
 }
 
-static HRESULT WINAPI mqr_GetLocation(IWICMetadataQueryReader *iface, UINT len, WCHAR *location, UINT *ret_len)
+static HRESULT WINAPI query_handler_GetLocation(IWICMetadataQueryWriter *iface, UINT len, WCHAR *location, UINT *ret_len)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
     const WCHAR *root;
     UINT actual_len;
 
-    TRACE("(%p,%u,%p,%p)\n", This, len, location, ret_len);
+    TRACE("(%p,%u,%p,%p)\n", iface, len, location, ret_len);
 
     if (!ret_len) return E_INVALIDARG;
 
-    root = This->root ? This->root : L"/";
+    root = handler->root ? handler->root : L"/";
     actual_len = lstrlenW(root) + 1;
 
     if (location)
@@ -443,9 +462,9 @@ static HRESULT get_next_reader(IWICMetadataReader *reader, UINT index,
     return hr;
 }
 
-static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCWSTR query, PROPVARIANT *value)
+static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR query, PROPVARIANT *value)
 {
-    QueryReader *This = impl_from_IWICMetadataQueryReader(iface);
+    struct query_handler *This = impl_from_IWICMetadataQueryWriter(iface);
     struct string_t elem;
     WCHAR *full_query;
     const WCHAR *p;
@@ -518,7 +537,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
                 reader = new_reader;
             }
             else
-                hr = find_reader_from_block(This->block, index, &guid, &reader);
+                hr = find_reader_from_block(This->object.block_reader, index, &guid, &reader);
 
             if (hr != S_OK) break;
 
@@ -532,7 +551,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
 
             PropVariantClear(&new_value);
             new_value.vt = VT_UNKNOWN;
-            hr = MetadataQueryReader_CreateInstance(This->block, root, (IWICMetadataQueryReader **)&new_value.punkVal);
+            hr = MetadataQueryReader_CreateInstance(This->object.block_reader, root, (IWICMetadataQueryReader **)&new_value.punkVal);
             SysFreeString(root);
             if (hr != S_OK) break;
         }
@@ -706,7 +725,7 @@ static HRESULT string_enumerator_create(IEnumString **enum_string)
     return S_OK;
 }
 
-static HRESULT WINAPI mqr_GetEnumerator(IWICMetadataQueryReader *iface,
+static HRESULT WINAPI query_handler_GetEnumerator(IWICMetadataQueryWriter *iface,
         IEnumString **enum_string)
 {
     TRACE("iface %p, enum_string %p.\n", iface, enum_string);
@@ -714,175 +733,64 @@ static HRESULT WINAPI mqr_GetEnumerator(IWICMetadataQueryReader *iface,
     return string_enumerator_create(enum_string);
 }
 
-static IWICMetadataQueryReaderVtbl mqr_vtbl = {
-    mqr_QueryInterface,
-    mqr_AddRef,
-    mqr_Release,
-    mqr_GetContainerFormat,
-    mqr_GetLocation,
-    mqr_GetMetadataByName,
-    mqr_GetEnumerator
-};
-
-HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, const WCHAR *root, IWICMetadataQueryReader **out)
-{
-    QueryReader *obj;
-
-    obj = calloc(1, sizeof(*obj));
-    if (!obj)
-        return E_OUTOFMEMORY;
-
-    obj->IWICMetadataQueryReader_iface.lpVtbl = &mqr_vtbl;
-    obj->ref = 1;
-
-    IWICMetadataBlockReader_AddRef(mbr);
-    obj->block = mbr;
-
-    obj->root = wcsdup(root);
-
-    *out = &obj->IWICMetadataQueryReader_iface;
-
-    return S_OK;
-}
-
-typedef struct
-{
-    IWICMetadataQueryWriter IWICMetadataQueryWriter_iface;
-    LONG ref;
-    IWICMetadataBlockWriter *block;
-    WCHAR *root;
-}
-QueryWriter;
-
-static inline QueryWriter *impl_from_IWICMetadataQueryWriter(IWICMetadataQueryWriter *iface)
-{
-    return CONTAINING_RECORD(iface, QueryWriter, IWICMetadataQueryWriter_iface);
-}
-
-static HRESULT WINAPI mqw_QueryInterface(IWICMetadataQueryWriter *iface, REFIID riid,
-        void **object)
-{
-    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
-
-    TRACE("writer %p, riid %s, object %p.\n", writer, debugstr_guid(riid), object);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-            || IsEqualGUID(riid, &IID_IWICMetadataQueryWriter)
-            || IsEqualGUID(riid, &IID_IWICMetadataQueryReader))
-        *object = &writer->IWICMetadataQueryWriter_iface;
-    else
-        *object = NULL;
-
-    if (*object)
-    {
-        IUnknown_AddRef((IUnknown *)*object);
-        return S_OK;
-    }
-
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI mqw_AddRef(IWICMetadataQueryWriter *iface)
-{
-    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
-    ULONG ref = InterlockedIncrement(&writer->ref);
-
-    TRACE("writer %p, refcount=%lu\n", writer, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI mqw_Release(IWICMetadataQueryWriter *iface)
-{
-    QueryWriter *writer = impl_from_IWICMetadataQueryWriter(iface);
-    ULONG ref = InterlockedDecrement(&writer->ref);
-
-    TRACE("writer %p, refcount=%lu.\n", writer, ref);
-
-    if (!ref)
-    {
-        IWICMetadataBlockWriter_Release(writer->block);
-        free(writer->root);
-        free(writer);
-    }
-    return ref;
-}
-
-static HRESULT WINAPI mqw_GetContainerFormat(IWICMetadataQueryWriter *iface, GUID *container_format)
-{
-    FIXME("iface %p, container_format %p stub.\n", iface, container_format);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mqw_GetEnumerator(IWICMetadataQueryWriter *iface, IEnumString **enum_string)
-{
-    TRACE("iface %p, enum_string %p.\n", iface, enum_string);
-
-    return string_enumerator_create(enum_string);
-}
-
-static HRESULT WINAPI mqw_GetLocation(IWICMetadataQueryWriter *iface, UINT max_length, WCHAR *namespace, UINT *actual_length)
-{
-    FIXME("iface %p, max_length %u, namespace %s, actual_length %p stub.\n",
-            iface, max_length, debugstr_w(namespace), actual_length);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mqw_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name, PROPVARIANT *value)
-{
-    FIXME("name %s, value %p stub.\n", debugstr_w(name), value);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI mqw_SetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name, const PROPVARIANT *value)
+static HRESULT WINAPI query_handler_SetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name, const PROPVARIANT *value)
 {
     FIXME("iface %p, name %s, value %p stub.\n", iface, debugstr_w(name), value);
 
     return S_OK;
 }
 
-static HRESULT WINAPI mqw_RemoveMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name)
+static HRESULT WINAPI query_handler_RemoveMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name)
 {
     FIXME("iface %p, name %s stub.\n", iface, debugstr_w(name));
 
     return E_NOTIMPL;
 }
 
-static const IWICMetadataQueryWriterVtbl mqw_vtbl =
+static IWICMetadataQueryWriterVtbl query_handler_vtbl =
 {
-    mqw_QueryInterface,
-    mqw_AddRef,
-    mqw_Release,
-    mqw_GetContainerFormat,
-    mqw_GetLocation,
-    mqw_GetMetadataByName,
-    mqw_GetEnumerator,
-    mqw_SetMetadataByName,
-    mqw_RemoveMetadataByName,
+    query_handler_QueryInterface,
+    query_handler_AddRef,
+    query_handler_Release,
+    query_handler_GetContainerFormat,
+    query_handler_GetLocation,
+    query_handler_GetMetadataByName,
+    query_handler_GetEnumerator,
+    query_handler_SetMetadataByName,
+    query_handler_RemoveMetadataByName,
 };
 
-HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *mbw, const WCHAR *root, IWICMetadataQueryWriter **out)
+static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_object_type object_type,
+        const WCHAR *root, IWICMetadataQueryWriter **ret)
 {
-    QueryWriter *obj;
+    struct query_handler *obj;
 
     obj = calloc(1, sizeof(*obj));
     if (!obj)
         return E_OUTOFMEMORY;
 
-    obj->IWICMetadataQueryWriter_iface.lpVtbl = &mqw_vtbl;
+    obj->IWICMetadataQueryWriter_iface.lpVtbl = &query_handler_vtbl;
     obj->ref = 1;
-
-    IWICMetadataBlockWriter_AddRef(mbw);
-    obj->block = mbw;
-
+    IUnknown_AddRef(block_handler);
+    obj->object.handler = block_handler;
+    obj->object_type = object_type;
     obj->root = wcsdup(root);
 
-    *out = &obj->IWICMetadataQueryWriter_iface;
+    *ret = &obj->IWICMetadataQueryWriter_iface;
 
     return S_OK;
+}
+
+HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *block_reader, const WCHAR *root,
+        IWICMetadataQueryReader **out)
+{
+    return create_query_handler((IUnknown *)block_reader, BLOCK_READER, root, (IWICMetadataQueryWriter **)out);
+}
+
+HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *block_writer, const WCHAR *root,
+        IWICMetadataQueryWriter **out)
+{
+    return create_query_handler((IUnknown *)block_writer, BLOCK_WRITER, root, out);
 }
 
 static const struct

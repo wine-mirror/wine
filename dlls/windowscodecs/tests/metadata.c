@@ -4965,113 +4965,100 @@ static void test_metadata_App1(void)
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+
+    check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
+    todo_wine
+    check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
+
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-
-        check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-        check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
-
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1"), "Unexpected path %s.\n", wine_dbgstr_w(path));
         IWICMetadataQueryWriter_Release(query_writer2);
-        PropVariantClear(&value);
     }
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
         IWICMetadataQueryWriter_Release(query_writer2);
-        PropVariantClear(&value);
     }
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/gps", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
         IWICMetadataQueryWriter_Release(query_writer2);
-        PropVariantClear(&value);
     }
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/exif", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
         IWICMetadataQueryWriter_Release(query_writer2);
-        PropVariantClear(&value);
     }
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/gps/{ushort=768}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 555, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 555, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/{ushort=256}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
-        ok(value.ulVal == 222, "Unexpected value %lu.\n", value.ulVal);
-    }
+    ok(value.vt == VT_UI4, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 222, "Unexpected value %lu.\n", value.ulVal);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/{ushort=34665}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-        check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-        check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
+    todo_wine
+    check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
+    todo_wine
+    check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
+    PropVariantClear(&value);
 
     IWICMetadataQueryWriter_Release(query_writer);
 
