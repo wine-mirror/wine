@@ -2031,12 +2031,7 @@ fi
 
 dnl **** Platform-specific checks ****
 
-case "$HOST_ARCH,$PE_ARCHS" in
-  x86_64,*i386*) wine_binary="wine" ;;
-  x86_64,*) wine_binary="wine64" ;;
-  *) wine_binary="wine" ;;
-esac
-AC_SUBST(WINELOADER_PROGRAMS,"$wine_binary")
+AC_SUBST(WINELOADER_PROGRAMS,"wine")
 
 case $host_os in
   linux*)
@@ -2049,8 +2044,7 @@ esac
 
 if test "$wine_use_preloader" = "yes"
 then
-  test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine-preloader)
-  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS wine-preloader"
   AC_DEFINE(HAVE_WINE_PRELOADER, 1, [Define to 1 if the Wine preloader is being used.])
 fi
 
@@ -2382,7 +2376,6 @@ wine_srcdir=
 test "$srcdir" = . || wine_srcdir="$srcdir/"
 
 WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
-WINE_CONFIG_SYMLINK(wine64,tools/winewrapper,["$wine_binary" = wine64 -o -n "$with_wine64"])
 
 WINE_CONFIG_MAKEFILE(dlls/acledit)
 WINE_CONFIG_MAKEFILE(dlls/aclui)
@@ -3579,7 +3572,7 @@ WINE_IGNORE_FILE(config.log)
 WINE_IGNORE_FILE(config.status)
 WINE_IGNORE_FILE(include/config.h)
 WINE_IGNORE_FILE(include/stamp-h)
-test "$wine_binary" = wine || WINE_IGNORE_FILE(loader/wine)
+WINE_IGNORE_FILE(loader-wow64)
 
 if test "x$enable_tools" != xno
 then
@@ -3649,22 +3642,16 @@ dnl Rules for wineloader
 
 if test -n "$with_wine64"
 then
-    case "$with_wine64" in
-      /*) reldir="" ;;
-      *)  reldir="../" ;;
-    esac
     dnl Get rid of old symlinks
     rm -f fonts server 2>/dev/null
     WINE_APPEND_RULE(
-[all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-loader/wine64 loader/wine64-preloader:
-	rm -f \$[@] && \$(LN_S) $reldir$with_wine64/\$[@] \$[@]
-$with_wine64/loader/wine:
-	rm -f \$[@] && \$(LN_S) $ac_pwd/loader/wine \$[@]
-$with_wine64/loader/wine-preloader:
-	rm -f \$[@] && \$(LN_S) $ac_pwd/loader/wine-preloader \$[@]
+[all: loader-wow64 $with_wine64/loader-wow64
+loader-wow64:
+	rm -f \$[@] && \$(LN_S) $with_wine64/loader \$[@]
+$with_wine64/loader-wow64:
+	rm -f \$[@] && \$(LN_S) $ac_pwd/loader \$[@]
 clean::
-	rm -f loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
+	rm -f loader-wow64 $with_wine64/loader-wow64])
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \

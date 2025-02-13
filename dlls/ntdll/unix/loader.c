@@ -141,6 +141,7 @@ static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(
 static const char *bin_dir;
 static const char *dll_dir;
 static const char *ntdll_dir;
+static const char *alt_build_dir;
 static SIZE_T dll_path_maxlen;
 
 const char *home_dir = NULL;
@@ -466,41 +467,24 @@ static void set_config_dir(void)
     }
 }
 
-static void init_paths( char *argv[] )
+static void init_paths(void)
 {
     Dl_info info;
-    char *basename;
-
-    if ((basename = strrchr( argv[0], '/' ))) basename++;
-    else basename = argv[0];
 
     if (!dladdr( init_paths, &info ) || !(ntdll_dir = realpath_dirname( info.dli_fname )))
         fatal_error( "cannot get path to ntdll.so\n" );
 
-    if (!(build_dir = remove_tail( ntdll_dir, "/dlls/ntdll" )))
+    if ((build_dir = remove_tail( ntdll_dir, "/dlls/ntdll" )))
     {
-        if (!(dll_dir = remove_tail( ntdll_dir, get_so_dir(current_machine) ))) dll_dir = ntdll_dir;
-#if (defined(__linux__) && !defined(__ANDROID__)) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
-        bin_dir = realpath_dirname( "/proc/self/exe" );
-#elif defined (__FreeBSD__) || defined(__DragonFly__)
-        {
-            static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
-            size_t path_size = PATH_MAX;
-            char *path = malloc( path_size );
-            if (path && !sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
-                bin_dir = realpath_dirname( path );
-            free( path );
-        }
-#endif
-        if (!bin_dir) bin_dir = build_relative_path( dll_dir, LIBDIR "/wine", BINDIR );
-        data_dir = build_relative_path( bin_dir, BINDIR, DATADIR "/wine" );
-        wineloader = build_path( bin_dir, basename );
+        wineloader = build_path( build_dir, "loader/wine" );
+        alt_build_dir = realpath_dirname( build_path( build_dir, "loader-wow64" ));
     }
     else
     {
-        char *dirname = build_path( build_dir, "loader" );
-        wineloader = build_path( dirname, basename );
-        free(dirname);
+        if (!(dll_dir = remove_tail( ntdll_dir, get_so_dir(current_machine) ))) dll_dir = ntdll_dir;
+        bin_dir = build_relative_path( dll_dir, LIBDIR "/wine", BINDIR );
+        data_dir = build_relative_path( dll_dir, LIBDIR "/wine", DATADIR "/wine" );
+        wineloader = build_path( ntdll_dir, "wine" );
     }
 
     set_dll_path();
@@ -520,20 +504,18 @@ char *get_alternate_wineloader( WORD machine )
     if (is_win64)
     {
         if (machine != get_alt_machine( current_machine )) return NULL;
-        ret = remove_tail( wineloader, "64" );
     }
     else
     {
-        size_t len = strlen(wineloader);
-
         if (machine == current_machine) return NULL;
-        if (len <= 2 || strcmp( wineloader + len - 2, "64" ))
-        {
-            ret = malloc( len + 3 );
-            strcpy( ret, wineloader );
-            strcat( ret, "64" );
-        }
+        machine = get_alt_machine( current_machine );
     }
+
+    if (!build_dir)
+        asprintf( &ret, "%s%s/wine", dll_dir, get_so_dir( machine ));
+    else if (alt_build_dir)
+        asprintf( &ret, "%s/loader/wine", alt_build_dir );
+
     return ret;
 }
 
@@ -541,17 +523,7 @@ char *get_alternate_wineloader( WORD machine )
 static void preloader_exec( char **argv )
 {
 #ifdef HAVE_WINE_PRELOADER
-    static const char *preloader = "wine-preloader";
-    char *p;
-
-    if (!(p = strrchr( argv[1], '/' ))) p = argv[1];
-    else p++;
-
-    if (strlen(p) > 2 && !strcmp( p + strlen(p) - 2, "64" )) preloader = "wine64-preloader";
-    argv[0] = malloc( p - argv[1] + strlen(preloader) + 1 );
-    memcpy( argv[0], argv[1], p - argv[1] );
-    strcpy( argv[0] + (p - argv[1]), preloader );
-
+    asprintf( &argv[0], "%s-preloader", argv[1] );
 #ifdef __APPLE__
     {
         posix_spawnattr_t attr;
@@ -615,15 +587,11 @@ static int exec_wineserver( pid_t *pid, char **argv )
 {
     char *path;
 
+    if (!is_win64 && alt_build_dir)  /* look for 64-bit server */
+        return build_path_and_exec( pid, alt_build_dir, "server/wineserver", argv );
+
     if (build_dir)
-    {
-        if (!is_win64)  /* look for 64-bit server */
-        {
-            char *loader = realpath_dirname( build_path( build_dir, "loader/wine64" ));
-            if (loader && !build_path_and_exec( pid, loader, "../server/wineserver", argv )) return 0;
-        }
         return build_path_and_exec( pid, build_dir, "server/wineserver", argv );
-    }
 
     if (!build_path_and_exec( pid, bin_dir, "wineserver", argv )) return 0;
     if ((path = getenv( "WINESERVER" )) && !build_path_and_exec( pid, "", path, argv )) return 0;
@@ -1964,7 +1932,7 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
     main_argc = argc;
     main_argv = argv;
 
-    init_paths( argv );
+    init_paths();
     virtual_init();
     init_environment();
 
@@ -2163,19 +2131,24 @@ DECLSPEC_EXPORT void __wine_main( int argc, char *argv[] )
     main_argc = argc;
     main_argv = argv;
 
-    init_paths( argv );
+    init_paths();
 
     if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
     {
         check_command_line( argc, argv );
-        if (pre_exec())
+        if (pre_exec() || !dlsym( RTLD_DEFAULT, "wine_main_preload_info" ))
         {
             static char noexec[] = "WINELOADERNOEXEC=1";
             char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
+            WORD machine = current_machine;
 
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
             putenv( noexec );
-            loader_exec( new_argv, current_machine );
+
+            /* default to 32-bit loader to support 32-bit prefixes */
+            if (machine == IMAGE_FILE_MACHINE_AMD64) machine = IMAGE_FILE_MACHINE_I386;
+
+            loader_exec( new_argv, machine );
             fatal_error( "could not exec the wine loader\n" );
         }
     }

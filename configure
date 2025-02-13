@@ -20895,12 +20895,7 @@ then
 fi
 
 
-case "$HOST_ARCH,$PE_ARCHS" in
-  x86_64,*i386*) wine_binary="wine" ;;
-  x86_64,*) wine_binary="wine64" ;;
-  *) wine_binary="wine" ;;
-esac
-WINELOADER_PROGRAMS="$wine_binary"
+WINELOADER_PROGRAMS="wine"
 
 
 case $host_os in
@@ -20914,8 +20909,7 @@ esac
 
 if test "$wine_use_preloader" = "yes"
 then
-  test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
-  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+  WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS wine-preloader"
 
 printf "%s\n" "#define HAVE_WINE_PRELOADER 1" >>confdefs.h
 
@@ -22040,10 +22034,6 @@ test "$srcdir" = . || wine_srcdir="$srcdir/"
 
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
-if test "$wine_binary" = wine64 -o -n "$with_wine64"; then
-ac_config_links="$ac_config_links wine64:tools/winewrapper"
-wine_fn_config_symlink wine64
-fi
 
 wine_fn_config_makefile dlls/acledit enable_acledit
 wine_fn_config_makefile dlls/aclui enable_aclui
@@ -23238,7 +23228,7 @@ as_fn_append CONFIGURE_TARGETS " config.log"
 as_fn_append CONFIGURE_TARGETS " config.status"
 as_fn_append CONFIGURE_TARGETS " include/config.h"
 as_fn_append CONFIGURE_TARGETS " include/stamp-h"
-test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine"
+as_fn_append CONFIGURE_TARGETS " loader-wow64"
 
 if test "x$enable_tools" != xno
 then
@@ -23279,21 +23269,15 @@ fi
 
 if test -n "$with_wine64"
 then
-    case "$with_wine64" in
-      /*) reldir="" ;;
-      *)  reldir="../" ;;
-    esac
         rm -f fonts server 2>/dev/null
     as_fn_append wine_rules "
-all: loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader
-loader/wine64 loader/wine64-preloader:
-	rm -f \$@ && \$(LN_S) $reldir$with_wine64/\$@ \$@
-$with_wine64/loader/wine:
-	rm -f \$@ && \$(LN_S) $ac_pwd/loader/wine \$@
-$with_wine64/loader/wine-preloader:
-	rm -f \$@ && \$(LN_S) $ac_pwd/loader/wine-preloader \$@
+all: loader-wow64 $with_wine64/loader-wow64
+loader-wow64:
+	rm -f \$@ && \$(LN_S) $with_wine64/loader \$@
+$with_wine64/loader-wow64:
+	rm -f \$@ && \$(LN_S) $ac_pwd/loader \$@
 clean::
-	rm -f loader/wine64 loader/wine64-preloader $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
+	rm -f loader-wow64 $with_wine64/loader-wow64"
 else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
@@ -24336,7 +24320,6 @@ do
     "include/config.h") CONFIG_HEADERS="$CONFIG_HEADERS include/config.h" ;;
     "include/stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS include/stamp-h" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
-    "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "tools/makedep") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/makedep" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
 
