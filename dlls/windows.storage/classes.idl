@@ -1,6 +1,7 @@
 /*
- * Copyright 2022-2024 Zhiyi Zhang for CodeWeavers
- * Copyright 2025 Jactry Zeng for CodeWeavers
+ * Runtime Classes for windows.storage.dll
+ *
+ * Copyright (C) 2025 Mohamad Al-Jaf
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,25 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+#pragma makedep register
 
-#define COBJMACROS
-#include "windef.h"
-#include "winbase.h"
-#include "winstring.h"
-#include "wine/debug.h"
-#include "objbase.h"
-
-#include "activation.h"
-#include "rometadataresolution.h"
-
-#define WIDL_using_Windows_Foundation
-#define WIDL_using_Windows_Foundation_Metadata
-#include "windows.foundation.metadata.h"
-#define WIDL_using_Windows_Storage
-#define WIDL_using_Windows_Storage_Streams
-#include "windows.media.h"
-#include "windows.storage.streams.h"
-#include "wintypes_private.h"
-
-extern IActivationFactory *data_writer_activation_factory;
+#define _WINDOWS_STORAGE
+#include "windows.storage.streams.idl"

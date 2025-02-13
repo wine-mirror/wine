@@ -2,4 +2,6 @@ MODULE  = windows.storage.dll
 IMPORTS = combase
 
 SOURCES = \
-	main.c
+	classes.idl \
+	main.c \
+	streams.c

@@ -49,6 +49,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_RandomAccessStreamReference(void)
 {
     static const WCHAR *random_access_stream_reference_statics_name = L"Windows.Storage.Streams.RandomAccessStreamReference";
+    IRandomAccessStreamReferenceStatics *random_access_stream_reference_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str = NULL;
     HRESULT hr;
@@ -69,8 +70,13 @@ static void test_RandomAccessStreamReference(void)
     check_interface( factory, &IID_IInspectable, FALSE );
     check_interface( factory, &IID_IAgileObject, TRUE /* Supported after Windows 10 1607 */ );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IRandomAccessStreamReferenceStatics, (void **)&random_access_stream_reference_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IRandomAccessStreamReferenceStatics_Release( random_access_stream_reference_statics );
+    ok( ref == 1, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
-    todo_wine ok( ref == 0, "got ref %ld.\n", ref );
+    ok( ref == 0, "got ref %ld.\n", ref );
 }
 
 START_TEST(storage)

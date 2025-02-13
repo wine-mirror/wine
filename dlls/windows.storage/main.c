@@ -30,8 +30,15 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID riid, void **out )
 
 HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **factory )
 {
+    const WCHAR *buffer = WindowsGetStringRawBuffer( classid, NULL );
+
     TRACE( "class %s, factory %p.\n", debugstr_hstring( classid ), factory );
 
     *factory = NULL;
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_RandomAccessStreamReference ))
+        IActivationFactory_QueryInterface( random_access_stream_reference_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;
 }
