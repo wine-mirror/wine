@@ -18,6 +18,7 @@
 
 #include <stdarg.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -31,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(sort);
 static BOOL option_unique;
 static BOOL option_c_locale;
 static BOOL option_reverse;
+static int  option_column;
 
 struct line
 {
@@ -47,13 +49,13 @@ struct sorted_lines
     unsigned int bufsize;
 };
 
-static inline int compare_string( const char *line, unsigned int len, const char *line2, unsigned int len2 )
+static inline int compare_string( const char *str, unsigned int len, const char *str2, unsigned int len2 )
 {
     unsigned int i;
 
     for (i = 0; i < min( len, len2 ); i++)
     {
-        char a = tolower( line[i] ), b = tolower( line2[i] );
+        char a = tolower( str[i] ), b = tolower( str2[i] );
         if (a > b) return 1;
         if (a < b) return -1;
     }
@@ -65,6 +67,7 @@ static inline int compare_string( const char *line, unsigned int len, const char
 static BOOL find_line( const struct sorted_lines *sorted, const char *line, unsigned int len, int *idx )
 {
     int i, c, min = 0, max = sorted->count - 1;
+    unsigned int offset;
     const char *ptr;
 
     while (min <= max)
@@ -72,10 +75,14 @@ static BOOL find_line( const struct sorted_lines *sorted, const char *line, unsi
         i = (min + max) / 2;
         ptr = sorted->buf + sorted->entry[i].start;
 
+        if (option_column && option_column < len && option_column < sorted->entry[i].len) offset = option_column - 1;
+        else offset = 0;
+
         if (option_c_locale)
-            c = compare_string( ptr, sorted->entry[i].len, line, len );
+            c = compare_string( ptr + offset, sorted->entry[i].len - offset, line + offset, len - offset );
         else
-            c = CompareStringA( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, ptr, sorted->entry[i].len, line, len ) - 2;
+            c = CompareStringA( LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                                ptr + offset, sorted->entry[i].len - offset, line + offset, len - offset ) - 2;
         if (option_reverse) c = -c;
 
         if (c > 0) max = i - 1;
@@ -320,6 +327,15 @@ int __cdecl wmain( int argc, WCHAR *argv[] )
                     return 1;
                 }
                 out_file = argv[i + 1];
+            }
+            else if (argv[i][1] == '+')
+            {
+                WCHAR *end;
+                if ((option_column = wcstol( argv[i] + 2, &end, 10 )) <= 0)
+                {
+                    wprintf( L"Expected column greater than 0.\n" );
+                    return 1;
+                }
             }
             else
             {
