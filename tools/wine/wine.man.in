@@ -88,13 +88,6 @@ Specifies the path and name of the
 binary. If not set, Wine will look for a file named "wineserver" in
 the path and in a few other likely locations.
 .TP
-.B WINELOADER
-Specifies the path and name of the
-.B wine
-binary to use to launch new Windows processes. If not set, Wine will
-look for a file named "wine" in the path and in a few other likely
-locations.
-.TP
 .B WINEDEBUG
 Turns debugging messages on or off. The syntax of the variable is
 of the form

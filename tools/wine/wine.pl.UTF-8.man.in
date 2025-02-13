@@ -86,13 +86,6 @@ Określa ścieżkę i nazwę programu binarnego
 Jeżeli nie ustawione, Wine będzie szukał pliku o nazwie "wineserver" w
 podanej ścieżce i kilku innych miejscach prawdopodobnego występowania.
 .TP
-.B WINELOADER
-Określa ścieżkę i nazwę programu binarnego
-.B wine
-używanej do uruchamiania nowych procesów Windowsowych. Jeżeli
-nieustawione, Wine będzie szukał pliku o nazwie "wine" w podanej
-ścieżce i kilku innych miejscach prawdopodobnego występowania.
-.TP
 .B WINEDEBUG
 Włącza lub wyłącza wiadomości debuggera. Składnia zmiennej
 wygląda następująco

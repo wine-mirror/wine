@@ -88,13 +88,6 @@ Si cette variable n'est pas définie, Wine essaiera de charger un
 fichier nommé « wineserver » dans le chemin système ou quelques autres
 emplacements potentiels.
 .TP
-.B WINELOADER
-Spécifie le chemin et le nom de l'exécutable
-.B wine
-à utiliser pour exécuter de nouveaux processus Windows. A défaut, Wine
-essaiera de charger un fichier nommé « wine » dans le chemin système
-ou quelques autres emplacements potentiels.
-.TP
 .B WINEDEBUG
 Active ou désactive les messages de débogage. La syntaxe est :
 .RI [ classe ][\fB+\fR|\fB-\fR] canal [,[ classe2 ][\fB+\fR|\fB-\fR] canal2 ]
