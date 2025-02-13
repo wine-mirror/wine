@@ -741,7 +741,7 @@ extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs,
                                   struct module* module);
 extern void         module_set_module(struct module* module, const WCHAR* name);
-extern WCHAR*       get_wine_loader_name(struct process *pcs) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC;
+extern const WCHAR *get_wine_loader_name(struct process *pcs);
 extern BOOL         module_is_wine_host(const WCHAR* module_name, const WCHAR* ext);
 extern BOOL         module_refresh_list(struct process *pcs);
 

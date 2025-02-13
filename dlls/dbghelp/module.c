@@ -84,33 +84,8 @@ static const WCHAR* get_filename(const WCHAR* name, const WCHAR* endptr)
 static BOOL is_wine_loader(const WCHAR *module)
 {
     const WCHAR *filename = get_filename(module, NULL);
-    const char *ptr;
-    BOOL ret = FALSE;
-    WCHAR *buffer;
-    DWORD len;
 
-    if ((ptr = getenv("WINELOADER")))
-    {
-        ptr = file_nameA(ptr);
-        len = 2 + MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, NULL, 0 );
-        buffer = heap_alloc( len * sizeof(WCHAR) );
-        MultiByteToWideChar( CP_UNIXCP, 0, ptr, -1, buffer, len );
-    }
-    else
-    {
-        buffer = heap_alloc( sizeof(L"wine") + 2 * sizeof(WCHAR) );
-        lstrcpyW( buffer, L"wine" );
-    }
-
-    if (!wcscmp( filename, buffer ))
-        ret = TRUE;
-
-    lstrcatW( buffer, L"64" );
-    if (!wcscmp( filename, buffer ))
-        ret = TRUE;
-
-    heap_free( buffer );
-    return ret;
+    return !wcscmp( filename, L"wine" );
 }
 
 static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
@@ -135,40 +110,9 @@ void module_set_module(struct module* module, const WCHAR* name)
     module_fill_module(name, module->modulename, ARRAY_SIZE(module->modulename));
 }
 
-/* Returned string must be freed by caller */
-WCHAR *get_wine_loader_name(struct process *pcs)
+const WCHAR *get_wine_loader_name(struct process *pcs)
 {
-    const WCHAR *name;
-    WCHAR* altname;
-    unsigned len;
-
-    name = process_getenv(pcs, L"WINELOADER");
-    if (!name) name = pcs->is_host_64bit ? L"wine64" : L"wine";
-    len = lstrlenW(name);
-
-    /* WINELOADER isn't properly updated in Wow64 process calling inside Windows env block
-     * (it's updated in ELF env block though)
-     * So do the adaptation ourselves.
-     */
-    altname = HeapAlloc(GetProcessHeap(), 0, (len + 2 + 1) * sizeof(WCHAR));
-    if (altname)
-    {
-        memcpy(altname, name, len * sizeof(WCHAR));
-        if (pcs->is_host_64bit && len >= 2 && memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)) != 0)
-        {
-            lstrcpyW(altname + len, L"64");
-            /* in multi-arch wow configuration, wine64 doesn't exist */
-            if (GetFileAttributesW(altname) == INVALID_FILE_ATTRIBUTES)
-                altname[len] = L'\0';
-        }
-        else if (!pcs->is_host_64bit && len >= 2 && !memcmp(name + len - 2, L"64", 2 * sizeof(WCHAR)))
-            altname[len - 2] = '\0';
-        else
-            altname[len] = '\0';
-    }
-
-    TRACE("returning %s\n", debugstr_w(altname));
-    return altname;
+    return process_getenv(pcs, L"WINELOADER");
 }
 
 static const char*      get_module_type(struct module* module)
