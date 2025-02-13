@@ -5734,6 +5734,133 @@ static void test_CreateQueryWriter(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_CreateQueryWriterFromReader(void)
+{
+    IWICMetadataBlockReader *block_reader;
+    IWICMetadataQueryWriter *query_writer;
+    IWICMetadataQueryWriter *query_writer2;
+    IWICMetadataQueryReader *query_reader, *query_reader2;
+    IWICBitmapFrameDecode *decoder_frame;
+    IWICComponentFactory *factory;
+    IWICBitmapDecoder *decoder;
+    IWICMetadataReader *reader;
+    PROPVARIANT value;
+    IStream *stream;
+    WCHAR buff[64];
+    UINT count, len;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Using query reader created with CreateQueryReaderFromBlockReader().
+
+       It's not allowed to create the writer for top level reader. */
+    hr = CoCreateInstance(&CLSID_WICApp1MetadataReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataReader, (void **)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    load_stream(reader, (const char *)&app1_data, sizeof(app1_data), 0);
+    hr = create_query_reader_from_metadata_reader(factory, reader, &GUID_ContainerFormatJpeg, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, NULL, &query_writer);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected type %d.\n", value.vt);
+
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader2, NULL, &query_writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    hr = IWICMetadataQueryWriter_GetLocation(query_writer, ARRAY_SIZE(buff), buff, &len);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(buff, L"/ifd"), "Unexpected location %s.\n", wine_dbgstr_w(buff));
+    IWICMetadataQueryWriter_Release(query_writer);
+}
+
+    IWICMetadataQueryReader_Release(query_reader);
+    IWICMetadataQueryReader_Release(query_reader2);
+
+    PropVariantClear(&value);
+
+    /* IWICMetadataReader -> IWICMetadataWriter -> IWICMetadataQueryWriter -> CreateQueryWriterFromReader(). */
+    hr = create_query_writer_from_metadata_reader(factory, reader, &GUID_ContainerFormatJpeg, &query_writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, (IWICMetadataQueryReader *)query_writer,
+            NULL, &query_writer2);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+    IWICMetadataQueryWriter_Release(query_writer);
+
+    query_writer = NULL;
+    hr = IWICComponentFactory_CreateQueryWriter(factory, &GUID_MetadataFormatChunktIME, NULL, &query_writer);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, (IWICMetadataQueryReader *)query_writer,
+            NULL, &query_writer2);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        IWICMetadataQueryWriter_Release(query_writer2);
+    if (query_writer)
+        IWICMetadataQueryWriter_Release(query_writer);
+
+    /* Using decoder frame. */
+    hr = CoCreateInstance(&CLSID_WICPngDecoder, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICBitmapDecoder, (void **)&decoder);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = create_stream(pngimage, sizeof(pngimage));
+    hr = IWICBitmapDecoder_Initialize(decoder, stream, WICDecodeMetadataCacheOnLoad);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IStream_Release(stream);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &decoder_frame);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IWICBitmapFrameDecode_QueryInterface(decoder_frame, &IID_IWICMetadataBlockReader, (void **)&block_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetMetadataQueryReader(decoder_frame, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, &GUID_VendorMicrosoft, &query_writer);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+
+    IWICMetadataQueryReader_Release(query_reader);
+    IWICBitmapFrameDecode_Release(decoder_frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    hr = IWICMetadataBlockReader_GetCount(block_reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, block_reader, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, &GUID_VendorMicrosoft, &query_writer);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+    IWICMetadataQueryReader_Release(query_reader);
+
+    IWICMetadataBlockReader_Release(block_reader);
+    IWICMetadataReader_Release(reader);
+
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -5766,6 +5893,7 @@ START_TEST(metadata)
     test_CreateMetadataWriter();
     test_metadata_writer();
     test_CreateQueryWriter();
+    test_CreateQueryWriterFromReader();
 
     CoUninitialize();
 }
