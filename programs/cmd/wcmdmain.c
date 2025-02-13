@@ -57,6 +57,8 @@ static int max_height;
 static int max_width;
 static int numChars;
 
+static HANDLE control_c_event;
+
 #define MAX_WRITECONSOLE_SIZE 65535
 
 /*
@@ -3848,9 +3850,19 @@ RETURN_CODE node_execute(CMD_NODE *node)
     return return_code;
 }
 
+
+RETURN_CODE WCMD_ctrlc_status(void)
+{
+    return (WAIT_OBJECT_0 == WaitForSingleObject(control_c_event, 0)) ? STATUS_CONTROL_C_EXIT : NO_ERROR;
+}
+
 static BOOL WINAPI my_event_handler(DWORD ctrl)
 {
     WCMD_output(L"\n");
+    if (ctrl == CTRL_C_EVENT)
+    {
+        SetEvent(control_c_event);
+    }
     return ctrl == CTRL_C_EVENT;
 }
 
@@ -3900,6 +3912,11 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   /* init for loop context */
   forloopcontext = NULL;
   WCMD_save_for_loop_context(TRUE);
+
+  /* Initialize the event here because the command loop at the bottom will
+   * reset it unconditionally even if the Control-C handler is not installed.
+   */
+  control_c_event = CreateEventW(NULL, TRUE, FALSE, NULL);
 
   /* Can't use argc/argv as it will have stripped quotes from parameters
    * meaning cmd.exe /C echo "quoted string" is impossible
@@ -4234,10 +4251,12 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   {
       if (rpl_status == RPL_SUCCESS && toExecute)
       {
+          ResetEvent(control_c_event);
           node_execute(toExecute);
           node_dispose_tree(toExecute);
           if (echo_mode) WCMD_output_asis(L"\r\n");
       }
   }
+  CloseHandle(control_c_event);
   return 0;
 }

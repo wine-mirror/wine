@@ -241,7 +241,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
  * FIXME: Assumes 24-line display for the /P qualifier.
  */
 
-static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int level) {
+static RETURN_CODE WCMD_list_directory (DIRECTORY_STACK *inputparms, int level, DIRECTORY_STACK **outputparms) {
 
   WCHAR string[1024], datestring[32], timestring[32];
   WCHAR real_path[MAX_PATH];
@@ -256,6 +256,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
   DIRECTORY_STACK *parms;
   int concurrentDirs = 0;
   BOOL done_header = FALSE;
+  RETURN_CODE return_code = NO_ERROR;
 
   dir_count = 0;
   file_count = 0;
@@ -333,7 +334,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     }
     WINE_TRACE("cols=%d, rows=%d\n", numCols, numRows);
 
-    for (rows=0; rows<numRows; rows++) {
+    for (rows=0; rows<numRows && return_code == NO_ERROR; rows++) {
      BOOL addNewLine = TRUE;
      for (cols=0; cols<numCols; cols++) {
       WCHAR username[24];
@@ -428,9 +429,16 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
      }
      if (addNewLine) WCMD_output_asis(L"\r\n");
      cur_width = 0;
+
+     /* Allow command to be aborted if user presses Ctrl-C.
+      * Don't overwrite any existing error code.
+      */
+     if (return_code == NO_ERROR) {
+        return_code = WCMD_ctrlc_status();
+     }
     }
 
-    if (!bare) {
+    if (!bare && return_code == NO_ERROR) {
        if (file_count == 1) {
          WCMD_output (L"       1 file %1!25s! bytes\n", WCMD_filesize64 (byte_count.QuadPart));
        }
@@ -442,7 +450,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
     file_total = file_total + file_count;
     dir_total = dir_total + dir_count;
 
-    if (!bare && !recurse) {
+    if (!bare && !recurse && return_code == NO_ERROR) {
        if (dir_count == 1) {
            WCMD_output (L"%1!8d! directory         ", 1);
        } else {
@@ -453,7 +461,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
   free(fd);
 
   /* When recursing, look in all subdirectories for matches */
-  if (recurse) {
+  if (recurse && return_code == NO_ERROR) {
     DIRECTORY_STACK *dirStack = NULL;
     DIRECTORY_STACK *lastEntry = NULL;
     WIN32_FIND_DATAW finddata;
@@ -498,9 +506,10 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
       } while (FindNextFileW(hff, &finddata) != 0);
       FindClose (hff);
 
-      while (dirStack != NULL) {
+      while (dirStack != NULL && return_code == NO_ERROR) {
         DIRECTORY_STACK *thisDir = dirStack;
-        dirStack = WCMD_list_directory (thisDir, 1);
+        return_code = WCMD_list_directory (thisDir, 1, &dirStack);
+        if (return_code != NO_ERROR) dirStack = NULL;
         while (thisDir != dirStack) {
           DIRECTORY_STACK *tempDir = thisDir->next;
           free(thisDir->dirName);
@@ -514,12 +523,13 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
   /* Handle case where everything is filtered out */
   if ((file_total + dir_total == 0) && (level == 0)) {
-    SetLastError (ERROR_FILE_NOT_FOUND);
+    return_code = ERROR_FILE_NOT_FOUND;
+    SetLastError (return_code);
     WCMD_print_error ();
-    errorlevel = ERROR_INVALID_FUNCTION;
   }
 
-  return parms;
+  *outputparms = parms;
+  return return_code;
 }
 
 /*****************************************************************************
@@ -535,7 +545,7 @@ static void WCMD_dir_trailer(const WCHAR *path) {
     WINE_TRACE("Writing trailer for '%s' gave %d(%ld)\n", wine_dbgstr_w(path),
                status, GetLastError());
 
-    if (errorlevel == NO_ERROR && !bare) {
+    if (!bare) {
       if (recurse) {
         WCMD_output (L"\n     Total files listed:\n%1!8d! files%2!25s! bytes\n", file_total, WCMD_filesize64 (byte_total));
         WCMD_output (L"%1!8d! directories %2!18s! bytes free\n\n", dir_total, WCMD_filesize64 (freebytes.QuadPart));
@@ -672,8 +682,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
   WCHAR fname[MAX_PATH];
   WCHAR ext[MAX_PATH];
   unsigned num_empty = 0, num_with_data = 0;
-
-  errorlevel = NO_ERROR;
+  RETURN_CODE return_code = NO_ERROR;
 
   /* Prefill quals with (uppercased) DIRCMD env var */
   if (GetEnvironmentVariableW(L"DIRCMD", string, ARRAY_SIZE(string))) {
@@ -757,9 +766,9 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                 dirTime = Written;
                 p = p - 1; /* So when step on, move to '/' */
               } else {
-                SetLastError(ERROR_INVALID_PARAMETER);
+                SetLastError(return_code = ERROR_INVALID_PARAMETER);
                 WCMD_print_error();
-                return errorlevel = ERROR_INVALID_FUNCTION;
+                goto exit;
               }
               break;
     case 'O': p = p + 1;
@@ -779,9 +788,9 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                           break;
                 case 'G': orderGroupDirs = TRUE; break;
                 default:
-                    SetLastError(ERROR_INVALID_PARAMETER);
+                    SetLastError(return_code = ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
-                    return errorlevel = ERROR_INVALID_FUNCTION;
+                    goto exit;
                 }
                 p++;
               }
@@ -816,9 +825,9 @@ RETURN_CODE WCMD_directory(WCHAR *args)
                 case 'R': mask = FILE_ATTRIBUTE_READONLY;  break;
                 case 'A': mask = FILE_ATTRIBUTE_ARCHIVE;   break;
                 default:
-                    SetLastError(ERROR_INVALID_PARAMETER);
+                    SetLastError(return_code = ERROR_INVALID_PARAMETER);
                     WCMD_print_error();
-                    return errorlevel = ERROR_INVALID_FUNCTION;
+                    goto exit;
                 }
 
                 /* Keep running list of bits we care about */
@@ -834,9 +843,9 @@ RETURN_CODE WCMD_directory(WCHAR *args)
               WINE_TRACE("Result: showattrs %lx, bits %lx\n", showattrs, attrsbits);
               break;
     default:
-              SetLastError(ERROR_INVALID_PARAMETER);
+              SetLastError(return_code = ERROR_INVALID_PARAMETER);
               WCMD_print_error();
-              return errorlevel = ERROR_INVALID_FUNCTION;
+              goto exit;
     }
     p = p + 1;
   }
@@ -950,7 +959,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
   thisEntry = fullParms;
   trailerReqd = FALSE;
 
-  while (thisEntry != NULL) {
+  while (thisEntry != NULL && return_code == NO_ERROR) {
 
     /* Output disk free (trailer) and volume information (header) if the drive
        letter changes */
@@ -959,7 +968,8 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       /* Trailer Information */
       if (lastDrive != '?') {
         trailerReqd = FALSE;
-        WCMD_dir_trailer(prevEntry->dirName);
+        if (return_code == NO_ERROR)
+            WCMD_dir_trailer(prevEntry->dirName);
         byte_total = file_total = dir_total = 0;
       }
 
@@ -974,7 +984,7 @@ RETURN_CODE WCMD_directory(WCHAR *args)
          drive[3] = L'\0';
          trailerReqd = TRUE;
          if (!WCMD_print_volume_information(drive)) {
-           errorlevel = ERROR_INVALID_FUNCTION;
+           return_code = ERROR_INVALID_PARAMETER;
            goto exit;
          }
       }
@@ -982,24 +992,27 @@ RETURN_CODE WCMD_directory(WCHAR *args)
       if (!bare) WCMD_output_asis (L"\n\n");
     }
 
-    /* Clear any errors from previous invocations, and process it */
-    errorlevel = NO_ERROR;
     prevEntry = thisEntry;
-    thisEntry = WCMD_list_directory (thisEntry, 0);
-    if (errorlevel)
-        num_empty++;
+    return_code = WCMD_list_directory (thisEntry, 0, &thisEntry);
+    if (return_code == ERROR_FILE_NOT_FOUND)
+      num_empty++;
     else
-        num_with_data++;
+      num_with_data++;
   }
 
   /* Trailer Information */
-  if (trailerReqd) {
+  if (trailerReqd && return_code == NO_ERROR) {
     WCMD_dir_trailer(prevEntry->dirName);
   }
 
-  if (num_empty && !num_with_data)
-      errorlevel = ERROR_INVALID_FUNCTION;
 exit:
+  if (return_code == STATUS_CONTROL_C_EXIT)
+      errorlevel = ERROR_INVALID_FUNCTION;
+  else if (return_code != NO_ERROR || (num_empty && !num_with_data))
+      return_code = errorlevel = ERROR_INVALID_FUNCTION;
+  else
+      errorlevel = NO_ERROR;
+
   if (paged_mode) WCMD_leave_paged_mode();
 
   /* Free storage allocated for parms */
@@ -1011,5 +1024,5 @@ exit:
     free(prevEntry);
   }
 
-  return errorlevel;
+  return return_code;
 }

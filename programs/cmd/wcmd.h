@@ -224,6 +224,8 @@ RETURN_CODE WCMD_run_builtin_command(int cmd_index, WCHAR *cmd);
 BOOL WCMD_find_label(HANDLE h, const WCHAR*, LARGE_INTEGER *pos);
 void WCMD_set_label_end(WCHAR *string);
 
+RETURN_CODE WCMD_ctrlc_status(void);
+
 void *xrealloc(void *, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 
 static inline void *xalloc(size_t sz) __WINE_MALLOC;
