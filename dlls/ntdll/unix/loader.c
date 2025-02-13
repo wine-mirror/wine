@@ -141,13 +141,13 @@ static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(
 static const char *bin_dir;
 static const char *dll_dir;
 static const char *ntdll_dir;
-static const char *wineloader;
 static SIZE_T dll_path_maxlen;
 
 const char *home_dir = NULL;
 const char *data_dir = NULL;
 const char *build_dir = NULL;
 const char *config_dir = NULL;
+const char *wineloader = NULL;
 const char **dll_paths = NULL;
 const char **system_dll_paths = NULL;
 const char *user_name = NULL;
@@ -469,7 +469,7 @@ static void set_config_dir(void)
 static void init_paths( char *argv[] )
 {
     Dl_info info;
-    char *basename, *env;
+    char *basename;
 
     if ((basename = strrchr( argv[0], '/' ))) basename++;
     else basename = argv[0];
@@ -502,9 +502,6 @@ static void init_paths( char *argv[] )
         wineloader = build_path( dirname, basename );
         free(dirname);
     }
-
-    asprintf( &env, "WINELOADER=%s", wineloader );
-    putenv( env );
 
     set_dll_path();
     set_system_dll_path();
