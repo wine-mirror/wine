@@ -608,6 +608,7 @@ case $host_os in
     dnl Disable modules that can't be used on Windows
     enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
+    enable_wine=${enable_wine:-no}
     dnl Disable dependencies that are not useful on Windows
     with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
@@ -3554,6 +3555,7 @@ WINE_CONFIG_MAKEFILE(server)
 WINE_CONFIG_MAKEFILE(tools,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/sfnt2fon,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/widl,,[test "x$enable_tools" = xno])
+WINE_CONFIG_MAKEFILE(tools/wine,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/winebuild,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/winedump,,[test "x$enable_tools" = xno])
 WINE_CONFIG_MAKEFILE(tools/winegcc,,[test "x$enable_tools" = xno])

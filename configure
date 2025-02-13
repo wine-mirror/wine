@@ -1762,6 +1762,7 @@ enable_server
 enable_tools
 enable_sfnt2fon
 enable_widl
+enable_wine
 enable_winebuild
 enable_winedump
 enable_winegcc
@@ -9167,6 +9168,7 @@ case $host_os in
     EXTRACFLAGS="-D__WINE_PE_BUILD"
         enable_loader=${enable_loader:-no}
     enable_server=${enable_server:-no}
+    enable_wine=${enable_wine:-no}
         with_x=${with_x:-no}
     with_pthread=${with_pthread:-no}
     ;;
@@ -23212,6 +23214,7 @@ wine_fn_config_makefile server enable_server
 test "x$enable_tools" = xno || wine_fn_config_makefile tools enable_tools
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/sfnt2fon enable_sfnt2fon
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/widl enable_widl
+test "x$enable_tools" = xno || wine_fn_config_makefile tools/wine enable_wine
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winebuild enable_winebuild
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winedump enable_winedump
 test "x$enable_tools" = xno || wine_fn_config_makefile tools/winegcc enable_winegcc

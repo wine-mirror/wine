@@ -1,0 +1,8 @@
+PROGRAMS = wine
+
+SOURCES = \
+	wine.c
+
+wine_EXTRADEFS = -DBINDIR="\"${bindir}\"" -DLIBDIR="\"${libdir}\""
+
+INSTALL_LIB = $(PROGRAMS)
