@@ -1331,6 +1331,16 @@ static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struc
     if (files.count) output_static_lib( output_file_name, files, 0 );
 }
 
+static void output_import_section( int index, int is_delay )
+{
+    if (!is_delay)
+        output( "\n\t.section .idata$%d\n", index );
+    else if (index == 5)
+        output( "\n\t.section .data$didat%d\n", index );
+    else
+        output( "\n\t.section .rdata$didat%d\n", index );
+}
+
 /* create a Windows-style import library */
 static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
@@ -1454,20 +1464,20 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output( "\t.long 0\n" );                         /* UnloadInformationTableRVA */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
 
-        output( "\n\t.section .idata$5\n" );
+        output_import_section( 5, is_delay );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* FirstThunk tail */
         output( ".L__wine_import_addrs:\n" );
 
-        output( "\n\t.section .idata$4\n" );
+        output_import_section( 4, is_delay );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* OriginalFirstThunk tail */
         output( ".L__wine_import_names:\n" );
 
         /* required to avoid internal linker errors with some binutils versions */
-        output( "\n\t.section .idata$2\n" );
+        output_import_section( 2, is_delay );
     }
     else
     {
-        output( "\n\t.section .idata$2\n" );
+        output_import_section( 2, is_delay );
         output( "%s\n", asm_globl( import_desc ) );
         output_rva( ".L__wine_import_names" );           /* OriginalFirstThunk */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
@@ -1475,10 +1485,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output_rva( "%s", asm_name( import_name ) );     /* Name */
         output_rva( ".L__wine_import_addrs" );           /* FirstThunk */
 
-        output( "\n\t.section .idata$4\n" );
+        output_import_section( 4, is_delay );
         output( ".L__wine_import_names:\n" );            /* OriginalFirstThunk head */
 
-        output( "\n\t.section .idata$5\n" );
+        output_import_section( 5, is_delay );
         output( ".L__wine_import_addrs:\n" );            /* FirstThunk head */
     }
 
@@ -1489,11 +1499,11 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
     new_output_as_file();
 
-    output( "\n\t.section .idata$4\n" );
+    output_import_section( 4, is_delay );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* OriginalFirstThunk tail */
-    output( "\n\t.section .idata$5\n" );
+    output_import_section( 5, is_delay );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* FirstThunk tail */
-    output( "\n\t.section .idata$7\n" );
+    output_import_section( 7, is_delay );
     output( "%s\n", asm_globl( import_name ) );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
 
@@ -1584,10 +1594,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 break;
             }
 
-            output( "\n\t.section .idata$4\n" );
+            output_import_section( 4, is_delay );
             output_thunk_rva( by_name ? -1 : odp->ordinal, ".L__wine_import_name" );
 
-            output( "\n\t.section .idata$5\n" );
+            output_import_section( 5, is_delay );
             output( "%s\n", asm_globl( imp_name ) );
             if (is_delay)
                 output( "\t%s .L__wine_delay_import\n", get_asm_ptr_keyword() );
@@ -1596,14 +1606,14 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
             if (by_name)
             {
-                output( "\n\t.section .idata$6\n" );
+                output_import_section( 6, is_delay );
                 output( ".L__wine_import_name:\n" );
                 output( "\t.short %d\n", odp->hint );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), name );
             }
 
             /* reference head object to always pull its sections */
-            output( "\n\t.section .idata$7\n" );
+            output_import_section( 7, is_delay );
             output_rva( "%s", asm_name( import_desc ) );
 
             free( imp_name );
