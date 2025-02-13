@@ -5024,6 +5024,9 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetLocation(query_reader, ARRAY_SIZE(path), path, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(path, L"/"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryReader_GetContainerFormat(query_reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_ContainerFormatJpeg), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1", &value);
@@ -5037,6 +5040,10 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(path, L"/app1"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryReader_GetContainerFormat(query_reader2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatApp1), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataQueryReader_Release(query_reader2);
     PropVariantClear(&value);
 
@@ -5049,6 +5056,10 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryReader_GetContainerFormat(query_reader2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataQueryReader_Release(query_reader2);
     PropVariantClear(&value);
 
@@ -5061,6 +5072,10 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryReader_GetContainerFormat(query_reader2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatGps), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataQueryReader_Release(query_reader2);
     PropVariantClear(&value);
 
@@ -5073,6 +5088,10 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetLocation(query_reader2, ARRAY_SIZE(path), path, &length);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryReader_GetContainerFormat(query_reader2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatExif), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
     IWICMetadataQueryReader_Release(query_reader2);
     PropVariantClear(&value);
 
@@ -5149,6 +5168,9 @@ static void test_metadata_App1(void)
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
         IWICMetadataQueryWriter_Release(query_writer2);
     }
     PropVariantClear(&value);
@@ -5165,6 +5187,9 @@ static void test_metadata_App1(void)
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatGps), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
         IWICMetadataQueryWriter_Release(query_writer2);
     }
     PropVariantClear(&value);
@@ -5181,6 +5206,9 @@ static void test_metadata_App1(void)
         hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&format, &GUID_MetadataFormatExif), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
         IWICMetadataQueryWriter_Release(query_writer2);
     }
     PropVariantClear(&value);
