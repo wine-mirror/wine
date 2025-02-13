@@ -96,18 +96,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
-#ifdef __i386__
-static const char so_dir[] = "/i386-unix";
-#elif defined(__x86_64__)
-static const char so_dir[] = "/x86_64-unix";
-#elif defined(__arm__)
-static const char so_dir[] = "/arm-unix";
-#elif defined(__aarch64__)
-static const char so_dir[] = "/aarch64-unix";
-#else
-static const char so_dir[] = "";
-#endif
-
 void *pDbgUiRemoteBreakin = NULL;
 void *pKiRaiseUserExceptionDispatcher = NULL;
 void *pKiUserExceptionDispatcher = NULL;
@@ -354,10 +342,20 @@ static int build_path_and_exec( pid_t *pid, const char *dir, const char *name, c
 }
 
 
+static const char *get_so_dir( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  return "/i386-unix";
+    case IMAGE_FILE_MACHINE_AMD64: return "/x86_64-unix";
+    case IMAGE_FILE_MACHINE_ARMNT: return "/arm-unix";
+    case IMAGE_FILE_MACHINE_ARM64: return "/aarch64-unix";
+    default: return "";
+    }
+}
+
 static const char *get_pe_dir( WORD machine )
 {
-    if (!machine) machine = current_machine;
-
     switch(machine)
     {
     case IMAGE_FILE_MACHINE_I386:  return "/i386-windows";
@@ -470,7 +468,7 @@ static void init_paths( char *argv[] )
 
     if (!(build_dir = remove_tail( ntdll_dir, "/dlls/ntdll" )))
     {
-        if (!(dll_dir = remove_tail( ntdll_dir, so_dir ))) dll_dir = ntdll_dir;
+        if (!(dll_dir = remove_tail( ntdll_dir, get_so_dir(current_machine) ))) dll_dir = ntdll_dir;
 #if (defined(__linux__) && !defined(__ANDROID__)) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
         bin_dir = realpath_dirname( "/proc/self/exe" );
 #elif defined (__FreeBSD__) || defined(__DragonFly__)
@@ -1196,6 +1194,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     unsigned int len = nt_name->Length / sizeof(WCHAR);
     char *ptr = NULL, *file, *ext = NULL;
     const char *pe_dir = get_pe_dir( search_machine );
+    const char *so_dir = get_so_dir( current_machine );
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
