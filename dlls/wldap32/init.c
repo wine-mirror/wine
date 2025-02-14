@@ -202,7 +202,7 @@ static LDAP *create_context( const char *url )
     if (!(ld = calloc( 1, sizeof( *ld )))) return NULL;
     if (map_error( ldap_initialize( &CTX(ld), url ) ) == WLDAP32_LDAP_SUCCESS)
     {
-        ldap_set_option( CTX(ld), WLDAP32_LDAP_OPT_PROTOCOL_VERSION, &version );
+        ldap_set_option( CTX(ld), LDAP_OPT_PROTOCOL_VERSION, &version );
         return ld;
     }
     free( ld );
