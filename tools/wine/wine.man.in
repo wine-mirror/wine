@@ -203,17 +203,22 @@ registry key.
 .RE
 .TP
 .B WINEARCH
-Specifies the Windows architecture to support. It can be set either to
+Specifies the Windows architecture to support. It can be set to
 .B win32
-(support only 32-bit applications), or to
+(support only 32-bit applications), to
 .B win64
-(support both 64-bit applications and 32-bit ones in WoW64 mode).
+(support both 64-bit applications and 32-bit ones), or to
+.B wow64
+(support 64-bit applications and 32-bit ones, using a 64-bit host
+process in all cases).
 .br
 The architecture supported by a given Wine prefix is set at prefix
 creation time and cannot be changed afterwards. When running with an
 existing prefix, Wine will refuse to start if
 .B WINEARCH
-doesn't match the prefix architecture.
+doesn't match the prefix architecture. It is possible however to
+switch freely between \fBwin64\fR and \fBwow64\fR with an existing
+64-bit prefix.
 .TP
 .B WINE_D3D_CONFIG
 Specifies Direct3D configuration options. It can be used instead of

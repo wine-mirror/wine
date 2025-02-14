@@ -1562,8 +1562,8 @@ size_t server_init_process(void)
 
         if (is_win64 && arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH is set to 'win32' but this is not supported in wow64 mode.\n" );
-        if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ))
-            fatal_error( "WINEARCH set to invalid value '%s', it must be either win32 or win64.\n", arch );
+        if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ) && strcmp( arch, "wow64" ))
+            fatal_error( "WINEARCH set to invalid value '%s', it must be win32, win64, or wow64.\n", arch );
 
         fd_socket = server_connect();
     }
@@ -1650,8 +1650,8 @@ size_t server_init_process(void)
     {
         if (is_win64)
             fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
-        if (arch && !strcmp( arch, "win64" ))
-            fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
+        if (arch && (!strcmp( arch, "win64" ) || !strcmp( arch, "wow64" )))
+            fatal_error( "WINEARCH set to %s but '%s' is a 32-bit installation.\n", arch, config_dir );
     }
 
     set_thread_id( NtCurrentTeb(), pid, tid );

@@ -499,15 +499,18 @@ static void init_paths(void)
  */
 char *get_alternate_wineloader( WORD machine )
 {
+    const char *arch;
+    BOOL force_wow64 = (arch = getenv( "WINEARCH" )) && !strcmp( arch, "wow64" );
     char *ret = NULL;
 
     if (is_win64)
     {
+        if (force_wow64) return NULL;
         if (machine != get_alt_machine( current_machine )) return NULL;
     }
     else
     {
-        if (machine == current_machine) return NULL;
+        if (!force_wow64 && machine == current_machine) return NULL;
         machine = get_alt_machine( current_machine );
     }
 
@@ -1057,7 +1060,7 @@ static inline char *prepend( char *buffer, const char *str, size_t len )
 }
 
 static inline char *prepend_build_dir_path( char *ptr, const char *ext, const char *arch_dir,
-                                            const char *top_dir )
+                                            const char *top_dir, const char *build_dir )
 {
     char *name = ptr;
     unsigned int namelen = strlen(name), extlen = strlen(ext);
@@ -1172,6 +1175,7 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     char *ptr = NULL, *file, *ext = NULL;
     const char *pe_dir = get_pe_dir( search_machine );
     const char *so_dir = get_so_dir( current_machine );
+    const char *pe_build_dir = build_dir;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     BOOL found_image = FALSE;
@@ -1183,7 +1187,12 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     if (!len) return STATUS_DLL_NOT_FOUND;
     InitializeObjectAttributes( &attr, nt_name, 0, 0, NULL );
 
-    if (build_dir) maxlen = strlen(build_dir) + sizeof("/programs/") + len;
+    if (build_dir)
+    {
+        if (alt_build_dir && search_machine == get_alt_machine( current_machine ))
+            pe_build_dir = alt_build_dir;
+        maxlen = max( strlen(build_dir), strlen(pe_build_dir) ) + sizeof("/programs/") + len;
+    }
     maxlen = max( maxlen, dll_path_maxlen + 1 ) + len + sizeof("/aarch64-windows") + sizeof(".so");
 
     if (!(file = malloc( maxlen ))) return STATUS_NO_MEMORY;
@@ -1203,10 +1212,10 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
     {
         /* try as a dll */
         file[pos + len + 1] = 0;
-        ptr = prepend_build_dir_path( file + pos, ".dll", pe_dir, "/dlls" );
+        ptr = prepend_build_dir_path( file + pos, ".dll", pe_dir, "/dlls", pe_build_dir );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info,
                                        limit_low, limit_high, load_machine, prefer_native );
-        ptr = prepend_build_dir_path( file + pos, ".dll", "", "/dlls" );
+        ptr = prepend_build_dir_path( file + pos, ".dll", "", "/dlls", build_dir );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         if (try_so)
         {
@@ -1217,10 +1226,10 @@ static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T
 
         /* now as a program */
         file[pos + len + 1] = 0;
-        ptr = prepend_build_dir_path( file + pos, ".exe", pe_dir, "/programs" );
+        ptr = prepend_build_dir_path( file + pos, ".exe", pe_dir, "/programs", pe_build_dir );
         status = open_builtin_pe_file( ptr, &attr, module, size_ptr, image_info,
                                        limit_low, limit_high, load_machine, prefer_native );
-        ptr = prepend_build_dir_path( file + pos, ".exe", "", "/programs" );
+        ptr = prepend_build_dir_path( file + pos, ".exe", "", "/programs", build_dir );
         if (status != STATUS_DLL_NOT_FOUND) goto done;
         if (try_so)
         {
