@@ -739,7 +739,13 @@ static BOOL verify_format(LPWSTR data)
 
     while (*data)
     {
-        if (*data == '[' && *(data - 1) != '\\')
+        if (*data == '\\' && *(data + 1) == '[')
+        {
+            data += 2;
+            continue;
+        }
+
+        if (*data == '[')
             count++;
         else if (*data == ']')
             count--;
