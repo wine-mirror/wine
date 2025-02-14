@@ -197,7 +197,7 @@ static VARTYPE map_type(struct string_t *str)
 static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *schema, int *idx)
 {
     const WCHAR *start, *end, *p;
-    WCHAR *bstr;
+    WCHAR *str;
     struct string_t next_elem;
     HRESULT hr;
 
@@ -250,25 +250,25 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         TRACE("type %s => %d\n", wine_dbgstr_wn(next_elem.str, next_elem.len), vt);
         if (vt == VT_ILLEGAL) return WINCODEC_ERR_WRONGSTATE;
 
-        next_token.vt = VT_BSTR;
-        next_token.bstrVal = SysAllocStringLen(NULL, elem->len - (end - start) + 1);
-        if (!next_token.bstrVal) return E_OUTOFMEMORY;
+        next_token.vt = VT_LPWSTR;
+        next_token.pwszVal = CoTaskMemAlloc((elem->len - (end - start) + 1) * sizeof(WCHAR));
+        if (!next_token.pwszVal) return E_OUTOFMEMORY;
 
-        bstr = next_token.bstrVal;
+        str = next_token.pwszVal;
 
         end++;
         while (*end && *end != '}' && end - start < elem->len)
         {
             if (*end == '\\') end++;
-            *bstr++ = *end++;
+            *str++ = *end++;
         }
         if (*end != '}')
         {
             PropVariantClear(&next_token);
             return WINCODEC_ERR_INVALIDQUERYREQUEST;
         }
-        *bstr = 0;
-        TRACE("schema/id %s\n", wine_dbgstr_w(next_token.bstrVal));
+        *str = 0;
+        TRACE("schema/id %s\n", wine_dbgstr_w(next_token.pwszVal));
 
         if (vt == VT_CLSID)
         {
@@ -280,7 +280,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
                 return E_OUTOFMEMORY;
             }
 
-            hr = UuidFromStringW(next_token.bstrVal, id->puuid);
+            hr = UuidFromStringW(next_token.pwszVal, id->puuid);
         }
         else
             hr = PropVariantChangeType(id, &next_token, 0, vt);
@@ -341,18 +341,18 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
     else
         elem->len = end - start;
 
-    id->vt = VT_BSTR;
-    id->bstrVal = SysAllocStringLen(NULL, elem->len + 1);
-    if (!id->bstrVal) return E_OUTOFMEMORY;
+    id->vt = VT_LPWSTR;
+    id->pwszVal = CoTaskMemAlloc((elem->len + 1) * sizeof(WCHAR));
+    if (!id->pwszVal) return E_OUTOFMEMORY;
 
-    bstr = id->bstrVal;
+    str = id->pwszVal;
     p = elem->str;
     while (p - elem->str < elem->len)
     {
         if (*p == '\\') p++;
-        *bstr++ = *p++;
+        *str++ = *p++;
     }
-    *bstr = 0;
+    *str = 0;
     TRACE("%s [%d]\n", wine_dbgstr_variant((VARIANT *)id), *idx);
 
     if (*p == ':')
@@ -516,7 +516,7 @@ static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *i
 
         if (!elem.len) break;
 
-        if (tk_id.vt == VT_CLSID || (tk_id.vt == VT_BSTR && WICMapShortNameToGuid(tk_id.bstrVal, &guid) == S_OK))
+        if (tk_id.vt == VT_CLSID || (tk_id.vt == VT_LPWSTR && WICMapShortNameToGuid(tk_id.pwszVal, &guid) == S_OK))
         {
             WCHAR *root;
 
@@ -565,26 +565,20 @@ static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *i
                 break;
             }
 
-            if (tk_schema.vt == VT_BSTR)
+            if (tk_schema.vt == VT_LPWSTR)
             {
                 hr = IWICMetadataReader_GetMetadataFormat(reader, &guid);
                 if (hr != S_OK) break;
 
                 schema.vt = VT_LPWSTR;
-                schema.pwszVal = (LPWSTR)map_shortname_to_schema(&guid, tk_schema.bstrVal);
+                schema.pwszVal = (LPWSTR)map_shortname_to_schema(&guid, tk_schema.pwszVal);
                 if (!schema.pwszVal)
-                    schema.pwszVal = tk_schema.bstrVal;
+                    schema.pwszVal = tk_schema.pwszVal;
             }
             else
                 schema = tk_schema;
 
-            if (tk_id.vt == VT_BSTR)
-            {
-                id.vt = VT_LPWSTR;
-                id.pwszVal = tk_id.bstrVal;
-            }
-            else
-                id = tk_id;
+            id = tk_id;
 
             PropVariantClear(&new_value);
             hr = IWICMetadataReader_GetValue(reader, &schema, &id, &new_value);
