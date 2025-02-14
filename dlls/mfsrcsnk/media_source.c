@@ -1428,10 +1428,12 @@ static void media_source_init_stream_map(struct media_source *source, UINT strea
 
     if (wcscmp(source->mime_type, L"video/mp4"))
     {
-        for (i = stream_count - 1; i >= 0; i--)
+        for (i = 0; i < stream_count; i++)
         {
-            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, i, i);
-            source->stream_map[i] = i;
+            if (FAILED(get_stream_media_type(source->winedmo_demuxer, i, &major, NULL)))
+                continue;
+            TRACE("mapping source %p stream %u to demuxer stream %u\n", source, n, i);
+            source->stream_map[n++] = i;
         }
         return;
     }
@@ -1523,11 +1525,11 @@ static void media_source_init_descriptors(struct media_source *source)
         NTSTATUS status;
         GUID major;
 
-        if (FAILED(status = winedmo_demuxer_stream_lang(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
+        if ((status = winedmo_demuxer_stream_lang(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
                 || (!wcscmp(source->mime_type, L"video/mp4") && FAILED(normalize_mp4_language_code(source, buffer)))
                 || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_LANGUAGE, buffer)))
             WARN("Failed to set stream descriptor language, status %#lx\n", status);
-        if (FAILED(status = winedmo_demuxer_stream_name(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
+        if ((status = winedmo_demuxer_stream_name(source->winedmo_demuxer, source->stream_map[i], buffer, ARRAY_SIZE(buffer)))
                 || FAILED(IMFStreamDescriptor_SetString(stream->descriptor, &MF_SD_STREAM_NAME, buffer)))
             WARN("Failed to set stream descriptor name, status %#lx\n", status);
 
@@ -1665,7 +1667,7 @@ static HRESULT media_source_async_create(struct media_source *source, IMFAsyncRe
         GUID major;
 
         if (FAILED(hr = get_stream_media_type(source->winedmo_demuxer, source->stream_map[i], &major, &media_type)))
-            goto done;
+            continue;
         if (SUCCEEDED(hr = stream_descriptor_create(i + 1, media_type, &descriptor)))
         {
             if (SUCCEEDED(hr = media_stream_create(&source->IMFMediaSource_iface, descriptor, &source->streams[i])))
