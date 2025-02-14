@@ -2086,6 +2086,25 @@ static int pre_exec(void)
     return 1;
 }
 
+#elif defined(__APPLE__)
+
+static int pre_exec(void)
+{
+    if (build_dir)
+    {
+        char *path = getenv( "DYLD_LIBRARY_PATH" );
+        if (path) asprintf( &path, "%s/dlls/ntdll:%s/dlls/win32u:%s", build_dir, build_dir, path );
+        else asprintf( &path, "%s/dlls/ntdll:%s/dlls/win32u", build_dir, build_dir );
+        setenv( "DYLD_LIBRARY_PATH", path, 1 );
+        return 1;
+    }
+#ifdef HAVE_WINE_PRELOADER
+    return 1;
+#else
+    return 0;
+#endif
+}
+
 #else
 
 static int pre_exec(void)
