@@ -2091,6 +2091,35 @@ static int pre_exec(void)
 #endif
 
 
+static void reexec_loader( int argc, char *argv[], char *extra_arg )
+{
+    static char noexec[] = "WINELOADERNOEXEC=1";
+    WORD machine = current_machine;
+    char **new_argv;
+
+    /* have to exec if we have a preloader, or an argument, or if we are the initial wrapper */
+    if (!pre_exec() && !extra_arg && dlsym( RTLD_DEFAULT, "wine_main_preload_info" )) return;
+
+    if (extra_arg)
+    {
+        new_argv = malloc( (argc + 3) * sizeof(*argv) );
+        memcpy( new_argv + 3, argv + 1, argc * sizeof(*argv) );
+        new_argv[2] = extra_arg;
+    }
+    else
+    {
+        new_argv = malloc( (argc + 2) * sizeof(*argv) );
+        memcpy( new_argv + 2, argv + 1, argc * sizeof(*argv) );
+    }
+
+    /* default to 32-bit loader to support 32-bit prefixes */
+    if (machine == IMAGE_FILE_MACHINE_AMD64) machine = IMAGE_FILE_MACHINE_I386;
+
+    putenv( noexec );
+    loader_exec( new_argv, machine );
+    fatal_error( "could not exec the wine loader\n" );
+}
+
 /***********************************************************************
  *           check_command_line
  *
@@ -2098,10 +2127,36 @@ static int pre_exec(void)
  */
 static void check_command_line( int argc, char *argv[] )
 {
+    char *basename;
     static const char usage[] =
         "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n"
         "       wine --help                   Display this help and exit\n"
         "       wine --version                Output version information and exit";
+
+    if ((basename = strrchr( argv[0], '/' ))) basename++;
+    else basename = argv[0];
+
+    if (strcmp( basename, "wine" )) /* check if there's a builtin exe corresponding to the base name */
+    {
+        const char *pe_dir = get_pe_dir( current_machine );
+        char *exe;
+
+        if (build_dir)
+        {
+            asprintf( &exe, "%s/programs/%s%s/%s.exe", build_dir, basename, pe_dir, basename );
+            if (!access( exe, R_OK )) reexec_loader( argc, argv, basename );
+            free( exe );
+        }
+        else
+        {
+            for (int i = 0; dll_paths[i]; i++)
+            {
+                asprintf( &exe, "%s%s/%s.exe", dll_paths[i], pe_dir, basename );
+                if (!access( exe, R_OK )) reexec_loader( argc, argv, basename );
+                free( exe );
+            }
+        }
+    }
 
     if (argc <= 1)
     {
@@ -2118,6 +2173,8 @@ static void check_command_line( int argc, char *argv[] )
         printf( "%s\n", wine_build );
         exit(0);
     }
+
+    reexec_loader( argc, argv, NULL );
 }
 
 
@@ -2132,26 +2189,7 @@ DECLSPEC_EXPORT void __wine_main( int argc, char *argv[] )
     main_argv = argv;
 
     init_paths();
-
-    if (!getenv( "WINELOADERNOEXEC" ))  /* first time around */
-    {
-        check_command_line( argc, argv );
-        if (pre_exec() || !dlsym( RTLD_DEFAULT, "wine_main_preload_info" ))
-        {
-            static char noexec[] = "WINELOADERNOEXEC=1";
-            char **new_argv = malloc( (argc + 2) * sizeof(*argv) );
-            WORD machine = current_machine;
-
-            memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
-            putenv( noexec );
-
-            /* default to 32-bit loader to support 32-bit prefixes */
-            if (machine == IMAGE_FILE_MACHINE_AMD64) machine = IMAGE_FILE_MACHINE_I386;
-
-            loader_exec( new_argv, machine );
-            fatal_error( "could not exec the wine loader\n" );
-        }
-    }
+    if (!getenv( "WINELOADERNOEXEC" ) || argc <= 1) check_command_line( argc, argv );
 
 #ifdef RLIMIT_NOFILE
     set_max_limit( RLIMIT_NOFILE );
