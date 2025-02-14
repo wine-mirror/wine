@@ -1129,10 +1129,17 @@ static void test_time_adjustment(void)
     len = 0;
     memset( &leap, 0xcc, sizeof(leap) );
     status = pNtQuerySystemInformation( SystemLeapSecondInformation, &leap, sizeof(leap), &len );
-    ok( status == STATUS_SUCCESS, "got %08lx\n", status );
-    ok( len == sizeof(leap), "wrong len %lu\n", len );
-    ok( leap.Enabled == 1, "got %u\n", leap.Enabled );
-    ok( !leap.Flags, "got %lx\n", leap.Flags );
+    if (status == STATUS_INVALID_INFO_CLASS)
+    {
+        win_skip( "NtQuerySystemInformation(SystemLeapSecondInformation) is not implemented.\n" );
+    }
+    else
+    {
+        ok( status == STATUS_SUCCESS, "got %08lx\n", status );
+        ok( len == sizeof(leap), "wrong len %lu\n", len );
+        ok( leap.Enabled == 1, "got %u\n", leap.Enabled );
+        ok( !leap.Flags, "got %lx\n", leap.Flags );
+    }
 }
 
 static void test_query_kerndebug(void)
