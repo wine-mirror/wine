@@ -275,7 +275,8 @@ dnl
 dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
 dnl
 AC_DEFUN([WINE_CONFIG_HELPERS],
-[AS_VAR_SET([wine_rules],["all:"])
+[AS_VAR_SET([wine_rules],["all:
+	@echo 'Wine build complete.'"])
 AC_SUBST(SUBDIRS,"")
 AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
@@ -302,15 +303,6 @@ wine_fn_config_makefile ()
           programs/*,*\ arm64ec\ *) AS_VAR_APPEND([arm64ec_DISABLED_SUBDIRS],[" $[1]"]) ;;
         esac ;;
     esac
-}
-
-wine_fn_config_symlink ()
-{
-    ac_links=$[@]
-    AS_VAR_APPEND([wine_rules],["
-$ac_links:
-	@./config.status \$[@]"])
-    for f in $ac_links; do AS_VAR_APPEND([CONFIGURE_TARGETS],[" $f"]); done
 }])
 
 dnl **** Define helper function to append a rule to a makefile command list ****
@@ -319,17 +311,6 @@ dnl Usage: WINE_APPEND_RULE(rule)
 dnl
 AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])AS_VAR_APPEND([wine_rules],["
 $1"])])
-
-dnl **** Create symlinks from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_SYMLINK(target,src,enable)
-dnl
-AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$3],[if test $3; then
-])AC_CONFIG_LINKS([$1:$2])dnl
-wine_fn_config_symlink[ $1]m4_ifval([$3],[
-fi])[]dnl
-])])
 
 dnl **** Create a makefile from config.status ****
 dnl

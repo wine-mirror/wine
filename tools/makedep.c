@@ -4348,6 +4348,13 @@ static void output_top_makefile( struct makefile *make )
             silent_rules ? " -S" : "" );
     strarray_add( &make->phony_targets, "depend" );
 
+    if (!strarray_exists( &disabled_dirs[0], "tools/wine" ))
+    {
+        output( "wine: %s\n", tools_path( make, "wine" ));
+        output( "\t%srm -f $@ && %s %s $@\n", cmd_prefix( "LN" ), ln_s, tools_path( make, "wine" ));
+        strarray_add( &make->all_targets[0], "wine" );
+    }
+
     for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );
     output_sources( make );
 

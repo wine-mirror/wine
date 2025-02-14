@@ -2376,8 +2376,6 @@ test "x$enable_silent_rules" = xyes && makedep_flags="$makedep_flags -S"
 wine_srcdir=
 test "$srcdir" = . || wine_srcdir="$srcdir/"
 
-WINE_CONFIG_SYMLINK(wine,tools/winewrapper)
-
 WINE_CONFIG_MAKEFILE(dlls/acledit)
 WINE_CONFIG_MAKEFILE(dlls/aclui)
 WINE_CONFIG_MAKEFILE(dlls/activeds.tlb)
@@ -3621,9 +3619,7 @@ AC_SUBST(SHELL,[/bin/sh])
 dnl Rules for re-running configure
 
 WINE_APPEND_RULE(
-[all: wine
-	@echo \"Wine build complete.\"
-Makefile: config.status
+[Makefile: config.status
 	@./config.status Makefile
 config.status: ${wine_srcdir}configure
 	@./config.status --recheck
