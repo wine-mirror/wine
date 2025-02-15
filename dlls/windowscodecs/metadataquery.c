@@ -735,6 +735,17 @@ static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *i
     return hr;
 }
 
+static WCHAR *query_get_guid_item_string(WCHAR *str, unsigned int len, const GUID *guid)
+{
+    if (SUCCEEDED(WICMapGuidToShortName(guid, len, str, NULL)))
+        return str;
+
+    swprintf(str, len, L"{guid=%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1], guid->Data4[2],
+            guid->Data4[3], guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    return str;
+}
+
 struct string_enumerator
 {
     IEnumString IEnumString_iface;
@@ -886,6 +897,9 @@ static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_objec
         const WCHAR *root, IWICMetadataQueryWriter **ret)
 {
     struct query_handler *obj;
+    WCHAR buff[64];
+    HRESULT hr;
+    GUID guid;
 
     obj = calloc(1, sizeof(*obj));
     if (!obj)
@@ -897,7 +911,25 @@ static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_objec
     obj->object.handler = block_handler;
     obj->object_type = object_type;
     if (!root)
-        root = L"/";
+    {
+        if (is_block_handler(obj))
+        {
+            root = L"/";
+        }
+        else
+        {
+            if (FAILED(hr = IWICMetadataReader_GetMetadataFormat(obj->object.reader, &guid)))
+            {
+                IWICMetadataQueryWriter_Release(&obj->IWICMetadataQueryWriter_iface);
+                return hr;
+            }
+
+            buff[0] = '/';
+            query_get_guid_item_string(buff + 1, ARRAY_SIZE(buff) - 1, &guid);
+            root = buff;
+        }
+    }
+
     obj->root = wcsdup(root);
 
     *ret = &obj->IWICMetadataQueryWriter_iface;
@@ -905,16 +937,26 @@ static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_objec
     return S_OK;
 }
 
-HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *block_reader,
+HRESULT MetadataQueryReader_CreateInstanceFromBlockReader(IWICMetadataBlockReader *block_reader,
         IWICMetadataQueryReader **out)
 {
     return create_query_handler((IUnknown *)block_reader, BLOCK_READER, NULL, (IWICMetadataQueryWriter **)out);
 }
 
-HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *block_writer,
+HRESULT MetadataQueryWriter_CreateInstanceFromBlockWriter(IWICMetadataBlockWriter *block_writer,
         IWICMetadataQueryWriter **out)
 {
     return create_query_handler((IUnknown *)block_writer, BLOCK_WRITER, NULL, out);
+}
+
+HRESULT MetadataQueryReader_CreateInstance(IWICMetadataReader *reader, IWICMetadataQueryReader **out)
+{
+    return create_query_handler((IUnknown *)reader, READER, NULL, (IWICMetadataQueryWriter **)out);
+}
+
+HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataWriter *writer, IWICMetadataQueryWriter **out)
+{
+    return create_query_handler((IUnknown *)writer, WRITER, NULL, out);
 }
 
 static const struct

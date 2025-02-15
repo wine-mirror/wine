@@ -5666,13 +5666,7 @@ static void test_CreateQueryWriter(void)
 
     /* "Unknown" format. */
     hr = IWICImagingFactory_CreateQueryWriter(factory, &GUID_MetadataFormatUnknown, NULL, &query_writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        IWICImagingFactory_Release(factory);
-        return;
-    }
 
     hr = IWICMetadataQueryWriter_GetLocation(query_writer, ARRAY_SIZE(buff), buff, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5684,18 +5678,26 @@ static void test_CreateQueryWriter(void)
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/", &value);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(value.vt == VT_BLOB, "Unexpected value type %u.\n", value.vt);
-    ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
-    ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
-    PropVariantClear(&value);
+    if (hr == S_OK)
+    {
+        ok(value.vt == VT_BLOB, "Unexpected value type %u.\n", value.vt);
+        ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
+        ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
+        PropVariantClear(&value);
+    }
 
     hr = IWICMetadataQueryWriter_GetEnumerator(query_writer, &enum_string);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, &fetched);
+    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!wcscmp(str, L"/{}"), "Unexpected string %s.\n", wine_dbgstr_w(str));
-    CoTaskMemFree(str);
+    if (hr == S_OK)
+    {
+        ok(!wcscmp(str, L"/{}"), "Unexpected string %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
     hr = IEnumString_Next(enum_string, 1, &str, &fetched);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     IEnumString_Release(enum_string);
@@ -5800,7 +5802,6 @@ if (hr == S_OK)
 
     query_writer = NULL;
     hr = IWICComponentFactory_CreateQueryWriter(factory, &GUID_MetadataFormatChunktIME, NULL, &query_writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, (IWICMetadataQueryReader *)query_writer,

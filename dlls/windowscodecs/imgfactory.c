@@ -1000,12 +1000,23 @@ static HRESULT WINAPI ImagingFactory_CreateFastMetadataEncoderFromFrameDecode(
 }
 
 static HRESULT WINAPI ImagingFactory_CreateQueryWriter(IWICImagingFactory2 *iface,
-    REFGUID guidMetadataFormat, const GUID *pguidVendor,
-    IWICMetadataQueryWriter **ppIQueryWriter)
+        REFGUID format, const GUID *vendor, IWICMetadataQueryWriter **query_writer)
 {
-    FIXME("(%p,%s,%s,%p): stub\n", iface, debugstr_guid(guidMetadataFormat),
-        debugstr_guid(pguidVendor), ppIQueryWriter);
-    return E_NOTIMPL;
+    IWICMetadataWriter *writer;
+    HRESULT hr;
+
+    TRACE("(%p,%s,%s,%p)\n", iface, debugstr_guid(format), debugstr_guid(vendor), query_writer);
+
+    *query_writer = NULL;
+
+    hr = create_metadata_writer(format, vendor, 0, &writer);
+    if (SUCCEEDED(hr))
+    {
+        hr = MetadataQueryWriter_CreateInstance(writer, query_writer);
+        IWICMetadataWriter_Release(writer);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI ImagingFactory_CreateQueryWriterFromReader(IWICImagingFactory2 *iface,
@@ -1769,7 +1780,7 @@ static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComp
     if (!block_reader || !query_reader)
         return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(block_reader, query_reader);
+    return MetadataQueryReader_CreateInstanceFromBlockReader(block_reader, query_reader);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComponentFactory *iface,
@@ -1780,7 +1791,7 @@ static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComp
     if (!block_writer || !query_writer)
         return E_INVALIDARG;
 
-    return MetadataQueryWriter_CreateInstance(block_writer, query_writer);
+    return MetadataQueryWriter_CreateInstanceFromBlockWriter(block_writer, query_writer);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateEncoderPropertyBag(IWICComponentFactory *iface,
