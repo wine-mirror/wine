@@ -5117,7 +5117,6 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/{ushort=34665}", &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-    todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
     PropVariantClear(&value);
 
@@ -5125,7 +5124,6 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/app1/ifd/{ushort=34853}", &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-    todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
     PropVariantClear(&value);
 
@@ -5235,7 +5233,6 @@ static void test_metadata_App1(void)
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/{ushort=34665}", &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
-    todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
     todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);

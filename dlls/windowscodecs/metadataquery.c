@@ -388,221 +388,323 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
     return S_OK;
 }
 
-static HRESULT find_reader_from_block(IWICMetadataBlockReader *block_reader, UINT index,
-                                      GUID *guid, IWICMetadataReader **reader)
+struct query_component
 {
+    unsigned int index;
+    PROPVARIANT schema;
+    PROPVARIANT id;
+    IWICMetadataReader *handler;
+};
+
+struct query_parser
+{
+    const WCHAR *ptr;
+
+    WCHAR *query;
+
+    struct query_component *components;
+    size_t count;
+    size_t capacity;
+
+    struct query_component *last;
+    struct query_component *prev;
+
+    HRESULT hr;
+};
+
+static bool wincodecs_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return true;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return false;
+
+    new_capacity = max(4, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = max_capacity;
+
+    new_elements = realloc(*elements, new_capacity * size);
+    if (!new_elements)
+        return false;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+
+    return true;
+}
+
+static void parse_query_component(struct query_parser *parser)
+{
+    struct query_component comp = { 0 };
+    struct string_t elem;
+    GUID guid;
+
+    if (*parser->ptr != '/')
+    {
+        parser->hr = WINCODEC_ERR_PROPERTYNOTSUPPORTED;
+        return;
+    }
+    parser->ptr++;
+
+    elem.str = parser->ptr;
+    elem.len = wcslen(parser->ptr);
+    parser->hr = get_token(&elem, &comp.id, &comp.schema, (int *)&comp.index);
+
+    /* Resolve known names. */
+    if (comp.id.vt == VT_LPWSTR)
+    {
+        if (SUCCEEDED(WICMapShortNameToGuid(comp.id.pwszVal, &guid)))
+        {
+            PropVariantClear(&comp.id);
+            parser->hr = InitPropVariantFromCLSID(&guid, &comp.id);
+        }
+    }
+
+    if (SUCCEEDED(parser->hr))
+    {
+        parser->ptr += elem.len;
+
+        if (comp.id.vt == VT_CLSID)
+        {
+            PropVariantClear(&comp.schema);
+            if (comp.index)
+            {
+                comp.schema.vt = VT_UI2;
+                comp.schema.uiVal = comp.index;
+            }
+        }
+
+        if (!wincodecs_array_reserve((void **)&parser->components, &parser->capacity,
+                parser->count + 1, sizeof(*parser->components)))
+        {
+            parser->hr = E_OUTOFMEMORY;
+            PropVariantClear(&comp.schema);
+            PropVariantClear(&comp.id);
+        }
+        else
+        {
+            parser->components[parser->count++] = comp;
+        }
+    }
+}
+
+static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query_handler,
+        struct query_parser *parser)
+{
+    struct query_component *comp;
+    IWICMetadataReader *handler;
     HRESULT hr;
     GUID format;
-    IWICMetadataReader *new_reader;
     UINT count, i, matched_index;
 
-    *reader = NULL;
+    comp = &parser->components[0];
+    if (comp->id.vt != VT_CLSID)
+        return E_UNEXPECTED;
 
-    hr = IWICMetadataBlockReader_GetCount(block_reader, &count);
+    hr = IWICMetadataBlockReader_GetCount(query_handler->object.block_reader, &count);
     if (hr != S_OK) return hr;
 
     matched_index = 0;
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; ++i)
     {
-        hr = IWICMetadataBlockReader_GetReaderByIndex(block_reader, i, &new_reader);
-        if (hr != S_OK) return hr;
+        hr = IWICMetadataBlockReader_GetReaderByIndex(query_handler->object.block_reader, i, &handler);
 
-        hr = IWICMetadataReader_GetMetadataFormat(new_reader, &format);
+        if (FAILED(hr))
+            break;
+
+        hr = IWICMetadataReader_GetMetadataFormat(handler, &format);
         if (hr == S_OK)
         {
-            if (IsEqualGUID(&format, guid))
+            if (IsEqualGUID(&format, comp->id.puuid))
             {
-                if (matched_index == index)
-                {
-                    *reader = new_reader;
-                    return S_OK;
-                }
+                if (matched_index == comp->index)
+                    break;
 
                 matched_index++;
             }
         }
 
-        IWICMetadataReader_Release(new_reader);
-        if (hr != S_OK) return hr;
+        IWICMetadataReader_Release(handler);
+        handler = NULL;
+
+        if (hr != S_OK) break;
     }
 
-    return WINCODEC_ERR_PROPERTYNOTFOUND;
+    if (FAILED(hr)) return hr;
+
+    comp->handler = handler;
+    return comp->handler ? S_OK : WINCODEC_ERR_PROPERTYNOTFOUND;
 }
 
-static HRESULT get_next_reader(IWICMetadataReader *reader, UINT index,
-                               GUID *guid, IWICMetadataReader **new_reader)
+static HRESULT init_propvar_from_string(const WCHAR *str, PROPVARIANT *var)
 {
-    HRESULT hr;
-    PROPVARIANT schema, id, value;
+    size_t size = (wcslen(str) + 1) * sizeof(*str);
+    WCHAR *s;
 
-    *new_reader = NULL;
+    if (!(s = CoTaskMemAlloc(size)))
+        return E_OUTOFMEMORY;
+    memcpy(s, str, size);
 
-    PropVariantInit(&schema);
-    PropVariantInit(&id);
-    PropVariantInit(&value);
-
-    if (index)
-    {
-        schema.vt = VT_UI2;
-        schema.uiVal = index;
-    }
-
-    id.vt = VT_CLSID;
-    id.puuid = guid;
-    hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
-    if (hr != S_OK) return hr;
-
-    if (value.vt == VT_UNKNOWN)
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)new_reader);
-    else
-        hr = WINCODEC_ERR_UNEXPECTEDMETADATATYPE;
-
-    PropVariantClear(&value);
-    return hr;
+    var->pwszVal = s;
+    var->vt = VT_LPWSTR;
+    return S_OK;
 }
 
-static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR query, PROPVARIANT *value)
+static void parser_resolve_component_handlers(struct query_handler *query_handler, struct query_parser *parser)
 {
-    struct query_handler *This = impl_from_IWICMetadataQueryWriter(iface);
-    struct string_t elem;
-    WCHAR *full_query;
-    const WCHAR *p;
-    int index, len;
-    PROPVARIANT tk_id, tk_schema, new_value;
+    PROPVARIANT value;
+    const WCHAR *url;
     GUID guid;
-    IWICMetadataReader *reader;
-    HRESULT hr = S_OK;
+    size_t i;
 
-    TRACE("(%p,%s,%p)\n", This, wine_dbgstr_w(query), value);
+    if (FAILED(parser->hr = parser_set_top_level_metadata_handler(query_handler, parser)))
+        return;
 
-    len = lstrlenW(query) + 1;
-    if (This->root) len += lstrlenW(This->root);
-    full_query = malloc(len * sizeof(WCHAR));
-    full_query[0] = 0;
-    if (This->root)
-        lstrcpyW(full_query, This->root);
-    lstrcatW(full_query, query);
-
-    PropVariantInit(&tk_id);
-    PropVariantInit(&tk_schema);
-    PropVariantInit(&new_value);
-
-    reader = NULL;
-    p = full_query;
-
-    while (*p)
+    /* First component is handled via block reader/writer. */
+    for (i = 1; i < parser->count; ++i)
     {
-        if (*p != '/')
+        struct query_component *prev_comp = &parser->components[i - 1];
+        struct query_component *comp = &parser->components[i];
+
+        if (!prev_comp->handler)
+            continue;
+
+        /* Expand schema urls for "known" formats. */
+        if (comp->schema.vt == VT_LPWSTR)
         {
-            WARN("query should start with '/'\n");
-            hr = WINCODEC_ERR_PROPERTYNOTSUPPORTED;
-            break;
+            if (SUCCEEDED(IWICMetadataReader_GetMetadataFormat(prev_comp->handler, &guid)))
+            {
+                url = map_shortname_to_schema(&guid, comp->schema.pwszVal);
+                if (url)
+                {
+                    PropVariantClear(&comp->schema);
+                    init_propvar_from_string(url, &comp->schema);
+                }
+            }
         }
 
-        p++;
-
-        index = 0;
-        elem.str = p;
-        elem.len = lstrlenW(p);
-        hr = get_token(&elem, &tk_id, &tk_schema, &index);
-        if (hr != S_OK)
-        {
-            WARN("get_token error %#lx\n", hr);
+        PropVariantInit(&value);
+        if (FAILED(parser->hr = IWICMetadataReader_GetValue(prev_comp->handler, &comp->schema, &comp->id, &value)))
             break;
-        }
-        TRACE("parsed %d characters: %s, index %d\n", elem.len, wine_dbgstr_wn(elem.str, elem.len), index);
-        TRACE("id %s, schema %s\n", wine_dbgstr_variant((VARIANT *)&tk_id), wine_dbgstr_variant((VARIANT *)&tk_schema));
 
-        if (!elem.len) break;
-
-        if (tk_id.vt == VT_CLSID || (tk_id.vt == VT_LPWSTR && WICMapShortNameToGuid(tk_id.pwszVal, &guid) == S_OK))
+        if (value.vt == VT_UNKNOWN)
         {
-            WCHAR *root;
+            parser->hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&comp->handler);
+        }
+        PropVariantClear(&value);
 
-            if (tk_schema.vt != VT_EMPTY)
-            {
-                FIXME("unsupported schema vt %u\n", tk_schema.vt);
-                PropVariantClear(&tk_schema);
-            }
+        if (FAILED(parser->hr))
+            break;
+    }
+}
 
-            if (tk_id.vt == VT_CLSID) guid = *tk_id.puuid;
+static HRESULT parse_query(struct query_handler *query_handler, const WCHAR *user_query,
+        struct query_parser *parser)
+{
+    WCHAR *query;
+    size_t len;
 
-            if (reader)
-            {
-                IWICMetadataReader *new_reader;
+    memset(parser, 0, sizeof(*parser));
 
-                hr = get_next_reader(reader, index, &guid, &new_reader);
-                IWICMetadataReader_Release(reader);
-                reader = new_reader;
-            }
-            else
-                hr = find_reader_from_block(This->object.block_reader, index, &guid, &reader);
+    len = wcslen(user_query) + 1;
+    if (query_handler->root) len += wcslen(query_handler->root);
 
-            if (hr != S_OK) break;
+    if (!(query = malloc(len * sizeof(WCHAR))))
+        return parser->hr = E_OUTOFMEMORY;
 
-            root = SysAllocStringLen(NULL, elem.str + elem.len - full_query + 2);
-            if (!root)
-            {
-                hr = E_OUTOFMEMORY;
-                break;
-            }
-            lstrcpynW(root, full_query, p - full_query + elem.len + 1);
+    query[0] = 0;
+    if (query_handler->root)
+        wcscpy(query, query_handler->root);
+    wcscat(query, user_query);
 
-            PropVariantClear(&new_value);
-            new_value.vt = VT_UNKNOWN;
-            hr = MetadataQueryReader_CreateInstance(This->object.block_reader, root, (IWICMetadataQueryReader **)&new_value.punkVal);
-            SysFreeString(root);
-            if (hr != S_OK) break;
+    parser->query = query;
+    parser->ptr = query;
+
+    while (*parser->ptr && parser->hr == S_OK)
+        parse_query_component(parser);
+
+    if (FAILED(parser->hr)) return parser->hr;
+
+    if (!parser->count)
+        return parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+
+    parser_resolve_component_handlers(query_handler, parser);
+
+    /* Validate that query is usable - it should produce an object or
+       an object followed by a value id. */
+    if (SUCCEEDED(parser->hr))
+    {
+        parser->last = &parser->components[parser->count - 1];
+        if (parser->last->handler)
+            return S_OK;
+
+        if (parser->count < 2)
+            return parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+
+        parser->prev = &parser->components[parser->count - 2];
+        if (!parser->prev->handler)
+            return parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+    }
+
+    return parser->hr;
+}
+
+static void parser_cleanup(struct query_parser *parser)
+{
+    size_t i;
+
+    for (i = 0; i < parser->count; ++i)
+    {
+        if (parser->components[i].handler)
+            IWICMetadataReader_Release(parser->components[i].handler);
+        PropVariantClear(&parser->components[i].schema);
+        PropVariantClear(&parser->components[i].id);
+    }
+    free(parser->components);
+    free(parser->query);
+}
+
+static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR query, PROPVARIANT *ret)
+{
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
+    struct query_component *comp;
+    struct query_parser parser;
+    PROPVARIANT value;
+    HRESULT hr;
+
+    TRACE("(%p,%s,%p)\n", iface, wine_dbgstr_w(query), ret);
+
+    PropVariantInit(&value);
+    if (SUCCEEDED(hr = parse_query(handler, query, &parser)))
+    {
+        comp = parser.last;
+
+        if (comp->handler)
+        {
+            value.vt = VT_UNKNOWN;
+            hr = MetadataQueryReader_CreateInstance(handler->object.block_reader, parser.query,
+                    (IWICMetadataQueryReader **)&value.punkVal);
         }
         else
         {
-            PROPVARIANT schema, id;
-
-            if (!reader)
-            {
-                hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
-                break;
-            }
-
-            if (tk_schema.vt == VT_LPWSTR)
-            {
-                hr = IWICMetadataReader_GetMetadataFormat(reader, &guid);
-                if (hr != S_OK) break;
-
-                schema.vt = VT_LPWSTR;
-                schema.pwszVal = (LPWSTR)map_shortname_to_schema(&guid, tk_schema.pwszVal);
-                if (!schema.pwszVal)
-                    schema.pwszVal = tk_schema.pwszVal;
-            }
-            else
-                schema = tk_schema;
-
-            id = tk_id;
-
-            PropVariantClear(&new_value);
-            hr = IWICMetadataReader_GetValue(reader, &schema, &id, &new_value);
-            if (hr != S_OK) break;
+            hr = IWICMetadataReader_GetValue(parser.prev->handler, &comp->schema, &comp->id, &value);
         }
-
-        p += elem.len;
-
-        PropVariantClear(&tk_id);
-        PropVariantClear(&tk_schema);
     }
 
-    if (reader)
-        IWICMetadataReader_Release(reader);
-
-    PropVariantClear(&tk_id);
-    PropVariantClear(&tk_schema);
-
-    if (hr == S_OK && value)
-        *value = new_value;
+    if (ret)
+        *ret = value;
     else
-        PropVariantClear(&new_value);
+        PropVariantClear(&value);
 
-    free(full_query);
+    parser_cleanup(&parser);
 
     return hr;
 }
