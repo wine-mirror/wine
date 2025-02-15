@@ -194,7 +194,7 @@ static VARTYPE map_type(struct string_t *str)
     return VT_ILLEGAL;
 }
 
-static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *schema, int *idx)
+static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *schema)
 {
     const WCHAR *start, *end, *p;
     WCHAR *str;
@@ -210,32 +210,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
 
     start = elem->str;
 
-    if (*start == '[')
-    {
-        WCHAR *idx_end;
-
-        if (start[1] < '0' || start[1] > '9') return DISP_E_TYPEMISMATCH;
-
-        *idx = wcstol(start + 1, &idx_end, 10);
-        if (idx_end > elem->str + elem->len) return WINCODEC_ERR_INVALIDQUERYREQUEST;
-        if (*idx_end != ']') return WINCODEC_ERR_INVALIDQUERYREQUEST;
-        if (*idx < 0) return WINCODEC_ERR_INVALIDQUERYREQUEST;
-        end = idx_end + 1;
-
-        next_elem.str = end;
-        next_elem.len = elem->len - (end - start);
-        hr = get_token(&next_elem, id, schema, idx);
-        if (hr != S_OK)
-        {
-            TRACE("get_token error %#lx\n", hr);
-            return hr;
-        }
-        elem->len = (end - start) + next_elem.len;
-
-        TRACE("indexed %s [%d]\n", wine_dbgstr_wn(elem->str, elem->len), *idx);
-        return S_OK;
-    }
-    else if (*start == '{')
+    if (*start == '{')
     {
         VARTYPE vt;
         PROPVARIANT next_token;
@@ -296,11 +271,10 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         if (*end == ':')
         {
             PROPVARIANT next_id, next_schema;
-            int next_idx = 0;
 
             next_elem.str = end + 1;
             next_elem.len = elem->len - (end - start + 1);
-            hr = get_token(&next_elem, &next_id, &next_schema, &next_idx);
+            hr = get_token(&next_elem, &next_id, &next_schema);
             if (hr != S_OK)
             {
                 TRACE("get_token error %#lx\n", hr);
@@ -308,7 +282,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
             }
             elem->len = (end - start + 1) + next_elem.len;
 
-            TRACE("id %s [%d]\n", wine_dbgstr_wn(elem->str, elem->len), *idx);
+            TRACE("id %s\n", wine_dbgstr_wn(elem->str, elem->len));
 
             if (next_schema.vt != VT_EMPTY)
             {
@@ -353,14 +327,13 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         *str++ = *p++;
     }
     *str = 0;
-    TRACE("%s [%d]\n", wine_dbgstr_variant((VARIANT *)id), *idx);
+    TRACE("%s\n", wine_dbgstr_variant((VARIANT *)id));
 
     if (*p == ':')
     {
         PROPVARIANT next_id, next_schema;
-        int next_idx = 0;
 
-        hr = get_token(&next_elem, &next_id, &next_schema, &next_idx);
+        hr = get_token(&next_elem, &next_id, &next_schema);
         if (hr != S_OK)
         {
             TRACE("get_token error %#lx\n", hr);
@@ -370,7 +343,7 @@ static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *sc
         }
         elem->len += next_elem.len + 1;
 
-        TRACE("id %s [%d]\n", wine_dbgstr_wn(elem->str, elem->len), *idx);
+        TRACE("id %s\n", wine_dbgstr_wn(elem->str, elem->len));
 
         if (next_schema.vt != VT_EMPTY)
         {
@@ -440,6 +413,61 @@ static bool wincodecs_array_reserve(void **elements, size_t *capacity, size_t co
     return true;
 }
 
+static bool parser_skip_char(struct query_parser *parser, WCHAR ch)
+{
+    if (FAILED(parser->hr)) return true;
+
+    if (*parser->ptr != ch)
+    {
+        parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+        return true;
+    }
+    parser->ptr++;
+    return false;
+}
+
+static void parse_query_index(struct query_parser *parser, unsigned int *ret)
+{
+    unsigned int index = 0, d;
+
+    if (parser_skip_char(parser, '[')) return;
+
+    if (*parser->ptr == '*' && *(parser->ptr + 1) == ']')
+    {
+        FIXME("[*] index value is not supported.\n");
+        parser->ptr += 2;
+        parser->hr = E_UNEXPECTED;
+        return;
+    }
+
+    /* Sign prefix is not allowed */
+
+    while (*parser->ptr)
+    {
+        if (*parser->ptr >= '0' && *parser->ptr <= '9')
+            d = *parser->ptr - '0';
+        else if (*parser->ptr == ']')
+            break;
+        else
+        {
+            parser->hr = WINCODEC_ERR_INVALIDQUERYCHARACTER;
+            return;
+        }
+
+        index = index * 10 + d;
+        parser->ptr++;
+    }
+
+    if (*parser->ptr != ']')
+    {
+        parser->hr = WINCODEC_ERR_INVALIDQUERYCHARACTER;
+        return;
+    }
+    parser->ptr++;
+
+    *ret = index;
+}
+
 static void parse_query_component(struct query_parser *parser)
 {
     struct query_component comp = { 0 };
@@ -453,9 +481,16 @@ static void parse_query_component(struct query_parser *parser)
     }
     parser->ptr++;
 
-    elem.str = parser->ptr;
-    elem.len = wcslen(parser->ptr);
-    parser->hr = get_token(&elem, &comp.id, &comp.schema, (int *)&comp.index);
+    /* Optional index */
+    if (*parser->ptr == '[')
+        parse_query_index(parser, &comp.index);
+
+    if (SUCCEEDED(parser->hr))
+    {
+        elem.str = parser->ptr;
+        elem.len = wcslen(parser->ptr);
+        parser->hr = get_token(&elem, &comp.id, &comp.schema);
+    }
 
     /* Resolve known names. */
     if (comp.id.vt == VT_LPWSTR)
