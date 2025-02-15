@@ -194,173 +194,6 @@ static VARTYPE map_type(struct string_t *str)
     return VT_ILLEGAL;
 }
 
-static HRESULT get_token(struct string_t *elem, PROPVARIANT *id, PROPVARIANT *schema)
-{
-    const WCHAR *start, *end, *p;
-    WCHAR *str;
-    struct string_t next_elem;
-    HRESULT hr;
-
-    TRACE("%s, len %d\n", wine_dbgstr_wn(elem->str, elem->len), elem->len);
-
-    PropVariantInit(id);
-    PropVariantInit(schema);
-
-    if (!elem->len) return S_OK;
-
-    start = elem->str;
-
-    if (*start == '{')
-    {
-        VARTYPE vt;
-        PROPVARIANT next_token;
-
-        end = wmemchr(start + 1, '=', elem->len - 1);
-        if (!end) return WINCODEC_ERR_INVALIDQUERYREQUEST;
-        if (end > elem->str + elem->len) return WINCODEC_ERR_INVALIDQUERYREQUEST;
-
-        next_elem.str = start + 1;
-        next_elem.len = end - start - 1;
-        vt = map_type(&next_elem);
-        TRACE("type %s => %d\n", wine_dbgstr_wn(next_elem.str, next_elem.len), vt);
-        if (vt == VT_ILLEGAL) return WINCODEC_ERR_WRONGSTATE;
-
-        next_token.vt = VT_LPWSTR;
-        next_token.pwszVal = CoTaskMemAlloc((elem->len - (end - start) + 1) * sizeof(WCHAR));
-        if (!next_token.pwszVal) return E_OUTOFMEMORY;
-
-        str = next_token.pwszVal;
-
-        end++;
-        while (*end && *end != '}' && end - start < elem->len)
-        {
-            if (*end == '\\') end++;
-            *str++ = *end++;
-        }
-        if (*end != '}')
-        {
-            PropVariantClear(&next_token);
-            return WINCODEC_ERR_INVALIDQUERYREQUEST;
-        }
-        *str = 0;
-        TRACE("schema/id %s\n", wine_dbgstr_w(next_token.pwszVal));
-
-        if (vt == VT_CLSID)
-        {
-            id->vt = VT_CLSID;
-            id->puuid = CoTaskMemAlloc(sizeof(GUID));
-            if (!id->puuid)
-            {
-                PropVariantClear(&next_token);
-                return E_OUTOFMEMORY;
-            }
-
-            hr = UuidFromStringW(next_token.pwszVal, id->puuid);
-        }
-        else
-            hr = PropVariantChangeType(id, &next_token, 0, vt);
-        PropVariantClear(&next_token);
-        if (hr != S_OK)
-        {
-            PropVariantClear(id);
-            PropVariantClear(schema);
-            return hr;
-        }
-
-        end++;
-        if (*end == ':')
-        {
-            PROPVARIANT next_id, next_schema;
-
-            next_elem.str = end + 1;
-            next_elem.len = elem->len - (end - start + 1);
-            hr = get_token(&next_elem, &next_id, &next_schema);
-            if (hr != S_OK)
-            {
-                TRACE("get_token error %#lx\n", hr);
-                return hr;
-            }
-            elem->len = (end - start + 1) + next_elem.len;
-
-            TRACE("id %s\n", wine_dbgstr_wn(elem->str, elem->len));
-
-            if (next_schema.vt != VT_EMPTY)
-            {
-                PropVariantClear(&next_id);
-                PropVariantClear(&next_schema);
-                return WINCODEC_ERR_WRONGSTATE;
-            }
-
-            *schema = *id;
-            *id = next_id;
-
-            return S_OK;
-        }
-
-        elem->len = end - start;
-        return S_OK;
-    }
-
-    end = wmemchr(start, '/', elem->len);
-    if (!end) end = start + elem->len;
-
-    p = wmemchr(start, ':', end - start);
-    if (p)
-    {
-        next_elem.str = p + 1;
-        next_elem.len = end - p - 1;
-
-        elem->len = p - start;
-    }
-    else
-        elem->len = end - start;
-
-    id->vt = VT_LPWSTR;
-    id->pwszVal = CoTaskMemAlloc((elem->len + 1) * sizeof(WCHAR));
-    if (!id->pwszVal) return E_OUTOFMEMORY;
-
-    str = id->pwszVal;
-    p = elem->str;
-    while (p - elem->str < elem->len)
-    {
-        if (*p == '\\') p++;
-        *str++ = *p++;
-    }
-    *str = 0;
-    TRACE("%s\n", wine_dbgstr_variant((VARIANT *)id));
-
-    if (*p == ':')
-    {
-        PROPVARIANT next_id, next_schema;
-
-        hr = get_token(&next_elem, &next_id, &next_schema);
-        if (hr != S_OK)
-        {
-            TRACE("get_token error %#lx\n", hr);
-            PropVariantClear(id);
-            PropVariantClear(schema);
-            return hr;
-        }
-        elem->len += next_elem.len + 1;
-
-        TRACE("id %s\n", wine_dbgstr_wn(elem->str, elem->len));
-
-        if (next_schema.vt != VT_EMPTY)
-        {
-            PropVariantClear(&next_id);
-            PropVariantClear(&next_schema);
-            PropVariantClear(id);
-            PropVariantClear(schema);
-            return WINCODEC_ERR_WRONGSTATE;
-        }
-
-        *schema = *id;
-        *id = next_id;
-    }
-
-    return S_OK;
-}
-
 struct query_component
 {
     unsigned int index;
@@ -373,6 +206,7 @@ struct query_parser
 {
     const WCHAR *ptr;
 
+    WCHAR *scratch;
     WCHAR *query;
 
     struct query_component *components;
@@ -468,10 +302,126 @@ static void parse_query_index(struct query_parser *parser, unsigned int *ret)
     *ret = index;
 }
 
+static bool parser_unescape(struct query_parser *parser)
+{
+    if (*parser->ptr == '\\')
+    {
+        parser->ptr++;
+        if (!*parser->ptr) return true;
+    }
+
+    return false;
+}
+
+static HRESULT init_propvar_from_string(const WCHAR *str, PROPVARIANT *var)
+{
+    size_t size = (wcslen(str) + 1) * sizeof(*str);
+    WCHAR *s;
+
+    if (!(s = CoTaskMemAlloc(size)))
+        return E_OUTOFMEMORY;
+    memcpy(s, str, size);
+
+    var->pwszVal = s;
+    var->vt = VT_LPWSTR;
+    return S_OK;
+}
+
+static void parse_query_name(struct query_parser *parser, PROPVARIANT *item)
+{
+    size_t len = 0;
+
+    while (*parser->ptr && (*parser->ptr != '/' && *parser->ptr != ':'))
+    {
+        if (parser_unescape(parser)) break;
+        parser->scratch[len++] = *parser->ptr;
+        parser->ptr++;
+    }
+
+    if (!len)
+    {
+        parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+        return;
+    }
+
+    parser->scratch[len] = 0;
+
+    parser->hr = init_propvar_from_string(parser->scratch, item);
+}
+
+static void parse_query_data_item(struct query_parser *parser, PROPVARIANT *item)
+{
+    struct string_t span;
+    PROPVARIANT v;
+    GUID guid;
+    VARTYPE vt;
+    size_t len;
+
+    if (parser_skip_char(parser, '{')) return;
+
+    /* Type */
+    span.str = parser->ptr;
+    span.len = 0;
+    while (*parser->ptr && *parser->ptr != '=')
+    {
+        span.len++;
+        parser->ptr++;
+    }
+
+    if (parser_skip_char(parser, '=')) return;
+
+    vt = map_type(&span);
+    if (vt == VT_ILLEGAL)
+    {
+        parser->hr = WINCODEC_ERR_WRONGSTATE;
+        return;
+    }
+
+    /* Value */
+    len = 0;
+    while (*parser->ptr && *parser->ptr != '}')
+    {
+        if (parser_unescape(parser)) break;
+        parser->scratch[len++] = *parser->ptr;
+        parser->ptr++;
+    }
+
+    if (parser_skip_char(parser, '}')) return;
+
+    parser->scratch[len] = 0;
+
+    if (vt == VT_CLSID)
+    {
+        if (UuidFromStringW(parser->scratch, &guid))
+        {
+            parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
+            return;
+        }
+
+        parser->hr = InitPropVariantFromCLSID(&guid, item);
+    }
+    else
+    {
+        v.vt = VT_LPWSTR;
+        v.pwszVal = parser->scratch;
+        parser->hr = PropVariantChangeType(item, &v, 0, vt);
+    }
+}
+
+static void parse_query_item(struct query_parser *parser, PROPVARIANT *item)
+{
+    if (FAILED(parser->hr))
+        return;
+
+    if (*parser->ptr == '{')
+        parse_query_data_item(parser, item);
+    else
+        parse_query_name(parser, item);
+}
+
 static void parse_query_component(struct query_parser *parser)
 {
     struct query_component comp = { 0 };
-    struct string_t elem;
     GUID guid;
 
     if (*parser->ptr != '/')
@@ -485,11 +435,14 @@ static void parse_query_component(struct query_parser *parser)
     if (*parser->ptr == '[')
         parse_query_index(parser, &comp.index);
 
-    if (SUCCEEDED(parser->hr))
+    parse_query_item(parser, &comp.id);
+    if (*parser->ptr == ':')
     {
-        elem.str = parser->ptr;
-        elem.len = wcslen(parser->ptr);
-        parser->hr = get_token(&elem, &comp.id, &comp.schema);
+        parser->ptr++;
+
+        comp.schema = comp.id;
+        PropVariantInit(&comp.id);
+        parse_query_item(parser, &comp.id);
     }
 
     /* Resolve known names. */
@@ -504,8 +457,6 @@ static void parse_query_component(struct query_parser *parser)
 
     if (SUCCEEDED(parser->hr))
     {
-        parser->ptr += elem.len;
-
         if (comp.id.vt == VT_CLSID)
         {
             PropVariantClear(&comp.schema);
@@ -579,20 +530,6 @@ static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query
     return comp->handler ? S_OK : WINCODEC_ERR_PROPERTYNOTFOUND;
 }
 
-static HRESULT init_propvar_from_string(const WCHAR *str, PROPVARIANT *var)
-{
-    size_t size = (wcslen(str) + 1) * sizeof(*str);
-    WCHAR *s;
-
-    if (!(s = CoTaskMemAlloc(size)))
-        return E_OUTOFMEMORY;
-    memcpy(s, str, size);
-
-    var->pwszVal = s;
-    var->vt = VT_LPWSTR;
-    return S_OK;
-}
-
 static void parser_resolve_component_handlers(struct query_handler *query_handler, struct query_parser *parser)
 {
     PROPVARIANT value;
@@ -660,6 +597,13 @@ static HRESULT parse_query(struct query_handler *query_handler, const WCHAR *use
         wcscpy(query, query_handler->root);
     wcscat(query, user_query);
 
+    if (!(parser->scratch = malloc(len * sizeof(WCHAR))))
+    {
+        parser->hr = E_OUTOFMEMORY;
+        free(query);
+        return parser->hr;
+    }
+
     parser->query = query;
     parser->ptr = query;
 
@@ -704,6 +648,7 @@ static void parser_cleanup(struct query_parser *parser)
         PropVariantClear(&parser->components[i].id);
     }
     free(parser->components);
+    free(parser->scratch);
     free(parser->query);
 }
 
