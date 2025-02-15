@@ -359,6 +359,14 @@ static void parse_query_data_item(struct query_parser *parser, PROPVARIANT *item
 
     if (parser_skip_char(parser, '{')) return;
 
+    /* Empty "{}" item represents VT_EMPTY. */
+    if (*parser->ptr == '}')
+    {
+        item->vt = VT_EMPTY;
+        parser->ptr++;
+        return;
+    }
+
     /* Type */
     span.str = parser->ptr;
     span.len = 0;

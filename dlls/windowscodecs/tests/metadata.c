@@ -781,23 +781,15 @@ static void test_metadata_unknown(void)
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/{}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
-        PropVariantClear(&value);
-    }
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    PropVariantClear(&value);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/unknown/{}", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
-        PropVariantClear(&value);
-    }
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    PropVariantClear(&value);
 
     IWICMetadataQueryReader_Release(query_reader2);
     IWICMetadataQueryReader_Release(query_reader);
