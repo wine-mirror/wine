@@ -5131,19 +5131,14 @@ static void test_metadata_App1(void)
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
 
     check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-    todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
 
     hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        IWICMetadataQueryWriter_Release(query_writer2);
-    }
+    hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    IWICMetadataQueryWriter_Release(query_writer2);
     PropVariantClear(&value);
 
     PropVariantInit(&value);
@@ -5151,18 +5146,15 @@ static void test_metadata_App1(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
     hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
-        IWICMetadataQueryWriter_Release(query_writer2);
-    }
+    hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatIfd), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+    IWICMetadataQueryWriter_Release(query_writer2);
     PropVariantClear(&value);
 
     PropVariantInit(&value);
@@ -5170,18 +5162,15 @@ static void test_metadata_App1(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
     hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(IsEqualGUID(&format, &GUID_MetadataFormatGps), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
-        IWICMetadataQueryWriter_Release(query_writer2);
-    }
+    hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd/gps"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatGps), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+    IWICMetadataQueryWriter_Release(query_writer2);
     PropVariantClear(&value);
 
     PropVariantInit(&value);
@@ -5189,18 +5178,15 @@ static void test_metadata_App1(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
     hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryWriter, (void **)&query_writer2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
-        hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(IsEqualGUID(&format, &GUID_MetadataFormatExif), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
-        IWICMetadataQueryWriter_Release(query_writer2);
-    }
+    hr = IWICMetadataQueryWriter_GetLocation(query_writer2, ARRAY_SIZE(path), path, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(path, L"/app1/ifd/exif"), "Unexpected path %s.\n", wine_dbgstr_w(path));
+    hr = IWICMetadataQueryWriter_GetContainerFormat(query_writer2, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatExif), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+    IWICMetadataQueryWriter_Release(query_writer2);
     PropVariantClear(&value);
 
     PropVariantInit(&value);
@@ -5226,7 +5212,6 @@ static void test_metadata_App1(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(value.vt == VT_UNKNOWN, "Unexpected value type: %u.\n", value.vt);
     check_interface(value.punkVal, &IID_IWICMetadataQueryReader, TRUE);
-    todo_wine
     check_interface(value.punkVal, &IID_IWICMetadataQueryWriter, TRUE);
     PropVariantClear(&value);
 

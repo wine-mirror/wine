@@ -509,7 +509,10 @@ static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query
 
     for (i = 0; i < count; ++i)
     {
-        hr = IWICMetadataBlockReader_GetReaderByIndex(query_handler->object.block_reader, i, &handler);
+        if (is_writer_handler(query_handler))
+            hr = IWICMetadataBlockWriter_GetWriterByIndex(query_handler->object.block_writer, i, (IWICMetadataWriter **)&handler);
+        else
+            hr = IWICMetadataBlockReader_GetReaderByIndex(query_handler->object.block_reader, i, &handler);
 
         if (FAILED(hr))
             break;
@@ -577,7 +580,8 @@ static void parser_resolve_component_handlers(struct query_handler *query_handle
 
         if (value.vt == VT_UNKNOWN)
         {
-            parser->hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataReader, (void **)&comp->handler);
+            parser->hr = IUnknown_QueryInterface(value.punkVal, is_writer_handler(query_handler) ?
+                    &IID_IWICMetadataWriter : &IID_IWICMetadataReader, (void **)&comp->handler);
         }
         PropVariantClear(&value);
 
@@ -678,8 +682,16 @@ static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *i
         if (comp->handler)
         {
             value.vt = VT_UNKNOWN;
-            hr = MetadataQueryReader_CreateInstance(handler->object.block_reader, parser.query,
-                    (IWICMetadataQueryReader **)&value.punkVal);
+            if (is_writer_handler(handler))
+            {
+                hr = MetadataQueryWriter_CreateInstance(handler->object.block_writer, parser.query,
+                        (IWICMetadataQueryWriter **)&value.punkVal);
+            }
+            else
+            {
+                hr = MetadataQueryReader_CreateInstance(handler->object.block_reader, parser.query,
+                        (IWICMetadataQueryReader **)&value.punkVal);
+            }
         }
         else
         {
