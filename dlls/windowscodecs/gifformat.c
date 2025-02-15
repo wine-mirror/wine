@@ -837,7 +837,7 @@ static HRESULT WINAPI GifFrameDecode_GetMetadataQueryReader(IWICBitmapFrameDecod
     if (!ppIMetadataQueryReader)
         return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, NULL, ppIMetadataQueryReader);
+    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
 }
 
 static HRESULT WINAPI GifFrameDecode_GetColorContexts(IWICBitmapFrameDecode *iface,
@@ -1216,7 +1216,7 @@ static HRESULT WINAPI GifDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface
 
     if (!ppIMetadataQueryReader) return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, NULL, ppIMetadataQueryReader);
+    return MetadataQueryReader_CreateInstance(&This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
 }
 
 static HRESULT WINAPI GifDecoder_GetPreview(IWICBitmapDecoder *iface,
@@ -2098,7 +2098,7 @@ static HRESULT WINAPI GifFrameEncode_GetMetadataQueryWriter(IWICBitmapFrameEncod
     if (!encode->initialized)
         return WINCODEC_ERR_NOTINITIALIZED;
 
-    return MetadataQueryWriter_CreateInstance(&encode->IWICMetadataBlockWriter_iface, NULL, writer);
+    return MetadataQueryWriter_CreateInstance(&encode->IWICMetadataBlockWriter_iface, writer);
 }
 
 static const IWICBitmapFrameEncodeVtbl GifFrameEncode_Vtbl =

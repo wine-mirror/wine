@@ -38,6 +38,8 @@ enum metadata_object_type
 {
     BLOCK_READER,
     BLOCK_WRITER,
+    READER,
+    WRITER,
 };
 
 struct query_handler
@@ -49,6 +51,8 @@ struct query_handler
         IUnknown *handler;
         IWICMetadataBlockReader *block_reader;
         IWICMetadataBlockWriter *block_writer;
+        IWICMetadataReader *reader;
+        IWICMetadataWriter *writer;
     } object;
     enum metadata_object_type object_type;
     WCHAR *root;
@@ -56,7 +60,14 @@ struct query_handler
 
 static bool is_writer_handler(const struct query_handler *handler)
 {
-    return handler->object_type == BLOCK_WRITER;
+    return handler->object_type == BLOCK_WRITER
+            || handler->object_type == WRITER;
+}
+
+static bool is_block_handler(const struct query_handler *handler)
+{
+    return handler->object_type == BLOCK_READER
+            || handler->object_type == BLOCK_WRITER;
 }
 
 static inline struct query_handler *impl_from_IWICMetadataQueryWriter(IWICMetadataQueryWriter *iface)
@@ -115,28 +126,27 @@ static HRESULT WINAPI query_handler_GetContainerFormat(IWICMetadataQueryWriter *
 
     TRACE("(%p,%p)\n", iface, format);
 
-    return IWICMetadataBlockReader_GetContainerFormat(handler->object.block_reader, format);
+    return is_block_handler(handler) ? IWICMetadataBlockReader_GetContainerFormat(handler->object.block_reader, format):
+            IWICMetadataReader_GetMetadataFormat(handler->object.reader, format);
 }
 
 static HRESULT WINAPI query_handler_GetLocation(IWICMetadataQueryWriter *iface, UINT len, WCHAR *location, UINT *ret_len)
 {
     struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
-    const WCHAR *root;
     UINT actual_len;
 
     TRACE("(%p,%u,%p,%p)\n", iface, len, location, ret_len);
 
     if (!ret_len) return E_INVALIDARG;
 
-    root = handler->root ? handler->root : L"/";
-    actual_len = lstrlenW(root) + 1;
+    actual_len = lstrlenW(handler->root) + 1;
 
     if (location)
     {
         if (len < actual_len)
             return WINCODEC_ERR_INSUFFICIENTBUFFER;
 
-        memcpy(location, root, actual_len * sizeof(WCHAR));
+        memcpy(location, handler->root, actual_len * sizeof(WCHAR));
     }
 
     *ret_len = actual_len;
@@ -199,15 +209,20 @@ struct query_component
     unsigned int index;
     PROPVARIANT schema;
     PROPVARIANT id;
-    IWICMetadataReader *handler;
+    union
+    {
+        IUnknown *handler;
+        IWICMetadataReader *reader;
+        IWICMetadataWriter *writer;
+    };
 };
 
 struct query_parser
 {
     const WCHAR *ptr;
+    const WCHAR *query;
 
     WCHAR *scratch;
-    WCHAR *query;
 
     struct query_component *components;
     size_t count;
@@ -427,6 +442,18 @@ static void parse_query_item(struct query_parser *parser, PROPVARIANT *item)
         parse_query_name(parser, item);
 }
 
+static void parse_add_component(struct query_parser *parser, struct query_component *comp)
+{
+    if (!wincodecs_array_reserve((void **)&parser->components, &parser->capacity,
+            parser->count + 1, sizeof(*parser->components)))
+    {
+        parser->hr = E_OUTOFMEMORY;
+        return;
+    }
+
+    parser->components[parser->count++] = *comp;
+}
+
 static void parse_query_component(struct query_parser *parser)
 {
     struct query_component comp = { 0 };
@@ -475,16 +502,12 @@ static void parse_query_component(struct query_parser *parser)
             }
         }
 
-        if (!wincodecs_array_reserve((void **)&parser->components, &parser->capacity,
-                parser->count + 1, sizeof(*parser->components)))
+        parse_add_component(parser, &comp);
+
+        if (FAILED(parser->hr))
         {
-            parser->hr = E_OUTOFMEMORY;
             PropVariantClear(&comp.schema);
             PropVariantClear(&comp.id);
-        }
-        else
-        {
-            parser->components[parser->count++] = comp;
         }
     }
 }
@@ -498,7 +521,17 @@ static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query
     GUID format;
     UINT count, i, matched_index;
 
+    /* Nested handlers are created on IWICMetadataReader/IWICMetadataWriter instances
+       directly. Same applies to the query writers created with CreateQueryWriter()/CreateQueryWriterFromReader().
+
+       However decoders and encoders will be using block handlers. */
+
+    if (!is_block_handler(query_handler))
+        return S_OK;
+
     comp = &parser->components[0];
+
+    /* Root component has to be an object within block collection, it's located using {CLSID, index} pair. */
     if (comp->id.vt != VT_CLSID)
         return E_UNEXPECTED;
 
@@ -537,8 +570,8 @@ static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query
 
     if (FAILED(hr)) return hr;
 
-    comp->handler = handler;
-    return comp->handler ? S_OK : WINCODEC_ERR_PROPERTYNOTFOUND;
+    comp->reader = handler;
+    return comp->reader ? S_OK : WINCODEC_ERR_PROPERTYNOTFOUND;
 }
 
 static void parser_resolve_component_handlers(struct query_handler *query_handler, struct query_parser *parser)
@@ -551,7 +584,8 @@ static void parser_resolve_component_handlers(struct query_handler *query_handle
     if (FAILED(parser->hr = parser_set_top_level_metadata_handler(query_handler, parser)))
         return;
 
-    /* First component is handled via block reader/writer. */
+    /* First component contains the root handler for this query. It's provided either
+       through block reader or specified explicitly on query creation. */
     for (i = 1; i < parser->count; ++i)
     {
         struct query_component *prev_comp = &parser->components[i - 1];
@@ -563,7 +597,7 @@ static void parser_resolve_component_handlers(struct query_handler *query_handle
         /* Expand schema urls for "known" formats. */
         if (comp->schema.vt == VT_LPWSTR)
         {
-            if (SUCCEEDED(IWICMetadataReader_GetMetadataFormat(prev_comp->handler, &guid)))
+            if (SUCCEEDED(IWICMetadataReader_GetMetadataFormat(prev_comp->reader, &guid)))
             {
                 url = map_shortname_to_schema(&guid, comp->schema.pwszVal);
                 if (url)
@@ -575,7 +609,7 @@ static void parser_resolve_component_handlers(struct query_handler *query_handle
         }
 
         PropVariantInit(&value);
-        if (FAILED(parser->hr = IWICMetadataReader_GetValue(prev_comp->handler, &comp->schema, &comp->id, &value)))
+        if (FAILED(parser->hr = IWICMetadataReader_GetValue(prev_comp->reader, &comp->schema, &comp->id, &value)))
             break;
 
         if (value.vt == VT_UNKNOWN)
@@ -590,34 +624,35 @@ static void parser_resolve_component_handlers(struct query_handler *query_handle
     }
 }
 
-static HRESULT parse_query(struct query_handler *query_handler, const WCHAR *user_query,
+static HRESULT parse_query(struct query_handler *query_handler, const WCHAR *query,
         struct query_parser *parser)
 {
-    WCHAR *query;
+    struct query_component comp = { 0 };
     size_t len;
 
     memset(parser, 0, sizeof(*parser));
 
-    len = wcslen(user_query) + 1;
-    if (query_handler->root) len += wcslen(query_handler->root);
+    /* Unspecified item is only allowed at root level. Replace it with an empty item notation,
+       so that it can work properly for the readers and fail, as it should, for the block readers. */
+    if (!wcscmp(query, L"/"))
+        query = L"/{}";
 
-    if (!(query = malloc(len * sizeof(WCHAR))))
-        return parser->hr = E_OUTOFMEMORY;
-
-    query[0] = 0;
-    if (query_handler->root)
-        wcscpy(query, query_handler->root);
-    wcscat(query, user_query);
-
+    len = wcslen(query) + 1;
     if (!(parser->scratch = malloc(len * sizeof(WCHAR))))
     {
         parser->hr = E_OUTOFMEMORY;
-        free(query);
         return parser->hr;
     }
 
     parser->query = query;
     parser->ptr = query;
+
+    if (!is_block_handler(query_handler))
+    {
+        comp.handler = query_handler->object.handler;
+        IUnknown_AddRef(comp.handler);
+        parse_add_component(parser, &comp);
+    }
 
     while (*parser->ptr && parser->hr == S_OK)
         parse_query_component(parser);
@@ -655,54 +690,45 @@ static void parser_cleanup(struct query_parser *parser)
     for (i = 0; i < parser->count; ++i)
     {
         if (parser->components[i].handler)
-            IWICMetadataReader_Release(parser->components[i].handler);
+            IUnknown_Release(parser->components[i].handler);
         PropVariantClear(&parser->components[i].schema);
         PropVariantClear(&parser->components[i].id);
     }
     free(parser->components);
     free(parser->scratch);
-    free(parser->query);
 }
 
-static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR query, PROPVARIANT *ret)
+static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_object_type object_type,
+        const WCHAR *location, IWICMetadataQueryWriter **ret);
+
+static HRESULT WINAPI query_handler_GetMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR query, PROPVARIANT *value)
 {
     struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
-    struct query_component *comp;
+    struct query_component *last, *prev;
     struct query_parser parser;
-    PROPVARIANT value;
     HRESULT hr;
 
-    TRACE("(%p,%s,%p)\n", iface, wine_dbgstr_w(query), ret);
+    TRACE("(%p,%s,%p)\n", iface, wine_dbgstr_w(query), value);
 
-    PropVariantInit(&value);
     if (SUCCEEDED(hr = parse_query(handler, query, &parser)))
     {
-        comp = parser.last;
+        last = parser.last;
+        prev = parser.prev;
 
-        if (comp->handler)
+        if (last->handler)
         {
-            value.vt = VT_UNKNOWN;
-            if (is_writer_handler(handler))
+            if (value)
             {
-                hr = MetadataQueryWriter_CreateInstance(handler->object.block_writer, parser.query,
-                        (IWICMetadataQueryWriter **)&value.punkVal);
-            }
-            else
-            {
-                hr = MetadataQueryReader_CreateInstance(handler->object.block_reader, parser.query,
-                        (IWICMetadataQueryReader **)&value.punkVal);
+                value->vt = VT_UNKNOWN;
+                hr = create_query_handler(last->handler, is_writer_handler(handler) ? WRITER : READER,
+                        parser.query, (IWICMetadataQueryWriter **)&value->punkVal);
             }
         }
         else
         {
-            hr = IWICMetadataReader_GetValue(parser.prev->handler, &comp->schema, &comp->id, &value);
+            hr = IWICMetadataReader_GetValue(prev->reader, &last->schema, &last->id, value);
         }
     }
-
-    if (ret)
-        *ret = value;
-    else
-        PropVariantClear(&value);
 
     parser_cleanup(&parser);
 
@@ -870,6 +896,8 @@ static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_objec
     IUnknown_AddRef(block_handler);
     obj->object.handler = block_handler;
     obj->object_type = object_type;
+    if (!root)
+        root = L"/";
     obj->root = wcsdup(root);
 
     *ret = &obj->IWICMetadataQueryWriter_iface;
@@ -877,16 +905,16 @@ static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_objec
     return S_OK;
 }
 
-HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *block_reader, const WCHAR *root,
+HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *block_reader,
         IWICMetadataQueryReader **out)
 {
-    return create_query_handler((IUnknown *)block_reader, BLOCK_READER, root, (IWICMetadataQueryWriter **)out);
+    return create_query_handler((IUnknown *)block_reader, BLOCK_READER, NULL, (IWICMetadataQueryWriter **)out);
 }
 
-HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *block_writer, const WCHAR *root,
+HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *block_writer,
         IWICMetadataQueryWriter **out)
 {
-    return create_query_handler((IUnknown *)block_writer, BLOCK_WRITER, root, out);
+    return create_query_handler((IUnknown *)block_writer, BLOCK_WRITER, NULL, out);
 }
 
 static const struct

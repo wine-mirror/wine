@@ -1769,7 +1769,7 @@ static HRESULT WINAPI ComponentFactory_CreateQueryReaderFromBlockReader(IWICComp
     if (!block_reader || !query_reader)
         return E_INVALIDARG;
 
-    return MetadataQueryReader_CreateInstance(block_reader, NULL, query_reader);
+    return MetadataQueryReader_CreateInstance(block_reader, query_reader);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComponentFactory *iface,
@@ -1780,7 +1780,7 @@ static HRESULT WINAPI ComponentFactory_CreateQueryWriterFromBlockWriter(IWICComp
     if (!block_writer || !query_writer)
         return E_INVALIDARG;
 
-    return MetadataQueryWriter_CreateInstance(block_writer, NULL, query_writer);
+    return MetadataQueryWriter_CreateInstance(block_writer, query_writer);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateEncoderPropertyBag(IWICComponentFactory *iface,

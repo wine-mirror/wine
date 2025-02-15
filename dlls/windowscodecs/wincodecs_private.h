@@ -239,8 +239,8 @@ extern HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT APEReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GifCommentReader_CreateInstance(REFIID iid, void **ppv);
-extern HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *, const WCHAR *, IWICMetadataQueryReader **);
-extern HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *, const WCHAR *, IWICMetadataQueryWriter **);
+extern HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *, IWICMetadataQueryReader **);
+extern HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *, IWICMetadataQueryWriter **);
 extern HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE hfile);
 
 static inline const char *debug_wic_rect(const WICRect *rect)
