@@ -1398,8 +1398,6 @@ enum
     NtUserCallHwndParam_ExposeWindowSurface,
     NtUserCallHwndParam_GetWinMonitorDpi,
     NtUserCallHwndParam_SetRawWindowPos,
-    /* temporary exports */
-    NtUserSetWindowStyle,
 };
 
 struct get_window_rects_params

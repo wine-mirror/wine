@@ -173,7 +173,6 @@ BOOL is_desktop_window( HWND hwnd );
 HWND WIN_GetFullHandle( HWND hwnd );
 HWND WIN_IsCurrentProcess( HWND hwnd );
 HWND WIN_IsCurrentThread( HWND hwnd );
-ULONG WIN_SetStyle( HWND hwnd, ULONG set_bits, ULONG clear_bits );
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode );
 HWND *WIN_ListChildren( HWND hwnd );
 void MDI_CalcDefaultChildPos( HWND hwndClient, INT total, LPPOINT lpPos, INT delta, UINT *id );

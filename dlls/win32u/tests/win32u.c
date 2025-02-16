@@ -294,37 +294,37 @@ static void test_NtUserAlterWindowStyle(void)
     ok( style == expect_style, "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, 0, 0 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
     ok( style == expect_style, "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, -1, -1 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
-    todo_wine ok( style == (expect_style | 0x23f), "got %#x\n", style );
+    ok( style == (expect_style | 0x23f), "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, -1, 0 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
     todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, 0, -1 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
     todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, -1, 0xe1e1e1e1 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
-    todo_wine ok( style == ((expect_style & ~WS_HSCROLL) | 0x21), "got %#x\n", style );
+    ok( style == ((expect_style & ~WS_HSCROLL) | 0x21), "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, -1, 0 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
     todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
 
     ret = NtUserAlterWindowStyle( hwnd, 0x20, 0xe1e1e1e1 );
-    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    ok( ret == 1, "got %#Ix\n", ret );
     style = GetWindowLongW( hwnd, GWL_STYLE );
     todo_wine ok( style == ((expect_style & ~(WS_VSCROLL | WS_HSCROLL)) | 0x20), "got %#x\n", style );
 

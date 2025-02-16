@@ -1170,8 +1170,10 @@ UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
  */
 ULONG WINAPI NtUserAlterWindowStyle( HWND hwnd, UINT mask, UINT style )
 {
-    FIXME( "hwnd %p, mask %#x, style %#x stub!\n", hwnd, mask, style );
-    return 0;
+    TRACE( "hwnd %p, mask %#x, style %#x\n", hwnd, mask, style );
+    /* FIXME: WS_TABSTOP shouldn't be there but we need it for BM_SETCHECK */
+    mask &= WS_TABSTOP | WS_VSCROLL | WS_HSCROLL | 0x23f;
+    return !!set_window_style_bits( hwnd, style & mask, mask & ~style );
 }
 
 static DWORD fix_exstyle( DWORD style, DWORD exstyle )
@@ -5958,13 +5960,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         struct set_raw_window_pos_params *params = (void *)param;
         return set_raw_window_pos( hwnd, params->rect, params->flags, params->internal );
     }
-
-    /* temporary exports */
-    case NtUserSetWindowStyle:
-        {
-            STYLESTRUCT *style = (void *)param;
-            return set_window_style_bits( hwnd, style->styleNew, style->styleOld );
-        }
 
     default:
         FIXME( "invalid code %u\n", code );
