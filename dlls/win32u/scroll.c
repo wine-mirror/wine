@@ -162,7 +162,7 @@ static BOOL show_scroll_bar( HWND hwnd, int bar, BOOL show_horz, BOOL show_vert 
         return FALSE;  /* Nothing to do! */
     }
 
-    old_style = set_window_style( hwnd, set_bits, clear_bits );
+    old_style = set_window_style_bits( hwnd, set_bits, clear_bits );
     if ((old_style & clear_bits) != 0 || (old_style & set_bits) != set_bits)
     {
         /* frame has been changed, let the window redraw itself */

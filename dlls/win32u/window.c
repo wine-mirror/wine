@@ -796,7 +796,7 @@ BOOL WINAPI NtUserEnableWindow( HWND hwnd, BOOL enable )
 
     if (enable)
     {
-        ret = (set_window_style( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
+        ret = (set_window_style_bits( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
         if (ret)
         {
             NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hwnd, OBJID_WINDOW, 0 );
@@ -808,7 +808,7 @@ BOOL WINAPI NtUserEnableWindow( HWND hwnd, BOOL enable )
     {
         send_message( hwnd, WM_CANCELMODE, 0, 0 );
 
-        ret = (set_window_style( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
+        ret = (set_window_style_bits( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
         if (!ret)
         {
             NtUserNotifyWinEvent( EVENT_OBJECT_STATECHANGE, hwnd, OBJID_WINDOW, 0 );
@@ -1116,12 +1116,7 @@ static WORD get_window_word( HWND hwnd, INT offset )
     return get_window_long_size( hwnd, offset, sizeof(WORD), TRUE );
 }
 
-/***********************************************************************
- *           set_window_style
- *
- * Change the style of a window.
- */
-ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits )
+UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
 {
     BOOL ok, made_visible = FALSE;
     STYLESTRUCT style;
@@ -4426,7 +4421,7 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
                 NtUserSetFocus( 0 );
         }
 
-        old_style = set_window_style( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
+        old_style = set_window_style_bits( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
         wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
 
@@ -4443,7 +4438,7 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
 
         minmax = get_min_max_info( hwnd );
 
-        old_style = set_window_style( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
+        old_style = set_window_style_bits( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
         if (old_style & WS_MINIMIZE)
             win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
 
@@ -4459,14 +4454,14 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     case SW_SHOWNORMAL:
     case SW_RESTORE:
     case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
-        old_style = set_window_style( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
+        old_style = set_window_style_bits( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
         {
             if (win_get_flags( hwnd ) & WIN_RESTORE_MAX)
             {
                 /* Restore to maximized position */
                 minmax = get_min_max_info( hwnd );
-                set_window_style( hwnd, WS_MAXIMIZE, 0 );
+                set_window_style_bits( hwnd, WS_MAXIMIZE, 0 );
                 swp_flags |= SWP_STATECHANGED;
                 SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
                          minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
@@ -4663,8 +4658,8 @@ static BOOL show_window( HWND hwnd, INT cmd )
     if (parent && !is_window_visible( parent ) && !(swp & SWP_STATECHANGED))
     {
         /* if parent is not visible simply toggle WS_VISIBLE and return */
-        if (show_flag) set_window_style( hwnd, WS_VISIBLE, 0 );
-        else set_window_style( hwnd, 0, WS_VISIBLE );
+        if (show_flag) set_window_style_bits( hwnd, WS_VISIBLE, 0 );
+        else set_window_style_bits( hwnd, 0, WS_VISIBLE );
     }
     else
         NtUserSetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
@@ -5676,7 +5671,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     /* Show the window, maximizing or minimizing if needed */
 
-    style = set_window_style( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
+    style = set_window_style_bits( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
     if (style & (WS_MINIMIZE | WS_MAXIMIZE))
     {
         RECT new_pos;
@@ -5959,7 +5954,7 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserSetWindowStyle:
         {
             STYLESTRUCT *style = (void *)param;
-            return set_window_style( hwnd, style->styleNew, style->styleOld );
+            return set_window_style_bits( hwnd, style->styleNew, style->styleOld );
         }
 
     default:

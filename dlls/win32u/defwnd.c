@@ -2542,11 +2542,11 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         return 0;
 
     case WM_SETREDRAW:
-        if (wparam) set_window_style( hwnd, WS_VISIBLE, 0 );
+        if (wparam) set_window_style_bits( hwnd, WS_VISIBLE, 0 );
         else
         {
             NtUserRedrawWindow( hwnd, NULL, 0, RDW_ALLCHILDREN | RDW_VALIDATE );
-            set_window_style( hwnd, 0, WS_VISIBLE );
+            set_window_style_bits( hwnd, 0, WS_VISIBLE );
         }
         return 0;
 
