@@ -745,7 +745,8 @@ static BOOL wayland_surface_client_covers_vscreen(struct wayland_surface *surfac
  */
 static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
                                               RECT *confine_rect,
-                                              BOOL covers_vscreen)
+                                              BOOL covers_vscreen,
+                                              BOOL force_lock)
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
     BOOL needs_relative, needs_lock, needs_confine;
@@ -758,9 +759,10 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
         return;
     }
 
-    needs_lock = wl_surface && (confine_rect || covers_vscreen) &&
-                 !pointer->cursor.wl_surface;
-    needs_confine = wl_surface && confine_rect && pointer->cursor.wl_surface;
+    needs_lock = wl_surface && (((confine_rect || covers_vscreen) &&
+                 !pointer->cursor.wl_surface) || force_lock);
+    needs_confine = wl_surface && confine_rect && pointer->cursor.wl_surface &&
+                 !force_lock;
 
     if (!needs_confine && pointer->zwp_confined_pointer_v1)
     {
@@ -866,7 +868,7 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
 
 void wayland_pointer_clear_constraint(void)
 {
-    wayland_pointer_update_constraint(NULL, NULL, FALSE);
+    wayland_pointer_update_constraint(NULL, NULL, FALSE, FALSE);
 }
 
 /***********************************************************************
@@ -877,6 +879,27 @@ void WAYLAND_SetCursor(HWND hwnd, HCURSOR hcursor)
     TRACE("hwnd=%p hcursor=%p\n", hwnd, hcursor);
 
     wayland_set_cursor(hwnd, hcursor, TRUE);
+}
+
+/***********************************************************************
+ *           WAYLAND_SetCursorPos
+ */
+BOOL WAYLAND_SetCursorPos(INT x, INT y)
+{
+    struct wayland_pointer *pointer = &process_wayland.pointer;
+
+    pthread_mutex_lock(&pointer->mutex);
+    if (pointer->zwp_relative_pointer_v1)
+    {
+        pthread_mutex_unlock(&pointer->mutex);
+        return FALSE;
+    }
+    pointer->pending_warp = TRUE;
+    pthread_mutex_unlock(&pointer->mutex);
+
+    TRACE("warping to %d,%d\n", x, y);
+    reapply_cursor_clipping();
+    return TRUE;
 }
 
 /***********************************************************************
@@ -913,6 +936,12 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     wayland_win_data_release(data);
 
     pthread_mutex_lock(&pointer->mutex);
+    if (wl_surface && pointer->pending_warp)
+    {
+        wayland_pointer_update_constraint(wl_surface, NULL, FALSE, TRUE);
+        pointer->pending_warp = FALSE;
+    }
+
     if (wl_surface && hwnd == pointer->constraint_hwnd && pointer->zwp_locked_pointer_v1)
     {
         zwp_locked_pointer_v1_set_cursor_position_hint(
@@ -934,7 +963,8 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
     * so we can access it without having the win data lock. */
     wayland_pointer_update_constraint(wl_surface,
                                       (clip && wl_surface) ? &confine_rect : NULL,
-                                      covers_vscreen);
+                                      covers_vscreen,
+                                      FALSE);
     pthread_mutex_unlock(&pointer->mutex);
 
     wl_display_flush(process_wayland.wl_display);
