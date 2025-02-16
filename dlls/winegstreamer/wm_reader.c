@@ -1932,11 +1932,25 @@ static HRESULT WINAPI reader_Close(IWMSyncReader2 *iface)
     return S_OK;
 }
 
-static HRESULT WINAPI reader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD output, DWORD *max)
+static HRESULT WINAPI reader_GetMaxOutputSampleSize(IWMSyncReader2 *iface, DWORD output_number, DWORD *size)
 {
-    struct wm_reader *This = impl_from_IWMSyncReader2(iface);
-    FIXME("(%p)->(%lu %p): stub!\n", This, output, max);
-    return E_NOTIMPL;
+    struct wm_reader *reader = impl_from_IWMSyncReader2(iface);
+    struct wm_stream *stream;
+
+    TRACE("reader %p, output_number %lu, size %p.\n", reader, output_number, size);
+
+    EnterCriticalSection(&reader->cs);
+
+    if (!(stream = get_stream_by_output_number(reader, output_number)))
+    {
+        LeaveCriticalSection(&reader->cs);
+        return E_INVALIDARG;
+    }
+
+    *size = wg_format_get_max_size(&stream->format);
+
+    LeaveCriticalSection(&reader->cs);
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_GetMaxStreamSampleSize(IWMSyncReader2 *iface, WORD stream_number, DWORD *size)

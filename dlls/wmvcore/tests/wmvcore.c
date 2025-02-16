@@ -1219,6 +1219,11 @@ static void test_sync_reader_streaming(void)
 
     for (i = 0; i < 2; ++i)
     {
+        DWORD max_sample_size = 0xdeadbeef;
+        hr = IWMSyncReader_GetMaxOutputSampleSize(reader, i, &max_sample_size);
+        ok(hr == S_OK, "Got hr %#lx for output %lu.\n", hr, i);
+        ok(max_sample_size > 0, "Expected max sample size > 0\n");
+
         hr = IWMProfile_GetStream(profile, i, &config);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
