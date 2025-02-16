@@ -837,8 +837,16 @@ static void test_metadata_unknown(void)
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    PropVariantInit(&id);
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_RemoveValue(writer, &schema, &id);
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_UI4;
+    hr = IWICMetadataWriter_RemoveValue(writer, &schema, &id);
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
+
     hr = IWICMetadataWriter_RemoveValueByIndex(writer, 0);
-    todo_wine
     ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICMetadataWriter_GetCount(writer, &count);
@@ -1829,6 +1837,7 @@ static void test_metadata_Exif(void)
 
 static void test_metadata_Gps(void)
 {
+    PROPVARIANT schema, id, value;
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
     UINT count=0;
@@ -1872,6 +1881,31 @@ static void test_metadata_Gps(void)
     check_interface(writer, &IID_IPersistStream, TRUE);
     check_interface(writer, &IID_IWICPersistStream, TRUE);
     check_interface(writer, &IID_IWICStreamProvider, TRUE);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
+    id.vt = VT_UI2;
+    id.uiVal = 0x300;
+    value.vt = VT_UI2;
+    value.ulVal = 555;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    id.uiVal = 1;
+    hr = IWICMetadataWriter_RemoveValue(writer, &schema, &id);
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    schema.vt = VT_UI4;
+    id.uiVal = 0x300;
+    hr = IWICMetadataWriter_RemoveValue(writer, &schema, &id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICMetadataWriter_GetCount(writer, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -5376,6 +5410,15 @@ static void test_metadata_App1(void)
     hr = IWICMetadataWriter_GetCount(writer, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!count, "Unexpected count %u.\n", count);
+
+    id.vt = VT_UI2;
+    id.uiVal = 0x300;
+    value.vt = VT_UI2;
+    value.ulVal = 555;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     IWICMetadataWriter_Release(writer);
 

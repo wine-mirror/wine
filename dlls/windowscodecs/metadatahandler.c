@@ -228,13 +228,14 @@ static HRESULT WINAPI MetadataHandler_GetValueByIndex(IWICMetadataWriter *iface,
 }
 
 static MetadataItem *metadatahandler_get_item(MetadataHandler *handler, const PROPVARIANT *schema,
-        const PROPVARIANT *id)
+        const PROPVARIANT *id, unsigned int *item_index)
 {
     PROPVARIANT index;
     GUID format;
     HRESULT hr;
     UINT i;
 
+    if (item_index) *item_index = 0;
     PropVariantInit(&index);
     if (id->vt == VT_CLSID && SUCCEEDED(PropVariantChangeType(&index, schema, 0, VT_UI4)))
     {
@@ -254,7 +255,11 @@ static MetadataItem *metadatahandler_get_item(MetadataHandler *handler, const PR
                 {
                     if (IsEqualGUID(&format, id->puuid))
                     {
-                        if (!index.ulVal) return &handler->items[i];
+                        if (!index.ulVal)
+                        {
+                            if (item_index) *item_index = i;
+                            return &handler->items[i];
+                        }
                         --index.ulVal;
                     }
                 }
@@ -271,10 +276,20 @@ static MetadataItem *metadatahandler_get_item(MetadataHandler *handler, const PR
 
         if (PropVariantCompareEx(id, &handler->items[i].id, 0, PVCF_USESTRCMPI) != 0) continue;
 
+        if (item_index) *item_index = i;
         return &handler->items[i];
     }
 
     return NULL;
+}
+
+static void metadata_handler_remove_item(MetadataHandler *handler, unsigned int index)
+{
+    clear_metadata_item(&handler->items[index]);
+    handler->item_count--;
+    if (index != handler->item_count)
+        memmove(&handler->items[index], &handler->items[index + 1],
+                (handler->item_count - index) * sizeof(*handler->items));
 }
 
 static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
@@ -290,7 +305,7 @@ static HRESULT WINAPI MetadataHandler_GetValue(IWICMetadataWriter *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if ((item = metadatahandler_get_item(This, schema, id)))
+    if ((item = metadatahandler_get_item(This, schema, id, NULL)))
     {
         hr = value ? PropVariantCopy(value, &item->value) : S_OK;
     }
@@ -323,7 +338,7 @@ static HRESULT WINAPI MetadataHandler_SetValue(IWICMetadataWriter *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if ((item = metadatahandler_get_item(This, schema, id)))
+    if ((item = metadatahandler_get_item(This, schema, id, NULL)))
     {
         PropVariantClear(&item->value);
         hr = PropVariantCopy(&item->value, value);
@@ -370,17 +385,52 @@ static HRESULT WINAPI MetadataHandler_SetValueByIndex(IWICMetadataWriter *iface,
 }
 
 static HRESULT WINAPI MetadataHandler_RemoveValue(IWICMetadataWriter *iface,
-    const PROPVARIANT *pvarSchema, const PROPVARIANT *pvarId)
+        const PROPVARIANT *schema, const PROPVARIANT *id)
 {
-    FIXME("(%p,%p,%p): stub\n", iface, pvarSchema, pvarId);
-    return E_NOTIMPL;
+    MetadataHandler *handler = impl_from_IWICMetadataWriter(iface);
+    unsigned int index;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p,%p,%p)\n", iface, schema, id);
+
+    if (handler->vtable->flags & METADATAHANDLER_FIXED_ITEMS)
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+
+    EnterCriticalSection(&handler->lock);
+
+    if (metadatahandler_get_item(handler, schema, id, &index))
+    {
+        metadata_handler_remove_item(handler, index);
+    }
+    else
+    {
+        hr = WINCODEC_ERR_PROPERTYNOTFOUND;
+    }
+
+    LeaveCriticalSection(&handler->lock);
+
+    return hr;
 }
 
-static HRESULT WINAPI MetadataHandler_RemoveValueByIndex(IWICMetadataWriter *iface,
-    UINT nIndex)
+static HRESULT WINAPI MetadataHandler_RemoveValueByIndex(IWICMetadataWriter *iface, UINT index)
 {
-    FIXME("(%p,%u): stub\n", iface, nIndex);
-    return E_NOTIMPL;
+    MetadataHandler *handler = impl_from_IWICMetadataWriter(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("(%p,%u)\n", iface, index);
+
+    EnterCriticalSection(&handler->lock);
+
+    if (index >= handler->item_count)
+        hr = E_INVALIDARG;
+    else if (handler->vtable->flags & METADATAHANDLER_FIXED_ITEMS)
+        hr = WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    else
+        metadata_handler_remove_item(handler, index);
+
+    LeaveCriticalSection(&handler->lock);
+
+    return hr;
 }
 
 static const IWICMetadataWriterVtbl MetadataHandler_Vtbl = {
@@ -882,7 +932,7 @@ HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv)
 
 static const MetadataHandlerVtbl UnknownMetadataWriter_Vtbl =
 {
-    .flags = METADATAHANDLER_IS_WRITER,
+    .flags = METADATAHANDLER_IS_WRITER | METADATAHANDLER_FIXED_ITEMS,
     .clsid = &CLSID_WICUnknownMetadataWriter,
     .fnLoad = LoadUnknownMetadata
 };

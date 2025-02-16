@@ -208,6 +208,7 @@ typedef struct _MetadataItem
 enum metadatahandler_flags
 {
     METADATAHANDLER_IS_WRITER = 0x1,
+    METADATAHANDLER_FIXED_ITEMS = 0x2, /* Items cannot be added or removed. */
 };
 
 typedef struct _MetadataHandlerVtbl
