@@ -270,6 +270,69 @@ static void test_class(void)
 
 }
 
+static LRESULT CALLBACK test_adjust_window_style_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    ok( 0, "unexpected msg %#x\n", msg );
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void test_NtUserAlterWindowStyle(void)
+{
+    UINT style, expect_style;
+    ULONG_PTR ret, old_proc;
+    HWND hwnd;
+
+    ret = NtUserAlterWindowStyle( 0, 0, 0 );
+    ok( ret == 0, "got %#Ix\n", ret );
+
+    expect_style = WS_OVERLAPPEDWINDOW | WS_HSCROLL | WS_VSCROLL | WS_CLIPSIBLINGS;
+    hwnd = CreateWindowW( L"static", L"static", expect_style, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, 0, 0, NULL, 0 );
+    flush_events();
+
+    old_proc = SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (ULONG_PTR)test_adjust_window_style_proc );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    ok( style == expect_style, "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, 0, 0 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    ok( style == expect_style, "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, -1, -1 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == (expect_style | 0x23f), "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, -1, 0 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, 0, -1 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, -1, 0xe1e1e1e1 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == ((expect_style & ~WS_HSCROLL) | 0x21), "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, -1, 0 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == (expect_style & ~(WS_VSCROLL | WS_HSCROLL)), "got %#x\n", style );
+
+    ret = NtUserAlterWindowStyle( hwnd, 0x20, 0xe1e1e1e1 );
+    todo_wine ok( ret == 1, "got %#Ix\n", ret );
+    style = GetWindowLongW( hwnd, GWL_STYLE );
+    todo_wine ok( style == ((expect_style & ~(WS_VSCROLL | WS_HSCROLL)) | 0x20), "got %#x\n", style );
+
+    flush_events();
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, old_proc );
+    DestroyWindow( hwnd );
+}
+
 static void test_NtUserCreateInputContext(void)
 {
     UINT_PTR value, attr3;
@@ -2561,6 +2624,7 @@ START_TEST(win32u)
     test_NtUserEnumDisplayDevices();
     test_window_props();
     test_class();
+    test_NtUserAlterWindowStyle();
     test_NtUserCreateInputContext();
     test_NtUserBuildHimcList();
     test_NtUserBuildHwndList();

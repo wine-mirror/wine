@@ -797,7 +797,7 @@
 @ stub NtUserAddVisualIdentifier
 @ stub NtUserAllowForegroundActivation
 @ stub NtUserAllowSetForegroundWindow
-@ stub NtUserAlterWindowStyle
+@ stdcall -syscall NtUserAlterWindowStyle(ptr long long)
 @ stub NtUserApplyWindowAction
 @ stdcall -syscall NtUserArrangeIconicWindows(long)
 @ stdcall -syscall NtUserAssociateInputContext(long long long)

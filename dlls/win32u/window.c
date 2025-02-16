@@ -1165,6 +1165,15 @@ UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
     return style.styleOld;
 }
 
+/**********************************************************************
+ *           NtUserAlterWindowStyle (win32u.@)
+ */
+ULONG WINAPI NtUserAlterWindowStyle( HWND hwnd, UINT mask, UINT style )
+{
+    FIXME( "hwnd %p, mask %#x, style %#x stub!\n", hwnd, mask, style );
+    return 0;
+}
+
 static DWORD fix_exstyle( DWORD style, DWORD exstyle )
 {
     if ((exstyle & WS_EX_DLGMODALFRAME) ||

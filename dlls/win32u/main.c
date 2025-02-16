@@ -1112,6 +1112,11 @@ BOOL SYSCALL_API NtUserAddClipboardFormatListener( HWND hwnd )
     SYSCALL_FUNC( NtUserAddClipboardFormatListener );
 }
 
+ULONG SYSCALL_API NtUserAlterWindowStyle( HWND hwnd, UINT mask, UINT style )
+{
+    SYSCALL_FUNC( NtUserAlterWindowStyle );
+}
+
 UINT SYSCALL_API NtUserArrangeIconicWindows( HWND parent )
 {
     SYSCALL_FUNC( NtUserArrangeIconicWindows );

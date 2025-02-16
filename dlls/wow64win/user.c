@@ -1552,6 +1552,15 @@ NTSTATUS WINAPI wow64_NtUserAddClipboardFormatListener( UINT *args )
     return NtUserAddClipboardFormatListener( hwnd );
 }
 
+NTSTATUS WINAPI wow64_NtUserAlterWindowStyle( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    UINT mask = get_ulong( &args );
+    UINT style = get_ulong( &args );
+
+    return NtUserAlterWindowStyle( hwnd, mask, style );
+}
+
 NTSTATUS WINAPI wow64_NtUserArrangeIconicWindows( UINT *args )
 {
     HWND parent = get_handle( &args );
