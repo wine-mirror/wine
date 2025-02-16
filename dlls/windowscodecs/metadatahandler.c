@@ -93,7 +93,7 @@ static HRESULT WINAPI MetadataHandler_QueryInterface(IWICMetadataWriter *iface, 
 
     if (IsEqualIID(&IID_IUnknown, iid) ||
         IsEqualIID(&IID_IWICMetadataReader, iid) ||
-        (IsEqualIID(&IID_IWICMetadataWriter, iid) && This->vtable->is_writer))
+        (IsEqualIID(&IID_IWICMetadataWriter, iid) && This->vtable->flags & METADATAHANDLER_IS_WRITER))
     {
         *ppv = &This->IWICMetadataWriter_iface;
     }
@@ -882,7 +882,7 @@ HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv)
 
 static const MetadataHandlerVtbl UnknownMetadataWriter_Vtbl =
 {
-    .is_writer = true,
+    .flags = METADATAHANDLER_IS_WRITER,
     .clsid = &CLSID_WICUnknownMetadataWriter,
     .fnLoad = LoadUnknownMetadata
 };
@@ -1583,7 +1583,7 @@ HRESULT IfdMetadataReader_CreateInstance(REFIID iid, void **ppv)
 
 static const MetadataHandlerVtbl IfdMetadataWriter_Vtbl =
 {
-    .is_writer = true,
+    .flags = METADATAHANDLER_IS_WRITER,
     &CLSID_WICIfdMetadataWriter,
     LoadIfdMetadataWriter
 };
@@ -1607,7 +1607,7 @@ HRESULT GpsMetadataReader_CreateInstance(REFIID iid, void **ppv)
 
 static const MetadataHandlerVtbl GpsMetadataWriter_Vtbl =
 {
-    .is_writer = true,
+    .flags = METADATAHANDLER_IS_WRITER,
     &CLSID_WICGpsMetadataWriter,
     LoadGpsMetadataWriter
 };
@@ -1631,7 +1631,7 @@ HRESULT ExifMetadataReader_CreateInstance(REFIID iid, void **ppv)
 
 static const MetadataHandlerVtbl ExifMetadataWriter_Vtbl =
 {
-    .is_writer = true,
+    .flags = METADATAHANDLER_IS_WRITER,
     &CLSID_WICExifMetadataWriter,
     LoadExifMetadataWriter
 };
@@ -1655,7 +1655,7 @@ HRESULT App1MetadataReader_CreateInstance(REFIID iid, void **ppv)
 
 static const MetadataHandlerVtbl App1MetadataWriter_Vtbl =
 {
-    .is_writer = true,
+    .flags = METADATAHANDLER_IS_WRITER,
     &CLSID_WICApp1MetadataWriter,
     LoadApp1MetadataWriter
 };

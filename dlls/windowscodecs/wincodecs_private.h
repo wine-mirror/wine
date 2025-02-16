@@ -205,9 +205,14 @@ typedef struct _MetadataItem
     PROPVARIANT value;
 } MetadataItem;
 
+enum metadatahandler_flags
+{
+    METADATAHANDLER_IS_WRITER = 0x1,
+};
+
 typedef struct _MetadataHandlerVtbl
 {
-    bool is_writer;
+    DWORD flags;
     const CLSID *clsid;
     HRESULT (*fnLoad)(IStream *stream, const GUID *preferred_vendor,
         DWORD persist_options, MetadataItem **items, DWORD *item_count);
