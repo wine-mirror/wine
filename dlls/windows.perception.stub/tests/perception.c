@@ -49,6 +49,60 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
         IUnknown_Release( unk );
 }
 
+static void flush_events(void)
+{
+    int min_timeout = 100, diff = 200;
+    DWORD time = GetTickCount() + diff;
+    MSG msg;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+        diff = time - GetTickCount();
+    }
+}
+
+#define create_foreground_window( a ) create_foreground_window_( __FILE__, __LINE__, a, 5 )
+HWND create_foreground_window_( const char *file, int line, BOOL fullscreen, UINT retries )
+{
+    for (;;)
+    {
+        HWND hwnd;
+        BOOL ret;
+
+        hwnd = CreateWindowW( L"static", NULL, WS_POPUP | (fullscreen ? 0 : WS_VISIBLE),
+                              100, 100, 200, 200, NULL, NULL, NULL, NULL );
+        ok_(file, line)( hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+        if (fullscreen)
+        {
+            HMONITOR hmonitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY );
+            MONITORINFO mi = {.cbSize = sizeof(MONITORINFO)};
+
+            ok_(file, line)( hmonitor != NULL, "MonitorFromWindow failed, error %lu\n", GetLastError() );
+            ret = GetMonitorInfoW( hmonitor, &mi );
+            ok_(file, line)( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+            ret = SetWindowPos( hwnd, 0, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left,
+                                mi.rcMonitor.bottom - mi.rcMonitor.top, SWP_FRAMECHANGED | SWP_SHOWWINDOW );
+            ok_(file, line)( ret, "SetWindowPos failed, error %lu\n", GetLastError() );
+        }
+        flush_events();
+
+        if (GetForegroundWindow() == hwnd) return hwnd;
+        ok_(file, line)( retries > 0, "failed to create foreground window\n" );
+        if (!retries--) return hwnd;
+
+        ret = DestroyWindow( hwnd );
+        ok_(file, line)( ret, "DestroyWindow failed, error %lu\n", GetLastError() );
+        flush_events();
+    }
+}
+
 static void test_ObserverStatics(void)
 {
     static const WCHAR *observer_statics_name = L"Windows.Perception.Spatial.Surfaces.SpatialSurfaceObserver";
@@ -102,8 +156,11 @@ static void test_HolographicSpaceStatics(void)
     static const WCHAR *holographicspace_statics_name = L"Windows.Graphics.Holographic.HolographicSpace";
     IHolographicSpaceStatics2 *holographicspace_statics2;
     IHolographicSpaceStatics3 *holographicspace_statics3;
+    IHolographicSpaceInterop *holographic_space_interop;
+    IHolographicSpace *holographic_space;
     IActivationFactory *factory;
     BOOLEAN value;
+    HWND window;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -162,6 +219,61 @@ static void test_HolographicSpaceStatics(void)
     ok( value == FALSE, "got %d.\n", value );
 
     ref = IHolographicSpaceStatics3_Release( holographicspace_statics3 );
+    ok( ref == 2, "got ref %ld.\n", ref );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IHolographicSpaceInterop, (void **)&holographic_space_interop );
+    if (hr == E_NOINTERFACE) /* win1703 */
+    {
+        win_skip( "IHolographicSpaceInterop is not supported, skipping tests.\n" );
+        goto done;
+    }
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    holographic_space = (void *)0xdeadbeef;
+    hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, NULL, &IID_IHolographicSpaceInterop, (void **)&holographic_space );
+    todo_wine
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    todo_wine
+    ok( holographic_space == (void *)0xdeadbeef, "got holographic_space %p.\n", holographic_space );
+    hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, (void *)0xdeadbeef, &IID_IHolographicSpaceInterop, (void **)&holographic_space );
+    ok( IsWindowVisible( (void *)0xdeadbeef ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( (void *)0xdeadbeef ) );
+    todo_wine
+    ok( hr == E_INVALIDARG || broken(hr == E_ACCESSDENIED) /* w1064v1709 */ || broken(hr == E_NOINTERFACE) /* w11 */, "got hr %#lx.\n", hr );
+    ok( holographic_space == NULL, "got holographic_space %p.\n", holographic_space );
+    if (hr == E_ACCESSDENIED) goto cleanup;
+
+    window = create_foreground_window( FALSE );
+    ok( IsWindowVisible( window ) == TRUE, "got IsWindowVisible %d\n", IsWindowVisible( window ) );
+
+    holographic_space = (void *)0xdeadbeef;
+    hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
+    todo_wine
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    ok( holographic_space == NULL, "got holographic_space %p.\n", holographic_space );
+
+    ShowWindow( window, SW_HIDE );
+    ok( IsWindowVisible( window ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( window ) );
+    hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( IsWindowVisible( window ) == FALSE, "got IsWindowVisible %d\n", IsWindowVisible( window ) );
+
+    if (SUCCEEDED(hr))
+    {
+        check_interface( holographic_space, &IID_IUnknown, FALSE );
+        check_interface( holographic_space, &IID_IInspectable, FALSE );
+        check_interface( holographic_space, &IID_IAgileObject, FALSE );
+
+        ref = IHolographicSpace_Release( holographic_space );
+        ok( ref == 0, "got ref %ld.\n", ref );
+
+        hr = IHolographicSpaceInterop_CreateForWindow( holographic_space_interop, window, &IID_IHolographicSpace, (void **)&holographic_space );
+        todo_wine
+        ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    }
+    DestroyWindow( window );
+cleanup:
+    ref = IHolographicSpaceInterop_Release( holographic_space_interop );
     ok( ref == 2, "got ref %ld.\n", ref );
 done:
     ref = IActivationFactory_Release( factory );
