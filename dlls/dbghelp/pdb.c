@@ -62,7 +62,7 @@ typedef uint64_t pdboff_t; /* offset in whole PDB file (64bit) */
 typedef uint32_t pdbsize_t; /* size inside a stream (including offset from beg of stream) (2G max) */
 
 struct pdb_reader;
-typedef enum pdb_result (*pdb_reader_fetch_t)(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size);
+typedef enum pdb_result (*pdb_reader_fetch_block_t)(struct pdb_reader *pdb, unsigned block_no, void **block_buffer);
 
 struct pdb_reader_walker
 {
@@ -145,7 +145,10 @@ struct pdb_reader
     const IMAGE_SECTION_HEADER *sections;
     unsigned num_sections;
 
-    pdb_reader_fetch_t fetch;
+    /* PDB file access */
+    pdb_reader_fetch_block_t fetch;
+    struct {unsigned block_no; unsigned age;} cache[4*4];
+    char *fetch_cache_blocks;
 };
 
 enum pdb_result
@@ -170,12 +173,42 @@ static enum pdb_result pdb_reader_report_unexpected(const char *kind, const char
 static const unsigned short  PDB_STREAM_TPI = 2;
 static const unsigned short  PDB_STREAM_DBI = 3;
 
-static enum pdb_result pdb_reader_fetch_file(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size)
+static enum pdb_result pdb_reader_fetch_file_no_cache(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size)
 {
     OVERLAPPED ov = {.Offset = offset, .OffsetHigh = offset >> 32, .hEvent = (HANDLE)(DWORD_PTR)1};
     DWORD num_read;
 
     return ReadFile(pdb->file, buffer, size, &num_read, &ov) && num_read == size ? R_PDB_SUCCESS : R_PDB_IOERROR;
+}
+
+static enum pdb_result pdb_reader_fetch_block_from_file(struct pdb_reader *pdb, unsigned block_no, void **buffer)
+{
+    enum pdb_result result;
+    unsigned i;
+    unsigned lru = ARRAY_SIZE(pdb->cache), found = ARRAY_SIZE(pdb->cache);
+
+    for (i = 0; i < ARRAY_SIZE(pdb->cache); i++)
+    {
+        if (pdb->cache[i].block_no == block_no)
+            found = i;
+        else
+        {
+            pdb->cache[i].age++;
+            if (lru == ARRAY_SIZE(pdb->cache) || pdb->cache[lru].age < pdb->cache[i].age)
+                lru = i;
+        }
+    }
+    if (found == ARRAY_SIZE(pdb->cache))
+    {
+        if ((result = pdb_reader_fetch_file_no_cache(pdb, pdb->fetch_cache_blocks + lru * pdb->block_size,
+                                                     (pdboff_t)block_no * pdb->block_size, pdb->block_size))) return result;
+        pdb->cache[lru].block_no = block_no;
+        found = lru;
+    }
+
+    pdb->cache[found].age = 0;
+    *buffer = pdb->fetch_cache_blocks + found * pdb->block_size;
+    return R_PDB_SUCCESS;
 }
 
 static const char       PDB_JG_IDENT[] = "Microsoft C/C++ program database 2.00\r\n\032JG\0";
@@ -242,13 +275,14 @@ static enum pdb_result pdb_reader_internal_read_from_blocks(struct pdb_reader *p
     enum pdb_result result;
     pdbsize_t initial_size = size;
     pdbsize_t toread;
+    void *block_buffer;
 
     while (size)
     {
         toread = min(pdb->block_size - delta, size);
 
-        if ((result = (*pdb->fetch)(pdb, buffer, (pdboff_t)*blocks * pdb->block_size + delta, toread)))
-            return result;
+        if ((result = (pdb->fetch)(pdb, *blocks, &block_buffer))) return result;
+        memcpy(buffer, (char *)block_buffer + delta, toread);
         size -= toread;
         blocks++;
         buffer = (char*)buffer + toread;
@@ -406,9 +440,8 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
     pdb->module = module;
     pdb->file = file;
     pool_init(&pdb->pool, 65536);
-    pdb->fetch = &pdb_reader_fetch_file;
 
-    if ((result = (*pdb->fetch)(pdb, &hdr, 0, sizeof(hdr)))) return result;
+    if ((result = pdb_reader_fetch_file_no_cache(pdb, &hdr, 0, sizeof(hdr)))) return result;
     if (!memcmp(hdr.signature, PDB_JG_IDENT, sizeof(PDB_JG_IDENT)))
     {
         FIXME("PDB reader doesn't support old PDB JG file format\n");
@@ -420,9 +453,16 @@ static enum pdb_result pdb_reader_init(struct pdb_reader *pdb, struct module *mo
         return R_PDB_INVALID_PDB_FILE;
     }
     pdb->block_size = hdr.block_size;
+    if ((result = pdb_reader_alloc(pdb, pdb->block_size * ARRAY_SIZE(pdb->cache), (void **)&pdb->fetch_cache_blocks))) goto failure;
+    for (i = 0; i < ARRAY_SIZE(pdb->cache); i++)
+    {
+        pdb->cache[i].block_no = 0; /* block where PDB header is, so should never be matched by a read operation */
+        pdb->cache[i].age = i;
+    }
+    pdb->fetch = &pdb_reader_fetch_block_from_file;
     toc_blocks_size = pdb_reader_num_blocks(pdb, hdr.toc_size) * sizeof(uint32_t);
     if ((result = pdb_reader_alloc(pdb, toc_blocks_size, (void**)&toc_blocks)) ||
-        (result = (*pdb->fetch)(pdb, toc_blocks, (pdboff_t)hdr.toc_block * hdr.block_size, toc_blocks_size)) ||
+        (result = pdb_reader_fetch_file_no_cache(pdb, toc_blocks, (pdboff_t)hdr.toc_block * hdr.block_size, toc_blocks_size)) ||
         (result = pdb_reader_alloc(pdb, hdr.toc_size, (void**)&toc)) ||
         (result = pdb_reader_internal_read_from_blocks(pdb, toc_blocks, 0, toc, hdr.toc_size, NULL)) ||
         (result = pdb_reader_alloc(pdb, toc->num_streams * sizeof(pdb->streams[0]), (void**)&pdb->streams)))
