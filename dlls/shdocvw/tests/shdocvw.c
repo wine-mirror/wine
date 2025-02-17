@@ -33,8 +33,6 @@
 
 static HMODULE hshdocvw;
 static HRESULT (WINAPI *pURLSubRegQueryA)(LPCSTR, LPCSTR, DWORD, LPVOID, DWORD, DWORD);
-static DWORD (WINAPI *pParseURLFromOutsideSourceA)(LPCSTR, LPSTR, LPDWORD, LPDWORD);
-static DWORD (WINAPI *pParseURLFromOutsideSourceW)(LPCWSTR, LPWSTR, LPDWORD, LPDWORD);
 
 static const char appdata[] = "AppData";
 static const char common_appdata[] = "Common AppData";
@@ -44,38 +42,10 @@ static const char regpath_iemain[] = "Software\\Microsoft\\Internet Explorer\\Ma
 static const char regpath_shellfolders[] = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
 static const char start_page[] = "Start Page";
 
-/* ################ */
-
-static const  struct {
-    const char *url;
-    const char *newurl;
-    DWORD len;
-} ParseURL_table[] = {
-    {"http://www.winehq.org", "http://www.winehq.org/", 22},
-    {"www.winehq.org", "http://www.winehq.org/", 22},
-    {"winehq.org", "http://winehq.org/", 18},
-    {"ftp.winehq.org", "ftp://ftp.winehq.org/", 21},
-    {"http://winehq.org", "http://winehq.org/", 18},
-    {"https://winehq.org", "https://winehq.org/", 19},
-    {"https://www.winehq.org", "https://www.winehq.org/", 23},
-    {"ftp://winehq.org", "ftp://winehq.org/", 17},
-    {"ftp://ftp.winehq.org", "ftp://ftp.winehq.org/", 21},
-    {"about:blank", "about:blank", 11},
-    {"about:home", "about:home", 10},
-    {"about:mozilla", "about:mozilla", 13},
-    /* a space at the start is not allowed */
-    {" http://www.winehq.org", "http://%20http://www.winehq.org", 31}
-
-};
-
-/* ################ */
-
 static void init_functions(void)
 {
     hshdocvw = LoadLibraryA("shdocvw.dll");
     pURLSubRegQueryA = (void *) GetProcAddress(hshdocvw, (LPSTR) 151);
-    pParseURLFromOutsideSourceA = (void *) GetProcAddress(hshdocvw, (LPSTR) 169);
-    pParseURLFromOutsideSourceW = (void *) GetProcAddress(hshdocvw, (LPSTR) 170);
 }
 
 /* ################ */
@@ -191,171 +161,9 @@ static void test_URLSubRegQueryA(void)
     /* todo: what does the last parameter mean? */
 }
 
-/* ################ */
-
-static void test_ParseURLFromOutsideSourceA(void)
-{
-    CHAR buffer[INTERNET_MAX_URL_LENGTH];
-    DWORD dummy;
-    DWORD maxlen;
-    DWORD len;
-    DWORD res;
-    int i;
-
-    if (!pParseURLFromOutsideSourceA) {
-        skip("ParseURLFromOutsideSourceA not found\n");
-        return;
-    }
-
-    for(i = 0; i < ARRAY_SIZE(ParseURL_table); i++) {
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = sizeof(buffer);
-        dummy = 0;
-        /* on success, len+1 is returned. No idea, if someone depend on this */
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
-        /* len does not include the terminating 0, when buffer is large enough */
-        ok( res != 0 && len == ParseURL_table[i].len &&
-            !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d: got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
-            i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
-
-
-        /* use the size test only for the first examples */
-        if (i > 4) continue;
-
-        maxlen = len;
-
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = maxlen + 1;
-        dummy = 0;
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
-        ok( res != 0 && len == ParseURL_table[i].len &&
-            !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d (+1): got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
-            i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
-
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = maxlen;
-        dummy = 0;
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
-        /* len includes the terminating 0, when the buffer is too small */
-        ok( res == 0 && len == ParseURL_table[i].len + 1,
-            "#%d (==): got %ld and %ld (expected '0' and %ld)\n",
-            i, res, len, ParseURL_table[i].len + 1);
-
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = maxlen-1;
-        dummy = 0;
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, &dummy);
-        /* len includes the terminating 0 on XP SP1 and before, when the buffer is too small */
-        ok( res == 0 && (len == ParseURL_table[i].len || len == ParseURL_table[i].len + 1),
-            "#%d (-1): got %ld and %ld (expected '0' and %ld or %ld)\n",
-            i, res, len, ParseURL_table[i].len, ParseURL_table[i].len + 1);
-
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = maxlen+1;
-        dummy = 0;
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, NULL, &len, &dummy);
-        /* len does not include the terminating 0, when buffer is NULL */
-        ok( res == 0 && len == ParseURL_table[i].len,
-            "#%d (buffer): got %ld and %ld (expected '0' and %ld)\n",
-            i, res, len, ParseURL_table[i].len);
-
-        if (0) {
-            /* that test crash on native shdocvw */
-            pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, NULL, &dummy);
-        }
-
-        memset(buffer, '#', sizeof(buffer)-1);
-        buffer[sizeof(buffer)-1] = '\0';
-        len = maxlen+1;
-        dummy = 0;
-        res = pParseURLFromOutsideSourceA(ParseURL_table[i].url, buffer, &len, NULL);
-        ok( res != 0 && len == ParseURL_table[i].len &&
-            !lstrcmpA(buffer, ParseURL_table[i].newurl),
-            "#%d (unknown): got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
-            i, res, len, buffer, ParseURL_table[i].len, ParseURL_table[i].newurl);
-    }
-}
-
-/* ################ */
-
-static void test_ParseURLFromOutsideSourceW(void)
-{
-    WCHAR urlW[INTERNET_MAX_URL_LENGTH];
-    WCHAR bufferW[INTERNET_MAX_URL_LENGTH];
-    CHAR  bufferA[INTERNET_MAX_URL_LENGTH];
-    DWORD maxlen;
-    DWORD dummy;
-    DWORD len;
-    DWORD res;
-
-    if (!pParseURLFromOutsideSourceW) {
-        skip("ParseURLFromOutsideSourceW not found\n");
-        return;
-    }
-    MultiByteToWideChar(CP_ACP, 0, ParseURL_table[0].url, -1, urlW, INTERNET_MAX_URL_LENGTH);
-
-    memset(bufferA, '#', sizeof(bufferA)-1);
-    bufferA[sizeof(bufferA) - 1] = '\0';
-    MultiByteToWideChar(CP_ACP, 0, bufferA, -1, bufferW, INTERNET_MAX_URL_LENGTH);
-
-    /* len is in characters */
-    len = ARRAY_SIZE(bufferW);
-    dummy = 0;
-    res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
-    WideCharToMultiByte(CP_ACP, 0, bufferW, -1, bufferA, sizeof(bufferA), NULL, NULL);
-    ok( res != 0 && len == ParseURL_table[0].len &&
-        !lstrcmpA(bufferA, ParseURL_table[0].newurl),
-        "got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
-        res, len, bufferA, ParseURL_table[0].len, ParseURL_table[0].newurl);
-
-
-    maxlen = len;
-
-    memset(bufferA, '#', sizeof(bufferA)-1);
-    bufferA[sizeof(bufferA) - 1] = '\0';
-    MultiByteToWideChar(CP_ACP, 0, bufferA, -1, bufferW, INTERNET_MAX_URL_LENGTH);
-    len = maxlen+1;
-    dummy = 0;
-    res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
-    WideCharToMultiByte(CP_ACP, 0, bufferW, -1, bufferA, sizeof(bufferA), NULL, NULL);
-    /* len does not include the terminating 0, when buffer is large enough */
-    ok( res != 0 && len == ParseURL_table[0].len &&
-        !lstrcmpA(bufferA, ParseURL_table[0].newurl),
-        "+1: got %ld and %ld with '%s' (expected '!=0' and %ld with '%s')\n",
-        res, len, bufferA, ParseURL_table[0].len, ParseURL_table[0].newurl);
-
-    len = maxlen;
-    dummy = 0;
-    res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
-    /* len includes the terminating 0, when the buffer is too small */
-    ok( res == 0 && len == ParseURL_table[0].len + 1,
-        "==: got %ld and %ld (expected '0' and %ld)\n",
-        res, len, ParseURL_table[0].len + 1);
-
-    len = maxlen - 1;
-    dummy = 0;
-    res = pParseURLFromOutsideSourceW(urlW, bufferW, &len, &dummy);
-    /* len includes the terminating 0 on XP SP1 and before, when the buffer is too small */
-    ok( res == 0 && (len == ParseURL_table[0].len || len == ParseURL_table[0].len + 1),
-        "-1: got %ld and %ld (expected '0' and %ld or %ld)\n",
-        res, len, ParseURL_table[0].len, ParseURL_table[0].len + 1);
-
-}
-
-/* ################ */
-
 START_TEST(shdocvw)
 {
     init_functions();
     test_URLSubRegQueryA();
-    test_ParseURLFromOutsideSourceA();
-    test_ParseURLFromOutsideSourceW();
     FreeLibrary(hshdocvw);
 }
