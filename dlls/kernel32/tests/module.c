@@ -1852,6 +1852,39 @@ static void test_hash_links(void)
     }
 }
 
+static void test_dont_resolve_dll_references(void)
+{
+    char tmp_path[MAX_PATH], tmp_file[MAX_PATH];
+    LDR_DATA_TABLE_ENTRY *mod;
+    NTSTATUS status;
+    HMODULE modbase;
+    DWORD ret;
+    int ires;
+
+    ret = GetTempPathA( sizeof(tmp_path), tmp_path );
+    ok( !!ret, "GetTempPathA returned %lu (err %lu)\n", ret, GetLastError() );
+
+    ires = sprintf( tmp_file, "%swtstdrdr.dll", tmp_path );
+    ok( ires >= 0 && ires < sizeof(tmp_file), "sprintf returned %d\n", ires );
+
+    create_test_dll( tmp_file );
+
+    modbase = LoadLibraryExA( tmp_file, 0, DONT_RESOLVE_DLL_REFERENCES );
+    ok( modbase != NULL, "LoadLibrary returned %p (err %lu)\n", modbase, GetLastError() );
+
+    status = LdrFindEntryForAddress( modbase, &mod );
+    ok( !status, "LdrFindEntryForAddress returned %lx\n", status );
+
+    ok( !(mod->Flags & LDR_LOAD_IN_PROGRESS), "expected LDR_LOAD_IN_PROGRESS to be unset (Flags: %lx)\n", mod->Flags );
+    ok( !(mod->Flags & LDR_PROCESS_ATTACHED), "expected LDR_PROCESS_ATTACHED to be unset (Flags: %lx)\n", mod->Flags );
+
+    ret = FreeLibrary( modbase );
+    ok( !!ret, "FreeLibrary returned %lu\n", ret );
+
+    ret = DeleteFileA( tmp_file );
+    ok( !!ret, "DeleteFileA returned %lu\n", ret );
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1891,4 +1924,5 @@ START_TEST(module)
     test_tls_links();
     test_base_address_index_tree();
     test_hash_links();
+    test_dont_resolve_dll_references();
 }
