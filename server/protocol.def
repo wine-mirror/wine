@@ -2544,6 +2544,7 @@ enum message_type
     user_handle_t  parent;      /* parent window */
     user_handle_t  owner;       /* owner window */
     atom_t         atom;        /* class atom */
+    mod_handle_t   class_instance; /* class module instance */
     mod_handle_t   instance;    /* module instance */
     unsigned int   dpi_context; /* thread DPI context */
     unsigned int   style;       /* window style */

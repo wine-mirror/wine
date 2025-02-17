@@ -3401,12 +3401,13 @@ struct create_window_request
     user_handle_t  parent;
     user_handle_t  owner;
     atom_t         atom;
+    mod_handle_t   class_instance;
     mod_handle_t   instance;
     unsigned int   dpi_context;
     unsigned int   style;
     unsigned int   ex_style;
     /* VARARG(class,unicode_str); */
-    char __pad_44[4];
+    char __pad_52[4];
 };
 struct create_window_reply
 {
@@ -6806,6 +6807,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 874
+#define SERVER_PROTOCOL_VERSION 875
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

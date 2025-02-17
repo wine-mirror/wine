@@ -5247,9 +5247,8 @@ void destroy_thread_windows(void)
  *
  * Create a window handle with the server.
  */
-static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
-                                  HINSTANCE instance, BOOL ansi,
-                                  DWORD style, DWORD ex_style )
+static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name, HINSTANCE class_instance,
+                                  HINSTANCE instance, BOOL ansi, DWORD style, DWORD ex_style )
 {
     UINT dpi_context = get_thread_dpi_awareness_context();
     HWND handle = 0, full_parent = 0, full_owner = 0;
@@ -5259,12 +5258,13 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     SERVER_START_REQ( create_window )
     {
-        req->parent    = wine_server_user_handle( parent );
-        req->owner     = wine_server_user_handle( owner );
-        req->instance  = wine_server_client_ptr( instance );
-        req->dpi_context = dpi_context;
-        req->style     = style;
-        req->ex_style  = ex_style;
+        req->parent          = wine_server_user_handle( parent );
+        req->owner           = wine_server_user_handle( owner );
+        req->class_instance  = wine_server_client_ptr( class_instance );
+        req->instance        = wine_server_client_ptr( instance );
+        req->dpi_context     = dpi_context;
+        req->style           = style;
+        req->ex_style        = ex_style;
         if (!(req->atom = get_int_atom_value( name )) && name->Length)
             wine_server_add_data( req, name->Buffer, name->Length );
         if (!wine_server_call_err( req ))
@@ -5322,6 +5322,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->owner      = full_owner;
     win->class      = class;
     win->winproc    = get_class_winproc( class );
+    win->hInstance  = instance;
     win->cbWndExtra = extra_bytes;
     list_init( &win->vulkan_surfaces );
     set_user_handle_ptr( handle, win );
@@ -5416,8 +5417,8 @@ static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_to )
 HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT cx, INT cy,
-                                  HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                  DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi )
+                                  HWND parent, HMENU menu, HINSTANCE class_instance, void *params,
+                                  DWORD flags, HINSTANCE instance, DWORD unk, BOOL ansi )
 {
     UINT win_dpi, context;
     struct window_surface *surface;
@@ -5432,7 +5433,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
 
     cs.lpCreateParams = params;
-    cs.hInstance  = client_instance ? client_instance : instance;
+    cs.hInstance  = instance ? instance : class_instance;
     cs.hMenu      = menu;
     cs.hwndParent = parent;
     cs.style      = style;
@@ -5489,13 +5490,13 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     style = cs.style & ~WS_VISIBLE;
     ex_style = cs.dwExStyle & ~WS_EX_LAYERED;
-    if (!(win = create_window_handle( parent, owner, class_name, instance, ansi, style, ex_style )))
+    if (!(win = create_window_handle( parent, owner, class_name, class_instance,
+                                      cs.hInstance, ansi, style, ex_style )))
         return 0;
     hwnd = win->handle;
 
     /* Fill the window structure */
 
-    win->hInstance   = cs.hInstance;
     win->text        = NULL;
     win->dwStyle     = style;
     win->dwExStyle   = ex_style;
@@ -5552,10 +5553,9 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     SERVER_START_REQ( set_window_info )
     {
         req->handle     = wine_server_user_handle( hwnd );
-        req->flags      = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE | SET_WIN_UNICODE;
+        req->flags      = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_UNICODE;
         req->style      = win->dwStyle;
         req->ex_style   = win->dwExStyle;
-        req->instance   = wine_server_client_ptr( win->hInstance );
         req->is_unicode = (win->flags & WIN_ISUNICODE) != 0;
         req->extra_offset = -1;
         wine_server_call( req );

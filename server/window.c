@@ -607,8 +607,8 @@ void post_desktop_message( struct desktop *desktop, unsigned int message,
 }
 
 /* create a new window structure (note: the window is not linked in the window tree) */
-static struct window *create_window( struct window *parent, struct window *owner,
-                                     atom_t atom, mod_handle_t instance )
+static struct window *create_window( struct window *parent, struct window *owner, atom_t atom,
+                                     mod_handle_t class_instance, mod_handle_t instance )
 {
     int extra_bytes;
     struct window *win = NULL;
@@ -617,7 +617,7 @@ static struct window *create_window( struct window *parent, struct window *owner
 
     if (!(desktop = get_thread_desktop( current, DESKTOP_CREATEWINDOW ))) return NULL;
 
-    if (!(class = grab_class( current->process, atom, instance, &extra_bytes )))
+    if (!(class = grab_class( current->process, atom, class_instance, &extra_bytes )))
     {
         release_object( desktop );
         return NULL;
@@ -656,7 +656,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->style          = 0;
     win->ex_style       = 0;
     win->id             = 0;
-    win->instance       = 0;
+    win->instance       = instance;
     win->is_unicode     = 1;
     win->is_linked      = 0;
     win->is_layered     = 0;
@@ -2214,7 +2214,7 @@ DECL_HANDLER(create_window)
 
     atom = cls_name.len ? find_global_atom( NULL, &cls_name ) : req->atom;
 
-    if (!(win = create_window( parent, owner, atom, req->instance ))) return;
+    if (!(win = create_window( parent, owner, atom, req->class_instance, req->instance ))) return;
 
     if (parent && !is_desktop_window( parent ))
         dpi_context = parent->shared->dpi_context;
@@ -2286,7 +2286,7 @@ DECL_HANDLER(get_desktop_window)
 
     if (!desktop->top_window && req->force)  /* create it */
     {
-        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0 )))
+        if ((desktop->top_window = create_window( NULL, NULL, DESKTOP_ATOM, 0, 0 )))
         {
             detach_window_thread( desktop->top_window );
             desktop->top_window->style  = WS_POPUP | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
@@ -2298,7 +2298,7 @@ DECL_HANDLER(get_desktop_window)
         static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
         static const struct unicode_str name = { messageW, sizeof(messageW) };
         atom_t atom = add_global_atom( NULL, &name );
-        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0 )))
+        if (atom && (desktop->msg_window = create_window( NULL, NULL, atom, 0, 0 )))
         {
             detach_window_thread( desktop->msg_window );
             desktop->msg_window->style = WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;

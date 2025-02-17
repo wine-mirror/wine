@@ -1656,6 +1656,7 @@ static void dump_create_window_request( const struct create_window_request *req 
     fprintf( stderr, " parent=%08x", req->parent );
     fprintf( stderr, ", owner=%08x", req->owner );
     fprintf( stderr, ", atom=%04x", req->atom );
+    dump_uint64( ", class_instance=", &req->class_instance );
     dump_uint64( ", instance=", &req->instance );
     fprintf( stderr, ", dpi_context=%08x", req->dpi_context );
     fprintf( stderr, ", style=%08x", req->style );
