@@ -88,6 +88,7 @@ static BOOL (WINAPI *pWow64DisableWow64FsRedirection)(void **);
 static BOOL (WINAPI *pWow64RevertWow64FsRedirection)(void *);
 static HMODULE (WINAPI *pLoadPackagedLibrary)(LPCWSTR lpwLibFileName, DWORD Reserved);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
+static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
 
 static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
 {
@@ -2667,6 +2668,36 @@ static HANDLE gen_forward_chain_testdll( char testdll_path[MAX_PATH],
     return file;
 }
 
+struct ldr_notify_counter
+{
+    WCHAR path[MAX_PATH];
+
+    unsigned int load_count;
+    unsigned int unload_count;
+};
+
+static void CALLBACK ldr_notify_counter_callback(ULONG reason, LDR_DLL_NOTIFICATION_DATA *data, void *context)
+{
+    struct ldr_notify_counter *lnc = context;
+
+    switch (reason)
+    {
+    case LDR_DLL_NOTIFICATION_REASON_LOADED:
+        if (!wcsicmp( data->Loaded.BaseDllName->Buffer, lnc->path ))
+        {
+            lnc->load_count++;
+        }
+        break;
+
+    case LDR_DLL_NOTIFICATION_REASON_UNLOADED:
+        if (!wcsicmp( data->Unloaded.BaseDllName->Buffer, lnc->path ))
+        {
+            lnc->unload_count++;
+        }
+        break;
+    }
+}
+
 static void subtest_export_forwarder_dep_chain( size_t num_chained_export_modules,
                                                 size_t exporter_index,
                                                 BOOL test_static_import,
@@ -2676,10 +2707,12 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
     size_t importer_index = test_static_import ? num_modules - 1 : 0;
     DWORD imp_thunk_base_rva, exp_func_base_rva;
     size_t ultimate_depender_index = 0; /* latest module depending on modules earlier in chain */
+    struct ldr_notify_counter lnc;
     char temp_paths[4][MAX_PATH];
     HANDLE temp_files[4];
     UINT_PTR exports[2];
     HMODULE modules[4];
+    void *cookie;
     BOOL res;
     size_t i;
 
@@ -2700,6 +2733,24 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
                                                    importer_index && i == importer_index,
                                                    i == 0 ? &exp_func_base_rva : NULL,
                                                    i == importer_index ? &imp_thunk_base_rva : NULL );
+    }
+
+    if (first_module_load_flags & DONT_RESOLVE_DLL_REFERENCES)
+    {
+        NTSTATUS status;
+        WCHAR *basename;
+        int cres;
+
+        memset( &lnc, 0, sizeof(lnc) );
+
+        cres = MultiByteToWideChar( CP_ACP, 0, temp_paths[0], -1, lnc.path, ARRAY_SIZE(lnc.path) );
+        ok( cres >= 0, "MultiByteToWideChar returned %d (err %lu)\n", cres, GetLastError() );
+
+        basename = wcsrchr( lnc.path, L'\\' ) + 1;
+        memmove( lnc.path, basename, (char *)lnc.path + sizeof(lnc.path) - (char *)basename );
+
+        status = pLdrRegisterDllNotification( 0, ldr_notify_counter_callback, &lnc, &cookie );
+        ok( !status, "LdrRegisterDllNotification returned %#lx.\n", status );
     }
 
     if (winetest_debug > 1)
@@ -2824,6 +2875,19 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
     for (i = 0; i < num_modules; i++)
     {
         ok( !GetModuleHandleA( temp_paths[i] ), "modules[%Iu] should not be kept loaded (3)\n", i );
+    }
+
+    if (first_module_load_flags & DONT_RESOLVE_DLL_REFERENCES)
+    {
+        NTSTATUS status;
+
+        status = pLdrUnregisterDllNotification( cookie );
+        ok( !status, "LdrUnregisterDllNotification returned %#lx.\n", status );
+
+        todo_wine_if(importer_index == 1)
+        ok( !lnc.load_count, "got %u for load count of first module\n", lnc.load_count );
+        todo_wine_if(importer_index == 1)
+        ok( !lnc.unload_count, "got %u for unload count of first module\n", lnc.unload_count );
     }
 
     if (winetest_debug > 1)
@@ -4704,6 +4768,7 @@ START_TEST(loader)
     pRtlImageDirectoryEntryToData = (void *)GetProcAddress(ntdll, "RtlImageDirectoryEntryToData");
     pRtlImageNtHeader = (void *)GetProcAddress(ntdll, "RtlImageNtHeader");
     pLdrRegisterDllNotification = (void *)GetProcAddress(ntdll, "LdrRegisterDllNotification");
+    pLdrUnregisterDllNotification = (void *)GetProcAddress(ntdll, "LdrUnregisterDllNotification");
     pFlsAlloc = (void *)GetProcAddress(kernel32, "FlsAlloc");
     pFlsSetValue = (void *)GetProcAddress(kernel32, "FlsSetValue");
     pFlsGetValue = (void *)GetProcAddress(kernel32, "FlsGetValue");
