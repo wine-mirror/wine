@@ -6089,45 +6089,34 @@ static void test_RemoveMetadataByName(void)
 
     /* Item does not exist. */
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=513}");
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/ifd");
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/invalid");
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/invalid/exif");
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     /* Removing terminal item. */
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}", &value);
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
 
     /* Remove at handler level. */
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd", &value);
-    todo_wine
     ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
     /* At root */
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/");
-    todo_wine
     ok(hr == WINCODEC_ERR_INVALIDQUERYREQUEST, "Unexpected hr %#lx.\n", hr);
     hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1");
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IWICMetadataQueryWriter_Release(query_writer);

@@ -533,7 +533,7 @@ static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query
 
     /* Root component has to be an object within block collection, it's located using {CLSID, index} pair. */
     if (comp->id.vt != VT_CLSID)
-        return E_UNEXPECTED;
+        return WINCODEC_ERR_INVALIDQUERYREQUEST;
 
     hr = IWICMetadataBlockReader_GetCount(query_handler->object.block_reader, &count);
     if (hr != S_OK) return hr;
@@ -669,14 +669,9 @@ static HRESULT parse_query(struct query_handler *query_handler, const WCHAR *que
     if (SUCCEEDED(parser->hr))
     {
         parser->last = &parser->components[parser->count - 1];
-        if (parser->last->handler)
-            return S_OK;
+        parser->prev = parser->count > 1 ? &parser->components[parser->count - 2] : NULL;
 
-        if (parser->count < 2)
-            return parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
-
-        parser->prev = &parser->components[parser->count - 2];
-        if (!parser->prev->handler)
+        if (!parser->last->handler && !(parser->prev && parser->prev->handler))
             return parser->hr = WINCODEC_ERR_INVALIDQUERYREQUEST;
     }
 
@@ -873,11 +868,32 @@ static HRESULT WINAPI query_handler_SetMetadataByName(IWICMetadataQueryWriter *i
     return S_OK;
 }
 
-static HRESULT WINAPI query_handler_RemoveMetadataByName(IWICMetadataQueryWriter *iface, LPCWSTR name)
+static HRESULT WINAPI query_handler_RemoveMetadataByName(IWICMetadataQueryWriter *iface, const WCHAR *query)
 {
-    FIXME("iface %p, name %s stub.\n", iface, debugstr_w(name));
+    struct query_handler *handler = impl_from_IWICMetadataQueryWriter(iface);
+    struct query_component *last, *prev;
+    struct query_parser parser;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, name %s.\n", iface, debugstr_w(query));
+
+    if (!query)
+        return E_INVALIDARG;
+
+    if (SUCCEEDED(hr = parse_query(handler, query, &parser)))
+    {
+        last = parser.last;
+        prev = parser.prev;
+
+        if (is_block_handler(handler) && parser.count == 1)
+            hr = IWICMetadataBlockWriter_RemoveWriterByIndex(handler->object.block_writer, last->index);
+        else
+            hr = IWICMetadataWriter_RemoveValue(prev->writer, &last->schema, &last->id);
+    }
+
+    parser_cleanup(&parser);
+
+    return hr;
 }
 
 static IWICMetadataQueryWriterVtbl query_handler_vtbl =
