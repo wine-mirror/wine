@@ -2670,6 +2670,7 @@ static HRESULT PropertyStorage_ConstructEmpty(IStream *stm, REFFMTID rfmtid,
     hr = PropertyStorage_BaseConstruct(stm, rfmtid, grfMode, &ps);
     if (SUCCEEDED(hr))
     {
+        ps->dirty = TRUE;
         if (clsid)
             ps->clsid = *clsid;
         ps->format = 0;
