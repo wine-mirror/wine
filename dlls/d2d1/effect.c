@@ -1083,6 +1083,17 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
+static const WCHAR flood_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Flood'/>            \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Flood'/>            \
+    <Inputs minimum='0' maximum='0' >                                     \
+    </Inputs>                                                             \
+  </Effect>";
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1099,6 +1110,7 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Shadow, shadow_description },
         { &CLSID_D2D1Grayscale, grayscale_description },
         { &CLSID_D2D1ColorMatrix, color_matrix_description },
+        { &CLSID_D2D1Flood, flood_description },
     };
     unsigned int i;
     HRESULT hr;

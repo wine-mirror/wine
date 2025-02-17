@@ -10992,6 +10992,7 @@ static void test_builtin_effect(BOOL d3d11)
         {&CLSID_D2D1Shadow,                  1, 1, 1, 1},
         {&CLSID_D2D1Grayscale,               3, 1, 1, 1},
         {&CLSID_D2D1ColorMatrix,             1, 1, 1, 1},
+        {&CLSID_D2D1Flood,                   1, 0, 0, 0},
     };
 
     if (!init_test_context(&ctx, d3d11))
@@ -11140,7 +11141,7 @@ static void test_builtin_effect(BOOL d3d11)
             winetest_push_context("Input %u", j);
             image_a = (ID2D1Image *)0xdeadbeef;
             ID2D1Effect_GetInput(effect, j, &image_a);
-            if (j == 0)
+            if (j == 0 && input_count > 0)
             {
                 ok(image_a == (ID2D1Image *)bitmap, "Got unexpected image_a %p.\n", image_a);
                 ID2D1Image_Release(image_a);
