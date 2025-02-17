@@ -2234,12 +2234,6 @@ static void test_metadata_png(void)
         &IID_IWICComponentFactory, (void**)&factory);
     ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
 
-    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, NULL, &queryreader);
-    ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
-
-    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, NULL);
-    ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
-
     hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, &queryreader);
     ok(hr == S_OK, "CreateQueryReaderFromBlockReader failed: %08lx\n", hr);
 
@@ -6109,6 +6103,31 @@ static void test_RemoveMetadataByName(void)
     IWICComponentFactory_Release(factory);
 }
 
+static void test_CreateQueryReaderFromBlockReader(void)
+{
+    IWICMetadataQueryReader *queryreader;
+    IWICMetadataBlockWriter *writer;
+    IWICComponentFactory *factory;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = create_test_block_writer(&GUID_ContainerFormatPng, &writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, NULL, &queryreader);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, (IWICMetadataBlockReader *)writer, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    IWICMetadataBlockWriter_Release(writer);
+
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -6143,6 +6162,7 @@ START_TEST(metadata)
     test_CreateQueryWriter();
     test_CreateQueryWriterFromReader();
     test_RemoveMetadataByName();
+    test_CreateQueryReaderFromBlockReader();
 
     CoUninitialize();
 }
