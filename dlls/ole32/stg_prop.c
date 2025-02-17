@@ -2473,12 +2473,17 @@ end:
 
 static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
 {
+    const ULARGE_INTEGER size = { .QuadPart = 0 };
     PROPERTYSECTIONHEADER sectionHdr;
     HRESULT hr;
     ULONG count;
     LARGE_INTEGER seek;
     DWORD numProps, prop, sectionOffset, dwTemp;
     PROPVARIANT var;
+
+    hr = IStream_SetSize(This->stm, size);
+    if (FAILED(hr))
+        return hr;
 
     PropertyStorage_WriteHeadersToStream(This);
 
