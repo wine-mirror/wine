@@ -2188,85 +2188,70 @@ static void test_metadata_png(void)
     hr = IWICBitmapFrameDecode_QueryInterface(frame, &IID_IWICMetadataBlockReader, (void**)&blockreader);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
 
-    if (SUCCEEDED(hr))
-    {
-        winetest_push_context("png");
-        test_block_reader_enumerator(blockreader);
-        winetest_pop_context();
+    winetest_push_context("png");
+    test_block_reader_enumerator(blockreader);
+    winetest_pop_context();
 
-        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
-        ok(hr == E_INVALIDARG, "GetContainerFormat failed, hr=%lx\n", hr);
+    hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
+    ok(hr == E_INVALIDARG, "GetContainerFormat failed, hr=%lx\n", hr);
 
-        hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &containerformat);
-        ok(hr == S_OK, "GetContainerFormat failed, hr=%lx\n", hr);
-        ok(IsEqualGUID(&containerformat, &GUID_ContainerFormatPng), "unexpected container format\n");
+    hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, &containerformat);
+    ok(hr == S_OK, "GetContainerFormat failed, hr=%lx\n", hr);
+    ok(IsEqualGUID(&containerformat, &GUID_ContainerFormatPng), "unexpected container format\n");
 
-        hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
-        ok(hr == E_INVALIDARG, "GetCount failed, hr=%lx\n", hr);
+    hr = IWICMetadataBlockReader_GetCount(blockreader, NULL);
+    ok(hr == E_INVALIDARG, "GetCount failed, hr=%lx\n", hr);
 
-        hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
-        ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
-        ok(count == 1, "unexpected count %d\n", count);
+    hr = IWICMetadataBlockReader_GetCount(blockreader, &count);
+    ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
+    ok(count == 1, "unexpected count %d\n", count);
 
-        if (0)
-        {
-            /* Crashes on Windows XP */
-            hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, NULL);
-            ok(hr == E_INVALIDARG, "GetReaderByIndex failed, hr=%lx\n", hr);
-        }
+    hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, NULL);
+    ok(hr == E_INVALIDARG, "GetReaderByIndex failed, hr=%lx\n", hr);
 
-        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
-        ok(hr == S_OK, "GetReaderByIndex failed, hr=%lx\n", hr);
+    hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
+    ok(hr == S_OK, "GetReaderByIndex failed, hr=%lx\n", hr);
 
-        if (SUCCEEDED(hr))
-        {
-            hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
-            ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
-            ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME) ||
-               broken(IsEqualGUID(&containerformat, &GUID_MetadataFormatUnknown)) /* Windows XP */,
-               "unexpected container format\n");
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
+    ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
+    ok(IsEqualGUID(&containerformat, &GUID_MetadataFormatChunktIME), "Unexpected format %s.\n",
+            wine_dbgstr_guid(&containerformat));
 
-            test_reader_container_format(reader, &GUID_ContainerFormatPng);
+    test_reader_container_format(reader, &GUID_ContainerFormatPng);
 
-            hr = IWICMetadataReader_GetCount(reader, &count);
-            ok(hr == S_OK, "GetCount error %#lx\n", hr);
-            ok(count == 6 || broken(count == 1) /* XP */, "expected 6, got %u\n", count);
-            if (count == 6)
-                compare_metadata(reader, td, count);
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "GetCount error %#lx\n", hr);
+    ok(count == 6, "Unexpected item count %u.\n", count);
+    if (count == 6)
+        compare_metadata(reader, td, count);
 
-            IWICMetadataReader_Release(reader);
-        }
+    IWICMetadataReader_Release(reader);
 
-        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
-        todo_wine ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "GetReaderByIndex failed, hr=%lx\n", hr);
+    hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 1, &reader);
+    todo_wine ok(hr == WINCODEC_ERR_VALUEOUTOFRANGE, "GetReaderByIndex failed, hr=%lx\n", hr);
 
-        hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IWICComponentFactory, (void**)&factory);
-        ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IWICComponentFactory, (void**)&factory);
+    ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
 
-        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, NULL, &queryreader);
-        ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, NULL, &queryreader);
+    ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
 
-        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, NULL);
-        ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, NULL);
+    ok(hr == E_INVALIDARG, "CreateQueryReaderFromBlockReader should have failed: %08lx\n", hr);
 
-        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, &queryreader);
-        ok(hr == S_OK, "CreateQueryReaderFromBlockReader failed: %08lx\n", hr);
+    hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, blockreader, &queryreader);
+    ok(hr == S_OK, "CreateQueryReaderFromBlockReader failed: %08lx\n", hr);
 
-        IWICMetadataQueryReader_Release(queryreader);
+    IWICMetadataQueryReader_Release(queryreader);
 
-        IWICComponentFactory_Release(factory);
+    IWICComponentFactory_Release(factory);
 
-        IWICMetadataBlockReader_Release(blockreader);
-    }
+    IWICMetadataBlockReader_Release(blockreader);
 
     hr = IWICBitmapFrameDecode_GetMetadataQueryReader(frame, &queryreader);
     ok(hr == S_OK, "GetMetadataQueryReader failed: %08lx\n", hr);
-
-    if (SUCCEEDED(hr))
-    {
-        IWICMetadataQueryReader_Release(queryreader);
-    }
+    IWICMetadataQueryReader_Release(queryreader);
 
     IWICBitmapFrameDecode_Release(frame);
 
