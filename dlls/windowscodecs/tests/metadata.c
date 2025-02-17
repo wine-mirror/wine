@@ -4274,8 +4274,18 @@ static HRESULT WINAPI test_block_writer_SetWriterByIndex(IWICMetadataBlockWriter
 
 static HRESULT WINAPI test_block_writer_RemoveWriterByIndex(IWICMetadataBlockWriter *iface, UINT index)
 {
-    ok(0, "not implemented\n");
-    return E_NOTIMPL;
+    struct test_block_writer *writer = impl_from_IWICMetadataBlockWriter(iface);
+
+    if (index >= writer->count)
+        return E_INVALIDARG;
+
+    IWICMetadataWriter_Release(writer->writers[index]);
+    writer->writers[index] = NULL;
+    writer->count--;
+    if (index != writer->count)
+        memcpy(&writer->writers[index], &writer->writers[index + 1], (writer->count - index) * sizeof(*writer->writers));
+
+    return S_OK;
 }
 
 static const IWICMetadataBlockWriterVtbl test_block_writer_vtbl =
@@ -6050,6 +6060,81 @@ if (hr == S_OK)
     IWICComponentFactory_Release(factory);
 }
 
+static void test_RemoveMetadataByName(void)
+{
+    IWICMetadataQueryWriter *query_writer;
+    IWICComponentFactory *factory;
+    IWICMetadataReader *reader;
+    PROPVARIANT value;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(&CLSID_WICApp1MetadataReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataReader, (void **)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    load_stream(reader, (const char *)&app1_data, sizeof(app1_data), 0);
+
+    hr = create_query_writer_from_metadata_reader(factory, reader, &GUID_ContainerFormatJpeg, &query_writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UI2, "Unexpected value type: %u.\n", value.vt);
+    ok(value.ulVal == 444, "Unexpected value %lu.\n", value.ulVal);
+
+    /* Item does not exist. */
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=513}");
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/ifd");
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/invalid");
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/invalid/exif");
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    /* Removing terminal item. */
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}");
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd/exif/{ushort=512}", &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    /* Remove at handler level. */
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1/ifd");
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/app1/ifd", &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+    /* At root */
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/");
+    todo_wine
+    ok(hr == WINCODEC_ERR_INVALIDQUERYREQUEST, "Unexpected hr %#lx.\n", hr);
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/app1");
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IWICMetadataQueryWriter_Release(query_writer);
+    IWICMetadataReader_Release(reader);
+    IWICComponentFactory_Release(factory);
+}
+
 START_TEST(metadata)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -6083,6 +6168,7 @@ START_TEST(metadata)
     test_metadata_writer();
     test_CreateQueryWriter();
     test_CreateQueryWriterFromReader();
+    test_RemoveMetadataByName();
 
     CoUninitialize();
 }
