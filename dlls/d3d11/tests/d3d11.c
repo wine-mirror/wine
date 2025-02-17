@@ -19687,6 +19687,7 @@ static void test_null_sampler(void)
 
 static void test_check_feature_support(void)
 {
+    D3D11_FEATURE_DATA_D3D9_SIMPLE_INSTANCING_SUPPORT d3d9si;
     D3D11_FEATURE_DATA_THREADING threading[2];
     D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS hwopts;
     D3D11_FEATURE_DATA_ARCHITECTURE_INFO archinfo;
@@ -19754,6 +19755,10 @@ static void test_check_feature_support(void)
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_ARCHITECTURE_INFO, &archinfo, sizeof(archinfo)*2);
     ok(hr == E_INVALIDARG /* Not available on all Windows versions but they will return E_INVALIDARG anyways. */,
             "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &d3d9si, sizeof(d3d9si));
+    todo_wine
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win 7 */, "Got unexpected hr %#lx.\n", hr);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
