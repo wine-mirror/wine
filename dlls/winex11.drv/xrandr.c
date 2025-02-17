@@ -714,13 +714,32 @@ static BOOL is_crtc_primary( RECT primary, const XRRCrtcInfo *crtc )
            crtc->y + crtc->height == primary.bottom;
 }
 
+struct vk_physdev_info
+{
+    VkPhysicalDevice physdev;
+    VkPhysicalDeviceProperties2 properties2;
+    VkPhysicalDeviceIDProperties id;
+};
+
+static int compare_vulkan_physical_devices( const void *v1, const void *v2 )
+{
+    static const int device_type_rank[6] = { 100, 1, 0, 2, 3, 200 };
+    const struct vk_physdev_info *d1 = v1, *d2 = v2;
+    int rank1, rank2;
+
+    rank1 = device_type_rank[ min( d1->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    rank2 = device_type_rank[ min( d2->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    if (rank1 != rank2) return rank1 - rank2;
+
+    return memcmp( &d1->id.deviceUUID, &d2->id.deviceUUID, sizeof(d1->id.deviceUUID) );
+}
+
 static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRProviderInfo *provider_info,
                                             struct x11drv_gpu *prev_gpus, int prev_gpu_count )
 {
     uint32_t device_count, device_idx, output_idx, i;
     VkPhysicalDevice *vk_physical_devices = NULL;
-    VkPhysicalDeviceProperties2 properties2;
-    VkPhysicalDeviceIDProperties id;
+    struct vk_physdev_info *devs = NULL;
     VkDisplayKHR vk_display;
     BOOL ret = FALSE;
     VkResult vr;
@@ -744,43 +763,50 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
         goto done;
     }
 
+    if (!(devs = calloc( device_count, sizeof(*devs) )))
+        goto done;
+
+    for (device_idx = 0; device_idx < device_count; ++device_idx)
+    {
+        devs[device_idx].physdev = vk_physical_devices[device_idx];
+        devs[device_idx].id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+        devs[device_idx].properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        devs[device_idx].properties2.pNext = &devs[device_idx].id;
+        p_vkGetPhysicalDeviceProperties2KHR( vk_physical_devices[device_idx], &devs[device_idx].properties2 );
+    }
+    qsort( devs, device_count, sizeof(*devs), compare_vulkan_physical_devices );
+
     TRACE("provider name %s.\n", debugstr_a(provider_info->name));
 
     for (device_idx = 0; device_idx < device_count; ++device_idx)
     {
         for (output_idx = 0; output_idx < provider_info->noutputs; ++output_idx)
         {
-            vr = p_vkGetRandROutputDisplayEXT( vk_physical_devices[device_idx], gdi_display,
+            vr = p_vkGetRandROutputDisplayEXT( devs[device_idx].physdev, gdi_display,
                                                provider_info->outputs[output_idx], &vk_display );
             if (vr != VK_SUCCESS || vk_display == VK_NULL_HANDLE)
                 continue;
 
-            memset( &id, 0, sizeof(id) );
-            id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
-            properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-            properties2.pNext = &id;
-
-            p_vkGetPhysicalDeviceProperties2KHR( vk_physical_devices[device_idx], &properties2 );
             for (i = 0; i < prev_gpu_count; ++i)
             {
-                if (!memcmp( &prev_gpus[i].vulkan_uuid, &id.deviceUUID, sizeof(id.deviceUUID) ))
+                if (!memcmp( &prev_gpus[i].vulkan_uuid, &devs[device_idx].id.deviceUUID, sizeof(devs[device_idx].id.deviceUUID) ))
                 {
-                    WARN( "device UUID %#x:%#x already assigned to GPU %u.\n", *((uint32_t *)id.deviceUUID + 1),
-                          *(uint32_t *)id.deviceUUID, i );
+                    WARN( "device UUID %#x:%#x already assigned to GPU %u.\n", *((uint32_t *)devs[device_idx].id.deviceUUID + 1),
+                          *(uint32_t *)devs[device_idx].id.deviceUUID, i );
                     break;
                 }
             }
             if (i < prev_gpu_count) continue;
 
-            memcpy( &gpu->vulkan_uuid, id.deviceUUID, sizeof(id.deviceUUID) );
+            memcpy( &gpu->vulkan_uuid, devs[device_idx].id.deviceUUID, sizeof(devs[device_idx].id.deviceUUID) );
 
             /* Ignore Khronos vendor IDs */
-            if (properties2.properties.vendorID < 0x10000)
+            if (devs[device_idx].properties2.properties.vendorID < 0x10000)
             {
-                gpu->pci_id.vendor = properties2.properties.vendorID;
-                gpu->pci_id.device = properties2.properties.deviceID;
+                gpu->pci_id.vendor = devs[device_idx].properties2.properties.vendorID;
+                gpu->pci_id.device = devs[device_idx].properties2.properties.deviceID;
             }
-            gpu->name = strdup( properties2.properties.deviceName );
+            gpu->name = strdup( devs[device_idx].properties2.properties.deviceName );
 
             ret = TRUE;
             goto done;
@@ -788,6 +814,7 @@ static BOOL get_gpu_properties_from_vulkan( struct x11drv_gpu *gpu, const XRRPro
     }
 
 done:
+    free( devs );
     free( vk_physical_devices );
     return ret;
 }
