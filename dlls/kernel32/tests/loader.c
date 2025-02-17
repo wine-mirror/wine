@@ -2824,7 +2824,6 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
 
         status = LdrFindEntryForAddress( modules[0], &mod );
         ok( !status, "LdrFindEntryForAddress returned %#lx", status );
-        todo_wine_if(importer_index == 1)
         ok( !(mod->Flags & LDR_PROCESS_ATTACHED), "expected LDR_PROCESS_ATTACHED to be unset (Flags=%#lx)\n", mod->Flags );
     }
 
@@ -2884,9 +2883,7 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
         status = pLdrUnregisterDllNotification( cookie );
         ok( !status, "LdrUnregisterDllNotification returned %#lx.\n", status );
 
-        todo_wine_if(importer_index == 1)
         ok( !lnc.load_count, "got %u for load count of first module\n", lnc.load_count );
-        todo_wine_if(importer_index == 1)
         ok( !lnc.unload_count, "got %u for unload count of first module\n", lnc.unload_count );
     }
 
