@@ -586,38 +586,70 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
     return STATUS_SUCCESS;
 }
 
+struct vk_physdev_info
+{
+    VkPhysicalDeviceProperties2 properties2;
+    VkPhysicalDeviceIDProperties id;
+    VkPhysicalDeviceMemoryProperties mem_properties;
+};
+
+static int compare_vulkan_physical_devices( const void *v1, const void *v2 )
+{
+    static const int device_type_rank[6] = { 100, 1, 0, 2, 3, 200 };
+    const struct vk_physdev_info *d1 = v1, *d2 = v2;
+    int rank1, rank2;
+
+    rank1 = device_type_rank[ min( d1->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    rank2 = device_type_rank[ min( d2->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    if (rank1 != rank2) return rank1 - rank2;
+
+    return memcmp( &d1->id.deviceUUID, &d2->id.deviceUUID, sizeof(d1->id.deviceUUID) );
+}
+
 BOOL get_vulkan_gpus( struct list *gpus )
 {
+    struct vk_physdev_info *devinfo;
     VkPhysicalDevice *devices;
     UINT i, j, count;
 
     if (!d3dkmt_use_vulkan()) return FALSE;
     if (!(count = get_vulkan_physical_devices( &devices ))) return FALSE;
 
+    if (!(devinfo = calloc( count, sizeof(*devinfo) )))
+    {
+        free( devices );
+        return FALSE;
+    }
     for (i = 0; i < count; ++i)
     {
-        VkPhysicalDeviceIDProperties id = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
-        VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
-        VkPhysicalDeviceMemoryProperties mem_properties;
+        devinfo[i].id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+        devinfo[i].properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        devinfo[i].properties2.pNext = &devinfo[i].id;
+        pvkGetPhysicalDeviceProperties2KHR( devices[i], &devinfo[i].properties2 );
+        pvkGetPhysicalDeviceMemoryProperties( devices[i], &devinfo[i].mem_properties );
+    }
+    qsort( devinfo, count, sizeof(*devinfo), compare_vulkan_physical_devices );
+
+    for (i = 0; i < count; ++i)
+    {
         struct vulkan_gpu *gpu;
 
         if (!(gpu = calloc( 1, sizeof(*gpu) ))) break;
-        pvkGetPhysicalDeviceProperties2KHR( devices[i], &properties2 );
-        memcpy( &gpu->uuid, id.deviceUUID, sizeof(gpu->uuid) );
-        gpu->name = strdup( properties2.properties.deviceName );
-        gpu->pci_id.vendor = properties2.properties.vendorID;
-        gpu->pci_id.device = properties2.properties.deviceID;
+        memcpy( &gpu->uuid, devinfo[i].id.deviceUUID, sizeof(gpu->uuid) );
+        gpu->name = strdup( devinfo[i].properties2.properties.deviceName );
+        gpu->pci_id.vendor = devinfo[i].properties2.properties.vendorID;
+        gpu->pci_id.device = devinfo[i].properties2.properties.deviceID;
 
-        pvkGetPhysicalDeviceMemoryProperties( devices[i], &mem_properties );
-        for (j = 0; j < mem_properties.memoryHeapCount; j++)
+        for (j = 0; j < devinfo[i].mem_properties.memoryHeapCount; j++)
         {
-            if (mem_properties.memoryHeaps[j].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-                gpu->memory += mem_properties.memoryHeaps[j].size;
+            if (devinfo[i].mem_properties.memoryHeaps[j].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                gpu->memory += devinfo[i].mem_properties.memoryHeaps[j].size;
         }
 
         list_add_tail( gpus, &gpu->entry );
     }
 
+    free( devinfo );
     free( devices );
     return TRUE;
 }
