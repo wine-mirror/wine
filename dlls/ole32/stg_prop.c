@@ -2558,6 +2558,8 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
     hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
 
 end:
+    if (SUCCEEDED(hr))
+        This->dirty = FALSE;
     return hr;
 }
 
