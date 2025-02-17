@@ -2162,7 +2162,7 @@ static void test_metadata_png(void)
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *blockreader;
-    IWICMetadataReader *reader;
+    IWICMetadataReader *reader, *reader2;
     IWICMetadataQueryReader *queryreader;
     IWICComponentFactory *factory;
     GUID containerformat;
@@ -2211,6 +2211,11 @@ static void test_metadata_png(void)
 
     hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
     ok(hr == S_OK, "GetReaderByIndex failed, hr=%lx\n", hr);
+    hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(reader == reader2, "Unexpected instance.\n");
+    IWICMetadataReader_Release(reader2);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &containerformat);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%#lx\n", hr);
@@ -2335,7 +2340,7 @@ static void test_metadata_gif(void)
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *frame;
     IWICMetadataBlockReader *blockreader;
-    IWICMetadataReader *reader;
+    IWICMetadataReader *reader, *reader2;
     IWICMetadataQueryReader *queryreader;
     GUID format;
     HRESULT hr;
@@ -2373,6 +2378,12 @@ static void test_metadata_gif(void)
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
+
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
+        ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
+        todo_wine
+        ok(reader == reader2, "Unexpected instance.\n");
+        IWICMetadataReader_Release(reader2);
 
         if (SUCCEEDED(hr))
         {
@@ -2424,6 +2435,11 @@ static void test_metadata_gif(void)
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader);
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
+        hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
+        ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
+        todo_wine
+        ok(reader == reader2, "Unexpected instance.\n");
+        IWICMetadataReader_Release(reader2);
 
         if (SUCCEEDED(hr))
         {
