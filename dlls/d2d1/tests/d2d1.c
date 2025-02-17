@@ -10991,6 +10991,7 @@ static void test_builtin_effect(BOOL d3d11)
         {&CLSID_D2D1Crop,                    1, 1, 1, 1},
         {&CLSID_D2D1Shadow,                  1, 1, 1, 1},
         {&CLSID_D2D1Grayscale,               3, 1, 1, 1},
+        {&CLSID_D2D1ColorMatrix,             1, 1, 1, 1},
     };
 
     if (!init_test_context(&ctx, d3d11))
