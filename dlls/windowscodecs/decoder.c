@@ -638,6 +638,13 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
             if (SUCCEEDED(hr))
                 hr = IWICStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
         }
+        else if (This->metadata_blocks[nIndex].options & DECODER_BLOCK_OFFSET_IS_PTR)
+        {
+            BYTE *data = (BYTE *)(ULONG_PTR)This->metadata_blocks[nIndex].offset;
+            UINT size = This->metadata_blocks[nIndex].length;
+
+            hr = IWICStream_InitializeFromMemory(stream, data, size);
+        }
         else
         {
             ULARGE_INTEGER offset, length;
