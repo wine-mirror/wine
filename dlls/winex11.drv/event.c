@@ -1297,25 +1297,14 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 
 
 /*****************************************************************
- *		SetFocus   (X11DRV.@)
+ *		ActivateWindow   (X11DRV.@)
  *
  * Set the X focus.
  */
-void X11DRV_SetFocus( HWND hwnd )
+void X11DRV_ActivateWindow( HWND hwnd, HWND previous )
 {
     struct x11drv_win_data *data;
-
-    HWND parent;
-
-    for (;;)
-    {
-        if (!(data = get_win_data( hwnd ))) return;
-        if (data->embedded) break;
-        parent = NtUserGetAncestor( hwnd, GA_PARENT );
-        if (!parent || parent == NtUserGetDesktopWindow()) break;
-        release_win_data( data );
-        hwnd = parent;
-    }
+    if (!(data = get_win_data( hwnd ))) return;
     if (!data->managed || data->embedder) set_input_focus( data );
     release_win_data( data );
 }

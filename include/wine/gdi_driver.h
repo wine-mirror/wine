@@ -373,7 +373,7 @@ struct user_driver_funcs
     BOOL    (*pScrollDC)(HDC,INT,INT,HRGN);
     void    (*pSetCapture)(HWND,UINT);
     void    (*pSetDesktopWindow)(HWND);
-    void    (*pSetFocus)(HWND);
+    void    (*pActivateWindow)(HWND,HWND);
     void    (*pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
     void    (*pSetParent)(HWND,HWND,HWND);
     void    (*pSetWindowRgn)(HWND,HRGN,BOOL);

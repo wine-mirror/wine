@@ -714,7 +714,7 @@ extern XContext winContext;
 extern XContext cursor_context;
 
 extern BOOL is_current_process_focused(void);
-extern void X11DRV_SetFocus( HWND hwnd );
+extern void X11DRV_ActivateWindow( HWND hwnd, HWND previous );
 extern void set_window_cursor( Window window, HCURSOR handle );
 extern void reapply_cursor_clipping(void);
 extern void ungrab_clipping_window(void);

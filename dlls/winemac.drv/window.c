@@ -1388,11 +1388,11 @@ void macdrv_DestroyWindow(HWND hwnd)
 
 
 /*****************************************************************
- *              SetFocus   (MACDRV.@)
+ *              ActivateWindow   (MACDRV.@)
  *
- * Set the Mac focus.
+ * Set the Mac active window.
  */
-void macdrv_SetFocus(HWND hwnd)
+void macdrv_ActivateWindow(HWND hwnd, HWND previous)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
 

@@ -136,7 +136,7 @@ extern void macdrv_CleanupIcons(HWND hwnd);
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 extern void macdrv_DestroyWindow(HWND hwnd);
 extern void macdrv_SetDesktopWindow(HWND hwnd);
-extern void macdrv_SetFocus(HWND hwnd);
+extern void macdrv_ActivateWindow(HWND hwnd, HWND previous);
 extern void macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha,
                                               DWORD flags);
 extern void macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent);
