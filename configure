@@ -794,6 +794,7 @@ BISON
 FLEX
 SED_CMD
 RUNTESTFLAGS
+wine64dir
 toolsdir
 x86_64_DISABLED_SUBDIRS
 x86_64_DELAYLOADFLAG
@@ -6600,6 +6601,8 @@ else
     as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
 fi
 toolsdir=$wine_cv_toolsdir
+
+wine64dir=$with_wine64
 
 RUNTESTFLAGS="-q -P wine"
 
@@ -23263,18 +23266,8 @@ include/stamp-h.in: configure.ac aclocal.m4
 fi
 
 
-if test -n "$with_wine64"
+if test -z "$with_wine64"
 then
-        rm -f fonts server 2>/dev/null
-    as_fn_append wine_rules "
-all: loader-wow64 $with_wine64/loader-wow64
-loader-wow64:
-	rm -f \$@ && \$(LN_S) $with_wine64/loader \$@
-$with_wine64/loader-wow64:
-	rm -f \$@ && \$(LN_S) $ac_pwd/loader \$@
-clean::
-	rm -f loader-wow64 $with_wine64/loader-wow64"
-else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
@@ -24143,6 +24136,7 @@ x86_64_STRIP = $x86_64_STRIP
 x86_64_DELAYLOADFLAG = $x86_64_DELAYLOADFLAG
 x86_64_DISABLED_SUBDIRS = $x86_64_DISABLED_SUBDIRS
 toolsdir = $toolsdir
+wine64dir = $wine64dir
 RUNTESTFLAGS = $RUNTESTFLAGS
 SED_CMD = $SED_CMD
 FLEX = $FLEX

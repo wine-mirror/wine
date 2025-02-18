@@ -146,6 +146,7 @@ static struct strarray top_install[NB_INSTALL_RULES];
 static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
+static const char *wine64_dir;
 static const char *exe_ext;
 static const char *fontforge;
 static const char *convert;
@@ -240,6 +241,7 @@ static const char *output_makefile_name = "Makefile";
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
+static char cwd[PATH_MAX];
 static int compile_commands_mode;
 static int silent_rules;
 static int input_line;
@@ -4142,12 +4144,9 @@ static void output_compile_commands( const char *dest )
     struct compile_command *cmd;
     unsigned int i;
     const char *dir;
-    char buffer[PATH_MAX];
 
     output_file = create_temp_file( dest );
-
-    getcwd( buffer, sizeof(buffer) );
-    dir = escape_cstring( buffer );
+    dir = escape_cstring( cwd );
 
     output( "[\n" );
     LIST_FOR_EACH_ENTRY( cmd, &compile_commands, struct compile_command, entry )
@@ -4355,6 +4354,16 @@ static void output_top_makefile( struct makefile *make )
         output( "wine: %s\n", loader );
         output( "\t%srm -f $@ && %s %s $@\n", cmd_prefix( "LN" ), ln_s, loader );
         strarray_add( &make->all_targets[0], "wine" );
+    }
+
+    if (wine64_dir)
+    {
+        output( "loader-wow64:\n" );
+	output( "\t%srm -f $@ && %s %s/loader $@\n", cmd_prefix( "LN" ), ln_s, wine64_dir );
+        output( "%s/loader-wow64:\n", wine64_dir );
+	output( "\t%srm -f $@ && %s %s/loader $@\n", cmd_prefix( "LN" ), ln_s, cwd );
+        strarray_add( &make->all_targets[0], "loader-wow64" );
+        strarray_add( &make->all_targets[0], strmake( "%s/loader-wow64", wine64_dir ));
     }
 
     for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );
@@ -4588,6 +4597,7 @@ int main( int argc, char *argv[] )
 
     atexit( cleanup_files );
     init_signals( exit_on_signal );
+    getcwd( cwd, sizeof(cwd) );
 
     for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
     for (i = 0; i < HASH_SIZE; i++) list_init( &global_includes[i] );
@@ -4608,6 +4618,7 @@ int main( int argc, char *argv[] )
     root_src_dir       = get_expanded_make_variable( top_makefile, "srcdir" );
     tools_dir          = get_expanded_make_variable( top_makefile, "toolsdir" );
     tools_ext          = get_expanded_make_variable( top_makefile, "toolsext" );
+    wine64_dir         = get_expanded_make_variable( top_makefile, "wine64dir" );
     exe_ext            = get_expanded_make_variable( top_makefile, "EXEEXT" );
     dll_ext[0]         = get_expanded_make_variable( top_makefile, "DLLEXT" );
     fontforge          = get_expanded_make_variable( top_makefile, "FONTFORGE" );

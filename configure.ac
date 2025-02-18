@@ -196,6 +196,7 @@ else
     AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
 fi
 AC_SUBST(toolsdir,[$wine_cv_toolsdir])
+AC_SUBST(wine64dir,[$with_wine64])
 AC_SUBST(RUNTESTFLAGS,["-q -P wine"])
 AC_SUBST(SED_CMD,["LC_ALL=C sed -e 's,@bindir@,\${bindir},g' -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g'"])
 
@@ -3642,19 +3643,8 @@ fi
 
 dnl Rules for wineloader
 
-if test -n "$with_wine64"
+if test -z "$with_wine64"
 then
-    dnl Get rid of old symlinks
-    rm -f fonts server 2>/dev/null
-    WINE_APPEND_RULE(
-[all: loader-wow64 $with_wine64/loader-wow64
-loader-wow64:
-	rm -f \$[@] && \$(LN_S) $with_wine64/loader \$[@]
-$with_wine64/loader-wow64:
-	rm -f \$[@] && \$(LN_S) $ac_pwd/loader \$[@]
-clean::
-	rm -f loader-wow64 $with_wine64/loader-wow64])
-else
     TOP_INSTALL_DEV="$TOP_INSTALL_DEV include"
     TOP_INSTALL_LIB="$TOP_INSTALL_LIB \
 fonts \
