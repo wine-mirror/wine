@@ -19757,7 +19757,6 @@ static void test_check_feature_support(void)
             "Got unexpected hr %#lx.\n", hr);
 
     hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D9_SIMPLE_INSTANCING_SUPPORT, &d3d9si, sizeof(d3d9si));
-    todo_wine
     ok(hr == S_OK || broken(hr == E_INVALIDARG) /* Win 7 */, "Got unexpected hr %#lx.\n", hr);
 
     refcount = ID3D11Device_Release(device);
