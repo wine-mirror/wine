@@ -855,6 +855,43 @@ echo --- success/failure for PAUSE command
 call :setError 666 & (pause < NUL > NUL 2>&1 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem TODO: pause is harder to test when fd 1 is a console handle as we don't control output
 echo ---
+rem end of duplication with builtin.bat (cf note above)
+echo --------- success/failure when invoking cmd /c --------------
+echo @call :setError %%1>sel.bat
+echo @goto :eof>>sel.bat
+echo :setError>>sel.bat
+echo @exit /b %%1>>sel.bat
+echo @exit /b %%1>selng.bat
+echo dir IDontExist.DoI> ec.cmd
+call :setError 666 & ((cmd.exe /c "echo a") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "dir IDontExist.DoI">nul) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "ec.cmd">nul) &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "exit /b 457") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "sel.bat 458") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "selng.bat 459") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "call sel.bat 460") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "call selng.bat 461") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "rmdir sel.bat") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((cmd.exe /c "IDontExist.exe") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem syntax error
+call :setError 666 & ((cmd.exe /c "echo>") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+echo --------- success/failure when invoking cmd /k --------------
+rem a bit convoluted, but we need to escape twice the errorlevel so that it's properly
+rem evaluated inside the 'cmd /k' process
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & echo a") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & (dir IDontExist.DoI >nul)") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & (ec.cmd >nul)") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & exit /b 457") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & sel.bat 458") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & selng.bat 459") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & call sel.bat 460") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & call selng.bat 461") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & rmdir sel.bat") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & IDontExist.exe") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+rem syntax error
+call :setError 666 & ((echo echo ERRORLEVEL ^^%%errorlevel^^%%| cmd.exe /q /k "@echo off & echo>") &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+erase /q sel.bat selng.bat ec.cmd
+
 setlocal DisableDelayedExpansion
 echo ------------ Testing 'set' ------------
 call :setError 0
@@ -3944,6 +3981,7 @@ if not errorlevel 1 echo errorlevel zero, good
 if not errorlevel 0x1 echo hexa should not be recognized!
 if not errorlevel 1a echo invalid error level recognized!
 rem Now verify that setting a real variable hides its magic variable
+setlocal
 set errorlevel=7
 echo %ErrorLevel% should be 7
 if errorlevel 7 echo setting var worked too well, bad
@@ -3952,6 +3990,7 @@ echo %ErrorLevel% should still be 7
 rem Verify that (call ) sets errorlevel to 0
 (call )
 if errorlevel 1 echo errorlevel should have been 0
+endlocal
 
 echo ------------ Testing GOTO ------------
 if a==a goto dest1
@@ -3992,22 +4031,26 @@ if exist cmd_output echo FAILURE at dest 6 as file exists
 echo Ignoring double colons worked
 del cmd_output >nul 2>&1
 
+del testgoto.bat >nul 2>&1
 rem goto a label which does not exist issues an error message and
 rem acts the same as goto :EOF, and ensure ::label is never matched
-del testgoto.bat >nul 2>&1
-echo goto :dest7 ^>nul 2^>^&1 >> testgoto.bat
+
+echo goto :dest7 foo ^>nul >> testgoto.bat
 echo echo FAILURE at dest 7 - Should have not found label and issued an error plus ended the batch>> testgoto.bat
 echo ::dest7>> testgoto.bat
 echo echo FAILURE at dest 7 - Incorrectly went to label >> testgoto.bat
+call :setError 666
 call testgoto.bat
+echo dest7 %ERRORLEVEL%
 del testgoto.bat >nul 2>&1
 
-del testgoto.bat >nul 2>&1
-echo goto ::dest8 ^>nul 2^>^&1 >> testgoto.bat
+echo goto ::dest8 foo ^>nul >> testgoto.bat
 echo echo FAILURE at dest 8 - Should have not found label and issued an error plus ended the batch>> testgoto.bat
 echo ::dest8>> testgoto.bat
 echo echo FAILURE at dest 8 - Incorrectly went to label >> testgoto.bat
+call :setError 666
 call testgoto.bat
+echo dest8 %ERRORLEVEL%
 del testgoto.bat >nul 2>&1
 
 if g==g goto dest9
@@ -4022,6 +4065,23 @@ echo FAILURE at dest 10
 :dest10:this is also ignored
 echo Correctly ignored trailing information
 
+echo goto :eof foo bar >> testgoto.bat
+echo echo FAILURE at dest eof - Should have not found label and issued an error plus ended the batch>> testgoto.bat
+call :setError 666
+call testgoto.bat
+echo desteof1 %ERRORLEVEL%
+del testgoto.bat >nul 2>&1
+
+echo goto :eof foo bar>> testgoto.bat
+echo echo FAILURE at dest eof - Should have not found label and issued an error plus ended the batch>> testgoto.bat
+echo :eof>> testgoto.bat
+echo echo FAILURE at dest eof - Incorrectly went to label>> testgoto.bat
+call :setError 666
+call testgoto.bat
+echo desteof2 %ERRORLEVEL%
+del testgoto.bat >nul 2>&1
+
+echo ---
 rem Testing which label is reached when there are many options
 echo Begin:
 set nextlabel=

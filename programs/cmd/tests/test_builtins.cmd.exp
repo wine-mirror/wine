@@ -692,7 +692,42 @@ SUCCESS 0
 --- success/failure for PAUSE command
 FAILURE 1
 ---
------------- Testing 'set' ------------
+--------- success/failure when invoking cmd /c --------------
+a
+SUCCESS 0
+FAILURE 1
+FAILURE 1
+FAILURE 457
+@todo_wine@SUCCESS 0
+FAILURE 459
+FAILURE 460
+FAILURE 461
+@todo_wine@FAILURE 267
+@todo_wine@FAILURE 1
+@todo_wine@FAILURE 1
+--------- success/failure when invoking cmd /k --------------
+a
+@todo_wine@ERRORLEVEL 0
+SUCCESS 0
+@todo_wine@ERRORLEVEL 1
+SUCCESS 0
+@todo_wine@ERRORLEVEL 1
+SUCCESS 0
+FAILURE 457
+@todo_wine@ERRORLEVEL 458
+SUCCESS 0
+@todo_wine@ERRORLEVEL 459
+SUCCESS 0
+@todo_wine@ERRORLEVEL 460
+SUCCESS 0
+@todo_wine@ERRORLEVEL 461
+SUCCESS 0
+@todo_wine@ERRORLEVEL 0
+SUCCESS 0
+@todo_wine@ERRORLEVEL 9009
+SUCCESS 0
+@todo_wine@FAILURE 1
+@todo_wine@------------ Testing 'set' ------------
 1
 0
 WINE_FOOBAR not defined
@@ -2122,8 +2157,13 @@ goto with a following space worked
 goto with following amphersands worked
 goto with redirections worked
 Ignoring double colons worked
+dest7 1
+dest8 1
 label with mixed whitespace and no echo worked
 Correctly ignored trailing information
+desteof1 666
+desteof2 666
+---
 Begin:
 ..First sub
 ..First sub
