@@ -1625,38 +1625,51 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd,
     return *state_cmd || *config_cmd;
 }
 
+static BOOL handle_state_change( unsigned long serial, unsigned long *expect_serial, UINT size, const void *value,
+                                 void *desired, void *pending, void *current, const char *expected,
+                                 const char *prefix, const char *received, const char *reason )
+{
+    if (serial < *expect_serial) reason = "old ";
+    else if (!*expect_serial && !memcmp( current, value, size )) reason = "no-op ";
+
+    if (reason)
+    {
+        WARN( "Ignoring %s%s%s%s\n", prefix, reason, received, expected );
+        return FALSE;
+    }
+
+    if (!*expect_serial) reason = "unexpected ";
+    else if (memcmp( pending, value, size )) reason = "mismatch ";
+
+    if (!reason) TRACE( "%s%s%s\n", prefix, received, expected );
+    else
+    {
+        WARN( "%s%s%s%s\n", prefix, reason, received, expected );
+        /* avoid requesting the same state again */
+        memcpy( desired, value, size );
+        memcpy( pending, value, size );
+    }
+
+    memcpy( current, value, size );
+    *expect_serial = 0;
+    return TRUE;
+}
+
 void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial, UINT value )
 {
     UINT *desired = &data->desired_state.wm_state, *pending = &data->pending_state.wm_state, *current = &data->current_state.wm_state;
     unsigned long *expect_serial = &data->wm_state_serial;
-    const char *reason = NULL, *expected, *received;
+    const char *reason = NULL, *expected, *received, *prefix;
 
+    prefix = wine_dbg_sprintf( "window %p/%lx ", data->hwnd, data->whole_window );
     received = wine_dbg_sprintf( "WM_STATE %#x/%lu", value, serial );
     expected = *expect_serial ? wine_dbg_sprintf( ", expected %#x/%lu", *pending, *expect_serial ) : "";
-
-    if (serial < *expect_serial) reason = "old ";
-    else if (!*expect_serial && *current == value) reason = "no-op ";
     /* ignore Metacity/Mutter transient NormalState during WithdrawnState <-> IconicState transitions */
-    else if (value == NormalState && *current + *pending == IconicState) reason = "transient ";
+    if (value == NormalState && *current + *pending == IconicState) reason = "transient ";
 
-    if (reason)
-    {
-        WARN( "Ignoring window %p/%lx %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+    if (!handle_state_change( serial, expect_serial, sizeof(value), &value, desired, pending,
+                              current, expected, prefix, received, reason ))
         return;
-    }
-
-    if (!*expect_serial) reason = "unexpected ";
-    else if (*pending != value) reason = "mismatch ";
-
-    if (!reason) TRACE( "window %p/%lx, %s%s\n", data->hwnd, data->whole_window, received, expected );
-    else
-    {
-        WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *desired = *pending = value; /* avoid requesting the same state again */
-    }
-
-    *current = value;
-    *expect_serial = 0;
 
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state );
@@ -1668,32 +1681,15 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
 {
     UINT *desired = &data->desired_state.net_wm_state, *pending = &data->pending_state.net_wm_state, *current = &data->current_state.net_wm_state;
     unsigned long *expect_serial = &data->net_wm_state_serial;
-    const char *reason = NULL, *expected, *received;
+    const char *expected, *received, *prefix;
 
+    prefix = wine_dbg_sprintf( "window %p/%lx ", data->hwnd, data->whole_window );
     received = wine_dbg_sprintf( "_NET_WM_STATE %#x/%lu", value, serial );
     expected = *expect_serial ? wine_dbg_sprintf( ", expected %#x/%lu", *pending, *expect_serial ) : "";
 
-    if (serial < *expect_serial) reason = "old ";
-    else if (!*expect_serial && *current == value) reason = "no-op ";
-
-    if (reason)
-    {
-        WARN( "Ignoring window %p/%lx %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
+    if (!handle_state_change( serial, expect_serial, sizeof(value), &value, desired, pending,
+                              current, expected, prefix, received, NULL ))
         return;
-    }
-
-    if (!*expect_serial) reason = "unexpected ";
-    else if (*pending != value) reason = "mismatch ";
-
-    if (!reason) TRACE( "window %p/%lx, %s%s\n", data->hwnd, data->whole_window, received, expected );
-    else
-    {
-        WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *desired = *pending = value; /* avoid requesting the same state again */
-    }
-
-    *current = value;
-    *expect_serial = 0;
 
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state );
@@ -1705,32 +1701,14 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
 {
     RECT *desired = &data->desired_state.rect, *pending = &data->pending_state.rect, *current = &data->current_state.rect;
     unsigned long *expect_serial = &data->configure_serial;
-    const char *reason = NULL, *expected, *received;
+    const char *expected, *received, *prefix;
 
+    prefix = wine_dbg_sprintf( "window %p/%lx ", data->hwnd, data->whole_window );
     received = wine_dbg_sprintf( "config %s/%lu", wine_dbgstr_rect(value), serial );
     expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", wine_dbgstr_rect(pending), *expect_serial ) : "";
 
-    if (serial < *expect_serial) reason = "old ";
-    else if (!*expect_serial && EqualRect( current, value )) reason = "no-op ";
-
-    if (reason)
-    {
-        WARN( "Ignoring window %p/%lx %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        return;
-    }
-
-    if (!*expect_serial) reason = "unexpected ";
-    else if (!EqualRect( pending, value )) reason = "mismatch ";
-
-    if (!reason) TRACE( "window %p/%lx, %s%s\n", data->hwnd, data->whole_window, received, expected );
-    else
-    {
-        WARN( "window %p/%lx, %s%s%s\n", data->hwnd, data->whole_window, reason, received, expected );
-        *desired = *pending = *value; /* avoid requesting the same state again */
-    }
-
-    *current = *value;
-    *expect_serial = 0;
+    handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
+                         current, expected, prefix, received, NULL );
 }
 
 BOOL window_has_pending_wm_state( HWND hwnd, UINT state )
