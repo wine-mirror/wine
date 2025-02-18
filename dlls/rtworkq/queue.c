@@ -298,6 +298,10 @@ static struct queue *get_system_queue(DWORD queue_id)
 {
     switch (queue_id)
     {
+        default:
+            if (!(RTWQ_CALLBACK_QUEUE_PRIVATE_MASK & queue_id))
+                return NULL;
+            /* fall through */
         case RTWQ_CALLBACK_QUEUE_UNDEFINED:
             /* Works in native Windows. Undocumented, but seems to use standard. */
             queue_id = RTWQ_CALLBACK_QUEUE_STANDARD;
@@ -309,8 +313,6 @@ static struct queue *get_system_queue(DWORD queue_id)
         case RTWQ_CALLBACK_QUEUE_MULTITHREADED:
         case RTWQ_CALLBACK_QUEUE_LONG_FUNCTION:
             return &system_queues[queue_id - 1];
-        default:
-            return NULL;
     }
 }
 
