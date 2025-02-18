@@ -131,11 +131,15 @@ static void text_input_done(void *data, struct zwp_text_input_v3 *zwp_text_input
     TRACE("data %p, text_input %p, serial %u.\n", data, zwp_text_input_v3, serial);
 
     pthread_mutex_lock(&text_input->mutex);
-    assert(text_input->wl_surface);
-    hwnd = wl_surface_get_user_data(text_input->wl_surface);
-
-    post_ime_update(hwnd, text_input->preedit_cursor_pos, text_input->preedit_string,
-            text_input->commit_string);
+    /* Some compositors will send a done event for every commit, regardless of
+     * the focus state of the text input. This behavior is arguably out of spec,
+     * but otherwise harmless, so just ignore the new state in such cases. */
+    if (text_input->wl_surface)
+    {
+        hwnd = wl_surface_get_user_data(text_input->wl_surface);
+        post_ime_update(hwnd, text_input->preedit_cursor_pos, text_input->preedit_string,
+                text_input->commit_string);
+    }
 
     free(text_input->preedit_string);
     text_input->preedit_string = NULL;
