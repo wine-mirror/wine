@@ -1609,39 +1609,39 @@ static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, U
     static SIZE default_sizes[] =
     {
         /* 4:3 */
-        { 320,  240},
-        { 400,  300},
-        { 512,  384},
         { 640,  480},
-        { 768,  576},
         { 800,  600},
         {1024,  768},
-        {1152,  864},
-        {1280,  960},
-        {1400, 1050},
         {1600, 1200},
-        {2048, 1536},
-        /* 5:4 */
-        {1280, 1024},
-        {2560, 2048},
         /* 16:9 */
+        { 960,  540},
         {1280,  720},
-        {1366,  768},
         {1600,  900},
         {1920, 1080},
         {2560, 1440},
-        {3840, 2160},
+        {2880, 1620},
+        {3200, 1800},
         /* 16:10 */
-        { 320,  200},
-        { 640,  400},
-        {1280,  800},
         {1440,  900},
         {1680, 1050},
         {1920, 1200},
         {2560, 1600},
+        /* 3:2 */
+        {1440,  960},
+        {1920, 1280},
+        /* 21:9 ultra-wide */
+        {2560, 1080},
+        /* 12:5 */
+        {1920,  800},
+        {3840, 1600},
+        /* 5:4 */
+        {1280, 1024},
+        /* 5:3 */
+        {1280,  768},
     };
     UINT max_width = devmode_get( maximum, DM_PELSWIDTH ), max_height = devmode_get( maximum, DM_PELSHEIGHT );
     SIZE *sizes, max_size = {.cx = max( max_width, max_height ), .cy = min( max_width, max_height )};
+    const DEVMODEW *mode;
     UINT i, count;
 
     count = 1 + ARRAY_SIZE(default_sizes) + modes_count;
@@ -1652,6 +1652,15 @@ static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, U
     {
         if (default_sizes[i].cx > max_size.cx || default_sizes[i].cy > max_size.cy) continue;
         count += add_screen_size( sizes, count, default_sizes[i] );
+    }
+
+    for (mode = modes; mode && modes_count; mode = NEXT_DEVMODEW(mode), modes_count--)
+    {
+        UINT width = devmode_get( mode, DM_PELSWIDTH ), height = devmode_get( mode, DM_PELSHEIGHT );
+        SIZE size = {.cx = max( width, height ), .cy = min( width, height )};
+        if (!size.cx || size.cx > max_size.cx) continue;
+        if (!size.cy || size.cy > max_size.cy) continue;
+        count += add_screen_size( sizes, count, size );
     }
 
     *sizes_count = count;
