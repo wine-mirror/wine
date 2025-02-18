@@ -12155,14 +12155,19 @@ static void glsl_fragment_pipe_tex_transform(struct wined3d_context *context,
 static void glsl_fragment_pipe_alpha_test_func(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state)
 {
-    const struct wined3d_ffp_ps_constants *constants = wined3d_buffer_load_sysmem(
-            context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP], &context_gl->c);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    GLint func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC]);
+    const struct wined3d_ffp_ps_constants *constants;
+    struct wined3d_buffer *buffer;
+    GLfloat ref;
+    GLint func;
 
-    if (func)
+    if ((func = wined3d_gl_compare_func(state->render_states[WINED3D_RS_ALPHAFUNC])))
     {
-        gl_info->gl_ops.gl.p_glAlphaFunc(func, constants->alpha_test_ref);
+        if ((buffer = context_gl->c.device->push_constants[WINED3D_PUSH_CONSTANTS_PS_FFP]))
+            ref = (constants = wined3d_buffer_load_sysmem(buffer, &context_gl->c))->alpha_test_ref;
+        else
+            ref = 0.0f;
+        gl_info->gl_ops.gl.p_glAlphaFunc(func, ref);
         checkGLcall("glAlphaFunc");
     }
 }
