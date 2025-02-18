@@ -546,7 +546,7 @@ static void test_media_event(IFilterGraph2 *graph)
 
     hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(current != stop, "Got current position %s.\n", wine_dbgstr_longlong(current));
+    ok(current != stop, "Got current position %s.\n", wine_dbgstr_longlong(current));
 
     hr = IMediaControl_Stop(control);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
