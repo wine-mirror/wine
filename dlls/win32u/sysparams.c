@@ -451,6 +451,21 @@ static const char *debugstr_devmodew( const DEVMODEW *devmode )
                              position );
 }
 
+static UINT devmode_get( const DEVMODEW *mode, UINT field )
+{
+    switch (field)
+    {
+    case DM_DISPLAYORIENTATION: return mode->dmFields & DM_DISPLAYORIENTATION ? mode->dmDisplayOrientation : 0;
+    case DM_BITSPERPEL: return mode->dmFields & DM_BITSPERPEL ? mode->dmBitsPerPel : 0;
+    case DM_PELSWIDTH: return mode->dmFields & DM_PELSWIDTH ? mode->dmPelsWidth : 0;
+    case DM_PELSHEIGHT: return mode->dmFields & DM_PELSHEIGHT ? mode->dmPelsHeight : 0;
+    case DM_DISPLAYFLAGS: return mode->dmFields & DM_DISPLAYFLAGS ? mode->dmDisplayFlags : 0;
+    case DM_DISPLAYFREQUENCY: return mode->dmFields & DM_DISPLAYFREQUENCY ? mode->dmDisplayFrequency : 0;
+    case DM_DISPLAYFIXEDOUTPUT: return mode->dmFields & DM_DISPLAYFIXEDOUTPUT ? mode->dmDisplayFixedOutput : 0;
+    }
+    return 0;
+}
+
 static BOOL write_source_mode( HKEY hkey, UINT index, const DEVMODEW *mode )
 {
     WCHAR bufferW[MAX_PATH] = {0};
@@ -1569,6 +1584,18 @@ static void add_monitor( const struct gdi_monitor *gdi_monitor, void *param )
     }
 }
 
+static UINT add_screen_size( SIZE *sizes, UINT count, SIZE size )
+{
+    UINT i = 0;
+
+    while (i < count && memcmp( sizes + i, &size, sizeof(size) )) i++;
+    if (i < count) return 0;
+
+    TRACE( "adding size %s\n", wine_dbgstr_point((POINT *)&size) );
+    sizes[i] = size;
+    return 1;
+}
+
 static UINT add_virtual_mode( DEVMODEW *modes, UINT count, const DEVMODEW *mode )
 {
     TRACE( "adding mode %s\n", debugstr_devmodew(mode) );
@@ -1613,12 +1640,19 @@ static SIZE *get_screen_sizes( const DEVMODEW *maximum, const DEVMODEW *modes, U
         {1920, 1200},
         {2560, 1600},
     };
-    SIZE *sizes;
-    UINT count;
+    UINT max_width = devmode_get( maximum, DM_PELSWIDTH ), max_height = devmode_get( maximum, DM_PELSHEIGHT );
+    SIZE *sizes, max_size = {.cx = max( max_width, max_height ), .cy = min( max_width, max_height )};
+    UINT i, count;
 
-    count = ARRAY_SIZE(default_sizes);
+    count = 1 + ARRAY_SIZE(default_sizes) + modes_count;
     if (!(sizes = malloc( count * sizeof(*sizes) ))) return NULL;
-    memcpy( sizes, default_sizes, count * sizeof(*sizes) );
+
+    count = add_screen_size( sizes, 0, max_size );
+    for (i = 0; i < ARRAY_SIZE(default_sizes); i++)
+    {
+        if (default_sizes[i].cx > max_size.cx || default_sizes[i].cy > max_size.cy) continue;
+        count += add_screen_size( sizes, count, default_sizes[i] );
+    }
 
     *sizes_count = count;
     return sizes;
