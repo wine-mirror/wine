@@ -3983,11 +3983,6 @@ static void output_sources( struct makefile *make )
     strarray_add( &make->distclean_files, "Makefile" );
     if (make->testdll) strarray_add( &make->distclean_files, "testlist.c" );
 
-    if (!make->obj_dir)
-        strarray_addall( &make->distclean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
-    else if (!strcmp( make->obj_dir, "po" ))
-        strarray_add( &make->distclean_files, "LINGUAS" );
-
     for (arch = 0; arch < archs.count; arch++)
     {
         strarray_addall_uniq( &make->clean_files, make->object_files[arch] );
@@ -4005,6 +4000,8 @@ static void output_sources( struct makefile *make )
         output_subdirs( make );
         return;
     }
+
+    if (!strcmp( make->obj_dir, "po" )) strarray_add( &make->distclean_files, "LINGUAS" );
 
     for (arch = 0; arch < archs.count; arch++) strarray_addall( &all_targets, make->all_targets[arch] );
     strarray_addall( &all_targets, make->font_files );
@@ -4340,7 +4337,16 @@ static void output_top_makefile( struct makefile *make )
     output( ".MAKEFILEDEPS:\n" );
     output( ".SUFFIXES:\n" );
     makedep = strmake( "%s%s",tools_dir_path( make, "makedep" ), tools_ext );
-    output( "Makefile: %s\n", makedep );
+    output( "Makefile: config.status %s\n", makedep );
+    output( "\t@./config.status Makefile\n" );
+    output( "config.status: %s\n", root_src_dir_path( "configure" ));
+    output( "\t@./config.status --recheck\n" );
+    strarray_add( &make->distclean_files, "config.status" );
+    output( "include/config.h: include/stamp-h\n" );
+    output( "include/stamp-h: %s config.status\n", root_src_dir_path( "include/config.h.in" ));
+    output( "\t@./config.status include/config.h include/stamp-h\n" );
+    strarray_add( &make->distclean_files, "include/config.h" );
+    strarray_add( &make->distclean_files, "include/stamp-h" );
     output( "depend: %s\n", makedep );
     output( "\t%s%s%s\n", makedep,
             compile_commands_mode ? " -C" : "",
@@ -4364,6 +4370,15 @@ static void output_top_makefile( struct makefile *make )
 	output( "\t%srm -f $@ && %s %s/loader $@\n", cmd_prefix( "LN" ), ln_s, cwd );
         strarray_add( &make->all_targets[0], "loader-wow64" );
         strarray_add( &make->all_targets[0], strmake( "%s/loader-wow64", wine64_dir ));
+    }
+
+    strarray_add( &make->distclean_files, "autom4te.cache" );
+    if (compile_commands_mode) strarray_add( &make->distclean_files, "compile_commands.json" );
+    strarray_addall( &make->distclean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
+    if (!make->src_dir)
+    {
+        strarray_add( &make->maintainerclean_files, "configure" );
+        strarray_add( &make->maintainerclean_files, "include/config.h.in" );
     }
 
     for (i = 0; i < subdirs.count; i++) output_sources( submakes[i] );

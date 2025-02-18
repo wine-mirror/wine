@@ -3571,12 +3571,7 @@ dnl Main ignore file
 
 WINE_IGNORE_FILE(TAGS)
 WINE_IGNORE_FILE(tags)
-WINE_IGNORE_FILE(autom4te.cache)
-WINE_IGNORE_FILE(compile_commands.json)
 WINE_IGNORE_FILE(config.log)
-WINE_IGNORE_FILE(config.status)
-WINE_IGNORE_FILE(include/config.h)
-WINE_IGNORE_FILE(include/stamp-h)
 WINE_IGNORE_FILE(loader-wow64)
 
 if test "x$enable_tools" != xno
@@ -3621,15 +3616,6 @@ AC_SUBST(SHELL,[/bin/sh])
 
 dnl Rules for re-running configure
 
-WINE_APPEND_RULE(
-[Makefile: config.status
-	@./config.status Makefile
-config.status: ${wine_srcdir}configure
-	@./config.status --recheck
-include/config.h: include/stamp-h
-include/stamp-h: ${wine_srcdir}include/config.h.in config.status
-	@./config.status include/config.h include/stamp-h])
-
 if test "x$enable_maintainer_mode" = xyes
 then
     WINE_APPEND_RULE(
@@ -3669,14 +3655,6 @@ server/wineserver"
       *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi
-
-dnl Rules for cleaning
-
-WINE_APPEND_RULE(
-[distclean:: clean
-	rm -rf autom4te.cache
-maintainer-clean::
-	rm -f configure include/config.h.in])
 
 dnl Rules for generated source files
 

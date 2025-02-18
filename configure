@@ -23223,12 +23223,7 @@ test "x$enable_tools" = xno || wine_fn_config_makefile tools/wrc enable_wrc
 
 as_fn_append CONFIGURE_TARGETS " TAGS"
 as_fn_append CONFIGURE_TARGETS " tags"
-as_fn_append CONFIGURE_TARGETS " autom4te.cache"
-as_fn_append CONFIGURE_TARGETS " compile_commands.json"
 as_fn_append CONFIGURE_TARGETS " config.log"
-as_fn_append CONFIGURE_TARGETS " config.status"
-as_fn_append CONFIGURE_TARGETS " include/config.h"
-as_fn_append CONFIGURE_TARGETS " include/stamp-h"
 as_fn_append CONFIGURE_TARGETS " loader-wow64"
 
 if test "x$enable_tools" != xno
@@ -23244,15 +23239,6 @@ ac_config_commands="$ac_config_commands Makefile"
 SHELL=/bin/sh
 
 
-
-as_fn_append wine_rules "
-Makefile: config.status
-	@./config.status Makefile
-config.status: ${wine_srcdir}configure
-	@./config.status --recheck
-include/config.h: include/stamp-h
-include/stamp-h: ${wine_srcdir}include/config.h.in config.status
-	@./config.status include/config.h include/stamp-h"
 
 if test "x$enable_maintainer_mode" = xyes
 then
@@ -23292,13 +23278,6 @@ server/wineserver"
       *) TOP_INSTALL_LIB="$TOP_INSTALL_LIB loader/wine.desktop" ;;
     esac
 fi
-
-
-as_fn_append wine_rules "
-distclean:: clean
-	rm -rf autom4te.cache
-maintainer-clean::
-	rm -f configure include/config.h.in"
 
 
 as_fn_append wine_rules "
