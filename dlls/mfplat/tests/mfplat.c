@@ -13245,13 +13245,10 @@ static void test_undefined_queue_id(void)
     callback = create_test_callback(&test_async_callback_result_vtbl);
 
     hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_UNDEFINED, &callback->IMFAsyncCallback_iface, NULL);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
-    if (result)
-        IMFAsyncResult_Release(result);
+    IMFAsyncResult_Release(result);
 
     hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, &callback->IMFAsyncCallback_iface, NULL);
     todo_wine

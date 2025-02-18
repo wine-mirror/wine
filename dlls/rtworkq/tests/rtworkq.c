@@ -228,12 +228,9 @@ static void test_undefined_queue_id(void)
     ok(hr == S_OK, "got %#lx\n", hr);
 
     hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_UNDEFINED, 0, result);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
-    todo_wine
     ok(res == 0, "got %#lx\n", res);
-    todo_wine
     ok(callback_result == result, "Expected result %p, got %p.\n", result, callback_result);
 
     hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_PRIVATE_MASK, 0, result);

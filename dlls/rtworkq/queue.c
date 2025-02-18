@@ -298,6 +298,10 @@ static struct queue *get_system_queue(DWORD queue_id)
 {
     switch (queue_id)
     {
+        case RTWQ_CALLBACK_QUEUE_UNDEFINED:
+            /* Works in native Windows. Undocumented, but seems to use standard. */
+            queue_id = RTWQ_CALLBACK_QUEUE_STANDARD;
+            /* fall through */
         case RTWQ_CALLBACK_QUEUE_STANDARD:
         case RTWQ_CALLBACK_QUEUE_RT:
         case RTWQ_CALLBACK_QUEUE_IO:
