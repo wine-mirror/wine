@@ -6383,7 +6383,6 @@ static void test_wmv_decoder(void)
             .result_bitmap = L"rgb32frame.bmp",
             .delta = 5,
             .new_transform = TRUE,
-            .todo = TRUE,
         },
 
         {
@@ -6395,7 +6394,6 @@ static void test_wmv_decoder(void)
             .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame.bmp",
             .delta = 5,
-            .todo = TRUE,
         },
 
         {
@@ -6420,7 +6418,6 @@ static void test_wmv_decoder(void)
             .result_bitmap = L"rgb32frame.bmp",
             .delta = 5,
             .new_transform = TRUE,
-            .todo = TRUE,
         },
     };
 
