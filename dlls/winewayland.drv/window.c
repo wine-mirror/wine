@@ -362,7 +362,7 @@ static inline HWND get_active_window(void)
  *
  * Check if a given window should be managed
  */
-static BOOL is_window_managed(HWND hwnd, UINT swp_flags, const RECT *window_rect)
+static BOOL is_window_managed(HWND hwnd, UINT swp_flags, BOOL fullscreen)
 {
     DWORD style, ex_style;
 
@@ -378,18 +378,10 @@ static BOOL is_window_managed(HWND hwnd, UINT swp_flags, const RECT *window_rect
     if (style & WS_THICKFRAME) return TRUE;
     if (style & WS_POPUP)
     {
-        HMONITOR hmon;
-        MONITORINFO mi;
-
         /* popup with sysmenu == caption are managed */
         if (style & WS_SYSMENU) return TRUE;
         /* full-screen popup windows are managed */
-        hmon = NtUserMonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-        mi.cbSize = sizeof(mi);
-        NtUserGetMonitorInfo(hmon, &mi);
-        if (window_rect->left <= mi.rcWork.left && window_rect->right >= mi.rcWork.right &&
-            window_rect->top <= mi.rcWork.top && window_rect->bottom >= mi.rcWork.bottom)
-            return TRUE;
+        if (fullscreen) return TRUE;
     }
     /* application windows are managed */
     ex_style = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
@@ -448,7 +440,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     /* Get the managed state with win_data unlocked, as is_window_managed
      * may need to query win_data information about other HWNDs and thus
      * acquire the lock itself internally. */
-    if (!(managed = is_window_managed(hwnd, swp_flags, &new_rects->window)) && surface) toplevel = owner_hint;
+    if (!(managed = is_window_managed(hwnd, swp_flags, fullscreen)) && surface) toplevel = owner_hint;
 
     if (!(data = wayland_win_data_get(hwnd))) return;
     toplevel_data = toplevel && toplevel != hwnd ? wayland_win_data_get_nolock(toplevel) : NULL;
