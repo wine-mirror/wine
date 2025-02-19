@@ -30,6 +30,170 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+struct object_enumerator
+{
+    IEnumUnknown IEnumUnknown_iface;
+    LONG refcount;
+
+    IUnknown **objects;
+    unsigned int count;
+    unsigned int position;
+};
+
+static inline struct object_enumerator *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct object_enumerator, IEnumUnknown_iface);
+}
+
+static HRESULT WINAPI object_enumerator_QueryInterface(IEnumUnknown *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IEnumUnknown) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI object_enumerator_AddRef(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&enumerator->refcount);
+
+    TRACE("%p refcount %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI object_enumerator_Release(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+    unsigned int i;
+
+    TRACE("%p refcount %lu.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        for (i = 0; i < enumerator->count; ++i)
+            IUnknown_Release(enumerator->objects[i]);
+        free(enumerator->objects);
+        free(enumerator);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI object_enumerator_Next(IEnumUnknown *iface, ULONG count, IUnknown **ret, ULONG *fetched)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG tmp;
+
+    TRACE("%p, %lu, %p, %p.\n", iface, count, ret, fetched);
+
+    if (!fetched) fetched = &tmp;
+
+    *fetched = 0;
+
+    while (enumerator->position < enumerator->count && *fetched < count)
+    {
+        *ret = enumerator->objects[enumerator->position++];
+        IUnknown_AddRef(*ret);
+
+        *fetched = *fetched + 1;
+        ret++;
+    }
+
+    return *fetched == count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI object_enumerator_Skip(IEnumUnknown *iface, ULONG count)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    HRESULT hr;
+
+    TRACE("%p, %lu.\n", iface, count);
+
+    hr = (count > enumerator->count || enumerator->position > enumerator->count - count) ? S_FALSE : S_OK;
+
+    count = min(count, enumerator->count - enumerator->position);
+    enumerator->position += count;
+
+    return hr;
+}
+
+static HRESULT WINAPI object_enumerator_Reset(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+
+    TRACE("%p.\n", iface);
+
+    enumerator->position = 0;
+    return S_OK;
+}
+
+static HRESULT create_object_enumerator(IUnknown **objects, unsigned int position,
+        unsigned int count, IEnumUnknown **ret);
+
+static HRESULT WINAPI object_enumerator_Clone(IEnumUnknown *iface, IEnumUnknown **ret)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+
+    TRACE("%p, %p.\n", iface, ret);
+
+    if (!ret)
+        return E_INVALIDARG;
+
+    return create_object_enumerator(enumerator->objects, enumerator->position, enumerator->count, ret);
+}
+
+static const IEnumUnknownVtbl object_enumerator_vtbl =
+{
+    object_enumerator_QueryInterface,
+    object_enumerator_AddRef,
+    object_enumerator_Release,
+    object_enumerator_Next,
+    object_enumerator_Skip,
+    object_enumerator_Reset,
+    object_enumerator_Clone,
+};
+
+static HRESULT create_object_enumerator(IUnknown **objects, unsigned int position,
+        unsigned int count, IEnumUnknown **ret)
+{
+    struct object_enumerator *object;
+    unsigned int i;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumUnknown_iface.lpVtbl = &object_enumerator_vtbl;
+    object->refcount = 1;
+    if (!(object->objects = calloc(count, sizeof(*object->objects))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    object->position = position;
+    object->count = count;
+
+    for (i = 0; i < count; ++i)
+    {
+        object->objects[i] = objects[i];
+        IUnknown_AddRef(object->objects[i]);
+    }
+
+    *ret = &object->IEnumUnknown_iface;
+
+    return S_OK;
+}
+
 typedef struct CommonDecoder CommonDecoder;
 
 struct metadata_block_reader
@@ -239,6 +403,46 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
         *ret_reader = block_reader->readers[index];
         IWICMetadataReader_AddRef(*ret_reader);
     }
+
+    return hr;
+}
+
+static HRESULT metadata_block_reader_get_enumerator(struct metadata_block_reader *block_reader,
+        IEnumUnknown **enumerator)
+{
+    IUnknown **objects;
+    HRESULT hr = S_OK;
+    UINT count, i;
+
+    if (!enumerator)
+        return E_INVALIDARG;
+
+    *enumerator = NULL;
+
+    if (FAILED(hr = metadata_block_reader_initialize_metadata(block_reader)))
+        return hr;
+
+    count = block_reader->metadata_count;
+
+    if (!(objects = calloc(count, sizeof(*objects))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = metadata_block_reader_get_reader(block_reader, i, (IWICMetadataReader **)&objects[i]);
+        if (FAILED(hr))
+            break;
+    }
+
+    if (SUCCEEDED(hr))
+        hr = create_object_enumerator(objects, 0, count, enumerator);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (objects[i])
+            IUnknown_Release(objects[i]);
+    }
+    free(objects);
 
     return hr;
 }
@@ -537,10 +741,13 @@ static HRESULT WINAPI CommonDecoder_Block_GetReaderByIndex(IWICMetadataBlockRead
 }
 
 static HRESULT WINAPI CommonDecoder_Block_GetEnumerator(IWICMetadataBlockReader *iface,
-        IEnumUnknown **ppIEnumMetadata)
+        IEnumUnknown **enumerator)
 {
-    FIXME("%p,%p\n", iface, ppIEnumMetadata);
-    return E_NOTIMPL;
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%p\n", iface, enumerator);
+
+    return metadata_block_reader_get_enumerator(&decoder->block_reader, enumerator);
 }
 
 static const IWICMetadataBlockReaderVtbl CommonDecoder_BlockVtbl =
@@ -881,10 +1088,13 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBloc
 }
 
 static HRESULT WINAPI CommonDecoderFrame_Block_GetEnumerator(IWICMetadataBlockReader *iface,
-    IEnumUnknown **ppIEnumMetadata)
+        IEnumUnknown **enumerator)
 {
-    FIXME("%p,%p\n", iface, ppIEnumMetadata);
-    return E_NOTIMPL;
+    CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%p\n", iface, enumerator);
+
+    return metadata_block_reader_get_enumerator(&This->block_reader, enumerator);
 }
 
 static const IWICMetadataBlockReaderVtbl CommonDecoderFrame_BlockVtbl = {

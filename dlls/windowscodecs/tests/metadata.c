@@ -114,13 +114,10 @@ static void test_block_reader_enumerator(IWICMetadataBlockReader *block_reader)
     HRESULT hr;
 
     hr = IWICMetadataBlockReader_GetEnumerator(block_reader, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICMetadataBlockReader_GetEnumerator(block_reader, &block_enum);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     hr = IWICMetadataBlockReader_GetEnumerator(block_reader, &block_enum2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -187,6 +184,8 @@ static void test_block_reader_enumerator(IWICMetadataBlockReader *block_reader)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumUnknown_Skip(block_enum, block_count + 1);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumUnknown_Skip(block_enum, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     fetched = 0;
     hr = IEnumUnknown_Next(block_enum, 1, &object2, &fetched);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
@@ -2416,6 +2415,8 @@ static void test_metadata_gif(void)
 
     if (SUCCEEDED(hr))
     {
+        test_block_reader_enumerator(blockreader);
+
         hr = IWICMetadataBlockReader_GetContainerFormat(blockreader, NULL);
         ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
 
