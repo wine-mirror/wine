@@ -6294,6 +6294,13 @@ static void test_wmv_decoder(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
+        .todo_duration = TRUE,
+    };
+    const struct sample_desc output_sample_desc_rgb_todo_time =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
         .todo_time = TRUE, .todo_duration = TRUE,
     };
 
@@ -6306,6 +6313,7 @@ static void test_wmv_decoder(void)
         const struct sample_desc *output_sample_desc;
         const WCHAR *result_bitmap;
         ULONG delta;
+        BOOL new_transform;
         BOOL todo;
     }
     transform_tests[] =
@@ -6338,7 +6346,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6349,7 +6357,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6360,11 +6368,60 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
 
+        {
+            /* WMV1 -> RGB (w/ new transform) */
+            .output_type_desc = output_type_desc_rgb,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+            .todo = TRUE,
+        },
+
+        {
+            /* WMV1 -> RGB (negative stride, but reusing MFT w/ positive stride) */
+            .output_type_desc = output_type_desc_rgb_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+            .todo = TRUE,
+        },
+
+        {
+            /* WMV1 -> RGB (negative stride w/ new transform) */
+            .output_type_desc = output_type_desc_rgb_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame-flip.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+        },
+
+        {
+            /* WMV1 -> RGB (positive stride w/ new transform) */
+            .output_type_desc = output_type_desc_rgb_positive_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+            .todo = TRUE,
+        },
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6470,9 +6527,22 @@ static void test_wmv_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
 
+    check_mft_set_output_type(transform, output_type_desc_rgb, S_OK);
+
     for (j = 0; j < ARRAY_SIZE(transform_tests); j++)
     {
         winetest_push_context("transform #%lu", j);
+
+        if (transform_tests[j].new_transform)
+        {
+            ret = IMFTransform_Release(transform);
+            ok(ret == 0, "Release returned %lu\n", ret);
+
+            if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IMFTransform, (void **)&transform)))
+                goto failed;
+            check_mft_set_input_type(transform, input_type_desc, S_OK);
+        }
 
         check_mft_set_output_type_required(transform, transform_tests[j].output_type_desc);
         check_mft_set_output_type(transform, transform_tests[j].output_type_desc, S_OK);
@@ -6535,6 +6605,7 @@ static void test_wmv_decoder(void)
 
         ret = check_mf_sample_collection(output_samples, transform_tests[j].output_sample_desc,
                                          transform_tests[j].result_bitmap);
+        todo_wine_if(transform_tests[j].todo)
         ok(ret <= transform_tests[j].delta, "got %lu%% diff\n", ret);
         IMFCollection_Release(output_samples);
 
