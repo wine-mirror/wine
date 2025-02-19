@@ -3572,7 +3572,6 @@ dnl Main ignore file
 WINE_IGNORE_FILE(TAGS)
 WINE_IGNORE_FILE(tags)
 WINE_IGNORE_FILE(config.log)
-WINE_IGNORE_FILE(loader-wow64)
 
 if test "x$enable_tools" != xno
 then

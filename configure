@@ -23224,7 +23224,6 @@ test "x$enable_tools" = xno || wine_fn_config_makefile tools/wrc enable_wrc
 as_fn_append CONFIGURE_TARGETS " TAGS"
 as_fn_append CONFIGURE_TARGETS " tags"
 as_fn_append CONFIGURE_TARGETS " config.log"
-as_fn_append CONFIGURE_TARGETS " loader-wow64"
 
 if test "x$enable_tools" != xno
 then

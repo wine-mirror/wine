@@ -4368,9 +4368,10 @@ static void output_top_makefile( struct makefile *make )
 	output( "\t%srm -f $@ && %s %s/loader $@\n", cmd_prefix( "LN" ), ln_s, wine64_dir );
         output( "%s/loader-wow64:\n", wine64_dir );
 	output( "\t%srm -f $@ && %s %s/loader $@\n", cmd_prefix( "LN" ), ln_s, cwd );
+        output( "all: %s/loader-wow64\n", wine64_dir );
         strarray_add( &make->all_targets[0], "loader-wow64" );
-        strarray_add( &make->all_targets[0], strmake( "%s/loader-wow64", wine64_dir ));
     }
+    else strarray_add( &make->clean_files, "loader-wow64" );
 
     strarray_add( &make->distclean_files, "autom4te.cache" );
     if (compile_commands_mode) strarray_add( &make->distclean_files, "compile_commands.json" );
