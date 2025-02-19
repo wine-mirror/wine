@@ -31,9 +31,6 @@
 
 #include "implglue.h"
 
-/* Function prototype copied from dlls/advapi32/crypt.c */
-BOOL WINAPI SystemFunction036(PVOID pbBuffer, ULONG dwLen);
-
 BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle)
 {
     switch (aiAlgid)
@@ -295,11 +292,6 @@ BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *stream,
     }
 
     return TRUE;
-}
-
-BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen)
-{
-    return SystemFunction036(pbBuffer, dwLen);
 }
 
 BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,DWORD *pdwPubExp)

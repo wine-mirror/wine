@@ -30,6 +30,8 @@
 
 #include "tomcrypt.h"
 #include "windef.h"
+#include "winbase.h"
+#include "ntsecapi.h"
 
 static const struct {
     int mpi_code, ltc_code;
@@ -52,11 +54,9 @@ static int mpi_to_ltc_error(int err)
    return CRYPT_ERROR;
 }
 
-extern int gen_rand_impl(unsigned char *dst, unsigned int len);
-
 static int rand_prime_helper(unsigned char *dst, int len, void *dat)
 {
-    return gen_rand_impl(dst, len) ? len : 0;
+    return RtlGenRandom(dst, len) ? len : 0;
 }
 
 static int rand_prime(mp_int *N, long len)

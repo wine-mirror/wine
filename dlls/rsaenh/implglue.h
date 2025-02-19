@@ -64,6 +64,4 @@ BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD
 BOOL import_private_key_impl(const BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                              DWORD dwDataLen, DWORD dwPubExp);
 
-BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen);
-
 #endif /* __WINE_IMPLGLUE_H */
