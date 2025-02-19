@@ -37,6 +37,7 @@ struct metadata_block_reader
     BOOL metadata_initialized;
     UINT metadata_count;
     struct decoder_block *metadata_blocks;
+    IWICMetadataReader **readers;
     UINT frame;
     CommonDecoder *decoder;
 };
@@ -64,7 +65,16 @@ static void metadata_block_reader_initialize(struct metadata_block_reader *block
 
 static void metadata_block_reader_cleanup(struct metadata_block_reader *block_reader)
 {
+    UINT i;
+
+    for (i = 0; i < block_reader->metadata_count && block_reader->readers; ++i)
+    {
+        if (block_reader->readers[i])
+            IWICMetadataReader_Release(block_reader->readers[i]);
+    }
+    free(block_reader->readers);
     free(block_reader->metadata_blocks);
+    memset(block_reader, 0, sizeof(*block_reader));
 }
 
 static HRESULT metadata_block_reader_initialize_metadata(struct metadata_block_reader *block_reader)
@@ -82,6 +92,16 @@ static HRESULT metadata_block_reader_initialize_metadata(struct metadata_block_r
                 &block_reader->metadata_count, &block_reader->metadata_blocks);
         if (SUCCEEDED(hr))
             block_reader->metadata_initialized = TRUE;
+
+        if (SUCCEEDED(hr))
+        {
+            block_reader->readers = calloc(block_reader->metadata_count, sizeof(*block_reader->readers));
+            if (!block_reader->readers)
+            {
+                metadata_block_reader_cleanup(block_reader);
+                hr = E_OUTOFMEMORY;
+            }
+        }
     }
 
     LeaveCriticalSection(&block_reader->decoder->lock);
@@ -113,16 +133,26 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
         UINT index, IWICMetadataReader **ret_reader)
 {
     IWICComponentFactory *factory = NULL;
+    IWICMetadataReader *reader;
     IWICStream *stream;
     HRESULT hr;
 
     if (!ret_reader)
         return E_INVALIDARG;
 
+    *ret_reader = NULL;
+
     hr = metadata_block_reader_initialize_metadata(block_reader);
 
     if (SUCCEEDED(hr) && index >= block_reader->metadata_count)
         hr = E_INVALIDARG;
+
+    if (SUCCEEDED(hr) && block_reader->readers[index])
+    {
+        *ret_reader = block_reader->readers[index];
+        IWICMetadataReader_AddRef(*ret_reader);
+        return S_OK;
+    }
 
     if (SUCCEEDED(hr))
         hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
@@ -162,7 +192,6 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
 
         if (block_reader->metadata_blocks[index].options & DECODER_BLOCK_READER_CLSID)
         {
-            IWICMetadataReader *reader;
             IWICPersistStream *persist;
             if (SUCCEEDED(hr))
             {
@@ -182,10 +211,11 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
                     IWICPersistStream_Release(persist);
                 }
 
-                if (SUCCEEDED(hr))
-                    *ret_reader = reader;
-                else
+                if (FAILED(hr))
+                {
                     IWICMetadataReader_Release(reader);
+                    reader = NULL;
+                }
             }
         }
         else
@@ -193,7 +223,7 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
             hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
                 &block_reader->decoder->decoder_info.block_format, NULL,
                 block_reader->metadata_blocks[index].options & DECODER_BLOCK_OPTION_MASK,
-                (IStream *)stream, ret_reader);
+                (IStream *)stream, &reader);
         }
 
         IWICStream_Release(stream);
@@ -201,8 +231,14 @@ static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *bl
 
     if (factory) IWICComponentFactory_Release(factory);
 
-    if (FAILED(hr))
-        *ret_reader = NULL;
+    if (SUCCEEDED(hr))
+    {
+        if (InterlockedCompareExchangePointer((void **)&block_reader->readers[index], reader, NULL))
+            IWICMetadataReader_Release(reader);
+
+        *ret_reader = block_reader->readers[index];
+        IWICMetadataReader_AddRef(*ret_reader);
+    }
 
     return hr;
 }

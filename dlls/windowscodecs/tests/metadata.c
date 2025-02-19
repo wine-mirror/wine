@@ -2213,7 +2213,6 @@ static void test_metadata_png(void)
     ok(hr == S_OK, "GetReaderByIndex failed, hr=%lx\n", hr);
     hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(reader == reader2, "Unexpected instance.\n");
     IWICMetadataReader_Release(reader2);
 
@@ -2381,7 +2380,6 @@ static void test_metadata_gif(void)
 
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
-        todo_wine
         ok(reader == reader2, "Unexpected instance.\n");
         IWICMetadataReader_Release(reader2);
 
@@ -2437,7 +2435,6 @@ static void test_metadata_gif(void)
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
         hr = IWICMetadataBlockReader_GetReaderByIndex(blockreader, 0, &reader2);
         ok(hr == S_OK, "GetReaderByIndex error %#lx\n", hr);
-        todo_wine
         ok(reader == reader2, "Unexpected instance.\n");
         IWICMetadataReader_Release(reader2);
 
