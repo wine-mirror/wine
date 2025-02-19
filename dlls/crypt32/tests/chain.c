@@ -3506,6 +3506,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
     }
 }
 
+/* Tuesday, May 1, 2007 */
+static SYSTEMTIME may2007 = { 2007, 5, 2, 1, 0, 0, 0, 0 };
 /* Wednesday, Oct 1, 2007 */
 static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
 /* Wednesday, Oct 28, 2009 */
@@ -5506,6 +5508,65 @@ static void test_VerifyCertChainPolicy_flags(void)
     CertCloseStore(store, 0);
 }
 
+static void test_chain_engine_cache_update(void)
+{
+    CERT_CHAIN_PARA para = { 0 };
+    PCCERT_CHAIN_CONTEXT chain;
+    PCCERT_CONTEXT cert, cert2;
+    FILETIME filetime;
+    HCERTSTORE store, store2;
+    BOOL ret;
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert, sizeof(selfSignedCert));
+    ok(!!cert, "got NULL.\n");
+
+    SystemTimeToFileTime(&may2007, &filetime);
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_IS_UNTRUSTED_ROOT, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    store2 = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store2, "got NULL.\n");
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store, "got NULL.\n");
+    ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    cert2 = CertFindCertificateInStore(store2, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL);
+    ok(!cert2, "got NULL.\n");
+    CertFreeCertificateContext(cert2);
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    todo_wine ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    todo_wine ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store, "got NULL.\n");
+    cert2 = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL);
+    ok(!!cert2, "got NULL.\n");
+    ret = CertDeleteCertificateFromStore(cert2);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    CertFreeCertificateContext(cert);
+}
+
 START_TEST(chain)
 {
     testCreateCertChainEngine();
@@ -5513,4 +5574,9 @@ START_TEST(chain)
     testGetCertChain();
     test_CERT_CHAIN_PARA_cbSize();
     test_VerifyCertChainPolicy_flags();
+    if (winetest_interactive)
+    {
+        /* This test will pop up user confirmation dialogs on Windows. */
+        test_chain_engine_cache_update();
+    }
 }
