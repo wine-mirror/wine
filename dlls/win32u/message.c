@@ -2177,15 +2177,18 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     {
         UINT state_cmd, config_cmd;
         RECT window_rect;
+        HWND foreground;
 
-        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect )) return 0;
+        if (!user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect, &foreground )) return 0;
+        if (foreground) NtUserSetForegroundWindow( foreground );
         if (state_cmd)
         {
             if (LOWORD(state_cmd) == SC_RESTORE && HIWORD(state_cmd)) NtUserSetActiveWindow( hwnd );
             send_message( hwnd, WM_SYSCOMMAND, LOWORD(state_cmd), 0 );
 
             /* state change might have changed the window config already, check again */
-            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect );
+            user_driver->pGetWindowStateUpdates( hwnd, &state_cmd, &config_cmd, &window_rect, &foreground );
+            if (foreground) NtUserSetForegroundWindow( foreground );
             if (state_cmd) WARN( "window %p state needs another update, ignoring\n", hwnd );
         }
         if (config_cmd)

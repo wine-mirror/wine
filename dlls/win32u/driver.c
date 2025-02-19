@@ -881,7 +881,7 @@ static BOOL nulldrv_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, U
     return FALSE;
 }
 
-static BOOL nulldrv_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect )
+static BOOL nulldrv_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect, HWND *foreground )
 {
     return FALSE;
 }
