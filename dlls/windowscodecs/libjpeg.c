@@ -305,6 +305,12 @@ static HRESULT CDECL jpeg_decoder_get_frame_info(struct decoder* iface, UINT fra
     return S_OK;
 }
 
+static HRESULT CDECL jpeg_decoder_get_decoder_palette(struct decoder *iface, UINT frame, WICColor *colors,
+        UINT *num_colors)
+{
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+}
+
 static HRESULT CDECL jpeg_decoder_copy_pixels(struct decoder* iface, UINT frame,
     const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {
@@ -334,6 +340,7 @@ static HRESULT CDECL jpeg_decoder_get_color_context(struct decoder* This, UINT f
 static const struct decoder_funcs jpeg_decoder_vtable = {
     jpeg_decoder_initialize,
     jpeg_decoder_get_frame_info,
+    jpeg_decoder_get_decoder_palette,
     jpeg_decoder_copy_pixels,
     jpeg_decoder_get_metadata_blocks,
     jpeg_decoder_get_color_context,

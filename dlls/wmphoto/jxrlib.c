@@ -249,6 +249,11 @@ static HRESULT CDECL wmp_decoder_get_frame_info(struct decoder *iface, UINT fram
     return S_OK;
 }
 
+static HRESULT CDECL wmp_decoder_get_decoder_palette(struct decoder *iface, UINT frame, WICColor *colors, UINT *num_colors)
+{
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+}
+
 static HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {
     struct wmp_decoder *This = impl_from_decoder(iface);
@@ -343,6 +348,7 @@ static void CDECL wmp_decoder_destroy(struct decoder* iface)
 static const struct decoder_funcs wmp_decoder_vtable = {
     wmp_decoder_initialize,
     wmp_decoder_get_frame_info,
+    wmp_decoder_get_decoder_palette,
     wmp_decoder_copy_pixels,
     wmp_decoder_get_metadata_blocks,
     wmp_decoder_get_color_context,

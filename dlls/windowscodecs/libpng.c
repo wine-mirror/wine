@@ -349,6 +349,12 @@ static HRESULT CDECL png_decoder_get_frame_info(struct decoder *iface, UINT fram
     return S_OK;
 }
 
+static HRESULT CDECL png_decoder_get_decoder_palette(struct decoder *iface, UINT frame, WICColor *colors,
+        UINT *num_colors)
+{
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+}
+
 static HRESULT CDECL png_decoder_copy_pixels(struct decoder *iface, UINT frame,
     const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {
@@ -454,6 +460,7 @@ static void CDECL png_decoder_destroy(struct decoder* iface)
 static const struct decoder_funcs png_decoder_vtable = {
     png_decoder_initialize,
     png_decoder_get_frame_info,
+    png_decoder_get_decoder_palette,
     png_decoder_copy_pixels,
     png_decoder_get_metadata_blocks,
     png_decoder_get_color_context,

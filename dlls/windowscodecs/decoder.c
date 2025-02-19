@@ -47,6 +47,7 @@ typedef struct CommonDecoder {
     LONG ref;
     CRITICAL_SECTION lock; /* must be held when stream or decoder is accessed */
     IStream *stream;
+    UINT frame;
     struct decoder *decoder;
     struct decoder_info decoder_info;
     struct decoder_stat file_info;
@@ -338,8 +339,26 @@ static HRESULT WINAPI CommonDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
 static HRESULT WINAPI CommonDecoder_CopyPalette(IWICBitmapDecoder *iface,
     IWICPalette *palette)
 {
+    CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    WICColor colors[256];
+    UINT num_colors;
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", iface, palette);
-    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+
+    if (FAILED(hr = decoder_get_decoder_palette(This->decoder, This->frame, colors, &num_colors)))
+        return hr;
+
+    if (num_colors)
+    {
+        hr = IWICPalette_InitializeCustom(palette, colors, num_colors);
+    }
+    else
+    {
+        hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+    }
+
+    return hr;
 }
 
 static HRESULT common_decoder_create_query_reader(IWICMetadataBlockReader *block_reader, IWICMetadataQueryReader **query_reader)
@@ -880,6 +899,9 @@ static HRESULT WINAPI CommonDecoder_GetFrame(IWICBitmapDecoder *iface,
         if (SUCCEEDED(hr) && This->cache_options == WICDecodeMetadataCacheOnLoad)
             hr = metadata_block_reader_initialize_metadata(&result->block_reader);
 
+        if (SUCCEEDED(hr))
+            This->frame = result->frame;
+
         if (FAILED(hr))
             free(result);
     }
@@ -912,8 +934,7 @@ HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
 
     TRACE("(%s,%s,%p)\n", debugstr_guid(&decoder_info->clsid), debugstr_guid(iid), ppv);
 
-    This = malloc(sizeof(*This));
-    if (!This)
+    if (!(This = calloc(1, sizeof(*This))))
     {
         decoder_destroy(decoder);
         return E_OUTOFMEMORY;
@@ -922,7 +943,6 @@ HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
     This->IWICBitmapDecoder_iface.lpVtbl = &CommonDecoder_Vtbl;
     This->IWICMetadataBlockReader_iface.lpVtbl = &CommonDecoder_BlockVtbl;
     This->ref = 1;
-    This->stream = NULL;
     This->decoder = decoder;
     This->decoder_info = *decoder_info;
     metadata_block_reader_initialize(&This->block_reader, This, ~0u);

@@ -650,6 +650,12 @@ static HRESULT CDECL tiff_decoder_get_frame_info(struct decoder* iface, UINT fra
     return hr;
 }
 
+static HRESULT CDECL tiff_decoder_get_decoder_palette(struct decoder *iface, UINT frame, WICColor *colors,
+        UINT *num_colors)
+{
+    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+}
+
 static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UINT tile_y)
 {
     tsize_t ret;
@@ -1069,6 +1075,7 @@ static void CDECL tiff_decoder_destroy(struct decoder* iface)
 static const struct decoder_funcs tiff_decoder_vtable = {
     tiff_decoder_initialize,
     tiff_decoder_get_frame_info,
+    tiff_decoder_get_decoder_palette,
     tiff_decoder_copy_pixels,
     tiff_decoder_get_metadata_blocks,
     tiff_decoder_get_color_context,

@@ -313,6 +313,7 @@ struct decoder_funcs
 {
     HRESULT (CDECL *initialize)(struct decoder* This, IStream *stream, struct decoder_stat *st);
     HRESULT (CDECL *get_frame_info)(struct decoder* This, UINT frame, struct decoder_frame *info);
+    HRESULT (CDECL *get_decoder_palette)(struct decoder* This, UINT frame, WICColor *colors, UINT *num_colors);
     HRESULT (CDECL *copy_pixels)(struct decoder* This, UINT frame, const WICRect *prc,
         UINT stride, UINT buffersize, BYTE *buffer);
     HRESULT (CDECL *get_metadata_blocks)(struct decoder* This, UINT frame, UINT *count,
@@ -330,6 +331,7 @@ HRESULT CDECL stream_write(IStream *stream, const void *buffer, ULONG write, ULO
 HRESULT CDECL decoder_create(const CLSID *decoder_clsid, struct decoder_info *info, struct decoder **result);
 HRESULT CDECL decoder_initialize(struct decoder *This, IStream *stream, struct decoder_stat *st);
 HRESULT CDECL decoder_get_frame_info(struct decoder* This, UINT frame, struct decoder_frame *info);
+HRESULT CDECL decoder_get_decoder_palette(struct decoder* This, UINT frame, WICColor *colors, UINT *num_colors);
 HRESULT CDECL decoder_copy_pixels(struct decoder* This, UINT frame, const WICRect *prc,
     UINT stride, UINT buffersize, BYTE *buffer);
 HRESULT CDECL decoder_get_metadata_blocks(struct decoder* This, UINT frame, UINT *count,
