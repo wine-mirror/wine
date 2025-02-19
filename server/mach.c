@@ -155,6 +155,9 @@ void init_process_tracing( struct process *process )
                 mach_port_deallocate( mach_task_self(), msg.task_port.name );
         }
     }
+    /* On Mach thread priorities depend on having the process port available, so
+     * reapply all thread priorities here after process tracing is initialized */
+    set_process_priority( process, process->priority );
 }
 
 /* terminate the per-process tracing mechanism */
