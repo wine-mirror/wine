@@ -18,10 +18,7 @@
 
 #include "wine/debug.h"
 
-#ifdef _WIN64
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-#endif
-
 extern NTSTATUS process_attach( void *args );
 extern NTSTATUS thread_attach( void *args );
 extern NTSTATUS process_detach( void *args );
@@ -95345,3048 +95342,12357 @@ C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == funcs_count);
 
 #endif
 
-static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
-static struct wgl_context * null_wglCreateContext( HDC hDc ) { return 0; }
-static BOOL null_wglDeleteContext( struct wgl_context * oldContext ) { return 0; }
-static int null_wglGetPixelFormat( HDC hdc ) { return 0; }
-static PROC null_wglGetProcAddress( LPCSTR lpszProc ) { return 0; }
-static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext ) { return 0; }
-static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd ) { return 0; }
-static BOOL null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource ) { return 0; }
-static BOOL null_wglSwapBuffers( HDC hdc ) { return 0; }
-static void null_glAccum( GLenum op, GLfloat value ) { }
-static void null_glAlphaFunc( GLenum func, GLfloat ref ) { }
-static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences ) { return 0; }
-static void null_glArrayElement( GLint i ) { }
-static void null_glBegin( GLenum mode ) { }
-static void null_glBindTexture( GLenum target, GLuint texture ) { }
-static void null_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap ) { }
-static void null_glBlendFunc( GLenum sfactor, GLenum dfactor ) { }
-static void null_glCallList( GLuint list ) { }
-static void null_glCallLists( GLsizei n, GLenum type, const void *lists ) { }
-static void null_glClear( GLbitfield mask ) { }
-static void null_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glClearDepth( GLdouble depth ) { }
-static void null_glClearIndex( GLfloat c ) { }
-static void null_glClearStencil( GLint s ) { }
-static void null_glClipPlane( GLenum plane, const GLdouble *equation ) { }
-static void null_glColor3b( GLbyte red, GLbyte green, GLbyte blue ) { }
-static void null_glColor3bv( const GLbyte *v ) { }
-static void null_glColor3d( GLdouble red, GLdouble green, GLdouble blue ) { }
-static void null_glColor3dv( const GLdouble *v ) { }
-static void null_glColor3f( GLfloat red, GLfloat green, GLfloat blue ) { }
-static void null_glColor3fv( const GLfloat *v ) { }
-static void null_glColor3i( GLint red, GLint green, GLint blue ) { }
-static void null_glColor3iv( const GLint *v ) { }
-static void null_glColor3s( GLshort red, GLshort green, GLshort blue ) { }
-static void null_glColor3sv( const GLshort *v ) { }
-static void null_glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) { }
-static void null_glColor3ubv( const GLubyte *v ) { }
-static void null_glColor3ui( GLuint red, GLuint green, GLuint blue ) { }
-static void null_glColor3uiv( const GLuint *v ) { }
-static void null_glColor3us( GLushort red, GLushort green, GLushort blue ) { }
-static void null_glColor3usv( const GLushort *v ) { }
-static void null_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha ) { }
-static void null_glColor4bv( const GLbyte *v ) { }
-static void null_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha ) { }
-static void null_glColor4dv( const GLdouble *v ) { }
-static void null_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glColor4fv( const GLfloat *v ) { }
-static void null_glColor4i( GLint red, GLint green, GLint blue, GLint alpha ) { }
-static void null_glColor4iv( const GLint *v ) { }
-static void null_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha ) { }
-static void null_glColor4sv( const GLshort *v ) { }
-static void null_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha ) { }
-static void null_glColor4ubv( const GLubyte *v ) { }
-static void null_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha ) { }
-static void null_glColor4uiv( const GLuint *v ) { }
-static void null_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha ) { }
-static void null_glColor4usv( const GLushort *v ) { }
-static void null_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) { }
-static void null_glColorMaterial( GLenum face, GLenum mode ) { }
-static void null_glColorPointer( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type ) { }
-static void null_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
-static void null_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
-static void null_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCullFace( GLenum mode ) { }
-static void null_glDeleteLists( GLuint list, GLsizei range ) { }
-static void null_glDeleteTextures( GLsizei n, const GLuint *textures ) { }
-static void null_glDepthFunc( GLenum func ) { }
-static void null_glDepthMask( GLboolean flag ) { }
-static void null_glDepthRange( GLdouble n, GLdouble f ) { }
-static void null_glDisable( GLenum cap ) { }
-static void null_glDisableClientState( GLenum array ) { }
-static void null_glDrawArrays( GLenum mode, GLint first, GLsizei count ) { }
-static void null_glDrawBuffer( GLenum buf ) { }
-static void null_glDrawElements( GLenum mode, GLsizei count, GLenum type, const void *indices ) { }
-static void null_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glEdgeFlag( GLboolean flag ) { }
-static void null_glEdgeFlagPointer( GLsizei stride, const void *pointer ) { }
-static void null_glEdgeFlagv( const GLboolean *flag ) { }
-static void null_glEnable( GLenum cap ) { }
-static void null_glEnableClientState( GLenum array ) { }
-static void null_glEnd(void) { }
-static void null_glEndList(void) { }
-static void null_glEvalCoord1d( GLdouble u ) { }
-static void null_glEvalCoord1dv( const GLdouble *u ) { }
-static void null_glEvalCoord1f( GLfloat u ) { }
-static void null_glEvalCoord1fv( const GLfloat *u ) { }
-static void null_glEvalCoord2d( GLdouble u, GLdouble v ) { }
-static void null_glEvalCoord2dv( const GLdouble *u ) { }
-static void null_glEvalCoord2f( GLfloat u, GLfloat v ) { }
-static void null_glEvalCoord2fv( const GLfloat *u ) { }
-static void null_glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) { }
-static void null_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) { }
-static void null_glEvalPoint1( GLint i ) { }
-static void null_glEvalPoint2( GLint i, GLint j ) { }
-static void null_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer ) { }
-static void null_glFinish(void) { }
-static void null_glFlush(void) { }
-static void null_glFogf( GLenum pname, GLfloat param ) { }
-static void null_glFogfv( GLenum pname, const GLfloat *params ) { }
-static void null_glFogi( GLenum pname, GLint param ) { }
-static void null_glFogiv( GLenum pname, const GLint *params ) { }
-static void null_glFrontFace( GLenum mode ) { }
-static void null_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
-static GLuint null_glGenLists( GLsizei range ) { return 0; }
-static void null_glGenTextures( GLsizei n, GLuint *textures ) { }
-static void null_glGetBooleanv( GLenum pname, GLboolean *data ) { }
-static void null_glGetClipPlane( GLenum plane, GLdouble *equation ) { }
-static void null_glGetDoublev( GLenum pname, GLdouble *data ) { }
-static GLenum null_glGetError(void) { return GL_INVALID_OPERATION; }
-static void null_glGetFloatv( GLenum pname, GLfloat *data ) { }
-static void null_glGetIntegerv( GLenum pname, GLint *data ) { }
-static void null_glGetLightfv( GLenum light, GLenum pname, GLfloat *params ) { }
-static void null_glGetLightiv( GLenum light, GLenum pname, GLint *params ) { }
-static void null_glGetMapdv( GLenum target, GLenum query, GLdouble *v ) { }
-static void null_glGetMapfv( GLenum target, GLenum query, GLfloat *v ) { }
-static void null_glGetMapiv( GLenum target, GLenum query, GLint *v ) { }
-static void null_glGetMaterialfv( GLenum face, GLenum pname, GLfloat *params ) { }
-static void null_glGetMaterialiv( GLenum face, GLenum pname, GLint *params ) { }
-static void null_glGetPixelMapfv( GLenum map, GLfloat *values ) { }
-static void null_glGetPixelMapuiv( GLenum map, GLuint *values ) { }
-static void null_glGetPixelMapusv( GLenum map, GLushort *values ) { }
-static void null_glGetPointerv( GLenum pname, void **params ) { }
-static void null_glGetPolygonStipple( GLubyte *mask ) { }
-static const GLubyte * null_glGetString( GLenum name ) { return 0; }
-static void null_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetTexEnviv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetTexGendv( GLenum coord, GLenum pname, GLdouble *params ) { }
-static void null_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params ) { }
-static void null_glGetTexGeniv( GLenum coord, GLenum pname, GLint *params ) { }
-static void null_glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, void *pixels ) { }
-static void null_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params ) { }
-static void null_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params ) { }
-static void null_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetTexParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glHint( GLenum target, GLenum mode ) { }
-static void null_glIndexMask( GLuint mask ) { }
-static void null_glIndexPointer( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glIndexd( GLdouble c ) { }
-static void null_glIndexdv( const GLdouble *c ) { }
-static void null_glIndexf( GLfloat c ) { }
-static void null_glIndexfv( const GLfloat *c ) { }
-static void null_glIndexi( GLint c ) { }
-static void null_glIndexiv( const GLint *c ) { }
-static void null_glIndexs( GLshort c ) { }
-static void null_glIndexsv( const GLshort *c ) { }
-static void null_glIndexub( GLubyte c ) { }
-static void null_glIndexubv( const GLubyte *c ) { }
-static void null_glInitNames(void) { }
-static void null_glInterleavedArrays( GLenum format, GLsizei stride, const void *pointer ) { }
-static GLboolean null_glIsEnabled( GLenum cap ) { return 0; }
-static GLboolean null_glIsList( GLuint list ) { return 0; }
-static GLboolean null_glIsTexture( GLuint texture ) { return 0; }
-static void null_glLightModelf( GLenum pname, GLfloat param ) { }
-static void null_glLightModelfv( GLenum pname, const GLfloat *params ) { }
-static void null_glLightModeli( GLenum pname, GLint param ) { }
-static void null_glLightModeliv( GLenum pname, const GLint *params ) { }
-static void null_glLightf( GLenum light, GLenum pname, GLfloat param ) { }
-static void null_glLightfv( GLenum light, GLenum pname, const GLfloat *params ) { }
-static void null_glLighti( GLenum light, GLenum pname, GLint param ) { }
-static void null_glLightiv( GLenum light, GLenum pname, const GLint *params ) { }
-static void null_glLineStipple( GLint factor, GLushort pattern ) { }
-static void null_glLineWidth( GLfloat width ) { }
-static void null_glListBase( GLuint base ) { }
-static void null_glLoadIdentity(void) { }
-static void null_glLoadMatrixd( const GLdouble *m ) { }
-static void null_glLoadMatrixf( const GLfloat *m ) { }
-static void null_glLoadName( GLuint name ) { }
-static void null_glLogicOp( GLenum opcode ) { }
-static void null_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points ) { }
-static void null_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points ) { }
-static void null_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points ) { }
-static void null_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points ) { }
-static void null_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 ) { }
-static void null_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) { }
-static void null_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 ) { }
-static void null_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 ) { }
-static void null_glMaterialf( GLenum face, GLenum pname, GLfloat param ) { }
-static void null_glMaterialfv( GLenum face, GLenum pname, const GLfloat *params ) { }
-static void null_glMateriali( GLenum face, GLenum pname, GLint param ) { }
-static void null_glMaterialiv( GLenum face, GLenum pname, const GLint *params ) { }
-static void null_glMatrixMode( GLenum mode ) { }
-static void null_glMultMatrixd( const GLdouble *m ) { }
-static void null_glMultMatrixf( const GLfloat *m ) { }
-static void null_glNewList( GLuint list, GLenum mode ) { }
-static void null_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz ) { }
-static void null_glNormal3bv( const GLbyte *v ) { }
-static void null_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz ) { }
-static void null_glNormal3dv( const GLdouble *v ) { }
-static void null_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) { }
-static void null_glNormal3fv( const GLfloat *v ) { }
-static void null_glNormal3i( GLint nx, GLint ny, GLint nz ) { }
-static void null_glNormal3iv( const GLint *v ) { }
-static void null_glNormal3s( GLshort nx, GLshort ny, GLshort nz ) { }
-static void null_glNormal3sv( const GLshort *v ) { }
-static void null_glNormalPointer( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
-static void null_glPassThrough( GLfloat token ) { }
-static void null_glPixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values ) { }
-static void null_glPixelMapuiv( GLenum map, GLsizei mapsize, const GLuint *values ) { }
-static void null_glPixelMapusv( GLenum map, GLsizei mapsize, const GLushort *values ) { }
-static void null_glPixelStoref( GLenum pname, GLfloat param ) { }
-static void null_glPixelStorei( GLenum pname, GLint param ) { }
-static void null_glPixelTransferf( GLenum pname, GLfloat param ) { }
-static void null_glPixelTransferi( GLenum pname, GLint param ) { }
-static void null_glPixelZoom( GLfloat xfactor, GLfloat yfactor ) { }
-static void null_glPointSize( GLfloat size ) { }
-static void null_glPolygonMode( GLenum face, GLenum mode ) { }
-static void null_glPolygonOffset( GLfloat factor, GLfloat units ) { }
-static void null_glPolygonStipple( const GLubyte *mask ) { }
-static void null_glPopAttrib(void) { }
-static void null_glPopClientAttrib(void) { }
-static void null_glPopMatrix(void) { }
-static void null_glPopName(void) { }
-static void null_glPrioritizeTextures( GLsizei n, const GLuint *textures, const GLfloat *priorities ) { }
-static void null_glPushAttrib( GLbitfield mask ) { }
-static void null_glPushClientAttrib( GLbitfield mask ) { }
-static void null_glPushMatrix(void) { }
-static void null_glPushName( GLuint name ) { }
-static void null_glRasterPos2d( GLdouble x, GLdouble y ) { }
-static void null_glRasterPos2dv( const GLdouble *v ) { }
-static void null_glRasterPos2f( GLfloat x, GLfloat y ) { }
-static void null_glRasterPos2fv( const GLfloat *v ) { }
-static void null_glRasterPos2i( GLint x, GLint y ) { }
-static void null_glRasterPos2iv( const GLint *v ) { }
-static void null_glRasterPos2s( GLshort x, GLshort y ) { }
-static void null_glRasterPos2sv( const GLshort *v ) { }
-static void null_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glRasterPos3dv( const GLdouble *v ) { }
-static void null_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glRasterPos3fv( const GLfloat *v ) { }
-static void null_glRasterPos3i( GLint x, GLint y, GLint z ) { }
-static void null_glRasterPos3iv( const GLint *v ) { }
-static void null_glRasterPos3s( GLshort x, GLshort y, GLshort z ) { }
-static void null_glRasterPos3sv( const GLshort *v ) { }
-static void null_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glRasterPos4dv( const GLdouble *v ) { }
-static void null_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glRasterPos4fv( const GLfloat *v ) { }
-static void null_glRasterPos4i( GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glRasterPos4iv( const GLint *v ) { }
-static void null_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glRasterPos4sv( const GLshort *v ) { }
-static void null_glReadBuffer( GLenum src ) { }
-static void null_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels ) { }
-static void null_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 ) { }
-static void null_glRectdv( const GLdouble *v1, const GLdouble *v2 ) { }
-static void null_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) { }
-static void null_glRectfv( const GLfloat *v1, const GLfloat *v2 ) { }
-static void null_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 ) { }
-static void null_glRectiv( const GLint *v1, const GLint *v2 ) { }
-static void null_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 ) { }
-static void null_glRectsv( const GLshort *v1, const GLshort *v2 ) { }
-static GLint null_glRenderMode( GLenum mode ) { return 0; }
-static void null_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glScaled( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glScalef( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glSelectBuffer( GLsizei size, GLuint *buffer ) { }
-static void null_glShadeModel( GLenum mode ) { }
-static void null_glStencilFunc( GLenum func, GLint ref, GLuint mask ) { }
-static void null_glStencilMask( GLuint mask ) { }
-static void null_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) { }
-static void null_glTexCoord1d( GLdouble s ) { }
-static void null_glTexCoord1dv( const GLdouble *v ) { }
-static void null_glTexCoord1f( GLfloat s ) { }
-static void null_glTexCoord1fv( const GLfloat *v ) { }
-static void null_glTexCoord1i( GLint s ) { }
-static void null_glTexCoord1iv( const GLint *v ) { }
-static void null_glTexCoord1s( GLshort s ) { }
-static void null_glTexCoord1sv( const GLshort *v ) { }
-static void null_glTexCoord2d( GLdouble s, GLdouble t ) { }
-static void null_glTexCoord2dv( const GLdouble *v ) { }
-static void null_glTexCoord2f( GLfloat s, GLfloat t ) { }
-static void null_glTexCoord2fv( const GLfloat *v ) { }
-static void null_glTexCoord2i( GLint s, GLint t ) { }
-static void null_glTexCoord2iv( const GLint *v ) { }
-static void null_glTexCoord2s( GLshort s, GLshort t ) { }
-static void null_glTexCoord2sv( const GLshort *v ) { }
-static void null_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r ) { }
-static void null_glTexCoord3dv( const GLdouble *v ) { }
-static void null_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) { }
-static void null_glTexCoord3fv( const GLfloat *v ) { }
-static void null_glTexCoord3i( GLint s, GLint t, GLint r ) { }
-static void null_glTexCoord3iv( const GLint *v ) { }
-static void null_glTexCoord3s( GLshort s, GLshort t, GLshort r ) { }
-static void null_glTexCoord3sv( const GLshort *v ) { }
-static void null_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
-static void null_glTexCoord4dv( const GLdouble *v ) { }
-static void null_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
-static void null_glTexCoord4fv( const GLfloat *v ) { }
-static void null_glTexCoord4i( GLint s, GLint t, GLint r, GLint q ) { }
-static void null_glTexCoord4iv( const GLint *v ) { }
-static void null_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q ) { }
-static void null_glTexCoord4sv( const GLshort *v ) { }
-static void null_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glTexEnvf( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glTexEnvi( GLenum target, GLenum pname, GLint param ) { }
-static void null_glTexEnviv( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTexGend( GLenum coord, GLenum pname, GLdouble param ) { }
-static void null_glTexGendv( GLenum coord, GLenum pname, const GLdouble *params ) { }
-static void null_glTexGenf( GLenum coord, GLenum pname, GLfloat param ) { }
-static void null_glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params ) { }
-static void null_glTexGeni( GLenum coord, GLenum pname, GLint param ) { }
-static void null_glTexGeniv( GLenum coord, GLenum pname, const GLint *params ) { }
-static void null_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexParameterf( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glTexParameterfv( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glTexParameteri( GLenum target, GLenum pname, GLint param ) { }
-static void null_glTexParameteriv( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTranslated( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glTranslatef( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertex2d( GLdouble x, GLdouble y ) { }
-static void null_glVertex2dv( const GLdouble *v ) { }
-static void null_glVertex2f( GLfloat x, GLfloat y ) { }
-static void null_glVertex2fv( const GLfloat *v ) { }
-static void null_glVertex2i( GLint x, GLint y ) { }
-static void null_glVertex2iv( const GLint *v ) { }
-static void null_glVertex2s( GLshort x, GLshort y ) { }
-static void null_glVertex2sv( const GLshort *v ) { }
-static void null_glVertex3d( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertex3dv( const GLdouble *v ) { }
-static void null_glVertex3f( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertex3fv( const GLfloat *v ) { }
-static void null_glVertex3i( GLint x, GLint y, GLint z ) { }
-static void null_glVertex3iv( const GLint *v ) { }
-static void null_glVertex3s( GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertex3sv( const GLshort *v ) { }
-static void null_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertex4dv( const GLdouble *v ) { }
-static void null_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertex4fv( const GLfloat *v ) { }
-static void null_glVertex4i( GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glVertex4iv( const GLint *v ) { }
-static void null_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertex4sv( const GLshort *v ) { }
-static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glAccumxOES( GLenum op, GLfixed value ) { }
-static GLboolean null_glAcquireKeyedMutexWin32EXT( GLuint memory, GLuint64 key, GLuint timeout ) { return 0; }
-static void null_glActiveProgramEXT( GLuint program ) { }
-static void null_glActiveShaderProgram( GLuint pipeline, GLuint program ) { }
-static void null_glActiveStencilFaceEXT( GLenum face ) { }
-static void null_glActiveTexture( GLenum texture ) { }
-static void null_glActiveTextureARB( GLenum texture ) { }
-static void null_glActiveVaryingNV( GLuint program, const GLchar *name ) { }
-static void null_glAlphaFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod ) { }
-static void null_glAlphaFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod ) { }
-static void null_glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod ) { }
-static void null_glAlphaFuncxOES( GLenum func, GLfixed ref ) { }
-static void null_glAlphaToCoverageDitherControlNV( GLenum mode ) { }
-static void null_glApplyFramebufferAttachmentCMAAINTEL(void) { }
-static void null_glApplyTextureEXT( GLenum mode ) { }
-static GLboolean null_glAreProgramsResidentNV( GLsizei n, const GLuint *programs, GLboolean *residences ) { return 0; }
-static GLboolean null_glAreTexturesResidentEXT( GLsizei n, const GLuint *textures, GLboolean *residences ) { return 0; }
-static void null_glArrayElementEXT( GLint i ) { }
-static void null_glArrayObjectATI( GLenum array, GLint size, GLenum type, GLsizei stride, GLuint buffer, GLuint offset ) { }
-static GLuint null_glAsyncCopyBufferSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *fenceValueArray, GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray ) { return 0; }
-static GLuint null_glAsyncCopyImageSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *waitValueArray, GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray ) { return 0; }
-static void null_glAsyncMarkerSGIX( GLuint marker ) { }
-static void null_glAttachObjectARB( GLhandleARB containerObj, GLhandleARB obj ) { }
-static void null_glAttachShader( GLuint program, GLuint shader ) { }
-static void null_glBeginConditionalRender( GLuint id, GLenum mode ) { }
-static void null_glBeginConditionalRenderNV( GLuint id, GLenum mode ) { }
-static void null_glBeginConditionalRenderNVX( GLuint id ) { }
-static void null_glBeginFragmentShaderATI(void) { }
-static void null_glBeginOcclusionQueryNV( GLuint id ) { }
-static void null_glBeginPerfMonitorAMD( GLuint monitor ) { }
-static void null_glBeginPerfQueryINTEL( GLuint queryHandle ) { }
-static void null_glBeginQuery( GLenum target, GLuint id ) { }
-static void null_glBeginQueryARB( GLenum target, GLuint id ) { }
-static void null_glBeginQueryIndexed( GLenum target, GLuint index, GLuint id ) { }
-static void null_glBeginTransformFeedback( GLenum primitiveMode ) { }
-static void null_glBeginTransformFeedbackEXT( GLenum primitiveMode ) { }
-static void null_glBeginTransformFeedbackNV( GLenum primitiveMode ) { }
-static void null_glBeginVertexShaderEXT(void) { }
-static void null_glBeginVideoCaptureNV( GLuint video_capture_slot ) { }
-static void null_glBindAttribLocation( GLuint program, GLuint index, const GLchar *name ) { }
-static void null_glBindAttribLocationARB( GLhandleARB programObj, GLuint index, const GLcharARB *name ) { }
-static void null_glBindBuffer( GLenum target, GLuint buffer ) { }
-static void null_glBindBufferARB( GLenum target, GLuint buffer ) { }
-static void null_glBindBufferBase( GLenum target, GLuint index, GLuint buffer ) { }
-static void null_glBindBufferBaseEXT( GLenum target, GLuint index, GLuint buffer ) { }
-static void null_glBindBufferBaseNV( GLenum target, GLuint index, GLuint buffer ) { }
-static void null_glBindBufferOffsetEXT( GLenum target, GLuint index, GLuint buffer, GLintptr offset ) { }
-static void null_glBindBufferOffsetNV( GLenum target, GLuint index, GLuint buffer, GLintptr offset ) { }
-static void null_glBindBufferRange( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glBindBufferRangeEXT( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glBindBufferRangeNV( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glBindBuffersBase( GLenum target, GLuint first, GLsizei count, const GLuint *buffers ) { }
-static void null_glBindBuffersRange( GLenum target, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizeiptr *sizes ) { }
-static void null_glBindFragDataLocation( GLuint program, GLuint color, const GLchar *name ) { }
-static void null_glBindFragDataLocationEXT( GLuint program, GLuint color, const GLchar *name ) { }
-static void null_glBindFragDataLocationIndexed( GLuint program, GLuint colorNumber, GLuint index, const GLchar *name ) { }
-static void null_glBindFragmentShaderATI( GLuint id ) { }
-static void null_glBindFramebuffer( GLenum target, GLuint framebuffer ) { }
-static void null_glBindFramebufferEXT( GLenum target, GLuint framebuffer ) { }
-static void null_glBindImageTexture( GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format ) { }
-static void null_glBindImageTextureEXT( GLuint index, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLint format ) { }
-static void null_glBindImageTextures( GLuint first, GLsizei count, const GLuint *textures ) { }
-static GLuint null_glBindLightParameterEXT( GLenum light, GLenum value ) { return 0; }
-static GLuint null_glBindMaterialParameterEXT( GLenum face, GLenum value ) { return 0; }
-static void null_glBindMultiTextureEXT( GLenum texunit, GLenum target, GLuint texture ) { }
-static GLuint null_glBindParameterEXT( GLenum value ) { return 0; }
-static void null_glBindProgramARB( GLenum target, GLuint program ) { }
-static void null_glBindProgramNV( GLenum target, GLuint id ) { }
-static void null_glBindProgramPipeline( GLuint pipeline ) { }
-static void null_glBindRenderbuffer( GLenum target, GLuint renderbuffer ) { }
-static void null_glBindRenderbufferEXT( GLenum target, GLuint renderbuffer ) { }
-static void null_glBindSampler( GLuint unit, GLuint sampler ) { }
-static void null_glBindSamplers( GLuint first, GLsizei count, const GLuint *samplers ) { }
-static void null_glBindShadingRateImageNV( GLuint texture ) { }
-static GLuint null_glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum value ) { return 0; }
-static void null_glBindTextureEXT( GLenum target, GLuint texture ) { }
-static void null_glBindTextureUnit( GLuint unit, GLuint texture ) { }
-static GLuint null_glBindTextureUnitParameterEXT( GLenum unit, GLenum value ) { return 0; }
-static void null_glBindTextures( GLuint first, GLsizei count, const GLuint *textures ) { }
-static void null_glBindTransformFeedback( GLenum target, GLuint id ) { }
-static void null_glBindTransformFeedbackNV( GLenum target, GLuint id ) { }
-static void null_glBindVertexArray( GLuint array ) { }
-static void null_glBindVertexArrayAPPLE( GLuint array ) { }
-static void null_glBindVertexBuffer( GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride ) { }
-static void null_glBindVertexBuffers( GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides ) { }
-static void null_glBindVertexShaderEXT( GLuint id ) { }
-static void null_glBindVideoCaptureStreamBufferNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLintptrARB offset ) { }
-static void null_glBindVideoCaptureStreamTextureNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLenum target, GLuint texture ) { }
-static void null_glBinormal3bEXT( GLbyte bx, GLbyte by, GLbyte bz ) { }
-static void null_glBinormal3bvEXT( const GLbyte *v ) { }
-static void null_glBinormal3dEXT( GLdouble bx, GLdouble by, GLdouble bz ) { }
-static void null_glBinormal3dvEXT( const GLdouble *v ) { }
-static void null_glBinormal3fEXT( GLfloat bx, GLfloat by, GLfloat bz ) { }
-static void null_glBinormal3fvEXT( const GLfloat *v ) { }
-static void null_glBinormal3iEXT( GLint bx, GLint by, GLint bz ) { }
-static void null_glBinormal3ivEXT( const GLint *v ) { }
-static void null_glBinormal3sEXT( GLshort bx, GLshort by, GLshort bz ) { }
-static void null_glBinormal3svEXT( const GLshort *v ) { }
-static void null_glBinormalPointerEXT( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glBitmapxOES( GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *bitmap ) { }
-static void null_glBlendBarrierKHR(void) { }
-static void null_glBlendBarrierNV(void) { }
-static void null_glBlendColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glBlendColorEXT( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) { }
-static void null_glBlendColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) { }
-static void null_glBlendEquation( GLenum mode ) { }
-static void null_glBlendEquationEXT( GLenum mode ) { }
-static void null_glBlendEquationIndexedAMD( GLuint buf, GLenum mode ) { }
-static void null_glBlendEquationSeparate( GLenum modeRGB, GLenum modeAlpha ) { }
-static void null_glBlendEquationSeparateEXT( GLenum modeRGB, GLenum modeAlpha ) { }
-static void null_glBlendEquationSeparateIndexedAMD( GLuint buf, GLenum modeRGB, GLenum modeAlpha ) { }
-static void null_glBlendEquationSeparatei( GLuint buf, GLenum modeRGB, GLenum modeAlpha ) { }
-static void null_glBlendEquationSeparateiARB( GLuint buf, GLenum modeRGB, GLenum modeAlpha ) { }
-static void null_glBlendEquationi( GLuint buf, GLenum mode ) { }
-static void null_glBlendEquationiARB( GLuint buf, GLenum mode ) { }
-static void null_glBlendFuncIndexedAMD( GLuint buf, GLenum src, GLenum dst ) { }
-static void null_glBlendFuncSeparate( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha ) { }
-static void null_glBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha ) { }
-static void null_glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha ) { }
-static void null_glBlendFuncSeparateIndexedAMD( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha ) { }
-static void null_glBlendFuncSeparatei( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha ) { }
-static void null_glBlendFuncSeparateiARB( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha ) { }
-static void null_glBlendFunci( GLuint buf, GLenum src, GLenum dst ) { }
-static void null_glBlendFunciARB( GLuint buf, GLenum src, GLenum dst ) { }
-static void null_glBlendParameteriNV( GLenum pname, GLint value ) { }
-static void null_glBlitFramebuffer( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
-static void null_glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
-static void null_glBlitNamedFramebuffer( GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
-static void null_glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64EXT address, GLsizeiptr length ) { }
-static void null_glBufferAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset ) { }
-static void null_glBufferData( GLenum target, GLsizeiptr size, const void *data, GLenum usage ) { }
-static void null_glBufferDataARB( GLenum target, GLsizeiptrARB size, const void *data, GLenum usage ) { }
-static void null_glBufferPageCommitmentARB( GLenum target, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
-static void null_glBufferParameteriAPPLE( GLenum target, GLenum pname, GLint param ) { }
-static GLuint null_glBufferRegionEnabled(void) { return 0; }
-static void null_glBufferStorage( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags ) { }
-static void null_glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags ) { }
-static void null_glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
-static void null_glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const void *data ) { }
-static void null_glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void *data ) { }
-static void null_glCallCommandListNV( GLuint list ) { }
-static GLenum null_glCheckFramebufferStatus( GLenum target ) { return 0; }
-static GLenum null_glCheckFramebufferStatusEXT( GLenum target ) { return 0; }
-static GLenum null_glCheckNamedFramebufferStatus( GLuint framebuffer, GLenum target ) { return 0; }
-static GLenum null_glCheckNamedFramebufferStatusEXT( GLuint framebuffer, GLenum target ) { return 0; }
-static void null_glClampColor( GLenum target, GLenum clamp ) { }
-static void null_glClampColorARB( GLenum target, GLenum clamp ) { }
-static void null_glClearAccumxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) { }
-static void null_glClearBufferData( GLenum target, GLenum internalformat, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearBufferSubData( GLenum target, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearBufferfi( GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil ) { }
-static void null_glClearBufferfv( GLenum buffer, GLint drawbuffer, const GLfloat *value ) { }
-static void null_glClearBufferiv( GLenum buffer, GLint drawbuffer, const GLint *value ) { }
-static void null_glClearBufferuiv( GLenum buffer, GLint drawbuffer, const GLuint *value ) { }
-static void null_glClearColorIiEXT( GLint red, GLint green, GLint blue, GLint alpha ) { }
-static void null_glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GLuint alpha ) { }
-static void null_glClearColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) { }
-static void null_glClearDepthdNV( GLdouble depth ) { }
-static void null_glClearDepthf( GLfloat d ) { }
-static void null_glClearDepthfOES( GLclampf depth ) { }
-static void null_glClearDepthxOES( GLfixed depth ) { }
-static void null_glClearNamedBufferData( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearNamedBufferDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearNamedBufferSubData( GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalformat, GLsizeiptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearNamedFramebufferfi( GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil ) { }
-static void null_glClearNamedFramebufferfv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat *value ) { }
-static void null_glClearNamedFramebufferiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint *value ) { }
-static void null_glClearNamedFramebufferuiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint *value ) { }
-static void null_glClearTexImage( GLuint texture, GLint level, GLenum format, GLenum type, const void *data ) { }
-static void null_glClearTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *data ) { }
-static void null_glClientActiveTexture( GLenum texture ) { }
-static void null_glClientActiveTextureARB( GLenum texture ) { }
-static void null_glClientActiveVertexStreamATI( GLenum stream ) { }
-static void null_glClientAttribDefaultEXT( GLbitfield mask ) { }
-static void null_glClientWaitSemaphoreui64NVX( GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray ) { }
-static GLenum null_glClientWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout ) { return 0; }
-static void null_glClipControl( GLenum origin, GLenum depth ) { }
-static void null_glClipPlanefOES( GLenum plane, const GLfloat *equation ) { }
-static void null_glClipPlanexOES( GLenum plane, const GLfixed *equation ) { }
-static void null_glColor3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glColor3fVertex3fvSUN( const GLfloat *c, const GLfloat *v ) { }
-static void null_glColor3hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue ) { }
-static void null_glColor3hvNV( const GLhalfNV *v ) { }
-static void null_glColor3xOES( GLfixed red, GLfixed green, GLfixed blue ) { }
-static void null_glColor3xvOES( const GLfixed *components ) { }
-static void null_glColor4fNormal3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glColor4fNormal3fVertex3fvSUN( const GLfloat *c, const GLfloat *n, const GLfloat *v ) { }
-static void null_glColor4hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue, GLhalfNV alpha ) { }
-static void null_glColor4hvNV( const GLhalfNV *v ) { }
-static void null_glColor4ubVertex2fSUN( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y ) { }
-static void null_glColor4ubVertex2fvSUN( const GLubyte *c, const GLfloat *v ) { }
-static void null_glColor4ubVertex3fSUN( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glColor4ubVertex3fvSUN( const GLubyte *c, const GLfloat *v ) { }
-static void null_glColor4xOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) { }
-static void null_glColor4xvOES( const GLfixed *components ) { }
-static void null_glColorFormatNV( GLint size, GLenum type, GLsizei stride ) { }
-static void null_glColorFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod ) { }
-static void null_glColorFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod ) { }
-static void null_glColorFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod ) { }
-static void null_glColorMaskIndexedEXT( GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a ) { }
-static void null_glColorMaski( GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a ) { }
-static void null_glColorP3ui( GLenum type, GLuint color ) { }
-static void null_glColorP3uiv( GLenum type, const GLuint *color ) { }
-static void null_glColorP4ui( GLenum type, GLuint color ) { }
-static void null_glColorP4uiv( GLenum type, const GLuint *color ) { }
-static void null_glColorPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer ) { }
-static void null_glColorPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glColorPointervINTEL( GLint size, GLenum type, const void **pointer ) { }
-static void null_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void *data ) { }
-static void null_glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void *data ) { }
-static void null_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *table ) { }
-static void null_glColorTableEXT( GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const void *table ) { }
-static void null_glColorTableParameterfv( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glColorTableParameterfvSGI( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glColorTableParameteriv( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glColorTableParameterivSGI( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glColorTableSGI( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *table ) { }
-static void null_glCombinerInputNV( GLenum stage, GLenum portion, GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage ) { }
-static void null_glCombinerOutputNV( GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum ) { }
-static void null_glCombinerParameterfNV( GLenum pname, GLfloat param ) { }
-static void null_glCombinerParameterfvNV( GLenum pname, const GLfloat *params ) { }
-static void null_glCombinerParameteriNV( GLenum pname, GLint param ) { }
-static void null_glCombinerParameterivNV( GLenum pname, const GLint *params ) { }
-static void null_glCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params ) { }
-static void null_glCommandListSegmentsNV( GLuint list, GLuint segments ) { }
-static void null_glCompileCommandListNV( GLuint list ) { }
-static void null_glCompileShader( GLuint shader ) { }
-static void null_glCompileShaderARB( GLhandleARB shaderObj ) { }
-static void null_glCompileShaderIncludeARB( GLuint shader, GLsizei count, const GLchar *const*path, const GLint *length ) { }
-static void null_glCompressedMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexImage1DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexImage2DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexImage3DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage1DARB( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage2DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTexSubImage3DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glCompressedTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data ) { }
-static void null_glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *bits ) { }
-static void null_glConservativeRasterParameterfNV( GLenum pname, GLfloat value ) { }
-static void null_glConservativeRasterParameteriNV( GLenum pname, GLint param ) { }
-static void null_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *image ) { }
-static void null_glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *image ) { }
-static void null_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *image ) { }
-static void null_glConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *image ) { }
-static void null_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params ) { }
-static void null_glConvolutionParameterfEXT( GLenum target, GLenum pname, GLfloat params ) { }
-static void null_glConvolutionParameterfv( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glConvolutionParameterfvEXT( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glConvolutionParameteri( GLenum target, GLenum pname, GLint params ) { }
-static void null_glConvolutionParameteriEXT( GLenum target, GLenum pname, GLint params ) { }
-static void null_glConvolutionParameteriv( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glConvolutionParameterivEXT( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glConvolutionParameterxOES( GLenum target, GLenum pname, GLfixed param ) { }
-static void null_glConvolutionParameterxvOES( GLenum target, GLenum pname, const GLfixed *params ) { }
-static void null_glCopyBufferSubData( GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
-static void null_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyColorSubTableEXT( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyColorTableSGI( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyImageSubData( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth ) { }
-static void null_glCopyImageSubDataNV( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth ) { }
-static void null_glCopyMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
-static void null_glCopyMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
-static void null_glCopyMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyNamedBufferSubData( GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
-static void null_glCopyPathNV( GLuint resultPath, GLuint srcPath ) { }
-static void null_glCopyTexImage1DEXT( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
-static void null_glCopyTexImage2DEXT( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
-static void null_glCopyTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border ) { }
-static void null_glCopyTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border ) { }
-static void null_glCopyTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width ) { }
-static void null_glCopyTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCopyTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glCoverFillPathNV( GLuint path, GLenum coverMode ) { }
-static void null_glCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glCoverStrokePathNV( GLuint path, GLenum coverMode ) { }
-static void null_glCoverageModulationNV( GLenum components ) { }
-static void null_glCoverageModulationTableNV( GLsizei n, const GLfloat *v ) { }
-static void null_glCreateBuffers( GLsizei n, GLuint *buffers ) { }
-static void null_glCreateCommandListsNV( GLsizei n, GLuint *lists ) { }
-static void null_glCreateFramebuffers( GLsizei n, GLuint *framebuffers ) { }
-static void null_glCreateMemoryObjectsEXT( GLsizei n, GLuint *memoryObjects ) { }
-static void null_glCreatePerfQueryINTEL( GLuint queryId, GLuint *queryHandle ) { }
-static GLuint null_glCreateProgram(void) { return 0; }
-static GLhandleARB null_glCreateProgramObjectARB(void) { return 0; }
-static void null_glCreateProgramPipelines( GLsizei n, GLuint *pipelines ) { }
-static GLuint null_glCreateProgressFenceNVX(void) { return 0; }
-static void null_glCreateQueries( GLenum target, GLsizei n, GLuint *ids ) { }
-static void null_glCreateRenderbuffers( GLsizei n, GLuint *renderbuffers ) { }
-static void null_glCreateSamplers( GLsizei n, GLuint *samplers ) { }
-static GLuint null_glCreateShader( GLenum type ) { return 0; }
-static GLhandleARB null_glCreateShaderObjectARB( GLenum shaderType ) { return 0; }
-static GLuint null_glCreateShaderProgramEXT( GLenum type, const GLchar *string ) { return 0; }
-static GLuint null_glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar *const*strings ) { return 0; }
-static void null_glCreateStatesNV( GLsizei n, GLuint *states ) { }
-static GLsync null_glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags ) { return 0; }
-static void null_glCreateTextures( GLenum target, GLsizei n, GLuint *textures ) { }
-static void null_glCreateTransformFeedbacks( GLsizei n, GLuint *ids ) { }
-static void null_glCreateVertexArrays( GLsizei n, GLuint *arrays ) { }
-static void null_glCullParameterdvEXT( GLenum pname, GLdouble *params ) { }
-static void null_glCullParameterfvEXT( GLenum pname, GLfloat *params ) { }
-static void null_glCurrentPaletteMatrixARB( GLint index ) { }
-static void null_glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam ) { }
-static void null_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam ) { }
-static void null_glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam ) { }
-static void null_glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
-static void null_glDebugMessageControlARB( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
-static void null_glDebugMessageEnableAMD( GLenum category, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled ) { }
-static void null_glDebugMessageInsert( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf ) { }
-static void null_glDebugMessageInsertAMD( GLenum category, GLenum severity, GLuint id, GLsizei length, const GLchar *buf ) { }
-static void null_glDebugMessageInsertARB( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf ) { }
-static void null_glDeformSGIX( GLbitfield mask ) { }
-static void null_glDeformationMap3dSGIX( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble w1, GLdouble w2, GLint wstride, GLint worder, const GLdouble *points ) { }
-static void null_glDeformationMap3fSGIX( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat w1, GLfloat w2, GLint wstride, GLint worder, const GLfloat *points ) { }
-static void null_glDeleteAsyncMarkersSGIX( GLuint marker, GLsizei range ) { }
-static void null_glDeleteBufferRegion( GLenum region ) { }
-static void null_glDeleteBuffers( GLsizei n, const GLuint *buffers ) { }
-static void null_glDeleteBuffersARB( GLsizei n, const GLuint *buffers ) { }
-static void null_glDeleteCommandListsNV( GLsizei n, const GLuint *lists ) { }
-static void null_glDeleteFencesAPPLE( GLsizei n, const GLuint *fences ) { }
-static void null_glDeleteFencesNV( GLsizei n, const GLuint *fences ) { }
-static void null_glDeleteFragmentShaderATI( GLuint id ) { }
-static void null_glDeleteFramebuffers( GLsizei n, const GLuint *framebuffers ) { }
-static void null_glDeleteFramebuffersEXT( GLsizei n, const GLuint *framebuffers ) { }
-static void null_glDeleteMemoryObjectsEXT( GLsizei n, const GLuint *memoryObjects ) { }
-static void null_glDeleteNamedStringARB( GLint namelen, const GLchar *name ) { }
-static void null_glDeleteNamesAMD( GLenum identifier, GLuint num, const GLuint *names ) { }
-static void null_glDeleteObjectARB( GLhandleARB obj ) { }
-static void null_glDeleteObjectBufferATI( GLuint buffer ) { }
-static void null_glDeleteOcclusionQueriesNV( GLsizei n, const GLuint *ids ) { }
-static void null_glDeletePathsNV( GLuint path, GLsizei range ) { }
-static void null_glDeletePerfMonitorsAMD( GLsizei n, GLuint *monitors ) { }
-static void null_glDeletePerfQueryINTEL( GLuint queryHandle ) { }
-static void null_glDeleteProgram( GLuint program ) { }
-static void null_glDeleteProgramPipelines( GLsizei n, const GLuint *pipelines ) { }
-static void null_glDeleteProgramsARB( GLsizei n, const GLuint *programs ) { }
-static void null_glDeleteProgramsNV( GLsizei n, const GLuint *programs ) { }
-static void null_glDeleteQueries( GLsizei n, const GLuint *ids ) { }
-static void null_glDeleteQueriesARB( GLsizei n, const GLuint *ids ) { }
-static void null_glDeleteQueryResourceTagNV( GLsizei n, const GLint *tagIds ) { }
-static void null_glDeleteRenderbuffers( GLsizei n, const GLuint *renderbuffers ) { }
-static void null_glDeleteRenderbuffersEXT( GLsizei n, const GLuint *renderbuffers ) { }
-static void null_glDeleteSamplers( GLsizei count, const GLuint *samplers ) { }
-static void null_glDeleteSemaphoresEXT( GLsizei n, const GLuint *semaphores ) { }
-static void null_glDeleteShader( GLuint shader ) { }
-static void null_glDeleteStatesNV( GLsizei n, const GLuint *states ) { }
-static void null_glDeleteSync( GLsync sync ) { }
-static void null_glDeleteTexturesEXT( GLsizei n, const GLuint *textures ) { }
-static void null_glDeleteTransformFeedbacks( GLsizei n, const GLuint *ids ) { }
-static void null_glDeleteTransformFeedbacksNV( GLsizei n, const GLuint *ids ) { }
-static void null_glDeleteVertexArrays( GLsizei n, const GLuint *arrays ) { }
-static void null_glDeleteVertexArraysAPPLE( GLsizei n, const GLuint *arrays ) { }
-static void null_glDeleteVertexShaderEXT( GLuint id ) { }
-static void null_glDepthBoundsEXT( GLclampd zmin, GLclampd zmax ) { }
-static void null_glDepthBoundsdNV( GLdouble zmin, GLdouble zmax ) { }
-static void null_glDepthRangeArraydvNV( GLuint first, GLsizei count, const GLdouble *v ) { }
-static void null_glDepthRangeArrayv( GLuint first, GLsizei count, const GLdouble *v ) { }
-static void null_glDepthRangeIndexed( GLuint index, GLdouble n, GLdouble f ) { }
-static void null_glDepthRangeIndexeddNV( GLuint index, GLdouble n, GLdouble f ) { }
-static void null_glDepthRangedNV( GLdouble zNear, GLdouble zFar ) { }
-static void null_glDepthRangef( GLfloat n, GLfloat f ) { }
-static void null_glDepthRangefOES( GLclampf n, GLclampf f ) { }
-static void null_glDepthRangexOES( GLfixed n, GLfixed f ) { }
-static void null_glDetachObjectARB( GLhandleARB containerObj, GLhandleARB attachedObj ) { }
-static void null_glDetachShader( GLuint program, GLuint shader ) { }
-static void null_glDetailTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points ) { }
-static void null_glDisableClientStateIndexedEXT( GLenum array, GLuint index ) { }
-static void null_glDisableClientStateiEXT( GLenum array, GLuint index ) { }
-static void null_glDisableIndexedEXT( GLenum target, GLuint index ) { }
-static void null_glDisableVariantClientStateEXT( GLuint id ) { }
-static void null_glDisableVertexArrayAttrib( GLuint vaobj, GLuint index ) { }
-static void null_glDisableVertexArrayAttribEXT( GLuint vaobj, GLuint index ) { }
-static void null_glDisableVertexArrayEXT( GLuint vaobj, GLenum array ) { }
-static void null_glDisableVertexAttribAPPLE( GLuint index, GLenum pname ) { }
-static void null_glDisableVertexAttribArray( GLuint index ) { }
-static void null_glDisableVertexAttribArrayARB( GLuint index ) { }
-static void null_glDisablei( GLenum target, GLuint index ) { }
-static void null_glDispatchCompute( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z ) { }
-static void null_glDispatchComputeGroupSizeARB( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, GLuint group_size_x, GLuint group_size_y, GLuint group_size_z ) { }
-static void null_glDispatchComputeIndirect( GLintptr indirect ) { }
-static void null_glDrawArraysEXT( GLenum mode, GLint first, GLsizei count ) { }
-static void null_glDrawArraysIndirect( GLenum mode, const void *indirect ) { }
-static void null_glDrawArraysInstanced( GLenum mode, GLint first, GLsizei count, GLsizei instancecount ) { }
-static void null_glDrawArraysInstancedARB( GLenum mode, GLint first, GLsizei count, GLsizei primcount ) { }
-static void null_glDrawArraysInstancedBaseInstance( GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance ) { }
-static void null_glDrawArraysInstancedEXT( GLenum mode, GLint start, GLsizei count, GLsizei primcount ) { }
-static void null_glDrawBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height, GLint xDest, GLint yDest ) { }
-static void null_glDrawBuffers( GLsizei n, const GLenum *bufs ) { }
-static void null_glDrawBuffersARB( GLsizei n, const GLenum *bufs ) { }
-static void null_glDrawBuffersATI( GLsizei n, const GLenum *bufs ) { }
-static void null_glDrawCommandsAddressNV( GLenum primitiveMode, const GLuint64 *indirects, const GLsizei *sizes, GLuint count ) { }
-static void null_glDrawCommandsNV( GLenum primitiveMode, GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, GLuint count ) { }
-static void null_glDrawCommandsStatesAddressNV( const GLuint64 *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count ) { }
-static void null_glDrawCommandsStatesNV( GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count ) { }
-static void null_glDrawElementArrayAPPLE( GLenum mode, GLint first, GLsizei count ) { }
-static void null_glDrawElementArrayATI( GLenum mode, GLsizei count ) { }
-static void null_glDrawElementsBaseVertex( GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex ) { }
-static void null_glDrawElementsIndirect( GLenum mode, GLenum type, const void *indirect ) { }
-static void null_glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount ) { }
-static void null_glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount ) { }
-static void null_glDrawElementsInstancedBaseInstance( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLuint baseinstance ) { }
-static void null_glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex ) { }
-static void null_glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance ) { }
-static void null_glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount ) { }
-static void null_glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count, GLsizei width ) { }
-static void null_glDrawMeshTasksIndirectNV( GLintptr indirect ) { }
-static void null_glDrawMeshTasksNV( GLuint first, GLuint count ) { }
-static void null_glDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, GLint first, GLsizei count ) { }
-static void null_glDrawRangeElementArrayATI( GLenum mode, GLuint start, GLuint end, GLsizei count ) { }
-static void null_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices ) { }
-static void null_glDrawRangeElementsBaseVertex( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices, GLint basevertex ) { }
-static void null_glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices ) { }
-static void null_glDrawTextureNV( GLuint texture, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 ) { }
-static void null_glDrawTransformFeedback( GLenum mode, GLuint id ) { }
-static void null_glDrawTransformFeedbackInstanced( GLenum mode, GLuint id, GLsizei instancecount ) { }
-static void null_glDrawTransformFeedbackNV( GLenum mode, GLuint id ) { }
-static void null_glDrawTransformFeedbackStream( GLenum mode, GLuint id, GLuint stream ) { }
-static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei instancecount ) { }
-static void null_glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 ) { }
-static void null_glEGLImageTargetTexStorageEXT( GLenum target, GLeglImageOES image, const GLint* attrib_list ) { }
-static void null_glEGLImageTargetTextureStorageEXT( GLuint texture, GLeglImageOES image, const GLint* attrib_list ) { }
-static void null_glEdgeFlagFormatNV( GLsizei stride ) { }
-static void null_glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean *pointer ) { }
-static void null_glEdgeFlagPointerListIBM( GLint stride, const GLboolean **pointer, GLint ptrstride ) { }
-static void null_glElementPointerAPPLE( GLenum type, const void *pointer ) { }
-static void null_glElementPointerATI( GLenum type, const void *pointer ) { }
-static void null_glEnableClientStateIndexedEXT( GLenum array, GLuint index ) { }
-static void null_glEnableClientStateiEXT( GLenum array, GLuint index ) { }
-static void null_glEnableIndexedEXT( GLenum target, GLuint index ) { }
-static void null_glEnableVariantClientStateEXT( GLuint id ) { }
-static void null_glEnableVertexArrayAttrib( GLuint vaobj, GLuint index ) { }
-static void null_glEnableVertexArrayAttribEXT( GLuint vaobj, GLuint index ) { }
-static void null_glEnableVertexArrayEXT( GLuint vaobj, GLenum array ) { }
-static void null_glEnableVertexAttribAPPLE( GLuint index, GLenum pname ) { }
-static void null_glEnableVertexAttribArray( GLuint index ) { }
-static void null_glEnableVertexAttribArrayARB( GLuint index ) { }
-static void null_glEnablei( GLenum target, GLuint index ) { }
-static void null_glEndConditionalRender(void) { }
-static void null_glEndConditionalRenderNV(void) { }
-static void null_glEndConditionalRenderNVX(void) { }
-static void null_glEndFragmentShaderATI(void) { }
-static void null_glEndOcclusionQueryNV(void) { }
-static void null_glEndPerfMonitorAMD( GLuint monitor ) { }
-static void null_glEndPerfQueryINTEL( GLuint queryHandle ) { }
-static void null_glEndQuery( GLenum target ) { }
-static void null_glEndQueryARB( GLenum target ) { }
-static void null_glEndQueryIndexed( GLenum target, GLuint index ) { }
-static void null_glEndTransformFeedback(void) { }
-static void null_glEndTransformFeedbackEXT(void) { }
-static void null_glEndTransformFeedbackNV(void) { }
-static void null_glEndVertexShaderEXT(void) { }
-static void null_glEndVideoCaptureNV( GLuint video_capture_slot ) { }
-static void null_glEvalCoord1xOES( GLfixed u ) { }
-static void null_glEvalCoord1xvOES( const GLfixed *coords ) { }
-static void null_glEvalCoord2xOES( GLfixed u, GLfixed v ) { }
-static void null_glEvalCoord2xvOES( const GLfixed *coords ) { }
-static void null_glEvalMapsNV( GLenum target, GLenum mode ) { }
-static void null_glEvaluateDepthValuesARB(void) { }
-static void null_glExecuteProgramNV( GLenum target, GLuint id, const GLfloat *params ) { }
-static void null_glExtractComponentEXT( GLuint res, GLuint src, GLuint num ) { }
-static void null_glFeedbackBufferxOES( GLsizei n, GLenum type, const GLfixed *buffer ) { }
-static GLsync null_glFenceSync( GLenum condition, GLbitfield flags ) { return 0; }
-static void null_glFinalCombinerInputNV( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage ) { }
-static GLint null_glFinishAsyncSGIX( GLuint *markerp ) { return 0; }
-static void null_glFinishFenceAPPLE( GLuint fence ) { }
-static void null_glFinishFenceNV( GLuint fence ) { }
-static void null_glFinishObjectAPPLE( GLenum object, GLint name ) { }
-static void null_glFinishTextureSUNX(void) { }
-static void null_glFlushMappedBufferRange( GLenum target, GLintptr offset, GLsizeiptr length ) { }
-static void null_glFlushMappedBufferRangeAPPLE( GLenum target, GLintptr offset, GLsizeiptr size ) { }
-static void null_glFlushMappedNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length ) { }
-static void null_glFlushMappedNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length ) { }
-static void null_glFlushPixelDataRangeNV( GLenum target ) { }
-static void null_glFlushRasterSGIX(void) { }
-static void null_glFlushStaticDataIBM( GLenum target ) { }
-static void null_glFlushVertexArrayRangeAPPLE( GLsizei length, void *pointer ) { }
-static void null_glFlushVertexArrayRangeNV(void) { }
-static void null_glFogCoordFormatNV( GLenum type, GLsizei stride ) { }
-static void null_glFogCoordPointer( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glFogCoordPointerEXT( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glFogCoordPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glFogCoordd( GLdouble coord ) { }
-static void null_glFogCoorddEXT( GLdouble coord ) { }
-static void null_glFogCoorddv( const GLdouble *coord ) { }
-static void null_glFogCoorddvEXT( const GLdouble *coord ) { }
-static void null_glFogCoordf( GLfloat coord ) { }
-static void null_glFogCoordfEXT( GLfloat coord ) { }
-static void null_glFogCoordfv( const GLfloat *coord ) { }
-static void null_glFogCoordfvEXT( const GLfloat *coord ) { }
-static void null_glFogCoordhNV( GLhalfNV fog ) { }
-static void null_glFogCoordhvNV( const GLhalfNV *fog ) { }
-static void null_glFogFuncSGIS( GLsizei n, const GLfloat *points ) { }
-static void null_glFogxOES( GLenum pname, GLfixed param ) { }
-static void null_glFogxvOES( GLenum pname, const GLfixed *param ) { }
-static void null_glFragmentColorMaterialSGIX( GLenum face, GLenum mode ) { }
-static void null_glFragmentCoverageColorNV( GLuint color ) { }
-static void null_glFragmentLightModelfSGIX( GLenum pname, GLfloat param ) { }
-static void null_glFragmentLightModelfvSGIX( GLenum pname, const GLfloat *params ) { }
-static void null_glFragmentLightModeliSGIX( GLenum pname, GLint param ) { }
-static void null_glFragmentLightModelivSGIX( GLenum pname, const GLint *params ) { }
-static void null_glFragmentLightfSGIX( GLenum light, GLenum pname, GLfloat param ) { }
-static void null_glFragmentLightfvSGIX( GLenum light, GLenum pname, const GLfloat *params ) { }
-static void null_glFragmentLightiSGIX( GLenum light, GLenum pname, GLint param ) { }
-static void null_glFragmentLightivSGIX( GLenum light, GLenum pname, const GLint *params ) { }
-static void null_glFragmentMaterialfSGIX( GLenum face, GLenum pname, GLfloat param ) { }
-static void null_glFragmentMaterialfvSGIX( GLenum face, GLenum pname, const GLfloat *params ) { }
-static void null_glFragmentMaterialiSGIX( GLenum face, GLenum pname, GLint param ) { }
-static void null_glFragmentMaterialivSGIX( GLenum face, GLenum pname, const GLint *params ) { }
-static void null_glFrameTerminatorGREMEDY(void) { }
-static void null_glFrameZoomSGIX( GLint factor ) { }
-static void null_glFramebufferDrawBufferEXT( GLuint framebuffer, GLenum mode ) { }
-static void null_glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, const GLenum *bufs ) { }
-static void null_glFramebufferFetchBarrierEXT(void) { }
-static void null_glFramebufferParameteri( GLenum target, GLenum pname, GLint param ) { }
-static void null_glFramebufferParameteriMESA( GLenum target, GLenum pname, GLint param ) { }
-static void null_glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode ) { }
-static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
-static void null_glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
-static void null_glFramebufferSampleLocationsfvARB( GLenum target, GLuint start, GLsizei count, const GLfloat *v ) { }
-static void null_glFramebufferSampleLocationsfvNV( GLenum target, GLuint start, GLsizei count, const GLfloat *v ) { }
-static void null_glFramebufferSamplePositionsfvAMD( GLenum target, GLuint numsamples, GLuint pixelindex, const GLfloat *values ) { }
-static void null_glFramebufferTexture( GLenum target, GLenum attachment, GLuint texture, GLint level ) { }
-static void null_glFramebufferTexture1D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glFramebufferTexture1DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glFramebufferTexture2D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glFramebufferTexture2DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glFramebufferTexture3D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset ) { }
-static void null_glFramebufferTexture3DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset ) { }
-static void null_glFramebufferTextureARB( GLenum target, GLenum attachment, GLuint texture, GLint level ) { }
-static void null_glFramebufferTextureEXT( GLenum target, GLenum attachment, GLuint texture, GLint level ) { }
-static void null_glFramebufferTextureFaceARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face ) { }
-static void null_glFramebufferTextureFaceEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face ) { }
-static void null_glFramebufferTextureLayer( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
-static void null_glFramebufferTextureLayerARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
-static void null_glFramebufferTextureLayerEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
-static void null_glFramebufferTextureMultiviewOVR( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews ) { }
-static void null_glFreeObjectBufferATI( GLuint buffer ) { }
-static void null_glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f ) { }
-static void null_glFrustumxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f ) { }
-static GLuint null_glGenAsyncMarkersSGIX( GLsizei range ) { return 0; }
-static void null_glGenBuffers( GLsizei n, GLuint *buffers ) { }
-static void null_glGenBuffersARB( GLsizei n, GLuint *buffers ) { }
-static void null_glGenFencesAPPLE( GLsizei n, GLuint *fences ) { }
-static void null_glGenFencesNV( GLsizei n, GLuint *fences ) { }
-static GLuint null_glGenFragmentShadersATI( GLuint range ) { return 0; }
-static void null_glGenFramebuffers( GLsizei n, GLuint *framebuffers ) { }
-static void null_glGenFramebuffersEXT( GLsizei n, GLuint *framebuffers ) { }
-static void null_glGenNamesAMD( GLenum identifier, GLuint num, GLuint *names ) { }
-static void null_glGenOcclusionQueriesNV( GLsizei n, GLuint *ids ) { }
-static GLuint null_glGenPathsNV( GLsizei range ) { return 0; }
-static void null_glGenPerfMonitorsAMD( GLsizei n, GLuint *monitors ) { }
-static void null_glGenProgramPipelines( GLsizei n, GLuint *pipelines ) { }
-static void null_glGenProgramsARB( GLsizei n, GLuint *programs ) { }
-static void null_glGenProgramsNV( GLsizei n, GLuint *programs ) { }
-static void null_glGenQueries( GLsizei n, GLuint *ids ) { }
-static void null_glGenQueriesARB( GLsizei n, GLuint *ids ) { }
-static void null_glGenQueryResourceTagNV( GLsizei n, GLint *tagIds ) { }
-static void null_glGenRenderbuffers( GLsizei n, GLuint *renderbuffers ) { }
-static void null_glGenRenderbuffersEXT( GLsizei n, GLuint *renderbuffers ) { }
-static void null_glGenSamplers( GLsizei count, GLuint *samplers ) { }
-static void null_glGenSemaphoresEXT( GLsizei n, GLuint *semaphores ) { }
-static GLuint null_glGenSymbolsEXT( GLenum datatype, GLenum storagetype, GLenum range, GLuint components ) { return 0; }
-static void null_glGenTexturesEXT( GLsizei n, GLuint *textures ) { }
-static void null_glGenTransformFeedbacks( GLsizei n, GLuint *ids ) { }
-static void null_glGenTransformFeedbacksNV( GLsizei n, GLuint *ids ) { }
-static void null_glGenVertexArrays( GLsizei n, GLuint *arrays ) { }
-static void null_glGenVertexArraysAPPLE( GLsizei n, GLuint *arrays ) { }
-static GLuint null_glGenVertexShadersEXT( GLuint range ) { return 0; }
-static void null_glGenerateMipmap( GLenum target ) { }
-static void null_glGenerateMipmapEXT( GLenum target ) { }
-static void null_glGenerateMultiTexMipmapEXT( GLenum texunit, GLenum target ) { }
-static void null_glGenerateTextureMipmap( GLuint texture ) { }
-static void null_glGenerateTextureMipmapEXT( GLuint texture, GLenum target ) { }
-static void null_glGetActiveAtomicCounterBufferiv( GLuint program, GLuint bufferIndex, GLenum pname, GLint *params ) { }
-static void null_glGetActiveAttrib( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name ) { }
-static void null_glGetActiveAttribARB( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name ) { }
-static void null_glGetActiveSubroutineName( GLuint program, GLenum shadertype, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name ) { }
-static void null_glGetActiveSubroutineUniformName( GLuint program, GLenum shadertype, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name ) { }
-static void null_glGetActiveSubroutineUniformiv( GLuint program, GLenum shadertype, GLuint index, GLenum pname, GLint *values ) { }
-static void null_glGetActiveUniform( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name ) { }
-static void null_glGetActiveUniformARB( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name ) { }
-static void null_glGetActiveUniformBlockName( GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName ) { }
-static void null_glGetActiveUniformBlockiv( GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params ) { }
-static void null_glGetActiveUniformName( GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName ) { }
-static void null_glGetActiveUniformsiv( GLuint program, GLsizei uniformCount, const GLuint *uniformIndices, GLenum pname, GLint *params ) { }
-static void null_glGetActiveVaryingNV( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name ) { }
-static void null_glGetArrayObjectfvATI( GLenum array, GLenum pname, GLfloat *params ) { }
-static void null_glGetArrayObjectivATI( GLenum array, GLenum pname, GLint *params ) { }
-static void null_glGetAttachedObjectsARB( GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj ) { }
-static void null_glGetAttachedShaders( GLuint program, GLsizei maxCount, GLsizei *count, GLuint *shaders ) { }
-static GLint null_glGetAttribLocation( GLuint program, const GLchar *name ) { return 0; }
-static GLint null_glGetAttribLocationARB( GLhandleARB programObj, const GLcharARB *name ) { return 0; }
-static void null_glGetBooleanIndexedvEXT( GLenum target, GLuint index, GLboolean *data ) { }
-static void null_glGetBooleani_v( GLenum target, GLuint index, GLboolean *data ) { }
-static void null_glGetBufferParameteri64v( GLenum target, GLenum pname, GLint64 *params ) { }
-static void null_glGetBufferParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetBufferParameterivARB( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetBufferParameterui64vNV( GLenum target, GLenum pname, GLuint64EXT *params ) { }
-static void null_glGetBufferPointerv( GLenum target, GLenum pname, void **params ) { }
-static void null_glGetBufferPointervARB( GLenum target, GLenum pname, void **params ) { }
-static void null_glGetBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, void *data ) { }
-static void null_glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void *data ) { }
-static void null_glGetClipPlanefOES( GLenum plane, GLfloat *equation ) { }
-static void null_glGetClipPlanexOES( GLenum plane, GLfixed *equation ) { }
-static void null_glGetColorTable( GLenum target, GLenum format, GLenum type, void *table ) { }
-static void null_glGetColorTableEXT( GLenum target, GLenum format, GLenum type, void *data ) { }
-static void null_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetColorTableParameterfvSGI( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetColorTableParameterivSGI( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetColorTableSGI( GLenum target, GLenum format, GLenum type, void *table ) { }
-static void null_glGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params ) { }
-static void null_glGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params ) { }
-static void null_glGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params ) { }
-static void null_glGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params ) { }
-static void null_glGetCombinerStageParameterfvNV( GLenum stage, GLenum pname, GLfloat *params ) { }
-static GLuint null_glGetCommandHeaderNV( GLenum tokenID, GLuint size ) { return 0; }
-static void null_glGetCompressedMultiTexImageEXT( GLenum texunit, GLenum target, GLint lod, void *img ) { }
-static void null_glGetCompressedTexImage( GLenum target, GLint level, void *img ) { }
-static void null_glGetCompressedTexImageARB( GLenum target, GLint level, void *img ) { }
-static void null_glGetCompressedTextureImage( GLuint texture, GLint level, GLsizei bufSize, void *pixels ) { }
-static void null_glGetCompressedTextureImageEXT( GLuint texture, GLenum target, GLint lod, void *img ) { }
-static void null_glGetCompressedTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei bufSize, void *pixels ) { }
-static void null_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, void *image ) { }
-static void null_glGetConvolutionFilterEXT( GLenum target, GLenum format, GLenum type, void *image ) { }
-static void null_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetConvolutionParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetConvolutionParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetConvolutionParameterxvOES( GLenum target, GLenum pname, GLfixed *params ) { }
-static void null_glGetCoverageModulationTableNV( GLsizei bufSize, GLfloat *v ) { }
-static GLuint null_glGetDebugMessageLog( GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog ) { return 0; }
-static GLuint null_glGetDebugMessageLogAMD( GLuint count, GLsizei bufSize, GLenum *categories, GLuint *severities, GLuint *ids, GLsizei *lengths, GLchar *message ) { return 0; }
-static GLuint null_glGetDebugMessageLogARB( GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog ) { return 0; }
-static void null_glGetDetailTexFuncSGIS( GLenum target, GLfloat *points ) { }
-static void null_glGetDoubleIndexedvEXT( GLenum target, GLuint index, GLdouble *data ) { }
-static void null_glGetDoublei_v( GLenum target, GLuint index, GLdouble *data ) { }
-static void null_glGetDoublei_vEXT( GLenum pname, GLuint index, GLdouble *params ) { }
-static void null_glGetFenceivNV( GLuint fence, GLenum pname, GLint *params ) { }
-static void null_glGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params ) { }
-static void null_glGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLint *params ) { }
-static void null_glGetFirstPerfQueryIdINTEL( GLuint *queryId ) { }
-static void null_glGetFixedvOES( GLenum pname, GLfixed *params ) { }
-static void null_glGetFloatIndexedvEXT( GLenum target, GLuint index, GLfloat *data ) { }
-static void null_glGetFloati_v( GLenum target, GLuint index, GLfloat *data ) { }
-static void null_glGetFloati_vEXT( GLenum pname, GLuint index, GLfloat *params ) { }
-static void null_glGetFogFuncSGIS( GLfloat *points ) { }
-static GLint null_glGetFragDataIndex( GLuint program, const GLchar *name ) { return 0; }
-static GLint null_glGetFragDataLocation( GLuint program, const GLchar *name ) { return 0; }
-static GLint null_glGetFragDataLocationEXT( GLuint program, const GLchar *name ) { return 0; }
-static void null_glGetFragmentLightfvSGIX( GLenum light, GLenum pname, GLfloat *params ) { }
-static void null_glGetFragmentLightivSGIX( GLenum light, GLenum pname, GLint *params ) { }
-static void null_glGetFragmentMaterialfvSGIX( GLenum face, GLenum pname, GLfloat *params ) { }
-static void null_glGetFragmentMaterialivSGIX( GLenum face, GLenum pname, GLint *params ) { }
-static void null_glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint *params ) { }
-static void null_glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint *params ) { }
-static void null_glGetFramebufferParameterfvAMD( GLenum target, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values ) { }
-static void null_glGetFramebufferParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params ) { }
-static void null_glGetFramebufferParameterivMESA( GLenum target, GLenum pname, GLint *params ) { }
-static GLenum null_glGetGraphicsResetStatus(void) { return 0; }
-static GLenum null_glGetGraphicsResetStatusARB(void) { return 0; }
-static GLhandleARB null_glGetHandleARB( GLenum pname ) { return 0; }
-static void null_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
-static void null_glGetHistogramEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
-static void null_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetHistogramParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetHistogramParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetHistogramParameterxvOES( GLenum target, GLenum pname, GLfixed *params ) { }
-static GLuint64 null_glGetImageHandleARB( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format ) { return 0; }
-static GLuint64 null_glGetImageHandleNV( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format ) { return 0; }
-static void null_glGetImageTransformParameterfvHP( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetImageTransformParameterivHP( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetInfoLogARB( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog ) { }
-static GLint null_glGetInstrumentsSGIX(void) { return 0; }
-static void null_glGetInteger64i_v( GLenum target, GLuint index, GLint64 *data ) { }
-static void null_glGetInteger64v( GLenum pname, GLint64 *data ) { }
-static void null_glGetIntegerIndexedvEXT( GLenum target, GLuint index, GLint *data ) { }
-static void null_glGetIntegeri_v( GLenum target, GLuint index, GLint *data ) { }
-static void null_glGetIntegerui64i_vNV( GLenum value, GLuint index, GLuint64EXT *result ) { }
-static void null_glGetIntegerui64vNV( GLenum value, GLuint64EXT *result ) { }
-static void null_glGetInternalformatSampleivNV( GLenum target, GLenum internalformat, GLsizei samples, GLenum pname, GLsizei count, GLint *params ) { }
-static void null_glGetInternalformati64v( GLenum target, GLenum internalformat, GLenum pname, GLsizei count, GLint64 *params ) { }
-static void null_glGetInternalformativ( GLenum target, GLenum internalformat, GLenum pname, GLsizei count, GLint *params ) { }
-static void null_glGetInvariantBooleanvEXT( GLuint id, GLenum value, GLboolean *data ) { }
-static void null_glGetInvariantFloatvEXT( GLuint id, GLenum value, GLfloat *data ) { }
-static void null_glGetInvariantIntegervEXT( GLuint id, GLenum value, GLint *data ) { }
-static void null_glGetLightxOES( GLenum light, GLenum pname, GLfixed *params ) { }
-static void null_glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat *params ) { }
-static void null_glGetListParameterivSGIX( GLuint list, GLenum pname, GLint *params ) { }
-static void null_glGetLocalConstantBooleanvEXT( GLuint id, GLenum value, GLboolean *data ) { }
-static void null_glGetLocalConstantFloatvEXT( GLuint id, GLenum value, GLfloat *data ) { }
-static void null_glGetLocalConstantIntegervEXT( GLuint id, GLenum value, GLint *data ) { }
-static void null_glGetMapAttribParameterfvNV( GLenum target, GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetMapAttribParameterivNV( GLenum target, GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLboolean packed, void *points ) { }
-static void null_glGetMapParameterfvNV( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetMapParameterivNV( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMapxvOES( GLenum target, GLenum query, GLfixed *v ) { }
-static void null_glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param ) { }
-static void null_glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params ) { }
-static void null_glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint *params ) { }
-static void null_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
-static void null_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values ) { }
-static void null_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetMinmaxParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMinmaxParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMultiTexEnvfvEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetMultiTexEnvivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMultiTexGendvEXT( GLenum texunit, GLenum coord, GLenum pname, GLdouble *params ) { }
-static void null_glGetMultiTexGenfvEXT( GLenum texunit, GLenum coord, GLenum pname, GLfloat *params ) { }
-static void null_glGetMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum pname, GLint *params ) { }
-static void null_glGetMultiTexImageEXT( GLenum texunit, GLenum target, GLint level, GLenum format, GLenum type, void *pixels ) { }
-static void null_glGetMultiTexLevelParameterfvEXT( GLenum texunit, GLenum target, GLint level, GLenum pname, GLfloat *params ) { }
-static void null_glGetMultiTexLevelParameterivEXT( GLenum texunit, GLenum target, GLint level, GLenum pname, GLint *params ) { }
-static void null_glGetMultiTexParameterIivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMultiTexParameterIuivEXT( GLenum texunit, GLenum target, GLenum pname, GLuint *params ) { }
-static void null_glGetMultiTexParameterfvEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetMultiTexParameterivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetMultisamplefv( GLenum pname, GLuint index, GLfloat *val ) { }
-static void null_glGetMultisamplefvNV( GLenum pname, GLuint index, GLfloat *val ) { }
-static void null_glGetNamedBufferParameteri64v( GLuint buffer, GLenum pname, GLint64 *params ) { }
-static void null_glGetNamedBufferParameteriv( GLuint buffer, GLenum pname, GLint *params ) { }
-static void null_glGetNamedBufferParameterivEXT( GLuint buffer, GLenum pname, GLint *params ) { }
-static void null_glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname, GLuint64EXT *params ) { }
-static void null_glGetNamedBufferPointerv( GLuint buffer, GLenum pname, void **params ) { }
-static void null_glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, void **params ) { }
-static void null_glGetNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, void *data ) { }
-static void null_glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void *data ) { }
-static void null_glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params ) { }
-static void null_glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params ) { }
-static void null_glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values ) { }
-static void null_glGetNamedFramebufferParameteriv( GLuint framebuffer, GLenum pname, GLint *param ) { }
-static void null_glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params ) { }
-static void null_glGetNamedProgramLocalParameterIivEXT( GLuint program, GLenum target, GLuint index, GLint *params ) { }
-static void null_glGetNamedProgramLocalParameterIuivEXT( GLuint program, GLenum target, GLuint index, GLuint *params ) { }
-static void null_glGetNamedProgramLocalParameterdvEXT( GLuint program, GLenum target, GLuint index, GLdouble *params ) { }
-static void null_glGetNamedProgramLocalParameterfvEXT( GLuint program, GLenum target, GLuint index, GLfloat *params ) { }
-static void null_glGetNamedProgramStringEXT( GLuint program, GLenum target, GLenum pname, void *string ) { }
-static void null_glGetNamedProgramivEXT( GLuint program, GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetNamedRenderbufferParameteriv( GLuint renderbuffer, GLenum pname, GLint *params ) { }
-static void null_glGetNamedRenderbufferParameterivEXT( GLuint renderbuffer, GLenum pname, GLint *params ) { }
-static void null_glGetNamedStringARB( GLint namelen, const GLchar *name, GLsizei bufSize, GLint *stringlen, GLchar *string ) { }
-static void null_glGetNamedStringivARB( GLint namelen, const GLchar *name, GLenum pname, GLint *params ) { }
-static void null_glGetNextPerfQueryIdINTEL( GLuint queryId, GLuint *nextQueryId ) { }
-static void null_glGetObjectBufferfvATI( GLuint buffer, GLenum pname, GLfloat *params ) { }
-static void null_glGetObjectBufferivATI( GLuint buffer, GLenum pname, GLint *params ) { }
-static void null_glGetObjectLabel( GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label ) { }
-static void null_glGetObjectLabelEXT( GLenum type, GLuint object, GLsizei bufSize, GLsizei *length, GLchar *label ) { }
-static void null_glGetObjectParameterfvARB( GLhandleARB obj, GLenum pname, GLfloat *params ) { }
-static void null_glGetObjectParameterivAPPLE( GLenum objectType, GLuint name, GLenum pname, GLint *params ) { }
-static void null_glGetObjectParameterivARB( GLhandleARB obj, GLenum pname, GLint *params ) { }
-static void null_glGetObjectPtrLabel( const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label ) { }
-static void null_glGetOcclusionQueryivNV( GLuint id, GLenum pname, GLint *params ) { }
-static void null_glGetOcclusionQueryuivNV( GLuint id, GLenum pname, GLuint *params ) { }
-static void null_glGetPathColorGenfvNV( GLenum color, GLenum pname, GLfloat *value ) { }
-static void null_glGetPathColorGenivNV( GLenum color, GLenum pname, GLint *value ) { }
-static void null_glGetPathCommandsNV( GLuint path, GLubyte *commands ) { }
-static void null_glGetPathCoordsNV( GLuint path, GLfloat *coords ) { }
-static void null_glGetPathDashArrayNV( GLuint path, GLfloat *dashArray ) { }
-static GLfloat null_glGetPathLengthNV( GLuint path, GLsizei startSegment, GLsizei numSegments ) { return 0; }
-static void null_glGetPathMetricRangeNV( GLbitfield metricQueryMask, GLuint firstPathName, GLsizei numPaths, GLsizei stride, GLfloat *metrics ) { }
-static void null_glGetPathMetricsNV( GLbitfield metricQueryMask, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLsizei stride, GLfloat *metrics ) { }
-static void null_glGetPathParameterfvNV( GLuint path, GLenum pname, GLfloat *value ) { }
-static void null_glGetPathParameterivNV( GLuint path, GLenum pname, GLint *value ) { }
-static void null_glGetPathSpacingNV( GLenum pathListMode, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLfloat advanceScale, GLfloat kerningScale, GLenum transformType, GLfloat *returnedSpacing ) { }
-static void null_glGetPathTexGenfvNV( GLenum texCoordSet, GLenum pname, GLfloat *value ) { }
-static void null_glGetPathTexGenivNV( GLenum texCoordSet, GLenum pname, GLint *value ) { }
-static void null_glGetPerfCounterInfoINTEL( GLuint queryId, GLuint counterId, GLuint counterNameLength, GLchar *counterName, GLuint counterDescLength, GLchar *counterDesc, GLuint *counterOffset, GLuint *counterDataSize, GLuint *counterTypeEnum, GLuint *counterDataTypeEnum, GLuint64 *rawCounterMaxValue ) { }
-static void null_glGetPerfMonitorCounterDataAMD( GLuint monitor, GLenum pname, GLsizei dataSize, GLuint *data, GLint *bytesWritten ) { }
-static void null_glGetPerfMonitorCounterInfoAMD( GLuint group, GLuint counter, GLenum pname, void *data ) { }
-static void null_glGetPerfMonitorCounterStringAMD( GLuint group, GLuint counter, GLsizei bufSize, GLsizei *length, GLchar *counterString ) { }
-static void null_glGetPerfMonitorCountersAMD( GLuint group, GLint *numCounters, GLint *maxActiveCounters, GLsizei counterSize, GLuint *counters ) { }
-static void null_glGetPerfMonitorGroupStringAMD( GLuint group, GLsizei bufSize, GLsizei *length, GLchar *groupString ) { }
-static void null_glGetPerfMonitorGroupsAMD( GLint *numGroups, GLsizei groupsSize, GLuint *groups ) { }
-static void null_glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, void *data, GLuint *bytesWritten ) { }
-static void null_glGetPerfQueryIdByNameINTEL( GLchar *queryName, GLuint *queryId ) { }
-static void null_glGetPerfQueryInfoINTEL( GLuint queryId, GLuint queryNameLength, GLchar *queryName, GLuint *dataSize, GLuint *noCounters, GLuint *noInstances, GLuint *capsMask ) { }
-static void null_glGetPixelMapxv( GLenum map, GLint size, GLfixed *values ) { }
-static void null_glGetPixelTexGenParameterfvSGIS( GLenum pname, GLfloat *params ) { }
-static void null_glGetPixelTexGenParameterivSGIS( GLenum pname, GLint *params ) { }
-static void null_glGetPixelTransformParameterfvEXT( GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetPixelTransformParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetPointerIndexedvEXT( GLenum target, GLuint index, void **data ) { }
-static void null_glGetPointeri_vEXT( GLenum pname, GLuint index, void **params ) { }
-static void null_glGetPointervEXT( GLenum pname, void **params ) { }
-static void null_glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary ) { }
-static void null_glGetProgramEnvParameterIivNV( GLenum target, GLuint index, GLint *params ) { }
-static void null_glGetProgramEnvParameterIuivNV( GLenum target, GLuint index, GLuint *params ) { }
-static void null_glGetProgramEnvParameterdvARB( GLenum target, GLuint index, GLdouble *params ) { }
-static void null_glGetProgramEnvParameterfvARB( GLenum target, GLuint index, GLfloat *params ) { }
-static void null_glGetProgramInfoLog( GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog ) { }
-static void null_glGetProgramInterfaceiv( GLuint program, GLenum programInterface, GLenum pname, GLint *params ) { }
-static void null_glGetProgramLocalParameterIivNV( GLenum target, GLuint index, GLint *params ) { }
-static void null_glGetProgramLocalParameterIuivNV( GLenum target, GLuint index, GLuint *params ) { }
-static void null_glGetProgramLocalParameterdvARB( GLenum target, GLuint index, GLdouble *params ) { }
-static void null_glGetProgramLocalParameterfvARB( GLenum target, GLuint index, GLfloat *params ) { }
-static void null_glGetProgramNamedParameterdvNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble *params ) { }
-static void null_glGetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params ) { }
-static void null_glGetProgramParameterdvNV( GLenum target, GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetProgramParameterfvNV( GLenum target, GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetProgramPipelineInfoLog( GLuint pipeline, GLsizei bufSize, GLsizei *length, GLchar *infoLog ) { }
-static void null_glGetProgramPipelineiv( GLuint pipeline, GLenum pname, GLint *params ) { }
-static GLuint null_glGetProgramResourceIndex( GLuint program, GLenum programInterface, const GLchar *name ) { return 0; }
-static GLint null_glGetProgramResourceLocation( GLuint program, GLenum programInterface, const GLchar *name ) { return 0; }
-static GLint null_glGetProgramResourceLocationIndex( GLuint program, GLenum programInterface, const GLchar *name ) { return 0; }
-static void null_glGetProgramResourceName( GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name ) { }
-static void null_glGetProgramResourcefvNV( GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum *props, GLsizei count, GLsizei *length, GLfloat *params ) { }
-static void null_glGetProgramResourceiv( GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum *props, GLsizei count, GLsizei *length, GLint *params ) { }
-static void null_glGetProgramStageiv( GLuint program, GLenum shadertype, GLenum pname, GLint *values ) { }
-static void null_glGetProgramStringARB( GLenum target, GLenum pname, void *string ) { }
-static void null_glGetProgramStringNV( GLuint id, GLenum pname, GLubyte *program ) { }
-static void null_glGetProgramSubroutineParameteruivNV( GLenum target, GLuint index, GLuint *param ) { }
-static void null_glGetProgramiv( GLuint program, GLenum pname, GLint *params ) { }
-static void null_glGetProgramivARB( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetProgramivNV( GLuint id, GLenum pname, GLint *params ) { }
-static void null_glGetQueryBufferObjecti64v( GLuint id, GLuint buffer, GLenum pname, GLintptr offset ) { }
-static void null_glGetQueryBufferObjectiv( GLuint id, GLuint buffer, GLenum pname, GLintptr offset ) { }
-static void null_glGetQueryBufferObjectui64v( GLuint id, GLuint buffer, GLenum pname, GLintptr offset ) { }
-static void null_glGetQueryBufferObjectuiv( GLuint id, GLuint buffer, GLenum pname, GLintptr offset ) { }
-static void null_glGetQueryIndexediv( GLenum target, GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetQueryObjecti64v( GLuint id, GLenum pname, GLint64 *params ) { }
-static void null_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, GLint64 *params ) { }
-static void null_glGetQueryObjectiv( GLuint id, GLenum pname, GLint *params ) { }
-static void null_glGetQueryObjectivARB( GLuint id, GLenum pname, GLint *params ) { }
-static void null_glGetQueryObjectui64v( GLuint id, GLenum pname, GLuint64 *params ) { }
-static void null_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, GLuint64 *params ) { }
-static void null_glGetQueryObjectuiv( GLuint id, GLenum pname, GLuint *params ) { }
-static void null_glGetQueryObjectuivARB( GLuint id, GLenum pname, GLuint *params ) { }
-static void null_glGetQueryiv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetQueryivARB( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetRenderbufferParameteriv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetRenderbufferParameterivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetSamplerParameterIiv( GLuint sampler, GLenum pname, GLint *params ) { }
-static void null_glGetSamplerParameterIuiv( GLuint sampler, GLenum pname, GLuint *params ) { }
-static void null_glGetSamplerParameterfv( GLuint sampler, GLenum pname, GLfloat *params ) { }
-static void null_glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint *params ) { }
-static void null_glGetSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, GLuint64 *params ) { }
-static void null_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, void *row, void *column, void *span ) { }
-static void null_glGetSeparableFilterEXT( GLenum target, GLenum format, GLenum type, void *row, void *column, void *span ) { }
-static void null_glGetShaderInfoLog( GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog ) { }
-static void null_glGetShaderPrecisionFormat( GLenum shadertype, GLenum precisiontype, GLint *range, GLint *precision ) { }
-static void null_glGetShaderSource( GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source ) { }
-static void null_glGetShaderSourceARB( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source ) { }
-static void null_glGetShaderiv( GLuint shader, GLenum pname, GLint *params ) { }
-static void null_glGetShadingRateImagePaletteNV( GLuint viewport, GLuint entry, GLenum *rate ) { }
-static void null_glGetShadingRateSampleLocationivNV( GLenum rate, GLuint samples, GLuint index, GLint *location ) { }
-static void null_glGetSharpenTexFuncSGIS( GLenum target, GLfloat *points ) { }
-static GLushort null_glGetStageIndexNV( GLenum shadertype ) { return 0; }
-static const GLubyte * null_glGetStringi( GLenum name, GLuint index ) { return 0; }
-static GLuint null_glGetSubroutineIndex( GLuint program, GLenum shadertype, const GLchar *name ) { return 0; }
-static GLint null_glGetSubroutineUniformLocation( GLuint program, GLenum shadertype, const GLchar *name ) { return 0; }
-static void null_glGetSynciv( GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values ) { }
-static void null_glGetTexBumpParameterfvATI( GLenum pname, GLfloat *param ) { }
-static void null_glGetTexBumpParameterivATI( GLenum pname, GLint *param ) { }
-static void null_glGetTexEnvxvOES( GLenum target, GLenum pname, GLfixed *params ) { }
-static void null_glGetTexFilterFuncSGIS( GLenum target, GLenum filter, GLfloat *weights ) { }
-static void null_glGetTexGenxvOES( GLenum coord, GLenum pname, GLfixed *params ) { }
-static void null_glGetTexLevelParameterxvOES( GLenum target, GLint level, GLenum pname, GLfixed *params ) { }
-static void null_glGetTexParameterIiv( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetTexParameterIivEXT( GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetTexParameterIuiv( GLenum target, GLenum pname, GLuint *params ) { }
-static void null_glGetTexParameterIuivEXT( GLenum target, GLenum pname, GLuint *params ) { }
-static void null_glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, void **params ) { }
-static void null_glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed *params ) { }
-static GLuint64 null_glGetTextureHandleARB( GLuint texture ) { return 0; }
-static GLuint64 null_glGetTextureHandleNV( GLuint texture ) { return 0; }
-static void null_glGetTextureImage( GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels ) { }
-static void null_glGetTextureImageEXT( GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, void *pixels ) { }
-static void null_glGetTextureLevelParameterfv( GLuint texture, GLint level, GLenum pname, GLfloat *params ) { }
-static void null_glGetTextureLevelParameterfvEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLfloat *params ) { }
-static void null_glGetTextureLevelParameteriv( GLuint texture, GLint level, GLenum pname, GLint *params ) { }
-static void null_glGetTextureLevelParameterivEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLint *params ) { }
-static void null_glGetTextureParameterIiv( GLuint texture, GLenum pname, GLint *params ) { }
-static void null_glGetTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params ) { }
-static void null_glGetTextureParameterIuiv( GLuint texture, GLenum pname, GLuint *params ) { }
-static void null_glGetTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, GLuint *params ) { }
-static void null_glGetTextureParameterfv( GLuint texture, GLenum pname, GLfloat *params ) { }
-static void null_glGetTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, GLfloat *params ) { }
-static void null_glGetTextureParameteriv( GLuint texture, GLenum pname, GLint *params ) { }
-static void null_glGetTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params ) { }
-static GLuint64 null_glGetTextureSamplerHandleARB( GLuint texture, GLuint sampler ) { return 0; }
-static GLuint64 null_glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler ) { return 0; }
-static void null_glGetTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void *pixels ) { }
-static void null_glGetTrackMatrixivNV( GLenum target, GLuint address, GLenum pname, GLint *params ) { }
-static void null_glGetTransformFeedbackVarying( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name ) { }
-static void null_glGetTransformFeedbackVaryingEXT( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name ) { }
-static void null_glGetTransformFeedbackVaryingNV( GLuint program, GLuint index, GLint *location ) { }
-static void null_glGetTransformFeedbacki64_v( GLuint xfb, GLenum pname, GLuint index, GLint64 *param ) { }
-static void null_glGetTransformFeedbacki_v( GLuint xfb, GLenum pname, GLuint index, GLint *param ) { }
-static void null_glGetTransformFeedbackiv( GLuint xfb, GLenum pname, GLint *param ) { }
-static GLuint null_glGetUniformBlockIndex( GLuint program, const GLchar *uniformBlockName ) { return 0; }
-static GLint null_glGetUniformBufferSizeEXT( GLuint program, GLint location ) { return 0; }
-static void null_glGetUniformIndices( GLuint program, GLsizei uniformCount, const GLchar *const*uniformNames, GLuint *uniformIndices ) { }
-static GLint null_glGetUniformLocation( GLuint program, const GLchar *name ) { return 0; }
-static GLint null_glGetUniformLocationARB( GLhandleARB programObj, const GLcharARB *name ) { return 0; }
-static GLintptr null_glGetUniformOffsetEXT( GLuint program, GLint location ) { return 0; }
-static void null_glGetUniformSubroutineuiv( GLenum shadertype, GLint location, GLuint *params ) { }
-static void null_glGetUniformdv( GLuint program, GLint location, GLdouble *params ) { }
-static void null_glGetUniformfv( GLuint program, GLint location, GLfloat *params ) { }
-static void null_glGetUniformfvARB( GLhandleARB programObj, GLint location, GLfloat *params ) { }
-static void null_glGetUniformi64vARB( GLuint program, GLint location, GLint64 *params ) { }
-static void null_glGetUniformi64vNV( GLuint program, GLint location, GLint64EXT *params ) { }
-static void null_glGetUniformiv( GLuint program, GLint location, GLint *params ) { }
-static void null_glGetUniformivARB( GLhandleARB programObj, GLint location, GLint *params ) { }
-static void null_glGetUniformui64vARB( GLuint program, GLint location, GLuint64 *params ) { }
-static void null_glGetUniformui64vNV( GLuint program, GLint location, GLuint64EXT *params ) { }
-static void null_glGetUniformuiv( GLuint program, GLint location, GLuint *params ) { }
-static void null_glGetUniformuivEXT( GLuint program, GLint location, GLuint *params ) { }
-static void null_glGetUnsignedBytei_vEXT( GLenum target, GLuint index, GLubyte *data ) { }
-static void null_glGetUnsignedBytevEXT( GLenum pname, GLubyte *data ) { }
-static void null_glGetVariantArrayObjectfvATI( GLuint id, GLenum pname, GLfloat *params ) { }
-static void null_glGetVariantArrayObjectivATI( GLuint id, GLenum pname, GLint *params ) { }
-static void null_glGetVariantBooleanvEXT( GLuint id, GLenum value, GLboolean *data ) { }
-static void null_glGetVariantFloatvEXT( GLuint id, GLenum value, GLfloat *data ) { }
-static void null_glGetVariantIntegervEXT( GLuint id, GLenum value, GLint *data ) { }
-static void null_glGetVariantPointervEXT( GLuint id, GLenum value, void **data ) { }
-static GLint null_glGetVaryingLocationNV( GLuint program, const GLchar *name ) { return 0; }
-static void null_glGetVertexArrayIndexed64iv( GLuint vaobj, GLuint index, GLenum pname, GLint64 *param ) { }
-static void null_glGetVertexArrayIndexediv( GLuint vaobj, GLuint index, GLenum pname, GLint *param ) { }
-static void null_glGetVertexArrayIntegeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, GLint *param ) { }
-static void null_glGetVertexArrayIntegervEXT( GLuint vaobj, GLenum pname, GLint *param ) { }
-static void null_glGetVertexArrayPointeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, void **param ) { }
-static void null_glGetVertexArrayPointervEXT( GLuint vaobj, GLenum pname, void **param ) { }
-static void null_glGetVertexArrayiv( GLuint vaobj, GLenum pname, GLint *param ) { }
-static void null_glGetVertexAttribArrayObjectfvATI( GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetVertexAttribArrayObjectivATI( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVertexAttribIiv( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVertexAttribIivEXT( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVertexAttribIuiv( GLuint index, GLenum pname, GLuint *params ) { }
-static void null_glGetVertexAttribIuivEXT( GLuint index, GLenum pname, GLuint *params ) { }
-static void null_glGetVertexAttribLdv( GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetVertexAttribLdvEXT( GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetVertexAttribLi64vNV( GLuint index, GLenum pname, GLint64EXT *params ) { }
-static void null_glGetVertexAttribLui64vARB( GLuint index, GLenum pname, GLuint64EXT *params ) { }
-static void null_glGetVertexAttribLui64vNV( GLuint index, GLenum pname, GLuint64EXT *params ) { }
-static void null_glGetVertexAttribPointerv( GLuint index, GLenum pname, void **pointer ) { }
-static void null_glGetVertexAttribPointervARB( GLuint index, GLenum pname, void **pointer ) { }
-static void null_glGetVertexAttribPointervNV( GLuint index, GLenum pname, void **pointer ) { }
-static void null_glGetVertexAttribdv( GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetVertexAttribdvARB( GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetVertexAttribdvNV( GLuint index, GLenum pname, GLdouble *params ) { }
-static void null_glGetVertexAttribfv( GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetVertexAttribfvARB( GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetVertexAttribfvNV( GLuint index, GLenum pname, GLfloat *params ) { }
-static void null_glGetVertexAttribiv( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVertexAttribivARB( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVertexAttribivNV( GLuint index, GLenum pname, GLint *params ) { }
-static void null_glGetVideoCaptureStreamdvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLdouble *params ) { }
-static void null_glGetVideoCaptureStreamfvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLfloat *params ) { }
-static void null_glGetVideoCaptureStreamivNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLint *params ) { }
-static void null_glGetVideoCaptureivNV( GLuint video_capture_slot, GLenum pname, GLint *params ) { }
-static void null_glGetVideoi64vNV( GLuint video_slot, GLenum pname, GLint64EXT *params ) { }
-static void null_glGetVideoivNV( GLuint video_slot, GLenum pname, GLint *params ) { }
-static void null_glGetVideoui64vNV( GLuint video_slot, GLenum pname, GLuint64EXT *params ) { }
-static void null_glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint *params ) { }
-static GLVULKANPROCNV null_glGetVkProcAddrNV( const GLchar *name ) { return 0; }
-static void null_glGetnColorTable( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table ) { }
-static void null_glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table ) { }
-static void null_glGetnCompressedTexImage( GLenum target, GLint lod, GLsizei bufSize, void *pixels ) { }
-static void null_glGetnCompressedTexImageARB( GLenum target, GLint lod, GLsizei bufSize, void *img ) { }
-static void null_glGetnConvolutionFilter( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *image ) { }
-static void null_glGetnConvolutionFilterARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *image ) { }
-static void null_glGetnHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values ) { }
-static void null_glGetnHistogramARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values ) { }
-static void null_glGetnMapdv( GLenum target, GLenum query, GLsizei bufSize, GLdouble *v ) { }
-static void null_glGetnMapdvARB( GLenum target, GLenum query, GLsizei bufSize, GLdouble *v ) { }
-static void null_glGetnMapfv( GLenum target, GLenum query, GLsizei bufSize, GLfloat *v ) { }
-static void null_glGetnMapfvARB( GLenum target, GLenum query, GLsizei bufSize, GLfloat *v ) { }
-static void null_glGetnMapiv( GLenum target, GLenum query, GLsizei bufSize, GLint *v ) { }
-static void null_glGetnMapivARB( GLenum target, GLenum query, GLsizei bufSize, GLint *v ) { }
-static void null_glGetnMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values ) { }
-static void null_glGetnMinmaxARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values ) { }
-static void null_glGetnPixelMapfv( GLenum map, GLsizei bufSize, GLfloat *values ) { }
-static void null_glGetnPixelMapfvARB( GLenum map, GLsizei bufSize, GLfloat *values ) { }
-static void null_glGetnPixelMapuiv( GLenum map, GLsizei bufSize, GLuint *values ) { }
-static void null_glGetnPixelMapuivARB( GLenum map, GLsizei bufSize, GLuint *values ) { }
-static void null_glGetnPixelMapusv( GLenum map, GLsizei bufSize, GLushort *values ) { }
-static void null_glGetnPixelMapusvARB( GLenum map, GLsizei bufSize, GLushort *values ) { }
-static void null_glGetnPolygonStipple( GLsizei bufSize, GLubyte *pattern ) { }
-static void null_glGetnPolygonStippleARB( GLsizei bufSize, GLubyte *pattern ) { }
-static void null_glGetnSeparableFilter( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, void *row, GLsizei columnBufSize, void *column, void *span ) { }
-static void null_glGetnSeparableFilterARB( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, void *row, GLsizei columnBufSize, void *column, void *span ) { }
-static void null_glGetnTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels ) { }
-static void null_glGetnTexImageARB( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *img ) { }
-static void null_glGetnUniformdv( GLuint program, GLint location, GLsizei bufSize, GLdouble *params ) { }
-static void null_glGetnUniformdvARB( GLuint program, GLint location, GLsizei bufSize, GLdouble *params ) { }
-static void null_glGetnUniformfv( GLuint program, GLint location, GLsizei bufSize, GLfloat *params ) { }
-static void null_glGetnUniformfvARB( GLuint program, GLint location, GLsizei bufSize, GLfloat *params ) { }
-static void null_glGetnUniformi64vARB( GLuint program, GLint location, GLsizei bufSize, GLint64 *params ) { }
-static void null_glGetnUniformiv( GLuint program, GLint location, GLsizei bufSize, GLint *params ) { }
-static void null_glGetnUniformivARB( GLuint program, GLint location, GLsizei bufSize, GLint *params ) { }
-static void null_glGetnUniformui64vARB( GLuint program, GLint location, GLsizei bufSize, GLuint64 *params ) { }
-static void null_glGetnUniformuiv( GLuint program, GLint location, GLsizei bufSize, GLuint *params ) { }
-static void null_glGetnUniformuivARB( GLuint program, GLint location, GLsizei bufSize, GLuint *params ) { }
-static void null_glGlobalAlphaFactorbSUN( GLbyte factor ) { }
-static void null_glGlobalAlphaFactordSUN( GLdouble factor ) { }
-static void null_glGlobalAlphaFactorfSUN( GLfloat factor ) { }
-static void null_glGlobalAlphaFactoriSUN( GLint factor ) { }
-static void null_glGlobalAlphaFactorsSUN( GLshort factor ) { }
-static void null_glGlobalAlphaFactorubSUN( GLubyte factor ) { }
-static void null_glGlobalAlphaFactoruiSUN( GLuint factor ) { }
-static void null_glGlobalAlphaFactorusSUN( GLushort factor ) { }
-static void null_glHintPGI( GLenum target, GLint mode ) { }
-static void null_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) { }
-static void null_glHistogramEXT( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink ) { }
-static void null_glIglooInterfaceSGIX( GLenum pname, const void *params ) { }
-static void null_glImageTransformParameterfHP( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glImageTransformParameterfvHP( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glImageTransformParameteriHP( GLenum target, GLenum pname, GLint param ) { }
-static void null_glImageTransformParameterivHP( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glImportMemoryFdEXT( GLuint memory, GLuint64 size, GLenum handleType, GLint fd ) { }
-static void null_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum handleType, void *handle ) { }
-static void null_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLenum handleType, const void *name ) { }
-static void null_glImportSemaphoreFdEXT( GLuint semaphore, GLenum handleType, GLint fd ) { }
-static void null_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum handleType, void *handle ) { }
-static void null_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum handleType, const void *name ) { }
-static GLsync null_glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags ) { return 0; }
-static void null_glIndexFormatNV( GLenum type, GLsizei stride ) { }
-static void null_glIndexFuncEXT( GLenum func, GLclampf ref ) { }
-static void null_glIndexMaterialEXT( GLenum face, GLenum mode ) { }
-static void null_glIndexPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void *pointer ) { }
-static void null_glIndexPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glIndexxOES( GLfixed component ) { }
-static void null_glIndexxvOES( const GLfixed *component ) { }
-static void null_glInsertComponentEXT( GLuint res, GLuint src, GLuint num ) { }
-static void null_glInsertEventMarkerEXT( GLsizei length, const GLchar *marker ) { }
-static void null_glInstrumentsBufferSGIX( GLsizei size, GLint *buffer ) { }
-static void null_glInterpolatePathsNV( GLuint resultPath, GLuint pathA, GLuint pathB, GLfloat weight ) { }
-static void null_glInvalidateBufferData( GLuint buffer ) { }
-static void null_glInvalidateBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr length ) { }
-static void null_glInvalidateFramebuffer( GLenum target, GLsizei numAttachments, const GLenum *attachments ) { }
-static void null_glInvalidateNamedFramebufferData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments ) { }
-static void null_glInvalidateNamedFramebufferSubData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glInvalidateSubFramebuffer( GLenum target, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glInvalidateTexImage( GLuint texture, GLint level ) { }
-static void null_glInvalidateTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth ) { }
-static GLboolean null_glIsAsyncMarkerSGIX( GLuint marker ) { return 0; }
-static GLboolean null_glIsBuffer( GLuint buffer ) { return 0; }
-static GLboolean null_glIsBufferARB( GLuint buffer ) { return 0; }
-static GLboolean null_glIsBufferResidentNV( GLenum target ) { return 0; }
-static GLboolean null_glIsCommandListNV( GLuint list ) { return 0; }
-static GLboolean null_glIsEnabledIndexedEXT( GLenum target, GLuint index ) { return 0; }
-static GLboolean null_glIsEnabledi( GLenum target, GLuint index ) { return 0; }
-static GLboolean null_glIsFenceAPPLE( GLuint fence ) { return 0; }
-static GLboolean null_glIsFenceNV( GLuint fence ) { return 0; }
-static GLboolean null_glIsFramebuffer( GLuint framebuffer ) { return 0; }
-static GLboolean null_glIsFramebufferEXT( GLuint framebuffer ) { return 0; }
-static GLboolean null_glIsImageHandleResidentARB( GLuint64 handle ) { return 0; }
-static GLboolean null_glIsImageHandleResidentNV( GLuint64 handle ) { return 0; }
-static GLboolean null_glIsMemoryObjectEXT( GLuint memoryObject ) { return 0; }
-static GLboolean null_glIsNameAMD( GLenum identifier, GLuint name ) { return 0; }
-static GLboolean null_glIsNamedBufferResidentNV( GLuint buffer ) { return 0; }
-static GLboolean null_glIsNamedStringARB( GLint namelen, const GLchar *name ) { return 0; }
-static GLboolean null_glIsObjectBufferATI( GLuint buffer ) { return 0; }
-static GLboolean null_glIsOcclusionQueryNV( GLuint id ) { return 0; }
-static GLboolean null_glIsPathNV( GLuint path ) { return 0; }
-static GLboolean null_glIsPointInFillPathNV( GLuint path, GLuint mask, GLfloat x, GLfloat y ) { return 0; }
-static GLboolean null_glIsPointInStrokePathNV( GLuint path, GLfloat x, GLfloat y ) { return 0; }
-static GLboolean null_glIsProgram( GLuint program ) { return 0; }
-static GLboolean null_glIsProgramARB( GLuint program ) { return 0; }
-static GLboolean null_glIsProgramNV( GLuint id ) { return 0; }
-static GLboolean null_glIsProgramPipeline( GLuint pipeline ) { return 0; }
-static GLboolean null_glIsQuery( GLuint id ) { return 0; }
-static GLboolean null_glIsQueryARB( GLuint id ) { return 0; }
-static GLboolean null_glIsRenderbuffer( GLuint renderbuffer ) { return 0; }
-static GLboolean null_glIsRenderbufferEXT( GLuint renderbuffer ) { return 0; }
-static GLboolean null_glIsSampler( GLuint sampler ) { return 0; }
-static GLboolean null_glIsSemaphoreEXT( GLuint semaphore ) { return 0; }
-static GLboolean null_glIsShader( GLuint shader ) { return 0; }
-static GLboolean null_glIsStateNV( GLuint state ) { return 0; }
-static GLboolean null_glIsSync( GLsync sync ) { return 0; }
-static GLboolean null_glIsTextureEXT( GLuint texture ) { return 0; }
-static GLboolean null_glIsTextureHandleResidentARB( GLuint64 handle ) { return 0; }
-static GLboolean null_glIsTextureHandleResidentNV( GLuint64 handle ) { return 0; }
-static GLboolean null_glIsTransformFeedback( GLuint id ) { return 0; }
-static GLboolean null_glIsTransformFeedbackNV( GLuint id ) { return 0; }
-static GLboolean null_glIsVariantEnabledEXT( GLuint id, GLenum cap ) { return 0; }
-static GLboolean null_glIsVertexArray( GLuint array ) { return 0; }
-static GLboolean null_glIsVertexArrayAPPLE( GLuint array ) { return 0; }
-static GLboolean null_glIsVertexAttribEnabledAPPLE( GLuint index, GLenum pname ) { return 0; }
-static void null_glLGPUCopyImageSubDataNVX( GLuint sourceGpu, GLbitfield destinationGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srxY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth ) { }
-static void null_glLGPUInterlockNVX(void) { }
-static void null_glLGPUNamedBufferSubDataNVX( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
-static void null_glLabelObjectEXT( GLenum type, GLuint object, GLsizei length, const GLchar *label ) { }
-static void null_glLightEnviSGIX( GLenum pname, GLint param ) { }
-static void null_glLightModelxOES( GLenum pname, GLfixed param ) { }
-static void null_glLightModelxvOES( GLenum pname, const GLfixed *param ) { }
-static void null_glLightxOES( GLenum light, GLenum pname, GLfixed param ) { }
-static void null_glLightxvOES( GLenum light, GLenum pname, const GLfixed *params ) { }
-static void null_glLineWidthxOES( GLfixed width ) { }
-static void null_glLinkProgram( GLuint program ) { }
-static void null_glLinkProgramARB( GLhandleARB programObj ) { }
-static void null_glListDrawCommandsStatesClientNV( GLuint list, GLuint segment, const void **indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count ) { }
-static void null_glListParameterfSGIX( GLuint list, GLenum pname, GLfloat param ) { }
-static void null_glListParameterfvSGIX( GLuint list, GLenum pname, const GLfloat *params ) { }
-static void null_glListParameteriSGIX( GLuint list, GLenum pname, GLint param ) { }
-static void null_glListParameterivSGIX( GLuint list, GLenum pname, const GLint *params ) { }
-static void null_glLoadIdentityDeformationMapSGIX( GLbitfield mask ) { }
-static void null_glLoadMatrixxOES( const GLfixed *m ) { }
-static void null_glLoadProgramNV( GLenum target, GLuint id, GLsizei len, const GLubyte *program ) { }
-static void null_glLoadTransposeMatrixd( const GLdouble *m ) { }
-static void null_glLoadTransposeMatrixdARB( const GLdouble *m ) { }
-static void null_glLoadTransposeMatrixf( const GLfloat *m ) { }
-static void null_glLoadTransposeMatrixfARB( const GLfloat *m ) { }
-static void null_glLoadTransposeMatrixxOES( const GLfixed *m ) { }
-static void null_glLockArraysEXT( GLint first, GLsizei count ) { }
-static void null_glMTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) { }
-static void null_glMTexCoord2fvSGIS( GLenum target, GLfloat * v ) { }
-static void null_glMakeBufferNonResidentNV( GLenum target ) { }
-static void null_glMakeBufferResidentNV( GLenum target, GLenum access ) { }
-static void null_glMakeImageHandleNonResidentARB( GLuint64 handle ) { }
-static void null_glMakeImageHandleNonResidentNV( GLuint64 handle ) { }
-static void null_glMakeImageHandleResidentARB( GLuint64 handle, GLenum access ) { }
-static void null_glMakeImageHandleResidentNV( GLuint64 handle, GLenum access ) { }
-static void null_glMakeNamedBufferNonResidentNV( GLuint buffer ) { }
-static void null_glMakeNamedBufferResidentNV( GLuint buffer, GLenum access ) { }
-static void null_glMakeTextureHandleNonResidentARB( GLuint64 handle ) { }
-static void null_glMakeTextureHandleNonResidentNV( GLuint64 handle ) { }
-static void null_glMakeTextureHandleResidentARB( GLuint64 handle ) { }
-static void null_glMakeTextureHandleResidentNV( GLuint64 handle ) { }
-static void null_glMap1xOES( GLenum target, GLfixed u1, GLfixed u2, GLint stride, GLint order, GLfixed points ) { }
-static void null_glMap2xOES( GLenum target, GLfixed u1, GLfixed u2, GLint ustride, GLint uorder, GLfixed v1, GLfixed v2, GLint vstride, GLint vorder, GLfixed points ) { }
-static void * null_glMapBuffer( GLenum target, GLenum access ) { return 0; }
-static void * null_glMapBufferARB( GLenum target, GLenum access ) { return 0; }
-static void * null_glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access ) { return 0; }
-static void null_glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const void *points ) { }
-static void null_glMapGrid1xOES( GLint n, GLfixed u1, GLfixed u2 ) { }
-static void null_glMapGrid2xOES( GLint n, GLfixed u1, GLfixed u2, GLfixed v1, GLfixed v2 ) { }
-static void * null_glMapNamedBuffer( GLuint buffer, GLenum access ) { return 0; }
-static void * null_glMapNamedBufferEXT( GLuint buffer, GLenum access ) { return 0; }
-static void * null_glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access ) { return 0; }
-static void * null_glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access ) { return 0; }
-static void * null_glMapObjectBufferATI( GLuint buffer ) { return 0; }
-static void null_glMapParameterfvNV( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glMapParameterivNV( GLenum target, GLenum pname, const GLint *params ) { }
-static void * null_glMapTexture2DINTEL( GLuint texture, GLint level, GLbitfield access, GLint *stride, GLenum *layout ) { return 0; }
-static void null_glMapVertexAttrib1dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points ) { }
-static void null_glMapVertexAttrib1fAPPLE( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points ) { }
-static void null_glMapVertexAttrib2dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points ) { }
-static void null_glMapVertexAttrib2fAPPLE( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points ) { }
-static void null_glMaterialxOES( GLenum face, GLenum pname, GLfixed param ) { }
-static void null_glMaterialxvOES( GLenum face, GLenum pname, const GLfixed *param ) { }
-static void null_glMatrixFrustumEXT( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
-static void null_glMatrixIndexPointerARB( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glMatrixIndexubvARB( GLint size, const GLubyte *indices ) { }
-static void null_glMatrixIndexuivARB( GLint size, const GLuint *indices ) { }
-static void null_glMatrixIndexusvARB( GLint size, const GLushort *indices ) { }
-static void null_glMatrixLoad3x2fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixLoad3x3fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixLoadIdentityEXT( GLenum mode ) { }
-static void null_glMatrixLoadTranspose3x3fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixLoadTransposedEXT( GLenum mode, const GLdouble *m ) { }
-static void null_glMatrixLoadTransposefEXT( GLenum mode, const GLfloat *m ) { }
-static void null_glMatrixLoaddEXT( GLenum mode, const GLdouble *m ) { }
-static void null_glMatrixLoadfEXT( GLenum mode, const GLfloat *m ) { }
-static void null_glMatrixMult3x2fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixMult3x3fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixMultTranspose3x3fNV( GLenum matrixMode, const GLfloat *m ) { }
-static void null_glMatrixMultTransposedEXT( GLenum mode, const GLdouble *m ) { }
-static void null_glMatrixMultTransposefEXT( GLenum mode, const GLfloat *m ) { }
-static void null_glMatrixMultdEXT( GLenum mode, const GLdouble *m ) { }
-static void null_glMatrixMultfEXT( GLenum mode, const GLfloat *m ) { }
-static void null_glMatrixOrthoEXT( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) { }
-static void null_glMatrixPopEXT( GLenum mode ) { }
-static void null_glMatrixPushEXT( GLenum mode ) { }
-static void null_glMatrixRotatedEXT( GLenum mode, GLdouble angle, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glMatrixRotatefEXT( GLenum mode, GLfloat angle, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glMatrixScaledEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glMatrixScalefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glMatrixTranslatedEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glMatrixTranslatefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glMaxShaderCompilerThreadsARB( GLuint count ) { }
-static void null_glMaxShaderCompilerThreadsKHR( GLuint count ) { }
-static void null_glMemoryBarrier( GLbitfield barriers ) { }
-static void null_glMemoryBarrierByRegion( GLbitfield barriers ) { }
-static void null_glMemoryBarrierEXT( GLbitfield barriers ) { }
-static void null_glMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, const GLint *params ) { }
-static void null_glMinSampleShading( GLfloat value ) { }
-static void null_glMinSampleShadingARB( GLfloat value ) { }
-static void null_glMinmax( GLenum target, GLenum internalformat, GLboolean sink ) { }
-static void null_glMinmaxEXT( GLenum target, GLenum internalformat, GLboolean sink ) { }
-static void null_glMultMatrixxOES( const GLfixed *m ) { }
-static void null_glMultTransposeMatrixd( const GLdouble *m ) { }
-static void null_glMultTransposeMatrixdARB( const GLdouble *m ) { }
-static void null_glMultTransposeMatrixf( const GLfloat *m ) { }
-static void null_glMultTransposeMatrixfARB( const GLfloat *m ) { }
-static void null_glMultTransposeMatrixxOES( const GLfixed *m ) { }
-static void null_glMultiDrawArrays( GLenum mode, const GLint *first, const GLsizei *count, GLsizei drawcount ) { }
-static void null_glMultiDrawArraysEXT( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount ) { }
-static void null_glMultiDrawArraysIndirect( GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride ) { }
-static void null_glMultiDrawArraysIndirectAMD( GLenum mode, const void *indirect, GLsizei primcount, GLsizei stride ) { }
-static void null_glMultiDrawArraysIndirectBindlessCountNV( GLenum mode, const void *indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawArraysIndirectBindlessNV( GLenum mode, const void *indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawArraysIndirectCount( GLenum mode, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
-static void null_glMultiDrawArraysIndirectCountARB( GLenum mode, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
-static void null_glMultiDrawElementArrayAPPLE( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount ) { }
-static void null_glMultiDrawElements( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount ) { }
-static void null_glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount, const GLint *basevertex ) { }
-static void null_glMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount ) { }
-static void null_glMultiDrawElementsIndirect( GLenum mode, GLenum type, const void *indirect, GLsizei drawcount, GLsizei stride ) { }
-static void null_glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const void *indirect, GLsizei primcount, GLsizei stride ) { }
-static void null_glMultiDrawElementsIndirectBindlessCountNV( GLenum mode, GLenum type, const void *indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawElementsIndirectBindlessNV( GLenum mode, GLenum type, const void *indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) { }
-static void null_glMultiDrawElementsIndirectCount( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
-static void null_glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
-static void null_glMultiDrawMeshTasksIndirectCountNV( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) { }
-static void null_glMultiDrawMeshTasksIndirectNV( GLintptr indirect, GLsizei drawcount, GLsizei stride ) { }
-static void null_glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint *first, const GLsizei *count, GLsizei primcount ) { }
-static void null_glMultiModeDrawArraysIBM( const GLenum *mode, const GLint *first, const GLsizei *count, GLsizei primcount, GLint modestride ) { }
-static void null_glMultiModeDrawElementsIBM( const GLenum *mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount, GLint modestride ) { }
-static void null_glMultiTexBufferEXT( GLenum texunit, GLenum target, GLenum internalformat, GLuint buffer ) { }
-static void null_glMultiTexCoord1bOES( GLenum texture, GLbyte s ) { }
-static void null_glMultiTexCoord1bvOES( GLenum texture, const GLbyte *coords ) { }
-static void null_glMultiTexCoord1d( GLenum target, GLdouble s ) { }
-static void null_glMultiTexCoord1dARB( GLenum target, GLdouble s ) { }
-static void null_glMultiTexCoord1dSGIS( GLenum target, GLdouble s ) { }
-static void null_glMultiTexCoord1dv( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord1dvARB( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord1dvSGIS( GLenum target, GLdouble * v ) { }
-static void null_glMultiTexCoord1f( GLenum target, GLfloat s ) { }
-static void null_glMultiTexCoord1fARB( GLenum target, GLfloat s ) { }
-static void null_glMultiTexCoord1fSGIS( GLenum target, GLfloat s ) { }
-static void null_glMultiTexCoord1fv( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord1fvARB( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord1fvSGIS( GLenum target, const GLfloat * v ) { }
-static void null_glMultiTexCoord1hNV( GLenum target, GLhalfNV s ) { }
-static void null_glMultiTexCoord1hvNV( GLenum target, const GLhalfNV *v ) { }
-static void null_glMultiTexCoord1i( GLenum target, GLint s ) { }
-static void null_glMultiTexCoord1iARB( GLenum target, GLint s ) { }
-static void null_glMultiTexCoord1iSGIS( GLenum target, GLint s ) { }
-static void null_glMultiTexCoord1iv( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord1ivARB( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord1ivSGIS( GLenum target, GLint * v ) { }
-static void null_glMultiTexCoord1s( GLenum target, GLshort s ) { }
-static void null_glMultiTexCoord1sARB( GLenum target, GLshort s ) { }
-static void null_glMultiTexCoord1sSGIS( GLenum target, GLshort s ) { }
-static void null_glMultiTexCoord1sv( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord1svARB( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord1svSGIS( GLenum target, GLshort * v ) { }
-static void null_glMultiTexCoord1xOES( GLenum texture, GLfixed s ) { }
-static void null_glMultiTexCoord1xvOES( GLenum texture, const GLfixed *coords ) { }
-static void null_glMultiTexCoord2bOES( GLenum texture, GLbyte s, GLbyte t ) { }
-static void null_glMultiTexCoord2bvOES( GLenum texture, const GLbyte *coords ) { }
-static void null_glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t ) { }
-static void null_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t ) { }
-static void null_glMultiTexCoord2dSGIS( GLenum target, GLdouble s, GLdouble t ) { }
-static void null_glMultiTexCoord2dv( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord2dvARB( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord2dvSGIS( GLenum target, GLdouble * v ) { }
-static void null_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) { }
-static void null_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t ) { }
-static void null_glMultiTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t ) { }
-static void null_glMultiTexCoord2fv( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord2fvARB( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord2fvSGIS( GLenum target, GLfloat * v ) { }
-static void null_glMultiTexCoord2hNV( GLenum target, GLhalfNV s, GLhalfNV t ) { }
-static void null_glMultiTexCoord2hvNV( GLenum target, const GLhalfNV *v ) { }
-static void null_glMultiTexCoord2i( GLenum target, GLint s, GLint t ) { }
-static void null_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t ) { }
-static void null_glMultiTexCoord2iSGIS( GLenum target, GLint s, GLint t ) { }
-static void null_glMultiTexCoord2iv( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord2ivARB( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord2ivSGIS( GLenum target, GLint * v ) { }
-static void null_glMultiTexCoord2s( GLenum target, GLshort s, GLshort t ) { }
-static void null_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t ) { }
-static void null_glMultiTexCoord2sSGIS( GLenum target, GLshort s, GLshort t ) { }
-static void null_glMultiTexCoord2sv( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord2svARB( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord2svSGIS( GLenum target, GLshort * v ) { }
-static void null_glMultiTexCoord2xOES( GLenum texture, GLfixed s, GLfixed t ) { }
-static void null_glMultiTexCoord2xvOES( GLenum texture, const GLfixed *coords ) { }
-static void null_glMultiTexCoord3bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r ) { }
-static void null_glMultiTexCoord3bvOES( GLenum texture, const GLbyte *coords ) { }
-static void null_glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdouble r ) { }
-static void null_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r ) { }
-static void null_glMultiTexCoord3dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r ) { }
-static void null_glMultiTexCoord3dv( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord3dvARB( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord3dvSGIS( GLenum target, GLdouble * v ) { }
-static void null_glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
-static void null_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
-static void null_glMultiTexCoord3fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r ) { }
-static void null_glMultiTexCoord3fv( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord3fvARB( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord3fvSGIS( GLenum target, GLfloat * v ) { }
-static void null_glMultiTexCoord3hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r ) { }
-static void null_glMultiTexCoord3hvNV( GLenum target, const GLhalfNV *v ) { }
-static void null_glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r ) { }
-static void null_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r ) { }
-static void null_glMultiTexCoord3iSGIS( GLenum target, GLint s, GLint t, GLint r ) { }
-static void null_glMultiTexCoord3iv( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord3ivARB( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord3ivSGIS( GLenum target, GLint * v ) { }
-static void null_glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort r ) { }
-static void null_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r ) { }
-static void null_glMultiTexCoord3sSGIS( GLenum target, GLshort s, GLshort t, GLshort r ) { }
-static void null_glMultiTexCoord3sv( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord3svARB( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord3svSGIS( GLenum target, GLshort * v ) { }
-static void null_glMultiTexCoord3xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r ) { }
-static void null_glMultiTexCoord3xvOES( GLenum texture, const GLfixed *coords ) { }
-static void null_glMultiTexCoord4bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r, GLbyte q ) { }
-static void null_glMultiTexCoord4bvOES( GLenum texture, const GLbyte *coords ) { }
-static void null_glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
-static void null_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
-static void null_glMultiTexCoord4dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) { }
-static void null_glMultiTexCoord4dv( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord4dvARB( GLenum target, const GLdouble *v ) { }
-static void null_glMultiTexCoord4dvSGIS( GLenum target, GLdouble * v ) { }
-static void null_glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
-static void null_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
-static void null_glMultiTexCoord4fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) { }
-static void null_glMultiTexCoord4fv( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord4fvARB( GLenum target, const GLfloat *v ) { }
-static void null_glMultiTexCoord4fvSGIS( GLenum target, GLfloat * v ) { }
-static void null_glMultiTexCoord4hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q ) { }
-static void null_glMultiTexCoord4hvNV( GLenum target, const GLhalfNV *v ) { }
-static void null_glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GLint q ) { }
-static void null_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r, GLint q ) { }
-static void null_glMultiTexCoord4iSGIS( GLenum target, GLint s, GLint t, GLint r, GLint q ) { }
-static void null_glMultiTexCoord4iv( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord4ivARB( GLenum target, const GLint *v ) { }
-static void null_glMultiTexCoord4ivSGIS( GLenum target, GLint * v ) { }
-static void null_glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
-static void null_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
-static void null_glMultiTexCoord4sSGIS( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q ) { }
-static void null_glMultiTexCoord4sv( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord4svARB( GLenum target, const GLshort *v ) { }
-static void null_glMultiTexCoord4svSGIS( GLenum target, GLshort * v ) { }
-static void null_glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q ) { }
-static void null_glMultiTexCoord4xvOES( GLenum texture, const GLfixed *coords ) { }
-static void null_glMultiTexCoordP1ui( GLenum texture, GLenum type, GLuint coords ) { }
-static void null_glMultiTexCoordP1uiv( GLenum texture, GLenum type, const GLuint *coords ) { }
-static void null_glMultiTexCoordP2ui( GLenum texture, GLenum type, GLuint coords ) { }
-static void null_glMultiTexCoordP2uiv( GLenum texture, GLenum type, const GLuint *coords ) { }
-static void null_glMultiTexCoordP3ui( GLenum texture, GLenum type, GLuint coords ) { }
-static void null_glMultiTexCoordP3uiv( GLenum texture, GLenum type, const GLuint *coords ) { }
-static void null_glMultiTexCoordP4ui( GLenum texture, GLenum type, GLuint coords ) { }
-static void null_glMultiTexCoordP4uiv( GLenum texture, GLenum type, const GLuint *coords ) { }
-static void null_glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid * pointer ) { }
-static void null_glMultiTexEnvfEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glMultiTexEnvfvEXT( GLenum texunit, GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glMultiTexEnviEXT( GLenum texunit, GLenum target, GLenum pname, GLint param ) { }
-static void null_glMultiTexEnvivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glMultiTexGendEXT( GLenum texunit, GLenum coord, GLenum pname, GLdouble param ) { }
-static void null_glMultiTexGendvEXT( GLenum texunit, GLenum coord, GLenum pname, const GLdouble *params ) { }
-static void null_glMultiTexGenfEXT( GLenum texunit, GLenum coord, GLenum pname, GLfloat param ) { }
-static void null_glMultiTexGenfvEXT( GLenum texunit, GLenum coord, GLenum pname, const GLfloat *params ) { }
-static void null_glMultiTexGeniEXT( GLenum texunit, GLenum coord, GLenum pname, GLint param ) { }
-static void null_glMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum pname, const GLint *params ) { }
-static void null_glMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMultiTexParameterIivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glMultiTexParameterIuivEXT( GLenum texunit, GLenum target, GLenum pname, const GLuint *params ) { }
-static void null_glMultiTexParameterfEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glMultiTexParameterfvEXT( GLenum texunit, GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glMultiTexParameteriEXT( GLenum texunit, GLenum target, GLenum pname, GLint param ) { }
-static void null_glMultiTexParameterivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glMultiTexRenderbufferEXT( GLenum texunit, GLenum target, GLuint renderbuffer ) { }
-static void null_glMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glMulticastBarrierNV(void) { }
-static void null_glMulticastBlitFramebufferNV( GLuint srcGpu, GLuint dstGpu, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) { }
-static void null_glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
-static void null_glMulticastCopyBufferSubDataNV( GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
-static void null_glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth ) { }
-static void null_glMulticastFramebufferSampleLocationsfvNV( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v ) { }
-static void null_glMulticastGetQueryObjecti64vNV( GLuint gpu, GLuint id, GLenum pname, GLint64 *params ) { }
-static void null_glMulticastGetQueryObjectivNV( GLuint gpu, GLuint id, GLenum pname, GLint *params ) { }
-static void null_glMulticastGetQueryObjectui64vNV( GLuint gpu, GLuint id, GLenum pname, GLuint64 *params ) { }
-static void null_glMulticastGetQueryObjectuivNV( GLuint gpu, GLuint id, GLenum pname, GLuint *params ) { }
-static void null_glMulticastScissorArrayvNVX( GLuint gpu, GLuint first, GLsizei count, const GLint *v ) { }
-static void null_glMulticastViewportArrayvNVX( GLuint gpu, GLuint first, GLsizei count, const GLfloat *v ) { }
-static void null_glMulticastViewportPositionWScaleNVX( GLuint gpu, GLuint index, GLfloat xcoeff, GLfloat ycoeff ) { }
-static void null_glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMask ) { }
-static void null_glNamedBufferAttachMemoryNV( GLuint buffer, GLuint memory, GLuint64 offset ) { }
-static void null_glNamedBufferData( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage ) { }
-static void null_glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage ) { }
-static void null_glNamedBufferPageCommitmentARB( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
-static void null_glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit ) { }
-static void null_glNamedBufferStorage( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags ) { }
-static void null_glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags ) { }
-static void null_glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags ) { }
-static void null_glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset ) { }
-static void null_glNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
-static void null_glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data ) { }
-static void null_glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) { }
-static void null_glNamedFramebufferDrawBuffer( GLuint framebuffer, GLenum buf ) { }
-static void null_glNamedFramebufferDrawBuffers( GLuint framebuffer, GLsizei n, const GLenum *bufs ) { }
-static void null_glNamedFramebufferParameteri( GLuint framebuffer, GLenum pname, GLint param ) { }
-static void null_glNamedFramebufferParameteriEXT( GLuint framebuffer, GLenum pname, GLint param ) { }
-static void null_glNamedFramebufferReadBuffer( GLuint framebuffer, GLenum src ) { }
-static void null_glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
-static void null_glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
-static void null_glNamedFramebufferSampleLocationsfvARB( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v ) { }
-static void null_glNamedFramebufferSampleLocationsfvNV( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v ) { }
-static void null_glNamedFramebufferSamplePositionsfvAMD( GLuint framebuffer, GLuint numsamples, GLuint pixelindex, const GLfloat *values ) { }
-static void null_glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level ) { }
-static void null_glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
-static void null_glNamedFramebufferTexture3DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset ) { }
-static void null_glNamedFramebufferTextureEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level ) { }
-static void null_glNamedFramebufferTextureFaceEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLenum face ) { }
-static void null_glNamedFramebufferTextureLayer( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
-static void null_glNamedFramebufferTextureLayerEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
-static void null_glNamedProgramLocalParameter4dEXT( GLuint program, GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glNamedProgramLocalParameter4dvEXT( GLuint program, GLenum target, GLuint index, const GLdouble *params ) { }
-static void null_glNamedProgramLocalParameter4fEXT( GLuint program, GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glNamedProgramLocalParameter4fvEXT( GLuint program, GLenum target, GLuint index, const GLfloat *params ) { }
-static void null_glNamedProgramLocalParameterI4iEXT( GLuint program, GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glNamedProgramLocalParameterI4ivEXT( GLuint program, GLenum target, GLuint index, const GLint *params ) { }
-static void null_glNamedProgramLocalParameterI4uiEXT( GLuint program, GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w ) { }
-static void null_glNamedProgramLocalParameterI4uivEXT( GLuint program, GLenum target, GLuint index, const GLuint *params ) { }
-static void null_glNamedProgramLocalParameters4fvEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLfloat *params ) { }
-static void null_glNamedProgramLocalParametersI4ivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLint *params ) { }
-static void null_glNamedProgramLocalParametersI4uivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLuint *params ) { }
-static void null_glNamedProgramStringEXT( GLuint program, GLenum target, GLenum format, GLsizei len, const void *string ) { }
-static void null_glNamedRenderbufferStorage( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedRenderbufferStorageEXT( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedRenderbufferStorageMultisample( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedRenderbufferStorageMultisampleAdvancedAMD( GLuint renderbuffer, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedRenderbufferStorageMultisampleCoverageEXT( GLuint renderbuffer, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedRenderbufferStorageMultisampleEXT( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glNamedStringARB( GLenum type, GLint namelen, const GLchar *name, GLint stringlen, const GLchar *string ) { }
-static GLuint null_glNewBufferRegion( GLenum type ) { return 0; }
-static GLuint null_glNewObjectBufferATI( GLsizei size, const void *pointer, GLenum usage ) { return 0; }
-static void null_glNormal3fVertex3fSUN( GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glNormal3fVertex3fvSUN( const GLfloat *n, const GLfloat *v ) { }
-static void null_glNormal3hNV( GLhalfNV nx, GLhalfNV ny, GLhalfNV nz ) { }
-static void null_glNormal3hvNV( const GLhalfNV *v ) { }
-static void null_glNormal3xOES( GLfixed nx, GLfixed ny, GLfixed nz ) { }
-static void null_glNormal3xvOES( const GLfixed *coords ) { }
-static void null_glNormalFormatNV( GLenum type, GLsizei stride ) { }
-static void null_glNormalP3ui( GLenum type, GLuint coords ) { }
-static void null_glNormalP3uiv( GLenum type, const GLuint *coords ) { }
-static void null_glNormalPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void *pointer ) { }
-static void null_glNormalPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glNormalPointervINTEL( GLenum type, const void **pointer ) { }
-static void null_glNormalStream3bATI( GLenum stream, GLbyte nx, GLbyte ny, GLbyte nz ) { }
-static void null_glNormalStream3bvATI( GLenum stream, const GLbyte *coords ) { }
-static void null_glNormalStream3dATI( GLenum stream, GLdouble nx, GLdouble ny, GLdouble nz ) { }
-static void null_glNormalStream3dvATI( GLenum stream, const GLdouble *coords ) { }
-static void null_glNormalStream3fATI( GLenum stream, GLfloat nx, GLfloat ny, GLfloat nz ) { }
-static void null_glNormalStream3fvATI( GLenum stream, const GLfloat *coords ) { }
-static void null_glNormalStream3iATI( GLenum stream, GLint nx, GLint ny, GLint nz ) { }
-static void null_glNormalStream3ivATI( GLenum stream, const GLint *coords ) { }
-static void null_glNormalStream3sATI( GLenum stream, GLshort nx, GLshort ny, GLshort nz ) { }
-static void null_glNormalStream3svATI( GLenum stream, const GLshort *coords ) { }
-static void null_glObjectLabel( GLenum identifier, GLuint name, GLsizei length, const GLchar *label ) { }
-static void null_glObjectPtrLabel( const void *ptr, GLsizei length, const GLchar *label ) { }
-static GLenum null_glObjectPurgeableAPPLE( GLenum objectType, GLuint name, GLenum option ) { return 0; }
-static GLenum null_glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, GLenum option ) { return 0; }
-static void null_glOrthofOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f ) { }
-static void null_glOrthoxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f ) { }
-static void null_glPNTrianglesfATI( GLenum pname, GLfloat param ) { }
-static void null_glPNTrianglesiATI( GLenum pname, GLint param ) { }
-static void null_glPassTexCoordATI( GLuint dst, GLuint coord, GLenum swizzle ) { }
-static void null_glPassThroughxOES( GLfixed token ) { }
-static void null_glPatchParameterfv( GLenum pname, const GLfloat *values ) { }
-static void null_glPatchParameteri( GLenum pname, GLint value ) { }
-static void null_glPathColorGenNV( GLenum color, GLenum genMode, GLenum colorFormat, const GLfloat *coeffs ) { }
-static void null_glPathCommandsNV( GLuint path, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords ) { }
-static void null_glPathCoordsNV( GLuint path, GLsizei numCoords, GLenum coordType, const void *coords ) { }
-static void null_glPathCoverDepthFuncNV( GLenum func ) { }
-static void null_glPathDashArrayNV( GLuint path, GLsizei dashCount, const GLfloat *dashArray ) { }
-static void null_glPathFogGenNV( GLenum genMode ) { }
-static GLenum null_glPathGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) { return 0; }
-static GLenum null_glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2] ) { return 0; }
-static void null_glPathGlyphRangeNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyph, GLsizei numGlyphs, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) { }
-static void null_glPathGlyphsNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLsizei numGlyphs, GLenum type, const void *charcodes, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) { }
-static GLenum null_glPathMemoryGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, GLsizeiptr fontSize, const void *fontData, GLsizei faceIndex, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) { return 0; }
-static void null_glPathParameterfNV( GLuint path, GLenum pname, GLfloat value ) { }
-static void null_glPathParameterfvNV( GLuint path, GLenum pname, const GLfloat *value ) { }
-static void null_glPathParameteriNV( GLuint path, GLenum pname, GLint value ) { }
-static void null_glPathParameterivNV( GLuint path, GLenum pname, const GLint *value ) { }
-static void null_glPathStencilDepthOffsetNV( GLfloat factor, GLfloat units ) { }
-static void null_glPathStencilFuncNV( GLenum func, GLint ref, GLuint mask ) { }
-static void null_glPathStringNV( GLuint path, GLenum format, GLsizei length, const void *pathString ) { }
-static void null_glPathSubCommandsNV( GLuint path, GLsizei commandStart, GLsizei commandsToDelete, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords ) { }
-static void null_glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei numCoords, GLenum coordType, const void *coords ) { }
-static void null_glPathTexGenNV( GLenum texCoordSet, GLenum genMode, GLint components, const GLfloat *coeffs ) { }
-static void null_glPauseTransformFeedback(void) { }
-static void null_glPauseTransformFeedbackNV(void) { }
-static void null_glPixelDataRangeNV( GLenum target, GLsizei length, const void *pointer ) { }
-static void null_glPixelMapx( GLenum map, GLint size, const GLfixed *values ) { }
-static void null_glPixelStorex( GLenum pname, GLfixed param ) { }
-static void null_glPixelTexGenParameterfSGIS( GLenum pname, GLfloat param ) { }
-static void null_glPixelTexGenParameterfvSGIS( GLenum pname, const GLfloat *params ) { }
-static void null_glPixelTexGenParameteriSGIS( GLenum pname, GLint param ) { }
-static void null_glPixelTexGenParameterivSGIS( GLenum pname, const GLint *params ) { }
-static void null_glPixelTexGenSGIX( GLenum mode ) { }
-static void null_glPixelTransferxOES( GLenum pname, GLfixed param ) { }
-static void null_glPixelTransformParameterfEXT( GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glPixelTransformParameterfvEXT( GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glPixelTransformParameteriEXT( GLenum target, GLenum pname, GLint param ) { }
-static void null_glPixelTransformParameterivEXT( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glPixelZoomxOES( GLfixed xfactor, GLfixed yfactor ) { }
-static GLboolean null_glPointAlongPathNV( GLuint path, GLsizei startSegment, GLsizei numSegments, GLfloat distance, GLfloat *x, GLfloat *y, GLfloat *tangentX, GLfloat *tangentY ) { return 0; }
-static void null_glPointParameterf( GLenum pname, GLfloat param ) { }
-static void null_glPointParameterfARB( GLenum pname, GLfloat param ) { }
-static void null_glPointParameterfEXT( GLenum pname, GLfloat param ) { }
-static void null_glPointParameterfSGIS( GLenum pname, GLfloat param ) { }
-static void null_glPointParameterfv( GLenum pname, const GLfloat *params ) { }
-static void null_glPointParameterfvARB( GLenum pname, const GLfloat *params ) { }
-static void null_glPointParameterfvEXT( GLenum pname, const GLfloat *params ) { }
-static void null_glPointParameterfvSGIS( GLenum pname, const GLfloat *params ) { }
-static void null_glPointParameteri( GLenum pname, GLint param ) { }
-static void null_glPointParameteriNV( GLenum pname, GLint param ) { }
-static void null_glPointParameteriv( GLenum pname, const GLint *params ) { }
-static void null_glPointParameterivNV( GLenum pname, const GLint *params ) { }
-static void null_glPointParameterxvOES( GLenum pname, const GLfixed *params ) { }
-static void null_glPointSizexOES( GLfixed size ) { }
-static GLint null_glPollAsyncSGIX( GLuint *markerp ) { return 0; }
-static GLint null_glPollInstrumentsSGIX( GLint *marker_p ) { return 0; }
-static void null_glPolygonOffsetClamp( GLfloat factor, GLfloat units, GLfloat clamp ) { }
-static void null_glPolygonOffsetClampEXT( GLfloat factor, GLfloat units, GLfloat clamp ) { }
-static void null_glPolygonOffsetEXT( GLfloat factor, GLfloat bias ) { }
-static void null_glPolygonOffsetxOES( GLfixed factor, GLfixed units ) { }
-static void null_glPopDebugGroup(void) { }
-static void null_glPopGroupMarkerEXT(void) { }
-static void null_glPresentFrameDualFillNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) { }
-static void null_glPresentFrameKeyedNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) { }
-static void null_glPrimitiveBoundingBoxARB( GLfloat minX, GLfloat minY, GLfloat minZ, GLfloat minW, GLfloat maxX, GLfloat maxY, GLfloat maxZ, GLfloat maxW ) { }
-static void null_glPrimitiveRestartIndex( GLuint index ) { }
-static void null_glPrimitiveRestartIndexNV( GLuint index ) { }
-static void null_glPrimitiveRestartNV(void) { }
-static void null_glPrioritizeTexturesEXT( GLsizei n, const GLuint *textures, const GLclampf *priorities ) { }
-static void null_glPrioritizeTexturesxOES( GLsizei n, const GLuint *textures, const GLfixed *priorities ) { }
-static void null_glProgramBinary( GLuint program, GLenum binaryFormat, const void *binary, GLsizei length ) { }
-static void null_glProgramBufferParametersIivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLint *params ) { }
-static void null_glProgramBufferParametersIuivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLuint *params ) { }
-static void null_glProgramBufferParametersfvNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLfloat *params ) { }
-static void null_glProgramEnvParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glProgramEnvParameter4dvARB( GLenum target, GLuint index, const GLdouble *params ) { }
-static void null_glProgramEnvParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glProgramEnvParameter4fvARB( GLenum target, GLuint index, const GLfloat *params ) { }
-static void null_glProgramEnvParameterI4iNV( GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glProgramEnvParameterI4ivNV( GLenum target, GLuint index, const GLint *params ) { }
-static void null_glProgramEnvParameterI4uiNV( GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w ) { }
-static void null_glProgramEnvParameterI4uivNV( GLenum target, GLuint index, const GLuint *params ) { }
-static void null_glProgramEnvParameters4fvEXT( GLenum target, GLuint index, GLsizei count, const GLfloat *params ) { }
-static void null_glProgramEnvParametersI4ivNV( GLenum target, GLuint index, GLsizei count, const GLint *params ) { }
-static void null_glProgramEnvParametersI4uivNV( GLenum target, GLuint index, GLsizei count, const GLuint *params ) { }
-static void null_glProgramLocalParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glProgramLocalParameter4dvARB( GLenum target, GLuint index, const GLdouble *params ) { }
-static void null_glProgramLocalParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glProgramLocalParameter4fvARB( GLenum target, GLuint index, const GLfloat *params ) { }
-static void null_glProgramLocalParameterI4iNV( GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glProgramLocalParameterI4ivNV( GLenum target, GLuint index, const GLint *params ) { }
-static void null_glProgramLocalParameterI4uiNV( GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w ) { }
-static void null_glProgramLocalParameterI4uivNV( GLenum target, GLuint index, const GLuint *params ) { }
-static void null_glProgramLocalParameters4fvEXT( GLenum target, GLuint index, GLsizei count, const GLfloat *params ) { }
-static void null_glProgramLocalParametersI4ivNV( GLenum target, GLuint index, GLsizei count, const GLint *params ) { }
-static void null_glProgramLocalParametersI4uivNV( GLenum target, GLuint index, GLsizei count, const GLuint *params ) { }
-static void null_glProgramNamedParameter4dNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glProgramNamedParameter4dvNV( GLuint id, GLsizei len, const GLubyte *name, const GLdouble *v ) { }
-static void null_glProgramNamedParameter4fNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glProgramNamedParameter4fvNV( GLuint id, GLsizei len, const GLubyte *name, const GLfloat *v ) { }
-static void null_glProgramParameter4dNV( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glProgramParameter4dvNV( GLenum target, GLuint index, const GLdouble *v ) { }
-static void null_glProgramParameter4fNV( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glProgramParameter4fvNV( GLenum target, GLuint index, const GLfloat *v ) { }
-static void null_glProgramParameteri( GLuint program, GLenum pname, GLint value ) { }
-static void null_glProgramParameteriARB( GLuint program, GLenum pname, GLint value ) { }
-static void null_glProgramParameteriEXT( GLuint program, GLenum pname, GLint value ) { }
-static void null_glProgramParameters4dvNV( GLenum target, GLuint index, GLsizei count, const GLdouble *v ) { }
-static void null_glProgramParameters4fvNV( GLenum target, GLuint index, GLsizei count, const GLfloat *v ) { }
-static void null_glProgramPathFragmentInputGenNV( GLuint program, GLint location, GLenum genMode, GLint components, const GLfloat *coeffs ) { }
-static void null_glProgramStringARB( GLenum target, GLenum format, GLsizei len, const void *string ) { }
-static void null_glProgramSubroutineParametersuivNV( GLenum target, GLsizei count, const GLuint *params ) { }
-static void null_glProgramUniform1d( GLuint program, GLint location, GLdouble v0 ) { }
-static void null_glProgramUniform1dEXT( GLuint program, GLint location, GLdouble x ) { }
-static void null_glProgramUniform1dv( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform1dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform1f( GLuint program, GLint location, GLfloat v0 ) { }
-static void null_glProgramUniform1fEXT( GLuint program, GLint location, GLfloat v0 ) { }
-static void null_glProgramUniform1fv( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform1fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform1i( GLuint program, GLint location, GLint v0 ) { }
-static void null_glProgramUniform1i64ARB( GLuint program, GLint location, GLint64 x ) { }
-static void null_glProgramUniform1i64NV( GLuint program, GLint location, GLint64EXT x ) { }
-static void null_glProgramUniform1i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glProgramUniform1i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glProgramUniform1iEXT( GLuint program, GLint location, GLint v0 ) { }
-static void null_glProgramUniform1iv( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform1ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform1ui( GLuint program, GLint location, GLuint v0 ) { }
-static void null_glProgramUniform1ui64ARB( GLuint program, GLint location, GLuint64 x ) { }
-static void null_glProgramUniform1ui64NV( GLuint program, GLint location, GLuint64EXT x ) { }
-static void null_glProgramUniform1ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glProgramUniform1ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glProgramUniform1uiEXT( GLuint program, GLint location, GLuint v0 ) { }
-static void null_glProgramUniform1uiv( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform1uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform2d( GLuint program, GLint location, GLdouble v0, GLdouble v1 ) { }
-static void null_glProgramUniform2dEXT( GLuint program, GLint location, GLdouble x, GLdouble y ) { }
-static void null_glProgramUniform2dv( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform2dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform2f( GLuint program, GLint location, GLfloat v0, GLfloat v1 ) { }
-static void null_glProgramUniform2fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1 ) { }
-static void null_glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform2fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform2i( GLuint program, GLint location, GLint v0, GLint v1 ) { }
-static void null_glProgramUniform2i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y ) { }
-static void null_glProgramUniform2i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y ) { }
-static void null_glProgramUniform2i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glProgramUniform2i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glProgramUniform2iEXT( GLuint program, GLint location, GLint v0, GLint v1 ) { }
-static void null_glProgramUniform2iv( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform2ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform2ui( GLuint program, GLint location, GLuint v0, GLuint v1 ) { }
-static void null_glProgramUniform2ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y ) { }
-static void null_glProgramUniform2ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y ) { }
-static void null_glProgramUniform2ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glProgramUniform2ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glProgramUniform2uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1 ) { }
-static void null_glProgramUniform2uiv( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform2uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform3d( GLuint program, GLint location, GLdouble v0, GLdouble v1, GLdouble v2 ) { }
-static void null_glProgramUniform3dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glProgramUniform3dv( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform3dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform3f( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2 ) { }
-static void null_glProgramUniform3fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2 ) { }
-static void null_glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform3fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform3i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 ) { }
-static void null_glProgramUniform3i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z ) { }
-static void null_glProgramUniform3i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) { }
-static void null_glProgramUniform3i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glProgramUniform3i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glProgramUniform3iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 ) { }
-static void null_glProgramUniform3iv( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform3ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform3ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
-static void null_glProgramUniform3ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z ) { }
-static void null_glProgramUniform3ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) { }
-static void null_glProgramUniform3ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glProgramUniform3ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glProgramUniform3uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
-static void null_glProgramUniform3uiv( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform3uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform4d( GLuint program, GLint location, GLdouble v0, GLdouble v1, GLdouble v2, GLdouble v3 ) { }
-static void null_glProgramUniform4dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glProgramUniform4dv( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform4dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glProgramUniform4f( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 ) { }
-static void null_glProgramUniform4fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 ) { }
-static void null_glProgramUniform4fv( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform4fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glProgramUniform4i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
-static void null_glProgramUniform4i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w ) { }
-static void null_glProgramUniform4i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) { }
-static void null_glProgramUniform4i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glProgramUniform4i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glProgramUniform4iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
-static void null_glProgramUniform4iv( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform4ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value ) { }
-static void null_glProgramUniform4ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
-static void null_glProgramUniform4ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w ) { }
-static void null_glProgramUniform4ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) { }
-static void null_glProgramUniform4ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glProgramUniform4ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glProgramUniform4uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
-static void null_glProgramUniform4uiv( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniform4uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glProgramUniformHandleui64ARB( GLuint program, GLint location, GLuint64 value ) { }
-static void null_glProgramUniformHandleui64NV( GLuint program, GLint location, GLuint64 value ) { }
-static void null_glProgramUniformHandleui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *values ) { }
-static void null_glProgramUniformHandleui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64 *values ) { }
-static void null_glProgramUniformMatrix2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix2x3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2x3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix2x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix2x4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix2x4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix2x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3x2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3x2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3x4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix3x4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix3x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4x2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4x2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4x3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glProgramUniformMatrix4x3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformMatrix4x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glProgramUniformui64NV( GLuint program, GLint location, GLuint64EXT value ) { }
-static void null_glProgramUniformui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glProgramVertexLimitNV( GLenum target, GLint limit ) { }
-static void null_glProvokingVertex( GLenum mode ) { }
-static void null_glProvokingVertexEXT( GLenum mode ) { }
-static void null_glPushClientAttribDefaultEXT( GLbitfield mask ) { }
-static void null_glPushDebugGroup( GLenum source, GLuint id, GLsizei length, const GLchar *message ) { }
-static void null_glPushGroupMarkerEXT( GLsizei length, const GLchar *marker ) { }
-static void null_glQueryCounter( GLuint id, GLenum target ) { }
-static GLbitfield null_glQueryMatrixxOES( GLfixed *mantissa, GLint *exponent ) { return 0; }
-static void null_glQueryObjectParameteruiAMD( GLenum target, GLuint id, GLenum pname, GLuint param ) { }
-static GLint null_glQueryResourceNV( GLenum queryType, GLint tagId, GLuint count, GLint *buffer ) { return 0; }
-static void null_glQueryResourceTagNV( GLint tagId, const GLchar *tagString ) { }
-static void null_glRasterPos2xOES( GLfixed x, GLfixed y ) { }
-static void null_glRasterPos2xvOES( const GLfixed *coords ) { }
-static void null_glRasterPos3xOES( GLfixed x, GLfixed y, GLfixed z ) { }
-static void null_glRasterPos3xvOES( const GLfixed *coords ) { }
-static void null_glRasterPos4xOES( GLfixed x, GLfixed y, GLfixed z, GLfixed w ) { }
-static void null_glRasterPos4xvOES( const GLfixed *coords ) { }
-static void null_glRasterSamplesEXT( GLuint samples, GLboolean fixedsamplelocations ) { }
-static void null_glReadBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glReadInstrumentsSGIX( GLint marker ) { }
-static void null_glReadnPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void *data ) { }
-static void null_glReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void *data ) { }
-static void null_glRectxOES( GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2 ) { }
-static void null_glRectxvOES( const GLfixed *v1, const GLfixed *v2 ) { }
-static void null_glReferencePlaneSGIX( const GLdouble *equation ) { }
-static GLboolean null_glReleaseKeyedMutexWin32EXT( GLuint memory, GLuint64 key ) { return 0; }
-static void null_glReleaseShaderCompiler(void) { }
-static void null_glRenderGpuMaskNV( GLbitfield mask ) { }
-static void null_glRenderbufferStorage( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glRenderbufferStorageEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glRenderbufferStorageMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glRenderbufferStorageMultisampleAdvancedAMD( GLenum target, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glRenderbufferStorageMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glRenderbufferStorageMultisampleEXT( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glReplacementCodePointerSUN( GLenum type, GLsizei stride, const void **pointer ) { }
-static void null_glReplacementCodeubSUN( GLubyte code ) { }
-static void null_glReplacementCodeubvSUN( const GLubyte *code ) { }
-static void null_glReplacementCodeuiColor3fVertex3fSUN( GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiColor3fVertex3fvSUN( const GLuint *rc, const GLfloat *c, const GLfloat *v ) { }
-static void null_glReplacementCodeuiColor4fNormal3fVertex3fSUN( GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *c, const GLfloat *n, const GLfloat *v ) { }
-static void null_glReplacementCodeuiColor4ubVertex3fSUN( GLuint rc, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiColor4ubVertex3fvSUN( const GLuint *rc, const GLubyte *c, const GLfloat *v ) { }
-static void null_glReplacementCodeuiNormal3fVertex3fSUN( GLuint rc, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *n, const GLfloat *v ) { }
-static void null_glReplacementCodeuiSUN( GLuint code ) { }
-static void null_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v ) { }
-static void null_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *n, const GLfloat *v ) { }
-static void null_glReplacementCodeuiTexCoord2fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiTexCoord2fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *v ) { }
-static void null_glReplacementCodeuiVertex3fSUN( GLuint rc, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glReplacementCodeuiVertex3fvSUN( const GLuint *rc, const GLfloat *v ) { }
-static void null_glReplacementCodeuivSUN( const GLuint *code ) { }
-static void null_glReplacementCodeusSUN( GLushort code ) { }
-static void null_glReplacementCodeusvSUN( const GLushort *code ) { }
-static void null_glRequestResidentProgramsNV( GLsizei n, const GLuint *programs ) { }
-static void null_glResetHistogram( GLenum target ) { }
-static void null_glResetHistogramEXT( GLenum target ) { }
-static void null_glResetMemoryObjectParameterNV( GLuint memory, GLenum pname ) { }
-static void null_glResetMinmax( GLenum target ) { }
-static void null_glResetMinmaxEXT( GLenum target ) { }
-static void null_glResizeBuffersMESA(void) { }
-static void null_glResolveDepthValuesNV(void) { }
-static void null_glResumeTransformFeedback(void) { }
-static void null_glResumeTransformFeedbackNV(void) { }
-static void null_glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z ) { }
-static void null_glSampleCoverage( GLfloat value, GLboolean invert ) { }
-static void null_glSampleCoverageARB( GLfloat value, GLboolean invert ) { }
-static void null_glSampleMapATI( GLuint dst, GLuint interp, GLenum swizzle ) { }
-static void null_glSampleMaskEXT( GLclampf value, GLboolean invert ) { }
-static void null_glSampleMaskIndexedNV( GLuint index, GLbitfield mask ) { }
-static void null_glSampleMaskSGIS( GLclampf value, GLboolean invert ) { }
-static void null_glSampleMaski( GLuint maskNumber, GLbitfield mask ) { }
-static void null_glSamplePatternEXT( GLenum pattern ) { }
-static void null_glSamplePatternSGIS( GLenum pattern ) { }
-static void null_glSamplerParameterIiv( GLuint sampler, GLenum pname, const GLint *param ) { }
-static void null_glSamplerParameterIuiv( GLuint sampler, GLenum pname, const GLuint *param ) { }
-static void null_glSamplerParameterf( GLuint sampler, GLenum pname, GLfloat param ) { }
-static void null_glSamplerParameterfv( GLuint sampler, GLenum pname, const GLfloat *param ) { }
-static void null_glSamplerParameteri( GLuint sampler, GLenum pname, GLint param ) { }
-static void null_glSamplerParameteriv( GLuint sampler, GLenum pname, const GLint *param ) { }
-static void null_glScalexOES( GLfixed x, GLfixed y, GLfixed z ) { }
-static void null_glScissorArrayv( GLuint first, GLsizei count, const GLint *v ) { }
-static void null_glScissorExclusiveArrayvNV( GLuint first, GLsizei count, const GLint *v ) { }
-static void null_glScissorExclusiveNV( GLint x, GLint y, GLsizei width, GLsizei height ) { }
-static void null_glScissorIndexed( GLuint index, GLint left, GLint bottom, GLsizei width, GLsizei height ) { }
-static void null_glScissorIndexedv( GLuint index, const GLint *v ) { }
-static void null_glSecondaryColor3b( GLbyte red, GLbyte green, GLbyte blue ) { }
-static void null_glSecondaryColor3bEXT( GLbyte red, GLbyte green, GLbyte blue ) { }
-static void null_glSecondaryColor3bv( const GLbyte *v ) { }
-static void null_glSecondaryColor3bvEXT( const GLbyte *v ) { }
-static void null_glSecondaryColor3d( GLdouble red, GLdouble green, GLdouble blue ) { }
-static void null_glSecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue ) { }
-static void null_glSecondaryColor3dv( const GLdouble *v ) { }
-static void null_glSecondaryColor3dvEXT( const GLdouble *v ) { }
-static void null_glSecondaryColor3f( GLfloat red, GLfloat green, GLfloat blue ) { }
-static void null_glSecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue ) { }
-static void null_glSecondaryColor3fv( const GLfloat *v ) { }
-static void null_glSecondaryColor3fvEXT( const GLfloat *v ) { }
-static void null_glSecondaryColor3hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue ) { }
-static void null_glSecondaryColor3hvNV( const GLhalfNV *v ) { }
-static void null_glSecondaryColor3i( GLint red, GLint green, GLint blue ) { }
-static void null_glSecondaryColor3iEXT( GLint red, GLint green, GLint blue ) { }
-static void null_glSecondaryColor3iv( const GLint *v ) { }
-static void null_glSecondaryColor3ivEXT( const GLint *v ) { }
-static void null_glSecondaryColor3s( GLshort red, GLshort green, GLshort blue ) { }
-static void null_glSecondaryColor3sEXT( GLshort red, GLshort green, GLshort blue ) { }
-static void null_glSecondaryColor3sv( const GLshort *v ) { }
-static void null_glSecondaryColor3svEXT( const GLshort *v ) { }
-static void null_glSecondaryColor3ub( GLubyte red, GLubyte green, GLubyte blue ) { }
-static void null_glSecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue ) { }
-static void null_glSecondaryColor3ubv( const GLubyte *v ) { }
-static void null_glSecondaryColor3ubvEXT( const GLubyte *v ) { }
-static void null_glSecondaryColor3ui( GLuint red, GLuint green, GLuint blue ) { }
-static void null_glSecondaryColor3uiEXT( GLuint red, GLuint green, GLuint blue ) { }
-static void null_glSecondaryColor3uiv( const GLuint *v ) { }
-static void null_glSecondaryColor3uivEXT( const GLuint *v ) { }
-static void null_glSecondaryColor3us( GLushort red, GLushort green, GLushort blue ) { }
-static void null_glSecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue ) { }
-static void null_glSecondaryColor3usv( const GLushort *v ) { }
-static void null_glSecondaryColor3usvEXT( const GLushort *v ) { }
-static void null_glSecondaryColorFormatNV( GLint size, GLenum type, GLsizei stride ) { }
-static void null_glSecondaryColorP3ui( GLenum type, GLuint color ) { }
-static void null_glSecondaryColorP3uiv( GLenum type, const GLuint *color ) { }
-static void null_glSecondaryColorPointer( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glSecondaryColorPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glSelectPerfMonitorCountersAMD( GLuint monitor, GLboolean enable, GLuint group, GLint numCounters, GLuint *counterList ) { }
-static void null_glSelectTextureCoordSetSGIS( GLenum target ) { }
-static void null_glSelectTextureSGIS( GLenum target ) { }
-static void null_glSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, const GLuint64 *params ) { }
-static void null_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *row, const void *column ) { }
-static void null_glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *row, const void *column ) { }
-static void null_glSetFenceAPPLE( GLuint fence ) { }
-static void null_glSetFenceNV( GLuint fence, GLenum condition ) { }
-static void null_glSetFragmentShaderConstantATI( GLuint dst, const GLfloat *value ) { }
-static void null_glSetInvariantEXT( GLuint id, GLenum type, const void *addr ) { }
-static void null_glSetLocalConstantEXT( GLuint id, GLenum type, const void *addr ) { }
-static void null_glSetMultisamplefvAMD( GLenum pname, GLuint index, const GLfloat *val ) { }
-static void null_glShaderBinary( GLsizei count, const GLuint *shaders, GLenum binaryformat, const void *binary, GLsizei length ) { }
-static void null_glShaderOp1EXT( GLenum op, GLuint res, GLuint arg1 ) { }
-static void null_glShaderOp2EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2 ) { }
-static void null_glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2, GLuint arg3 ) { }
-static void null_glShaderSource( GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length ) { }
-static void null_glShaderSourceARB( GLhandleARB shaderObj, GLsizei count, const GLcharARB **string, const GLint *length ) { }
-static void null_glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding ) { }
-static void null_glShadingRateImageBarrierNV( GLboolean synchronize ) { }
-static void null_glShadingRateImagePaletteNV( GLuint viewport, GLuint first, GLsizei count, const GLenum *rates ) { }
-static void null_glShadingRateSampleOrderCustomNV( GLenum rate, GLuint samples, const GLint *locations ) { }
-static void null_glShadingRateSampleOrderNV( GLenum order ) { }
-static void null_glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points ) { }
-static void null_glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *dstLayouts ) { }
-static void null_glSignalSemaphoreui64NVX( GLuint signalGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray ) { }
-static void null_glSignalVkFenceNV( GLuint64 vkFence ) { }
-static void null_glSignalVkSemaphoreNV( GLuint64 vkSemaphore ) { }
-static void null_glSpecializeShader( GLuint shader, const GLchar *pEntryPoint, GLuint numSpecializationConstants, const GLuint *pConstantIndex, const GLuint *pConstantValue ) { }
-static void null_glSpecializeShaderARB( GLuint shader, const GLchar *pEntryPoint, GLuint numSpecializationConstants, const GLuint *pConstantIndex, const GLuint *pConstantValue ) { }
-static void null_glSpriteParameterfSGIX( GLenum pname, GLfloat param ) { }
-static void null_glSpriteParameterfvSGIX( GLenum pname, const GLfloat *params ) { }
-static void null_glSpriteParameteriSGIX( GLenum pname, GLint param ) { }
-static void null_glSpriteParameterivSGIX( GLenum pname, const GLint *params ) { }
-static void null_glStartInstrumentsSGIX(void) { }
-static void null_glStateCaptureNV( GLuint state, GLenum mode ) { }
-static void null_glStencilClearTagEXT( GLsizei stencilTagBits, GLuint stencilClearTag ) { }
-static void null_glStencilFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glStencilFillPathNV( GLuint path, GLenum fillMode, GLuint mask ) { }
-static void null_glStencilFuncSeparate( GLenum face, GLenum func, GLint ref, GLuint mask ) { }
-static void null_glStencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask ) { }
-static void null_glStencilMaskSeparate( GLenum face, GLuint mask ) { }
-static void null_glStencilOpSeparate( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass ) { }
-static void null_glStencilOpSeparateATI( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass ) { }
-static void null_glStencilOpValueAMD( GLenum face, GLuint value ) { }
-static void null_glStencilStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glStencilStrokePathNV( GLuint path, GLint reference, GLuint mask ) { }
-static void null_glStencilThenCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glStencilThenCoverFillPathNV( GLuint path, GLenum fillMode, GLuint mask, GLenum coverMode ) { }
-static void null_glStencilThenCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glStencilThenCoverStrokePathNV( GLuint path, GLint reference, GLuint mask, GLenum coverMode ) { }
-static void null_glStopInstrumentsSGIX( GLint marker ) { }
-static void null_glStringMarkerGREMEDY( GLsizei len, const void *string ) { }
-static void null_glSubpixelPrecisionBiasNV( GLuint xbits, GLuint ybits ) { }
-static void null_glSwizzleEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW ) { }
-static void null_glSyncTextureINTEL( GLuint texture ) { }
-static void null_glTagSampleBufferSGIX(void) { }
-static void null_glTangent3bEXT( GLbyte tx, GLbyte ty, GLbyte tz ) { }
-static void null_glTangent3bvEXT( const GLbyte *v ) { }
-static void null_glTangent3dEXT( GLdouble tx, GLdouble ty, GLdouble tz ) { }
-static void null_glTangent3dvEXT( const GLdouble *v ) { }
-static void null_glTangent3fEXT( GLfloat tx, GLfloat ty, GLfloat tz ) { }
-static void null_glTangent3fvEXT( const GLfloat *v ) { }
-static void null_glTangent3iEXT( GLint tx, GLint ty, GLint tz ) { }
-static void null_glTangent3ivEXT( const GLint *v ) { }
-static void null_glTangent3sEXT( GLshort tx, GLshort ty, GLshort tz ) { }
-static void null_glTangent3svEXT( const GLshort *v ) { }
-static void null_glTangentPointerEXT( GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glTbufferMask3DFX( GLuint mask ) { }
-static void null_glTessellationFactorAMD( GLfloat factor ) { }
-static void null_glTessellationModeAMD( GLenum mode ) { }
-static GLboolean null_glTestFenceAPPLE( GLuint fence ) { return 0; }
-static GLboolean null_glTestFenceNV( GLuint fence ) { return 0; }
-static GLboolean null_glTestObjectAPPLE( GLenum object, GLuint name ) { return 0; }
-static void null_glTexAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset ) { }
-static void null_glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer ) { }
-static void null_glTexBufferARB( GLenum target, GLenum internalformat, GLuint buffer ) { }
-static void null_glTexBufferEXT( GLenum target, GLenum internalformat, GLuint buffer ) { }
-static void null_glTexBufferRange( GLenum target, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glTexBumpParameterfvATI( GLenum pname, const GLfloat *param ) { }
-static void null_glTexBumpParameterivATI( GLenum pname, const GLint *param ) { }
-static void null_glTexCoord1bOES( GLbyte s ) { }
-static void null_glTexCoord1bvOES( const GLbyte *coords ) { }
-static void null_glTexCoord1hNV( GLhalfNV s ) { }
-static void null_glTexCoord1hvNV( const GLhalfNV *v ) { }
-static void null_glTexCoord1xOES( GLfixed s ) { }
-static void null_glTexCoord1xvOES( const GLfixed *coords ) { }
-static void null_glTexCoord2bOES( GLbyte s, GLbyte t ) { }
-static void null_glTexCoord2bvOES( const GLbyte *coords ) { }
-static void null_glTexCoord2fColor3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glTexCoord2fColor3fVertex3fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *v ) { }
-static void null_glTexCoord2fColor4fNormal3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glTexCoord2fColor4fNormal3fVertex3fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v ) { }
-static void null_glTexCoord2fColor4ubVertex3fSUN( GLfloat s, GLfloat t, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glTexCoord2fColor4ubVertex3fvSUN( const GLfloat *tc, const GLubyte *c, const GLfloat *v ) { }
-static void null_glTexCoord2fNormal3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glTexCoord2fNormal3fVertex3fvSUN( const GLfloat *tc, const GLfloat *n, const GLfloat *v ) { }
-static void null_glTexCoord2fVertex3fSUN( GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glTexCoord2fVertex3fvSUN( const GLfloat *tc, const GLfloat *v ) { }
-static void null_glTexCoord2hNV( GLhalfNV s, GLhalfNV t ) { }
-static void null_glTexCoord2hvNV( const GLhalfNV *v ) { }
-static void null_glTexCoord2xOES( GLfixed s, GLfixed t ) { }
-static void null_glTexCoord2xvOES( const GLfixed *coords ) { }
-static void null_glTexCoord3bOES( GLbyte s, GLbyte t, GLbyte r ) { }
-static void null_glTexCoord3bvOES( const GLbyte *coords ) { }
-static void null_glTexCoord3hNV( GLhalfNV s, GLhalfNV t, GLhalfNV r ) { }
-static void null_glTexCoord3hvNV( const GLhalfNV *v ) { }
-static void null_glTexCoord3xOES( GLfixed s, GLfixed t, GLfixed r ) { }
-static void null_glTexCoord3xvOES( const GLfixed *coords ) { }
-static void null_glTexCoord4bOES( GLbyte s, GLbyte t, GLbyte r, GLbyte q ) { }
-static void null_glTexCoord4bvOES( const GLbyte *coords ) { }
-static void null_glTexCoord4fColor4fNormal3fVertex4fSUN( GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glTexCoord4fColor4fNormal3fVertex4fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v ) { }
-static void null_glTexCoord4fVertex4fSUN( GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glTexCoord4fVertex4fvSUN( const GLfloat *tc, const GLfloat *v ) { }
-static void null_glTexCoord4hNV( GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q ) { }
-static void null_glTexCoord4hvNV( const GLhalfNV *v ) { }
-static void null_glTexCoord4xOES( GLfixed s, GLfixed t, GLfixed r, GLfixed q ) { }
-static void null_glTexCoord4xvOES( const GLfixed *coords ) { }
-static void null_glTexCoordFormatNV( GLint size, GLenum type, GLsizei stride ) { }
-static void null_glTexCoordP1ui( GLenum type, GLuint coords ) { }
-static void null_glTexCoordP1uiv( GLenum type, const GLuint *coords ) { }
-static void null_glTexCoordP2ui( GLenum type, GLuint coords ) { }
-static void null_glTexCoordP2uiv( GLenum type, const GLuint *coords ) { }
-static void null_glTexCoordP3ui( GLenum type, GLuint coords ) { }
-static void null_glTexCoordP3uiv( GLenum type, const GLuint *coords ) { }
-static void null_glTexCoordP4ui( GLenum type, GLuint coords ) { }
-static void null_glTexCoordP4uiv( GLenum type, const GLuint *coords ) { }
-static void null_glTexCoordPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer ) { }
-static void null_glTexCoordPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glTexCoordPointervINTEL( GLint size, GLenum type, const void **pointer ) { }
-static void null_glTexEnvxOES( GLenum target, GLenum pname, GLfixed param ) { }
-static void null_glTexEnvxvOES( GLenum target, GLenum pname, const GLfixed *params ) { }
-static void null_glTexFilterFuncSGIS( GLenum target, GLenum filter, GLsizei n, const GLfloat *weights ) { }
-static void null_glTexGenxOES( GLenum coord, GLenum pname, GLfixed param ) { }
-static void null_glTexGenxvOES( GLenum coord, GLenum pname, const GLfixed *params ) { }
-static void null_glTexImage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
-static void null_glTexImage2DMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations ) { }
-static void null_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexImage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
-static void null_glTexImage3DMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations ) { }
-static void null_glTexImage4DSGIS( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexPageCommitmentARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean commit ) { }
-static void null_glTexParameterIiv( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTexParameterIivEXT( GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTexParameterIuiv( GLenum target, GLenum pname, const GLuint *params ) { }
-static void null_glTexParameterIuivEXT( GLenum target, GLenum pname, const GLuint *params ) { }
-static void null_glTexParameterxOES( GLenum target, GLenum pname, GLfixed param ) { }
-static void null_glTexParameterxvOES( GLenum target, GLenum pname, const GLfixed *params ) { }
-static void null_glTexRenderbufferNV( GLenum target, GLuint renderbuffer ) { }
-static void null_glTexStorage1D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width ) { }
-static void null_glTexStorage2D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
-static void null_glTexStorage3D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
-static void null_glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
-static void null_glTexStorageMem1DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset ) { }
-static void null_glTexStorageMem2DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset ) { }
-static void null_glTexStorageMem2DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
-static void null_glTexStorageMem3DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset ) { }
-static void null_glTexStorageMem3DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
-static void null_glTexStorageSparseAMD( GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
-static void null_glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureBarrier(void) { }
-static void null_glTextureBarrierNV(void) { }
-static void null_glTextureBuffer( GLuint texture, GLenum internalformat, GLuint buffer ) { }
-static void null_glTextureBufferEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer ) { }
-static void null_glTextureBufferRange( GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glTextureBufferRangeEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glTextureColorMaskSGIS( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) { }
-static void null_glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureImage2DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations ) { }
-static void null_glTextureImage2DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations ) { }
-static void null_glTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureImage3DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations ) { }
-static void null_glTextureImage3DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations ) { }
-static void null_glTextureLightEXT( GLenum pname ) { }
-static void null_glTextureMaterialEXT( GLenum face, GLenum mode ) { }
-static void null_glTextureNormalEXT( GLenum mode ) { }
-static void null_glTexturePageCommitmentEXT( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean commit ) { }
-static void null_glTextureParameterIiv( GLuint texture, GLenum pname, const GLint *params ) { }
-static void null_glTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTextureParameterIuiv( GLuint texture, GLenum pname, const GLuint *params ) { }
-static void null_glTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, const GLuint *params ) { }
-static void null_glTextureParameterf( GLuint texture, GLenum pname, GLfloat param ) { }
-static void null_glTextureParameterfEXT( GLuint texture, GLenum target, GLenum pname, GLfloat param ) { }
-static void null_glTextureParameterfv( GLuint texture, GLenum pname, const GLfloat *param ) { }
-static void null_glTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, const GLfloat *params ) { }
-static void null_glTextureParameteri( GLuint texture, GLenum pname, GLint param ) { }
-static void null_glTextureParameteriEXT( GLuint texture, GLenum target, GLenum pname, GLint param ) { }
-static void null_glTextureParameteriv( GLuint texture, GLenum pname, const GLint *param ) { }
-static void null_glTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params ) { }
-static void null_glTextureRangeAPPLE( GLenum target, GLsizei length, const void *pointer ) { }
-static void null_glTextureRenderbufferEXT( GLuint texture, GLenum target, GLuint renderbuffer ) { }
-static void null_glTextureStorage1D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width ) { }
-static void null_glTextureStorage1DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width ) { }
-static void null_glTextureStorage2D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glTextureStorage2DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height ) { }
-static void null_glTextureStorage2DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
-static void null_glTextureStorage2DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) { }
-static void null_glTextureStorage3D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
-static void null_glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth ) { }
-static void null_glTextureStorage3DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
-static void null_glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) { }
-static void null_glTextureStorageMem1DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureStorageMem2DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureStorageMem2DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureStorageMem3DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureStorageMem3DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset ) { }
-static void null_glTextureStorageSparseAMD( GLuint texture, GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags ) { }
-static void null_glTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels ) { }
-static void null_glTextureView( GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers ) { }
-static void null_glTrackMatrixNV( GLenum target, GLuint address, GLenum matrix, GLenum transform ) { }
-static void null_glTransformFeedbackAttribsNV( GLsizei count, const GLint *attribs, GLenum bufferMode ) { }
-static void null_glTransformFeedbackBufferBase( GLuint xfb, GLuint index, GLuint buffer ) { }
-static void null_glTransformFeedbackBufferRange( GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size ) { }
-static void null_glTransformFeedbackStreamAttribsNV( GLsizei count, const GLint *attribs, GLsizei nbuffers, const GLint *bufstreams, GLenum bufferMode ) { }
-static void null_glTransformFeedbackVaryings( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode ) { }
-static void null_glTransformFeedbackVaryingsEXT( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode ) { }
-static void null_glTransformFeedbackVaryingsNV( GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode ) { }
-static void null_glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues ) { }
-static void null_glTranslatexOES( GLfixed x, GLfixed y, GLfixed z ) { }
-static void null_glUniform1d( GLint location, GLdouble x ) { }
-static void null_glUniform1dv( GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glUniform1f( GLint location, GLfloat v0 ) { }
-static void null_glUniform1fARB( GLint location, GLfloat v0 ) { }
-static void null_glUniform1fv( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform1fvARB( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform1i( GLint location, GLint v0 ) { }
-static void null_glUniform1i64ARB( GLint location, GLint64 x ) { }
-static void null_glUniform1i64NV( GLint location, GLint64EXT x ) { }
-static void null_glUniform1i64vARB( GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glUniform1i64vNV( GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glUniform1iARB( GLint location, GLint v0 ) { }
-static void null_glUniform1iv( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform1ivARB( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform1ui( GLint location, GLuint v0 ) { }
-static void null_glUniform1ui64ARB( GLint location, GLuint64 x ) { }
-static void null_glUniform1ui64NV( GLint location, GLuint64EXT x ) { }
-static void null_glUniform1ui64vARB( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniform1ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glUniform1uiEXT( GLint location, GLuint v0 ) { }
-static void null_glUniform1uiv( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform1uivEXT( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform2d( GLint location, GLdouble x, GLdouble y ) { }
-static void null_glUniform2dv( GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glUniform2f( GLint location, GLfloat v0, GLfloat v1 ) { }
-static void null_glUniform2fARB( GLint location, GLfloat v0, GLfloat v1 ) { }
-static void null_glUniform2fv( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform2fvARB( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform2i( GLint location, GLint v0, GLint v1 ) { }
-static void null_glUniform2i64ARB( GLint location, GLint64 x, GLint64 y ) { }
-static void null_glUniform2i64NV( GLint location, GLint64EXT x, GLint64EXT y ) { }
-static void null_glUniform2i64vARB( GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glUniform2i64vNV( GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glUniform2iARB( GLint location, GLint v0, GLint v1 ) { }
-static void null_glUniform2iv( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform2ivARB( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform2ui( GLint location, GLuint v0, GLuint v1 ) { }
-static void null_glUniform2ui64ARB( GLint location, GLuint64 x, GLuint64 y ) { }
-static void null_glUniform2ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y ) { }
-static void null_glUniform2ui64vARB( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniform2ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glUniform2uiEXT( GLint location, GLuint v0, GLuint v1 ) { }
-static void null_glUniform2uiv( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform2uivEXT( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform3d( GLint location, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glUniform3dv( GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glUniform3f( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 ) { }
-static void null_glUniform3fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 ) { }
-static void null_glUniform3fv( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform3fvARB( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform3i( GLint location, GLint v0, GLint v1, GLint v2 ) { }
-static void null_glUniform3i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z ) { }
-static void null_glUniform3i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) { }
-static void null_glUniform3i64vARB( GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glUniform3i64vNV( GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glUniform3iARB( GLint location, GLint v0, GLint v1, GLint v2 ) { }
-static void null_glUniform3iv( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform3ivARB( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform3ui( GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
-static void null_glUniform3ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z ) { }
-static void null_glUniform3ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) { }
-static void null_glUniform3ui64vARB( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniform3ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glUniform3uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
-static void null_glUniform3uiv( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform3uivEXT( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform4d( GLint location, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glUniform4dv( GLint location, GLsizei count, const GLdouble *value ) { }
-static void null_glUniform4f( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 ) { }
-static void null_glUniform4fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 ) { }
-static void null_glUniform4fv( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform4fvARB( GLint location, GLsizei count, const GLfloat *value ) { }
-static void null_glUniform4i( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
-static void null_glUniform4i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w ) { }
-static void null_glUniform4i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) { }
-static void null_glUniform4i64vARB( GLint location, GLsizei count, const GLint64 *value ) { }
-static void null_glUniform4i64vNV( GLint location, GLsizei count, const GLint64EXT *value ) { }
-static void null_glUniform4iARB( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
-static void null_glUniform4iv( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform4ivARB( GLint location, GLsizei count, const GLint *value ) { }
-static void null_glUniform4ui( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
-static void null_glUniform4ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w ) { }
-static void null_glUniform4ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) { }
-static void null_glUniform4ui64vARB( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniform4ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glUniform4uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
-static void null_glUniform4uiv( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniform4uivEXT( GLint location, GLsizei count, const GLuint *value ) { }
-static void null_glUniformBlockBinding( GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding ) { }
-static void null_glUniformBufferEXT( GLuint program, GLint location, GLuint buffer ) { }
-static void null_glUniformHandleui64ARB( GLint location, GLuint64 value ) { }
-static void null_glUniformHandleui64NV( GLint location, GLuint64 value ) { }
-static void null_glUniformHandleui64vARB( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniformHandleui64vNV( GLint location, GLsizei count, const GLuint64 *value ) { }
-static void null_glUniformMatrix2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix2fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix2x3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix2x3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix2x4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix2x4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix3fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix3x2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix3x2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix3x4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix3x4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix4fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix4x2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix4x2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformMatrix4x3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value ) { }
-static void null_glUniformMatrix4x3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value ) { }
-static void null_glUniformSubroutinesuiv( GLenum shadertype, GLsizei count, const GLuint *indices ) { }
-static void null_glUniformui64NV( GLint location, GLuint64EXT value ) { }
-static void null_glUniformui64vNV( GLint location, GLsizei count, const GLuint64EXT *value ) { }
-static void null_glUnlockArraysEXT(void) { }
-static GLboolean null_glUnmapBuffer( GLenum target ) { return 0; }
-static GLboolean null_glUnmapBufferARB( GLenum target ) { return 0; }
-static GLboolean null_glUnmapNamedBuffer( GLuint buffer ) { return 0; }
-static GLboolean null_glUnmapNamedBufferEXT( GLuint buffer ) { return 0; }
-static void null_glUnmapObjectBufferATI( GLuint buffer ) { }
-static void null_glUnmapTexture2DINTEL( GLuint texture, GLint level ) { }
-static void null_glUpdateObjectBufferATI( GLuint buffer, GLuint offset, GLsizei size, const void *pointer, GLenum preserve ) { }
-static void null_glUploadGpuMaskNVX( GLbitfield mask ) { }
-static void null_glUseProgram( GLuint program ) { }
-static void null_glUseProgramObjectARB( GLhandleARB programObj ) { }
-static void null_glUseProgramStages( GLuint pipeline, GLbitfield stages, GLuint program ) { }
-static void null_glUseShaderProgramEXT( GLenum type, GLuint program ) { }
-static void null_glVDPAUFiniNV(void) { }
-static void null_glVDPAUGetSurfaceivNV( GLvdpauSurfaceNV surface, GLenum pname, GLsizei count, GLsizei *length, GLint *values ) { }
-static void null_glVDPAUInitNV( const void *vdpDevice, const void *getProcAddress ) { }
-static GLboolean null_glVDPAUIsSurfaceNV( GLvdpauSurfaceNV surface ) { return 0; }
-static void null_glVDPAUMapSurfacesNV( GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces ) { }
-static GLvdpauSurfaceNV null_glVDPAURegisterOutputSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames ) { return 0; }
-static GLvdpauSurfaceNV null_glVDPAURegisterVideoSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames ) { return 0; }
-static GLvdpauSurfaceNV null_glVDPAURegisterVideoSurfaceWithPictureStructureNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames, GLboolean isFrameStructure ) { return 0; }
-static void null_glVDPAUSurfaceAccessNV( GLvdpauSurfaceNV surface, GLenum access ) { }
-static void null_glVDPAUUnmapSurfacesNV( GLsizei numSurface, const GLvdpauSurfaceNV *surfaces ) { }
-static void null_glVDPAUUnregisterSurfaceNV( GLvdpauSurfaceNV surface ) { }
-static void null_glValidateProgram( GLuint program ) { }
-static void null_glValidateProgramARB( GLhandleARB programObj ) { }
-static void null_glValidateProgramPipeline( GLuint pipeline ) { }
-static void null_glVariantArrayObjectATI( GLuint id, GLenum type, GLsizei stride, GLuint buffer, GLuint offset ) { }
-static void null_glVariantPointerEXT( GLuint id, GLenum type, GLuint stride, const void *addr ) { }
-static void null_glVariantbvEXT( GLuint id, const GLbyte *addr ) { }
-static void null_glVariantdvEXT( GLuint id, const GLdouble *addr ) { }
-static void null_glVariantfvEXT( GLuint id, const GLfloat *addr ) { }
-static void null_glVariantivEXT( GLuint id, const GLint *addr ) { }
-static void null_glVariantsvEXT( GLuint id, const GLshort *addr ) { }
-static void null_glVariantubvEXT( GLuint id, const GLubyte *addr ) { }
-static void null_glVariantuivEXT( GLuint id, const GLuint *addr ) { }
-static void null_glVariantusvEXT( GLuint id, const GLushort *addr ) { }
-static void null_glVertex2bOES( GLbyte x, GLbyte y ) { }
-static void null_glVertex2bvOES( const GLbyte *coords ) { }
-static void null_glVertex2hNV( GLhalfNV x, GLhalfNV y ) { }
-static void null_glVertex2hvNV( const GLhalfNV *v ) { }
-static void null_glVertex2xOES( GLfixed x ) { }
-static void null_glVertex2xvOES( const GLfixed *coords ) { }
-static void null_glVertex3bOES( GLbyte x, GLbyte y, GLbyte z ) { }
-static void null_glVertex3bvOES( const GLbyte *coords ) { }
-static void null_glVertex3hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z ) { }
-static void null_glVertex3hvNV( const GLhalfNV *v ) { }
-static void null_glVertex3xOES( GLfixed x, GLfixed y ) { }
-static void null_glVertex3xvOES( const GLfixed *coords ) { }
-static void null_glVertex4bOES( GLbyte x, GLbyte y, GLbyte z, GLbyte w ) { }
-static void null_glVertex4bvOES( const GLbyte *coords ) { }
-static void null_glVertex4hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w ) { }
-static void null_glVertex4hvNV( const GLhalfNV *v ) { }
-static void null_glVertex4xOES( GLfixed x, GLfixed y, GLfixed z ) { }
-static void null_glVertex4xvOES( const GLfixed *coords ) { }
-static void null_glVertexArrayAttribBinding( GLuint vaobj, GLuint attribindex, GLuint bindingindex ) { }
-static void null_glVertexArrayAttribFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) { }
-static void null_glVertexArrayAttribIFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexArrayAttribLFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexArrayBindVertexBufferEXT( GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride ) { }
-static void null_glVertexArrayBindingDivisor( GLuint vaobj, GLuint bindingindex, GLuint divisor ) { }
-static void null_glVertexArrayColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayEdgeFlagOffsetEXT( GLuint vaobj, GLuint buffer, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayElementBuffer( GLuint vaobj, GLuint buffer ) { }
-static void null_glVertexArrayFogCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayIndexOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayMultiTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum texunit, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayNormalOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayParameteriAPPLE( GLenum pname, GLint param ) { }
-static void null_glVertexArrayRangeAPPLE( GLsizei length, void *pointer ) { }
-static void null_glVertexArrayRangeNV( GLsizei length, const void *pointer ) { }
-static void null_glVertexArraySecondaryColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayVertexAttribBindingEXT( GLuint vaobj, GLuint attribindex, GLuint bindingindex ) { }
-static void null_glVertexArrayVertexAttribDivisorEXT( GLuint vaobj, GLuint index, GLuint divisor ) { }
-static void null_glVertexArrayVertexAttribFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) { }
-static void null_glVertexArrayVertexAttribIFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexArrayVertexAttribIOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayVertexAttribLFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexArrayVertexAttribLOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayVertexAttribOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexArrayVertexBindingDivisorEXT( GLuint vaobj, GLuint bindingindex, GLuint divisor ) { }
-static void null_glVertexArrayVertexBuffer( GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride ) { }
-static void null_glVertexArrayVertexBuffers( GLuint vaobj, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides ) { }
-static void null_glVertexArrayVertexOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) { }
-static void null_glVertexAttrib1d( GLuint index, GLdouble x ) { }
-static void null_glVertexAttrib1dARB( GLuint index, GLdouble x ) { }
-static void null_glVertexAttrib1dNV( GLuint index, GLdouble x ) { }
-static void null_glVertexAttrib1dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib1dvARB( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib1dvNV( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib1f( GLuint index, GLfloat x ) { }
-static void null_glVertexAttrib1fARB( GLuint index, GLfloat x ) { }
-static void null_glVertexAttrib1fNV( GLuint index, GLfloat x ) { }
-static void null_glVertexAttrib1fv( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib1fvARB( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib1fvNV( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib1hNV( GLuint index, GLhalfNV x ) { }
-static void null_glVertexAttrib1hvNV( GLuint index, const GLhalfNV *v ) { }
-static void null_glVertexAttrib1s( GLuint index, GLshort x ) { }
-static void null_glVertexAttrib1sARB( GLuint index, GLshort x ) { }
-static void null_glVertexAttrib1sNV( GLuint index, GLshort x ) { }
-static void null_glVertexAttrib1sv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib1svARB( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib1svNV( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib2d( GLuint index, GLdouble x, GLdouble y ) { }
-static void null_glVertexAttrib2dARB( GLuint index, GLdouble x, GLdouble y ) { }
-static void null_glVertexAttrib2dNV( GLuint index, GLdouble x, GLdouble y ) { }
-static void null_glVertexAttrib2dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib2dvARB( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib2dvNV( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib2f( GLuint index, GLfloat x, GLfloat y ) { }
-static void null_glVertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y ) { }
-static void null_glVertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y ) { }
-static void null_glVertexAttrib2fv( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib2fvARB( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib2fvNV( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib2hNV( GLuint index, GLhalfNV x, GLhalfNV y ) { }
-static void null_glVertexAttrib2hvNV( GLuint index, const GLhalfNV *v ) { }
-static void null_glVertexAttrib2s( GLuint index, GLshort x, GLshort y ) { }
-static void null_glVertexAttrib2sARB( GLuint index, GLshort x, GLshort y ) { }
-static void null_glVertexAttrib2sNV( GLuint index, GLshort x, GLshort y ) { }
-static void null_glVertexAttrib2sv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib2svARB( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib2svNV( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib3d( GLuint index, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexAttrib3dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexAttrib3dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexAttrib3dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib3dvARB( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib3dvNV( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib3f( GLuint index, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertexAttrib3fv( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib3fvARB( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib3fvNV( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib3hNV( GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z ) { }
-static void null_glVertexAttrib3hvNV( GLuint index, const GLhalfNV *v ) { }
-static void null_glVertexAttrib3s( GLuint index, GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertexAttrib3sARB( GLuint index, GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertexAttrib3sNV( GLuint index, GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertexAttrib3sv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib3svARB( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib3svNV( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4Nbv( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttrib4NbvARB( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttrib4Niv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttrib4NivARB( GLuint index, const GLint *v ) { }
-static void null_glVertexAttrib4Nsv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4NsvARB( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4Nub( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w ) { }
-static void null_glVertexAttrib4NubARB( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w ) { }
-static void null_glVertexAttrib4Nubv( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttrib4NubvARB( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttrib4Nuiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttrib4NuivARB( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttrib4Nusv( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttrib4NusvARB( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttrib4bv( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttrib4bvARB( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttrib4d( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexAttrib4dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexAttrib4dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexAttrib4dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib4dvARB( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib4dvNV( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttrib4f( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertexAttrib4fv( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib4fvARB( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib4fvNV( GLuint index, const GLfloat *v ) { }
-static void null_glVertexAttrib4hNV( GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w ) { }
-static void null_glVertexAttrib4hvNV( GLuint index, const GLhalfNV *v ) { }
-static void null_glVertexAttrib4iv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttrib4ivARB( GLuint index, const GLint *v ) { }
-static void null_glVertexAttrib4s( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertexAttrib4sARB( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertexAttrib4sNV( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertexAttrib4sv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4svARB( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4svNV( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttrib4ubNV( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w ) { }
-static void null_glVertexAttrib4ubv( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttrib4ubvARB( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttrib4ubvNV( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttrib4uiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttrib4uivARB( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttrib4usv( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttrib4usvARB( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttribArrayObjectATI( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLuint buffer, GLuint offset ) { }
-static void null_glVertexAttribBinding( GLuint attribindex, GLuint bindingindex ) { }
-static void null_glVertexAttribDivisor( GLuint index, GLuint divisor ) { }
-static void null_glVertexAttribDivisorARB( GLuint index, GLuint divisor ) { }
-static void null_glVertexAttribFormat( GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) { }
-static void null_glVertexAttribFormatNV( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride ) { }
-static void null_glVertexAttribI1i( GLuint index, GLint x ) { }
-static void null_glVertexAttribI1iEXT( GLuint index, GLint x ) { }
-static void null_glVertexAttribI1iv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI1ivEXT( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI1ui( GLuint index, GLuint x ) { }
-static void null_glVertexAttribI1uiEXT( GLuint index, GLuint x ) { }
-static void null_glVertexAttribI1uiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI1uivEXT( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI2i( GLuint index, GLint x, GLint y ) { }
-static void null_glVertexAttribI2iEXT( GLuint index, GLint x, GLint y ) { }
-static void null_glVertexAttribI2iv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI2ivEXT( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI2ui( GLuint index, GLuint x, GLuint y ) { }
-static void null_glVertexAttribI2uiEXT( GLuint index, GLuint x, GLuint y ) { }
-static void null_glVertexAttribI2uiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI2uivEXT( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI3i( GLuint index, GLint x, GLint y, GLint z ) { }
-static void null_glVertexAttribI3iEXT( GLuint index, GLint x, GLint y, GLint z ) { }
-static void null_glVertexAttribI3iv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI3ivEXT( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI3ui( GLuint index, GLuint x, GLuint y, GLuint z ) { }
-static void null_glVertexAttribI3uiEXT( GLuint index, GLuint x, GLuint y, GLuint z ) { }
-static void null_glVertexAttribI3uiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI3uivEXT( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI4bv( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttribI4bvEXT( GLuint index, const GLbyte *v ) { }
-static void null_glVertexAttribI4i( GLuint index, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glVertexAttribI4iEXT( GLuint index, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glVertexAttribI4iv( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI4ivEXT( GLuint index, const GLint *v ) { }
-static void null_glVertexAttribI4sv( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttribI4svEXT( GLuint index, const GLshort *v ) { }
-static void null_glVertexAttribI4ubv( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttribI4ubvEXT( GLuint index, const GLubyte *v ) { }
-static void null_glVertexAttribI4ui( GLuint index, GLuint x, GLuint y, GLuint z, GLuint w ) { }
-static void null_glVertexAttribI4uiEXT( GLuint index, GLuint x, GLuint y, GLuint z, GLuint w ) { }
-static void null_glVertexAttribI4uiv( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI4uivEXT( GLuint index, const GLuint *v ) { }
-static void null_glVertexAttribI4usv( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttribI4usvEXT( GLuint index, const GLushort *v ) { }
-static void null_glVertexAttribIFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexAttribIFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride ) { }
-static void null_glVertexAttribIPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribIPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribL1d( GLuint index, GLdouble x ) { }
-static void null_glVertexAttribL1dEXT( GLuint index, GLdouble x ) { }
-static void null_glVertexAttribL1dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL1dvEXT( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL1i64NV( GLuint index, GLint64EXT x ) { }
-static void null_glVertexAttribL1i64vNV( GLuint index, const GLint64EXT *v ) { }
-static void null_glVertexAttribL1ui64ARB( GLuint index, GLuint64EXT x ) { }
-static void null_glVertexAttribL1ui64NV( GLuint index, GLuint64EXT x ) { }
-static void null_glVertexAttribL1ui64vARB( GLuint index, const GLuint64EXT *v ) { }
-static void null_glVertexAttribL1ui64vNV( GLuint index, const GLuint64EXT *v ) { }
-static void null_glVertexAttribL2d( GLuint index, GLdouble x, GLdouble y ) { }
-static void null_glVertexAttribL2dEXT( GLuint index, GLdouble x, GLdouble y ) { }
-static void null_glVertexAttribL2dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL2dvEXT( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL2i64NV( GLuint index, GLint64EXT x, GLint64EXT y ) { }
-static void null_glVertexAttribL2i64vNV( GLuint index, const GLint64EXT *v ) { }
-static void null_glVertexAttribL2ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y ) { }
-static void null_glVertexAttribL2ui64vNV( GLuint index, const GLuint64EXT *v ) { }
-static void null_glVertexAttribL3d( GLuint index, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexAttribL3dEXT( GLuint index, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexAttribL3dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL3dvEXT( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL3i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z ) { }
-static void null_glVertexAttribL3i64vNV( GLuint index, const GLint64EXT *v ) { }
-static void null_glVertexAttribL3ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) { }
-static void null_glVertexAttribL3ui64vNV( GLuint index, const GLuint64EXT *v ) { }
-static void null_glVertexAttribL4d( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexAttribL4dEXT( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexAttribL4dv( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL4dvEXT( GLuint index, const GLdouble *v ) { }
-static void null_glVertexAttribL4i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) { }
-static void null_glVertexAttribL4i64vNV( GLuint index, const GLint64EXT *v ) { }
-static void null_glVertexAttribL4ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) { }
-static void null_glVertexAttribL4ui64vNV( GLuint index, const GLuint64EXT *v ) { }
-static void null_glVertexAttribLFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) { }
-static void null_glVertexAttribLFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride ) { }
-static void null_glVertexAttribLPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribLPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribP1ui( GLuint index, GLenum type, GLboolean normalized, GLuint value ) { }
-static void null_glVertexAttribP1uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value ) { }
-static void null_glVertexAttribP2ui( GLuint index, GLenum type, GLboolean normalized, GLuint value ) { }
-static void null_glVertexAttribP2uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value ) { }
-static void null_glVertexAttribP3ui( GLuint index, GLenum type, GLboolean normalized, GLuint value ) { }
-static void null_glVertexAttribP3uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value ) { }
-static void null_glVertexAttribP4ui( GLuint index, GLenum type, GLboolean normalized, GLuint value ) { }
-static void null_glVertexAttribP4uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value ) { }
-static void null_glVertexAttribParameteriAMD( GLuint index, GLenum pname, GLint param ) { }
-static void null_glVertexAttribPointer( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribPointerNV( GLuint index, GLint fsize, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexAttribs1dvNV( GLuint index, GLsizei count, const GLdouble *v ) { }
-static void null_glVertexAttribs1fvNV( GLuint index, GLsizei count, const GLfloat *v ) { }
-static void null_glVertexAttribs1hvNV( GLuint index, GLsizei n, const GLhalfNV *v ) { }
-static void null_glVertexAttribs1svNV( GLuint index, GLsizei count, const GLshort *v ) { }
-static void null_glVertexAttribs2dvNV( GLuint index, GLsizei count, const GLdouble *v ) { }
-static void null_glVertexAttribs2fvNV( GLuint index, GLsizei count, const GLfloat *v ) { }
-static void null_glVertexAttribs2hvNV( GLuint index, GLsizei n, const GLhalfNV *v ) { }
-static void null_glVertexAttribs2svNV( GLuint index, GLsizei count, const GLshort *v ) { }
-static void null_glVertexAttribs3dvNV( GLuint index, GLsizei count, const GLdouble *v ) { }
-static void null_glVertexAttribs3fvNV( GLuint index, GLsizei count, const GLfloat *v ) { }
-static void null_glVertexAttribs3hvNV( GLuint index, GLsizei n, const GLhalfNV *v ) { }
-static void null_glVertexAttribs3svNV( GLuint index, GLsizei count, const GLshort *v ) { }
-static void null_glVertexAttribs4dvNV( GLuint index, GLsizei count, const GLdouble *v ) { }
-static void null_glVertexAttribs4fvNV( GLuint index, GLsizei count, const GLfloat *v ) { }
-static void null_glVertexAttribs4hvNV( GLuint index, GLsizei n, const GLhalfNV *v ) { }
-static void null_glVertexAttribs4svNV( GLuint index, GLsizei count, const GLshort *v ) { }
-static void null_glVertexAttribs4ubvNV( GLuint index, GLsizei count, const GLubyte *v ) { }
-static void null_glVertexBindingDivisor( GLuint bindingindex, GLuint divisor ) { }
-static void null_glVertexBlendARB( GLint count ) { }
-static void null_glVertexBlendEnvfATI( GLenum pname, GLfloat param ) { }
-static void null_glVertexBlendEnviATI( GLenum pname, GLint param ) { }
-static void null_glVertexFormatNV( GLint size, GLenum type, GLsizei stride ) { }
-static void null_glVertexP2ui( GLenum type, GLuint value ) { }
-static void null_glVertexP2uiv( GLenum type, const GLuint *value ) { }
-static void null_glVertexP3ui( GLenum type, GLuint value ) { }
-static void null_glVertexP3uiv( GLenum type, const GLuint *value ) { }
-static void null_glVertexP4ui( GLenum type, GLuint value ) { }
-static void null_glVertexP4uiv( GLenum type, const GLuint *value ) { }
-static void null_glVertexPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer ) { }
-static void null_glVertexPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride ) { }
-static void null_glVertexPointervINTEL( GLint size, GLenum type, const void **pointer ) { }
-static void null_glVertexStream1dATI( GLenum stream, GLdouble x ) { }
-static void null_glVertexStream1dvATI( GLenum stream, const GLdouble *coords ) { }
-static void null_glVertexStream1fATI( GLenum stream, GLfloat x ) { }
-static void null_glVertexStream1fvATI( GLenum stream, const GLfloat *coords ) { }
-static void null_glVertexStream1iATI( GLenum stream, GLint x ) { }
-static void null_glVertexStream1ivATI( GLenum stream, const GLint *coords ) { }
-static void null_glVertexStream1sATI( GLenum stream, GLshort x ) { }
-static void null_glVertexStream1svATI( GLenum stream, const GLshort *coords ) { }
-static void null_glVertexStream2dATI( GLenum stream, GLdouble x, GLdouble y ) { }
-static void null_glVertexStream2dvATI( GLenum stream, const GLdouble *coords ) { }
-static void null_glVertexStream2fATI( GLenum stream, GLfloat x, GLfloat y ) { }
-static void null_glVertexStream2fvATI( GLenum stream, const GLfloat *coords ) { }
-static void null_glVertexStream2iATI( GLenum stream, GLint x, GLint y ) { }
-static void null_glVertexStream2ivATI( GLenum stream, const GLint *coords ) { }
-static void null_glVertexStream2sATI( GLenum stream, GLshort x, GLshort y ) { }
-static void null_glVertexStream2svATI( GLenum stream, const GLshort *coords ) { }
-static void null_glVertexStream3dATI( GLenum stream, GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glVertexStream3dvATI( GLenum stream, const GLdouble *coords ) { }
-static void null_glVertexStream3fATI( GLenum stream, GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glVertexStream3fvATI( GLenum stream, const GLfloat *coords ) { }
-static void null_glVertexStream3iATI( GLenum stream, GLint x, GLint y, GLint z ) { }
-static void null_glVertexStream3ivATI( GLenum stream, const GLint *coords ) { }
-static void null_glVertexStream3sATI( GLenum stream, GLshort x, GLshort y, GLshort z ) { }
-static void null_glVertexStream3svATI( GLenum stream, const GLshort *coords ) { }
-static void null_glVertexStream4dATI( GLenum stream, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glVertexStream4dvATI( GLenum stream, const GLdouble *coords ) { }
-static void null_glVertexStream4fATI( GLenum stream, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glVertexStream4fvATI( GLenum stream, const GLfloat *coords ) { }
-static void null_glVertexStream4iATI( GLenum stream, GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glVertexStream4ivATI( GLenum stream, const GLint *coords ) { }
-static void null_glVertexStream4sATI( GLenum stream, GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glVertexStream4svATI( GLenum stream, const GLshort *coords ) { }
-static void null_glVertexWeightPointerEXT( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glVertexWeightfEXT( GLfloat weight ) { }
-static void null_glVertexWeightfvEXT( const GLfloat *weight ) { }
-static void null_glVertexWeighthNV( GLhalfNV weight ) { }
-static void null_glVertexWeighthvNV( const GLhalfNV *weight ) { }
-static GLenum null_glVideoCaptureNV( GLuint video_capture_slot, GLuint *sequence_num, GLuint64EXT *capture_time ) { return 0; }
-static void null_glVideoCaptureStreamParameterdvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLdouble *params ) { }
-static void null_glVideoCaptureStreamParameterfvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLfloat *params ) { }
-static void null_glVideoCaptureStreamParameterivNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLint *params ) { }
-static void null_glViewportArrayv( GLuint first, GLsizei count, const GLfloat *v ) { }
-static void null_glViewportIndexedf( GLuint index, GLfloat x, GLfloat y, GLfloat w, GLfloat h ) { }
-static void null_glViewportIndexedfv( GLuint index, const GLfloat *v ) { }
-static void null_glViewportPositionWScaleNV( GLuint index, GLfloat xcoeff, GLfloat ycoeff ) { }
-static void null_glViewportSwizzleNV( GLuint index, GLenum swizzlex, GLenum swizzley, GLenum swizzlez, GLenum swizzlew ) { }
-static void null_glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *srcLayouts ) { }
-static void null_glWaitSemaphoreui64NVX( GLuint waitGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray ) { }
-static void null_glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout ) { }
-static void null_glWaitVkSemaphoreNV( GLuint64 vkSemaphore ) { }
-static void null_glWeightPathsNV( GLuint resultPath, GLsizei numPaths, const GLuint *paths, const GLfloat *weights ) { }
-static void null_glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const void *pointer ) { }
-static void null_glWeightbvARB( GLint size, const GLbyte *weights ) { }
-static void null_glWeightdvARB( GLint size, const GLdouble *weights ) { }
-static void null_glWeightfvARB( GLint size, const GLfloat *weights ) { }
-static void null_glWeightivARB( GLint size, const GLint *weights ) { }
-static void null_glWeightsvARB( GLint size, const GLshort *weights ) { }
-static void null_glWeightubvARB( GLint size, const GLubyte *weights ) { }
-static void null_glWeightuivARB( GLint size, const GLuint *weights ) { }
-static void null_glWeightusvARB( GLint size, const GLushort *weights ) { }
-static void null_glWindowPos2d( GLdouble x, GLdouble y ) { }
-static void null_glWindowPos2dARB( GLdouble x, GLdouble y ) { }
-static void null_glWindowPos2dMESA( GLdouble x, GLdouble y ) { }
-static void null_glWindowPos2dv( const GLdouble *v ) { }
-static void null_glWindowPos2dvARB( const GLdouble *v ) { }
-static void null_glWindowPos2dvMESA( const GLdouble *v ) { }
-static void null_glWindowPos2f( GLfloat x, GLfloat y ) { }
-static void null_glWindowPos2fARB( GLfloat x, GLfloat y ) { }
-static void null_glWindowPos2fMESA( GLfloat x, GLfloat y ) { }
-static void null_glWindowPos2fv( const GLfloat *v ) { }
-static void null_glWindowPos2fvARB( const GLfloat *v ) { }
-static void null_glWindowPos2fvMESA( const GLfloat *v ) { }
-static void null_glWindowPos2i( GLint x, GLint y ) { }
-static void null_glWindowPos2iARB( GLint x, GLint y ) { }
-static void null_glWindowPos2iMESA( GLint x, GLint y ) { }
-static void null_glWindowPos2iv( const GLint *v ) { }
-static void null_glWindowPos2ivARB( const GLint *v ) { }
-static void null_glWindowPos2ivMESA( const GLint *v ) { }
-static void null_glWindowPos2s( GLshort x, GLshort y ) { }
-static void null_glWindowPos2sARB( GLshort x, GLshort y ) { }
-static void null_glWindowPos2sMESA( GLshort x, GLshort y ) { }
-static void null_glWindowPos2sv( const GLshort *v ) { }
-static void null_glWindowPos2svARB( const GLshort *v ) { }
-static void null_glWindowPos2svMESA( const GLshort *v ) { }
-static void null_glWindowPos3d( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glWindowPos3dARB( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glWindowPos3dMESA( GLdouble x, GLdouble y, GLdouble z ) { }
-static void null_glWindowPos3dv( const GLdouble *v ) { }
-static void null_glWindowPos3dvARB( const GLdouble *v ) { }
-static void null_glWindowPos3dvMESA( const GLdouble *v ) { }
-static void null_glWindowPos3f( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glWindowPos3fARB( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glWindowPos3fMESA( GLfloat x, GLfloat y, GLfloat z ) { }
-static void null_glWindowPos3fv( const GLfloat *v ) { }
-static void null_glWindowPos3fvARB( const GLfloat *v ) { }
-static void null_glWindowPos3fvMESA( const GLfloat *v ) { }
-static void null_glWindowPos3i( GLint x, GLint y, GLint z ) { }
-static void null_glWindowPos3iARB( GLint x, GLint y, GLint z ) { }
-static void null_glWindowPos3iMESA( GLint x, GLint y, GLint z ) { }
-static void null_glWindowPos3iv( const GLint *v ) { }
-static void null_glWindowPos3ivARB( const GLint *v ) { }
-static void null_glWindowPos3ivMESA( const GLint *v ) { }
-static void null_glWindowPos3s( GLshort x, GLshort y, GLshort z ) { }
-static void null_glWindowPos3sARB( GLshort x, GLshort y, GLshort z ) { }
-static void null_glWindowPos3sMESA( GLshort x, GLshort y, GLshort z ) { }
-static void null_glWindowPos3sv( const GLshort *v ) { }
-static void null_glWindowPos3svARB( const GLshort *v ) { }
-static void null_glWindowPos3svMESA( const GLshort *v ) { }
-static void null_glWindowPos4dMESA( GLdouble x, GLdouble y, GLdouble z, GLdouble w ) { }
-static void null_glWindowPos4dvMESA( const GLdouble *v ) { }
-static void null_glWindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) { }
-static void null_glWindowPos4fvMESA( const GLfloat *v ) { }
-static void null_glWindowPos4iMESA( GLint x, GLint y, GLint z, GLint w ) { }
-static void null_glWindowPos4ivMESA( const GLint *v ) { }
-static void null_glWindowPos4sMESA( GLshort x, GLshort y, GLshort z, GLshort w ) { }
-static void null_glWindowPos4svMESA( const GLshort *v ) { }
-static void null_glWindowRectanglesEXT( GLenum mode, GLsizei count, const GLint *box ) { }
-static void null_glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW ) { }
-static void * null_wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority ) { return 0; }
-static BOOL null_wglBindTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer ) { return 0; }
-static BOOL null_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats ) { return 0; }
-static struct wgl_context * null_wglCreateContextAttribsARB( HDC hDC, struct wgl_context * hShareContext, const int *attribList ) { return 0; }
-static struct wgl_pbuffer * null_wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList ) { return 0; }
-static BOOL null_wglDestroyPbufferARB( struct wgl_pbuffer * hPbuffer ) { return 0; }
-static void null_wglFreeMemoryNV( void *pointer ) { }
-static HDC null_wglGetCurrentReadDCARB(void) { return 0; }
-static const char * null_wglGetExtensionsStringARB( HDC hdc ) { return 0; }
-static const char * null_wglGetExtensionsStringEXT(void) { return 0; }
-static HDC null_wglGetPbufferDCARB( struct wgl_pbuffer * hPbuffer ) { return 0; }
-static BOOL null_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues ) { return 0; }
-static BOOL null_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues ) { return 0; }
-static int null_wglGetSwapIntervalEXT(void) { return 0; }
-static BOOL null_wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc ) { return 0; }
-static BOOL null_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value ) { return 0; }
-static const GLchar * null_wglQueryCurrentRendererStringWINE( GLenum attribute ) { return 0; }
-static BOOL null_wglQueryPbufferARB( struct wgl_pbuffer * hPbuffer, int iAttribute, int *piValue ) { return 0; }
-static BOOL null_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint *value ) { return 0; }
-static const GLchar * null_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) { return 0; }
-static int null_wglReleasePbufferDCARB( struct wgl_pbuffer * hPbuffer, HDC hDC ) { return 0; }
-static BOOL null_wglReleaseTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer ) { return 0; }
-static BOOL null_wglSetPbufferAttribARB( struct wgl_pbuffer * hPbuffer, const int *piAttribList ) { return 0; }
-static BOOL null_wglSetPixelFormatWINE( HDC hdc, int format ) { return 0; }
-static BOOL null_wglSwapIntervalEXT( int interval ) { return 0; }
+static BOOL null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static struct wgl_context * null_wglCreateContext( HDC hDc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglDeleteContext( struct wgl_context * oldContext )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static int null_wglGetPixelFormat( HDC hdc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static PROC null_wglGetProcAddress( LPCSTR lpszProc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglMakeCurrent( HDC hDc, struct wgl_context * newContext )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglSetPixelFormat( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglShareLists( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglSwapBuffers( HDC hdc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
+                                    UINT *num_formats, UINT *num_onscreen_formats )
+{
+    ERR( "unsupported\n" );
+    *num_formats = *num_onscreen_formats = 0;
+}
+static void null_glAccum( GLenum op, GLfloat value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaFunc( GLenum func, GLfloat ref )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glAreTexturesResident( GLsizei n, const GLuint *textures, GLboolean *residences )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glArrayElement( GLint i )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBegin( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindTexture( GLenum target, GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBitmap( GLsizei width, GLsizei height, GLfloat xorig, GLfloat yorig, GLfloat xmove, GLfloat ymove, const GLubyte *bitmap )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFunc( GLenum sfactor, GLenum dfactor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCallList( GLuint list )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCallLists( GLsizei n, GLenum type, const void *lists )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClear( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepth( GLdouble depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearIndex( GLfloat c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearStencil( GLint s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClipPlane( GLenum plane, const GLdouble *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3b( GLbyte red, GLbyte green, GLbyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3bv( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3d( GLdouble red, GLdouble green, GLdouble blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3f( GLfloat red, GLfloat green, GLfloat blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3i( GLint red, GLint green, GLint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3s( GLshort red, GLshort green, GLshort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3ub( GLubyte red, GLubyte green, GLubyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3ubv( const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3ui( GLuint red, GLuint green, GLuint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3uiv( const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3us( GLushort red, GLushort green, GLushort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3usv( const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4b( GLbyte red, GLbyte green, GLbyte blue, GLbyte alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4bv( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4d( GLdouble red, GLdouble green, GLdouble blue, GLdouble alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4f( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4i( GLint red, GLint green, GLint blue, GLint alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4s( GLshort red, GLshort green, GLshort blue, GLshort alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ub( GLubyte red, GLubyte green, GLubyte blue, GLubyte alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ubv( const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ui( GLuint red, GLuint green, GLuint blue, GLuint alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4uiv( const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4us( GLushort red, GLushort green, GLushort blue, GLushort alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4usv( const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorMaterial( GLenum face, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorPointer( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum type )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexImage1D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexImage2D( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCullFace( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteLists( GLuint list, GLsizei range )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteTextures( GLsizei n, const GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthFunc( GLenum func )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthMask( GLboolean flag )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRange( GLdouble n, GLdouble f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisable( GLenum cap )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableClientState( GLenum array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArrays( GLenum mode, GLint first, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawBuffer( GLenum buf )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElements( GLenum mode, GLsizei count, GLenum type, const void *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawPixels( GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlag( GLboolean flag )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlagPointer( GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlagv( const GLboolean *flag )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnable( GLenum cap )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableClientState( GLenum array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnd(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndList(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1d( GLdouble u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1dv( const GLdouble *u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1f( GLfloat u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1fv( const GLfloat *u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2d( GLdouble u, GLdouble v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2dv( const GLdouble *u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2f( GLfloat u, GLfloat v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2fv( const GLfloat *u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalMesh1( GLenum mode, GLint i1, GLint i2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalPoint1( GLint i )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalPoint2( GLint i, GLint j )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFeedbackBuffer( GLsizei size, GLenum type, GLfloat *buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFinish(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlush(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogf( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogfv( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogi( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogiv( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrontFace( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrustum( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenLists( GLsizei range )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenTextures( GLsizei n, GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBooleanv( GLenum pname, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetClipPlane( GLenum plane, GLdouble *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetDoublev( GLenum pname, GLdouble *data )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glGetError(void)
+{
+    ERR( "unsupported\n" );
+    return GL_INVALID_OPERATION;
+}
+static void null_glGetFloatv( GLenum pname, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetIntegerv( GLenum pname, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLightfv( GLenum light, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLightiv( GLenum light, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapdv( GLenum target, GLenum query, GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapfv( GLenum target, GLenum query, GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapiv( GLenum target, GLenum query, GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMaterialfv( GLenum face, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMaterialiv( GLenum face, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelMapfv( GLenum map, GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelMapuiv( GLenum map, GLuint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelMapusv( GLenum map, GLushort *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPointerv( GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPolygonStipple( GLubyte *mask )
+{
+    ERR( "unsupported\n" );
+}
+static const GLubyte * null_glGetString( GLenum name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexEnviv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexGendv( GLenum coord, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexGenfv( GLenum coord, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexGeniv( GLenum coord, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexImage( GLenum target, GLint level, GLenum format, GLenum type, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexLevelParameterfv( GLenum target, GLint level, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexLevelParameteriv( GLenum target, GLint level, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glHint( GLenum target, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexMask( GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexPointer( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexd( GLdouble c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexdv( const GLdouble *c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexf( GLfloat c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexfv( const GLfloat *c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexi( GLint c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexiv( const GLint *c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexs( GLshort c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexsv( const GLshort *c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexub( GLubyte c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexubv( const GLubyte *c )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInitNames(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInterleavedArrays( GLenum format, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glIsEnabled( GLenum cap )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsList( GLuint list )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTexture( GLuint texture )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glLightModelf( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModelfv( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModeli( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModeliv( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightf( GLenum light, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightfv( GLenum light, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLighti( GLenum light, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightiv( GLenum light, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLineStipple( GLint factor, GLushort pattern )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLineWidth( GLfloat width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListBase( GLuint base )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadIdentity(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadMatrixd( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadMatrixf( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadName( GLuint name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLogicOp( GLenum opcode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap1d( GLenum target, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap1f( GLenum target, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap2d( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap2f( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid1d( GLint un, GLdouble u1, GLdouble u2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid2d( GLint un, GLdouble u1, GLdouble u2, GLint vn, GLdouble v1, GLdouble v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid2f( GLint un, GLfloat u1, GLfloat u2, GLint vn, GLfloat v1, GLfloat v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialf( GLenum face, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialfv( GLenum face, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMateriali( GLenum face, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialiv( GLenum face, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMode( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultMatrixd( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultMatrixf( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNewList( GLuint list, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3b( GLbyte nx, GLbyte ny, GLbyte nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3bv( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3d( GLdouble nx, GLdouble ny, GLdouble nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3i( GLint nx, GLint ny, GLint nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3s( GLshort nx, GLshort ny, GLshort nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalPointer( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glOrtho( GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPassThrough( GLfloat token )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelMapfv( GLenum map, GLsizei mapsize, const GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelMapuiv( GLenum map, GLsizei mapsize, const GLuint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelMapusv( GLenum map, GLsizei mapsize, const GLushort *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelStoref( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelStorei( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransferf( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransferi( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelZoom( GLfloat xfactor, GLfloat yfactor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointSize( GLfloat size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonMode( GLenum face, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonOffset( GLfloat factor, GLfloat units )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonStipple( const GLubyte *mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopAttrib(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopClientAttrib(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopMatrix(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopName(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrioritizeTextures( GLsizei n, const GLuint *textures, const GLfloat *priorities )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushAttrib( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushClientAttrib( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushMatrix(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushName( GLuint name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2d( GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2f( GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2i( GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2s( GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3d( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3f( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3i( GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3s( GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4i( GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4s( GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadBuffer( GLenum src )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectd( GLdouble x1, GLdouble y1, GLdouble x2, GLdouble y2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectdv( const GLdouble *v1, const GLdouble *v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectfv( const GLfloat *v1, const GLfloat *v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRecti( GLint x1, GLint y1, GLint x2, GLint y2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectiv( const GLint *v1, const GLint *v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRects( GLshort x1, GLshort y1, GLshort x2, GLshort y2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectsv( const GLshort *v1, const GLshort *v2 )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glRenderMode( GLenum mode )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glRotated( GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRotatef( GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScaled( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScalef( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSelectBuffer( GLsizei size, GLuint *buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShadeModel( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilFunc( GLenum func, GLint ref, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilMask( GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilOp( GLenum fail, GLenum zfail, GLenum zpass )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1d( GLdouble s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1f( GLfloat s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1i( GLint s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1s( GLshort s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2d( GLdouble s, GLdouble t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2f( GLfloat s, GLfloat t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2i( GLint s, GLint t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2s( GLshort s, GLshort t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3d( GLdouble s, GLdouble t, GLdouble r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3f( GLfloat s, GLfloat t, GLfloat r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3i( GLint s, GLint t, GLint r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3s( GLshort s, GLshort t, GLshort r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4d( GLdouble s, GLdouble t, GLdouble r, GLdouble q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4i( GLint s, GLint t, GLint r, GLint q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4s( GLshort s, GLshort t, GLshort r, GLshort q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordPointer( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvf( GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvi( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnviv( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGend( GLenum coord, GLenum pname, GLdouble param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGendv( GLenum coord, GLenum pname, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGenf( GLenum coord, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGeni( GLenum coord, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGeniv( GLenum coord, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage1D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage2D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterf( GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterfv( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameteri( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameteriv( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTranslated( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTranslatef( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2d( GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2f( GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2i( GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2s( GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3d( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3f( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3i( GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3s( GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4d( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4i( GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4s( GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexPointer( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAccumxOES( GLenum op, GLfixed value )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glAcquireKeyedMutexWin32EXT( GLuint memory, GLuint64 key, GLuint timeout )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glActiveProgramEXT( GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glActiveShaderProgram( GLuint pipeline, GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glActiveStencilFaceEXT( GLenum face )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glActiveTexture( GLenum texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glActiveTextureARB( GLenum texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glActiveVaryingNV( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaFuncxOES( GLenum func, GLfixed ref )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAlphaToCoverageDitherControlNV( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glApplyFramebufferAttachmentCMAAINTEL(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glApplyTextureEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glAreProgramsResidentNV( GLsizei n, const GLuint *programs, GLboolean *residences )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glAreTexturesResidentEXT( GLsizei n, const GLuint *textures, GLboolean *residences )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glArrayElementEXT( GLint i )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glArrayObjectATI( GLenum array, GLint size, GLenum type, GLsizei stride, GLuint buffer, GLuint offset )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glAsyncCopyBufferSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *fenceValueArray, GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glAsyncCopyImageSubDataNVX( GLsizei waitSemaphoreCount, const GLuint *waitSemaphoreArray, const GLuint64 *waitValueArray, GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth, GLsizei signalSemaphoreCount, const GLuint *signalSemaphoreArray, const GLuint64 *signalValueArray )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glAsyncMarkerSGIX( GLuint marker )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAttachObjectARB( GLhandleARB containerObj, GLhandleARB obj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glAttachShader( GLuint program, GLuint shader )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginConditionalRender( GLuint id, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginConditionalRenderNV( GLuint id, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginConditionalRenderNVX( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginFragmentShaderATI(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginOcclusionQueryNV( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginPerfMonitorAMD( GLuint monitor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginPerfQueryINTEL( GLuint queryHandle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginQuery( GLenum target, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginQueryARB( GLenum target, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginQueryIndexed( GLenum target, GLuint index, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginTransformFeedback( GLenum primitiveMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginTransformFeedbackEXT( GLenum primitiveMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginTransformFeedbackNV( GLenum primitiveMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginVertexShaderEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBeginVideoCaptureNV( GLuint video_capture_slot )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindAttribLocation( GLuint program, GLuint index, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindAttribLocationARB( GLhandleARB programObj, GLuint index, const GLcharARB *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBuffer( GLenum target, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferARB( GLenum target, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferBase( GLenum target, GLuint index, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferBaseEXT( GLenum target, GLuint index, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferBaseNV( GLenum target, GLuint index, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferOffsetEXT( GLenum target, GLuint index, GLuint buffer, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferOffsetNV( GLenum target, GLuint index, GLuint buffer, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferRange( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferRangeEXT( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBufferRangeNV( GLenum target, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBuffersBase( GLenum target, GLuint first, GLsizei count, const GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindBuffersRange( GLenum target, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizeiptr *sizes )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFragDataLocation( GLuint program, GLuint color, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFragDataLocationEXT( GLuint program, GLuint color, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFragDataLocationIndexed( GLuint program, GLuint colorNumber, GLuint index, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFragmentShaderATI( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFramebuffer( GLenum target, GLuint framebuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindFramebufferEXT( GLenum target, GLuint framebuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindImageTexture( GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindImageTextureEXT( GLuint index, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLint format )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindImageTextures( GLuint first, GLsizei count, const GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glBindLightParameterEXT( GLenum light, GLenum value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glBindMaterialParameterEXT( GLenum face, GLenum value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glBindMultiTextureEXT( GLenum texunit, GLenum target, GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glBindParameterEXT( GLenum value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glBindProgramARB( GLenum target, GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindProgramNV( GLenum target, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindProgramPipeline( GLuint pipeline )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindRenderbuffer( GLenum target, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindRenderbufferEXT( GLenum target, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindSampler( GLuint unit, GLuint sampler )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindSamplers( GLuint first, GLsizei count, const GLuint *samplers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindShadingRateImageNV( GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glBindTextureEXT( GLenum target, GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindTextureUnit( GLuint unit, GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glBindTextureUnitParameterEXT( GLenum unit, GLenum value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glBindTextures( GLuint first, GLsizei count, const GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindTransformFeedback( GLenum target, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindTransformFeedbackNV( GLenum target, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVertexArray( GLuint array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVertexArrayAPPLE( GLuint array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVertexBuffer( GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVertexBuffers( GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVertexShaderEXT( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVideoCaptureStreamBufferNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLintptrARB offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBindVideoCaptureStreamTextureNV( GLuint video_capture_slot, GLuint stream, GLenum frame_region, GLenum target, GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3bEXT( GLbyte bx, GLbyte by, GLbyte bz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3bvEXT( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3dEXT( GLdouble bx, GLdouble by, GLdouble bz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3dvEXT( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3fEXT( GLfloat bx, GLfloat by, GLfloat bz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3fvEXT( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3iEXT( GLint bx, GLint by, GLint bz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3ivEXT( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3sEXT( GLshort bx, GLshort by, GLshort bz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormal3svEXT( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBinormalPointerEXT( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBitmapxOES( GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte *bitmap )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendBarrierKHR(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendBarrierNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendColorEXT( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquation( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationIndexedAMD( GLuint buf, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationSeparate( GLenum modeRGB, GLenum modeAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationSeparateEXT( GLenum modeRGB, GLenum modeAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationSeparateIndexedAMD( GLuint buf, GLenum modeRGB, GLenum modeAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationSeparatei( GLuint buf, GLenum modeRGB, GLenum modeAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationSeparateiARB( GLuint buf, GLenum modeRGB, GLenum modeAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationi( GLuint buf, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendEquationiARB( GLuint buf, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncIndexedAMD( GLuint buf, GLenum src, GLenum dst )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparate( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparateINGR( GLenum sfactorRGB, GLenum dfactorRGB, GLenum sfactorAlpha, GLenum dfactorAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparateIndexedAMD( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparatei( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFuncSeparateiARB( GLuint buf, GLenum srcRGB, GLenum dstRGB, GLenum srcAlpha, GLenum dstAlpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFunci( GLuint buf, GLenum src, GLenum dst )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendFunciARB( GLuint buf, GLenum src, GLenum dst )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlendParameteriNV( GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlitFramebuffer( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBlitNamedFramebuffer( GLuint readFramebuffer, GLuint drawFramebuffer, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64EXT address, GLsizeiptr length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferData( GLenum target, GLsizeiptr size, const void *data, GLenum usage )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferDataARB( GLenum target, GLsizeiptrARB size, const void *data, GLenum usage )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferPageCommitmentARB( GLenum target, GLintptr offset, GLsizeiptr size, GLboolean commit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferParameteriAPPLE( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glBufferRegionEnabled(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glBufferStorage( GLenum target, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferStorageExternalEXT( GLenum target, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferStorageMemEXT( GLenum target, GLsizeiptr size, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCallCommandListNV( GLuint list )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glCheckFramebufferStatus( GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glCheckFramebufferStatusEXT( GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glCheckNamedFramebufferStatus( GLuint framebuffer, GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glCheckNamedFramebufferStatusEXT( GLuint framebuffer, GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glClampColor( GLenum target, GLenum clamp )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClampColorARB( GLenum target, GLenum clamp )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearAccumxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferData( GLenum target, GLenum internalformat, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferSubData( GLenum target, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferfi( GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferfv( GLenum buffer, GLint drawbuffer, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferiv( GLenum buffer, GLint drawbuffer, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearBufferuiv( GLenum buffer, GLint drawbuffer, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearColorIiEXT( GLint red, GLint green, GLint blue, GLint alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GLuint alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepthdNV( GLdouble depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepthf( GLfloat d )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepthfOES( GLclampf depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearDepthxOES( GLfixed depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedBufferData( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedBufferDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedBufferSubData( GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalformat, GLsizeiptr offset, GLsizeiptr size, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedFramebufferfi( GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedFramebufferfv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedFramebufferiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearNamedFramebufferuiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearTexImage( GLuint texture, GLint level, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClearTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClientActiveTexture( GLenum texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClientActiveTextureARB( GLenum texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClientActiveVertexStreamATI( GLenum stream )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClientAttribDefaultEXT( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClientWaitSemaphoreui64NVX( GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glClientWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glClipControl( GLenum origin, GLenum depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClipPlanefOES( GLenum plane, const GLfloat *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glClipPlanexOES( GLenum plane, const GLfixed *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3fVertex3fvSUN( const GLfloat *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3xOES( GLfixed red, GLfixed green, GLfixed blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor3xvOES( const GLfixed *components )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4fNormal3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4fNormal3fVertex3fvSUN( const GLfloat *c, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue, GLhalfNV alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ubVertex2fSUN( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ubVertex2fvSUN( const GLubyte *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ubVertex3fSUN( GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4ubVertex3fvSUN( const GLubyte *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4xOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColor4xvOES( const GLfixed *components )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorFormatNV( GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMask, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorMaskIndexedEXT( GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorMaski( GLuint index, GLboolean r, GLboolean g, GLboolean b, GLboolean a )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorP3ui( GLenum type, GLuint color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorP3uiv( GLenum type, const GLuint *color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorP4ui( GLenum type, GLuint color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorP4uiv( GLenum type, const GLuint *color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorPointervINTEL( GLint size, GLenum type, const void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableEXT( GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableParameterfv( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableParameterfvSGI( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableParameteriv( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableParameterivSGI( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glColorTableSGI( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerInputNV( GLenum stage, GLenum portion, GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerOutputNV( GLenum stage, GLenum portion, GLenum abOutput, GLenum cdOutput, GLenum sumOutput, GLenum scale, GLenum bias, GLboolean abDotProduct, GLboolean cdDotProduct, GLboolean muxSum )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerParameterfNV( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerParameterfvNV( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerParameteriNV( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerParameterivNV( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCombinerStageParameterfvNV( GLenum stage, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCommandListSegmentsNV( GLuint list, GLuint segments )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompileCommandListNV( GLuint list )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompileShader( GLuint shader )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompileShaderARB( GLhandleARB shaderObj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompileShaderIncludeARB( GLuint shader, GLsizei count, const GLchar *const*path, const GLint *length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage1DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage2DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexImage3DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage1DARB( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage2DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTexSubImage3DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void *bits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConservativeRasterParameterfNV( GLenum pname, GLfloat value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConservativeRasterParameteriNV( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterf( GLenum target, GLenum pname, GLfloat params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterfEXT( GLenum target, GLenum pname, GLfloat params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterfv( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterfvEXT( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameteri( GLenum target, GLenum pname, GLint params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameteriEXT( GLenum target, GLenum pname, GLint params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameteriv( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterivEXT( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterxOES( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glConvolutionParameterxvOES( GLenum target, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyBufferSubData( GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyColorSubTable( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyColorSubTableEXT( GLenum target, GLsizei start, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyColorTable( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyColorTableSGI( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyConvolutionFilter1D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyConvolutionFilter2D( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyImageSubData( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyImageSubDataNV( GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyNamedBufferSubData( GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyPathNV( GLuint resultPath, GLuint srcPath )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexImage1DEXT( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexImage2DEXT( GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint x, GLint y, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCopyTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverFillPathNV( GLuint path, GLenum coverMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverStrokePathNV( GLuint path, GLenum coverMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverageModulationNV( GLenum components )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCoverageModulationTableNV( GLsizei n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateBuffers( GLsizei n, GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateCommandListsNV( GLsizei n, GLuint *lists )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateFramebuffers( GLsizei n, GLuint *framebuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateMemoryObjectsEXT( GLsizei n, GLuint *memoryObjects )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreatePerfQueryINTEL( GLuint queryId, GLuint *queryHandle )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glCreateProgram(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLhandleARB null_glCreateProgramObjectARB(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glCreateProgramPipelines( GLsizei n, GLuint *pipelines )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glCreateProgressFenceNVX(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glCreateQueries( GLenum target, GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateRenderbuffers( GLsizei n, GLuint *renderbuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateSamplers( GLsizei n, GLuint *samplers )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glCreateShader( GLenum type )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLhandleARB null_glCreateShaderObjectARB( GLenum shaderType )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glCreateShaderProgramEXT( GLenum type, const GLchar *string )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar *const*strings )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glCreateStatesNV( GLsizei n, GLuint *states )
+{
+    ERR( "unsupported\n" );
+}
+static GLsync null_glCreateSyncFromCLeventARB( struct _cl_context *context, struct _cl_event *event, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glCreateTextures( GLenum target, GLsizei n, GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateTransformFeedbacks( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCreateVertexArrays( GLsizei n, GLuint *arrays )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCullParameterdvEXT( GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCullParameterfvEXT( GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glCurrentPaletteMatrixARB( GLint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageControl( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageControlARB( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageEnableAMD( GLenum category, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageInsert( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageInsertAMD( GLenum category, GLenum severity, GLuint id, GLsizei length, const GLchar *buf )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDebugMessageInsertARB( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeformSGIX( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeformationMap3dSGIX( GLenum target, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, GLdouble w1, GLdouble w2, GLint wstride, GLint worder, const GLdouble *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeformationMap3fSGIX( GLenum target, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, GLfloat w1, GLfloat w2, GLint wstride, GLint worder, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteAsyncMarkersSGIX( GLuint marker, GLsizei range )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteBufferRegion( GLenum region )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteBuffers( GLsizei n, const GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteBuffersARB( GLsizei n, const GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteCommandListsNV( GLsizei n, const GLuint *lists )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteFencesAPPLE( GLsizei n, const GLuint *fences )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteFencesNV( GLsizei n, const GLuint *fences )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteFragmentShaderATI( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteFramebuffers( GLsizei n, const GLuint *framebuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteFramebuffersEXT( GLsizei n, const GLuint *framebuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteMemoryObjectsEXT( GLsizei n, const GLuint *memoryObjects )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteNamedStringARB( GLint namelen, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteNamesAMD( GLenum identifier, GLuint num, const GLuint *names )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteObjectARB( GLhandleARB obj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteObjectBufferATI( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteOcclusionQueriesNV( GLsizei n, const GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeletePathsNV( GLuint path, GLsizei range )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeletePerfMonitorsAMD( GLsizei n, GLuint *monitors )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeletePerfQueryINTEL( GLuint queryHandle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteProgram( GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteProgramPipelines( GLsizei n, const GLuint *pipelines )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteProgramsARB( GLsizei n, const GLuint *programs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteProgramsNV( GLsizei n, const GLuint *programs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteQueries( GLsizei n, const GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteQueriesARB( GLsizei n, const GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteQueryResourceTagNV( GLsizei n, const GLint *tagIds )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteRenderbuffers( GLsizei n, const GLuint *renderbuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteRenderbuffersEXT( GLsizei n, const GLuint *renderbuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteSamplers( GLsizei count, const GLuint *samplers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteSemaphoresEXT( GLsizei n, const GLuint *semaphores )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteShader( GLuint shader )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteStatesNV( GLsizei n, const GLuint *states )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteSync( GLsync sync )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteTexturesEXT( GLsizei n, const GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteTransformFeedbacks( GLsizei n, const GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteTransformFeedbacksNV( GLsizei n, const GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteVertexArrays( GLsizei n, const GLuint *arrays )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteVertexArraysAPPLE( GLsizei n, const GLuint *arrays )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDeleteVertexShaderEXT( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthBoundsEXT( GLclampd zmin, GLclampd zmax )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthBoundsdNV( GLdouble zmin, GLdouble zmax )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangeArraydvNV( GLuint first, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangeArrayv( GLuint first, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangeIndexed( GLuint index, GLdouble n, GLdouble f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangeIndexeddNV( GLuint index, GLdouble n, GLdouble f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangedNV( GLdouble zNear, GLdouble zFar )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangef( GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangefOES( GLclampf n, GLclampf f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDepthRangexOES( GLfixed n, GLfixed f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDetachObjectARB( GLhandleARB containerObj, GLhandleARB attachedObj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDetachShader( GLuint program, GLuint shader )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDetailTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableClientStateIndexedEXT( GLenum array, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableClientStateiEXT( GLenum array, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableIndexedEXT( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVariantClientStateEXT( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexArrayAttrib( GLuint vaobj, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexArrayAttribEXT( GLuint vaobj, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexArrayEXT( GLuint vaobj, GLenum array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexAttribAPPLE( GLuint index, GLenum pname )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexAttribArray( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisableVertexAttribArrayARB( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDisablei( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDispatchCompute( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDispatchComputeGroupSizeARB( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, GLuint group_size_x, GLuint group_size_y, GLuint group_size_z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDispatchComputeIndirect( GLintptr indirect )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysEXT( GLenum mode, GLint first, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysIndirect( GLenum mode, const void *indirect )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysInstanced( GLenum mode, GLint first, GLsizei count, GLsizei instancecount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysInstancedARB( GLenum mode, GLint first, GLsizei count, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysInstancedBaseInstance( GLenum mode, GLint first, GLsizei count, GLsizei instancecount, GLuint baseinstance )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawArraysInstancedEXT( GLenum mode, GLint start, GLsizei count, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height, GLint xDest, GLint yDest )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawBuffers( GLsizei n, const GLenum *bufs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawBuffersARB( GLsizei n, const GLenum *bufs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawBuffersATI( GLsizei n, const GLenum *bufs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawCommandsAddressNV( GLenum primitiveMode, const GLuint64 *indirects, const GLsizei *sizes, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawCommandsNV( GLenum primitiveMode, GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawCommandsStatesAddressNV( const GLuint64 *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawCommandsStatesNV( GLuint buffer, const GLintptr *indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementArrayAPPLE( GLenum mode, GLint first, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementArrayATI( GLenum mode, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsBaseVertex( GLenum mode, GLsizei count, GLenum type, const void *indices, GLint basevertex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsIndirect( GLenum mode, GLenum type, const void *indirect )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstancedBaseInstance( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLuint baseinstance )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei instancecount, GLint basevertex, GLuint baseinstance )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const void *indices, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawMeshArraysSUN( GLenum mode, GLint first, GLsizei count, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawMeshTasksIndirectNV( GLintptr indirect )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawMeshTasksNV( GLuint first, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, GLint first, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawRangeElementArrayATI( GLenum mode, GLuint start, GLuint end, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawRangeElementsBaseVertex( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices, GLint basevertex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTextureNV( GLuint texture, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTransformFeedback( GLenum mode, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTransformFeedbackInstanced( GLenum mode, GLuint id, GLsizei instancecount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTransformFeedbackNV( GLenum mode, GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTransformFeedbackStream( GLenum mode, GLuint id, GLuint stream )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawTransformFeedbackStreamInstanced( GLenum mode, GLuint id, GLuint stream, GLsizei instancecount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glDrawVkImageNV( GLuint64 vkImage, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEGLImageTargetTexStorageEXT( GLenum target, GLeglImageOES image, const GLint* attrib_list )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEGLImageTargetTextureStorageEXT( GLuint texture, GLeglImageOES image, const GLint* attrib_list )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlagFormatNV( GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlagPointerEXT( GLsizei stride, GLsizei count, const GLboolean *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEdgeFlagPointerListIBM( GLint stride, const GLboolean **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glElementPointerAPPLE( GLenum type, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glElementPointerATI( GLenum type, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableClientStateIndexedEXT( GLenum array, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableClientStateiEXT( GLenum array, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableIndexedEXT( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVariantClientStateEXT( GLuint id )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexArrayAttrib( GLuint vaobj, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexArrayAttribEXT( GLuint vaobj, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexArrayEXT( GLuint vaobj, GLenum array )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexAttribAPPLE( GLuint index, GLenum pname )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexAttribArray( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnableVertexAttribArrayARB( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEnablei( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndConditionalRender(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndConditionalRenderNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndConditionalRenderNVX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndFragmentShaderATI(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndOcclusionQueryNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndPerfMonitorAMD( GLuint monitor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndPerfQueryINTEL( GLuint queryHandle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndQuery( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndQueryARB( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndQueryIndexed( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndTransformFeedback(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndTransformFeedbackEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndTransformFeedbackNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndVertexShaderEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEndVideoCaptureNV( GLuint video_capture_slot )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1xOES( GLfixed u )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord1xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2xOES( GLfixed u, GLfixed v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalCoord2xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvalMapsNV( GLenum target, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glEvaluateDepthValuesARB(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glExecuteProgramNV( GLenum target, GLuint id, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glExtractComponentEXT( GLuint res, GLuint src, GLuint num )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFeedbackBufferxOES( GLsizei n, GLenum type, const GLfixed *buffer )
+{
+    ERR( "unsupported\n" );
+}
+static GLsync null_glFenceSync( GLenum condition, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glFinalCombinerInputNV( GLenum variable, GLenum input, GLenum mapping, GLenum componentUsage )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glFinishAsyncSGIX( GLuint *markerp )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glFinishFenceAPPLE( GLuint fence )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFinishFenceNV( GLuint fence )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFinishObjectAPPLE( GLenum object, GLint name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFinishTextureSUNX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushMappedBufferRange( GLenum target, GLintptr offset, GLsizeiptr length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushMappedBufferRangeAPPLE( GLenum target, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushMappedNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushMappedNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushPixelDataRangeNV( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushRasterSGIX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushStaticDataIBM( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushVertexArrayRangeAPPLE( GLsizei length, void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFlushVertexArrayRangeNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordFormatNV( GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordPointer( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordPointerEXT( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordd( GLdouble coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoorddEXT( GLdouble coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoorddv( const GLdouble *coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoorddvEXT( const GLdouble *coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordf( GLfloat coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordfEXT( GLfloat coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordfv( const GLfloat *coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordfvEXT( const GLfloat *coord )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordhNV( GLhalfNV fog )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogCoordhvNV( const GLhalfNV *fog )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogFuncSGIS( GLsizei n, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogxOES( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFogxvOES( GLenum pname, const GLfixed *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentColorMaterialSGIX( GLenum face, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentCoverageColorNV( GLuint color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightModelfSGIX( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightModelfvSGIX( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightModeliSGIX( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightModelivSGIX( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightfSGIX( GLenum light, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightfvSGIX( GLenum light, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightiSGIX( GLenum light, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentLightivSGIX( GLenum light, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentMaterialfSGIX( GLenum face, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentMaterialfvSGIX( GLenum face, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentMaterialiSGIX( GLenum face, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFragmentMaterialivSGIX( GLenum face, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrameTerminatorGREMEDY(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrameZoomSGIX( GLint factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferDrawBufferEXT( GLuint framebuffer, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferDrawBuffersEXT( GLuint framebuffer, GLsizei n, const GLenum *bufs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferFetchBarrierEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferParameteri( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferParameteriMESA( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferSampleLocationsfvARB( GLenum target, GLuint start, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferSampleLocationsfvNV( GLenum target, GLuint start, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferSamplePositionsfvAMD( GLenum target, GLuint numsamples, GLuint pixelindex, const GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture( GLenum target, GLenum attachment, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture1D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture1DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture2D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture2DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture3D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTexture3DEXT( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureARB( GLenum target, GLenum attachment, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureEXT( GLenum target, GLenum attachment, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureFaceARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureFaceEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLenum face )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureLayer( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureLayerARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureLayerEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFramebufferTextureMultiviewOVR( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFreeObjectBufferATI( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glFrustumxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenAsyncMarkersSGIX( GLsizei range )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenBuffers( GLsizei n, GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenBuffersARB( GLsizei n, GLuint *buffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenFencesAPPLE( GLsizei n, GLuint *fences )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenFencesNV( GLsizei n, GLuint *fences )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenFragmentShadersATI( GLuint range )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenFramebuffers( GLsizei n, GLuint *framebuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenFramebuffersEXT( GLsizei n, GLuint *framebuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenNamesAMD( GLenum identifier, GLuint num, GLuint *names )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenOcclusionQueriesNV( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenPathsNV( GLsizei range )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenPerfMonitorsAMD( GLsizei n, GLuint *monitors )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenProgramPipelines( GLsizei n, GLuint *pipelines )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenProgramsARB( GLsizei n, GLuint *programs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenProgramsNV( GLsizei n, GLuint *programs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenQueries( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenQueriesARB( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenQueryResourceTagNV( GLsizei n, GLint *tagIds )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenRenderbuffers( GLsizei n, GLuint *renderbuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenRenderbuffersEXT( GLsizei n, GLuint *renderbuffers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenSamplers( GLsizei count, GLuint *samplers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenSemaphoresEXT( GLsizei n, GLuint *semaphores )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenSymbolsEXT( GLenum datatype, GLenum storagetype, GLenum range, GLuint components )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenTexturesEXT( GLsizei n, GLuint *textures )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenTransformFeedbacks( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenTransformFeedbacksNV( GLsizei n, GLuint *ids )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenVertexArrays( GLsizei n, GLuint *arrays )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenVertexArraysAPPLE( GLsizei n, GLuint *arrays )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGenVertexShadersEXT( GLuint range )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGenerateMipmap( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenerateMipmapEXT( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenerateMultiTexMipmapEXT( GLenum texunit, GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenerateTextureMipmap( GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGenerateTextureMipmapEXT( GLuint texture, GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveAtomicCounterBufferiv( GLuint program, GLuint bufferIndex, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveAttrib( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveAttribARB( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveSubroutineName( GLuint program, GLenum shadertype, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveSubroutineUniformName( GLuint program, GLenum shadertype, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveSubroutineUniformiv( GLuint program, GLenum shadertype, GLuint index, GLenum pname, GLint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniform( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLint *size, GLenum *type, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniformARB( GLhandleARB programObj, GLuint index, GLsizei maxLength, GLsizei *length, GLint *size, GLenum *type, GLcharARB *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniformBlockName( GLuint program, GLuint uniformBlockIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformBlockName )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniformBlockiv( GLuint program, GLuint uniformBlockIndex, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniformName( GLuint program, GLuint uniformIndex, GLsizei bufSize, GLsizei *length, GLchar *uniformName )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveUniformsiv( GLuint program, GLsizei uniformCount, const GLuint *uniformIndices, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetActiveVaryingNV( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetArrayObjectfvATI( GLenum array, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetArrayObjectivATI( GLenum array, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetAttachedObjectsARB( GLhandleARB containerObj, GLsizei maxCount, GLsizei *count, GLhandleARB *obj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetAttachedShaders( GLuint program, GLsizei maxCount, GLsizei *count, GLuint *shaders )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glGetAttribLocation( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetAttribLocationARB( GLhandleARB programObj, const GLcharARB *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetBooleanIndexedvEXT( GLenum target, GLuint index, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBooleani_v( GLenum target, GLuint index, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferParameteri64v( GLenum target, GLenum pname, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferParameterivARB( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferParameterui64vNV( GLenum target, GLenum pname, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferPointerv( GLenum target, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferPointervARB( GLenum target, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetClipPlanefOES( GLenum plane, GLfloat *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetClipPlanexOES( GLenum plane, GLfixed *equation )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTable( GLenum target, GLenum format, GLenum type, void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableEXT( GLenum target, GLenum format, GLenum type, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameterfvSGI( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableParameterivSGI( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetColorTableSGI( GLenum target, GLenum format, GLenum type, void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCombinerInputParameterfvNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCombinerInputParameterivNV( GLenum stage, GLenum portion, GLenum variable, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCombinerOutputParameterfvNV( GLenum stage, GLenum portion, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCombinerOutputParameterivNV( GLenum stage, GLenum portion, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCombinerStageParameterfvNV( GLenum stage, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGetCommandHeaderNV( GLenum tokenID, GLuint size )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetCompressedMultiTexImageEXT( GLenum texunit, GLenum target, GLint lod, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCompressedTexImage( GLenum target, GLint level, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCompressedTexImageARB( GLenum target, GLint level, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCompressedTextureImage( GLuint texture, GLint level, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCompressedTextureImageEXT( GLuint texture, GLenum target, GLint lod, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCompressedTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionFilterEXT( GLenum target, GLenum format, GLenum type, void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionParameterfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetConvolutionParameterxvOES( GLenum target, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetCoverageModulationTableNV( GLsizei bufSize, GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGetDebugMessageLog( GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glGetDebugMessageLogAMD( GLuint count, GLsizei bufSize, GLenum *categories, GLuint *severities, GLuint *ids, GLsizei *lengths, GLchar *message )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glGetDebugMessageLogARB( GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetDetailTexFuncSGIS( GLenum target, GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetDoubleIndexedvEXT( GLenum target, GLuint index, GLdouble *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetDoublei_v( GLenum target, GLuint index, GLdouble *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetDoublei_vEXT( GLenum pname, GLuint index, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFenceivNV( GLuint fence, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFinalCombinerInputParameterfvNV( GLenum variable, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFinalCombinerInputParameterivNV( GLenum variable, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFirstPerfQueryIdINTEL( GLuint *queryId )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFixedvOES( GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFloatIndexedvEXT( GLenum target, GLuint index, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFloati_v( GLenum target, GLuint index, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFloati_vEXT( GLenum pname, GLuint index, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFogFuncSGIS( GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glGetFragDataIndex( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetFragDataLocation( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetFragDataLocationEXT( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetFragmentLightfvSGIX( GLenum light, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFragmentLightivSGIX( GLenum light, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFragmentMaterialfvSGIX( GLenum face, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFragmentMaterialivSGIX( GLenum face, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferAttachmentParameteriv( GLenum target, GLenum attachment, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferAttachmentParameterivEXT( GLenum target, GLenum attachment, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferParameterfvAMD( GLenum target, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetFramebufferParameterivMESA( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glGetGraphicsResetStatus(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glGetGraphicsResetStatusARB(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLhandleARB null_glGetHandleARB( GLenum pname )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramParameterfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetHistogramParameterxvOES( GLenum target, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint64 null_glGetImageHandleARB( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint64 null_glGetImageHandleNV( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetImageTransformParameterfvHP( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetImageTransformParameterivHP( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInfoLogARB( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *infoLog )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glGetInstrumentsSGIX(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetInteger64i_v( GLenum target, GLuint index, GLint64 *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInteger64v( GLenum pname, GLint64 *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetIntegerIndexedvEXT( GLenum target, GLuint index, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetIntegeri_v( GLenum target, GLuint index, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetIntegerui64i_vNV( GLenum value, GLuint index, GLuint64EXT *result )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetIntegerui64vNV( GLenum value, GLuint64EXT *result )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInternalformatSampleivNV( GLenum target, GLenum internalformat, GLsizei samples, GLenum pname, GLsizei count, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInternalformati64v( GLenum target, GLenum internalformat, GLenum pname, GLsizei count, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInternalformativ( GLenum target, GLenum internalformat, GLenum pname, GLsizei count, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInvariantBooleanvEXT( GLuint id, GLenum value, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInvariantFloatvEXT( GLuint id, GLenum value, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetInvariantIntegervEXT( GLuint id, GLenum value, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLightxOES( GLenum light, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetListParameterivSGIX( GLuint list, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLocalConstantBooleanvEXT( GLuint id, GLenum value, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLocalConstantFloatvEXT( GLuint id, GLenum value, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetLocalConstantIntegervEXT( GLuint id, GLenum value, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapAttribParameterfvNV( GLenum target, GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapAttribParameterivNV( GLenum target, GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLboolean packed, void *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapParameterfvNV( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapParameterivNV( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMapxvOES( GLenum target, GLenum query, GLfixed *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMemoryObjectDetachedResourcesuivNV( GLuint memory, GLenum pname, GLint first, GLsizei count, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmaxParameterfv( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmaxParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmaxParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMinmaxParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexEnvfvEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexEnvivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexGendvEXT( GLenum texunit, GLenum coord, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexGenfvEXT( GLenum texunit, GLenum coord, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexImageEXT( GLenum texunit, GLenum target, GLint level, GLenum format, GLenum type, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexLevelParameterfvEXT( GLenum texunit, GLenum target, GLint level, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexLevelParameterivEXT( GLenum texunit, GLenum target, GLint level, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexParameterIivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexParameterIuivEXT( GLenum texunit, GLenum target, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexParameterfvEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultiTexParameterivEXT( GLenum texunit, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultisamplefv( GLenum pname, GLuint index, GLfloat *val )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetMultisamplefvNV( GLenum pname, GLuint index, GLfloat *val )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferParameteri64v( GLuint buffer, GLenum pname, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferParameteriv( GLuint buffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferParameterivEXT( GLuint buffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferPointerv( GLuint buffer, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedFramebufferAttachmentParameteriv( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedFramebufferAttachmentParameterivEXT( GLuint framebuffer, GLenum attachment, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedFramebufferParameterfvAMD( GLuint framebuffer, GLenum pname, GLuint numsamples, GLuint pixelindex, GLsizei size, GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedFramebufferParameteriv( GLuint framebuffer, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedFramebufferParameterivEXT( GLuint framebuffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramLocalParameterIivEXT( GLuint program, GLenum target, GLuint index, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramLocalParameterIuivEXT( GLuint program, GLenum target, GLuint index, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramLocalParameterdvEXT( GLuint program, GLenum target, GLuint index, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramLocalParameterfvEXT( GLuint program, GLenum target, GLuint index, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramStringEXT( GLuint program, GLenum target, GLenum pname, void *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedProgramivEXT( GLuint program, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedRenderbufferParameteriv( GLuint renderbuffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedRenderbufferParameterivEXT( GLuint renderbuffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedStringARB( GLint namelen, const GLchar *name, GLsizei bufSize, GLint *stringlen, GLchar *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNamedStringivARB( GLint namelen, const GLchar *name, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetNextPerfQueryIdINTEL( GLuint queryId, GLuint *nextQueryId )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectBufferfvATI( GLuint buffer, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectBufferivATI( GLuint buffer, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectLabel( GLenum identifier, GLuint name, GLsizei bufSize, GLsizei *length, GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectLabelEXT( GLenum type, GLuint object, GLsizei bufSize, GLsizei *length, GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectParameterfvARB( GLhandleARB obj, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectParameterivAPPLE( GLenum objectType, GLuint name, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectParameterivARB( GLhandleARB obj, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetObjectPtrLabel( const void *ptr, GLsizei bufSize, GLsizei *length, GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetOcclusionQueryivNV( GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetOcclusionQueryuivNV( GLuint id, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathColorGenfvNV( GLenum color, GLenum pname, GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathColorGenivNV( GLenum color, GLenum pname, GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathCommandsNV( GLuint path, GLubyte *commands )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathCoordsNV( GLuint path, GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathDashArrayNV( GLuint path, GLfloat *dashArray )
+{
+    ERR( "unsupported\n" );
+}
+static GLfloat null_glGetPathLengthNV( GLuint path, GLsizei startSegment, GLsizei numSegments )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetPathMetricRangeNV( GLbitfield metricQueryMask, GLuint firstPathName, GLsizei numPaths, GLsizei stride, GLfloat *metrics )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathMetricsNV( GLbitfield metricQueryMask, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLsizei stride, GLfloat *metrics )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathParameterfvNV( GLuint path, GLenum pname, GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathParameterivNV( GLuint path, GLenum pname, GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathSpacingNV( GLenum pathListMode, GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLfloat advanceScale, GLfloat kerningScale, GLenum transformType, GLfloat *returnedSpacing )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathTexGenfvNV( GLenum texCoordSet, GLenum pname, GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPathTexGenivNV( GLenum texCoordSet, GLenum pname, GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfCounterInfoINTEL( GLuint queryId, GLuint counterId, GLuint counterNameLength, GLchar *counterName, GLuint counterDescLength, GLchar *counterDesc, GLuint *counterOffset, GLuint *counterDataSize, GLuint *counterTypeEnum, GLuint *counterDataTypeEnum, GLuint64 *rawCounterMaxValue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorCounterDataAMD( GLuint monitor, GLenum pname, GLsizei dataSize, GLuint *data, GLint *bytesWritten )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorCounterInfoAMD( GLuint group, GLuint counter, GLenum pname, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorCounterStringAMD( GLuint group, GLuint counter, GLsizei bufSize, GLsizei *length, GLchar *counterString )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorCountersAMD( GLuint group, GLint *numCounters, GLint *maxActiveCounters, GLsizei counterSize, GLuint *counters )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorGroupStringAMD( GLuint group, GLsizei bufSize, GLsizei *length, GLchar *groupString )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfMonitorGroupsAMD( GLint *numGroups, GLsizei groupsSize, GLuint *groups )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfQueryDataINTEL( GLuint queryHandle, GLuint flags, GLsizei dataSize, void *data, GLuint *bytesWritten )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfQueryIdByNameINTEL( GLchar *queryName, GLuint *queryId )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPerfQueryInfoINTEL( GLuint queryId, GLuint queryNameLength, GLchar *queryName, GLuint *dataSize, GLuint *noCounters, GLuint *noInstances, GLuint *capsMask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelMapxv( GLenum map, GLint size, GLfixed *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelTexGenParameterfvSGIS( GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelTexGenParameterivSGIS( GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelTransformParameterfvEXT( GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPixelTransformParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPointerIndexedvEXT( GLenum target, GLuint index, void **data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPointeri_vEXT( GLenum pname, GLuint index, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetPointervEXT( GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei *length, GLenum *binaryFormat, void *binary )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramEnvParameterIivNV( GLenum target, GLuint index, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramEnvParameterIuivNV( GLenum target, GLuint index, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramEnvParameterdvARB( GLenum target, GLuint index, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramEnvParameterfvARB( GLenum target, GLuint index, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramInfoLog( GLuint program, GLsizei bufSize, GLsizei *length, GLchar *infoLog )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramInterfaceiv( GLuint program, GLenum programInterface, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramLocalParameterIivNV( GLenum target, GLuint index, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramLocalParameterIuivNV( GLenum target, GLuint index, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramLocalParameterdvARB( GLenum target, GLuint index, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramLocalParameterfvARB( GLenum target, GLuint index, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramNamedParameterdvNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramNamedParameterfvNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramParameterdvNV( GLenum target, GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramParameterfvNV( GLenum target, GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramPipelineInfoLog( GLuint pipeline, GLsizei bufSize, GLsizei *length, GLchar *infoLog )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramPipelineiv( GLuint pipeline, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGetProgramResourceIndex( GLuint program, GLenum programInterface, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetProgramResourceLocation( GLuint program, GLenum programInterface, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetProgramResourceLocationIndex( GLuint program, GLenum programInterface, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetProgramResourceName( GLuint program, GLenum programInterface, GLuint index, GLsizei bufSize, GLsizei *length, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramResourcefvNV( GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum *props, GLsizei count, GLsizei *length, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramResourceiv( GLuint program, GLenum programInterface, GLuint index, GLsizei propCount, const GLenum *props, GLsizei count, GLsizei *length, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramStageiv( GLuint program, GLenum shadertype, GLenum pname, GLint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramStringARB( GLenum target, GLenum pname, void *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramStringNV( GLuint id, GLenum pname, GLubyte *program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramSubroutineParameteruivNV( GLenum target, GLuint index, GLuint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramiv( GLuint program, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramivARB( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetProgramivNV( GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryBufferObjecti64v( GLuint id, GLuint buffer, GLenum pname, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryBufferObjectiv( GLuint id, GLuint buffer, GLenum pname, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryBufferObjectui64v( GLuint id, GLuint buffer, GLenum pname, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryBufferObjectuiv( GLuint id, GLuint buffer, GLenum pname, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryIndexediv( GLenum target, GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjecti64v( GLuint id, GLenum pname, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjecti64vEXT( GLuint id, GLenum pname, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectiv( GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectivARB( GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectui64v( GLuint id, GLenum pname, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectui64vEXT( GLuint id, GLenum pname, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectuiv( GLuint id, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryObjectuivARB( GLuint id, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryiv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetQueryivARB( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetRenderbufferParameteriv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetRenderbufferParameterivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSamplerParameterIiv( GLuint sampler, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSamplerParameterIuiv( GLuint sampler, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSamplerParameterfv( GLuint sampler, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSeparableFilter( GLenum target, GLenum format, GLenum type, void *row, void *column, void *span )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSeparableFilterEXT( GLenum target, GLenum format, GLenum type, void *row, void *column, void *span )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShaderInfoLog( GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *infoLog )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShaderPrecisionFormat( GLenum shadertype, GLenum precisiontype, GLint *range, GLint *precision )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShaderSource( GLuint shader, GLsizei bufSize, GLsizei *length, GLchar *source )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShaderSourceARB( GLhandleARB obj, GLsizei maxLength, GLsizei *length, GLcharARB *source )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShaderiv( GLuint shader, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShadingRateImagePaletteNV( GLuint viewport, GLuint entry, GLenum *rate )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetShadingRateSampleLocationivNV( GLenum rate, GLuint samples, GLuint index, GLint *location )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetSharpenTexFuncSGIS( GLenum target, GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static GLushort null_glGetStageIndexNV( GLenum shadertype )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static const GLubyte * null_glGetStringi( GLenum name, GLuint index )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glGetSubroutineIndex( GLuint program, GLenum shadertype, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetSubroutineUniformLocation( GLuint program, GLenum shadertype, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetSynciv( GLsync sync, GLenum pname, GLsizei count, GLsizei *length, GLint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexBumpParameterfvATI( GLenum pname, GLfloat *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexBumpParameterivATI( GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexEnvxvOES( GLenum target, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexFilterFuncSGIS( GLenum target, GLenum filter, GLfloat *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexGenxvOES( GLenum coord, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexLevelParameterxvOES( GLenum target, GLint level, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterIiv( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterIivEXT( GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterIuiv( GLenum target, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterIuivEXT( GLenum target, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, void **params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint64 null_glGetTextureHandleARB( GLuint texture )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint64 null_glGetTextureHandleNV( GLuint texture )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetTextureImage( GLuint texture, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureImageEXT( GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureLevelParameterfv( GLuint texture, GLint level, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureLevelParameterfvEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureLevelParameteriv( GLuint texture, GLint level, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureLevelParameterivEXT( GLuint texture, GLenum target, GLint level, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterIiv( GLuint texture, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterIuiv( GLuint texture, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterfv( GLuint texture, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameteriv( GLuint texture, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint64 null_glGetTextureSamplerHandleARB( GLuint texture, GLuint sampler )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint64 null_glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetTextureSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTrackMatrixivNV( GLenum target, GLuint address, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbackVarying( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbackVaryingEXT( GLuint program, GLuint index, GLsizei bufSize, GLsizei *length, GLsizei *size, GLenum *type, GLchar *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbackVaryingNV( GLuint program, GLuint index, GLint *location )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbacki64_v( GLuint xfb, GLenum pname, GLuint index, GLint64 *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbacki_v( GLuint xfb, GLenum pname, GLuint index, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetTransformFeedbackiv( GLuint xfb, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glGetUniformBlockIndex( GLuint program, const GLchar *uniformBlockName )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetUniformBufferSizeEXT( GLuint program, GLint location )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetUniformIndices( GLuint program, GLsizei uniformCount, const GLchar *const*uniformNames, GLuint *uniformIndices )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glGetUniformLocation( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glGetUniformLocationARB( GLhandleARB programObj, const GLcharARB *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLintptr null_glGetUniformOffsetEXT( GLuint program, GLint location )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetUniformSubroutineuiv( GLenum shadertype, GLint location, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformdv( GLuint program, GLint location, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformfv( GLuint program, GLint location, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformfvARB( GLhandleARB programObj, GLint location, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformi64vARB( GLuint program, GLint location, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformi64vNV( GLuint program, GLint location, GLint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformiv( GLuint program, GLint location, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformivARB( GLhandleARB programObj, GLint location, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformui64vARB( GLuint program, GLint location, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformui64vNV( GLuint program, GLint location, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformuiv( GLuint program, GLint location, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUniformuivEXT( GLuint program, GLint location, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUnsignedBytei_vEXT( GLenum target, GLuint index, GLubyte *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetUnsignedBytevEXT( GLenum pname, GLubyte *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantArrayObjectfvATI( GLuint id, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantArrayObjectivATI( GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantBooleanvEXT( GLuint id, GLenum value, GLboolean *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantFloatvEXT( GLuint id, GLenum value, GLfloat *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantIntegervEXT( GLuint id, GLenum value, GLint *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVariantPointervEXT( GLuint id, GLenum value, void **data )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glGetVaryingLocationNV( GLuint program, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetVertexArrayIndexed64iv( GLuint vaobj, GLuint index, GLenum pname, GLint64 *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayIndexediv( GLuint vaobj, GLuint index, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayIntegeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayIntegervEXT( GLuint vaobj, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayPointeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, void **param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayPointervEXT( GLuint vaobj, GLenum pname, void **param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexArrayiv( GLuint vaobj, GLenum pname, GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribArrayObjectfvATI( GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribArrayObjectivATI( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribIiv( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribIivEXT( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribIuiv( GLuint index, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribIuivEXT( GLuint index, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribLdv( GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribLdvEXT( GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribLi64vNV( GLuint index, GLenum pname, GLint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribLui64vARB( GLuint index, GLenum pname, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribLui64vNV( GLuint index, GLenum pname, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribPointerv( GLuint index, GLenum pname, void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribPointervARB( GLuint index, GLenum pname, void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribPointervNV( GLuint index, GLenum pname, void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribdv( GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribdvARB( GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribdvNV( GLuint index, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribfv( GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribfvARB( GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribfvNV( GLuint index, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribiv( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribivARB( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVertexAttribivNV( GLuint index, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoCaptureStreamdvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoCaptureStreamfvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoCaptureStreamivNV( GLuint video_capture_slot, GLuint stream, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoCaptureivNV( GLuint video_capture_slot, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoi64vNV( GLuint video_slot, GLenum pname, GLint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoivNV( GLuint video_slot, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideoui64vNV( GLuint video_slot, GLenum pname, GLuint64EXT *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static GLVULKANPROCNV null_glGetVkProcAddrNV( const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glGetnColorTable( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *table )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnCompressedTexImage( GLenum target, GLint lod, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnCompressedTexImageARB( GLenum target, GLint lod, GLsizei bufSize, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnConvolutionFilter( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnConvolutionFilterARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void *image )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnHistogramARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapdv( GLenum target, GLenum query, GLsizei bufSize, GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapdvARB( GLenum target, GLenum query, GLsizei bufSize, GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapfv( GLenum target, GLenum query, GLsizei bufSize, GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapfvARB( GLenum target, GLenum query, GLsizei bufSize, GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapiv( GLenum target, GLenum query, GLsizei bufSize, GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMapivARB( GLenum target, GLenum query, GLsizei bufSize, GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnMinmaxARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapfv( GLenum map, GLsizei bufSize, GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapfvARB( GLenum map, GLsizei bufSize, GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapuiv( GLenum map, GLsizei bufSize, GLuint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapuivARB( GLenum map, GLsizei bufSize, GLuint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapusv( GLenum map, GLsizei bufSize, GLushort *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPixelMapusvARB( GLenum map, GLsizei bufSize, GLushort *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPolygonStipple( GLsizei bufSize, GLubyte *pattern )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnPolygonStippleARB( GLsizei bufSize, GLubyte *pattern )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnSeparableFilter( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, void *row, GLsizei columnBufSize, void *column, void *span )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnSeparableFilterARB( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, void *row, GLsizei columnBufSize, void *column, void *span )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnTexImage( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnTexImageARB( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void *img )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformdv( GLuint program, GLint location, GLsizei bufSize, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformdvARB( GLuint program, GLint location, GLsizei bufSize, GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformfv( GLuint program, GLint location, GLsizei bufSize, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformfvARB( GLuint program, GLint location, GLsizei bufSize, GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformi64vARB( GLuint program, GLint location, GLsizei bufSize, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformiv( GLuint program, GLint location, GLsizei bufSize, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformivARB( GLuint program, GLint location, GLsizei bufSize, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformui64vARB( GLuint program, GLint location, GLsizei bufSize, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformuiv( GLuint program, GLint location, GLsizei bufSize, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGetnUniformuivARB( GLuint program, GLint location, GLsizei bufSize, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactorbSUN( GLbyte factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactordSUN( GLdouble factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactorfSUN( GLfloat factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactoriSUN( GLint factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactorsSUN( GLshort factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactorubSUN( GLubyte factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactoruiSUN( GLuint factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glGlobalAlphaFactorusSUN( GLushort factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glHintPGI( GLenum target, GLint mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glHistogram( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glHistogramEXT( GLenum target, GLsizei width, GLenum internalformat, GLboolean sink )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIglooInterfaceSGIX( GLenum pname, const void *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImageTransformParameterfHP( GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImageTransformParameterfvHP( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImageTransformParameteriHP( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImageTransformParameterivHP( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportMemoryFdEXT( GLuint memory, GLuint64 size, GLenum handleType, GLint fd )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportMemoryWin32HandleEXT( GLuint memory, GLuint64 size, GLenum handleType, void *handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportMemoryWin32NameEXT( GLuint memory, GLuint64 size, GLenum handleType, const void *name )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportSemaphoreFdEXT( GLuint semaphore, GLenum handleType, GLint fd )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportSemaphoreWin32HandleEXT( GLuint semaphore, GLenum handleType, void *handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glImportSemaphoreWin32NameEXT( GLuint semaphore, GLenum handleType, const void *name )
+{
+    ERR( "unsupported\n" );
+}
+static GLsync null_glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glIndexFormatNV( GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexFuncEXT( GLenum func, GLclampf ref )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexMaterialEXT( GLenum face, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexxOES( GLfixed component )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glIndexxvOES( const GLfixed *component )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInsertComponentEXT( GLuint res, GLuint src, GLuint num )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInsertEventMarkerEXT( GLsizei length, const GLchar *marker )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInstrumentsBufferSGIX( GLsizei size, GLint *buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInterpolatePathsNV( GLuint resultPath, GLuint pathA, GLuint pathB, GLfloat weight )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateBufferData( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateFramebuffer( GLenum target, GLsizei numAttachments, const GLenum *attachments )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateNamedFramebufferData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateNamedFramebufferSubData( GLuint framebuffer, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateSubFramebuffer( GLenum target, GLsizei numAttachments, const GLenum *attachments, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateTexImage( GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glInvalidateTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glIsAsyncMarkerSGIX( GLuint marker )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsBuffer( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsBufferARB( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsBufferResidentNV( GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsCommandListNV( GLuint list )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsEnabledIndexedEXT( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsEnabledi( GLenum target, GLuint index )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsFenceAPPLE( GLuint fence )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsFenceNV( GLuint fence )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsFramebuffer( GLuint framebuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsFramebufferEXT( GLuint framebuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsImageHandleResidentARB( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsImageHandleResidentNV( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsMemoryObjectEXT( GLuint memoryObject )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsNameAMD( GLenum identifier, GLuint name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsNamedBufferResidentNV( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsNamedStringARB( GLint namelen, const GLchar *name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsObjectBufferATI( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsOcclusionQueryNV( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsPathNV( GLuint path )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsPointInFillPathNV( GLuint path, GLuint mask, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsPointInStrokePathNV( GLuint path, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsProgram( GLuint program )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsProgramARB( GLuint program )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsProgramNV( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsProgramPipeline( GLuint pipeline )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsQuery( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsQueryARB( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsRenderbuffer( GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsRenderbufferEXT( GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsSampler( GLuint sampler )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsSemaphoreEXT( GLuint semaphore )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsShader( GLuint shader )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsStateNV( GLuint state )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsSync( GLsync sync )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTextureEXT( GLuint texture )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTextureHandleResidentARB( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTextureHandleResidentNV( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTransformFeedback( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsTransformFeedbackNV( GLuint id )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsVariantEnabledEXT( GLuint id, GLenum cap )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsVertexArray( GLuint array )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsVertexArrayAPPLE( GLuint array )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glIsVertexAttribEnabledAPPLE( GLuint index, GLenum pname )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glLGPUCopyImageSubDataNVX( GLuint sourceGpu, GLbitfield destinationGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srxY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLGPUInterlockNVX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLGPUNamedBufferSubDataNVX( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLabelObjectEXT( GLenum type, GLuint object, GLsizei length, const GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightEnviSGIX( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModelxOES( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightModelxvOES( GLenum pname, const GLfixed *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightxOES( GLenum light, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLightxvOES( GLenum light, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLineWidthxOES( GLfixed width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLinkProgram( GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLinkProgramARB( GLhandleARB programObj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListDrawCommandsStatesClientNV( GLuint list, GLuint segment, const void **indirects, const GLsizei *sizes, const GLuint *states, const GLuint *fbos, GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListParameterfSGIX( GLuint list, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListParameterfvSGIX( GLuint list, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListParameteriSGIX( GLuint list, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glListParameterivSGIX( GLuint list, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadIdentityDeformationMapSGIX( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadMatrixxOES( const GLfixed *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadProgramNV( GLenum target, GLuint id, GLsizei len, const GLubyte *program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadTransposeMatrixd( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadTransposeMatrixdARB( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadTransposeMatrixf( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadTransposeMatrixfARB( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLoadTransposeMatrixxOES( const GLfixed *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glLockArraysEXT( GLint first, GLsizei count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMTexCoord2fvSGIS( GLenum target, GLfloat * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeBufferNonResidentNV( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeBufferResidentNV( GLenum target, GLenum access )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeImageHandleNonResidentARB( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeImageHandleNonResidentNV( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeImageHandleResidentARB( GLuint64 handle, GLenum access )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeImageHandleResidentNV( GLuint64 handle, GLenum access )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeNamedBufferNonResidentNV( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeNamedBufferResidentNV( GLuint buffer, GLenum access )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeTextureHandleNonResidentARB( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeTextureHandleNonResidentNV( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeTextureHandleResidentARB( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMakeTextureHandleResidentNV( GLuint64 handle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap1xOES( GLenum target, GLfixed u1, GLfixed u2, GLint stride, GLint order, GLfixed points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMap2xOES( GLenum target, GLfixed u1, GLfixed u2, GLint ustride, GLint uorder, GLfixed v1, GLfixed v2, GLint vstride, GLint vorder, GLfixed points )
+{
+    ERR( "unsupported\n" );
+}
+static void * null_glMapBuffer( GLenum target, GLenum access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapBufferARB( GLenum target, GLenum access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const void *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid1xOES( GLint n, GLfixed u1, GLfixed u2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapGrid2xOES( GLint n, GLfixed u1, GLfixed u2, GLfixed v1, GLfixed v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void * null_glMapNamedBuffer( GLuint buffer, GLenum access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapNamedBufferEXT( GLuint buffer, GLenum access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void * null_glMapObjectBufferATI( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glMapParameterfvNV( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapParameterivNV( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void * null_glMapTexture2DINTEL( GLuint texture, GLint level, GLbitfield access, GLint *stride, GLenum *layout )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glMapVertexAttrib1dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapVertexAttrib1fAPPLE( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint stride, GLint order, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapVertexAttrib2dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint ustride, GLint uorder, GLdouble v1, GLdouble v2, GLint vstride, GLint vorder, const GLdouble *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMapVertexAttrib2fAPPLE( GLuint index, GLuint size, GLfloat u1, GLfloat u2, GLint ustride, GLint uorder, GLfloat v1, GLfloat v2, GLint vstride, GLint vorder, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialxOES( GLenum face, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaterialxvOES( GLenum face, GLenum pname, const GLfixed *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixFrustumEXT( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixIndexPointerARB( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixIndexubvARB( GLint size, const GLubyte *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixIndexuivARB( GLint size, const GLuint *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixIndexusvARB( GLint size, const GLushort *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoad3x2fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoad3x3fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoadIdentityEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoadTranspose3x3fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoadTransposedEXT( GLenum mode, const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoadTransposefEXT( GLenum mode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoaddEXT( GLenum mode, const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixLoadfEXT( GLenum mode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMult3x2fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMult3x3fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMultTranspose3x3fNV( GLenum matrixMode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMultTransposedEXT( GLenum mode, const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMultTransposefEXT( GLenum mode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMultdEXT( GLenum mode, const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixMultfEXT( GLenum mode, const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixOrthoEXT( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixPopEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixPushEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixRotatedEXT( GLenum mode, GLdouble angle, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixRotatefEXT( GLenum mode, GLfloat angle, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixScaledEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixScalefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixTranslatedEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMatrixTranslatefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaxShaderCompilerThreadsARB( GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMaxShaderCompilerThreadsKHR( GLuint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMemoryBarrier( GLbitfield barriers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMemoryBarrierByRegion( GLbitfield barriers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMemoryBarrierEXT( GLbitfield barriers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMemoryObjectParameterivEXT( GLuint memoryObject, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMinSampleShading( GLfloat value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMinSampleShadingARB( GLfloat value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMinmax( GLenum target, GLenum internalformat, GLboolean sink )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMinmaxEXT( GLenum target, GLenum internalformat, GLboolean sink )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultMatrixxOES( const GLfixed *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultTransposeMatrixd( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultTransposeMatrixdARB( const GLdouble *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultTransposeMatrixf( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultTransposeMatrixfARB( const GLfloat *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultTransposeMatrixxOES( const GLfixed *m )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArrays( GLenum mode, const GLint *first, const GLsizei *count, GLsizei drawcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysEXT( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirect( GLenum mode, const void *indirect, GLsizei drawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirectAMD( GLenum mode, const void *indirect, GLsizei primcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirectBindlessCountNV( GLenum mode, const void *indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirectBindlessNV( GLenum mode, const void *indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirectCount( GLenum mode, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawArraysIndirectCountARB( GLenum mode, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementArrayAPPLE( GLenum mode, const GLint *first, const GLsizei *count, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElements( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei drawcount, const GLint *basevertex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsEXT( GLenum mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirect( GLenum mode, GLenum type, const void *indirect, GLsizei drawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const void *indirect, GLsizei primcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirectBindlessCountNV( GLenum mode, GLenum type, const void *indirect, GLsizei drawCount, GLsizei maxDrawCount, GLsizei stride, GLint vertexBufferCount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirectBindlessNV( GLenum mode, GLenum type, const void *indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirectCount( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, const void *indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawMeshTasksIndirectCountNV( GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawMeshTasksIndirectNV( GLintptr indirect, GLsizei drawcount, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint *first, const GLsizei *count, GLsizei primcount )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiModeDrawArraysIBM( const GLenum *mode, const GLint *first, const GLsizei *count, GLsizei primcount, GLint modestride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiModeDrawElementsIBM( const GLenum *mode, const GLsizei *count, GLenum type, const void *const*indices, GLsizei primcount, GLint modestride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexBufferEXT( GLenum texunit, GLenum target, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1bOES( GLenum texture, GLbyte s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1bvOES( GLenum texture, const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1d( GLenum target, GLdouble s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1dARB( GLenum target, GLdouble s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1dSGIS( GLenum target, GLdouble s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1dv( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1dvARB( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1dvSGIS( GLenum target, GLdouble * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1f( GLenum target, GLfloat s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1fARB( GLenum target, GLfloat s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1fSGIS( GLenum target, GLfloat s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1fv( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1fvARB( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1fvSGIS( GLenum target, const GLfloat * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1hNV( GLenum target, GLhalfNV s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1hvNV( GLenum target, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1i( GLenum target, GLint s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1iARB( GLenum target, GLint s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1iSGIS( GLenum target, GLint s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1iv( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1ivARB( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1ivSGIS( GLenum target, GLint * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1s( GLenum target, GLshort s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1sARB( GLenum target, GLshort s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1sSGIS( GLenum target, GLshort s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1sv( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1svARB( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1svSGIS( GLenum target, GLshort * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1xOES( GLenum texture, GLfixed s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord1xvOES( GLenum texture, const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2bOES( GLenum texture, GLbyte s, GLbyte t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2bvOES( GLenum texture, const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2dARB( GLenum target, GLdouble s, GLdouble t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2dSGIS( GLenum target, GLdouble s, GLdouble t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2dv( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2dvARB( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2dvSGIS( GLenum target, GLdouble * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2fARB( GLenum target, GLfloat s, GLfloat t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2fSGIS( GLenum target, GLfloat s, GLfloat t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2fv( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2fvARB( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2fvSGIS( GLenum target, GLfloat * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2hNV( GLenum target, GLhalfNV s, GLhalfNV t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2hvNV( GLenum target, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2i( GLenum target, GLint s, GLint t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2iARB( GLenum target, GLint s, GLint t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2iSGIS( GLenum target, GLint s, GLint t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2iv( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2ivARB( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2ivSGIS( GLenum target, GLint * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2s( GLenum target, GLshort s, GLshort t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2sARB( GLenum target, GLshort s, GLshort t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2sSGIS( GLenum target, GLshort s, GLshort t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2sv( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2svARB( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2svSGIS( GLenum target, GLshort * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2xOES( GLenum texture, GLfixed s, GLfixed t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord2xvOES( GLenum texture, const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3bvOES( GLenum texture, const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdouble r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3dv( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3dvARB( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3dvSGIS( GLenum target, GLdouble * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3f( GLenum target, GLfloat s, GLfloat t, GLfloat r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3fv( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3fvARB( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3fvSGIS( GLenum target, GLfloat * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3hvNV( GLenum target, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3i( GLenum target, GLint s, GLint t, GLint r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3iARB( GLenum target, GLint s, GLint t, GLint r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3iSGIS( GLenum target, GLint s, GLint t, GLint r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3iv( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3ivARB( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3ivSGIS( GLenum target, GLint * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3s( GLenum target, GLshort s, GLshort t, GLshort r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3sARB( GLenum target, GLshort s, GLshort t, GLshort r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3sSGIS( GLenum target, GLshort s, GLshort t, GLshort r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3sv( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3svARB( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3svSGIS( GLenum target, GLshort * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord3xvOES( GLenum texture, const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r, GLbyte q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4bvOES( GLenum texture, const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4dARB( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4dSGIS( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4dv( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4dvARB( GLenum target, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4dvSGIS( GLenum target, GLdouble * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4fARB( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4fSGIS( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4fv( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4fvARB( GLenum target, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4fvSGIS( GLenum target, GLfloat * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4hNV( GLenum target, GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4hvNV( GLenum target, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4i( GLenum target, GLint s, GLint t, GLint r, GLint q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4iARB( GLenum target, GLint s, GLint t, GLint r, GLint q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4iSGIS( GLenum target, GLint s, GLint t, GLint r, GLint q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4iv( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4ivARB( GLenum target, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4ivSGIS( GLenum target, GLint * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4s( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4sARB( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4sSGIS( GLenum target, GLshort s, GLshort t, GLshort r, GLshort q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4sv( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4svARB( GLenum target, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4svSGIS( GLenum target, GLshort * v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoord4xvOES( GLenum texture, const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP1ui( GLenum texture, GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP1uiv( GLenum texture, GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP2ui( GLenum texture, GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP2uiv( GLenum texture, GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP3ui( GLenum texture, GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP3uiv( GLenum texture, GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP4ui( GLenum texture, GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordP4uiv( GLenum texture, GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexCoordPointerSGIS( GLenum target, GLint size, GLenum type, GLsizei stride, GLvoid * pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexEnvfEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexEnvfvEXT( GLenum texunit, GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexEnviEXT( GLenum texunit, GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexEnvivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGendEXT( GLenum texunit, GLenum coord, GLenum pname, GLdouble param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGendvEXT( GLenum texunit, GLenum coord, GLenum pname, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGenfEXT( GLenum texunit, GLenum coord, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGenfvEXT( GLenum texunit, GLenum coord, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGeniEXT( GLenum texunit, GLenum coord, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameterIivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameterIuivEXT( GLenum texunit, GLenum target, GLenum pname, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameterfEXT( GLenum texunit, GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameterfvEXT( GLenum texunit, GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameteriEXT( GLenum texunit, GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexParameterivEXT( GLenum texunit, GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexRenderbufferEXT( GLenum texunit, GLenum target, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastBarrierNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastBlitFramebufferNV( GLuint srcGpu, GLuint dstGpu, GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastBufferSubDataNV( GLbitfield gpuMask, GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastCopyBufferSubDataNV( GLuint readGpu, GLbitfield writeGpuMask, GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastCopyImageSubDataNV( GLuint srcGpu, GLbitfield dstGpuMask, GLuint srcName, GLenum srcTarget, GLint srcLevel, GLint srcX, GLint srcY, GLint srcZ, GLuint dstName, GLenum dstTarget, GLint dstLevel, GLint dstX, GLint dstY, GLint dstZ, GLsizei srcWidth, GLsizei srcHeight, GLsizei srcDepth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastFramebufferSampleLocationsfvNV( GLuint gpu, GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastGetQueryObjecti64vNV( GLuint gpu, GLuint id, GLenum pname, GLint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastGetQueryObjectivNV( GLuint gpu, GLuint id, GLenum pname, GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastGetQueryObjectui64vNV( GLuint gpu, GLuint id, GLenum pname, GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastGetQueryObjectuivNV( GLuint gpu, GLuint id, GLenum pname, GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastScissorArrayvNVX( GLuint gpu, GLuint first, GLsizei count, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastViewportArrayvNVX( GLuint gpu, GLuint first, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastViewportPositionWScaleNVX( GLuint gpu, GLuint index, GLfloat xcoeff, GLfloat ycoeff )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glMulticastWaitSyncNV( GLuint signalGpu, GLbitfield waitGpuMask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferAttachMemoryNV( GLuint buffer, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferData( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const void *data, GLenum usage )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferPageCommitmentARB( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferPageCommitmentEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLboolean commit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferStorage( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, const void *data, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferStorageExternalEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLeglClientBufferEXT clientBuffer, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferStorageMemEXT( GLuint buffer, GLsizeiptr size, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferSubData( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedCopyBufferSubDataEXT( GLuint readBuffer, GLuint writeBuffer, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferDrawBuffer( GLuint framebuffer, GLenum buf )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferDrawBuffers( GLuint framebuffer, GLsizei n, const GLenum *bufs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferParameteri( GLuint framebuffer, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferParameteriEXT( GLuint framebuffer, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferReadBuffer( GLuint framebuffer, GLenum src )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferSampleLocationsfvARB( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferSampleLocationsfvNV( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferSamplePositionsfvAMD( GLuint framebuffer, GLuint numsamples, GLuint pixelindex, const GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTexture2DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTexture3DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level, GLint zoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTextureEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTextureFaceEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLenum face )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTextureLayer( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedFramebufferTextureLayerEXT( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level, GLint layer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameter4dEXT( GLuint program, GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameter4dvEXT( GLuint program, GLenum target, GLuint index, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameter4fEXT( GLuint program, GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameter4fvEXT( GLuint program, GLenum target, GLuint index, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameterI4iEXT( GLuint program, GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameterI4ivEXT( GLuint program, GLenum target, GLuint index, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameterI4uiEXT( GLuint program, GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameterI4uivEXT( GLuint program, GLenum target, GLuint index, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParameters4fvEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParametersI4ivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramLocalParametersI4uivEXT( GLuint program, GLenum target, GLuint index, GLsizei count, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedProgramStringEXT( GLuint program, GLenum target, GLenum format, GLsizei len, const void *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorage( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorageEXT( GLuint renderbuffer, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorageMultisample( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorageMultisampleAdvancedAMD( GLuint renderbuffer, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorageMultisampleCoverageEXT( GLuint renderbuffer, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedRenderbufferStorageMultisampleEXT( GLuint renderbuffer, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNamedStringARB( GLenum type, GLint namelen, const GLchar *name, GLint stringlen, const GLchar *string )
+{
+    ERR( "unsupported\n" );
+}
+static GLuint null_glNewBufferRegion( GLenum type )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLuint null_glNewObjectBufferATI( GLsizei size, const void *pointer, GLenum usage )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glNormal3fVertex3fSUN( GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3fVertex3fvSUN( const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3hNV( GLhalfNV nx, GLhalfNV ny, GLhalfNV nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3xOES( GLfixed nx, GLfixed ny, GLfixed nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormal3xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalFormatNV( GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalP3ui( GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalP3uiv( GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalPointerListIBM( GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalPointervINTEL( GLenum type, const void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3bATI( GLenum stream, GLbyte nx, GLbyte ny, GLbyte nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3bvATI( GLenum stream, const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3dATI( GLenum stream, GLdouble nx, GLdouble ny, GLdouble nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3dvATI( GLenum stream, const GLdouble *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3fATI( GLenum stream, GLfloat nx, GLfloat ny, GLfloat nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3fvATI( GLenum stream, const GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3iATI( GLenum stream, GLint nx, GLint ny, GLint nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3ivATI( GLenum stream, const GLint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3sATI( GLenum stream, GLshort nx, GLshort ny, GLshort nz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glNormalStream3svATI( GLenum stream, const GLshort *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glObjectLabel( GLenum identifier, GLuint name, GLsizei length, const GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glObjectPtrLabel( const void *ptr, GLsizei length, const GLchar *label )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glObjectPurgeableAPPLE( GLenum objectType, GLuint name, GLenum option )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, GLenum option )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glOrthofOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glOrthoxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPNTrianglesfATI( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPNTrianglesiATI( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPassTexCoordATI( GLuint dst, GLuint coord, GLenum swizzle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPassThroughxOES( GLfixed token )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPatchParameterfv( GLenum pname, const GLfloat *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPatchParameteri( GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathColorGenNV( GLenum color, GLenum genMode, GLenum colorFormat, const GLfloat *coeffs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathCommandsNV( GLuint path, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathCoordsNV( GLuint path, GLsizei numCoords, GLenum coordType, const void *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathCoverDepthFuncNV( GLenum func )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathDashArrayNV( GLuint path, GLsizei dashCount, const GLfloat *dashArray )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathFogGenNV( GLenum genMode )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glPathGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLenum null_glPathGlyphIndexRangeNV( GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint pathParameterTemplate, GLfloat emScale, GLuint baseAndCount[2] )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glPathGlyphRangeNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLuint firstGlyph, GLsizei numGlyphs, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathGlyphsNV( GLuint firstPathName, GLenum fontTarget, const void *fontName, GLbitfield fontStyle, GLsizei numGlyphs, GLenum type, const void *charcodes, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glPathMemoryGlyphIndexArrayNV( GLuint firstPathName, GLenum fontTarget, GLsizeiptr fontSize, const void *fontData, GLsizei faceIndex, GLuint firstGlyphIndex, GLsizei numGlyphs, GLuint pathParameterTemplate, GLfloat emScale )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glPathParameterfNV( GLuint path, GLenum pname, GLfloat value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathParameterfvNV( GLuint path, GLenum pname, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathParameteriNV( GLuint path, GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathParameterivNV( GLuint path, GLenum pname, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathStencilDepthOffsetNV( GLfloat factor, GLfloat units )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathStencilFuncNV( GLenum func, GLint ref, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathStringNV( GLuint path, GLenum format, GLsizei length, const void *pathString )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathSubCommandsNV( GLuint path, GLsizei commandStart, GLsizei commandsToDelete, GLsizei numCommands, const GLubyte *commands, GLsizei numCoords, GLenum coordType, const void *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei numCoords, GLenum coordType, const void *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPathTexGenNV( GLenum texCoordSet, GLenum genMode, GLint components, const GLfloat *coeffs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPauseTransformFeedback(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPauseTransformFeedbackNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelDataRangeNV( GLenum target, GLsizei length, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelMapx( GLenum map, GLint size, const GLfixed *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelStorex( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTexGenParameterfSGIS( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTexGenParameterfvSGIS( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTexGenParameteriSGIS( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTexGenParameterivSGIS( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTexGenSGIX( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransferxOES( GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransformParameterfEXT( GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransformParameterfvEXT( GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransformParameteriEXT( GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelTransformParameterivEXT( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPixelZoomxOES( GLfixed xfactor, GLfixed yfactor )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glPointAlongPathNV( GLuint path, GLsizei startSegment, GLsizei numSegments, GLfloat distance, GLfloat *x, GLfloat *y, GLfloat *tangentX, GLfloat *tangentY )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glPointParameterf( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfARB( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfEXT( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfSGIS( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfv( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfvARB( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfvEXT( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterfvSGIS( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameteri( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameteriNV( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameteriv( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterivNV( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointParameterxvOES( GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPointSizexOES( GLfixed size )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glPollAsyncSGIX( GLuint *markerp )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLint null_glPollInstrumentsSGIX( GLint *marker_p )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glPolygonOffsetClamp( GLfloat factor, GLfloat units, GLfloat clamp )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonOffsetClampEXT( GLfloat factor, GLfloat units, GLfloat clamp )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonOffsetEXT( GLfloat factor, GLfloat bias )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPolygonOffsetxOES( GLfixed factor, GLfixed units )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopDebugGroup(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPopGroupMarkerEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPresentFrameDualFillNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPresentFrameKeyedNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrimitiveBoundingBoxARB( GLfloat minX, GLfloat minY, GLfloat minZ, GLfloat minW, GLfloat maxX, GLfloat maxY, GLfloat maxZ, GLfloat maxW )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrimitiveRestartIndex( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrimitiveRestartIndexNV( GLuint index )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrimitiveRestartNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrioritizeTexturesEXT( GLsizei n, const GLuint *textures, const GLclampf *priorities )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPrioritizeTexturesxOES( GLsizei n, const GLuint *textures, const GLfixed *priorities )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramBinary( GLuint program, GLenum binaryFormat, const void *binary, GLsizei length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramBufferParametersIivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramBufferParametersIuivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramBufferParametersfvNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameter4dvARB( GLenum target, GLuint index, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameter4fvARB( GLenum target, GLuint index, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameterI4iNV( GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameterI4ivNV( GLenum target, GLuint index, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameterI4uiNV( GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameterI4uivNV( GLenum target, GLuint index, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParameters4fvEXT( GLenum target, GLuint index, GLsizei count, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParametersI4ivNV( GLenum target, GLuint index, GLsizei count, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramEnvParametersI4uivNV( GLenum target, GLuint index, GLsizei count, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameter4dvARB( GLenum target, GLuint index, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameter4fARB( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameter4fvARB( GLenum target, GLuint index, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameterI4iNV( GLenum target, GLuint index, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameterI4ivNV( GLenum target, GLuint index, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameterI4uiNV( GLenum target, GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameterI4uivNV( GLenum target, GLuint index, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParameters4fvEXT( GLenum target, GLuint index, GLsizei count, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParametersI4ivNV( GLenum target, GLuint index, GLsizei count, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramLocalParametersI4uivNV( GLenum target, GLuint index, GLsizei count, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramNamedParameter4dNV( GLuint id, GLsizei len, const GLubyte *name, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramNamedParameter4dvNV( GLuint id, GLsizei len, const GLubyte *name, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramNamedParameter4fNV( GLuint id, GLsizei len, const GLubyte *name, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramNamedParameter4fvNV( GLuint id, GLsizei len, const GLubyte *name, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameter4dNV( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameter4dvNV( GLenum target, GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameter4fNV( GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameter4fvNV( GLenum target, GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameteri( GLuint program, GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameteriARB( GLuint program, GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameteriEXT( GLuint program, GLenum pname, GLint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameters4dvNV( GLenum target, GLuint index, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramParameters4fvNV( GLenum target, GLuint index, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramPathFragmentInputGenNV( GLuint program, GLint location, GLenum genMode, GLint components, const GLfloat *coeffs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramStringARB( GLenum target, GLenum format, GLsizei len, const void *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramSubroutineParametersuivNV( GLenum target, GLsizei count, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1d( GLuint program, GLint location, GLdouble v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1dEXT( GLuint program, GLint location, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1dv( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1f( GLuint program, GLint location, GLfloat v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1fEXT( GLuint program, GLint location, GLfloat v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1fv( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1i( GLuint program, GLint location, GLint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1i64ARB( GLuint program, GLint location, GLint64 x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1i64NV( GLuint program, GLint location, GLint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1iEXT( GLuint program, GLint location, GLint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1iv( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ui( GLuint program, GLint location, GLuint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ui64ARB( GLuint program, GLint location, GLuint64 x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ui64NV( GLuint program, GLint location, GLuint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1uiEXT( GLuint program, GLint location, GLuint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1uiv( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform1uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2d( GLuint program, GLint location, GLdouble v0, GLdouble v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2dEXT( GLuint program, GLint location, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2dv( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2f( GLuint program, GLint location, GLfloat v0, GLfloat v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2i( GLuint program, GLint location, GLint v0, GLint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2iEXT( GLuint program, GLint location, GLint v0, GLint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2iv( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ui( GLuint program, GLint location, GLuint v0, GLuint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2uiv( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform2uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3d( GLuint program, GLint location, GLdouble v0, GLdouble v1, GLdouble v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3dv( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3f( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3iv( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3uiv( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform3uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4d( GLuint program, GLint location, GLdouble v0, GLdouble v1, GLdouble v2, GLdouble v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4dEXT( GLuint program, GLint location, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4dv( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4dvEXT( GLuint program, GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4f( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4fEXT( GLuint program, GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4fv( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4i64vARB( GLuint program, GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4iv( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ivEXT( GLuint program, GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4uiv( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniform4uivEXT( GLuint program, GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformHandleui64ARB( GLuint program, GLint location, GLuint64 value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformHandleui64NV( GLuint program, GLint location, GLuint64 value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformHandleui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64 *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformHandleui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64 *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix2x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix3x4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x2dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x2dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x2fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x2fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x3dv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x3dvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x3fv( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformMatrix4x3fvEXT( GLuint program, GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformui64NV( GLuint program, GLint location, GLuint64EXT value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramUniformui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProgramVertexLimitNV( GLenum target, GLint limit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProvokingVertex( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glProvokingVertexEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushClientAttribDefaultEXT( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushDebugGroup( GLenum source, GLuint id, GLsizei length, const GLchar *message )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glPushGroupMarkerEXT( GLsizei length, const GLchar *marker )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glQueryCounter( GLuint id, GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static GLbitfield null_glQueryMatrixxOES( GLfixed *mantissa, GLint *exponent )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glQueryObjectParameteruiAMD( GLenum target, GLuint id, GLenum pname, GLuint param )
+{
+    ERR( "unsupported\n" );
+}
+static GLint null_glQueryResourceNV( GLenum queryType, GLint tagId, GLuint count, GLint *buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glQueryResourceTagNV( GLint tagId, const GLchar *tagString )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2xOES( GLfixed x, GLfixed y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos2xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3xOES( GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos3xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4xOES( GLfixed x, GLfixed y, GLfixed z, GLfixed w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterPos4xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRasterSamplesEXT( GLuint samples, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadInstrumentsSGIX( GLint marker )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadnPixels( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void *data )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectxOES( GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRectxvOES( const GLfixed *v1, const GLfixed *v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReferencePlaneSGIX( const GLdouble *equation )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glReleaseKeyedMutexWin32EXT( GLuint memory, GLuint64 key )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glReleaseShaderCompiler(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderGpuMaskNV( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorage( GLenum target, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorageEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorageMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorageMultisampleAdvancedAMD( GLenum target, GLsizei samples, GLsizei storageSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorageMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRenderbufferStorageMultisampleEXT( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodePointerSUN( GLenum type, GLsizei stride, const void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeubSUN( GLubyte code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeubvSUN( const GLubyte *code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor3fVertex3fSUN( GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor3fVertex3fvSUN( const GLuint *rc, const GLfloat *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor4fNormal3fVertex3fSUN( GLuint rc, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *c, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor4ubVertex3fSUN( GLuint rc, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiColor4ubVertex3fvSUN( const GLuint *rc, const GLubyte *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiNormal3fVertex3fSUN( GLuint rc, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiSUN( GLuint code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fVertex3fSUN( GLuint rc, GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiTexCoord2fVertex3fvSUN( const GLuint *rc, const GLfloat *tc, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiVertex3fSUN( GLuint rc, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuiVertex3fvSUN( const GLuint *rc, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeuivSUN( const GLuint *code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeusSUN( GLushort code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glReplacementCodeusvSUN( const GLushort *code )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRequestResidentProgramsNV( GLsizei n, const GLuint *programs )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResetHistogram( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResetHistogramEXT( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResetMemoryObjectParameterNV( GLuint memory, GLenum pname )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResetMinmax( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResetMinmaxEXT( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResizeBuffersMESA(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResolveDepthValuesNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResumeTransformFeedback(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glResumeTransformFeedbackNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleCoverage( GLfloat value, GLboolean invert )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleCoverageARB( GLfloat value, GLboolean invert )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleMapATI( GLuint dst, GLuint interp, GLenum swizzle )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleMaskEXT( GLclampf value, GLboolean invert )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleMaskIndexedNV( GLuint index, GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleMaskSGIS( GLclampf value, GLboolean invert )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSampleMaski( GLuint maskNumber, GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplePatternEXT( GLenum pattern )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplePatternSGIS( GLenum pattern )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameterIiv( GLuint sampler, GLenum pname, const GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameterIuiv( GLuint sampler, GLenum pname, const GLuint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameterf( GLuint sampler, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameterfv( GLuint sampler, GLenum pname, const GLfloat *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameteri( GLuint sampler, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSamplerParameteriv( GLuint sampler, GLenum pname, const GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScalexOES( GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissorArrayv( GLuint first, GLsizei count, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissorExclusiveArrayvNV( GLuint first, GLsizei count, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissorExclusiveNV( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissorIndexed( GLuint index, GLint left, GLint bottom, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glScissorIndexedv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3b( GLbyte red, GLbyte green, GLbyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3bEXT( GLbyte red, GLbyte green, GLbyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3bv( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3bvEXT( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3d( GLdouble red, GLdouble green, GLdouble blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3dEXT( GLdouble red, GLdouble green, GLdouble blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3dvEXT( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3f( GLfloat red, GLfloat green, GLfloat blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3fEXT( GLfloat red, GLfloat green, GLfloat blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3fvEXT( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3hNV( GLhalfNV red, GLhalfNV green, GLhalfNV blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3i( GLint red, GLint green, GLint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3iEXT( GLint red, GLint green, GLint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ivEXT( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3s( GLshort red, GLshort green, GLshort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3sEXT( GLshort red, GLshort green, GLshort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3svEXT( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ub( GLubyte red, GLubyte green, GLubyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ubEXT( GLubyte red, GLubyte green, GLubyte blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ubv( const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ubvEXT( const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3ui( GLuint red, GLuint green, GLuint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3uiEXT( GLuint red, GLuint green, GLuint blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3uiv( const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3uivEXT( const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3us( GLushort red, GLushort green, GLushort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3usEXT( GLushort red, GLushort green, GLushort blue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3usv( const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColor3usvEXT( const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorFormatNV( GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorP3ui( GLenum type, GLuint color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorP3uiv( GLenum type, const GLuint *color )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorPointer( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSecondaryColorPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSelectPerfMonitorCountersAMD( GLuint monitor, GLboolean enable, GLuint group, GLint numCounters, GLuint *counterList )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSelectTextureCoordSetSGIS( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSelectTextureSGIS( GLenum target )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSemaphoreParameterui64vEXT( GLuint semaphore, GLenum pname, const GLuint64 *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *row, const void *column )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *row, const void *column )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetFenceAPPLE( GLuint fence )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetFenceNV( GLuint fence, GLenum condition )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetFragmentShaderConstantATI( GLuint dst, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetInvariantEXT( GLuint id, GLenum type, const void *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetLocalConstantEXT( GLuint id, GLenum type, const void *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSetMultisamplefvAMD( GLenum pname, GLuint index, const GLfloat *val )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderBinary( GLsizei count, const GLuint *shaders, GLenum binaryformat, const void *binary, GLsizei length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderOp1EXT( GLenum op, GLuint res, GLuint arg1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderOp2EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint arg2, GLuint arg3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderSource( GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderSourceARB( GLhandleARB shaderObj, GLsizei count, const GLcharARB **string, const GLint *length )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShaderStorageBlockBinding( GLuint program, GLuint storageBlockIndex, GLuint storageBlockBinding )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShadingRateImageBarrierNV( GLboolean synchronize )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShadingRateImagePaletteNV( GLuint viewport, GLuint first, GLsizei count, const GLenum *rates )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShadingRateSampleOrderCustomNV( GLenum rate, GLuint samples, const GLint *locations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glShadingRateSampleOrderNV( GLenum order )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSharpenTexFuncSGIS( GLenum target, GLsizei n, const GLfloat *points )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSignalSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *dstLayouts )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSignalSemaphoreui64NVX( GLuint signalGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSignalVkFenceNV( GLuint64 vkFence )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSignalVkSemaphoreNV( GLuint64 vkSemaphore )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpecializeShader( GLuint shader, const GLchar *pEntryPoint, GLuint numSpecializationConstants, const GLuint *pConstantIndex, const GLuint *pConstantValue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpecializeShaderARB( GLuint shader, const GLchar *pEntryPoint, GLuint numSpecializationConstants, const GLuint *pConstantIndex, const GLuint *pConstantValue )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpriteParameterfSGIX( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpriteParameterfvSGIX( GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpriteParameteriSGIX( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSpriteParameterivSGIX( GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStartInstrumentsSGIX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStateCaptureNV( GLuint state, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilClearTagEXT( GLsizei stencilTagBits, GLuint stencilClearTag )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilFillPathNV( GLuint path, GLenum fillMode, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilFuncSeparate( GLenum face, GLenum func, GLint ref, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilFuncSeparateATI( GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilMaskSeparate( GLenum face, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilOpSeparate( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilOpSeparateATI( GLenum face, GLenum sfail, GLenum dpfail, GLenum dppass )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilOpValueAMD( GLenum face, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilStrokePathNV( GLuint path, GLint reference, GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilThenCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilThenCoverFillPathNV( GLuint path, GLenum fillMode, GLuint mask, GLenum coverMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilThenCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void *paths, GLuint pathBase, GLint reference, GLuint mask, GLenum coverMode, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStencilThenCoverStrokePathNV( GLuint path, GLint reference, GLuint mask, GLenum coverMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStopInstrumentsSGIX( GLint marker )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glStringMarkerGREMEDY( GLsizei len, const void *string )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSubpixelPrecisionBiasNV( GLuint xbits, GLuint ybits )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSwizzleEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glSyncTextureINTEL( GLuint texture )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTagSampleBufferSGIX(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3bEXT( GLbyte tx, GLbyte ty, GLbyte tz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3bvEXT( const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3dEXT( GLdouble tx, GLdouble ty, GLdouble tz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3dvEXT( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3fEXT( GLfloat tx, GLfloat ty, GLfloat tz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3fvEXT( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3iEXT( GLint tx, GLint ty, GLint tz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3ivEXT( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3sEXT( GLshort tx, GLshort ty, GLshort tz )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangent3svEXT( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTangentPointerEXT( GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTbufferMask3DFX( GLuint mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTessellationFactorAMD( GLfloat factor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTessellationModeAMD( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glTestFenceAPPLE( GLuint fence )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glTestFenceNV( GLuint fence )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glTestObjectAPPLE( GLenum object, GLuint name )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glTexAttachMemoryNV( GLenum target, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBuffer( GLenum target, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBufferARB( GLenum target, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBufferEXT( GLenum target, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBufferRange( GLenum target, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBumpParameterfvATI( GLenum pname, const GLfloat *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexBumpParameterivATI( GLenum pname, const GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1bOES( GLbyte s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1hNV( GLhalfNV s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1xOES( GLfixed s )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord1xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2bOES( GLbyte s, GLbyte t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor3fVertex3fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor4fNormal3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor4fNormal3fVertex3fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor4ubVertex3fSUN( GLfloat s, GLfloat t, GLubyte r, GLubyte g, GLubyte b, GLubyte a, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fColor4ubVertex3fvSUN( const GLfloat *tc, const GLubyte *c, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fNormal3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fNormal3fVertex3fvSUN( const GLfloat *tc, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fVertex3fSUN( GLfloat s, GLfloat t, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2fVertex3fvSUN( const GLfloat *tc, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2hNV( GLhalfNV s, GLhalfNV t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2xOES( GLfixed s, GLfixed t )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord2xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3bOES( GLbyte s, GLbyte t, GLbyte r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3hNV( GLhalfNV s, GLhalfNV t, GLhalfNV r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3xOES( GLfixed s, GLfixed t, GLfixed r )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord3xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4bOES( GLbyte s, GLbyte t, GLbyte r, GLbyte q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4fColor4fNormal3fVertex4fSUN( GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4fColor4fNormal3fVertex4fvSUN( const GLfloat *tc, const GLfloat *c, const GLfloat *n, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4fVertex4fSUN( GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4fVertex4fvSUN( const GLfloat *tc, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4hNV( GLhalfNV s, GLhalfNV t, GLhalfNV r, GLhalfNV q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4xOES( GLfixed s, GLfixed t, GLfixed r, GLfixed q )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoord4xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordFormatNV( GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP1ui( GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP1uiv( GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP2ui( GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP2uiv( GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP3ui( GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP3uiv( GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP4ui( GLenum type, GLuint coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordP4uiv( GLenum type, const GLuint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexCoordPointervINTEL( GLint size, GLenum type, const void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvxOES( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexEnvxvOES( GLenum target, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexFilterFuncSGIS( GLenum target, GLenum filter, GLsizei n, const GLfloat *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGenxOES( GLenum coord, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexGenxvOES( GLenum coord, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage2DMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage3DMultisampleCoverageNV( GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexImage4DSGIS( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexPageCommitmentARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean commit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterIiv( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterIivEXT( GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterIuiv( GLenum target, GLenum pname, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterIuivEXT( GLenum target, GLenum pname, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterxOES( GLenum target, GLenum pname, GLfixed param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexParameterxvOES( GLenum target, GLenum pname, const GLfixed *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexRenderbufferNV( GLenum target, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorage1D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorage2D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorage3D( GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageMem1DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageMem2DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageMem2DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageMem3DEXT( GLenum target, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageMem3DMultisampleEXT( GLenum target, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexStorageSparseAMD( GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureAttachMemoryNV( GLuint texture, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBarrier(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBarrierNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBuffer( GLuint texture, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBufferEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBufferRange( GLuint texture, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureBufferRangeEXT( GLuint texture, GLenum target, GLenum internalformat, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureColorMaskSGIS( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage2DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage2DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage3DMultisampleCoverageNV( GLuint texture, GLenum target, GLsizei coverageSamples, GLsizei colorSamples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureImage3DMultisampleNV( GLuint texture, GLenum target, GLsizei samples, GLint internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureLightEXT( GLenum pname )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureMaterialEXT( GLenum face, GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureNormalEXT( GLenum mode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTexturePageCommitmentEXT( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean commit )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterIiv( GLuint texture, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterIuiv( GLuint texture, GLenum pname, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterIuivEXT( GLuint texture, GLenum target, GLenum pname, const GLuint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterf( GLuint texture, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterfEXT( GLuint texture, GLenum target, GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterfv( GLuint texture, GLenum pname, const GLfloat *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterfvEXT( GLuint texture, GLenum target, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameteri( GLuint texture, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameteriEXT( GLuint texture, GLenum target, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameteriv( GLuint texture, GLenum pname, const GLint *param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureParameterivEXT( GLuint texture, GLenum target, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureRangeAPPLE( GLenum target, GLsizei length, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureRenderbufferEXT( GLuint texture, GLenum target, GLuint renderbuffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage1D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage1DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage2D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage2DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage2DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage2DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage3D( GLuint texture, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage3DEXT( GLuint texture, GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage3DMultisample( GLuint texture, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorage3DMultisampleEXT( GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageMem1DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageMem2DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageMem2DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageMem3DEXT( GLuint texture, GLsizei levels, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageMem3DMultisampleEXT( GLuint texture, GLsizei samples, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedSampleLocations, GLuint memory, GLuint64 offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureStorageSparseAMD( GLuint texture, GLenum target, GLenum internalFormat, GLsizei width, GLsizei height, GLsizei depth, GLsizei layers, GLbitfield flags )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage1D( GLuint texture, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage2D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void *pixels )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTextureView( GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTrackMatrixNV( GLenum target, GLuint address, GLenum matrix, GLenum transform )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackAttribsNV( GLsizei count, const GLint *attribs, GLenum bufferMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackBufferBase( GLuint xfb, GLuint index, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackBufferRange( GLuint xfb, GLuint index, GLuint buffer, GLintptr offset, GLsizeiptr size )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackStreamAttribsNV( GLsizei count, const GLint *attribs, GLsizei nbuffers, const GLint *bufstreams, GLenum bufferMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackVaryings( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackVaryingsEXT( GLuint program, GLsizei count, const GLchar *const*varyings, GLenum bufferMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformFeedbackVaryingsNV( GLuint program, GLsizei count, const GLint *locations, GLenum bufferMode )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum transformType, const GLfloat *transformValues )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glTranslatexOES( GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1d( GLint location, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1dv( GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1f( GLint location, GLfloat v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1fARB( GLint location, GLfloat v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1fv( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1fvARB( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1i( GLint location, GLint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1i64ARB( GLint location, GLint64 x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1i64NV( GLint location, GLint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1i64vARB( GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1i64vNV( GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1iARB( GLint location, GLint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1iv( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ivARB( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ui( GLint location, GLuint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ui64ARB( GLint location, GLuint64 x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ui64NV( GLint location, GLuint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ui64vARB( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1uiEXT( GLint location, GLuint v0 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1uiv( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform1uivEXT( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2d( GLint location, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2dv( GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2f( GLint location, GLfloat v0, GLfloat v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2fARB( GLint location, GLfloat v0, GLfloat v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2fv( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2fvARB( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2i( GLint location, GLint v0, GLint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2i64ARB( GLint location, GLint64 x, GLint64 y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2i64NV( GLint location, GLint64EXT x, GLint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2i64vARB( GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2i64vNV( GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2iARB( GLint location, GLint v0, GLint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2iv( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ivARB( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ui( GLint location, GLuint v0, GLuint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ui64ARB( GLint location, GLuint64 x, GLuint64 y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ui64vARB( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2uiEXT( GLint location, GLuint v0, GLuint v1 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2uiv( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform2uivEXT( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3d( GLint location, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3dv( GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3f( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3fv( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3fvARB( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3i( GLint location, GLint v0, GLint v1, GLint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3i64vARB( GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3i64vNV( GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3iARB( GLint location, GLint v0, GLint v1, GLint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3iv( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ivARB( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ui( GLint location, GLuint v0, GLuint v1, GLuint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ui64vARB( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3uiv( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform3uivEXT( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4d( GLint location, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4dv( GLint location, GLsizei count, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4f( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat v2, GLfloat v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4fv( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4fvARB( GLint location, GLsizei count, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4i( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4i64vARB( GLint location, GLsizei count, const GLint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4i64vNV( GLint location, GLsizei count, const GLint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4iARB( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4iv( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ivARB( GLint location, GLsizei count, const GLint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ui( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ui64vARB( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4ui64vNV( GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4uiv( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniform4uivEXT( GLint location, GLsizei count, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformBlockBinding( GLuint program, GLuint uniformBlockIndex, GLuint uniformBlockBinding )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformBufferEXT( GLuint program, GLint location, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformHandleui64ARB( GLint location, GLuint64 value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformHandleui64NV( GLint location, GLuint64 value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformHandleui64vARB( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformHandleui64vNV( GLint location, GLsizei count, const GLuint64 *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2x3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2x3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2x4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix2x4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3x2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3x2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3x4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix3x4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4fvARB( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4x2dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4x2fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4x3dv( GLint location, GLsizei count, GLboolean transpose, const GLdouble *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformMatrix4x3fv( GLint location, GLsizei count, GLboolean transpose, const GLfloat *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformSubroutinesuiv( GLenum shadertype, GLsizei count, const GLuint *indices )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformui64NV( GLint location, GLuint64EXT value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUniformui64vNV( GLint location, GLsizei count, const GLuint64EXT *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUnlockArraysEXT(void)
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glUnmapBuffer( GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glUnmapBufferARB( GLenum target )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glUnmapNamedBuffer( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLboolean null_glUnmapNamedBufferEXT( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glUnmapObjectBufferATI( GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUnmapTexture2DINTEL( GLuint texture, GLint level )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUpdateObjectBufferATI( GLuint buffer, GLuint offset, GLsizei size, const void *pointer, GLenum preserve )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUploadGpuMaskNVX( GLbitfield mask )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUseProgram( GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUseProgramObjectARB( GLhandleARB programObj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUseProgramStages( GLuint pipeline, GLbitfield stages, GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glUseShaderProgramEXT( GLenum type, GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVDPAUFiniNV(void)
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVDPAUGetSurfaceivNV( GLvdpauSurfaceNV surface, GLenum pname, GLsizei count, GLsizei *length, GLint *values )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVDPAUInitNV( const void *vdpDevice, const void *getProcAddress )
+{
+    ERR( "unsupported\n" );
+}
+static GLboolean null_glVDPAUIsSurfaceNV( GLvdpauSurfaceNV surface )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glVDPAUMapSurfacesNV( GLsizei numSurfaces, const GLvdpauSurfaceNV *surfaces )
+{
+    ERR( "unsupported\n" );
+}
+static GLvdpauSurfaceNV null_glVDPAURegisterOutputSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLvdpauSurfaceNV null_glVDPAURegisterVideoSurfaceNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static GLvdpauSurfaceNV null_glVDPAURegisterVideoSurfaceWithPictureStructureNV( const void *vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint *textureNames, GLboolean isFrameStructure )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glVDPAUSurfaceAccessNV( GLvdpauSurfaceNV surface, GLenum access )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVDPAUUnmapSurfacesNV( GLsizei numSurface, const GLvdpauSurfaceNV *surfaces )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVDPAUUnregisterSurfaceNV( GLvdpauSurfaceNV surface )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glValidateProgram( GLuint program )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glValidateProgramARB( GLhandleARB programObj )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glValidateProgramPipeline( GLuint pipeline )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantArrayObjectATI( GLuint id, GLenum type, GLsizei stride, GLuint buffer, GLuint offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantPointerEXT( GLuint id, GLenum type, GLuint stride, const void *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantbvEXT( GLuint id, const GLbyte *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantdvEXT( GLuint id, const GLdouble *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantfvEXT( GLuint id, const GLfloat *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantivEXT( GLuint id, const GLint *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantsvEXT( GLuint id, const GLshort *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantubvEXT( GLuint id, const GLubyte *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantuivEXT( GLuint id, const GLuint *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVariantusvEXT( GLuint id, const GLushort *addr )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2bOES( GLbyte x, GLbyte y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2hNV( GLhalfNV x, GLhalfNV y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2xOES( GLfixed x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex2xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3bOES( GLbyte x, GLbyte y, GLbyte z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3xOES( GLfixed x, GLfixed y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex3xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4bOES( GLbyte x, GLbyte y, GLbyte z, GLbyte w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4bvOES( const GLbyte *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4hvNV( const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4xOES( GLfixed x, GLfixed y, GLfixed z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertex4xvOES( const GLfixed *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayAttribBinding( GLuint vaobj, GLuint attribindex, GLuint bindingindex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayAttribFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayAttribIFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayAttribLFormat( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayBindVertexBufferEXT( GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayBindingDivisor( GLuint vaobj, GLuint bindingindex, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayEdgeFlagOffsetEXT( GLuint vaobj, GLuint buffer, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayElementBuffer( GLuint vaobj, GLuint buffer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayFogCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayIndexOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayMultiTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum texunit, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayNormalOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayParameteriAPPLE( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayRangeAPPLE( GLsizei length, void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayRangeNV( GLsizei length, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArraySecondaryColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribBindingEXT( GLuint vaobj, GLuint attribindex, GLuint bindingindex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribDivisorEXT( GLuint vaobj, GLuint index, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribIFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribIOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribLFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribLOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexAttribOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexBindingDivisorEXT( GLuint vaobj, GLuint bindingindex, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexBuffer( GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexBuffers( GLuint vaobj, GLuint first, GLsizei count, const GLuint *buffers, const GLintptr *offsets, const GLsizei *strides )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexArrayVertexOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1d( GLuint index, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1dARB( GLuint index, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1dNV( GLuint index, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1dvARB( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1dvNV( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1f( GLuint index, GLfloat x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1fARB( GLuint index, GLfloat x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1fNV( GLuint index, GLfloat x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1fv( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1fvARB( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1fvNV( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1hNV( GLuint index, GLhalfNV x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1hvNV( GLuint index, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1s( GLuint index, GLshort x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1sARB( GLuint index, GLshort x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1sNV( GLuint index, GLshort x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1sv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1svARB( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib1svNV( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2d( GLuint index, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2dARB( GLuint index, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2dNV( GLuint index, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2dvARB( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2dvNV( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2f( GLuint index, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2fARB( GLuint index, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2fNV( GLuint index, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2fv( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2fvARB( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2fvNV( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2hNV( GLuint index, GLhalfNV x, GLhalfNV y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2hvNV( GLuint index, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2s( GLuint index, GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2sARB( GLuint index, GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2sNV( GLuint index, GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2sv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2svARB( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib2svNV( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3d( GLuint index, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3dvARB( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3dvNV( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3f( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3fv( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3fvARB( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3fvNV( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3hNV( GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3hvNV( GLuint index, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3s( GLuint index, GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3sARB( GLuint index, GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3sNV( GLuint index, GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3sv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3svARB( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib3svNV( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nbv( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NbvARB( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Niv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NivARB( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nsv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NsvARB( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nub( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NubARB( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nubv( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NubvARB( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nuiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NuivARB( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4Nusv( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4NusvARB( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4bv( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4bvARB( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4d( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4dARB( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4dNV( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4dvARB( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4dvNV( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4f( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4fARB( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4fNV( GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4fv( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4fvARB( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4fvNV( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4hNV( GLuint index, GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4hvNV( GLuint index, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4iv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4ivARB( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4s( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4sARB( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4sNV( GLuint index, GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4sv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4svARB( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4svNV( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4ubNV( GLuint index, GLubyte x, GLubyte y, GLubyte z, GLubyte w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4ubv( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4ubvARB( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4ubvNV( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4uiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4uivARB( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4usv( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttrib4usvARB( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribArrayObjectATI( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLuint buffer, GLuint offset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribBinding( GLuint attribindex, GLuint bindingindex )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribDivisor( GLuint index, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribDivisorARB( GLuint index, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribFormat( GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribFormatNV( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1i( GLuint index, GLint x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1iEXT( GLuint index, GLint x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1iv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1ivEXT( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1ui( GLuint index, GLuint x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1uiEXT( GLuint index, GLuint x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1uiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI1uivEXT( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2i( GLuint index, GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2iEXT( GLuint index, GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2iv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2ivEXT( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2ui( GLuint index, GLuint x, GLuint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2uiEXT( GLuint index, GLuint x, GLuint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2uiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI2uivEXT( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3i( GLuint index, GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3iEXT( GLuint index, GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3iv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3ivEXT( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3ui( GLuint index, GLuint x, GLuint y, GLuint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3uiEXT( GLuint index, GLuint x, GLuint y, GLuint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3uiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI3uivEXT( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4bv( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4bvEXT( GLuint index, const GLbyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4i( GLuint index, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4iEXT( GLuint index, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4iv( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4ivEXT( GLuint index, const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4sv( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4svEXT( GLuint index, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4ubv( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4ubvEXT( GLuint index, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4ui( GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4uiEXT( GLuint index, GLuint x, GLuint y, GLuint z, GLuint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4uiv( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4uivEXT( GLuint index, const GLuint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4usv( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribI4usvEXT( GLuint index, const GLushort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribIFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribIFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribIPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribIPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1d( GLuint index, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1dEXT( GLuint index, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1dvEXT( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1i64NV( GLuint index, GLint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1i64vNV( GLuint index, const GLint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1ui64ARB( GLuint index, GLuint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1ui64NV( GLuint index, GLuint64EXT x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1ui64vARB( GLuint index, const GLuint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL1ui64vNV( GLuint index, const GLuint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2d( GLuint index, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2dEXT( GLuint index, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2dvEXT( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2i64NV( GLuint index, GLint64EXT x, GLint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2i64vNV( GLuint index, const GLint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL2ui64vNV( GLuint index, const GLuint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3d( GLuint index, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3dEXT( GLuint index, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3dvEXT( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3i64vNV( GLuint index, const GLint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL3ui64vNV( GLuint index, const GLuint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4d( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4dEXT( GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4dv( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4dvEXT( GLuint index, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4i64vNV( GLuint index, const GLint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribL4ui64vNV( GLuint index, const GLuint64EXT *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribLFormat( GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribLFormatNV( GLuint index, GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribLPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribLPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP1ui( GLuint index, GLenum type, GLboolean normalized, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP1uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP2ui( GLuint index, GLenum type, GLboolean normalized, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP2uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP3ui( GLuint index, GLenum type, GLboolean normalized, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP3uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP4ui( GLuint index, GLenum type, GLboolean normalized, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribP4uiv( GLuint index, GLenum type, GLboolean normalized, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribParameteriAMD( GLuint index, GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribPointer( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribPointerNV( GLuint index, GLint fsize, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs1dvNV( GLuint index, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs1fvNV( GLuint index, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs1hvNV( GLuint index, GLsizei n, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs1svNV( GLuint index, GLsizei count, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs2dvNV( GLuint index, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs2fvNV( GLuint index, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs2hvNV( GLuint index, GLsizei n, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs2svNV( GLuint index, GLsizei count, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs3dvNV( GLuint index, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs3fvNV( GLuint index, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs3hvNV( GLuint index, GLsizei n, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs3svNV( GLuint index, GLsizei count, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs4dvNV( GLuint index, GLsizei count, const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs4fvNV( GLuint index, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs4hvNV( GLuint index, GLsizei n, const GLhalfNV *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs4svNV( GLuint index, GLsizei count, const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexAttribs4ubvNV( GLuint index, GLsizei count, const GLubyte *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexBindingDivisor( GLuint bindingindex, GLuint divisor )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexBlendARB( GLint count )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexBlendEnvfATI( GLenum pname, GLfloat param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexBlendEnviATI( GLenum pname, GLint param )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexFormatNV( GLint size, GLenum type, GLsizei stride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP2ui( GLenum type, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP2uiv( GLenum type, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP3ui( GLenum type, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP3uiv( GLenum type, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP4ui( GLenum type, GLuint value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexP4uiv( GLenum type, const GLuint *value )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexPointerListIBM( GLint size, GLenum type, GLint stride, const void **pointer, GLint ptrstride )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexPointervINTEL( GLint size, GLenum type, const void **pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1dATI( GLenum stream, GLdouble x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1dvATI( GLenum stream, const GLdouble *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1fATI( GLenum stream, GLfloat x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1fvATI( GLenum stream, const GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1iATI( GLenum stream, GLint x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1ivATI( GLenum stream, const GLint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1sATI( GLenum stream, GLshort x )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream1svATI( GLenum stream, const GLshort *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2dATI( GLenum stream, GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2dvATI( GLenum stream, const GLdouble *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2fATI( GLenum stream, GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2fvATI( GLenum stream, const GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2iATI( GLenum stream, GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2ivATI( GLenum stream, const GLint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2sATI( GLenum stream, GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream2svATI( GLenum stream, const GLshort *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3dATI( GLenum stream, GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3dvATI( GLenum stream, const GLdouble *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3fATI( GLenum stream, GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3fvATI( GLenum stream, const GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3iATI( GLenum stream, GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3ivATI( GLenum stream, const GLint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3sATI( GLenum stream, GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream3svATI( GLenum stream, const GLshort *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4dATI( GLenum stream, GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4dvATI( GLenum stream, const GLdouble *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4fATI( GLenum stream, GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4fvATI( GLenum stream, const GLfloat *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4iATI( GLenum stream, GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4ivATI( GLenum stream, const GLint *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4sATI( GLenum stream, GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexStream4svATI( GLenum stream, const GLshort *coords )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexWeightPointerEXT( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexWeightfEXT( GLfloat weight )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexWeightfvEXT( const GLfloat *weight )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexWeighthNV( GLhalfNV weight )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVertexWeighthvNV( const GLhalfNV *weight )
+{
+    ERR( "unsupported\n" );
+}
+static GLenum null_glVideoCaptureNV( GLuint video_capture_slot, GLuint *sequence_num, GLuint64EXT *capture_time )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_glVideoCaptureStreamParameterdvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLdouble *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVideoCaptureStreamParameterfvNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLfloat *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glVideoCaptureStreamParameterivNV( GLuint video_capture_slot, GLuint stream, GLenum pname, const GLint *params )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewportArrayv( GLuint first, GLsizei count, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewportIndexedf( GLuint index, GLfloat x, GLfloat y, GLfloat w, GLfloat h )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewportIndexedfv( GLuint index, const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewportPositionWScaleNV( GLuint index, GLfloat xcoeff, GLfloat ycoeff )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glViewportSwizzleNV( GLuint index, GLenum swizzlex, GLenum swizzley, GLenum swizzlez, GLenum swizzlew )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWaitSemaphoreEXT( GLuint semaphore, GLuint numBufferBarriers, const GLuint *buffers, GLuint numTextureBarriers, const GLuint *textures, const GLenum *srcLayouts )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWaitSemaphoreui64NVX( GLuint waitGpu, GLsizei fenceObjectCount, const GLuint *semaphoreArray, const GLuint64 *fenceValueArray )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWaitVkSemaphoreNV( GLuint64 vkSemaphore )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightPathsNV( GLuint resultPath, GLsizei numPaths, const GLuint *paths, const GLfloat *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightbvARB( GLint size, const GLbyte *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightdvARB( GLint size, const GLdouble *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightfvARB( GLint size, const GLfloat *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightivARB( GLint size, const GLint *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightsvARB( GLint size, const GLshort *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightubvARB( GLint size, const GLubyte *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightuivARB( GLint size, const GLuint *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWeightusvARB( GLint size, const GLushort *weights )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2d( GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2dARB( GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2dMESA( GLdouble x, GLdouble y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2dvARB( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2dvMESA( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2f( GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2fARB( GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2fMESA( GLfloat x, GLfloat y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2fvARB( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2fvMESA( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2i( GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2iARB( GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2iMESA( GLint x, GLint y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2ivARB( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2ivMESA( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2s( GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2sARB( GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2sMESA( GLshort x, GLshort y )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2svARB( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos2svMESA( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3d( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3dARB( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3dMESA( GLdouble x, GLdouble y, GLdouble z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3dv( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3dvARB( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3dvMESA( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3f( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3fARB( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3fMESA( GLfloat x, GLfloat y, GLfloat z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3fv( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3fvARB( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3fvMESA( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3i( GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3iARB( GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3iMESA( GLint x, GLint y, GLint z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3iv( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3ivARB( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3ivMESA( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3s( GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3sARB( GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3sMESA( GLshort x, GLshort y, GLshort z )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3sv( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3svARB( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos3svMESA( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4dMESA( GLdouble x, GLdouble y, GLdouble z, GLdouble w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4dvMESA( const GLdouble *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4fMESA( GLfloat x, GLfloat y, GLfloat z, GLfloat w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4fvMESA( const GLfloat *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4iMESA( GLint x, GLint y, GLint z, GLint w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4ivMESA( const GLint *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4sMESA( GLshort x, GLshort y, GLshort z, GLshort w )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowPos4svMESA( const GLshort *v )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWindowRectanglesEXT( GLenum mode, GLsizei count, const GLint *box )
+{
+    ERR( "unsupported\n" );
+}
+static void null_glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLenum outY, GLenum outZ, GLenum outW )
+{
+    ERR( "unsupported\n" );
+}
+static void * null_wglAllocateMemoryNV( GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglBindTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static struct wgl_context * null_wglCreateContextAttribsARB( HDC hDC, struct wgl_context * hShareContext, const int *attribList )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static struct wgl_pbuffer * null_wglCreatePbufferARB( HDC hDC, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglDestroyPbufferARB( struct wgl_pbuffer * hPbuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static void null_wglFreeMemoryNV( void *pointer )
+{
+    ERR( "unsupported\n" );
+}
+static HDC null_wglGetCurrentReadDCARB(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static const char * null_wglGetExtensionsStringARB( HDC hdc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static const char * null_wglGetExtensionsStringEXT(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static HDC null_wglGetPbufferDCARB( struct wgl_pbuffer * hPbuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static int null_wglGetSwapIntervalEXT(void)
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglMakeContextCurrentARB( HDC hDrawDC, HDC hReadDC, struct wgl_context * hglrc )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint *value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static const GLchar * null_wglQueryCurrentRendererStringWINE( GLenum attribute )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglQueryPbufferARB( struct wgl_pbuffer * hPbuffer, int iAttribute, int *piValue )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum attribute, GLuint *value )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static const GLchar * null_wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static int null_wglReleasePbufferDCARB( struct wgl_pbuffer * hPbuffer, HDC hDC )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglReleaseTexImageARB( struct wgl_pbuffer * hPbuffer, int iBuffer )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglSetPbufferAttribARB( struct wgl_pbuffer * hPbuffer, const int *piAttribList )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglSetPixelFormatWINE( HDC hdc, int format )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
+static BOOL null_wglSwapIntervalEXT( int interval )
+{
+    ERR( "unsupported\n" );
+    return 0;
+}
 
 struct opengl_funcs null_opengl_funcs =
 {
+    .p_get_pixel_formats = null_get_pixel_formats,
     .p_wglCopyContext = null_wglCopyContext,
     .p_wglCreateContext = null_wglCreateContext,
     .p_wglDeleteContext = null_wglDeleteContext,

@@ -520,19 +520,18 @@ sub generate_null_func($$)
     my $func_ret = get_func_ret( $func, 1 );
     my $ret = "";
 
-    return "" if $name eq "glDebugEntry";
-
-    $ret .= "static $func_ret null_$name($decl_args)";
-    $ret .= " {";
+    $ret .= "static $func_ret null_$name($decl_args)\n";
+    $ret .= "{\n";
+    $ret .= "    ERR( \"unsupported\\n\" );\n";
     if ($name eq "glGetError")
     {
-        $ret .= " return GL_INVALID_OPERATION;";
+        $ret .= "    return GL_INVALID_OPERATION;\n";
     }
     elsif (!is_void_func( $func ))
     {
-        $ret .= " return 0;";
+        $ret .= "    return 0;\n";
     }
-    $ret .= " }\n";
+    $ret .= "}\n";
     return $ret;
 }
 
@@ -1151,9 +1150,7 @@ print OUT "#include \"unixlib.h\"\n";
 print OUT "#include \"unix_private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 
-print OUT "#ifdef _WIN64\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
-print OUT "#endif\n\n";
 
 print OUT "extern NTSTATUS process_attach( void *args );\n";
 print OUT "extern NTSTATUS thread_attach( void *args );\n";
@@ -1300,6 +1297,12 @@ foreach (sort keys %wgl_functions)
     next if defined $manual_win_functions{$_};
     print OUT generate_null_func($_, $wgl_functions{$_});
 }
+printf OUT "static void null_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,\n";
+printf OUT "                                    UINT *num_formats, UINT *num_onscreen_formats )\n";
+printf OUT "{\n";
+printf OUT "    ERR( \"unsupported\\n\" );\n";
+printf OUT "    *num_formats = *num_onscreen_formats = 0;\n";
+printf OUT "}\n";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -1314,6 +1317,7 @@ print OUT "\n";
 
 print OUT "struct opengl_funcs null_opengl_funcs =\n";
 print OUT "{\n";
+print OUT "    .p_get_pixel_formats = null_get_pixel_formats,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
