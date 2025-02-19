@@ -254,7 +254,10 @@ typedef BOOL (WINAPI *SetContextPropertyFunc)(const void *context,
  DWORD dwPropID, DWORD dwFlags, const void *pvData);
 typedef BOOL (WINAPI *SerializeElementFunc)(const void *context, DWORD dwFlags,
  BYTE *pbElement, DWORD *pcbElement);
-typedef BOOL (WINAPI *DeleteContextFunc)(const void *contex);
+typedef BOOL (WINAPI *DeleteContextFromStoreFunc)(const void *contex);
+typedef const void * (*FindContextByContextFunc)(HCERTSTORE store, const void *context);
+typedef const void * (WINAPI *DuplicateContextFunc)(const void *context);
+typedef void (WINAPI *FreeContextFunc)(const void *context);
 
 /* An abstract context (certificate, CRL, or CTL) interface */
 typedef struct _WINE_CONTEXT_INTERFACE
@@ -267,7 +270,10 @@ typedef struct _WINE_CONTEXT_INTERFACE
     GetContextPropertyFunc       getProp;
     SetContextPropertyFunc       setProp;
     SerializeElementFunc         serialize;
-    DeleteContextFunc            deleteFromStore;
+    DeleteContextFromStoreFunc   deleteFromStore;
+    FindContextByContextFunc     findContextByContext;
+    DuplicateContextFunc         duplicateContext;
+    FreeContextFunc              freeContext;
 } WINE_CONTEXT_INTERFACE;
 
 extern const WINE_CONTEXT_INTERFACE *pCertInterface;
