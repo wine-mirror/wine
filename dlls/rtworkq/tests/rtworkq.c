@@ -466,9 +466,68 @@ static void test_work_queue(void)
     IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
 }
 
+static void test_scheduled_items(void)
+{
+    struct test_callback *test_callback;
+    RTWQWORKITEM_KEY key, key2;
+    IRtwqAsyncResult *result;
+    ULONG refcount;
+    HRESULT hr;
+
+    test_callback = create_test_callback();
+
+    hr = RtwqStartup();
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+    hr = RtwqScheduleWorkItem(result, -5000, &key);
+    ok(hr == S_OK, "Failed to schedule item, hr %#lx.\n", hr);
+    IRtwqAsyncResult_Release(result);
+
+    hr = RtwqCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+
+    refcount = IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
+    ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
+
+    hr = RtwqCancelWorkItem(key);
+    ok(hr == RTWQ_E_NOT_FOUND || broken(hr == S_OK) /* < win10 */, "Unexpected hr %#lx.\n", hr);
+
+    test_callback = create_test_callback();
+
+    hr = RtwqCreateAsyncResult(NULL, &test_callback->IRtwqAsyncCallback_iface, NULL, &result);
+    ok(hr == S_OK, "Failed to create result, hr %#lx.\n", hr);
+
+    hr = RtwqPutWaitingWorkItem(NULL, 0, result, &key);
+    ok(hr == S_OK, "Failed to add waiting item, hr %#lx.\n", hr);
+
+    hr = RtwqPutWaitingWorkItem(NULL, 0, result, &key2);
+    ok(hr == S_OK, "Failed to add waiting item, hr %#lx.\n", hr);
+
+    hr = RtwqCancelWorkItem(key);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+
+    hr = RtwqCancelWorkItem(key2);
+    ok(hr == S_OK, "Failed to cancel item, hr %#lx.\n", hr);
+
+    hr = RtwqShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
+
+    Sleep(20);
+    /* One or two callback invocations with RTWQ_E_OPERATION_CANCELLED may have been
+     * pending when RtwqShutdown() was called. Release depends upon their execution. */
+    refcount = IRtwqAsyncResult_Release(result);
+    flaky_wine
+    ok(refcount == 0, "Unexpected refcount %lu.\n", refcount);
+
+    IRtwqAsyncCallback_Release(&test_callback->IRtwqAsyncCallback_iface);
+}
+
 START_TEST(rtworkq)
 {
     test_platform_init();
     test_undefined_queue_id();
     test_work_queue();
+    test_scheduled_items();
 }
