@@ -71,6 +71,7 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     ThemeManager,\
+    VCRuntime.ntx86,\
     LicenseInformation
 
 [DefaultInstall.NT]
@@ -94,6 +95,7 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     ThemeManager,\
+    VCRuntime.ntx86,\
     VersionInfo,\
     LicenseInformation
 
@@ -119,6 +121,7 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     ThemeManager,\
+    VCRuntime.ntamd64,\
     VersionInfo,\
     LicenseInformation
 
@@ -144,6 +147,8 @@ AddReg=\
     SessionMgr,\
     Tapi,\
     ThemeManager,\
+    VCRuntime.ntamd64,\
+    VCRuntime.ntarm64,\
     VersionInfo,\
     LicenseInformation
 
@@ -159,6 +164,8 @@ AddReg=\
     MCI,\
     Misc,\
     Tapi,\
+    VCRuntime.ntamd64,\
+    VCRuntime.ntx86,\
     VersionInfo,\
     LicenseInformation
 
@@ -2103,6 +2110,30 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"InternationalRule",,"8W10EFG"
 HKLM,%CurrentVersion%\Telephony\Country List\998,"LongDistanceRule",," 8WFG"
 HKLM,%CurrentVersion%\Telephony\Country List\998,"Name",,"Uzbekistan"
 HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
+
+[VCRuntime.ntamd64]
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Bld",0x10003,0x00008681
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Installed",0x10003,0x00000001
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Major",0x10003,0x0000000e
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Minor",0x10003,0x0000002a
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Rbld",0x10003,0x00000000
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64,"Version",2,"14.42.34433.0"
+
+[VCRuntime.ntarm64]
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Bld",0x10003,0x00008681
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Installed",0x10003,0x00000001
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Major",0x10003,0x0000000e
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Minor",0x10003,0x0000002a
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Rbld",0x10003,0x00000000
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\arm64,"Version",2,"14.42.34433.0"
+
+[VCRuntime.ntx86]
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Bld",0x10003,0x00008681
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Installed",0x10003,0x00000001
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Major",0x10003,0x0000000e
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Minor",0x10003,0x0000002a
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Rbld",0x10003,0x00000000
+HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.34433.0"
 
 [RegisterDllsSection]
 ;;some dlls have to be registered first
