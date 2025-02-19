@@ -377,11 +377,10 @@ static HRESULT WINAPI domattr_get_nodeTypeString(
     BSTR* p)
 {
     domattr *This = impl_from_IXMLDOMAttribute( iface );
-    static const WCHAR attributeW[] = {'a','t','t','r','i','b','u','t','e',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(attributeW, p);
+    return return_bstr(L"attribute", p);
 }
 
 static HRESULT WINAPI domattr_get_text(

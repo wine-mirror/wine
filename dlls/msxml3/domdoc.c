@@ -49,19 +49,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-static const WCHAR PropertySelectionLanguageW[] = {'S','e','l','e','c','t','i','o','n','L','a','n','g','u','a','g','e',0};
-static const WCHAR PropertySelectionNamespacesW[] = {'S','e','l','e','c','t','i','o','n','N','a','m','e','s','p','a','c','e','s',0};
-static const WCHAR PropertyProhibitDTDW[] = {'P','r','o','h','i','b','i','t','D','T','D',0};
-static const WCHAR PropertyNewParserW[] = {'N','e','w','P','a','r','s','e','r',0};
-static const WCHAR PropValueXPathW[] = {'X','P','a','t','h',0};
-static const WCHAR PropValueXSLPatternW[] = {'X','S','L','P','a','t','t','e','r','n',0};
-static const WCHAR PropertyResolveExternalsW[] = {'R','e','s','o','l','v','e','E','x','t','e','r','n','a','l','s',0};
-static const WCHAR PropertyAllowXsltScriptW[] = {'A','l','l','o','w','X','s','l','t','S','c','r','i','p','t',0};
-static const WCHAR PropertyAllowDocumentFunctionW[] = {'A','l','l','o','w','D','o','c','u','m','e','n','t','F','u','n','c','t','i','o','n',0};
-static const WCHAR PropertyNormalizeAttributeValuesW[] = {'N','o','r','m','a','l','i','z','e','A','t','t','r','i','b','u','t','e','V','a','l','u','e','s',0};
-static const WCHAR PropertyValidateOnParse[] = L"ValidateOnParse";
-static const WCHAR PropertyMaxElementDepth[] = L"MaxElementDepth";
-
 /* Anything that passes the test_get_ownerDocument()
  * tests can go here (data shared between all instances).
  * We need to preserve this when reloading a document,
@@ -1060,11 +1047,9 @@ static HRESULT WINAPI domdoc_get_nodeName(
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
 
-    static const WCHAR documentW[] = {'#','d','o','c','u','m','e','n','t',0};
-
     TRACE("(%p)->(%p)\n", This, name);
 
-    return return_bstr(documentW, name);
+    return return_bstr(L"#document", name);
 }
 
 
@@ -1317,11 +1302,10 @@ static HRESULT WINAPI domdoc_get_nodeTypeString(
     BSTR *p)
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    static const WCHAR documentW[] = {'d','o','c','u','m','e','n','t',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(documentW, p);
+    return return_bstr(L"document", p);
 }
 
 
@@ -2394,13 +2378,12 @@ static HRESULT WINAPI domdoc_get_parseError(
     IXMLDOMParseError** errorObj )
 {
     domdoc *This = impl_from_IXMLDOMDocument3( iface );
-    static const WCHAR err[] = {'e','r','r','o','r',0};
     BSTR error_string = NULL;
 
     FIXME("(%p)->(%p): creating a dummy parseError\n", iface, errorObj);
 
     if(This->error)
-        error_string = SysAllocString(err);
+        error_string = SysAllocString(L"error");
 
     *errorObj = create_parseError(This->error, NULL, error_string, NULL, 0, 0, 0);
     if(!*errorObj) return E_OUTOFMEMORY;
@@ -2573,10 +2556,9 @@ static char *xmldoc_encoding(IXMLDOMDocument3 *doc)
                 hr = IXMLDOMNode_get_attributes(node, &node_map);
                 if (hr == S_OK)
                 {
-                    static const WCHAR encodingW[] = {'e','n','c','o','d','i','n','g',0};
                     BSTR bstr;
 
-                    bstr = SysAllocString(encodingW);
+                    bstr = SysAllocString(L"encoding");
                     hr = IXMLDOMNamedNodeMap_getNamedItem(node_map, bstr, &item);
                     SysFreeString(bstr);
                     if (hr == S_OK)
@@ -3027,7 +3009,7 @@ static HRESULT WINAPI domdoc_setProperty(
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(p), debugstr_variant(&value));
 
-    if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
+    if (wcsicmp(p, L"SelectionLanguage") == 0)
     {
         VARIANT varStr;
         HRESULT hr;
@@ -3044,9 +3026,9 @@ static HRESULT WINAPI domdoc_setProperty(
             bstr = V_BSTR(&value);
 
         hr = S_OK;
-        if (lstrcmpiW(bstr, PropValueXPathW) == 0)
+        if (wcsicmp(bstr, L"XPath") == 0)
             This->properties->XPath = TRUE;
-        else if (lstrcmpiW(bstr, PropValueXSLPatternW) == 0)
+        else if (wcsicmp(bstr, L"XSLPattern") == 0)
             This->properties->XPath = FALSE;
         else
             hr = E_FAIL;
@@ -3054,7 +3036,7 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
-    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
+    else if (wcsicmp(p, L"SelectionNamespaces") == 0)
     {
         xmlChar *nsStr = (xmlChar*)This->properties->selectNsStr;
         struct list *pNsList;
@@ -3186,7 +3168,7 @@ static HRESULT WINAPI domdoc_setProperty(
         VariantClear(&varStr);
         return hr;
     }
-    else if (lstrcmpiW(p, PropertyValidateOnParse) == 0)
+    else if (wcsicmp(p, L"ValidateOnParse") == 0)
     {
         if (This->properties->version < MSXML4)
             return E_FAIL;
@@ -3196,13 +3178,13 @@ static HRESULT WINAPI domdoc_setProperty(
             return S_OK;
         }
     }
-    else if (lstrcmpiW(p, PropertyProhibitDTDW) == 0 ||
-             lstrcmpiW(p, PropertyNewParserW) == 0 ||
-             lstrcmpiW(p, PropertyResolveExternalsW) == 0 ||
-             lstrcmpiW(p, PropertyAllowXsltScriptW) == 0 ||
-             lstrcmpiW(p, PropertyNormalizeAttributeValuesW) == 0 ||
-             lstrcmpiW(p, PropertyAllowDocumentFunctionW) == 0 ||
-             lstrcmpiW(p, PropertyMaxElementDepth) == 0)
+    else if (wcsicmp(p, L"ProhibitDTD") == 0 ||
+             wcsicmp(p, L"NewParser") == 0 ||
+             wcsicmp(p, L"ResolveExternals") == 0 ||
+             wcsicmp(p, L"AllowXsltScript") == 0 ||
+             wcsicmp(p, L"NormalizeAttributeValues") == 0 ||
+             wcsicmp(p, L"AllowDocumentFunction") == 0 ||
+             wcsicmp(p, L"MaxElementDepth") == 0)
     {
         /* Ignore */
         FIXME("Ignoring property %s, value %s\n", debugstr_w(p), debugstr_variant(&value));
@@ -3225,15 +3207,15 @@ static HRESULT WINAPI domdoc_getProperty(
     if (!var)
         return E_INVALIDARG;
 
-    if (lstrcmpiW(p, PropertySelectionLanguageW) == 0)
+    if (wcsicmp(p, L"SelectionLanguage") == 0)
     {
         V_VT(var) = VT_BSTR;
         V_BSTR(var) = This->properties->XPath ?
-                      SysAllocString(PropValueXPathW) :
-                      SysAllocString(PropValueXSLPatternW);
+                      SysAllocString(L"XPath") :
+                      SysAllocString(L"XSLPattern");
         return V_BSTR(var) ? S_OK : E_OUTOFMEMORY;
     }
-    else if (lstrcmpiW(p, PropertySelectionNamespacesW) == 0)
+    else if (wcsicmp(p, L"SelectionNamespaces") == 0)
     {
         int lenA, lenW;
         BSTR rebuiltStr, cur;
@@ -3268,7 +3250,7 @@ static HRESULT WINAPI domdoc_getProperty(
         free(rebuiltStr);
         return S_OK;
     }
-    else if (lstrcmpiW(p, PropertyValidateOnParse) == 0)
+    else if (wcsicmp(p, L"ValidateOnParse") == 0)
     {
         if (This->properties->version < MSXML4)
             return E_FAIL;

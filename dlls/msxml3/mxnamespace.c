@@ -51,10 +51,6 @@ struct nscontext
 
 #define DEFAULT_PREFIX_ALLOC_COUNT 16
 
-static const WCHAR xmlW[] = {'x','m','l',0};
-static const WCHAR xmluriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g',
-    '/','X','M','L','/','1','9','9','8','/','n','a','m','e','s','p','a','c','e',0};
-
 typedef struct
 {
     DispatchEx dispex;
@@ -186,8 +182,8 @@ static struct nscontext* alloc_ns_context(void)
     }
 
     /* first allocated prefix is always 'xml' */
-    ctxt->ns[0].prefix = SysAllocString(xmlW);
-    ctxt->ns[0].uri = SysAllocString(xmluriW);
+    ctxt->ns[0].prefix = SysAllocString(L"xml");
+    ctxt->ns[0].uri = SysAllocString(L"http://www.w3.org/XML/1998/namespace");
     ctxt->count++;
     if (!ctxt->ns[0].prefix || !ctxt->ns[0].uri)
     {
@@ -273,13 +269,11 @@ static HRESULT WINAPI namespacemanager_popContext(IMXNamespaceManager *iface)
 static HRESULT WINAPI namespacemanager_declarePrefix(IMXNamespaceManager *iface,
     const WCHAR *prefix, const WCHAR *namespaceURI)
 {
-    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
-
     namespacemanager *This = impl_from_IMXNamespaceManager( iface );
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(prefix), debugstr_w(namespaceURI));
 
-    if (prefix && (!wcscmp(prefix, xmlW) || !wcscmp(prefix, xmlnsW) || !namespaceURI))
+    if (prefix && (!wcscmp(prefix, L"xml") || !wcscmp(prefix, L"xmlns") || !namespaceURI))
         return E_INVALIDARG;
 
     return declare_prefix(This, prefix, namespaceURI);

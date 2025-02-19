@@ -77,48 +77,27 @@ struct xml_encoding_data
     UINT cp;
 };
 
-static const WCHAR iso_8859_1W[] = {'i','s','o','-','8','8','5','9','-','1',0};
-static const WCHAR iso_8859_2W[] = {'i','s','o','-','8','8','5','9','-','2',0};
-static const WCHAR iso_8859_3W[] = {'i','s','o','-','8','8','5','9','-','3',0};
-static const WCHAR iso_8859_4W[] = {'i','s','o','-','8','8','5','9','-','4',0};
-static const WCHAR iso_8859_5W[] = {'i','s','o','-','8','8','5','9','-','5',0};
-static const WCHAR iso_8859_7W[] = {'i','s','o','-','8','8','5','9','-','7',0};
-static const WCHAR iso_8859_9W[] = {'i','s','o','-','8','8','5','9','-','9',0};
-static const WCHAR iso_8859_13W[] = {'i','s','o','-','8','8','5','9','-','1','3',0};
-static const WCHAR iso_8859_15W[] = {'i','s','o','-','8','8','5','9','-','1','5',0};
-static const WCHAR utf16W[] = {'U','T','F','-','1','6',0};
-static const WCHAR utf8W[] = {'U','T','F','-','8',0};
-static const WCHAR windows_1250W[] = {'w','i','n','d','o','w','s','-','1','2','5','0',0};
-static const WCHAR windows_1251W[] = {'w','i','n','d','o','w','s','-','1','2','5','1',0};
-static const WCHAR windows_1252W[] = {'w','i','n','d','o','w','s','-','1','2','5','2',0};
-static const WCHAR windows_1253W[] = {'w','i','n','d','o','w','s','-','1','2','5','3',0};
-static const WCHAR windows_1254W[] = {'w','i','n','d','o','w','s','-','1','2','5','4',0};
-static const WCHAR windows_1255W[] = {'w','i','n','d','o','w','s','-','1','2','5','5',0};
-static const WCHAR windows_1256W[] = {'w','i','n','d','o','w','s','-','1','2','5','6',0};
-static const WCHAR windows_1257W[] = {'w','i','n','d','o','w','s','-','1','2','5','7',0};
-static const WCHAR windows_1258W[] = {'w','i','n','d','o','w','s','-','1','2','5','8',0};
-
 static const struct xml_encoding_data xml_encoding_map[] = {
-    { iso_8859_1W,  XmlEncoding_ISO_8859_1,  28591 },
-    { iso_8859_13W, XmlEncoding_ISO_8859_13, 28603 },
-    { iso_8859_15W, XmlEncoding_ISO_8859_15, 28605 },
-    { iso_8859_2W,  XmlEncoding_ISO_8859_2,  28592 },
-    { iso_8859_3W,  XmlEncoding_ISO_8859_3,  28593 },
-    { iso_8859_4W,  XmlEncoding_ISO_8859_4,  28594 },
-    { iso_8859_5W,  XmlEncoding_ISO_8859_5,  28595 },
-    { iso_8859_7W,  XmlEncoding_ISO_8859_7,  28597 },
-    { iso_8859_9W,  XmlEncoding_ISO_8859_9,  28599 },
-    { utf16W,       XmlEncoding_UTF16,          ~0 },
-    { utf8W,        XmlEncoding_UTF8,      CP_UTF8 },
-    { windows_1250W,XmlEncoding_windows_1250, 1250 },
-    { windows_1251W,XmlEncoding_windows_1251, 1251 },
-    { windows_1252W,XmlEncoding_windows_1252, 1252 },
-    { windows_1253W,XmlEncoding_windows_1253, 1253 },
-    { windows_1254W,XmlEncoding_windows_1254, 1254 },
-    { windows_1255W,XmlEncoding_windows_1255, 1255 },
-    { windows_1256W,XmlEncoding_windows_1256, 1256 },
-    { windows_1257W,XmlEncoding_windows_1257, 1257 },
-    { windows_1258W,XmlEncoding_windows_1258, 1258 }
+    { L"iso-8859-1",   XmlEncoding_ISO_8859_1,  28591 },
+    { L"iso-8859-13",  XmlEncoding_ISO_8859_13, 28603 },
+    { L"iso-8859-15",  XmlEncoding_ISO_8859_15, 28605 },
+    { L"iso-8859-2",   XmlEncoding_ISO_8859_2,  28592 },
+    { L"iso-8859-3",   XmlEncoding_ISO_8859_3,  28593 },
+    { L"iso-8859-4",   XmlEncoding_ISO_8859_4,  28594 },
+    { L"iso-8859-5",   XmlEncoding_ISO_8859_5,  28595 },
+    { L"iso-8859-7",   XmlEncoding_ISO_8859_7,  28597 },
+    { L"iso-8859-9",   XmlEncoding_ISO_8859_9,  28599 },
+    { L"UTF-16",       XmlEncoding_UTF16,          ~0 },
+    { L"UTF-8",        XmlEncoding_UTF8,      CP_UTF8 },
+    { L"windows-1250", XmlEncoding_windows_1250, 1250 },
+    { L"windows-1251", XmlEncoding_windows_1251, 1251 },
+    { L"windows-1252", XmlEncoding_windows_1252, 1252 },
+    { L"windows-1253", XmlEncoding_windows_1253, 1253 },
+    { L"windows-1254", XmlEncoding_windows_1254, 1254 },
+    { L"windows-1255", XmlEncoding_windows_1255, 1255 },
+    { L"windows-1256", XmlEncoding_windows_1256, 1256 },
+    { L"windows-1257", XmlEncoding_windows_1257, 1257 },
+    { L"windows-1258", XmlEncoding_windows_1258, 1258 }
 };
 
 typedef enum
@@ -588,7 +567,7 @@ static void write_prolog_buffer(mxwriter *writer)
     if (writer->dest)
         write_output_buffer(writer, writer->encoding, -1);
     else
-        write_output_buffer(writer, utf16W, ARRAY_SIZE(utf16W) - 1);
+        write_output_buffer(writer, L"UTF-16", ARRAY_SIZE(L"UTF-16") - 1);
     write_output_buffer(writer, quotW, 1);
 
     /* standalone */
@@ -2589,7 +2568,6 @@ static dispex_static_data_t mxwriter_dispex = {
 
 HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
 {
-    static const WCHAR version10W[] = {'1','.','0',0};
     mxwriter *This;
     HRESULT hr;
 
@@ -2619,8 +2597,8 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->props[MXWriter_OmitXmlDecl] = VARIANT_FALSE;
     This->props[MXWriter_Standalone] = VARIANT_FALSE;
     This->prop_changed = FALSE;
-    This->encoding = SysAllocString(utf16W);
-    This->version  = SysAllocString(version10W);
+    This->encoding = SysAllocString(L"UTF-16");
+    This->version  = SysAllocString(L"1.0");
     This->xml_enc  = XmlEncoding_UTF16;
 
     This->element = NULL;

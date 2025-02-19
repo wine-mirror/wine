@@ -138,10 +138,6 @@ static HRESULT WINAPI domimpl_Invoke(
 
 static HRESULT WINAPI domimpl_hasFeature(IXMLDOMImplementation* This, BSTR feature, BSTR version, VARIANT_BOOL *hasFeature)
 {
-    static const WCHAR bVersion[] = {'1','.','0',0};
-    static const WCHAR bXML[] = {'X','M','L',0};
-    static const WCHAR bDOM[] = {'D','O','M',0};
-    static const WCHAR bMSDOM[] = {'M','S','-','D','O','M',0};
     BOOL bValidFeature = FALSE;
     BOOL bValidVersion = FALSE;
 
@@ -152,10 +148,10 @@ static HRESULT WINAPI domimpl_hasFeature(IXMLDOMImplementation* This, BSTR featu
 
     *hasFeature = VARIANT_FALSE;
 
-    if(!version || lstrcmpiW(version, bVersion) == 0)
+    if(!version || wcsicmp(version, L"1.0") == 0)
         bValidVersion = TRUE;
 
-    if(lstrcmpiW(feature, bXML) == 0 || lstrcmpiW(feature, bDOM) == 0 || lstrcmpiW(feature, bMSDOM) == 0)
+    if(wcsicmp(feature, L"XML") == 0 || wcsicmp(feature, L"DOM") == 0 || wcsicmp(feature, L"MS-DOM") == 0)
         bValidFeature = TRUE;
 
     if(bValidVersion && bValidFeature)

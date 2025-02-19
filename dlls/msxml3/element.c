@@ -384,11 +384,10 @@ static HRESULT WINAPI domelem_get_nodeTypeString(
     BSTR* p)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    static const WCHAR elementW[] = {'e','l','e','m','e','n','t',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(elementW, p);
+    return return_bstr(L"element", p);
 }
 
 static HRESULT WINAPI domelem_get_text(
@@ -1414,7 +1413,6 @@ static HRESULT WINAPI domelem_setAttributeNode(
     IXMLDOMAttribute** old)
 {
     domelem *This = impl_from_IXMLDOMElement( iface );
-    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
     xmlChar *name, *value;
     BSTR nameW, prefix;
     xmlnode *attr_node;
@@ -1439,7 +1437,7 @@ static HRESULT WINAPI domelem_setAttributeNode(
     if (hr != S_OK) return hr;
 
     /* adding xmlns attribute doesn't change a tree or existing namespace definition */
-    if (!wcscmp(nameW, xmlnsW))
+    if (!wcscmp(nameW, L"xmlns"))
     {
         SysFreeString(nameW);
         return DISP_E_UNKNOWNNAME;

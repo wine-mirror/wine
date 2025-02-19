@@ -158,12 +158,9 @@ static HRESULT WINAPI domcdata_get_nodeName(
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
 
-    static const WCHAR cdata_sectionW[] =
-        {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0};
-
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(cdata_sectionW, p);
+    return return_bstr(L"#cdata-section", p);
 }
 
 static HRESULT WINAPI domcdata_get_nodeValue(
@@ -352,11 +349,10 @@ static HRESULT WINAPI domcdata_get_nodeTypeString(
     BSTR* p)
 {
     domcdata *This = impl_from_IXMLDOMCDATASection( iface );
-    static const WCHAR cdatasectionW[] = {'c','d','a','t','a','s','e','c','t','i','o','n',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(cdatasectionW, p);
+    return return_bstr(L"cdatasection", p);
 }
 
 static HRESULT WINAPI domcdata_get_text(

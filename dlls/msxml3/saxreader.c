@@ -63,45 +63,6 @@ typedef enum
     LexicalHandlerParEntities    = 1 << 15
 } saxreader_feature;
 
-/* feature names */
-static const WCHAR FeatureExternalGeneralEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/',
-    'f','e','a','t','u','r','e','s','/','e','x','t','e','r','n','a','l','-','g','e','n','e','r','a','l',
-    '-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureExternalParameterEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','e','x','t','e','r','n','a','l','-','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureLexicalHandlerParEntitiesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','l','e','x','i','c','a','l','-','h','a','n','d','l','e','r','/','p','a','r','a','m','e','t','e','r','-','e','n','t','i','t','i','e','s',0
-};
-
-static const WCHAR FeatureProhibitDTDW[] = {
-    'p','r','o','h','i','b','i','t','-','d','t','d',0
-};
-
-static const WCHAR FeatureNamespacesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','n','a','m','e','s','p','a','c','e','s',0
-};
-
-static const WCHAR FeatureNamespacePrefixesW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/','s','a','x','/','f','e','a','t','u','r','e','s',
-    '/','n','a','m','e','s','p','a','c','e','-','p','r','e','f','i','x','e','s',0
-};
-
-static const WCHAR ExhaustiveErrorsW[] = {
-    'e','x','h','a','u','s','t','i','v','e','-','e','r','r','o','r','s',0
-};
-
-static const WCHAR SchemaValidationW[] = {
-    's','c','h','e','m','a','-','v','a','l','i','d','a','t','i','o','n',0
-};
-
 struct saxreader_feature_pair
 {
     saxreader_feature feature;
@@ -109,14 +70,14 @@ struct saxreader_feature_pair
 };
 
 static const struct saxreader_feature_pair saxreader_feature_map[] = {
-    { ExhaustiveErrors, ExhaustiveErrorsW },
-    { ExternalGeneralEntities, FeatureExternalGeneralEntitiesW },
-    { ExternalParameterEntities, FeatureExternalParameterEntitiesW },
-    { LexicalHandlerParEntities, FeatureLexicalHandlerParEntitiesW },
-    { NamespacePrefixes, FeatureNamespacePrefixesW },
-    { Namespaces, FeatureNamespacesW },
-    { ProhibitDTD, FeatureProhibitDTDW },
-    { SchemaValidation, SchemaValidationW },
+    { ExhaustiveErrors, L"exhaustive-errors" },
+    { ExternalGeneralEntities, L"http://xml.org/sax/features/external-general-entities" },
+    { ExternalParameterEntities, L"http://xml.org/sax/features/external-parameter-entities" },
+    { LexicalHandlerParEntities, L"http://xml.org/sax/features/lexical-handler/parameter-entities" },
+    { NamespacePrefixes, L"http://xml.org/sax/features/namespace-prefixes" },
+    { Namespaces, L"http://xml.org/sax/features/namespaces" },
+    { ProhibitDTD, L"prohibit-dtd" },
+    { SchemaValidation, L"schema-validation" },
 };
 
 static saxreader_feature get_saxreader_feature(const WCHAR *name)
@@ -370,50 +331,9 @@ static HRESULT saxreader_saxcharacters(saxlocator *locator, BSTR chars)
 }
 
 /* property names */
-static const WCHAR PropertyCharsetW[] = {
-    'c','h','a','r','s','e','t',0
-};
-static const WCHAR PropertyXmlDeclVersionW[] = {
-    'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
-};
-static const WCHAR PropertyDeclHandlerW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-    'd','e','c','l','a','r','a','t','i','o','n',
-    '-','h','a','n','d','l','e','r',0
-};
-static const WCHAR PropertyDomNodeW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-    'd','o','m','-','n','o','d','e',0
-};
-static const WCHAR PropertyInputSourceW[] = {
-    'i','n','p','u','t','-','s','o','u','r','c','e',0
-};
-static const WCHAR PropertyLexicalHandlerW[] = {
-    'h','t','t','p',':','/','/','x','m','l','.','o','r','g','/',
-    's','a','x','/','p','r','o','p','e','r','t','i','e','s','/',
-    'l','e','x','i','c','a','l','-','h','a','n','d','l','e','r',0
-};
-static const WCHAR PropertyMaxElementDepthW[] = {
-    'm','a','x','-','e','l','e','m','e','n','t','-','d','e','p','t','h',0
-};
-static const WCHAR PropertyMaxXMLSizeW[] = {
-    'm','a','x','-','x','m','l','-','s','i','z','e',0
-};
-static const WCHAR PropertySchemaDeclHandlerW[] = {
-    's','c','h','e','m','a','-','d','e','c','l','a','r','a','t','i','o','n','-',
-    'h','a','n','d','l','e','r',0
-};
-static const WCHAR PropertyXMLDeclEncodingW[] = {
-    'x','m','l','d','e','c','l','-','e','n','c','o','d','i','n','g',0
-};
-static const WCHAR PropertyXMLDeclStandaloneW[] = {
-    'x','m','l','d','e','c','l','-','s','t','a','n','d','a','l','o','n','e',0
-};
-static const WCHAR PropertyXMLDeclVersionW[] = {
-    'x','m','l','d','e','c','l','-','v','e','r','s','i','o','n',0
-};
+static const WCHAR PropertyDeclHandlerW[] = L"http://xml.org/sax/properties/declaration-handler";
+static const WCHAR PropertyDomNodeW[] = L"http://xml.org/sax/properties/dom-node";
+static const WCHAR PropertyLexicalHandlerW[] = L"http://xml.org/sax/properties/lexical-handler";
 
 static inline HRESULT set_feature_value(saxreader *reader, saxreader_feature feature, VARIANT_BOOL value)
 {
@@ -1388,7 +1308,7 @@ static const struct ISAXAttributesVtbl isaxattributes_vtbl =
    escaped to '&#38;'. This function takes care of ampersands only. */
 static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
 {
-    static const WCHAR ampescW[] = {'&','#','3','8',';',0};
+    static const WCHAR ampescW[] = L"&#38;";
     WCHAR *dest, *ptrW, *str;
     DWORD str_len;
     BSTR bstr;
@@ -1448,7 +1368,6 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
         int nb_attributes, const xmlChar **xmlAttributes)
 {
     static const xmlChar xmlns[] = "xmlns";
-    static const WCHAR xmlnsW[] = { 'x','m','l','n','s',0 };
 
     struct _attributes *attrs;
     int i;
@@ -1490,7 +1409,7 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
 
         SysFreeString(attrs[nb_attributes+i].szQName);
         if(!xmlNamespaces[2*i])
-            attrs[nb_attributes+i].szQName = SysAllocString(xmlnsW);
+            attrs[nb_attributes+i].szQName = SysAllocString(L"xmlns");
         else
             attrs[nb_attributes+i].szQName = QName_from_xmlChar(xmlns, xmlNamespaces[2*i]);
     }
@@ -2431,9 +2350,6 @@ static const struct ISAXLocatorVtbl SAXLocatorVtbl =
 
 static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, BOOL vbInterface)
 {
-    static const WCHAR w3xmlns[] = { 'h','t','t','p',':','/','/', 'w','w','w','.','w','3','.',
-        'o','r','g','/','2','0','0','0','/','x','m','l','n','s','/',0 };
-
     saxlocator *locator;
 
     locator = malloc(sizeof(*locator));
@@ -2457,7 +2373,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     locator->column = 0;
     locator->ret = S_OK;
     if (locator->saxreader->version >= MSXML6)
-        locator->namespaceUri = SysAllocString(w3xmlns);
+        locator->namespaceUri = SysAllocString(L"http://www.w3.org/2000/xmlns/");
     else
         locator->namespaceUri = SysAllocStringLen(NULL, 0);
     if(!locator->namespaceUri)
@@ -2800,14 +2716,14 @@ static HRESULT internal_putProperty(
     if(!memcmp(prop, PropertyLexicalHandlerW, sizeof(PropertyLexicalHandlerW)))
         return saxreader_put_handler_from_variant(This, SAXLexicalHandler, v, vbInterface);
 
-    if(!memcmp(prop, PropertyMaxXMLSizeW, sizeof(PropertyMaxXMLSizeW)))
+    if(!memcmp(prop, L"max-xml-size", sizeof(L"max-xml-size")))
     {
         if (V_VT(v) == VT_I4 && V_I4(v) == 0) return S_OK;
         FIXME("(%p)->(%s): max-xml-size unsupported\n", This, debugstr_variant(v));
         return E_NOTIMPL;
     }
 
-    if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
+    if(!memcmp(prop, L"max-element-depth", sizeof(L"max-element-depth")))
     {
         if (V_VT(v) == VT_I4 && V_I4(v) == 0) return S_OK;
         FIXME("(%p)->(%s): max-element-depth unsupported\n", This, debugstr_variant(v));
@@ -2816,25 +2732,25 @@ static HRESULT internal_putProperty(
 
     FIXME("(%p)->(%s:%s): unsupported property\n", This, debugstr_w(prop), debugstr_variant(v));
 
-    if(!memcmp(prop, PropertyCharsetW, sizeof(PropertyCharsetW)))
+    if(!memcmp(prop, L"charset", sizeof(L"charset")))
         return E_NOTIMPL;
 
     if(!memcmp(prop, PropertyDomNodeW, sizeof(PropertyDomNodeW)))
         return E_FAIL;
 
-    if(!memcmp(prop, PropertyInputSourceW, sizeof(PropertyInputSourceW)))
+    if(!memcmp(prop, L"input-source", sizeof(L"input-source")))
         return E_NOTIMPL;
 
-    if(!memcmp(prop, PropertySchemaDeclHandlerW, sizeof(PropertySchemaDeclHandlerW)))
+    if(!memcmp(prop, L"schema-declaration-handler", sizeof(L"schema-declaration-handler")))
         return E_NOTIMPL;
 
-    if(!memcmp(prop, PropertyXMLDeclEncodingW, sizeof(PropertyXMLDeclEncodingW)))
+    if(!memcmp(prop, L"xmldecl-encoding", sizeof(L"xmldecl-encoding")))
         return E_FAIL;
 
-    if(!memcmp(prop, PropertyXMLDeclStandaloneW, sizeof(PropertyXMLDeclStandaloneW)))
+    if(!memcmp(prop, L"xmldecl-standalone", sizeof(L"xmldecl-standalone")))
         return E_FAIL;
 
-    if(!memcmp(prop, PropertyXMLDeclVersionW, sizeof(PropertyXMLDeclVersionW)))
+    if(!memcmp(prop, L"xmldecl-version", sizeof(L"xmldecl-version")))
         return E_FAIL;
 
     return E_INVALIDARG;
@@ -2860,7 +2776,7 @@ static HRESULT internal_getProperty(const saxreader* This, const WCHAR *prop, VA
         return S_OK;
     }
 
-    if (!memcmp(PropertyXmlDeclVersionW, prop, sizeof(PropertyXmlDeclVersionW)))
+    if (!memcmp(L"xmldecl-version", prop, sizeof(L"xmldecl-version")))
     {
         V_VT(value) = VT_BSTR;
         V_BSTR(value) = SysAllocString(This->xmldecl_version);

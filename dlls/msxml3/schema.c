@@ -123,80 +123,6 @@ static const tid_t schema_cache_se_tids[] = {
 #define DT_MIN_HASH_VALUE 2
 #define DT_MAX_HASH_VALUE 115
 
-static const xmlChar DT_bin_base64[] = "bin.base64";
-static const xmlChar DT_bin_hex[] = "bin.hex";
-static const xmlChar DT_boolean[] = "boolean";
-static const xmlChar DT_char[] = "char";
-static const xmlChar DT_date[] = "date";
-static const xmlChar DT_date_tz[] = "date.tz";
-static const xmlChar DT_dateTime[] = "dateTime";
-static const xmlChar DT_dateTime_tz[] = "dateTime.tz";
-static const xmlChar DT_entity[] = "entity";
-static const xmlChar DT_entities[] = "entities";
-static const xmlChar DT_enumeration[] = "enumeration";
-static const xmlChar DT_fixed_14_4[] = "fixed.14.4";
-static const xmlChar DT_float[] = "float";
-static const xmlChar DT_i1[] = "i1";
-static const xmlChar DT_i2[] = "i2";
-static const xmlChar DT_i4[] = "i4";
-static const xmlChar DT_i8[] = "i8";
-static const xmlChar DT_id[] = "id";
-static const xmlChar DT_idref[] = "idref";
-static const xmlChar DT_idrefs[] = "idrefs";
-static const xmlChar DT_int[] = "int";
-static const xmlChar DT_nmtoken[] = "nmtoken";
-static const xmlChar DT_nmtokens[] = "nmtokens";
-static const xmlChar DT_notation[] = "notation";
-static const xmlChar DT_number[] = "number";
-static const xmlChar DT_r4[] = "r4";
-static const xmlChar DT_r8[] = "r8";
-static const xmlChar DT_string[] = "string";
-static const xmlChar DT_time[] = "time";
-static const xmlChar DT_time_tz[] = "time.tz";
-static const xmlChar DT_ui1[] = "ui1";
-static const xmlChar DT_ui2[] = "ui2";
-static const xmlChar DT_ui4[] = "ui4";
-static const xmlChar DT_ui8[] = "ui8";
-static const xmlChar DT_uri[] = "uri";
-static const xmlChar DT_uuid[] = "uuid";
-
-static const OLECHAR wDT_bin_base64[] = {'b','i','n','.','b','a','s','e','6','4',0};
-static const OLECHAR wDT_bin_hex[] = {'b','i','n','.','h','e','x',0};
-static const OLECHAR wDT_boolean[] = {'b','o','o','l','e','a','n',0};
-static const OLECHAR wDT_char[] = {'c','h','a','r',0};
-static const OLECHAR wDT_date[] = {'d','a','t','e',0};
-static const OLECHAR wDT_date_tz[] = {'d','a','t','e','.','t','z',0};
-static const OLECHAR wDT_dateTime[] = {'d','a','t','e','T','i','m','e',0};
-static const OLECHAR wDT_dateTime_tz[] = {'d','a','t','e','T','i','m','e','.','t','z',0};
-static const OLECHAR wDT_entity[] = {'e','n','t','i','t','y',0};
-static const OLECHAR wDT_entities[] = {'e','n','t','i','t','i','e','s',0};
-static const OLECHAR wDT_enumeration[] = {'e','n','u','m','e','r','a','t','i','o','n',0};
-static const OLECHAR wDT_fixed_14_4[] = {'f','i','x','e','d','.','1','4','.','4',0};
-static const OLECHAR wDT_float[] = {'f','l','o','a','t',0};
-static const OLECHAR wDT_i1[] = {'i','1',0};
-static const OLECHAR wDT_i2[] = {'i','2',0};
-static const OLECHAR wDT_i4[] = {'i','4',0};
-static const OLECHAR wDT_i8[] = {'i','8',0};
-static const OLECHAR wDT_id[] = {'i','d',0};
-static const OLECHAR wDT_idref[] = {'i','d','r','e','f',0};
-static const OLECHAR wDT_idrefs[] = {'i','d','r','e','f','s',0};
-static const OLECHAR wDT_int[] = {'i','n','t',0};
-static const OLECHAR wDT_nmtoken[] = {'n','m','t','o','k','e','n',0};
-static const OLECHAR wDT_nmtokens[] = {'n','m','t','o','k','e','n','s',0};
-static const OLECHAR wDT_notation[] = {'n','o','t','a','t','i','o','n',0};
-static const OLECHAR wDT_number[] = {'n','u','m','b','e','r',0};
-static const OLECHAR wDT_r4[] = {'r','4',0};
-static const OLECHAR wDT_r8[] = {'r','8',0};
-static const OLECHAR wDT_string[] = {'s','t','r','i','n','g',0};
-static const OLECHAR wDT_time[] = {'t','i','m','e',0};
-static const OLECHAR wDT_time_tz[] = {'t','i','m','e','.','t','z',0};
-static const OLECHAR wDT_ui1[] = {'u','i','1',0};
-static const OLECHAR wDT_ui2[] = {'u','i','2',0};
-static const OLECHAR wDT_ui4[] = {'u','i','4',0};
-static const OLECHAR wDT_ui8[] = {'u','i','8',0};
-static const OLECHAR wDT_uri[] = {'u','r','i',0};
-static const OLECHAR wDT_uuid[] = {'u','u','i','d',0};
-
 static const BYTE hash_assoc_values[] =
 {
     116, 116, 116, 116, 116, 116, 116, 116, 116, 116,
@@ -396,85 +322,52 @@ static DWORD dt_hash_bstr(OLECHAR const* bstr, int len /* calculated if -1 */)
     return hval;
 }
 
-static const xmlChar *const DT_string_table[LAST_DT] =
+#define DT_ENTRY(name) { name, L##name }
+static const struct
 {
-    DT_bin_base64,
-    DT_bin_hex,
-    DT_boolean,
-    DT_char,
-    DT_date,
-    DT_date_tz,
-    DT_dateTime,
-    DT_dateTime_tz,
-    DT_entity,
-    DT_entities,
-    DT_enumeration,
-    DT_fixed_14_4,
-    DT_float,
-    DT_i1,
-    DT_i2,
-    DT_i4,
-    DT_i8,
-    DT_id,
-    DT_idref,
-    DT_idrefs,
-    DT_int,
-    DT_nmtoken,
-    DT_nmtokens,
-    DT_notation,
-    DT_number,
-    DT_r4,
-    DT_r8,
-    DT_string,
-    DT_time,
-    DT_time_tz,
-    DT_ui1,
-    DT_ui2,
-    DT_ui4,
-    DT_ui8,
-    DT_uri,
-    DT_uuid
-};
-
-static const WCHAR *const DT_wstring_table[LAST_DT] =
+    xmlChar x[16];
+    WCHAR w[16];
+}
+DT_string_table[LAST_DT] =
 {
-    wDT_bin_base64,
-    wDT_bin_hex,
-    wDT_boolean,
-    wDT_char,
-    wDT_date,
-    wDT_date_tz,
-    wDT_dateTime,
-    wDT_dateTime_tz,
-    wDT_entity,
-    wDT_entities,
-    wDT_enumeration,
-    wDT_fixed_14_4,
-    wDT_float,
-    wDT_i1,
-    wDT_i2,
-    wDT_i4,
-    wDT_i8,
-    wDT_id,
-    wDT_idref,
-    wDT_idrefs,
-    wDT_int,
-    wDT_nmtoken,
-    wDT_nmtokens,
-    wDT_notation,
-    wDT_number,
-    wDT_r4,
-    wDT_r8,
-    wDT_string,
-    wDT_time,
-    wDT_time_tz,
-    wDT_ui1,
-    wDT_ui2,
-    wDT_ui4,
-    wDT_ui8,
-    wDT_uri,
-    wDT_uuid
+    DT_ENTRY("bin.base64"),
+    DT_ENTRY("bin.hex"),
+    DT_ENTRY("boolean"),
+    DT_ENTRY("char"),
+    DT_ENTRY("date"),
+    DT_ENTRY("date.tz"),
+    DT_ENTRY("dateTime"),
+    DT_ENTRY("dateTime.tz"),
+    DT_ENTRY("entity"),
+    DT_ENTRY("entities"),
+    DT_ENTRY("enumeration"),
+    DT_ENTRY("fixed.14.4"),
+    DT_ENTRY("float"),
+    DT_ENTRY("i1"),
+    DT_ENTRY("i2"),
+    DT_ENTRY("i4"),
+    DT_ENTRY("i8"),
+    DT_ENTRY("id"),
+    DT_ENTRY("idref"),
+    DT_ENTRY("idrefs"),
+    DT_ENTRY("int"),
+    DT_ENTRY("nmtoken"),
+    DT_ENTRY("nmtokens"),
+    DT_ENTRY("notation"),
+    DT_ENTRY("number"),
+    DT_ENTRY("r4"),
+    DT_ENTRY("r8"),
+    DT_ENTRY("string"),
+    DT_ENTRY("time"),
+    DT_ENTRY("time.tz"),
+    DT_ENTRY("ui1"),
+    DT_ENTRY("ui2"),
+    DT_ENTRY("ui4"),
+    DT_ENTRY("ui8"),
+    DT_ENTRY("uri"),
+    DT_ENTRY("uuid"),
 };
+#undef DT_ENTRY
 
 static const XDR_DT DT_lookup_table[] =
 {
@@ -546,7 +439,7 @@ XDR_DT str_to_dt(xmlChar const* str, int len /* calculated if -1 */)
     if (hash <= DT_MAX_HASH_VALUE)
         dt = DT_lookup_table[hash];
 
-    if (dt != DT_INVALID && xmlStrcasecmp(str, DT_string_table[dt]) == 0)
+    if (dt != DT_INVALID && xmlStrcasecmp(str, DT_string_table[dt].x) == 0)
         return dt;
 
     return DT_INVALID;
@@ -560,7 +453,7 @@ XDR_DT bstr_to_dt(OLECHAR const* bstr, int len /* calculated if -1 */)
     if (hash <= DT_MAX_HASH_VALUE)
         dt = DT_lookup_table[hash];
 
-    if (dt != DT_INVALID && lstrcmpiW(bstr, DT_wstring_table[dt]) == 0)
+    if (dt != DT_INVALID && wcsicmp(bstr, DT_string_table[dt].w) == 0)
         return dt;
 
     return DT_INVALID;
@@ -571,7 +464,7 @@ xmlChar const* dt_to_str(XDR_DT dt)
     if (dt == DT_INVALID)
         return NULL;
 
-    return DT_string_table[dt];
+    return DT_string_table[dt].x;
 }
 
 OLECHAR const* dt_to_bstr(XDR_DT dt)
@@ -579,12 +472,12 @@ OLECHAR const* dt_to_bstr(XDR_DT dt)
     if (dt == DT_INVALID)
         return NULL;
 
-    return DT_wstring_table[dt];
+    return DT_string_table[dt].w;
 }
 
 const char* debugstr_dt(XDR_DT dt)
 {
-    return debugstr_a(dt != DT_INVALID ? (const char*)DT_string_table[dt] : NULL);
+    return debugstr_a(dt != DT_INVALID ? (const char*)DT_string_table[dt].x : NULL);
 }
 
 HRESULT dt_validate(XDR_DT dt, xmlChar const* content)
