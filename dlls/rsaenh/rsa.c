@@ -75,7 +75,6 @@ static int rand_prime(mp_int *N, long len)
 
    /* allow sizes between 2 and 256 bytes for a prime size */
    if (len < 16 || len > 8192) {
-      printf("Invalid prime size!\n");
       return CRYPT_INVALID_PRIME_SIZE;
    }
    
