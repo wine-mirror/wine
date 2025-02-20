@@ -214,12 +214,14 @@ static context_t *MemStore_enumContext(WINE_MEMSTORE *store, struct list *list, 
 
 static BOOL MemStore_deleteContext(WINE_MEMSTORE *store, context_t *context)
 {
+    EnterCriticalSection(&store->cs);
     if (!context->deleted_from_store)
     {
         context->deleted_from_store = TRUE;
         if (!context->ref)
             memstore_free_context(context);
     }
+    LeaveCriticalSection(&store->cs);
     return TRUE;
 }
 
