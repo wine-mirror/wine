@@ -903,36 +903,45 @@ static void report_test_start( struct wine_test *test, const char *subtest, cons
 }
 
 /* filter out color escapes and null characters from test output data */
-static void *filter_data( const char *data, DWORD size )
+static void *filter_data( const char *data, DWORD size, DWORD *output_size )
 {
-    DWORD i, j;
-    char *ret = malloc( size + 1 );
+    DWORD i, j, eol, ignore = 0;
+    char *ret;
 
-    for (i = j = 0; i < size; i++)
+    if (!(ret = malloc( size + 1 ))) return NULL;
+    for (i = j = eol = 0; i < size; i++)
     {
         if (data[i] == '\x1b' && data[i + 1] == '[')
         {
             while (data[i] && data[i] != 'm') i++;
         }
         else if (data[i]) ret[j++] = data[i];
+        if (!strncmp( data + i, " Test succeeded", 15 )) ignore += i + 15 - eol;
+        if (data[i] == '\n') eol = i;
     }
     ret[j] = 0;
+    *output_size = j - ignore;
+
     return ret;
 }
 
 static void report_test_done( struct wine_test *test, const char *subtest, const char *file, DWORD pid, DWORD ticks,
                               HANDLE out_file, UINT status, const char *data, DWORD size )
 {
-    if (quiet_mode <= 1 || status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
-    xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
-    if (size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+    char *filtered_data;
+    DWORD output_size;
 
-    if (junit)
+    if (!(filtered_data = filter_data( data, size, &output_size ))) return;
+
+    if (quiet_mode <= 1 || status || output_size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+    xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
+    if (output_size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+
+    if (filtered_data && junit)
     {
         int total = 0, fail_total = 0, skip_total = 0, failures = 0;
         const char *next, *line, *ptr, *dir = strrchr( file, '/' );
         float time, last_time = 0;
-        char *filtered_data = filter_data( data, size );
 
         for (line = next = filtered_data; *line; line = next)
         {
@@ -1018,7 +1027,7 @@ static void report_test_done( struct wine_test *test, const char *subtest, const
             output( junit, "<system-out>Test exited with status %d</system-out><failure/>", status );
             output( junit, "</testcase>\n" );
         }
-        if (size > MAX_OUTPUT_SIZE)
+        if (output_size > MAX_OUTPUT_SIZE)
         {
             output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s output overflow\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
                      test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
@@ -1028,8 +1037,9 @@ static void report_test_done( struct wine_test *test, const char *subtest, const
         }
 
         output( junit, "  </testsuite>\n" );
-        free( filtered_data );
     }
+
+    free( filtered_data );
 }
 
 static void report_test_skip( struct wine_test *test, const char *subtest, const char *file )
