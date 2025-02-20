@@ -193,6 +193,10 @@ NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
                                            union winebluetooth_property *property );
 
 void winebluetooth_device_free( winebluetooth_device_t device );
+static inline BOOL winebluetooth_device_equal( winebluetooth_device_t d1, winebluetooth_device_t d2 )
+{
+    return d1.handle == d2.handle;
+}
 
 enum winebluetooth_watcher_event_type
 {
@@ -200,6 +204,7 @@ enum winebluetooth_watcher_event_type
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -226,12 +231,18 @@ struct winebluetooth_watcher_event_device_added
     winebluetooth_radio_t radio;
 };
 
+struct winebluetooth_watcher_event_device_removed
+{
+    winebluetooth_device_t device;
+};
+
 union winebluetooth_watcher_event_data
 {
     struct winebluetooth_watcher_event_radio_added radio_added;
     winebluetooth_radio_t radio_removed;
     struct winebluetooth_watcher_event_radio_props_changed radio_props_changed;
     struct winebluetooth_watcher_event_device_added device_added;
+    struct winebluetooth_watcher_event_device_removed device_removed;
 };
 
 struct winebluetooth_watcher_event

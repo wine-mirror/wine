@@ -453,6 +453,33 @@ static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_even
     winebluetooth_radio_free( event.radio );
 }
 
+static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_event_device_removed event )
+{
+    struct bluetooth_radio *radio;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
+    {
+        struct bluetooth_remote_device *device, *next;
+
+        EnterCriticalSection( &radio->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY_SAFE( device, next, &radio->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            if (winebluetooth_device_equal( event.device, device->device ))
+            {
+                list_remove( &device->entry );
+                winebluetooth_device_free( device->device );
+                DeleteCriticalSection( &device->props_cs );
+                free( device );
+                break;
+            }
+        }
+        LeaveCriticalSection( &radio->remote_devices_cs );
+    }
+    LeaveCriticalSection( &device_list_cs );
+    winebluetooth_device_free( event.device );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -481,6 +508,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED:
                         bluetooth_radio_add_remote_device( event->event_data.device_added );
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED:
+                        bluetooth_radio_remove_remote_device( event->event_data.device_removed );
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );

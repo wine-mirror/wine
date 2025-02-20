@@ -909,6 +909,22 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                         event_list, BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED, event ))
                     unix_name_free( radio_name );
             }
+            else if (!strcmp( interfaces[i], BLUEZ_INTERFACE_DEVICE ))
+            {
+                struct unix_name *device;
+                union winebluetooth_watcher_event_data event;
+
+                device = unix_name_get_or_create( object_path );
+                if (!device)
+                {
+                    ERR( "Failed to allocate memory for adapter path %s\n", object_path );
+                    continue;
+                }
+                event.device_removed.device.handle = (UINT_PTR)device;
+                if (!bluez_event_list_queue_new_event( event_list, BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED,
+                                                       event ))
+                    unix_name_free( device );
+            }
         }
         p_dbus_free_string_array( interfaces );
     }
@@ -1058,6 +1074,9 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED:
             unix_name_free( (struct unix_name *)event1->event.device_added.radio.handle );
             unix_name_free( (struct unix_name *)event1->event.device_added.device.handle );
+            break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED:
+            unix_name_free( (struct unix_name *)event1->event.device_removed.device.handle );
             break;
         }
         free( event1 );
