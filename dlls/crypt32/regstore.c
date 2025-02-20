@@ -43,6 +43,7 @@ typedef struct _WINE_REGSTOREINFO
     struct list      certsToDelete;
     struct list      crlsToDelete;
     struct list      ctlsToDelete;
+    HANDLE           key_modified_event;
 } WINE_REGSTOREINFO;
 
 void CRYPT_HashToStr(const BYTE *hash, LPWSTR asciiHash)
@@ -324,6 +325,7 @@ static void WINAPI CRYPT_RegCloseStore(HCERTSTORE hCertStore, DWORD dwFlags)
 
     CRYPT_RegFlushStore(store, FALSE);
     RegCloseKey(store->key);
+    CloseHandle(store->key_modified_event);
     store->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&store->cs);
     CryptMemFree(store);
@@ -461,13 +463,22 @@ static BOOL WINAPI CRYPT_RegControl(HCERTSTORE hCertStore, DWORD dwFlags,
     {
     case CERT_STORE_CTRL_RESYNC:
     {
-        HCERTSTORE memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
-         CERT_STORE_CREATE_NEW_FLAG, NULL);
+        HCERTSTORE memStore;
+        DWORD ret;
 
+        EnterCriticalSection(&store->cs);
         CRYPT_RegFlushStore(store, FALSE);
-        CRYPT_RegReadFromReg(store->key, memStore, CERT_STORE_ADD_REPLACE_EXISTING);
-        I_CertUpdateStore(store->memStore, memStore, 0, 0);
-        CertCloseStore(memStore, 0);
+        if ((ret = WaitForSingleObject(store->key_modified_event, 0)) != WAIT_TIMEOUT)
+        {
+            memStore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+            if (RegNotifyChangeKeyValue(store->key, TRUE, REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET,
+                store->key_modified_event, TRUE))
+                ERR("RegNotifyChangeKeyValue failed.\n");
+            CRYPT_RegReadFromReg(store->key, memStore, CERT_STORE_ADD_REPLACE_EXISTING);
+            I_CertUpdateStore(store->memStore, memStore, 0, 0);
+            CertCloseStore(memStore, 0);
+        }
+        LeaveCriticalSection(&store->cs);
         break;
     }
     case CERT_STORE_CTRL_COMMIT:
@@ -553,6 +564,10 @@ WINECRYPT_CERTSTORE *CRYPT_RegOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags,
                     list_init(&regInfo->certsToDelete);
                     list_init(&regInfo->crlsToDelete);
                     list_init(&regInfo->ctlsToDelete);
+                    regInfo->key_modified_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+                    if (RegNotifyChangeKeyValue(regInfo->key, TRUE, REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_LAST_SET,
+                        regInfo->key_modified_event, TRUE))
+                        ERR("RegNotifyChangeKeyValue failed.\n");
                     CRYPT_RegReadFromReg(regInfo->key, regInfo->memStore, CERT_STORE_ADD_ALWAYS);
                     regInfo->dirty = FALSE;
                     provInfo.cbSize = sizeof(provInfo);
