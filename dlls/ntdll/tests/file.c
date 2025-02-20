@@ -1392,7 +1392,7 @@ static void test_file_full_size_information(void)
 
     if (res == STATUS_NOT_IMPLEMENTED || res == STATUS_INVALID_PARAMETER)
     {
-        skip( "FileFsFullSizeInformationEx not supported.\n" );
+        win_skip( "FileFsFullSizeInformationEx not supported.\n" );
         CloseHandle( h );
         return;
     }

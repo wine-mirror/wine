@@ -2122,6 +2122,31 @@ static NTSTATUS get_full_size_info(int fd, FILE_FS_FULL_SIZE_INFORMATION *info) 
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_full_size_info_ex(int fd, FILE_FS_FULL_SIZE_INFORMATION_EX *info)
+{
+    FILE_FS_FULL_SIZE_INFORMATION full_info;
+    NTSTATUS status;
+
+    if ((status = get_full_size_info(fd, &full_info)) != STATUS_SUCCESS)
+        return status;
+
+    info->ActualTotalAllocationUnits = full_info.TotalAllocationUnits.QuadPart;
+    info->ActualAvailableAllocationUnits = full_info.ActualAvailableAllocationUnits.QuadPart;
+    info->ActualPoolUnavailableAllocationUnits = 0;
+    info->CallerAvailableAllocationUnits = full_info.CallerAvailableAllocationUnits.QuadPart;
+    info->CallerPoolUnavailableAllocationUnits = 0;
+    info->UsedAllocationUnits = info->ActualTotalAllocationUnits - info->ActualAvailableAllocationUnits;
+    info->CallerTotalAllocationUnits = info->CallerAvailableAllocationUnits + info->UsedAllocationUnits;
+    info->TotalReservedAllocationUnits = 0;
+    info->VolumeStorageReserveAllocationUnits = 0;
+    info->AvailableCommittedAllocationUnits = 0;
+    info->PoolAvailableAllocationUnits = 0;
+    info->SectorsPerAllocationUnit = full_info.SectorsPerAllocationUnit;
+    info->BytesPerSector = full_info.BytesPerSector;
+
+    return STATUS_SUCCESS;
+}
+
 
 static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
                                       ULONG length, FILE_INFORMATION_CLASS info_class )
@@ -7033,6 +7058,17 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
         {
             FILE_FS_FULL_SIZE_INFORMATION *info = buffer;
             if ((status = get_full_size_info(fd, info)) == STATUS_SUCCESS)
+                io->Information = sizeof(*info);
+        }
+        break;
+
+    case FileFsFullSizeInformationEx:
+        if (length < sizeof(FILE_FS_FULL_SIZE_INFORMATION_EX))
+            status = STATUS_BUFFER_TOO_SMALL;
+        else
+        {
+            FILE_FS_FULL_SIZE_INFORMATION_EX *info = buffer;
+            if ((status = get_full_size_info_ex(fd, info)) == STATUS_SUCCESS)
                 io->Information = sizeof(*info);
         }
         break;
