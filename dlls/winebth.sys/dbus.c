@@ -524,6 +524,36 @@ static void bluez_device_prop_from_dict_entry( const char *prop_name, DBusMessag
         parse_mac_address( addr_str, props->address.rgBytes );
         *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS;
     }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED &&
+             !strcmp( prop_name, "Connected" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t connected;
+
+        p_dbus_message_iter_get_basic( variant, &connected );
+        props->connected = !!connected;
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED &&
+             !strcmp( prop_name, "Paired" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t paired;
+
+        p_dbus_message_iter_get_basic( variant, &paired );
+        props->paired = !!paired;
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING &&
+             !strcmp( prop_name, "LegacyPairing" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t legacy;
+
+        p_dbus_message_iter_get_basic( variant, &legacy );
+        props->legacy_pairing = !!legacy;
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING;
+    }
 }
 
 static NTSTATUS bluez_adapter_get_props_async( void *connection, const char *radio_object_path,

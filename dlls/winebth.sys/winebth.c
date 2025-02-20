@@ -154,8 +154,6 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         struct bluetooth_remote_device *device;
         SIZE_T rem_devices;
 
-        FIXME("IOCTL_BTH_GET_DEVICE_INFO: semi-stub!\n");
-
         if (!list)
         {
             status = STATUS_INVALID_PARAMETER;
@@ -192,6 +190,20 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
                 {
                     info->flags |= BDIF_ADDRESS;
                     info->address = RtlUlonglongByteSwap( device->props.address.ullLong );
+                }
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED &&
+                    device->props.connected)
+                    info->flags |= BDIF_CONNECTED;
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED &&
+                    device->props.paired)
+                    info->flags |= (BDIF_PAIRED | BDIF_PERSONAL);
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING &&
+                    !device->props.legacy_pairing)
+                {
+                    info->flags |= BDIF_SSP_SUPPORTED;
+                    if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED &&
+                        device->props.paired)
+                        info->flags |= BDIF_SSP_PAIRED;
                 }
                 LeaveCriticalSection( &device->props_cs );
 
