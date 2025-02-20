@@ -1507,13 +1507,6 @@ static void vkd3d_glsl_handle_instruction(struct vkd3d_glsl_generator *gen,
         case VKD3DSIH_DCL_INDEXABLE_TEMP:
             shader_glsl_dcl_indexable_temp(gen, ins);
             break;
-        case VKD3DSIH_DCL_INPUT:
-        case VKD3DSIH_DCL_INPUT_PS:
-        case VKD3DSIH_DCL_INPUT_PS_SGV:
-        case VKD3DSIH_DCL_INPUT_PS_SIV:
-        case VKD3DSIH_DCL_INPUT_SGV:
-        case VKD3DSIH_DCL_OUTPUT:
-        case VKD3DSIH_DCL_OUTPUT_SIV:
         case VKD3DSIH_NOP:
             break;
         case VKD3DSIH_DEFAULT:
@@ -2476,7 +2469,7 @@ int glsl_compile(struct vsir_program *program, uint64_t config_flags,
     if ((ret = vsir_program_transform(program, config_flags, compile_info, message_context)) < 0)
         return ret;
 
-    VKD3D_ASSERT(program->normalisation_level == VSIR_FULLY_NORMALISED_IO);
+    VKD3D_ASSERT(program->normalisation_level == VSIR_NORMALISED_SM6);
 
     vkd3d_glsl_generator_init(&generator, program, compile_info,
             descriptor_info, combined_sampler_info, message_context);

@@ -29,7 +29,7 @@
 #define UINT          VKD3D_FORMAT_TYPE_UINT
 static const struct vkd3d_format vkd3d_formats[] =
 {
-    {DXGI_FORMAT_UNKNOWN,               VK_FORMAT_UNDEFINED,                1,  1, 1,  1},
+    {DXGI_FORMAT_UNKNOWN,               VK_FORMAT_UNDEFINED,                1,  1, 1,  1, 0,     1},
     {DXGI_FORMAT_R32G32B32A32_TYPELESS, VK_FORMAT_R32G32B32A32_SFLOAT,      16, 1, 1,  1, COLOR, 1, TYPELESS},
     {DXGI_FORMAT_R32G32B32A32_FLOAT,    VK_FORMAT_R32G32B32A32_SFLOAT,      16, 1, 1,  1, COLOR, 1},
     {DXGI_FORMAT_R32G32B32A32_UINT,     VK_FORMAT_R32G32B32A32_UINT,        16, 1, 1,  1, COLOR, 1, UINT},

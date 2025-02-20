@@ -115,6 +115,14 @@ static uint32_t read_u32(const char **ptr)
     return ret;
 }
 
+static uint64_t read_u64(const char **ptr)
+{
+    uint64_t ret;
+    memcpy(&ret, *ptr, sizeof(ret));
+    *ptr += sizeof(ret);
+    return ret;
+}
+
 static float read_float(const char **ptr)
 {
     union
@@ -502,6 +510,28 @@ int shader_parse_input_signature(const struct vkd3d_shader_code *dxbc,
     return ret;
 }
 
+static int shdr_parse_features(const struct vkd3d_shader_dxbc_section_desc *section,
+        struct vkd3d_shader_message_context *message_context, struct vsir_features *f)
+{
+    const char *data = section->data.code;
+    const char *ptr = data;
+    uint64_t flags;
+
+    if (!require_space(0, 1, sizeof(uint64_t), section->data.size))
+    {
+        WARN("Invalid data size %#zx.\n", section->data.size);
+        vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_DXBC_INVALID_CHUNK_SIZE,
+                "SFI0 section size %zu is too small to contain flags.\n", section->data.size);
+        return VKD3D_ERROR_INVALID_ARGUMENT;
+    }
+    flags = read_u64(&ptr);
+
+    if (flags & DXBC_SFI0_REQUIRES_ROVS)
+        f->rovs = true;
+
+    return VKD3D_OK;
+}
+
 static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
         struct vkd3d_shader_message_context *message_context, void *context)
 {
@@ -556,6 +586,11 @@ static int shdr_handler(const struct vkd3d_shader_dxbc_section_desc *section,
                 FIXME("Multiple shader code chunks.\n");
             desc->byte_code = section->data.code;
             desc->byte_code_size = section->data.size;
+            break;
+
+        case TAG_SFI0:
+            if ((ret = shdr_parse_features(section, message_context, &desc->features)) < 0)
+                return ret;
             break;
 
         case TAG_AON9:

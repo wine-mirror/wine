@@ -6869,14 +6869,7 @@ static void test_hlsl_double(void)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = D3DXCompileShader(ps_hlsl, sizeof(ps_hlsl), NULL, NULL, "main", "ps_2_0", 0, &ps_bytecode, &errors, NULL);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        if (errors)
-            trace("%s", (char *)ID3DXBuffer_GetBufferPointer(errors));
-        release_test_context(&context);
-        return;
-    }
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexShader(context.device, ID3DXBuffer_GetBufferPointer(vs_bytecode), &vs);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);

@@ -97,6 +97,17 @@ static void vkd3d_dbg_output(const char *fmt, ...)
     va_end(args);
 }
 
+#if HAVE_PTHREAD_THREADID_NP
+static uint64_t get_pthread_threadid(void)
+{
+    uint64_t thread_id;
+
+    pthread_threadid_np(NULL, &thread_id);
+
+    return thread_id;
+}
+#endif
+
 void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const char *fmt, ...)
 {
     va_list args;
@@ -108,6 +119,8 @@ void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const ch
     vkd3d_dbg_output("vkd3d:%04lx:%s:%s ", GetCurrentThreadId(), debug_level_names[level], function);
 #elif HAVE_GETTID
     vkd3d_dbg_output("vkd3d:%u:%s:%s ", gettid(), debug_level_names[level], function);
+#elif HAVE_PTHREAD_THREADID_NP
+    vkd3d_dbg_output("vkd3d:%"PRIu64":%s:%s ", get_pthread_threadid(), debug_level_names[level], function);
 #else
     vkd3d_dbg_output("vkd3d:%s:%s ", debug_level_names[level], function);
 #endif

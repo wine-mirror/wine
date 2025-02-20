@@ -57,6 +57,7 @@ enum vkd3d_shader_api_version
     VKD3D_SHADER_API_VERSION_1_12,
     VKD3D_SHADER_API_VERSION_1_13,
     VKD3D_SHADER_API_VERSION_1_14,
+    VKD3D_SHADER_API_VERSION_1_15,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_API_VERSION),
 };
@@ -112,6 +113,11 @@ enum vkd3d_shader_structure_type
      * \since 1.13
      */
     VKD3D_SHADER_STRUCTURE_TYPE_PARAMETER_INFO,
+    /**
+     * The structure is a vkd3d_shader_scan_hull_shader_tessellation_info structure.
+     * \since 1.15
+     */
+    VKD3D_SHADER_STRUCTURE_TYPE_SCAN_HULL_SHADER_TESSELLATION_INFO,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_STRUCTURE_TYPE),
 };
@@ -472,6 +478,113 @@ enum vkd3d_shader_binding_flag
 };
 
 /**
+ * The factor used to interpolate the fragment output colour with fog.
+ *
+ * See VKD3D_SHADER_PARAMETER_NAME_FOG_FRAGMENT_MODE for specification of the
+ * interpolation factor as defined here.
+ *
+ * The following variables may be used to determine the interpolation factor:
+ *
+ * c = The fog coordinate value output from the vertex shader. This is an
+ *     inter-stage varying with the semantic name "FOG" and semantic index 0.
+ *     It may be modified by VKD3D_SHADER_PARAMETER_NAME_FOG_SOURCE.
+ * E = The value of VKD3D_SHADER_PARAMETER_NAME_FOG_END.
+ * k = The value of VKD3D_SHADER_PARAMETER_NAME_FOG_SCALE.
+ *
+ * \since 1.15
+ */
+enum vkd3d_shader_fog_fragment_mode
+{
+    /**
+     * No fog interpolation is applied;
+     * the output colour is passed through unmodified.
+     * Equivalently, the fog interpolation factor is 1.
+     */
+    VKD3D_SHADER_FOG_FRAGMENT_NONE = 0x0,
+    /**
+     * The fog interpolation factor is 2^-(k * c).
+     *
+     * In order to implement traditional exponential fog, as present in
+     * Direct3D and OpenGL, i.e.
+     *
+     *     e^-(density * c)
+     *
+     * set
+     *
+     *     k = density * log₂(e)
+     */
+    VKD3D_SHADER_FOG_FRAGMENT_EXP = 0x1,
+    /**
+     * The fog interpolation factor is 2^-((k * c)²).
+     *
+     * In order to implement traditional square-exponential fog, as present in
+     * Direct3D and OpenGL, i.e.
+     *
+     *     e^-((density * c)²)
+     *
+     * set
+     *
+     *     k = density * √log₂(e)
+     */
+    VKD3D_SHADER_FOG_FRAGMENT_EXP2 = 0x2,
+    /**
+     * The fog interpolation factor is (E - c) * k.
+     *
+     * In order to implement traditional linear fog, as present in Direct3D and
+     * OpenGL, i.e.
+     *
+     *     (end - c) / (end - start)
+     *
+     * set
+     *
+     *     E = end
+     *     k = 1 / (end - start)
+     */
+    VKD3D_SHADER_FOG_FRAGMENT_LINEAR = 0x3,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_FOG_FRAGMENT_MODE),
+};
+
+/**
+ * The source of the fog varying output by a pre-rasterization shader.
+ * The fog varying is defined as the output varying with the semantic name "FOG"
+ * and semantic index 0.
+ *
+ * See VKD3D_SHADER_PARAMETER_NAME_FOG_SOURCE for further documentation of this
+ * parameter.
+ *
+ * \since 1.15
+ */
+enum vkd3d_shader_fog_source
+{
+    /**
+     * The source shader is not modified. That is, the fog varying in the target
+     * shader is the original fog varying if and only if present.
+     */
+    VKD3D_SHADER_FOG_SOURCE_FOG = 0x0,
+    /**
+     * If the source shader has a fog varying, it is not modified.
+     * Otherwise, if the source shader outputs a varying with semantic name
+     * "COLOR" and semantic index 1 whose index includes a W component,
+     * said W component is output as fog varying.
+     * Otherwise, no fog varying is output.
+     */
+    VKD3D_SHADER_FOG_SOURCE_FOG_OR_SPECULAR_W = 0x1,
+    /**
+     * The fog source is the Z component of the position output by the vertex
+     * shader.
+     */
+    VKD3D_SHADER_FOG_SOURCE_Z = 0x2,
+    /**
+     * The fog source is the W component of the position output by the vertex
+     * shader.
+     */
+    VKD3D_SHADER_FOG_SOURCE_W = 0x3,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_FOG_SOURCE),
+};
+
+/**
  * The manner in which a parameter value is provided to the shader, used in
  * struct vkd3d_shader_parameter and struct vkd3d_shader_parameter1.
  */
@@ -734,6 +847,97 @@ enum vkd3d_shader_parameter_name
      * \since 1.14
      */
     VKD3D_SHADER_PARAMETER_NAME_POINT_SPRITE,
+    /**
+     * Fog mode used in fragment shaders.
+     *
+     * The value specified by this parameter must be a member of
+     * enum vkd3d_shader_fog_fragment_mode.
+     *
+     * If not VKD3D_SHADER_FOG_FRAGMENT_NONE, the pixel shader colour output at
+     * location 0 is linearly interpolated with the fog colour defined by
+     * VKD3D_SHADER_PARAMETER_NAME_FOG_COLOUR. The interpolation factor is
+     * defined according to the enumerant selected by this parameter.
+     * The interpolated value is then outputted instead of the original value at
+     * location 0.
+     *
+     * An interpolation factor of 0 specifies to use the fog colour; a factor of
+     * 1 specifies to use the original colour output. The interpolation factor
+     * is clamped to the [0, 1] range before interpolating.
+     *
+     * The default value is VKD3D_SHADER_FOG_FRAGMENT_NONE.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32.
+     *
+     * Only VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT is supported in this
+     * version of vkd3d-shader.
+     *
+     * \since 1.15
+     */
+    VKD3D_SHADER_PARAMETER_NAME_FOG_FRAGMENT_MODE,
+    /**
+     * Fog colour.
+     * See VKD3D_SHADER_PARAMETER_NAME_FOG_FRAGMENT_MODE for documentation of
+     * fog.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4.
+     *
+     * The default value is transparent black, i.e. the vector {0, 0, 0, 0}.
+     *
+     * \since 1.15
+     */
+    VKD3D_SHADER_PARAMETER_NAME_FOG_COLOUR,
+    /**
+     * End coordinate for linear fog.
+     * See VKD3D_SHADER_PARAMETER_NAME_FOG_FRAGMENT_MODE for documentation of
+     * fog.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * The default value is 1.0.
+     *
+     * \since 1.15
+     */
+    VKD3D_SHADER_PARAMETER_NAME_FOG_END,
+    /**
+     * Scale value for fog.
+     * See VKD3D_SHADER_PARAMETER_NAME_FOG_FRAGMENT_MODE for documentation of
+     * fog.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32.
+     *
+     * The default value is 1.0.
+     *
+     * \since 1.15
+     */
+    VKD3D_SHADER_PARAMETER_NAME_FOG_SCALE,
+    /**
+     * Fog source. The value specified by this parameter must be a member of
+     * enum vkd3d_shader_fog_source.
+     *
+     * This parameter replaces or suppletes the fog varying output by a
+     * pre-rasterization shader. The fog varying is defined as the output
+     * varying with the semantic name "FOG" and semantic index 0.
+     *
+     * Together with other fog parameters, this parameter can be used to
+     * implement fixed function fog, as present in Direct3D versions up to 9,
+     * if the target environment does not support fog as part of its own
+     * fixed-function API (as Vulkan and core OpenGL).
+     *
+     * The default value is VKD3D_SHADER_FOG_SOURCE_FOG.
+     *
+     * The data type for this parameter must be
+     * VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32.
+     *
+     * Only VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT is supported in this
+     * version of vkd3d-shader.
+     *
+     * \since 1.15
+     */
+    VKD3D_SHADER_PARAMETER_NAME_FOG_SOURCE,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_PARAMETER_NAME),
 };
@@ -917,6 +1121,8 @@ enum vkd3d_shader_d3dbc_constant_register
     VKD3D_SHADER_D3DBC_INT_CONSTANT_REGISTER    = 0x1,
     /** The boolean constant register set, b# in Direct3D assembly. */
     VKD3D_SHADER_D3DBC_BOOL_CONSTANT_REGISTER   = 0x2,
+
+    VKD3D_FORCE_32_BIT_ENUM(VKD3D_SHADER_D3DBC_CONSTANT_REGISTER),
 };
 
 /**
@@ -2041,6 +2247,26 @@ struct vkd3d_shader_scan_combined_resource_sampler_info
 };
 
 /**
+ * A chained structure describing the tessellation information in a hull shader.
+ *
+ * This structure extends vkd3d_shader_compile_info.
+ *
+ * \since 1.15
+ */
+struct vkd3d_shader_scan_hull_shader_tessellation_info
+{
+    /** Must be set to VKD3D_SHADER_STRUCTURE_TYPE_SCAN_HULL_SHADER_TESSELLATION_INFO. */
+    enum vkd3d_shader_structure_type type;
+    /** Optional pointer to a structure containing further parameters. */
+    const void *next;
+
+    /** The tessellation output primitive. */
+    enum vkd3d_shader_tessellator_output_primitive output_primitive;
+    /** The tessellation partitioning mode. */
+    enum vkd3d_shader_tessellator_partitioning partitioning;
+};
+
+/**
  * Data type of a shader varying, returned as part of struct
  * vkd3d_shader_signature_element.
  */
@@ -2527,6 +2753,7 @@ VKD3D_SHADER_API const enum vkd3d_shader_target_type *vkd3d_shader_get_supported
  * - vkd3d_shader_preprocess_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
  * - vkd3d_shader_scan_descriptor_info
+ * - vkd3d_shader_scan_hull_shader_tessellation_info
  * - vkd3d_shader_scan_signature_info
  * - vkd3d_shader_spirv_domain_shader_target_info
  * - vkd3d_shader_spirv_target_info
@@ -2714,9 +2941,10 @@ VKD3D_SHADER_API int vkd3d_shader_convert_root_signature(struct vkd3d_shader_ver
  * \param compile_info A chained structure containing scan parameters.
  * \n
  * The scanner supports the following chained structures:
- * - vkd3d_shader_scan_descriptor_info
- * - vkd3d_shader_scan_signature_info
  * - vkd3d_shader_scan_combined_resource_sampler_info
+ * - vkd3d_shader_scan_descriptor_info
+ * - vkd3d_shader_scan_hull_shader_tessellation_info
+ * - vkd3d_shader_scan_signature_info
  * \n
  * Although the \a compile_info parameter is read-only, chained structures
  * passed to this function need not be, and may serve as output parameters,

@@ -36,6 +36,16 @@ struct fx_4_binary_type
     uint32_t typeinfo;
 };
 
+struct fx_5_shader
+{
+    uint32_t offset;
+    uint32_t sodecl[4];
+    uint32_t sodecl_count;
+    uint32_t rast_stream;
+    uint32_t iface_bindings_count;
+    uint32_t iface_bindings;
+};
+
 struct string_entry
 {
     struct rb_entry entry;
@@ -550,6 +560,8 @@ enum fx_4_type_constants
     FX_4_ASSIGNMENT_VARIABLE = 0x2,
     FX_4_ASSIGNMENT_ARRAY_CONSTANT_INDEX = 0x3,
     FX_4_ASSIGNMENT_ARRAY_VARIABLE_INDEX = 0x4,
+    FX_4_ASSIGNMENT_INLINE_SHADER = 0x7,
+    FX_5_ASSIGNMENT_INLINE_SHADER = 0x8,
 };
 
 static const uint32_t fx_4_numeric_base_types[] =
@@ -598,8 +610,8 @@ static uint32_t get_fx_4_numeric_type_description(const struct hlsl_type *type, 
             return 0;
     }
 
-    value |= (type->dimy & 0x7) << FX_4_NUMERIC_ROWS_SHIFT;
-    value |= (type->dimx & 0x7) << FX_4_NUMERIC_COLUMNS_SHIFT;
+    value |= (type->e.numeric.dimy & 0x7) << FX_4_NUMERIC_ROWS_SHIFT;
+    value |= (type->e.numeric.dimx & 0x7) << FX_4_NUMERIC_COLUMNS_SHIFT;
     if (type->modifiers & HLSL_MODIFIER_COLUMN_MAJOR)
         value |= FX_4_NUMERIC_COLUMN_MAJOR_MASK;
 
@@ -762,6 +774,7 @@ static uint32_t write_fx_4_type(const struct hlsl_type *type, struct fx_write_co
         case HLSL_CLASS_TECHNIQUE:
         case HLSL_CLASS_CONSTANT_BUFFER:
         case HLSL_CLASS_NULL:
+        case HLSL_CLASS_STREAM_OUTPUT:
             vkd3d_unreachable();
 
         case HLSL_CLASS_VOID:
@@ -1008,8 +1021,8 @@ static uint32_t get_fx_2_type_class(const struct hlsl_type *type)
     return hlsl_sm1_class(type);
 }
 
-static uint32_t write_fx_2_parameter(const struct hlsl_type *type, const char *name, const struct hlsl_semantic *semantic,
-        struct fx_write_context *fx)
+static uint32_t write_fx_2_parameter(const struct hlsl_type *type, const char *name,
+        const struct hlsl_semantic *semantic, bool is_combined_sampler, struct fx_write_context *fx)
 {
     struct vkd3d_bytecode_buffer *buffer = &fx->unstructured;
     uint32_t semantic_offset, offset, elements_count = 0, name_offset;
@@ -1025,7 +1038,7 @@ static uint32_t write_fx_2_parameter(const struct hlsl_type *type, const char *n
     name_offset = write_string(name, fx);
     semantic_offset = semantic->raw_name ? write_string(semantic->raw_name, fx) : 0;
 
-    offset = put_u32(buffer, hlsl_sm1_base_type(type));
+    offset = put_u32(buffer, hlsl_sm1_base_type(type, is_combined_sampler));
     put_u32(buffer, get_fx_2_type_class(type));
     put_u32(buffer, name_offset);
     put_u32(buffer, semantic_offset);
@@ -1034,13 +1047,13 @@ static uint32_t write_fx_2_parameter(const struct hlsl_type *type, const char *n
     switch (type->class)
     {
         case HLSL_CLASS_VECTOR:
-            put_u32(buffer, type->dimx);
-            put_u32(buffer, type->dimy);
+            put_u32(buffer, type->e.numeric.dimx);
+            put_u32(buffer, type->e.numeric.dimy);
             break;
         case HLSL_CLASS_SCALAR:
         case HLSL_CLASS_MATRIX:
-            put_u32(buffer, type->dimy);
-            put_u32(buffer, type->dimx);
+            put_u32(buffer, type->e.numeric.dimy);
+            put_u32(buffer, type->e.numeric.dimx);
             break;
         case HLSL_CLASS_STRUCT:
             put_u32(buffer, type->e.record.field_count);
@@ -1061,7 +1074,7 @@ static uint32_t write_fx_2_parameter(const struct hlsl_type *type, const char *n
 
             /* Validated in check_invalid_object_fields(). */
             VKD3D_ASSERT(hlsl_is_numeric_type(field->type));
-            write_fx_2_parameter(field->type, field->name, &field->semantic, fx);
+            write_fx_2_parameter(field->type, field->name, &field->semantic, false, fx);
         }
     }
 
@@ -1298,6 +1311,7 @@ static bool is_type_supported_fx_2(struct hlsl_ctx *ctx, const struct hlsl_type 
         case HLSL_CLASS_TECHNIQUE:
         case HLSL_CLASS_CONSTANT_BUFFER:
         case HLSL_CLASS_NULL:
+        case HLSL_CLASS_STREAM_OUTPUT:
             /* This cannot appear as an extern variable. */
             break;
     }
@@ -1321,7 +1335,7 @@ static void write_fx_2_parameters(struct fx_write_context *fx)
         if (!is_type_supported_fx_2(ctx, var->data_type, &var->loc))
             continue;
 
-        desc_offset = write_fx_2_parameter(var->data_type, var->name, &var->semantic, fx);
+        desc_offset = write_fx_2_parameter(var->data_type, var->name, &var->semantic, var->is_combined_sampler, fx);
         value_offset = write_fx_2_initial_value(var, fx);
 
         flags = 0;
@@ -1344,7 +1358,7 @@ static void write_fx_2_annotation(struct hlsl_ir_var *var, struct fx_write_conte
     struct vkd3d_bytecode_buffer *buffer = &fx->structured;
     uint32_t desc_offset, value_offset;
 
-    desc_offset = write_fx_2_parameter(var->data_type, var->name, &var->semantic, fx);
+    desc_offset = write_fx_2_parameter(var->data_type, var->name, &var->semantic, var->is_combined_sampler, fx);
     value_offset = write_fx_2_initial_value(var, fx);
 
     put_u32(buffer, desc_offset);
@@ -1834,6 +1848,7 @@ enum state_property_component_type
     FX_BLEND,
     FX_VERTEXSHADER,
     FX_PIXELSHADER,
+    FX_GEOMETRYSHADER,
     FX_COMPONENT_TYPE_COUNT,
 };
 
@@ -2065,6 +2080,7 @@ fx_4_states[] =
 
     { "VertexShader",          HLSL_CLASS_PASS, HLSL_CLASS_SCALAR, FX_VERTEXSHADER,     1, 1, 6 },
     { "PixelShader",           HLSL_CLASS_PASS, HLSL_CLASS_SCALAR, FX_PIXELSHADER,      1, 1, 7 },
+    { "GeometryShader",        HLSL_CLASS_PASS, HLSL_CLASS_SCALAR, FX_GEOMETRYSHADER,   1, 1, 8 },
     { "DS_StencilRef",         HLSL_CLASS_PASS, HLSL_CLASS_SCALAR, FX_UINT,  1, 1, 9 },
     { "AB_BlendFactor",        HLSL_CLASS_PASS, HLSL_CLASS_VECTOR, FX_FLOAT, 4, 1, 10 },
     { "AB_SampleMask",         HLSL_CLASS_PASS, HLSL_CLASS_SCALAR, FX_UINT,  1, 1, 11 },
@@ -2951,7 +2967,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) fx_parser_error(struct fx_parser *parser, en
 
 static int fx_2_parse(struct fx_parser *parser)
 {
-    fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_NOT_IMPLEMENTED, "Parsing fx_2_0 binaries is not implemented.\n");
+    fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_NOT_IMPLEMENTED, "Parsing fx_2_0 binaries is not implemented.");
 
     return -1;
 }
@@ -3120,7 +3136,7 @@ static void fx_parse_fx_4_annotations(struct fx_parser *parser)
         else
         {
             fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_INVALID_DATA,
-                    "Only numeric and string types are supported in annotations.\n");
+                    "Only numeric and string types are supported in annotations.");
         }
 
         if (type.element_count)
@@ -3210,63 +3226,23 @@ static void fx_parse_buffers(struct fx_parser *parser)
     }
 }
 
-static void fx_4_parse_shader_initializer(struct fx_parser *parser, unsigned int object_type)
+static void fx_4_parse_shader_blob(struct fx_parser *parser, unsigned int object_type, const struct fx_5_shader *shader)
 {
     struct vkd3d_shader_compile_info info = { 0 };
     struct vkd3d_shader_code output;
-    uint32_t data_size, offset;
     const void *data = NULL;
     const char *p, *q, *end;
-    struct fx_5_shader
-    {
-        uint32_t offset;
-        uint32_t sodecl[4];
-        uint32_t sodecl_count;
-        uint32_t rast_stream;
-        uint32_t iface_bindings_count;
-        uint32_t iface_bindings;
-    } shader5;
-    struct fx_4_gs_so
-    {
-        uint32_t offset;
-        uint32_t sodecl;
-    } gs_so;
+    uint32_t data_size;
     int ret;
 
     static const struct vkd3d_shader_compile_option options[] =
     {
-        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_14},
+        {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_15},
     };
 
-    switch (object_type)
-    {
-        case FX_4_OBJECT_TYPE_PIXEL_SHADER:
-        case FX_4_OBJECT_TYPE_VERTEX_SHADER:
-        case FX_4_OBJECT_TYPE_GEOMETRY_SHADER:
-            offset = fx_parser_read_u32(parser);
-            break;
-
-        case FX_4_OBJECT_TYPE_GEOMETRY_SHADER_SO:
-            fx_parser_read_u32s(parser, &gs_so, sizeof(gs_so));
-            offset = gs_so.offset;
-            break;
-
-        case FX_5_OBJECT_TYPE_GEOMETRY_SHADER:
-        case FX_5_OBJECT_TYPE_COMPUTE_SHADER:
-        case FX_5_OBJECT_TYPE_HULL_SHADER:
-        case FX_5_OBJECT_TYPE_DOMAIN_SHADER:
-            fx_parser_read_u32s(parser, &shader5, sizeof(shader5));
-            offset = shader5.offset;
-            break;
-
-        default:
-            parser->failed = true;
-            return;
-    }
-
-    fx_parser_read_unstructured(parser, &data_size, offset, sizeof(data_size));
+    fx_parser_read_unstructured(parser, &data_size, shader->offset, sizeof(data_size));
     if (data_size)
-        data = fx_parser_get_unstructured_ptr(parser, offset + 4, data_size);
+        data = fx_parser_get_unstructured_ptr(parser, shader->offset + 4, data_size);
 
     if (!data)
         return;
@@ -3283,7 +3259,7 @@ static void fx_4_parse_shader_initializer(struct fx_parser *parser, unsigned int
     if ((ret = vkd3d_shader_compile(&info, &output, NULL)) < 0)
     {
         fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_INVALID_DATA,
-                "Failed to disassemble shader blob.\n");
+                "Failed to disassemble shader blob.");
         return;
     }
     parse_fx_print_indent(parser);
@@ -3307,24 +3283,56 @@ static void fx_4_parse_shader_initializer(struct fx_parser *parser, unsigned int
 
     parse_fx_print_indent(parser);
     vkd3d_string_buffer_printf(&parser->buffer, "}");
-    if (object_type == FX_4_OBJECT_TYPE_GEOMETRY_SHADER_SO && gs_so.sodecl)
+    if (object_type == FX_4_OBJECT_TYPE_GEOMETRY_SHADER_SO && shader->sodecl[0])
     {
         vkd3d_string_buffer_printf(&parser->buffer, "\n/* Stream output declaration: \"%s\" */",
-                fx_4_get_string(parser, gs_so.sodecl));
+                fx_4_get_string(parser, shader->sodecl[0]));
     }
     else if (object_type == FX_5_OBJECT_TYPE_GEOMETRY_SHADER)
     {
-        for (unsigned int i = 0; i < ARRAY_SIZE(shader5.sodecl); ++i)
+        for (unsigned int i = 0; i < ARRAY_SIZE(shader->sodecl); ++i)
         {
-           if (shader5.sodecl[i])
+           if (shader->sodecl[i])
                vkd3d_string_buffer_printf(&parser->buffer, "\n/* Stream output %u declaration: \"%s\" */",
-                       i, fx_4_get_string(parser, shader5.sodecl[i]));
+                       i, fx_4_get_string(parser, shader->sodecl[i]));
         }
-        if (shader5.sodecl_count)
-            vkd3d_string_buffer_printf(&parser->buffer, "\n/* Rasterized stream %u */", shader5.rast_stream);
+        if (shader->sodecl_count)
+            vkd3d_string_buffer_printf(&parser->buffer, "\n/* Rasterized stream %u */", shader->rast_stream);
     }
 
     vkd3d_shader_free_shader_code(&output);
+}
+
+static void fx_4_parse_shader_initializer(struct fx_parser *parser, unsigned int object_type)
+{
+    struct fx_5_shader shader = { 0 };
+
+    switch (object_type)
+    {
+        case FX_4_OBJECT_TYPE_PIXEL_SHADER:
+        case FX_4_OBJECT_TYPE_VERTEX_SHADER:
+        case FX_4_OBJECT_TYPE_GEOMETRY_SHADER:
+            shader.offset = fx_parser_read_u32(parser);
+            break;
+
+        case FX_4_OBJECT_TYPE_GEOMETRY_SHADER_SO:
+            shader.offset    = fx_parser_read_u32(parser);
+            shader.sodecl[0] = fx_parser_read_u32(parser);
+            break;
+
+        case FX_5_OBJECT_TYPE_GEOMETRY_SHADER:
+        case FX_5_OBJECT_TYPE_COMPUTE_SHADER:
+        case FX_5_OBJECT_TYPE_HULL_SHADER:
+        case FX_5_OBJECT_TYPE_DOMAIN_SHADER:
+            fx_parser_read_u32s(parser, &shader, sizeof(shader));
+            break;
+
+        default:
+            parser->failed = true;
+            return;
+    }
+
+    fx_4_parse_shader_blob(parser, object_type, &shader);
 }
 
 static bool fx_4_object_has_initializer(const struct fx_4_binary_type *type)
@@ -3390,6 +3398,8 @@ static void fx_4_parse_state_object_initializer(struct fx_parser *parser, uint32
         [FX_UINT8] = "byte",
     };
     const struct rhs_named_value *named_value;
+    struct fx_5_shader shader = { 0 };
+    unsigned int shader_type = 0;
     uint32_t i, j, comp_count;
     struct fx_4_state *state;
 
@@ -3400,7 +3410,7 @@ static void fx_4_parse_state_object_initializer(struct fx_parser *parser, uint32
         if (!(state = bsearch(&entry.id, fx_4_states, ARRAY_SIZE(fx_4_states),
                 sizeof(*fx_4_states), fx_4_state_id_compare)))
         {
-            fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_INVALID_DATA, "Unrecognized state id %#x.\n", entry.id);
+            fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_INVALID_DATA, "Unrecognized state id %#x.", entry.id);
             break;
         }
 
@@ -3486,9 +3496,38 @@ static void fx_4_parse_state_object_initializer(struct fx_parser *parser, uint32
                 vkd3d_string_buffer_printf(&parser->buffer, "%s[%s]", fx_4_get_string(parser, index.name),
                         fx_4_get_string(parser, index.index));
                 break;
+            case FX_4_ASSIGNMENT_INLINE_SHADER:
+            case FX_5_ASSIGNMENT_INLINE_SHADER:
+            {
+                bool shader5 = entry.type == FX_5_ASSIGNMENT_INLINE_SHADER;
+
+                if (shader5)
+                    fx_parser_read_unstructured(parser, &shader, entry.value, sizeof(shader));
+                else
+                    fx_parser_read_unstructured(parser, &shader, entry.value, 2 * sizeof(uint32_t));
+
+                if (state->type == FX_PIXELSHADER)
+                    shader_type = FX_4_OBJECT_TYPE_PIXEL_SHADER;
+                else if (state->type == FX_VERTEXSHADER)
+                    shader_type = FX_4_OBJECT_TYPE_VERTEX_SHADER;
+                else if (state->type == FX_GEOMETRYSHADER)
+                    shader_type = shader5 ? FX_5_OBJECT_TYPE_GEOMETRY_SHADER : FX_4_OBJECT_TYPE_GEOMETRY_SHADER_SO;
+                else if (state->type == FX_HULLSHADER)
+                    shader_type = FX_5_OBJECT_TYPE_HULL_SHADER;
+                else if (state->type == FX_DOMAINSHADER)
+                    shader_type = FX_5_OBJECT_TYPE_DOMAIN_SHADER;
+                else if (state->type == FX_COMPUTESHADER)
+                    shader_type = FX_5_OBJECT_TYPE_COMPUTE_SHADER;
+
+                vkd3d_string_buffer_printf(&parser->buffer, "\n");
+                parse_fx_start_indent(parser);
+                fx_4_parse_shader_blob(parser, shader_type, &shader);
+                parse_fx_end_indent(parser);
+                break;
+            }
             default:
                 fx_parser_error(parser, VKD3D_SHADER_ERROR_FX_NOT_IMPLEMENTED,
-                        "Unsupported assignment type %u.\n", entry.type);
+                        "Unsupported assignment type %u.", entry.type);
         }
         vkd3d_string_buffer_printf(&parser->buffer, ";\n");
     }

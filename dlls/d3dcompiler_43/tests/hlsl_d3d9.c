@@ -1164,18 +1164,14 @@ static void test_samplers(void)
     {
         hr = IDirect3DDevice9_Clear(test_context.device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_XRGB(255, 0, 0), 1.0f, 0);
         ok(hr == D3D_OK, "Test %u: Got unexpected hr %#lx.\n", i, hr);
-        todo_wine_if (i > 2)
         ps_code = compile_shader(tests[i], "ps_2_0", 0);
-        if (ps_code)
-        {
-            draw_quad(test_context.device, ps_code);
+        draw_quad(test_context.device, ps_code);
 
-            v = get_color_vec4(test_context.device, 0, 0);
-            ok(compare_vec4(&v, 1.0f, 0.0f, 1.0f, 0.0f, 0),
-                    "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
+        v = get_color_vec4(test_context.device, 0, 0);
+        ok(compare_vec4(&v, 1.0f, 0.0f, 1.0f, 0.0f, 0),
+           "Test %u: Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", i, v.x, v.y, v.z, v.w);
 
-            ID3D10Blob_Release(ps_code);
-        }
+        ID3D10Blob_Release(ps_code);
     }
 
     IDirect3DTexture9_Release(texture);
@@ -1835,7 +1831,7 @@ static void test_hlsl_double(void)
 #if D3D_COMPILER_VERSION >= 46
     todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
 #else
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 #endif
     if (FAILED(hr))
     {

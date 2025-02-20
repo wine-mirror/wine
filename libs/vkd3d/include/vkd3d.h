@@ -99,6 +99,7 @@ enum vkd3d_api_version
     VKD3D_API_VERSION_1_12,
     VKD3D_API_VERSION_1_13,
     VKD3D_API_VERSION_1_14,
+    VKD3D_API_VERSION_1_15,
 
     VKD3D_FORCE_32_BIT_ENUM(VKD3D_API_VERSION),
 };
@@ -411,9 +412,13 @@ VKD3D_API uint32_t vkd3d_get_vk_queue_family_index(ID3D12CommandQueue *queue);
  * the Vulkan driver as being submitted before other work submitted
  * though the Direct3D 12 API. If this is not desired, it is
  * recommended to synchronize work submission using an ID3D12Fence
- * object, by submitting to the queue a signal operation after all the
- * Direct3D 12 work is submitted and waiting for it before calling
- * vkd3d_acquire_vk_queue().
+ * object:
+ *  1. submit work through the Direct3D 12 API;
+ *  2. call vkd3d_queue_signal_on_cpu();
+ *  3. wait for the fence to be signalled;
+ *  4. call vkd3d_acquire_vk_queue(); it is guaranteed that all work submitted
+ *     at point 1 has already been submitted to Vulkan (though not necessarily
+ *     executed).
  *
  * \since 1.0
  */
@@ -466,6 +471,21 @@ VKD3D_API HRESULT vkd3d_create_versioned_root_signature_deserializer(const void 
  */
 VKD3D_API void vkd3d_set_log_callback(PFN_vkd3d_log callback);
 
+/**
+ * Signal a fence on the CPU once all the currently outstanding queue work is
+ * submitted to Vulkan.
+ *
+ * The fence will be signalled on the CPU (as if ID3D12Fence_Signal() was
+ * called) once all the work submitted through the Direct3D 12 API before
+ * vkd3d_queue_signal_on_cpu() is called has left the internal queue and has
+ * been submitted to the underlying Vulkan queue. Read the documentation for
+ * vkd3d_acquire_vk_queue() for more details.
+ *
+ * \since 1.15
+ */
+VKD3D_API HRESULT vkd3d_queue_signal_on_cpu(ID3D12CommandQueue *queue,
+        ID3D12Fence *fence, uint64_t value);
+
 #endif  /* VKD3D_NO_PROTOTYPES */
 
 /*
@@ -511,6 +531,10 @@ typedef HRESULT (*PFN_vkd3d_create_versioned_root_signature_deserializer)(const 
 
 /** Type of vkd3d_set_log_callback(). \since 1.4 */
 typedef void (*PFN_vkd3d_set_log_callback)(PFN_vkd3d_log callback);
+
+/** Type of vkd3d_queue_signal_on_cpu(). \since 1.15 */
+typedef HRESULT (*PFN_vkd3d_queue_signal_on_cpu)(ID3D12CommandQueue *queue,
+        ID3D12Fence *fence, uint64_t value);
 
 #ifdef __cplusplus
 }

@@ -1473,16 +1473,21 @@ static void vkd3d_device_vk_heaps_descriptor_limits_init(struct vkd3d_device_des
         uav_divisor = properties->maxDescriptorSetUpdateAfterBindSampledImages >= (3u << 20) ? 3 : 2;
     }
 
-    limits->uniform_buffer_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindUniformBuffers,
-            properties->maxPerStageDescriptorUpdateAfterBindUniformBuffers - root_provision);
-    limits->sampled_image_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindSampledImages,
-            properties->maxPerStageDescriptorUpdateAfterBindSampledImages / srv_divisor - root_provision);
-    limits->storage_buffer_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindStorageBuffers,
-            properties->maxPerStageDescriptorUpdateAfterBindStorageBuffers - root_provision);
-    limits->storage_image_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindStorageImages,
-            properties->maxPerStageDescriptorUpdateAfterBindStorageImages / uav_divisor - root_provision);
-    limits->sampler_max_descriptors = min(properties->maxDescriptorSetUpdateAfterBindSamplers,
-            properties->maxPerStageDescriptorUpdateAfterBindSamplers - root_provision);
+    limits->uniform_buffer_max_descriptors = min(min(properties->maxDescriptorSetUpdateAfterBindUniformBuffers,
+            properties->maxPerStageDescriptorUpdateAfterBindUniformBuffers - root_provision),
+            VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS);
+    limits->sampled_image_max_descriptors = min(min(properties->maxDescriptorSetUpdateAfterBindSampledImages,
+            properties->maxPerStageDescriptorUpdateAfterBindSampledImages / srv_divisor - root_provision),
+            VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS);
+    limits->storage_buffer_max_descriptors = min(min(properties->maxDescriptorSetUpdateAfterBindStorageBuffers,
+            properties->maxPerStageDescriptorUpdateAfterBindStorageBuffers - root_provision),
+            VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS);
+    limits->storage_image_max_descriptors = min(min(properties->maxDescriptorSetUpdateAfterBindStorageImages,
+            properties->maxPerStageDescriptorUpdateAfterBindStorageImages / uav_divisor - root_provision),
+            VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS);
+    limits->sampler_max_descriptors = min(min(properties->maxDescriptorSetUpdateAfterBindSamplers,
+            properties->maxPerStageDescriptorUpdateAfterBindSamplers - root_provision),
+            VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS);
     limits->sampler_max_descriptors = min(limits->sampler_max_descriptors, VKD3D_MAX_DESCRIPTOR_SET_SAMPLERS);
 }
 
@@ -2677,39 +2682,16 @@ static void vkd3d_time_domains_init(struct d3d12_device *device)
 static void device_init_descriptor_pool_sizes(struct d3d12_device *device)
 {
     const struct vkd3d_device_descriptor_limits *limits = &device->vk_info.descriptor_limits;
-    VkDescriptorPoolSize *pool_sizes = device->vk_pool_sizes;
+    unsigned int *pool_sizes = device->vk_pool_limits;
 
-    if (device->use_vk_heaps)
-    {
-        pool_sizes[0].type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
-        pool_sizes[0].descriptorCount = min(limits->storage_image_max_descriptors,
-                VKD3D_MAX_UAV_CLEAR_DESCRIPTORS_PER_TYPE);
-        pool_sizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        pool_sizes[1].descriptorCount = pool_sizes[0].descriptorCount;
-        pool_sizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-        pool_sizes[2].descriptorCount = min(limits->sampler_max_descriptors, D3D12_MAX_LIVE_STATIC_SAMPLERS);
-        device->vk_pool_count = 3;
-        return;
-    }
-
-    VKD3D_ASSERT(ARRAY_SIZE(device->vk_pool_sizes) >= 6);
-    pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pool_sizes[0].descriptorCount = min(limits->uniform_buffer_max_descriptors,
+    pool_sizes[VKD3D_SHADER_DESCRIPTOR_TYPE_CBV] = min(limits->uniform_buffer_max_descriptors,
             VKD3D_MAX_VIRTUAL_HEAP_DESCRIPTORS_PER_TYPE);
-    pool_sizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
-    pool_sizes[1].descriptorCount = min(limits->sampled_image_max_descriptors,
+    pool_sizes[VKD3D_SHADER_DESCRIPTOR_TYPE_SRV] = min(limits->sampled_image_max_descriptors,
             VKD3D_MAX_VIRTUAL_HEAP_DESCRIPTORS_PER_TYPE);
-    pool_sizes[2].type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-    pool_sizes[2].descriptorCount = pool_sizes[1].descriptorCount;
-    pool_sizes[3].type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
-    pool_sizes[3].descriptorCount = min(limits->storage_image_max_descriptors,
+    pool_sizes[VKD3D_SHADER_DESCRIPTOR_TYPE_UAV] = min(limits->storage_image_max_descriptors,
             VKD3D_MAX_VIRTUAL_HEAP_DESCRIPTORS_PER_TYPE);
-    pool_sizes[4].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    pool_sizes[4].descriptorCount = pool_sizes[3].descriptorCount;
-    pool_sizes[5].type = VK_DESCRIPTOR_TYPE_SAMPLER;
-    pool_sizes[5].descriptorCount = min(limits->sampler_max_descriptors,
+    pool_sizes[VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER] = min(limits->sampler_max_descriptors,
             VKD3D_MAX_VIRTUAL_HEAP_DESCRIPTORS_PER_TYPE);
-    device->vk_pool_count = 6;
 };
 
 static void vkd3d_desc_object_cache_init(struct vkd3d_desc_object_cache *cache, size_t size)
@@ -3461,6 +3443,7 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             for (i = 0; i < data->NumFeatureLevels; ++i)
             {
                 D3D_FEATURE_LEVEL fl = data->pFeatureLevelsRequested[i];
+                TRACE("Requested feature level %#x.\n", fl);
                 if (data->MaxSupportedFeatureLevel < fl && fl <= vulkan_info->max_feature_level)
                     data->MaxSupportedFeatureLevel = fl;
             }
@@ -3572,12 +3555,6 @@ static HRESULT STDMETHODCALLTYPE d3d12_device_CheckFeatureSupport(ID3D12Device9 
             {
                 WARN("Invalid size %u.\n", feature_data_size);
                 return E_INVALIDARG;
-            }
-
-            if (data->Format == DXGI_FORMAT_UNKNOWN)
-            {
-                data->PlaneCount = 1;
-                return S_OK;
             }
 
             if (!(format = vkd3d_get_format(device, data->Format, false)))
@@ -4385,7 +4362,7 @@ static void d3d12_device_get_resource1_allocation_info(struct d3d12_device *devi
     {
         desc = &resource_descs[i];
 
-        if (FAILED(d3d12_resource_validate_desc(desc, device)))
+        if (FAILED(d3d12_resource_validate_desc(desc, device, 0)))
         {
             WARN("Invalid resource desc.\n");
             goto invalid;
@@ -4716,10 +4693,11 @@ static void d3d12_device_get_copyable_footprints(struct d3d12_device *device,
         uint64_t base_offset, D3D12_PLACED_SUBRESOURCE_FOOTPRINT *layouts, UINT *row_counts,
         UINT64 *row_sizes, UINT64 *total_bytes)
 {
-    unsigned int i, sub_resource_idx, miplevel_idx, row_count, row_size, row_pitch;
+    unsigned int i, sub_resource_idx, plane_idx, miplevel_idx, row_count, row_size, row_pitch;
     unsigned int width, height, depth, plane_count, sub_resources_per_plane;
     const struct vkd3d_format *format;
     uint64_t offset, size, total;
+    DXGI_FORMAT plane_format;
 
     if (layouts)
         memset(layouts, 0xff, sizeof(*layouts) * sub_resource_count);
@@ -4730,20 +4708,19 @@ static void d3d12_device_get_copyable_footprints(struct d3d12_device *device,
     if (total_bytes)
         *total_bytes = ~(uint64_t)0;
 
-    if (!(format = vkd3d_format_from_d3d12_resource_desc(device, desc, 0)))
+    if (!(format = vkd3d_get_format(device, desc->Format, true)))
     {
         WARN("Invalid format %#x.\n", desc->Format);
         return;
     }
 
-    if (FAILED(d3d12_resource_validate_desc(desc, device)))
+    if (FAILED(d3d12_resource_validate_desc(desc, device, VKD3D_VALIDATE_FORCE_ALLOW_DS)))
     {
         WARN("Invalid resource desc.\n");
         return;
     }
 
-    plane_count = ((format->vk_aspect_mask & VK_IMAGE_ASPECT_DEPTH_BIT)
-            && (format->vk_aspect_mask & VK_IMAGE_ASPECT_STENCIL_BIT)) ? 2 : 1;
+    plane_count = format->plane_count;
     sub_resources_per_plane = d3d12_resource_desc_get_sub_resource_count(desc);
 
     if (!vkd3d_bound_range(first_sub_resource, sub_resource_count, sub_resources_per_plane * plane_count))
@@ -4754,21 +4731,31 @@ static void d3d12_device_get_copyable_footprints(struct d3d12_device *device,
 
     offset = 0;
     total = 0;
+    plane_format = desc->Format;
     for (i = 0; i < sub_resource_count; ++i)
     {
         sub_resource_idx = (first_sub_resource + i) % sub_resources_per_plane;
+        plane_idx = (first_sub_resource + i) / sub_resources_per_plane;
         miplevel_idx = sub_resource_idx % desc->MipLevels;
+
+        if (plane_count > 1)
+        {
+            plane_format = !plane_idx ? DXGI_FORMAT_R32_TYPELESS : DXGI_FORMAT_R8_TYPELESS;
+            format = vkd3d_get_format(device, plane_format, true);
+        }
+
         width = align(d3d12_resource_desc_get_width(desc, miplevel_idx), format->block_width);
         height = align(d3d12_resource_desc_get_height(desc, miplevel_idx), format->block_height);
         depth = d3d12_resource_desc_get_depth(desc, miplevel_idx);
         row_count = height / format->block_height;
         row_size = (width / format->block_width) * format->byte_count * format->block_byte_count;
-        row_pitch = align(row_size, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT);
+        /* Direct3D 12 requires double the alignment for dual planes. */
+        row_pitch = align(row_size, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT * plane_count);
 
         if (layouts)
         {
             layouts[i].Offset = base_offset + offset;
-            layouts[i].Footprint.Format = desc->Format;
+            layouts[i].Footprint.Format = plane_format;
             layouts[i].Footprint.Width = width;
             layouts[i].Footprint.Height = height;
             layouts[i].Footprint.Depth = depth;
@@ -4780,7 +4767,7 @@ static void d3d12_device_get_copyable_footprints(struct d3d12_device *device,
             row_sizes[i] = row_size;
 
         size = max(0, row_count - 1) * row_pitch + row_size;
-        size = max(0, depth - 1) * align(size, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT) + size;
+        size = max(0, depth - 1) * align(size, D3D12_TEXTURE_DATA_PITCH_ALIGNMENT * plane_count) + size;
 
         total = offset + size;
         offset = align(total, D3D12_TEXTURE_DATA_PLACEMENT_ALIGNMENT);
