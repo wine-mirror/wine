@@ -164,6 +164,13 @@ static NTSTATUS bluetooth_adapter_set_prop( void *arg )
     return bluez_adapter_set_prop( dbus_connection, params );
 }
 
+static NTSTATUS bluetooth_device_free( void *args )
+{
+    struct bluetooth_device_free_params *params = args;
+    unix_name_free( params->device );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS bluetooth_get_event( void *args )
 {
     struct bluetooth_get_event_params *params = args;
@@ -180,6 +187,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_adapter_set_prop,
     bluetooth_adapter_get_unique_name,
     bluetooth_adapter_free,
+
+    bluetooth_device_free,
 
     bluetooth_get_event,
 };

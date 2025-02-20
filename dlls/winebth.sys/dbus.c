@@ -115,6 +115,7 @@ const int bluez_timeout = -1;
 
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_INTERFACE_ADAPTER "org.bluez.Adapter1"
+#define BLUEZ_INTERFACE_DEVICE  "org.bluez.Device1"
 
 #define DO_FUNC( f ) typeof( f ) (*p_##f)
 DBUS_FUNCS;
@@ -491,6 +492,40 @@ static void bluez_radio_prop_from_dict_entry( const char *prop_name, DBusMessage
     }
 }
 
+static void bluez_device_prop_from_dict_entry( const char *prop_name, DBusMessageIter *variant,
+                                               struct winebluetooth_device_properties *props,
+                                               winebluetooth_device_props_mask_t *props_mask,
+                                               winebluetooth_device_props_mask_t wanted_props_mask )
+{
+    TRACE_( dbus )( "(%s, %p, %p, %p, %#x)\n", debugstr_a( prop_name ), variant, props, props_mask,
+                    wanted_props_mask );
+
+
+    if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME &&
+        !strcmp( prop_name, "Name" ) &&
+        p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_STRING)
+    {
+        const char *name_str;
+        SIZE_T len;
+
+        p_dbus_message_iter_get_basic( variant, &name_str );
+        len = strlen( name_str );
+        memcpy( props->name, name_str, min( len + 1, ARRAYSIZE( props->name ) ) );
+        props->name[ARRAYSIZE( props->name ) - 1] = '\0';
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_NAME;
+    }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+        !strcmp( prop_name, "Address" ) &&
+        p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_STRING)
+    {
+        const char *addr_str;
+
+        p_dbus_message_iter_get_basic( variant, &addr_str );
+        parse_mac_address( addr_str, props->address.rgBytes );
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS;
+    }
+}
+
 static NTSTATUS bluez_adapter_get_props_async( void *connection, const char *radio_object_path,
                                                DBusPendingCall **call )
 {
@@ -520,6 +555,8 @@ struct bluez_watcher_ctx
 
     /* struct bluez_init_entry */
     struct list initial_radio_list;
+    /* struct bluez_init_entry */
+    struct list initial_device_list;
 
     /* struct bluez_watcher_event */
     struct list event_list;
@@ -529,6 +566,7 @@ struct bluez_init_entry
 {
     union {
         struct winebluetooth_watcher_event_radio_added radio;
+        struct winebluetooth_watcher_event_device_added device;
     } object;
     struct list entry;
 };
@@ -929,6 +967,10 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED:
             unix_name_free( (struct unix_name *)event1->event.radio_props_changed.radio.handle );
             break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED:
+            unix_name_free( (struct unix_name *)event1->event.device_added.radio.handle );
+            unix_name_free( (struct unix_name *)event1->event.device_added.device.handle );
+            break;
         }
         free( event1 );
     }
@@ -955,7 +997,7 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
     }
     watcher_ctx->init_device_list_call = call;
     list_init( &watcher_ctx->initial_radio_list );
-
+    list_init( &watcher_ctx->initial_device_list );
     list_init( &watcher_ctx->event_list );
 
     /* The bluez_dbus_loop thread will free up the watcher when the disconnect message is processed (i.e,
@@ -1010,7 +1052,8 @@ void bluez_watcher_close( void *connection, void *ctx )
     p_dbus_connection_remove_filter( connection, bluez_filter, ctx );
 }
 
-static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct list *adapter_list )
+static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct list *adapter_list,
+                                                  struct list *device_list )
 {
     DBusMessageIter dict, paths_iter, iface_iter, prop_iter;
     const char *path;
@@ -1062,10 +1105,65 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
                        debugstr_a( radio_name->str ), radio_name );
                 break;
             }
+            else if (!strcmp( iface, BLUEZ_INTERFACE_DEVICE ))
+            {
+                const char *prop_name;
+                DBusMessageIter variant;
+                struct bluez_init_entry *init_device;
+                struct unix_name *device_name, *radio_name = NULL;
+
+                init_device = calloc( 1, sizeof( *init_device ) );
+                if (!init_device)
+                {
+                    status = STATUS_NO_MEMORY;
+                    goto done;
+                }
+                device_name = unix_name_get_or_create( path );
+                if (!device_name)
+                {
+                    free( init_device );
+                    status = STATUS_NO_MEMORY;
+                    goto done;
+                }
+                init_device->object.device.device.handle = (UINT_PTR)device_name;
+
+                while((prop_name = bluez_next_dict_entry( &prop_iter, &variant )))
+                {
+                    if (!strcmp( prop_name, "Adapter" ) &&
+                        p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_OBJECT_PATH)
+                    {
+                        const char *path;
+                        p_dbus_message_iter_get_basic( &variant, &path );
+                        radio_name = unix_name_get_or_create( path );
+                        if (!radio_name)
+                        {
+                            unix_name_free( device_name );
+                            free( init_device );
+                            status = STATUS_NO_MEMORY;
+                            goto done;
+                        }
+                        init_device->object.device.radio.handle = (UINT_PTR)radio_name;
+                    }
+                    else
+                        bluez_device_prop_from_dict_entry( prop_name, &variant, &init_device->object.device.props,
+                                                           &init_device->object.device.known_props_mask,
+                                                           WINEBLUETOOTH_DEVICE_ALL_PROPERTIES );
+                }
+                if (!init_device->object.device.radio.handle)
+                {
+                    unix_name_free( device_name );
+                    free( init_device );
+                    ERR( "Could not find the associated adapter for device %s\n", debugstr_a( path ) );
+                    break;
+                }
+                list_add_tail( device_list, &init_device->entry );
+                TRACE( "Found BlueZ org.bluez.Device1 object %s: %p\n", debugstr_a( path ), device_name );
+                break;
+            }
         }
     }
 
-    TRACE( "Initial device list: radios: %d\n", list_count( adapter_list ) );
+    TRACE( "Initial device list: radios: %d, devices: %d\n", list_count( adapter_list ), list_count( device_list ) );
  done:
     return status;
 }
@@ -1081,6 +1179,17 @@ static BOOL bluez_watcher_event_queue_ready( struct bluez_watcher_ctx *ctx, stru
         event->event_data.radio_added = radio->object.radio;
         list_remove( &radio->entry );
         free( radio );
+        return TRUE;
+    }
+    if (!list_empty( &ctx->initial_device_list ))
+    {
+        struct bluez_init_entry *device;
+
+        device = LIST_ENTRY( list_head( &ctx->initial_device_list ), struct bluez_init_entry, entry );
+        event->event_type = BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED;
+        event->event_data.device_added = device->object.device;
+        list_remove( &device->entry );
+        free( device );
         return TRUE;
     }
     if (!list_empty( &ctx->event_list ))
@@ -1147,7 +1256,8 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher,
                 p_dbus_connection_unref( connection );
                 return STATUS_NO_MEMORY;
             }
-            status = bluez_build_initial_device_lists( reply, &watcher_ctx->initial_radio_list );
+            status = bluez_build_initial_device_lists( reply, &watcher_ctx->initial_radio_list,
+                                                       &watcher_ctx->initial_device_list );
             p_dbus_message_unref( reply );
             if (status != STATUS_SUCCESS)
             {

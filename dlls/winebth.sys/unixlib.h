@@ -49,6 +49,11 @@ struct bluetooth_adapter_free_params
     unix_name_t adapter;
 };
 
+struct bluetooth_device_free_params
+{
+    unix_name_t device;
+};
+
 struct bluetooth_adapter_get_unique_name_params
 {
     unix_name_t adapter;
@@ -78,6 +83,8 @@ enum bluetoothapis_funcs
     unix_bluetooth_adapter_set_prop,
     unix_bluetooth_adapter_get_unique_name,
     unix_bluetooth_adapter_free,
+
+    unix_bluetooth_device_free,
 
     unix_bluetooth_get_event,
 

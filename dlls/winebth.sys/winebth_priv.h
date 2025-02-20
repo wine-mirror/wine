@@ -133,6 +133,19 @@ typedef UINT16 winebluetooth_radio_props_mask_t;
      WINEBLUETOOTH_RADIO_PROPERTY_VERSION | WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING |             \
      WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE)
 
+typedef struct
+{
+    UINT_PTR handle;
+} winebluetooth_device_t;
+
+typedef UINT16 winebluetooth_device_props_mask_t;
+
+#define WINEBLUETOOTH_DEVICE_PROPERTY_NAME    (1)
+#define WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS (1 << 1)
+
+#define WINEBLUETOOTH_DEVICE_ALL_PROPERTIES \
+    (WINEBLUETOOTH_DEVICE_PROPERTY_NAME | WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+
 union winebluetooth_property
 {
     BOOL boolean;
@@ -154,6 +167,12 @@ struct winebluetooth_radio_properties
     BYTE version;
 };
 
+struct winebluetooth_device_properties
+{
+    BLUETOOTH_ADDRESS address;
+    CHAR name[BLUETOOTH_MAX_NAME_SIZE];
+};
+
 NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
                                               SIZE_T *size );
 void winebluetooth_radio_free( winebluetooth_radio_t radio );
@@ -165,11 +184,14 @@ NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
                                            ULONG prop_flag,
                                            union winebluetooth_property *property );
 
+void winebluetooth_device_free( winebluetooth_device_t device );
+
 enum winebluetooth_watcher_event_type
 {
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_REMOVED,
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED,
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -188,11 +210,20 @@ struct winebluetooth_watcher_event_radio_props_changed
     winebluetooth_radio_t radio;
 };
 
+struct winebluetooth_watcher_event_device_added
+{
+    winebluetooth_device_props_mask_t known_props_mask;
+    struct winebluetooth_device_properties props;
+    winebluetooth_device_t device;
+    winebluetooth_radio_t radio;
+};
+
 union winebluetooth_watcher_event_data
 {
     struct winebluetooth_watcher_event_radio_added radio_added;
     winebluetooth_radio_t radio_removed;
     struct winebluetooth_watcher_event_radio_props_changed radio_props_changed;
+    struct winebluetooth_watcher_event_device_added device_added;
 };
 
 struct winebluetooth_watcher_event

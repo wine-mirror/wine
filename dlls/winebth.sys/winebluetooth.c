@@ -77,6 +77,15 @@ void winebluetooth_radio_free( winebluetooth_radio_t radio )
     UNIX_BLUETOOTH_CALL( bluetooth_adapter_free, &args );
 }
 
+void winebluetooth_device_free( winebluetooth_device_t device )
+{
+    struct bluetooth_device_free_params args = {0};
+    TRACE( "(%p)\n", (void *)device.handle );
+
+    args.device = device.handle;
+    UNIX_BLUETOOTH_CALL( bluetooth_device_free, &args );
+}
+
 NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )
 {
     struct bluetooth_get_event_params params = {0};

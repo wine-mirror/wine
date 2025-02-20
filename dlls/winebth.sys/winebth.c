@@ -78,6 +78,19 @@ struct bluetooth_radio
     WCHAR *hw_name;
     UNICODE_STRING bthport_symlink_name;
     UNICODE_STRING bthradio_symlink_name;
+
+    CRITICAL_SECTION remote_devices_cs;
+    struct list remote_devices; /* Guarded by remote_devices_cs */
+};
+
+struct bluetooth_remote_device
+{
+    struct list entry;
+
+    winebluetooth_device_t device;
+    CRITICAL_SECTION props_cs;
+    winebluetooth_device_props_mask_t props_mask; /* Guarded by props_cs */
+    struct winebluetooth_device_properties props; /* Guarded by props_cs */
 };
 
 static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
@@ -270,8 +283,10 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     device->hw_name = hw_name;
     device->props = event.props;
     device->props_mask = event.props_mask;
+    list_init( &device->remote_devices );
 
     InitializeCriticalSection( &device->props_cs );
+    InitializeCriticalSection( &device->remote_devices_cs );
 
     EnterCriticalSection( &device_list_cs );
     list_add_tail( &device_list, &device->entry );
@@ -331,6 +346,39 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
     winebluetooth_radio_free( radio );
 }
 
+static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_event_device_added event )
+{
+    struct bluetooth_radio *radio;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
+    {
+        if (winebluetooth_radio_equal( event.radio, radio->radio ))
+        {
+            struct bluetooth_remote_device *remote_device;
+
+            remote_device = calloc( 1, sizeof( *remote_device ) );
+            if (!remote_device)
+            {
+                winebluetooth_device_free( event.device );
+                break;
+            }
+
+            InitializeCriticalSection( &remote_device->props_cs );
+            remote_device->device = event.device;
+            remote_device->props_mask = event.known_props_mask;
+            remote_device->props = event.props;
+
+            EnterCriticalSection( &radio->remote_devices_cs );
+            list_add_tail( &radio->remote_devices, &remote_device->entry );
+            LeaveCriticalSection( &radio->remote_devices_cs );
+            break;
+        }
+    }
+    LeaveCriticalSection( &device_list_cs );
+    winebluetooth_radio_free( event.radio );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -356,6 +404,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_PROPERTIES_CHANGED:
                         update_bluetooth_radio_properties( event->event_data.radio_props_changed );
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED:
+                        bluetooth_radio_add_remote_device( event->event_data.device_added );
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );
