@@ -328,6 +328,7 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
         }
     }
     LeaveCriticalSection( &device_list_cs );
+    winebluetooth_radio_free( radio );
 }
 
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
