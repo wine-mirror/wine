@@ -25,7 +25,6 @@ SOURCES = \
 	dibdrv/dc.c \
 	dibdrv/graphics.c \
 	dibdrv/objects.c \
-	dibdrv/opengl.c \
 	dibdrv/primitives.c \
 	driver.c \
 	emfdrv.c \
