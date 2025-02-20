@@ -1337,13 +1337,16 @@ static void test_file_io_completion(void)
 static void test_file_full_size_information(void)
 {
     IO_STATUS_BLOCK io;
+    FILE_FS_FULL_SIZE_INFORMATION_EX ffsie;
     FILE_FS_FULL_SIZE_INFORMATION ffsi;
     FILE_FS_SIZE_INFORMATION fsi;
+    ULONGLONG expected;
     HANDLE h;
     NTSTATUS res;
 
     if(!(h = create_temp_file(0))) return ;
 
+    memset(&ffsie,0,sizeof(ffsie));
     memset(&ffsi,0,sizeof(ffsi));
     memset(&fsi,0,sizeof(fsi));
 
@@ -1382,6 +1385,74 @@ static void test_file_full_size_information(void)
     /* Assume file system is NTFS */
     ok(ffsi.BytesPerSector == 512, "[ffsi] BytesPerSector expected 512, got %ld\n",ffsi.BytesPerSector);
     ok(ffsi.SectorsPerAllocationUnit == 8, "[ffsi] SectorsPerAllocationUnit expected 8, got %ld\n",ffsi.SectorsPerAllocationUnit);
+
+    /* FileFsFullSizeInformationEx is supported on Windows 10 build 1809 and later */
+    res = pNtQueryVolumeInformationFile(h, &io, &ffsie, sizeof ffsie, FileFsFullSizeInformationEx);
+    ok(res == STATUS_INVALID_PARAMETER || res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
+
+    if (res == STATUS_NOT_IMPLEMENTED || res == STATUS_INVALID_PARAMETER)
+    {
+        skip( "FileFsFullSizeInformationEx not supported.\n" );
+        CloseHandle( h );
+        return;
+    }
+
+    expected = ffsie.ActualAvailableAllocationUnits + ffsie.ActualPoolUnavailableAllocationUnits
+            + ffsie.UsedAllocationUnits + ffsie.TotalReservedAllocationUnits;
+    ok(ffsie.ActualTotalAllocationUnits == expected,
+        "[ffsie] ActualTotalAllocationUnits expected 0x%s, got 0x%s\n", wine_dbgstr_longlong(expected),
+        wine_dbgstr_longlong(ffsie.ActualTotalAllocationUnits));
+    expected = ffsie.ActualTotalAllocationUnits - ffsie.UsedAllocationUnits - ffsie.TotalReservedAllocationUnits;
+    ok(ffsie.ActualAvailableAllocationUnits == expected,
+        "[ffsie] ActualAvailableAllocationUnits expected 0x%s, got 0x%s\n",
+        wine_dbgstr_longlong(expected), wine_dbgstr_longlong(ffsie.ActualAvailableAllocationUnits));
+    ok(ffsie.ActualPoolUnavailableAllocationUnits == 0,
+        "[ffsie] ActualPoolUnavailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.ActualPoolUnavailableAllocationUnits));
+    expected = ffsie.CallerAvailableAllocationUnits + ffsie.CallerPoolUnavailableAllocationUnits
+            + ffsie.UsedAllocationUnits + ffsie.TotalReservedAllocationUnits;
+    ok(ffsie.CallerTotalAllocationUnits == expected,
+        "[ffsie] CallerTotalAllocationUnits expected 0x%s, got 0x%s\n", wine_dbgstr_longlong(expected),
+        wine_dbgstr_longlong(ffsie.CallerTotalAllocationUnits));
+    ok((LONGLONG)ffsie.CallerAvailableAllocationUnits > 0,
+        "[ffsie] CallerAvailableAllocationUnits expected positive, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.CallerAvailableAllocationUnits));
+    ok(ffsie.CallerPoolUnavailableAllocationUnits == 0,
+        "[ffsie] CallerPoolUnavailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.CallerPoolUnavailableAllocationUnits));
+    ok((LONGLONG)ffsie.UsedAllocationUnits > 0, "[ffsie] UsedAllocationUnits expected positive, got 0x%s\n",
+            wine_dbgstr_longlong(ffsie.UsedAllocationUnits));
+    ok((LONGLONG)ffsie.TotalReservedAllocationUnits >= 0,
+        "[ffsie] TotalReservedAllocationUnits expected >= 0, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.TotalReservedAllocationUnits));
+    ok(ffsie.VolumeStorageReserveAllocationUnits <= ffsie.TotalReservedAllocationUnits,
+        "[ffsie] VolumeStorageReserveAllocationUnits expected <= 0x%s, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.TotalReservedAllocationUnits),
+        wine_dbgstr_longlong(ffsie.VolumeStorageReserveAllocationUnits));
+    ok(ffsie.AvailableCommittedAllocationUnits == 0
+            /* in win10 can be (0 - UsedAllocationUnits - TotalReservedAllocationUnits) */
+            || broken((LONGLONG)ffsie.AvailableCommittedAllocationUnits < 0),
+        "[ffsie] AvailableCommittedAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.AvailableCommittedAllocationUnits));
+    ok(ffsie.PoolAvailableAllocationUnits == 0,
+        "[ffsie] PoolAvailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(ffsie.PoolAvailableAllocationUnits));
+    ok(ffsie.ActualTotalAllocationUnits == ffsi.TotalAllocationUnits.QuadPart,
+        "[ffsie] TotalAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
+        wine_dbgstr_longlong(ffsi.TotalAllocationUnits.QuadPart),
+        wine_dbgstr_longlong(ffsie.ActualTotalAllocationUnits));
+    ok(ffsie.CallerAvailableAllocationUnits == ffsi.CallerAvailableAllocationUnits.QuadPart,
+        "[ffsie] CallerAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
+        wine_dbgstr_longlong(ffsi.CallerAvailableAllocationUnits.QuadPart),
+        wine_dbgstr_longlong(ffsie.CallerAvailableAllocationUnits));
+    ok(ffsie.ActualAvailableAllocationUnits == ffsi.ActualAvailableAllocationUnits.QuadPart,
+        "[ffsie] ActualAvailableAllocationUnits error ffsi:0x%s, ffsie:0x%s\n",
+        wine_dbgstr_longlong(ffsi.ActualAvailableAllocationUnits.QuadPart),
+        wine_dbgstr_longlong(ffsie.ActualAvailableAllocationUnits));
+
+    /* Assume file system is NTFS */
+    ok(ffsie.BytesPerSector == 512, "[ffsie] BytesPerSector expected 512, got %ld\n",ffsie.BytesPerSector);
+    ok(ffsie.SectorsPerAllocationUnit == 8, "[ffsie] SectorsPerAllocationUnit expected 8, got %ld\n",ffsie.SectorsPerAllocationUnit);
 
     CloseHandle( h );
 }
