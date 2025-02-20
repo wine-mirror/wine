@@ -2087,7 +2087,6 @@ static void test_create_device_child(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     EnumWindows(enum_first_current_thread_window_proc, (LPARAM)&result_hwnd);
-    todo_wine
     ok(result_hwnd == hwnd, "Got unexpected window %p.\n", result_hwnd);
 
     ID3D11Device_Release(device);
@@ -2099,7 +2098,6 @@ static void test_create_device_child(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     EnumWindows(enum_first_current_thread_window_proc, (LPARAM)&result_hwnd);
-    todo_wine
     ok(result_hwnd == hwnd, "Got unexpected window %p.\n", result_hwnd);
 
     ID3D11Device_Release(device);

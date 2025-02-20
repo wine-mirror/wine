@@ -617,6 +617,7 @@ HWND dxgi_factory_get_device_window(struct dxgi_factory *factory)
             ERR("Failed to create a window.\n");
             return NULL;
         }
+        SetWindowPos(factory->device_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
         TRACE("Created device window %p for factory %p.\n", factory->device_window, factory);
     }
 
