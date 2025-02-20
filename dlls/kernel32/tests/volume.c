@@ -60,6 +60,7 @@ static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameA)(LPCSTR, LPSTR, DWORD, LP
 static BOOL (WINAPI *pGetVolumePathNamesForVolumeNameW)(LPCWSTR, LPWSTR, DWORD, LPDWORD);
 static BOOL (WINAPI *pCreateSymbolicLinkA)(const char *, const char *, DWORD);
 static BOOL (WINAPI *pGetVolumeInformationByHandleW)(HANDLE, WCHAR *, DWORD, DWORD *, DWORD *, DWORD *, WCHAR *, DWORD);
+static HRESULT (WINAPI *pGetDiskSpaceInformationA)(LPCSTR, DISK_SPACE_INFORMATION *);
 
 /* ############################### */
 
@@ -1736,6 +1737,96 @@ static void test_mountmgr_query_points(void)
     free(output);
 }
 
+#define check_disk_space_information(a) check_disk_space_information_(__LINE__, a)
+static void check_disk_space_information_(unsigned int line, const DISK_SPACE_INFORMATION *info)
+{
+    ULONGLONG expected;
+
+    expected = info->ActualAvailableAllocationUnits + info->ActualPoolUnavailableAllocationUnits
+            + info->UsedAllocationUnits + info->TotalReservedAllocationUnits;
+    ok_(__FILE__,line)(info->ActualTotalAllocationUnits == expected,
+        "ActualTotalAllocationUnits expected 0x%s, got 0x%s\n", wine_dbgstr_longlong(expected),
+        wine_dbgstr_longlong(info->ActualTotalAllocationUnits));
+    expected = info->ActualTotalAllocationUnits - info->UsedAllocationUnits - info->TotalReservedAllocationUnits;
+    ok_(__FILE__,line)(info->ActualAvailableAllocationUnits == expected,
+        "ActualAvailableAllocationUnits expected 0x%s, got 0x%s\n",
+        wine_dbgstr_longlong(expected), wine_dbgstr_longlong(info->ActualAvailableAllocationUnits));
+    ok_(__FILE__,line)(info->ActualPoolUnavailableAllocationUnits == 0,
+        "ActualPoolUnavailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(info->ActualPoolUnavailableAllocationUnits));
+    expected = info->CallerAvailableAllocationUnits + info->CallerPoolUnavailableAllocationUnits
+            + info->UsedAllocationUnits + info->TotalReservedAllocationUnits;
+    ok_(__FILE__,line)(info->CallerTotalAllocationUnits == expected,
+        "CallerTotalAllocationUnits expected 0x%s, got 0x%s\n", wine_dbgstr_longlong(expected),
+        wine_dbgstr_longlong(info->CallerTotalAllocationUnits));
+    ok_(__FILE__,line)((LONGLONG)info->CallerAvailableAllocationUnits > 0,
+        "CallerAvailableAllocationUnits expected positive, got 0x%s\n",
+        wine_dbgstr_longlong(info->CallerAvailableAllocationUnits));
+    ok_(__FILE__,line)(info->CallerPoolUnavailableAllocationUnits == 0,
+        "CallerPoolUnavailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(info->CallerPoolUnavailableAllocationUnits));
+    ok_(__FILE__,line)((LONGLONG)info->UsedAllocationUnits > 0, "UsedAllocationUnits expected positive, got 0x%s\n",
+        wine_dbgstr_longlong(info->UsedAllocationUnits));
+    ok_(__FILE__,line)((LONGLONG)info->TotalReservedAllocationUnits >= 0,
+        "TotalReservedAllocationUnits expected >= 0, got 0x%s\n",
+        wine_dbgstr_longlong(info->TotalReservedAllocationUnits));
+    ok_(__FILE__,line)(info->VolumeStorageReserveAllocationUnits <= info->TotalReservedAllocationUnits,
+        "VolumeStorageReserveAllocationUnits expected <= 0x%s, got 0x%s\n",
+        wine_dbgstr_longlong(info->TotalReservedAllocationUnits),
+        wine_dbgstr_longlong(info->VolumeStorageReserveAllocationUnits));
+    ok_(__FILE__,line)(info->AvailableCommittedAllocationUnits == 0
+            /* in win10 can be (0 - UsedAllocationUnits - TotalReservedAllocationUnits) */
+            || broken((LONGLONG)info->AvailableCommittedAllocationUnits < 0),
+        "AvailableCommittedAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(info->AvailableCommittedAllocationUnits));
+    ok_(__FILE__,line)(info->PoolAvailableAllocationUnits == 0,
+        "PoolAvailableAllocationUnits expected zero, got 0x%s\n",
+        wine_dbgstr_longlong(info->PoolAvailableAllocationUnits));
+
+    /* Assume file system is NTFS */
+    ok_(__FILE__,line)(info->BytesPerSector == 512, "BytesPerSector expected 512, got %ld\n",info->BytesPerSector);
+    ok_(__FILE__,line)(info->SectorsPerAllocationUnit == 8, "SectorsPerAllocationUnit expected 8, got %ld\n",info->SectorsPerAllocationUnit);
+}
+
+static void test_GetDiskSpaceInformationA(void)
+{
+    DISK_SPACE_INFORMATION info;
+    HRESULT hr;
+
+    /* GetDiskSpaceInformation() is supported on Windows 10 build 1809 and later */
+    if (!pGetDiskSpaceInformationA)
+    {
+        skip("GetDiskSpaceInformationA is not present.\n");
+        return;
+    }
+
+    memset(&info,0,sizeof(info));
+
+    hr = pGetDiskSpaceInformationA("Q:\\", &info);
+    todo_wine
+    ok(hr == HRESULT_FROM_NT(ERROR_BAD_NET_RESP | ERROR_SEVERITY_WARNING | ERROR_SEVERITY_INFORMATIONAL),
+        "unexpected 0x%08lx\n", hr);
+
+    hr = pGetDiskSpaceInformationA("", &info);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "unexpected 0x%08lx\n", hr);
+
+    hr = pGetDiskSpaceInformationA(NULL, NULL);
+    ok(hr == HRESULT_FROM_NT(ERROR_INVALID_DATA | ERROR_SEVERITY_WARNING | ERROR_SEVERITY_INFORMATIONAL),
+        "unexpected 0x%08lx\n", hr);
+
+    hr = pGetDiskSpaceInformationA(NULL, &info);
+    ok(hr == S_OK, "failed 0x%08lx\n", hr);
+    check_disk_space_information(&info);
+
+    hr = pGetDiskSpaceInformationA("C:\\", &info);
+    ok(hr == S_OK, "failed 0x%08lx\n", hr);
+    check_disk_space_information(&info);
+
+    hr = pGetDiskSpaceInformationA("\\\\?\\C:\\", &info);
+    ok(hr == S_OK, "failed 0x%08lx\n", hr);
+    check_disk_space_information(&info);
+}
+
 START_TEST(volume)
 {
     hdll = GetModuleHandleA("kernel32.dll");
@@ -1748,6 +1839,7 @@ START_TEST(volume)
     pGetVolumePathNamesForVolumeNameW = (void *) GetProcAddress(hdll, "GetVolumePathNamesForVolumeNameW");
     pCreateSymbolicLinkA = (void *) GetProcAddress(hdll, "CreateSymbolicLinkA");
     pGetVolumeInformationByHandleW = (void *) GetProcAddress(hdll, "GetVolumeInformationByHandleW");
+    pGetDiskSpaceInformationA = (void *) GetProcAddress(hdll, "GetDiskSpaceInformationA");
 
     test_query_dos_deviceA();
     test_dos_devices();
@@ -1768,4 +1860,5 @@ START_TEST(volume)
     test_mounted_folder();
     test_GetVolumeInformationByHandle();
     test_mountmgr_query_points();
+    test_GetDiskSpaceInformationA();
 }
