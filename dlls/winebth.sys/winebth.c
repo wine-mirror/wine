@@ -148,6 +148,68 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
     }
+    case IOCTL_BTH_GET_DEVICE_INFO:
+    {
+        BTH_DEVICE_INFO_LIST *list = irp->AssociatedIrp.SystemBuffer;
+        struct bluetooth_remote_device *device;
+        SIZE_T rem_devices;
+
+        FIXME("IOCTL_BTH_GET_DEVICE_INFO: semi-stub!\n");
+
+        if (!list)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (outsize < sizeof( *list ))
+        {
+            status = STATUS_INVALID_BUFFER_SIZE;
+            break;
+        }
+
+        rem_devices = (outsize - sizeof( *list ))/sizeof(BTH_DEVICE_INFO) + 1;
+        status = STATUS_SUCCESS;
+        irp->IoStatus.Information = 0;
+
+        EnterCriticalSection( &ext->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            list->numOfDevices++;
+            if (rem_devices > 0)
+            {
+                BTH_DEVICE_INFO *info;
+
+                info = &list->deviceList[list->numOfDevices - 1];
+                memset( info, 0, sizeof( *info ) );
+
+                EnterCriticalSection( &device->props_cs );
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME)
+                {
+                    info->flags |= BDIF_NAME;
+                    memcpy( info->name, device->props.name, sizeof( info->name ) );
+                }
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+                {
+                    info->flags |= BDIF_ADDRESS;
+                    info->address = RtlUlonglongByteSwap( device->props.address.ullLong );
+                }
+                LeaveCriticalSection( &device->props_cs );
+
+                irp->IoStatus.Information += sizeof( *info );
+                rem_devices--;
+            }
+        }
+        LeaveCriticalSection( &ext->remote_devices_cs );
+
+        irp->IoStatus.Information += sizeof( *list );
+        if (list->numOfDevices)
+            irp->IoStatus.Information -= sizeof( BTH_DEVICE_INFO );
+
+        /* The output buffer needs to be exactly sized. */
+        if (rem_devices)
+            status = STATUS_INVALID_BUFFER_SIZE;
+        break;
+    }
     case IOCTL_WINEBTH_RADIO_SET_FLAG:
     {
         const struct winebth_radio_set_flag_params *params = irp->AssociatedIrp.SystemBuffer;
