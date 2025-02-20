@@ -952,13 +952,15 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
         wm_loaded = TRUE;
     }
 
-    if (wm_loaded)
+    if (wm->ldr.DdagNode != node_ntdll && wm->ldr.DdagNode != node_kernel32)
     {
         if (!imports_fixup_done && importer)
         {
+            /* Prepare for the callee stealing the reference */
+            if (!wm_loaded && wm->ldr.LoadCount != -1) wm->ldr.LoadCount++;
             add_module_dependency( importer->ldr.DdagNode, wm->ldr.DdagNode );
         }
-        else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
+        else if (wm_loaded && process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
         {
             ERR( "process_attach failed for forward '%s' used by %s\n",
                  forward, debugstr_w(get_modref( module )->ldr.FullDllName.Buffer) );
