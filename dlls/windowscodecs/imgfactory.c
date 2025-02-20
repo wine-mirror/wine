@@ -1712,7 +1712,22 @@ HRESULT create_metadata_writer_from_reader(IWICMetadataReader *reader, const GUI
 
         if (cached_stream)
         {
-            hr = create_stream_wrapper(cached_stream, 0, &stream);
+            LARGE_INTEGER move;
+            ULARGE_INTEGER pos;
+
+            /* Move wrapper stream to match original stream position. */
+            move.QuadPart = 0;
+            hr = IStream_Seek(cached_stream, move, STREAM_SEEK_CUR, &pos);
+
+            if (SUCCEEDED(hr))
+                hr = create_stream_wrapper(cached_stream, 0, &stream);
+
+            if (SUCCEEDED(hr))
+            {
+                move.QuadPart = pos.QuadPart;
+                hr = IStream_Seek(stream, move, STREAM_SEEK_SET, NULL);
+            }
+
             IStream_Release(cached_stream);
         }
     }
