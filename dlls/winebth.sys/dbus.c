@@ -806,6 +806,64 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                         unix_name_free( radio );
                 }
             }
+            else if (!strcmp( iface_name, BLUEZ_INTERFACE_DEVICE ))
+            {
+                struct winebluetooth_watcher_event_device_added device_added = {0};
+                struct unix_name *device_name, *radio_name = NULL;
+                DBusMessageIter props_iter, variant;
+                const char *prop_name;
+
+                device_name = unix_name_get_or_create( object_path );
+                device_added.device.handle = (UINT_PTR)device_name;
+                if (!device_name)
+                {
+                    ERR("Failed to allocate memory for device path %s\n", debugstr_a( object_path ));
+                    break;
+                }
+                p_dbus_message_iter_next( &iface_entry );
+                p_dbus_message_iter_recurse( &iface_entry, &props_iter );
+
+                while((prop_name = bluez_next_dict_entry( &props_iter, &variant )))
+                {
+                    if (!strcmp( prop_name, "Adapter" ) &&
+                        p_dbus_message_iter_get_arg_type( &variant ) == DBUS_TYPE_OBJECT_PATH)
+                    {
+                        const char *path;
+
+                        p_dbus_message_iter_get_basic( &variant, &path );
+                        radio_name = unix_name_get_or_create( path );
+                        if (!radio_name)
+                        {
+                            unix_name_free( device_name );
+                            ERR("Failed to allocate memory for radio path %s\n", debugstr_a( path ));
+                            break;
+                        }
+                        device_added.radio.handle = (UINT_PTR)radio_name;
+                    }
+                    else
+                        bluez_device_prop_from_dict_entry( prop_name, &variant, &device_added.props,
+                                                           &device_added.known_props_mask,
+                                                           WINEBLUETOOTH_DEVICE_ALL_PROPERTIES );
+                }
+
+                if (!radio_name)
+                {
+                    unix_name_free( device_name );
+                    ERR( "Could not find the associated adapter for device %s\n", debugstr_a( object_path ) );
+                    break;
+                }
+                else
+                {
+                    union winebluetooth_watcher_event_data event = { .device_added = device_added };
+                    TRACE( "New BlueZ org.bluez.Device1 object added at %s: %p\n", debugstr_a( object_path ),
+                           device_name );
+                    if (!bluez_event_list_queue_new_event( event_list, BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_ADDED, event ))
+                    {
+                        unix_name_free( device_name );
+                        unix_name_free( radio_name );
+                    }
+                }
+            }
             p_dbus_message_iter_next( &ifaces_iter );
         }
     }
