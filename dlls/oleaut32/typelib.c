@@ -4556,7 +4556,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	    pOtherTypeInfoBlks[i].other_name[w] = '\0';
 	}
 	pOtherTypeInfoBlks[i].res1a = *(WORD*)(ptr + len + 4);
-	pOtherTypeInfoBlks[i].name_offs = *(WORD*)(ptr + len + 8);
+	pOtherTypeInfoBlks[i].name_offs = *(WORD*)(ptr + len + 6);
 	extra = pOtherTypeInfoBlks[i].hlpstr_len = *(WORD*)(ptr + 8 + len);
 	if(extra) {
 	    pOtherTypeInfoBlks[i].extra = malloc(extra);
