@@ -910,6 +910,7 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     WCHAR mod_name[256];
     const char *end = strrchr(forward, '.');
     FARPROC proc = NULL;
+    BOOL wm_loaded = FALSE;
 
     if (!end) return NULL;
     if (build_import_name( importer, mod_name, forward, end - forward )) return NULL;
@@ -918,26 +919,30 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward, LPCWS
     {
         WINE_MODREF *imp = get_modref( module );
         TRACE( "delay loading %s for '%s'\n", debugstr_w(mod_name), forward );
-        if (load_dll( load_path, mod_name, 0, &wm, imp->system ) == STATUS_SUCCESS)
-        {
-            if (!imports_fixup_done && importer)
-            {
-                add_module_dependency( importer->ldr.DdagNode, wm->ldr.DdagNode );
-            }
-            else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
-            {
-                LdrUnloadDll( wm->ldr.DllBase );
-                wm = NULL;
-            }
-        }
-
-        if (!wm)
+        if (load_dll( load_path, mod_name, 0, &wm, imp->system ) != STATUS_SUCCESS)
         {
             ERR( "module not found for forward '%s' used by %s\n",
                  forward, debugstr_w(imp->ldr.FullDllName.Buffer) );
             return NULL;
         }
+        wm_loaded = TRUE;
     }
+
+    if (wm_loaded)
+    {
+        if (!imports_fixup_done && importer)
+        {
+            add_module_dependency( importer->ldr.DdagNode, wm->ldr.DdagNode );
+        }
+        else if (process_attach( wm->ldr.DdagNode, NULL ) != STATUS_SUCCESS)
+        {
+            ERR( "process_attach failed for forward '%s' used by %s\n",
+                 forward, debugstr_w(get_modref( module )->ldr.FullDllName.Buffer) );
+            LdrUnloadDll( wm->ldr.DllBase );
+            return NULL;
+        }
+    }
+
     if ((exports = RtlImageDirectoryEntryToData( wm->ldr.DllBase, TRUE,
                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
     {
