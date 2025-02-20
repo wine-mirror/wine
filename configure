@@ -21061,6 +21061,12 @@ then :
   printf "%s\n" "#define HAVE_EPOLL_CREATE 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "epoll_pwait2" "ac_cv_func_epoll_pwait2"
+if test "x$ac_cv_func_epoll_pwait2" = xyes
+then :
+  printf "%s\n" "#define HAVE_EPOLL_PWAIT2 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "fstatfs" "ac_cv_func_fstatfs"
 if test "x$ac_cv_func_fstatfs" = xyes
 then :

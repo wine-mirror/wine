@@ -51,6 +51,9 @@
 /* Define to 1 if you have the 'epoll_create' function. */
 #undef HAVE_EPOLL_CREATE
 
+/* Define to 1 if you have the 'epoll_pwait2' function. */
+#undef HAVE_EPOLL_PWAIT2
+
 /* Define to 1 if you have the FFmpeg libraries. */
 #undef HAVE_FFMPEG
 
