@@ -799,8 +799,8 @@ static inline unsigned int get_unique_id(void)
     return id;
 }
 
-/* try to merge a WM_MOUSEMOVE message with the last in the list; return 1 if successful */
-static int merge_mousemove( struct thread_input *input, const struct message *msg )
+/* lookup an already queued mouse message that matches the message, window and type */
+static struct message *find_mouse_message( struct thread_input *input, const struct message *msg )
 {
     struct message *prev;
     struct list *ptr;
@@ -811,12 +811,21 @@ static int merge_mousemove( struct thread_input *input, const struct message *ms
         if (prev->msg >> 31) continue; /* ignore internal messages */
         if (prev->msg != WM_INPUT) break;
     }
-    if (!ptr) return 0;
-    if (prev->result) return 0;
-    if (prev->win && msg->win && prev->win != msg->win) return 0;
-    if (prev->msg != msg->msg) return 0;
-    if (prev->type != msg->type) return 0;
-    /* now we can merge it */
+    if (!ptr) return NULL;
+    if (prev->result) return NULL;
+    if (prev->win && msg->win && prev->win != msg->win) return NULL;
+    if (prev->msg != msg->msg) return NULL;
+    if (prev->type != msg->type) return NULL;
+    return prev;
+}
+
+/* try to merge a WM_MOUSEMOVE message with the last in the list; return 1 if successful */
+static int merge_mousemove( struct thread_input *input, const struct message *msg )
+{
+    struct message *prev;
+
+    if (!(prev = find_mouse_message( input, msg ))) return 0;
+
     prev->wparam  = msg->wparam;
     prev->lparam  = msg->lparam;
     prev->x       = msg->x;
@@ -828,8 +837,8 @@ static int merge_mousemove( struct thread_input *input, const struct message *ms
         struct hardware_msg_data *msg_data = msg->data;
         prev_data->info = msg_data->info;
     }
-    list_remove( ptr );
-    list_add_tail( &input->msg_list, ptr );
+    list_remove( &prev->entry );
+    list_add_tail( &input->msg_list, &prev->entry );
     return 1;
 }
 
