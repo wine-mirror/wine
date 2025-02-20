@@ -1345,10 +1345,16 @@ static void test_metadata_hIST(void)
 
 static void test_metadata_tIME(void)
 {
+    IWICMetadataQueryReader *query_reader, *query_reader2;
+    IWICComponentFactory *factory;
     HRESULT hr;
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
+    IEnumString *enum_string;
+    PROPVARIANT value;
     UINT i, count;
+    ULONG fetched;
+    WCHAR *str;
     GUID format;
     static const struct test_data td[] =
     {
@@ -1374,6 +1380,10 @@ static void test_metadata_tIME(void)
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /*winxp*/, "CoCreateInstance failed, hr=%lx\n", hr);
     if (FAILED(hr)) return;
 
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     check_interface(reader, &IID_IWICMetadataReader, TRUE);
     check_interface(reader, &IID_IPersist, TRUE);
     check_interface(reader, &IID_IPersistStream, TRUE);
@@ -1391,6 +1401,62 @@ static void test_metadata_tIME(void)
     ok(count == ARRAY_SIZE(td), "unexpected count %i\n", count);
 
     compare_metadata(reader, td, count);
+
+    /* Query reader. */
+    hr = create_query_reader_from_metadata_reader(factory, reader, &GUID_ContainerFormatPng, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(!wcscmp(str, L"/tIME"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+    IEnumString_Release(enum_string);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/tIME", &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+if (hr == S_OK)
+{
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader2, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(td); ++i)
+    {
+        WCHAR buff[16];
+
+        str = NULL;
+        hr = IEnumString_Next(enum_string, 1, &str, &fetched);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+
+        wcscpy(buff, L"/");
+        wcscat(buff, td[i].id_string);
+
+        ok(!wcscmp(str, buff), "Unexpected query %s.\n", wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+
+    IEnumString_Release(enum_string);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/Day", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UI1, "Unexpected type %d.\n", value.vt);
+    ok(value.bVal == 2, "Unexpected value %u.\n", value.bVal);
+    PropVariantClear(&value);
+
+    IWICMetadataQueryReader_Release(query_reader2);
+}
+    IWICMetadataQueryReader_Release(query_reader);
 
     IWICMetadataReader_Release(reader);
 
@@ -1425,6 +1491,7 @@ static void test_metadata_tIME(void)
     load_stream(writer, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionNoCacheStream);
 
     IWICMetadataWriter_Release(writer);
+    IWICComponentFactory_Release(factory);
 }
 
 static inline USHORT ushort_bswap(USHORT s)
@@ -5918,10 +5985,12 @@ static void test_CreateQueryWriterFromReader(void)
     IWICComponentFactory *factory;
     IWICBitmapDecoder *decoder;
     IWICMetadataReader *reader;
+    IEnumString *enum_string;
     PROPVARIANT value;
     IStream *stream;
     WCHAR buff[64];
     UINT count, len;
+    WCHAR *str;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
@@ -5959,6 +6028,31 @@ if (hr == S_OK)
     hr = IWICMetadataQueryWriter_GetLocation(query_writer, ARRAY_SIZE(buff), buff, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!wcscmp(buff, L"/ifd"), "Unexpected location %s.\n", wine_dbgstr_w(buff));
+
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/");
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataQueryWriter_RemoveMetadataByName(query_writer, L"/exif");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataQueryWriter_GetEnumerator(query_writer, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"/{ushort=256}"), "Unexpected query %s.\n", debugstr_w(str));
+    CoTaskMemFree(str);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"/{ushort=257}"), "Unexpected query %s.\n", debugstr_w(str));
+    CoTaskMemFree(str);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"/{ushort=34853}"), "Unexpected query %s.\n", debugstr_w(str));
+    CoTaskMemFree(str);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
+    IEnumString_Release(enum_string);
+
     IWICMetadataQueryWriter_Release(query_writer);
 }
 
