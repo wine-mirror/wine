@@ -948,6 +948,7 @@ static HWND get_ime_ui_window(void)
     {
         imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
                                         ImmGetDefaultIMEWnd( 0 ), 0, ime->module, 0 );
+        SetWindowPos( imc->ui_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE );
         SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)NtUserGetWindowInputContext( GetFocus() ) );
     }
     return imc->ui_hwnd;

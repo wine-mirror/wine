@@ -8055,7 +8055,6 @@ static void test_ime_ui_window_child( void )
     hwnd = CreateWindowW( L"static", L"", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
     ok_ne( 0, hwnd, HWND, "%p" );
     EnumWindows( enum_first_current_thread_window_proc, (LPARAM)&result_hwnd );
-    todo_wine
     ok_eq( result_hwnd, hwnd, HWND, "%p" );
     DestroyWindow( hwnd );
 }
