@@ -1466,36 +1466,6 @@ static struct decoder_pattern const tiff_patterns[] = {
     {0}
 };
 
-static const BYTE tga_footer_magic[18] = "TRUEVISION-XFILE.";
-
-static const BYTE tga_indexed_magic[18] = {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0};
-static const BYTE tga_indexed_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0xff,0xcf};
-
-static const BYTE tga_truecolor_magic[18] = {0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-static const BYTE tga_truecolor_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0x87,0xc0};
-
-static const BYTE tga_grayscale_magic[18] = {0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0};
-static const BYTE tga_grayscale_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0xff,0xcf};
-
-static GUID const * const tga_formats[] = {
-    &GUID_WICPixelFormat8bppGray,
-    &GUID_WICPixelFormat8bppIndexed,
-    &GUID_WICPixelFormat16bppGray,
-    &GUID_WICPixelFormat16bppBGR555,
-    &GUID_WICPixelFormat24bppBGR,
-    &GUID_WICPixelFormat32bppBGRA,
-    &GUID_WICPixelFormat32bppPBGRA,
-    NULL
-};
-
-static struct decoder_pattern const tga_patterns[] = {
-    {18,18,tga_footer_magic,mask_all,1},
-    {18,0,tga_indexed_magic,tga_indexed_mask,0},
-    {18,0,tga_truecolor_magic,tga_truecolor_mask,0},
-    {18,0,tga_grayscale_magic,tga_grayscale_mask,0},
-    {0}
-};
-
 static struct regsvr_decoder const decoder_list[] = {
     {   &CLSID_WICBmpDecoder,
 	"The Wine Project",
@@ -1584,17 +1554,6 @@ static struct regsvr_decoder const decoder_list[] = {
 	".tif;.tiff",
 	tiff_decode_formats,
 	tiff_patterns
-    },
-    {   &CLSID_WineTgaDecoder,
-	"The Wine Project",
-	"TGA Decoder",
-	"1.0.0.0",
-	&GUID_VendorWine,
-	&GUID_WineContainerFormatTga,
-	"image/x-targa",
-	".tga;.tpic",
-	tga_formats,
-	tga_patterns
     },
     { NULL }			/* list terminator */
 };

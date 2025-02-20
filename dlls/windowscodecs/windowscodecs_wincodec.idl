@@ -140,13 +140,6 @@ coclass WICDdsEncoder { interface IWICBitmapEncoder; }
 coclass WICDefaultFormatConverter { interface IWICFormatConverter; }
 
 [
-    helpstring("WIC TGA Decoder"),
-    threading(both),
-    uuid(b11fc79a-67cc-43e6-a9ce-e3d54945d304)
-]
-coclass WineTgaDecoder { interface IWICBitmapDecoder; }
-
-[
     helpstring("WIC Unknown Metadata Reader"),
     threading(both),
     uuid(699745c2-5066-4b82-a8e3-d40478dbec8c)
