@@ -767,15 +767,10 @@ static void test_metadata_unknown(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     str = NULL;
     hr = IEnumString_Next(enum_string, 1, &str, &fetched);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(fetched == 1, "Unexpected count %lu.\n", fetched);
-    if (hr == S_OK)
-    {
-        ok(!wcscmp(str, L"/{}"), "Unexpected query %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
+    ok(!wcscmp(str, L"/{}"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
     IEnumString_Release(enum_string);
 
     PropVariantInit(&value);
@@ -4639,15 +4634,10 @@ static void test_queryreader(void)
     hr = IWICMetadataQueryReader_GetEnumerator(reader, &enum_string);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
+    ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateMetadataWriter(factory, &GUID_MetadataFormatApp1, NULL, 0, &writer);
@@ -4661,28 +4651,19 @@ static void test_queryreader(void)
 
     /* Existing enumerator does not pick it up. */
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
-    todo_wine
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     IEnumString_Release(enum_string);
 
     hr = IWICMetadataQueryReader_GetEnumerator(reader, &enum_string);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
+    ok(!wcscmp(str, L"/ifd"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(!wcscmp(str, L"/app1"), "Unexpected query %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
+    ok(!wcscmp(str, L"/app1"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
 
     IEnumString_Release(enum_string);
 
