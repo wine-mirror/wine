@@ -642,9 +642,13 @@ static HRESULT WINAPI metadatahandler_stream_provider_GetPersistOptions(IWICStre
 
 static HRESULT WINAPI metadatahandler_stream_provider_GetPreferredVendorGUID(IWICStreamProvider *iface, GUID *guid)
 {
-    FIXME("%p, %p stub\n", iface, guid);
+    TRACE("%p, %p.\n", iface, guid);
 
-    return E_NOTIMPL;
+    if (!guid)
+        return E_INVALIDARG;
+
+    memcpy(guid, &GUID_VendorMicrosoft, sizeof(*guid));
+    return S_OK;
 }
 
 static HRESULT WINAPI metadatahandler_stream_provider_RefreshStream(IWICStreamProvider *iface)

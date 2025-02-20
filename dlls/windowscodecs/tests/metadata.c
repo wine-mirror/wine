@@ -457,13 +457,10 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
 
     memset(&guid, 0, sizeof(guid));
     hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, &guid);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &GUID_VendorMicrosoft), "Unexpected vendor %s.\n", wine_dbgstr_guid(&guid));
 
     hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICStreamProvider_GetPersistOptions(stream_provider, NULL);
@@ -487,9 +484,7 @@ static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD 
 
     memset(&guid, 0, sizeof(guid));
     hr = IWICStreamProvider_GetPreferredVendorGUID(stream_provider, &guid);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(IsEqualGUID(&guid, &GUID_VendorMicrosoft), "Unexpected vendor %s.\n", wine_dbgstr_guid(&guid));
 
     flags = ~persist_options;
