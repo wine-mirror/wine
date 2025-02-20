@@ -173,7 +173,7 @@ static CertificateChainEngine *get_chain_engine(HCERTCHAINENGINE handle, BOOL al
             if(default_cu_engine != handle)
                 CertFreeCertificateChainEngine(handle);
         }
-
+        CertControlStore(default_cu_engine->hWorld, 0, CERT_STORE_CTRL_RESYNC, NULL);
         return default_cu_engine;
     }
 
@@ -187,7 +187,7 @@ static CertificateChainEngine *get_chain_engine(HCERTCHAINENGINE handle, BOOL al
             if(default_lm_engine != handle)
                 CertFreeCertificateChainEngine(handle);
         }
-
+        CertControlStore(default_lm_engine->hWorld, 0, CERT_STORE_CTRL_RESYNC, NULL);
         return default_lm_engine;
     }
 

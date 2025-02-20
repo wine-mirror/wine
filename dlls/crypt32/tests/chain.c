@@ -5552,7 +5552,7 @@ static void test_chain_engine_cache_update(void)
 
     ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
     ok(ret, "got error %#lx.\n", GetLastError());
-    todo_wine ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
     CertFreeCertificateChain(chain);
 
     store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
