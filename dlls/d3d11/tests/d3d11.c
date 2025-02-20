@@ -2046,6 +2046,66 @@ static void draw_color_quad_(unsigned int line, struct d3d11_test_context *conte
     draw_quad_vs_(line, context, vs_code, vs_code_size);
 }
 
+static BOOL CALLBACK enum_first_current_thread_window_proc(HWND hwnd, LPARAM lparam)
+{
+    if (GetWindowThreadProcessId(hwnd, NULL) == GetCurrentThreadId())
+    {
+        *(HWND *)lparam = hwnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void test_create_device_child(void)
+{
+    DXGI_SWAP_CHAIN_DESC swapchain_desc;
+    HWND hwnd, result_hwnd;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    /* Unity expects the first window in the current thread to be its game window, not DXGI device window */
+    hwnd = CreateWindowW(L"static", L"", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+
+    /* Create a device without a device window in windowed mode */
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = NULL;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, &device, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    EnumWindows(enum_first_current_thread_window_proc, (LPARAM)&result_hwnd);
+    todo_wine
+    ok(result_hwnd == hwnd, "Got unexpected window %p.\n", result_hwnd);
+
+    ID3D11Device_Release(device);
+
+    /* Create a device without a device window in fullscreen mode */
+    swapchain_desc.Windowed = FALSE;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, &device, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    EnumWindows(enum_first_current_thread_window_proc, (LPARAM)&result_hwnd);
+    todo_wine
+    ok(result_hwnd == hwnd, "Got unexpected window %p.\n", result_hwnd);
+
+    ID3D11Device_Release(device);
+    DestroyWindow(hwnd);
+}
+
 static void test_create_device(void)
 {
     static const D3D_FEATURE_LEVEL default_feature_levels[] =
@@ -2060,8 +2120,11 @@ static void test_create_device(void)
     D3D_FEATURE_LEVEL feature_level, supported_feature_level;
     DXGI_SWAP_CHAIN_DESC swapchain_desc, obtained_desc;
     ID3D11DeviceContext *immediate_context;
+    char **argv, cmd[MAX_PATH];
     IDXGISwapChain *swapchain;
+    PROCESS_INFORMATION info;
     ID3D11Device *device;
+    STARTUPINFOA startup;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -2268,6 +2331,19 @@ static void test_create_device(void)
     ok(!immediate_context, "Got unexpected immediate context pointer %p.\n", immediate_context);
 
     DestroyWindow(window);
+
+    /* Test that creating a swapchain without a device window shouldn't create a fallback device
+     * window that's on top of normal windows at creation. Run the tests in a new process to avoid
+     * interference from windows in the current process */
+    winetest_get_mainargs(&argv);
+    sprintf(cmd, "%s d3d11 test_create_device_child", argv[0]);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    ok(CreateProcessA(NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info), "CreateProcess failed.\n");
+
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
 }
 
 static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
@@ -36584,6 +36660,13 @@ START_TEST(d3d11)
     HMODULE wined3d;
     char **argv;
 
+    argc = winetest_get_mainargs(&argv);
+    if (argc == 3 && !strcmp(argv[2], "test_create_device_child"))
+    {
+        test_create_device_child();
+        return;
+    }
+
     if ((wined3d = GetModuleHandleA("wined3d.dll")))
     {
         enum wined3d_renderer (CDECL *p_wined3d_get_renderer)(void);
@@ -36600,7 +36683,6 @@ START_TEST(d3d11)
     if (sizeof(void *) == 4 && !strcmp(winetest_platform, "wine"))
         use_mt = FALSE;
 
-    argc = winetest_get_mainargs(&argv);
     for (i = 2; i < argc; ++i)
     {
         if (!strcmp(argv[i], "--validate"))
