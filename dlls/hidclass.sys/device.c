@@ -122,7 +122,7 @@ void hid_queue_remove_pending_irps( struct hid_queue *queue )
 
     while ((irp = hid_queue_pop_irp( queue )))
     {
-        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        irp->IoStatus.Status = STATUS_DEVICE_NOT_CONNECTED;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
 }

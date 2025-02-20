@@ -573,7 +573,11 @@ static void read_controller_state(struct xinput_controller *controller)
     if (!GetOverlappedResult(controller->device, &controller->hid.read_ovl, &read_len, TRUE))
     {
         if (GetLastError() == ERROR_OPERATION_ABORTED) return;
-        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE) controller_destroy(controller, TRUE);
+        if (GetLastError() == ERROR_ACCESS_DENIED || GetLastError() == ERROR_INVALID_HANDLE ||
+            GetLastError() == ERROR_DEVICE_NOT_CONNECTED)
+        {
+            controller_destroy(controller, TRUE);
+        }
         else ERR("Failed to read input report, GetOverlappedResult failed with error %lu\n", GetLastError());
         return;
     }
