@@ -8037,8 +8037,58 @@ static void test_nihongo_no(void)
     ime_call_count = 0;
 }
 
+static BOOL CALLBACK enum_first_current_thread_window_proc( HWND hwnd, LPARAM lparam )
+{
+    if (GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
+    {
+        *(HWND *)lparam = hwnd;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static void test_ime_ui_window_child( void )
+{
+    HWND hwnd, result_hwnd = 0;
+
+    /* Unity expects the first window in the current thread to be its game window, not Wine IME */
+    hwnd = CreateWindowW( L"static", L"", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL );
+    ok_ne( 0, hwnd, HWND, "%p" );
+    EnumWindows( enum_first_current_thread_window_proc, (LPARAM)&result_hwnd );
+    todo_wine
+    ok_eq( result_hwnd, hwnd, HWND, "%p" );
+    DestroyWindow( hwnd );
+}
+
+static void test_ime_ui_window( const char *argv0 )
+{
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char cmd[MAX_PATH];
+
+    /* Run in a new process to avoid interference from windows in the current process */
+    sprintf( cmd, "%s imm32 test_ime_ui_window_child", argv0 );
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+    CreateProcessA( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hProcess );
+    CloseHandle( info.hThread );
+}
+
 START_TEST(imm32)
 {
+    char **argv;
+    int argc;
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc == 3 && !strcmp( argv[2], "test_ime_ui_window_child" ))
+    {
+        test_ime_ui_window_child();
+        return;
+    }
+
     default_hkl = GetKeyboardLayout( 0 );
 
     test_class.hInstance = GetModuleHandleW( NULL );
@@ -8050,6 +8100,7 @@ START_TEST(imm32)
         return;
     }
 
+    test_ime_ui_window( argv[0] );
     test_com_initialization();
 
     test_ImmEnumInputContext();
