@@ -819,6 +819,30 @@ static struct message *find_mouse_message( struct thread_input *input, const str
     return prev;
 }
 
+/* try to merge a WM_MOUSEWHEEL message with the last in the list; return 1 if successful */
+static int merge_mousewheel( struct thread_input *input, const struct message *msg )
+{
+    struct message *prev;
+
+    if (!(prev = find_mouse_message( input, msg ))) return 0;
+    if (prev->x != msg->x || prev->y != msg->y) return 0; /* don't merge if cursor has moved */
+
+    prev->wparam += msg->wparam; /* accumulate wheel delta */
+    prev->lparam  = msg->lparam;
+    prev->x       = msg->x;
+    prev->y       = msg->y;
+    prev->time    = msg->time;
+    if (msg->type == MSG_HARDWARE && prev->data && msg->data)
+    {
+        struct hardware_msg_data *prev_data = prev->data;
+        struct hardware_msg_data *msg_data = msg->data;
+        prev_data->info = msg_data->info;
+    }
+    list_remove( &prev->entry );
+    list_add_tail( &input->msg_list, &prev->entry );
+    return 1;
+}
+
 /* try to merge a WM_MOUSEMOVE message with the last in the list; return 1 if successful */
 static int merge_mousemove( struct thread_input *input, const struct message *msg )
 {
@@ -870,6 +894,7 @@ static int merge_unique_message( struct thread_input *input, unsigned int messag
 /* try to merge a message with the messages in the list; return 1 if successful */
 static int merge_message( struct thread_input *input, const struct message *msg )
 {
+    if (msg->msg == WM_MOUSEWHEEL) return merge_mousewheel( input, msg );
     if (msg->msg == WM_MOUSEMOVE) return merge_mousemove( input, msg );
     if (msg->msg == WM_WINE_CLIPCURSOR) return merge_unique_message( input, WM_WINE_CLIPCURSOR, msg );
     if (msg->msg == WM_WINE_SETCURSOR) return merge_unique_message( input, WM_WINE_SETCURSOR, msg );
