@@ -721,6 +721,8 @@ XML2_PE_LIBS
 XML2_PE_CFLAGS
 VKD3D_PE_LIBS
 VKD3D_PE_CFLAGS
+TOMCRYPT_PE_LIBS
+TOMCRYPT_PE_CFLAGS
 TIFF_PE_LIBS
 TIFF_PE_CFLAGS
 PNG_PE_LIBS
@@ -1643,6 +1645,7 @@ enable_png
 enable_strmbase
 enable_strmiids
 enable_tiff
+enable_tomcrypt
 enable_uuid
 enable_vkd3d
 enable_wbemuuid
@@ -1811,6 +1814,8 @@ PNG_PE_CFLAGS
 PNG_PE_LIBS
 TIFF_PE_CFLAGS
 TIFF_PE_LIBS
+TOMCRYPT_PE_CFLAGS
+TOMCRYPT_PE_LIBS
 VKD3D_PE_CFLAGS
 VKD3D_PE_LIBS
 XML2_PE_CFLAGS
@@ -2632,6 +2637,11 @@ Some influential environment variables:
               C compiler flags for the PE tiff, overriding the bundled version
   TIFF_PE_LIBS
               Linker flags for the PE tiff, overriding the bundled version
+  TOMCRYPT_PE_CFLAGS
+              C compiler flags for the PE tomcrypt, overriding the bundled
+              version
+  TOMCRYPT_PE_LIBS
+              Linker flags for the PE tomcrypt, overriding the bundled version
   VKD3D_PE_CFLAGS
               C compiler flags for the PE vkd3d, overriding the bundled
               version
@@ -13970,6 +13980,23 @@ fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff cflags: $TIFF_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: tiff libs: $TIFF_PE_LIBS" >&5
 
+if ${TOMCRYPT_PE_LIBS:+false} :
+then :
+  TOMCRYPT_PE_LIBS=tomcrypt
+   if ${TOMCRYPT_PE_CFLAGS:+false} :
+then :
+  TOMCRYPT_PE_CFLAGS="-I\$(top_srcdir)/libs/tomcrypt/src/headers -DLTC_NO_PROTOTYPES -DLTC_SOURCE"
+else case e in #(
+  e) enable_tomcrypt=no ;;
+esac
+fi
+else case e in #(
+  e) enable_tomcrypt=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: tomcrypt cflags: $TOMCRYPT_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: tomcrypt libs: $TOMCRYPT_PE_LIBS" >&5
+
 if ${VKD3D_PE_LIBS:+false} :
 then :
   VKD3D_PE_LIBS=vkd3d
@@ -23069,6 +23096,7 @@ wine_fn_config_makefile libs/png enable_png
 wine_fn_config_makefile libs/strmbase enable_strmbase
 wine_fn_config_makefile libs/strmiids enable_strmiids
 wine_fn_config_makefile libs/tiff enable_tiff
+wine_fn_config_makefile libs/tomcrypt enable_tomcrypt
 wine_fn_config_makefile libs/uuid enable_uuid
 wine_fn_config_makefile libs/vkd3d enable_vkd3d
 wine_fn_config_makefile libs/wbemuuid enable_wbemuuid
@@ -24188,6 +24216,8 @@ PNG_PE_CFLAGS = $PNG_PE_CFLAGS
 PNG_PE_LIBS = $PNG_PE_LIBS
 TIFF_PE_CFLAGS = $TIFF_PE_CFLAGS
 TIFF_PE_LIBS = $TIFF_PE_LIBS
+TOMCRYPT_PE_CFLAGS = $TOMCRYPT_PE_CFLAGS
+TOMCRYPT_PE_LIBS = $TOMCRYPT_PE_LIBS
 VKD3D_PE_CFLAGS = $VKD3D_PE_CFLAGS
 VKD3D_PE_LIBS = $VKD3D_PE_LIBS
 XML2_PE_CFLAGS = $XML2_PE_CFLAGS
