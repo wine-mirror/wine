@@ -89,6 +89,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_YUY2,                       0,  0,  0,  0,   0,  0,  0,  0,    2,   0,  0},
     {WINED3DFMT_YV12,                       0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
     {WINED3DFMT_NV12,                       0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
+    {WINED3DFMT_NV12_PLANAR,                0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
     {WINED3DFMT_DXT1,                       0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
     {WINED3DFMT_DXT2,                       0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
     {WINED3DFMT_DXT3,                       0,  0,  0,  0,   0,  0,  0,  0,    1,   0,  0},
@@ -718,7 +719,7 @@ static const struct
 }
 format_plane_info[] =
 {
-    {WINED3DFMT_NV12, {WINED3DFMT_R8_UINT, WINED3DFMT_R8G8_UINT}, 2, 2},
+    {WINED3DFMT_NV12_PLANAR, {WINED3DFMT_R8_UINT, WINED3DFMT_R8G8_UINT}, 2, 2},
 };
 
 struct wined3d_format_vertex_info
@@ -4757,6 +4758,7 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_R9G9B9E5_SHAREDEXP);
         FMT_TO_STR(WINED3DFMT_R8G8_B8G8_UNORM);
         FMT_TO_STR(WINED3DFMT_G8R8_G8B8_UNORM);
+        FMT_TO_STR(WINED3DFMT_NV12_PLANAR);
         FMT_TO_STR(WINED3DFMT_BC1_TYPELESS);
         FMT_TO_STR(WINED3DFMT_BC1_UNORM);
         FMT_TO_STR(WINED3DFMT_BC1_UNORM_SRGB);

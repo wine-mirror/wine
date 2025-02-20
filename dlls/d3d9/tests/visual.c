@@ -13919,6 +13919,13 @@ static void yuv_layout_test(void)
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
         }
+
+        for (i = 0; i < ARRAY_SIZE(test_data); i++)
+        {
+            hr = IDirect3DDevice9_ColorFill(device, surface, NULL, test_data[i].color1);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        }
+
         IDirect3DSurface9_Release(surface);
     }
 
