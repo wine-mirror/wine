@@ -344,6 +344,10 @@ HRESULT create_metadata_reader(REFGUID format, const GUID *vendor, DWORD options
         IWICMetadataReader **reader);
 HRESULT create_metadata_writer(REFGUID format, const GUID *vendor, DWORD options,
         IWICMetadataWriter **writer);
+HRESULT create_metadata_query_writer_from_reader(IWICMetadataQueryReader *query_reader, const GUID *vendor,
+        IWICMetadataQueryWriter **query_writer);
+HRESULT create_metadata_writer_from_reader(IWICMetadataReader *reader, const GUID *vendor,
+        IWICMetadataWriter **writer);
 
 struct encoder_funcs;
 

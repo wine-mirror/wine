@@ -6009,7 +6009,6 @@ static void test_CreateQueryWriterFromReader(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, NULL, &query_writer);
-    todo_wine
     ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
 
     PropVariantInit(&value);
@@ -6067,7 +6066,6 @@ if (hr == S_OK)
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, (IWICMetadataQueryReader *)query_writer,
             NULL, &query_writer2);
-    todo_wine
     ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
     IWICMetadataQueryWriter_Release(query_writer);
 
@@ -6077,10 +6075,8 @@ if (hr == S_OK)
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, (IWICMetadataQueryReader *)query_writer,
             NULL, &query_writer2);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IWICMetadataQueryWriter_Release(query_writer2);
+    IWICMetadataQueryWriter_Release(query_writer2);
     if (query_writer)
         IWICMetadataQueryWriter_Release(query_writer);
 
@@ -6103,7 +6099,6 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, &GUID_VendorMicrosoft, &query_writer);
-    todo_wine
     ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
 
     IWICMetadataQueryReader_Release(query_reader);
@@ -6118,7 +6113,6 @@ if (hr == S_OK)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICComponentFactory_CreateQueryWriterFromReader(factory, query_reader, &GUID_VendorMicrosoft, &query_writer);
-    todo_wine
     ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
     IWICMetadataQueryReader_Release(query_reader);
 

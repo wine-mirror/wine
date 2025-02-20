@@ -1276,6 +1276,18 @@ static IWICMetadataQueryWriterVtbl query_handler_vtbl =
     query_handler_RemoveMetadataByName,
 };
 
+static struct query_handler *unsafe_impl_from_IWICMetadataQueryReader(IWICMetadataQueryReader *iface)
+{
+    if (!iface)
+        return NULL;
+    if (iface->lpVtbl != (IWICMetadataQueryReaderVtbl *)&query_handler_vtbl)
+    {
+        WARN("External query reader implementations are not supported.\n");
+        return NULL;
+    }
+    return CONTAINING_RECORD(iface, struct query_handler, IWICMetadataQueryWriter_iface);
+}
+
 static HRESULT create_query_handler(IUnknown *block_handler, enum metadata_object_type object_type,
         const WCHAR *root, IWICMetadataQueryWriter **ret)
 {
@@ -1340,6 +1352,31 @@ HRESULT MetadataQueryReader_CreateInstance(IWICMetadataReader *reader, IWICMetad
 HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataWriter *writer, IWICMetadataQueryWriter **out)
 {
     return create_query_handler((IUnknown *)writer, WRITER, NULL, out);
+}
+
+HRESULT create_metadata_query_writer_from_reader(IWICMetadataQueryReader *query_reader, const GUID *vendor,
+        IWICMetadataQueryWriter **query_writer)
+{
+    struct query_handler *query_reader_obj = unsafe_impl_from_IWICMetadataQueryReader(query_reader);
+    IWICMetadataWriter *writer;
+    HRESULT hr;
+
+    *query_writer = NULL;
+
+    if (!query_reader_obj)
+        return E_FAIL;
+
+    if (is_block_handler(query_reader_obj))
+        return WINCODEC_ERR_UNEXPECTEDMETADATATYPE;
+
+    hr = create_metadata_writer_from_reader(query_reader_obj->object.reader, vendor, &writer);
+    if (SUCCEEDED(hr))
+    {
+        hr = create_query_handler((IUnknown *)writer, WRITER, NULL, query_writer);
+        IWICMetadataWriter_Release(writer);
+    }
+
+    return hr;
 }
 
 static const struct
