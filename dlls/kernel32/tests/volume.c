@@ -1796,7 +1796,7 @@ static void test_GetDiskSpaceInformationA(void)
     /* GetDiskSpaceInformation() is supported on Windows 10 build 1809 and later */
     if (!pGetDiskSpaceInformationA)
     {
-        skip("GetDiskSpaceInformationA is not present.\n");
+        win_skip("GetDiskSpaceInformationA is not present.\n");
         return;
     }
 

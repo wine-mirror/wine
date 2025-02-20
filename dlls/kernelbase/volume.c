@@ -736,6 +736,43 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetDiskFreeSpaceA( LPCSTR root, LPDWORD cluster_se
 }
 
 
+/***********************************************************************
+ *           GetDiskSpaceInformationW   (kernelbase.@)
+ */
+HRESULT WINAPI GetDiskSpaceInformationW( LPCWSTR root, DISK_SPACE_INFORMATION *info )
+{
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
+    HANDLE handle;
+
+    TRACE( "%s,%p\n", debugstr_w(root), info );
+
+    if (!info)
+        return HRESULT_FROM_NT( ERROR_INVALID_DATA | ERROR_SEVERITY_WARNING | ERROR_SEVERITY_INFORMATIONAL );
+
+    if (!open_device_root( root, &handle )) return HRESULT_FROM_WIN32( ERROR_PATH_NOT_FOUND );
+
+    status = NtQueryVolumeInformationFile( handle, &io, (FILE_FS_FULL_SIZE_INFORMATION_EX *)info, sizeof(*info),
+                                           FileFsFullSizeInformationEx );
+    NtClose( handle );
+    if (!set_ntstatus( status )) return status;
+
+    return S_OK;
+}
+
+
+/***********************************************************************
+ *           GetDiskSpaceInformationA   (kernelbase.@)
+ */
+HRESULT WINAPI GetDiskSpaceInformationA( LPCSTR root, DISK_SPACE_INFORMATION *info )
+{
+    WCHAR *rootW = NULL;
+
+    if (root && !(rootW = file_name_AtoW( root, FALSE ))) return FALSE;
+    return GetDiskSpaceInformationW( rootW, info );
+}
+
+
 static BOOL is_dos_path( const UNICODE_STRING *path )
 {
     static const WCHAR global_prefix[4] = {'\\','?','?','\\'};

@@ -514,6 +514,8 @@
 @ stdcall GetDiskFreeSpaceExA(str ptr ptr ptr)
 @ stdcall GetDiskFreeSpaceExW(wstr ptr ptr ptr)
 @ stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr)
+@ stdcall GetDiskSpaceInformationA(str ptr)
+@ stdcall GetDiskSpaceInformationW(wstr ptr)
 @ stdcall GetDriveTypeA(str)
 @ stdcall GetDriveTypeW(wstr)
 # @ stub GetDurationFormatEx

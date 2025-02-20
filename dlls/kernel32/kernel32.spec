@@ -659,6 +659,8 @@
 @ stdcall -import GetDiskFreeSpaceExA (str ptr ptr ptr)
 @ stdcall -import GetDiskFreeSpaceExW (wstr ptr ptr ptr)
 @ stdcall -import GetDiskFreeSpaceW(wstr ptr ptr ptr ptr)
+@ stdcall -import GetDiskSpaceInformationA(str ptr)
+@ stdcall -import GetDiskSpaceInformationW(wstr ptr)
 @ stdcall GetDllDirectoryA(long ptr)
 @ stdcall GetDllDirectoryW(long ptr)
 @ stdcall -import GetDriveTypeA(str)
