@@ -67,6 +67,7 @@ struct macdrv_context
     HWND                    draw_hwnd;
     macdrv_view             draw_view;
     RECT                    draw_rect;
+    RECT                    draw_rect_win_dpi;
     CGLPBufferObj           draw_pbuffer;
     GLenum                  draw_pbuffer_face;
     GLint                   draw_pbuffer_level;
@@ -1506,13 +1507,14 @@ static void mark_contexts_for_moved_view(macdrv_view view)
 static BOOL sync_context_rect(struct macdrv_context *context)
 {
     BOOL ret = FALSE;
-    if (InterlockedCompareExchange(&context->view_moved, FALSE, TRUE))
-    {
-        struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
+    RECT rect;
+    struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
 
-        if (data && data->client_cocoa_view == context->draw_view)
+    if (data && data->client_cocoa_view == context->draw_view)
+    {
+        if (InterlockedCompareExchange(&context->view_moved, FALSE, TRUE))
         {
-            RECT rect = data->rects.client;
+            rect = data->rects.client;
             OffsetRect(&rect, -data->rects.visible.left, -data->rects.visible.top);
             if (!EqualRect(&context->draw_rect, &rect))
             {
@@ -1520,8 +1522,16 @@ static BOOL sync_context_rect(struct macdrv_context *context)
                 ret = TRUE;
             }
         }
-        release_win_data(data);
+
+        NtUserGetClientRect(context->draw_hwnd, &rect, NtUserGetDpiForWindow(context->draw_hwnd));
+        if (!EqualRect(&context->draw_rect_win_dpi, &rect))
+        {
+            context->draw_rect_win_dpi = rect;
+            ret = TRUE;
+        }
     }
+
+    release_win_data(data);
     return ret;
 }
 
@@ -1546,7 +1556,7 @@ static void make_context_current(struct macdrv_context *context, BOOL read)
         sync_context_rect(context);
 
         view = context->draw_view;
-        view_rect = context->draw_rect;
+        view_rect = context->draw_rect_win_dpi;
         pbuffer = context->draw_pbuffer;
     }
 
@@ -2420,6 +2430,7 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
         context->draw_view = data->client_cocoa_view;
         context->draw_rect = data->rects.client;
         OffsetRect(&context->draw_rect, -data->rects.visible.left, -data->rects.visible.top);
+        NtUserGetClientRect(hwnd, &context->draw_rect_win_dpi, NtUserGetDpiForWindow(hwnd));
         context->draw_pbuffer = NULL;
         release_win_data(data);
     }

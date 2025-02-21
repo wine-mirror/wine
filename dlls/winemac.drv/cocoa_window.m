@@ -3751,12 +3751,7 @@ void macdrv_set_view_frame(macdrv_view v, CGRect rect)
             else
                 [view setFrame:newFrame];
             [view setNeedsDisplay:YES];
-
-            if (retina_enabled)
-            {
-                int backing_size[2] = { 0 };
-                [view wine_setBackingSize:backing_size];
-            }
+            [view wine_setBackingSize:(int[2]){ 0 }];
             [(WineWindow*)[view window] updateForGLSubviews];
         }
     });

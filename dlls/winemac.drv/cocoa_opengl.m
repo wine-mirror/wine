@@ -73,9 +73,6 @@
     // need to destroy and recreate the surface or we get weird behavior.
     - (void) resetSurfaceIfBackingSizeChanged
     {
-        if (!retina_enabled)
-            return;
-
         int view_backing[2];
         if (macdrv_get_view_backing_size((macdrv_view)self.view, view_backing) &&
             (view_backing[0] != backing_size[0] || view_backing[1] != backing_size[1]))
@@ -100,9 +97,6 @@
     - (void) wine_updateBackingSize:(const CGSize*)size
     {
         GLint enabled;
-
-        if (!retina_enabled)
-            return;
 
         if (size)
         {
