@@ -746,7 +746,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     static const char fakedll_signature[] = "Wine placeholder DLL";
 
     IMAGE_COR20_HEADER clr;
-    IMAGE_SECTION_HEADER sec[96];
+    IMAGE_SECTION_HEADER *sec;
     struct
     {
         IMAGE_DOS_HEADER dos;
@@ -770,7 +770,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     off_t pos;
     int size, has_relocs;
     size_t mz_size, clr_va = 0, clr_size = 0, cfg_va, cfg_size;
-    unsigned int i;
+    unsigned int i, ret;
 
     /* load the headers */
 
@@ -918,13 +918,14 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     /* load the section headers */
 
     pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
-    if (nt.FileHeader.NumberOfSections > ARRAY_SIZE( sec )) return STATUS_INVALID_IMAGE_FORMAT;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (!mapping->size) mapping->size = mapping->image.map_size;
     else if (mapping->size > mapping->image.map_size) return STATUS_SECTION_TOO_BIG;
     if (pos + size > mapping->image.map_size) return STATUS_INVALID_FILE_FOR_SECTION;
     if (pos + size > mapping->image.header_size) mapping->image.header_size = pos + size;
-    if (pread( unix_fd, sec, size, pos ) != size) return STATUS_INVALID_FILE_FOR_SECTION;
+    if (!(sec = malloc( size ))) return STATUS_NO_MEMORY;
+    ret = STATUS_INVALID_FILE_FOR_SECTION;
+    if (pread( unix_fd, sec, size, pos ) != size) goto done;
 
     for (i = 0; i < nt.FileHeader.NumberOfSections && !mapping->image.contains_code; i++)
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
@@ -950,10 +951,12 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             mapping->image.is_hybrid = !!cfg.cfg64.CHPEMetadataPointer;
     }
 
-    if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections ))
-        return STATUS_INVALID_FILE_FOR_SECTION;
+    if (build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections ))
+        ret = STATUS_SUCCESS;
 
-    return STATUS_SUCCESS;
+done:
+    free( sec );
+    return ret;
 }
 
 static struct ranges *create_ranges(void)
