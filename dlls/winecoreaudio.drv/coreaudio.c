@@ -47,6 +47,7 @@
 #include <AudioToolbox/AudioFormat.h>
 #include <AudioToolbox/AudioConverter.h>
 #include <AudioUnit/AudioUnit.h>
+#include <os/lock.h>
 
 #undef LoadResource
 #undef CompareString
@@ -71,15 +72,6 @@
 
 #if !defined(MAC_OS_VERSION_12_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_12_0
 #define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
-#endif
-
-#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
-#include <os/lock.h>
-#else
-#include <libkern/OSAtomic.h>
-typedef OSSpinLock                  os_unfair_lock;
-#define os_unfair_lock_lock(lock)   OSSpinLockLock(lock)
-#define os_unfair_lock_unlock(lock) OSSpinLockUnlock(lock)
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
