@@ -374,8 +374,15 @@ todo_wine {
     ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        ok(!!name && !wcscmp(name, L"Click"),
-            "unexpected name %s\n", debugstr_w(name));
+        if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
+        {
+            skip("Non-English locale (test with hardcoded 'Click')\n");
+        }
+        else
+        {
+            ok(!!name && !wcscmp(name, L"Click"),
+                "unexpected name %s\n", debugstr_w(name));
+        }
         SysFreeString(name);
     }
 
@@ -413,8 +420,15 @@ todo_wine {
     ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
     {
-        ok(!!name && !wcscmp(name, L"Click"),
-            "unexpected name %s\n", debugstr_w(name));
+        if (PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH)
+        {
+            skip("Non-English locale (test with hardcoded 'Click')\n");
+        }
+        else
+        {
+            ok(!!name && !wcscmp(name, L"Click"),
+                "unexpected name %s\n", debugstr_w(name));
+        }
         SysFreeString(name);
     }
 
