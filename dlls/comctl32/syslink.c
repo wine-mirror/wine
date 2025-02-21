@@ -432,8 +432,46 @@ static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG flags, VARIA
 
 static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *left, LONG *top, LONG *width, LONG *height, VARIANT childid)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+    RECT rc = {0};
+    POINT point;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    if (item)
+    {
+        int n = item->nText;
+        PDOC_TEXTBLOCK block = item->Blocks;
+
+        while (n > 0)
+        {
+            UnionRect(&rc, &rc, &block->rc);
+            n -= block->nChars + block->nSkip;
+            block++;
+        }
+    }
+    else
+    {
+        GetClientRect(This->infoPtr->Self, &rc);
+    }
+
+    point.x = rc.left;
+    point.y = rc.top;
+    MapWindowPoints(This->infoPtr->Self, NULL, &point, 1);
+    *left = point.x;
+    *top = point.y;
+    *width = rc.right - rc.left;
+    *height = rc.bottom - rc.top;
+
+    TRACE("<-- (%li,%li,%li,%li)\n", *left, *top, *width, *height);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG dir, VARIANT start, VARIANT *end)

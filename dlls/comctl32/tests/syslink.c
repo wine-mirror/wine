@@ -335,10 +335,10 @@ static void test_msaa(void)
     if (SUCCEEDED(hr))
         ok(!name, "unexpected default action %s\n", debugstr_w(name));
 
-todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
+todo_wine {
     hr = IAccessible_get_accChildCount(acc, &count);
     ok(hr == S_OK, "accChildCount failed, hr=%lx\n", hr);
     ok(count == 2, "accChildCount returned %li\n", count);
@@ -385,10 +385,10 @@ todo_wine {
         SysFreeString(name);
     }
 
-todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
+todo_wine {
     /* child 2 */
     V_I4(&varChild) = 2;
     hr = IAccessible_get_accChild(acc, varChild, &child);
@@ -431,10 +431,10 @@ todo_wine {
         SysFreeString(name);
     }
 
-todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
+todo_wine {
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ole_window);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
 }
