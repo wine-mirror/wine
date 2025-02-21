@@ -2120,7 +2120,8 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
     const IMAGE_DATA_DIRECTORY *relocs;
     const IMAGE_SECTION_HEADER *sec;
     INT_PTR delta;
-    ULONG protect_old[96], i;
+    ULONG *protect_old, i;
+    NTSTATUS status = STATUS_SUCCESS;
 
     base = (char *)nt->OptionalHeader.ImageBase;
     if (module == base) return STATUS_SUCCESS;  /* nothing to do */
@@ -2145,8 +2146,9 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
     if (!relocs->Size) return STATUS_SUCCESS;
     if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
 
-    if (nt->FileHeader.NumberOfSections > ARRAY_SIZE( protect_old ))
-        return STATUS_INVALID_IMAGE_FORMAT;
+    if (!(protect_old = RtlAllocateHeap( GetProcessHeap(), 0,
+                                         nt->FileHeader.NumberOfSections * sizeof(*protect_old ))))
+        return STATUS_NO_MEMORY;
 
     sec = IMAGE_FIRST_SECTION( nt );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -2169,12 +2171,17 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
         if (rel->VirtualAddress >= len)
         {
             WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
-            return STATUS_ACCESS_VIOLATION;
+            status = STATUS_ACCESS_VIOLATION;
+            goto done;
         }
         rel = LdrProcessRelocationBlock( get_rva( module, rel->VirtualAddress ),
                                          (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                          (USHORT *)(rel + 1), delta );
-        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
+        if (!rel)
+        {
+            status = STATUS_INVALID_IMAGE_FORMAT;
+            goto done;
+        }
     }
 
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
@@ -2185,7 +2192,9 @@ static NTSTATUS perform_relocations( void *module, IMAGE_NT_HEADERS *nt, SIZE_T 
                                 &size, protect_old[i], &protect_old[i] );
     }
 
-    return STATUS_SUCCESS;
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, protect_old );
+    return status;
 }
 
 
@@ -2360,7 +2369,7 @@ static ULONG read_image_directory( HANDLE file, const SECTION_IMAGE_INFORMATION 
     IMAGE_DOS_HEADER mz;
     IO_STATUS_BLOCK io;
     LARGE_INTEGER offset;
-    IMAGE_SECTION_HEADER sec[96];
+    IMAGE_SECTION_HEADER *sec;
     unsigned int i, count;
     DWORD va, size;
     union
@@ -2393,17 +2402,21 @@ static ULONG read_image_directory( HANDLE file, const SECTION_IMAGE_INFORMATION 
     }
     if (!va) return 0;
     offset.QuadPart += offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.nt32.FileHeader.SizeOfOptionalHeader;
-    count = min( 96, nt.nt32.FileHeader.NumberOfSections );
-    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) return 0;
-    if (io.Information != count * sizeof(*sec)) return 0;
+    count = nt.nt32.FileHeader.NumberOfSections;
+    if (!(sec = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*sec) * count ))) return 0;
+    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) goto done;
+    if (io.Information != count * sizeof(*sec)) goto done;
     for (i = 0; i < count; i++)
     {
         if (va < sec[i].VirtualAddress) continue;
         if (sec[i].Misc.VirtualSize && va - sec[i].VirtualAddress >= sec[i].Misc.VirtualSize) continue;
         offset.QuadPart = sec[i].PointerToRawData + va - sec[i].VirtualAddress;
-        if (NtReadFile( file, 0, NULL, NULL, &io, buffer, min( maxlen, size ), &offset, NULL )) return 0;
+        if (NtReadFile( file, 0, NULL, NULL, &io, buffer, min( maxlen, size ), &offset, NULL )) goto done;
+        RtlFreeHeap( GetProcessHeap(), 0, sec );
         return io.Information;
     }
+done:
+    RtlFreeHeap( GetProcessHeap(), 0, sec );
     return 0;
 }
 
