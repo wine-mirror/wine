@@ -168,6 +168,33 @@ static int xic_preedit_done( XIC xic, XPointer user, XPointer arg )
     return 0;
 }
 
+static DWORD get_comp_cursor_pos( XIMPreeditDrawCallbackStruct *params )
+{
+    int i, cursor_begin = -1, cursor_end = -1;
+    XIMText *text = params->text;
+
+    if (text && text->feedback)
+    {
+        for (i = 0; i < text->length; i++)
+        {
+            if (text->feedback[i] & XIMReverse)
+            {
+                if (cursor_begin == -1) cursor_begin = i;
+                cursor_end = i + 1;
+            }
+        }
+        if (cursor_begin != -1) cursor_begin += params->chg_first;
+        if (cursor_end   != -1) cursor_end   += params->chg_first;
+    }
+
+    if (cursor_begin == cursor_end)
+        cursor_begin = cursor_end = params->caret; /* ATTR_INPUT */
+
+    TRACE( "caret %d, cursor_begin %d, cursor_end %d\n", params->caret, cursor_begin, cursor_end );
+
+    return MAKELONG( cursor_begin, cursor_end );
+}
+
 static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 {
     XIMPreeditDrawCallbackStruct *params = (void *)arg;
@@ -202,7 +229,7 @@ static int xic_preedit_draw( XIC xic, XPointer user, XPointer arg )
 
     if (text && str != text->string.multi_byte) free( str );
 
-    post_ime_update( hwnd, params->caret, ime_comp_buf, NULL );
+    post_ime_update( hwnd, get_comp_cursor_pos( params ), ime_comp_buf, NULL );
 
     return 0;
 }
@@ -248,7 +275,7 @@ static int xic_preedit_caret( XIC xic, XPointer user, XPointer arg )
     }
     params->position = xim_caret_pos = pos;
 
-    post_ime_update( hwnd, pos, ime_comp_buf, NULL );
+    post_ime_update( hwnd, MAKELONG( pos, pos ), ime_comp_buf, NULL );
 
     return 0;
 }
