@@ -309,7 +309,7 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case ConfigureNotify:
     case PropertyNotify:
     case ClientMessage:
-        return (mask & QS_POSTMESSAGE) != 0;
+        return (mask & (QS_POSTMESSAGE | QS_SENDMESSAGE)) != 0;
 #ifdef GenericEvent
     case GenericEvent:
 #ifdef HAVE_X11_EXTENSIONS_XINPUT2_H
