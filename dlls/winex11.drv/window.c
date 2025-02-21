@@ -2895,9 +2895,6 @@ BOOL X11DRV_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const str
     if (!data && !(data = X11DRV_create_win_data( hwnd, rects ))) return FALSE; /* use default surface */
     data->shaped = shaped;
 
-    /* check if we need to switch the window to managed */
-    if (is_window_managed( hwnd, swp_flags, &rects->window )) window_set_managed( data, TRUE );
-
     ret = !!data->whole_window; /* use default surface if we don't have a window */
     release_win_data( data );
 
@@ -2970,6 +2967,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     sync_gl_drawable( hwnd, FALSE );
 
     if (!(data = get_win_data( hwnd ))) return;
+    if (is_window_managed( hwnd, swp_flags, &new_rects->window )) window_set_managed( data, TRUE );
 
     old_style = new_style & ~(WS_VISIBLE | WS_MINIMIZE | WS_MAXIMIZE);
     if (data->desired_state.wm_state != WithdrawnState) old_style |= WS_VISIBLE;
