@@ -176,7 +176,9 @@ static void macdrv_im_set_text(const macdrv_event *event)
     }
 
     if (event->im_set_text.complete) post_ime_update(hwnd, -1, NULL, text);
-    else post_ime_update(hwnd, event->im_set_text.cursor_pos, text, NULL);
+    else post_ime_update(hwnd,
+                         MAKELONG(event->im_set_text.cursor_begin, event->im_set_text.cursor_end),
+                         text, NULL);
 
     free(text);
 }

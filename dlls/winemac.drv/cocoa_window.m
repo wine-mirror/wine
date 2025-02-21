@@ -867,7 +867,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             event->im_set_text.himc = [window himc];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
             event->im_set_text.complete = FALSE;
-            event->im_set_text.cursor_pos = markedTextSelection.location + markedTextSelection.length;
+            event->im_set_text.cursor_begin = markedTextSelection.location;
+            event->im_set_text.cursor_end = markedTextSelection.location + markedTextSelection.length;
 
             [[window queue] postEvent:event];
 

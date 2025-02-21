@@ -365,7 +365,8 @@ typedef struct macdrv_event {
         struct {
             void           *himc;
             CFStringRef     text;       /* new text or NULL if just completing existing text */
-            unsigned int    cursor_pos;
+            unsigned int    cursor_begin;
+            unsigned int    cursor_end;
             unsigned int    complete;   /* is completing text? */
         }                                           im_set_text;
         struct {
