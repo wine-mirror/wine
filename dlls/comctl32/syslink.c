@@ -251,8 +251,22 @@ static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *cou
 
 static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT childid, IDispatch **disp)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    *disp = NULL;
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    if (item)
+        return S_FALSE;
+    else
+        return E_INVALIDARG;
 }
 
 static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT childid, BSTR *name)
