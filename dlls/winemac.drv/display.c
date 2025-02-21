@@ -809,6 +809,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     free_display_mode_descriptor(desc);
     CFRelease(display_modes);
     macdrv_free_displays(macdrv_displays);
+    macdrv_reset_device_metrics();
 
     return ret;
 }

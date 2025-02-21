@@ -3015,8 +3015,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
         update_children_window_state( hwnd );
 
-        return send_message_timeout( HWND_BROADCAST, WM_WINE_DESKTOP_RESIZED, old_rect.left,
-                                     old_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
+        return 0;
     }
     default:
         if (msg >= WM_USER && hwnd == get_desktop_window())

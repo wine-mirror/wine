@@ -1662,10 +1662,6 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             release_win_data(data);
         }
         return 0;
-    case WM_WINE_DESKTOP_RESIZED:
-        macdrv_reset_device_metrics();
-        macdrv_reassert_window_position(hwnd);
-        return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
         activate_on_following_focus();
         TRACE("WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS time %u\n", activate_on_focus_time);
