@@ -205,6 +205,8 @@ static HRESULT Accessible_FindChild(SYSLINK_ACC *This, VARIANT childid, DOC_ITEM
 
     LIST_FOR_EACH_ENTRY(current, &This->infoPtr->Items, DOC_ITEM, entry)
     {
+        if (current->Type != slLink)
+            continue;
         if (!--index)
         {
             *result = current;
