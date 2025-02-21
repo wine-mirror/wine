@@ -73,20 +73,16 @@ static GLboolean (*pOSMesaMakeCurrent)( OSMesaContext ctx, void *buffer, GLenum 
                                         GLsizei width, GLsizei height );
 static void (*pOSMesaPixelStore)( GLint pname, GLint value );
 
-static BOOL init_opengl(void)
+static struct opengl_funcs *osmesa_get_wgl_driver(void)
 {
-    static BOOL init_done = FALSE;
     static void *osmesa_handle;
     unsigned int i;
-
-    if (init_done) return (osmesa_handle != NULL);
-    init_done = TRUE;
 
     osmesa_handle = dlopen( SONAME_LIBOSMESA, RTLD_NOW );
     if (osmesa_handle == NULL)
     {
         ERR( "Failed to load OSMesa: %s\n", dlerror() );
-        return FALSE;
+        return NULL;
     }
 
 #define LOAD_FUNCPTR(f) do if (!(p##f = dlsym( osmesa_handle, #f ))) \
@@ -111,12 +107,12 @@ static BOOL init_opengl(void)
         }
     }
 
-    return TRUE;
+    return &osmesa_opengl_funcs;
 
 failed:
     dlclose( osmesa_handle );
     osmesa_handle = NULL;
-    return FALSE;
+    return NULL;
 }
 
 static struct wgl_context *osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
@@ -353,18 +349,6 @@ static struct opengl_funcs osmesa_opengl_funcs =
     .wgl.p_get_pixel_formats = osmesa_get_pixel_formats,
 };
 
-static struct opengl_funcs *osmesa_get_wgl_driver(void)
-{
-    if (!init_opengl())
-    {
-        static int warned;
-        if (!warned++) ERR( "OSMesa not available, no OpenGL bitmap support\n" );
-        return (void *)-1;
-    }
-
-    return &osmesa_opengl_funcs;
-}
-
 #else  /* SONAME_LIBOSMESA */
 
 static struct opengl_funcs *osmesa_get_wgl_driver(void)
@@ -374,20 +358,23 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
 
 #endif  /* SONAME_LIBOSMESA */
 
-/***********************************************************************
- *      __wine_get_wgl_driver  (win32u.@)
- */
-const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
+static struct opengl_funcs *display_funcs;
+static struct opengl_funcs *memory_funcs;
+
+static void memory_funcs_init(void)
+{
+    memory_funcs = osmesa_get_wgl_driver();
+}
+
+static void display_funcs_init(void)
+{
+    display_funcs = user_driver->pwine_get_wgl_driver( WINE_WGL_DRIVER_VERSION );
+}
+
+static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
 {
     DWORD is_disabled, is_display, is_memdc;
     DC *dc;
-
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n",
-             version, WINE_WGL_DRIVER_VERSION );
-        return NULL;
-    }
 
     if (!(dc = get_dc_ptr( hdc ))) return NULL;
     is_memdc = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
@@ -396,7 +383,32 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
     release_dc_ptr( dc );
 
     if (is_disabled) return NULL;
-    if (is_display) return user_driver->pwine_get_wgl_driver( version );
-    if (is_memdc) return osmesa_get_wgl_driver();
-    return (void *)-1;
+    if (is_display)
+    {
+        static pthread_once_t display_init_once = PTHREAD_ONCE_INIT;
+        pthread_once( &display_init_once, display_funcs_init );
+        return display_funcs ? display_funcs : null_funcs;
+    }
+    if (is_memdc)
+    {
+        static pthread_once_t memory_init_once = PTHREAD_ONCE_INIT;
+        pthread_once( &memory_init_once, memory_funcs_init );
+        return memory_funcs ? memory_funcs : null_funcs;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ *      __wine_get_wgl_driver  (win32u.@)
+ */
+const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
+{
+    if (version != WINE_WGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n",
+             version, WINE_WGL_DRIVER_VERSION );
+        return NULL;
+    }
+
+    return get_dc_funcs( hdc, (void *)-1 );
 }
