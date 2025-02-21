@@ -330,12 +330,12 @@ static void test_msaa(void)
         SysFreeString(name);
     }
 
-todo_wine {
     hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
     ok(hr == S_FALSE, "accDefaultAction failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
         ok(!name, "unexpected default action %s\n", debugstr_w(name));
 
+todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
@@ -369,7 +369,6 @@ todo_wine {
         SysFreeString(name);
     }
 
-todo_wine {
     hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
     ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
@@ -386,6 +385,7 @@ todo_wine {
         SysFreeString(name);
     }
 
+todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
@@ -415,7 +415,6 @@ todo_wine {
         SysFreeString(name);
     }
 
-todo_wine {
     hr = IAccessible_get_accDefaultAction(acc, varChild, &name);
     ok(hr == S_OK, "accDefaultAction failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr))
@@ -432,6 +431,7 @@ todo_wine {
         SysFreeString(name);
     }
 
+todo_wine {
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 

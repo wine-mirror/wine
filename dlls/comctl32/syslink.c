@@ -396,8 +396,32 @@ static HRESULT WINAPI Accessible_get_accSelection(IAccessible *iface, VARIANT *c
 
 static HRESULT WINAPI Accessible_get_accDefaultAction(IAccessible *iface, VARIANT childid, BSTR *action)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    if (!action)
+        return E_POINTER;
+
+    *action = NULL;
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    if (item)
+    {
+        *action = SysAllocString(L"Click");
+        if (!*action)
+            return E_OUTOFMEMORY;
+        return S_OK;
+    }
+    else
+    {
+        return S_FALSE;
+    }
 }
 
 static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG flags, VARIANT childid)
