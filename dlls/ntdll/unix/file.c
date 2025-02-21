@@ -3347,9 +3347,10 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
  *
  * Recursively search directories from the dir queue for a given inode.
  */
-static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, dev_t dev )
+static NTSTATUS find_file_id( int root_fd, char **unix_name, ULONG *len, ULONGLONG file_id, dev_t dev )
 {
     unsigned int pos;
+    int dir_fd;
     DIR *dir;
     struct dirent *de;
     NTSTATUS status;
@@ -3358,7 +3359,12 @@ static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, d
 
     while (!(status = next_dir_in_queue( name )))
     {
-        if (!(dir = opendir( name ))) continue;
+        if ((dir_fd = openat( root_fd, name, O_RDONLY )) == -1) continue;
+        if (!(dir = fdopendir( dir_fd )))
+        {
+            close( dir_fd );
+            continue;
+        }
         TRACE( "searching %s for %s\n", debugstr_a(name), wine_dbgstr_longlong(file_id) );
         pos = strlen( name );
         if (pos + MAX_DIR_ENTRY_LEN >= *len / sizeof(WCHAR))
@@ -3376,7 +3382,7 @@ static NTSTATUS find_file_id( char **unix_name, ULONG *len, ULONGLONG file_id, d
         {
             if (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." )) continue;
             strcpy( name + pos, de->d_name );
-            if (lstat( name, &st ) == -1) continue;
+            if (fstatat( root_fd, name, &st, AT_SYMLINK_NOFOLLOW ) == -1) continue;
             if (st.st_dev != dev) continue;
             if (st.st_ino == file_id)
             {
@@ -3405,7 +3411,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
                                            UNICODE_STRING *nt_name )
 {
     enum server_fd_type type;
-    int old_cwd, root_fd, needs_close;
+    int root_fd, needs_close;
     char *unix_name;
     ULONG len;
     NTSTATUS status;
@@ -3437,29 +3443,23 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
         goto done;
     }
 
-    mutex_lock( &dir_mutex );
-    if ((old_cwd = open( ".", O_RDONLY )) != -1 && fchdir( root_fd ) != -1)
+    /* shortcut for ".." */
+    if (!fstatat( root_fd, "..", &st, 0 ) && st.st_dev == root_st.st_dev && st.st_ino == file_id)
     {
-        /* shortcut for ".." */
-        if (!stat( "..", &st ) && st.st_dev == root_st.st_dev && st.st_ino == file_id)
-        {
-            strcpy( unix_name, ".." );
-            status = STATUS_SUCCESS;
-        }
-        else
-        {
-            status = add_dir_to_queue( "." );
-            if (!status)
-                status = find_file_id( &unix_name, &len, file_id, root_st.st_dev );
-            if (!status)  /* get rid of "./" prefix */
-                memmove( unix_name, unix_name + 2, strlen(unix_name) - 1 );
-            flush_dir_queue();
-        }
-        if (fchdir( old_cwd ) == -1) chdir( "/" );
+        strcpy( unix_name, ".." );
+        status = STATUS_SUCCESS;
     }
-    else status = errno_to_status( errno );
-    mutex_unlock( &dir_mutex );
-    if (old_cwd != -1) close( old_cwd );
+    else
+    {
+        mutex_lock( &dir_mutex );
+        status = add_dir_to_queue( "." );
+        if (!status)
+            status = find_file_id( root_fd, &unix_name, &len, file_id, root_st.st_dev );
+        if (!status)  /* get rid of "./" prefix */
+            memmove( unix_name, unix_name + 2, strlen(unix_name) - 1 );
+        flush_dir_queue();
+        mutex_unlock( &dir_mutex );
+    }
 
 done:
     if (status == STATUS_SUCCESS)
