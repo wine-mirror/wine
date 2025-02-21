@@ -278,8 +278,46 @@ static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT childid
 
 static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT childid, VARIANT *state)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+    GUITHREADINFO info;
+    BOOL focused = 0;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    V_VT(state) = VT_I4;
+    V_I4(state) = 0;
+
+    info.cbSize = sizeof(info);
+    if(GetGUIThreadInfo(0, &info) && info.hwndFocus == This->infoPtr->Self)
+        focused = 1;
+
+    if (item)
+    {
+        V_I4(state) |= STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_LINKED;
+        if (focused && (item->u.Link.state & LIS_FOCUSED) == LIS_FOCUSED)
+            V_I4(state) |= STATE_SYSTEM_FOCUSED;
+    }
+    else
+    {
+        LONG style = GetWindowLongW(This->infoPtr->Self, GWL_STYLE);
+
+        if (style & WS_DISABLED)
+            V_I4(state) |= STATE_SYSTEM_UNAVAILABLE;
+        else
+            V_I4(state) |= STATE_SYSTEM_FOCUSABLE;
+        if (!(style & WS_VISIBLE))
+            V_I4(state) |= STATE_SYSTEM_INVISIBLE;
+        if (focused)
+            V_I4(state) |= STATE_SYSTEM_FOCUSED;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_get_accHelp(IAccessible *iface, VARIANT childid, BSTR *help)

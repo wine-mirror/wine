@@ -316,13 +316,13 @@ static void test_msaa(void)
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_CLIENT, "accRole returned %li\n", V_I4(&varResult));
 
-todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == STATE_SYSTEM_FOCUSABLE, "accState returned %li\n", V_I4(&varResult));
 
+todo_wine {
     hr = IAccessible_get_accName(acc, varChild, &name);
     ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr)) {
@@ -355,13 +355,13 @@ todo_wine {
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
 
-todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_LINKED), "accState returned %li\n", V_I4(&varResult));
 
+todo_wine {
     hr = IAccessible_get_accName(acc, varChild, &name);
     ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr)) {
@@ -401,13 +401,13 @@ todo_wine {
     ok(V_VT(&varResult) == VT_I4, "accRole returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == ROLE_SYSTEM_LINK, "accRole returned %li\n", V_I4(&varResult));
 
-todo_wine {
     VariantClear(&varResult);
     hr = IAccessible_get_accState(acc, varChild, &varResult);
     ok(hr == S_OK, "accState failed, hr=%lx\n", hr);
     ok(V_VT(&varResult) == VT_I4, "accState returned vt=%x\n", V_VT(&varResult));
     ok(V_I4(&varResult) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_LINKED), "accState returned %li\n", V_I4(&varResult));
 
+todo_wine {
     hr = IAccessible_get_accName(acc, varChild, &name);
     ok(hr == S_OK, "accName failed, hr=%lx\n", hr);
     if (SUCCEEDED(hr)) {
