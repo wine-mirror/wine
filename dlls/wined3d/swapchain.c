@@ -1007,6 +1007,7 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
 
 fail:
     VK_CALL(vkDestroySurfaceKHR(vk_info->instance, vk_surface, NULL));
+    swapchain_vk->vk_surface = 0;
     return E_FAIL;
 }
 
