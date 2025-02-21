@@ -226,8 +226,27 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch** d
 
 static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *count)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    DOC_ITEM *current;
+    LONG result = 0;
+
+    TRACE("%p\n", iface);
+
+    if (!This->infoPtr)
+    {
+        WARN("control was destroyed\n");
+        return E_FAIL;
+    }
+
+    LIST_FOR_EACH_ENTRY(current, &This->infoPtr->Items, DOC_ITEM, entry)
+    {
+        if (current->Type == slLink)
+            result++;
+    }
+
+    *count = result;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT childid, IDispatch **disp)

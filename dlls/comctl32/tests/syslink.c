@@ -338,11 +338,11 @@ static void test_msaa(void)
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
-todo_wine {
     hr = IAccessible_get_accChildCount(acc, &count);
     ok(hr == S_OK, "accChildCount failed, hr=%lx\n", hr);
     ok(count == 2, "accChildCount returned %li\n", count);
 
+todo_wine {
     /* child 1 */
     V_I4(&varChild) = 1;
     hr = IAccessible_get_accChild(acc, varChild, &child);
