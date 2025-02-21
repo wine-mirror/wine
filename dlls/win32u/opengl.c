@@ -39,16 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
-struct osmesa_funcs
-{
-    void (*get_gl_funcs)( struct opengl_funcs *funcs );
-    struct wgl_context * (*create_context)( HDC hdc, const PIXELFORMATDESCRIPTOR *descr );
-    BOOL (*delete_context)( struct wgl_context *context );
-    PROC (*get_proc_address)( const char *proc );
-    BOOL (*make_current)( struct wgl_context *context, void *bits,
-                          int width, int height, int bpp, int stride );
-};
-
 #ifdef SONAME_LIBOSMESA
 
 #define OSMESA_COLOR_INDEX  GL_COLOR_INDEX
@@ -69,7 +59,7 @@ struct wgl_context
     UINT          format;
 };
 
-static struct opengl_funcs opengl_funcs;
+static struct opengl_funcs osmesa_opengl_funcs;
 
 #define USE_GL_FUNC(name) #name,
 static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
@@ -114,7 +104,7 @@ static BOOL init_opengl(void)
 
     for (i = 0; i < ARRAY_SIZE( opengl_func_names ); i++)
     {
-        if (!(((void **)&opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
+        if (!(((void **)&osmesa_opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
         {
             ERR( "%s not found in %s, disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA );
             goto failed;
@@ -127,11 +117,6 @@ failed:
     dlclose( osmesa_handle );
     osmesa_handle = NULL;
     return FALSE;
-}
-
-static void osmesa_get_gl_funcs( struct opengl_funcs *funcs )
-{
-    funcs->gl = opengl_funcs.gl;
 }
 
 static struct wgl_context *osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
@@ -200,32 +185,6 @@ static BOOL osmesa_make_current( struct wgl_context *context, void *bits,
     return ret;
 }
 
-static const struct osmesa_funcs osmesa_funcs_table =
-{
-    osmesa_get_gl_funcs,
-    osmesa_create_context,
-    osmesa_delete_context,
-    osmesa_get_proc_address,
-    osmesa_make_current
-};
-
-static const struct osmesa_funcs *init_opengl_lib(void)
-{
-    if (!init_opengl()) return NULL;
-    return &osmesa_funcs_table;
-}
-
-#else  /* SONAME_LIBOSMESA */
-
-static const struct osmesa_funcs *init_opengl_lib(void)
-{
-    return NULL;
-}
-
-#endif  /* SONAME_LIBOSMESA */
-
-static const struct osmesa_funcs *osmesa_funcs;
-
 static const struct
 {
     BYTE color_bits;
@@ -279,19 +238,18 @@ static void describe_pixel_format( int fmt, PIXELFORMATDESCRIPTOR *descr )
     descr->iLayerType       = PFD_MAIN_PLANE;
 }
 
-static BOOL dibdrv_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+static BOOL osmesa_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
 {
     FIXME( "not supported yet\n" );
     return FALSE;
 }
 
-static BOOL dibdrv_wglDeleteContext( struct wgl_context *context )
+static BOOL osmesa_wglDeleteContext( struct wgl_context *context )
 {
-    if (!osmesa_funcs) return FALSE;
-    return osmesa_funcs->delete_context( context );
+    return osmesa_delete_context( context );
 }
 
-static int dibdrv_wglGetPixelFormat( HDC hdc )
+static int osmesa_wglGetPixelFormat( HDC hdc )
 {
     DC *dc = get_dc_ptr( hdc );
     int ret = 0;
@@ -304,35 +262,32 @@ static int dibdrv_wglGetPixelFormat( HDC hdc )
     return ret;
 }
 
-static struct wgl_context *dibdrv_wglCreateContext( HDC hdc )
+static struct wgl_context *osmesa_wglCreateContext( HDC hdc )
 {
     PIXELFORMATDESCRIPTOR descr;
-    int format = dibdrv_wglGetPixelFormat( hdc );
+    int format = osmesa_wglGetPixelFormat( hdc );
 
     if (!format) format = 1;
     if (format <= 0 || format > ARRAY_SIZE( pixel_formats )) return NULL;
     describe_pixel_format( format, &descr );
 
-    if (!osmesa_funcs) return NULL;
-    return osmesa_funcs->create_context( hdc, &descr );
+    return osmesa_create_context( hdc, &descr );
 }
 
-static PROC dibdrv_wglGetProcAddress( const char *proc )
+static PROC osmesa_wglGetProcAddress( const char *proc )
 {
     if (!strncmp( proc, "wgl", 3 )) return NULL;
-    if (!osmesa_funcs) return NULL;
-    return osmesa_funcs->get_proc_address( proc );
+    return osmesa_get_proc_address( proc );
 }
 
-static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
+static BOOL osmesa_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 {
     HBITMAP bitmap;
     BITMAPOBJ *bmp;
     dib_info dib;
     BOOL ret = FALSE;
 
-    if (!osmesa_funcs) return FALSE;
-    if (!context) return osmesa_funcs->make_current( NULL, NULL, 0, 0, 0, 0 );
+    if (!context) return osmesa_make_current( NULL, NULL, 0, 0, 0, 0 );
 
     bitmap = NtGdiGetDCObject( hdc, NTGDI_OBJ_SURF );
     bmp = GDI_GetObjPtr( bitmap, NTGDI_OBJ_BITMAP );
@@ -350,30 +305,30 @@ static BOOL dibdrv_wglMakeCurrent( HDC hdc, struct wgl_context *context )
 
         TRACE( "context %p bits %p size %ux%u\n", context, bits, width, height );
 
-        ret = osmesa_funcs->make_current( context, bits, width, height, dib.bit_count, dib.stride );
+        ret = osmesa_make_current( context, bits, width, height, dib.bit_count, dib.stride );
     }
     GDI_ReleaseObj( bitmap );
     return ret;
 }
 
-static BOOL dibdrv_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
+static BOOL osmesa_wglSetPixelFormat( HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr )
 {
     if (fmt <= 0 || fmt > ARRAY_SIZE( pixel_formats )) return FALSE;
     return NtGdiSetPixelFormat( hdc, fmt );
 }
 
-static BOOL dibdrv_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
+static BOOL osmesa_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
 {
     FIXME( "not supported yet\n" );
     return FALSE;
 }
 
-static BOOL dibdrv_wglSwapBuffers( HDC hdc )
+static BOOL osmesa_wglSwapBuffers( HDC hdc )
 {
     return TRUE;
 }
 
-static void dibdrv_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
+static void osmesa_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
                                       UINT *num_formats, UINT *num_onscreen_formats )
 {
     UINT i, num_pixel_formats = ARRAY_SIZE( pixel_formats );
@@ -384,31 +339,40 @@ static void dibdrv_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
     *num_formats = *num_onscreen_formats = num_pixel_formats;
 }
 
-static struct opengl_funcs dibdrv_opengl_funcs =
+static struct opengl_funcs osmesa_opengl_funcs =
 {
-    .wgl.p_wglCopyContext = dibdrv_wglCopyContext,
-    .wgl.p_wglCreateContext = dibdrv_wglCreateContext,
-    .wgl.p_wglDeleteContext = dibdrv_wglDeleteContext,
-    .wgl.p_wglGetPixelFormat = dibdrv_wglGetPixelFormat,
-    .wgl.p_wglGetProcAddress = dibdrv_wglGetProcAddress,
-    .wgl.p_wglMakeCurrent = dibdrv_wglMakeCurrent,
-    .wgl.p_wglSetPixelFormat = dibdrv_wglSetPixelFormat,
-    .wgl.p_wglShareLists = dibdrv_wglShareLists,
-    .wgl.p_wglSwapBuffers = dibdrv_wglSwapBuffers,
-    .wgl.p_get_pixel_formats = dibdrv_get_pixel_formats,
+    .wgl.p_wglCopyContext = osmesa_wglCopyContext,
+    .wgl.p_wglCreateContext = osmesa_wglCreateContext,
+    .wgl.p_wglDeleteContext = osmesa_wglDeleteContext,
+    .wgl.p_wglGetPixelFormat = osmesa_wglGetPixelFormat,
+    .wgl.p_wglGetProcAddress = osmesa_wglGetProcAddress,
+    .wgl.p_wglMakeCurrent = osmesa_wglMakeCurrent,
+    .wgl.p_wglSetPixelFormat = osmesa_wglSetPixelFormat,
+    .wgl.p_wglShareLists = osmesa_wglShareLists,
+    .wgl.p_wglSwapBuffers = osmesa_wglSwapBuffers,
+    .wgl.p_get_pixel_formats = osmesa_get_pixel_formats,
 };
 
-static struct opengl_funcs *dibdrv_get_wgl_driver(void)
+static struct opengl_funcs *osmesa_get_wgl_driver(void)
 {
-    if (!osmesa_funcs && !(osmesa_funcs = init_opengl_lib()))
+    if (!init_opengl())
     {
         static int warned;
         if (!warned++) ERR( "OSMesa not available, no OpenGL bitmap support\n" );
         return (void *)-1;
     }
-    osmesa_funcs->get_gl_funcs( &dibdrv_opengl_funcs );
-    return &dibdrv_opengl_funcs;
+
+    return &osmesa_opengl_funcs;
 }
+
+#else  /* SONAME_LIBOSMESA */
+
+static struct opengl_funcs *osmesa_get_wgl_driver(void)
+{
+    return NULL;
+}
+
+#endif  /* SONAME_LIBOSMESA */
 
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
@@ -433,6 +397,6 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
 
     if (is_disabled) return NULL;
     if (is_display) return user_driver->pwine_get_wgl_driver( version );
-    if (is_memdc) return dibdrv_get_wgl_driver();
+    if (is_memdc) return osmesa_get_wgl_driver();
     return (void *)-1;
 }
