@@ -3862,7 +3862,7 @@ static void output_subdirs( struct makefile *make )
     output_rm_filenames( clean_files, "rm -f" );
     output( "testclean::\n");
     output_rm_filenames( testclean_files, "rm -f" );
-    output( "distclean::\n");
+    output( "distclean:: clean\n");
     output_rm_filenames( distclean_files, "rm -f" );
     output_rm_filenames( distclean_dirs, "-rmdir 2>/dev/null" );
     output( "maintainer-clean::\n");
@@ -4373,7 +4373,6 @@ static void output_top_makefile( struct makefile *make )
     }
     else strarray_add( &make->clean_files, "loader-wow64" );
 
-    strarray_add( &make->distclean_files, "autom4te.cache" );
     if (compile_commands_mode) strarray_add( &make->distclean_files, "compile_commands.json" );
     strarray_addall( &make->distclean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
     if (!make->src_dir)
