@@ -579,21 +579,19 @@ struct dir_name
     char name[1];
 };
 
-static struct list dir_queue = LIST_INIT( dir_queue );
-
-static NTSTATUS add_dir_to_queue( const char *name )
+static NTSTATUS add_dir_to_queue( struct list *queue, const char *name )
 {
     int len = strlen( name ) + 1;
     struct dir_name *dir = malloc( offsetof( struct dir_name, name[len] ));
     if (!dir) return STATUS_NO_MEMORY;
     strcpy( dir->name, name );
-    list_add_tail( &dir_queue, &dir->entry );
+    list_add_tail( queue, &dir->entry );
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS next_dir_in_queue( char *name )
+static NTSTATUS next_dir_in_queue( struct list *queue, char *name )
 {
-    struct list *head = list_head( &dir_queue );
+    struct list *head = list_head( queue );
     if (head)
     {
         struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
@@ -605,11 +603,11 @@ static NTSTATUS next_dir_in_queue( char *name )
     return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
-static void flush_dir_queue(void)
+static void flush_dir_queue( struct list *queue )
 {
     struct list *head;
 
-    while ((head = list_head( &dir_queue )))
+    while ((head = list_head( queue )))
     {
         struct dir_name *dir = LIST_ENTRY( head, struct dir_name, entry );
         list_remove( &dir->entry );
@@ -3347,7 +3345,7 @@ static NTSTATUS find_drive_rootA( LPCSTR *ppath, unsigned int len, int *drive_re
  *
  * Recursively search directories from the dir queue for a given inode.
  */
-static NTSTATUS find_file_id( int root_fd, char **unix_name, ULONG *len, ULONGLONG file_id, dev_t dev )
+static NTSTATUS find_file_id( int root_fd, char **unix_name, ULONG *len, ULONGLONG file_id, dev_t dev, struct list *dir_queue )
 {
     unsigned int pos;
     int dir_fd;
@@ -3357,7 +3355,7 @@ static NTSTATUS find_file_id( int root_fd, char **unix_name, ULONG *len, ULONGLO
     struct stat st;
     char *name = *unix_name;
 
-    while (!(status = next_dir_in_queue( name )))
+    while (!(status = next_dir_in_queue( dir_queue, name )))
     {
         if ((dir_fd = openat( root_fd, name, O_RDONLY )) == -1) continue;
         if (!(dir = fdopendir( dir_fd )))
@@ -3390,7 +3388,7 @@ static NTSTATUS find_file_id( int root_fd, char **unix_name, ULONG *len, ULONGLO
                 return STATUS_SUCCESS;
             }
             if (!S_ISDIR( st.st_mode )) continue;
-            if ((status = add_dir_to_queue( name )) != STATUS_SUCCESS)
+            if ((status = add_dir_to_queue( dir_queue, name )) != STATUS_SUCCESS)
             {
                 closedir( dir );
                 return status;
@@ -3417,6 +3415,7 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
     NTSTATUS status;
     ULONGLONG file_id;
     struct stat st, root_st;
+    struct list dir_queue = LIST_INIT( dir_queue );
 
     nt_name->Buffer = NULL;
     if (attr->ObjectName->Length != sizeof(ULONGLONG)) return STATUS_OBJECT_PATH_SYNTAX_BAD;
@@ -3451,14 +3450,12 @@ static NTSTATUS file_id_to_unix_file_name( const OBJECT_ATTRIBUTES *attr, char *
     }
     else
     {
-        mutex_lock( &dir_mutex );
-        status = add_dir_to_queue( "." );
+        status = add_dir_to_queue( &dir_queue, "." );
         if (!status)
-            status = find_file_id( root_fd, &unix_name, &len, file_id, root_st.st_dev );
+            status = find_file_id( root_fd, &unix_name, &len, file_id, root_st.st_dev, &dir_queue );
         if (!status)  /* get rid of "./" prefix */
             memmove( unix_name, unix_name + 2, strlen(unix_name) - 1 );
-        flush_dir_queue();
-        mutex_unlock( &dir_mutex );
+        flush_dir_queue( &dir_queue );
     }
 
 done:
