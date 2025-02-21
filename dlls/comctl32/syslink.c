@@ -238,8 +238,52 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT childi
 
 static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT childid, BSTR *name)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+    BSTR result;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    if (!name)
+        return E_POINTER;
+
+    *name = NULL;
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    if (item)
+    {
+        result = SysAllocString(item->Text);
+        if (!result)
+            return E_OUTOFMEMORY;
+    }
+    else
+    {
+        UINT total_length = 0, i;
+
+        LIST_FOR_EACH_ENTRY(item, &This->infoPtr->Items, DOC_ITEM, entry)
+        {
+            total_length += item->nText;
+        }
+
+        result = SysAllocStringLen(NULL, total_length);
+        if (!result)
+            return E_OUTOFMEMORY;
+
+        i = 0;
+        LIST_FOR_EACH_ENTRY(item, &This->infoPtr->Items, DOC_ITEM, entry)
+        {
+            memcpy(&result[i], item->Text, item->nText * sizeof(*result));
+            i += item->nText;
+        }
+    }
+
+    *name = result;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_get_accValue(IAccessible *iface, VARIANT childid, BSTR *value)

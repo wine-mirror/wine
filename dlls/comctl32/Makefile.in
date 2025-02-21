@@ -1,7 +1,7 @@
 EXTRADEFS = -D_COMCTL32_
 MODULE    = comctl32.dll
 IMPORTLIB = comctl32
-IMPORTS   = uuid user32 gdi32 advapi32 imm32 kernelbase oleacc
+IMPORTS   = uuid user32 gdi32 advapi32 imm32 kernelbase oleacc oleaut32
 DELAYIMPORTS = winmm uxtheme
 
 SOURCES = \
