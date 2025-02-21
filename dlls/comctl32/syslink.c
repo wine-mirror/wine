@@ -79,6 +79,7 @@ typedef struct SYSLINK_INFO SYSLINK_INFO;
 typedef struct
 {
     IAccessible IAccessible_iface;
+    IOleWindow IOleWindow_iface;
     struct SYSLINK_INFO *infoPtr;
     LONG refcount;
 } SYSLINK_ACC;
@@ -113,6 +114,11 @@ static inline SYSLINK_ACC *impl_from_IAccessible(IAccessible *iface)
     return CONTAINING_RECORD(iface, SYSLINK_ACC, IAccessible_iface);
 }
 
+static inline SYSLINK_ACC *impl_from_IOleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, SYSLINK_ACC, IOleWindow_iface);
+}
+
 static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID iid, void **ppv)
 {
     SYSLINK_ACC *This = impl_from_IAccessible(iface);
@@ -124,6 +130,10 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID iid, 
         IsEqualIID(&IID_IAccessible, iid))
     {
         *ppv = &This->IAccessible_iface;
+    }
+    else if (IsEqualIID(&IID_IOleWindow, iid))
+    {
+        *ppv = &This->IOleWindow_iface;
     }
     else
     {
@@ -568,6 +578,51 @@ static const IAccessibleVtbl Accessible_Vtbl = {
     Accessible_put_accValue
 };
 
+static HRESULT WINAPI Accessible_Window_QueryInterface(IOleWindow *iface, REFIID iid, void **ppv)
+{
+    SYSLINK_ACC *This = impl_from_IOleWindow(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, iid, ppv);
+}
+
+static ULONG WINAPI Accessible_Window_AddRef(IOleWindow *iface)
+{
+    SYSLINK_ACC *This = impl_from_IOleWindow(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Accessible_Window_Release(IOleWindow *iface)
+{
+    SYSLINK_ACC *This = impl_from_IOleWindow(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Accessible_GetWindow(IOleWindow *iface, HWND *hwnd)
+{
+    SYSLINK_ACC *This = impl_from_IOleWindow(iface);
+
+    TRACE("%p\n", This);
+
+    if (!This->infoPtr)
+        return E_FAIL;
+
+    *hwnd = This->infoPtr->Self;
+    return S_OK;
+}
+
+static HRESULT WINAPI Accessible_ContextSensitiveHelp(IOleWindow *This, BOOL fEnterMode)
+{
+    FIXME("%p\b", This);
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl Accessible_Window_Vtbl = {
+    Accessible_Window_QueryInterface,
+    Accessible_Window_AddRef,
+    Accessible_Window_Release,
+    Accessible_GetWindow,
+    Accessible_ContextSensitiveHelp
+};
+
 static void Accessible_Create(SYSLINK_INFO* infoPtr)
 {
     SYSLINK_ACC *This;
@@ -576,6 +631,7 @@ static void Accessible_Create(SYSLINK_INFO* infoPtr)
     if (!This) return;
 
     This->IAccessible_iface.lpVtbl = &Accessible_Vtbl;
+    This->IOleWindow_iface.lpVtbl = &Accessible_Window_Vtbl;
     This->infoPtr = infoPtr;
     This->refcount = 1;
     infoPtr->AccessibleImpl = This;

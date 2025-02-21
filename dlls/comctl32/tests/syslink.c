@@ -430,10 +430,8 @@ static void test_msaa(void)
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
-todo_wine {
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ole_window);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
-}
 
     if (SUCCEEDED(hr)) {
         hr = IOleWindow_GetWindow(ole_window, &ret_hwnd);
