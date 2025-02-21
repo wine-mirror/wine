@@ -1954,21 +1954,10 @@ RETURN_CODE WCMD_move(void)
 RETURN_CODE WCMD_pause(void)
 {
   RETURN_CODE return_code = NO_ERROR;
-  DWORD oldmode;
-  BOOL have_console;
-  DWORD count;
-  WCHAR key;
-  HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-
-  have_console = GetConsoleMode(hIn, &oldmode);
-  if (have_console)
-      SetConsoleMode(hIn, 0);
-
   WCMD_output_asis(anykey);
-  if (!WCMD_ReadFile(hIn, &key, 1, &count) || !count)
-      return_code = ERROR_INVALID_FUNCTION;
-  if (have_console)
-    SetConsoleMode(hIn, oldmode);
+  return_code = WCMD_wait_for_input(GetStdHandle(STD_INPUT_HANDLE));
+  WCMD_output_asis(L"\r\n");
+
   return return_code;
 }
 

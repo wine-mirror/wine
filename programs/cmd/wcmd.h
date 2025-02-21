@@ -174,8 +174,8 @@ RETURN_CODE WCMD_move (void);
 WCHAR* WINAPIV WCMD_format_string (const WCHAR *format, ...);
 void WINAPIV WCMD_output (const WCHAR *format, ...);
 void WINAPIV WCMD_output_stderr (const WCHAR *format, ...);
-void WCMD_output_asis (const WCHAR *message);
-void WCMD_output_asis_stderr (const WCHAR *message);
+RETURN_CODE WCMD_output_asis (const WCHAR *message);
+RETURN_CODE WCMD_output_asis_stderr (const WCHAR *message);
 RETURN_CODE WCMD_pause(void);
 RETURN_CODE WCMD_popd(void);
 void WCMD_print_error (void);
@@ -210,6 +210,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute);
 WCHAR *WCMD_strip_quotes(WCHAR *cmd);
 WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
+RETURN_CODE WCMD_wait_for_input(HANDLE hIn);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
 
 enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
