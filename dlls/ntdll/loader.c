@@ -2404,7 +2404,7 @@ static ULONG read_image_directory( HANDLE file, const SECTION_IMAGE_INFORMATION 
     offset.QuadPart += offsetof( IMAGE_NT_HEADERS32, OptionalHeader ) + nt.nt32.FileHeader.SizeOfOptionalHeader;
     count = nt.nt32.FileHeader.NumberOfSections;
     if (!(sec = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*sec) * count ))) return 0;
-    if (NtReadFile( file, 0, NULL, NULL, &io, &sec, count * sizeof(*sec), &offset, NULL )) goto done;
+    if (NtReadFile( file, 0, NULL, NULL, &io, sec, count * sizeof(*sec), &offset, NULL )) goto done;
     if (io.Information != count * sizeof(*sec)) goto done;
     for (i = 0; i < count; i++)
     {
