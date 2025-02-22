@@ -364,6 +364,7 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
 
             case URB_FUNCTION_VENDOR_DEVICE:
             case URB_FUNCTION_VENDOR_INTERFACE:
+            case URB_FUNCTION_VENDOR_ENDPOINT:
             {
                 struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
                 req->TransferBufferLength = transfer->actual_length;
@@ -542,6 +543,7 @@ static NTSTATUS usb_submit_urb(void *args)
 
         case URB_FUNCTION_VENDOR_DEVICE:
         case URB_FUNCTION_VENDOR_INTERFACE:
+        case URB_FUNCTION_VENDOR_ENDPOINT:
         {
             struct _URB_CONTROL_VENDOR_OR_CLASS_REQUEST *req = &urb->UrbControlVendorClassRequest;
             uint8_t req_type = LIBUSB_REQUEST_TYPE_VENDOR;
@@ -555,8 +557,10 @@ static NTSTATUS usb_submit_urb(void *args)
 
             if (urb->UrbHeader.Function == URB_FUNCTION_VENDOR_DEVICE)
                 req_type |= LIBUSB_RECIPIENT_DEVICE;
-            else
+            else if (urb->UrbHeader.Function == URB_FUNCTION_VENDOR_INTERFACE)
                 req_type |= LIBUSB_RECIPIENT_INTERFACE;
+            else
+                req_type |= LIBUSB_RECIPIENT_ENDPOINT;
 
             if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
                 req_type |= LIBUSB_ENDPOINT_IN;
