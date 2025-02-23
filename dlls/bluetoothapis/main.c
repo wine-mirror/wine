@@ -48,15 +48,181 @@ struct bluetooth_find_radio_handle
     DWORD idx;
 };
 
+struct bluetooth_find_device
+{
+    BLUETOOTH_DEVICE_SEARCH_PARAMS params;
+    BTH_DEVICE_INFO_LIST *device_list;
+    SIZE_T idx;
+};
+
+static const char *debugstr_BLUETOOTH_DEVICE_SEARCH_PARAMS( const BLUETOOTH_DEVICE_SEARCH_PARAMS *params )
+{
+    if (!params || params->dwSize != sizeof( *params ))
+        return wine_dbg_sprintf("%p", params );
+
+    return wine_dbg_sprintf( "{ %ld %d %d %d %d %d %u %p }", params->dwSize, params->fReturnAuthenticated,
+                             params->fReturnRemembered, params->fReturnUnknown, params->fReturnConnected,
+                             params->fIssueInquiry, params->cTimeoutMultiplier, params->hRadio );
+}
+
+static BOOL radio_set_inquiry( HANDLE radio, BOOL enable )
+{
+    DWORD bytes;
+
+    return DeviceIoControl( radio, enable ? IOCTL_WINEBTH_RADIO_START_DISCOVERY : IOCTL_WINEBTH_RADIO_STOP_DISCOVERY,
+                            NULL, 0, NULL, 0, &bytes, NULL );
+}
+
+static BTH_DEVICE_INFO_LIST *radio_get_devices( HANDLE radio )
+{
+    DWORD num_devices = 1;
+
+    for (;;)
+    {
+        BTH_DEVICE_INFO_LIST *list;
+        DWORD size, bytes;
+
+        size = sizeof( *list ) + (num_devices - 1) * sizeof( list->deviceList[0] );
+        list = calloc( 1, size );
+        if (!list)
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return NULL;
+        }
+        if (!DeviceIoControl( radio, IOCTL_BTH_GET_DEVICE_INFO, NULL, 0, list, size, &bytes, NULL )
+            && GetLastError() != ERROR_INVALID_USER_BUFFER)
+        {
+            free( list );
+            return NULL;
+        }
+        if (!list->numOfDevices)
+        {
+            free( list );
+            SetLastError( ERROR_NO_MORE_ITEMS );
+            return NULL;
+        }
+        if (num_devices != list->numOfDevices)
+        {
+            /* The buffer is incorrectly sized, try again. */
+            num_devices = list->numOfDevices;
+            free( list );
+            continue;
+        }
+        return list;
+    }
+}
+
+static void device_info_from_bth_info( BLUETOOTH_DEVICE_INFO *info, const BTH_DEVICE_INFO *bth_info )
+{
+    memset( info, 0, sizeof( *info ));
+    info->dwSize = sizeof( *info );
+
+    if (bth_info->flags & BDIF_ADDRESS)
+        info->Address.ullLong = bth_info->address;
+    info->ulClassofDevice = bth_info->classOfDevice;
+    info->fConnected = !!(bth_info->flags & BDIF_CONNECTED);
+    info->fRemembered = !!(bth_info->flags & BDIF_PERSONAL);
+    info->fAuthenticated = !!(bth_info->flags & BDIF_PAIRED);
+
+    if (bth_info->flags & BDIF_NAME)
+        MultiByteToWideChar( CP_ACP, 0, bth_info->name, -1, info->szName, ARRAY_SIZE( info->szName ) );
+}
+
+static BOOL device_find_next( struct bluetooth_find_device *find, BLUETOOTH_DEVICE_INFO *info )
+{
+    while (find->idx < find->device_list->numOfDevices)
+    {
+        const BTH_DEVICE_INFO *bth_info;
+        BOOL matches;
+
+        bth_info = &find->device_list->deviceList[find->idx++];
+        matches = (find->params.fReturnAuthenticated && bth_info->flags & BDIF_PAIRED) ||
+            (find->params.fReturnRemembered && bth_info->flags & BDIF_PERSONAL) ||
+            (find->params.fReturnUnknown && !(bth_info->flags & BDIF_PERSONAL)) ||
+            (find->params.fReturnConnected && bth_info->flags & BDIF_CONNECTED);
+
+        if (!matches)
+            continue;
+
+        device_info_from_bth_info( info, bth_info );
+        /* If the user is looking for unknown devices as part of device inquiry, or wants connected devices,
+         * we can set stLastSeen to the current UTC time. */
+        if ((find->params.fIssueInquiry && find->params.fReturnUnknown && !info->fRemembered)
+            || (find->params.fReturnConnected && info->fConnected))
+            GetSystemTime( &info->stLastSeen );
+        else
+            FIXME( "semi-stub!\n" );
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 /*********************************************************************
  *  BluetoothFindFirstDevice
  */
-HBLUETOOTH_DEVICE_FIND WINAPI BluetoothFindFirstDevice(BLUETOOTH_DEVICE_SEARCH_PARAMS *params,
-                                                       BLUETOOTH_DEVICE_INFO *info)
+HBLUETOOTH_DEVICE_FIND WINAPI BluetoothFindFirstDevice( BLUETOOTH_DEVICE_SEARCH_PARAMS *params,
+                                                        BLUETOOTH_DEVICE_INFO *info )
 {
-    FIXME("(%p %p): stub!\n", params, info);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    struct bluetooth_find_device *hfind;
+    BTH_DEVICE_INFO_LIST *device_list;
+
+    TRACE( "(%s %p)\n", debugstr_BLUETOOTH_DEVICE_SEARCH_PARAMS( params ), info );
+
+    if (!params || !info)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (params->dwSize != sizeof( *params ) || info->dwSize != sizeof( *info ))
+    {
+        SetLastError( ERROR_REVISION_MISMATCH );
+        return NULL;
+    }
+    if (params->fIssueInquiry && params->cTimeoutMultiplier > 48)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    if (!params->hRadio)
+    {
+        /* TODO: Perform device inquiry on all local radios */
+        FIXME( "semi-stub!\n" );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (params->fIssueInquiry)
+    {
+        if (!radio_set_inquiry( params->hRadio, TRUE ))
+            return NULL;
+        Sleep( params->cTimeoutMultiplier * 1280 );
+        radio_set_inquiry( params->hRadio, FALSE );
+    }
+
+    if (!(device_list = radio_get_devices( params->hRadio )))
+        return NULL;
+
+    hfind = malloc( sizeof( *hfind ) );
+    if (!hfind)
+    {
+        free( device_list );
+        SetLastError( ERROR_OUTOFMEMORY );
+        return NULL;
+    }
+
+    hfind->params = *params;
+    hfind->device_list = device_list;
+    hfind->idx = 0;
+    if (!device_find_next( hfind, info ))
+    {
+        free( hfind->device_list );
+        free( hfind );
+        SetLastError( ERROR_NO_MORE_ITEMS );
+        return NULL;
+    }
+    SetLastError( ERROR_SUCCESS );
+    return hfind;
 }
 
 /*********************************************************************
@@ -130,11 +296,22 @@ BOOL WINAPI BluetoothFindRadioClose( HBLUETOOTH_RADIO_FIND find_handle )
 /*********************************************************************
  *  BluetoothFindDeviceClose
  */
-BOOL WINAPI BluetoothFindDeviceClose(HBLUETOOTH_DEVICE_FIND find)
+BOOL WINAPI BluetoothFindDeviceClose( HBLUETOOTH_DEVICE_FIND find_handle )
 {
-    FIXME("(%p): stub!\n", find);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct bluetooth_find_device *find = find_handle;
+
+    TRACE( "(%p)\n", find_handle );
+
+    if (!find_handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    free( find->device_list );
+    free( find );
+    SetLastError( ERROR_SUCCESS );
+    return TRUE;
 }
 
 /*********************************************************************
