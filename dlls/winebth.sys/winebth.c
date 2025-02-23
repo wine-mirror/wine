@@ -206,6 +206,9 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
                         device->props.paired)
                         info->flags |= BDIF_SSP_PAIRED;
                 }
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED &&
+                    device->props.trusted)
+                    info->flags |= BDIF_PERSONAL;
                 LeaveCriticalSection( &device->props_cs );
 
                 irp->IoStatus.Information += sizeof( *info );

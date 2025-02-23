@@ -566,6 +566,16 @@ static void bluez_device_prop_from_dict_entry( const char *prop_name, DBusMessag
         props->legacy_pairing = !!legacy;
         *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING;
     }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED &&
+             !strcmp( prop_name, "Trusted" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_BOOLEAN)
+    {
+        dbus_bool_t trusted;
+
+        p_dbus_message_iter_get_basic( variant, &trusted );
+        props->trusted = !!trusted;
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED;
+    }
 }
 
 static NTSTATUS bluez_adapter_get_props_async( void *connection, const char *radio_object_path,

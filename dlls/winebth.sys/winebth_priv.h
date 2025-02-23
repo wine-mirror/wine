@@ -145,11 +145,12 @@ typedef UINT16 winebluetooth_device_props_mask_t;
 #define WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED      (1 << 2)
 #define WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED         (1 << 3)
 #define WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING (1 << 4)
+#define WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED        (1 << 5)
 
 #define WINEBLUETOOTH_DEVICE_ALL_PROPERTIES                                           \
     (WINEBLUETOOTH_DEVICE_PROPERTY_NAME | WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS |     \
      WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED | WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED | \
-     WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING)
+     WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING | WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED)
 
 union winebluetooth_property
 {
@@ -179,6 +180,7 @@ struct winebluetooth_device_properties
     BOOL connected;
     BOOL paired;
     BOOL legacy_pairing;
+    BOOL trusted;
 };
 
 NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
