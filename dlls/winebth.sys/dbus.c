@@ -345,12 +345,12 @@ NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_
     switch (params->prop_flag)
     {
     case LOCAL_RADIO_CONNECTABLE:
-        prop_name = "Discoverable";
+        prop_name = "Connectable";
         val.bool_val = params->prop->boolean;
         val_type = DBUS_TYPE_BOOLEAN;
         break;
     case LOCAL_RADIO_DISCOVERABLE:
-        prop_name = "Connectable";
+        prop_name = "Discoverable";
         val.bool_val = params->prop->boolean;
         val_type = DBUS_TYPE_BOOLEAN;
         break;
