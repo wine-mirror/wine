@@ -209,6 +209,11 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
                 if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED &&
                     device->props.trusted)
                     info->flags |= BDIF_PERSONAL;
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
+                {
+                    info->classOfDevice = device->props.class;
+                    info->flags |= BDIF_COD;
+                }
                 LeaveCriticalSection( &device->props_cs );
 
                 irp->IoStatus.Information += sizeof( *info );

@@ -576,6 +576,13 @@ static void bluez_device_prop_from_dict_entry( const char *prop_name, DBusMessag
         props->trusted = !!trusted;
         *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED;
     }
+    else if (wanted_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS &&
+             !strcmp( prop_name, "Class" ) &&
+             p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_UINT32)
+    {
+        p_dbus_message_iter_get_basic( variant, &props->class );
+        *props_mask |= WINEBLUETOOTH_DEVICE_PROPERTY_CLASS;
+    }
 }
 
 static NTSTATUS bluez_adapter_get_props_async( void *connection, const char *radio_object_path,
