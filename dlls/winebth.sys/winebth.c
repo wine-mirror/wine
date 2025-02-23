@@ -408,8 +408,6 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
 {
     struct bluetooth_radio *device;
     winebluetooth_radio_t radio = event.radio;
-    winebluetooth_radio_props_mask_t mask = event.changed_props_mask;
-    struct winebluetooth_radio_properties props = event.props;
 
     EnterCriticalSection( &device_list_cs );
     LIST_FOR_EACH_ENTRY( device, &device_list, struct bluetooth_radio, entry )
@@ -417,8 +415,27 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
         if (winebluetooth_radio_equal( radio, device->radio ) && !device->removed)
         {
             EnterCriticalSection( &device->props_cs );
-            device->props_mask = mask;
-            device->props = props;
+            device->props_mask |= event.changed_props_mask;
+            device->props_mask &= ~event.invalid_props_mask;
+
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME)
+                memcpy( device->props.name, event.props.name, sizeof( event.props.name ));
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
+                device->props.address.ullLong = RtlUlonglongByteSwap( event.props.address.ullLong );
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE)
+                device->props.discoverable = event.props.discoverable;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE)
+                device->props.connectable = event.props.connectable;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CLASS)
+                device->props.class = event.props.class;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_MANUFACTURER)
+                device->props.manufacturer = event.props.manufacturer;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_VERSION)
+                device->props.version = event.props.version;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERING)
+                device->props.discovering = event.props.discovering;
+            if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_PAIRABLE)
+                device->props.pairable = event.props.pairable;
             bluetooth_radio_set_properties( device->device_obj, device->props_mask,
                                             &device->props );
             LeaveCriticalSection( &device->props_cs );
