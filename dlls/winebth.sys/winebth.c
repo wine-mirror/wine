@@ -510,6 +510,49 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
     winebluetooth_device_free( event.device );
 }
 
+static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_event_device_props_changed event )
+{
+    struct bluetooth_radio *radio;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
+    {
+        struct bluetooth_remote_device *device;
+
+        EnterCriticalSection( &radio->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &radio->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            if (winebluetooth_device_equal( event.device, device->device ))
+            {
+                EnterCriticalSection( &device->props_cs );
+                device->props_mask |= event.changed_props_mask;
+                device->props_mask &= ~event.invalid_props_mask;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME)
+                    memcpy( device->props.name, event.props.name, sizeof( event.props.name ));
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+                    device->props.address = event.props.address;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED)
+                    device->props.connected = event.props.connected;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED)
+                    device->props.paired = event.props.paired;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING)
+                    device->props.legacy_pairing = event.props.legacy_pairing;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED)
+                    device->props.trusted = event.props.trusted;
+                if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
+                    device->props.class = event.props.class;
+                LeaveCriticalSection( &device->props_cs );
+                LeaveCriticalSection( &radio->remote_devices_cs );
+                goto done;
+            }
+        }
+        LeaveCriticalSection( &radio->remote_devices_cs );
+    }
+done:
+    LeaveCriticalSection( &device_list_cs );
+    winebluetooth_device_free( event.device );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -541,6 +584,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED:
                         bluetooth_radio_remove_remote_device( event->event_data.device_removed );
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_PROPERTIES_CHANGED:
+                        bluetooth_radio_update_device_props( event->event_data.device_props_changed);
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );
