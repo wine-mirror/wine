@@ -30,13 +30,13 @@
 #define RSAENH_MAX_HASH_SIZE        104
 
 typedef union tagKEY_CONTEXT {
-    rc2_key rc2;
-    des_key des;
-    des3_key des3;
-    aes_key aes;
-    prng_state rc4;
+    symmetric_key key;
+    prng_state prng;
     rsa_key rsa;
 } KEY_CONTEXT;
+
+extern prng_state prng;
+extern int wprng;
 
 BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle);
 BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD dwDataLen);

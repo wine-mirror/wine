@@ -354,6 +354,10 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, PVOID reserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstance);
             init_handle_table(&handle_table);
+            /* tomcrypt initialization */
+            init_LTM();
+            wprng = register_prng( &rc4_desc );
+            rng_make_prng( 1024, wprng, &prng, NULL );
             break;
 
         case DLL_PROCESS_DETACH:
