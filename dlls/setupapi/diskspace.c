@@ -37,10 +37,11 @@ typedef struct {
     LONGLONG dwWantedSpace;
 } DRIVE_ENTRY, *LPDRIVE_ENTRY;
 
-typedef struct {
+struct disk_space_list
+{
     DWORD   dwDriveCount;
     DRIVE_ENTRY Drives[26];
-} DISKSPACELIST, *LPDISKSPACELIST;
+};
 
 
 /***********************************************************************
@@ -48,10 +49,10 @@ typedef struct {
  */
 HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT Flags)
 {
+    struct disk_space_list *list;
     WCHAR drives[255];
     DWORD rc;
     WCHAR *ptr;
-    LPDISKSPACELIST list=NULL;
 
     TRACE("(%p, %lu, 0x%08x)\n", Reserved1, Reserved2, Flags);
 
@@ -66,7 +67,7 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT 
     if (rc == 0)
         return NULL;
 
-    list = malloc(sizeof(DISKSPACELIST));
+    list = malloc(sizeof(*list));
 
     list->dwDriveCount = 0;
     
@@ -105,9 +106,9 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListA(PVOID Reserved1, DWORD Reserved2, UINT 
 /***********************************************************************
  *		SetupDuplicateDiskSpaceListW  (SETUPAPI.@)
  */
-HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC DiskSpace, PVOID Reserved1, DWORD Reserved2, UINT Flags)
+HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC handle, PVOID Reserved1, DWORD Reserved2, UINT Flags)
 {
-    DISKSPACELIST *list_copy, *list_original = DiskSpace;
+    struct disk_space_list *copy, *list = handle;
 
     if (Reserved1 || Reserved2 || Flags)
     {
@@ -115,22 +116,21 @@ HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC DiskSpace, PVOID Reserved1, 
         return NULL;
     }
 
-    if (!DiskSpace)
+    if (!handle)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return NULL;
     }
 
-    list_copy = malloc(sizeof(DISKSPACELIST));
-    if (!list_copy)
+    if (!(copy = malloc(sizeof(*copy))))
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return NULL;
     }
 
-    *list_copy = *list_original;
+    *copy = *list;
 
-    return list_copy;
+    return copy;
 }
 
 /***********************************************************************
@@ -155,16 +155,16 @@ BOOL WINAPI SetupAddInstallSectionToDiskSpaceListA(HDSKSPC DiskSpace,
 /***********************************************************************
 *		SetupQuerySpaceRequiredOnDriveW  (SETUPAPI.@)
 */
-BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC DiskSpace,
+BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC handle,
                         LPCWSTR DriveSpec, LONGLONG *SpaceRequired,
                         PVOID Reserved1, UINT Reserved2)
 {
+    struct disk_space_list *list = handle;
     WCHAR *driveW;
     unsigned int i;
-    LPDISKSPACELIST list = DiskSpace;
     BOOL rc = FALSE;
 
-    if (!DiskSpace)
+    if (!handle)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -252,9 +252,9 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
 /***********************************************************************
 *		SetupDestroyDiskSpaceList  (SETUPAPI.@)
 */
-BOOL WINAPI SetupDestroyDiskSpaceList(HDSKSPC DiskSpace)
+BOOL WINAPI SetupDestroyDiskSpaceList(HDSKSPC handle)
 {
-    LPDISKSPACELIST list = DiskSpace;
+    struct disk_space_list *list = handle;
     free(list);
     return TRUE;
 }
