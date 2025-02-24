@@ -40,6 +40,49 @@ static REFERENCE_TIME samplelen(DWORD samples, int rate)
     return (REFERENCE_TIME) 10000000 * samples / rate;
 }
 
+#define check_member_(line, val, exp, fmt, member)                                           \
+    ok_ (__FILE__, line)((val).member == (exp).member, "Got " #member " " fmt ", expected " fmt ".\n", (val).member, (exp).member)
+#define check_member(val, exp, fmt, member) check_member_(__LINE__, val, exp, fmt, member)
+
+#define check_wave_format(a, b) check_wave_format_(__LINE__, a, b)
+static void check_wave_format_(int line, WAVEFORMATEX *info, const WAVEFORMATEX *expected)
+{
+    check_member_(line, *info, *expected, "%#x", wFormatTag);
+    check_member_(line, *info, *expected, "%u",  nChannels);
+    check_member_(line, *info, *expected, "%lu", nSamplesPerSec);
+    check_member_(line, *info, *expected, "%lu", nAvgBytesPerSec);
+    check_member_(line, *info, *expected, "%u",  nBlockAlign);
+    check_member_(line, *info, *expected, "%u",  wBitsPerSample);
+    check_member_(line, *info, *expected, "%u",  cbSize);
+}
+
+#define check_dmo_media_type(a, b) check_dmo_media_type_(__LINE__, a, b)
+static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DMO_MEDIA_TYPE *expected)
+{
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->majortype, &expected->majortype),
+            "Got unexpected majortype %s, expected %s.\n",
+            debugstr_guid(&media_type->majortype), debugstr_guid(&expected->majortype));
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->subtype, &expected->subtype),
+            "Got unexpected subtype %s, expected %s.\n",
+            debugstr_guid(&media_type->subtype), debugstr_guid(&expected->subtype));
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->formattype, &expected->formattype),
+            "Got unexpected formattype %s.\n",
+            debugstr_guid(&media_type->formattype));
+    ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
+    check_member_(line, *media_type, *expected, "%lu", cbFormat);
+
+    if (expected->pbFormat)
+    {
+        ok_(__FILE__, line)(!!media_type->pbFormat, "Got NULL pbFormat.\n");
+        if (!media_type->pbFormat)
+            return;
+
+        if (IsEqualGUID(&media_type->formattype, &FORMAT_WaveFormatEx)
+                && IsEqualGUID(&expected->formattype, &FORMAT_WaveFormatEx))
+            check_wave_format((WAVEFORMATEX *)media_type->pbFormat, (WAVEFORMATEX *)expected->pbFormat);
+    }
+}
+
 struct test_buffer
 {
     IMediaBuffer IMediaBuffer_iface;
@@ -558,10 +601,22 @@ static void test_media_types(void)
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
+    hr = IMediaObject_GetInputCurrentType(dmo, 1, &mt);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
+
     hr = IMediaObject_SetInputType(dmo, 1, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     input_mt.majortype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
@@ -589,6 +644,16 @@ static void test_media_types(void)
 
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        check_dmo_media_type(&mt, &input_mt);
+        MoFreeMediaType(&mt);
+    }
 
     for (i = 0; i < 4; ++i)
     {
@@ -621,6 +686,16 @@ static void test_media_types(void)
     mp3fmt.wfx.nChannels = 1;
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        check_dmo_media_type(&mt, &input_mt);
+        MoFreeMediaType(&mt);
+    }
 
     for (i = 0; i < 2; ++i)
     {
