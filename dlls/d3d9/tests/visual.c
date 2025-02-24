@@ -13746,7 +13746,7 @@ done:
 
 static void yuv_layout_test(void)
 {
-    unsigned int color, ref_color, fmt, i, x, y;
+    unsigned int color, fmt, i, x, y;
     HRESULT hr;
     IDirect3DSurface9 *surface, *target;
     D3DFORMAT format;
@@ -13763,19 +13763,27 @@ static void yuv_layout_test(void)
 
     static const struct
     {
-        DWORD color1, color2;
-        DWORD rgb1, rgb2;
+        uint8_t y, u, v;
+        uint32_t rgb_full, rgb_reduced;
     }
-    test_data[] =
+    tests[] =
     {
-        { 0x000000, 0xffffff, 0x00008800, 0x00ff7dff },
-        { 0xff0000, 0x00ffff, 0x004aff14, 0x00b800ee },
-        { 0x00ff00, 0xff00ff, 0x000024ee, 0x00ffe114 },
-        { 0x0000ff, 0xffff00, 0x00b80000, 0x004affff },
-        { 0xffff00, 0x0000ff, 0x004affff, 0x00b80000 },
-        { 0xff00ff, 0x00ff00, 0x00ffe114, 0x000024ee },
-        { 0x00ffff, 0xff0000, 0x00b800ee, 0x004aff14 },
-        { 0xffffff, 0x000000, 0x00ff7dff, 0x00008800 },
+        {0x10, 0x80, 0x80, 0x000000, 0x101010},
+        {0xeb, 0x80, 0x80, 0xffffff, 0xebebeb},
+        {0x51, 0x5a, 0xf0, 0xff0000, 0xee0e0e},
+        {0x91, 0x36, 0x22, 0x00ff01, 0x0dee0e},
+        {0x29, 0xf0, 0x6e, 0x0000ff, 0x100fef},
+        {0x7e, 0x80, 0x80, 0x808080, 0x7e7e7e},
+        {0x00, 0x80, 0x80, 0x000000, 0x000000},
+        {0xff, 0x80, 0x80, 0xffffff, 0xffffff},
+        {0x00, 0x00, 0x00, 0x008800, 0x008800},
+        {0xff, 0x00, 0x00, 0x4aff14, 0x4cff1c},
+        {0x00, 0xff, 0x00, 0x0024ee, 0x0030e1},
+        {0x00, 0x00, 0xff, 0xb80000, 0xb20000},
+        {0xff, 0xff, 0x00, 0x4affff, 0x4cffff},
+        {0xff, 0x00, 0xff, 0xffe114, 0xffd01c},
+        {0x00, 0xff, 0xff, 0xb800ee, 0xb200e1},
+        {0xff, 0xff, 0xff, 0xff7dff, 0xff78ff},
     };
 
     static const struct
@@ -13836,11 +13844,15 @@ static void yuv_layout_test(void)
             continue;
         }
 
+        winetest_push_context("format %s", formats[fmt].str);
+
         hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, format, D3DPOOL_DEFAULT, &surface, NULL);
         ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
 
-        for (i = 0; i < ARRAY_SIZE(test_data); i++)
+        for (i = 0; i < ARRAY_SIZE(tests); i++)
         {
+            winetest_push_context("value (%#x,%#x,%#x)", tests[i].y, tests[i].u, tests[i].v);
+
             hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
             ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
             buf = lr.pBits;
@@ -13850,15 +13862,14 @@ static void yuv_layout_test(void)
                 v_buf = chroma_buf;
                 u_buf = chroma_buf + height / 2 * lr.Pitch/2;
             }
-            /* Draw the top left quarter of the screen with color1, the rest with color2 */
             for (y = 0; y < height; y++)
             {
                 for (x = 0; x < width; x += 2)
                 {
-                    DWORD color = (x < width / 2 && y < height / 2) ? test_data[i].color1 : test_data[i].color2;
-                    BYTE Y = (color >> 16) & 0xff;
-                    BYTE U = (color >>  8) & 0xff;
-                    BYTE V = (color >>  0) & 0xff;
+                    uint8_t Y = tests[i].y, U = tests[i].u, V = tests[i].v;
+                    if (x < width / 2 && y < height / 2)
+                        Y = U = V = 0x40;
+
                     if (format == D3DFMT_UYVY)
                     {
                         buf[y * lr.Pitch + 2 * x + 0] = U;
@@ -13897,36 +13908,39 @@ static void yuv_layout_test(void)
             hr = IDirect3DDevice9_StretchRect(device, surface, NULL, target, NULL, D3DTEXF_POINT);
             ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
 
-            /* Some Windows drivers (mostly Nvidia, but also some VM drivers) insist on doing linear filtering
-             * although we asked for point filtering. To prevent running into precision problems, read at points
-             * with some margin within each quadrant.
-             *
-             * Unfortunately different implementations(Windows-Nvidia and Mac-AMD tested) interpret some colors
-             * vastly differently, so we need a max diff of 18. */
             for (y = 0; y < 4; y++)
             {
                 for (x = 0; x < 4; x++)
                 {
                     UINT xcoord = (1 + 2 * x) * 640 / 8;
                     UINT ycoord = (1 + 2 * y) * 480 / 8;
-                    ref_color = (y < 2 && x < 2) ? test_data[i].rgb1 : test_data[i].rgb2;
+
                     color = getPixelColor(device, xcoord, ycoord);
-                    ok(color_match(color, ref_color, 18),
-                            "Format %s: Got color %#x for pixel (%d/%d)/(%d/%d), pixel %d %d, expected %#x.\n",
-                            fmt_string, color, x, 4, y, 4, xcoord, ycoord, ref_color);
+                    if (x < 2 && y < 2)
+                        ok(color_match(color, 0x008400, 1),
+                                "Got color %#x at (%u, %u).\n", color, xcoord, ycoord);
+                    else
+                        ok(color_match(color, tests[i].rgb_full, 1)
+                                || color_match(color, tests[i].rgb_reduced, 1),
+                                "Got color %#x at (%u, %u), expected %#x.\n", color, xcoord, ycoord, tests[i].rgb_full);
                 }
             }
             hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            winetest_pop_context();
         }
 
-        for (i = 0; i < ARRAY_SIZE(test_data); i++)
+        for (i = 0; i < ARRAY_SIZE(tests); i++)
         {
-            hr = IDirect3DDevice9_ColorFill(device, surface, NULL, test_data[i].color1);
+            hr = IDirect3DDevice9_ColorFill(device, surface, NULL,
+                    ((uint32_t)tests[i].y << 16) | ((uint32_t)tests[i].u << 8) | tests[i].v);
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
         }
 
         IDirect3DSurface9_Release(surface);
+
+        winetest_pop_context();
     }
 
     IDirect3DSurface9_Release(target);
