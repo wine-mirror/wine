@@ -172,10 +172,8 @@ static void test_convert(void)
         memcpy(inbuf.data + 96 * i, mp3hdr, 4);
     inbuf.len = 96 * 5;
     hr = IMediaObject_ProcessInput(dmo, 1, &inbuf.IMediaBuffer_iface, 0, 0, 0);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx\n", hr);
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
-    todo_wine
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(inbuf.refcount == 2, "Got refcount %ld.\n", inbuf.refcount);
 
@@ -430,10 +428,8 @@ static void test_stream_info(void)
     ok(!flags, "Got flags %#lx.\n", flags);
 
     hr = IMediaObject_GetInputSizeInfo(dmo, 1, &size, &lookahead, &alignment);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetOutputSizeInfo(dmo, 1, &size, &alignment);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
@@ -536,7 +532,6 @@ static void test_media_types(void)
 
     memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
     hr = IMediaObject_GetInputType(dmo, 1, 0, &mt);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(dmo, 0, 0, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -556,17 +551,14 @@ static void test_media_types(void)
 
     memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
     hr = IMediaObject_GetOutputType(dmo, 1, 0, &mt);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(dmo, 0, 0, &mt);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_SetInputType(dmo, 1, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -659,7 +651,6 @@ static void test_media_types(void)
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 1, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);

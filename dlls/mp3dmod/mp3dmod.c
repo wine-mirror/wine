@@ -171,6 +171,9 @@ static HRESULT WINAPI MediaObject_GetInputType(IMediaObject *iface, DWORD index,
 {
     TRACE("iface %p, index %lu, type_index %lu, type %p.\n", iface, index, type_index, type);
 
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+
     if (type_index)
         return DMO_E_NO_MORE_ITEMS;
 
@@ -191,6 +194,9 @@ static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index
     WAVEFORMATEX *format;
 
     TRACE("iface %p, index %lu, type_index %lu, type %p.\n", iface, index, type_index, type);
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
 
     if (!dmo->intype_set)
         return DMO_E_TYPE_NOT_SET;
@@ -225,6 +231,9 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
 
     TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
 
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
         if (dmo->intype_set)
@@ -257,6 +266,12 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
     int err;
 
     TRACE("(%p)->(%ld, %p, %#lx)\n", iface, index, type, flags);
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+
+    if (!This->intype_set)
+        return DMO_E_TYPE_NOT_SET;
 
     if (flags & DMO_SET_TYPEF_CLEAR)
     {
@@ -317,6 +332,9 @@ static HRESULT WINAPI MediaObject_GetInputSizeInfo(IMediaObject *iface,
 
     TRACE("iface %p, index %lu, size %p, lookahead %p, alignment %p.\n", iface, index, size, lookahead, alignment);
 
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+
     if (!dmo->intype_set || !dmo->outtype_set)
         return DMO_E_TYPE_NOT_SET;
 
@@ -330,6 +348,9 @@ static HRESULT WINAPI MediaObject_GetOutputSizeInfo(IMediaObject *iface, DWORD i
     struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
 
     TRACE("iface %p, index %lu, size %p, alignment %p.\n", iface, index, size, alignment);
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
 
     if (!dmo->intype_set || !dmo->outtype_set)
         return DMO_E_TYPE_NOT_SET;
@@ -410,6 +431,9 @@ static HRESULT WINAPI MediaObject_ProcessInput(IMediaObject *iface, DWORD index,
 
     TRACE("(%p)->(%ld, %p, %#lx, %s, %s)\n", iface, index, buffer, flags,
           wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
+
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
 
     if (This->buffer)
     {
