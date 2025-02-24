@@ -185,7 +185,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     struct findstr_file *file_head = NULL, *current_file, *next_file;
     char line[MAXSTRING];
     WCHAR *string, *ptr, *buffer;
-    BOOL has_string = FALSE, has_file = FALSE, case_sensitive = TRUE, regular_expression = FALSE;
+    BOOL has_string = FALSE, has_file = FALSE, case_sensitive = TRUE, regular_expression = TRUE;
     int ret = 1, i, j;
 
     for (i = 0; i < argc; i++)
@@ -237,6 +237,10 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                 case 'I':
                 case 'i':
                     case_sensitive = FALSE;
+                    break;
+                case 'L':
+                case 'l':
+                    regular_expression = FALSE;
                     break;
                 case 'R':
                 case 'r':

@@ -321,20 +321,15 @@ static void test_basic(void)
     ret = strcmp(stdout_buffer, "a");
     ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
 
-    todo_wine
     run_find_file(".", "a", 0);
-    todo_wine
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "a");
-    todo_wine
     ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
 
     run_find_file("/L .", "a", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
-    todo_wine
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
-    todo_wine
     ok(!ret, "Got the wrong result. '%s'\n", stdout_buffer);
 }
 
