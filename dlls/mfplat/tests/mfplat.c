@@ -5949,11 +5949,17 @@ static void test_MFCreateWaveFormatExFromMFMediaType(void)
     {
         const GUID *subtype;
         WORD format_tag;
+        UINT32 size;
+        WORD size_field;
+        BOOL todo;
+        BOOL todo_size;
     }
     wave_fmt_tests[] =
     {
-        { &MFAudioFormat_PCM,   WAVE_FORMAT_PCM, },
-        { &MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT, },
+        { &MFAudioFormat_PCM, WAVE_FORMAT_PCM, sizeof(WAVEFORMATEX), 0, },
+        { &MFAudioFormat_Float, WAVE_FORMAT_IEEE_FLOAT, sizeof(WAVEFORMATEX), 0, },
+        { &MFAudioFormat_MP3, WAVE_FORMAT_MPEGLAYER3, sizeof(WAVEFORMATEX), 0, TRUE, },
+        { &DUMMY_GUID3, WAVE_FORMAT_EXTENSIBLE, sizeof(WAVEFORMATEXTENSIBLE), 22, TRUE, TRUE, },
     };
     WAVEFORMATEXTENSIBLE *format_ext;
     IMFMediaType *mediatype;
@@ -5981,27 +5987,35 @@ static void test_MFCreateWaveFormatExFromMFMediaType(void)
 
     for (i = 0; i < ARRAY_SIZE(wave_fmt_tests); ++i)
     {
+        winetest_push_context("test %d", i);
         hr = IMFMediaType_SetGUID(mediatype, &MF_MT_SUBTYPE, wave_fmt_tests[i].subtype);
         ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
 
         hr = MFCreateWaveFormatExFromMFMediaType(mediatype, &format, &size, MFWaveFormatExConvertFlag_Normal);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(hr == S_OK, "Failed to create format, hr %#lx.\n", hr);
         ok(format != NULL, "Expected format structure.\n");
-        ok(size == sizeof(*format), "Unexpected size %u.\n", size);
+        todo_wine_if(wave_fmt_tests[i].todo_size)
+        ok(size == wave_fmt_tests[i].size, "Unexpected size %u.\n", size);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(format->wFormatTag == wave_fmt_tests[i].format_tag, "Expected tag %u, got %u.\n", wave_fmt_tests[i].format_tag, format->wFormatTag);
         ok(format->nChannels == 0, "Unexpected number of channels, %u.\n", format->nChannels);
         ok(format->nSamplesPerSec == 0, "Unexpected sample rate, %lu.\n", format->nSamplesPerSec);
         ok(format->nAvgBytesPerSec == 0, "Unexpected average data rate rate, %lu.\n", format->nAvgBytesPerSec);
         ok(format->nBlockAlign == 0, "Unexpected alignment, %u.\n", format->nBlockAlign);
         ok(format->wBitsPerSample == 0, "Unexpected sample size, %u.\n", format->wBitsPerSample);
-        ok(format->cbSize == 0, "Unexpected size field, %u.\n", format->cbSize);
+        todo_wine_if(wave_fmt_tests[i].todo_size)
+        ok(format->cbSize == wave_fmt_tests[i].size_field, "Unexpected size field, %u.\n", format->cbSize);
         CoTaskMemFree(format);
 
         hr = MFCreateWaveFormatExFromMFMediaType(mediatype, (WAVEFORMATEX **)&format_ext, &size,
                 MFWaveFormatExConvertFlag_ForceExtensible);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(hr == S_OK, "Failed to create format, hr %#lx.\n", hr);
         ok(format_ext != NULL, "Expected format structure.\n");
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(size == sizeof(*format_ext), "Unexpected size %u.\n", size);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(format_ext->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE, "Unexpected tag.\n");
         ok(format_ext->Format.nChannels == 0, "Unexpected number of channels, %u.\n", format_ext->Format.nChannels);
         ok(format_ext->Format.nSamplesPerSec == 0, "Unexpected sample rate, %lu.\n", format_ext->Format.nSamplesPerSec);
@@ -6009,14 +6023,18 @@ static void test_MFCreateWaveFormatExFromMFMediaType(void)
                 format_ext->Format.nAvgBytesPerSec);
         ok(format_ext->Format.nBlockAlign == 0, "Unexpected alignment, %u.\n", format_ext->Format.nBlockAlign);
         ok(format_ext->Format.wBitsPerSample == 0, "Unexpected sample size, %u.\n", format_ext->Format.wBitsPerSample);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(format_ext->Format.cbSize == sizeof(*format_ext) - sizeof(format_ext->Format), "Unexpected size field, %u.\n",
                 format_ext->Format.cbSize);
         CoTaskMemFree(format_ext);
 
         hr = MFCreateWaveFormatExFromMFMediaType(mediatype, &format, &size, MFWaveFormatExConvertFlag_ForceExtensible + 1);
+        todo_wine_if(wave_fmt_tests[i].todo)
         ok(hr == S_OK, "Failed to create format, hr %#lx.\n", hr);
-        ok(size == sizeof(*format), "Unexpected size %u.\n", size);
+        todo_wine_if(wave_fmt_tests[i].todo_size)
+        ok(size == wave_fmt_tests[i].size, "Unexpected size %u.\n", size);
         CoTaskMemFree(format);
+        winetest_pop_context();
     }
 
     IMFMediaType_Release(mediatype);
@@ -8504,6 +8522,18 @@ static void test_MFInitAMMediaTypeFromMFMediaType(void)
     ok(IsEqualGUID(&am_type.formattype, &FORMAT_MPEG2Video), "got %s.\n", debugstr_guid(&am_type.formattype));
     ok(am_type.cbFormat == sizeof(MPEG2VIDEOINFO), "got %lu\n", am_type.cbFormat);
     CoTaskMemFree(am_type.pbFormat);
+    IMFMediaType_DeleteAllItems(media_type);
+
+    /* test audio with NULL mapping */
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, &MFAudioFormat_MP3);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = MFInitAMMediaTypeFromMFMediaType(media_type, GUID_NULL, &am_type);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaType_DeleteAllItems(media_type);
 
 
     /* test WAVEFORMATEX mapping */
