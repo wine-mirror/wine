@@ -1085,14 +1085,14 @@ static enum d3dx_pixel_format_id d3dx_get_tga_format_for_bpp(uint8_t bpp)
     }
 }
 
-#define IMAGETYPE_COLORMAPPED 1
-#define IMAGETYPE_TRUECOLOR 2
-#define IMAGETYPE_GRAYSCALE 3
-#define IMAGETYPE_MASK 0x07
-#define IMAGETYPE_RLE 8
+#define TGA_IMAGETYPE_COLORMAPPED 1
+#define TGA_IMAGETYPE_TRUECOLOR 2
+#define TGA_IMAGETYPE_GRAYSCALE 3
+#define TGA_IMAGETYPE_MASK 0x07
+#define TGA_IMAGETYPE_RLE 8
 
-#define IMAGE_RIGHTTOLEFT 0x10
-#define IMAGE_TOPTOBOTTOM 0x20
+#define TGA_IMAGE_RIGHTTOLEFT 0x10
+#define TGA_IMAGE_TOPTOBOTTOM 0x20
 
 #include "pshpack1.h"
 struct tga_header
@@ -1155,9 +1155,9 @@ static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_siz
 {
     const struct pixel_format_desc *fmt_desc = get_d3dx_pixel_format_info(image->format);
     const struct tga_header *header = (const struct tga_header *)src_data;
-    const BOOL right_to_left = !!(header->image_descriptor & IMAGE_RIGHTTOLEFT);
-    const BOOL bottom_to_top = !(header->image_descriptor & IMAGE_TOPTOBOTTOM);
-    const BOOL is_rle = !!(header->image_type & IMAGETYPE_RLE);
+    const BOOL right_to_left = !!(header->image_descriptor & TGA_IMAGE_RIGHTTOLEFT);
+    const BOOL bottom_to_top = !(header->image_descriptor & TGA_IMAGE_TOPTOBOTTOM);
+    const BOOL is_rle = !!(header->image_type & TGA_IMAGETYPE_RLE);
     uint8_t *img_buf = NULL, *src_row = NULL;
     uint32_t row_pitch, slice_pitch, i;
     PALETTEENTRY *palette = NULL;
@@ -1294,20 +1294,20 @@ static HRESULT d3dx_initialize_image_from_tga(const void *src_data, uint32_t src
                 || (d3dx_get_tga_format_for_bpp(header->color_map_entrysize) == D3DX_PIXEL_FORMAT_COUNT)))
         return D3DXERR_INVALIDDATA;
 
-    switch (header->image_type & IMAGETYPE_MASK)
+    switch (header->image_type & TGA_IMAGETYPE_MASK)
     {
-        case IMAGETYPE_COLORMAPPED:
+        case TGA_IMAGETYPE_COLORMAPPED:
             if (header->depth != 8 || !header->color_map_type)
                 return D3DXERR_INVALIDDATA;
             image->format = D3DX_PIXEL_FORMAT_P8_UINT;
             break;
 
-        case IMAGETYPE_TRUECOLOR:
+        case TGA_IMAGETYPE_TRUECOLOR:
             if ((image->format = d3dx_get_tga_format_for_bpp(header->depth)) == D3DX_PIXEL_FORMAT_COUNT)
                 return D3DXERR_INVALIDDATA;
             break;
 
-        case IMAGETYPE_GRAYSCALE:
+        case TGA_IMAGETYPE_GRAYSCALE:
             if (header->depth != 8)
                 return D3DXERR_INVALIDDATA;
             image->format = D3DX_PIXEL_FORMAT_L8_UNORM;
