@@ -3005,11 +3005,7 @@ HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *mediatype, WAVE
         return E_INVALIDARG;
 
     if (FAILED(hr = IMFMediaType_GetBlobSize(mediatype, &MF_MT_USER_DATA, &user_size)))
-    {
-        if (!IsEqualGUID(&subtype, &MFAudioFormat_PCM) && !IsEqualGUID(&subtype, &MFAudioFormat_Float))
-            return hr;
         user_size = 0;
-    }
 
     if (media_type_get_uint32(mediatype, &MF_MT_AUDIO_NUM_CHANNELS) > 2
             && SUCCEEDED(IMFMediaType_GetItem(mediatype, &MF_MT_AUDIO_CHANNEL_MASK, NULL)))
