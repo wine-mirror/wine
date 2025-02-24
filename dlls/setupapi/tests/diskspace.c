@@ -295,9 +295,11 @@ static void test_SetupDuplicateDiskSpaceListW(void)
 
 static void test_SetupQuerySpaceRequiredOnDriveA(void)
 {
+    char temp_path[MAX_PATH], drive[3];
     BOOL ret;
     HDSKSPC handle;
     LONGLONG space;
+    HANDLE file;
 
     SetLastError(0xdeadbeef);
     ret = SetupQuerySpaceRequiredOnDriveA(NULL, NULL, NULL, NULL, 0);
@@ -369,8 +371,149 @@ static void test_SetupQuerySpaceRequiredOnDriveA(void)
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %lu\n",
        GetLastError());
 
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, "c:", &space, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(space == 0xdeadbeef, "got space %I64d\n", space);
+    ok(GetLastError() == ERROR_INVALID_DRIVE, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "C:/file1", 10000, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "C:/file2", 13, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "C:\\file1", 5000, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "C:/file1", 4000, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "D:/file1", 4000, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, "c", &space, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DRIVE, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, "c:\\", &space, NULL, 0);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_DRIVE, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, "c:", &space, NULL, 0);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == (4096 * 3), "got space %I64d\n", space);
+
     ok(SetupDestroyDiskSpaceList(handle),
        "Expected SetupDestroyDiskSpaceList to succeed\n");
+
+    /* Test treatment of a file that exists. */
+
+    GetTempPathA(ARRAY_SIZE(temp_path), temp_path);
+    strcat(temp_path, "\\winetest_diskspace");
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, 0);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 10000, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    drive[0] = temp_path[0];
+    drive[1] = ':';
+    drive[2] = 0;
+
+    file = CreateFileA(temp_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
+    SetFilePointer(file, 1025, NULL, FILE_BEGIN);
+    ret = SetEndOfFile(file);
+    ok(ret == TRUE, "got error %d\n", errno);
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    ok(!space, "got space %I64d\n", space);
+
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 10000, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == -4096, "got space %I64d\n", space);
+
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 4097, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == 4096, "got space %I64d\n", space);
+
+    /* Delete after copy does not replace, and seems to be ignored. */
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 10000, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == 4096, "got space %I64d\n", space);
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    /* Test copy without delete. */
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, 0);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 4097, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == 4096, "got space %I64d\n", space);
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    /* With SPDSL_IGNORE_DISK. */
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, SPDSL_IGNORE_DISK);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, temp_path, 4097, FILEOP_COPY, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    space = 0xdeadbeef;
+    ret = SetupQuerySpaceRequiredOnDriveA(handle, drive, &space, NULL, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(space == (4096 * 2), "got space %I64d\n", space);
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    CloseHandle(file);
+    ret = DeleteFileA(temp_path);
+    ok(ret, "got error %lu\n", GetLastError());
 }
 
 static void test_SetupQuerySpaceRequiredOnDriveW(void)
@@ -460,12 +603,169 @@ static void test_SetupQuerySpaceRequiredOnDriveW(void)
        "Expected SetupDestroyDiskSpaceList to succeed\n");
 }
 
+static void test_add_files(void)
+{
+    HDSKSPC handle;
+    BOOL ret;
+
+    static const struct
+    {
+        const char *path;
+        unsigned int op;
+        DWORD error;
+    }
+    tests[] =
+    {
+        {"W:/file1", FILEOP_RENAME, ERROR_INVALID_PARAMETER},
+        {"W:/file1", FILEOP_BACKUP, ERROR_INVALID_PARAMETER},
+        {"W:/file1", FILEOP_DELETE},
+        {"W:/file1", FILEOP_DELETE}, /* add the same file twice */
+        {"w:file1", FILEOP_COPY},
+        {"w:file1", FILEOP_COPY}, /* add the same file twice */
+        {"W:/dir/", FILEOP_DELETE, ERROR_INVALID_PARAMETER},
+        {"W:/dir/", FILEOP_COPY, ERROR_INVALID_PARAMETER},
+        {"C:/windows", FILEOP_COPY},
+        {"../file1", FILEOP_COPY},
+        {"\\\\unc\\file1", FILEOP_COPY, ERROR_INVALID_PARAMETER},
+        {"\\\\.\\file1", FILEOP_COPY, ERROR_INVALID_PARAMETER},
+        {"\\\\?\\file1", FILEOP_COPY, ERROR_INVALID_PARAMETER},
+        {"", FILEOP_COPY, ERROR_INVALID_NAME},
+    };
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, 0);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        SetLastError(0xdeadbeef);
+        ret = SetupAddToDiskSpaceListA(handle, tests[i].path, 0, tests[i].op, 0, 0);
+        ok(ret == !GetLastError(), "got %d\n", ret);
+        todo_wine ok(GetLastError() == tests[i].error, "got error %lu for path %s, op %u\n",
+                GetLastError(), tests[i].path, tests[i].op);
+    }
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+}
+
+static void test_query_drives(void)
+{
+    char buffer[20], cwd[MAX_PATH];
+    WCHAR bufferW[20];
+    HDSKSPC handle;
+    DWORD len;
+    BOOL ret;
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, 0);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, NULL, 0, NULL);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, NULL, 0, &len);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(len == 1, "got len %lu\n", len);
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, 0, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    todo_wine ok(len == 1, "got len %lu\n", len);
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, 1, &len);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(len == 1, "got len %lu\n", len);
+    todo_wine ok(!buffer[0], "got %s\n", debugstr_an(buffer, len));
+
+    ret = SetupAddToDiskSpaceListA(handle, "P:/file1", 123, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "P:/file2", 123, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "H:file3", 123, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "R:/file4", 123, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, 4, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    todo_wine ok(len == 7, "got len %lu\n", len);
+    todo_wine ok(!memcmp(buffer, "h:\0\xcc", 4), "got %s\n", debugstr_an(buffer, len));
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    memset(bufferW, 0xcc, sizeof(bufferW));
+    ret = SetupQueryDrivesInDiskSpaceListW(handle, bufferW, 4, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    todo_wine ok(len == 7, "got len %lu\n", len);
+    todo_wine ok(!memcmp(bufferW, L"h:\0\xcccc", 4 * sizeof(WCHAR)), "got %s\n", debugstr_wn(bufferW, len));
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, 8, &len);
+    ok(!ret, "got %d\n", ret);
+    todo_wine ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError());
+    todo_wine ok(len == 10, "got len %lu\n", len);
+    todo_wine ok(!memcmp(buffer, "h:\0p:\0\xcc\xcc", 8), "got %s\n", debugstr_an(buffer, len));
+
+    SetLastError(0xdeadbeef);
+    len = 0xdeadbeef;
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, sizeof(buffer), &len);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(len == 10, "got len %lu\n", len);
+    todo_wine ok(!memcmp(buffer, "h:\0p:\0r:\0", 10), "got %s\n", debugstr_an(buffer, len));
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    handle = SetupCreateDiskSpaceListW(NULL, 0, 0);
+    ok(!!handle, "got error %lu\n", GetLastError());
+
+    ret = SetupAddToDiskSpaceListA(handle, "file5", 123, FILEOP_DELETE, 0, 0);
+    todo_wine ok(ret, "got error %lu\n", GetLastError());
+
+    GetCurrentDirectoryA(sizeof(cwd), cwd);
+    cwd[0] = tolower(cwd[0]);
+    cwd[2] = cwd[3] = 0;
+
+    SetLastError(0xdeadbeef);
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = SetupQueryDrivesInDiskSpaceListA(handle, buffer, sizeof(buffer), NULL);
+    todo_wine ok(ret == TRUE, "got %d\n", ret);
+    todo_wine ok(!GetLastError(), "got error %lu\n", GetLastError());
+    todo_wine ok(!memcmp(buffer, cwd, 4), "expected %s, got %s\n", debugstr_an(cwd, 4), debugstr_an(buffer, len));
+
+    ret = SetupDestroyDiskSpaceList(handle);
+    ok(ret, "got error %lu\n", GetLastError());
+}
+
 START_TEST(diskspace)
 {
     test_SetupCreateDiskSpaceListA();
     test_SetupCreateDiskSpaceListW();
     test_SetupDuplicateDiskSpaceListA();
     test_SetupDuplicateDiskSpaceListW();
+    test_add_files();
     test_SetupQuerySpaceRequiredOnDriveA();
     test_SetupQuerySpaceRequiredOnDriveW();
+    test_query_drives();
 }
