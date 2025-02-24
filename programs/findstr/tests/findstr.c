@@ -148,69 +148,69 @@ static void test_basic(void)
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin, LF */
-    run_find_stdin("abc", "abc\n", 0);
+    run_find_stdin("/L abc", "abc\n", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc\n");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin, CR/LF */
-    run_find_stdin("abc", "abc\r\n", 0);
+    run_find_stdin("/L abc", "abc\r\n", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc\r\n");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin fails */
-    run_find_stdin("abc", "cba", 1);
+    run_find_stdin("/L abc", "cba", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
 
     /* find string in file */
-    run_find_file("abc", "abc", 0);
+    run_find_file("/L abc", "abc", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in file fails */
-    run_find_file("abc", "cba", 1);
+    run_find_file("/L abc", "cba", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
 
     /* find string in stdin with space separator */
-    run_find_stdin("\"abc cba\"", "abc", 0);
+    run_find_stdin("/L \"abc cba\"", "abc", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc\r\n");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin with /C: */
-    run_find_stdin("/C:abc", "abc", 0);
+    run_find_stdin("/L /C:abc", "abc", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc\r\n");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin with /C:"abc" */
-    run_find_stdin("/C:\"abc\"", "abc", 0);
+    run_find_stdin("/L /C:\"abc\"", "abc", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc\r\n");
     ok(!ret, "Got the wrong result.\n");
 
     /* find string in stdin with /C:"abc cba" fails */
-    run_find_stdin("/C:\"abc cba\"", "abc", 1);
+    run_find_stdin("/L /C:\"abc cba\"", "abc", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
 
     /* find string in stdin with /C: fails */
-    run_find_stdin("/C:abc", "cba", 1);
+    run_find_stdin("/L /C:abc", "cba", 1);
     ok(stdout_size == 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
 
     /* find string in file, case insensitive */
-    run_find_file("/I aBc", "abc", 0);
+    run_find_file("/L /I aBc", "abc", 0);
     ok(stdout_size > 0, "Unexpected stdout buffer size %ld.\n", stdout_size);
     ok(stderr_size == 0, "Unexpected stderr buffer size %ld.\n", stderr_size);
     ret = strcmp(stdout_buffer, "abc");
