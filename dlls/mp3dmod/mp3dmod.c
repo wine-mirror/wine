@@ -304,6 +304,8 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
                 format->nChannels, format->nSamplesPerSec, format->wBitsPerSample);
             return DMO_E_TYPE_NOT_ACCEPTED;
         }
+        if (This->outtype_set)
+            MoFreeMediaType(&This->outtype);
         MoCopyMediaType(&This->outtype, type);
         This->outtype_set = TRUE;
     }
