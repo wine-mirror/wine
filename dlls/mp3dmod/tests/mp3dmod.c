@@ -718,18 +718,15 @@ static void test_media_types(void)
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_GetOutputCurrentType(dmo, 1, &mt);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     output_mt.formattype = GUID_NULL;
@@ -744,14 +741,10 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
-        check_dmo_media_type(&mt, &output_mt);
-        MoFreeMediaType(&mt);
-    }
+    check_dmo_media_type(&mt, &output_mt);
+    MoFreeMediaType(&mt);
 
     IMediaObject_Release(dmo);
 }
