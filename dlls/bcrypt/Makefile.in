@@ -1,13 +1,11 @@
 MODULE    = bcrypt.dll
-IMPORTS   = advapi32
 IMPORTLIB = bcrypt
+IMPORTS   = $(TOMCRYPT_PE_LIBS) advapi32
+EXTRAINCL = $(TOMCRYPT_PE_CFLAGS)
 UNIXLIB   = bcrypt.so
 UNIX_CFLAGS = $(GNUTLS_CFLAGS)
 
 SOURCES = \
 	bcrypt_main.c \
 	gnutls.c \
-	md2.c \
-	sha256.c \
-	sha512.c \
 	version.rc

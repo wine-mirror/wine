@@ -29,6 +29,7 @@
 #include "wincrypt.h"
 #include "winternl.h"
 #include "bcrypt.h"
+#include "tomcrypt.h"
 
 #include "wine/debug.h"
 #include "bcrypt_internal.h"
@@ -427,136 +428,21 @@ NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
     return STATUS_SUCCESS;
 }
 
-struct hash_impl
-{
-    union
-    {
-        MD2_CTX md2;
-        MD4_CTX md4;
-        MD5_CTX md5;
-        SHA_CTX sha1;
-        SHA256_CTX sha256;
-        SHA512_CTX sha512;
-    } u;
-};
-
-static NTSTATUS hash_init( struct hash_impl *hash, enum alg_id alg_id )
+static const struct ltc_hash_descriptor *get_hash_descriptor( enum alg_id alg_id )
 {
     switch (alg_id)
     {
-    case ALG_ID_MD2:
-        md2_init( &hash->u.md2 );
-        break;
-
-    case ALG_ID_MD4:
-        MD4Init( &hash->u.md4 );
-        break;
-
-    case ALG_ID_MD5:
-        MD5Init( &hash->u.md5 );
-        break;
-
-    case ALG_ID_SHA1:
-        A_SHAInit( &hash->u.sha1 );
-        break;
-
-    case ALG_ID_SHA256:
-        sha256_init( &hash->u.sha256 );
-        break;
-
-    case ALG_ID_SHA384:
-        sha384_init( &hash->u.sha512 );
-        break;
-
-    case ALG_ID_SHA512:
-        sha512_init( &hash->u.sha512 );
-        break;
-
+    case ALG_ID_MD2: return &md2_desc;
+    case ALG_ID_MD4: return &md4_desc;
+    case ALG_ID_MD5: return &md5_desc;
+    case ALG_ID_SHA1: return &sha1_desc;
+    case ALG_ID_SHA256: return &sha256_desc;
+    case ALG_ID_SHA384: return &sha384_desc;
+    case ALG_ID_SHA512: return &sha512_desc;
     default:
         ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
+        return NULL;
     }
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_update( struct hash_impl *hash, enum alg_id alg_id, UCHAR *input, ULONG size )
-{
-    switch (alg_id)
-    {
-    case ALG_ID_MD2:
-        md2_update( &hash->u.md2, input, size );
-        break;
-
-    case ALG_ID_MD4:
-        MD4Update( &hash->u.md4, input, size );
-        break;
-
-    case ALG_ID_MD5:
-        MD5Update( &hash->u.md5, input, size );
-        break;
-
-    case ALG_ID_SHA1:
-        A_SHAUpdate( &hash->u.sha1, input, size );
-        break;
-
-    case ALG_ID_SHA256:
-        sha256_update( &hash->u.sha256, input, size );
-        break;
-
-    case ALG_ID_SHA384:
-        sha384_update( &hash->u.sha512, input, size );
-        break;
-
-    case ALG_ID_SHA512:
-        sha512_update( &hash->u.sha512, input, size );
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS hash_finish( struct hash_impl *hash, enum alg_id alg_id, UCHAR *output )
-{
-    switch (alg_id)
-    {
-    case ALG_ID_MD2:
-        md2_finalize( &hash->u.md2, output );
-        break;
-
-    case ALG_ID_MD4:
-        MD4Final( &hash->u.md4 );
-        memcpy( output, hash->u.md4.digest, 16 );
-        break;
-
-    case ALG_ID_MD5:
-        MD5Final( &hash->u.md5 );
-        memcpy( output, hash->u.md5.digest, 16 );
-        break;
-
-    case ALG_ID_SHA1:
-        A_SHAFinal( &hash->u.sha1, (ULONG *)output );
-        break;
-
-    case ALG_ID_SHA256:
-        sha256_finalize( &hash->u.sha256, output );
-        break;
-
-    case ALG_ID_SHA384:
-        sha384_finalize( &hash->u.sha512, output );
-        break;
-
-    case ALG_ID_SHA512:
-        sha512_finalize( &hash->u.sha512, output );
-        break;
-
-    default:
-        ERR( "unhandled id %u\n", alg_id );
-        return STATUS_NOT_IMPLEMENTED;
-    }
-    return STATUS_SUCCESS;
 }
 
 #define HASH_FLAG_HMAC      0x01
@@ -565,11 +451,12 @@ struct hash
 {
     struct object     hdr;
     enum alg_id       alg_id;
+    const struct ltc_hash_descriptor *desc;
     ULONG             flags;
     UCHAR            *secret;
     ULONG             secret_len;
-    struct hash_impl  outer;
-    struct hash_impl  inner;
+    hash_state        outer;
+    hash_state        inner;
 };
 
 #define BLOCK_LENGTH_RC4        1
@@ -999,43 +886,44 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, const WCHAR *prop, UCHA
     }
 }
 
-static NTSTATUS hash_prepare( struct hash *hash )
+static void hash_prepare( struct hash *hash )
 {
     UCHAR buffer[MAX_HASH_BLOCK_BITS / 8] = {0};
     int block_bytes, i;
-    NTSTATUS status;
 
     /* initialize hash */
-    if ((status = hash_init( &hash->inner, hash->alg_id ))) return status;
-    if (!(hash->flags & HASH_FLAG_HMAC)) return STATUS_SUCCESS;
+    hash->desc->init( &hash->inner );
+    if (!(hash->flags & HASH_FLAG_HMAC)) return;
 
     /* initialize hmac */
-    if ((status = hash_init( &hash->outer, hash->alg_id ))) return status;
-    block_bytes = builtin_algorithms[hash->alg_id].block_bits / 8;
+    hash->desc->init( &hash->outer );
+    block_bytes = hash->desc->blocksize;
     if (hash->secret_len > block_bytes)
     {
-        struct hash_impl temp;
-        if ((status = hash_init( &temp, hash->alg_id ))) return status;
-        if ((status = hash_update( &temp, hash->alg_id, hash->secret, hash->secret_len ))) return status;
-        if ((status = hash_finish( &temp, hash->alg_id, buffer ))) return status;
+        hash_state temp;
+        hash->desc->init( &temp );
+        hash->desc->process( &temp, hash->secret, hash->secret_len );
+        hash->desc->done( &temp, buffer );
     }
     else memcpy( buffer, hash->secret, hash->secret_len );
 
     for (i = 0; i < block_bytes; i++) buffer[i] ^= 0x5c;
-    if ((status = hash_update( &hash->outer, hash->alg_id, buffer, block_bytes ))) return status;
+    hash->desc->process( &hash->outer, buffer, block_bytes );
     for (i = 0; i < block_bytes; i++) buffer[i] ^= (0x5c ^ 0x36);
-    return hash_update( &hash->inner, hash->alg_id, buffer, block_bytes );
+    hash->desc->process( &hash->inner, buffer, block_bytes );
 }
 
 static NTSTATUS hash_create( const struct algorithm *alg, UCHAR *secret, ULONG secret_len, ULONG flags,
                              struct hash **ret_hash )
 {
     struct hash *hash;
-    NTSTATUS status;
+    const struct ltc_hash_descriptor *desc = get_hash_descriptor( alg->id );
 
+    if (!desc) return STATUS_NOT_IMPLEMENTED;
     if (!(hash = calloc( 1, sizeof(*hash) ))) return STATUS_NO_MEMORY;
     hash->hdr.magic = MAGIC_HASH;
     hash->alg_id    = alg->id;
+    hash->desc      = desc;
     if (alg->flags & BCRYPT_ALG_HANDLE_HMAC_FLAG) hash->flags = HASH_FLAG_HMAC;
     if ((alg->flags & BCRYPT_HASH_REUSABLE_FLAG) || (flags & BCRYPT_HASH_REUSABLE_FLAG))
         hash->flags |= HASH_FLAG_REUSABLE;
@@ -1048,13 +936,7 @@ static NTSTATUS hash_create( const struct algorithm *alg, UCHAR *secret, ULONG s
     memcpy( hash->secret, secret, secret_len );
     hash->secret_len = secret_len;
 
-    if ((status = hash_prepare( hash )))
-    {
-        free( hash->secret );
-        free( hash );
-        return status;
-    }
-
+    hash_prepare( hash );
     *ret_hash = hash;
     return STATUS_SUCCESS;
 }
@@ -1137,28 +1019,26 @@ NTSTATUS WINAPI BCryptHashData( BCRYPT_HASH_HANDLE handle, UCHAR *input, ULONG s
     if (!hash) return STATUS_INVALID_HANDLE;
     if (!input) return STATUS_SUCCESS;
 
-    return hash_update( &hash->inner, hash->alg_id, input, size );
+    if (hash->desc->process( &hash->inner, input, size )) return STATUS_INVALID_PARAMETER;
+    return STATUS_SUCCESS;
 }
 
-static NTSTATUS hash_finalize( struct hash *hash, UCHAR *output )
+static void hash_finalize( struct hash *hash, UCHAR *output )
 {
     UCHAR buffer[MAX_HASH_OUTPUT_BYTES];
-    ULONG hash_length = builtin_algorithms[hash->alg_id].hash_length;
-    NTSTATUS status;
 
     if (!(hash->flags & HASH_FLAG_HMAC))
     {
-        if ((status = hash_finish( &hash->inner, hash->alg_id, output ))) return status;
-        if (hash->flags & HASH_FLAG_REUSABLE) return hash_prepare( hash );
-        return STATUS_SUCCESS;
+        hash->desc->done( &hash->inner, output );
+        if (hash->flags & HASH_FLAG_REUSABLE) hash_prepare( hash );
+        return;
     }
 
-    if ((status = hash_finish( &hash->inner, hash->alg_id, buffer ))) return status;
-    if ((status = hash_update( &hash->outer, hash->alg_id, buffer, hash_length ))) return status;
-    if ((status = hash_finish( &hash->outer, hash->alg_id, output ))) return status;
+    hash->desc->done( &hash->inner, buffer );
+    hash->desc->process( &hash->outer, buffer, hash->desc->hashsize );
+    hash->desc->done( &hash->outer, output );
 
-    if (hash->flags & HASH_FLAG_REUSABLE) return hash_prepare( hash );
-    return STATUS_SUCCESS;
+    if (hash->flags & HASH_FLAG_REUSABLE) hash_prepare( hash );
 }
 
 NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULONG size, ULONG flags )
@@ -1168,9 +1048,10 @@ NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULON
     TRACE( "%p, %p, %lu, %#lx\n", handle, output, size, flags );
 
     if (!hash) return STATUS_INVALID_HANDLE;
-    if (!output || size != builtin_algorithms[hash->alg_id].hash_length) return STATUS_INVALID_PARAMETER;
+    if (!output || size != hash->desc->hashsize) return STATUS_INVALID_PARAMETER;
 
-    return hash_finalize( hash, output );
+    hash_finalize( hash, output );
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS hash_single( struct algorithm *alg, UCHAR *secret, ULONG secret_len, UCHAR *input, ULONG input_len,
@@ -1180,14 +1061,14 @@ static NTSTATUS hash_single( struct algorithm *alg, UCHAR *secret, ULONG secret_
     NTSTATUS status;
 
     if ((status = hash_create( alg, secret, secret_len, 0, &hash ))) return status;
-    if ((status = hash_update( &hash->inner, hash->alg_id, input, input_len )))
+    if (input_len && hash->desc->process( &hash->inner, input, input_len ))
     {
         hash_destroy( hash );
-        return status;
+        return STATUS_INVALID_PARAMETER;
     }
-    status = hash_finalize( hash, output );
+    hash_finalize( hash, output );
     hash_destroy( hash );
-    return status;
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secret_len, UCHAR *input, ULONG input_len,
@@ -2368,23 +2249,22 @@ NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDL
 {
     struct hash *hash = get_hash_object( handle );
     UCHAR buf[MAX_HASH_OUTPUT_BYTES * 2];
-    NTSTATUS status;
     ULONG len;
 
     TRACE( "%p, %p, %p, %lu, %#lx\n", handle, halg, key, keylen, flags );
 
     if (!hash) return STATUS_INVALID_HANDLE;
     if (!key || !keylen) return STATUS_INVALID_PARAMETER;
-    if (keylen > builtin_algorithms[hash->alg_id].hash_length * 2) return STATUS_INVALID_PARAMETER;
+    if (keylen > hash->desc->hashsize * 2) return STATUS_INVALID_PARAMETER;
     if (halg)
     {
         FIXME( "algorithm handle not supported\n" );
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((status = hash_finalize( hash, buf ))) return status;
+    hash_finalize( hash, buf );
 
-    len = builtin_algorithms[hash->alg_id].hash_length;
+    len = hash->desc->hashsize;
     if (len < keylen)
     {
         UCHAR pad1[HMAC_PAD_LEN], pad2[HMAC_PAD_LEN];
@@ -2396,15 +2276,14 @@ NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDL
             pad2[i] = 0x5c ^ (i < len ? buf[i] : 0);
         }
 
-        if ((status = hash_prepare( hash )) ||
-            (status = hash_update( &hash->inner, hash->alg_id, pad1, sizeof(pad1) )) ||
-            (status = hash_finalize( hash, buf ))) return status;
+        hash_prepare( hash );
+        hash->desc->process( &hash->inner, pad1, sizeof(pad1) );
+        hash_finalize( hash, buf );
 
-        if ((status = hash_prepare( hash )) ||
-            (status = hash_update( &hash->inner, hash->alg_id, pad2, sizeof(pad2) )) ||
-            (status = hash_finalize( hash, buf + len ))) return status;
+        hash_prepare( hash );
+        hash->desc->process( &hash->inner, pad2, sizeof(pad2) );
+        hash_finalize( hash, buf + len );
     }
-
     memcpy( key, buf, keylen );
     return STATUS_SUCCESS;
 }
@@ -2412,10 +2291,10 @@ NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDL
 static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,
                         ULONGLONG iterations, ULONG i, UCHAR *dst, ULONG hash_len )
 {
-    NTSTATUS status = STATUS_INVALID_PARAMETER;
     UCHAR bytes[4], *buf;
     ULONG j, k;
 
+    if (!iterations) return STATUS_INVALID_PARAMETER;
     if (!(buf = malloc( hash_len ))) return STATUS_NO_MEMORY;
 
     for (j = 0; j < iterations; j++)
@@ -2423,37 +2302,26 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
         if (j == 0)
         {
             /* use salt || INT(i) */
-            if ((status = hash_update( &hash->inner, hash->alg_id, salt, salt_len )))
+            if (hash->desc->process( &hash->inner, salt, salt_len ))
             {
                 free( buf );
-                return status;
+                return STATUS_INVALID_PARAMETER;
             }
             bytes[0] = (i >> 24) & 0xff;
             bytes[1] = (i >> 16) & 0xff;
             bytes[2] = (i >> 8) & 0xff;
             bytes[3] = i & 0xff;
-            status = hash_update( &hash->inner, hash->alg_id, bytes, 4 );
+            hash->desc->process( &hash->inner, bytes, 4 );
         }
-        else status = hash_update( &hash->inner, hash->alg_id, buf, hash_len ); /* use U_j */
+        else hash->desc->process( &hash->inner, buf, hash_len ); /* use U_j */
 
-        if (status)
-        {
-            free( buf );
-            return status;
-        }
-
-        if ((status = hash_finalize( hash, buf )))
-        {
-            free( buf );
-            return status;
-        }
-
+        hash_finalize( hash, buf );
         if (j == 0) memcpy( dst, buf, hash_len );
         else for (k = 0; k < hash_len; k++) dst[k] ^= buf[k];
     }
 
     free( buf );
-    return status;
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS derive_key_pbkdf2( struct algorithm *alg, UCHAR *pwd, ULONG pwd_len, UCHAR *salt, ULONG salt_len,
