@@ -168,6 +168,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         rem_devices = (outsize - sizeof( *list ))/sizeof(BTH_DEVICE_INFO) + 1;
         status = STATUS_SUCCESS;
         irp->IoStatus.Information = 0;
+        list->numOfDevices = 0;
 
         EnterCriticalSection( &ext->remote_devices_cs );
         LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
