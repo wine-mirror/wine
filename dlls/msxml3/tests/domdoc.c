@@ -10203,6 +10203,15 @@ static void test_get_attributes(void)
         L"xmlns:dcterms",
         L"xmlns:foaf"
     };
+    const WCHAR *attributes[] =
+    {
+        L"rdf:about",
+        L"dcterms:created",
+        L"xmlns:oslc_am",
+        L"xmlns:rdf",
+        L"xmlns:dcterms",
+        L"xmlns:foaf"
+    };
     const get_attributes_t *entry = get_attributes;
     IXMLDOMNamedNodeMap *map;
     IXMLDOMDocument *doc, *doc2;
@@ -10474,6 +10483,50 @@ static void test_get_attributes(void)
         hr = IXMLDOMNode_get_nodeName(node2, &str);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!lstrcmpW(str, namespaces[i]), "got %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        IXMLDOMNode_Release(node2);
+    }
+
+    IXMLDOMNamedNodeMap_Release(map);
+    IXMLDOMElement_Release(elem);
+
+    IXMLDOMDocument_Release(doc);
+
+    str = SysAllocString(L"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                L"<rdf:RDF rdf:about=\"foo\""
+                L"         dcterms:created=\"2025\""
+                L"         xmlns:oslc_am=\"http://open-services.net/ns/am#\""
+                L"         xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\""
+                L"         xmlns:dcterms=\"http://purl.org/dc/terms/\""
+                L"         xmlns:foaf=\"http://xmlns.com/foaf/0.1/\" >"
+                L"</rdf:RDF>");
+
+    doc = create_document(&IID_IXMLDOMDocument2);
+
+    hr = IXMLDOMDocument_loadXML(doc, str, &b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(b == VARIANT_TRUE, "got %d\n", b);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXMLDOMElement_get_attributes(elem, &map);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    length = -1;
+    hr = IXMLDOMNamedNodeMap_get_length(map, &length);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 6, "length %#lx.\n", length);
+
+    for(i=0; i < length; i++)
+    {
+        hr = IXMLDOMNamedNodeMap_get_item(map, i, &node2);
+        ok( hr == S_OK, "Unexpected hr %#lx (%ld).\n", hr, i);
+
+        hr = IXMLDOMNode_get_nodeName(node2, &str);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!lstrcmpW(str, attributes[i]), "got %s\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IXMLDOMNode_Release(node2);

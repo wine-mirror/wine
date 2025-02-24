@@ -1812,6 +1812,8 @@ static HRESULT domelem_get_item(const xmlNodePtr node, LONG index, IXMLDOMNode *
             *item = create_node( (xmlNodePtr) curr );
             return S_OK;
         }
+
+        ++attrIndex;
     }
 
     if (!node->nsDef)
