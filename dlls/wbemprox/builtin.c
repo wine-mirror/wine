@@ -298,6 +298,15 @@ static const struct column col_physicalmemory[] =
     { L"PartNumber",           CIM_STRING },
     { L"SerialNumber",         CIM_STRING },
 };
+static const struct column col_physicalmemoryarray[] =
+{
+    { L"Caption",              CIM_STRING },
+    { L"MaxCapacity",          CIM_UINT32 },
+    { L"MaxCapacityEx",        CIM_UINT64 },
+    { L"Model",                CIM_STRING },
+    { L"Name",                 CIM_STRING },
+    { L"Status",               CIM_STRING },
+};
 static const struct column col_pnpentity[] =
 {
     { L"Caption",              CIM_STRING|COL_FLAG_DYNAMIC },
@@ -791,6 +800,15 @@ struct record_physicalmemory
     UINT16       memorytype;
     const WCHAR *partnumber;
     const WCHAR *serial;
+};
+struct record_physicalmemoryarray
+{
+    const WCHAR *caption;
+    UINT32       max_capacity;
+    UINT64       max_capacity_ex;
+    const WCHAR *model;
+    const WCHAR *name;
+    const WCHAR *status;
 };
 struct record_pnpentity
 {
@@ -3255,6 +3273,30 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     return status;
 }
 
+static enum fill_status fill_physicalmemoryarray( struct table *table, const struct expr *cond )
+{
+    struct record_physicalmemoryarray *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
+    UINT64 max_capacity;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    max_capacity = get_total_physical_memory();
+
+    rec = (struct record_physicalmemoryarray *)table->data;
+    rec->caption              = L"Physical Memory Array";
+    rec->max_capacity         = max_capacity > 0x400000 ? 0x400000 : max_capacity;
+    rec->max_capacity_ex      = max_capacity;
+    rec->name                 = L"Physical Memory Array";
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
 static WCHAR *get_reg_value( HKEY key, const WCHAR *value )
 {
     DWORD size, type;
@@ -4477,6 +4519,7 @@ static struct table cimv2_builtin_classes[] =
     { L"Win32_PageFileUsage", C(col_pagefileusage), D(data_pagefileusage) },
     { L"Win32_PhysicalMedia", C(col_physicalmedia), D(data_physicalmedia) },
     { L"Win32_PhysicalMemory", C(col_physicalmemory), 0, 0, NULL, fill_physicalmemory },
+    { L"Win32_PhysicalMemoryArray", C(col_physicalmemoryarray), 0, 0, NULL, fill_physicalmemoryarray },
     { L"Win32_PnPEntity", C(col_pnpentity), 0, 0, NULL, fill_pnpentity },
     { L"Win32_Printer", C(col_printer), 0, 0, NULL, fill_printer },
     { L"Win32_Process", C(col_process), 0, 0, NULL, fill_process },
