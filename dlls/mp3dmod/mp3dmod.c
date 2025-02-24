@@ -313,9 +313,18 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
 
 static HRESULT WINAPI MediaObject_GetInputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
 {
-    FIXME("(%p)->(%ld, %p) stub!\n", iface, index, type);
+    struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
+    TRACE("(%p)->(%ld, %p)\n", iface, index, type);
 
-    return E_NOTIMPL;
+    if (index)
+        return DMO_E_INVALIDSTREAMINDEX;
+
+    if (!dmo->intype_set)
+        return DMO_E_TYPE_NOT_SET;
+
+    MoCopyMediaType(type, &dmo->intype);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetOutputCurrentType(IMediaObject *iface, DWORD index, DMO_MEDIA_TYPE *type)
