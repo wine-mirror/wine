@@ -33,12 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
-typedef struct {
-    WCHAR   lpzName[20];
-    LONGLONG dwFreeSpace;
-    LONGLONG dwWantedSpace;
-} DRIVE_ENTRY, *LPDRIVE_ENTRY;
-
 struct file
 {
     WCHAR *path;
@@ -51,8 +45,6 @@ struct disk_space_list
     unsigned int flags;
     struct file *files;
     size_t count, capacity;
-    DWORD   dwDriveCount;
-    DRIVE_ENTRY Drives[26];
 };
 
 static bool ascii_isalpha(WCHAR c)
@@ -66,9 +58,6 @@ static bool ascii_isalpha(WCHAR c)
 HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT Flags)
 {
     struct disk_space_list *list;
-    WCHAR drives[255];
-    DWORD rc;
-    WCHAR *ptr;
 
     TRACE("(%p, %lu, 0x%08x)\n", Reserved1, Reserved2, Flags);
 
@@ -78,34 +67,8 @@ HDSKSPC WINAPI SetupCreateDiskSpaceListW(PVOID Reserved1, DWORD Reserved2, UINT 
         return NULL;
     }
 
-    rc = GetLogicalDriveStringsW(255,drives);
-
-    if (rc == 0)
-        return NULL;
-
     list = calloc(1, sizeof(*list));
     list->flags = Flags;
-
-    ptr = drives;
-    
-    while (*ptr)
-    {
-        DWORD type = GetDriveTypeW(ptr);
-        if (type == DRIVE_FIXED)
-        {
-            DWORD clusters;
-            DWORD sectors;
-            DWORD bytes;
-            DWORD total;
-            lstrcpyW(list->Drives[list->dwDriveCount].lpzName,ptr);
-            GetDiskFreeSpaceW(ptr,&sectors,&bytes,&clusters,&total);
-            list->Drives[list->dwDriveCount].dwFreeSpace = clusters * sectors *
-                                                           bytes;
-            list->Drives[list->dwDriveCount].dwWantedSpace = 0;
-            list->dwDriveCount++;
-        }
-       ptr += lstrlenW(ptr) + 1;
-    }
     return list;
 }
 
@@ -143,8 +106,8 @@ HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC handle, PVOID Reserved1, DWO
         return NULL;
     }
 
-    *copy = *list;
-
+    copy->flags = list->flags;
+    copy->count = list->count;
     copy->capacity = 0;
     array_reserve((void **)&copy->files, &copy->capacity, copy->count, sizeof(*copy->files));
     for (size_t i = 0; i < list->count; ++i)
@@ -180,13 +143,14 @@ BOOL WINAPI SetupAddInstallSectionToDiskSpaceListA(HDSKSPC DiskSpace,
 *		SetupQuerySpaceRequiredOnDriveW  (SETUPAPI.@)
 */
 BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC handle,
-                        LPCWSTR DriveSpec, LONGLONG *SpaceRequired,
-                        PVOID Reserved1, UINT Reserved2)
+        const WCHAR *drive, LONGLONG *ret_size, void *reserved1, UINT reserved2)
 {
     struct disk_space_list *list = handle;
-    WCHAR *driveW;
-    unsigned int i;
-    BOOL rc = FALSE;
+    bool has_files = false;
+    LONGLONG size = 0;
+
+    TRACE("handle %p, drive %s, ret_size %p, reserved1 %p, reserved2 %#x.\n",
+            handle, debugstr_w(drive), ret_size, reserved1, reserved2);
 
     if (!handle)
     {
@@ -194,39 +158,36 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveW(HDSKSPC handle,
         return FALSE;
     }
 
-    if (!DriveSpec)
+    if (!drive)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
-    driveW = malloc((wcslen(DriveSpec) + 2) * sizeof(WCHAR));
-    if (!driveW)
+    if (!ascii_isalpha(drive[0]) || drive[1] != ':' || drive[2])
     {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        SetLastError(ERROR_INVALID_DRIVE);
         return FALSE;
     }
 
-    lstrcpyW(driveW,DriveSpec);
-    lstrcatW(driveW,L"\\");
-
-    TRACE("Looking for drive %s\n",debugstr_w(driveW));
- 
-    for (i = 0; i < list->dwDriveCount; i++)
+    for (size_t i = 0; i < list->count; ++i)
     {
-        TRACE("checking drive %s\n",debugstr_w(list->Drives[i].lpzName));
-        if (wcscmp(driveW,list->Drives[i].lpzName)==0)
+        if (towlower(drive[0]) == towlower(list->files[i].path[0]))
         {
-            rc = TRUE;
-            *SpaceRequired = list->Drives[i].dwWantedSpace;
-            break;
+            has_files = true;
+            size += list->files[i].size;
         }
     }
 
-    free(driveW);
+    if (!has_files)
+    {
+        SetLastError(ERROR_INVALID_DRIVE);
+        return FALSE;
+    }
 
-    if (!rc) SetLastError(ERROR_INVALID_DRIVE);
-    return rc;
+    *ret_size = size;
+    SetLastError(ERROR_SUCCESS);
+    return TRUE;
 }
 
 /***********************************************************************
