@@ -136,8 +136,6 @@ typedef struct tagKEYCONTAINER
 /******************************************************************************
  * Some magic constants
  */
-#define RSAENH_ENCRYPT                    1
-#define RSAENH_DECRYPT                    0    
 #define RSAENH_HMAC_DEF_IPAD_CHAR      0x36
 #define RSAENH_HMAC_DEF_OPAD_CHAR      0x5c
 #define RSAENH_HMAC_DEF_PAD_LEN          64
@@ -557,21 +555,18 @@ BOOL block_encrypt(CRYPTKEY *key, BYTE *data, DWORD *data_len, DWORD buf_len,
     {
         switch (key->dwMode) {
             case CRYPT_MODE_ECB:
-                encrypt_block_impl(key->aiAlgid, 0, context, in, out,
-                                   RSAENH_ENCRYPT);
+                encrypt_block_impl(key->aiAlgid, 0, context, in, out);
                 break;
             case CRYPT_MODE_CBC:
                 for (j = 0; j < key->dwBlockLen; j++)
                     in[j] ^= chain_vector[j];
-                encrypt_block_impl(key->aiAlgid, 0, context, in, out,
-                                   RSAENH_ENCRYPT);
+                encrypt_block_impl(key->aiAlgid, 0, context, in, out);
                 memcpy(chain_vector, out, key->dwBlockLen);
                 break;
             case CRYPT_MODE_CFB:
                 for (j = 0; j < key->dwBlockLen; j++)
                 {
-                    encrypt_block_impl(key->aiAlgid, 0, context,
-                                       chain_vector, o, RSAENH_ENCRYPT);
+                    encrypt_block_impl(key->aiAlgid, 0, context, chain_vector, o);
                     out[j] = in[j] ^ o[0];
                     for (k = 0; k < key->dwBlockLen - 1; k++)
                         chain_vector[k] = chain_vector[k+1];
@@ -2689,7 +2684,7 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             return FALSE;
         }
         if (!pad_data(hProv, pbData, *pdwDataLen, pbData, pCryptKey->dwBlockLen, dwFlags)) return FALSE;
-        encrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbData, pbData, RSAENH_ENCRYPT);
+        encrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbData, pbData);
         *pdwDataLen = pCryptKey->dwBlockLen;
         Final = TRUE;
     } else {
@@ -2776,21 +2771,18 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
             switch (pCryptKey->dwMode) {
                 case CRYPT_MODE_ECB:
-                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
-                                       RSAENH_DECRYPT);
+                    decrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out);
                     break;
                 
                 case CRYPT_MODE_CBC:
-                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
-                                       RSAENH_DECRYPT);
+                    decrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out);
                     for (j=0; j<pCryptKey->dwBlockLen; j++) out[j] ^= pCryptKey->abChainVector[j];
                     memcpy(pCryptKey->abChainVector, in, pCryptKey->dwBlockLen);
                     break;
 
                 case CRYPT_MODE_CFB:
                     for (j=0; j<pCryptKey->dwBlockLen; j++) {
-                        encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, 
-                                           pCryptKey->abChainVector, o, RSAENH_ENCRYPT);
+                        encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, pCryptKey->abChainVector, o);
                         out[j] = in[j] ^ o[0];
                         for (k=0; k<pCryptKey->dwBlockLen-1; k++) 
                             pCryptKey->abChainVector[k] = pCryptKey->abChainVector[k+1];
@@ -2836,7 +2828,7 @@ BOOL WINAPI RSAENH_CPDecrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
             SetLastError(NTE_BAD_KEY);
             return FALSE;
         }
-        encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbData, pbData, RSAENH_DECRYPT);
+        decrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbData, pbData);
         if (!unpad_data(hProv, pbData, pCryptKey->dwBlockLen, pbData, pdwDataLen, dwFlags)) return FALSE;
         Final = TRUE;
     } else {
@@ -2887,8 +2879,7 @@ static BOOL crypt_export_simple(CRYPTKEY *pCryptKey, CRYPTKEY *pPubKey,
             return FALSE;
         }
 
-        encrypt_block_impl(pPubKey->aiAlgid, PK_PUBLIC, &pPubKey->context, (BYTE*)(pAlgid+1),
-                           (BYTE*)(pAlgid+1), RSAENH_ENCRYPT);
+        encrypt_block_impl(pPubKey->aiAlgid, PK_PUBLIC, &pPubKey->context, (BYTE*)(pAlgid+1), (BYTE*)(pAlgid+1));
     }
     *pdwDataLen = dwDataLen;
     return TRUE;
@@ -3340,8 +3331,7 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwD
 
     pbDecrypted = malloc(pPubKey->dwBlockLen);
     if (!pbDecrypted) return FALSE;
-    encrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted,
-                       RSAENH_DECRYPT);
+    decrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted);
 
     dwKeyLen = RSAENH_MAX_KEY_SIZE;
     if (!unpad_data(hProv, pbDecrypted, pPubKey->dwBlockLen, pbDecrypted, &dwKeyLen, dwFlags)) {
@@ -4955,7 +4945,7 @@ BOOL WINAPI RSAENH_CPSignHash(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwKeySpe
         goto out;
     }
 
-    ret = encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbSignature, pbSignature, RSAENH_ENCRYPT);
+    ret = encrypt_block_impl(pCryptKey->aiAlgid, PK_PRIVATE, &pCryptKey->context, pbSignature, pbSignature);
 out:
     RSAENH_CPDestroyKey(hProv, hCryptKey);
     return ret;
@@ -5053,8 +5043,7 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, const B
         goto cleanup;
     }
 
-    if (!encrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbSignature, pbDecrypted, 
-                            RSAENH_DECRYPT)) 
+    if (!decrypt_block_impl(pCryptKey->aiAlgid, PK_PUBLIC, &pCryptKey->context, pbSignature, pbDecrypted))
     {
         goto cleanup;
     }

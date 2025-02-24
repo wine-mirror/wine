@@ -202,73 +202,94 @@ static inline void reverse_bytes(BYTE *pbData, DWORD dwLen) {
 }
 
 BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *in,
-                        BYTE *out, DWORD enc)
+                        BYTE *out)
 {
     unsigned long inlen, outlen;
-    BYTE *in_reversed = NULL;
-        
+
     switch (aiAlgid) {
         case CALG_RC2:
-            if (enc) {
-                rc2_ecb_encrypt(in, out, &pKeyContext->rc2);
-            } else {
-                rc2_ecb_decrypt(in, out, &pKeyContext->rc2);
-            }
+            rc2_ecb_encrypt(in, out, &pKeyContext->rc2);
             break;
 
         case CALG_3DES:
         case CALG_3DES_112:
-            if (enc) {
-                des3_ecb_encrypt(in, out, &pKeyContext->des3);
-            } else {
-                des3_ecb_decrypt(in, out, &pKeyContext->des3);
-            }
+            des3_ecb_encrypt(in, out, &pKeyContext->des3);
             break;
 
         case CALG_DES:
-            if (enc) {
-                des_ecb_encrypt(in, out, &pKeyContext->des);
-            } else {
-                des_ecb_decrypt(in, out, &pKeyContext->des);
-            }
+            des_ecb_encrypt(in, out, &pKeyContext->des);
             break;
 
         case CALG_AES:
         case CALG_AES_128:
         case CALG_AES_192:
         case CALG_AES_256:
-            if (enc) {
-                aes_ecb_encrypt(in, out, &pKeyContext->aes);
-            } else {
-                aes_ecb_decrypt(in, out, &pKeyContext->aes);
-            }
+            aes_ecb_encrypt(in, out, &pKeyContext->aes);
             break;
 
         case CALG_RSA_KEYX:
         case CALG_RSA_SIGN:
         case CALG_SSL3_SHAMD5:
             outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
-            if (enc) {
-                if (rsa_exptmod(in, inlen, out, &outlen, dwKeySpec, &pKeyContext->rsa) != CRYPT_OK) {
-                    SetLastError(NTE_FAIL);
-                    return FALSE;
-                }
-                reverse_bytes(out, outlen);
-            } else {
-                in_reversed = malloc(inlen);
-                if (!in_reversed) {
-                    SetLastError(NTE_NO_MEMORY);
-                    return FALSE;
-                }
-                memcpy(in_reversed, in, inlen);
-                reverse_bytes(in_reversed, inlen);
-                if (rsa_exptmod(in_reversed, inlen, out, &outlen, dwKeySpec, &pKeyContext->rsa) != CRYPT_OK) {
-                    free(in_reversed);
-                    SetLastError(NTE_FAIL);
-                    return FALSE;
-                }
-                free(in_reversed);
+            if (rsa_exptmod(in, inlen, out, &outlen, dwKeySpec, &pKeyContext->rsa) != CRYPT_OK) {
+                SetLastError(NTE_FAIL);
+                return FALSE;
             }
+            reverse_bytes(out, outlen);
+            break;
+
+        default:
+            SetLastError(NTE_BAD_ALGID);
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+BOOL decrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *in,
+                        BYTE *out)
+{
+    unsigned long inlen, outlen;
+    BYTE *in_reversed;
+
+    switch (aiAlgid) {
+        case CALG_RC2:
+            rc2_ecb_decrypt(in, out, &pKeyContext->rc2);
+            break;
+
+        case CALG_3DES:
+        case CALG_3DES_112:
+            des3_ecb_decrypt(in, out, &pKeyContext->des3);
+            break;
+
+        case CALG_DES:
+            des_ecb_decrypt(in, out, &pKeyContext->des);
+            break;
+
+        case CALG_AES:
+        case CALG_AES_128:
+        case CALG_AES_192:
+        case CALG_AES_256:
+            aes_ecb_decrypt(in, out, &pKeyContext->aes);
+            break;
+
+        case CALG_RSA_KEYX:
+        case CALG_RSA_SIGN:
+        case CALG_SSL3_SHAMD5:
+            outlen = inlen = (mp_count_bits(&pKeyContext->rsa.N)+7)/8;
+            in_reversed = malloc(inlen);
+            if (!in_reversed) {
+                SetLastError(NTE_NO_MEMORY);
+                return FALSE;
+            }
+            memcpy(in_reversed, in, inlen);
+            reverse_bytes(in_reversed, inlen);
+            if (rsa_exptmod(in_reversed, inlen, out, &outlen, dwKeySpec, &pKeyContext->rsa) != CRYPT_OK) {
+                free(in_reversed);
+                SetLastError(NTE_FAIL);
+                return FALSE;
+            }
+            free(in_reversed);
             break;
 
         default:
