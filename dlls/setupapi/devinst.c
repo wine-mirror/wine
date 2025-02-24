@@ -118,7 +118,7 @@ struct device_iface
     struct list      entry;
 };
 
-static bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+bool array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     unsigned int new_capacity, max_capacity;
     void *new_elements;
