@@ -3,6 +3,7 @@ EXTRAINCL = $(TOMCRYPT_PE_CFLAGS)
 EXTRADEFS = -D_ACRTIMP= -DLTC_NO_TEST
 
 SOURCES = \
+	mpi.c \
 	src/ciphers/aes/aes.c \
 	src/ciphers/aes/aes_tab.c \
 	src/ciphers/blowfish.c \
