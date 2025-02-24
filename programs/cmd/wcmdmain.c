@@ -3614,8 +3614,13 @@ static RETURN_CODE for_control_execute_numbers(CMD_FOR_CONTROL *for_ctrl, CMD_NO
     int numbers[3] = {0, 0, 0}, var;
     int i;
 
-    wcscpy(set, for_ctrl->set);
-    handleExpansion(set, TRUE);
+    if (for_ctrl->set)
+    {
+        wcscpy(set, for_ctrl->set);
+        handleExpansion(set, TRUE);
+    }
+    else
+        set[0] = L'\0';
 
     /* Note: native doesn't check the actual number of parameters, and set
      * them by default to 0.
@@ -3648,7 +3653,7 @@ static RETURN_CODE for_control_execute(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *node
 {
     RETURN_CODE return_code;
 
-    if (!for_ctrl->set) return NO_ERROR;
+    if (!for_ctrl->set && for_ctrl->operator != CMD_FOR_NUMBERS) return NO_ERROR;
 
     WCMD_save_for_loop_context(FALSE);
 
