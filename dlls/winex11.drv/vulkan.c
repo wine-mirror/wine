@@ -80,7 +80,7 @@ static void vulkan_surface_destroy( HWND hwnd, struct x11drv_vulkan_surface *sur
     free( surface );
 }
 
-static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, VkSurfaceKHR *handle, void **private )
+static VkResult X11DRV_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *handle, void **private )
 {
     VkXlibSurfaceCreateInfoKHR info =
     {
@@ -105,7 +105,7 @@ static VkResult X11DRV_vulkan_surface_create( HWND hwnd, VkInstance instance, Vk
     NtUserGetClientRect( hwnd, &surface->rect, NtUserGetDpiForWindow( hwnd ) );
 
     info.window = surface->window;
-    if (pvkCreateXlibSurfaceKHR( instance, &info, NULL /* allocator */, handle ))
+    if (pvkCreateXlibSurfaceKHR( instance->host.instance, &info, NULL /* allocator */, handle ))
     {
         ERR("Failed to create Xlib surface\n");
         vulkan_surface_destroy( hwnd, surface );

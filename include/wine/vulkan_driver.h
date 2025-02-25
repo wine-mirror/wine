@@ -46,7 +46,7 @@ struct vulkan_client_object
 #include "wine/rbtree.h"
 
 /* Wine internal vulkan driver version, needs to be bumped upon vulkan_funcs changes. */
-#define WINE_VULKAN_DRIVER_VERSION 35
+#define WINE_VULKAN_DRIVER_VERSION 36
 
 struct vulkan_object
 {
@@ -175,7 +175,7 @@ struct vulkan_funcs
 /* interface between win32u and the user drivers */
 struct vulkan_driver_funcs
 {
-    VkResult (*p_vulkan_surface_create)(HWND, VkInstance, VkSurfaceKHR *, void **);
+    VkResult (*p_vulkan_surface_create)(HWND, const struct vulkan_instance *, VkSurfaceKHR *, void **);
     void (*p_vulkan_surface_destroy)(HWND, void *);
     void (*p_vulkan_surface_detach)(HWND, void *);
     void (*p_vulkan_surface_update)(HWND, void *);
