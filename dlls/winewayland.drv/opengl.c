@@ -110,7 +110,7 @@ struct wgl_pbuffer
 {
     struct list entry;
     struct wayland_gl_drawable *gl;
-    int width, height;
+    int width, height, pixel_format;
     int texture_format, texture_target, texture_binding;
     EGLContext tmp_context, prev_context;
 };
@@ -432,35 +432,18 @@ static void wgl_context_refresh(struct wgl_context *ctx)
     if (old_read) wayland_gl_drawable_release(old_read);
 }
 
-static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
+static BOOL wayland_set_pixel_format(HWND hwnd, int old_format, int new_format, BOOL internal)
 {
-    HWND hwnd = NtUserWindowFromDC(hdc);
     struct wayland_gl_drawable *gl;
-    int prev = 0;
-
-    if (!hwnd || hwnd == NtUserGetDesktopWindow())
-    {
-        WARN("not a proper window DC %p/%p\n", hdc, hwnd);
-        return FALSE;
-    }
-    if (!is_onscreen_format(format))
-    {
-        WARN("Invalid format %d\n", format);
-        return FALSE;
-    }
-    TRACE("%p/%p format %d\n", hdc, hwnd, format);
 
     /* Even for internal pixel format fail setting it if the app has already set a
      * different pixel format. Let wined3d create a backup GL context instead.
      * Switching pixel format involves drawable recreation and is much more expensive
      * than blitting from backup context. */
-    if ((prev = win32u_get_window_pixel_format(hwnd)))
-        return prev == format;
+    if (old_format) return old_format == new_format;
 
-    if (!(gl = wayland_gl_drawable_create(hwnd, format))) return FALSE;
+    if (!(gl = wayland_gl_drawable_create(hwnd, new_format))) return FALSE;
     wayland_update_gl_drawable(hwnd, gl);
-    win32u_set_window_pixel_format(hwnd, format, internal);
-
     return TRUE;
 }
 
@@ -640,17 +623,6 @@ static BOOL wayland_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
     return wayland_wglMakeContextCurrentARB(hdc, hdc, ctx);
 }
 
-static BOOL wayland_wglSetPixelFormat(HDC hdc, int format,
-                                      const PIXELFORMATDESCRIPTOR *pfd)
-{
-    return set_pixel_format(hdc, format, FALSE);
-}
-
-static BOOL wayland_wglSetPixelFormatWINE(HDC hdc, int format)
-{
-    return set_pixel_format(hdc, format, TRUE);
-}
-
 static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *dest)
 {
     struct wgl_context *keep, *clobber;
@@ -771,6 +743,7 @@ static struct wgl_pbuffer *wayland_wglCreatePbufferARB(HDC hdc, int format,
 
     pbuffer->width = width;
     pbuffer->height = height;
+    pbuffer->pixel_format = format;
     wl_egl_window_resize(pbuffer->gl->wl_egl_window, width, height, 0, 0);
 
     for (; attribs && attribs[0]; attribs += 2)
@@ -894,6 +867,7 @@ static HDC wayland_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
         return 0;
     }
 
+    NtGdiSetPixelFormat(hdc, pbuffer->pixel_format);
     return hdc;
 }
 
@@ -1203,9 +1177,6 @@ static BOOL init_opengl_funcs(void)
 
 static const char *wayland_init_wgl_extensions(void)
 {
-    register_extension("WGL_WINE_pixel_format_passthrough");
-    opengl_funcs.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
-
     register_extension("WGL_ARB_make_current_read");
     opengl_funcs.p_wglGetCurrentReadDCARB = (void *)1;  /* never called */
     opengl_funcs.p_wglMakeContextCurrentARB = wayland_wglMakeContextCurrentARB;
@@ -1302,6 +1273,7 @@ static BOOL init_egl_configs(void)
 static const struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_wgl_extensions = wayland_init_wgl_extensions,
+    .p_set_pixel_format = wayland_set_pixel_format,
 };
 
 /**********************************************************************
@@ -1415,7 +1387,6 @@ static struct opengl_funcs opengl_funcs =
     .p_wglDeleteContext = wayland_wglDeleteContext,
     .p_wglGetProcAddress = wayland_wglGetProcAddress,
     .p_wglMakeCurrent = wayland_wglMakeCurrent,
-    .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
     .p_wglShareLists = wayland_wglShareLists,
     .p_wglSwapBuffers = wayland_wglSwapBuffers,
     .p_get_pixel_formats = wayland_get_pixel_formats,
