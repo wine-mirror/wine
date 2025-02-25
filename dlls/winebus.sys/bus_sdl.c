@@ -96,6 +96,7 @@ MAKE_FUNCPTR(SDL_HapticClose);
 MAKE_FUNCPTR(SDL_HapticDestroyEffect);
 MAKE_FUNCPTR(SDL_HapticGetEffectStatus);
 MAKE_FUNCPTR(SDL_HapticNewEffect);
+MAKE_FUNCPTR(SDL_HapticNumAxes);
 MAKE_FUNCPTR(SDL_HapticOpenFromJoystick);
 MAKE_FUNCPTR(SDL_HapticPause);
 MAKE_FUNCPTR(SDL_HapticQuery);
@@ -226,6 +227,8 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl, BOOL force)
 
     if ((impl->effect_support & EFFECT_SUPPORT_PHYSICAL))
     {
+        int axes_count;
+
         /* SDL_HAPTIC_SQUARE doesn't exist */
         if (force || (impl->effect_support & SDL_HAPTIC_SINE)) usages[count++] = PID_USAGE_ET_SINE;
         if (force || (impl->effect_support & SDL_HAPTIC_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
@@ -238,7 +241,8 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl, BOOL force)
         if (force || (impl->effect_support & SDL_HAPTIC_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
         if (force || (impl->effect_support & SDL_HAPTIC_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
-        if (!hid_device_add_physical(&impl->unix_device, usages, count, 2))
+        if ((axes_count = pSDL_HapticNumAxes(impl->sdl_haptic)) < 0) axes_count = 2;
+        if (!hid_device_add_physical(&impl->unix_device, usages, count, axes_count))
             return FALSE;
     }
 
@@ -1122,6 +1126,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticDestroyEffect);
     LOAD_FUNCPTR(SDL_HapticGetEffectStatus);
     LOAD_FUNCPTR(SDL_HapticNewEffect);
+    LOAD_FUNCPTR(SDL_HapticNumAxes);
     LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
     LOAD_FUNCPTR(SDL_HapticPause);
     LOAD_FUNCPTR(SDL_HapticQuery);
