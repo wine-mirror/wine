@@ -420,6 +420,18 @@ static void bluez_radio_prop_from_dict_entry( const char *prop_name, DBusMessage
     TRACE_(dbus)( "(%s, %p, %p, %p, %#x)\n", debugstr_a( prop_name ), variant, props, props_mask,
                   wanted_props_mask );
 
+    if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME &&
+        !strcmp( prop_name, "Name" ) &&
+        p_dbus_message_iter_get_arg_type( variant ))
+    {
+        const char *name_str;
+        SIZE_T len;
+        p_dbus_message_iter_get_basic( variant, &name_str );
+        len = strlen( name_str );
+        memcpy( props->name, name_str, min( len + 1, ARRAYSIZE( props->name )));
+        props->name[ARRAYSIZE( props->name ) - 1] = '\0';
+        *props_mask |= WINEBLUETOOTH_RADIO_PROPERTY_NAME;
+    }
     if (wanted_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS &&
         !strcmp( prop_name, "Address" ) &&
         p_dbus_message_iter_get_arg_type( variant ) == DBUS_TYPE_STRING)
