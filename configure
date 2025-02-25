@@ -6584,35 +6584,33 @@ case "$host_cpu" in
 esac
 
 
+toolsdir=$with_wine_tools
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for the directory containing the Wine tools" >&5
 printf %s "checking for the directory containing the Wine tools... " >&6; }
-if test ${wine_cv_toolsdir+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) wine_cv_toolsdir="$with_wine_tools"
-   if test -z "$with_wine_tools"; then
-     if test "$cross_compiling" = "yes"; then
-       as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
-     elif test -n "$with_wine64"; then
-       wine_cv_toolsdir="$with_wine64"
-     fi
-   fi ;;
-esac
+if test -z "$toolsdir"; then
+    if test "$cross_compiling" = "yes"; then
+        as_fn_error $? "you must use the --with-wine-tools option when cross-compiling." "$LINENO" 5
+    elif test -n "$with_wine64"; then
+        toolsdir="$with_wine64"
+        libdir64=$(grep "^libdir *=" $with_wine64/Makefile | sed 's/^libdir *= *//')
+        if test "$libdir64" != "$libdir"; then
+            printf "%s\n" "$as_me:${as_lineno-$LINENO}: libdir64: $libdir64" >&5
+            as_fn_error $? "when using --with-wine64 you must use the same --libdir in both build trees." "$LINENO" 5
+        fi
+    fi
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_toolsdir" >&5
-printf "%s\n" "$wine_cv_toolsdir" >&6; }
-if test -z "$wine_cv_toolsdir"; then
+if test -z "$toolsdir"; then
     wine_makedep=tools/makedep$toolsext
-elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
-    wine_makedep=$wine_cv_toolsdir/tools/makedep$toolsext
+elif test -d "$toolsdir/tools/winebuild"; then
+    wine_makedep=$toolsdir/tools/makedep$toolsext
     enable_tools=${enable_tools:-no}
-    test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $wine_cv_toolsdir" "$LINENO" 5
+    test -f "$wine_makedep" || as_fn_error $? "the Wine tools have not yet been built in $toolsdir" "$LINENO" 5
 else
-    as_fn_error $? "could not find Wine tools in $wine_cv_toolsdir" "$LINENO" 5
+    as_fn_error $? "could not find Wine tools in $toolsdir" "$LINENO" 5
 fi
-toolsdir=$wine_cv_toolsdir
-
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: ${toolsdir:-none needed}" >&5
+printf "%s\n" "${toolsdir:-none needed}" >&6; }
 wine64dir=$with_wine64
 
 RUNTESTFLAGS="-q -P wine"
