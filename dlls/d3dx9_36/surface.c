@@ -579,6 +579,13 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     if (FAILED(hr))
         goto exit;
 
+    /*
+     * Encode 32bpp BGRA format surfaces as 32bpp BGRX for BMP.
+     * This matches the behavior of native.
+     */
+    if (IsEqualGUID(&GUID_ContainerFormatBmp, container_format) && (fmt_desc->format == D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM))
+        pixel_format_guid = wic_guid_from_d3dx_pixel_format_id(D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM);
+
     wic_pixel_format = *pixel_format_guid;
     hr = IWICBitmapFrameEncode_SetPixelFormat(wic_frame, &wic_pixel_format);
     if (FAILED(hr))
@@ -651,6 +658,38 @@ static const enum d3dx_pixel_format_id png_save_pixel_formats[] =
 static const enum d3dx_pixel_format_id jpg_save_pixel_formats[] =
 {
     D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
+};
+
+static const enum d3dx_pixel_format_id bmp_save_pixel_formats[] =
+{
+    D3DX_PIXEL_FORMAT_B5G5R5X1_UNORM,
+    D3DX_PIXEL_FORMAT_B5G6R5_UNORM,
+    D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
+    D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM,
+    D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM,
+};
+
+static const enum d3dx_pixel_format_id unimplemented_bmp_save_pixel_formats[] =
+{
+    D3DX_PIXEL_FORMAT_P8_UINT,
+    D3DX_PIXEL_FORMAT_A8_UNORM,
+    D3DX_PIXEL_FORMAT_P8_UINT_A8_UNORM,
+    D3DX_PIXEL_FORMAT_L8A8_UNORM,
+    D3DX_PIXEL_FORMAT_L16_UNORM,
+    D3DX_PIXEL_FORMAT_B2G3R3_UNORM,
+    D3DX_PIXEL_FORMAT_R16_FLOAT,
+    D3DX_PIXEL_FORMAT_R16G16_FLOAT,
+    D3DX_PIXEL_FORMAT_R16G16_UNORM,
+    D3DX_PIXEL_FORMAT_R32_FLOAT,
+    D3DX_PIXEL_FORMAT_R32G32_FLOAT,
+    D3DX_PIXEL_FORMAT_B4G4R4X4_UNORM,
+    D3DX_PIXEL_FORMAT_B4G4R4A4_UNORM,
+    D3DX_PIXEL_FORMAT_B2G3R3A8_UNORM,
+    D3DX_PIXEL_FORMAT_B5G5R5A1_UNORM,
+    D3DX_PIXEL_FORMAT_R8G8B8X8_UNORM,
+    D3DX_PIXEL_FORMAT_R8G8B8A8_UNORM,
+    D3DX_PIXEL_FORMAT_B10G10R10A2_UNORM,
+    D3DX_PIXEL_FORMAT_R10G10B10A2_UNORM,
 };
 
 static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enum d3dx_pixel_format_id *format_ids,
@@ -768,6 +807,23 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
                     dst_format);
             break;
 
+        case D3DXIFF_BMP:
+        {
+            unsigned int i;
+
+            for (i = 0; i < ARRAY_SIZE(unimplemented_bmp_save_pixel_formats); ++i)
+            {
+                if (unimplemented_bmp_save_pixel_formats[i] == dst_format)
+                {
+                    FIXME("Saving pixel format %d to BMP files is currently unsupported.\n", dst_format);
+                    return E_NOTIMPL;
+                }
+            }
+            dst_format = d3dx_get_closest_d3dx_pixel_format_id(bmp_save_pixel_formats, ARRAY_SIZE(bmp_save_pixel_formats),
+                    dst_format);
+            break;
+        }
+
         default:
             assert(0 && "Unexpected file format.");
             return E_FAIL;
@@ -838,6 +894,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
 
         case D3DXIFF_PNG:
         case D3DXIFF_JPG:
+        case D3DXIFF_BMP:
             if (src_fmt_desc == dst_fmt_desc)
                 dst_pixels = *src_pixels;
             else
@@ -3275,7 +3332,6 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
     switch (file_format)
     {
-        case D3DXIFF_BMP:
         case D3DXIFF_DIB:
             container_format = &GUID_ContainerFormatBmp;
             break;
@@ -3283,6 +3339,7 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         case D3DXIFF_TGA:
         case D3DXIFF_PNG:
         case D3DXIFF_JPG:
+        case D3DXIFF_BMP:
             return save_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect, file_format);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
