@@ -88,7 +88,6 @@ EXT_BLOCK_SIZE = 1000
 
 UNSUPPORTED_EXTENSIONS = [
     # Instance extensions
-    "VK_EXT_headless_surface", # Needs WSI work.
     "VK_KHR_display", # Needs WSI work.
     "VK_KHR_surface_protected_capabilities",
     "VK_LUNARG_direct_driver_loading", # Implemented in the Vulkan loader
@@ -130,6 +129,7 @@ UNSUPPORTED_EXTENSIONS = [
 UNEXPOSED_EXTENSIONS = {
     "VK_EXT_map_memory_placed",
     "VK_KHR_external_memory_win32",
+    "VK_EXT_headless_surface",
 }
 
 # The Vulkan loader provides entry-points for core functionality and important
