@@ -472,7 +472,11 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
                 winebluetooth_device_free( device->device );
                 DeleteCriticalSection( &device->props_cs );
                 free( device );
-                break;
+
+                LeaveCriticalSection( &radio->remote_devices_cs );
+                LeaveCriticalSection( &device_list_cs );
+                winebluetooth_device_free( event.device );
+                return;
             }
         }
         LeaveCriticalSection( &radio->remote_devices_cs );
