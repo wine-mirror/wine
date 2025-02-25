@@ -2644,7 +2644,9 @@ xmlXPathFormatNumber(double number, char buffer[], int buffersize)
 	    /* Finally copy result back to caller */
 	    size = strlen(work) + 1;
 	    if (size > buffersize) {
+#if 0  /* avoid compiler warning */
 		work[buffersize - 1] = 0;
+#endif
 		size = buffersize;
 	    }
 	    memmove(buffer, work, size);

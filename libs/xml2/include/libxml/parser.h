@@ -953,7 +953,7 @@ XML_DEPRECATED XMLPUBFUN int
 		xmlSubstituteEntitiesDefault(int val);
 XML_DEPRECATED XMLPUBFUN int
                 xmlThrDefSubstituteEntitiesDefaultValue(int v);
-XML_DEPRECATED XMLPUBFUN int
+XMLPUBFUN int
 		xmlKeepBlanksDefault	(int val);
 XML_DEPRECATED XMLPUBFUN int
 		xmlThrDefKeepBlanksDefaultValue(int v);

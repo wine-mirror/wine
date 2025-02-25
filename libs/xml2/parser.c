@@ -7281,6 +7281,14 @@ xmlParseReference(xmlParserCtxtPtr ctxt) {
     }
 
     /*
+     * Some users try to parse entities on their own and used to set
+     * the renamed "checked" member. Fix the flags to cover this
+     * case.
+     */
+    if (((ent->flags & XML_ENT_PARSED) == 0) && (ent->children != NULL))
+        ent->flags |= XML_ENT_PARSED;
+
+    /*
      * The first reference to the entity trigger a parsing phase
      * where the ent->children is filled with the result from
      * the parsing.
