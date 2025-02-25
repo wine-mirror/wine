@@ -44,7 +44,7 @@ struct shader_spirv_resource_bindings
     size_t binding_base[WINED3D_SHADER_TYPE_COUNT];
     enum wined3d_shader_type so_stage;
 
-    uint32_t ffp_extra_binding[2];
+    uint32_t ffp_ps_extra_binding, ffp_vs_extra_binding;
 };
 
 struct shader_spirv_priv
@@ -220,7 +220,7 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
     {
         unsigned int rt_alpha_swizzle = compile_args->u.fs.args.rt_alpha_swizzle;
 
-        fill_ps_parameters(args, compile_args, bindings->ffp_extra_binding[WINED3D_SHADER_TYPE_PIXEL]);
+        fill_ps_parameters(args, compile_args, bindings->ffp_ps_extra_binding);
 
         args->spirv_target.dual_source_blending = compile_args->u.fs.args.dual_source_blend;
 
@@ -745,7 +745,11 @@ static bool shader_spirv_resource_bindings_init(struct shader_spirv_resource_bin
                     WINED3D_SHADER_DESCRIPTOR_TYPE_CBV, WINED3D_FFP_CONSTANTS_EXTRA_REGISTER,
                     WINED3D_SHADER_RESOURCE_BUFFER, WINED3D_DATA_FLOAT, binding_idx))
                 return false;
-            bindings->ffp_extra_binding[shader_type] = binding_idx;
+
+            if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
+                bindings->ffp_ps_extra_binding = binding_idx;
+            else
+                bindings->ffp_vs_extra_binding = binding_idx;
         }
     }
 
