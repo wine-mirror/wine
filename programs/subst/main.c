@@ -1,5 +1,6 @@
 /*
  * Copyright 2016 Austin English
+ * Copyright 2025 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,12 +23,37 @@ WINE_DEFAULT_DEBUG_CHANNEL(subst);
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
+    const WCHAR *device = NULL, *path = NULL;
+    BOOL delete = FALSE;
     int i;
 
-    WINE_FIXME("stub:");
-    for (i = 0; i < argc; i++)
-        WINE_FIXME(" %s", wine_dbgstr_w(argv[i]));
-    WINE_FIXME("\n");
+    if (argc == 1)
+    {
+        FIXME( "Device list not supported\n" );
+        return 1;
+    }
 
-    return 0;
+    if (argc != 3)
+    {
+        wprintf( L"Wrong number of arguments\n" );
+        return 1;
+    }
+
+    for (i = 1; i < argc; i++)
+    {
+        if (!wcsicmp( argv[i], L"/d" )) delete = TRUE;
+        else if (!device) device = argv[i];
+        else path = argv[i];
+    }
+
+    if (DefineDosDeviceW( delete ? DDD_REMOVE_DEFINITION : 0, device, path )) return 0;
+
+    if (!delete && GetLastError() == ERROR_ALREADY_EXISTS)
+        wprintf( L"Device already exists.\n" );
+    else if (delete && GetLastError() == ERROR_FILE_NOT_FOUND)
+        wprintf( L"No such device.\n" );
+    else
+        WARN( "Failed to define DOS device (%lu).\n", GetLastError() );
+
+    return 1;
 }
