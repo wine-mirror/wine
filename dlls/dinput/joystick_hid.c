@@ -69,8 +69,8 @@ struct pid_effect_update
     UINT axis_count;
     UINT direction_coll;
     UINT direction_count;
-    struct hid_value_caps *axis_caps[6];
-    struct hid_value_caps *direction_caps[6];
+    struct hid_value_caps *axis_caps[MAX_PID_AXES];
+    struct hid_value_caps *direction_caps[MAX_PID_AXES];
     struct hid_value_caps *duration_caps;
     struct hid_value_caps *gain_caps;
     struct hid_value_caps *sample_period_caps;
@@ -221,11 +221,11 @@ struct hid_joystick_effect
     struct list entry;
     struct hid_joystick *joystick;
 
-    DWORD axes[6];
-    LONG directions[6];
+    DWORD axes[MAX_PID_AXES];
+    LONG directions[MAX_PID_AXES];
     DICONSTANTFORCE constant_force;
     DIRAMPFORCE ramp_force;
-    DICONDITION condition[6];
+    DICONDITION condition[MAX_PID_AXES];
     DIENVELOPE envelope;
     DIPERIODIC periodic;
     DIEFFECT params;
@@ -1852,7 +1852,7 @@ static BOOL init_pid_caps( struct dinput_device *device, UINT index, struct hid_
     if (instance->wCollectionNumber == effect_update->axes_coll)
     {
         SET_REPORT_ID( effect_update );
-        if (effect_update->axis_count >= 6) FIXME( "more than 6 PID axes detected\n" );
+        if (effect_update->axis_count >= MAX_PID_AXES) FIXME( "more than %d PID axes detected\n", MAX_PID_AXES );
         else effect_update->axis_caps[effect_update->axis_count] = caps;
         effect_update->axis_count++;
     }
@@ -1861,7 +1861,7 @@ static BOOL init_pid_caps( struct dinput_device *device, UINT index, struct hid_
         SET_REPORT_ID( effect_update );
         caps->physical_min = 0;
         caps->physical_max = 35900;
-        if (effect_update->direction_count >= 6) FIXME( "more than 6 PID directions detected\n" );
+        if (effect_update->direction_count >= MAX_PID_AXES) FIXME( "more than %d PID directions detected\n", MAX_PID_AXES );
         else effect_update->direction_caps[effect_update->direction_count] = caps;
         effect_update->direction_count++;
     }
@@ -2374,7 +2374,7 @@ static void convert_directions_from_spherical( const DIEFFECT *in, DIEFFECT *out
 static void convert_directions( const DIEFFECT *in, DIEFFECT *out )
 {
     DWORD direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
-    LONG directions[6] = {0};
+    LONG directions[MAX_PID_AXES] = {0};
     DIEFFECT spherical = {.rglDirection = directions};
 
     switch (in->dwFlags & direction_flags)
@@ -2894,7 +2894,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     ULONG report_len = impl->joystick->caps.OutputReportByteLength;
     HANDLE device = impl->joystick->device;
     struct hid_value_caps *caps;
-    LONG directions[4] = {0};
+    LONG directions[MAX_PID_AXES] = {0};
     DWORD i, tmp, count;
     DIEFFECT spherical;
     NTSTATUS status;

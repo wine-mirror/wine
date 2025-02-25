@@ -239,6 +239,8 @@ struct hid_preparsed_data
 #define PID_USAGE_CREATE_NEW_EFFECT_REPORT         ((USAGE) 0xab)
 #define PID_USAGE_RAM_POOL_AVAILABLE               ((USAGE) 0xac)
 
+#define MAX_PID_AXES                               6
+
 #define IOCTL_HID_GET_WINE_RAWINPUT_HANDLE         HID_BUFFER_CTL_CODE(300)
 
 #endif /* __WINE_PARSE_H */

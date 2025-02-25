@@ -29,6 +29,7 @@
 #include "unixlib.h"
 
 #include "wine/list.h"
+#include "wine/hid.h"
 
 struct effect_periodic
 {
@@ -75,9 +76,9 @@ struct effect_params
     UINT16 sample_period;
     UINT16 start_delay;
     BYTE trigger_button;
-    BOOL axis_enabled[2];
+    BOOL axis_enabled[MAX_PID_AXES];
     BOOL direction_enabled;
-    UINT16 direction[2];
+    UINT16 direction[MAX_PID_AXES];
     BYTE gain_percent;
     BYTE condition_count;
     /* only for periodic, constant or ramp forces */
@@ -85,7 +86,7 @@ struct effect_params
     union
     {
         struct effect_periodic periodic;
-        struct effect_condition condition[2];
+        struct effect_condition condition[MAX_PID_AXES];
         struct effect_constant_force constant_force;
         struct effect_ramp_force ramp_force;
     };
