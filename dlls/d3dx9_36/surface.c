@@ -545,6 +545,7 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     WICPixelFormatGUID wic_pixel_format;
     const LARGE_INTEGER seek = { 0 };
     IWICImagingFactory *wic_factory;
+    IWICPalette *wic_palette = NULL;
     IStream *stream = NULL;
     STATSTG stream_stats;
     HRESULT hr;
@@ -555,9 +556,11 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
         return D3DERR_INVALIDCALL;
 
     hr = IWICImagingFactory_CreateEncoder(wic_factory, container_format, NULL, &wic_encoder);
-    IWICImagingFactory_Release(wic_factory);
     if (FAILED(hr))
-        return D3DERR_INVALIDCALL;
+    {
+        hr = D3DERR_INVALIDCALL;
+        goto exit;
+    }
 
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     if (FAILED(hr))
@@ -578,6 +581,31 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     hr = IWICBitmapFrameEncode_SetSize(wic_frame, pixels->size.width, pixels->size.height);
     if (FAILED(hr))
         goto exit;
+
+    if (pixels->palette)
+    {
+        WICColor tmp_palette[256];
+        unsigned int i;
+
+        hr = IWICImagingFactory_CreatePalette(wic_factory, &wic_palette);
+        if (FAILED(hr))
+            goto exit;
+
+        for (i = 0; i < ARRAY_SIZE(tmp_palette); ++i)
+        {
+            const PALETTEENTRY *pe = &pixels->palette[i];
+
+            tmp_palette[i] = (pe->peFlags << 24) | (pe->peRed << 16) | (pe->peGreen << 8) | (pe->peBlue);
+        }
+
+        hr = IWICPalette_InitializeCustom(wic_palette, tmp_palette, ARRAY_SIZE(tmp_palette));
+        if (FAILED(hr))
+            goto exit;
+
+        hr = IWICBitmapFrameEncode_SetPalette(wic_frame, wic_palette);
+        if (FAILED(hr))
+            goto exit;
+    }
 
     /*
      * Encode 32bpp BGRA format surfaces as 32bpp BGRX for BMP.
@@ -630,10 +658,14 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     }
 
 exit:
+    if (wic_factory)
+        IWICImagingFactory_Release(wic_factory);
     if (stream && (*wic_file != stream))
         IStream_Release(stream);
     if (wic_frame)
         IWICBitmapFrameEncode_Release(wic_frame);
+    if (wic_palette)
+        IWICPalette_Release(wic_palette);
     if (encoder_options)
         IPropertyBag2_Release(encoder_options);
     if (wic_encoder)
@@ -667,11 +699,11 @@ static const enum d3dx_pixel_format_id bmp_save_pixel_formats[] =
     D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
     D3DX_PIXEL_FORMAT_B8G8R8X8_UNORM,
     D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM,
+    D3DX_PIXEL_FORMAT_P8_UINT,
 };
 
 static const enum d3dx_pixel_format_id unimplemented_bmp_save_pixel_formats[] =
 {
-    D3DX_PIXEL_FORMAT_P8_UINT,
     D3DX_PIXEL_FORMAT_A8_UNORM,
     D3DX_PIXEL_FORMAT_P8_UINT_A8_UNORM,
     D3DX_PIXEL_FORMAT_L8A8_UNORM,
