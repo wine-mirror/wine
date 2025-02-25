@@ -12682,7 +12682,14 @@ static void glsl_blitter_generate_yuv_shader(struct wined3d_string_buffer *buffe
 {
     enum complex_fixup complex_fixup = get_complex_fixup(args->fixup);
 
-    shader_addline(buffer, "const vec4 yuv_coef = vec4(1.403, -0.344, -0.714, 1.770);\n");
+    /* Drivers disagree on whether the Y'CbCr components should be interpreted
+     * as being in the [0,255] range (NVidia, but this is configurable) or the
+     * reduced [16,235]/[16,240] range (AMD, WARP).
+     * The game Locoland plays back video inside a black frame, the background
+     * of which only matches the frame if the reduced range is used, so we side
+     * with the reduced range here. */
+
+    shader_addline(buffer, "const vec4 yuv_coef = vec4(1.596, -0.392, -0.813, 2.017);\n");
     shader_addline(buffer, "float luminance;\n");
     shader_addline(buffer, "vec2 texcoord;\n");
     shader_addline(buffer, "vec2 chroma;\n");
@@ -12724,6 +12731,7 @@ static void glsl_blitter_generate_yuv_shader(struct wined3d_string_buffer *buffe
      * http://www.fourcc.org/fccyvrgb.php. Note that the chroma
      * ranges from -0.5 to 0.5. */
     shader_addline(buffer, "\n    chroma.xy -= 0.5;\n");
+    shader_addline(buffer, "    luminance = (luminance - 0.063) * 1.164;\n");
 
     shader_addline(buffer, "    %s.x = luminance + chroma.x * yuv_coef.x;\n", output);
     shader_addline(buffer, "    %s.y = luminance + chroma.y * yuv_coef.y + chroma.x * yuv_coef.z;\n", output);
