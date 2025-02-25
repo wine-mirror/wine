@@ -19,6 +19,11 @@
 #ifndef __WINE_D3DKMDT_H
 #define __WINE_D3DKMDT_H
 
+#define DXGK_FEATURE_SUPPORT_ALWAYS_OFF   ((UINT)0)
+#define DXGK_FEATURE_SUPPORT_EXPERIMENTAL ((UINT)1)
+#define DXGK_FEATURE_SUPPORT_STABLE       ((UINT)2)
+#define DXGK_FEATURE_SUPPORT_ALWAYS_ON    ((UINT)3)
+
 typedef enum _D3DKMDT_VIDEO_SIGNAL_STANDARD
 {
     D3DKMDT_VSS_UNINITIALIZED =  0,
@@ -55,5 +60,149 @@ typedef enum _D3DKMDT_VIDEO_SIGNAL_STANDARD
     D3DKMDT_VSS_PAL_M         = 31,
     D3DKMDT_VSS_OTHER         = 255
 } D3DKMDT_VIDEO_SIGNAL_STANDARD;
+
+typedef enum _D3DKMDT_GRAPHICS_PREEMPTION_GRANULARITY
+{
+    D3DKMDT_GRAPHICS_PREEMPTION_NONE                = 0,
+    D3DKMDT_GRAPHICS_PREEMPTION_DMA_BUFFER_BOUNDARY = 100,
+    D3DKMDT_GRAPHICS_PREEMPTION_PRIMITIVE_BOUNDARY  = 200,
+    D3DKMDT_GRAPHICS_PREEMPTION_TRIANGLE_BOUNDARY   = 300,
+    D3DKMDT_GRAPHICS_PREEMPTION_PIXEL_BOUNDARY      = 400,
+    D3DKMDT_GRAPHICS_PREEMPTION_SHADER_BOUNDARY     = 500,
+} D3DKMDT_GRAPHICS_PREEMPTION_GRANULARITY;
+
+typedef enum _D3DKMDT_COMPUTE_PREEMPTION_GRANULARITY
+{
+    D3DKMDT_COMPUTE_PREEMPTION_NONE                  = 0,
+    D3DKMDT_COMPUTE_PREEMPTION_DMA_BUFFER_BOUNDARY   = 100,
+    D3DKMDT_COMPUTE_PREEMPTION_DISPATCH_BOUNDARY     = 200,
+    D3DKMDT_COMPUTE_PREEMPTION_THREAD_GROUP_BOUNDARY = 300,
+    D3DKMDT_COMPUTE_PREEMPTION_THREAD_BOUNDARY       = 400,
+    D3DKMDT_COMPUTE_PREEMPTION_SHADER_BOUNDARY       = 500,
+} D3DKMDT_COMPUTE_PREEMPTION_GRANULARITY;
+
+typedef struct _D3DKMDT_PREEMPTION_CAPS
+{
+    D3DKMDT_GRAPHICS_PREEMPTION_GRANULARITY GraphicsPreemptionGranularity;
+    D3DKMDT_COMPUTE_PREEMPTION_GRANULARITY  ComputePreemptionGranularity;
+} D3DKMDT_PREEMPTION_CAPS;
+
+typedef struct _D3DKMT_WDDM_1_2_CAPS
+{
+    D3DKMDT_PREEMPTION_CAPS PreemptionCaps;
+    union
+    {
+        struct
+        {
+            UINT SupportNonVGA                       :  1;
+            UINT SupportSmoothRotation               :  1;
+            UINT SupportPerEngineTDR                 :  1;
+            UINT SupportKernelModeCommandBuffer      :  1;
+            UINT SupportCCD                          :  1;
+            UINT SupportSoftwareDeviceBitmaps        :  1;
+            UINT SupportGammaRamp                    :  1;
+            UINT SupportHWCursor                     :  1;
+            UINT SupportHWVSync                      :  1;
+            UINT SupportSurpriseRemovalInHibernation :  1;
+            UINT Reserved                            : 22;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_1_2_CAPS;
+
+typedef struct _D3DKMT_WDDM_1_3_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT SupportMiracast               :  1;
+            UINT IsHybridIntegratedGPU         :  1;
+            UINT IsHybridDiscreteGPU           :  1;
+            UINT SupportPowerManagementPStates :  1;
+            UINT SupportVirtualModes           :  1;
+            UINT SupportCrossAdapterResource   :  1;
+            UINT Reserved                      : 26;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_1_3_CAPS;
+
+typedef struct _D3DKMT_WDDM_2_0_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT Support64BitAtomics       :  1;
+            UINT GpuMmuSupported           :  1;
+            UINT IoMmuSupported            :  1;
+            UINT FlipOverwriteSupported    :  1;
+            UINT SupportContextlessPresent :  1;
+            UINT SupportSurpriseRemoval    :  1;
+            UINT Reserved                  : 26;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_2_0_CAPS;
+
+typedef struct _D3DKMT_WDDM_2_7_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT HwSchSupported               :  1;
+            UINT HwSchEnabled                 :  1;
+            UINT HwSchEnabledByDefault        :  1;
+            UINT IndependentVidPnVSyncControl :  1;
+            UINT Reserved                     : 28;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_2_7_CAPS;
+
+typedef struct _D3DKMT_WDDM_2_9_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT    HwSchSupportState          :  2;
+            UINT    HwSchEnabled               :  1;
+            UINT    SelfRefreshMemorySupported :  1;
+            UINT    Reserved                   : 28;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_2_9_CAPS;
+
+typedef struct _D3DKMT_WDDM_3_0_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT    HwFlipQueueSupportState :  2;
+            UINT    HwFlipQueueEnabled      :  1;
+            UINT    DisplayableSupported    :  1;
+            UINT    Reserved                : 28;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_3_0_CAPS;
+
+typedef struct _D3DKMT_WDDM_3_1_CAPS
+{
+    union
+    {
+        struct
+        {
+            UINT    NativeGpuFenceSupported :   1;
+            UINT    Reserved                :  31;
+        };
+        UINT Value;
+    };
+} D3DKMT_WDDM_3_1_CAPS;
 
 #endif /* __WINE_D3DKMDT_H */
