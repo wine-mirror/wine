@@ -510,8 +510,8 @@ static struct vulkan_funcs vulkan_funcs =
 
 static VkResult nulldrv_vulkan_surface_create( HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface, void **private )
 {
-    FIXME( "stub!\n" );
-    return VK_ERROR_INCOMPATIBLE_DRIVER;
+    VkHeadlessSurfaceCreateInfoEXT create_info = {.sType = VK_STRUCTURE_TYPE_HEADLESS_SURFACE_CREATE_INFO_EXT};
+    return instance->p_vkCreateHeadlessSurfaceEXT( instance->host.instance, &create_info, NULL, surface );
 }
 
 static void nulldrv_vulkan_surface_destroy( HWND hwnd, void *private )
@@ -537,7 +537,7 @@ static VkBool32 nulldrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysic
 
 static const char *nulldrv_get_host_surface_extension(void)
 {
-    return "VK_WINE_nulldrv_surface";
+    return "VK_EXT_headless_surface";
 }
 
 static const struct vulkan_driver_funcs nulldrv_funcs =
