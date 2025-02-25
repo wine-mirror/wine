@@ -648,6 +648,11 @@ static const enum d3dx_pixel_format_id png_save_pixel_formats[] =
     D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM
 };
 
+static const enum d3dx_pixel_format_id jpg_save_pixel_formats[] =
+{
+    D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
+};
+
 static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enum d3dx_pixel_format_id *format_ids,
         uint32_t format_ids_size, enum d3dx_pixel_format_id format_id)
 {
@@ -758,6 +763,11 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
                     dst_format);
             break;
 
+        case D3DXIFF_JPG:
+            dst_format = d3dx_get_closest_d3dx_pixel_format_id(jpg_save_pixel_formats, ARRAY_SIZE(jpg_save_pixel_formats),
+                    dst_format);
+            break;
+
         default:
             assert(0 && "Unexpected file format.");
             return E_FAIL;
@@ -827,6 +837,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
         }
 
         case D3DXIFF_PNG:
+        case D3DXIFF_JPG:
             if (src_fmt_desc == dst_fmt_desc)
                 dst_pixels = *src_pixels;
             else
@@ -3268,12 +3279,10 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         case D3DXIFF_DIB:
             container_format = &GUID_ContainerFormatBmp;
             break;
-        case D3DXIFF_JPG:
-            container_format = &GUID_ContainerFormatJpeg;
-            break;
         case D3DXIFF_DDS:
         case D3DXIFF_TGA:
         case D3DXIFF_PNG:
+        case D3DXIFF_JPG:
             return save_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect, file_format);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
