@@ -60,9 +60,15 @@
 #endif
 
 #ifdef __clang__
-  #define ATTRIBUTE_NO_SANITIZE_INTEGER \
-    ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow") \
-    ATTRIBUTE_NO_SANITIZE("unsigned-shift-base")
+  #if (!defined(__apple_build_version__) && __clang_major__ >= 12) || \
+      (defined(__apple_build_version__) && __clang_major__ >= 13)
+    #define ATTRIBUTE_NO_SANITIZE_INTEGER \
+      ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow") \
+      ATTRIBUTE_NO_SANITIZE("unsigned-shift-base")
+  #else
+    #define ATTRIBUTE_NO_SANITIZE_INTEGER \
+      ATTRIBUTE_NO_SANITIZE("unsigned-integer-overflow")
+  #endif
 #else
   #define ATTRIBUTE_NO_SANITIZE_INTEGER
 #endif

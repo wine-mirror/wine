@@ -9453,6 +9453,35 @@ xmlAttrHashInsert(xmlParserCtxtPtr ctxt, unsigned size, const xmlChar *name,
     return(INT_MAX);
 }
 
+static int
+xmlAttrHashInsertQName(xmlParserCtxtPtr ctxt, unsigned size,
+                       const xmlChar *name, const xmlChar *prefix,
+                       unsigned hashValue, int aindex) {
+    xmlAttrHashBucket *table = ctxt->attrHash;
+    xmlAttrHashBucket *bucket;
+    unsigned hindex;
+
+    hindex = hashValue & (size - 1);
+    bucket = &table[hindex];
+
+    while (bucket->index >= 0) {
+        const xmlChar **atts = &ctxt->atts[bucket->index];
+
+        if ((name == atts[0]) && (prefix == atts[1]))
+            return(bucket->index);
+
+        hindex++;
+        bucket++;
+        if (hindex >= size) {
+            hindex = 0;
+            bucket = table;
+        }
+    }
+
+    bucket->index = aindex;
+
+    return(INT_MAX);
+}
 /**
  * xmlParseStartTag2:
  * @ctxt:  an XML parser context
@@ -9501,6 +9530,8 @@ xmlParseStartTag2(xmlParserCtxtPtr ctxt, const xmlChar **pref,
     int nratts, nbatts, nbdef, inputid;
     int i, j, nbNs, nbTotalDef, attval, nsIndex, maxAtts;
     int alloc = 0;
+    int numNsErr = 0;
+    int numDupErr = 0;
 
     if (RAW != '<') return(NULL);
     NEXT1;
@@ -9879,10 +9910,12 @@ next_attr:
             if (res < INT_MAX) {
                 if (aprefix == atts[res+1]) {
                     xmlErrAttributeDup(ctxt, aprefix, attname);
+                    numDupErr += 1;
                 } else {
                     xmlNsErr(ctxt, XML_NS_ERR_ATTRIBUTE_REDEFINED,
                              "Namespaced Attribute %s in '%s' redefined\n",
                              attname, nsuri, NULL);
+                    numNsErr += 1;
                 }
             }
         }
@@ -9978,6 +10011,43 @@ next_attr:
                 nbdef++;
 	    }
 	}
+    }
+
+    /*
+     * Using a single hash table for nsUri/localName pairs cannot
+     * detect duplicate QNames reliably. The following example will
+     * only result in two namespace errors.
+     *
+     * <doc xmlns:a="a" xmlns:b="a">
+     *   <elem a:a="" b:a="" b:a=""/>
+     * </doc>
+     *
+     * If we saw more than one namespace error but no duplicate QNames
+     * were found, we have to scan for duplicate QNames.
+     */
+    if ((numDupErr == 0) && (numNsErr > 1)) {
+        memset(ctxt->attrHash, -1,
+               attrHashSize * sizeof(ctxt->attrHash[0]));
+
+        for (i = 0, j = 0; j < nratts; i += 5, j++) {
+            unsigned hashValue, nameHashValue, prefixHashValue;
+            int res;
+
+            aprefix = atts[i+1];
+            if (aprefix == NULL)
+                continue;
+
+            attname = atts[i];
+            /* Hash values always have bit 31 set, see dict.c */
+            nameHashValue = ctxt->attallocs[j] | 0x80000000;
+            prefixHashValue = xmlDictComputeHash(ctxt->dict, aprefix);
+
+            hashValue = xmlDictCombineHash(nameHashValue, prefixHashValue);
+            res = xmlAttrHashInsertQName(ctxt, attrHashSize, attname,
+                                         aprefix, hashValue, i);
+            if (res < INT_MAX)
+                xmlErrAttributeDup(ctxt, aprefix, attname);
+        }
     }
 
     /*

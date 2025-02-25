@@ -5057,25 +5057,26 @@ xmlSnprintfElements(char *buf, int size, xmlNodePtr node, int glob) {
 	    return;
 	}
         switch (cur->type) {
-            case XML_ELEMENT_NODE:
+            case XML_ELEMENT_NODE: {
+                int qnameLen = xmlStrlen(cur->name);
+
+                if ((cur->ns != NULL) && (cur->ns->prefix != NULL))
+                    qnameLen += xmlStrlen(cur->ns->prefix) + 1;
+                if (size - len < qnameLen + 10) {
+                    if ((size - len > 4) && (buf[len - 1] != '.'))
+                        strcat(buf, " ...");
+                    return;
+                }
 		if ((cur->ns != NULL) && (cur->ns->prefix != NULL)) {
-		    if (size - len < xmlStrlen(cur->ns->prefix) + 10) {
-			if ((size - len > 4) && (buf[len - 1] != '.'))
-			    strcat(buf, " ...");
-			return;
-		    }
 		    strcat(buf, (char *) cur->ns->prefix);
 		    strcat(buf, ":");
 		}
-                if (size - len < xmlStrlen(cur->name) + 10) {
-		    if ((size - len > 4) && (buf[len - 1] != '.'))
-			strcat(buf, " ...");
-		    return;
-		}
-	        strcat(buf, (char *) cur->name);
+                if (cur->name != NULL)
+	            strcat(buf, (char *) cur->name);
 		if (cur->next != NULL)
 		    strcat(buf, " ");
 		break;
+            }
             case XML_TEXT_NODE:
 		if (xmlIsBlankNode(cur))
 		    break;
