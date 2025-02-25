@@ -78,11 +78,6 @@ static const GUID *wic_guid_from_d3dx_pixel_format_id(enum d3dx_pixel_format_id 
     return NULL;
 }
 
-static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
-{
-    return wic_guid_from_d3dx_pixel_format_id(d3dx_pixel_format_id_from_d3dformat(format));
-}
-
 #define DDS_PALETTE_SIZE (sizeof(PALETTEENTRY) * 256)
 
 /* dds_header.flags */
@@ -525,6 +520,7 @@ static const GUID *wic_container_guid_from_d3dx_file_format(D3DXIMAGE_FILEFORMAT
 {
     switch (iff)
     {
+        case D3DXIFF_DIB:
         case D3DXIFF_BMP: return &GUID_ContainerFormatBmp;
         case D3DXIFF_JPG: return &GUID_ContainerFormatJpeg;
         case D3DXIFF_PNG: return &GUID_ContainerFormatPng;
@@ -840,6 +836,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
             break;
 
         case D3DXIFF_BMP:
+        case D3DXIFF_DIB:
         {
             unsigned int i;
 
@@ -927,6 +924,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
         case D3DXIFF_PNG:
         case D3DXIFF_JPG:
         case D3DXIFF_BMP:
+        case D3DXIFF_DIB:
             if (src_fmt_desc == dst_fmt_desc)
                 dst_pixels = *src_pixels;
             else
@@ -989,75 +987,6 @@ exit:
     if (*dst_buffer != buffer)
         ID3DXBuffer_Release(buffer);
     return hr;
-}
-
-static HRESULT save_surface_to_memory(ID3DXBuffer **dst_buffer, IDirect3DSurface9 *src_surface,
-        const PALETTEENTRY *src_palette, const RECT *src_rect, D3DXIMAGE_FILEFORMAT file_format)
-{
-    const struct pixel_format_desc *src_fmt_desc;
-    D3DSURFACE_DESC src_surface_desc;
-    IDirect3DSurface9 *temp_surface;
-    struct d3dx_pixels src_pixels;
-    D3DLOCKED_RECT locked_rect;
-    ID3DXBuffer *buffer;
-    RECT src_rect_temp;
-    HRESULT hr;
-
-    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
-    src_fmt_desc = get_format_info(src_surface_desc.Format);
-    if (is_unknown_format(src_fmt_desc))
-        return E_NOTIMPL;
-
-    if (!src_palette && is_index_format(src_fmt_desc))
-    {
-        FIXME("Default palette unimplemented.\n");
-        return E_NOTIMPL;
-    }
-
-    if (src_rect)
-    {
-        if (src_rect->left > src_rect->right || src_rect->right > src_surface_desc.Width
-                || src_rect->top > src_rect->bottom || src_rect->bottom > src_surface_desc.Height
-                || src_rect->left < 0 || src_rect->top < 0)
-        {
-            WARN("Invalid src_rect specified.\n");
-            return D3DERR_INVALIDCALL;
-        }
-    }
-    else
-    {
-        SetRect(&src_rect_temp, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
-        src_rect = &src_rect_temp;
-    }
-
-    hr = lock_surface(src_surface, NULL, &locked_rect, &temp_surface, FALSE);
-    if (FAILED(hr))
-        return hr;
-
-    hr = d3dx_pixels_init(locked_rect.pBits, locked_rect.Pitch, 0, src_palette, src_fmt_desc->format,
-            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
-    if (FAILED(hr))
-    {
-        unlock_surface(src_surface, NULL, temp_surface, FALSE);
-        return hr;
-    }
-
-    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
-    if (FAILED(hr))
-    {
-        unlock_surface(src_surface, NULL, temp_surface, FALSE);
-        return hr;
-    }
-
-    hr = unlock_surface(src_surface, NULL, temp_surface, FALSE);
-    if (FAILED(hr))
-    {
-        ID3DXBuffer_Release(buffer);
-        return hr;
-    }
-
-    *dst_buffer = buffer;
-    return D3D_OK;
 }
 
 static const uint8_t bmp_file_signature[] =       { 'B', 'M' };
@@ -3337,214 +3266,86 @@ HRESULT WINAPI D3DXSaveSurfaceToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
 HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
         IDirect3DSurface9 *src_surface, const PALETTEENTRY *src_palette, const RECT *src_rect)
 {
-    IWICBitmapEncoder *encoder = NULL;
-    IWICBitmapFrameEncode *frame = NULL;
-    IPropertyBag2 *encoder_options = NULL;
-    IStream *stream = NULL;
-    HRESULT hr;
-    const GUID *container_format;
-    const GUID *pixel_format_guid;
-    WICPixelFormatGUID wic_pixel_format;
-    IWICImagingFactory *factory;
-    D3DFORMAT d3d_pixel_format;
+    const struct pixel_format_desc *src_fmt_desc;
     D3DSURFACE_DESC src_surface_desc;
     IDirect3DSurface9 *temp_surface;
+    struct d3dx_pixels src_pixels;
     D3DLOCKED_RECT locked_rect;
-    int width, height;
-    STATSTG stream_stats;
-    HGLOBAL stream_hglobal;
     ID3DXBuffer *buffer;
-    DWORD size;
+    RECT src_rect_temp;
+    HRESULT hr;
 
     TRACE("dst_buffer %p, file_format %#x, src_surface %p, src_palette %p, src_rect %s.\n",
         dst_buffer, file_format, src_surface, src_palette, wine_dbgstr_rect(src_rect));
 
-    if (!dst_buffer || !src_surface) return D3DERR_INVALIDCALL;
+    if (!dst_buffer || !src_surface || file_format > D3DXIFF_PFM)
+        return D3DERR_INVALIDCALL;
 
-    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
     switch (file_format)
     {
-        case D3DXIFF_DIB:
-            container_format = &GUID_ContainerFormatBmp;
-            break;
-        case D3DXIFF_DDS:
-        case D3DXIFF_TGA:
-        case D3DXIFF_PNG:
-        case D3DXIFF_JPG:
-        case D3DXIFF_BMP:
-            return save_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect, file_format);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
         case D3DXIFF_PPM:
-            FIXME("File format %#x is not supported yet\n", file_format);
+            FIXME("File format %#x is not supported yet.\n", file_format);
             return E_NOTIMPL;
+
         default:
-            return D3DERR_INVALIDCALL;
+            break;
     }
 
-    if (src_palette || is_index_format(get_format_info(src_surface_desc.Format)))
+    IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+    src_fmt_desc = get_format_info(src_surface_desc.Format);
+    if (is_unknown_format(src_fmt_desc))
+        return E_NOTIMPL;
+
+    if (!src_palette && is_index_format(src_fmt_desc))
     {
-        FIXME("Saving surfaces with palettized pixel formats via WIC is not implemented yet.\n");
-        return D3DERR_INVALIDCALL;
+        FIXME("Default palette unimplemented.\n");
+        return E_NOTIMPL;
     }
 
     if (src_rect)
     {
-        if (src_rect->left == src_rect->right || src_rect->top == src_rect->bottom)
+        if (src_rect->left > src_rect->right || src_rect->right > src_surface_desc.Width
+                || src_rect->top > src_rect->bottom || src_rect->bottom > src_surface_desc.Height
+                || src_rect->left < 0 || src_rect->top < 0)
         {
-            WARN("Invalid rectangle with 0 area\n");
-            return D3DXCreateBuffer(64, dst_buffer);
+            WARN("Invalid src_rect specified.\n");
+            return D3DERR_INVALIDCALL;
         }
-        if (src_rect->left < 0 || src_rect->top < 0)
-            return D3DERR_INVALIDCALL;
-        if (src_rect->left > src_rect->right || src_rect->top > src_rect->bottom)
-            return D3DERR_INVALIDCALL;
-        if (src_rect->right > src_surface_desc.Width || src_rect->bottom > src_surface_desc.Height)
-            return D3DERR_INVALIDCALL;
-
-        width = src_rect->right - src_rect->left;
-        height = src_rect->bottom - src_rect->top;
     }
     else
     {
-        width = src_surface_desc.Width;
-        height = src_surface_desc.Height;
+        SetRect(&src_rect_temp, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
+        src_rect = &src_rect_temp;
     }
 
-    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
-    if (FAILED(hr)) goto cleanup_err;
+    hr = lock_surface(src_surface, NULL, &locked_rect, &temp_surface, FALSE);
+    if (FAILED(hr))
+        return hr;
 
-    hr = IWICImagingFactory_CreateEncoder(factory, container_format, NULL, &encoder);
-    IWICImagingFactory_Release(factory);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICBitmapEncoder_Initialize(encoder, stream, WICBitmapEncoderNoCache);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICBitmapEncoder_CreateNewFrame(encoder, &frame, &encoder_options);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICBitmapFrameEncode_Initialize(frame, encoder_options);
-    if (FAILED(hr)) goto cleanup_err;
-
-    hr = IWICBitmapFrameEncode_SetSize(frame, width, height);
-    if (FAILED(hr)) goto cleanup_err;
-
-    pixel_format_guid = wic_guid_from_d3dformat(src_surface_desc.Format);
-    if (!pixel_format_guid)
+    hr = d3dx_pixels_init(locked_rect.pBits, locked_rect.Pitch, 0, src_palette, src_fmt_desc->format,
+            src_rect->left, src_rect->top, src_rect->right, src_rect->bottom, 0, 1, &src_pixels);
+    if (FAILED(hr))
     {
-        FIXME("Pixel format %#x is not supported yet\n", src_surface_desc.Format);
-        hr = E_NOTIMPL;
-        goto cleanup;
+        unlock_surface(src_surface, NULL, temp_surface, FALSE);
+        return hr;
     }
 
-    memcpy(&wic_pixel_format, pixel_format_guid, sizeof(GUID));
-    hr = IWICBitmapFrameEncode_SetPixelFormat(frame, &wic_pixel_format);
-    d3d_pixel_format = d3dformat_from_d3dx_pixel_format_id(d3dx_pixel_format_id_from_wic_pixel_format(&wic_pixel_format));
-    if (SUCCEEDED(hr) && d3d_pixel_format != D3DFMT_UNKNOWN)
+    hr = d3dx_save_pixels_to_memory(&src_pixels, src_fmt_desc, file_format, &buffer);
+    if (FAILED(hr))
     {
-        TRACE("Using pixel format %s %#x\n", debugstr_guid(&wic_pixel_format), d3d_pixel_format);
-        if (src_surface_desc.Format == d3d_pixel_format) /* Simple copy */
-        {
-            if (FAILED(hr = lock_surface(src_surface, src_rect, &locked_rect, &temp_surface, FALSE)))
-                goto cleanup;
-
-            IWICBitmapFrameEncode_WritePixels(frame, height,
-                locked_rect.Pitch, height * locked_rect.Pitch, locked_rect.pBits);
-            unlock_surface(src_surface, src_rect, temp_surface, FALSE);
-        }
-        else /* Pixel format conversion */
-        {
-            const struct pixel_format_desc *src_format_desc, *dst_format_desc;
-            struct volume size;
-            DWORD dst_pitch;
-            void *dst_data;
-
-            src_format_desc = get_format_info(src_surface_desc.Format);
-            dst_format_desc = get_format_info(d3d_pixel_format);
-            if (!is_conversion_from_supported(src_format_desc)
-                    || !is_conversion_to_supported(dst_format_desc))
-            {
-                FIXME("Unsupported format conversion %#x -> %#x.\n",
-                    src_surface_desc.Format, d3d_pixel_format);
-                hr = E_NOTIMPL;
-                goto cleanup;
-            }
-
-            size.width = width;
-            size.height = height;
-            size.depth = 1;
-            dst_pitch = width * dst_format_desc->bytes_per_pixel;
-            dst_data = malloc(dst_pitch * height);
-            if (!dst_data)
-            {
-                hr = E_OUTOFMEMORY;
-                goto cleanup;
-            }
-            if (FAILED(hr = lock_surface(src_surface, src_rect, &locked_rect, &temp_surface, FALSE)))
-            {
-                free(dst_data);
-                goto cleanup;
-            }
-            convert_argb_pixels(locked_rect.pBits, locked_rect.Pitch, 0, &size, src_format_desc,
-                dst_data, dst_pitch, 0, &size, dst_format_desc, 0, NULL);
-            unlock_surface(src_surface, src_rect, temp_surface, FALSE);
-
-            IWICBitmapFrameEncode_WritePixels(frame, height, dst_pitch, dst_pitch * height, dst_data);
-            free(dst_data);
-        }
-
-        hr = IWICBitmapFrameEncode_Commit(frame);
-        if (SUCCEEDED(hr)) hr = IWICBitmapEncoder_Commit(encoder);
+        unlock_surface(src_surface, NULL, temp_surface, FALSE);
+        return hr;
     }
-    else WARN("Unsupported pixel format %#x\n", src_surface_desc.Format);
 
-    /* copy data from stream to ID3DXBuffer */
-    hr = IStream_Stat(stream, &stream_stats, STATFLAG_NONAME);
-    if (FAILED(hr)) goto cleanup_err;
-
-    if (stream_stats.cbSize.u.HighPart != 0)
+    hr = unlock_surface(src_surface, NULL, temp_surface, FALSE);
+    if (FAILED(hr))
     {
-        hr = D3DXERR_INVALIDDATA;
-        goto cleanup;
+        ID3DXBuffer_Release(buffer);
+        return hr;
     }
-    size = stream_stats.cbSize.u.LowPart;
 
-    /* Remove BMP header for DIB */
-    if (file_format == D3DXIFF_DIB)
-        size -= sizeof(BITMAPFILEHEADER);
-
-    hr = D3DXCreateBuffer(size, &buffer);
-    if (FAILED(hr)) goto cleanup;
-
-    hr = GetHGlobalFromStream(stream, &stream_hglobal);
-    if (SUCCEEDED(hr))
-    {
-        void *buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
-        void *stream_data = GlobalLock(stream_hglobal);
-        /* Remove BMP header for DIB */
-        if (file_format == D3DXIFF_DIB)
-            stream_data = (void*)((BYTE*)stream_data + sizeof(BITMAPFILEHEADER));
-        memcpy(buffer_pointer, stream_data, size);
-        GlobalUnlock(stream_hglobal);
-        *dst_buffer = buffer;
-    }
-    else ID3DXBuffer_Release(buffer);
-
-cleanup_err:
-    if (FAILED(hr) && hr != E_OUTOFMEMORY)
-        hr = D3DERR_INVALIDCALL;
-
-cleanup:
-    if (stream) IStream_Release(stream);
-
-    if (frame) IWICBitmapFrameEncode_Release(frame);
-    if (encoder_options) IPropertyBag2_Release(encoder_options);
-
-    if (encoder) IWICBitmapEncoder_Release(encoder);
-
-    return hr;
+    *dst_buffer = buffer;
+    return D3D_OK;
 }
