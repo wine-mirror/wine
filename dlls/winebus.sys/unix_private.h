@@ -184,6 +184,7 @@ struct hid_physical
     BYTE set_ramp_force_report;
 
     struct hid_effect_state effect_state;
+    USHORT axes_count;
 };
 
 struct hid_device_state
@@ -253,7 +254,7 @@ extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usa
                                 const USAGE *usages, BOOL rel, LONG min, LONG max);
 
 extern BOOL hid_device_add_haptics(struct unix_device *iface);
-extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count);
+extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count, USHORT axes_count);
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value);
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value);

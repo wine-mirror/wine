@@ -238,7 +238,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl, BOOL force)
         if (force || (impl->effect_support & SDL_HAPTIC_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
         if (force || (impl->effect_support & SDL_HAPTIC_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
-        if (!hid_device_add_physical(&impl->unix_device, usages, count))
+        if (!hid_device_add_physical(&impl->unix_device, usages, count, 2))
             return FALSE;
     }
 

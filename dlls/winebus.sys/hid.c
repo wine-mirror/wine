@@ -556,6 +556,80 @@ struct pid_effect_state
 };
 #include "poppack.h"
 
+static BOOL hid_descriptor_add_axes_enable(struct unix_device *iface, USHORT axes_count)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    const BYTE header[] =
+    {
+        USAGE(1, PID_USAGE_AXES_ENABLE),
+        COLLECTION(1, Logical),
+    };
+    const BYTE footer[] =
+    {
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(1, 1),
+            REPORT_SIZE(1, 1),
+            REPORT_COUNT(1, axes_count),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+        USAGE(1, PID_USAGE_DIRECTION_ENABLE),
+        REPORT_COUNT(1, 1),
+        OUTPUT(1, Data|Var|Abs),
+        REPORT_COUNT(1, (7 - axes_count) % 8), /* byte pad */
+        OUTPUT(1, Cnst|Var|Abs),
+    };
+    UINT i;
+
+    if (!hid_report_descriptor_append(desc, header, sizeof(header)))
+        return FALSE;
+
+    for (i = 0; i < axes_count; i++)
+    {
+        USAGE_AND_PAGE usage = iface->hid_device_state.abs_axis_usages[i];
+        const BYTE template[] = { USAGE(4, ((UINT)usage.UsagePage << 16) | usage.Usage) };
+        if (!hid_report_descriptor_append(desc, template, sizeof(template)))
+            return FALSE;
+    }
+
+    return hid_report_descriptor_append(desc, footer, sizeof(footer));
+}
+
+static BOOL hid_descriptor_add_directions(struct unix_device *iface, USHORT axes_count)
+{
+    struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
+    const BYTE header[] =
+    {
+        USAGE(1, PID_USAGE_DIRECTION),
+        COLLECTION(1, Logical),
+    };
+    const BYTE footer[] =
+    {
+            UNIT(1, 0x14), /* Eng Rot:Angular Pos */
+            UNIT_EXPONENT(1, -2),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(4, 35900),
+            REPORT_SIZE(1, 16),
+            REPORT_COUNT(1, axes_count),
+            OUTPUT(1, Data|Var|Abs),
+        END_COLLECTION,
+        UNIT_EXPONENT(1, 0),
+        UNIT(1, 0), /* None */
+    };
+    UINT i;
+
+    if (!hid_report_descriptor_append(desc, header, sizeof(header)))
+        return FALSE;
+
+    for (i = 0; i < axes_count; ++i)
+    {
+        const BYTE template[] = { USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16) | (i + 1)) };
+        if (!hid_report_descriptor_append(desc, template, sizeof(template)))
+            return FALSE;
+    }
+
+    return hid_report_descriptor_append(desc, footer, sizeof(footer));
+}
+
 static BOOL hid_descriptor_add_set_periodic(struct unix_device *iface)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
@@ -672,7 +746,7 @@ static BOOL hid_descriptor_add_set_envelope(struct unix_device *iface)
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-static BOOL hid_descriptor_add_set_condition(struct unix_device *iface)
+static BOOL hid_descriptor_add_set_condition(struct unix_device *iface, USHORT axes_count)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE report_id = ++desc->next_report_id[HidP_Output];
@@ -692,7 +766,7 @@ static BOOL hid_descriptor_add_set_condition(struct unix_device *iface)
 
             USAGE(1, PID_USAGE_PARAMETER_BLOCK_OFFSET),
             LOGICAL_MINIMUM(1, 0x00),
-            LOGICAL_MAXIMUM(1, 0x01),
+            LOGICAL_MAXIMUM(1, axes_count - 1),
             REPORT_SIZE(1, 8),
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs),
@@ -800,7 +874,7 @@ static BOOL hid_descriptor_add_set_ramp_force(struct unix_device *iface)
     return hid_report_descriptor_append(desc, template, sizeof(template));
 }
 
-BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count)
+BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count, USHORT axes_count)
 {
     struct hid_report_descriptor *desc = &iface->hid_report_descriptor;
     const BYTE device_control_report = ++desc->next_report_id[HidP_Output];
@@ -901,7 +975,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             USAGE(1, PID_USAGE_EFFECT_TYPE),
             COLLECTION(1, Logical),
     };
-    const BYTE effect_update_footer[] =
+    const BYTE effect_update_template[] =
     {
                 LOGICAL_MINIMUM(1, 1),
                 LOGICAL_MAXIMUM(1, count),
@@ -936,37 +1010,9 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
             REPORT_SIZE(1, 8),
             REPORT_COUNT(1, 1),
             OUTPUT(1, Data|Var|Abs|Null),
-
-            USAGE(1, PID_USAGE_AXES_ENABLE),
-            COLLECTION(1, Logical),
-                USAGE(4, (state->abs_axis_usages[0].UsagePage<<16)|state->abs_axis_usages[0].Usage),
-                USAGE(4, (state->abs_axis_usages[1].UsagePage<<16)|state->abs_axis_usages[1].Usage),
-                LOGICAL_MINIMUM(1, 0),
-                LOGICAL_MAXIMUM(1, 1),
-                REPORT_SIZE(1, 1),
-                REPORT_COUNT(1, 2),
-                OUTPUT(1, Data|Var|Abs),
-            END_COLLECTION,
-            USAGE(1, PID_USAGE_DIRECTION_ENABLE),
-            REPORT_COUNT(1, 1),
-            OUTPUT(1, Data|Var|Abs),
-            REPORT_COUNT(1, 5),
-            OUTPUT(1, Cnst|Var|Abs), /* 5-bit pad */
-
-            USAGE(1, PID_USAGE_DIRECTION),
-            COLLECTION(1, Logical),
-                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|1),
-                USAGE(4, (HID_USAGE_PAGE_ORDINAL<<16)|2),
-                UNIT(1, 0x14), /* Eng Rot:Angular Pos */
-                UNIT_EXPONENT(1, -2),
-                LOGICAL_MINIMUM(1, 0),
-                LOGICAL_MAXIMUM(4, 35900),
-                REPORT_SIZE(1, 16),
-                REPORT_COUNT(1, 2),
-                OUTPUT(1, Data|Var|Abs),
-            END_COLLECTION,
-            UNIT_EXPONENT(1, 0),
-            UNIT(1, 0), /* None */
+    };
+    const BYTE effect_update_footer[] =
+    {
         END_COLLECTION,
     };
 
@@ -1003,6 +1049,8 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
     BOOL ramp_force = FALSE;
     ULONG i;
 
+    if (axes_count > MAX_PID_AXES) axes_count = MAX_PID_AXES;
+
     if (!hid_report_descriptor_append(desc, device_control_header, sizeof(device_control_header)))
         return FALSE;
     for (i = 1; i < ARRAY_SIZE(pid_device_control_usages); ++i)
@@ -1033,6 +1081,12 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
         if (!hid_report_descriptor_append_usage(desc, usages[i]))
             return FALSE;
     }
+    if (!hid_report_descriptor_append(desc, effect_update_template, sizeof(effect_update_template)))
+        return FALSE;
+    if (!hid_descriptor_add_axes_enable(iface, axes_count))
+        return FALSE;
+    if (!hid_descriptor_add_directions(iface, axes_count))
+        return FALSE;
     if (!hid_report_descriptor_append(desc, effect_update_footer, sizeof(effect_update_footer)))
         return FALSE;
 
@@ -1059,7 +1113,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
         return FALSE;
     if (envelope && !hid_descriptor_add_set_envelope(iface))
         return FALSE;
-    if (condition && !hid_descriptor_add_set_condition(iface))
+    if (condition && !hid_descriptor_add_set_condition(iface, axes_count))
         return FALSE;
     if (constant_force && !hid_descriptor_add_set_constant_force(iface))
         return FALSE;
@@ -1076,6 +1130,7 @@ BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT co
     iface->hid_physical.device_gain_report = device_gain_report;
     iface->hid_physical.effect_control_report = effect_control_report;
     iface->hid_physical.effect_update_report = effect_update_report;
+    iface->hid_physical.axes_count = axes_count;
 
     effect_state->id = effect_state_report;
     effect_state->report_len = sizeof(struct pid_effect_state) + 1;
@@ -1187,8 +1242,9 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
         struct pid_effect_update *report = (struct pid_effect_update *)(packet->reportBuffer + 1);
         struct effect_params *params = iface->hid_physical.effect_params + report->index;
         USAGE effect_type;
+        ULONG i;
 
-        io->Information = sizeof(*report) + 1;
+        io->Information = offsetof(struct pid_effect_update, direction[physical->axes_count]) + 1;
         if (packet->reportBufferLen < io->Information)
             io->Status = STATUS_BUFFER_TOO_SMALL;
         else if (report->type_index >= ARRAY_SIZE(iface->hid_physical.effect_types))
@@ -1204,11 +1260,10 @@ static void hid_device_set_output_report(struct unix_device *iface, HID_XFER_PAC
             params->start_delay = report->start_delay;
             params->gain_percent = report->gain_percent;
             params->trigger_button = report->trigger_button == 0xff ? 0 : report->trigger_button;
-            params->axis_enabled[0] = (report->enable_bits & 1) != 0;
-            params->axis_enabled[1] = (report->enable_bits & 2) != 0;
-            params->direction_enabled = (report->enable_bits & 4) != 0;
-            params->direction[0] = report->direction[0];
-            params->direction[1] = report->direction[1];
+
+            for (i = 0; i < physical->axes_count; ++i) params->direction[i] = report->direction[i];
+            for (i = 0; i < physical->axes_count; ++i) params->axis_enabled[i] = !!(report->enable_bits & (1 << i));
+            params->direction_enabled = (report->enable_bits & (1 << physical->axes_count)) != 0;
 
             io->Status = iface->hid_vtbl->physical_effect_update(iface, report->index, params);
         }
