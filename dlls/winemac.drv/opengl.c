@@ -1324,43 +1324,6 @@ static BOOL init_gl_info(void)
 }
 
 
-static int get_dc_pixel_format(HWND hwnd, HDC hdc)
-{
-    int format;
-
-    if (hwnd)
-    {
-        struct macdrv_win_data *data;
-
-        if (!(data = get_win_data(hwnd)))
-        {
-            FIXME("DC for window %p of other process: not implemented\n", hwnd);
-            return 0;
-        }
-
-        format = data->pixel_format;
-        release_win_data(data);
-    }
-    else
-    {
-        struct wgl_pbuffer *pbuffer;
-
-        pthread_mutex_lock(&dc_pbuffers_mutex);
-        pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
-        if (pbuffer)
-            format = pbuffer->format;
-        else
-        {
-            WARN("no window or pbuffer for DC %p\n", hdc);
-            format = 0;
-        }
-        pthread_mutex_unlock(&dc_pbuffers_mutex);
-    }
-
-    return format;
-}
-
-
 /**********************************************************************
  *              create_context
  */
@@ -1510,35 +1473,11 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
     return TRUE;
 }
 
-
-/**********************************************************************
- *              set_pixel_format
- *
- * Implementation of wglSetPixelFormat and wglSetPixelFormatWINE.
- */
-static BOOL set_pixel_format(HDC hdc, int fmt, BOOL internal)
+static BOOL macdrv_set_pixel_format(HWND hwnd, int old_format, int new_format, BOOL internal)
 {
     struct macdrv_win_data *data;
-    const pixel_format *pf;
-    HWND hwnd = NtUserWindowFromDC(hdc);
-    BOOL ret = FALSE;
 
-    TRACE("hdc %p format %d\n", hdc, fmt);
-
-    if (!hwnd || hwnd == NtUserGetDesktopWindow())
-    {
-        WARN("not a proper window DC %p/%p\n", hdc, hwnd);
-        return FALSE;
-    }
-
-    if (!internal)
-    {
-        /* cannot change it if already set */
-        int prev = win32u_get_window_pixel_format( hwnd );
-
-        if (prev)
-            return prev == fmt;
-    }
+    TRACE("hwnd %p, old_format %d, new_format %d, internal %u\n", hwnd, old_format, new_format, internal);
 
     if (!(data = get_win_data(hwnd)))
     {
@@ -1546,44 +1485,9 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL internal)
         return FALSE;
     }
 
-    /* Check if fmt is in our list of supported formats to see if it is supported. */
-    pf = get_pixel_format(fmt, FALSE /* non-displayable */);
-    if (!pf)
-    {
-        ERR("Invalid pixel format: %d\n", fmt);
-        goto done;
-    }
-
-    if (!pf->window)
-    {
-        WARN("Pixel format %d is not compatible for window rendering\n", fmt);
-        goto done;
-    }
-
-    data->pixel_format = fmt;
-
-    TRACE("pixel format:\n");
-    TRACE("           window: %u\n", (unsigned int)pf->window);
-    TRACE("          pBuffer: %u\n", (unsigned int)pf->pbuffer);
-    TRACE("      accelerated: %u\n", (unsigned int)pf->accelerated);
-    TRACE("       color bits: %u%s\n", (unsigned int)color_modes[pf->color_mode].color_bits, (color_modes[pf->color_mode].is_float ? " float" : ""));
-    TRACE("       alpha bits: %u\n", (unsigned int)color_modes[pf->color_mode].alpha_bits);
-    TRACE("      aux buffers: %u\n", (unsigned int)pf->aux_buffers);
-    TRACE("       depth bits: %u\n", (unsigned int)pf->depth_bits);
-    TRACE("     stencil bits: %u\n", (unsigned int)pf->stencil_bits);
-    TRACE("       accum bits: %u\n", (unsigned int)pf->accum_mode ? color_modes[pf->accum_mode - 1].color_bits : 0);
-    TRACE("    double_buffer: %u\n", (unsigned int)pf->double_buffer);
-    TRACE("           stereo: %u\n", (unsigned int)pf->stereo);
-    TRACE("   sample_buffers: %u\n", (unsigned int)pf->sample_buffers);
-    TRACE("          samples: %u\n", (unsigned int)pf->samples);
-    TRACE("    backing_store: %u\n", (unsigned int)pf->backing_store);
-    ret = TRUE;
-
-done:
+    data->pixel_format = new_format;
     release_win_data(data);
-    if (ret && gl_surface_mode == GL_SURFACE_BEHIND)
-        win32u_set_window_pixel_format(hwnd, fmt, internal);
-    return ret;
+    return TRUE;
 }
 
 
@@ -2391,7 +2295,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
 
     TRACE("hdc %p, share_context %p, attrib_list %p\n", hdc, share_context, attrib_list);
 
-    format = get_dc_pixel_format(NtUserWindowFromDC(hdc), hdc);
+    format = opengl_funcs.p_wglGetPixelFormat(hdc);
 
     if (!is_valid_pixel_format(format))
     {
@@ -2734,6 +2638,7 @@ static HDC macdrv_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
     CFDictionarySetValue(dc_pbuffers, hdc, pbuffer);
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
+    NtGdiSetPixelFormat(hdc, pbuffer->format);
     TRACE("pbuffer %p -> hdc %p\n", pbuffer, hdc);
     return hdc;
 }
@@ -3351,17 +3256,6 @@ static BOOL macdrv_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const int
 
 
 /**********************************************************************
- *              macdrv_wglSetPixelFormatWINE
- *
- * WGL_WINE_pixel_format_passthrough: wglSetPixelFormatWINE
- */
-static BOOL macdrv_wglSetPixelFormatWINE(HDC hdc, int fmt)
-{
-    return set_pixel_format(hdc, fmt, TRUE);
-}
-
-
-/**********************************************************************
  *              macdrv_wglSwapIntervalEXT
  *
  * WGL_EXT_swap_control: wglSwapIntervalEXT
@@ -3501,12 +3395,6 @@ static const char *macdrv_init_wgl_extensions(void)
     /*
      * WINE-specific WGL Extensions
      */
-
-    /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
-     * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
-     */
-    register_extension("WGL_WINE_pixel_format_passthrough");
-    opengl_funcs.p_wglSetPixelFormatWINE = macdrv_wglSetPixelFormatWINE;
 
     register_extension("WGL_WINE_query_renderer");
     opengl_funcs.p_wglQueryCurrentRendererIntegerWINE = macdrv_wglQueryCurrentRendererIntegerWINE;
@@ -3747,32 +3635,6 @@ static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
 }
 
 /***********************************************************************
- *              macdrv_wglGetPixelFormat
- */
-static int macdrv_wglGetPixelFormat(HDC hdc)
-{
-    int format;
-    HWND hwnd;
-
-    if ((hwnd = NtUserWindowFromDC( hdc )))
-        return win32u_get_window_pixel_format( hwnd );
-
-    format = get_dc_pixel_format(NULL, hdc);
-
-    if (!is_valid_pixel_format(format))  /* not set yet */
-        format = 0;
-    else if (!is_displayable_pixel_format(format))
-    {
-        /* Non-displayable formats can't be used with traditional WGL calls.
-         * As has been verified on Windows GetPixelFormat doesn't fail but returns pixel format 1. */
-        format = 1;
-    }
-
-    TRACE(" hdc %p -> %d\n", hdc, format);
-    return format;
-}
-
-/***********************************************************************
  *              macdrv_wglGetProcAddress
  */
 static PROC macdrv_wglGetProcAddress(const char *proc)
@@ -3806,14 +3668,6 @@ static BOOL macdrv_wglMakeCurrent(HDC hdc, struct wgl_context *context)
           (context ? context->cglcontext : NULL));
 
     return macdrv_wglMakeContextCurrentARB(hdc, hdc, context);
-}
-
-/**********************************************************************
- *              macdrv_wglSetPixelFormat
- */
-static BOOL macdrv_wglSetPixelFormat(HDC hdc, int fmt, const PIXELFORMATDESCRIPTOR *descr)
-{
-    return set_pixel_format(hdc, fmt, FALSE);
 }
 
 /***********************************************************************
@@ -3957,6 +3811,7 @@ static void macdrv_get_pixel_formats(struct wgl_pixel_format *formats,
 static const struct opengl_driver_funcs macdrv_driver_funcs =
 {
     .p_init_wgl_extensions = macdrv_init_wgl_extensions,
+    .p_set_pixel_format = macdrv_set_pixel_format,
 };
 
 static struct opengl_funcs opengl_funcs =
@@ -3964,10 +3819,8 @@ static struct opengl_funcs opengl_funcs =
     .p_wglCopyContext = macdrv_wglCopyContext,
     .p_wglCreateContext = macdrv_wglCreateContext,
     .p_wglDeleteContext = macdrv_wglDeleteContext,
-    .p_wglGetPixelFormat = macdrv_wglGetPixelFormat,
     .p_wglGetProcAddress = macdrv_wglGetProcAddress,
     .p_wglMakeCurrent = macdrv_wglMakeCurrent,
-    .p_wglSetPixelFormat = macdrv_wglSetPixelFormat,
     .p_wglShareLists = macdrv_wglShareLists,
     .p_wglSwapBuffers = macdrv_wglSwapBuffers,
     .p_get_pixel_formats = macdrv_get_pixel_formats,
