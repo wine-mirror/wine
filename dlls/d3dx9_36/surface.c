@@ -65,9 +65,8 @@ static enum d3dx_pixel_format_id d3dx_pixel_format_id_from_wic_pixel_format(cons
 
 }
 
-static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
+static const GUID *wic_guid_from_d3dx_pixel_format_id(enum d3dx_pixel_format_id d3dx_pixel_format)
 {
-    enum d3dx_pixel_format_id d3dx_pixel_format = d3dx_pixel_format_id_from_d3dformat(format);
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(wic_pixel_formats); i++)
@@ -77,6 +76,11 @@ static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
     }
 
     return NULL;
+}
+
+static const GUID *wic_guid_from_d3dformat(D3DFORMAT format)
+{
+    return wic_guid_from_d3dx_pixel_format_id(d3dx_pixel_format_id_from_d3dformat(format));
 }
 
 #define DDS_PALETTE_SIZE (sizeof(PALETTEENTRY) * 256)
@@ -517,10 +521,131 @@ static HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE r
     return D3D_OK;
 }
 
+static const GUID *wic_container_guid_from_d3dx_file_format(D3DXIMAGE_FILEFORMAT iff)
+{
+    switch (iff)
+    {
+        case D3DXIFF_BMP: return &GUID_ContainerFormatBmp;
+        case D3DXIFF_JPG: return &GUID_ContainerFormatJpeg;
+        case D3DXIFF_PNG: return &GUID_ContainerFormatPng;
+        default:
+            assert(0 && "Unexpected file format.");
+            return NULL;
+    }
+}
+
+static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pixel_format_desc *fmt_desc,
+        D3DXIMAGE_FILEFORMAT image_file_format, IStream **wic_file, uint32_t *wic_file_size)
+{
+    const GUID *container_format = wic_container_guid_from_d3dx_file_format(image_file_format);
+    const GUID *pixel_format_guid = wic_guid_from_d3dx_pixel_format_id(fmt_desc->format);
+    IWICBitmapFrameEncode *wic_frame = NULL;
+    IPropertyBag2 *encoder_options = NULL;
+    IWICBitmapEncoder *wic_encoder = NULL;
+    WICPixelFormatGUID wic_pixel_format;
+    const LARGE_INTEGER seek = { 0 };
+    IWICImagingFactory *wic_factory;
+    IStream *stream = NULL;
+    STATSTG stream_stats;
+    HRESULT hr;
+
+    assert(container_format && pixel_format_guid);
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &wic_factory);
+    if (FAILED(hr))
+        return D3DERR_INVALIDCALL;
+
+    hr = IWICImagingFactory_CreateEncoder(wic_factory, container_format, NULL, &wic_encoder);
+    IWICImagingFactory_Release(wic_factory);
+    if (FAILED(hr))
+        return D3DERR_INVALIDCALL;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapEncoder_Initialize(wic_encoder, stream, WICBitmapEncoderNoCache);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapEncoder_CreateNewFrame(wic_encoder, &wic_frame, &encoder_options);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapFrameEncode_Initialize(wic_frame, encoder_options);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapFrameEncode_SetSize(wic_frame, pixels->size.width, pixels->size.height);
+    if (FAILED(hr))
+        goto exit;
+
+    wic_pixel_format = *pixel_format_guid;
+    hr = IWICBitmapFrameEncode_SetPixelFormat(wic_frame, &wic_pixel_format);
+    if (FAILED(hr))
+        goto exit;
+
+    if (!IsEqualGUID(pixel_format_guid, &wic_pixel_format))
+    {
+        ERR("SetPixelFormat returned a different pixel format.\n");
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    hr = IWICBitmapFrameEncode_WritePixels(wic_frame, pixels->size.height, pixels->row_pitch, pixels->slice_pitch,
+            (BYTE *)pixels->data);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapFrameEncode_Commit(wic_frame);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IWICBitmapEncoder_Commit(wic_encoder);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
+    if (FAILED(hr))
+        goto exit;
+
+    hr = IStream_Stat(stream, &stream_stats, STATFLAG_NONAME);
+    if (FAILED(hr))
+        goto exit;
+
+    if (!stream_stats.cbSize.u.HighPart && !!stream_stats.cbSize.u.LowPart)
+    {
+        *wic_file = stream;
+        *wic_file_size = stream_stats.cbSize.u.LowPart;
+    }
+    else
+    {
+        hr = D3DXERR_INVALIDDATA;
+    }
+
+exit:
+    if (stream && (*wic_file != stream))
+        IStream_Release(stream);
+    if (wic_frame)
+        IWICBitmapFrameEncode_Release(wic_frame);
+    if (encoder_options)
+        IPropertyBag2_Release(encoder_options);
+    if (wic_encoder)
+        IWICBitmapEncoder_Release(wic_encoder);
+
+    return hr;
+}
+
 static const enum d3dx_pixel_format_id tga_save_pixel_formats[] =
 {
     D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
     D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM
+};
+
+static const enum d3dx_pixel_format_id png_save_pixel_formats[] =
+{
+    D3DX_PIXEL_FORMAT_B8G8R8_UNORM,
+    D3DX_PIXEL_FORMAT_B8G8R8A8_UNORM,
+    D3DX_PIXEL_FORMAT_R16G16B16A16_UNORM
 };
 
 static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enum d3dx_pixel_format_id *format_ids,
@@ -609,11 +734,12 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
     const struct pixel_format_desc *dst_fmt_desc;
     uint32_t dst_row_pitch, dst_slice_pitch;
     struct d3dx_pixels dst_pixels;
+    uint8_t *pixels, *tmp_buf;
     ID3DXBuffer *buffer;
-    uint8_t *pixels;
     HRESULT hr;
 
     *dst_buffer = buffer = NULL;
+    pixels = tmp_buf = NULL;
     switch (file_format)
     {
         case D3DXIFF_DDS:
@@ -625,22 +751,28 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
         case D3DXIFF_TGA:
             dst_format = d3dx_get_closest_d3dx_pixel_format_id(tga_save_pixel_formats, ARRAY_SIZE(tga_save_pixel_formats),
                     dst_format);
-            if (dst_format == D3DX_PIXEL_FORMAT_COUNT)
-            {
-                WARN("Failed to find adequate replacement format for saving.\n");
-                return D3DERR_INVALIDCALL;
-            }
+            break;
 
-            if (dst_format != src_fmt_desc->format && !is_conversion_from_supported(src_fmt_desc))
-            {
-                FIXME("Cannot convert d3dx pixel format %d, can't save.\n", src_fmt_desc->format);
-                return E_NOTIMPL;
-            }
+        case D3DXIFF_PNG:
+            dst_format = d3dx_get_closest_d3dx_pixel_format_id(png_save_pixel_formats, ARRAY_SIZE(png_save_pixel_formats),
+                    dst_format);
             break;
 
         default:
             assert(0 && "Unexpected file format.");
             return E_FAIL;
+    }
+
+    if (dst_format == D3DX_PIXEL_FORMAT_COUNT)
+    {
+        WARN("Failed to find adequate replacement format for saving.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (dst_format != src_fmt_desc->format && !is_conversion_from_supported(src_fmt_desc))
+    {
+        FIXME("Cannot convert d3dx pixel format %d, can't save.\n", src_fmt_desc->format);
+        return E_NOTIMPL;
     }
 
     dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
@@ -694,25 +826,66 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
              break;
         }
 
+        case D3DXIFF_PNG:
+            if (src_fmt_desc == dst_fmt_desc)
+                dst_pixels = *src_pixels;
+            else
+                pixels = tmp_buf = malloc(dst_slice_pitch);
+            break;
+
         default:
             break;
     }
 
     if (src_pixels->size.width != 0 && src_pixels->size.height != 0)
     {
-        const PALETTEENTRY *dst_palette = is_index_format(dst_fmt_desc) ? src_pixels->palette : NULL;
-        const RECT dst_rect = { 0, 0, src_pixels->size.width, src_pixels->size.height };
+        if (pixels)
+        {
+            const PALETTEENTRY *dst_palette = is_index_format(dst_fmt_desc) ? src_pixels->palette : NULL;
+            const RECT dst_rect = { 0, 0, src_pixels->size.width, src_pixels->size.height };
 
-        set_d3dx_pixels(&dst_pixels, pixels, dst_row_pitch, dst_slice_pitch, dst_palette, src_pixels->size.width,
-                src_pixels->size.height, src_pixels->size.depth, &dst_rect);
+            set_d3dx_pixels(&dst_pixels, pixels, dst_row_pitch, dst_slice_pitch, dst_palette,
+                    src_pixels->size.width, src_pixels->size.height, src_pixels->size.depth, &dst_rect);
 
-        hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_fmt_desc, src_pixels, src_fmt_desc, D3DX_FILTER_NONE, 0);
+            hr = d3dx_load_pixels_from_pixels(&dst_pixels, dst_fmt_desc, src_pixels, src_fmt_desc, D3DX_FILTER_NONE, 0);
+            if (FAILED(hr))
+                goto exit;
+        }
+
+        /* WIC path, encode the image. */
+        if (!buffer)
+        {
+            IStream *wic_file = NULL;
+            uint32_t buf_size = 0;
+
+            hr = d3dx_pixels_save_wic(&dst_pixels, dst_fmt_desc, file_format, &wic_file, &buf_size);
+            if (FAILED(hr))
+                goto exit;
+            hr = D3DXCreateBuffer(buf_size, &buffer);
+            if (FAILED(hr))
+            {
+                IStream_Release(wic_file);
+                goto exit;
+            }
+
+            hr = IStream_Read(wic_file, ID3DXBuffer_GetBufferPointer(buffer), buf_size, NULL);
+            IStream_Release(wic_file);
+            if (FAILED(hr))
+                goto exit;
+        }
+    }
+    /* Return an empty buffer for size 0 images via WIC. */
+    else if (!buffer)
+    {
+        FIXME("Returning empty buffer for size 0 image.\n");
+        hr = D3DXCreateBuffer(64, &buffer);
         if (FAILED(hr))
             goto exit;
     }
 
     *dst_buffer = buffer;
 exit:
+    free(tmp_buf);
     if (*dst_buffer != buffer)
         ID3DXBuffer_Release(buffer);
     return hr;
@@ -1024,25 +1197,6 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     return FALSE;
 }
 
-struct d3dx_wic_file_format
-{
-    const GUID *wic_container_guid;
-    D3DXIMAGE_FILEFORMAT d3dx_file_format;
-};
-
-static const GUID *d3dx_file_format_to_wic_container_guid(D3DXIMAGE_FILEFORMAT iff)
-{
-    switch (iff)
-    {
-        case D3DXIFF_BMP: return &GUID_ContainerFormatBmp;
-        case D3DXIFF_JPG: return &GUID_ContainerFormatJpeg;
-        case D3DXIFF_PNG: return &GUID_ContainerFormatPng;
-        default:
-            assert(0); /* Shouldn't happen. */
-            return NULL;
-    }
-}
-
 static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
 {
     switch (format)
@@ -1146,7 +1300,7 @@ exit:
 static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src_data_size,
         struct d3dx_image *image, D3DXIMAGE_FILEFORMAT d3dx_file_format, uint32_t flags)
 {
-    const GUID *container_format_guid = d3dx_file_format_to_wic_container_guid(d3dx_file_format);
+    const GUID *container_format_guid = wic_container_guid_from_d3dx_file_format(d3dx_file_format);
     IWICBitmapFrameDecode *bitmap_frame = NULL;
     IWICBitmapDecoder *bitmap_decoder = NULL;
     IWICImagingFactory *wic_factory;
@@ -2612,6 +2766,8 @@ HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pi
         SetRect(&unaligned_rect, 0, 0, (right - left), (bottom - top));
     }
 
+    if (!slice_pitch)
+        slice_pitch = row_pitch * (bottom - top);
     set_d3dx_pixels(pixels, ptr, row_pitch, slice_pitch, palette, (right - left), (bottom - top), (back - front),
             &unaligned_rect);
 
@@ -3112,14 +3268,12 @@ HRESULT WINAPI D3DXSaveSurfaceToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         case D3DXIFF_DIB:
             container_format = &GUID_ContainerFormatBmp;
             break;
-        case D3DXIFF_PNG:
-            container_format = &GUID_ContainerFormatPng;
-            break;
         case D3DXIFF_JPG:
             container_format = &GUID_ContainerFormatJpeg;
             break;
         case D3DXIFF_DDS:
         case D3DXIFF_TGA:
+        case D3DXIFF_PNG:
             return save_surface_to_memory(dst_buffer, src_surface, src_palette, src_rect, file_format);
         case D3DXIFF_HDR:
         case D3DXIFF_PFM:
