@@ -3117,7 +3117,7 @@ class VkGenerator(object):
         f.write("#define ALL_VK_DEVICE_FUNCS \\\n")
         first = True
         for vk_func in self.registry.device_funcs:
-            if not vk_func.needs_exposing():
+            if not vk_func.is_required():
                 continue
 
             if not vk_func.needs_dispatch():
@@ -3134,7 +3134,7 @@ class VkGenerator(object):
         f.write("#define ALL_VK_INSTANCE_FUNCS \\\n")
         first = True
         for vk_func in self.registry.instance_funcs + self.registry.phys_dev_funcs:
-            if not vk_func.needs_exposing():
+            if not vk_func.is_required():
                 continue
 
             if not vk_func.needs_dispatch():

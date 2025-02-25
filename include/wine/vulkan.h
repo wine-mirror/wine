@@ -19407,6 +19407,8 @@ VkResult VKAPI_CALL vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micr
     USE_VK_FUNC(vkGetImageViewOpaqueCaptureDescriptorDataEXT) \
     USE_VK_FUNC(vkGetLatencyTimingsNV) \
     USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \
+    USE_VK_FUNC(vkGetMemoryWin32HandleKHR) \
+    USE_VK_FUNC(vkGetMemoryWin32HandlePropertiesKHR) \
     USE_VK_FUNC(vkGetMicromapBuildSizesEXT) \
     USE_VK_FUNC(vkGetPartitionedAccelerationStructuresBuildSizesNV) \
     USE_VK_FUNC(vkGetPerformanceParameterINTEL) \
