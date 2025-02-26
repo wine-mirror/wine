@@ -6890,6 +6890,28 @@ static void test_hlsl_double(void)
     release_test_context(&context);
 }
 
+static void test_implicit_truncation_warning(void)
+{
+    static const char hlsl[] =
+            "float4 main(in float4 pos : POSITION) : POSITION\n"
+            "{\n"
+            "    float2 x = pos;\n"
+            "    return pos;\n"
+            "}\n";
+    ID3DXBuffer *bytecode, *errors;
+    HRESULT hr;
+
+    hr = D3DXCompileShader(hlsl, sizeof(hlsl), NULL, NULL, "main", "vs_2_0", 0, &bytecode, &errors, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    if (D3DX_SDK_VERSION < 42)
+        todo_wine ok(!errors, "Expected no errors.\n");
+    else
+        ok(!!errors, "Expected errors.\n");
+    if (errors)
+        ID3DXBuffer_Release(errors);
+    ID3DXBuffer_Release(bytecode);
+}
+
 START_TEST(shader)
 {
     test_get_shader_size();
@@ -6908,4 +6930,5 @@ START_TEST(shader)
     test_fragment_linker();
 #endif
     test_hlsl_double();
+    test_implicit_truncation_warning();
 }
