@@ -1,6 +1,6 @@
 MODULE    = wow64.dll
 IMPORTLIB = wow64
-IMPORTS   = ntdll winecrt0
+IMPORTS   = ntdll
 
 EXTRADLLFLAGS = -nodefaultlibs
 

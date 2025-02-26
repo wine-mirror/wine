@@ -2265,11 +2265,20 @@ static const char *get_crt_define( const struct makefile *make )
 /*******************************************************************
  *         get_default_imports
  */
-static struct strarray get_default_imports( const struct makefile *make, struct strarray imports )
+static struct strarray get_default_imports( const struct makefile *make, struct strarray imports,
+                                            int nodefaultlibs )
 {
     struct strarray ret = empty_strarray;
     const char *crt_dll = get_default_crt( make );
     unsigned int i;
+
+    if (nodefaultlibs)
+    {
+        for (i = 0; i < imports.count; i++)
+            if (!strcmp( imports.str[i], "winecrt0" )) return ret;
+        strarray_add( &ret, "winecrt0" );
+        return ret;
+    }
 
     for (i = 0; i < imports.count; i++)
         if (is_crt_module( imports.str[i] ))
@@ -3112,7 +3121,7 @@ static void output_source_testdll( struct makefile *make, struct incl_file *sour
     if (!imports.count) imports = make->imports;
     strarray_addall( &dll_flags, make->extradllflags );
     strarray_addall( &dll_flags, get_expanded_file_local_var( make, obj, "EXTRADLLFLAGS" ));
-    if (!strarray_exists( &dll_flags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
+    default_imports = get_default_imports( make, imports, strarray_exists( &dll_flags, "-nodefaultlibs" ));
     if (strarray_exists( &dll_flags, "-mconsole" )) ext = ".exe";
 
     for (arch = 0; arch < archs.count; arch++)
@@ -3454,8 +3463,8 @@ static void output_module( struct makefile *make, unsigned int arch )
         if (!get_link_arch( make, arch, &link_arch )) return;
 
         module_name = arch_module_name( make->module, arch );
-
-        if (!strarray_exists( &make->extradllflags, "-nodefaultlibs" )) default_imports = get_default_imports( make, imports );
+        default_imports = get_default_imports( make, imports,
+                                               strarray_exists( &make->extradllflags, "-nodefaultlibs" ));
 
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, IMPORT_TYPE_DELAYED, arch ));
@@ -3618,7 +3627,7 @@ static void output_test_module( struct makefile *make, unsigned int arch )
     char *basemodule = replace_extension( make->testdll, ".dll", "" );
     char *stripped = arch_module_name( strmake( "%s_test-stripped.exe", basemodule ), arch );
     char *testmodule = arch_module_name( strmake( "%s_test.exe", basemodule ), arch );
-    struct strarray default_imports = get_default_imports( make, make->imports );
+    struct strarray default_imports = get_default_imports( make, make->imports, 0 );
     struct strarray dep_libs = empty_strarray;
     struct strarray all_libs = empty_strarray;
     struct makefile *parent = get_parent_makefile( make );

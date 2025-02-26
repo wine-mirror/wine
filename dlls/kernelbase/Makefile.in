@@ -1,7 +1,7 @@
 EXTRADEFS = -DWINBASEAPI= -DWINADVAPI= -DWINUSERAPI= -DWINSHLWAPI=
 MODULE    = kernelbase.dll
 IMPORTLIB = kernelbase
-IMPORTS   = uuid ntdll winecrt0
+IMPORTS   = uuid ntdll
 
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles
 i386_EXTRADLLFLAGS = -Wl,--image-base,0x7b000000
