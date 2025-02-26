@@ -8527,14 +8527,11 @@ static void test_ddrawstream_mem_allocator(void)
 
     mem_allocator = NULL;
     hr = IMemInputPin_GetAllocator(mem_input, &mem_allocator);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(mem_allocator == ddraw_allocator, "Expected GetAllocator to return ddraw allocator.\n");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(mem_allocator == ddraw_allocator, "Expected GetAllocator to return ddraw allocator.\n");
 
-    if (mem_allocator)
-    {
-        check_interface(mem_allocator, &IID_IDirectDrawMediaStream, TRUE);
-        IMemAllocator_Release(mem_allocator);
-    }
+    check_interface(mem_allocator, &IID_IDirectDrawMediaStream, TRUE);
+    IMemAllocator_Release(mem_allocator);
 
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void **)&new_allocator);
@@ -8553,8 +8550,8 @@ static void test_ddrawstream_mem_allocator(void)
     mem_allocator = NULL;
     hr = IMemInputPin_GetAllocator(mem_input, &mem_allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(mem_allocator == ddraw_allocator, "Expected GetAllocator to return ddraw allocator.\n");
-    todo_wine check_interface(mem_allocator, &IID_IDirectDrawMediaStream, TRUE);
+    ok(mem_allocator == ddraw_allocator, "Expected GetAllocator to return ddraw allocator.\n");
+    check_interface(mem_allocator, &IID_IDirectDrawMediaStream, TRUE);
 
     IMemInputPin_Release(mem_input);
 
@@ -8618,7 +8615,7 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     ref = IMemAllocator_Release(new_allocator);
-    todo_wine ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
     IDirectDrawMediaStream_Release(ddraw_stream);
     IMemAllocator_Release(ddraw_allocator);
     IGraphBuilder_Disconnect(graph, pin);
