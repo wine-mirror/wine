@@ -1552,7 +1552,7 @@ static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const CERT_RE
     if (FAILED(hr = SHGetKnownFolderPath(&FOLDERID_LocalAppDataLow, 0, NULL, &appdata_path)))
     {
         ERR("Failed to get LocalAppDataLow path, hr %#lx.\n", hr);
-        return INVALID_HANDLE_VALUE;
+        return NULL;
     }
 
     len = swprintf(path, ARRAY_SIZE(path), L"%s\\Microsoft\\CryptnetUrlCache\\Content\\", appdata_path);
@@ -1561,7 +1561,7 @@ static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const CERT_RE
     if (len + CACHED_CERT_HASH_SIZE * 2 * sizeof(WCHAR) > ARRAY_SIZE(path) - 1)
     {
         WARN("Hash length exceeds static buffer; not caching.\n");
-        return INVALID_HANDLE_VALUE;
+        return NULL;
     }
 
     CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
