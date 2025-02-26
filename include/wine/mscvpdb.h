@@ -2804,24 +2804,24 @@ typedef struct OMFSourceLine
 {
     unsigned short  Seg;
     unsigned short  cLnOff;
-    unsigned int    offset[1];
-    unsigned short  lineNbr[1];
+    unsigned int    offset[];
+/*    unsigned short  lineNbr[]; */
 } OMFSourceLine;
 
 typedef struct OMFSourceFile
 {
     unsigned short  cSeg;
     unsigned short  reserved;
-    unsigned int    baseSrcLn[1];
-    unsigned short  cFName;
-    char            Name;
+    unsigned int    baseSrcLn[];
+/*    unsigned short  cFName; */
+/*    char            Name; */
 } OMFSourceFile;
 
 typedef struct OMFSourceModule
 {
     unsigned short  cFile;
     unsigned short  cSeg;
-    unsigned int    baseSrcFile[1];
+    unsigned int    baseSrcFile[];
 } OMFSourceModule;
 
 
