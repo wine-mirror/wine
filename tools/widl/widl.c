@@ -365,7 +365,7 @@ void write_dlldata(const statement_list_t *stmts)
     fclose(dlldata);
   }
 
-  if (strarray_exists( &filenames, proxy_token ))
+  if (strarray_exists( filenames, proxy_token ))
       /* We're already in the list, no need to regenerate this file.  */
       return;
 

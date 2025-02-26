@@ -182,7 +182,7 @@ static inline void remove_name( struct strarray *table, unsigned int idx )
 /* locate a name in a (sorted) list */
 static inline const char *find_name( const char *name, struct strarray table )
 {
-    return strarray_bsearch( &table, name, name_cmp );
+    return strarray_bsearch( table, name, name_cmp );
 }
 
 /* sort a name table */
