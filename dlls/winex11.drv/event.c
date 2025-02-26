@@ -851,6 +851,7 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
     else pos = root_to_virtual_screen( event->x, event->y );
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
+    window_clear_padding( data );
 
     rect.left   = pos.x;
     rect.top    = pos.y;

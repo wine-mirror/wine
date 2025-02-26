@@ -1402,6 +1402,35 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
     }
 }
 
+void window_clear_padding( struct x11drv_win_data *data )
+{
+    RECT rect, visible;
+
+    visible = data->rects.visible;
+    OffsetRect( &visible, -data->rects.visible.left, -data->rects.visible.top );
+
+    rect = data->rects.window;
+    OffsetRect( &rect, -data->rects.visible.left, -data->rects.visible.top );
+    intersect_rect( &rect, &rect, &visible );
+
+    if (rect.left > 0 || rect.top > 0 || rect.right < visible.right || rect.bottom < visible.bottom)
+    {
+        UINT width = visible.right - rect.right, height = visible.bottom - rect.bottom;
+        GC gc;
+
+        TRACE( "Clearing window %p/%lx padding visible %s, rect %s.\n", data->hwnd, data->whole_window,
+               wine_dbgstr_rect( &visible ), wine_dbgstr_rect( &rect ) );
+
+        gc = XCreateGC( data->display, data->whole_window, 0, NULL );
+        XSetSubwindowMode( data->display, gc, IncludeInferiors );
+        if (visible.right && rect.top) XFillRectangle( data->display, data->whole_window, gc, 0, 0, visible.right, rect.top );
+        if (rect.left && visible.bottom) XFillRectangle( data->display, data->whole_window, gc, 0, 0, rect.left, visible.bottom );
+        if (width && visible.bottom) XFillRectangle( data->display, data->whole_window, gc, rect.right, 0, width, visible.bottom );
+        if (height && visible.right) XFillRectangle( data->display, data->whole_window, gc, 0, rect.bottom, visible.right, height );
+        XFreeGC( data->display, gc );
+    }
+}
+
 static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL above )
 {
     const RECT *old_rect = &data->pending_state.rect;
@@ -1468,6 +1497,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     TRACE( "window %p/%lx, requesting config %s mask %#x above %u, serial %lu\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(new_rect), mask, above, data->configure_serial );
     XReconfigureWMWindow( data->display, data->whole_window, data->vis.screen, mask, &changes );
+
+    if (mask & (CWWidth | CWHeight)) window_clear_padding( data );
 }
 
 /***********************************************************************
@@ -3334,6 +3365,7 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         if (swp_flags & (SWP_FRAMECHANGED | SWP_STATECHANGED)) set_wm_hints( data );
         update_net_wm_states( data );
     }
+    if (fullscreen) window_clear_padding( data );
 
     /* if window was fullscreen and is being hidden, release cursor clipping */
     was_fullscreen &= data->desired_state.wm_state != NormalState;
