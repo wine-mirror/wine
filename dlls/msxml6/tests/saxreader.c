@@ -46,6 +46,7 @@ static struct class_support class_support[] =
 {
     { &CLSID_MXXMLWriter60, "MXXMLWriter60", &IID_IMXWriter },
     { &CLSID_SAXAttributes60, "SAXAttributes60", &IID_IMXAttributes },
+    { &CLSID_SAXXMLReader60, "SAXXMLReader60", &IID_ISAXXMLReader },
     { NULL }
 };
 
@@ -2830,6 +2831,56 @@ static void test_mxwriter_indent(void)
     free_bstrs();
 }
 
+static void test_saxreader_encoding(void)
+{
+    /* UTF-8 data with UTF-8 BOM and UTF-16 in prolog */
+    static const CHAR UTF8BOMTest[] =
+        "\xEF\xBB\xBF<?xml version = \"1.0\" encoding = \"UTF-16\"?>\n"
+        "<a></a>\n";
+
+    static const CHAR testXmlA[] = "test.xml";
+
+    ISAXXMLReader *reader;
+    VARIANT input;
+    DWORD written;
+    HANDLE file;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    file = CreateFileA(testXmlA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %lu\n", GetLastError());
+    WriteFile(file, UTF8BOMTest, sizeof(UTF8BOMTest)-1, &written, NULL);
+    CloseHandle(file);
+
+    hr = ISAXXMLReader_parseURL(reader, L"test.xml");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    DeleteFileA(testXmlA);
+
+    /* try BSTR input with no BOM or '<?xml' instruction */
+    V_VT(&input) = VT_BSTR;
+    V_BSTR(&input) = _bstr_("<element></element>");
+    hr = ISAXXMLReader_parse(reader, input);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ISAXXMLReader_Release(reader);
+
+    free_bstrs();
+}
+
+static void test_saxreader_dispex(void)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+}
+
 START_TEST(saxreader)
 {
     HRESULT hr;
@@ -2838,6 +2889,12 @@ START_TEST(saxreader)
     ok(hr == S_OK, "Failed to initialize COM, hr %#lx.\n", hr);
 
     get_class_support_data();
+
+    if (is_class_supported(&CLSID_SAXXMLReader60))
+    {
+        test_saxreader_encoding();
+        test_saxreader_dispex();
+    }
 
     if (is_class_supported(&CLSID_MXXMLWriter60))
     {

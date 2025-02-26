@@ -2917,7 +2917,6 @@ static const struct enc_test_entry_t encoding_test_data[] = {
     { &CLSID_SAXXMLReader,   "CLSID_SAXXMLReader",   UTF8BOMTest, 0xc00ce56f, TRUE },
     { &CLSID_SAXXMLReader30, "CLSID_SAXXMLReader30", UTF8BOMTest, 0xc00ce56f, TRUE },
     { &CLSID_SAXXMLReader40, "CLSID_SAXXMLReader40", UTF8BOMTest, S_OK, FALSE },
-    { &CLSID_SAXXMLReader60, "CLSID_SAXXMLReader60", UTF8BOMTest, S_OK, FALSE },
     { 0 }
 };
 
@@ -4905,14 +4904,6 @@ static void test_saxreader_dispex(void)
 
     IVBSAXXMLReader_Release(vbreader);
     ISAXXMLReader_Release(reader);
-
-    if (is_clsid_supported(&CLSID_SAXXMLReader60, reader_support_data))
-    {
-        hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        test_obj_dispex(unk);
-        IUnknown_Release(unk);
-    }
 }
 
 static void test_mxwriter_dispex(void)
