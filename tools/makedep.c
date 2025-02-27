@@ -3635,9 +3635,8 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
     if (hybrid_arch) output_filenames_obj_dir( make, make->object_files[hybrid_arch] );
     if (!arch) output_filenames_obj_dir( make, make->unixobj_files );
     output( "\n" );
-    if (!make->extlib)
-        add_install_rule( make, make->staticlib, arch, name,
-                          strmake( "d%s%s", arch_install_dirs[arch], make->staticlib ));
+    add_install_rule( make, make->staticlib, arch, name,
+                      strmake( "d%s%s", arch_install_dirs[arch], make->staticlib ));
 }
 
 
@@ -4492,7 +4491,7 @@ static void load_sources( struct makefile *make )
     {
         /* add default install rules if nothing was specified */
         for (i = 0; i < NB_INSTALL_RULES; i++) if (make->install[i].count) break;
-        if (i == NB_INSTALL_RULES)
+        if (i == NB_INSTALL_RULES && !make->extlib)
         {
             if (make->importlib) strarray_add( &make->install[INSTALL_DEV], make->importlib );
             if (make->staticlib) strarray_add( &make->install[INSTALL_DEV], make->staticlib );
