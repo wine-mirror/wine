@@ -10575,8 +10575,7 @@ static void set_glsl_shader_program(const struct wined3d_context_gl *context_gl,
         {
             reorder_shader_id = shader_glsl_generate_vs3_rasterizer_input_setup(priv, vshader, pshader,
                     state->primitive_type == WINED3D_PT_POINTLIST && vshader->reg_maps.point_size,
-                    d3d_info->emulated_flatshading
-                    && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
+                    d3d_info->emulated_flatshading && state->extra_vs_args.flat_shading, gl_info);
             TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
             GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
             checkGLcall("glAttachShader");
@@ -11806,9 +11805,6 @@ static void glsl_vertex_pipe_vp_free(struct wined3d_device *device, struct wined
     wine_rb_destroy(&priv->ffp_vertex_shaders, shader_glsl_free_ffp_vertex_shader, &ctx);
 }
 
-static void glsl_vertex_pipe_nop(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id) {}
-
 static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -11899,12 +11895,6 @@ static void glsl_vertex_pipe_pointsize(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
 }
 
-static void glsl_vertex_pipe_shademode(struct wined3d_context *context,
-        const struct wined3d_state *state, DWORD state_id)
-{
-    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
-}
-
 static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
@@ -11930,8 +11920,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_POINTSIZE),                         {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize}, WINED3D_GL_EXT_NONE       },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_shademode}, WINED3D_GLSL_130          },
-    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_nop   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(1, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_TEXTURESTAGE(2, WINED3D_TSS_TEXCOORD_INDEX),          {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },

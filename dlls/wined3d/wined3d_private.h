@@ -2878,6 +2878,7 @@ struct wined3d_extra_vs_args
 {
     uint8_t clip_planes;
     bool pixel_fog;
+    bool flat_shading;
 };
 
 struct wined3d_extra_ps_args

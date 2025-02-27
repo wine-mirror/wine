@@ -6519,7 +6519,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
             settings->texcoords = wined3d_mask_from_size(WINED3D_MAX_FFP_TEXTURES);
 
         if (d3d_info->emulated_flatshading)
-            settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+            settings->flatshading = state->extra_vs_args.flat_shading;
         else
             settings->flatshading = FALSE;
 
@@ -6613,7 +6613,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
 
     if (d3d_info->emulated_flatshading)
-        settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+        settings->flatshading = state->extra_vs_args.flat_shading;
     else
         settings->flatshading = FALSE;
 
