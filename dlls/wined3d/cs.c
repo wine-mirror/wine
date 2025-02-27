@@ -1950,7 +1950,7 @@ static void wined3d_cs_exec_set_transform(struct wined3d_cs *cs, const void *dat
     /* Fog behaviour depends on the projection matrix. */
     if (op->state == WINED3D_TS_PROJECTION
             && cs->state.render_states[WINED3D_RS_FOGENABLE]
-            && cs->state.render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+            && cs->state.extra_vs_args.pixel_fog)
         device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
 }
 

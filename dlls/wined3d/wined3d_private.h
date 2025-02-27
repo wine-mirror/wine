@@ -2877,6 +2877,7 @@ enum wined3d_push_constants
 struct wined3d_extra_vs_args
 {
     uint8_t clip_planes;
+    bool pixel_fog;
 };
 
 struct wined3d_extra_ps_args

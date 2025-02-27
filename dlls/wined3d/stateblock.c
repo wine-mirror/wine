@@ -1731,6 +1731,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_FOGTABLEMODE:
             stateblock->changed.ffp_vs_settings = 1;
             stateblock->changed.fog_constants = 1;
+            stateblock->changed.extra_vs_args = 1;
             stateblock->changed.extra_ps_args = 1;
             break;
 
@@ -3231,6 +3232,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_SRGBWRITEENABLE:
                 case WINED3D_RS_CLIPPING:
                 case WINED3D_RS_CLIPPLANEENABLE:
+                case WINED3D_RS_FOGTABLEMODE:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3980,6 +3982,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         struct wined3d_extra_vs_args args;
 
         args.clip_planes = state->rs[WINED3D_RS_CLIPPING] ? state->rs[WINED3D_RS_CLIPPLANEENABLE] : 0;
+        args.pixel_fog = (state->rs[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE);
         wined3d_device_context_emit_set_extra_vs_args(context, &args);
     }
 

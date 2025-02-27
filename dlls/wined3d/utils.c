@@ -6503,7 +6503,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
         settings->diffuse = vdecl->diffuse;
         if (!state->render_states[WINED3D_RS_FOGENABLE])
             settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
-        else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+        else if (state->extra_vs_args.pixel_fog)
             settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
         else
             settings->fog_mode = WINED3D_FFP_VS_FOG_FOGCOORD;
@@ -6595,7 +6595,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
 
     if (!state->render_states[WINED3D_RS_FOGENABLE])
         settings->fog_mode = WINED3D_FFP_VS_FOG_OFF;
-    else if (state->render_states[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+    else if (state->extra_vs_args.pixel_fog)
     {
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
 
