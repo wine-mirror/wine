@@ -270,17 +270,20 @@ static void test_undefined_queue_id(void)
     ok(res == 0, "got %#lx\n", res);
     ok(callback_result == result, "Expected result %p, got %p.\n", result, callback_result);
 
-    hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_PRIVATE_MASK, 0, result);
+    hr = RtwqPutWorkItem(0xffff, 0, result);
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
     ok(res == 0, "got %#lx\n", res);
     ok(callback_result == result, "Expected result %p, got %p.\n", result, callback_result);
 
-    hr = RtwqPutWorkItem(RTWQ_CALLBACK_QUEUE_PRIVATE_MASK & (RTWQ_CALLBACK_QUEUE_PRIVATE_MASK - 1), 0, result);
+    hr = RtwqPutWorkItem(0x4000, 0, result);
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&test_callback->IRtwqAsyncCallback_iface, 100, &callback_result);
     ok(res == 0, "got %#lx\n", res);
     ok(callback_result == result, "Expected result %p, got %p.\n", result, callback_result);
+
+    hr = RtwqPutWorkItem(0x10000, 0, result);
+    ok(hr == RTWQ_E_INVALID_WORKQUEUE, "got %#lx\n", hr);
 
     IRtwqAsyncResult_Release(result);
 
