@@ -1200,6 +1200,8 @@ static void build(struct options* opts)
         add_library(opts, lib_dirs, &files, "advapi32");
         add_library(opts, lib_dirs, &files, "user32");
         add_library(opts, lib_dirs, &files, "winecrt0");
+        if (opts->target.platform == PLATFORM_WINDOWS)
+            add_library(opts, lib_dirs, &files, "compiler-rt");
         if (opts->use_msvcrt)
         {
             if (!crt_lib)
