@@ -4978,6 +4978,7 @@ static void test_swapchain_backbuffer_index(IUnknown *device, BOOL is_d3d12)
     {
         swapchain_desc.BufferCount = 4;
         swapchain_desc.SwapEffect = swap_effects[i];
+        swapchain_desc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
         expected_hr = is_d3d12 && !is_flip_model(swap_effects[i]) ? DXGI_ERROR_INVALID_CALL : S_OK;
         hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
         ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
