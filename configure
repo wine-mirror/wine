@@ -745,6 +745,8 @@ FLUIDSYNTH_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
 FAUDIO_PE_LIBS
 FAUDIO_PE_CFLAGS
+COMPILER_RT_PE_LIBS
+COMPILER_RT_PE_CFLAGS
 CAPSTONE_PE_LIBS
 CAPSTONE_PE_CFLAGS
 MINGW_PKG_CONFIG
@@ -1627,6 +1629,7 @@ enable_fonts
 enable_include
 enable_adsiid
 enable_capstone
+enable_compiler_rt
 enable_dmoguids
 enable_dxerr8
 enable_dxerr9
@@ -1793,6 +1796,8 @@ OBJC
 OBJCFLAGS
 CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS
+COMPILER_RT_PE_CFLAGS
+COMPILER_RT_PE_LIBS
 FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS
@@ -2592,6 +2597,12 @@ Some influential environment variables:
               version
   CAPSTONE_PE_LIBS
               Linker flags for the PE capstone, overriding the bundled version
+  COMPILER_RT_PE_CFLAGS
+              C compiler flags for the PE compiler-rt, overriding the bundled
+              version
+  COMPILER_RT_PE_LIBS
+              Linker flags for the PE compiler-rt, overriding the bundled
+              version
   FAUDIO_PE_CFLAGS
               C compiler flags for the PE faudio, overriding the bundled
               version
@@ -10678,6 +10689,10 @@ else case e in #(
 esac
 fi
 
+    case "$target" in
+      *-windows) wine_compiler_rt_libs="compiler-rt" ;;
+    esac
+
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
 printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }
@@ -13791,6 +13806,23 @@ esac
 fi
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: capstone cflags: $CAPSTONE_PE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: capstone libs: $CAPSTONE_PE_LIBS" >&5
+
+if ${COMPILER_RT_PE_LIBS:+false} :
+then :
+  COMPILER_RT_PE_LIBS="$wine_compiler_rt_libs"
+   if ${COMPILER_RT_PE_CFLAGS:+false} :
+then :
+  COMPILER_RT_PE_CFLAGS=
+else case e in #(
+  e) enable_compiler_rt=no ;;
+esac
+fi
+else case e in #(
+  e) enable_compiler_rt=no ;;
+esac
+fi
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: compiler-rt cflags: $COMPILER_RT_PE_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: compiler-rt libs: $COMPILER_RT_PE_LIBS" >&5
 
 if ${FAUDIO_PE_LIBS:+false} :
 then :
@@ -22030,6 +22062,7 @@ else
     enable_wow64win=${enable_wow64win:-no}
     enable_wow64cpu=${enable_wow64cpu:-no}
     enable_xtajit64=${enable_xtajit64:-no}
+    enable_compiler_rt=${enable_compiler_rt:-no}
 fi
 
 enable_cmd=${enable_cmd:-yes}
@@ -23077,6 +23110,7 @@ wine_fn_config_makefile fonts enable_fonts
 wine_fn_config_makefile include enable_include
 wine_fn_config_makefile libs/adsiid enable_adsiid
 wine_fn_config_makefile libs/capstone enable_capstone
+wine_fn_config_makefile libs/compiler-rt enable_compiler_rt
 wine_fn_config_makefile libs/dmoguids enable_dmoguids
 wine_fn_config_makefile libs/dxerr8 enable_dxerr8
 wine_fn_config_makefile libs/dxerr9 enable_dxerr9
@@ -24194,6 +24228,8 @@ PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 CAPSTONE_PE_CFLAGS = $CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS = $CAPSTONE_PE_LIBS
+COMPILER_RT_PE_CFLAGS = $COMPILER_RT_PE_CFLAGS
+COMPILER_RT_PE_LIBS = $COMPILER_RT_PE_LIBS
 FAUDIO_PE_CFLAGS = $FAUDIO_PE_CFLAGS
 FAUDIO_PE_LIBS = $FAUDIO_PE_LIBS
 FLUIDSYNTH_PE_CFLAGS = $FLUIDSYNTH_PE_CFLAGS
