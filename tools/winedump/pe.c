@@ -4380,12 +4380,13 @@ struct version_info
 
 static void dump_version_children( const struct version_info *info, const char *prefix, int indent )
 {
-    const struct version_info *child = GET_CHILD( info );
+    const struct version_info *next, *child = GET_CHILD( info );
 
-    while ((char *)child < (char *)info + info->len)
+    for ( ; (char *)child < (char *)info + info->len; child = next)
     {
+        next = GET_NEXT( child );
         printf( "%s%*s", prefix, indent * 2, "" );
-        if (child->val_len)
+        if (child->val_len || GET_VALUE( child ) == next)
         {
             printf( "VALUE \"" );
             dump_strW( child->key, strlenW(child->key) );
@@ -4411,7 +4412,6 @@ static void dump_version_children( const struct version_info *info, const char *
             printf( "\"\n" );
         }
         dump_version_children( child, prefix, indent + 1 );
-        child = GET_NEXT( child );
     }
 }
 
