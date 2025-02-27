@@ -6598,12 +6598,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
     else if (state->extra_vs_args.pixel_fog)
     {
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
-
-        if (state->transforms[WINED3D_TS_PROJECTION]._14 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._24 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._34 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._44 == 1.0f)
-            settings->ortho_fog = 1;
+        settings->ortho_fog = state->extra_vs_args.ortho_fog;
     }
     else if (state->render_states[WINED3D_RS_FOGVERTEXMODE] == WINED3D_FOG_NONE)
         settings->fog_mode = WINED3D_FFP_VS_FOG_FOGCOORD;

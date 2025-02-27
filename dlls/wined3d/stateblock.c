@@ -1900,6 +1900,9 @@ void CDECL wined3d_stateblock_set_transform(struct wined3d_stateblock *statebloc
         stateblock->changed.texture_matrices = 1;
     else if (d3dts == WINED3D_TS_VIEW || d3dts >= WINED3D_TS_WORLD)
         stateblock->changed.modelview_matrices = 1;
+    else if (d3dts == WINED3D_TS_PROJECTION
+            && stateblock->stateblock_state.rs[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE)
+        stateblock->changed.extra_vs_args = 1; /* For ortho_fog. */
 }
 
 void CDECL wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,
@@ -3984,11 +3987,13 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     if (changed->extra_vs_args)
     {
+        const struct wined3d_matrix *proj = &state->transforms[WINED3D_TS_PROJECTION];
         struct wined3d_extra_vs_args args;
 
         args.clip_planes = state->rs[WINED3D_RS_CLIPPING] ? state->rs[WINED3D_RS_CLIPPLANEENABLE] : 0;
         args.pixel_fog = (state->rs[WINED3D_RS_FOGTABLEMODE] != WINED3D_FOG_NONE);
         args.flat_shading = state->rs[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+        args.ortho_fog = (proj->_14 == 0.0f && proj->_24 == 0.0f && proj->_34 == 0.0f && proj->_44 == 1.0f);
         wined3d_device_context_emit_set_extra_vs_args(context, &args);
     }
 

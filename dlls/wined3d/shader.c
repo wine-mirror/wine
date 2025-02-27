@@ -2697,10 +2697,7 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
 
     if (state->extra_vs_args.pixel_fog)
     {
-        if (state->transforms[WINED3D_TS_PROJECTION]._14 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._24 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._34 == 0.0f
-                && state->transforms[WINED3D_TS_PROJECTION]._44 == 1.0f)
+        if (state->extra_vs_args.ortho_fog)
         {
             /* Fog source is vertex output Z.
              *
