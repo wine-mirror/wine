@@ -61,6 +61,25 @@
 #include "wmcodecdsp.h"
 #include "dvdmedia.h"
 
+static void run_child_test(const char *name)
+{
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char **argv;
+
+    winetest_get_mainargs(&argv);
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "%s mfplat %s", argv[0], name);
+    ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+            "CreateProcess failed.\n" );
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+}
+
 DEFINE_GUID(DUMMY_CLSID, 0x12345678,0x1234,0x1234,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19);
 DEFINE_GUID(DUMMY_GUID1, 0x12345678,0x1234,0x1234,0x21,0x21,0x21,0x21,0x21,0x21,0x21,0x21);
 DEFINE_GUID(DUMMY_GUID2, 0x12345678,0x1234,0x1234,0x22,0x22,0x22,0x22,0x22,0x22,0x22,0x22);
@@ -13532,19 +13551,20 @@ static void test_undefined_queue_id(void)
     ok(res == 0, "got %#lx\n", res);
     IMFAsyncResult_Release(result);
 
-    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK, &callback->IMFAsyncCallback_iface, NULL);
+    hr = MFPutWorkItem(0xffff, &callback->IMFAsyncCallback_iface, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
     ok(res == 0, "got %#lx\n", res);
     IMFAsyncResult_Release(result);
 
-    hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK & (MFASYNC_CALLBACK_QUEUE_PRIVATE_MASK - 1),
-            &callback->IMFAsyncCallback_iface, NULL);
+    hr = MFPutWorkItem(0x4000, &callback->IMFAsyncCallback_iface, NULL);
     ok(hr == S_OK, "got %#lx\n", hr);
     res = wait_async_callback_result(&callback->IMFAsyncCallback_iface, 100, &result);
     ok(res == 0, "got %#lx\n", res);
     IMFAsyncResult_Release(result);
 
+    hr = MFPutWorkItem(0x10000, &callback->IMFAsyncCallback_iface, NULL);
+    ok(hr == MF_E_INVALID_WORKQUEUE, "got %#lx\n", hr);
     IMFAsyncCallback_Release(&callback->IMFAsyncCallback_iface);
 
     hr = MFShutdown();
@@ -13561,7 +13581,14 @@ START_TEST(mfplat)
     argc = winetest_get_mainargs(&argv);
     if (argc >= 3)
     {
-        test_queue_com_state(argv[2]);
+        if (!strcmp(argv[2], "startup"))
+            test_startup();
+        else if (!strcmp(argv[2], "startup_counts"))
+            test_startup_counts();
+        else if (!strcmp(argv[2], "undefined_queue_id"))
+            test_undefined_queue_id();
+        else
+            test_queue_com_state(argv[2]);
         return;
     }
 
@@ -13573,8 +13600,9 @@ START_TEST(mfplat)
 
     CoInitialize(NULL);
 
-    test_startup();
-    test_startup_counts();
+    run_child_test("startup");
+    run_child_test("startup_counts");
+    run_child_test("undefined_queue_id");
     test_register();
     test_media_type();
     test_MFCreateMediaEvent();
@@ -13646,7 +13674,6 @@ START_TEST(mfplat)
     test_MFInitMediaTypeFromAMMediaType();
     test_MFCreatePathFromURL();
     test_2dbuffer_copy();
-    test_undefined_queue_id();
 
     CoUninitialize();
 }
