@@ -3212,7 +3212,7 @@ static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT c
     {
         if (infos[i].rect.left == 0 && infos[i].rect.top == 0) primary = infos[i].rect;
 
-        if (info - infos + i) UnionRect( &scaled_virtual, &scaled_virtual, &infos[i].rect );
+        if (info != infos + i) UnionRect( &scaled_virtual, &scaled_virtual, &infos[i].rect );
         else
         {
             scaled = monitor = infos[i].rect;
