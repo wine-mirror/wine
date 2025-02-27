@@ -2012,7 +2012,16 @@ WINBASEAPI void        WINAPI DeleteCriticalSection(CRITICAL_SECTION *lpCrit);
 WINBASEAPI void        WINAPI DeleteFiber(LPVOID);
 WINBASEAPI BOOL        WINAPI DeleteFileA(LPCSTR);
 WINBASEAPI BOOL        WINAPI DeleteFileW(LPCWSTR);
-#define                       DeleteFile WINELIB_NAME_AW(DeleteFile)
+#ifndef WINE_NO_UNICODE_MACROS
+static inline BOOL DeleteFile( LPCTSTR file_name )
+{
+#ifdef UNICODE
+    return DeleteFileW( file_name );
+#else
+    return DeleteFileA( file_name );
+#endif
+}
+#endif
 WINBASEAPI void        WINAPI DeleteProcThreadAttributeList(struct _PROC_THREAD_ATTRIBUTE_LIST*);
 WINBASEAPI BOOL        WINAPI DeleteTimerQueue(HANDLE);
 WINBASEAPI BOOL        WINAPI DeleteTimerQueueEx(HANDLE,HANDLE);
