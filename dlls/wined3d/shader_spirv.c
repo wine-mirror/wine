@@ -61,6 +61,7 @@ struct shader_spirv_compile_arguments
         {
             struct vkd3d_shader_varying_map varying_map[MAX_SM1_INTER_STAGE_VARYINGS];
             unsigned int varying_count;
+            uint8_t clip_planes;
         } vs;
         struct
         {
@@ -104,7 +105,7 @@ struct wined3d_shader_spirv_compile_args
     struct vkd3d_shader_spirv_target_info spirv_target;
     struct vkd3d_shader_parameter_info parameter_info;
     enum vkd3d_shader_spirv_extension extensions[1];
-    struct vkd3d_shader_parameter1 parameters[4];
+    struct vkd3d_shader_parameter1 parameters[9];
     unsigned int ps_alpha_swizzle[WINED3D_MAX_RENDER_TARGETS];
 };
 
@@ -149,12 +150,38 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
                 vkd3d_shader_build_varying_map(&vs_program->signature_info.output,
                         &ps_program->signature_info.input, &args->u.vs.varying_count, args->u.vs.varying_map);
             }
+
+            args->u.vs.clip_planes = state->extra_vs_args.clip_planes;
             break;
         }
 
         default:
             break;
     }
+}
+
+static void fill_vs_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_args,
+        const struct shader_spirv_compile_arguments *compile_args, uint32_t ffp_extra_binding)
+{
+    struct vkd3d_shader_parameter1 *parameters = vkd3d_args->parameters;
+
+    for (unsigned int i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
+    {
+        parameters[i].name = VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_0 + i;
+        parameters[i].type = VKD3D_SHADER_PARAMETER_TYPE_BUFFER;
+        parameters[i].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32_VEC4;
+        parameters[i].u.buffer.set = 0;
+        parameters[i].u.buffer.binding = ffp_extra_binding;
+        parameters[i].u.buffer.offset = offsetof(struct wined3d_ffp_vs_constants, clip_planes[i]);
+    }
+
+    parameters[8].name = VKD3D_SHADER_PARAMETER_NAME_CLIP_PLANE_MASK;
+    parameters[8].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+    parameters[8].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+    parameters[8].u.immediate_constant.u.u32 = compile_args->u.vs.clip_planes;
+
+    vkd3d_args->parameter_info.parameter_count = 9;
+    vkd3d_args->parameter_info.parameters = vkd3d_args->parameters;
 }
 
 static void fill_ps_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_args,
@@ -233,14 +260,16 @@ static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info
     }
     else if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
     {
+        fill_vs_parameters(args, compile_args, bindings->ffp_vs_extra_binding);
+
         if (source_type == VKD3D_SHADER_SOURCE_D3D_BYTECODE)
         {
-            args->spirv_target.next = &args->varying_map;
-
             args->varying_map.type = VKD3D_SHADER_STRUCTURE_TYPE_VARYING_MAP_INFO;
-            args->varying_map.next = vkd3d_interface;
+            args->varying_map.next = args->spirv_target.next;
             args->varying_map.varying_map = compile_args->u.vs.varying_map;
             args->varying_map.varying_count = compile_args->u.vs.varying_count;
+
+            args->spirv_target.next = &args->varying_map;
         }
     }
 }

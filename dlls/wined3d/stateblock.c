@@ -4082,6 +4082,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_PS_FFP,
             WINED3D_SHADER_TYPE_PIXEL, WINED3D_FFP_CONSTANTS_EXTRA_REGISTER);
+    bind_push_constant_buffer(device, WINED3D_PUSH_CONSTANTS_VS_FFP,
+            WINED3D_SHADER_TYPE_VERTEX, WINED3D_FFP_CONSTANTS_EXTRA_REGISTER);
 
     assert(list_empty(&stateblock->changed.changed_lights));
     memset(&stateblock->changed, 0, sizeof(stateblock->changed));
