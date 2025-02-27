@@ -1536,10 +1536,8 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {138, 139},
         {144, 144},
         {149, 150},
-        {152, 153},
-        {156, 160},
-        {162, 165},
-        {167, 209},
+        {152, 160},
+        {162, 209},
         {  0,   0},
     };
     static const unsigned int simple_states[] =

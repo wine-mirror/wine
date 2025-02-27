@@ -2819,6 +2819,11 @@ struct wined3d_ffp_vs_constants
 
     /* States not used by the HLSL pipeline. */
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
+    struct wined3d_ffp_point_clamp_constants
+    {
+        float min, max;
+    } point_clamp;
+    float padding2[2]; /* Align to 16-bytes. */
 };
 
 struct wined3d_ffp_ps_constants
@@ -4490,8 +4495,6 @@ void get_identity_matrix(struct wined3d_matrix *mat);
 void get_modelview_matrix(const struct wined3d_stateblock_state *state, unsigned int index, struct wined3d_matrix *mat);
 void get_texture_matrix(const struct wined3d_stateblock_state *state,
         const unsigned int tex, struct wined3d_matrix *mat);
-void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
-        float *out_min, float *out_max);
 
 struct wined3d_palette
 {

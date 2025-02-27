@@ -70,6 +70,7 @@ struct wined3d_saved_states
     uint32_t position_transformed : 1;
     uint32_t bumpenv_constants : 1;
     uint32_t fog_constants : 1;
+    uint32_t point_size_constants : 1;
     uint32_t extra_vs_args : 1;
     uint32_t extra_ps_args : 1;
 };
@@ -331,6 +332,7 @@ void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *
     states->position_transformed = 1;
     states->bumpenv_constants = 1;
     states->fog_constants = 1;
+    states->point_size_constants = 1;
     states->extra_vs_args = 1;
     states->extra_ps_args = 1;
 
@@ -2486,6 +2488,8 @@ static void wined3d_stateblock_invalidate_initial_states(struct wined3d_stateblo
     stateblock->changed.ffp_ps_settings = 1;
     stateblock->changed.bumpenv_constants = 1;
     stateblock->changed.fog_constants = 1;
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MAX, 1);
+    wined3d_bitmap_set_bits(stateblock->changed.renderState, WINED3D_RS_POINTSIZE_MIN, 1);
 }
 
 static HRESULT stateblock_init(struct wined3d_stateblock *stateblock, const struct wined3d_stateblock *device_state,
@@ -3207,6 +3211,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_CLIPPLANEENABLE:
                 case WINED3D_RS_FOGTABLEMODE:
                 case WINED3D_RS_SHADEMODE:
+                case WINED3D_RS_POINTSIZE_MAX:
+                case WINED3D_RS_POINTSIZE_MIN:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3902,6 +3908,19 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_VS_POINTSIZE,
                 offsetof(struct wined3d_ffp_vs_constants, point), sizeof(constants), &constants);
+    }
+
+    if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_POINTSIZE_MIN)
+            || wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_POINTSIZE_MAX))
+    {
+        struct wined3d_ffp_point_clamp_constants constants;
+
+        constants.min = int_to_float(state->rs[WINED3D_RS_POINTSIZE_MIN]);
+        constants.max = int_to_float(state->rs[WINED3D_RS_POINTSIZE_MAX]);
+        if (constants.min > constants.max)
+            constants.min = constants.max;
+        wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_VS_POINTSIZE,
+                offsetof(struct wined3d_ffp_vs_constants, point_clamp), sizeof(constants), &constants);
     }
 
     if (changed->bumpenv_constants)

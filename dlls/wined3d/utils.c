@@ -5765,25 +5765,6 @@ void get_texture_matrix(const struct wined3d_stateblock_state *state,
             generated, get_texcoord_format(state->vertex_declaration, coord_idx), mat);
 }
 
-void get_pointsize_minmax(const struct wined3d_context *context, const struct wined3d_state *state,
-        float *out_min, float *out_max)
-{
-    union
-    {
-        DWORD d;
-        float f;
-    } min, max;
-
-    min.d = state->render_states[WINED3D_RS_POINTSIZE_MIN];
-    max.d = state->render_states[WINED3D_RS_POINTSIZE_MAX];
-
-    if (min.f > max.f)
-        min.f = max.f;
-
-    *out_min = min.f;
-    *out_max = max.f;
-}
-
 static BOOL wined3d_get_primary_display(WCHAR *display)
 {
     DISPLAY_DEVICEW display_device;
