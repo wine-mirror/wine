@@ -294,9 +294,11 @@ static const struct column col_physicalmemory[] =
     { L"ConfiguredClockSpeed", CIM_UINT32 },
     { L"DeviceLocator",        CIM_STRING },
     { L"FormFactor",           CIM_UINT16 },
+    { L"Manufacturer",         CIM_STRING },
     { L"MemoryType",           CIM_UINT16 },
     { L"PartNumber",           CIM_STRING },
     { L"SerialNumber",         CIM_STRING },
+    { L"Speed",                CIM_UINT32 },
 };
 static const struct column col_physicalmemoryarray[] =
 {
@@ -797,9 +799,11 @@ struct record_physicalmemory
     UINT32       configuredclockspeed;
     const WCHAR *devicelocator;
     UINT16       formfactor;
+    const WCHAR *manufacturer;
     UINT16       memorytype;
     const WCHAR *partnumber;
     const WCHAR *serial;
+    UINT32       speed;
 };
 struct record_physicalmemoryarray
 {
@@ -3263,8 +3267,10 @@ static enum fill_status fill_physicalmemory( struct table *table, const struct e
     rec->devicelocator        = L"DIMM 0";
     rec->formfactor           = 8; /* DIMM */
     rec->memorytype           = 9; /* RAM */
+    rec->manufacturer         = L"Wine";
     rec->partnumber           = L"";
     rec->serial               = L"";
+    rec->speed                = 3200;
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 

@@ -1688,6 +1688,7 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
         check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceLocator", VT_BSTR, CIM_STRING );
         check_property( obj, L"FormFactor", VT_I4, CIM_UINT16 );
+        check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
         check_property( obj, L"MemoryType", VT_I4, CIM_UINT16 );
 
         type = 0xdeadbeef;
