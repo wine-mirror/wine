@@ -70,6 +70,7 @@ struct wined3d_saved_states
     uint32_t position_transformed : 1;
     uint32_t bumpenv_constants : 1;
     uint32_t fog_constants : 1;
+    uint32_t extra_vs_args : 1;
     uint32_t extra_ps_args : 1;
 };
 
@@ -330,6 +331,7 @@ void CDECL wined3d_stateblock_primary_dirtify_all_states(struct wined3d_device *
     states->position_transformed = 1;
     states->bumpenv_constants = 1;
     states->fog_constants = 1;
+    states->extra_vs_args = 1;
     states->extra_ps_args = 1;
 
     list_init(&stateblock->changed.changed_lights);
@@ -1706,6 +1708,11 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
         case WINED3D_RS_FOGVERTEXMODE:
             stateblock->changed.ffp_vs_settings = 1;
             stateblock->changed.fog_constants = 1;
+            break;
+
+        case WINED3D_RS_CLIPPING:
+        case WINED3D_RS_CLIPPLANEENABLE:
+            stateblock->changed.extra_vs_args = 1;
             break;
 
         case WINED3D_RS_ALPHAFUNC:
@@ -3222,6 +3229,8 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_ALPHAFUNC:
                 case WINED3D_RS_ALPHATESTENABLE:
                 case WINED3D_RS_SRGBWRITEENABLE:
+                case WINED3D_RS_CLIPPING:
+                case WINED3D_RS_CLIPPLANEENABLE:
                     break;
 
                 case WINED3D_RS_ANTIALIAS:
@@ -3964,6 +3973,14 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
         wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_FFP,
                 WINED3D_SHADER_CONST_FFP_PS, 0, offsetof(struct wined3d_ffp_ps_constants, color_key), &constants);
+    }
+
+    if (changed->extra_vs_args)
+    {
+        struct wined3d_extra_vs_args args;
+
+        args.clip_planes = state->rs[WINED3D_RS_CLIPPING] ? state->rs[WINED3D_RS_CLIPPLANEENABLE] : 0;
+        wined3d_device_context_emit_set_extra_vs_args(context, &args);
     }
 
     if (wined3d_bitmap_is_set(changed->renderState, WINED3D_RS_ALPHAREF))

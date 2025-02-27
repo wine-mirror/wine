@@ -3213,7 +3213,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     context_invalidate_state(context, STATE_VDECL); /* because of last_was_rhw = TRUE */
 
     wined3d_context_gl_enable_clip_distances(context_gl, 0);
-    context_invalidate_state(context, STATE_RENDER(WINED3D_RS_CLIPPING));
+    context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
 
     /* FIXME: Make draw_textured_quad() able to work with a upper left origin. */
     if (gl_info->supported[ARB_CLIP_CONTROL])

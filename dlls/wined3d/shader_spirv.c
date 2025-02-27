@@ -1217,8 +1217,6 @@ static void spirv_vertex_pipe_vk_vp_free(struct wined3d_device *device, struct w
 
 static const struct wined3d_state_entry_template spirv_vertex_pipe_vk_vp_states[] =
 {
-    {STATE_RENDER(WINED3D_RS_CLIPPING),                 {STATE_RENDER(WINED3D_RS_CLIPPING),                 state_nop}},
-    {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),          {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),          state_nop}},
     {STATE_RENDER(WINED3D_RS_POINTSIZE),                {STATE_RENDER(WINED3D_RS_POINTSIZE),                state_nop}},
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),            {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),            state_nop}},
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),            {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),            state_nop}},

@@ -2728,8 +2728,7 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
         args->fog_src = VS_FOG_COORD;
     }
 
-    args->clip_enabled = state->render_states[WINED3D_RS_CLIPPING]
-            && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+    args->clip_enabled = !!state->extra_vs_args.clip_planes;
     args->point_size = state->primitive_type == WINED3D_PT_POINTLIST;
     args->next_shader_type = hull_shader ? WINED3D_SHADER_TYPE_HULL
             : geometry_shader ? WINED3D_SHADER_TYPE_GEOMETRY : WINED3D_SHADER_TYPE_PIXEL;

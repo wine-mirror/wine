@@ -6541,8 +6541,7 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
             break;
     }
 
-    settings->clipping = state->render_states[WINED3D_RS_CLIPPING]
-            && state->render_states[WINED3D_RS_CLIPPLANEENABLE];
+    settings->clipping = !!state->extra_vs_args.clip_planes;
     settings->diffuse = vdecl->diffuse;
     settings->normal = vdecl->normal;
     settings->normalize = settings->normal && state->render_states[WINED3D_RS_NORMALIZENORMALS];

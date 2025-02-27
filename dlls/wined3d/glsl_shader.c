@@ -10858,9 +10858,8 @@ static void shader_glsl_update_graphics_program(struct shader_glsl_priv *priv,
         current_vertex_color_clamp = glsl_program->vs.vertex_color_clamp;
         if (glsl_program->shader_controlled_clip_distances)
             wined3d_context_gl_enable_clip_distances(context_gl, glsl_program->clip_distance_mask);
-        else if ((context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_VERTEX))
-                && state->render_states[WINED3D_RS_CLIPPING])
-            wined3d_context_gl_enable_clip_distances(context_gl, state->render_states[WINED3D_RS_CLIPPLANEENABLE]);
+        else if (context_gl->c.shader_update_mask & (1u << WINED3D_SHADER_TYPE_VERTEX))
+            wined3d_context_gl_enable_clip_distances(context_gl, state->extra_vs_args.clip_planes);
     }
     else
     {
@@ -11935,8 +11934,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_SPECULARMATERIALSOURCE),            {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_VERTEXBLEND),                       {STATE_RENDER(WINED3D_RS_FOGENABLE),                         NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_CLIPPING),                          {STATE_RENDER(WINED3D_RS_CLIPPING),                          state_clipping         }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_CLIPPLANEENABLE),                   {STATE_RENDER(WINED3D_RS_CLIPPING),                          NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE),                         {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     glsl_vertex_pipe_pointsize}, WINED3D_GL_EXT_NONE       },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },

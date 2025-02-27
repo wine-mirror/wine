@@ -2869,10 +2869,16 @@ enum wined3d_push_constants
     WINED3D_PUSH_CONSTANTS_COUNT,
 };
 
-/* Pixel shader states part of the Direct3D 1-9 FFP, which are also used when
+/* States part of the Direct3D 1-9 FFP, which are also used when
  * using shaders, which are not implemented as uniforms.
  * These eventually make their way into vs_compile_args / ps_compile_args, but
  * those structs also include states other than the FFP states. */
+
+struct wined3d_extra_vs_args
+{
+    uint8_t clip_planes;
+};
+
 struct wined3d_extra_ps_args
 {
     bool point_sprite;
@@ -2985,6 +2991,7 @@ struct wined3d_state
     uint32_t sample_mask;
     struct wined3d_depth_stencil_state *depth_stencil_state;
     unsigned int stencil_ref;
+    struct wined3d_extra_vs_args extra_vs_args;
     struct wined3d_extra_ps_args extra_ps_args;
     bool depth_bounds_enable;
     float depth_bounds_min, depth_bounds_max;
@@ -3775,6 +3782,8 @@ void wined3d_device_context_emit_set_depth_stencil_view(struct wined3d_device_co
         struct wined3d_rendertarget_view *view);
 void wined3d_device_context_emit_set_extra_ps_args(struct wined3d_device_context *context,
         const struct wined3d_extra_ps_args *args);
+void wined3d_device_context_emit_set_extra_vs_args(struct wined3d_device_context *context,
+        const struct wined3d_extra_vs_args *args);
 void wined3d_device_context_emit_set_feature_level(struct wined3d_device_context *context,
         enum wined3d_feature_level level);
 void wined3d_device_context_emit_set_index_buffer(struct wined3d_device_context *context, struct wined3d_buffer *buffer,
