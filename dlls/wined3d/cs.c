@@ -118,7 +118,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_DEPTH_BOUNDS,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
-    WINED3D_CS_OP_SET_TRANSFORM,
     WINED3D_CS_OP_SET_COLOR_KEY,
     WINED3D_CS_OP_SET_LIGHT,
     WINED3D_CS_OP_SET_LIGHT_ENABLE,
@@ -380,13 +379,6 @@ struct wined3d_cs_set_texture_state
     DWORD value;
 };
 
-struct wined3d_cs_set_transform
-{
-    enum wined3d_cs_op opcode;
-    enum wined3d_transform_state state;
-    struct wined3d_matrix matrix;
-};
-
 struct wined3d_cs_set_light
 {
     enum wined3d_cs_op opcode;
@@ -619,7 +611,6 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_BOUNDS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE_STATE);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_TRANSFORM);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_COLOR_KEY);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_LIGHT_ENABLE);
@@ -1942,31 +1933,6 @@ void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
-static void wined3d_cs_exec_set_transform(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_transform *op = data;
-
-    cs->state.transforms[op->state] = op->matrix;
-    /* Fog behaviour depends on the projection matrix. */
-    if (op->state == WINED3D_TS_PROJECTION
-            && cs->state.render_states[WINED3D_RS_FOGENABLE]
-            && cs->state.extra_vs_args.pixel_fog)
-        device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX));
-}
-
-void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
-        enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
-{
-    struct wined3d_cs_set_transform *op;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_TRANSFORM;
-    op->state = state;
-    op->matrix = *matrix;
-
-    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-}
-
 static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_color_key *op = data;
@@ -3060,7 +3026,6 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_DEPTH_BOUNDS            */ wined3d_cs_exec_set_depth_bounds,
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
-    /* WINED3D_CS_OP_SET_TRANSFORM               */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_COLOR_KEY               */ wined3d_cs_exec_set_color_key,
     /* WINED3D_CS_OP_SET_LIGHT                   */ wined3d_cs_exec_set_light,
     /* WINED3D_CS_OP_SET_LIGHT_ENABLE            */ wined3d_cs_exec_set_light_enable,

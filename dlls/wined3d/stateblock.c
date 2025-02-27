@@ -2327,21 +2327,12 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
     state->primitive_type = WINED3D_PT_UNDEFINED;
     state->patch_vertex_count = 0;
 
-    /* Set some of the defaults for lights, transforms etc */
-    state->transforms[WINED3D_TS_PROJECTION] = identity;
-    state->transforms[WINED3D_TS_VIEW] = identity;
-    for (i = 0; i < 256; ++i)
-    {
-        state->transforms[WINED3D_TS_WORLD_MATRIX(i)] = identity;
-    }
-
     init_default_render_states(state->render_states, d3d_info);
 
     /* Texture Stage States - Put directly into state block, we will call function below */
     for (i = 0; i < WINED3D_MAX_FFP_TEXTURES; ++i)
     {
         TRACE("Setting up default texture states for texture Stage %u.\n", i);
-        state->transforms[WINED3D_TS_TEXTURE0 + i] = identity;
         init_default_texture_state(i, state->texture_states[i]);
     }
 
@@ -2835,31 +2826,6 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
         wined3d_shader_resource_view_decref(prev);
 
     return;
-}
-
-static void wined3d_device_set_transform(struct wined3d_device *device,
-        enum wined3d_transform_state state, const struct wined3d_matrix *matrix)
-{
-    TRACE("device %p, state %s, matrix %p.\n", device, debug_d3dtstype(state), matrix);
-    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_11, matrix->_12, matrix->_13, matrix->_14);
-    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_21, matrix->_22, matrix->_23, matrix->_24);
-    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_31, matrix->_32, matrix->_33, matrix->_34);
-    TRACE("%.8e %.8e %.8e %.8e\n", matrix->_41, matrix->_42, matrix->_43, matrix->_44);
-
-    /* If the new matrix is the same as the current one,
-     * we cut off any further processing. this seems to be a reasonable
-     * optimization because as was noticed, some apps (warcraft3 for example)
-     * tend towards setting the same matrix repeatedly for some reason.
-     *
-     * From here on we assume that the new matrix is different, wherever it matters. */
-    if (!memcmp(&device->cs->c.state->transforms[state], matrix, sizeof(*matrix)))
-    {
-        TRACE("The application is setting the same matrix over again.\n");
-        return;
-    }
-
-    device->cs->c.state->transforms[state] = *matrix;
-    wined3d_device_context_emit_set_transform(&device->cs->c, state, matrix);
 }
 
 static enum wined3d_texture_address get_texture_address_mode(const struct wined3d_texture *texture,
@@ -3688,13 +3654,6 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
                     offsetof(struct wined3d_ffp_vs_constants, projection_matrix), sizeof(matrix), &matrix);
         }
-
-        if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION))
-        {
-            /* wined3d_ffp_vs_settings.ortho_fog still needs the
-             * device state to be set. */
-            wined3d_device_set_transform(device, WINED3D_TS_PROJECTION, &state->transforms[WINED3D_TS_PROJECTION]);
-        }
     }
     else if (changed->transforms)
     {
@@ -3705,15 +3664,10 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
         }
 
         if (wined3d_bitmap_is_set(changed->transform, WINED3D_TS_PROJECTION) || changed->position_transformed)
-        {
             wined3d_device_context_push_constants(context,
                     WINED3D_PUSH_CONSTANTS_VS_FFP, WINED3D_SHADER_CONST_FFP_PROJ,
                     offsetof(struct wined3d_ffp_vs_constants, projection_matrix),
                     sizeof(state->transforms[WINED3D_TS_PROJECTION]), &state->transforms[WINED3D_TS_PROJECTION]);
-            /* wined3d_ffp_vs_settings.ortho_fog and vs_compile_args.ortho_fog
-             * still need the device state to be set. */
-            wined3d_device_set_transform(device, WINED3D_TS_PROJECTION, &state->transforms[WINED3D_TS_PROJECTION]);
-        }
 
         /* Clip planes are affected by the view matrix. */
         changed->clipplane = wined3d_mask_from_size(WINED3D_MAX_CLIP_DISTANCES);

@@ -2980,7 +2980,6 @@ struct wined3d_state
 
     uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
-    struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_viewport viewports[WINED3D_MAX_VIEWPORTS];
     unsigned int viewport_count;
     RECT scissor_rects[WINED3D_MAX_VIEWPORTS];
@@ -3821,8 +3820,6 @@ void wined3d_device_context_emit_set_texture(struct wined3d_device_context *cont
         struct wined3d_shader_resource_view *view);
 void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context *context, unsigned int stage,
         enum wined3d_texture_stage_state state, unsigned int value);
-void wined3d_device_context_emit_set_transform(struct wined3d_device_context *context,
-        enum wined3d_transform_state state, const struct wined3d_matrix *matrix);
 void wined3d_device_context_emit_set_unordered_access_views(struct wined3d_device_context *context,
         enum wined3d_pipeline pipeline, unsigned int start_idx, unsigned int count,
         struct wined3d_unordered_access_view *const *views, const unsigned int *initial_count);
