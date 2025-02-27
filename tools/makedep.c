@@ -607,6 +607,25 @@ static int is_native_arch_disabled( struct makefile *make )
 
 
 /*******************************************************************
+ *         is_subdir_other_arch
+ *
+ * Check if the filename is in a subdirectory named from a different arch.
+ * Used to avoid building asm files for the wrong platform.
+ */
+static int is_subdir_other_arch( const char *name, unsigned int arch )
+{
+    const char *dir, *p = strrchr( name, '/' );
+
+    if (!p || p == name) return 0;
+    dir = get_basename( strmake( "%.*s", (int)(p - name), name ));
+    if (!strcmp( dir, "arm64" )) dir = "aarch64";
+    if (!strcmp( dir, "amd64" )) dir = "x86_64";
+    if (native_archs[arch] && !strcmp( dir, archs.str[native_archs[arch]] )) return 0;
+    return strcmp( dir, archs.str[arch] );
+}
+
+
+/*******************************************************************
  *         get_link_arch
  */
 static int get_link_arch( const struct makefile *make, unsigned int arch, unsigned int *link_arch )
@@ -3223,6 +3242,8 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         if (!(source->file->flags & FLAG_C_IMPLIB) && (!make->staticlib || make->extlib)) return;
     }
 
+    if (strendswith( source->name, ".S" ) && is_subdir_other_arch( source->name, arch )) return;
+
     obj_name = strmake( "%s%s.o", source->arch ? "" : arch_dirs[arch], obj );
     strarray_add( targets, obj_name );
 
@@ -3599,6 +3620,7 @@ static void output_static_lib( struct makefile *make, unsigned int arch )
     const char *name = strmake( "%s%s", arch_dirs[arch], make->staticlib );
     unsigned int hybrid_arch = hybrid_archs[arch];
 
+    if (make->disabled[arch]) return;
     if (native_archs[arch]) return;
 
     strarray_add( &make->clean_files, name );
