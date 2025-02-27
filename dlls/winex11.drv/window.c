@@ -913,6 +913,9 @@ static void set_mwm_hints( struct x11drv_win_data *data, UINT style, UINT ex_sty
             /* The window can be programmatically minimized even without
                a minimize box button. Allow the WM to restore it. */
             if (style & WS_MINIMIZE)    mwm_hints.functions |= MWM_FUNC_MINIMIZE | MWM_FUNC_MAXIMIZE;
+            /* The window can be programmatically maximized even without
+               a maximize box button. Allow the WM to maximize it. */
+            if (style & WS_MAXIMIZE)    mwm_hints.functions |= MWM_FUNC_MAXIMIZE;
         }
     }
 
