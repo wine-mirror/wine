@@ -1337,12 +1337,12 @@ static void wined3d_cs_exec_set_rendertarget_views(struct wined3d_cs *cs, const 
             device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
         if (!(device->adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-                || cs->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+                || cs->state.extra_ps_args.srgb_write)
         {
             prev_srgb_write = prev && prev->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
             curr_srgb_write = view && view->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
             if (prev_srgb_write != curr_srgb_write)
-                device_invalidate_state(device, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
+                device_invalidate_state(device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
         }
     }
 

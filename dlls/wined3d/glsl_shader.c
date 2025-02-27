@@ -12123,7 +12123,6 @@ static const struct wined3d_state_entry_template glsl_fragment_pipe_state_templa
     {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                  {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_fragment_pipe_vs                  }, WINED3D_GL_EXT_NONE },
     {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                   {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    glsl_fragment_pipe_shader              }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                   {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    state_nop                              }, WINED3D_GL_EXT_NONE },
-    {STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE),                  {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_ARG0),             {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(1, WINED3D_TSS_ALPHA_ARG0),             {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(2, WINED3D_TSS_ALPHA_ARG0),             {STATE_RENDER(WINED3D_RS_COLORKEYENABLE),                    NULL                                   }, WINED3D_GL_EXT_NONE },

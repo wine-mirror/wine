@@ -2878,6 +2878,7 @@ struct wined3d_extra_ps_args
     bool point_sprite;
     bool flat_shading;
     bool fog_enable;
+    bool srgb_write;
     enum wined3d_fog_mode fog_mode;
     enum wined3d_cmp_func alpha_func;
     uint32_t texcoord_index[WINED3D_MAX_FFP_TEXTURES];
@@ -4709,7 +4710,7 @@ static inline BOOL needs_srgb_write(const struct wined3d_d3d_info *d3d_info,
         const struct wined3d_state *state, const struct wined3d_fb_state *fb)
 {
     return (!(d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-            || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
+            || state->extra_ps_args.srgb_write)
             && fb->render_targets[0] && fb->render_targets[0]->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
 }
 
