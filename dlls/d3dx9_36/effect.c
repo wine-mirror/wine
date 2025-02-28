@@ -2453,6 +2453,7 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(effect, parameter);
+    unsigned int i;
 
     TRACE("iface %p, parameter %p, data %p, bytes %u.\n", iface, parameter, data, bytes);
 
@@ -2474,11 +2475,21 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
         switch (param->type)
         {
             case D3DXPT_VOID:
-            case D3DXPT_BOOL:
             case D3DXPT_INT:
             case D3DXPT_FLOAT:
             case D3DXPT_STRING:
                 break;
+
+            case D3DXPT_BOOL:
+            {
+                BOOL *src = (BOOL *)param->data;
+                BOOL *dst = (BOOL *)data;
+
+                for (i = 0; i < (param->bytes / sizeof(*src)); ++i)
+                    dst[i] = !!src[i];
+
+                return D3D_OK;
+            }
 
             case D3DXPT_VERTEXSHADER:
             case D3DXPT_PIXELSHADER:
@@ -2487,9 +2498,6 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
             case D3DXPT_TEXTURE2D:
             case D3DXPT_TEXTURE3D:
             case D3DXPT_TEXTURECUBE:
-            {
-                unsigned int i;
-
                 for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
                 {
                     IUnknown *unk = ((IUnknown **)param->data)[i];
@@ -2497,7 +2505,6 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
                         IUnknown_AddRef(unk);
                 }
                 break;
-            }
 
             default:
                 FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(param->type));

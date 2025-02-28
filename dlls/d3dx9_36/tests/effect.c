@@ -9136,8 +9136,7 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
                         unexpected_values++;
                 }
 
-                todo_wine_if(param_desc.Type == D3DXPT_BOOL) ok(!unexpected_values,
-                        "Got %u unexpected values.\n", unexpected_values);
+                ok(!unexpected_values, "Got %u unexpected values.\n", unexpected_values);
             }
             winetest_pop_context();
         }
