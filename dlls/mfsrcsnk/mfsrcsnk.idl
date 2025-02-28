@@ -38,3 +38,10 @@ coclass MFWAVESinkClassFactory { }
     uuid(42c9b9f5-16fc-47ef-af22-da05f7c842e3)
 ]
 coclass WAVByteStreamPlugin {}
+
+[
+    helpstring("MP3 Byte Stream Handler"),
+    threading(both),
+    uuid(a82e50ba-8e92-41eb-9df2-433f50ec2993)
+]
+coclass MP3ByteStreamPlugin {}

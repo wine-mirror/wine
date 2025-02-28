@@ -33,6 +33,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
         return IClassFactory_QueryInterface(&avi_byte_stream_plugin_factory, riid, out);
     if (IsEqualGUID(clsid, &CLSID_WAVByteStreamPlugin))
         return IClassFactory_QueryInterface(&wav_byte_stream_plugin_factory, riid, out);
+    if (IsEqualGUID(clsid, &CLSID_MP3ByteStreamPlugin))
+        return IClassFactory_QueryInterface(&mp3_byte_stream_plugin_factory, riid, out);
 
     if (IsEqualGUID(clsid, &CLSID_MFWAVESinkClassFactory))
         return IClassFactory_QueryInterface(wave_sink_class_factory, riid, out);

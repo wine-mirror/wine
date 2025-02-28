@@ -872,6 +872,7 @@ fail:
     IMFMediaType_Release(*type);
     return hr;
 }
+
 static HRESULT WINAPI MFTransform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
 {
     struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
@@ -991,6 +992,7 @@ static HRESULT WINAPI MFTransform_ProcessMessage(IMFTransform *iface, MFT_MESSAG
             if (FAILED(hr = IMediaObject_Flush(&decoder->IMediaObject_iface)))
                 return convert_dmo_to_mf_error(hr);
             break;
+
         case MFT_MESSAGE_COMMAND_DRAIN:
             decoder->draining = TRUE;
             break;
