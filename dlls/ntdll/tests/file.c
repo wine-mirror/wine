@@ -1388,14 +1388,13 @@ static void test_file_full_size_information(void)
 
     /* FileFsFullSizeInformationEx is supported on Windows 10 build 1809 and later */
     res = pNtQueryVolumeInformationFile(h, &io, &ffsie, sizeof ffsie, FileFsFullSizeInformationEx);
-    ok(res == STATUS_INVALID_PARAMETER || res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
-
-    if (res == STATUS_NOT_IMPLEMENTED || res == STATUS_INVALID_PARAMETER)
+    if (res == STATUS_NOT_IMPLEMENTED || res == STATUS_INVALID_PARAMETER || res == STATUS_INVALID_INFO_CLASS)
     {
         win_skip( "FileFsFullSizeInformationEx not supported.\n" );
         CloseHandle( h );
         return;
     }
+    ok(res == STATUS_SUCCESS, "cannot get attributes, res %lx\n", res);
 
     expected = ffsie.ActualAvailableAllocationUnits + ffsie.ActualPoolUnavailableAllocationUnits
             + ffsie.UsedAllocationUnits + ffsie.TotalReservedAllocationUnits;
