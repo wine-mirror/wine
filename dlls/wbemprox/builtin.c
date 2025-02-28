@@ -423,10 +423,10 @@ static const struct column col_softwarelicensingproduct[] =
 static const struct column col_sounddevice[] =
 {
     { L"Caption",      CIM_STRING },
-    { L"DeviceID",     CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"DeviceID",     CIM_STRING },
     { L"Manufacturer", CIM_STRING },
     { L"Name",         CIM_STRING },
-    { L"PNPDeviceID",  CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"PNPDeviceID",  CIM_STRING },
     { L"ProductName",  CIM_STRING },
     { L"Status",       CIM_STRING },
     { L"StatusInfo",   CIM_UINT16 },
@@ -4446,34 +4446,20 @@ static enum fill_status fill_volume( struct table *table, const struct expr *con
     return status;
 }
 
-static WCHAR *get_sounddevice_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
-{
-    static const WCHAR fmtW[] = L"HDAUDIO\\FUNC_01&VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%04X\\0&DEADBEEF&0&DEAD";
-    UINT len = sizeof(fmtW) + 2;
-    WCHAR *ret;
-
-    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
-    swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
-    return ret;
-}
-
 static enum fill_status fill_sounddevice( struct table *table, const struct expr *cond )
 {
     struct record_sounddevice *rec;
-    DXGI_ADAPTER_DESC desc;
     UINT row = 0;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    get_dxgi_adapter_desc( &desc );
-
     rec = (struct record_sounddevice *)table->data;
     rec->caption = L"Wine Audio Device";
-    rec->deviceid = get_sounddevice_pnpdeviceid( &desc );
+    rec->deviceid = L"HDAUDIO\\FUNC_01&VEN_0000&DEV_0000&SUBSYS_00000000&REV_0000\\0&DEADBEEF&0&DEAD";
     rec->manufacturer = L"The Wine Project";
     rec->name = L"Wine Audio Device";
-    rec->pnpdeviceid = get_sounddevice_pnpdeviceid( &desc );
+    rec->pnpdeviceid = rec->deviceid;
     rec->productname = L"Wine Audio Device";
     rec->status = L"OK";
     rec->statusinfo = 3;
