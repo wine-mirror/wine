@@ -2359,13 +2359,28 @@ found:
     return TRUE;
 }
 
+BOOL symt_match_stringAW(const char *string, const WCHAR *re, BOOL _case)
+{
+    WCHAR*      strW;
+    BOOL        ret = FALSE;
+    DWORD       sz;
+
+    sz = MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0);
+    if ((strW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+    {
+        MultiByteToWideChar(CP_ACP, 0, string, -1, strW, sz);
+        ret = SymMatchStringW(strW, re, _case);
+        HeapFree(GetProcessHeap(), 0, strW);
+    }
+    return ret;
+}
+
 /******************************************************************
  *		SymMatchStringA (DBGHELP.@)
  *
  */
 BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
 {
-    WCHAR*      strW;
     WCHAR*      reW;
     BOOL        ret = FALSE;
     DWORD       sz;
@@ -2377,17 +2392,13 @@ BOOL WINAPI SymMatchStringA(PCSTR string, PCSTR re, BOOL _case)
     }
     TRACE("%s %s %c\n", debugstr_a(string), debugstr_a(re), _case ? 'Y' : 'N');
 
-    sz = MultiByteToWideChar(CP_ACP, 0, string, -1, NULL, 0);
-    if ((strW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
-        MultiByteToWideChar(CP_ACP, 0, string, -1, strW, sz);
     sz = MultiByteToWideChar(CP_ACP, 0, re, -1, NULL, 0);
     if ((reW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
+    {
         MultiByteToWideChar(CP_ACP, 0, re, -1, reW, sz);
-
-    if (strW && reW)
-        ret = SymMatchStringW(strW, reW, _case);
-    HeapFree(GetProcessHeap(), 0, strW);
-    HeapFree(GetProcessHeap(), 0, reW);
+        ret = symt_match_stringAW(string, reW, _case);
+        HeapFree(GetProcessHeap(), 0, reW);
+    }
     return ret;
 }
 
@@ -2555,20 +2566,10 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
             if (dli->is_source_file)
             {
                 file = source_get(pair.effective, dli->u.source_file);
-                if (!file) sci.FileName[0] = '\0';
+                if (file && symt_match_stringAW(file, srcmask, FALSE))
+                    strcpy(sci.FileName, file);
                 else
-                {
-                    DWORD   sz = MultiByteToWideChar(CP_ACP, 0, file, -1, NULL, 0);
-                    WCHAR*  fileW;
-
-                    if ((fileW = HeapAlloc(GetProcessHeap(), 0, sz * sizeof(WCHAR))))
-                        MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, sz);
-                    if (SymMatchStringW(fileW, srcmask, FALSE))
-                        strcpy(sci.FileName, file);
-                    else
-                        sci.FileName[0] = '\0';
-                    HeapFree(GetProcessHeap(), 0, fileW);
-                }
+                    sci.FileName[0] = '\0';
             }
             else if (sci.FileName[0])
             {
