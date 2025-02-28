@@ -2268,7 +2268,7 @@ static void test_topology_loader(void)
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 2 * 4 * 44100),
         ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 4 * 8),
-        ATTR_UINT32(MF_MT_AUDIO_CHANNEL_MASK, 3),
+        ATTR_UINT32(MF_MT_AUDIO_CHANNEL_MASK, 3, .todo = TRUE),
         ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
     };
     static const media_type_desc video_i420_1280 =
@@ -2457,14 +2457,12 @@ static void test_topology_loader(void)
             .input_type = &audio_mp3_44100, .output_type = &audio_pcm_44100, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .current_input = &audio_mp3_44100,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject,
-            .flags = LOADER_TODO,
         },
         {
             /* MP3 -> PCM, need both decoder and converter */
             .input_type = &audio_mp3_44100, .output_type = &audio_float_48000, .sink_method = MF_CONNECT_ALLOW_DECODER, .source_method = -1,
             .current_input = &audio_mp3_44100, .decoded_type = &audio_float_44100_stereo,
             .expected_result = S_OK, .decoder_class = CLSID_CMP3DecMediaObject, .converter_class = CLSID_CResamplerMediaObject,
-            .flags = LOADER_TODO,
         },
 
         {
@@ -2776,7 +2774,6 @@ todo_wine {
 
             hr = IMFTopology_GetNodeCount(full_topology, &node_count);
             ok(hr == S_OK, "Failed to get node count, hr %#lx.\n", hr);
-            todo_wine_if(IsEqualGUID(&test->decoder_class, &CLSID_CMP3DecMediaObject))
             ok(node_count == count, "Unexpected node count %u.\n", node_count);
 
             hr = IMFTopologyNode_GetTopoNodeID(src_node, &node_id);

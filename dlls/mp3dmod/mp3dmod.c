@@ -30,6 +30,9 @@
 #include "dmo.h"
 #include "rpcproxy.h"
 #include "wmcodecdsp.h"
+#include "mfapi.h"
+#include "mferror.h"
+#include "mftransform.h"
 #include "wine/debug.h"
 
 #include "initguid.h"
@@ -44,6 +47,7 @@ struct mp3_decoder
 {
     IUnknown IUnknown_inner;
     IMediaObject IMediaObject_iface;
+    IMFTransform IMFTransform_iface;
     IUnknown *outer;
     LONG ref;
     mpg123_handle *mh;
@@ -53,6 +57,8 @@ struct mp3_decoder
 
     IMediaBuffer *buffer;
     REFERENCE_TIME timestamp;
+
+    BOOL draining;
 };
 
 static inline struct mp3_decoder *impl_from_IUnknown(IUnknown *iface)
@@ -70,6 +76,8 @@ static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID iid, void *
         *obj = &This->IUnknown_inner;
     else if (IsEqualGUID(iid, &IID_IMediaObject))
         *obj = &This->IMediaObject_iface;
+    else if (IsEqualGUID(iid, &IID_IMFTransform))
+        *obj = &This->IMFTransform_iface;
     else
     {
         FIXME("no interface for %s\n", debugstr_guid(iid));
@@ -634,6 +642,532 @@ static const IMediaObjectVtbl MediaObject_vtbl = {
     MediaObject_Lock,
 };
 
+static HRESULT convert_dmo_to_mf_error(HRESULT dmo_error)
+{
+    switch (dmo_error)
+    {
+        case DMO_E_INVALIDSTREAMINDEX:
+            return MF_E_INVALIDSTREAMNUMBER;
+
+        case DMO_E_INVALIDTYPE:
+        case DMO_E_TYPE_NOT_ACCEPTED:
+            return MF_E_INVALIDMEDIATYPE;
+
+        case DMO_E_TYPE_NOT_SET:
+            return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+        case DMO_E_NOTACCEPTING:
+            return MF_E_NOTACCEPTING;
+
+        case DMO_E_NO_MORE_ITEMS:
+            return MF_E_NO_MORE_TYPES;
+    }
+
+    return dmo_error;
+}
+
+static inline struct mp3_decoder *impl_from_IMFTransform(IMFTransform *iface)
+{
+    return CONTAINING_RECORD(iface, struct mp3_decoder, IMFTransform_iface);
+}
+
+static HRESULT WINAPI MFTransform_QueryInterface(IMFTransform *iface, REFIID iid, void **obj)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    return IUnknown_QueryInterface(decoder->outer, iid, obj);
+}
+
+static ULONG WINAPI MFTransform_AddRef(IMFTransform *iface)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    return IUnknown_AddRef(decoder->outer);
+}
+
+static ULONG WINAPI MFTransform_Release(IMFTransform *iface)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    return IUnknown_Release(decoder->outer);
+}
+
+static HRESULT WINAPI MFTransform_GetStreamLimits(IMFTransform *iface, DWORD *input_minimum,
+        DWORD *input_maximum, DWORD *output_minimum, DWORD *output_maximum)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, input_minimum %p, input_maximum %p, output_minimum %p, output_maximum %p.\n",
+            iface, input_minimum, input_maximum, output_minimum, output_maximum);
+    IMediaObject_GetStreamCount(&decoder->IMediaObject_iface, input_minimum, output_minimum);
+    *input_maximum = *input_minimum;
+    *output_maximum = *output_minimum;
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_GetStreamCount(IMFTransform *iface, DWORD *inputs, DWORD *outputs)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+
+    TRACE("iface %p, inputs %p, outputs %p.\n", iface, inputs, outputs);
+    IMediaObject_GetStreamCount(&decoder->IMediaObject_iface, inputs, outputs);
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_GetStreamIDs(IMFTransform *iface, DWORD input_size, DWORD *inputs,
+        DWORD output_size, DWORD *outputs)
+{
+    FIXME("iface %p, input_size %lu, inputs %p, output_size %lu, outputs %p stub!\n", iface,
+            input_size, inputs, output_size, outputs);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_GetInputStreamInfo(IMFTransform *iface, DWORD id, MFT_INPUT_STREAM_INFO *info)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    memset(info, 0, sizeof(*info));
+
+    /* Doc says: If not implemented, assume zero latency. */
+    if (FAILED(hr = IMediaObject_GetInputMaxLatency(&decoder->IMediaObject_iface, id, &info->hnsMaxLatency)) && hr != E_NOTIMPL)
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = IMediaObject_GetInputStreamInfo(&decoder->IMediaObject_iface, id, &info->dwFlags)))
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = IMediaObject_GetInputSizeInfo(&decoder->IMediaObject_iface, id, &info->cbSize, &info->cbMaxLookahead, &info->cbAlignment)))
+        return convert_dmo_to_mf_error(hr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    memset(info, 0, sizeof(*info));
+
+    if (FAILED(hr = IMediaObject_GetOutputStreamInfo(&decoder->IMediaObject_iface, id, &info->dwFlags)))
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = IMediaObject_GetOutputSizeInfo(&decoder->IMediaObject_iface, id, &info->cbSize, &info->cbAlignment)))
+        return convert_dmo_to_mf_error(hr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)
+{
+    TRACE("iface %p, attributes %p.\n", iface, attributes);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_GetInputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    TRACE("iface %p, id %#lx, attributes %p.\n", iface, id, attributes);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_GetOutputStreamAttributes(IMFTransform *iface, DWORD id, IMFAttributes **attributes)
+{
+    TRACE("iface %p, id %#lx, attributes %p.\n", iface, id, attributes);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_DeleteInputStream(IMFTransform *iface, DWORD id)
+{
+    TRACE("iface %p, id %#lx.\n", iface, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_AddInputStreams(IMFTransform *iface, DWORD streams, DWORD *ids)
+{
+    TRACE("iface %p, streams %lu, ids %p.\n", iface, streams, ids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_GetInputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE pt;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+
+    if (FAILED(hr = IMediaObject_GetInputType(&decoder->IMediaObject_iface, id, index, &pt)))
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = MFCreateMediaType(type)))
+        return hr;
+
+    return MFInitMediaTypeFromAMMediaType(*type, (AM_MEDIA_TYPE*)&pt);
+}
+
+static HRESULT WINAPI MFTransform_GetOutputAvailableType(IMFTransform *iface, DWORD id, DWORD index,
+        IMFMediaType **type)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    UINT32 bps, block_align, num_channels;
+    const WAVEFORMATEX *input_format;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, index %#lx, type %p.\n", iface, id, index, type);
+
+    if (id)
+        return MF_E_INVALIDSTREAMNUMBER;
+
+    if (!decoder->intype_set)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    input_format = (WAVEFORMATEX *)decoder->intype.pbFormat;
+
+    if (index >= 6 || (input_format->nChannels != 2 && index >= 3))
+        return MF_E_NO_MORE_TYPES;
+
+    if (FAILED(hr = MFCreateMediaType(type)))
+        return hr;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(*type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetGUID(*type, &MF_MT_SUBTYPE, index % 3 ? &MFAudioFormat_PCM : &MFAudioFormat_Float)))
+        goto fail;
+
+    if (index % 3 == 0)
+        bps = 32;
+    else if (index % 3 == 1)
+        bps = 16;
+    else
+        bps = 8;
+
+    num_channels = index / 3 ? 1 : input_format->nChannels;
+    block_align = bps/8 * num_channels;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_AUDIO_BITS_PER_SAMPLE, bps)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_AUDIO_NUM_CHANNELS, num_channels)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_AUDIO_SAMPLES_PER_SECOND, input_format->nSamplesPerSec)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, input_format->nSamplesPerSec * block_align)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, block_align)))
+        goto fail;
+
+    if (FAILED(hr = IMFMediaType_SetUINT32(*type, &MF_MT_ALL_SAMPLES_INDEPENDENT, 1)))
+        goto fail;
+
+    return S_OK;
+
+fail:
+    IMFMediaType_Release(*type);
+    return hr;
+}
+static HRESULT WINAPI MFTransform_SetInputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (!type)
+        flags |= DMO_SET_TYPEF_CLEAR;
+    else if (FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, GUID_NULL, (AM_MEDIA_TYPE*)&mt)))
+        return hr;
+
+    hr = IMediaObject_SetInputType(&decoder->IMediaObject_iface, id, &mt, flags);
+
+    if (hr == S_FALSE)
+        return MF_E_INVALIDMEDIATYPE;
+    else if (FAILED(hr))
+        return convert_dmo_to_mf_error(hr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_SetOutputType(IMFTransform *iface, DWORD id, IMFMediaType *type, DWORD flags)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, type %p, flags %#lx.\n", iface, id, type, flags);
+
+    if (!type)
+        flags |= DMO_SET_TYPEF_CLEAR;
+    else if (FAILED(hr = MFInitAMMediaTypeFromMFMediaType(type, GUID_NULL, (AM_MEDIA_TYPE*)&mt)))
+        return hr;
+
+    hr = IMediaObject_SetOutputType(&decoder->IMediaObject_iface, id, &mt, flags);
+
+    if (hr == S_FALSE)
+        return MF_E_INVALIDMEDIATYPE;
+    else if (FAILED(hr))
+        return convert_dmo_to_mf_error(hr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_GetInputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **out)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, out %p.\n", iface, id, out);
+
+    if (FAILED(hr = IMediaObject_GetInputCurrentType(&decoder->IMediaObject_iface, id, &mt)))
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = MFCreateMediaType(out)))
+        return hr;
+
+    return MFInitMediaTypeFromAMMediaType(*out, (AM_MEDIA_TYPE*)&mt);
+}
+
+static HRESULT WINAPI MFTransform_GetOutputCurrentType(IMFTransform *iface, DWORD id, IMFMediaType **out)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_MEDIA_TYPE mt;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, out %p.\n", iface, id, out);
+
+    if (FAILED(hr = IMediaObject_GetOutputCurrentType(&decoder->IMediaObject_iface, id, &mt)))
+        return convert_dmo_to_mf_error(hr);
+
+    if (FAILED(hr = MFCreateMediaType(out)))
+        return hr;
+
+    return MFInitMediaTypeFromAMMediaType(*out, (AM_MEDIA_TYPE*)&mt);
+}
+
+static HRESULT WINAPI MFTransform_GetInputStatus(IMFTransform *iface, DWORD id, DWORD *flags)
+{
+
+    FIXME("iface %p, id %#lx, flags %p stub!\n", iface, id, flags);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_GetOutputStatus(IMFTransform *iface, DWORD *flags)
+{
+    FIXME("iface %p, flags %p stub!\n", iface, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_SetOutputBounds(IMFTransform *iface, LONGLONG lower, LONGLONG upper)
+{
+    FIXME("iface %p, lower %I64d, upper %I64d stub!\n", iface, lower, upper);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_ProcessEvent(IMFTransform *iface, DWORD id, IMFMediaEvent *event)
+{
+    FIXME("iface %p, id %#lx, event %p stub!\n", iface, id, event);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MFTransform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_TYPE message, ULONG_PTR param)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, message %#x, param %p stub!\n", iface, message, (void *)param);
+
+    switch(message)
+    {
+        case MFT_MESSAGE_COMMAND_FLUSH:
+            if (FAILED(hr = IMediaObject_Flush(&decoder->IMediaObject_iface)))
+                return convert_dmo_to_mf_error(hr);
+            break;
+        case MFT_MESSAGE_COMMAND_DRAIN:
+            decoder->draining = TRUE;
+            break;
+
+        case MFT_MESSAGE_NOTIFY_BEGIN_STREAMING:
+        case MFT_MESSAGE_NOTIFY_START_OF_STREAM:
+            if (FAILED(hr = IMediaObject_AllocateStreamingResources(&decoder->IMediaObject_iface)))
+                return convert_dmo_to_mf_error(hr);
+            break;
+
+        case MFT_MESSAGE_NOTIFY_END_OF_STREAM:
+        case MFT_MESSAGE_NOTIFY_END_STREAMING:
+            if (FAILED(hr = IMediaObject_FreeStreamingResources(&decoder->IMediaObject_iface)))
+                return convert_dmo_to_mf_error(hr);
+            break;
+
+        default:
+            FIXME("message %#x stub!\n", message);
+            break;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    LONGLONG sample_time, duration;
+    IMediaBuffer *dmo_buffer;
+    IMFMediaBuffer *buffer;
+    UINT32 discontinuity;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, sample %p, flags %#lx.\n", iface, id, sample, flags);
+
+    if (decoder->draining)
+        return MF_E_NOTACCEPTING;
+
+    if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_Discontinuity, &discontinuity)) && discontinuity)
+    {
+        if (FAILED(hr = IMediaObject_Discontinuity(&decoder->IMediaObject_iface, id)))
+            return convert_dmo_to_mf_error(hr);
+    }
+
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
+        return hr;
+
+    hr = MFCreateLegacyMediaBufferOnMFMediaBuffer(sample, buffer, 0, &dmo_buffer);
+    IMFMediaBuffer_Release(buffer);
+    if (FAILED(hr))
+        return hr;
+
+    flags = 0;
+
+    if (SUCCEEDED(IMFSample_GetSampleTime(sample, &sample_time)))
+        flags |= DMO_INPUT_DATA_BUFFERF_TIME;
+
+    if (SUCCEEDED(IMFSample_GetSampleDuration(sample, &duration)))
+        flags |= DMO_INPUT_DATA_BUFFERF_TIMELENGTH;
+
+    hr = IMediaObject_ProcessInput(&decoder->IMediaObject_iface, id, dmo_buffer, flags, sample_time, duration);
+    IMediaBuffer_Release(dmo_buffer);
+    if (FAILED(hr))
+        return convert_dmo_to_mf_error(hr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI MFTransform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
+        MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
+{
+    struct mp3_decoder *decoder = impl_from_IMFTransform(iface);
+    DMO_OUTPUT_DATA_BUFFER *dmo_output;
+    IMFMediaBuffer *buffer;
+    HRESULT hr;
+    int i;
+
+    TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
+
+    if (count > 1)
+    {
+        FIXME("Multiple buffers not handled.\n");
+        return E_INVALIDARG;
+    }
+
+    dmo_output = calloc(count, sizeof(*dmo_output));
+    if (!dmo_output)
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; i++)
+    {
+        if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(samples[i].pSample, &buffer)))
+            goto fail;
+
+        hr = MFCreateLegacyMediaBufferOnMFMediaBuffer(samples[i].pSample, buffer, 0, &dmo_output[i].pBuffer);
+        IMFMediaBuffer_Release(buffer);
+        if (FAILED(hr))
+            goto fail;
+    }
+
+    hr = IMediaObject_ProcessOutput(&decoder->IMediaObject_iface, flags, count, dmo_output, status);
+
+    for (i = 0; i < count; i++)
+        IMediaBuffer_Release(dmo_output[i].pBuffer);
+
+    if (FAILED(hr))
+    {
+        free(dmo_output);
+        return convert_dmo_to_mf_error(hr);
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (dmo_output[i].dwStatus & DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT)
+            IMFSample_SetUINT32(samples[i].pSample, &MFSampleExtension_CleanPoint, 1);
+
+        if (dmo_output[i].dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIME)
+            IMFSample_SetSampleTime(samples[i].pSample, dmo_output[i].rtTimestamp);
+
+        if (dmo_output[i].dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH)
+            IMFSample_SetSampleDuration(samples[i].pSample, dmo_output[i].rtTimelength);
+
+        if (dmo_output[i].dwStatus & DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE)
+            samples[i].dwStatus |= MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
+    }
+
+    free(dmo_output);
+
+    if (hr == S_FALSE)
+    {
+        decoder->draining = FALSE;
+        return MF_E_TRANSFORM_NEED_MORE_INPUT;
+    }
+
+    return S_OK;
+
+fail:
+    for (i = 0; i < count; i++)
+    {
+        if (dmo_output[i].pBuffer)
+            IMediaBuffer_Release(dmo_output[i].pBuffer);
+    }
+    free(dmo_output);
+
+    return hr;
+}
+
+static const IMFTransformVtbl IMFTransform_vtbl =
+{
+    MFTransform_QueryInterface,
+    MFTransform_AddRef,
+    MFTransform_Release,
+    MFTransform_GetStreamLimits,
+    MFTransform_GetStreamCount,
+    MFTransform_GetStreamIDs,
+    MFTransform_GetInputStreamInfo,
+    MFTransform_GetOutputStreamInfo,
+    MFTransform_GetAttributes,
+    MFTransform_GetInputStreamAttributes,
+    MFTransform_GetOutputStreamAttributes,
+    MFTransform_DeleteInputStream,
+    MFTransform_AddInputStreams,
+    MFTransform_GetInputAvailableType,
+    MFTransform_GetOutputAvailableType,
+    MFTransform_SetInputType,
+    MFTransform_SetOutputType,
+    MFTransform_GetInputCurrentType,
+    MFTransform_GetOutputCurrentType,
+    MFTransform_GetInputStatus,
+    MFTransform_GetOutputStatus,
+    MFTransform_SetOutputBounds,
+    MFTransform_ProcessEvent,
+    MFTransform_ProcessMessage,
+    MFTransform_ProcessInput,
+    MFTransform_ProcessOutput,
+};
+
 static HRESULT create_mp3_decoder(IUnknown *outer, REFIID iid, void **obj)
 {
     struct mp3_decoder *This;
@@ -645,6 +1179,7 @@ static HRESULT create_mp3_decoder(IUnknown *outer, REFIID iid, void **obj)
 
     This->IUnknown_inner.lpVtbl = &Unknown_vtbl;
     This->IMediaObject_iface.lpVtbl = &MediaObject_vtbl;
+    This->IMFTransform_iface.lpVtbl = &IMFTransform_vtbl;
     This->ref = 1;
     This->outer = outer ? outer : &This->IUnknown_inner;
 
@@ -733,6 +1268,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **obj)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    MFT_REGISTER_TYPE_INFO mf_in, mf_out;
     DMO_PARTIAL_MEDIATYPE in, out;
     HRESULT hr;
 
@@ -740,8 +1276,15 @@ HRESULT WINAPI DllRegisterServer(void)
     in.subtype = WMMEDIASUBTYPE_MP3;
     out.type = WMMEDIATYPE_Audio;
     out.subtype = WMMEDIASUBTYPE_PCM;
+    mf_in.guidMajorType = MFMediaType_Audio;
+    mf_in.guidSubtype = MFAudioFormat_MP3;
+    mf_out.guidMajorType = MFMediaType_Audio;
+    mf_out.guidSubtype = MFAudioFormat_PCM;
     hr = DMORegister(L"MP3 Decoder DMO", &CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER,
         0, 1, &in, 1, &out);
+    if (FAILED(hr)) return hr;
+    hr = MFTRegister(CLSID_CMP3DecMediaObject, MFT_CATEGORY_AUDIO_DECODER, (LPWSTR) L"MP3 Decoder MFT",
+        0, 1, &mf_in, 1, &mf_out, NULL);
     if (FAILED(hr)) return hr;
 
     return __wine_register_resources();
@@ -755,6 +1298,8 @@ HRESULT WINAPI DllUnregisterServer(void)
     HRESULT hr;
 
     hr = DMOUnregister(&CLSID_CMP3DecMediaObject, &DMOCATEGORY_AUDIO_DECODER);
+    if (FAILED(hr)) return hr;
+    hr = MFTUnregister(CLSID_CMP3DecMediaObject);
     if (FAILED(hr)) return hr;
 
     return __wine_unregister_resources();

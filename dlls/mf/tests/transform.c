@@ -1345,7 +1345,7 @@ static DWORD check_mf_media_buffer_(const char *file, int line, IMFMediaBuffer *
     if (*expect_data)
     {
         if (*expect_data_len < length)
-            todo_wine_if(expect->todo_length)
+            todo_wine_if(expect->todo_length || expect->todo_data)
             ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
         else if (!expect->compare)
             diff = compare_bytes(data, &length, NULL, NULL, *expect_data);
@@ -1430,6 +1430,7 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     todo_wine_if(expect->todo_length)
     ok_(file, line)(total_length == expect_length,
             "got total length %#lx\n", total_length);
+    todo_wine_if(expect->todo_data)
     ok_(file, line)(!*expect_data || *expect_data_len >= expect_length,
             "missing %#lx data\n", expect_length - *expect_data_len);
 
@@ -9120,8 +9121,9 @@ static void test_mp3_decoder(void)
 
     const struct buffer_desc output_buffer_desc[] =
     {
-        {.length = 0x9c0, .compare = compare_pcm16},
+        {.length = 0x9c0, .compare = compare_pcm16, .todo_length = TRUE},
         {.length = mp3dec_block_size, .compare = compare_pcm16},
+        {.length = mp3dec_block_size, .compare = compare_pcm16, .todo_data = TRUE},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -9135,16 +9137,19 @@ static void test_mp3_decoder(void)
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 282993,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
+            .todo_length = TRUE, .todo_duration = TRUE,
         },
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 282993, .sample_duration = 522449,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 18,
+            .todo_time = TRUE,
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
             .sample_time = 10209524, .sample_duration = 522449,
-            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+            .buffer_count = 1, .buffers = output_buffer_desc + 2,
+            .todo_time = TRUE, .todo_data = TRUE,
         },
     };
 
@@ -9198,9 +9203,7 @@ static void test_mp3_decoder(void)
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == ARRAY_SIZE(expect_available_inputs), "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
@@ -9295,6 +9298,7 @@ static void test_mp3_decoder(void)
     else
     {
         ret = check_mf_sample_collection(output_samples, output_sample_desc, L"mp3decdata.bin");
+        todo_wine
         ok(ret == 0, "got %lu%% diff\n", ret);
     }
     IMFCollection_Release(output_samples);
