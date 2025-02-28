@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for ZapfChancery-MediumItalic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  220 },
     { 0x0021,  280 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  340 },
     { 0x00ac,  520 },
     { 0x00ae,  740 },
+    { 0x00af,  440 },
     { 0x00b0,  400 },
     { 0x00b1,  520 },
     { 0x00b2,  264 },
     { 0x00b3,  264 },
     { 0x00b4,  300 },
+    { 0x00b5,  458 },
     { 0x00b6,  500 },
     { 0x00b7,  220 },
     { 0x00b8,  300 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  440 },
     { 0x02c6,  340 },
     { 0x02c7,  340 },
-    { 0x02c9,  440 },
     { 0x02d8,  440 },
     { 0x02d9,  220 },
     { 0x02da,  300 },
     { 0x02db,  280 },
     { 0x02dc,  440 },
     { 0x02dd,  400 },
-    { 0x03bc,  460 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  240 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030,  960 },
     { 0x2039,  240 },
     { 0x203a,  260 },
+    { 0x2044,   60 },
+    { 0x20ac,  440 },
     { 0x2122, 1000 },
     { 0x2212,  520 },
-    { 0x2215,   60 },
     { 0xfb01,  520 },
     { 0xfb02,  520 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_ZapfChancery_MediumItalic =
 {
-    "ZapfChancery-MediumItalic",	    /* FontName */
-    L"ITC Zapf Chancery",		    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    -14,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -181, -314, 1065, 831 },		    /* FontBBox */
+    "ZapfChancery-MediumItalic", /* FontName */
+    L"ITC Zapf Chancery", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    -14, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -181, -314, 1065, 831 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	790,				    /* WinMetrics.sAscender */
-	-303,				    /* WinMetrics.sDescender */
-	29,				    /* WinMetrics.sLineGap */
-	350,				    /* WinMetrics.sAvgCharWidth */
-	790,				    /* WinMetrics.usWinAscent */
-	303				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        750,  /* WinMetrics.sAscender */
+        -314,  /* WinMetrics.sDescender */
+        86,  /* WinMetrics.sLineGap */
+        350,  /* WinMetrics.sAvgCharWidth */
+        750,  /* WinMetrics.usWinAscent */
+        314,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

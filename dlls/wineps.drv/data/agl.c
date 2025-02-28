@@ -1,43 +1,56 @@
-/*******************************************************************************
- *
- *	Font and glyph data for the Wine PostScript driver
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	This data is derived from the Adobe Glyph list at
- *
- *	    http://partners.adobe.com/asn/developer/type/glyphlist.txt
- *
- *	and the Adobe Font Metrics files at
- *
- *	    ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles/base35/
- *
- *	which are Copyright 1985-1998 Adobe Systems Incorporated.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
-#include "data/agl.h"
 
-
-/*
- *  Built-in font metrics
- */
+extern const AFM PSDRV_AvantGarde_Book;
+extern const AFM PSDRV_AvantGarde_BookOblique;
+extern const AFM PSDRV_AvantGarde_Demi;
+extern const AFM PSDRV_AvantGarde_DemiOblique;
+extern const AFM PSDRV_Bookman_Demi;
+extern const AFM PSDRV_Bookman_DemiItalic;
+extern const AFM PSDRV_Bookman_Light;
+extern const AFM PSDRV_Bookman_LightItalic;
+extern const AFM PSDRV_Courier;
+extern const AFM PSDRV_Courier_Bold;
+extern const AFM PSDRV_Courier_BoldOblique;
+extern const AFM PSDRV_Courier_Oblique;
+extern const AFM PSDRV_Helvetica;
+extern const AFM PSDRV_Helvetica_Bold;
+extern const AFM PSDRV_Helvetica_BoldOblique;
+extern const AFM PSDRV_Helvetica_Narrow;
+extern const AFM PSDRV_Helvetica_Narrow_Bold;
+extern const AFM PSDRV_Helvetica_Narrow_BoldOblique;
+extern const AFM PSDRV_Helvetica_Narrow_Oblique;
+extern const AFM PSDRV_Helvetica_Oblique;
+extern const AFM PSDRV_NewCenturySchlbk_Bold;
+extern const AFM PSDRV_NewCenturySchlbk_BoldItalic;
+extern const AFM PSDRV_NewCenturySchlbk_Italic;
+extern const AFM PSDRV_NewCenturySchlbk_Roman;
+extern const AFM PSDRV_Palatino_Bold;
+extern const AFM PSDRV_Palatino_BoldItalic;
+extern const AFM PSDRV_Palatino_Italic;
+extern const AFM PSDRV_Palatino_Roman;
+extern const AFM PSDRV_Symbol;
+extern const AFM PSDRV_Times_Bold;
+extern const AFM PSDRV_Times_BoldItalic;
+extern const AFM PSDRV_Times_Italic;
+extern const AFM PSDRV_Times_Roman;
+extern const AFM PSDRV_ZapfChancery_MediumItalic;
+extern const AFM PSDRV_ZapfDingbats;
 
 const AFM *const PSDRV_BuiltinAFMs[] =
 {
-    &PSDRV_AvantGarde_Demi,
-    &PSDRV_AvantGarde_DemiOblique,
     &PSDRV_AvantGarde_Book,
     &PSDRV_AvantGarde_BookOblique,
+    &PSDRV_AvantGarde_Demi,
+    &PSDRV_AvantGarde_DemiOblique,
     &PSDRV_Bookman_Demi,
     &PSDRV_Bookman_DemiItalic,
     &PSDRV_Bookman_Light,
     &PSDRV_Bookman_LightItalic,
+    &PSDRV_Courier,
     &PSDRV_Courier_Bold,
     &PSDRV_Courier_BoldOblique,
-    &PSDRV_Courier,
     &PSDRV_Courier_Oblique,
     &PSDRV_Helvetica,
     &PSDRV_Helvetica_Bold,

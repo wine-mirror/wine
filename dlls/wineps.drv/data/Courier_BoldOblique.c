@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Courier-BoldOblique
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[243] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  600 },
     { 0x0021,  600 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[243] =
     { 0x00ab,  600 },
     { 0x00ac,  600 },
     { 0x00ae,  600 },
+    { 0x00af,  600 },
     { 0x00b0,  600 },
     { 0x00b1,  600 },
     { 0x00b2,  600 },
     { 0x00b3,  600 },
     { 0x00b4,  600 },
+    { 0x00b5,  600 },
     { 0x00b6,  600 },
     { 0x00b7,  600 },
     { 0x00b8,  600 },
@@ -206,31 +199,24 @@ static const AFMMETRICS metrics[243] =
     { 0x00fe,  600 },
     { 0x00ff,  600 },
     { 0x0131,  600 },
-    { 0x0132,  600 },
-    { 0x0133,  600 },
     { 0x0141,  600 },
     { 0x0142,  600 },
     { 0x0152,  600 },
     { 0x0153,  600 },
-    { 0x015e,  600 },
     { 0x0160,  600 },
     { 0x0161,  600 },
     { 0x0178,  600 },
     { 0x017d,  600 },
     { 0x017e,  600 },
     { 0x0192,  600 },
-    { 0x01e6,  600 },
-    { 0x01e7,  600 },
     { 0x02c6,  600 },
     { 0x02c7,  600 },
-    { 0x02c9,  600 },
     { 0x02d8,  600 },
     { 0x02d9,  600 },
     { 0x02da,  600 },
     { 0x02db,  600 },
     { 0x02dc,  600 },
     { 0x02dd,  600 },
-    { 0x03bc,  600 },
     { 0x2013,  600 },
     { 0x2014,  600 },
     { 0x2018,  600 },
@@ -246,19 +232,10 @@ static const AFMMETRICS metrics[243] =
     { 0x2030,  600 },
     { 0x2039,  600 },
     { 0x203a,  600 },
-    { 0x20a4,  600 },
-    { 0x211e,  600 },
+    { 0x2044,  600 },
+    { 0x20ac,  600 },
     { 0x2122,  600 },
-    { 0x2190,  600 },
-    { 0x2191,  600 },
-    { 0x2192,  600 },
-    { 0x2193,  600 },
-    { 0x2194,  600 },
     { 0x2212,  600 },
-    { 0x2215,  600 },
-    { 0xf6bf,  600 },
-    { 0xf6c0,  600 },
-    { 0xf6c2,  600 },
     { 0xfb01,  600 },
     { 0xfb02,  600 },
 };
@@ -270,22 +247,22 @@ static const AFMMETRICS metrics[243] =
 
 const AFM PSDRV_Courier_BoldOblique =
 {
-    "Courier-BoldOblique",		    /* FontName */
-    L"Courier",				    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_BOLD,				    /* Weight */
-    -12,				    /* ItalicAngle */
-    TRUE,				    /* IsFixedPitch */
-    { -56, -250, 868, 801 },		    /* FontBBox */
+    "Courier-BoldOblique", /* FontName */
+    L"Courier", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_BOLD, /* Weight */
+    -11, /* ItalicAngle */
+    TRUE, /* IsFixedPitch */
+    { -49, -249, 758, 811 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	833,				    /* WinMetrics.sAscender */
-	-300,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	600,				    /* WinMetrics.sAvgCharWidth */
-	833,				    /* WinMetrics.usWinAscent */
-	300				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        764,  /* WinMetrics.sAscender */
+        -249,  /* WinMetrics.sDescender */
+        137,  /* WinMetrics.sLineGap */
+        600,  /* WinMetrics.sAvgCharWidth */
+        764,  /* WinMetrics.usWinAscent */
+        249,  /* WinMetrics.usWinDescent */
     },
-    243,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

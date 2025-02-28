@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for AvantGarde-DemiOblique
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  280 },
     { 0x0021,  280 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  460 },
     { 0x00ac,  600 },
     { 0x00ae,  740 },
+    { 0x00af,  420 },
     { 0x00b0,  400 },
     { 0x00b1,  600 },
     { 0x00b2,  336 },
     { 0x00b3,  336 },
     { 0x00b4,  420 },
+    { 0x00b5,  600 },
     { 0x00b6,  600 },
     { 0x00b7,  280 },
     { 0x00b8,  340 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  560 },
     { 0x02c6,  540 },
     { 0x02c7,  540 },
-    { 0x02c9,  420 },
     { 0x02d8,  480 },
     { 0x02d9,  280 },
     { 0x02da,  360 },
     { 0x02db,  340 },
     { 0x02dc,  480 },
     { 0x02dd,  700 },
-    { 0x03bc,  576 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  280 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1280 },
     { 0x2039,  240 },
     { 0x203a,  240 },
+    { 0x2044,  160 },
+    { 0x20ac,  560 },
     { 0x2122, 1000 },
     { 0x2212,  600 },
-    { 0x2215,  160 },
     { 0xfb01,  520 },
     { 0xfb02,  520 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_AvantGarde_DemiOblique =
 {
-    "AvantGarde-DemiOblique",		    /* FontName */
-    L"ITC Avant Garde Gothic",		    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_BOLD,				    /* Weight */
-    -10.5,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -123, -251, 1256, 1021 },		    /* FontBBox */
+    "AvantGarde-DemiOblique", /* FontName */
+    L"ITC Avant Garde Gothic", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_BOLD, /* Weight */
+    -10.5, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -123, -251, 1256, 1021 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	1006,				    /* WinMetrics.sAscender */
-	-220,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	485,				    /* WinMetrics.sAvgCharWidth */
-	1006,				    /* WinMetrics.usWinAscent */
-	220				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        857,  /* WinMetrics.sAscender */
+        -251,  /* WinMetrics.sDescender */
+        42,  /* WinMetrics.sLineGap */
+        486,  /* WinMetrics.sAvgCharWidth */
+        857,  /* WinMetrics.usWinAscent */
+        251,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

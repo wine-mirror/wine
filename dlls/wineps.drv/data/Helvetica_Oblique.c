@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Helvetica-Oblique
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  278 },
     { 0x0021,  278 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  556 },
     { 0x00ac,  584 },
     { 0x00ae,  737 },
+    { 0x00af,  333 },
     { 0x00b0,  400 },
     { 0x00b1,  584 },
     { 0x00b2,  333 },
     { 0x00b3,  333 },
     { 0x00b4,  333 },
+    { 0x00b5,  578 },
     { 0x00b6,  537 },
     { 0x00b7,  278 },
     { 0x00b8,  333 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  556 },
     { 0x02c6,  333 },
     { 0x02c7,  333 },
-    { 0x02c9,  333 },
     { 0x02d8,  333 },
     { 0x02d9,  333 },
     { 0x02da,  333 },
     { 0x02db,  333 },
     { 0x02dc,  333 },
     { 0x02dd,  333 },
-    { 0x03bc,  556 },
     { 0x2013,  556 },
     { 0x2014, 1000 },
     { 0x2018,  222 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1000 },
     { 0x2039,  333 },
     { 0x203a,  333 },
+    { 0x2044,  167 },
+    { 0x20ac,  556 },
     { 0x2122, 1000 },
     { 0x2212,  584 },
-    { 0x2215,  167 },
     { 0xfb01,  500 },
     { 0xfb02,  500 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Helvetica_Oblique =
 {
-    "Helvetica-Oblique",		    /* FontName */
-    L"Helvetica",			    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    -12,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -170, -225, 1116, 931 },		    /* FontBBox */
+    "Helvetica-Oblique", /* FontName */
+    L"Helvetica", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    -12, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -171, -225, 1116, 931 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	905,				    /* WinMetrics.sAscender */
-	-212,				    /* WinMetrics.sDescender */
-	33,				    /* WinMetrics.sLineGap */
-	441,				    /* WinMetrics.sAvgCharWidth */
-	905,				    /* WinMetrics.usWinAscent */
-	212				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        775,  /* WinMetrics.sAscender */
+        -225,  /* WinMetrics.sDescender */
+        150,  /* WinMetrics.sLineGap */
+        442,  /* WinMetrics.sAvgCharWidth */
+        775,  /* WinMetrics.usWinAscent */
+        225,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

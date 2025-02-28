@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for NewCenturySchlbk-BoldItalic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  287 },
     { 0x0021,  333 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  481 },
     { 0x00ac,  606 },
     { 0x00ae,  747 },
+    { 0x00af,  333 },
     { 0x00b0,  400 },
     { 0x00b1,  606 },
     { 0x00b2,  344 },
     { 0x00b3,  344 },
     { 0x00b4,  333 },
+    { 0x00b5,  685 },
     { 0x00b6,  650 },
     { 0x00b7,  287 },
     { 0x00b8,  333 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  574 },
     { 0x02c6,  333 },
     { 0x02c7,  333 },
-    { 0x02c9,  333 },
     { 0x02d8,  333 },
     { 0x02d9,  333 },
     { 0x02da,  333 },
     { 0x02db,  333 },
     { 0x02dc,  333 },
     { 0x02dd,  333 },
-    { 0x03bc,  685 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  259 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1167 },
     { 0x2039,  278 },
     { 0x203a,  278 },
+    { 0x2044,  167 },
+    { 0x20ac,  574 },
     { 0x2122,  950 },
     { 0x2212,  606 },
-    { 0x2215,  167 },
     { 0xfb01,  685 },
     { 0xfb02,  685 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_NewCenturySchlbk_BoldItalic =
 {
-    "NewCenturySchlbk-BoldItalic",	    /* FontName */
-    L"New Century Schoolbook",		    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_BOLD,				    /* Weight */
-    -16,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -205, -250, 1147, 991 },		    /* FontBBox */
+    "NewCenturySchlbk-BoldItalic", /* FontName */
+    L"New Century Schoolbook", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_BOLD, /* Weight */
+    -16, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -205, -250, 1147, 991 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	986,				    /* WinMetrics.sAscender */
-	-216,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	515,				    /* WinMetrics.sAvgCharWidth */
-	985,				    /* WinMetrics.usWinAscent */
-	216				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        810,  /* WinMetrics.sAscender */
+        -250,  /* WinMetrics.sDescender */
+        90,  /* WinMetrics.sLineGap */
+        515,  /* WinMetrics.sAvgCharWidth */
+        810,  /* WinMetrics.usWinAscent */
+        250,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

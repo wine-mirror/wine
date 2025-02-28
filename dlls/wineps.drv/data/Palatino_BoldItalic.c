@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Palatino-BoldItalic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  250 },
     { 0x0021,  333 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  500 },
     { 0x00ac,  606 },
     { 0x00ae,  747 },
+    { 0x00af,  333 },
     { 0x00b0,  400 },
     { 0x00b1,  606 },
     { 0x00b2,  300 },
     { 0x00b3,  300 },
     { 0x00b4,  333 },
+    { 0x00b5,  541 },
     { 0x00b6,  556 },
     { 0x00b7,  250 },
     { 0x00b8,  333 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  500 },
     { 0x02c6,  333 },
     { 0x02c7,  333 },
-    { 0x02c9,  333 },
     { 0x02d8,  333 },
     { 0x02d9,  333 },
     { 0x02da,  556 },
     { 0x02db,  333 },
     { 0x02dc,  333 },
     { 0x02dd,  333 },
-    { 0x03bc,  556 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  278 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1000 },
     { 0x2039,  333 },
     { 0x203a,  333 },
+    { 0x2044,  167 },
+    { 0x20ac,  500 },
     { 0x2122, 1000 },
     { 0x2212,  606 },
-    { 0x2215,  167 },
     { 0xfb01,  611 },
     { 0xfb02,  611 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Palatino_BoldItalic =
 {
-    "Palatino-BoldItalic",		    /* FontName */
-    L"Palatino",			    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_BOLD,				    /* Weight */
-    -10,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -170, -271, 1073, 926 },		    /* FontBBox */
+    "Palatino-BoldItalic", /* FontName */
+    L"Palatino", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_BOLD, /* Weight */
+    -10, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -170, -271, 1073, 926 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	923,				    /* WinMetrics.sAscender */
-	-282,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	447,				    /* WinMetrics.sAvgCharWidth */
-	922,				    /* WinMetrics.usWinAscent */
-	281				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        750,  /* WinMetrics.sAscender */
+        -271,  /* WinMetrics.sDescender */
+        129,  /* WinMetrics.sLineGap */
+        447,  /* WinMetrics.sAvgCharWidth */
+        750,  /* WinMetrics.usWinAscent */
+        271,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Palatino-Roman
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  250 },
     { 0x0021,  278 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  500 },
     { 0x00ac,  606 },
     { 0x00ae,  747 },
+    { 0x00af,  333 },
     { 0x00b0,  400 },
     { 0x00b1,  606 },
     { 0x00b2,  300 },
     { 0x00b3,  300 },
     { 0x00b4,  333 },
+    { 0x00b5,  574 },
     { 0x00b6,  628 },
     { 0x00b7,  250 },
     { 0x00b8,  333 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  500 },
     { 0x02c6,  333 },
     { 0x02c7,  333 },
-    { 0x02c9,  333 },
     { 0x02d8,  333 },
     { 0x02d9,  250 },
     { 0x02da,  333 },
     { 0x02db,  313 },
     { 0x02dc,  333 },
     { 0x02dd,  380 },
-    { 0x03bc,  603 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  278 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1144 },
     { 0x2039,  331 },
     { 0x203a,  331 },
+    { 0x2044,  167 },
+    { 0x20ac,  500 },
     { 0x2122,  979 },
     { 0x2212,  606 },
-    { 0x2215,  167 },
     { 0xfb01,  605 },
     { 0xfb02,  608 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Palatino_Roman =
 {
-    "Palatino-Roman",			    /* FontName */
-    L"Palatino",			    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    0,					    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -166, -283, 1021, 927 },		    /* FontBBox */
+    "Palatino-Roman", /* FontName */
+    L"Palatino", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    0, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -166, -283, 1021, 927 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	923,				    /* WinMetrics.sAscender */
-	-282,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	445,				    /* WinMetrics.sAvgCharWidth */
-	960,				    /* WinMetrics.usWinAscent */
-	282				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        750,  /* WinMetrics.sAscender */
+        -283,  /* WinMetrics.sDescender */
+        117,  /* WinMetrics.sLineGap */
+        445,  /* WinMetrics.sAvgCharWidth */
+        750,  /* WinMetrics.usWinAscent */
+        283,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

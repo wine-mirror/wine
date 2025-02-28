@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Bookman-DemiItalic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  340 },
     { 0x0021,  320 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  380 },
     { 0x00ac,  620 },
     { 0x00ae,  780 },
+    { 0x00af,  480 },
     { 0x00b0,  400 },
     { 0x00b1,  600 },
     { 0x00b2,  408 },
     { 0x00b3,  408 },
     { 0x00b4,  340 },
+    { 0x00b5,  679 },
     { 0x00b6,  680 },
     { 0x00b7,  340 },
     { 0x00b8,  360 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  680 },
     { 0x02c6,  480 },
     { 0x02c7,  480 },
-    { 0x02c9,  480 },
     { 0x02d8,  460 },
     { 0x02d9,  380 },
     { 0x02da,  360 },
     { 0x02db,  320 },
     { 0x02dc,  480 },
     { 0x02dd,  560 },
-    { 0x03bc,  680 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  320 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1360 },
     { 0x2039,  220 },
     { 0x203a,  220 },
+    { 0x2044,  120 },
+    { 0x20ac,  680 },
     { 0x2122,  940 },
     { 0x2212,  600 },
-    { 0x2215,  120 },
     { 0xfb01,  820 },
     { 0xfb02,  820 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Bookman_DemiItalic =
 {
-    "Bookman-DemiItalic",		    /* FontName */
-    L"ITC Bookman",			    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_BOLD,				    /* Weight */
-    -10,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -231, -250, 1333, 941 },		    /* FontBBox */
+    "Bookman-DemiItalic", /* FontName */
+    L"ITC Bookman", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_BOLD, /* Weight */
+    -10, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -231, -250, 1333, 941 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	942,				    /* WinMetrics.sAscender */
-	-232,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	538,				    /* WinMetrics.sAvgCharWidth */
-	942,				    /* WinMetrics.usWinAscent */
-	231				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        790,  /* WinMetrics.sAscender */
+        -250,  /* WinMetrics.sDescender */
+        110,  /* WinMetrics.sLineGap */
+        538,  /* WinMetrics.sAvgCharWidth */
+        790,  /* WinMetrics.usWinAscent */
+        250,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

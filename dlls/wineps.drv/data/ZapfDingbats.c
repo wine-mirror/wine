@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for ZapfDingbats
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[188] =
+static const AFMMETRICS metrics[202] =
 {
     { 0xf020,  278 },
     { 0xf021,  974 },
@@ -113,6 +104,20 @@ static const AFMMETRICS metrics[188] =
     { 0xf07c,  392 },
     { 0xf07d,  668 },
     { 0xf07e,  668 },
+    { 0xf080,  390 },
+    { 0xf081,  390 },
+    { 0xf082,  317 },
+    { 0xf083,  317 },
+    { 0xf084,  276 },
+    { 0xf085,  276 },
+    { 0xf086,  509 },
+    { 0xf087,  509 },
+    { 0xf088,  410 },
+    { 0xf089,  410 },
+    { 0xf08a,  234 },
+    { 0xf08b,  234 },
+    { 0xf08c,  334 },
+    { 0xf08d,  334 },
     { 0xf0a1,  732 },
     { 0xf0a2,  544 },
     { 0xf0a3,  544 },
@@ -215,22 +220,22 @@ static const AFMMETRICS metrics[188] =
 
 const AFM PSDRV_ZapfDingbats =
 {
-    "ZapfDingbats",			    /* FontName */
-    L"ITC Zapf Dingbats",		    /* FamilyName */
-    L"FontSpecific",			    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    0,					    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -1, -143, 981, 820 },		    /* FontBBox */
+    "ZapfDingbats", /* FontName */
+    L"ITC Zapf Dingbats", /* FamilyName */
+    L"FontSpecific", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    0, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -1, -143, 981, 820 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	801,				    /* WinMetrics.sAscender */
-	-201,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	740,				    /* WinMetrics.sAvgCharWidth */
-	801,				    /* WinMetrics.usWinAscent */
-	201				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        820,  /* WinMetrics.sAscender */
+        -143,  /* WinMetrics.sDescender */
+        187,  /* WinMetrics.sLineGap */
+        746,  /* WinMetrics.sAvgCharWidth */
+        820,  /* WinMetrics.usWinAscent */
+        143,  /* WinMetrics.usWinDescent */
     },
-    188,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    202, /* NumofMetrics */
+    metrics /* Metrics */
 };

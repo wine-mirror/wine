@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Bookman-LightItalic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  300 },
     { 0x0021,  320 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  300 },
     { 0x00ac,  600 },
     { 0x00ae,  740 },
+    { 0x00af,  440 },
     { 0x00b0,  400 },
     { 0x00b1,  600 },
     { 0x00b2,  372 },
     { 0x00b3,  372 },
     { 0x00b4,  320 },
+    { 0x00b5,  640 },
     { 0x00b6,  620 },
     { 0x00b7,  300 },
     { 0x00b8,  320 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  620 },
     { 0x02c6,  440 },
     { 0x02c7,  440 },
-    { 0x02c9,  440 },
     { 0x02d8,  440 },
     { 0x02d9,  260 },
     { 0x02da,  300 },
     { 0x02db,  260 },
     { 0x02dc,  440 },
     { 0x02dd,  340 },
-    { 0x03bc,  620 },
     { 0x2013,  500 },
     { 0x2014, 1000 },
     { 0x2018,  280 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1180 },
     { 0x2039,  180 },
     { 0x203a,  180 },
+    { 0x2044,   20 },
+    { 0x20ac,  620 },
     { 0x2122,  980 },
     { 0x2212,  600 },
-    { 0x2215,   20 },
     { 0xfb01,  640 },
     { 0xfb02,  660 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Bookman_LightItalic =
 {
-    "Bookman-LightItalic",		    /* FontName */
-    L"ITC Bookman",			    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    -10,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -228, -250, 1269, 883 },		    /* FontBBox */
+    "Bookman-LightItalic", /* FontName */
+    L"ITC Bookman", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    -10, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -228, -250, 1269, 883 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	942,				    /* WinMetrics.sAscender */
-	-232,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	482,				    /* WinMetrics.sAvgCharWidth */
-	875,				    /* WinMetrics.usWinAscent */
-	232				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        777,  /* WinMetrics.sAscender */
+        -250,  /* WinMetrics.sDescender */
+        123,  /* WinMetrics.sLineGap */
+        483,  /* WinMetrics.sAvgCharWidth */
+        777,  /* WinMetrics.usWinAscent */
+        250,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

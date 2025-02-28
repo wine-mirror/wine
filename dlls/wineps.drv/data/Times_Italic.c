@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Times-Italic
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[228] =
+static const AFMMETRICS metrics[229] =
 {
     { 0x0020,  250 },
     { 0x0021,  333 },
@@ -126,11 +117,13 @@ static const AFMMETRICS metrics[228] =
     { 0x00ab,  500 },
     { 0x00ac,  675 },
     { 0x00ae,  760 },
+    { 0x00af,  333 },
     { 0x00b0,  400 },
     { 0x00b1,  675 },
     { 0x00b2,  300 },
     { 0x00b3,  300 },
     { 0x00b4,  333 },
+    { 0x00b5,  514 },
     { 0x00b6,  523 },
     { 0x00b7,  250 },
     { 0x00b8,  333 },
@@ -218,14 +211,12 @@ static const AFMMETRICS metrics[228] =
     { 0x0192,  500 },
     { 0x02c6,  333 },
     { 0x02c7,  333 },
-    { 0x02c9,  333 },
     { 0x02d8,  333 },
     { 0x02d9,  333 },
     { 0x02da,  333 },
     { 0x02db,  333 },
     { 0x02dc,  333 },
     { 0x02dd,  333 },
-    { 0x03bc,  500 },
     { 0x2013,  500 },
     { 0x2014,  889 },
     { 0x2018,  333 },
@@ -241,9 +232,10 @@ static const AFMMETRICS metrics[228] =
     { 0x2030, 1000 },
     { 0x2039,  333 },
     { 0x203a,  333 },
+    { 0x2044,  167 },
+    { 0x20ac,  500 },
     { 0x2122,  980 },
     { 0x2212,  675 },
-    { 0x2215,  167 },
     { 0xfb01,  500 },
     { 0xfb02,  500 },
 };
@@ -255,22 +247,22 @@ static const AFMMETRICS metrics[228] =
 
 const AFM PSDRV_Times_Italic =
 {
-    "Times-Italic",			    /* FontName */
-    L"Times",				    /* FamilyName */
-    L"AdobeStandardEncoding",		    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    -15.5,				    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -169, -217, 1010, 883 },		    /* FontBBox */
+    "Times-Italic", /* FontName */
+    L"Times", /* FamilyName */
+    L"AdobeStandardEncoding", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    -15.5, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -169, -217, 1010, 883 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	891,				    /* WinMetrics.sAscender */
-	-216,				    /* WinMetrics.sDescender */
-	42,				    /* WinMetrics.sLineGap */
-	402,				    /* WinMetrics.sAvgCharWidth */
-	891,				    /* WinMetrics.usWinAscent */
-	216				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        783,  /* WinMetrics.sAscender */
+        -217,  /* WinMetrics.sDescender */
+        150,  /* WinMetrics.sLineGap */
+        402,  /* WinMetrics.sAvgCharWidth */
+        783,  /* WinMetrics.usWinAscent */
+        217,  /* WinMetrics.usWinDescent */
     },
-    228,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    229, /* NumofMetrics */
+    metrics /* Metrics */
 };

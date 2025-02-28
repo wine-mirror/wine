@@ -1,13 +1,4 @@
-/*******************************************************************************
- *
- *	Font metric data for Symbol
- *
- *	Copyright 2001 Ian Pilcher
- *
- *
- *	See dlls/wineps/data/COPYRIGHTS for font copyright information.
- *
- */
+/* Automatically generated; DO NOT EDIT!! */
 
 #include "psdrv.h"
 
@@ -16,7 +7,7 @@
  *  Glyph metrics
  */
 
-static const AFMMETRICS metrics[188] =
+static const AFMMETRICS metrics[189] =
 {
     { 0xf020,  250 },
     { 0xf021,  333 },
@@ -113,6 +104,7 @@ static const AFMMETRICS metrics[188] =
     { 0xf07c,  200 },
     { 0xf07d,  480 },
     { 0xf07e,  549 },
+    { 0xf0a0,  750 },
     { 0xf0a1,  620 },
     { 0xf0a2,  247 },
     { 0xf0a3,  549 },
@@ -215,22 +207,22 @@ static const AFMMETRICS metrics[188] =
 
 const AFM PSDRV_Symbol =
 {
-    "Symbol",				    /* FontName */
-    L"Symbol",				    /* FamilyName */
-    L"FontSpecific",			    /* EncodingScheme */
-    FW_NORMAL,				    /* Weight */
-    0,					    /* ItalicAngle */
-    FALSE,				    /* IsFixedPitch */
-    { -180, -293, 1090, 1010 },		    /* FontBBox */
+    "Symbol", /* FontName */
+    L"Symbol", /* FamilyName */
+    L"FontSpecific", /* EncodingScheme */
+    FW_NORMAL, /* Weight */
+    0, /* ItalicAngle */
+    FALSE, /* IsFixedPitch */
+    { -180, -293, 1090, 1010 }, /* FontBBox */
     {
-	1000,				    /* WinMetrics.usUnitsPerEm */
-	1005,				    /* WinMetrics.sAscender */
-	-220,				    /* WinMetrics.sDescender */
-	0,				    /* WinMetrics.sLineGap */
-	600,				    /* WinMetrics.sAvgCharWidth */
-	1005,				    /* WinMetrics.usWinAscent */
-	220				    /* WinMetrics.usWinDescent */
+        1000,  /* WinMetrics.usUnitsPerEm */
+        1010,  /* WinMetrics.sAscender */
+        -293,  /* WinMetrics.sDescender */
+        0,  /* WinMetrics.sLineGap */
+        586,  /* WinMetrics.sAvgCharWidth */
+        1010,  /* WinMetrics.usWinAscent */
+        293,  /* WinMetrics.usWinDescent */
     },
-    188,				    /* NumofMetrics */
-    metrics				    /* Metrics */
+    189, /* NumofMetrics */
+    metrics /* Metrics */
 };
