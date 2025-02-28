@@ -1895,9 +1895,14 @@ static void test_Win32_VideoController( IWbemServices *services )
         check_property( obj, L"__RELPATH", VT_BSTR, CIM_STRING );
         check_property( obj, L"__SERVER", VT_BSTR, CIM_STRING );
         check_property( obj, L"AdapterCompatibility", VT_BSTR, CIM_STRING );
+        check_property( obj, L"AdapterDACType", VT_BSTR, CIM_STRING );
+        check_property( obj, L"AdapterRAM", VT_I4, CIM_UINT32 );
         check_property( obj, L"Availability", VT_I4, CIM_UINT16 );
+        check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"ConfigManagerErrorCode", VT_I4, CIM_UINT32 );
         check_property( obj, L"DriverDate", VT_BSTR, CIM_DATETIME );
+        check_property( obj, L"DriverVersion", VT_BSTR, CIM_STRING );
+        check_property( obj, L"Status", VT_BSTR, CIM_STRING );
 
         type = 0xdeadbeef;
         VariantInit( &val );
@@ -1908,7 +1913,6 @@ static void test_Win32_VideoController( IWbemServices *services )
         trace( "installeddisplaydrivers %s\n", wine_dbgstr_w(V_BSTR( &val )) );
         VariantClear( &val );
 
-        check_property( obj, L"Status", VT_BSTR, CIM_STRING );
         IWbemClassObject_Release( obj );
     }
 

@@ -475,7 +475,7 @@ static const struct column col_videocontroller[] =
 {
     { L"AcceleratorCapabilities",     CIM_UINT16|CIM_FLAG_ARRAY },
     { L"AdapterCompatibility",        CIM_STRING },
-    { L"AdapterDACType",              CIM_STRING },
+    { L"AdapterDACType",              CIM_STRING|COL_FLAG_DYNAMIC },
     { L"AdapterRAM",                  CIM_UINT32 },
     { L"Availability",                CIM_UINT16 },
     { L"CapabilityDescriptions",      CIM_STRING|CIM_FLAG_ARRAY },
@@ -493,11 +493,11 @@ static const struct column col_videocontroller[] =
     { L"CurrentScanMode",             CIM_UINT16 },
     { L"CurrentVerticalResolution",   CIM_UINT32 },
     { L"Description",                 CIM_STRING|COL_FLAG_DYNAMIC },
-    { L"DeviceId",                    CIM_STRING|COL_FLAG_KEY },
+    { L"DeviceId",                    CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
     { L"DeviceSpecificPens",          CIM_UINT32 },
     { L"DitherType",                  CIM_UINT32 },
-    { L"DriverDate",                  CIM_DATETIME },
-    { L"DriverVersion",               CIM_STRING },
+    { L"DriverDate",                  CIM_DATETIME|COL_FLAG_DYNAMIC },
+    { L"DriverVersion",               CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ErrorCleared",                CIM_BOOLEAN },
     { L"ErrorDescription",            CIM_STRING },
     { L"ICMIntent",                   CIM_UINT32 },
@@ -4294,101 +4294,182 @@ static enum fill_status fill_systemenclosure( struct table *table, const struct 
     return status;
 }
 
-static WCHAR *get_videocontroller_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
+static DWORD get_reg_value_dword( HKEY key, const WCHAR *value )
 {
-    static const WCHAR fmtW[] = L"PCI\\VEN_%04X&DEV_%04X&SUBSYS_%08X&REV_%02X\\0&DEADBEEF&0&DEAD";
-    UINT len = sizeof(fmtW) + 2;
-    WCHAR *ret;
+    DWORD type, ret, size = sizeof(ret);
+    if (RegQueryValueExW( key, value, NULL, &type, (BYTE *)&ret, &size ) || type != REG_DWORD) return 0;
+    return ret;
+}
 
-    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
-    swprintf( ret, len, fmtW, desc->VendorId, desc->DeviceId, desc->SubSysId, desc->Revision );
+struct display_adapter
+{
+    WCHAR *driver_date;
+    WCHAR *driver_desc;
+    WCHAR *driver_version;
+    WCHAR *dac_type;
+    DWORD  memory_size;
+};
+
+static struct display_adapter *get_display_adapters( UINT *count )
+{
+    DWORD nb_allocated = 2, i = 0, idx_class = 0;
+    HKEY key_class, key_instance;
+    struct display_adapter *ret, *tmp;
+    WCHAR instance[5];
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE,
+                       L"System\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}",
+                       0, KEY_ENUMERATE_SUB_KEYS, &key_class )) return NULL;
+
+    if (!(ret = malloc( nb_allocated * sizeof(*ret) )))
+    {
+        RegCloseKey( key_class );
+        return NULL;
+    }
+
+    while (RegEnumKeyW( key_class, idx_class++, instance, ARRAY_SIZE(instance) ) != ERROR_NO_MORE_ITEMS)
+    {
+        if (!RegOpenKeyExW( key_class, instance, 0, KEY_READ, &key_instance ))
+        {
+            ret[i].driver_date = get_reg_value( key_instance, L"DriverDate" );
+            ret[i].driver_desc = get_reg_value( key_instance, L"DriverDesc" );
+            ret[i].driver_version = get_reg_value( key_instance, L"DriverVersion" );
+            ret[i].dac_type = get_reg_value( key_instance, L"HardwareInformation.DacType" );
+            ret[i].memory_size = get_reg_value_dword( key_instance, L"HardwareInformation.MemorySize" );
+            if (++i >= nb_allocated)
+            {
+                nb_allocated *= 2;
+                if ((tmp = realloc( ret, nb_allocated * sizeof(*ret) ))) ret = tmp;
+                else
+                {
+                    while (--i)
+                    {
+                        free( ret[i].driver_date );
+                        free( ret[i].driver_desc );
+                        free( ret[i].driver_version );
+                        free( ret[i].dac_type );
+                    }
+                    goto done;
+                }
+            }
+            RegCloseKey( key_instance );
+        }
+    }
+
+done:
+    RegCloseKey( key_class );
+    if (!i)
+    {
+        free( ret );
+        ret = NULL;
+    }
+    *count = i;
     return ret;
 }
 
 #define HW_VENDOR_AMD    0x1002
 #define HW_VENDOR_NVIDIA 0x10de
-#define HW_VENDOR_VMWARE 0x15ad
 #define HW_VENDOR_INTEL  0x8086
+#define HW_VENDOR_WINE   0x0000
 
-static const WCHAR *get_videocontroller_installeddriver( UINT vendorid )
+static DWORD get_adapter_vendor_id( const WCHAR *desc )
 {
-    /* FIXME: wined3d has a better table, but we cannot access this information through dxgi */
+    if (!desc) return HW_VENDOR_WINE;
+    if (wcsstr( desc, L"AMD" )) return HW_VENDOR_AMD;
+    if (wcsstr( desc, L"NVIDIA" )) return HW_VENDOR_NVIDIA;
+    if (wcsstr( desc, L"Intel" )) return HW_VENDOR_INTEL;
+    return HW_VENDOR_WINE;
+}
 
-    if (vendorid == HW_VENDOR_AMD) return L"aticfx32.dll";
-    else if (vendorid == HW_VENDOR_NVIDIA) return L"nvd3dum.dll";
-    else if (vendorid == HW_VENDOR_INTEL) return L"igdudim32.dll";
+static WCHAR *get_videocontroller_pnpdeviceid( const WCHAR *desc )
+{
+    static const WCHAR fmtW[] = L"PCI\\VEN_%04X&DEV_0000&SUBSYS_00000000&REV_00\\0&DEADBEEF&0&DEAD";
+    DWORD vendor_id = get_adapter_vendor_id( desc );
+    UINT len = ARRAY_SIZE(fmtW);
+    WCHAR *ret;
+
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, vendor_id );
+    return ret;
+}
+
+static const WCHAR *get_videocontroller_installeddriver( const WCHAR *desc )
+{
+    DWORD vendor_id = get_adapter_vendor_id( desc );
+    if (vendor_id == HW_VENDOR_AMD) return L"aticfx32.dll";
+    if (vendor_id == HW_VENDOR_NVIDIA) return L"nvd3dum.dll";
+    if (vendor_id == HW_VENDOR_INTEL) return L"igdudim32.dll";
     return L"wine.dll";
 }
 
-static BOOL get_dxgi_adapter_desc( DXGI_ADAPTER_DESC *desc )
+static const WCHAR *convert_driverdate( const WCHAR *date )
 {
-    IDXGIFactory *factory;
-    IDXGIAdapter *adapter;
-    HRESULT hr;
+    static const WCHAR fmtW[] = L"%04u%02u%02u000000.000000-000";
+    UINT len = ARRAY_SIZE(fmtW), year, month, day;
+    WCHAR *ret;
 
-    memset( desc, 0, sizeof(*desc) );
-    hr = CreateDXGIFactory( &IID_IDXGIFactory, (void **)&factory );
-    if (FAILED( hr )) return FALSE;
-
-    hr = IDXGIFactory_EnumAdapters( factory, 0, &adapter );
-    if (FAILED( hr ))
-    {
-        IDXGIFactory_Release( factory );
-        return FALSE;
-    }
-
-    hr = IDXGIAdapter_GetDesc( adapter, desc );
-    IDXGIAdapter_Release( adapter );
-    IDXGIFactory_Release( factory );
-    return SUCCEEDED( hr );
+    if (!date) return NULL;
+    if (swscanf( date, L"%02u-%02u-%04u", &month, &day, &year ) != 3) return NULL;
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    swprintf( ret, len, fmtW, year, month, day );
+    return ret;
 }
 
 static enum fill_status fill_videocontroller( struct table *table, const struct expr *cond )
 {
     struct record_videocontroller *rec;
-    DXGI_ADAPTER_DESC desc;
-    UINT row = 0, hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
-    const WCHAR *name = L"VideoController1";
+    struct display_adapter *adapters;
+    UINT count, i, offset = 0, row = 0, hres = 1024, vres = 768;
     enum fill_status status = FILL_STATUS_UNFILTERED;
-    WCHAR mode[44];
+    WCHAR mode[44], device_id[32];
 
-    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
-
-    if (get_dxgi_adapter_desc( &desc ))
+    if (!(adapters = get_display_adapters( &count ))) return FILL_STATUS_FAILED;
+    if (!resize_table( table, count, sizeof(*rec) ))
     {
-        if (desc.DedicatedVideoMemory > UINT_MAX) vidmem = 0xfff00000;
-        else vidmem = desc.DedicatedVideoMemory;
-        name = desc.Description;
+        free( adapters );
+        return FILL_STATUS_FAILED;
     }
 
-    rec = (struct record_videocontroller *)table->data;
-    rec->adapter_compatibility = L"(Standard display types)";
-    rec->adapter_dactype       = L"Integrated RAMDAC";
-    rec->adapter_ram           = vidmem;
-    rec->availability          = 3; /* Running or Full Power */
-    rec->caption               = wcsdup( name );
-    rec->current_bitsperpixel  = get_bitsperpixel( &hres, &vres );
-    rec->current_horizontalres = hres;
-    rec->current_scanmode      = 2; /* Unknown */
-    rec->current_verticalres   = vres;
-    rec->description           = wcsdup( name );
-    rec->device_id             = L"VideoController1";
-    rec->driverdate            = L"20230420000000.000000-000";
-    rec->driverversion         = L"31.0.14051.5006";
-    rec->installeddriver       = get_videocontroller_installeddriver( desc.VendorId );
-    rec->name                  = wcsdup( name );
-    rec->pnpdevice_id          = get_videocontroller_pnpdeviceid( &desc );
-    rec->status                = L"OK";
-    rec->videoarchitecture     = 2; /* Unknown */
-    rec->videomemorytype       = 2; /* Unknown */
-    swprintf( mode, ARRAY_SIZE( mode ), L"%u x %u x %I64u colors", hres, vres, (UINT64)1 << rec->current_bitsperpixel );
-    rec->videomodedescription  = wcsdup( mode );
-    rec->videoprocessor        = wcsdup( name );
-    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
-    else row++;
+    for (i = 0; i < count; i++)
+    {
+        rec = (struct record_videocontroller *)(table->data + offset);
+        rec->adapter_compatibility = L"(Standard display types)";
+        rec->adapter_dactype       = adapters[i].dac_type;
+        rec->adapter_ram           = adapters[i].memory_size;
+        rec->availability          = 3; /* Running or Full Power */
+        rec->caption               = adapters[i].driver_desc;
+        rec->current_bitsperpixel  = get_bitsperpixel( &hres, &vres );
+        rec->current_horizontalres = hres;
+        rec->current_scanmode      = 2; /* Unknown */
+        rec->current_verticalres   = vres;
+        rec->description           = wcsdup( rec->caption );
+        swprintf( device_id, ARRAY_SIZE( device_id ), L"VideoController1", i + 1 );
+        rec->device_id             = wcsdup( device_id );
+        rec->driverdate            = convert_driverdate( adapters[i].driver_date );
+        free( adapters[i].driver_date );
+        rec->driverversion         = adapters[i].driver_version;
+        rec->installeddriver       = get_videocontroller_installeddriver( adapters[i].driver_desc );
+        rec->name                  = wcsdup( rec->caption );
+        rec->pnpdevice_id          = get_videocontroller_pnpdeviceid( adapters[i].driver_desc );
+        rec->status                = L"OK";
+        rec->videoarchitecture     = 2; /* Unknown */
+        rec->videomemorytype       = 2; /* Unknown */
+        swprintf( mode, ARRAY_SIZE( mode ), L"%u x %u x %I64u colors", hres, vres, (UINT64)1 << rec->current_bitsperpixel );
+        rec->videomodedescription  = wcsdup( mode );
+        rec->videoprocessor        = wcsdup( rec->caption );
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
+        offset += sizeof(*rec);
+        row++;
+    }
 
     TRACE("created %u rows\n", row);
     table->num_rows = row;
+
+    free( adapters );
     return status;
 }
 
