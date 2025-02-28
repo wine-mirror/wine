@@ -586,8 +586,20 @@ static void STDMETHODCALLTYPE d2d_dc_render_target_Clear(ID2D1DCRenderTarget *if
 static void STDMETHODCALLTYPE d2d_dc_render_target_BeginDraw(ID2D1DCRenderTarget *iface)
 {
     struct d2d_dc_render_target *render_target = impl_from_ID2D1DCRenderTarget(iface);
+    const RECT *dst_rect = &render_target->dst_rect;
+    HDC hdc;
 
     TRACE("iface %p.\n", iface);
+
+    if (render_target->dxgi_surface)
+    {
+        if (SUCCEEDED(IDXGISurface1_GetDC(render_target->dxgi_surface, TRUE, &hdc)))
+        {
+            BitBlt(hdc, 0, 0, dst_rect->right - dst_rect->left, dst_rect->bottom - dst_rect->top,
+                    render_target->hdc, dst_rect->left, dst_rect->top, SRCCOPY);
+            IDXGISurface1_ReleaseDC(render_target->dxgi_surface, NULL);
+        }
+    }
 
     ID2D1RenderTarget_BeginDraw(render_target->dxgi_target);
 }

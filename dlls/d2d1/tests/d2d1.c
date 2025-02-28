@@ -6170,7 +6170,6 @@ static void test_dc_target(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     clr = GetPixel(hdc, 0, 0);
-    todo_wine
     ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
 
     /* Partially fill. */
@@ -6190,7 +6189,6 @@ static void test_dc_target(BOOL d3d11)
     clr = GetPixel(hdc, 0, 0);
     ok(clr == RGB(0, 255, 0), "Got unexpected colour 0x%08lx.\n", clr);
     clr = GetPixel(hdc, 12, 0);
-    todo_wine
     ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
 
     /* Bind to a subrectangle. */
@@ -6208,7 +6206,6 @@ static void test_dc_target(BOOL d3d11)
     clr = GetPixel(hdc, 0, 0);
     ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
     clr = GetPixel(hdc, 12, 0);
-    todo_wine
     ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
 
     /* GDI-clear while drawing. */
@@ -6223,7 +6220,6 @@ static void test_dc_target(BOOL d3d11)
     clr = GetPixel(hdc, 0, 0);
     ok(clr == RGB(192, 192, 192), "Got unexpected colour 0x%08lx.\n", clr);
     clr = GetPixel(hdc, 12, 0);
-    todo_wine
     ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
 
     ID2D1DCRenderTarget_Release(rt);
