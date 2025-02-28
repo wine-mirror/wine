@@ -1211,7 +1211,7 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     value = (ULONG)min( memory_size, (ULONGLONG)ULONG_MAX );
     set_reg_value( hkey, memory_sizeW, REG_DWORD, &value, sizeof(value) );
 
-    if (pci->vendor && pci->device)
+    if (pci->vendor)
     {
         /* The last seven digits are the driver number. */
         switch (pci->vendor)
