@@ -5952,6 +5952,7 @@ static void test_dc_target(BOOL d3d11)
     D2D1_ANTIALIAS_MODE aa_mode;
     ID2D1SolidColorBrush *brush;
     ID2D1RenderTarget *rt3;
+    D2D1_TAG tag1, tag2;
     FLOAT dpi_x, dpi_y;
     D2D1_COLOR_F color;
     HENHMETAFILE hemf;
@@ -6152,12 +6153,115 @@ static void test_dc_target(BOOL d3d11)
     clr = GetPixel(hdc2, 0, 0);
     ok(clr == RGB(0, 0, 255), "Got unexpected colour 0x%08lx.\n", clr);
 
-    DeleteDC(hdc);
     DeleteDC(hdc2);
+
+    /* Retaining original content. */
+    SetRect(&rect, 0, 0, 16, 16);
+
+    hr = ID2D1DCRenderTarget_BindDC(rt, hdc, &rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    FillRect(hdc, &rect, GetStockObject(GRAY_BRUSH));
+    clr = GetPixel(hdc, 0, 0);
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    clr = GetPixel(hdc, 0, 0);
+    todo_wine
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+
+    /* Partially fill. */
+    set_color(&color, 0.0f, 1.0f, 0.0f, 1.0f);
+    hr = ID2D1DCRenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    r.left = r.top = 0.0f;
+    r.bottom = 16.0f;
+    r.right = 8.0f;
+    ID2D1DCRenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1SolidColorBrush_Release(brush);
+
+    clr = GetPixel(hdc, 0, 0);
+    ok(clr == RGB(0, 255, 0), "Got unexpected colour 0x%08lx.\n", clr);
+    clr = GetPixel(hdc, 12, 0);
+    todo_wine
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+
+    /* Bind to a subrectangle. */
+    SetRect(&rect, 0, 0, 16, 16);
+    FillRect(hdc, &rect, GetStockObject(GRAY_BRUSH));
+
+    SetRect(&rect, 8, 0, 16, 16);
+    hr = ID2D1DCRenderTarget_BindDC(rt, hdc, &rect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    clr = GetPixel(hdc, 0, 0);
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+    clr = GetPixel(hdc, 12, 0);
+    todo_wine
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+
+    /* GDI-clear while drawing. */
+    SetRect(&rect, 0, 0, 16, 16);
+    FillRect(hdc, &rect, GetStockObject(GRAY_BRUSH));
+
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    FillRect(hdc, &rect, GetStockObject(LTGRAY_BRUSH));
+    hr = ID2D1DCRenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    clr = GetPixel(hdc, 0, 0);
+    ok(clr == RGB(192, 192, 192), "Got unexpected colour 0x%08lx.\n", clr);
+    clr = GetPixel(hdc, 12, 0);
+    todo_wine
+    ok(clr == RGB(128, 128, 128), "Got unexpected colour 0x%08lx.\n", clr);
+
+    ID2D1DCRenderTarget_Release(rt);
+
+    /* Drawing attempt with no dc. */
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DCRenderTarget_SetTags(rt, 1, 2);
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    ID2D1DCRenderTarget_SetTags(rt, 3, 4);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, &tag1, &tag2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(!tag1, "Unexpected tag %s.\n", wine_dbgstr_longlong(tag1));
+    ok(!tag2, "Unexpected tag %s.\n", wine_dbgstr_longlong(tag2));
+
+    /* Bind after BeginDraw(). */
+    ID2D1DCRenderTarget_SetTags(rt, 1, 2);
+    ID2D1DCRenderTarget_BeginDraw(rt);
+    hr = ID2D1DCRenderTarget_BindDC(rt, hdc, &rect);
+    todo_wine
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ID2D1DCRenderTarget_SetTags(rt, 3, 4);
+    hr = ID2D1DCRenderTarget_EndDraw(rt, &tag1, &tag2);
+    todo_wine
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(!tag1, "Unexpected tag %s.\n", wine_dbgstr_longlong(tag1));
+    ok(!tag2, "Unexpected tag %s.\n", wine_dbgstr_longlong(tag2));
+
+    ID2D1DCRenderTarget_Release(rt);
+    DeleteDC(hdc);
 
     /* Metafile context. */
     hdc = CreateMetaFileA(NULL);
     ok(!!hdc, "Failed to create a device context.\n");
+
+    hr = ID2D1Factory_CreateDCRenderTarget(ctx.factory, &desc, &rt);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1DCRenderTarget_BindDC(rt, hdc, &rect);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
