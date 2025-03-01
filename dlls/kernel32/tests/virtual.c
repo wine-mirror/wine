@@ -4531,6 +4531,11 @@ static LONG store_buffer_litmus_test( void (*WINAPI barrier0)(void), void (*WINA
     ret = WaitForMultipleObjects( ARRAY_SIZE(threads), threads, TRUE, INFINITE );
     ok( ret == WAIT_OBJECT_0, "WaitForMultipleObjects failed: %lu\n", GetLastError() );
 
+    for (i = 0; i < ARRAY_SIZE(threads); i++)
+    {
+        CloseHandle( threads[i] );
+    }
+
     ret = VirtualFree( shared.read, 0, MEM_RELEASE );
     ok( ret, "VirtualFree failed: %lu\n", GetLastError() );
 
