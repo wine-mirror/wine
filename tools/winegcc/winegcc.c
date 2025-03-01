@@ -236,11 +236,11 @@ static int is_pe_target( const struct options *opts )
 
 enum tool
 {
-    TOOL_CC,
-    TOOL_CXX,
-    TOOL_CPP,
-    TOOL_LD,
-    TOOL_OBJCOPY,
+    WINEGCC_TOOL_CC,
+    WINEGCC_TOOL_CXX,
+    WINEGCC_TOOL_CPP,
+    WINEGCC_TOOL_LD,
+    WINEGCC_TOOL_OBJCOPY,
 };
 
 static const struct
@@ -312,12 +312,12 @@ static struct strarray get_translator(struct options *opts)
     switch(opts->processor)
     {
     case proc_cpp:
-        return build_tool_name( opts, opts->target_alias, TOOL_CPP );
+        return build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CPP );
     case proc_cc:
     case proc_as:
-        return build_tool_name( opts, opts->target_alias, TOOL_CC );
+        return build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CC );
     case proc_cxx:
-        return build_tool_name( opts, opts->target_alias, TOOL_CXX );
+        return build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CXX );
     }
     assert(0);
     return empty_strarray;
@@ -639,8 +639,8 @@ static void compile(struct options* opts, const char* lang)
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = build_tool_name( opts, opts->target_alias, TOOL_CC );
-            gpp = build_tool_name( opts, opts->target_alias, TOOL_CXX );
+            gcc = build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CC );
+            gpp = build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CXX );
             for ( j = 0; !gcc_defs && j < comp_args.count; j++ )
             {
                 const char *cc = comp_args.str[j];
@@ -963,11 +963,11 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
     /* get the filename from the path */
     output_name = get_basename( output_file );
 
-    tool = build_tool_name( opts, target, TOOL_CC );
+    tool = build_tool_name( opts, target, WINEGCC_TOOL_CC );
     strarray_add( &spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
     if (!is_pe)
     {
-        tool = build_tool_name( opts, target, TOOL_LD );
+        tool = build_tool_name( opts, target, WINEGCC_TOOL_LD );
         strarray_add( &spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
     }
 
@@ -1362,7 +1362,7 @@ static void build(struct options* opts)
 
     if (opts->debug_file && !strendswith(opts->debug_file, ".pdb"))
     {
-        struct strarray tool, objcopy = build_tool_name(opts, opts->target_alias, TOOL_OBJCOPY);
+        struct strarray tool, objcopy = build_tool_name(opts, opts->target_alias, WINEGCC_TOOL_OBJCOPY);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
@@ -1393,9 +1393,9 @@ static void build(struct options* opts)
             error("--out-implib requires a .spec or .def file\n");
 
         implib_args = get_winebuild_args( opts, opts->target_alias );
-        tool = build_tool_name( opts, opts->target_alias, TOOL_CC );
+        tool = build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_CC );
         strarray_add( &implib_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
-        tool = build_tool_name( opts, opts->target_alias, TOOL_LD );
+        tool = build_tool_name( opts, opts->target_alias, WINEGCC_TOOL_LD );
         strarray_add( &implib_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
 
         strarray_add(&implib_args, "--implib");
