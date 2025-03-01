@@ -34,6 +34,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
 #endif
+#ifdef __APPLE__
+# include <mach-o/dyld.h>
+#endif
 
 #include "main.h"
 
@@ -132,6 +135,12 @@ static const char *get_self_exe(void)
     size_t path_size = PATH_MAX;
     char *path = malloc( path_size );
     if (path && !sysctl( pathname, sizeof(pathname)/sizeof(pathname[0]), path, &path_size, NULL, 0 ))
+        return path;
+    free( path );
+#elif defined(__APPLE__)
+    uint32_t path_size = PATH_MAX;
+    char *path = malloc( path_size );
+    if (path && !_NSGetExecutablePath( path, &path_size ))
         return path;
     free( path );
 #endif
