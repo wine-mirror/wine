@@ -2499,10 +2499,10 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
     seek.QuadPart = SECTIONHEADER_OFFSET;
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
-        goto end;
+        return hr;
     hr = IStream_Write(This->stm, &sectionHdr, sizeof(sectionHdr), &count);
     if (FAILED(hr))
-        goto end;
+        return hr;
 
     prop = 0;
     sectionOffset = sizeof(PROPERTYSECTIONHEADER) +
@@ -2513,7 +2513,7 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
         prop++;
         hr = PropertyStorage_WriteDictionaryToStream(This, &sectionOffset);
         if (FAILED(hr))
-            goto end;
+            return hr;
     }
 
     PropVariantInit(&var);
@@ -2523,7 +2523,7 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
     hr = PropertyStorage_WritePropertyToStream(This, prop++, PID_CODEPAGE,
      &var, &sectionOffset);
     if (FAILED(hr))
-        goto end;
+        return hr;
 
     if (This->locale != LOCALE_SYSTEM_DEFAULT)
     {
@@ -2532,7 +2532,7 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
         hr = PropertyStorage_WritePropertyToStream(This, prop++, PID_LOCALE,
          &var, &sectionOffset);
         if (FAILED(hr))
-            goto end;
+            return hr;
     }
 
     if (This->grfFlags & PROPSETFLAG_CASE_SENSITIVE)
@@ -2542,22 +2542,20 @@ static HRESULT PropertyStorage_WriteToStream(PropertyStorage_impl *This)
         hr = PropertyStorage_WritePropertyToStream(This, prop++, PID_BEHAVIOR,
          &var, &sectionOffset);
         if (FAILED(hr))
-            goto end;
+            return hr;
     }
 
     hr = PropertyStorage_WritePropertiesToStream(This, prop, &sectionOffset);
     if (FAILED(hr))
-        goto end;
+        return hr;
 
     /* Now write the byte count of the section */
     seek.QuadPart = SECTIONHEADER_OFFSET;
     hr = IStream_Seek(This->stm, seek, STREAM_SEEK_SET, NULL);
     if (FAILED(hr))
-        goto end;
+        return hr;
     StorageUtl_WriteDWord(&dwTemp, 0, sectionOffset);
     hr = IStream_Write(This->stm, &dwTemp, sizeof(dwTemp), &count);
-
-end:
     if (SUCCEEDED(hr))
         This->dirty = FALSE;
     return hr;
