@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
 #endif
+#ifdef __APPLE__
+# include <mach-o/dyld.h>
+#endif
 
 #include "windef.h"
 #include "winternl.h"
@@ -285,6 +288,17 @@ static char *get_nls_dir(void)
     if (dir)
     {
         if (sysctl( pathname, ARRAY_SIZE( pathname ), dir, &dir_size, NULL, 0 ))
+        {
+            free( dir );
+            dir = NULL;
+        }
+    }
+#elif defined(__APPLE__)
+    uint32_t dir_size = PATH_MAX;
+    dir = malloc( dir_size );
+    if (dir)
+    {
+        if (_NSGetExecutablePath( dir, &dir_size ))
         {
             free( dir );
             dir = NULL;
