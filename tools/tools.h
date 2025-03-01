@@ -39,6 +39,9 @@
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
 #endif
+#ifdef __APPLE__
+# include <mach-o/dyld.h>
+#endif
 
 #ifdef _WIN32
 # include <direct.h>
@@ -703,6 +706,12 @@ static inline char *get_bindir( const char *argv0 )
     size_t path_size = PATH_MAX;
     char *path = xmalloc( path_size );
     if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
+        dir = realpath( path, NULL );
+    free( path );
+#elif defined(__APPLE__)
+    uint32_t path_size = PATH_MAX;
+    char *path = xmalloc( path_size );
+    if (!_NSGetExecutablePath( path, &path_size ))
         dir = realpath( path, NULL );
     free( path );
 #endif
