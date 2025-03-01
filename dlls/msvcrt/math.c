@@ -1414,15 +1414,25 @@ int CDECL fegetenv(fenv_t *env)
 }
 
 /*********************************************************************
+ *      feraiseexcept (MSVCR120.@)
+ */
+int CDECL feraiseexcept(int flags)
+{
+    fenv_t env;
+
+    flags &= FE_ALL_EXCEPT;
+    fegetenv(&env);
+    env._Fe_stat |= fenv_encode(flags, flags);
+    return fesetenv(&env);
+}
+
+/*********************************************************************
  *		feupdateenv (MSVCR120.@)
  */
 int CDECL feupdateenv(const fenv_t *env)
 {
-    fenv_t set;
-    fegetenv(&set);
-    set._Fe_ctl = env->_Fe_ctl;
-    set._Fe_stat |= env->_Fe_stat;
-    return fesetenv(&set);
+    int except = fetestexcept(FE_ALL_EXCEPT);
+    return fesetenv(env) || feraiseexcept(except);
 }
 
 /*********************************************************************
@@ -1447,19 +1457,6 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
     fegetenv(&env);
     env._Fe_stat &= ~fenv_encode(excepts, excepts);
     env._Fe_stat |= *status & fenv_encode(excepts, excepts);
-    return fesetenv(&env);
-}
-
-/*********************************************************************
- *      feraiseexcept (MSVCR120.@)
- */
-int CDECL feraiseexcept(int flags)
-{
-    fenv_t env;
-
-    flags &= FE_ALL_EXCEPT;
-    fegetenv(&env);
-    env._Fe_stat |= fenv_encode(flags, flags);
     return fesetenv(&env);
 }
 
