@@ -34,6 +34,12 @@ static void test_enum_system_firmware_tables(void)
     UINT res;
     DWORD err;
 
+    if (!pEnumSystemFirmwareTables)
+    {
+        win_skip("Function EnumSystemFirmwareTables not available, skipping.\n");
+        return;
+    }
+
     /* Applications may use e.g. 'ACPI', which we currently don't support.
      * We should at the very least return valid error codes for it.
      * Test with a definitely-invalid provider so it also fails on real Windows. */
