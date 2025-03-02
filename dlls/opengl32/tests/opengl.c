@@ -861,84 +861,79 @@ static void test_acceleration(HDC hdc)
 
 static void test_bitmap_rendering( BOOL use_dib )
 {
-    PIXELFORMATDESCRIPTOR pfd;
-    int i, ret, bpp, iPixelFormat=0;
-    unsigned int nFormats;
+    BITMAPINFO bmi = {.bmiHeader = {.biSize = sizeof(BITMAPINFOHEADER), .biPlanes = 1, .biCompression = BI_RGB}};
+    int i, ret, bpp, count, pixel_format = 0;
+    HBITMAP bmp, old_bmp, bmp2;
     HGLRC hglrc, hglrc2;
-    BITMAPINFO biDst;
-    HBITMAP bmpDst, oldDst, bmp2;
-    HDC hdcDst, hdcScreen;
-    UINT *dstBuffer = NULL;
+    UINT *pixels = NULL;
+    HDC hdc;
 
-    hdcScreen = CreateCompatibleDC(0);
-    hdcDst = CreateCompatibleDC(0);
+    winetest_push_context( use_dib ? "DIB" : "DDB" );
+
+    hdc = CreateCompatibleDC( 0 );
 
     if (use_dib)
     {
         bpp = 32;
-        memset(&biDst, 0, sizeof(BITMAPINFO));
-        biDst.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        biDst.bmiHeader.biWidth = 4;
-        biDst.bmiHeader.biHeight = -4;
-        biDst.bmiHeader.biPlanes = 1;
-        biDst.bmiHeader.biBitCount = 32;
-        biDst.bmiHeader.biCompression = BI_RGB;
+        bmi.bmiHeader.biWidth = 4;
+        bmi.bmiHeader.biHeight = -4;
+        bmi.bmiHeader.biBitCount = 32;
+        bmp = CreateDIBSection( 0, &bmi, DIB_RGB_COLORS, (void **)&pixels, NULL, 0 );
 
-        bmpDst = CreateDIBSection(0, &biDst, DIB_RGB_COLORS, (void**)&dstBuffer, NULL, 0);
-
-        biDst.bmiHeader.biWidth = 12;
-        biDst.bmiHeader.biHeight = -12;
-        biDst.bmiHeader.biBitCount = 16;
-        bmp2 = CreateDIBSection(0, &biDst, DIB_RGB_COLORS, NULL, NULL, 0);
+        bmi.bmiHeader.biWidth = 12;
+        bmi.bmiHeader.biHeight = -12;
+        bmi.bmiHeader.biBitCount = 16;
+        bmp2 = CreateDIBSection( 0, &bmi, DIB_RGB_COLORS, NULL, NULL, 0 );
     }
     else
     {
-        bpp = GetDeviceCaps( hdcScreen, BITSPIXEL );
-        bmpDst = CreateBitmap( 4, 4, 1, bpp, NULL );
+        bpp = GetDeviceCaps( hdc, BITSPIXEL );
+        bmp = CreateBitmap( 4, 4, 1, bpp, NULL );
         bmp2 = CreateBitmap( 12, 12, 1, bpp, NULL );
     }
 
-    oldDst = SelectObject(hdcDst, bmpDst);
-
-    trace( "testing on %s\n", use_dib ? "DIB" : "DDB" );
+    old_bmp = SelectObject( hdc, bmp );
 
     /* Pick a pixel format by hand because ChoosePixelFormat is unreliable */
-    nFormats = DescribePixelFormat(hdcDst, 0, 0, NULL);
-    for(i=1; i<=nFormats; i++)
+    count = DescribePixelFormat( hdc, 0, 0, NULL );
+    for (i = 1; i <= count; i++)
     {
-        memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-        DescribePixelFormat(hdcDst, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd);
+        PIXELFORMATDESCRIPTOR pfd = {0};
+
+        DescribePixelFormat( hdc, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd );
 
         if((pfd.dwFlags & PFD_DRAW_TO_BITMAP) &&
            (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
            (pfd.cColorBits == bpp) &&
            (pfd.cAlphaBits == 8) )
         {
-            iPixelFormat = i;
+            pixel_format = i;
             break;
         }
     }
 
-    if(!iPixelFormat)
+    if (!pixel_format)
     {
         skip("Unable to find a suitable pixel format\n");
     }
     else
     {
-        ret = SetPixelFormat(hdcDst, iPixelFormat, &pfd);
+        PIXELFORMATDESCRIPTOR pfd = {0};
+
+        ret = SetPixelFormat( hdc, pixel_format, &pfd );
         ok( ret, "SetPixelFormat failed\n" );
-        ret = GetPixelFormat( hdcDst );
-        ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
-        ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+        ret = GetPixelFormat( hdc );
+        ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
+        ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
         ok( !ret, "SetPixelFormat succeeded\n" );
-        hglrc = wglCreateContext(hdcDst);
+        hglrc = wglCreateContext( hdc );
         ok(hglrc != NULL, "Unable to create a context\n");
 
         if(hglrc)
         {
             GLint viewport[4];
-            wglMakeCurrent(hdcDst, hglrc);
-            hglrc2 = wglCreateContext(hdcDst);
+            wglMakeCurrent( hdc, hglrc );
+            hglrc2 = wglCreateContext( hdc );
             ok(hglrc2 != NULL, "Unable to create a context\n");
 
             /* Note this is RGBA but we read ARGB back */
@@ -950,15 +945,15 @@ static void test_bitmap_rendering( BOOL use_dib )
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
             /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
-            if (dstBuffer)
+            if (pixels)
                 for (i = 0; i < 16; i++)
-                    ok(dstBuffer[i] == 0x223344 || dstBuffer[i] == 0x11223344, "Received color=%x at %u\n",
-                       dstBuffer[i], i);
+                    ok( pixels[i] == 0x223344 || pixels[i] == 0x11223344,
+                        "Received color=%x at %u\n", pixels[i], i );
 
-            SelectObject(hdcDst, bmp2);
-            ret = GetPixelFormat( hdcDst );
-            ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
-            ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+            SelectObject( hdc, bmp2 );
+            ret = GetPixelFormat( hdc );
+            ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
+            ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
             ok( !ret, "SetPixelFormat succeeded\n" );
 
             /* context still uses the old pixel format and viewport */
@@ -970,7 +965,7 @@ static void test_bitmap_rendering( BOOL use_dib )
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
 
             wglMakeCurrent(NULL, NULL);
-            wglMakeCurrent(hdcDst, hglrc);
+            wglMakeCurrent( hdc, hglrc );
             glClearColor((float)0x44/0xff, (float)0x55/0xff, (float)0x66/0xff, (float)0x11/0xff);
             glClear(GL_COLOR_BUFFER_BIT);
             glFinish();
@@ -978,22 +973,22 @@ static void test_bitmap_rendering( BOOL use_dib )
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
 
-            wglMakeCurrent(hdcDst, hglrc2);
+            wglMakeCurrent( hdc, hglrc2 );
             glGetIntegerv( GL_VIEWPORT, viewport );
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
 
-            wglMakeCurrent(hdcDst, hglrc);
+            wglMakeCurrent( hdc, hglrc );
             glGetIntegerv( GL_VIEWPORT, viewport );
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
 
-            SelectObject(hdcDst, bmpDst);
-            ret = GetPixelFormat( hdcDst );
-            ok( ret == iPixelFormat, "GetPixelFormat returned %d/%d\n", ret, iPixelFormat );
-            ret = SetPixelFormat(hdcDst, iPixelFormat + 1, &pfd);
+            SelectObject( hdc, bmp );
+            ret = GetPixelFormat( hdc );
+            ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
+            ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
             ok( !ret, "SetPixelFormat succeeded\n" );
-            wglMakeCurrent(hdcDst, hglrc2);
+            wglMakeCurrent( hdc, hglrc2 );
             glGetIntegerv( GL_VIEWPORT, viewport );
             ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
                 "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
@@ -1003,11 +998,12 @@ static void test_bitmap_rendering( BOOL use_dib )
         }
     }
 
-    SelectObject(hdcDst, oldDst);
+    SelectObject( hdc, old_bmp );
     DeleteObject(bmp2);
-    DeleteObject(bmpDst);
-    DeleteDC(hdcDst);
-    DeleteDC(hdcScreen);
+    DeleteObject( bmp );
+    DeleteDC( hdc );
+
+    winetest_pop_context();
 }
 
 struct wgl_thread_param
