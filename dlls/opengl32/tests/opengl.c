@@ -863,9 +863,10 @@ static void test_bitmap_rendering( BOOL use_dib )
 {
     BITMAPINFO bmi = {.bmiHeader = {.biSize = sizeof(BITMAPINFOHEADER), .biPlanes = 1, .biCompression = BI_RGB}};
     int i, ret, bpp, count, pixel_format = 0;
-    HBITMAP bmp, old_bmp, bmp2;
+    HBITMAP bmp, old_bmp, bmp2, tmp_bmp;
     HGLRC hglrc, hglrc2;
     UINT *pixels = NULL;
+    GLint viewport[4];
     HDC hdc;
 
     winetest_push_context( use_dib ? "DIB" : "DDB" );
@@ -892,111 +893,135 @@ static void test_bitmap_rendering( BOOL use_dib )
         bmp2 = CreateBitmap( 12, 12, 1, bpp, NULL );
     }
 
-    old_bmp = SelectObject( hdc, bmp );
-
-    /* Pick a pixel format by hand because ChoosePixelFormat is unreliable */
+    ret = GetPixelFormat( hdc );
+    ok( ret == 0, "got %d\n", ret );
     count = DescribePixelFormat( hdc, 0, 0, NULL );
+    ok( count > 1, "got %d\n", count );
+
+    old_bmp = SelectObject( hdc, bmp );
+    ok( !!old_bmp, "got %p\n", old_bmp );
+
+    /* cannot create a GL context without a pixel format */
+
+    hglrc = wglCreateContext( hdc );
+    todo_wine
+    ok( !hglrc, "wglCreateContext succeeded\n" );
+    if (hglrc) wglDeleteContext( hglrc );
+
+    /* cannot set pixel format twice */
+
     for (i = 1; i <= count; i++)
     {
         PIXELFORMATDESCRIPTOR pfd = {0};
 
-        DescribePixelFormat( hdc, i, sizeof(PIXELFORMATDESCRIPTOR), &pfd );
+        winetest_push_context( "%u", i );
 
-        if((pfd.dwFlags & PFD_DRAW_TO_BITMAP) &&
-           (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
-           (pfd.cColorBits == bpp) &&
-           (pfd.cAlphaBits == 8) )
+        ret = DescribePixelFormat( hdc, i, sizeof(pfd), &pfd );
+        ok( ret == count, "got %d\n", ret );
+
+        if ((pfd.dwFlags & PFD_DRAW_TO_BITMAP) && (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
+            pfd.cColorBits == bpp && pfd.cAlphaBits == 8)
         {
-            pixel_format = i;
-            break;
+            ret = SetPixelFormat( hdc, i, &pfd );
+            if (pixel_format) ok( !ret, "SetPixelFormat succeeded\n" );
+            else ok( ret, "SetPixelFormat failed\n" );
+            if (ret) pixel_format = i;
+            ret = GetPixelFormat( hdc );
+            ok( ret == pixel_format, "got %d\n", ret );
         }
+
+        winetest_pop_context();
     }
 
-    if (!pixel_format)
-    {
-        skip("Unable to find a suitable pixel format\n");
-    }
-    else
+    ok( !!pixel_format, "got pixel_format %u\n", pixel_format );
+
+    /* even after changing the selected bitmap */
+
+    tmp_bmp = SelectObject( hdc, bmp2 );
+    ok( tmp_bmp == bmp, "got %p\n", tmp_bmp );
+
+    for (i = 1; i <= count; i++)
     {
         PIXELFORMATDESCRIPTOR pfd = {0};
 
-        ret = SetPixelFormat( hdc, pixel_format, &pfd );
-        ok( ret, "SetPixelFormat failed\n" );
+        winetest_push_context( "%u", i );
+
+        ret = DescribePixelFormat( hdc, i, sizeof(pfd), &pfd );
+        ok( ret == count, "got %d\n", ret );
+
+        ret = SetPixelFormat( hdc, i, &pfd );
+        if (pixel_format != i) ok( !ret, "SetPixelFormat succeeded\n" );
+        else ok( ret, "SetPixelFormat succeeded\n" );
         ret = GetPixelFormat( hdc );
-        ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
-        ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
-        ok( !ret, "SetPixelFormat succeeded\n" );
-        hglrc = wglCreateContext( hdc );
-        ok(hglrc != NULL, "Unable to create a context\n");
+        ok( ret == pixel_format, "got %d\n", ret );
 
-        if(hglrc)
-        {
-            GLint viewport[4];
-            wglMakeCurrent( hdc, hglrc );
-            hglrc2 = wglCreateContext( hdc );
-            ok(hglrc2 != NULL, "Unable to create a context\n");
-
-            /* Note this is RGBA but we read ARGB back */
-            glClearColor((float)0x22/0xff, (float)0x33/0xff, (float)0x44/0xff, (float)0x11/0xff);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            glFinish();
-
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-            /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
-            if (pixels)
-                for (i = 0; i < 16; i++)
-                    ok( pixels[i] == 0x223344 || pixels[i] == 0x11223344,
-                        "Received color=%x at %u\n", pixels[i], i );
-
-            SelectObject( hdc, bmp2 );
-            ret = GetPixelFormat( hdc );
-            ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
-            ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
-            ok( !ret, "SetPixelFormat succeeded\n" );
-
-            /* context still uses the old pixel format and viewport */
-            glClearColor((float)0x44/0xff, (float)0x33/0xff, (float)0x22/0xff, (float)0x11/0xff);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glFinish();
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-
-            wglMakeCurrent(NULL, NULL);
-            wglMakeCurrent( hdc, hglrc );
-            glClearColor((float)0x44/0xff, (float)0x55/0xff, (float)0x66/0xff, (float)0x11/0xff);
-            glClear(GL_COLOR_BUFFER_BIT);
-            glFinish();
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-
-            wglMakeCurrent( hdc, hglrc2 );
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-
-            wglMakeCurrent( hdc, hglrc );
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-
-            SelectObject( hdc, bmp );
-            ret = GetPixelFormat( hdc );
-            ok( ret == pixel_format, "GetPixelFormat returned %d/%d\n", ret, pixel_format );
-            ret = SetPixelFormat( hdc, pixel_format + 1, &pfd );
-            ok( !ret, "SetPixelFormat succeeded\n" );
-            wglMakeCurrent( hdc, hglrc2 );
-            glGetIntegerv( GL_VIEWPORT, viewport );
-            ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
-                "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
-
-            wglDeleteContext(hglrc2);
-            wglDeleteContext(hglrc);
-        }
+        winetest_pop_context();
     }
+
+    tmp_bmp = SelectObject( hdc, bmp );
+    ok( tmp_bmp == bmp2, "got %p\n", tmp_bmp );
+
+    /* creating a GL context now works */
+
+    hglrc = wglCreateContext( hdc );
+    ok( !!hglrc, "wglCreateContext failed, error %lu\n", GetLastError() );
+    ret = wglMakeCurrent( hdc, hglrc );
+    ok( ret, "wglMakeCurrent failed, error %lu\n", GetLastError() );
+
+    hglrc2 = wglCreateContext( hdc );
+    ok( hglrc2 != NULL, "Unable to create a context\n" );
+
+    /* Note this is RGBA but we read ARGB back */
+    glClearColor( (float)0x22 / 0xff, (float)0x33 / 0xff, (float)0x44 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    glFinish();
+
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+    /* Note apparently the alpha channel is not supported by the software renderer (bitmap only works using software) */
+    for (i = 0; pixels && i < 16; i++) ok( pixels[i] == 0x223344 || pixels[i] == 0x11223344, "Received color=%x at %u\n", pixels[i], i );
+
+    tmp_bmp = SelectObject( hdc, bmp2 );
+    ok( tmp_bmp == bmp, "got %p\n", tmp_bmp );
+
+    /* context still uses the old pixel format and viewport */
+    glClearColor( (float)0x44 / 0xff, (float)0x33 / 0xff, (float)0x22 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    glFinish();
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+    wglMakeCurrent( NULL, NULL );
+    wglMakeCurrent( hdc, hglrc );
+    glClearColor( (float)0x44 / 0xff, (float)0x55 / 0xff, (float)0x66 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    glFinish();
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+    wglMakeCurrent( hdc, hglrc2 );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+    wglMakeCurrent( hdc, hglrc );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 4 && viewport[3] == 4,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+    tmp_bmp = SelectObject( hdc, bmp );
+    ok( tmp_bmp == bmp2, "got %p\n", tmp_bmp );
+
+    wglMakeCurrent( hdc, hglrc2 );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( viewport[0] == 0 && viewport[1] == 0 && viewport[2] == 12 && viewport[3] == 12,
+        "wrong viewport %d,%d,%d,%d\n", viewport[0], viewport[1], viewport[2], viewport[3] );
+
+    wglDeleteContext( hglrc2 );
+    wglDeleteContext( hglrc );
 
     SelectObject( hdc, old_bmp );
     DeleteObject(bmp2);
