@@ -1747,6 +1747,38 @@ do                                                                  \
     }                                                               \
 } while (0)
 
+/* This is to handle a Win7 case,
+   where VT_R4 returns the string expected from VT_R8. */
+#define check_PropVariantToBSTR2(type, member, value, expect_str)   \
+do                                                                  \
+{                                                                   \
+    PROPVARIANT check_propvar_ = {.vt = (type), .member = (value)}; \
+    HRESULT check_hr_, check_hr2_;                                  \
+    BSTR check_bstr_, check_bstr2_;                                 \
+                                                                    \
+    ok_(__FILE__, __LINE__)((type) == VT_R4,                        \
+            "check_PropVariantToBSTR2 handles just VT_R4.\n");      \
+                                                                    \
+    check_hr_ = PropVariantToBSTR(&check_propvar_, &check_bstr_);   \
+    ok_(__FILE__, __LINE__)(check_hr_ == S_OK,                      \
+            "PropVariantToBSTR returned %#lx.\n", check_hr_);       \
+                                                                    \
+    check_propvar_.vt = VT_R8;                                      \
+    check_hr2_ = PropVariantToBSTR(&check_propvar_, &check_bstr2_); \
+    ok_(__FILE__, __LINE__)(check_hr2_ == S_OK,                     \
+            "PropVariantToBSTR returned %#lx.\n", check_hr2_);      \
+                                                                    \
+    if (check_hr_ == S_OK && check_bstr2_ == S_OK)                  \
+    {                                                               \
+        ok_(__FILE__, __LINE__)(                                    \
+                !wcscmp(check_bstr_, (expect_str)) ||               \
+                broken(!wcscmp(check_bstr_, check_bstr2_)),         \
+                "Unexpected bstr %s.\n", debugstr_w(check_bstr_));  \
+        SysFreeString(check_bstr_);                                 \
+        SysFreeString(check_bstr2_);                                \
+    }                                                               \
+} while (0)
+
 static void test_PropVariantToBSTR(void)
 {
     unsigned char test_bytes[] = {1, 20, 30, 4};
@@ -1765,7 +1797,7 @@ static void test_PropVariantToBSTR(void)
     todo_wine
     {
     check_PropVariantToBSTR(VT_BOOL,   boolVal,        TRUE,                 L"1");
-    check_PropVariantToBSTR(VT_R4,     fltVal,         0.125f,               L"0.125");
+    check_PropVariantToBSTR2(VT_R4,    fltVal,         0.125f,               L"0.125");
     check_PropVariantToBSTR(VT_R8,     dblVal,         0.456,                L"0.456");
     }
     check_PropVariantToBSTR(VT_I1,     cVal,           -123,                 L"-123");
