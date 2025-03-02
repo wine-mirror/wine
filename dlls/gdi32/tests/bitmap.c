@@ -5704,7 +5704,7 @@ static void test_D3DKMTCreateDCFromMemory( void )
     DWORD type, pixel;
     int size;
     HDC bmp_dc;
-    HBITMAP bmp;
+    HBITMAP bmp, bmp2, tmp_bmp;
 
     static const struct
     {
@@ -5893,6 +5893,12 @@ static void test_D3DKMTCreateDCFromMemory( void )
         bmp = SelectObject( bmp_dc, bmp );
         ret = BitBlt( bmp_dc, 0, 0, create_desc.Width, create_desc.Height, create_desc.hDc, 0, 0, SRCCOPY );
         ok(ret, "Failed to blit.\n");
+
+        /* cannot select a different bitmap on D3DKMT DCs */
+        bmp2 = CreateBitmap( 4, 4, 1, 32, NULL );
+        tmp_bmp = SelectObject( create_desc.hDc, bmp2 );
+        todo_wine ok( !tmp_bmp, "SelectObject succeeded\n" );
+        DeleteObject( bmp2 );
 
         destroy_desc.hDc = create_desc.hDc;
         destroy_desc.hBitmap = create_desc.hBitmap;
