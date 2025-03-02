@@ -259,16 +259,25 @@ static HRESULT WINAPI FlipRotator_Initialize(IWICBitmapFlipRotator *iface,
         goto end;
     }
 
-    if (options&WICBitmapTransformRotate90)
+    switch (options & 3)
     {
-        This->swap_xy = 1;
-        This->flip_x = !This->flip_x;
-    }
+    case WICBitmapTransformRotate0:
+        break;
 
-    if (options&WICBitmapTransformRotate180)
-    {
-        This->flip_x = !This->flip_x;
-        This->flip_y = !This->flip_y;
+    case WICBitmapTransformRotate90:
+        This->swap_xy = 1;
+        This->flip_x = 1;
+        break;
+
+    case WICBitmapTransformRotate180:
+        This->flip_x = 1;
+        This->flip_y = 1;
+        break;
+
+    case WICBitmapTransformRotate270:
+        This->swap_xy = 1;
+        This->flip_y = 1;
+        break;
     }
 
     if (options&WICBitmapTransformFlipHorizontal)

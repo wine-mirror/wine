@@ -1487,6 +1487,10 @@ static void test_FlipRotator(void)
     static BYTE dst_data_rotate180_flip_h[] = { 4,5,6, 1,2,3 };
     static BYTE dst_data_rotate180_flip_v[] = { 3,2,1, 6,5,4 };
     static BYTE dst_data_rotate180_flip_hv[] = { 1,2,3, 4,5,6 };
+    static BYTE dst_data_rotate270[] = {  3,6, 2,5, 1,4 };
+    static BYTE dst_data_rotate270_flip_h[] = { 1,4, 2,5, 3,6 };
+    static BYTE dst_data_rotate270_flip_v[] = { 6,3, 5,2, 4,1 };
+    static BYTE dst_data_rotate270_flip_hv[] = { 4,1, 5,2, 6,3 };
     static BYTE dst_data_flip_h[] = { 3,2,1, 6,5,4 };
     static BYTE dst_data_flip_v[] = { 4,5,6, 1,2,3 };
     static BYTE dst_data_flip_hv[] = { 6,5,4, 3,2,1 };
@@ -1506,9 +1510,17 @@ static void test_FlipRotator(void)
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipHorizontal, 3, 2, dst_data_rotate180_flip_h },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_v },
         { WICBitmapTransformRotate180 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 3, 2, dst_data_rotate180_flip_hv },
+        { WICBitmapTransformRotate270, 2, 3, dst_data_rotate270 },
+        { WICBitmapTransformRotate270 | WICBitmapTransformFlipHorizontal, 2, 3, dst_data_rotate270_flip_h },
+        { WICBitmapTransformRotate270 | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate270_flip_v },
+        { WICBitmapTransformRotate270 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate270_flip_hv },
         { WICBitmapTransformFlipHorizontal, 3, 2, dst_data_flip_h },
         { WICBitmapTransformFlipVertical, 3, 2, dst_data_flip_v },
         { WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 3, 2, dst_data_flip_hv },
+        { 7, 2, 3, dst_data_rotate270 },
+        { 7 | WICBitmapTransformFlipHorizontal, 2, 3, dst_data_rotate270_flip_h },
+        { 7 | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate270_flip_v },
+        { 7 | WICBitmapTransformFlipHorizontal | WICBitmapTransformFlipVertical, 2, 3, dst_data_rotate270_flip_hv },
     };
     HRESULT hr;
     IWICBitmap *bitmap;
