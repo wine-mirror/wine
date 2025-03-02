@@ -18,12 +18,26 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <windows.h>
-#include <wingdi.h>
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+#include "winerror.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winternl.h"
+#include "ddk/d3dkmthk.h"
+
 #include "wine/test.h"
 #include "wine/wgl.h"
 
 #define MAX_FORMATS 256
+
+static NTSTATUS (WINAPI *pD3DKMTCreateDCFromMemory)( D3DKMT_CREATEDCFROMMEMORY *desc );
+static NTSTATUS (WINAPI *pD3DKMTDestroyDCFromMemory)( const D3DKMT_DESTROYDCFROMMEMORY *desc );
 
 /* WGL_ARB_create_context */
 static HGLRC (WINAPI *pwglCreateContextAttribsARB)(HDC hDC, HGLRC hShareContext, const int *attribList);
@@ -1177,6 +1191,126 @@ static void test_bitmap_rendering( BOOL use_dib )
     DeleteObject( bmp2 );
     DeleteObject( bmp );
     DeleteDC( hdc );
+
+    winetest_pop_context();
+}
+
+static void test_d3dkmt_rendering(void)
+{
+    static const RECT expect_rect = {0, 0, 4, 4};
+    int i, ret, count, pixel_format = 0;
+    D3DKMT_CREATEDCFROMMEMORY create;
+    D3DKMT_DESTROYDCFROMMEMORY desc;
+    UINT pixels[16 * 16], pixel;
+    GLint viewport[4], object;
+    NTSTATUS status;
+    HGLRC hglrc;
+
+    create.pMemory = pixels;
+    create.Format = D3DDDIFMT_A8R8G8B8;
+    create.Width = 4;
+    create.Height = 4;
+    create.Pitch = 4 * 4;
+    create.hDeviceDc = CreateCompatibleDC( 0 );
+    create.pColorTable = NULL;
+    status = pD3DKMTCreateDCFromMemory( &create );
+    ok( !status, "got %#lx\n", status );
+    DeleteDC( create.hDeviceDc );
+    desc.hBitmap = create.hBitmap;
+    desc.hDc = create.hDc;
+
+    ret = GetPixelFormat( desc.hDc );
+    ok( ret == 0, "got %d\n", ret );
+    count = DescribePixelFormat( desc.hDc, 0, 0, NULL );
+    ok( count > 1, "got %d\n", count );
+
+    /* cannot create a GL context without a pixel format */
+
+    hglrc = wglCreateContext( desc.hDc );
+    todo_wine ok( !hglrc, "wglCreateContext succeeded\n" );
+    if (hglrc) wglDeleteContext( hglrc );
+
+    /* cannot set pixel format twice */
+
+    for (i = 1; i <= count; i++)
+    {
+        PIXELFORMATDESCRIPTOR pfd = {0};
+
+        winetest_push_context( "%u", i );
+
+        ret = DescribePixelFormat( desc.hDc, i, sizeof(pfd), &pfd );
+        ok( ret == count, "got %d\n", ret );
+
+        if ((pfd.dwFlags & PFD_DRAW_TO_BITMAP) && (pfd.dwFlags & PFD_SUPPORT_OPENGL) &&
+            pfd.cColorBits == 32 && pfd.cAlphaBits == 8)
+        {
+            ret = SetPixelFormat( desc.hDc, i, &pfd );
+            if (pixel_format) ok( !ret, "SetPixelFormat succeeded\n" );
+            else ok( ret, "SetPixelFormat failed\n" );
+            if (ret) pixel_format = i;
+            ret = GetPixelFormat( desc.hDc );
+            ok( ret == pixel_format, "got %d\n", ret );
+        }
+
+        winetest_pop_context();
+    }
+
+    ok( !!pixel_format, "got pixel_format %u\n", pixel_format );
+
+    /* creating a GL context now works */
+
+    hglrc = wglCreateContext( desc.hDc );
+    ok( !!hglrc, "wglCreateContext failed, error %lu\n", GetLastError() );
+    ret = wglMakeCurrent( desc.hDc, hglrc );
+    ok( ret, "wglMakeCurrent failed, error %lu\n", GetLastError() );
+
+    glGetIntegerv( GL_READ_BUFFER, &object );
+    ok( object == GL_FRONT, "got %u\n", object );
+    glGetIntegerv( GL_DRAW_BUFFER, &object );
+    ok( object == GL_FRONT, "got %u\n", object );
+
+    memset( viewport, 0xcd, sizeof(viewport) );
+    glGetIntegerv( GL_VIEWPORT, viewport );
+    ok( EqualRect( (RECT *)viewport, &expect_rect ), "got viewport %s\n", wine_dbgstr_rect( (RECT *)viewport ) );
+
+    memset( (void *)pixels, 0xcd, sizeof(*pixels) * 4 * 4 );
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( (pixel & 0xffffff) == 0xcdcdcd, "got %#x\n", pixel );
+
+    glClearColor( (float)0x44 / 0xff, (float)0x33 / 0xff, (float)0x22 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    ok( (pixels[0] & 0xffffff) == 0xcdcdcd, "got %#x\n", pixels[0] );
+    glFinish();
+    ok( (pixels[0] & 0xffffff) == 0x443322, "got %#x\n", pixels[0] );
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
+
+    glClearColor( (float)0x55 / 0xff, (float)0x66 / 0xff, (float)0x77 / 0xff, (float)0x88 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    ok( (pixels[0] & 0xffffff) == 0x443322, "got %#x\n", pixels[0] );
+    glFlush();
+    ok( (pixels[0] & 0xffffff) == 0x556677, "got %#x\n", pixels[0] );
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    ok( (pixel & 0xffffff) == 0x776655, "got %#x\n", pixel );
+
+    glClearColor( (float)0x44 / 0xff, (float)0x33 / 0xff, (float)0x22 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    ok( (pixels[0] & 0xffffff) == 0x556677, "got %#x\n", pixels[0] );
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
+    todo_wine ok( (pixels[0] & 0xffffff) == 0x443322, "got %#x\n", pixels[0] );
+
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    ok( (pixel & 0xffffff) == 0x223344, "got %#x\n", pixel );
+    memset( pixels, 0xa5, sizeof(pixels) );
+    glReadPixels( 0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel );
+    todo_wine ok( (pixel & 0xffffff) == 0xa5a5a5, "got %#x\n", pixel );
+    memset( pixels, 0xcd, sizeof(pixels) );
+
+    wglDeleteContext( hglrc );
+
+    status = pD3DKMTDestroyDCFromMemory( &desc );
+    ok( !status, "got %#lx\n", status );
 
     winetest_pop_context();
 }
@@ -2352,10 +2486,15 @@ START_TEST(opengl)
     ok(hwnd != NULL, "err: %ld\n", GetLastError());
     if (hwnd)
     {
+        HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
         HDC hdc;
         int iPixelFormat, res;
         HGLRC hglrc;
         DWORD error;
+
+        pD3DKMTCreateDCFromMemory  = (void *)GetProcAddress( gdi32, "D3DKMTCreateDCFromMemory" );
+        pD3DKMTDestroyDCFromMemory = (void *)GetProcAddress( gdi32, "D3DKMTDestroyDCFromMemory" );
+
         ShowWindow(hwnd, SW_SHOW);
 
         hdc = GetDC(hwnd);
@@ -2379,6 +2518,7 @@ START_TEST(opengl)
 
         test_bitmap_rendering( TRUE );
         test_bitmap_rendering( FALSE );
+        test_d3dkmt_rendering();
         test_minimized();
         test_window_dc();
         test_message_window();
