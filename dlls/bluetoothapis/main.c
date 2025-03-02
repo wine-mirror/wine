@@ -214,7 +214,7 @@ HBLUETOOTH_DEVICE_FIND WINAPI BluetoothFindFirstDevice( BLUETOOTH_DEVICE_SEARCH_
     hfind->params = *params;
     hfind->device_list = device_list;
     hfind->idx = 0;
-    if (!device_find_next( hfind, info ))
+    if (!BluetoothFindNextDevice( hfind, info ))
     {
         free( hfind->device_list );
         free( hfind );
@@ -586,11 +586,25 @@ BOOL WINAPI BluetoothEnableDiscovery( HANDLE radio, BOOL enabled )
 /*********************************************************************
  *  BluetoothFindNextDevice
  */
-BOOL WINAPI BluetoothFindNextDevice(HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVICE_INFO *info)
+BOOL WINAPI BluetoothFindNextDevice( HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVICE_INFO *info )
 {
-    FIXME("(%p, %p): stub!\n", find, info);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL success;
+
+    TRACE( "(%p, %p)\n", find, info );
+
+    /* This method doesn't perform any validation for info, for some reason. */
+    if (!find)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    success = device_find_next( find, info );
+    if (!success)
+        SetLastError( ERROR_NO_MORE_ITEMS );
+    else
+        SetLastError( ERROR_SUCCESS );
+    return success;
 }
 
 /*********************************************************************
