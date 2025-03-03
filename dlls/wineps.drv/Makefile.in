@@ -11,42 +11,7 @@ SOURCES = \
 	builtin.c \
 	clipping.c \
 	color.c \
-	data/AvantGarde_Book.c \
-	data/AvantGarde_BookOblique.c \
-	data/AvantGarde_Demi.c \
-	data/AvantGarde_DemiOblique.c \
-	data/Bookman_Demi.c \
-	data/Bookman_DemiItalic.c \
-	data/Bookman_Light.c \
-	data/Bookman_LightItalic.c \
-	data/Courier.c \
-	data/Courier_Bold.c \
-	data/Courier_BoldOblique.c \
-	data/Courier_Oblique.c \
-	data/Helvetica.c \
-	data/Helvetica_Bold.c \
-	data/Helvetica_BoldOblique.c \
-	data/Helvetica_Narrow.c \
-	data/Helvetica_Narrow_Bold.c \
-	data/Helvetica_Narrow_BoldOblique.c \
-	data/Helvetica_Narrow_Oblique.c \
-	data/Helvetica_Oblique.c \
-	data/NewCenturySchlbk_Bold.c \
-	data/NewCenturySchlbk_BoldItalic.c \
-	data/NewCenturySchlbk_Italic.c \
-	data/NewCenturySchlbk_Roman.c \
-	data/Palatino_Bold.c \
-	data/Palatino_BoldItalic.c \
-	data/Palatino_Italic.c \
-	data/Palatino_Roman.c \
-	data/Symbol.c \
-	data/Times_Bold.c \
-	data/Times_BoldItalic.c \
-	data/Times_Italic.c \
-	data/Times_Roman.c \
-	data/ZapfChancery_MediumItalic.c \
-	data/ZapfDingbats.c \
-	data/agl.c \
+	corefonts.c \
 	direction.c \
 	download.c \
 	driver.c \

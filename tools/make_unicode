@@ -6085,21 +6085,26 @@ sub dump_psfonts($)
         $fonts{$varname} = \%font;
     }
 
+    $filename = "$dir/corefonts.c";
+    printf "Building %s\n", $filename;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "/* Adobe Core Fonts, generated from $data_files{psfonts}->{url} */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"psdrv.h\"\n\n";
+
     foreach my $name (sort keys %fonts)
     {
         my $count = scalar @{$fonts{$name}->{chars}};
-        my $filename = sprintf "%s/data/%s.c", $dir, $name;
-        printf "Building %s\n", $filename;
-        open OUTPUT, ">$filename.new" or die "Cannot create $filename";
-        print OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-        print OUTPUT "#include \"psdrv.h\"\n\n";
-        print OUTPUT "\n/*\n *  Glyph metrics\n */\n\n";
-        printf OUTPUT "static const AFMMETRICS metrics[%u] =\n{\n", $count;
+        printf OUTPUT "static const AFMMETRICS metrics_%s[%u] =\n{\n", $name, $count;
         foreach my $m (sort { $a->{UV} <=> $b->{UV} } @{$fonts{$name}->{chars}})
         {
             printf OUTPUT "    { 0x%04x, %4u },\n", $m->{UV}, $m->{WX};
         }
-        print OUTPUT  "};\n";
+        print OUTPUT  "};\n\n";
+    }
+
+    foreach my $name (sort keys %fonts)
+    {
         my %weights = ( Bold => "FW_BOLD",
                         Book => "FW_NORMAL",
                         Demi => "FW_BOLD",
@@ -6107,38 +6112,28 @@ sub dump_psfonts($)
                         Roman => "FW_NORMAL",
                         Medium => "FW_NORMAL",
             );
-        printf OUTPUT "\n\n/*\n *  Font metrics\n */\n\nconst AFM PSDRV_%s =\n{\n", $name;
-        printf OUTPUT "    \"%s\", /* FontName */\n", $fonts{$name}->{FontName};
-        printf OUTPUT "    L\"%s\", /* FamilyName */\n", $fonts{$name}->{FamilyName};
-        printf OUTPUT "    L\"%s\", /* EncodingScheme */\n", $fonts{$name}->{EncodingScheme};
-        printf OUTPUT "    %s, /* Weight */\n", $weights{$fonts{$name}->{Weight}};
-        printf OUTPUT "    %s, /* ItalicAngle */\n", $fonts{$name}->{ItalicAngle};
-        printf OUTPUT "    %s, /* IsFixedPitch */\n", uc $fonts{$name}->{IsFixedPitch};
-        printf OUTPUT "    { %d, %d, %d, %d }, /* FontBBox */\n", @{$fonts{$name}->{FontBBox}}[0..3];
-        print OUTPUT  "    {\n";
-        printf OUTPUT "        %d,  /* WinMetrics.usUnitsPerEm */\n", $fonts{$name}->{usUnitsPerEm};
-        printf OUTPUT "        %d,  /* WinMetrics.sAscender */\n", $fonts{$name}->{sAscender};
-        printf OUTPUT "        %d,  /* WinMetrics.sDescender */\n", $fonts{$name}->{sDescender};
-        printf OUTPUT "        %d,  /* WinMetrics.sLineGap */\n", $fonts{$name}->{sLineGap};
-        printf OUTPUT "        %d,  /* WinMetrics.sAvgCharWidth */\n", $fonts{$name}->{sAvgCharWidth};
-        printf OUTPUT "        %d,  /* WinMetrics.usWinAscent */\n", $fonts{$name}->{usWinAscent};
-        printf OUTPUT "        %d,  /* WinMetrics.usWinDescent */\n", $fonts{$name}->{usWinDescent};
-        print OUTPUT  "    },\n";
-        printf OUTPUT "    %s, /* NumofMetrics */\n", $count;
-        print OUTPUT "    metrics /* Metrics */\n";
-        print OUTPUT  "};\n";
-        close OUTPUT;
-        save_file($filename);
+        printf OUTPUT "static const AFM font_%s =\n{\n", $name;
+        printf OUTPUT "    .FontName = \"%s\",\n", $fonts{$name}->{FontName};
+        printf OUTPUT "    .FamilyName = L\"%s\",\n", $fonts{$name}->{FamilyName};
+        printf OUTPUT "    .EncodingScheme = L\"%s\",\n", $fonts{$name}->{EncodingScheme};
+        printf OUTPUT "    .Weight = %s,\n", $weights{$fonts{$name}->{Weight}};
+        printf OUTPUT "    .ItalicAngle = %s,\n", $fonts{$name}->{ItalicAngle};
+        printf OUTPUT "    .IsFixedPitch = %s,\n", uc $fonts{$name}->{IsFixedPitch};
+        printf OUTPUT "    .FontBBox = { %d, %d, %d, %d },\n", @{$fonts{$name}->{FontBBox}}[0..3];
+        printf OUTPUT "    .WinMetrics.usUnitsPerEm = %d,\n", $fonts{$name}->{usUnitsPerEm};
+        printf OUTPUT "    .WinMetrics.sAscender = %d,\n", $fonts{$name}->{sAscender};
+        printf OUTPUT "    .WinMetrics.sDescender = %d,\n", $fonts{$name}->{sDescender};
+        printf OUTPUT "    .WinMetrics.sLineGap = %d,\n", $fonts{$name}->{sLineGap};
+        printf OUTPUT "    .WinMetrics.sAvgCharWidth = %d,\n", $fonts{$name}->{sAvgCharWidth};
+        printf OUTPUT "    .WinMetrics.usWinAscent = %d,\n", $fonts{$name}->{usWinAscent};
+        printf OUTPUT "    .WinMetrics.usWinDescent = %d,\n", $fonts{$name}->{usWinDescent};
+        printf OUTPUT "    .NumofMetrics = %s,\n", $count;
+        printf OUTPUT "    .Metrics = metrics_%s\n", $name;
+        print OUTPUT  "};\n\n";
     }
 
-    $filename = "$dir/data/agl.c";
-    printf "Building %s\n", $filename;
-    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
-    print OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"psdrv.h\"\n\n";
-    map { print OUTPUT  "extern const AFM PSDRV_$_;\n"; } sort keys %fonts;
-    print OUTPUT "\nconst AFM *const PSDRV_BuiltinAFMs[] =\n{\n";
-    map { print OUTPUT  "    &PSDRV_$_,\n"; } sort keys %fonts;
+    print OUTPUT "const AFM * const PSDRV_BuiltinAFMs[] =\n{\n";
+    map { print OUTPUT  "    &font_$_,\n"; } sort keys %fonts;
     print OUTPUT  "    NULL\n};\n";
     close OUTPUT;
     save_file($filename);
