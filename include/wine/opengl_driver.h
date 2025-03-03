@@ -113,6 +113,7 @@ struct opengl_funcs
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs
 {
+    const char *(*p_init_wgl_extensions)(void);
 };
 
 #endif /* WINE_UNIX_LIB */
