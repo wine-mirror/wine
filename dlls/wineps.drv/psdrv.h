@@ -82,8 +82,8 @@ typedef struct {
 } OLD_AFMMETRICS;
 
 typedef struct {
-    LONG    	    	UV; 	    	    	/* Unicode value */
-    FLOAT   	    	WX; 	    	    	/* Advance width */
+    WCHAR    	    	UV; 	    	    	/* Unicode value */
+    SHORT   	    	WX; 	    	    	/* Advance width */
 } AFMMETRICS;
 
 typedef struct {
