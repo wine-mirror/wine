@@ -628,6 +628,10 @@ DWORD WINAPI DECLSPEC_HOTPATCH SuspendThread( HANDLE thread )
 {
     DWORD ret;
 
+    /* NT in Win9x mode returns 0 for current thread. */
+    if ((GetVersion() & 0x80000000) && GetThreadId( thread ) == GetCurrentThreadId())
+        return 0;
+
     if (!set_ntstatus( NtSuspendThread( thread, &ret ))) ret = ~0U;
     return ret;
 }
