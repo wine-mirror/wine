@@ -96,6 +96,7 @@ extern "C" {
 #define _sntprintf    WINE_tchar_routine(snprintf,        snprintf,    _snwprintf)
 #define _stprintf     WINE_tchar_routine(sprintf,         sprintf,     swprintf)
 #define _stscanf      WINE_tchar_routine(sscanf,          sscanf,      swscanf)
+#define _stscanf_s    WINE_tchar_routine(sscanf_s,        sscanf_s,    swscanf_s)
 #define _taccess      WINE_tchar_routine(access,          _access,     _waccess)
 #define _tasctime     WINE_tchar_routine(asctime,         asctime,     _wasctime)
 #define _tccpy        WINE_tchar_routine(WINE_tchar_tccpy,_mbccpy,     WINE_tchar_tccpy)
