@@ -38,13 +38,9 @@ my %modules16 =
   "wow32.dll" => 1,
 );
 
-my %ignored_source_files = (
-    "dlls/wineps.drv/afm2c.c" => 1,
-    "dlls/wineps.drv/mkagl.c" => 1,
-);
-
 my (@makefiles, %makefiles);
 my @nls_files;
+my %deleted_files;
 
 sub dirname($)
 {
@@ -261,7 +257,7 @@ sub assign_sources_to_makefiles(@)
 {
     foreach my $file (@_)
     {
-        next if defined $ignored_source_files{$file};
+        next if defined $deleted_files{$file};
         next if $file =~ /Makefile\.in$/;
         my $dir = dirname( $file );
         my $subdir = $dir;
@@ -395,7 +391,7 @@ my $git_dir = $ENV{GIT_DIR} || ".git";
 die "needs to be run from a git checkout" unless -e $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z` or die "cannot get files list";
-map { $ignored_source_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
+map { $deleted_files{$_} = 1; } split /\0/, `git ls-files -d -z`;
 @makefiles = grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort @makefiles)
