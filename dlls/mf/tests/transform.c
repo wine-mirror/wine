@@ -2946,9 +2946,9 @@ static void test_aac_decoder_user_data(void)
         BOOL todo_short;
     } tests[] = {
         { "aac",              aac_input_type_desc,              S_OK,                  FALSE, TRUE },
-        { "raw aac",          raw_aac_input_type_desc,          S_OK,                  FALSE, TRUE },
+        { "raw aac",          raw_aac_input_type_desc,          S_OK                               },
         { "raw aac long",     raw_aac_input_type_desc_long,     S_OK,                  FALSE, TRUE },
-        { "raw aac 48Khz",    raw_aac_input_type_desc_48khz,    S_OK,                  FALSE, TRUE },
+        { "raw aac 48Khz",    raw_aac_input_type_desc_48khz,    S_OK                               },
         { "raw aac mismatch", raw_aac_input_type_desc_mismatch, MF_E_INVALIDMEDIATYPE, TRUE        },
     };
 
