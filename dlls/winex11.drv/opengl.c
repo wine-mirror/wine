@@ -1327,11 +1327,6 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         mark_drawable_dirty( old, new );
         release_gl_drawable( new );
     }
-    else
-    {
-        destroy_gl_drawable( hwnd );
-        win32u_set_window_pixel_format( hwnd, 0, FALSE );
-    }
     release_gl_drawable( old );
 }
 
