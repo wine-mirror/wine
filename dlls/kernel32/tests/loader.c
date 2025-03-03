@@ -2881,8 +2881,8 @@ static void subtest_export_forwarder_dep_chain( size_t num_chained_export_module
         status = pLdrUnregisterDllNotification( cookie );
         ok( !status, "LdrUnregisterDllNotification returned %#lx.\n", status );
 
-        ok( !lnc.load_count, "got %u for load count of first module\n", lnc.load_count );
-        ok( !lnc.unload_count, "got %u for unload count of first module\n", lnc.unload_count );
+        ok( lnc.load_count == lnc.unload_count, "got %u/%u for load/unload count of 1st module\n", lnc.load_count, lnc.unload_count );
+        ok( !lnc.load_count || broken(lnc.load_count == 1) /* win7 */, "got %u for load count of first module\n", lnc.load_count );
     }
 
     if (winetest_debug > 1)
