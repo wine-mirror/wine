@@ -5945,6 +5945,26 @@ sub dump_psfonts($)
         die "unrecognized line $_";
     }
 
+    my $filename = "$dir/glyphs.c";
+    printf "Building %s\n", $filename;
+    my $count = scalar keys %glyphs;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "/* Adobe Glyph List, generated from $current_data_file */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"psdrv.h\"\n\n";
+    print OUTPUT "const INT PSDRV_AGLbyNameSize = $count;\n\n";
+    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyName[$count] =\n{\n";
+    map { printf OUTPUT "    { 0x%04x, \"$_\" },\n", $glyphs{$_}; } sort keys %glyphs;
+    print OUTPUT "};\n\n";
+
+    $count = scalar keys %glyph_values;
+    print OUTPUT "const INT PSDRV_AGLbyUVSize = $count;\n\n";
+    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyUV[$count] =\n{\n";
+    map { printf OUTPUT "    { 0x%04x, \"%s\" },\n", hex $_, $glyph_values{$_}; } sort keys %glyph_values;
+    print OUTPUT "};\n";
+    close OUTPUT;
+    save_file($filename);
+
     foreach my $file (@psfonts)
     {
         my $FILE = open_data_file( "psfonts", "Adobe-Core35_AFMs-229/$file.afm" );
@@ -6068,7 +6088,7 @@ sub dump_psfonts($)
     foreach my $name (sort keys %fonts)
     {
         my $count = scalar @{$fonts{$name}->{chars}};
-        my $filename = sprintf "%s/%s.c", $dir, $name;
+        my $filename = sprintf "%s/data/%s.c", $dir, $name;
         printf "Building %s\n", $filename;
         open OUTPUT, ">$filename.new" or die "Cannot create $filename";
         print OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
@@ -6111,7 +6131,7 @@ sub dump_psfonts($)
         save_file($filename);
     }
 
-    my $filename = "$dir/agl.c";
+    $filename = "$dir/data/agl.c";
     printf "Building %s\n", $filename;
     open OUTPUT, ">$filename.new" or die "Cannot create $filename";
     print OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
@@ -6119,21 +6139,7 @@ sub dump_psfonts($)
     map { print OUTPUT  "extern const AFM PSDRV_$_;\n"; } sort keys %fonts;
     print OUTPUT "\nconst AFM *const PSDRV_BuiltinAFMs[] =\n{\n";
     map { print OUTPUT  "    &PSDRV_$_,\n"; } sort keys %fonts;
-    print OUTPUT  "    NULL\n};\n\n";
-
-    my $count = scalar keys %glyphs;
-    print OUTPUT "\n/*\n *  The AGL encoding vector, sorted by glyph name - duplicates omitted\n */\n\n";
-    print OUTPUT "const INT PSDRV_AGLbyNameSize = $count;\n\n";
-    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyName[$count] =\n{\n";
-    map { printf OUTPUT "    { 0x%04x, \"$_\" },\n", $glyphs{$_}; } sort keys %glyphs;
-    print OUTPUT "};\n\n";
-
-    $count = scalar keys %glyph_values;
-    print OUTPUT "\n/*\n *  The AGL encoding vector, sorted by Unicode value - duplicates included\n */\n\n";
-    print OUTPUT "const INT PSDRV_AGLbyUVSize = $count;\n\n";
-    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyUV[$count] =\n{\n";
-    map { printf OUTPUT "    { 0x%04x, \"%s\" },\n", hex $_, $glyph_values{$_}; } sort keys %glyph_values;
-    print OUTPUT "};\n";
+    print OUTPUT  "    NULL\n};\n";
     close OUTPUT;
     save_file($filename);
 }
@@ -6176,7 +6182,7 @@ dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/gdi32/uniscribe/indicsyllable.c" );
 dump_vertical( "dlls/win32u/vertical.c", 1 );
 dump_vertical( "dlls/wineps.drv/vertical.c", 0 );
-dump_psfonts( "dlls/wineps.drv/data" );
+dump_psfonts( "dlls/wineps.drv" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );

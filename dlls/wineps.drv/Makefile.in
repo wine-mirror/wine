@@ -53,6 +53,7 @@ SOURCES = \
 	encode.c \
 	escape.c \
 	font.c \
+	glyphs.c \
 	graphics.c \
 	init.c \
 	pen.c \
