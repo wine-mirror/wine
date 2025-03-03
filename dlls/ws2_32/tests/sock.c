@@ -4012,8 +4012,11 @@ static void test_WSAConnectByName(void)
     ret = WSAConnectByNameA(s, "winehq.org", "https", NULL, NULL, NULL, NULL, NULL, NULL);
     err = WSAGetLastError();
     ok(!ret, "WSAConnectByNameA should have failed\n");
-    ok(err == WSAEINVAL || err == WSAEFAULT, "expected error %u (WSAEINVAL) or %u (WSAEFAULT), got %u\n",
-       WSAEINVAL, WSAEFAULT, err); /* WSAEFAULT win10 >= 1809 */
+    ok(err == WSAEINVAL ||
+       err == WSAEFAULT ||   /* win10 >= 1809 */
+       err == WSAEOPNOTSUPP, /* win7, win8, win10 <= 1507 */
+       "expected error %u (WSAEINVAL) or %u (WSAEFAULT) or %u (WSAEOPNOTSUPP), got %u\n",
+       WSAEINVAL, WSAEFAULT, WSAEOPNOTSUPP, err);
     closesocket(s);
 
     /* Passing non-null as the reserved parameter */
