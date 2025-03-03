@@ -594,18 +594,6 @@ static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
     return TRUE;
 }
 
-static const char *wayland_wglGetExtensionsStringARB(HDC hdc)
-{
-    TRACE("() returning \"%s\"\n", wgl_extensions);
-    return wgl_extensions;
-}
-
-static const char *wayland_wglGetExtensionsStringEXT(void)
-{
-    TRACE("() returning \"%s\"\n", wgl_extensions);
-    return wgl_extensions;
-}
-
 static PROC wayland_wglGetProcAddress(LPCSTR name)
 {
     if (!strncmp(name, "wgl", 3)) return NULL;
@@ -1210,12 +1198,11 @@ static BOOL init_opengl_funcs(void)
     p_glClear = opengl_funcs.p_glClear;
     opengl_funcs.p_glClear = wayland_glClear;
 
-    register_extension("WGL_ARB_extensions_string");
-    opengl_funcs.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
+    return TRUE;
+}
 
-    register_extension("WGL_EXT_extensions_string");
-    opengl_funcs.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
-
+static const char *wayland_init_wgl_extensions(void)
+{
     register_extension("WGL_WINE_pixel_format_passthrough");
     opengl_funcs.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
 
@@ -1255,7 +1242,7 @@ static BOOL init_opengl_funcs(void)
     opengl_funcs.p_wglReleaseTexImageARB = wayland_wglReleaseTexImageARB;
     opengl_funcs.p_wglSetPbufferAttribARB = wayland_wglSetPbufferAttribARB;
 
-    return TRUE;
+    return wgl_extensions;
 }
 
 static BOOL init_egl_configs(void)
@@ -1311,6 +1298,11 @@ static BOOL init_egl_configs(void)
 
     return TRUE;
 }
+
+static const struct opengl_driver_funcs wayland_driver_funcs =
+{
+    .p_init_wgl_extensions = wayland_init_wgl_extensions,
+};
 
 /**********************************************************************
  *           WAYLAND_OpenGLInit
@@ -1407,6 +1399,7 @@ UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct 
     if (!init_opengl_funcs()) goto err;
     if (!init_egl_configs()) goto err;
     *funcs = &opengl_funcs;
+    *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
 
 err:
