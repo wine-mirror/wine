@@ -728,6 +728,7 @@ static void check_mft_set_input_type_(int line, IMFTransform *transform, const s
     init_media_type(media_type, attributes, -1);
 
     hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(hr == expect_hr, "SetInputType returned %#lx.\n", hr);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     todo_wine_if(todo)
@@ -2870,6 +2871,135 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
             ok(i == ARRAY_SIZE(expect_available_outputs) * 2, "got %lu media types.\n", i);
         else
             ok(i == ARRAY_SIZE(expect_available_outputs), "got %lu media types.\n", i);
+        winetest_pop_context();
+    }
+
+    ret = IMFTransform_Release(transform);
+    ok(!ret, "got %lu.\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_aac_decoder_user_data(void)
+{
+    /* https://wiki.multimedia.cx/index.php/MPEG-4_Audio */
+    static const BYTE aac_raw_codec_data[] = {0x12, 0x08}; /* short form of 1 channel 44.1 Khz */
+    static const BYTE aac_raw_codec_data_long[] = {0x17, 0x80, 0x56, 0x22, 0x08}; /* long form of 1 channel 44.1 Khz */
+    static const BYTE aac_raw_codec_data_48khz[] = {0x11, 0x90}; /* short form of 1 channel 48 Khz */
+    static const struct attribute_desc raw_aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data, sizeof(aac_raw_codec_data), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_long[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_long, sizeof(aac_raw_codec_data_long), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_48khz[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_48khz, sizeof(aac_raw_codec_data_48khz), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_mismatch[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_48khz, sizeof(aac_raw_codec_data_48khz), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, test_aac_codec_data, sizeof(test_aac_codec_data), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
+        ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
+        ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
+        {0},
+    };
+
+    static struct {
+        const char *name;
+        const struct attribute_desc *desc;
+        HRESULT exp_result;
+        BOOL todo;
+        BOOL todo_short;
+    } tests[] = {
+        { "aac",              aac_input_type_desc,              S_OK,                  FALSE, TRUE },
+        { "raw aac",          raw_aac_input_type_desc,          S_OK,                  FALSE, TRUE },
+        { "raw aac long",     raw_aac_input_type_desc_long,     S_OK,                  FALSE, TRUE },
+        { "raw aac 48Khz",    raw_aac_input_type_desc_48khz,    S_OK,                  FALSE, TRUE },
+        { "raw aac mismatch", raw_aac_input_type_desc_mismatch, MF_E_INVALIDMEDIATYPE, TRUE        },
+    };
+
+    const struct attribute_desc *input_type_desc;
+    struct attribute_desc input_desc[64];
+    unsigned int user_data_index = ~0u;
+    IMFTransform *transform;
+    ULONG ret, i, j;
+    HRESULT hr;
+
+    winetest_push_context("aacdec user_data");
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSAACDecMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+    {
+        win_skip("AAC decoder transform is not available.\n");
+        goto failed;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%s", tests[i].name);
+        user_data_index = ~0u;
+        input_type_desc = tests[i].desc;
+        for (j = 0; j < ARRAY_SIZE(input_desc); j++)
+        {
+            input_desc[j] = input_type_desc[j];
+            if (!input_desc[j].key)
+                break;
+            if (IsEqualGUID(input_desc[j].key, &MF_MT_USER_DATA))
+                user_data_index = j;
+        }
+
+        ok(user_data_index != ~0u, "Could not find MF_MT_USER_DATA.\n");
+        ok(i < ARRAY_SIZE(input_desc), "Too many attributes.\n");
+
+        /* confirm standard input result */
+        check_mft_set_input_type_(__LINE__, transform, input_desc, tests[i].exp_result, tests[i].todo);
+
+        if (tests[i].exp_result == S_OK)
+        {
+            /* confirm shorter fails */
+            input_desc[user_data_index].value.blob.cbSize = input_type_desc[user_data_index].value.blob.cbSize - 1;
+            check_mft_set_input_type_(__LINE__, transform, input_desc, MF_E_INVALIDMEDIATYPE, tests[i].todo_short);
+
+            /* confirm longer is OK */
+            input_desc[user_data_index].value.blob.cbSize = input_type_desc[user_data_index].value.blob.cbSize + 1;
+            check_mft_set_input_type(transform, input_desc, S_OK);
+        }
         winetest_pop_context();
     }
 
@@ -10303,6 +10433,7 @@ START_TEST(transform)
     test_sample_copier_output_processing();
     test_aac_encoder();
     test_aac_decoder();
+    test_aac_decoder_user_data();
     test_wma_encoder();
     test_wma_decoder();
     test_wma_decoder_dmo_input_type();
