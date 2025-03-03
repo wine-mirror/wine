@@ -154,7 +154,8 @@ NTSTATUS demuxer_create( void *arg )
     }
     format = demuxer->ctx->iformat;
 
-    if ((params->duration = get_context_duration( demuxer->ctx )) == AV_NOPTS_VALUE)
+    if ((params->duration = get_context_duration( demuxer->ctx )) == AV_NOPTS_VALUE ||
+        strstr( format->name, "mp3" ))
     {
         if ((ret = avformat_find_stream_info( demuxer->ctx, NULL )) < 0)
         {
