@@ -909,11 +909,12 @@ static void *filter_data( const char *data, DWORD size, DWORD *output_size )
     char *ret;
 
     if (!(ret = malloc( size + 1 ))) return NULL;
-    for (i = j = eol = 0; i < size; i++)
+    for (i = j = 0, eol = -1; i < size; i++)
     {
         if (data[i] == '\x1b' && data[i + 1] == '[')
         {
             while (data[i] && data[i] != 'm') i++;
+            eol = i;
         }
         else if (data[i]) ret[j++] = data[i];
         if (!strncmp( data + i, " Test succeeded", 15 )) ignore += i + 15 - eol;
