@@ -56,8 +56,8 @@ my %data_files =
                 sha  => "477820bb3055bbcc90880d788cd95607d221dc94457bae249231adecf13c12e6" },
  tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz",
                 sha  => "4d5fcbc72c7c450ebfe0b659bd0f1c02fbf52fd7f517a9ea13fe71c21eb5f0d0" },
- glyphs    => { url  => "https://web.archive.org/web/20021206051753id_/http://partners.adobe.com:80/asn/developer/type/glyphlist-old.txt",
-                sha  => "4d071537493190678e51bc43ab5d5e016cfeb7b8b0c14c0a92382d2beba92312" },
+ glyphs    => { url  => "https://github.com/adobe-type-tools/agl-aglfn/raw/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6/glyphlist.txt",
+                sha  => "a3b2f61ced9f3644cc0d4ecde5c59df34ca286c689d9484a43a710a81c466789" },
  psfonts   => { url  => "https://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz",
                 sha  => "034ed3025cff4c48bbefae90f9eff7dc6237dd384443c594c017b571e49d0649" },
 );
@@ -5936,10 +5936,10 @@ sub dump_psfonts($)
         s/\r$//;
         next if /^$/;
         next if /^#/;
-        if (/([0-9A-F]+);([A-Za-z0-9_]+);/)
+        if (/([A-Za-z0-9_]+);([0-9A-F]+)/)
         {
-            $glyph_values{$1} ||= $2;
-            $glyphs{$2} ||= hex $1;
+            $glyph_values{$2} ||= $1;
+            $glyphs{$1} ||= hex $2;
             next;
         }
         die "unrecognized line $_";
