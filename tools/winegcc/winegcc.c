@@ -783,13 +783,13 @@ no_compat_defines:
         if (includedir)
         {
             strarray_add( &comp_args, strmake( "%s%s/wine/windows", isystem, includedir ));
-            strarray_add( &comp_args, strmake( "%s%s", idirafter, includedir ));
+            if (!opts->use_msvcrt) strarray_add( &comp_args, strmake( "%s%s", idirafter, includedir ));
         }
         for (j = 0; j < ARRAY_SIZE(incl_dirs); j++)
         {
             if (j && !strcmp( incl_dirs[0], incl_dirs[j] )) continue;
             strarray_add(&comp_args, strmake( "%s%s%s/wine/windows", isystem, root, incl_dirs[j] ));
-            strarray_add(&comp_args, strmake( "%s%s%s", idirafter, root, incl_dirs[j] ));
+            if (!opts->use_msvcrt) strarray_add(&comp_args, strmake( "%s%s%s", idirafter, root, incl_dirs[j] ));
         }
     }
     else if (opts->wine_objdir)
