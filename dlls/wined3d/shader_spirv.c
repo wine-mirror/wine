@@ -220,7 +220,12 @@ static void fill_ps_parameters(struct wined3d_shader_spirv_compile_args *vkd3d_a
     fill_buffer_parameter(&parameters[3], ffp_extra_binding, VKD3D_SHADER_PARAMETER_NAME_ALPHA_TEST_REF,
             VKD3D_SHADER_PARAMETER_DATA_TYPE_FLOAT32, offsetof(struct wined3d_ffp_ps_constants, alpha_test_ref));
 
-    vkd3d_args->parameter_info.parameter_count = 4;
+    parameters[4].name = VKD3D_SHADER_PARAMETER_NAME_POINT_SPRITE;
+    parameters[4].type = VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT;
+    parameters[4].data_type = VKD3D_SHADER_PARAMETER_DATA_TYPE_UINT32;
+    parameters[4].u.immediate_constant.u.u32 = compile_args->u.fs.args.pointsprite;
+
+    vkd3d_args->parameter_info.parameter_count = 5;
     vkd3d_args->parameter_info.parameters = vkd3d_args->parameters;
 }
 
