@@ -911,9 +911,9 @@ static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, const struct 
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static struct opengl_funcs *nulldrv_wine_get_wgl_driver( UINT version )
+static UINT nulldrv_OpenGLInit( UINT version, struct opengl_funcs **opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
-    return (void *)-1;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static void nulldrv_ThreadDetach( void )
@@ -1302,7 +1302,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* vulkan support */
     loaderdrv_VulkanInit,
     /* opengl support */
-    nulldrv_wine_get_wgl_driver,
+    nulldrv_OpenGLInit,
     /* thread management */
     nulldrv_ThreadDetach,
 };
@@ -1396,7 +1396,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(WindowPosChanged);
     SET_USER_FUNC(SystemParametersInfo);
     SET_USER_FUNC(VulkanInit);
-    SET_USER_FUNC(wine_get_wgl_driver);
+    SET_USER_FUNC(OpenGLInit);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 

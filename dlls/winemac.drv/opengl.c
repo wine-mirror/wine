@@ -4165,23 +4165,23 @@ static void load_extensions(void)
 
 
 /**********************************************************************
- *              macdrv_wine_get_wgl_driver
+ *              macdrv_OpenGLInit
  */
-struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
+UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     TRACE("()\n");
 
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_OPENGL_DRIVER_VERSION);
-        return NULL;
+        return STATUS_INVALID_PARAMETER;
     }
 
     dc_pbuffers = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
     if (!dc_pbuffers)
     {
         WARN("CFDictionaryCreateMutable failed\n");
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
 
     opengl_handle = dlopen("/System/Library/Frameworks/OpenGL.framework/OpenGL", RTLD_LAZY|RTLD_LOCAL|RTLD_NOLOAD);
@@ -4189,7 +4189,7 @@ struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
     {
         ERR("Failed to load OpenGL: %s\n", dlerror());
         ERR("OpenGL support is disabled.\n");
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
 
 #define USE_GL_FUNC(func) \
@@ -4230,12 +4230,13 @@ struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
     if (!init_pixel_formats())
         goto failed;
 
-    return &opengl_funcs;
+    *funcs = &opengl_funcs;
+    return STATUS_SUCCESS;
 
 failed:
     dlclose(opengl_handle);
     opengl_handle = NULL;
-    return NULL;
+    return STATUS_NOT_SUPPORTED;
 }
 
 

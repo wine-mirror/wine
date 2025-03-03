@@ -282,7 +282,7 @@ extern BOOL client_side_with_render;
 extern BOOL shape_layered_windows;
 extern const struct gdi_dc_funcs *X11DRV_XRender_Init(void);
 
-extern struct opengl_funcs *X11DRV_wine_get_wgl_driver( UINT version );
+extern UINT X11DRV_OpenGLInit( UINT, struct opengl_funcs **, const struct opengl_driver_funcs ** );
 extern UINT X11DRV_VulkanInit( UINT, void *, const struct vulkan_driver_funcs ** );
 
 extern struct format_entry *import_xdnd_selection( Display *display, Window win, Atom selection,

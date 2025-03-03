@@ -319,7 +319,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pWindowPosChanging = ANDROID_WindowPosChanging,
     .pCreateWindowSurface = ANDROID_CreateWindowSurface,
     .pWindowPosChanged = ANDROID_WindowPosChanged,
-    .pwine_get_wgl_driver = ANDROID_wine_get_wgl_driver,
+    .pOpenGLInit = ANDROID_OpenGLInit,
 };
 
 

@@ -38,6 +38,8 @@
 #include <sys/un.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "x11drv.h"
 #include "xcomposite.h"
 #include "winternl.h"
@@ -536,16 +538,16 @@ done:
 static void *opengl_handle;
 
 /**********************************************************************
- *           X11DRV_wine_get_wgl_driver
+ *           X11DRV_OpenglInit
  */
-struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
+UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     int error_base, event_base;
 
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
-        return NULL;
+        return STATUS_INVALID_PARAMETER;
     }
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
@@ -555,7 +557,7 @@ struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
     {
         ERR( "Failed to load libGL: %s\n", dlerror() );
         ERR( "OpenGL support is disabled.\n");
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
 
 #define USE_GL_FUNC(func) \
@@ -724,12 +726,13 @@ struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
     X11DRV_WineGL_LoadExtensions();
     init_pixel_formats( gdi_display );
 
-    return &opengl_funcs;
+    *funcs = &opengl_funcs;
+    return STATUS_SUCCESS;
 
 failed:
     dlclose(opengl_handle);
     opengl_handle = NULL;
-    return NULL;
+    return STATUS_NOT_SUPPORTED;
 }
 
 static const char *debugstr_fbconfig( GLXFBConfig fbconfig )
@@ -2905,11 +2908,11 @@ static struct opengl_funcs opengl_funcs =
 #else  /* no OpenGL includes */
 
 /**********************************************************************
- *           X11DRV_wine_get_wgl_driver
+ *           X11DRV_OpenglInit
  */
-struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
+UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
 {
-    return NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 void sync_gl_drawable( HWND hwnd, BOOL known_child )

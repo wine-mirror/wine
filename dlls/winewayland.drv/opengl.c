@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
@@ -1311,9 +1313,9 @@ static BOOL init_egl_configs(void)
 }
 
 /**********************************************************************
- *           WAYLAND_wine_get_wgl_driver
+ *           WAYLAND_OpenGLInit
  */
-struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
+UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     EGLint egl_version[2];
     const char *egl_client_exts, *egl_exts;
@@ -1322,13 +1324,13 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
     {
         ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
             version, WINE_OPENGL_DRIVER_VERSION);
-        return NULL;
+        return STATUS_INVALID_PARAMETER;
     }
 
     if (!(egl_handle = dlopen(SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL)))
     {
         ERR("Failed to load %s: %s\n", SONAME_LIBEGL, dlerror());
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
 
 #define LOAD_FUNCPTR_DLSYM(func) \
@@ -1404,12 +1406,13 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
 
     if (!init_opengl_funcs()) goto err;
     if (!init_egl_configs()) goto err;
-    return &opengl_funcs;
+    *funcs = &opengl_funcs;
+    return STATUS_SUCCESS;
 
 err:
     dlclose(egl_handle);
     egl_handle = NULL;
-    return NULL;
+    return STATUS_NOT_SUPPORTED;
 }
 
 static struct opengl_funcs opengl_funcs =
@@ -1449,9 +1452,9 @@ void wayland_resize_gl_drawable(HWND hwnd)
 
 #else /* No GL */
 
-struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
+UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
 {
-    return NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 void wayland_destroy_gl_drawable(HWND hwnd)

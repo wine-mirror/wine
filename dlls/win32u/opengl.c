@@ -352,6 +352,9 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
 
 #endif  /* SONAME_LIBOSMESA */
 
+static const struct opengl_driver_funcs nulldrv_funcs;
+static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
+
 static struct opengl_funcs *display_funcs;
 static struct opengl_funcs *memory_funcs;
 
@@ -362,7 +365,14 @@ static void memory_funcs_init(void)
 
 static void display_funcs_init(void)
 {
-    display_funcs = user_driver->pwine_get_wgl_driver( WINE_OPENGL_DRIVER_VERSION );
+    UINT status;
+
+    if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &driver_funcs )) &&
+        status != STATUS_NOT_IMPLEMENTED)
+    {
+        ERR( "Failed to initialize the driver opengl functions, status %#x\n", status );
+        return;
+    }
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )

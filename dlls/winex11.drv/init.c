@@ -467,7 +467,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pWindowPosChanged = X11DRV_WindowPosChanged,
     .pSystemParametersInfo = X11DRV_SystemParametersInfo,
     .pVulkanInit = X11DRV_VulkanInit,
-    .pwine_get_wgl_driver = X11DRV_wine_get_wgl_driver,
+    .pOpenGLInit = X11DRV_OpenGLInit,
     .pThreadDetach = X11DRV_ThreadDetach,
 };
 

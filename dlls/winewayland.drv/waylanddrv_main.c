@@ -52,7 +52,7 @@ static const struct user_driver_funcs waylanddrv_funcs =
     .pWindowPosChanging = WAYLAND_WindowPosChanging,
     .pCreateWindowSurface = WAYLAND_CreateWindowSurface,
     .pVulkanInit = WAYLAND_VulkanInit,
-    .pwine_get_wgl_driver = WAYLAND_wine_get_wgl_driver,
+    .pOpenGLInit = WAYLAND_OpenGLInit,
 };
 
 static void wayland_init_process_name(void)

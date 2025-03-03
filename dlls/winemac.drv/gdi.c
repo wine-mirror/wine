@@ -310,7 +310,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pGetWindowStyleMasks = macdrv_GetWindowStyleMasks,
     .pCreateWindowSurface = macdrv_CreateWindowSurface,
     .pVulkanInit = macdrv_VulkanInit,
-    .pwine_get_wgl_driver = macdrv_wine_get_wgl_driver,
+    .pOpenGLInit = macdrv_OpenGLInit,
 };
 
 

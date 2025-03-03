@@ -39,6 +39,8 @@
 #include <EGL/egl.h>
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "android.h"
 #include "winternl.h"
 
@@ -956,9 +958,9 @@ static void init_extensions(void)
 }
 
 /**********************************************************************
- *           ANDROID_wine_get_wgl_driver
+ *           ANDROID_OpenGLInit
  */
-struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
+UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     EGLConfig *configs;
     EGLint major, minor, count, i, pass;
@@ -966,17 +968,17 @@ struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
-        return NULL;
+        return STATUS_INVALID_PARAMETER;
     }
     if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))
     {
         ERR( "failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
     if (!(opengl_handle = dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL )))
     {
         ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, dlerror() );
-        return NULL;
+        return STATUS_NOT_SUPPORTED;
     }
 
 #define LOAD_FUNCPTR(func) do { \
@@ -1043,7 +1045,8 @@ struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
     }
 
     init_extensions();
-    return &egl_funcs;
+    *funcs = &egl_funcs;
+    return STATUS_SUCCESS;
 }
 
 
