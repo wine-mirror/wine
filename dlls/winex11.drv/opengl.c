@@ -287,7 +287,6 @@ static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
 static struct opengl_funcs opengl_funcs;
 
-static void X11DRV_WineGL_LoadExtensions(void);
 static void init_pixel_formats( Display *display );
 static BOOL glxRequireVersion(int requiredVersion);
 
@@ -536,6 +535,7 @@ done:
 }
 
 static void *opengl_handle;
+static const struct opengl_driver_funcs x11drv_driver_funcs;
 
 /**********************************************************************
  *           X11DRV_OpenglInit
@@ -723,10 +723,10 @@ UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct 
         pglXSwapBuffersMscOML = pglXGetProcAddressARB( (const GLubyte *)"glXSwapBuffersMscOML" );
     }
 
-    X11DRV_WineGL_LoadExtensions();
     init_pixel_formats( gdi_display );
 
     *funcs = &opengl_funcs;
+    *driver_funcs = &x11drv_driver_funcs;
     return STATUS_SUCCESS;
 
 failed:
@@ -2059,17 +2059,6 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
 }
 
 /**
- * X11DRV_wglGetExtensionsStringARB
- *
- * WGL_ARB_extensions_string: wglGetExtensionsStringARB
- */
-static const char *X11DRV_wglGetExtensionsStringARB(HDC hdc)
-{
-    TRACE("() returning \"%s\"\n", wglExtensions);
-    return wglExtensions;
-}
-
-/**
  * X11DRV_wglCreatePbufferARB
  *
  * WGL_ARB_pbuffer: wglCreatePbufferARB
@@ -2533,17 +2522,6 @@ static BOOL X11DRV_wglReleaseTexImageARB( struct wgl_pbuffer *object, int iBuffe
 }
 
 /**
- * X11DRV_wglGetExtensionsStringEXT
- *
- * WGL_EXT_extensions_string: wglGetExtensionsStringEXT
- */
-static const char *X11DRV_wglGetExtensionsStringEXT(void)
-{
-    TRACE("() returning \"%s\"\n", wglExtensions);
-    return wglExtensions;
-}
-
-/**
  * X11DRV_wglGetSwapIntervalEXT
  *
  * WGL_EXT_swap_control: wglGetSwapIntervalEXT
@@ -2664,10 +2642,7 @@ static void register_extension(const char *ext)
     TRACE("'%s'\n", ext);
 }
 
-/**
- * X11DRV_WineGL_LoadExtensions
- */
-static void X11DRV_WineGL_LoadExtensions(void)
+static const char *x11drv_init_wgl_extensions(void)
 {
     wglExtensions[0] = 0;
 
@@ -2683,10 +2658,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
         if (has_extension( glxExtensions, "GLX_ARB_create_context_profile"))
             register_extension("WGL_ARB_create_context_profile");
     }
-
-
-    register_extension( "WGL_ARB_extensions_string" );
-    opengl_funcs.p_wglGetExtensionsStringARB = X11DRV_wglGetExtensionsStringARB;
 
     if (glxRequireVersion(3))
     {
@@ -2737,9 +2708,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
     }
 
     /* EXT Extensions */
-
-    register_extension( "WGL_EXT_extensions_string" );
-    opengl_funcs.p_wglGetExtensionsStringEXT = X11DRV_wglGetExtensionsStringEXT;
 
     /* Load this extension even when it isn't backed by a GLX extension because it is has been around for ages.
      * Games like Call of Duty and K.O.T.O.R. rely on it. Further our emulation is good enough. */
@@ -2798,6 +2766,8 @@ static void X11DRV_WineGL_LoadExtensions(void)
         opengl_funcs.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
         opengl_funcs.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
     }
+
+    return wglExtensions;
 }
 
 /**
@@ -2890,6 +2860,11 @@ static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
     *num_formats = nb_pixel_formats;
     *num_onscreen_formats = nb_onscreen_formats;
 }
+
+static const struct opengl_driver_funcs x11drv_driver_funcs =
+{
+    .p_init_wgl_extensions = x11drv_init_wgl_extensions,
+};
 
 static struct opengl_funcs opengl_funcs =
 {
