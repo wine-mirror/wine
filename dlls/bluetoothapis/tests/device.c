@@ -22,6 +22,7 @@
 
 #include <windef.h>
 #include <winbase.h>
+#include <winnls.h>
 
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
@@ -93,6 +94,86 @@ void test_BluetoothFindFirstDevice( void )
     test_for_all_radios( test_radio_BluetoothFindFirstDevice, NULL );
 }
 
+void test_radio_BluetoothFindNextDevice( HANDLE radio, void *data )
+{
+    BLUETOOTH_DEVICE_SEARCH_PARAMS search_params = *(BLUETOOTH_DEVICE_SEARCH_PARAMS *)data;
+    BLUETOOTH_DEVICE_INFO info = {0};
+    HBLUETOOTH_DEVICE_FIND hfind;
+    BOOL success;
+    DWORD err, i = 0;
+
+    search_params.hRadio = radio;
+    info.dwSize = sizeof( info );
+
+    SetLastError( 0xdeadbeef );
+    hfind = BluetoothFindFirstDevice( &search_params, &info );
+    err = GetLastError();
+    ok( !!hfind || err == ERROR_NO_MORE_ITEMS, "BluetoothFindFirstDevice failed: %lu\n", GetLastError() );
+    if (!hfind)
+    {
+        skip( "No devices found.\n" );
+        return;
+    }
+
+    for (;;)
+    {
+        const BYTE *addr = info.Address.rgBytes;
+        WCHAR buf[256];
+        BOOL matches;
+
+        matches = (info.fConnected && search_params.fReturnConnected)
+            || (info.fAuthenticated && search_params.fReturnAuthenticated)
+            || (info.fRemembered && search_params.fReturnRemembered)
+            || (!info.fRemembered && search_params.fReturnUnknown);
+        ok( matches, "Device does not match filter constraints\n" );
+        trace( "device %lu: %02x:%02x:%02x:%02x:%02x:%02x\n", i, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+        trace( "  name: %s\n", debugstr_w( info.szName ) );
+        trace( "  class: %#lx\n", info.ulClassofDevice );
+        trace( "  connected: %d, authenticated: %d, remembered: %d\n", info.fConnected, info.fAuthenticated,
+               info.fRemembered );
+        if (GetTimeFormatEx( NULL, TIME_FORCE24HOURFORMAT, &info.stLastSeen, NULL, buf, ARRAY_SIZE( buf ) ))
+            trace( "  last seen: %s UTC\n", debugstr_w( buf ) );
+
+        memset( &info, 0, sizeof( info ));
+        info.dwSize = sizeof( info );
+        SetLastError( 0xdeadbeef );
+        success = BluetoothFindNextDevice( hfind, &info );
+        err = GetLastError();
+        ok( success || err == ERROR_NO_MORE_ITEMS, "BluetoothFindNextDevice failed: %lu\n", err );
+        if (!success)
+            break;
+    }
+
+    ok( BluetoothFindDeviceClose( hfind ), "BluetoothFindDeviceClose failed: %lu\n", GetLastError() );
+}
+
+void test_BluetoothFindNextDevice( void )
+{
+    BLUETOOTH_DEVICE_SEARCH_PARAMS params = {0};
+    DWORD err;
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = BluetoothFindNextDevice( NULL, NULL );
+    ok( !ret, "Expected BluetoothFindNextDevice to return FALSE\n" );
+    err = GetLastError();
+    ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
+
+    params.dwSize = sizeof( params );
+    params.fReturnUnknown = TRUE;
+    params.fReturnRemembered = TRUE;
+    params.fReturnConnected = TRUE;
+    params.fReturnAuthenticated = TRUE;
+
+    if (winetest_interactive)
+    {
+        params.fIssueInquiry = TRUE;
+        params.cTimeoutMultiplier = 5;
+    }
+
+    test_for_all_radios( test_radio_BluetoothFindNextDevice, &params );
+}
+
 void test_BluetoothFindDeviceClose( void )
 {
     DWORD err;
@@ -107,4 +188,5 @@ START_TEST( device )
 {
     test_BluetoothFindFirstDevice();
     test_BluetoothFindDeviceClose();
+    test_BluetoothFindNextDevice();
 }
