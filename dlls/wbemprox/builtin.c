@@ -4449,7 +4449,7 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
         rec->current_scanmode      = 2; /* Unknown */
         rec->current_verticalres   = vres;
         rec->description           = wcsdup( rec->caption );
-        swprintf( device_id, ARRAY_SIZE( device_id ), L"VideoController1", i + 1 );
+        swprintf( device_id, ARRAY_SIZE( device_id ), L"VideoController%u", i + 1 );
         rec->device_id             = wcsdup( device_id );
         rec->driverdate            = convert_driverdate( adapters[i].driver_date );
         free( adapters[i].driver_date );
