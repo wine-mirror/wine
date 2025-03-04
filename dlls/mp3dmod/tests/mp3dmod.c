@@ -746,6 +746,35 @@ static void test_media_types(void)
     check_dmo_media_type(&mt, &output_mt);
     MoFreeMediaType(&mt);
 
+    output_format.nSamplesPerSec = 24000;
+    output_format.nAvgBytesPerSec = 24000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 12000;
+    output_format.nAvgBytesPerSec = 12000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 6000;
+    output_format.nAvgBytesPerSec = 6000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 12000;
+    output_format.nAvgBytesPerSec = 6000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 48000;
+    output_format.nAvgBytesPerSec = 48000;
+    output_format.nChannels = 2;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
     /* Windows accepts 32 bits per sample but does not enumerate it */
     output_format.nChannels = 1;
     output_format.wBitsPerSample = 32;
