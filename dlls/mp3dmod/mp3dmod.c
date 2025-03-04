@@ -289,6 +289,8 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
         enc = MPG123_ENC_UNSIGNED_8;
     else if (format->wBitsPerSample == 16)
         enc = MPG123_ENC_SIGNED_16;
+    else if (format->wBitsPerSample == 32)
+        enc = MPG123_ENC_FLOAT_32;
     else
     {
         ERR("Cannot decode to bit depth %u.\n", format->wBitsPerSample);
