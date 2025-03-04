@@ -194,7 +194,13 @@ static BOOL WINAPI load_d3dassemble_once(INIT_ONCE *once, void *param, void **co
      * in sync regarding which library creates the unnumbered d3dcompiler.lib implib.
      * GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, D3DCompile) would
      * be nice, but "D3DCompile" will point to the IAT stub, not d3dcompiler_xy.dll */
+#if D3DX_SDK_VERSION == 42
+    HMODULE mod = GetModuleHandleW(L"d3dcompiler_42");
+#elif D3DX_SDK_VERSION == 43
+    HMODULE mod = GetModuleHandleW(L"d3dcompiler_43");
+#else
     HMODULE mod = GetModuleHandleW(D3DCOMPILER_DLL_W);
+#endif
     void **assemble = param;
 
     if (!mod)
