@@ -31,6 +31,11 @@
 
 extern void test_for_all_radios( const char *file, int line, void (*test)( HANDLE radio, void *data ), void *data );
 
+static const char *debugstr_bluetooth_address( const BYTE *addr )
+{
+    return wine_dbg_sprintf( "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+}
+
 void test_radio_BluetoothFindFirstDevice( HANDLE radio, void *data )
 {
     BLUETOOTH_DEVICE_SEARCH_PARAMS search_params;
@@ -117,7 +122,7 @@ void test_radio_BluetoothFindNextDevice( HANDLE radio, void *data )
 
     for (;;)
     {
-        const BYTE *addr = info.Address.rgBytes;
+        BLUETOOTH_DEVICE_INFO info2 = {0};
         WCHAR buf[256];
         BOOL matches;
 
@@ -126,13 +131,24 @@ void test_radio_BluetoothFindNextDevice( HANDLE radio, void *data )
             || (info.fRemembered && search_params.fReturnRemembered)
             || (!info.fRemembered && search_params.fReturnUnknown);
         ok( matches, "Device does not match filter constraints\n" );
-        trace( "device %lu: %02x:%02x:%02x:%02x:%02x:%02x\n", i, addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+        trace( "device %lu: %s\n", i, debugstr_bluetooth_address( info.Address.rgBytes) );
         trace( "  name: %s\n", debugstr_w( info.szName ) );
         trace( "  class: %#lx\n", info.ulClassofDevice );
         trace( "  connected: %d, authenticated: %d, remembered: %d\n", info.fConnected, info.fAuthenticated,
                info.fRemembered );
         if (GetTimeFormatEx( NULL, TIME_FORCE24HOURFORMAT, &info.stLastSeen, NULL, buf, ARRAY_SIZE( buf ) ))
             trace( "  last seen: %s UTC\n", debugstr_w( buf ) );
+
+        info2.dwSize = sizeof( info2 );
+        info2.Address = info.Address;
+        err = BluetoothGetDeviceInfo( radio, &info2 );
+        ok( !err, "BluetoothGetDeviceInfo failed: %lu\n", err );
+        ok( !memcmp( info2.Address.rgBytes, info.Address.rgBytes, sizeof( info.Address.rgBytes ) ), "%s != %s\n",
+            debugstr_bluetooth_address( info2.Address.rgBytes ), debugstr_bluetooth_address( info.Address.rgBytes ) );
+        ok( !wcscmp( info2.szName, info.szName ), "%s != %s\n", debugstr_w( info2.szName ), debugstr_w( info.szName ) );
+        ok( info2.fAuthenticated == info.fAuthenticated, "%d != %d\n", info.fAuthenticated, info.fAuthenticated );
+        ok( info2.fRemembered == info.fRemembered, "%d != %d\n", info.fRemembered, info.fRemembered );
+        ok( info2.fAuthenticated == info.fAuthenticated, "%d != %d\n", info.fAuthenticated, info.fAuthenticated );
 
         memset( &info, 0, sizeof( info ));
         info.dwSize = sizeof( info );
