@@ -3624,8 +3624,8 @@ NTSTATUS WINAPI wow64_NtUserMessageCall( UINT *args )
 {
     HWND hwnd = get_handle( &args );
     UINT msg = get_ulong( &args );
-    LONG wparam = get_ulong( &args );
-    LONG lparam = get_ulong( &args );
+    ULONG wparam = get_ulong( &args );
+    ULONG lparam = get_ulong( &args );
     void *result_info = get_ptr( &args );
     UINT type = get_ulong ( &args );
     BOOL ansi = get_ulong( &args );
