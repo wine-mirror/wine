@@ -765,14 +765,12 @@ static void test_media_types(void)
     output_format.nSamplesPerSec = 12000;
     output_format.nAvgBytesPerSec = 6000;
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     output_format.nSamplesPerSec = 48000;
     output_format.nAvgBytesPerSec = 48000;
     output_format.nChannels = 2;
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
     /* Windows accepts 32 bits per sample but does not enumerate it */
