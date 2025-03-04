@@ -1688,7 +1688,6 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
         check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"DeviceLocator", VT_BSTR, CIM_STRING );
         check_property( obj, L"FormFactor", VT_I4, CIM_UINT16 );
-        check_property( obj, L"Manufacturer", VT_BSTR, CIM_STRING );
         check_property( obj, L"MemoryType", VT_I4, CIM_UINT16 );
 
         type = 0xdeadbeef;
@@ -1701,6 +1700,15 @@ static void test_Win32_PhysicalMemory( IWbemServices *services )
             ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
             trace( "ConfiguredClockSpeed %ld\n", V_I4( &val ) );
         }
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"Manufacturer", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type %#x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
+        trace( "Manufacturer %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
 
         type = 0xdeadbeef;
         VariantInit( &val );
@@ -1896,14 +1904,29 @@ static void test_Win32_VideoController( IWbemServices *services )
         check_property( obj, L"__RELPATH", VT_BSTR, CIM_STRING );
         check_property( obj, L"__SERVER", VT_BSTR, CIM_STRING );
         check_property( obj, L"AdapterCompatibility", VT_BSTR, CIM_STRING );
-        check_property( obj, L"AdapterDACType", VT_BSTR, CIM_STRING );
-        check_property( obj, L"AdapterRAM", VT_I4, CIM_UINT32 );
         check_property( obj, L"Availability", VT_I4, CIM_UINT16 );
         check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
         check_property( obj, L"ConfigManagerErrorCode", VT_I4, CIM_UINT32 );
         check_property( obj, L"DriverDate", VT_BSTR, CIM_DATETIME );
         check_property( obj, L"DriverVersion", VT_BSTR, CIM_STRING );
         check_property( obj, L"Status", VT_BSTR, CIM_STRING );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"AdapterDACType", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
+        trace( "AdapterDACType %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+
+        type = 0xdeadbeef;
+        VariantInit( &val );
+        hr = IWbemClassObject_Get( obj, L"AdapterRAM", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_I4 || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+        trace( "AdapterRAM %lu\n", V_UI4( &val ) );
 
         type = 0xdeadbeef;
         VariantInit( &val );
