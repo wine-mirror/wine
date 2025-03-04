@@ -783,7 +783,6 @@ static void test_media_types(void)
 
     mp3fmt.wfx.nChannels = 0;
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     IMediaObject_Release(dmo);

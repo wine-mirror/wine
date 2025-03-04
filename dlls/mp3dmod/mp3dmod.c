@@ -228,6 +228,7 @@ static HRESULT WINAPI MediaObject_GetOutputType(IMediaObject *iface, DWORD index
 static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
     struct mp3_decoder *dmo = impl_from_IMediaObject(iface);
+    const WAVEFORMATEX *format;
 
     TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
 
@@ -245,6 +246,11 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
     if (!IsEqualGUID(&type->majortype, &WMMEDIATYPE_Audio)
             || !IsEqualGUID(&type->subtype, &WMMEDIASUBTYPE_MP3)
             || !IsEqualGUID(&type->formattype, &WMFORMAT_WaveFormatEx))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    format = (WAVEFORMATEX *) type->pbFormat;
+
+    if (!format->nChannels)
         return DMO_E_TYPE_NOT_ACCEPTED;
 
     if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
