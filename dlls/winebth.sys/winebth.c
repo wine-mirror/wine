@@ -122,7 +122,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
         {
             info->localInfo.flags |= BDIF_ADDRESS;
-            info->localInfo.address = RtlUlonglongByteSwap( ext->props.address.ullLong );
+            info->localInfo.address = RtlUlonglongByteSwap( ext->props.address.ullLong ) >> 16;
         }
         if (ext->props_mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME)
         {
@@ -190,7 +190,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
                 if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
                 {
                     info->flags |= BDIF_ADDRESS;
-                    info->address = RtlUlonglongByteSwap( device->props.address.ullLong );
+                    info->address = RtlUlonglongByteSwap( device->props.address.ullLong ) >> 16;
                 }
                 if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED &&
                     device->props.connected)
@@ -421,7 +421,7 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
             if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_NAME)
                 memcpy( device->props.name, event.props.name, sizeof( event.props.name ));
             if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
-                device->props.address.ullLong = RtlUlonglongByteSwap( event.props.address.ullLong );
+                device->props.address.ullLong = event.props.address.ullLong;
             if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_DISCOVERABLE)
                 device->props.discoverable = event.props.discoverable;
             if (event.changed_props_mask & WINEBLUETOOTH_RADIO_PROPERTY_CONNECTABLE)
@@ -721,7 +721,7 @@ static void bluetooth_radio_set_properties( DEVICE_OBJECT *obj,
 {
     if (mask & WINEBLUETOOTH_RADIO_PROPERTY_ADDRESS)
     {
-        BTH_ADDR addr = RtlUlonglongByteSwap( props->address.ullLong );
+        BTH_ADDR addr = RtlUlonglongByteSwap( props->address.ullLong ) >> 16;
         IoSetDevicePropertyData( obj, &DEVPKEY_BluetoothRadio_Address, LOCALE_NEUTRAL, 0,
                                  DEVPROP_TYPE_UINT64, sizeof( addr ), &addr );
     }

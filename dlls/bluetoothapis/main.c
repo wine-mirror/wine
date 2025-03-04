@@ -202,7 +202,7 @@ DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
         return GetLastError();
 
     if (radio_info.localInfo.flags & BDIF_ADDRESS)
-        info->address.ullLong = RtlUlonglongByteSwap( radio_info.localInfo.address );
+        info->address.ullLong = RtlUlonglongByteSwap( radio_info.localInfo.address ) >> 16;
     if (radio_info.localInfo.flags & BDIF_COD)
         info->ulClassofDevice = radio_info.localInfo.classOfDevice;
     if (radio_info.localInfo.flags & BDIF_NAME)
