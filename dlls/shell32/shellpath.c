@@ -2039,7 +2039,7 @@ static const CSIDL_DATA CSIDL_Data[] =
     },
     { /* 0x6e */
         .id         = &FOLDERID_UserProgramFiles,
-        .type       = CSIDL_Type_Disallowed, /* FIXME */
+        .type       = CSIDL_Type_User,
         .category   = KF_CATEGORY_PERUSER,
         .name       = L"UserProgramFiles",
         .parent     = &FOLDERID_LocalAppData,

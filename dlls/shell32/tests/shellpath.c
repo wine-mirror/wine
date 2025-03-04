@@ -1983,6 +1983,19 @@ if (0) { /* crashes */
     todo_wine ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "got 0x%08lx\n", hr);
     ok(path == NULL, "path set\n");
 #endif
+
+    /* check UserProgramFiles */
+    path = NULL;
+    hr = pSHGetKnownFolderPath(&FOLDERID_UserProgramFiles, KF_FLAG_CREATE, NULL, &path);
+    ok(hr == S_OK, "expected S_OK, got 0x%08lx\n", hr);
+    ok(path != NULL, "path not set\n");
+    path2 = NULL;
+    len = ExpandEnvironmentStringsW(L"%LOCALAPPDATA%\\Programs", NULL, -1);
+    path2 = CoTaskMemAlloc(sizeof(WCHAR) * (len + 1));
+    ExpandEnvironmentStringsW(L"%LOCALAPPDATA%\\Programs", path2, len);
+    ok(!wcsicmp(path, path2), "expected equal paths got %s\n", debugstr_w(path));
+    CoTaskMemFree(path);
+    CoTaskMemFree(path2);
 }
 
 static BOOL is_in_strarray(const WCHAR *needle, const char *hay)
