@@ -392,6 +392,47 @@ DWORD WINAPI BluetoothGetRadioInfo( HANDLE radio, PBLUETOOTH_RADIO_INFO info )
 }
 
 /*********************************************************************
+ *  BluetoothGetDeviceInfo
+ */
+DWORD WINAPI BluetoothGetDeviceInfo( HANDLE radio, BLUETOOTH_DEVICE_INFO *info )
+{
+    const static BYTE addr_zero[6];
+    BTH_DEVICE_INFO_LIST *devices;
+    DWORD i, ret = ERROR_NOT_FOUND;
+
+    TRACE( "(%p, %p)\n", radio, info );
+
+    if (!radio)
+        return E_HANDLE;
+    if (!info)
+        return ERROR_INVALID_PARAMETER;
+    if (info->dwSize != sizeof( *info ))
+        return ERROR_REVISION_MISMATCH;
+    if (!memcmp( info->Address.rgBytes, addr_zero, sizeof( addr_zero ) ))
+        return ERROR_NOT_FOUND;
+
+    devices = radio_get_devices( radio );
+    if (!devices)
+        return GetLastError();
+    for (i = 0; i < devices->numOfDevices; i++)
+    {
+        if (devices->deviceList[i].address == info->Address.ullLong)
+        {
+            device_info_from_bth_info( info, &devices->deviceList[i] );
+            if (info->fConnected)
+                GetSystemTime( &info->stLastSeen );
+            else
+                FIXME( "semi-stub!\n" );
+            ret = ERROR_SUCCESS;
+            break;
+        }
+    }
+
+    free( devices );
+    return ret;
+}
+
+/*********************************************************************
  *  BluetoothIsConnectable
  */
 BOOL WINAPI BluetoothIsConnectable( HANDLE radio )

@@ -30,7 +30,7 @@
 @ stub BluetoothFindProtocolEntryClose
 @ stdcall -import BluetoothFindRadioClose(ptr)
 @ stub BluetoothFindServiceClose
-@ stub BluetoothGetDeviceInfo
+@ stdcall BluetoothGetDeviceInfo(ptr long)
 @ stdcall -import BluetoothGetRadioInfo(ptr ptr)
 @ stdcall BluetoothIsConnectable(ptr) bthprops.cpl.BluetoothIsConnectable
 @ stdcall BluetoothIsDiscoverable(ptr) bthprops.cpl.BluetoothIsDiscoverable
