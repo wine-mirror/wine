@@ -1756,9 +1756,6 @@ do                                                                  \
     HRESULT check_hr_, check_hr2_;                                  \
     BSTR check_bstr_, check_bstr2_;                                 \
                                                                     \
-    ok_(__FILE__, __LINE__)((type) == VT_R4,                        \
-            "check_PropVariantToBSTR2 handles just VT_R4.\n");      \
-                                                                    \
     check_hr_ = PropVariantToBSTR(&check_propvar_, &check_bstr_);   \
     ok_(__FILE__, __LINE__)(check_hr_ == S_OK,                      \
             "PropVariantToBSTR returned %#lx.\n", check_hr_);       \
