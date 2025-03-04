@@ -746,6 +746,16 @@ static void test_media_types(void)
     check_dmo_media_type(&mt, &output_mt);
     MoFreeMediaType(&mt);
 
+    /* Windows accepts 32 bits per sample but does not enumerate it */
+    output_format.nChannels = 1;
+    output_format.wBitsPerSample = 32;
+    output_format.nBlockAlign = 4;
+    output_format.nSamplesPerSec = 48000;
+    output_format.nAvgBytesPerSec = 192000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    todo_wine
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     IMediaObject_Release(dmo);
 }
 
