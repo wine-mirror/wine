@@ -421,16 +421,16 @@ static HRESULT WINAPI MediaObject_Discontinuity(IMediaObject *iface, DWORD index
 
 static HRESULT WINAPI MediaObject_AllocateStreamingResources(IMediaObject *iface)
 {
-    FIXME("(%p)->() stub!\n", iface);
+    TRACE("(%p)->()\n", iface);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_FreeStreamingResources(IMediaObject *iface)
 {
-    FIXME("(%p)->() stub!\n", iface);
+    TRACE("(%p)->()\n", iface);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI MediaObject_GetInputStatus(IMediaObject *iface, DWORD index, DWORD *flags)
