@@ -248,7 +248,7 @@ typedef unsigned short wctype_t;
 #endif
 
 #ifndef __TCHAR_DEFINED
-#if defined(WINE_UNICODE_NATIVE)
+#if defined(WINE_UNICODE_NATIVE) || defined(__MINGW32__) || defined(_MSC_VER)
 typedef wchar_t       _TCHAR;
 #elif __cpp_unicode_literals >= 200710
 typedef char16_t      _TCHAR;

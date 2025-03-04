@@ -289,7 +289,7 @@ typedef WCHAR OLECHAR;
 typedef [string] OLECHAR *LPOLESTR;
 typedef [string] const OLECHAR *LPCOLESTR;
 cpp_quote("#ifndef __WINESRC__")
-cpp_quote("# ifdef WINE_UNICODE_NATIVE")
+cpp_quote("# if defined(WINE_UNICODE_NATIVE) || defined(__MINGW32__) || defined(_MSC_VER)")
 cpp_quote("#  define OLESTR(str) L##str")
 cpp_quote("# else")
 cpp_quote("#  define OLESTR(str) u##str")

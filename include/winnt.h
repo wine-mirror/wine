@@ -476,7 +476,7 @@ typedef int             LONG,       *PLONG;
 #endif
 
 /* Some systems might have wchar_t, but we really need 16 bit characters */
-#if defined(WINE_UNICODE_NATIVE)
+#if defined(WINE_UNICODE_NATIVE) || defined(__MINGW32__) || defined(_MSC_VER)
 typedef wchar_t         WCHAR;
 #elif __cpp_unicode_literals >= 200710
 typedef char16_t        WCHAR;
