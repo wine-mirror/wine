@@ -261,7 +261,7 @@ static HRESULT WINAPI MediaObject_SetInputType(IMediaObject *iface, DWORD index,
 static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index, const DMO_MEDIA_TYPE *type, DWORD flags)
 {
     struct mp3_decoder *This = impl_from_IMediaObject(iface);
-    WAVEFORMATEX *format;
+    WAVEFORMATEX *format, *in_format;
     long enc;
     int err;
 
@@ -300,6 +300,16 @@ static HRESULT WINAPI MediaObject_SetOutputType(IMediaObject *iface, DWORD index
     if (format->nChannels * format->wBitsPerSample/8 != format->nBlockAlign
             || format->nSamplesPerSec * format->nBlockAlign != format->nAvgBytesPerSec)
         return E_INVALIDARG;
+
+    in_format = (WAVEFORMATEX *)This->intype.pbFormat;
+
+    if (format->nSamplesPerSec != in_format->nSamplesPerSec &&
+            format->nSamplesPerSec*2 != in_format->nSamplesPerSec &&
+            format->nSamplesPerSec*4 != in_format->nSamplesPerSec)
+    {
+        ERR("Cannot decode to %lu samples per second (input %lu).\n", format->nSamplesPerSec, in_format->nSamplesPerSec);
+        return DMO_E_TYPE_NOT_ACCEPTED;
+    }
 
     if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
     {
