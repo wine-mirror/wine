@@ -65,7 +65,10 @@ typedef struct _WgStepperClass
 #define GST_IS_WG_STEPPER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_WG_STEPPER))
 
 G_DEFINE_TYPE (WgStepper, wg_stepper, GST_TYPE_ELEMENT);
-GST_ELEMENT_REGISTER_DEFINE(winegstreamerstepper, "winegstreamerstepper", GST_RANK_NONE, GST_TYPE_WG_STEPPER);
+gboolean gst_element_register_winegstreamerstepper(GstPlugin *plugin)
+{
+    return gst_element_register(plugin, "winegstreamerstepper", GST_RANK_NONE, GST_TYPE_WG_STEPPER);
+}
 
 static bool wg_stepper_step(WgStepper *stepper);
 static void wg_stepper_flush(WgStepper *stepper);
