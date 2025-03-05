@@ -65,7 +65,14 @@ typedef struct WS(sockaddr)
 #define AF_CLUSTER                 24
 #define AF_12844                   25
 #define AF_IRDA                    26
-#define AF_MAX                     27
+#define AF_NETDES                  28
+#define AF_TCNPROCESS              29
+#define AF_TCNMESSAGE              30
+#define AF_ICLFXBM                 31
+#define AF_BTH                     32
+#define AF_LINK                    33
+#define AF_HYPERV                  34
+#define AF_MAX                     35
 #else /* USE_WS_PREFIX */
 #define WS_AF_UNSPEC               0
 #define WS_AF_UNIX                 1
@@ -96,7 +103,14 @@ typedef struct WS(sockaddr)
 #define WS_AF_CLUSTER              24
 #define WS_AF_12844                25
 #define WS_AF_IRDA                 26
-#define WS_AF_MAX                  27
+#define WS_AF_NETDES               28
+#define WS_AF_TCNPROCESS           29
+#define WS_AF_TCNMESSAGE           30
+#define WS_AF_ICLFXBM              31
+#define WS_AF_BTH                  32
+#define WS_AF_LINK                 33
+#define WS_AF_HYPERV               34
+#define WS_AF_MAX                  35
 #endif /* USE_WS_PREFIX */
 
 #ifndef USE_WS_PREFIX

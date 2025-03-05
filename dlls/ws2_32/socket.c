@@ -226,6 +226,17 @@ const char *debugstr_sockaddr( const struct sockaddr *a )
                                 addr,
                                 ((const SOCKADDR_IRDA *)a)->irdaServiceName);
     }
+    case AF_BTH:
+    {
+        const SOCKADDR_BTH *addr = (SOCKADDR_BTH *)a;
+        BLUETOOTH_ADDRESS bth_addr = {0};
+
+        bth_addr.ullLong = addr->btAddr;
+        return wine_dbg_sprintf( "{ family AF_BTH, addr %02X:%02X:%02X:%02X:%02X:%02X, serviceClassId %s, port %ld }",
+                                 bth_addr.rgBytes[5], bth_addr.rgBytes[4], bth_addr.rgBytes[3], bth_addr.rgBytes[2],
+                                 bth_addr.rgBytes[1], bth_addr.rgBytes[0], wine_dbgstr_guid( &addr->serviceClassId ),
+                                 addr->port );
+    }
     default:
         return wine_dbg_sprintf("{ family %d }", a->sa_family);
     }
