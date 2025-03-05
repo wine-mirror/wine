@@ -2668,7 +2668,7 @@ UINT get_win_monitor_dpi( HWND hwnd, UINT *raw_dpi )
     }
     else
     {
-        rect = win->rects.window;
+        rect = is_iconic( hwnd ) ? win->normal_rect : win->rects.window;
         release_win_ptr( win );
     }
 
