@@ -22,10 +22,6 @@ import "unknwn.idl";
 import "objidl.idl";
 import "oaidl.idl";
 
-cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
-cpp_quote("#undef CopyFile")
-cpp_quote("#undef MoveFile")
-cpp_quote("#endif")
 /* this is not defined in public headers */
 cpp_quote("#define CTL_E_ENDOFFILE STD_CTL_SCODE(62)")
 cpp_quote("#define CTL_E_KEY_ALREADY_EXISTS STD_CTL_SCODE(457)")
