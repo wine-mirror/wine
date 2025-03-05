@@ -7436,6 +7436,27 @@ static FORCEINLINE void YieldProcessor(void)
 #endif
 }
 
+#if defined(__x86_64__)
+# if defined(__arm64ec__)
+#  define _umul128 UnsignedMultiply128
+# else
+#  define UnsignedMultiply128 _umul128
+#  if defined(_MSC_VER)
+DWORD64 _umul128(DWORD64,DWORD64,DWORD64*);
+#   pragma intrinsic(_umul128)
+#  endif
+# endif
+#endif
+
+#if (defined(__x86_64__) && !defined(_MSC_VER)) || defined(__aarch64__) || defined(__arm64ec__)
+static FORCEINLINE DWORD64 UnsignedMultiply128( DWORD64 a, DWORD64 b, DWORD64 *hi )
+{
+    unsigned __int128 v = (unsigned __int128)a * b;
+    *hi = v >> 64;
+    return (DWORD64)v;
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif
