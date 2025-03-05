@@ -32,7 +32,6 @@
 #include "iphlpapi.h"
 #include "netioapi.h"
 #include "tlhelp32.h"
-#include "d3d10.h"
 #include "winternl.h"
 #include "winioctl.h"
 #include "winsvc.h"
@@ -40,7 +39,6 @@
 #include "sddl.h"
 #include "ntsecapi.h"
 #include "winspool.h"
-#include "setupapi.h"
 #include "ntddstor.h"
 
 #include "wine/debug.h"
