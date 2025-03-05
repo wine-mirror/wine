@@ -4465,6 +4465,37 @@ static HRESULT WINAPI d3dx_effect_SetRawValue(ID3DXEffect *iface, D3DXHANDLE par
             break;
         }
 
+        case D3DXPC_MATRIX_ROWS:
+        {
+            D3DXMATRIX *dst_elem;
+            uint8_t *dst_data;
+            unsigned int i;
+
+            if (param->columns != 4 || param->rows != 4)
+            {
+                FIXME("%ux%u matrix parameters are currently unsupported.\n", param->rows, param->columns);
+                return E_NOTIMPL;
+            }
+
+            if (byte_offset & 0x3f || bytes & 0x3f)
+            {
+                FIXME("Partial matrix updates are currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            if ((byte_offset + bytes) > param->bytes)
+            {
+                FIXME("Writing adjacent parameters is currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            dst_data = param_get_data_and_dirtify(effect, param, !byte_offset ? bytes : param->bytes, TRUE);
+            dst_elem = (D3DXMATRIX *)(dst_data + byte_offset);
+            for (i = 0; i < (bytes / sizeof(D3DXMATRIX)); ++i)
+                D3DXMatrixTranspose(&dst_elem[i], &((const D3DXMATRIX *)data)[i]);
+            break;
+        }
+
         default:
             FIXME("Unhandled parameter class %s.\n", debug_d3dxparameter_class(param->class));
             return E_NOTIMPL;

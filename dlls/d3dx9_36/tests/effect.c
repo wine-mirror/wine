@@ -9033,7 +9033,6 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
                     3.0f,  7.0f, 10.0f, 14.0f,
                     4.0f,  0.0f, 11.0f,  0.0f }
           },
-          .todo_hr = TRUE
         },
         { "44_2", 0, 128,
           { .f = {  1.0f,  2.0f,  3.0f,  4.0f,
@@ -9056,7 +9055,6 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
                    17.0f, 21.0f, 25.0f, 29.0f,
                    18.0f, 22.0f, 26.0f, 30.0f }
           },
-          .todo_hr = TRUE
         },
         /* Set second element. */
         { "44_2", 64, 64,
@@ -9075,7 +9073,6 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
                     3.0f,  7.0f, 10.0f, 14.0f,
                     4.0f,  0.0f, 11.0f,  0.0f }
           },
-          .todo_hr = TRUE
         },
     };
     static const DWORD test_int_val[] = { 1, 2, 3, 4 };
@@ -9158,7 +9155,7 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetRawValue(effect, param2, tmp, 0, 0);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "i4");
     param2 = effect->lpVtbl->GetParameterByName(effect, NULL, "i4_2");
