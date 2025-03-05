@@ -1928,9 +1928,11 @@ static void test_mxwriter_comment(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXLexicalHandler_comment(vblexical, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXLexicalHandler_comment(lexical, L"comment", 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2161,9 +2163,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXLexicalHandler_startDTD(vblexical, NULL, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXLexicalHandler_startDTD(lexical, NULL, 0, L"pub", 3, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2230,9 +2234,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_elementDecl(vbdecl, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_elementDecl(decl, L"name", 4, NULL, 0);
     todo_wine
@@ -2313,9 +2319,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_internalEntityDecl(vbdecl, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_internalEntityDecl(decl, _bstr_("name"), -1, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2339,9 +2347,11 @@ static void test_mxwriter_dtd(void)
     hr = ISAXDeclHandler_externalEntityDecl(decl, NULL, 0, NULL, 0, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_externalEntityDecl(vbdecl, NULL, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_externalEntityDecl(decl, _bstr_("name"), 0, NULL, 0, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2625,7 +2635,7 @@ static void test_mxattr_clear(void)
 
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, NULL);
     todo_wine
-    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* Win7 */, "Unexpected hr %#lx.\n", hr);
 
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2642,6 +2652,7 @@ static void test_mxattr_clear(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 1, "got %d\n", len);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     len = -1;
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, &len);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -2652,6 +2663,7 @@ static void test_mxattr_clear(void)
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     todo_wine
     ok(!ptr, "Unexpected pointer %p.\n", ptr);
+    }
 
     len = 0;
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
@@ -2672,9 +2684,9 @@ static void test_mxattr_clear(void)
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     todo_wine
-    ok(!len, "Unexpected length %d.\n", len);
+    ok(!len || broken(len == -1) /* Win7 */, "Unexpected length %d.\n", len);
     todo_wine
-    ok(!ptr, "Unexpected pointer %p.\n", ptr);
+    ok(!ptr || broken(ptr == (void*)0xdeadbeef) /* Win7 */, "Unexpected pointer %p.\n", ptr);
 
     IMXAttributes_Release(mxattr);
     ISAXAttributes_Release(saxattr);
