@@ -5489,7 +5489,7 @@ static void test_createeffect(void)
 
     param_size = sizeof(ColorMatrix)-1;
     stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
     expect(sizeof(ColorMatrix)-1, param_size);
 
     for (i=0; i < 5; i++)
@@ -5497,33 +5497,33 @@ static void test_createeffect(void)
             color_matrix.m[i][j] = i * j + 1;
 
     stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix)-1);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix)+1);
-    todo_wine expect(InvalidParameter, stat);
+    expect(InvalidParameter, stat);
 
     stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix));
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
 
     param_size = sizeof(ColorMatrix)+1;
     memset(&color_matrix, 0, sizeof(color_matrix));
     stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
-    todo_wine expect(Ok, stat);
-    todo_wine expect(sizeof(ColorMatrix), param_size);
-
-    for (i=0; i < 5; i++)
-        for (j=0; j < 5; j++)
-            todo_wine expectf((float)(i * j + 1), color_matrix.m[i][j]);
-
-    param_size = sizeof(ColorMatrix);
-    memset(&color_matrix, 0, sizeof(color_matrix));
-    stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
-    todo_wine expect(Ok, stat);
+    expect(Ok, stat);
     expect(sizeof(ColorMatrix), param_size);
 
     for (i=0; i < 5; i++)
         for (j=0; j < 5; j++)
-            todo_wine expectf((float)(i * j + 1), color_matrix.m[i][j]);
+            expectf((float)(i * j + 1), color_matrix.m[i][j]);
+
+    param_size = sizeof(ColorMatrix);
+    memset(&color_matrix, 0, sizeof(color_matrix));
+    stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
+    expect(Ok, stat);
+    expect(sizeof(ColorMatrix), param_size);
+
+    for (i=0; i < 5; i++)
+        for (j=0; j < 5; j++)
+            expectf((float)(i * j + 1), color_matrix.m[i][j]);
 
     stat = GdipDeleteEffect(effect);
     expect(Ok, stat);
