@@ -5493,6 +5493,15 @@ static void test_GetStringTypeW(void)
     }
 }
 
+/* Up to Windows 10 1607 */
+static int is_codepoint_2066_broken(void)
+{
+    WCHAR buf[10];
+    int len = ARRAY_SIZE(buf);
+    pRtlNormalizeString( 13, L"\x2066", 1, buf, &len );
+    return buf[0] != 0;
+}
+
 static void test_IdnToNameprepUnicode(void)
 {
     struct {
@@ -5606,7 +5615,10 @@ static void test_IdnToNameprepUnicode(void)
             status = pRtlNormalizeString( 13, test_data[i].in, test_data[i].in_len, buf, &len );
             ok( status == test_data[i].status || broken(status == test_data[i].broken_status),
                 "%ld: failed %lx\n", i, status );
-            if (!status) ok( !wcsnicmp(test_data[i].out, buf, len), "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, len));
+            if (!status)
+                ok( !wcsnicmp(test_data[i].out, buf, len) ||
+                    broken(buf[1] == L'\x2066' && is_codepoint_2066_broken()),
+                    "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, len));
         }
     }
 }
