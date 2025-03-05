@@ -209,7 +209,7 @@ static void test_SetupDuplicateDiskSpaceListA(void)
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %lu\n", GetLastError());
 
     duplicate = SetupDuplicateDiskSpaceListA(handle, NULL, 0, 0);
-    ok(duplicate != NULL, "Expected SetupDuplicateDiskSpaceList to return NULL, got %p\n", duplicate);
+    ok(duplicate != NULL, "Expected SetupDuplicateDiskSpaceList to not return NULL, got %p\n", duplicate);
     ok(duplicate != handle,
        "Expected new handle (%p) to be different from the old handle (%p)\n", duplicate, handle);
 
@@ -285,7 +285,7 @@ static void test_SetupDuplicateDiskSpaceListW(void)
        "Expected GetLastError() to return ERROR_INVALID_PARAMETER, got %lu\n", GetLastError());
 
     duplicate = SetupDuplicateDiskSpaceListW(handle, NULL, 0, 0);
-    ok(duplicate != NULL, "Expected SetupDuplicateDiskSpaceList to return NULL, got %p\n", duplicate);
+    ok(duplicate != NULL, "Expected SetupDuplicateDiskSpaceList to not return NULL, got %p\n", duplicate);
     ok(duplicate != handle,
        "Expected new handle (%p) to be different from the old handle (%p)\n", duplicate, handle);
 
