@@ -5418,12 +5418,14 @@ static void test_createeffect(void)
     GpStatus (WINAPI *pGdipCreateEffect)( const GUID guid, CGpEffect **effect);
     GpStatus (WINAPI *pGdipDeleteEffect)( CGpEffect *effect);
     GpStatus (WINAPI *pGdipGetEffectParameterSize)(CGpEffect *effect, UINT *size);
-    GpStatus (WINAPI *pGdipGetEffectParameters)(CGpEffect *effect, const VOID *params, const UINT size);
+    GpStatus (WINAPI *pGdipGetEffectParameters)(CGpEffect *effect, UINT *size, VOID *params);
+    GpStatus (WINAPI *pGdipSetEffectParameters)(CGpEffect *effect, const VOID *params, const UINT size);
     GpStatus stat;
     CGpEffect *effect = NULL;
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
-    int i;
+    int i, j;
     UINT param_size;
+    ColorMatrix color_matrix;
 
     static const struct test_data {
         const GUID *effect;
@@ -5452,7 +5454,8 @@ static void test_createeffect(void)
     pGdipDeleteEffect = (void*)GetProcAddress( mod, "GdipDeleteEffect");
     pGdipGetEffectParameterSize = (void*)GetProcAddress( mod, "GdipGetEffectParameterSize");
     pGdipGetEffectParameters = (void*)GetProcAddress( mod, "GdipGetEffectParameters");
-    if (!pGdipCreateEffect || !pGdipDeleteEffect || !pGdipGetEffectParameterSize || !pGdipGetEffectParameters)
+    pGdipSetEffectParameters = (void*)GetProcAddress( mod, "GdipSetEffectParameters");
+    if (!pGdipCreateEffect || !pGdipDeleteEffect || !pGdipGetEffectParameterSize || !pGdipGetEffectParameters || !pGdipSetEffectParameters)
     {
         /* GdipCreateEffect/GdipDeleteEffect/GdipGetEffectParameterSize/GdipGetEffectParameters were introduced in Windows Vista. */
         win_skip("GDIPlus version 1.1 not available\n");
@@ -5466,10 +5469,64 @@ static void test_createeffect(void)
     expect(Win32Error, stat);
     ok( !effect, "expected null effect\n");
 
+    stat = pGdipCreateEffect(ColorMatrixEffectGuid, &effect);
+    expect(Ok, stat);
+
     param_size = 0;
     stat = pGdipGetEffectParameterSize(NULL, &param_size);
     expect(InvalidParameter, stat);
     expect(0, param_size);
+
+    param_size = sizeof(ColorMatrix);
+    stat = pGdipGetEffectParameters(NULL, &param_size, &color_matrix);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipGetEffectParameters(effect, NULL, &color_matrix);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipGetEffectParameters(effect, &param_size, NULL);
+    expect(InvalidParameter, stat);
+
+    param_size = sizeof(ColorMatrix)-1;
+    stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
+    todo_wine expect(InvalidParameter, stat);
+    expect(sizeof(ColorMatrix)-1, param_size);
+
+    for (i=0; i < 5; i++)
+        for (j=0; j < 5; j++)
+            color_matrix.m[i][j] = i * j + 1;
+
+    stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix)-1);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix)+1);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = pGdipSetEffectParameters(effect, &color_matrix, sizeof(color_matrix));
+    todo_wine expect(Ok, stat);
+
+    param_size = sizeof(ColorMatrix)+1;
+    memset(&color_matrix, 0, sizeof(color_matrix));
+    stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
+    todo_wine expect(Ok, stat);
+    todo_wine expect(sizeof(ColorMatrix), param_size);
+
+    for (i=0; i < 5; i++)
+        for (j=0; j < 5; j++)
+            todo_wine expectf((float)(i * j + 1), color_matrix.m[i][j]);
+
+    param_size = sizeof(ColorMatrix);
+    memset(&color_matrix, 0, sizeof(color_matrix));
+    stat = pGdipGetEffectParameters(effect, &param_size, &color_matrix);
+    todo_wine expect(Ok, stat);
+    expect(sizeof(ColorMatrix), param_size);
+
+    for (i=0; i < 5; i++)
+        for (j=0; j < 5; j++)
+            todo_wine expectf((float)(i * j + 1), color_matrix.m[i][j]);
+
+    stat = GdipDeleteEffect(effect);
+    expect(Ok, stat);
 
     for (i = 0; i < ARRAY_SIZE(td); i++)
     {
