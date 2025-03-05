@@ -5511,6 +5511,37 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     return retval;
 }
 
+static UINT get_effect_parameter_size(EffectType type)
+{
+    switch (type)
+    {
+    case BlurEffect:
+        return sizeof(struct BlurParams);
+    case SharpenEffect:
+        return sizeof(struct SharpenParams);
+    case TintEffect:
+        return sizeof(struct TintParams);
+    case RedEyeCorrectionEffect:
+        return sizeof(struct RedEyeCorrectionParams);
+    case ColorMatrixEffect:
+        return sizeof(ColorMatrix);
+    case ColorLUTEffect:
+        return sizeof(struct ColorLUTParams);
+    case BrightnessContrastEffect:
+        return sizeof(struct BrightnessContrastParams);
+    case HueSaturationLightnessEffect:
+        return sizeof(struct HueSaturationLightnessParams);
+    case ColorBalanceEffect:
+        return sizeof(struct ColorBalanceParams);
+    case LevelsEffect:
+        return sizeof(struct LevelsParams);
+    case ColorCurveEffect:
+        return sizeof(struct ColorCurveParams);
+    default:
+        return 0;
+    }
+}
+
 /*****************************************************************************
  * GdipCreateEffect [GDIPLUS.@]
  */
@@ -5608,45 +5639,9 @@ GpStatus WINGDIPAPI GdipGetEffectParameterSize(CGpEffect *effect, UINT *size)
     if (!effect || !size)
         return InvalidParameter;
 
-    switch (effect->type)
-    {
-    case BlurEffect:
-        sz = sizeof(struct BlurParams);
-        break;
-    case SharpenEffect:
-        sz = sizeof(struct SharpenParams);
-        break;
-    case TintEffect:
-        sz = sizeof(struct TintParams);
-        break;
-    case RedEyeCorrectionEffect:
-        sz = sizeof(struct RedEyeCorrectionParams);
-        break;
-    case ColorMatrixEffect:
-        sz = sizeof(ColorMatrix);
-        break;
-    case ColorLUTEffect:
-        sz = sizeof(struct ColorLUTParams);
-        break;
-    case BrightnessContrastEffect:
-        sz = sizeof(struct BrightnessContrastParams);
-        break;
-    case HueSaturationLightnessEffect:
-        sz = sizeof(struct HueSaturationLightnessParams);
-        break;
-    case ColorBalanceEffect:
-        sz = sizeof(struct ColorBalanceParams);
-        break;
-    case LevelsEffect:
-        sz = sizeof(struct LevelsParams);
-        break;
-    case ColorCurveEffect:
-        sz = sizeof(struct ColorCurveParams);
-        break;
-    default:
+    sz = get_effect_parameter_size(effect->type);
+    if (!sz)
         status = InvalidParameter;
-        break;
-    }
 
     *size = sz;
     return status;
