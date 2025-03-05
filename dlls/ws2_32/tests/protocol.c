@@ -27,6 +27,10 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <ws2spi.h>
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
+#include <bthdef.h>
+#include <ws2bth.h>
 #include <mswsock.h>
 #include <iphlpapi.h>
 
@@ -1270,6 +1274,23 @@ static void test_WSAAddressToString(void)
         { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0xfa81, "[20ab::2001%4660]:33274" },
         { { 0xab20, 0, 0, 0, 0, 0, 0, 0x120 }, 0x1234, 0, "20ab::2001%4660" },
     };
+    static struct
+    {
+        BTH_ADDR address;
+        ULONG port;
+        char output[30];
+    }
+    bluetooth_tests[] =
+    {
+        { 0, 0, "(00:00:00:00:00:00)" },
+        { 0, 200, "(00:00:00:00:00:00):200" },
+        { 0xdeadbeefcafe, 0, "(DE:AD:BE:EF:CA:FE)" },
+        { 0xdeadbeefcafe, 4294967295, "(DE:AD:BE:EF:CA:FE):4294967295" },
+        /* BTH_ADDR values consisting of 8 bytes. */
+        { 0xdeadbeefdeadbeef, 0, "(BE:EF:DE:AD:BE:EF)" },
+        { 0xdeadbeefdeadbeef, 4294967295, "(BE:EF:DE:AD:BE:EF):4294967295" }
+    };
+
     SOCKADDR_IN sockaddr;
     SOCKADDR_IN6 sockaddr6;
     char output[64];
@@ -1363,6 +1384,33 @@ static void test_WSAAddressToString(void)
         ok( !ret, "got error %d\n", WSAGetLastError() );
         ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w(outputW) );
         ok( len == wcslen(expected_outputW) + 1, "got len %lu\n", len );
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(bluetooth_tests); ++i)
+    {
+        SOCKADDR_BTH addr = {0};
+        const char *exp_outputA = bluetooth_tests[i].output;
+
+        addr.addressFamily = AF_BTH;
+        addr.btAddr = bluetooth_tests[i].address;
+        addr.port = bluetooth_tests[i].port;
+
+        winetest_push_context( "Test %u", i );
+
+        len = sizeof(output);
+        ret = WSAAddressToStringA( (SOCKADDR *)&addr, sizeof(addr), NULL, output, &len );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !strcmp( output, exp_outputA ), "got string %s\n", debugstr_a( output ) );
+        ok( len == strlen( exp_outputA ) + 1, "got len %lu\n", len );
+
+        len = sizeof(outputW);
+        ret = WSAAddressToStringW( (SOCKADDR *)&addr, sizeof(addr), NULL, outputW, &len );
+        MultiByteToWideChar( CP_ACP, 0, exp_outputA, -1, expected_outputW, ARRAY_SIZE(expected_outputW) );
+        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !wcscmp( outputW, expected_outputW ), "got string %s\n", debugstr_w( outputW ) );
+        ok( len == wcslen( expected_outputW ) + 1, "got len %lu\n", len );
 
         winetest_pop_context();
     }
