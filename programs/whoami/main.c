@@ -266,37 +266,31 @@ static int user(void)
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    if (argv[1] == NULL)
-    {
-
+    if (!argv[1])
         return simple(NameSamCompatible);
-    }
-    else
-    {
-        wcslwr(argv[1]);
 
-        if (!wcscmp(argv[1], L"/upn"))
+    if (argv[1][0] == '/' || argv[1][0] == '-')
+    {
+        if (!wcsicmp(argv[1] + 1, L"upn"))
         {
             /* Not implemented as of now, therefore fails */
             return simple(NameUserPrincipal);
         }
-        else if (!wcscmp(argv[1], L"/fqdn"))
+        if (!wcscmp(argv[1] + 1, L"fqdn"))
         {
             /* Not implemented as of now, therefore fails */
             return simple(NameFullyQualifiedDN);
         }
-        else if (!wcscmp(argv[1], L"/logonid"))
+        if (!wcscmp(argv[1] + 1, L"logonid"))
         {
             return logon_id();
         }
-        else if (!wcscmp(argv[1], L"/user"))
+        if (!wcscmp(argv[1] + 1, L"user"))
         {
             return user();
         }
-        else
-        {
-            FIXME("stub\n");
-            return 1;
-        }
     }
+
+    FIXME("stub\n");
+    return 1;
 }
