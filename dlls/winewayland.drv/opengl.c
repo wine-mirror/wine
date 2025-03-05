@@ -194,6 +194,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     struct wayland_gl_drawable *gl;
     int client_width, client_height;
     RECT client_rect = {0};
+    const EGLint attribs[] = {EGL_PRESENT_OPAQUE_EXT, EGL_TRUE, EGL_NONE};
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
 
@@ -223,7 +224,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     }
 
     gl->surface = p_eglCreateWindowSurface(egl_display, egl_config_for_format(format),
-                                           gl->wl_egl_window, NULL);
+                                           gl->wl_egl_window, attribs);
     if (!gl->surface)
     {
         ERR("Failed to create EGL surface\n");
@@ -1400,6 +1401,7 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
     REQUIRE_EXT(EGL_KHR_create_context);
     REQUIRE_EXT(EGL_KHR_create_context_no_error);
     REQUIRE_EXT(EGL_KHR_no_config_context);
+    REQUIRE_EXT(EGL_EXT_present_opaque);
 #undef REQUIRE_EXT
 
     has_egl_ext_pixel_format_float = has_extension(egl_exts, "EGL_EXT_pixel_format_float");
