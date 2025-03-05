@@ -109,6 +109,7 @@ HDSKSPC WINAPI SetupDuplicateDiskSpaceListW(HDSKSPC handle, PVOID Reserved1, DWO
     copy->flags = list->flags;
     copy->count = list->count;
     copy->capacity = 0;
+    copy->files = NULL;
     array_reserve((void **)&copy->files, &copy->capacity, copy->count, sizeof(*copy->files));
     for (size_t i = 0; i < list->count; ++i)
     {
