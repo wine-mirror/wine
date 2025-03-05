@@ -5653,6 +5653,19 @@ GpStatus WINGDIPAPI GdipGetEffectParameterSize(CGpEffect *effect, UINT *size)
 }
 
 /*****************************************************************************
+ * GdipGetEffectParameters [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipGetEffectParameters(CGpEffect *effect, UINT *size, void *params)
+{
+    FIXME("(%p,%p,%p)\n", effect, size, params);
+
+    if (!effect || !size || !params)
+        return InvalidParameter;
+
+    return NotImplemented;
+}
+
+/*****************************************************************************
  * GdipSetEffectParameters [GDIPLUS.@]
  */
 GpStatus WINGDIPAPI GdipSetEffectParameters(CGpEffect *effect,

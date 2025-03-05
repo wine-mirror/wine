@@ -613,7 +613,7 @@
 613 stdcall GdipCreateEffect(int128 ptr)
 614 stdcall GdipDeleteEffect(ptr)
 615 stdcall GdipGetEffectParameterSize(ptr ptr)
-616 stub GdipGetEffectParameters
+616 stdcall GdipGetEffectParameters(ptr ptr ptr)
 617 stdcall GdipSetEffectParameters(ptr ptr long)
 618 stdcall GdipInitializePalette(ptr long long long ptr)
 619 stdcall GdipBitmapCreateApplyEffect(ptr long ptr ptr ptr ptr long ptr ptr)
