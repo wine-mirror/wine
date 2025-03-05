@@ -296,7 +296,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         else
         {
             FIXME("stub\n");
-            return 0;
+            return 1;
         }
     }
 }
