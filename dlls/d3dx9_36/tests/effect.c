@@ -8993,12 +8993,10 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
         { "4", 0, 16,
           { .f = { 1.0f, 2.0f, 0.0f, 3.0f } },
           { .f = { 1.0f, 2.0f, 0.0f, 3.0f } },
-          .todo_hr = TRUE
         },
         { "4_2", 0, 32,
           { .f = { 2.0f, 0.0f, 0.0f, 8.0f, 3.0f, 4.0f, 0.0f, 5.0f } },
           { .f = { 2.0f, 0.0f, 0.0f, 8.0f, 3.0f, 4.0f, 0.0f, 5.0f } },
-          .todo_hr = TRUE
         },
         /* 10. */
         { "22", 0, 64,
@@ -9150,14 +9148,14 @@ static void test_effect_set_raw_value(IDirect3DDevice9 *device)
 
     /* Test passing a NULL parameter. */
     hr = effect->lpVtbl->SetRawValue(effect, NULL, tmp, 4, 0);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "i4");
     param2 = effect->lpVtbl->GetParameterByName(effect, NULL, "i44");
 
     /* Test setting with a size of 0. */
     hr = effect->lpVtbl->SetRawValue(effect, param, tmp, 0, 0);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetRawValue(effect, param2, tmp, 0, 0);
     todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);

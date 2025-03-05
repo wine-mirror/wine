@@ -4431,10 +4431,46 @@ static HRESULT WINAPI d3dx_effect_CloneEffect(ID3DXEffect *iface, IDirect3DDevic
 static HRESULT WINAPI d3dx_effect_SetRawValue(ID3DXEffect *iface, D3DXHANDLE parameter, const void *data,
         UINT byte_offset, UINT bytes)
 {
-    FIXME("iface %p, parameter %p, data %p, byte_offset %u, bytes %u stub!\n",
-            iface, parameter, data, byte_offset, bytes);
+    struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(effect, parameter);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, parameter %p, data %p, byte_offset %u, bytes %u.\n", iface, parameter, data, byte_offset, bytes);
+
+    if (!param)
+    {
+        WARN("Invalid parameter %p specified.\n", parameter);
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (param->class)
+    {
+        case D3DXPC_VECTOR:
+        {
+            uint8_t *dst_data;
+
+            if (param->columns != 4)
+            {
+                FIXME("Vec%u parameters are currently unsupported.\n", param->columns);
+                return E_NOTIMPL;
+            }
+
+            if ((byte_offset + bytes) > param->bytes)
+            {
+                FIXME("Writing adjacent parameters is currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            dst_data = param_get_data_and_dirtify(effect, param, !byte_offset ? bytes : param->bytes, TRUE);
+            memcpy(dst_data + byte_offset, data, bytes);
+            break;
+        }
+
+        default:
+            FIXME("Unhandled parameter class %s.\n", debug_d3dxparameter_class(param->class));
+            return E_NOTIMPL;
+    }
+
+    return D3D_OK;
 }
 #endif
 
