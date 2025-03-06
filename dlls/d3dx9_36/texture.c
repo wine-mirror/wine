@@ -1856,38 +1856,28 @@ HRESULT WINAPI D3DXSaveTextureToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEF
 HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
         IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
 {
-    HRESULT hr;
+    const struct pixel_format_desc *fmt_desc = NULL;
+    unsigned int levels, file_size, i;
+    struct d3dx_image image;
     D3DRESOURCETYPE type;
+    ID3DXBuffer *buffer;
+    struct volume size;
+    HRESULT hr;
 
     TRACE("dst_buffer %p, file_format %u, src_texture %p, src_palette %p.\n",
             dst_buffer, file_format, src_texture, src_palette);
 
-    if (!dst_buffer || !src_texture) return D3DERR_INVALIDCALL;
+    if (!dst_buffer || !src_texture || file_format > D3DXIFF_PFM)
+        return D3DERR_INVALIDCALL;
 
-    if (file_format == D3DXIFF_DDS)
-    {
-        FIXME("DDS file format isn't supported yet\n");
-        return E_NOTIMPL;
-    }
-
+    *dst_buffer = buffer = NULL;
     type = IDirect3DBaseTexture9_GetType(src_texture);
-    switch (type)
+    if (type < D3DRTYPE_TEXTURE || type > D3DRTYPE_CUBETEXTURE)
+        return D3DERR_INVALIDCALL;
+
+    if (file_format != D3DXIFF_DDS)
     {
-        case D3DRTYPE_TEXTURE:
-        case D3DRTYPE_CUBETEXTURE:
-        {
-            IDirect3DSurface9 *surface;
-
-            hr = get_surface(type, src_texture, D3DCUBEMAP_FACE_POSITIVE_X, 0, &surface);
-            if (SUCCEEDED(hr))
-            {
-                hr = D3DXSaveSurfaceToFileInMemory(dst_buffer, file_format, surface, src_palette, NULL);
-                IDirect3DSurface9_Release(surface);
-            }
-            break;
-        }
-
-        case D3DRTYPE_VOLUMETEXTURE:
+        if (type == D3DRTYPE_VOLUMETEXTURE)
         {
             IDirect3DVolume9 *volume;
 
@@ -1897,12 +1887,116 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
                 hr = D3DXSaveVolumeToFileInMemory(dst_buffer, file_format, volume, src_palette, NULL);
                 IDirect3DVolume9_Release(volume);
             }
+        }
+        else
+        {
+            IDirect3DSurface9 *surface;
+
+            hr = get_surface(type, src_texture, D3DCUBEMAP_FACE_POSITIVE_X, 0, &surface);
+            if (SUCCEEDED(hr))
+            {
+                hr = D3DXSaveSurfaceToFileInMemory(dst_buffer, file_format, surface, src_palette, NULL);
+                IDirect3DSurface9_Release(surface);
+            }
+        }
+
+        return hr;
+    }
+
+    levels = IDirect3DBaseTexture9_GetLevelCount(src_texture);
+    switch (type)
+    {
+        case D3DRTYPE_TEXTURE:
+        {
+            IDirect3DTexture9 *texture = (IDirect3DTexture9 *)src_texture;
+            D3DSURFACE_DESC desc;
+
+            hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &desc);
+            if (FAILED(hr))
+                break;
+
+            fmt_desc = get_format_info(desc.Format);
+            if (is_unknown_format(fmt_desc))
+                return E_NOTIMPL;
+
+            set_volume_struct(&size, desc.Width, desc.Height, 1);
             break;
         }
 
         default:
-            return D3DERR_INVALIDCALL;
+            return E_NOTIMPL;
     }
+
+    if (is_index_format(fmt_desc) && !src_palette)
+        return E_NOTIMPL;
+
+    file_size = d3dx_calculate_layer_pixels_size(fmt_desc->format, size.width, size.height, size.depth, levels);
+    file_size += is_index_format(fmt_desc) ? sizeof(struct dds_header) + DDS_PALETTE_SIZE : sizeof(struct dds_header);
+
+    hr = D3DXCreateBuffer(file_size, &buffer);
+    if (FAILED(hr))
+        return hr;
+
+    hr = d3dx_init_dds_header((struct dds_header *)ID3DXBuffer_GetBufferPointer(buffer), type, fmt_desc->format, &size,
+            levels);
+    if (FAILED(hr))
+        goto exit;
+
+    if (is_index_format(fmt_desc))
+        memcpy((uint8_t *)ID3DXBuffer_GetBufferPointer(buffer) + sizeof(struct dds_header), src_palette,
+                DDS_PALETTE_SIZE);
+
+    hr = d3dx_image_init(ID3DXBuffer_GetBufferPointer(buffer), ID3DXBuffer_GetBufferSize(buffer), &image, 0, 0);
+    if (FAILED(hr))
+        goto exit;
+
+    for (i = 0; i < levels; ++i)
+    {
+        IDirect3DSurface9 *src_surface, *tmp_surface;
+        struct d3dx_pixels src_pixels, dst_pixels;
+        D3DSURFACE_DESC src_surface_desc;
+        D3DLOCKED_RECT src_locked_rect;
+        RECT src_rect;
+
+        hr = d3dx_image_get_pixels(&image, 0, i, &dst_pixels);
+        if (FAILED(hr))
+            goto exit;
+
+        hr = get_surface(type, src_texture, 0, i, &src_surface);
+        if (FAILED(hr))
+            goto exit;
+
+        hr = lock_surface(src_surface, NULL, &src_locked_rect, &tmp_surface, FALSE);
+        if (FAILED(hr))
+        {
+            IDirect3DSurface9_Release(src_surface);
+            goto exit;
+        }
+
+        IDirect3DTexture9_GetLevelDesc((IDirect3DTexture9 *)src_texture, i, &src_surface_desc);
+        SetRect(&src_rect, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
+        set_d3dx_pixels(&src_pixels, src_locked_rect.pBits, src_locked_rect.Pitch, 0, src_palette,
+                src_surface_desc.Width, src_surface_desc.Height, 1, &src_rect);
+
+        hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, D3DX_FILTER_NONE, 0);
+        if (FAILED(hr))
+        {
+            unlock_surface(src_surface, NULL, tmp_surface, FALSE);
+            IDirect3DSurface9_Release(src_surface);
+            goto exit;
+        }
+
+        hr = unlock_surface(src_surface, NULL, tmp_surface, FALSE);
+        IDirect3DSurface9_Release(src_surface);
+        if (FAILED(hr))
+            goto exit;
+    }
+
+    *dst_buffer = buffer;
+
+exit:
+    if (buffer && (buffer != *dst_buffer))
+        ID3DXBuffer_Release(buffer);
 
     return hr;
 }

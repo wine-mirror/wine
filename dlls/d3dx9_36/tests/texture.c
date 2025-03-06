@@ -3172,7 +3172,6 @@ static void test_save_texture_to_dds_file(IDirect3DDevice9 *device)
             (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
             (DDSCAPS_TEXTURE | DDSCAPS_PALETTE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX),
             0, PALETTED_DDS_FILE_HEADER_SIZE + 21,
-            .todo_hr = TRUE
         },
         {
             D3DRTYPE_CUBETEXTURE, D3DFMT_P8, D3DPOOL_SCRATCH, 4, 0, 0, 3, test_palette, D3D_OK,
@@ -3197,7 +3196,6 @@ static void test_save_texture_to_dds_file(IDirect3DDevice9 *device)
             (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT | DDSD_MIPMAPCOUNT), 4, 4, 0, 0, 3,
             (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX | DDSCAPS_ALPHA),
             0, DDS_FILE_HEADER_SIZE + 84,
-            .todo_hr = TRUE
         },
         {
             D3DRTYPE_CUBETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 0, 0, 3, NULL, D3D_OK,
@@ -3232,7 +3230,6 @@ static void test_save_texture_to_dds_file(IDirect3DDevice9 *device)
             (DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT), 4, 4, 0, 0, 0,
             (DDSCAPS_TEXTURE | DDSCAPS_ALPHA),
             0, DDS_FILE_HEADER_SIZE + 64,
-            .todo_hr = TRUE
         },
         {
             D3DRTYPE_CUBETEXTURE, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, 4, 0, 0, 1, NULL, D3D_OK,
@@ -3370,24 +3367,20 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
         }
     }
 
-    todo_wine {
     hr = D3DXSaveTextureToFileInMemory(&buffer, D3DXIFF_DDS, (IDirect3DBaseTexture9 *)texture, NULL);
     ok(hr == D3D_OK, "D3DXSaveTextureToFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
-    if (SUCCEEDED(hr))
-    {
-        buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
-        buffer_size = ID3DXBuffer_GetBufferSize(buffer);
-        hr = D3DXGetImageInfoFromFileInMemory(buffer_pointer, buffer_size, &info);
-        ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
-        ok(info.Width == 256, "Got width %u, expected %u\n", info.Width, 256);
-        ok(info.Height == 256, "Got height %u, expected %u\n", info.Height, 256);
-        ok(info.MipLevels == 9, "Got miplevels %u, expected %u\n", info.MipLevels, 9);
-        ok(info.ResourceType == D3DRTYPE_TEXTURE, "Got resource type %#x, expected %#x\n", info.ResourceType, D3DRTYPE_TEXTURE);
-        ok(info.ImageFileFormat == D3DXIFF_DDS, "Got file format %#x, expected %#x\n", info.ImageFileFormat, D3DXIFF_DDS);
-        ID3DXBuffer_Release(buffer);
-    }
-    }
+    buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
+    buffer_size = ID3DXBuffer_GetBufferSize(buffer);
+    hr = D3DXGetImageInfoFromFileInMemory(buffer_pointer, buffer_size, &info);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
+
+    ok(info.Width == 256, "Got width %u, expected %u\n", info.Width, 256);
+    ok(info.Height == 256, "Got height %u, expected %u\n", info.Height, 256);
+    ok(info.MipLevels == 9, "Got miplevels %u, expected %u\n", info.MipLevels, 9);
+    ok(info.ResourceType == D3DRTYPE_TEXTURE, "Got resource type %#x, expected %#x\n", info.ResourceType, D3DRTYPE_TEXTURE);
+    ok(info.ImageFileFormat == D3DXIFF_DDS, "Got file format %#x, expected %#x\n", info.ImageFileFormat, D3DXIFF_DDS);
+    ID3DXBuffer_Release(buffer);
 
     IDirect3DTexture9_Release(texture);
 
