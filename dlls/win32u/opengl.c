@@ -99,7 +99,7 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
             ERR( "%s not found in %s, disabling.\n", #func, SONAME_LIBOSMESA ); \
             goto failed; \
         }
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
     return &osmesa_opengl_funcs;

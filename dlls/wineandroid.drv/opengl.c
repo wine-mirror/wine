@@ -670,7 +670,7 @@ static void init_extensions(void)
     /* load standard functions and extensions exported from the OpenGL library */
 
 #define USE_GL_FUNC(func) if ((ptr = dlsym( opengl_handle, #func ))) egl_funcs.p_##func = ptr;
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
 #define LOAD_FUNCPTR(func) egl_funcs.p_##func = dlsym( opengl_handle, #func )
@@ -1060,7 +1060,7 @@ static void glstub_##name(void) \
     ExitProcess( 1 ); \
 }
 
-ALL_GL_UNIX_FUNCS
+ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
 static struct opengl_funcs egl_funcs =
@@ -1076,6 +1076,6 @@ static struct opengl_funcs egl_funcs =
     .p_wglSwapBuffers = android_wglSwapBuffers,
     .p_get_pixel_formats = android_get_pixel_formats,
 #define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 };

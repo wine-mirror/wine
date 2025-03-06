@@ -1203,7 +1203,7 @@ static BOOL init_opengl_funcs(void)
             ERR("%s not found, disabling OpenGL.\n", #func); \
             return FALSE; \
         }
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
     p_glClear = opengl_funcs.p_glClear;

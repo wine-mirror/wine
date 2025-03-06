@@ -878,6 +878,7 @@ open HEADER, ">$wgl_driver_file" or die "cannot create $wgl_driver_file";
 print HEADER "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 print HEADER "#ifndef __WINE_WGL_DRIVER_H\n";
 print HEADER "#define __WINE_WGL_DRIVER_H\n\n";
+print HEADER "#include \"wine/wgl.h\"\n\n";
 
 printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
 
@@ -922,32 +923,20 @@ foreach (sort keys %wgl_functions)
     my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
     printf HEADER "    %-10s (*p_$_)($decl_args);\n", $func_ret;
 }
-printf HEADER "    %-10s (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );\n", "void";
-
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $norm_functions{$_}, 1, 1, "" );
-    my $func_ret = get_func_ret( $norm_functions{$_}, 1 );
-    printf HEADER "    %-10s (*p_$_)($decl_args);\n", $func_ret;
-}
-
+print HEADER "    void       (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );\n";
 foreach (sort keys %ext_functions)
 {
+    next unless $_ =~ /^wgl/;
     next if defined $manual_win_functions{$_};
     my $decl_args = get_func_args( $ext_functions{$_}, 1, 1, "" );
     my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
     printf HEADER "    %-10s (*p_$_)($decl_args);\n", $func_ret;
 }
+print HEADER "#define USE_GL_FUNC(x) PFN_##x p_##x;\n";
+print HEADER "    ALL_GL_FUNCS\n";
+print HEADER "    ALL_GL_EXT_FUNCS\n";
+print HEADER "#undef USE_GL_FUNC\n";
 print HEADER "};\n\n";
-
-print HEADER "#define ALL_GL_UNIX_FUNCS";
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
-}
-print HEADER "\n\n";
 print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
 close HEADER;
 

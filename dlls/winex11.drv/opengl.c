@@ -565,7 +565,7 @@ struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
             ERR( "%s not found in libGL, disabling OpenGL.\n", #func ); \
             goto failed; \
         }
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
     /* redirect some standard OpenGL functions */

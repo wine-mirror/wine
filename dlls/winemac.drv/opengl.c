@@ -4199,7 +4199,7 @@ struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
             ERR( "%s not found in OpenGL, disabling.\n", #func ); \
             goto failed; \
         }
-    ALL_GL_UNIX_FUNCS
+    ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
     if (!init_gl_info())
