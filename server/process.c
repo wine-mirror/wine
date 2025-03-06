@@ -1641,7 +1641,7 @@ void set_process_priority( struct process *process, int priority )
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        set_thread_priority( thread, priority, thread->priority );
+        set_thread_priority( thread, thread->priority );
     }
 }
 

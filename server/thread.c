@@ -784,8 +784,9 @@ static int get_base_priority( int priority_class, int priority )
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
 #define THREAD_PRIORITY_REALTIME_LOWEST -7
 
-unsigned int set_thread_priority( struct thread *thread, int priority_class, int priority )
+unsigned int set_thread_priority( struct thread *thread, int priority )
 {
+    int priority_class = thread->process->priority;
     int max = THREAD_PRIORITY_HIGHEST;
     int min = THREAD_PRIORITY_LOWEST;
 
@@ -814,7 +815,7 @@ static void set_thread_info( struct thread *thread,
 {
     if (req->mask & SET_THREAD_INFO_PRIORITY)
     {
-        unsigned int status = set_thread_priority( thread, thread->process->priority, req->priority );
+        unsigned int status = set_thread_priority( thread, req->priority );
         if (status) set_error( status );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
@@ -1617,7 +1618,7 @@ DECL_HANDLER(init_first_thread)
     else
         set_thread_affinity( current, current->affinity );
 
-    set_thread_priority( current, process->priority, current->priority );
+    set_thread_priority( current, current->priority );
 
     debug_level = max( debug_level, req->debug_level );
 
@@ -1648,7 +1649,7 @@ DECL_HANDLER(init_thread)
 
     init_thread_context( current );
     generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
-    set_thread_priority( current, current->process->priority, current->priority );
+    set_thread_priority( current, current->priority );
     set_thread_affinity( current, current->affinity );
 
     reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
