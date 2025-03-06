@@ -40,6 +40,11 @@
 #define ADDRESS_AND_SIZE_TO_SPAN_PAGES(va, length) \
     ((BYTE_OFFSET(va) + ((SIZE_T)(length)) + (PAGE_SIZE - 1)) >> PAGE_SHIFT)
 
+#define LOW_PRIORITY             0
+#define LOW_REALTIME_PRIORITY   16
+#define HIGH_PRIORITY           31
+#define MAXIMUM_PRIORITY        32
+
 typedef LONG KPRIORITY;
 
 typedef ULONG_PTR KSPIN_LOCK, *PKSPIN_LOCK;
