@@ -326,6 +326,7 @@ SOURCES = \
 	fci.h \
 	fdi.h \
 	featurestagingapi.h \
+	fibersapi.h \
 	fileapi.h \
 	filter.idl \
 	fltdefs.h \
