@@ -51,6 +51,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winternl.h"
+#include "ddk/wdm.h"
 
 #include "file.h"
 #include "handle.h"
@@ -247,14 +248,14 @@ void init_threading(void)
     if (nice_limit < 0 && debug_level) fprintf(stderr, "wine: Using setpriority to control niceness in the [%d,%d] range\n", nice_limit, -nice_limit );
 }
 
-static void apply_thread_priority( struct thread *thread, int base_priority )
+static void apply_thread_priority( struct thread *thread, int effective_priority )
 {
     int min = -nice_limit, max = nice_limit, range = max - min, niceness;
 
     /* FIXME: handle realtime priorities using SCHED_RR if possible */
-    if (base_priority > THREAD_BASE_PRIORITY_LOWRT) base_priority = THREAD_BASE_PRIORITY_LOWRT;
-    /* map an NT application band [1,15] base priority to [-nice_limit, nice_limit] */
-    niceness = (min + (base_priority - 1) * range / 14);
+    if (effective_priority >= LOW_REALTIME_PRIORITY) effective_priority = LOW_REALTIME_PRIORITY - 1;
+    /* map an NT application band [1,15] priority to [-nice_limit, nice_limit] */
+    niceness = (min + (effective_priority - 1) * range / 14);
     setpriority( PRIO_PROCESS, thread->unix_tid, niceness );
 }
 
@@ -275,13 +276,13 @@ void init_threading(void)
     }
 }
 
-static int get_mach_importance( int base_priority )
+static int get_mach_importance( int effective_priority )
 {
     int min = -31, max = 32, range = max - min;
-    return min + (base_priority - 1) * range / 14;
+    return min + (effective_priority - 1) * range / 14;
 }
 
-static void apply_thread_priority( struct thread *thread, int base_priority )
+static void apply_thread_priority( struct thread *thread, int effective_priority )
 {
     kern_return_t kr;
     mach_msg_type_name_t type;
@@ -294,9 +295,9 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
     kr = mach_port_extract_right( process_port, thread->unix_tid,
                                   MACH_MSG_TYPE_COPY_SEND, &thread_port, &type );
     if (kr != KERN_SUCCESS) return;
-    /* base priority 15 is for time-critical threads, so not compute-bound */
-    thread_extended_policy.timeshare = base_priority > 14 ? 0 : 1;
-    thread_precedence_policy.importance = get_mach_importance( base_priority );
+    /* effective priority 15 is for time-critical threads, so not compute-bound */
+    thread_extended_policy.timeshare = effective_priority > 14 ? 0 : 1;
+    thread_precedence_policy.importance = get_mach_importance( effective_priority );
     /* adapted from the QoS table at xnu/osfmk/kern/thread_policy.c */
     switch (thread->priority)
     {
@@ -325,7 +326,7 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
         break;
     }
     /* QOS_UNSPECIFIED is assigned the highest tier available, so it does not provide a limit */
-    if (base_priority > THREAD_BASE_PRIORITY_LOWRT)
+    if (effective_priority >= LOW_REALTIME_PRIORITY)
     {
         throughput_qos = THROUGHPUT_QOS_TIER_UNSPECIFIED;
         latency_qos = LATENCY_QOS_TIER_UNSPECIFIED;
@@ -339,7 +340,7 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
                        THREAD_EXTENDED_POLICY_COUNT );
     thread_policy_set( thread_port, THREAD_PRECEDENCE_POLICY, (thread_policy_t)&thread_precedence_policy,
                        THREAD_PRECEDENCE_POLICY_COUNT );
-    if (base_priority > THREAD_BASE_PRIORITY_LOWRT)
+    if (effective_priority >= LOW_REALTIME_PRIORITY)
     {
         /* For realtime threads we are requesting from the scheduler to be moved
          * into the Mach realtime band (96-127) above the kernel.
@@ -354,14 +355,14 @@ static void apply_thread_priority( struct thread *thread, int base_priority )
          * importance), which is on XNU equivalent to setting SCHED_RR with the
          * pthread API. */
         struct thread_time_constraint_policy thread_time_constraint_policy;
-        int realtime_priority = base_priority - THREAD_BASE_PRIORITY_LOWRT;
+        int realtime_priority = effective_priority - LOW_REALTIME_PRIORITY + 1;
         unsigned int max_constraint = mach_ticks_per_second / 2;
         unsigned int max_computation = max_constraint / 10;
         /* unfortunately we can't give a hint for the periodicity of calculations */
         thread_time_constraint_policy.period = 0;
         thread_time_constraint_policy.constraint = max_constraint;
         thread_time_constraint_policy.computation = realtime_priority * max_computation / 16;
-        thread_time_constraint_policy.preemptible = thread->priority == THREAD_PRIORITY_TIME_CRITICAL ? 0 : 1;
+        thread_time_constraint_policy.preemptible = effective_priority == HIGH_PRIORITY ? 0 : 1;
         thread_policy_set( thread_port, THREAD_TIME_CONSTRAINT_POLICY,
                            (thread_policy_t)&thread_time_constraint_policy,
                            THREAD_TIME_CONSTRAINT_POLICY_COUNT );
@@ -375,7 +376,7 @@ void init_threading(void)
 {
 }
 
-static void apply_thread_priority( struct thread *thread, int base_priority )
+static void apply_thread_priority( struct thread *thread, int effective_priority )
 {
 }
 
@@ -770,15 +771,24 @@ affinity_t get_thread_affinity( struct thread *thread )
     return mask;
 }
 
-static int get_base_priority( int priority_class, int priority )
+static int priority_from_class_and_level( int priority_class, int priority_level )
 {
     /* offsets taken from https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities */
     static const int class_offsets[] = { 4, 8, 13, 24, 6, 10 };
 
-    if (priority == THREAD_PRIORITY_IDLE) return (priority_class == PROCESS_PRIOCLASS_REALTIME ? 16 : 1);
-    if (priority == THREAD_PRIORITY_TIME_CRITICAL) return (priority_class == PROCESS_PRIOCLASS_REALTIME ? 31 : 15);
-    if (priority_class >= ARRAY_SIZE(class_offsets)) return 8;
-    return class_offsets[priority_class - 1] + priority;
+    if (priority_class == PROCESS_PRIOCLASS_REALTIME)
+    {
+        if (priority_level == THREAD_PRIORITY_IDLE) return LOW_REALTIME_PRIORITY;
+        if (priority_level == THREAD_PRIORITY_TIME_CRITICAL) return HIGH_PRIORITY;
+    }
+    else
+    {
+        if (priority_level == THREAD_PRIORITY_IDLE) return LOW_PRIORITY + 1;
+        if (priority_level == THREAD_PRIORITY_TIME_CRITICAL) return LOW_REALTIME_PRIORITY - 1;
+    }
+
+    if (priority_class >= ARRAY_SIZE(class_offsets)) return LOW_REALTIME_PRIORITY / 2;
+    return class_offsets[priority_class - 1] + priority_level;
 }
 
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
@@ -804,7 +814,7 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
 
     /* if thread is gone or hasn't started yet, this will be called again from init_thread with a unix_tid */
     if (thread->state == RUNNING && thread->unix_tid != -1)
-        apply_thread_priority( thread, get_base_priority( priority_class, priority ));
+        apply_thread_priority( thread, priority_from_class_and_level( priority_class, priority ) );
 
     return STATUS_SUCCESS;
 }
