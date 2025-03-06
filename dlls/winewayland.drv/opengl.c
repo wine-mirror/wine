@@ -51,10 +51,6 @@ static EGLConfig *egl_configs;
 static int num_egl_configs;
 static BOOL has_egl_ext_pixel_format_float;
 
-#define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
-#undef USE_GL_FUNC
-
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
 DECL_FUNCPTR(eglBindAPI);
 DECL_FUNCPTR(eglChooseConfig);
@@ -991,7 +987,7 @@ static BOOL wayland_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
         pbuffer->prev_context = prev_context;
     }
 
-    opengl_funcs.gl.p_glGetIntegerv(pbuffer->texture_binding, &prev_bound_texture);
+    opengl_funcs.p_glGetIntegerv(pbuffer->texture_binding, &prev_bound_texture);
 
     p_eglMakeCurrent(egl_display, pbuffer->gl->surface, pbuffer->gl->surface,
                      pbuffer->tmp_context);
@@ -1000,8 +996,8 @@ static BOOL wayland_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
      * state isn't shared between contexts. After that copy the pbuffer texture
      * data. Note that at the moment we ignore the 'buffer' argument and always
      * copy from the pbuffer back buffer. */
-    opengl_funcs.gl.p_glBindTexture(pbuffer->texture_target, prev_bound_texture);
-    opengl_funcs.gl.p_glCopyTexImage2D(pbuffer->texture_target, 0,
+    opengl_funcs.p_glBindTexture(pbuffer->texture_target, prev_bound_texture);
+    opengl_funcs.p_glCopyTexImage2D(pbuffer->texture_target, 0,
                                        pbuffer->texture_format, 0, 0,
                                        pbuffer->width, pbuffer->height, 0);
 
@@ -1201,46 +1197,44 @@ static void register_extension(const char *ext)
 
 static BOOL init_opengl_funcs(void)
 {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
-    {
-        if (!(((void **)&opengl_funcs.gl)[i] = p_eglGetProcAddress(opengl_func_names[i])))
-        {
-            ERR("%s not found, disabling OpenGL.\n", opengl_func_names[i]);
-            return FALSE;
+#define USE_GL_FUNC(func) \
+        if (!(opengl_funcs.p_##func = (void *)p_eglGetProcAddress(#func))) \
+        { \
+            ERR("%s not found, disabling OpenGL.\n", #func); \
+            return FALSE; \
         }
-    }
+    ALL_GL_UNIX_FUNCS
+#undef USE_GL_FUNC
 
-    p_glClear = opengl_funcs.gl.p_glClear;
-    opengl_funcs.gl.p_glClear = wayland_glClear;
+    p_glClear = opengl_funcs.p_glClear;
+    opengl_funcs.p_glClear = wayland_glClear;
 
     register_extension("WGL_ARB_extensions_string");
-    opengl_funcs.ext.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
+    opengl_funcs.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
 
     register_extension("WGL_EXT_extensions_string");
-    opengl_funcs.ext.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
+    opengl_funcs.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
 
     register_extension("WGL_WINE_pixel_format_passthrough");
-    opengl_funcs.ext.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
+    opengl_funcs.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
 
     register_extension("WGL_ARB_make_current_read");
-    opengl_funcs.ext.p_wglGetCurrentReadDCARB = (void *)1;  /* never called */
-    opengl_funcs.ext.p_wglMakeContextCurrentARB = wayland_wglMakeContextCurrentARB;
+    opengl_funcs.p_wglGetCurrentReadDCARB = (void *)1;  /* never called */
+    opengl_funcs.p_wglMakeContextCurrentARB = wayland_wglMakeContextCurrentARB;
 
     register_extension("WGL_ARB_create_context");
     register_extension("WGL_ARB_create_context_no_error");
     register_extension("WGL_ARB_create_context_profile");
-    opengl_funcs.ext.p_wglCreateContextAttribsARB = wayland_wglCreateContextAttribsARB;
+    opengl_funcs.p_wglCreateContextAttribsARB = wayland_wglCreateContextAttribsARB;
 
     register_extension("WGL_EXT_swap_control");
-    opengl_funcs.ext.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
-    opengl_funcs.ext.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
+    opengl_funcs.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
+    opengl_funcs.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
 
     register_extension("WGL_ARB_pixel_format");
-    opengl_funcs.ext.p_wglChoosePixelFormatARB = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+    opengl_funcs.p_wglChoosePixelFormatARB = (void *)1; /* never called */
+    opengl_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
+    opengl_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
     if (has_egl_ext_pixel_format_float)
     {
@@ -1249,16 +1243,16 @@ static BOOL init_opengl_funcs(void)
     }
 
     register_extension("WGL_ARB_pbuffer");
-    opengl_funcs.ext.p_wglCreatePbufferARB = wayland_wglCreatePbufferARB;
-    opengl_funcs.ext.p_wglDestroyPbufferARB = wayland_wglDestroyPbufferARB;
-    opengl_funcs.ext.p_wglGetPbufferDCARB = wayland_wglGetPbufferDCARB;
-    opengl_funcs.ext.p_wglQueryPbufferARB = wayland_wglQueryPbufferARB;
-    opengl_funcs.ext.p_wglReleasePbufferDCARB = wayland_wglReleasePbufferDCARB;
+    opengl_funcs.p_wglCreatePbufferARB = wayland_wglCreatePbufferARB;
+    opengl_funcs.p_wglDestroyPbufferARB = wayland_wglDestroyPbufferARB;
+    opengl_funcs.p_wglGetPbufferDCARB = wayland_wglGetPbufferDCARB;
+    opengl_funcs.p_wglQueryPbufferARB = wayland_wglQueryPbufferARB;
+    opengl_funcs.p_wglReleasePbufferDCARB = wayland_wglReleasePbufferDCARB;
 
     register_extension("WGL_ARB_render_texture");
-    opengl_funcs.ext.p_wglBindTexImageARB = wayland_wglBindTexImageARB;
-    opengl_funcs.ext.p_wglReleaseTexImageARB = wayland_wglReleaseTexImageARB;
-    opengl_funcs.ext.p_wglSetPbufferAttribARB = wayland_wglSetPbufferAttribARB;
+    opengl_funcs.p_wglBindTexImageARB = wayland_wglBindTexImageARB;
+    opengl_funcs.p_wglReleaseTexImageARB = wayland_wglReleaseTexImageARB;
+    opengl_funcs.p_wglSetPbufferAttribARB = wayland_wglSetPbufferAttribARB;
 
     return TRUE;
 }
@@ -1421,18 +1415,15 @@ err:
 
 static struct opengl_funcs opengl_funcs =
 {
-    .wgl =
-    {
-        .p_wglCopyContext = wayland_wglCopyContext,
-        .p_wglCreateContext = wayland_wglCreateContext,
-        .p_wglDeleteContext = wayland_wglDeleteContext,
-        .p_wglGetProcAddress = wayland_wglGetProcAddress,
-        .p_wglMakeCurrent = wayland_wglMakeCurrent,
-        .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
-        .p_wglShareLists = wayland_wglShareLists,
-        .p_wglSwapBuffers = wayland_wglSwapBuffers,
-        .p_get_pixel_formats = wayland_get_pixel_formats,
-    }
+    .p_wglCopyContext = wayland_wglCopyContext,
+    .p_wglCreateContext = wayland_wglCreateContext,
+    .p_wglDeleteContext = wayland_wglDeleteContext,
+    .p_wglGetProcAddress = wayland_wglGetProcAddress,
+    .p_wglMakeCurrent = wayland_wglMakeCurrent,
+    .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
+    .p_wglShareLists = wayland_wglShareLists,
+    .p_wglSwapBuffers = wayland_wglSwapBuffers,
+    .p_get_pixel_formats = wayland_get_pixel_formats,
 };
 
 /**********************************************************************

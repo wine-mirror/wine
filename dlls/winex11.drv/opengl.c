@@ -286,10 +286,6 @@ static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
 static struct opengl_funcs opengl_funcs;
 
-#define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
-#undef USE_GL_FUNC
-
 static void X11DRV_WineGL_LoadExtensions(void);
 static void init_pixel_formats( Display *display );
 static BOOL glxRequireVersion(int requiredVersion);
@@ -470,9 +466,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
                         "installed correctly\n", is_win64 ? "64-bit" : "32-bit" );
         goto done;
     }
-    gl_renderer = (const char *)opengl_funcs.gl.p_glGetString(GL_RENDERER);
-    gl_version  = (const char *)opengl_funcs.gl.p_glGetString(GL_VERSION);
-    str = (const char *) opengl_funcs.gl.p_glGetString(GL_EXTENSIONS);
+    gl_renderer = (const char *)opengl_funcs.p_glGetString(GL_RENDERER);
+    gl_version  = (const char *)opengl_funcs.p_glGetString(GL_VERSION);
+    str = (const char *) opengl_funcs.p_glGetString(GL_EXTENSIONS);
     glExtensions = malloc( strlen(str) + sizeof(legacy_extensions) );
     strcpy(glExtensions, str);
     strcat(glExtensions, legacy_extensions);
@@ -546,7 +542,6 @@ static void *opengl_handle;
 struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
 {
     int error_base, event_base;
-    unsigned int i;
 
     if (version != WINE_WGL_DRIVER_VERSION)
     {
@@ -564,18 +559,18 @@ struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
         return NULL;
     }
 
-    for (i = 0; i < ARRAY_SIZE( opengl_func_names ); i++)
-    {
-        if (!(((void **)&opengl_funcs.gl)[i] = dlsym( opengl_handle, opengl_func_names[i] )))
-        {
-            ERR( "%s not found in libGL, disabling OpenGL.\n", opengl_func_names[i] );
-            goto failed;
+#define USE_GL_FUNC(func) \
+        if (!(opengl_funcs.p_##func = dlsym( opengl_handle, #func ))) \
+        { \
+            ERR( "%s not found in libGL, disabling OpenGL.\n", #func ); \
+            goto failed; \
         }
-    }
+    ALL_GL_UNIX_FUNCS
+#undef USE_GL_FUNC
 
     /* redirect some standard OpenGL functions */
 #define REDIRECT(func) \
-    do { p##func = opengl_funcs.gl.p_##func; opengl_funcs.gl.p_##func = w##func; } while(0)
+    do { p##func = opengl_funcs.p_##func; opengl_funcs.p_##func = w##func; } while(0)
     REDIRECT( glFinish );
     REDIRECT( glFlush );
     REDIRECT( glGetString );
@@ -2496,15 +2491,15 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
             object->prev_context = prev_context;
         }
 
-        opengl_funcs.gl.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
+        opengl_funcs.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
 
         /* Switch to our pbuffer */
         pglXMakeCurrent(gdi_display, object->gl->drawable, object->tmp_context);
 
         /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
          * After that copy the pbuffer texture data. */
-        opengl_funcs.gl.p_glBindTexture(object->texture_target, prev_binded_texture);
-        opengl_funcs.gl.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
+        opengl_funcs.p_glBindTexture(object->texture_target, prev_binded_texture);
+        opengl_funcs.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
 
         /* Switch back to the original drawable and context */
         pglXMakeCurrent(gdi_display, prev_drawable, prev_context);
@@ -2679,7 +2674,7 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (has_extension( glxExtensions, "GLX_ARB_create_context"))
     {
         register_extension( "WGL_ARB_create_context" );
-        opengl_funcs.ext.p_wglCreateContextAttribsARB = X11DRV_wglCreateContextAttribsARB;
+        opengl_funcs.p_wglCreateContextAttribsARB = X11DRV_wglCreateContextAttribsARB;
 
         if (has_extension( glxExtensions, "GLX_ARB_create_context_no_error" ))
             register_extension( "WGL_ARB_create_context_no_error" );
@@ -2689,13 +2684,13 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
 
     register_extension( "WGL_ARB_extensions_string" );
-    opengl_funcs.ext.p_wglGetExtensionsStringARB = X11DRV_wglGetExtensionsStringARB;
+    opengl_funcs.p_wglGetExtensionsStringARB = X11DRV_wglGetExtensionsStringARB;
 
     if (glxRequireVersion(3))
     {
         register_extension( "WGL_ARB_make_current_read" );
-        opengl_funcs.ext.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-        opengl_funcs.ext.p_wglMakeContextCurrentARB = X11DRV_wglMakeContextCurrentARB;
+        opengl_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+        opengl_funcs.p_wglMakeContextCurrentARB = X11DRV_wglMakeContextCurrentARB;
     }
 
     if (has_extension( glxExtensions, "GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
@@ -2703,18 +2698,18 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (glxRequireVersion(3))
     {
         register_extension( "WGL_ARB_pbuffer" );
-        opengl_funcs.ext.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
-        opengl_funcs.ext.p_wglDestroyPbufferARB   = X11DRV_wglDestroyPbufferARB;
-        opengl_funcs.ext.p_wglGetPbufferDCARB     = X11DRV_wglGetPbufferDCARB;
-        opengl_funcs.ext.p_wglQueryPbufferARB     = X11DRV_wglQueryPbufferARB;
-        opengl_funcs.ext.p_wglReleasePbufferDCARB = X11DRV_wglReleasePbufferDCARB;
-        opengl_funcs.ext.p_wglSetPbufferAttribARB = X11DRV_wglSetPbufferAttribARB;
+        opengl_funcs.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
+        opengl_funcs.p_wglDestroyPbufferARB   = X11DRV_wglDestroyPbufferARB;
+        opengl_funcs.p_wglGetPbufferDCARB     = X11DRV_wglGetPbufferDCARB;
+        opengl_funcs.p_wglQueryPbufferARB     = X11DRV_wglQueryPbufferARB;
+        opengl_funcs.p_wglReleasePbufferDCARB = X11DRV_wglReleasePbufferDCARB;
+        opengl_funcs.p_wglSetPbufferAttribARB = X11DRV_wglSetPbufferAttribARB;
     }
 
     register_extension( "WGL_ARB_pixel_format" );
-    opengl_funcs.ext.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+    opengl_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
+    opengl_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
+    opengl_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
     if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
     {
@@ -2727,8 +2722,8 @@ static void X11DRV_WineGL_LoadExtensions(void)
         (glxRequireVersion(3) && use_render_texture_emulation))
     {
         register_extension( "WGL_ARB_render_texture" );
-        opengl_funcs.ext.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
-        opengl_funcs.ext.p_wglReleaseTexImageARB = X11DRV_wglReleaseTexImageARB;
+        opengl_funcs.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
+        opengl_funcs.p_wglReleaseTexImageARB = X11DRV_wglReleaseTexImageARB;
 
         /* The WGL version of GLX_NV_float_buffer requires render_texture */
         if (has_extension( glxExtensions, "GLX_NV_float_buffer"))
@@ -2742,13 +2737,13 @@ static void X11DRV_WineGL_LoadExtensions(void)
     /* EXT Extensions */
 
     register_extension( "WGL_EXT_extensions_string" );
-    opengl_funcs.ext.p_wglGetExtensionsStringEXT = X11DRV_wglGetExtensionsStringEXT;
+    opengl_funcs.p_wglGetExtensionsStringEXT = X11DRV_wglGetExtensionsStringEXT;
 
     /* Load this extension even when it isn't backed by a GLX extension because it is has been around for ages.
      * Games like Call of Duty and K.O.T.O.R. rely on it. Further our emulation is good enough. */
     register_extension( "WGL_EXT_swap_control" );
-    opengl_funcs.ext.p_wglSwapIntervalEXT = X11DRV_wglSwapIntervalEXT;
-    opengl_funcs.ext.p_wglGetSwapIntervalEXT = X11DRV_wglGetSwapIntervalEXT;
+    opengl_funcs.p_wglSwapIntervalEXT = X11DRV_wglSwapIntervalEXT;
+    opengl_funcs.p_wglGetSwapIntervalEXT = X11DRV_wglGetSwapIntervalEXT;
 
     if (has_extension( glxExtensions, "GLX_EXT_framebuffer_sRGB"))
         register_extension("WGL_EXT_framebuffer_sRGB");
@@ -2778,8 +2773,8 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (has_extension(glExtensions, "GL_NV_vertex_array_range"))
     {
         register_extension( "WGL_NV_vertex_array_range" );
-        opengl_funcs.ext.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
-        opengl_funcs.ext.p_wglFreeMemoryNV = pglXFreeMemoryNV;
+        opengl_funcs.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
+        opengl_funcs.p_wglFreeMemoryNV = pglXFreeMemoryNV;
     }
 
     if (has_extension(glxExtensions, "GLX_OML_swap_method"))
@@ -2791,15 +2786,15 @@ static void X11DRV_WineGL_LoadExtensions(void)
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
     register_extension( "WGL_WINE_pixel_format_passthrough" );
-    opengl_funcs.ext.p_wglSetPixelFormatWINE = X11DRV_wglSetPixelFormatWINE;
+    opengl_funcs.p_wglSetPixelFormatWINE = X11DRV_wglSetPixelFormatWINE;
 
     if (has_extension( glxExtensions, "GLX_MESA_query_renderer" ))
     {
         register_extension( "WGL_WINE_query_renderer" );
-        opengl_funcs.ext.p_wglQueryCurrentRendererIntegerWINE = X11DRV_wglQueryCurrentRendererIntegerWINE;
-        opengl_funcs.ext.p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
-        opengl_funcs.ext.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
-        opengl_funcs.ext.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
+        opengl_funcs.p_wglQueryCurrentRendererIntegerWINE = X11DRV_wglQueryCurrentRendererIntegerWINE;
+        opengl_funcs.p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
+        opengl_funcs.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
+        opengl_funcs.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
     }
 }
 
@@ -2896,18 +2891,16 @@ static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
 
 static struct opengl_funcs opengl_funcs =
 {
-    {
-        glxdrv_wglCopyContext,              /* p_wglCopyContext */
-        glxdrv_wglCreateContext,            /* p_wglCreateContext */
-        glxdrv_wglDeleteContext,            /* p_wglDeleteContext */
-        glxdrv_wglGetPixelFormat,           /* p_wglGetPixelFormat */
-        glxdrv_wglGetProcAddress,           /* p_wglGetProcAddress */
-        glxdrv_wglMakeCurrent,              /* p_wglMakeCurrent */
-        glxdrv_wglSetPixelFormat,           /* p_wglSetPixelFormat */
-        glxdrv_wglShareLists,               /* p_wglShareLists */
-        glxdrv_wglSwapBuffers,              /* p_wglSwapBuffers */
-        glxdrv_get_pixel_formats,           /* p_get_pixel_formats */
-    }
+    .p_wglCopyContext = glxdrv_wglCopyContext,
+    .p_wglCreateContext = glxdrv_wglCreateContext,
+    .p_wglDeleteContext = glxdrv_wglDeleteContext,
+    .p_wglGetPixelFormat = glxdrv_wglGetPixelFormat,
+    .p_wglGetProcAddress = glxdrv_wglGetProcAddress,
+    .p_wglMakeCurrent = glxdrv_wglMakeCurrent,
+    .p_wglSetPixelFormat = glxdrv_wglSetPixelFormat,
+    .p_wglShareLists = glxdrv_wglShareLists,
+    .p_wglSwapBuffers = glxdrv_wglSwapBuffers,
+    .p_get_pixel_formats = glxdrv_get_pixel_formats,
 };
 
 #else  /* no OpenGL includes */

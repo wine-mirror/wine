@@ -61,10 +61,6 @@ struct wgl_context
 
 static struct opengl_funcs osmesa_opengl_funcs;
 
-#define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
-#undef USE_GL_FUNC
-
 static OSMesaContext (*pOSMesaCreateContextExt)( GLenum format, GLint depthBits, GLint stencilBits,
                                                  GLint accumBits, OSMesaContext sharelist );
 static void (*pOSMesaDestroyContext)( OSMesaContext ctx );
@@ -76,7 +72,6 @@ static void (*pOSMesaPixelStore)( GLint pname, GLint value );
 static struct opengl_funcs *osmesa_get_wgl_driver(void)
 {
     static void *osmesa_handle;
-    unsigned int i;
 
     osmesa_handle = dlopen( SONAME_LIBOSMESA, RTLD_NOW );
     if (osmesa_handle == NULL)
@@ -98,14 +93,14 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
     LOAD_FUNCPTR(OSMesaPixelStore);
 #undef LOAD_FUNCPTR
 
-    for (i = 0; i < ARRAY_SIZE( opengl_func_names ); i++)
-    {
-        if (!(((void **)&osmesa_opengl_funcs.gl)[i] = pOSMesaGetProcAddress( opengl_func_names[i] )))
-        {
-            ERR( "%s not found in %s, disabling.\n", opengl_func_names[i], SONAME_LIBOSMESA );
-            goto failed;
+#define USE_GL_FUNC(func) \
+        if (!(osmesa_opengl_funcs.p_##func = pOSMesaGetProcAddress( #func ))) \
+        { \
+            ERR( "%s not found in %s, disabling.\n", #func, SONAME_LIBOSMESA ); \
+            goto failed; \
         }
-    }
+    ALL_GL_UNIX_FUNCS
+#undef USE_GL_FUNC
 
     return &osmesa_opengl_funcs;
 
@@ -337,16 +332,16 @@ static void osmesa_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
 
 static struct opengl_funcs osmesa_opengl_funcs =
 {
-    .wgl.p_wglCopyContext = osmesa_wglCopyContext,
-    .wgl.p_wglCreateContext = osmesa_wglCreateContext,
-    .wgl.p_wglDeleteContext = osmesa_wglDeleteContext,
-    .wgl.p_wglGetPixelFormat = osmesa_wglGetPixelFormat,
-    .wgl.p_wglGetProcAddress = osmesa_wglGetProcAddress,
-    .wgl.p_wglMakeCurrent = osmesa_wglMakeCurrent,
-    .wgl.p_wglSetPixelFormat = osmesa_wglSetPixelFormat,
-    .wgl.p_wglShareLists = osmesa_wglShareLists,
-    .wgl.p_wglSwapBuffers = osmesa_wglSwapBuffers,
-    .wgl.p_get_pixel_formats = osmesa_get_pixel_formats,
+    .p_wglCopyContext = osmesa_wglCopyContext,
+    .p_wglCreateContext = osmesa_wglCreateContext,
+    .p_wglDeleteContext = osmesa_wglDeleteContext,
+    .p_wglGetPixelFormat = osmesa_wglGetPixelFormat,
+    .p_wglGetProcAddress = osmesa_wglGetProcAddress,
+    .p_wglMakeCurrent = osmesa_wglMakeCurrent,
+    .p_wglSetPixelFormat = osmesa_wglSetPixelFormat,
+    .p_wglShareLists = osmesa_wglShareLists,
+    .p_wglSwapBuffers = osmesa_wglSwapBuffers,
+    .p_get_pixel_formats = osmesa_get_pixel_formats,
 };
 
 #else  /* SONAME_LIBOSMESA */

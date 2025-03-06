@@ -643,21 +643,21 @@ static void init_extensions(void)
 
     register_extension("WGL_ARB_create_context");
     register_extension("WGL_ARB_create_context_profile");
-    egl_funcs.ext.p_wglCreateContextAttribsARB = android_wglCreateContextAttribsARB;
+    egl_funcs.p_wglCreateContextAttribsARB = android_wglCreateContextAttribsARB;
 
     register_extension("WGL_ARB_extensions_string");
-    egl_funcs.ext.p_wglGetExtensionsStringARB = android_wglGetExtensionsStringARB;
+    egl_funcs.p_wglGetExtensionsStringARB = android_wglGetExtensionsStringARB;
 
     register_extension("WGL_ARB_make_current_read");
-    egl_funcs.ext.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-    egl_funcs.ext.p_wglMakeContextCurrentARB = android_wglMakeContextCurrentARB;
+    egl_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+    egl_funcs.p_wglMakeContextCurrentARB = android_wglMakeContextCurrentARB;
 
     register_extension("WGL_EXT_extensions_string");
-    egl_funcs.ext.p_wglGetExtensionsStringEXT = android_wglGetExtensionsStringEXT;
+    egl_funcs.p_wglGetExtensionsStringEXT = android_wglGetExtensionsStringEXT;
 
     register_extension("WGL_EXT_swap_control");
-    egl_funcs.ext.p_wglSwapIntervalEXT = android_wglSwapIntervalEXT;
-    egl_funcs.ext.p_wglGetSwapIntervalEXT = android_wglGetSwapIntervalEXT;
+    egl_funcs.p_wglSwapIntervalEXT = android_wglSwapIntervalEXT;
+    egl_funcs.p_wglGetSwapIntervalEXT = android_wglGetSwapIntervalEXT;
 
     register_extension("WGL_EXT_framebuffer_sRGB");
 
@@ -665,15 +665,15 @@ static void init_extensions(void)
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
     register_extension("WGL_WINE_pixel_format_passthrough");
-    egl_funcs.ext.p_wglSetPixelFormatWINE = android_wglSetPixelFormatWINE;
+    egl_funcs.p_wglSetPixelFormatWINE = android_wglSetPixelFormatWINE;
 
     /* load standard functions and extensions exported from the OpenGL library */
 
-#define USE_GL_FUNC(func) if ((ptr = dlsym( opengl_handle, #func ))) egl_funcs.gl.p_##func = ptr;
+#define USE_GL_FUNC(func) if ((ptr = dlsym( opengl_handle, #func ))) egl_funcs.p_##func = ptr;
     ALL_GL_UNIX_FUNCS
 #undef USE_GL_FUNC
 
-#define LOAD_FUNCPTR(func) egl_funcs.ext.p_##func = dlsym( opengl_handle, #func )
+#define LOAD_FUNCPTR(func) egl_funcs.p_##func = dlsym( opengl_handle, #func )
     LOAD_FUNCPTR( glActiveShaderProgram );
     LOAD_FUNCPTR( glActiveTexture );
     LOAD_FUNCPTR( glAttachShader );
@@ -952,7 +952,7 @@ static void init_extensions(void)
     /* redirect some standard OpenGL functions */
 
 #define REDIRECT(func) \
-    do { p##func = egl_funcs.gl.p_##func; egl_funcs.gl.p_##func = w##func; } while(0)
+    do { p##func = egl_funcs.p_##func; egl_funcs.p_##func = w##func; } while(0)
     REDIRECT(glFinish);
     REDIRECT(glFlush);
 #undef REDIRECT
@@ -1065,19 +1065,17 @@ ALL_GL_UNIX_FUNCS
 
 static struct opengl_funcs egl_funcs =
 {
-    {
-        android_wglCopyContext,
-        android_wglCreateContext,
-        android_wglDeleteContext,
-        android_wglGetPixelFormat,
-        android_wglGetProcAddress,
-        android_wglMakeCurrent,
-        android_wglSetPixelFormat,
-        android_wglShareLists,
-        android_wglSwapBuffers,
-        android_get_pixel_formats,
-    },
-#define USE_GL_FUNC(name) (void *)glstub_##name,
-    { ALL_GL_UNIX_FUNCS }
+    .p_wglCopyContext = android_wglCopyContext,
+    .p_wglCreateContext = android_wglCreateContext,
+    .p_wglDeleteContext = android_wglDeleteContext,
+    .p_wglGetPixelFormat = android_wglGetPixelFormat,
+    .p_wglGetProcAddress = android_wglGetProcAddress,
+    .p_wglMakeCurrent = android_wglMakeCurrent,
+    .p_wglSetPixelFormat = android_wglSetPixelFormat,
+    .p_wglShareLists = android_wglShareLists,
+    .p_wglSwapBuffers = android_wglSwapBuffers,
+    .p_get_pixel_formats = android_get_pixel_formats,
+#define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
+    ALL_GL_UNIX_FUNCS
 #undef USE_GL_FUNC
 };
