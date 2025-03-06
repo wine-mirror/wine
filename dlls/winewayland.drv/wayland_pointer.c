@@ -494,6 +494,17 @@ static BOOL get_icon_info(HICON handle, ICONINFOEXW *ret)
     return TRUE;
 }
 
+static BOOL cursor_buffer_is_transparent(struct wayland_shm_buffer *shm_buffer)
+{
+    uint32_t *pixel = shm_buffer->map_data;
+    uint32_t *end = pixel + shm_buffer->map_size / WINEWAYLAND_BYTES_PER_PIXEL;
+
+    for (; pixel < end; ++pixel)
+        if ((*pixel & 0xff000000) != 0) return FALSE;
+
+    return TRUE;
+}
+
 static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor, double scale)
 {
     struct wayland_cursor *cursor = &process_wayland.pointer.cursor;
@@ -537,6 +548,9 @@ static void wayland_pointer_update_cursor_buffer(HCURSOR hcursor, double scale)
         ERR("Failed to create shm_buffer for cursor=%p\n", hcursor);
         goto clear_cursor;
     }
+
+    if (cursor_buffer_is_transparent(cursor->shm_buffer))
+        goto clear_cursor;
 
     /* Make sure the hotspot is valid. */
     if (cursor->hotspot_x >= cursor->shm_buffer->width ||
