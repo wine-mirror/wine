@@ -2150,9 +2150,9 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,command,start.exe
 10,system,ddeml.dll,ddeml.dll16
 10,system,mmsystem.dll,mmsystem.dll16
-11,,ddhelp.exe
-11,,dosx.exe
-11,,dsound.vxd
+11,,ddhelp.exe,*
+11,,dosx.exe,*
+11,,dsound.vxd,*
 11,,start.exe
 11,,winhlp32.exe
 52,win40\0,wineps16.drv,wineps16.drv16

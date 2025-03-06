@@ -272,6 +272,7 @@ static BOOL build_fake_dll( HANDLE file, const WCHAR *name )
     DWORD lfanew = (sizeof(*dos) + sizeof(fakedll_signature) + 15) & ~15;
     DWORD size, header_size = lfanew + sizeof(*nt);
 
+    TRACE( "creating %s\n", debugstr_w(name) );
     info.handle = file;
     buffer = calloc( 1, header_size + 8 * sizeof(IMAGE_SECTION_HEADER) );
 
@@ -1047,7 +1048,7 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
 {
     struct list delay_copy = LIST_INIT( delay_copy );
     HANDLE h;
-    BOOL ret;
+    BOOL ret = FALSE;
     SIZE_T size;
     const WCHAR *filename;
     void *buffer;
@@ -1069,18 +1070,17 @@ BOOL create_fake_dll( const WCHAR *name, const WCHAR *source )
     if (!(h = create_dest_file( name, delete ))) return TRUE;  /* not a fake dll */
     if (h == INVALID_HANDLE_VALUE) return FALSE;
 
-    if ((buffer = load_fake_dll( source, &size )))
+    if (!wcscmp( source, L"*" ))  /* '*' source means create fake file for a non-existent dll */
+    {
+        ret = build_fake_dll( h, name );
+    }
+    else if ((buffer = load_fake_dll( source, &size )))
     {
         DWORD written;
 
         ret = (WriteFile( h, buffer, size, &written, NULL ) && written == size);
         if (ret) register_fake_dll( name, buffer, size, &delay_copy );
         else ERR( "failed to write to %s (error=%lu)\n", debugstr_w(name), GetLastError() );
-    }
-    else
-    {
-        WARN( "fake dll %s not found for %s\n", debugstr_w(source), debugstr_w(name) );
-        ret = build_fake_dll( h, name );
     }
 
     CloseHandle( h );
