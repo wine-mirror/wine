@@ -1857,7 +1857,7 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         IDirect3DBaseTexture9 *src_texture, const PALETTEENTRY *src_palette)
 {
     const struct pixel_format_desc *fmt_desc = NULL;
-    unsigned int levels, file_size, i;
+    unsigned int levels, file_size, i, j;
     struct d3dx_image image;
     D3DRESOURCETYPE type;
     ID3DXBuffer *buffer;
@@ -1923,6 +1923,24 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             break;
         }
 
+        case D3DRTYPE_CUBETEXTURE:
+        {
+            IDirect3DCubeTexture9 *texture = (IDirect3DCubeTexture9 *)src_texture;
+            D3DSURFACE_DESC desc;
+
+            hr = IDirect3DCubeTexture9_GetLevelDesc(texture, 0, &desc);
+            if (FAILED(hr))
+                break;
+
+            fmt_desc = get_format_info(desc.Format);
+            if (is_unknown_format(fmt_desc))
+                return E_NOTIMPL;
+
+            set_volume_struct(&size, desc.Width, desc.Height, 1);
+            break;
+        }
+
+
         default:
             return E_NOTIMPL;
     }
@@ -1931,6 +1949,8 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
         return E_NOTIMPL;
 
     file_size = d3dx_calculate_layer_pixels_size(fmt_desc->format, size.width, size.height, size.depth, levels);
+    if (type == D3DRTYPE_CUBETEXTURE)
+        file_size *= 6;
     file_size += is_index_format(fmt_desc) ? sizeof(struct dds_header) + DDS_PALETTE_SIZE : sizeof(struct dds_header);
 
     hr = D3DXCreateBuffer(file_size, &buffer);
@@ -1950,46 +1970,49 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     if (FAILED(hr))
         goto exit;
 
-    for (i = 0; i < levels; ++i)
+    for (j = 0; j < image.layer_count; ++j)
     {
-        IDirect3DSurface9 *src_surface, *tmp_surface;
-        struct d3dx_pixels src_pixels, dst_pixels;
-        D3DSURFACE_DESC src_surface_desc;
-        D3DLOCKED_RECT src_locked_rect;
-        RECT src_rect;
-
-        hr = d3dx_image_get_pixels(&image, 0, i, &dst_pixels);
-        if (FAILED(hr))
-            goto exit;
-
-        hr = get_surface(type, src_texture, 0, i, &src_surface);
-        if (FAILED(hr))
-            goto exit;
-
-        hr = lock_surface(src_surface, NULL, &src_locked_rect, &tmp_surface, FALSE);
-        if (FAILED(hr))
+        for (i = 0; i < levels; ++i)
         {
+            IDirect3DSurface9 *src_surface, *tmp_surface;
+            struct d3dx_pixels src_pixels, dst_pixels;
+            D3DSURFACE_DESC src_surface_desc;
+            D3DLOCKED_RECT src_locked_rect;
+            RECT src_rect;
+
+            hr = d3dx_image_get_pixels(&image, j, i, &dst_pixels);
+            if (FAILED(hr))
+                goto exit;
+
+            hr = get_surface(type, src_texture, j, i, &src_surface);
+            if (FAILED(hr))
+                goto exit;
+
+            hr = lock_surface(src_surface, NULL, &src_locked_rect, &tmp_surface, FALSE);
+            if (FAILED(hr))
+            {
+                IDirect3DSurface9_Release(src_surface);
+                goto exit;
+            }
+
+            IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+            SetRect(&src_rect, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
+            set_d3dx_pixels(&src_pixels, src_locked_rect.pBits, src_locked_rect.Pitch, 0, src_palette,
+                    src_surface_desc.Width, src_surface_desc.Height, 1, &src_rect);
+
+            hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, D3DX_FILTER_NONE, 0);
+            if (FAILED(hr))
+            {
+                unlock_surface(src_surface, NULL, tmp_surface, FALSE);
+                IDirect3DSurface9_Release(src_surface);
+                goto exit;
+            }
+
+            hr = unlock_surface(src_surface, NULL, tmp_surface, FALSE);
             IDirect3DSurface9_Release(src_surface);
-            goto exit;
+            if (FAILED(hr))
+                goto exit;
         }
-
-        IDirect3DTexture9_GetLevelDesc((IDirect3DTexture9 *)src_texture, i, &src_surface_desc);
-        SetRect(&src_rect, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
-        set_d3dx_pixels(&src_pixels, src_locked_rect.pBits, src_locked_rect.Pitch, 0, src_palette,
-                src_surface_desc.Width, src_surface_desc.Height, 1, &src_rect);
-
-        hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, D3DX_FILTER_NONE, 0);
-        if (FAILED(hr))
-        {
-            unlock_surface(src_surface, NULL, tmp_surface, FALSE);
-            IDirect3DSurface9_Release(src_surface);
-            goto exit;
-        }
-
-        hr = unlock_surface(src_surface, NULL, tmp_surface, FALSE);
-        IDirect3DSurface9_Release(src_surface);
-        if (FAILED(hr))
-            goto exit;
     }
 
     *dst_buffer = buffer;

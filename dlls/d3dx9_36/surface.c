@@ -448,6 +448,12 @@ HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE resource
         header->miplevels = mip_levels;
     }
 
+    if (resource_type == D3DRTYPE_CUBETEXTURE)
+    {
+        header->caps |= DDS_CAPS_COMPLEX;
+        header->caps2 |= (DDS_CAPS2_CUBEMAP | DDS_CAPS2_CUBEMAP_ALL_FACES);
+    }
+
     if (header->pixel_format.flags & DDS_PF_ALPHA || header->pixel_format.flags & DDS_PF_ALPHA_ONLY)
         header->caps |= DDSCAPS_ALPHA;
     if (header->pixel_format.flags & DDS_PF_INDEXED)
