@@ -595,7 +595,7 @@ static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
         return (void *)-1;
     }
 
-    func_ptr = (const void **)&funcs->ext + (found - extension_registry);
+    func_ptr = (const void **)((char *)funcs + found->offset);
     if (!*func_ptr)
     {
         void *driver_func = funcs->wgl.p_wglGetProcAddress( name );

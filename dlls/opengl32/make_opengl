@@ -1383,7 +1383,7 @@ print OUT "{\n";
 foreach (sort keys %ext_functions)
 {
     my $func = $ext_functions{$_};
-    printf OUT "    { \"%s\", \"%s\" },\n", $_, join(" ", sort @{$func->[2]});
+    printf OUT "    { \"%s\", \"%s\", offsetof(struct opengl_funcs, ext.p_$_) },\n", $_, join(" ", sort @{$func->[2]});
 }
 print OUT "};\n";
 
