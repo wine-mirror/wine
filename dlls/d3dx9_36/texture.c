@@ -1940,9 +1940,26 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
             break;
         }
 
+        case D3DRTYPE_VOLUMETEXTURE:
+        {
+            IDirect3DVolumeTexture9 *texture = (IDirect3DVolumeTexture9 *)src_texture;
+            D3DVOLUME_DESC desc;
+
+            hr = IDirect3DVolumeTexture9_GetLevelDesc(texture, 0, &desc);
+            if (FAILED(hr))
+                break;
+
+            fmt_desc = get_format_info(desc.Format);
+            if (is_unknown_format(fmt_desc))
+                return E_NOTIMPL;
+
+            set_volume_struct(&size, desc.Width, desc.Height, desc.Depth);
+            break;
+        }
 
         default:
-            return E_NOTIMPL;
+            assert(0); /* Should not happen. */
+            return E_FAIL;
     }
 
     if (is_index_format(fmt_desc) && !src_palette)
@@ -1970,51 +1987,83 @@ HRESULT WINAPI D3DXSaveTextureToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE
     if (FAILED(hr))
         goto exit;
 
-    for (j = 0; j < image.layer_count; ++j)
+    if (type != D3DRTYPE_VOLUMETEXTURE)
     {
+        for (j = 0; j < image.layer_count; ++j)
+        {
+            for (i = 0; i < levels; ++i)
+            {
+                IDirect3DSurface9 *src_surface, *tmp_surface;
+                struct d3dx_pixels src_pixels, dst_pixels;
+                D3DSURFACE_DESC src_surface_desc;
+                D3DLOCKED_RECT src_locked_rect;
+                RECT src_rect;
+
+                hr = d3dx_image_get_pixels(&image, j, i, &dst_pixels);
+                if (FAILED(hr))
+                    goto exit;
+
+                hr = get_surface(type, src_texture, j, i, &src_surface);
+                if (FAILED(hr))
+                    goto exit;
+
+                hr = lock_surface(src_surface, NULL, &src_locked_rect, &tmp_surface, FALSE);
+                if (FAILED(hr))
+                {
+                    IDirect3DSurface9_Release(src_surface);
+                    goto exit;
+                }
+
+                IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
+                SetRect(&src_rect, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
+                set_d3dx_pixels(&src_pixels, src_locked_rect.pBits, src_locked_rect.Pitch, 0, src_palette,
+                        src_surface_desc.Width, src_surface_desc.Height, 1, &src_rect);
+
+                hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, D3DX_FILTER_NONE, 0);
+                if (FAILED(hr))
+                {
+                    unlock_surface(src_surface, NULL, tmp_surface, FALSE);
+                    IDirect3DSurface9_Release(src_surface);
+                    goto exit;
+                }
+
+                hr = unlock_surface(src_surface, NULL, tmp_surface, FALSE);
+                IDirect3DSurface9_Release(src_surface);
+                if (FAILED(hr))
+                    goto exit;
+            }
+        }
+    }
+    else
+    {
+        IDirect3DVolumeTexture9 *volume_tex = (IDirect3DVolumeTexture9 *)src_texture;
+
         for (i = 0; i < levels; ++i)
         {
-            IDirect3DSurface9 *src_surface, *tmp_surface;
             struct d3dx_pixels src_pixels, dst_pixels;
-            D3DSURFACE_DESC src_surface_desc;
-            D3DLOCKED_RECT src_locked_rect;
+            D3DVOLUME_DESC src_volume_desc;
+            D3DLOCKED_BOX src_locked_box;
             RECT src_rect;
 
-            hr = d3dx_image_get_pixels(&image, j, i, &dst_pixels);
+            hr = d3dx_image_get_pixels(&image, 0, i, &dst_pixels);
             if (FAILED(hr))
                 goto exit;
 
-            hr = get_surface(type, src_texture, j, i, &src_surface);
+            hr = IDirect3DVolumeTexture9_LockBox(volume_tex, i, &src_locked_box, NULL, D3DLOCK_READONLY);
             if (FAILED(hr))
                 goto exit;
 
-            hr = lock_surface(src_surface, NULL, &src_locked_rect, &tmp_surface, FALSE);
-            if (FAILED(hr))
-            {
-                IDirect3DSurface9_Release(src_surface);
-                goto exit;
-            }
-
-            IDirect3DSurface9_GetDesc(src_surface, &src_surface_desc);
-            SetRect(&src_rect, 0, 0, src_surface_desc.Width, src_surface_desc.Height);
-            set_d3dx_pixels(&src_pixels, src_locked_rect.pBits, src_locked_rect.Pitch, 0, src_palette,
-                    src_surface_desc.Width, src_surface_desc.Height, 1, &src_rect);
+            IDirect3DVolumeTexture9_GetLevelDesc(volume_tex, i, &src_volume_desc);
+            SetRect(&src_rect, 0, 0, src_volume_desc.Width, src_volume_desc.Height);
+            set_d3dx_pixels(&src_pixels, src_locked_box.pBits, src_locked_box.RowPitch, src_locked_box.SlicePitch,
+                    src_palette, src_volume_desc.Width, src_volume_desc.Height, src_volume_desc.Depth, &src_rect);
 
             hr = d3dx_load_pixels_from_pixels(&dst_pixels, fmt_desc, &src_pixels, fmt_desc, D3DX_FILTER_NONE, 0);
-            if (FAILED(hr))
-            {
-                unlock_surface(src_surface, NULL, tmp_surface, FALSE);
-                IDirect3DSurface9_Release(src_surface);
-                goto exit;
-            }
-
-            hr = unlock_surface(src_surface, NULL, tmp_surface, FALSE);
-            IDirect3DSurface9_Release(src_surface);
+            IDirect3DVolumeTexture9_UnlockBox(volume_tex, i);
             if (FAILED(hr))
                 goto exit;
         }
     }
-
     *dst_buffer = buffer;
 
 exit:
