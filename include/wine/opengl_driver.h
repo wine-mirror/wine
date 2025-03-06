@@ -114,6 +114,7 @@ struct opengl_funcs
 struct opengl_driver_funcs
 {
     const char *(*p_init_wgl_extensions)(void);
+    BOOL (*p_set_pixel_format)(HWND,int,int,BOOL);
 };
 
 #endif /* WINE_UNIX_LIB */
