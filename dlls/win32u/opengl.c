@@ -517,6 +517,11 @@ static void display_funcs_init(void)
      */
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
     display_funcs->p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
+
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format" );
+    display_funcs->p_wglChoosePixelFormatARB      = (void *)1; /* never called */
+    display_funcs->p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
+    display_funcs->p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )

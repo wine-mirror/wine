@@ -3334,11 +3334,6 @@ static const char *macdrv_init_wgl_extensions(void)
     opengl_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
     opengl_funcs.p_wglMakeContextCurrentARB = macdrv_wglMakeContextCurrentARB;
 
-    register_extension("WGL_ARB_pixel_format");
-    opengl_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
-
     if (gluCheckExtension((GLubyte*)"GL_ARB_color_buffer_float", (GLubyte*)gl_info.glExtensions))
     {
         register_extension("WGL_ARB_pixel_format_float");

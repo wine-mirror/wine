@@ -2598,11 +2598,6 @@ static const char *x11drv_init_wgl_extensions(void)
         opengl_funcs.p_wglSetPbufferAttribARB = X11DRV_wglSetPbufferAttribARB;
     }
 
-    register_extension( "WGL_ARB_pixel_format" );
-    opengl_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
-
     if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
     {
         register_extension("WGL_ARB_pixel_format_float");

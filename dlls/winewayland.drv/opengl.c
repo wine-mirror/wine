@@ -1190,11 +1190,6 @@ static const char *wayland_init_wgl_extensions(void)
     opengl_funcs.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
     opengl_funcs.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
 
-    register_extension("WGL_ARB_pixel_format");
-    opengl_funcs.p_wglChoosePixelFormatARB = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
-
     if (has_egl_ext_pixel_format_float)
     {
         register_extension("WGL_ARB_pixel_format_float");
