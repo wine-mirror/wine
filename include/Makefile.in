@@ -458,6 +458,7 @@ SOURCES = \
 	minidumpapiset.h \
 	minmax.h \
 	minschannel.h \
+	minwindef.h \
 	mlang.idl \
 	mmc.idl \
 	mmddk.h \

@@ -21,255 +21,18 @@
 #ifndef _WINDEF_
 #define _WINDEF_
 
+#include <minwindef.h>
+
 #ifndef WINVER
 #define WINVER 0x0500
-#endif
-
-#ifndef NO_STRICT
-# ifndef STRICT
-#  define STRICT
-# endif /* STRICT */
-#endif /* NO_STRICT */
-
-#ifndef __has_attribute
-#define __has_attribute(x) 0
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Calling conventions definitions */
-
-#if (defined(__x86_64__) || defined(__powerpc64__) || defined(__aarch64__)) && !defined(_WIN64)
-#define _WIN64
-#endif
-
-#ifndef _WIN64
-# if defined(__i386__) && !defined(_X86_)
-#  define _X86_
-# endif
-# if defined(_X86_) && !defined(__i386__)
-#  define __i386__
-# endif
-#endif
-
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-
-#undef __stdcall
-#undef __cdecl
-#undef __fastcall
-#undef __thiscall
-
-#ifdef WINE_UNIX_LIB
-# define __stdcall
-# define __cdecl
-#else
-# if defined(__i386__) && defined(__GNUC__)
-#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
-#   define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
-#   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
-#  else
-#   define __stdcall __attribute__((__stdcall__))
-#   define __cdecl __attribute__((__cdecl__))
-#  endif
-# elif defined(__x86_64__) && defined(__GNUC__)
-#  if __has_attribute(__force_align_arg_pointer__)
-#   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
-#  else
-#   define __stdcall __attribute__((ms_abi))
-#  endif
-#  define __cdecl __stdcall
-#  define __ms_va_list __builtin_ms_va_list
-# else
-#  define __stdcall
-#  define __cdecl
-# endif
-# define __fastcall __stdcall
-# define __thiscall __stdcall
-#endif  /* WINE_UNIX_LIB */
-
-#endif  /* _MSC_VER || __MINGW32__ */
-
-#if !defined(__ms_va_list) && !defined(WINE_UNIX_LIB)
-# define __ms_va_list va_list
-#endif
-
-#ifdef __WINESRC__
-#define __ONLY_IN_WINELIB(x)	do_not_use_this_in_wine
-#else
-#define __ONLY_IN_WINELIB(x)	x
-#endif
-
-#ifndef _MSC_VER
-#ifndef _stdcall
-#define _stdcall    __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef _fastcall
-#define _fastcall   __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef cdecl
-#define cdecl       __ONLY_IN_WINELIB(__cdecl)
-#endif
-#ifndef _cdecl
-#define _cdecl      __ONLY_IN_WINELIB(__cdecl)
-#endif
-#endif /* _MSC_VER */
-
-#ifndef pascal
-#define pascal      __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef _pascal
-#define _pascal     __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef __export
-#define __export    __ONLY_IN_WINELIB(__stdcall)
-#endif
-#ifndef near
-#define near        __ONLY_IN_WINELIB(/* nothing */)
-#endif
-#ifndef far
-#define far         __ONLY_IN_WINELIB(/* nothing */)
-#endif
-#ifndef _near
-#define _near       __ONLY_IN_WINELIB(/* nothing */)
-#endif
-#ifndef _far
-#define _far        __ONLY_IN_WINELIB(/* nothing */)
-#endif
-#ifndef NEAR
-#define NEAR        __ONLY_IN_WINELIB(/* nothing */)
-#endif
-#ifndef FAR
-#define FAR         __ONLY_IN_WINELIB(/* nothing */)
-#endif
-
-#ifndef _MSC_VER
-# ifndef _declspec
-#  define _declspec(x)    __ONLY_IN_WINELIB(/* nothing */)
-# endif
-# ifndef __declspec
-#  define __declspec(x)   __ONLY_IN_WINELIB(/* nothing */)
-# endif
-#endif
-
-#ifdef _MSC_VER
-# define inline __inline
-#endif
-
-#define CALLBACK    __stdcall
-#define WINAPI      __stdcall
-#define APIPRIVATE  __stdcall
-#define PASCAL      __stdcall
-#define CDECL       __cdecl
-#define _CDECL      __cdecl
-#define APIENTRY    WINAPI
-#define CONST       __ONLY_IN_WINELIB(const)
-#ifndef WINAPIV
-# define WINAPIV CDECL
-#endif
-
-/* Misc. constants. */
-
-#undef NULL
-#ifdef __cplusplus
-#ifndef _WIN64
-#define NULL 0
-#else
-#define NULL 0LL
-#endif
-#else
-#define NULL  ((void*)0)
-#endif
-
-#ifdef FALSE
-#undef FALSE
-#endif
-#define FALSE 0
-
-#ifdef TRUE
-#undef TRUE
-#endif
-#define TRUE  1
-
-#ifndef IN
-#define IN
-#endif
-
-#ifndef OUT
-#define OUT
-#endif
-
-#ifndef OPTIONAL
-#define OPTIONAL
-#endif
-
-/* Standard data types */
-
-#ifndef BASETYPES
-#define BASETYPES
-typedef unsigned char UCHAR, *PUCHAR;
-typedef unsigned short USHORT, *PUSHORT;
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
-typedef unsigned long ULONG, *PULONG;
-#else
-typedef unsigned int ULONG, *PULONG;
-#endif
-#endif
-
-typedef void                                   *LPVOID;
-typedef const void                             *LPCVOID;
-typedef int             BOOL,       *PBOOL,    *LPBOOL;
-typedef unsigned char   BYTE,       *PBYTE,    *LPBYTE;
-typedef unsigned short  WORD,       *PWORD,    *LPWORD;
-typedef int             INT,        *PINT,     *LPINT;
-typedef unsigned int    UINT,       *PUINT;
-typedef float           FLOAT,      *PFLOAT;
-typedef char                        *PSZ;
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
-typedef long                                   *LPLONG;
-typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
-#else
-typedef int                                    *LPLONG;
-typedef unsigned int    DWORD,      *PDWORD,   *LPDWORD;
-#endif
-
-/* Macros to map Winelib names to the correct implementation name */
-/* Note that Winelib is purely Win32.                             */
-
-#ifdef __WINESRC__
-#define WINE_NO_UNICODE_MACROS 1
-#endif
-
-#ifdef WINE_NO_UNICODE_MACROS
-# define WINELIB_NAME_AW(func) \
-    func##_must_be_suffixed_with_W_or_A_in_this_context \
-    func##_must_be_suffixed_with_W_or_A_in_this_context
-#else  /* WINE_NO_UNICODE_MACROS */
-# ifdef UNICODE
-#  define WINELIB_NAME_AW(func) func##W
-# else
-#  define WINELIB_NAME_AW(func) func##A
-# endif
-#endif  /* WINE_NO_UNICODE_MACROS */
-
-#ifdef WINE_NO_UNICODE_MACROS
-# define DECL_WINELIB_TYPE_AW(type)  /* nothing */
-#else
-# define DECL_WINELIB_TYPE_AW(type)  typedef WINELIB_NAME_AW(type) type;
-#endif
-
-#include <winnt.h>
-
-/* Polymorphic types */
-
-typedef UINT_PTR        WPARAM;
-typedef LONG_PTR        LPARAM;
-typedef LONG_PTR        LRESULT;
-
 /* Integer types */
 
-typedef WORD            ATOM;
 typedef DWORD           COLORREF, *LPCOLORREF;
 
 
@@ -288,20 +51,11 @@ DECLARE_HANDLE(HFONT);
 DECLARE_HANDLE(HGLRC);
 DECLARE_HANDLE(HHOOK);
 DECLARE_HANDLE(HICON);
-DECLARE_HANDLE(HINSTANCE);
-DECLARE_HANDLE(HKEY);
-typedef HKEY *PHKEY;
-DECLARE_HANDLE(HKL);
 DECLARE_HANDLE(HMENU);
-DECLARE_HANDLE(HMETAFILE);
 DECLARE_HANDLE(HMONITOR);
 DECLARE_HANDLE(HPALETTE);
 DECLARE_HANDLE(HPEN);
-DECLARE_HANDLE(HRGN);
-DECLARE_HANDLE(HRSRC);
-DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HWINEVENTHOOK);
-DECLARE_HANDLE(HWINSTA);
 DECLARE_HANDLE(HWND);
 
 /* Handle types that must remain interchangeable even with strict on */
@@ -383,12 +137,6 @@ typedef struct tagPOINTS
     SHORT x;
     SHORT y;
 } POINTS, *PPOINTS, *LPPOINTS;
-
-typedef struct _FILETIME {
-    DWORD  dwLowDateTime;
-    DWORD  dwHighDateTime;
-} FILETIME, *PFILETIME, *LPFILETIME;
-#define _FILETIME_
 
 /* The RECT structure */
 typedef struct tagRECT
