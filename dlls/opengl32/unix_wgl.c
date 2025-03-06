@@ -108,7 +108,7 @@ static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type t
     return ULongToHandle( ptr->handle );
 }
 
-static struct wgl_handle *get_handle_ptr( HANDLE handle, enum wgl_handle_type type )
+static struct wgl_handle *get_handle_ptr( HANDLE handle )
 {
     unsigned int index = LOWORD( handle ) & ~HANDLE_TYPE_MASK;
 
@@ -641,8 +641,8 @@ static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     struct wgl_handle *src, *dst;
     BOOL ret = FALSE;
 
-    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
+    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
+    if ((dst = get_handle_ptr( hglrcDst )))
     {
         if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         else ret = src->funcs->p_wglCopyContext( src->u.context->drv_ctx, dst->u.context->drv_ctx, mask );
@@ -676,7 +676,7 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
+        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
         if (!ptr->u.context->tid || ptr->u.context->tid == tid)
         {
             ret = ptr->funcs->p_wglMakeCurrent( hdc, ptr->u.context->drv_ctx );
@@ -716,7 +716,7 @@ static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     struct wgl_handle *ptr;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
 
-    if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
+    if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
     if (ptr->u.context->tid && ptr->u.context->tid != tid)
     {
         RtlSetLastWin32Error( ERROR_BUSY );
@@ -737,8 +737,8 @@ static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
     BOOL ret = FALSE;
     struct wgl_handle *src, *dst;
 
-    if (!(src = get_handle_ptr( hglrcSrc, HANDLE_CONTEXT ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst, HANDLE_CONTEXT )))
+    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
+    if ((dst = get_handle_ptr( hglrcDst )))
     {
         if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         else ret = src->funcs->p_wglShareLists( src->u.context->drv_ctx, dst->u.context->drv_ctx );
@@ -749,7 +749,7 @@ static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
 static BOOL wrap_wglBindTexImageARB( HPBUFFERARB handle, int buffer )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     return ptr->funcs->p_wglBindTexImageARB( ptr->u.pbuffer, buffer );
 }
 
@@ -767,7 +767,7 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
         return 0;
     }
     if (!funcs->p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ptr = get_handle_ptr( share, HANDLE_CONTEXT )))
+    if (share && !(share_ptr = get_handle_ptr( share )))
     {
         RtlSetLastWin32Error( ERROR_INVALID_OPERATION );
         return 0;
@@ -817,7 +817,7 @@ static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
 {
     struct wgl_handle *ptr;
 
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     ptr->funcs->p_wglDestroyPbufferARB( ptr->u.pbuffer );
     free_handle_ptr( ptr );
     return TRUE;
@@ -826,7 +826,7 @@ static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
 static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return 0;
+    if (!(ptr = get_handle_ptr( handle ))) return 0;
     return ptr->funcs->p_wglGetPbufferDCARB( ptr->u.pbuffer );
 }
 
@@ -838,7 +838,7 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
+        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
         if (!ptr->u.context->tid || ptr->u.context->tid == tid)
         {
             ret = (ptr->funcs->p_wglMakeContextCurrentARB &&
@@ -872,28 +872,28 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
 static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     return ptr->funcs->p_wglQueryPbufferARB( ptr->u.pbuffer, attrib, value );
 }
 
 static int wrap_wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     return ptr->funcs->p_wglReleasePbufferDCARB( ptr->u.pbuffer, hdc );
 }
 
 static BOOL wrap_wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     return ptr->funcs->p_wglReleaseTexImageARB( ptr->u.pbuffer, buffer );
 }
 
 static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
 {
     struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle, HANDLE_PBUFFER ))) return FALSE;
+    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
     return ptr->funcs->p_wglSetPbufferAttribARB( ptr->u.pbuffer, attribs );
 }
 
@@ -1635,7 +1635,7 @@ NTSTATUS wow64_ext_glClientWaitSync( void *args )
 
     pthread_mutex_lock( &wgl_lock );
 
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1666,7 +1666,7 @@ NTSTATUS wow64_ext_glDeleteSync( void *args )
 
     pthread_mutex_lock( &wgl_lock );
 
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1736,7 +1736,7 @@ NTSTATUS wow64_ext_glGetSynciv( void *args )
 
     pthread_mutex_lock( &wgl_lock );
 
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1769,7 +1769,7 @@ NTSTATUS wow64_ext_glIsSync( void *args )
 
     pthread_mutex_lock( &wgl_lock );
 
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1800,7 +1800,7 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
 
     pthread_mutex_lock( &wgl_lock );
 
-    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync) )))
         status = STATUS_INVALID_HANDLE;
     else
     {
