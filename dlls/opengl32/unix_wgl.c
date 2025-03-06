@@ -84,6 +84,7 @@ struct wgl_handle
     {
         struct opengl_context *context; /* for HANDLE_CONTEXT */
         struct wgl_pbuffer *pbuffer;    /* for HANDLE_PBUFFER */
+        GLsync sync;                    /* for HANDLE_GLSYNC */
         struct wgl_handle *next;        /* for free handles */
     } u;
 };
@@ -1636,7 +1637,7 @@ NTSTATUS wow64_ext_glClientWaitSync( void *args )
         struct glClientWaitSync_params params =
         {
             .teb = get_teb64(params32->teb),
-            .sync = (GLsync)handle->u.context,
+            .sync = handle->u.sync,
             .flags = params32->flags,
             .timeout = params32->timeout,
         };
@@ -1667,7 +1668,7 @@ NTSTATUS wow64_ext_glDeleteSync( void *args )
         struct glDeleteSync_params params =
         {
             .teb = get_teb64(params32->teb),
-            .sync = (GLsync)handle->u.context,
+            .sync = handle->u.sync,
         };
         status = ext_glDeleteSync( &params );
         free_handle_ptr( handle );
@@ -1737,7 +1738,7 @@ NTSTATUS wow64_ext_glGetSynciv( void *args )
         struct glGetSynciv_params params =
         {
             .teb = get_teb64(params32->teb),
-            .sync = (GLsync)handle->u.context,
+            .sync = handle->u.sync,
             .pname = params32->pname,
             .count = params32->count,
             .length = ULongToPtr(params32->length),
@@ -1770,7 +1771,7 @@ NTSTATUS wow64_ext_glIsSync( void *args )
         struct glIsSync_params params =
         {
             .teb = get_teb64(params32->teb),
-            .sync = (GLsync)handle->u.context,
+            .sync = handle->u.sync,
         };
         status = ext_glIsSync( &params );
         params32->ret = params.ret;
@@ -1801,7 +1802,7 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
         struct glWaitSync_params params =
         {
             .teb = get_teb64(params32->teb),
-            .sync = (GLsync)handle->u.context,
+            .sync = handle->u.sync,
             .flags = params32->flags,
             .timeout = params32->timeout,
         };
