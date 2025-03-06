@@ -101,7 +101,7 @@ static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct opengl_funcs opengl_funcs;
 
 #define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
+static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
 #undef USE_GL_FUNC
 
 

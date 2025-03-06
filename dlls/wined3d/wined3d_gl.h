@@ -30,7 +30,6 @@
 #include <stdint.h>
 
 #include "wine/wgl.h"
-#include "wine/wgl_driver.h"
 
 struct wined3d_swapchain_gl;
 struct wined3d_texture_gl;
@@ -337,6 +336,25 @@ struct wined3d_ffp_attrib_ops
     wined3d_generic_attrib_func generic[WINED3D_FFP_EMIT_COUNT];
 };
 
+struct wined3d_gl_funcs
+{
+#define USE_GL_FUNC(x) PFN_##x p_##x;
+    struct
+    {
+        ALL_WGL_FUNCS
+    } wgl;
+    struct
+    {
+        ALL_GL_FUNCS
+    } gl;
+    struct
+    {
+        ALL_WGL_EXT_FUNCS
+        ALL_GL_EXT_FUNCS
+    } ext;
+#undef USE_GL_FUNC
+};
+
 struct wined3d_gl_info
 {
     unsigned int selected_gl_version;
@@ -350,7 +368,7 @@ struct wined3d_gl_info
 
     HGLRC (WINAPI *p_wglCreateContextAttribsARB)(HDC dc, HGLRC share, const GLint *attribs);
     struct wined3d_ffp_attrib_ops ffp_attrib_ops;
-    struct opengl_funcs gl_ops;
+    struct wined3d_gl_funcs gl_ops;
     struct wined3d_fbo_ops fbo_ops;
 
     void (WINE_GLAPI *p_glDisableWINE)(GLenum cap);

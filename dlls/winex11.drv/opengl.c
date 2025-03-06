@@ -287,7 +287,7 @@ static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 static struct opengl_funcs opengl_funcs;
 
 #define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
+static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
 #undef USE_GL_FUNC
 
 static void X11DRV_WineGL_LoadExtensions(void);

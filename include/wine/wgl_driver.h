@@ -3097,7 +3097,7 @@ struct opengl_funcs
     } ext;
 };
 
-#define ALL_WGL_FUNCS \
+#define ALL_GL_UNIX_FUNCS \
     USE_GL_FUNC(glAccum) \
     USE_GL_FUNC(glAlphaFunc) \
     USE_GL_FUNC(glAreTexturesResident) \

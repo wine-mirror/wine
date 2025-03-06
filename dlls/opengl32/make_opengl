@@ -950,7 +950,7 @@ foreach (sort keys %ext_functions)
 print HEADER "    } ext;\n";
 print HEADER "};\n\n";
 
-print HEADER "#define ALL_WGL_FUNCS";
+print HEADER "#define ALL_GL_UNIX_FUNCS";
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -967,6 +967,19 @@ open HEADER, ">$wgl_file" or die "cannot create $wgl_file";
 print HEADER "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 print HEADER "#ifndef __WINE_WGL_H\n";
 print HEADER "#define __WINE_WGL_H\n\n";
+
+print HEADER "#include <stdarg.h>\n";
+print HEADER "#include <stddef.h>\n";
+print HEADER "#include <windef.h>\n";
+print HEADER "#include <winbase.h>\n";
+print HEADER "#include <wingdi.h>\n";
+print HEADER "\n";
+
+print HEADER "#ifdef WINE_UNIX_LIB\n";
+print HEADER "#define GL_NO_PROTOTYPES\n";
+print HEADER "#define GLAPIENTRY\n";
+print HEADER "#endif\n";
+print HEADER "\n";
 
 print HEADER "#ifndef GLAPIENTRY\n";
 print HEADER "#define GLAPIENTRY __stdcall\n";
@@ -988,14 +1001,66 @@ foreach (sort keys %gl_enums)
 }
 print HEADER "\n";
 
+print HEADER "#ifndef GL_NO_PROTOTYPES\n";
 foreach (sort keys %norm_functions)
 {
     my $decl_args = get_func_args( $norm_functions{$_}, 1, 0, "" );
     my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
     printf HEADER "%-10s GLAPIENTRY $_($decl_args);\n", $func_ret;
 }
+print HEADER "#endif\n\n";
 
-print HEADER "\n#endif /* __WINE_WGL_H */\n";
+foreach (sort keys %wgl_functions)
+{
+    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 0, "" );
+    my $func_ret = get_func_ret( $wgl_functions{$_}, 0 );
+    printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
+}
+
+foreach (sort keys %norm_functions)
+{
+    my $decl_args = get_func_args( $norm_functions{$_}, 1, 0, "" );
+    my $func_ret = get_func_ret( $norm_functions{$_}, 0 );
+    printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
+}
+
+foreach (sort keys %ext_functions)
+{
+    my $decl_args = get_func_args( $ext_functions{$_}, 1, 0, "" );
+    my $func_ret = get_func_ret( $ext_functions{$_}, 0 );
+    printf HEADER "typedef %-10s (GLAPIENTRY *PFN_$_)($decl_args);\n", $func_ret;
+}
+print HEADER "\n";
+
+print HEADER "#define ALL_WGL_FUNCS";
+foreach (sort keys %wgl_functions)
+{
+    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
+}
+print HEADER "\n\n";
+print HEADER "#define ALL_WGL_EXT_FUNCS";
+foreach (sort keys %ext_functions)
+{
+    next unless $_ =~ /^wgl/;
+    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
+}
+print HEADER "\n\n";
+print HEADER "#define ALL_GL_FUNCS";
+foreach (sort keys %norm_functions)
+{
+    next if $_ =~ /^glDebugEntry/; # windows-specific function
+    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
+}
+print HEADER "\n\n";
+print HEADER "#define ALL_GL_EXT_FUNCS";
+foreach (sort keys %ext_functions)
+{
+    next unless $_ =~ /^gl/;
+    printf HEADER " \\\n    USE_GL_FUNC(\%s)", $_;
+}
+print HEADER "\n\n";
+
+print HEADER "#endif /* __WINE_WGL_H */\n";
 close HEADER;
 
 #

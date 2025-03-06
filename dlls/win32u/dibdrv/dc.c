@@ -29,7 +29,6 @@
 
 #include "wine/unixlib.h"
 #include "wine/wgl.h"
-#include "wine/wgl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dib);

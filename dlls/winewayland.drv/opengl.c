@@ -52,7 +52,7 @@ static int num_egl_configs;
 static BOOL has_egl_ext_pixel_format_float;
 
 #define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
+static const char *opengl_func_names[] = { ALL_GL_UNIX_FUNCS };
 #undef USE_GL_FUNC
 
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
@@ -73,6 +73,9 @@ DECL_FUNCPTR(eglMakeCurrent);
 DECL_FUNCPTR(eglQueryString);
 DECL_FUNCPTR(eglSwapBuffers);
 DECL_FUNCPTR(eglSwapInterval);
+#undef DECL_FUNCPTR
+
+#define DECL_FUNCPTR(f) static PFN_##f p_##f
 DECL_FUNCPTR(glClear);
 #undef DECL_FUNCPTR
 
