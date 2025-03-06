@@ -150,6 +150,9 @@
 #define D3DCOLORWRITEENABLE_BLUE  (__MSABI_LONG(1)<<2)
 #define D3DCOLORWRITEENABLE_ALPHA (__MSABI_LONG(1)<<3)
 
+#define D3DDEVINFOID_RESOURCEMANAGER 5
+#define D3DDEVINFOID_VERTEXSTATS     6
+
 
 #ifndef MAKEFOURCC
 #define MAKEFOURCC(ch0, ch1, ch2, ch3)  \
@@ -1116,6 +1119,9 @@ typedef struct _D3DMATRIX {
         float m[4][4];
     } DUMMYUNIONNAME;
 } D3DMATRIX;
+
+#define D3DPRESENT_RATE_DEFAULT 0
+#define D3DPRESENT_RATE_UNLIMITED 0x7fffffff
 
 typedef struct _D3DPRESENT_PARAMETERS_ {
     UINT                    BackBufferWidth;
