@@ -31,8 +31,7 @@
 #include "winternl.h"
 #include "winnt.h"
 #include "wine/debug.h"
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 #define GL_SILENCE_DEPRECATION
 #define __gl_h_
@@ -4172,9 +4171,9 @@ struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version)
 {
     TRACE("()\n");
 
-    if (version != WINE_WGL_DRIVER_VERSION)
+    if (version != WINE_OPENGL_DRIVER_VERSION)
     {
-        ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_WGL_DRIVER_VERSION);
+        ERR("version mismatch, opengl32 wants %u but macdrv has %u\n", version, WINE_OPENGL_DRIVER_VERSION);
         return NULL;
     }
 

@@ -32,8 +32,7 @@
 #include "win32u_private.h"
 #include "ntuser_private.h"
 
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 #include "dibdrv/dibdrv.h"
 
@@ -363,7 +362,7 @@ static void memory_funcs_init(void)
 
 static void display_funcs_init(void)
 {
-    display_funcs = user_driver->pwine_get_wgl_driver( WINE_WGL_DRIVER_VERSION );
+    display_funcs = user_driver->pwine_get_wgl_driver( WINE_OPENGL_DRIVER_VERSION );
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
@@ -398,10 +397,10 @@ static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
  */
 const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
 {
-    if (version != WINE_WGL_DRIVER_VERSION)
+    if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR( "version mismatch, opengl32 wants %u but dibdrv has %u\n",
-             version, WINE_WGL_DRIVER_VERSION );
+             version, WINE_OPENGL_DRIVER_VERSION );
         return NULL;
     }
 

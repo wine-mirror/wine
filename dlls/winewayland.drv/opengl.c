@@ -40,8 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
@@ -1319,10 +1318,10 @@ struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
     EGLint egl_version[2];
     const char *egl_client_exts, *egl_exts;
 
-    if (version != WINE_WGL_DRIVER_VERSION)
+    if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
-            version, WINE_WGL_DRIVER_VERSION);
+            version, WINE_OPENGL_DRIVER_VERSION);
         return NULL;
     }
 

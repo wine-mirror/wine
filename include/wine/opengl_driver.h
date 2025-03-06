@@ -1,14 +1,32 @@
-/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */
+/*
+ * Copyright 2025 Rémi Bernon for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 
-#ifndef __WINE_WGL_DRIVER_H
-#define __WINE_WGL_DRIVER_H
+#ifndef __WINE_OPENGL_DRIVER_H
+#define __WINE_OPENGL_DRIVER_H
+
+#include <stdarg.h>
+#include <stddef.h>
+
+#include <windef.h>
+#include <winbase.h>
+#include <wingdi.h>
 
 #include "wine/wgl.h"
-
-#define WINE_WGL_DRIVER_VERSION 30
-
-struct wgl_context;
-struct wgl_pbuffer;
 
 struct wgl_pixel_format
 {
@@ -39,6 +57,14 @@ struct wgl_pixel_format
     int framebuffer_srgb_capable;
     int float_components;
 };
+
+#ifdef WINE_UNIX_LIB
+
+/* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
+#define WINE_OPENGL_DRIVER_VERSION 30
+
+struct wgl_context;
+struct wgl_pbuffer;
 
 struct opengl_funcs
 {
@@ -83,4 +109,6 @@ struct opengl_funcs
 #undef USE_GL_FUNC
 };
 
-#endif /* __WINE_WGL_DRIVER_H */
+#endif /* WINE_UNIX_LIB */
+
+#endif /* __WINE_OPENGL_DRIVER_H */

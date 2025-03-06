@@ -949,6 +949,7 @@ SOURCES = \
 	wine/mscvpdb.h \
 	wine/mssign.h \
 	wine/nsi.h \
+	wine/opengl_driver.h \
 	wine/orpc.idl \
 	wine/plugplay.idl \
 	wine/rbtree.h \
@@ -962,7 +963,6 @@ SOURCES = \
 	wine/vulkan.h \
 	wine/vulkan_driver.h \
 	wine/wgl.h \
-	wine/wgl_driver.h \
 	wine/winbase16.h \
 	wine/windef16.h \
 	wine/wine_common_ver.rc \

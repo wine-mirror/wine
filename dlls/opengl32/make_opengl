@@ -51,7 +51,6 @@ use File::Basename;
 # Files to generate
 #
 my $spec_file = "opengl32.spec";
-my $wgl_driver_file = "../../include/wine/wgl_driver.h";
 my $wgl_file = "../../include/wine/wgl.h";
 
 # If set to 1, generate TRACEs for each OpenGL function
@@ -857,88 +856,6 @@ sub parse_file($)
 parse_file( "$cache/gl-$commit.xml" );
 parse_file( "$cache/wgl-$commit.xml" );
 parse_file( "winegl.xml" );
-
-#
-# Get the current wgl_driver.h version
-#
-my $wgl_version = 0;
-open HEADER, "<$wgl_driver_file" or die "cannot open $wgl_driver_file";
-while (<HEADER>)
-{
-    next unless /^#define WINE_WGL_DRIVER_VERSION (\d+)/;
-    $wgl_version = $1;
-    last;
-}
-close HEADER;
-
-#
-# Generate the wgl_driver.h file
-#
-open HEADER, ">$wgl_driver_file" or die "cannot create $wgl_driver_file";
-print HEADER "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
-print HEADER "#ifndef __WINE_WGL_DRIVER_H\n";
-print HEADER "#define __WINE_WGL_DRIVER_H\n\n";
-print HEADER "#include \"wine/wgl.h\"\n\n";
-
-printf HEADER "#define WINE_WGL_DRIVER_VERSION %u\n\n", $wgl_version + 1;
-
-print HEADER "struct wgl_context;\n";
-print HEADER "struct wgl_pbuffer;\n\n";
-
-print HEADER "struct wgl_pixel_format\n";
-print HEADER "{\n";
-print HEADER "    PIXELFORMATDESCRIPTOR pfd;\n";
-print HEADER "    int swap_method;\n";
-print HEADER "    int transparent;\n";
-print HEADER "    int pixel_type;\n";
-print HEADER "    int draw_to_pbuffer;\n";
-print HEADER "    int max_pbuffer_pixels;\n";
-print HEADER "    int max_pbuffer_width;\n";
-print HEADER "    int max_pbuffer_height;\n";
-print HEADER "    int transparent_red_value;\n";
-print HEADER "    int transparent_red_value_valid;\n";
-print HEADER "    int transparent_green_value;\n";
-print HEADER "    int transparent_green_value_valid;\n";
-print HEADER "    int transparent_blue_value;\n";
-print HEADER "    int transparent_blue_value_valid;\n";
-print HEADER "    int transparent_alpha_value;\n";
-print HEADER "    int transparent_alpha_value_valid;\n";
-print HEADER "    int transparent_index_value;\n";
-print HEADER "    int transparent_index_value_valid;\n";
-print HEADER "    int sample_buffers;\n";
-print HEADER "    int samples;\n";
-print HEADER "    int bind_to_texture_rgb;\n";
-print HEADER "    int bind_to_texture_rgba;\n";
-print HEADER "    int bind_to_texture_rectangle_rgb;\n";
-print HEADER "    int bind_to_texture_rectangle_rgba;\n";
-print HEADER "    int framebuffer_srgb_capable;\n";
-print HEADER "    int float_components;\n";
-print HEADER "};\n\n";
-
-print HEADER "struct opengl_funcs\n{\n";
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1, "" );
-    my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
-    printf HEADER "    %-10s (*p_$_)($decl_args);\n", $func_ret;
-}
-print HEADER "    void       (*p_get_pixel_formats)( struct wgl_pixel_format *formats, UINT max_formats, UINT *num_formats, UINT *num_onscreen_formats );\n";
-foreach (sort keys %ext_functions)
-{
-    next unless $_ =~ /^wgl/;
-    next if defined $manual_win_functions{$_};
-    my $decl_args = get_func_args( $ext_functions{$_}, 1, 1, "" );
-    my $func_ret = get_func_ret( $ext_functions{$_}, 1 );
-    printf HEADER "    %-10s (*p_$_)($decl_args);\n", $func_ret;
-}
-print HEADER "#define USE_GL_FUNC(x) PFN_##x p_##x;\n";
-print HEADER "    ALL_GL_FUNCS\n";
-print HEADER "    ALL_GL_EXT_FUNCS\n";
-print HEADER "#undef USE_GL_FUNC\n";
-print HEADER "};\n\n";
-print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
-close HEADER;
 
 #
 # Generate the wgl.h file

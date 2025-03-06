@@ -48,8 +48,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 typedef struct __GLXcontextRec *GLXContext;
 typedef struct __GLXFBConfigRec *GLXFBConfig;
@@ -543,9 +542,9 @@ struct opengl_funcs *X11DRV_wine_get_wgl_driver(UINT version)
 {
     int error_base, event_base;
 
-    if (version != WINE_WGL_DRIVER_VERSION)
+    if (version != WINE_OPENGL_DRIVER_VERSION)
     {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
         return NULL;
     }
 

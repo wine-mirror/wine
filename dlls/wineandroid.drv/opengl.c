@@ -42,10 +42,7 @@
 #include "android.h"
 #include "winternl.h"
 
-#define GLAPIENTRY /* nothing */
-#include "wine/wgl.h"
-#undef GLAPIENTRY
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
@@ -966,9 +963,9 @@ struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
     EGLConfig *configs;
     EGLint major, minor, count, i, pass;
 
-    if (version != WINE_WGL_DRIVER_VERSION)
+    if (version != WINE_OPENGL_DRIVER_VERSION)
     {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_WGL_DRIVER_VERSION );
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
         return NULL;
     }
     if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))

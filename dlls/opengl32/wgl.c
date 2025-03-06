@@ -36,7 +36,7 @@
 
 #include "wine/glu.h"
 #include "wine/debug.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
