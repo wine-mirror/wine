@@ -397,7 +397,15 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
 
 #endif  /* SONAME_LIBOSMESA */
 
-static const struct opengl_driver_funcs nulldrv_funcs;
+static const char *nulldrv_init_wgl_extensions(void)
+{
+    return "";
+}
+
+static const struct opengl_driver_funcs nulldrv_funcs =
+{
+    .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
+};
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
 
 static char wgl_extensions[4096];
@@ -434,16 +442,13 @@ static void display_funcs_init(void)
     }
     if (!display_funcs) return;
 
-    if (driver_funcs->p_init_wgl_extensions)
-    {
-        strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions() );
+    strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions() );
 
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
-        display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
+    display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
 
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_extensions_string" );
-        display_funcs->p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
-    }
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_extensions_string" );
+    display_funcs->p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
