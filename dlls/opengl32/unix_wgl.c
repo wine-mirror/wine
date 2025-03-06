@@ -73,7 +73,7 @@ struct opengl_context
     GLubyte *extensions;         /* extension string */
     GLuint *disabled_exts;       /* indices of disabled extensions */
     struct wgl_context *drv_ctx; /* driver context */
-    GLubyte *version_string;
+    GLubyte *wow64_version;      /* wow64 GL version override */
 };
 
 struct wgl_handle
@@ -482,24 +482,18 @@ static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
         else if (name == GL_VERSION && is_win64 && is_wow64())
         {
             struct wgl_handle *ptr = get_current_context_ptr( teb );
+            GLubyte **str = &ptr->u.context->wow64_version;
             int major, minor;
-            const char *rest;
 
-            if (ptr->u.context->version_string)
-                return ptr->u.context->version_string;
-
-            rest = parse_gl_version( (const char *)ret, &major, &minor );
-
-            /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
-            if (major > 4 || (major == 4 && minor >= 4))
+            if (!*str)
             {
-                char *str = NULL;
-
-                asprintf( &str, "4.3%s", rest );
-                if (InterlockedCompareExchangePointer( (void **)&ptr->u.context->version_string, str, NULL ))
-                    free( str );
-                return ptr->u.context->version_string;
+                const char *rest = parse_gl_version( (const char *)ret, &major, &minor );
+                /* 4.4 depends on ARB_buffer_storage, which we don't support on wow64. */
+                if (major > 4 || (major == 4 && minor >= 4)) asprintf( (char **)str, "4.3%s", rest );
+                else *str = (GLubyte *)strdup( (char *)ret );
             }
+
+            return *str;
         }
     }
 
@@ -724,7 +718,7 @@ static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     }
     if (hglrc == teb->glCurrentRC) wrap_wglMakeCurrent( teb, 0, 0 );
     ptr->funcs->p_wglDeleteContext( ptr->u.context->drv_ctx );
-    free( ptr->u.context->version_string );
+    free( ptr->u.context->wow64_version );
     free( ptr->u.context->disabled_exts );
     free( ptr->u.context->extensions );
     free( ptr->u.context );
