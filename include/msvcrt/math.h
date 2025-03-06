@@ -303,6 +303,7 @@ inline bool signbit(long double x) throw() { return _ldsign(x) != 0; }
 template <class T> inline bool isfinite(T x) throw() { return fpclassify(x) <= 0; }
 template <class T> inline bool isinf(T x) throw() { return fpclassify(x) == FP_INFINITE; }
 template <class T> inline bool isnan(T x) throw() { return fpclassify(x) == FP_NAN; }
+template <class T> inline bool isnormal(T x) throw() { return fpclassify(x) == FP_NORMAL; }
 } /* extern "C++" */
 
 #elif _MSVCR_VER >= 120
