@@ -1222,7 +1222,6 @@ struct obj_locator
     affinity_t   affinity;      /* thread affinity mask */
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
-    int          last;          /* last thread in process */
     int          suspend_count; /* thread suspend count */
     unsigned int flags;         /* GET_THREAD_INFO_FLAG_ flags */
     data_size_t  desc_len;      /* description length in bytes */
@@ -1230,6 +1229,7 @@ struct obj_locator
 @END
 #define GET_THREAD_INFO_FLAG_DBG_HIDDEN 0x01
 #define GET_THREAD_INFO_FLAG_TERMINATED 0x02
+#define GET_THREAD_INFO_FLAG_LAST       0x04
 
 
 /* Retrieve information about thread times */

@@ -2153,7 +2153,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
             status = wine_server_call( req );
             if (status == STATUS_SUCCESS)
             {
-                ULONG last = reply->last;
+                ULONG last = !!(reply->flags & GET_THREAD_INFO_FLAG_LAST);
                 if (data) memcpy( data, &last, sizeof(last) );
                 if (ret_len) *ret_len = sizeof(last);
             }

@@ -272,7 +272,6 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     dump_uint64( ", affinity=", &req->affinity );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
-    fprintf( stderr, ", last=%d", req->last );
     fprintf( stderr, ", suspend_count=%d", req->suspend_count );
     fprintf( stderr, ", flags=%08x", req->flags );
     fprintf( stderr, ", desc_len=%u", req->desc_len );

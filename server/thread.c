@@ -1727,7 +1727,6 @@ DECL_HANDLER(get_thread_info)
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
         reply->priority       = thread->base_priority;
         reply->affinity       = thread->affinity;
-        reply->last           = thread->process->running_threads == 1;
         reply->suspend_count  = thread->suspend;
         reply->desc_len       = thread->desc_len;
         reply->flags          = 0;
@@ -1735,6 +1734,8 @@ DECL_HANDLER(get_thread_info)
             reply->flags |= GET_THREAD_INFO_FLAG_DBG_HIDDEN;
         if (thread->state == TERMINATED)
             reply->flags |= GET_THREAD_INFO_FLAG_TERMINATED;
+        if (thread->process->running_threads == 1)
+            reply->flags |= GET_THREAD_INFO_FLAG_LAST;
 
         if (thread->desc && get_reply_max_size())
         {

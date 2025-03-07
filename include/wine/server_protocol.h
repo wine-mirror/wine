@@ -1299,14 +1299,15 @@ struct get_thread_info_reply
     affinity_t   affinity;
     int          exit_code;
     int          priority;
-    int          last;
     int          suspend_count;
     unsigned int flags;
     data_size_t  desc_len;
     /* VARARG(desc,unicode_str); */
+    char __pad_60[4];
 };
 #define GET_THREAD_INFO_FLAG_DBG_HIDDEN 0x01
 #define GET_THREAD_INFO_FLAG_TERMINATED 0x02
+#define GET_THREAD_INFO_FLAG_LAST       0x04
 
 
 
@@ -6797,6 +6798,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 860
+#define SERVER_PROTOCOL_VERSION 861
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
