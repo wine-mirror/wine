@@ -95,10 +95,10 @@ static struct wgl_handle *next_free;
 static unsigned int handle_count;
 
 /* the current context is assumed valid and doesn't need locking */
-static inline struct wgl_handle *get_current_context_ptr( TEB *teb )
+static struct opengl_context *get_current_context( TEB *teb )
 {
     if (!teb->glCurrentRC) return NULL;
-    return &wgl_handles[LOWORD(teb->glCurrentRC) & ~HANDLE_TYPE_MASK];
+    return wgl_handles[LOWORD(teb->glCurrentRC) & ~HANDLE_TYPE_MASK].u.context;
 }
 
 static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
@@ -118,6 +118,14 @@ static struct wgl_handle *get_handle_ptr( HANDLE handle )
 
     RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
     return NULL;
+}
+
+static struct opengl_context *opengl_context_from_handle( HGLRC handle, const struct opengl_funcs **funcs )
+{
+    struct wgl_handle *entry;
+    if (!(entry = get_handle_ptr( handle ))) return NULL;
+    *funcs = entry->funcs;
+    return entry->u.context;
 }
 
 static HANDLE alloc_handle( enum wgl_handle_type type, const struct opengl_funcs *funcs, void *user_ptr )
@@ -385,8 +393,8 @@ static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts
 
 static const GLuint *disabled_extensions_index( TEB *teb )
 {
-    struct wgl_handle *ptr = get_current_context_ptr( teb );
-    GLuint **disabled = &ptr->u.context->disabled_exts;
+    struct opengl_context *ctx = get_current_context( teb );
+    GLuint **disabled = &ctx->disabled_exts;
     if (*disabled || filter_extensions( teb, NULL, NULL, disabled )) return *disabled;
     return NULL;
 }
@@ -475,15 +483,15 @@ static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     {
         if (name == GL_EXTENSIONS)
         {
-            struct wgl_handle *ptr = get_current_context_ptr( teb );
-            GLubyte **extensions = &ptr->u.context->extensions;
-            GLuint **disabled = &ptr->u.context->disabled_exts;
+            struct opengl_context *ctx = get_current_context( teb );
+            GLubyte **extensions = &ctx->extensions;
+            GLuint **disabled = &ctx->disabled_exts;
             if (*extensions || filter_extensions( teb, (const char *)ret, extensions, disabled )) return *extensions;
         }
         else if (name == GL_VERSION && is_win64 && is_wow64())
         {
-            struct wgl_handle *ptr = get_current_context_ptr( teb );
-            GLubyte **str = &ptr->u.context->wow64_version;
+            struct opengl_context *ctx = get_current_context( teb );
+            GLubyte **str = &ctx->wow64_version;
             int major, minor;
 
             if (!*str)
@@ -578,7 +586,7 @@ static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     /* Without an active context opengl32 doesn't know to what
      * driver it has to dispatch wglGetProcAddress.
      */
-    if (!get_current_context_ptr( teb ))
+    if (!get_current_context( teb ))
     {
         WARN( "No active WGL context found\n" );
         return (void *)-1;
@@ -633,15 +641,14 @@ static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 
 static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
-    struct wgl_handle *src, *dst;
+    const struct opengl_funcs *src_funcs, *dst_funcs;
+    struct opengl_context *src, *dst;
     BOOL ret = FALSE;
 
-    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst )))
-    {
-        if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->p_wglCopyContext( src->u.context->drv_ctx, dst->u.context->drv_ctx, mask );
-    }
+    if (!(src = opengl_context_from_handle( hglrcSrc, &src_funcs ))) return FALSE;
+    if (!(dst = opengl_context_from_handle( hglrcDst, &dst_funcs ))) return FALSE;
+    if (src_funcs != dst_funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    else ret = src_funcs->p_wglCopyContext( src->drv_ctx, dst->drv_ctx, mask );
     return ret;
 }
 
@@ -667,22 +674,23 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    struct wgl_handle *ptr, *prev = get_current_context_ptr( teb );
+    struct opengl_context *ctx, *prev = get_current_context( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == tid)
+        if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
+        if (!ctx->tid || ctx->tid == tid)
         {
-            ret = ptr->funcs->p_wglMakeCurrent( hdc, ptr->u.context->drv_ctx );
+            ret = funcs->p_wglMakeCurrent( hdc, ctx->drv_ctx );
             if (ret)
             {
-                if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = tid;
+                if (prev) prev->tid = 0;
+                ctx->tid = tid;
                 teb->glReserved1[0] = hdc;
                 teb->glReserved1[1] = hdc;
                 teb->glCurrentRC = hglrc;
-                teb->glTable = (void *)ptr->funcs;
+                teb->glTable = (void *)funcs;
             }
         }
         else
@@ -693,8 +701,8 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     }
     else if (prev)
     {
-        if (!prev->funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->u.context->tid = 0;
+        if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
+        prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
     }
@@ -709,35 +717,36 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
 {
     struct wgl_handle *ptr;
+    struct opengl_context *ctx;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
 
     if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
-    if (ptr->u.context->tid && ptr->u.context->tid != tid)
+    ctx = ptr->u.context;
+    if (ctx->tid && ctx->tid != tid)
     {
         RtlSetLastWin32Error( ERROR_BUSY );
         return FALSE;
     }
     if (hglrc == teb->glCurrentRC) wrap_wglMakeCurrent( teb, 0, 0 );
-    ptr->funcs->p_wglDeleteContext( ptr->u.context->drv_ctx );
-    free( ptr->u.context->wow64_version );
-    free( ptr->u.context->disabled_exts );
-    free( ptr->u.context->extensions );
-    free( ptr->u.context );
+    ptr->funcs->p_wglDeleteContext( ctx->drv_ctx );
+    free( ctx->wow64_version );
+    free( ctx->disabled_exts );
+    free( ctx->extensions );
+    free( ctx );
     free_handle_ptr( ptr );
     return TRUE;
 }
 
 static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
 {
+    const struct opengl_funcs *src_funcs, *dst_funcs;
+    struct opengl_context *src, *dst;
     BOOL ret = FALSE;
-    struct wgl_handle *src, *dst;
 
-    if (!(src = get_handle_ptr( hglrcSrc ))) return FALSE;
-    if ((dst = get_handle_ptr( hglrcDst )))
-    {
-        if (src->funcs != dst->funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        else ret = src->funcs->p_wglShareLists( src->u.context->drv_ctx, dst->u.context->drv_ctx );
-    }
+    if (!(src = opengl_context_from_handle( hglrcSrc, &src_funcs ))) return FALSE;
+    if (!(dst = opengl_context_from_handle( hglrcDst, &dst_funcs ))) return FALSE;
+    if (src_funcs != dst_funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+    else ret = src_funcs->p_wglShareLists( src->drv_ctx, dst->drv_ctx );
     return ret;
 }
 
@@ -752,9 +761,8 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
-    struct wgl_handle *share_ptr = NULL;
-    struct opengl_context *context;
-    const struct opengl_funcs *funcs = get_dc_funcs( hdc );
+    struct opengl_context *context, *share_ctx = NULL;
+    const struct opengl_funcs *funcs = get_dc_funcs( hdc ), *share_funcs;
 
     if (!funcs)
     {
@@ -762,12 +770,12 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
         return 0;
     }
     if (!funcs->p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ptr = get_handle_ptr( share )))
+    if (share && !(share_ctx = opengl_context_from_handle( share, &share_funcs )))
     {
         RtlSetLastWin32Error( ERROR_INVALID_OPERATION );
         return 0;
     }
-    if ((drv_ctx = funcs->p_wglCreateContextAttribsARB( hdc, share_ptr ? share_ptr->u.context->drv_ctx : NULL, attribs )))
+    if ((drv_ctx = funcs->p_wglCreateContextAttribsARB( hdc, share_ctx ? share_ctx->drv_ctx : NULL, attribs )))
     {
         if ((context = calloc( 1, sizeof(*context) )))
         {
@@ -829,23 +837,24 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
 {
     BOOL ret = TRUE;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
-    struct wgl_handle *ptr, *prev = get_current_context_ptr( teb );
+    struct opengl_context *ctx, *prev = get_current_context( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
 
     if (hglrc)
     {
-        if (!(ptr = get_handle_ptr( hglrc ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == tid)
+        if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
+        if (!ctx->tid || ctx->tid == tid)
         {
-            ret = (ptr->funcs->p_wglMakeContextCurrentARB &&
-                   ptr->funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->u.context->drv_ctx ));
+            ret = (funcs->p_wglMakeContextCurrentARB &&
+                   funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ctx->drv_ctx ));
             if (ret)
             {
-                if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = tid;
+                if (prev) prev->tid = 0;
+                ctx->tid = tid;
                 teb->glReserved1[0] = draw_hdc;
                 teb->glReserved1[1] = read_hdc;
                 teb->glCurrentRC = hglrc;
-                teb->glTable = (void *)ptr->funcs;
+                teb->glTable = (void *)funcs;
             }
         }
         else
@@ -856,8 +865,8 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
     }
     else if (prev)
     {
-        if (!prev->funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
-        prev->u.context->tid = 0;
+        if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
+        prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
     }
@@ -898,10 +907,10 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     struct gl_debug_message_callback_params *params;
     void *ret_ptr;
     ULONG ret_len;
-    struct wgl_handle *ptr = (struct wgl_handle *)user;
+    struct opengl_context *ctx = (struct opengl_context *)user;
     UINT len = strlen( message ) + 1, size;
 
-    if (!ptr->u.context->debug_callback) return;
+    if (!ctx->debug_callback) return;
     if (!NtCurrentTeb())
     {
         fprintf( stderr, "msg:gl_debug_message_callback called from native thread, severity %#x, message \"%.*s\".\n",
@@ -912,8 +921,8 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     size = offsetof(struct gl_debug_message_callback_params, message[len] );
     if (!(params = malloc( size ))) return;
     params->dispatch.callback = call_gl_debug_message_callback;
-    params->debug_callback = ptr->u.context->debug_callback;
-    params->debug_user = ptr->u.context->debug_user;
+    params->debug_callback = ctx->debug_callback;
+    params->debug_user = ctx->debug_user;
     params->source = source;
     params->type = type;
     params->id = id;
@@ -927,38 +936,38 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
 
 static void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user )
 {
-    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallback) return;
 
-    ptr->u.context->debug_callback = (UINT_PTR)callback;
-    ptr->u.context->debug_user     = (UINT_PTR)user;
-    funcs->p_glDebugMessageCallback( gl_debug_message_callback, ptr );
+    ctx->debug_callback = (UINT_PTR)callback;
+    ctx->debug_user     = (UINT_PTR)user;
+    funcs->p_glDebugMessageCallback( gl_debug_message_callback, ctx );
 }
 
 static void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user )
 {
-    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallbackAMD) return;
 
-    ptr->u.context->debug_callback = (UINT_PTR)callback;
-    ptr->u.context->debug_user     = (UINT_PTR)user;
-    funcs->p_glDebugMessageCallbackAMD( gl_debug_message_callback, ptr );
+    ctx->debug_callback = (UINT_PTR)callback;
+    ctx->debug_user     = (UINT_PTR)user;
+    funcs->p_glDebugMessageCallbackAMD( gl_debug_message_callback, ctx );
 }
 
 static void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *user )
 {
-    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->p_glDebugMessageCallbackARB) return;
 
-    ptr->u.context->debug_callback = (UINT_PTR)callback;
-    ptr->u.context->debug_user     = (UINT_PTR)user;
-    funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ptr );
+    ctx->debug_callback = (UINT_PTR)callback;
+    ctx->debug_user     = (UINT_PTR)user;
+    funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ctx );
 }
 
 NTSTATUS wgl_wglCopyContext( void *args )
