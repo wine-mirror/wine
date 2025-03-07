@@ -1754,10 +1754,12 @@
 @ stdcall WakeByAddressSingle(ptr) ntdll.RtlWakeAddressSingle
 @ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
 @ stdcall WerGetFlags(ptr ptr)
+@ stdcall WerRegisterCustomMetadata(wstr wstr)
 @ stdcall WerRegisterFile(wstr long long)
 @ stdcall WerRegisterMemoryBlock(ptr long)
 @ stdcall WerRegisterRuntimeExceptionModule(wstr ptr)
 @ stdcall WerSetFlags(long)
+@ stdcall WerUnregisterCustomMetadata(wstr)
 @ stdcall WerUnregisterFile(wstr)
 @ stdcall WerUnregisterMemoryBlock(ptr)
 @ stdcall WerUnregisterRuntimeExceptionModule(wstr ptr)

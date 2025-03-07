@@ -1628,10 +1628,12 @@
 @ stdcall WakeAllConditionVariable(ptr) NTDLL.RtlWakeAllConditionVariable
 @ stdcall WakeConditionVariable(ptr) NTDLL.RtlWakeConditionVariable
 @ stdcall -import WerGetFlags(ptr ptr)
+@ stdcall -import WerRegisterCustomMetadata(wstr wstr)
 @ stdcall -import WerRegisterFile(wstr long long)
 @ stdcall -import WerRegisterMemoryBlock(ptr long)
 @ stdcall -import WerRegisterRuntimeExceptionModule(wstr ptr)
 @ stdcall -import WerSetFlags(long)
+@ stdcall -import WerUnregisterCustomMetadata(wstr)
 @ stdcall -import WerUnregisterFile(wstr)
 @ stdcall -import WerUnregisterMemoryBlock(ptr)
 @ stdcall -import WerUnregisterRuntimeExceptionModule(wstr ptr)
