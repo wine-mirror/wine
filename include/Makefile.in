@@ -758,6 +758,7 @@ SOURCES = \
 	structuredquerycondition.idl \
 	svrapi.h \
 	synchapi.h \
+	sysinfoapi.h \
 	systemmediatransportcontrolsinterop.idl \
 	t2embapi.h \
 	tapi.h \

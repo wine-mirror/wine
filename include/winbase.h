@@ -50,6 +50,7 @@ extern "C" {
 #include <realtimeapiset.h>
 #include <fibersapi.h>
 #include <namespaceapi.h>
+#include <sysinfoapi.h>
 
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0
@@ -298,20 +299,6 @@ typedef struct tagMEMORYSTATUS
     SIZE_T   dwTotalVirtual;
     SIZE_T   dwAvailVirtual;
 } MEMORYSTATUS, *LPMEMORYSTATUS;
-
-#include <pshpack8.h>
-typedef struct tagMEMORYSTATUSEX {
-  DWORD dwLength;
-  DWORD dwMemoryLoad;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPhys;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPhys;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalPageFile;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailPageFile;
-  DWORDLONG DECLSPEC_ALIGN(8) ullTotalVirtual;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailVirtual;
-  DWORDLONG DECLSPEC_ALIGN(8) ullAvailExtendedVirtual;
-} MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
-#include <poppack.h>
 
 typedef enum _MEMORY_RESOURCE_NOTIFICATION_TYPE {
     LowMemoryResourceNotification,
@@ -705,26 +692,6 @@ typedef struct _SYSTEM_POWER_STATUS
 #define SYSTEM_STATUS_FLAG_POWER_SAVING_ON  0x01
 
 #define BATTERY_LIFE_UNKNOWN 0xFFFFFFFF
-
-typedef struct _SYSTEM_INFO
-{
-    union {
-	DWORD	dwOemId; /* Obsolete field - do not use */
-	struct {
-		WORD wProcessorArchitecture;
-		WORD wReserved;
-	} DUMMYSTRUCTNAME;
-    } DUMMYUNIONNAME;
-    DWORD	dwPageSize;
-    LPVOID	lpMinimumApplicationAddress;
-    LPVOID	lpMaximumApplicationAddress;
-    DWORD_PTR	dwActiveProcessorMask;
-    DWORD	dwNumberOfProcessors;
-    DWORD	dwProcessorType;
-    DWORD	dwAllocationGranularity;
-    WORD	wProcessorLevel;
-    WORD	wProcessorRevision;
-} SYSTEM_INFO, *LPSYSTEM_INFO;
 
 typedef BOOL (CALLBACK *ENUMRESTYPEPROCA)(HMODULE,LPSTR,LONG_PTR);
 typedef BOOL (CALLBACK *ENUMRESTYPEPROCW)(HMODULE,LPWSTR,LONG_PTR);
@@ -1243,19 +1210,6 @@ typedef struct tagCOMMTIMEOUTS {
 typedef void (CALLBACK *PAPCFUNC)(ULONG_PTR);
 typedef void (CALLBACK *PTIMERAPCROUTINE)(LPVOID,DWORD,DWORD);
 
-typedef enum _COMPUTER_NAME_FORMAT
-{
-	ComputerNameNetBIOS,
-	ComputerNameDnsHostname,
-	ComputerNameDnsDomain,
-	ComputerNameDnsFullyQualified,
-	ComputerNamePhysicalNetBIOS,
-	ComputerNamePhysicalDnsHostname,
-	ComputerNamePhysicalDnsDomain,
-	ComputerNamePhysicalDnsFullyQualified,
-	ComputerNameMax
-} COMPUTER_NAME_FORMAT;
-
 #define HW_PROFILE_GUIDLEN	39
 #define MAX_PROFILE_LEN		80
 
@@ -1741,7 +1695,6 @@ WINBASEAPI BOOL        WINAPI DisconnectNamedPipe(HANDLE);
 WINBASEAPI BOOL        WINAPI DnsHostnameToComputerNameA(LPCSTR,LPSTR,LPDWORD);
 WINBASEAPI BOOL        WINAPI DnsHostnameToComputerNameW(LPCWSTR,LPWSTR,LPDWORD);
 #define                       DnsHostnameToComputerName WINELIB_NAME_AW(DnsHostnameToComputerName)
-WINBASEAPI BOOL        WINAPI DnsHostnameToComputerNameExW(LPCWSTR,LPWSTR,LPDWORD);
 WINBASEAPI BOOL        WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 WINBASEAPI BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD,BOOL,DWORD);
 WINADVAPI  BOOL        WINAPI DuplicateToken(HANDLE,SECURITY_IMPERSONATION_LEVEL,PHANDLE);
@@ -1884,9 +1837,6 @@ WINBASEAPI DWORD       WINAPI GetCompressedFileSizeW(LPCWSTR,LPDWORD);
 WINBASEAPI BOOL        WINAPI GetComputerNameA(LPSTR,LPDWORD);
 WINBASEAPI BOOL        WINAPI GetComputerNameW(LPWSTR,LPDWORD);
 #define                       GetComputerName WINELIB_NAME_AW(GetComputerName)
-WINBASEAPI BOOL        WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT,LPSTR,LPDWORD);
-WINBASEAPI BOOL        WINAPI GetComputerNameExW(COMPUTER_NAME_FORMAT,LPWSTR,LPDWORD);
-#define                       GetComputerNameEx WINELIB_NAME_AW(GetComputerNameEx)
 WINBASEAPI UINT        WINAPI GetCurrentDirectoryA(UINT,LPSTR);
 WINBASEAPI UINT        WINAPI GetCurrentDirectoryW(UINT,LPWSTR);
 #define                       GetCurrentDirectory WINELIB_NAME_AW(GetCurrentDirectory)
@@ -1953,7 +1903,6 @@ WINBASEAPI DWORD       WINAPI GetFullPathNameW(LPCWSTR,DWORD,LPWSTR,LPWSTR*);
 WINBASEAPI BOOL        WINAPI GetHandleInformation(HANDLE,LPDWORD);
 WINADVAPI  BOOL        WINAPI GetKernelObjectSecurity(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR,DWORD,LPDWORD);
 WINADVAPI  DWORD       WINAPI GetLengthSid(PSID);
-WINBASEAPI VOID        WINAPI GetLocalTime(LPSYSTEMTIME);
 WINBASEAPI DWORD       WINAPI GetLogicalDrives(void);
 WINBASEAPI UINT        WINAPI GetLogicalDriveStringsA(UINT,LPSTR);
 WINBASEAPI UINT        WINAPI GetLogicalDriveStringsW(UINT,LPWSTR);
@@ -1980,7 +1929,6 @@ WINBASEAPI BOOL        WINAPI GetNamedPipeHandleStateW(HANDLE,LPDWORD,LPDWORD,LP
 WINBASEAPI BOOL        WINAPI GetNamedPipeInfo(HANDLE,LPDWORD,LPDWORD,LPDWORD,LPDWORD);
 WINBASEAPI BOOL        WINAPI GetNamedPipeServerProcessId(HANDLE,PULONG);
 WINBASEAPI BOOL        WINAPI GetNamedPipeServerSessionId(HANDLE,PULONG);
-WINBASEAPI VOID        WINAPI GetNativeSystemInfo(LPSYSTEM_INFO);
 WINBASEAPI PUMS_CONTEXT WINAPI GetNextUmsListItem(PUMS_CONTEXT);
 WINBASEAPI BOOL        WINAPI GetNumaAvailableMemoryNode(UCHAR,PULONGLONG);
 WINBASEAPI BOOL        WINAPI GetNumaAvailableMemoryNodeEx(USHORT,PULONGLONG);
@@ -2012,8 +1960,6 @@ WINBASEAPI BOOL        WINAPI GetPrivateProfileStructW(LPCWSTR,LPCWSTR,LPVOID,UI
 #define                       GetPrivateProfileStruct WINELIB_NAME_AW(GetPrivateProfileStruct)
 WINBASEAPI FARPROC     WINAPI GetProcAddress(HMODULE,LPCSTR);
 WINBASEAPI BOOL        WINAPI GetProcessAffinityMask(HANDLE,PDWORD_PTR,PDWORD_PTR);
-WINBASEAPI BOOL        WINAPI GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION,PDWORD);
-WINBASEAPI BOOL        WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP,PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX,PDWORD);
 WINBASEAPI DWORD       WINAPI GetProcessHeaps(DWORD,PHANDLE);
 WINBASEAPI DWORD       WINAPI GetProcessId(HANDLE);
 WINBASEAPI DWORD       WINAPI GetProcessIdOfThread(HANDLE);
@@ -2025,7 +1971,6 @@ WINBASEAPI BOOL        WINAPI GetProcessTimes(HANDLE,LPFILETIME,LPFILETIME,LPFIL
 WINBASEAPI DWORD       WINAPI GetProcessVersion(DWORD);
 WINBASEAPI BOOL        WINAPI GetProcessWorkingSetSize(HANDLE,PSIZE_T,PSIZE_T);
 WINBASEAPI BOOL        WINAPI GetProcessWorkingSetSizeEx(HANDLE,SIZE_T*,SIZE_T*,DWORD*);
-WINBASEAPI BOOL        WINAPI GetProductInfo(DWORD,DWORD,DWORD,DWORD,PDWORD);
 WINBASEAPI UINT        WINAPI GetProfileIntA(LPCSTR,LPCSTR,INT);
 WINBASEAPI UINT        WINAPI GetProfileIntW(LPCWSTR,LPCWSTR,INT);
 #define                       GetProfileInt WINELIB_NAME_AW(GetProfileInt)
@@ -2055,17 +2000,8 @@ WINBASEAPI VOID        WINAPI GetStartupInfoW(LPSTARTUPINFOW);
 #define                       GetStartupInfo WINELIB_NAME_AW(GetStartupInfo)
 WINBASEAPI HANDLE      WINAPI GetStdHandle(DWORD);
 WINBASEAPI BOOL        WINAPI GetSystemCpuSetInformation(SYSTEM_CPU_SET_INFORMATION*,ULONG,ULONG*,HANDLE,ULONG);
-WINBASEAPI UINT        WINAPI GetSystemDirectoryA(LPSTR,UINT);
-WINBASEAPI UINT        WINAPI GetSystemDirectoryW(LPWSTR,UINT);
-#define                       GetSystemDirectory WINELIB_NAME_AW(GetSystemDirectory)
-WINBASEAPI UINT        WINAPI GetSystemFirmwareTable(DWORD,DWORD,PVOID,DWORD);
-WINBASEAPI VOID        WINAPI GetSystemInfo(LPSYSTEM_INFO);
 WINBASEAPI BOOL        WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS);
 WINBASEAPI BOOL        WINAPI GetSystemRegistryQuota(PDWORD,PDWORD);
-WINBASEAPI VOID        WINAPI GetSystemTime(LPSYSTEMTIME);
-WINBASEAPI BOOL        WINAPI GetSystemTimeAdjustment(PDWORD,PDWORD,PBOOL);
-WINBASEAPI VOID        WINAPI GetSystemTimeAsFileTime(LPFILETIME);
-WINBASEAPI VOID        WINAPI GetSystemTimePreciseAsFileTime(LPFILETIME);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryA(LPSTR,UINT);
 WINBASEAPI UINT        WINAPI GetSystemWindowsDirectoryW(LPWSTR,UINT);
 #define                       GetSystemWindowsDirectory WINELIB_NAME_AW(GetSystemWindowsDirectory)
@@ -2092,17 +2028,11 @@ WINBASEAPI INT         WINAPI GetThreadPriority(HANDLE);
 WINBASEAPI BOOL        WINAPI GetThreadPriorityBoost(HANDLE,PBOOL);
 WINBASEAPI BOOL        WINAPI GetThreadSelectorEntry(HANDLE,DWORD,LPLDT_ENTRY);
 WINBASEAPI BOOL        WINAPI GetThreadTimes(HANDLE,LPFILETIME,LPFILETIME,LPFILETIME,LPFILETIME);
-WINBASEAPI DWORD       WINAPI GetTickCount(void);
-WINBASEAPI ULONGLONG   WINAPI GetTickCount64(void);
 WINADVAPI  BOOL        WINAPI GetTokenInformation(HANDLE,TOKEN_INFORMATION_CLASS,LPVOID,DWORD,LPDWORD);
 WINBASEAPI BOOL        WINAPI GetUmsCompletionListEvent(PUMS_COMPLETION_LIST, PHANDLE);
 WINADVAPI  BOOL        WINAPI GetUserNameA(LPSTR,LPDWORD);
 WINADVAPI  BOOL        WINAPI GetUserNameW(LPWSTR,LPDWORD);
 #define                       GetUserName WINELIB_NAME_AW(GetUserName)
-WINBASEAPI DWORD       WINAPI GetVersion(void);
-WINBASEAPI BOOL        WINAPI GetVersionExA(OSVERSIONINFOA*);
-WINBASEAPI BOOL        WINAPI GetVersionExW(OSVERSIONINFOW*);
-#define                       GetVersionEx WINELIB_NAME_AW(GetVersionEx)
 WINBASEAPI BOOL        WINAPI GetVolumeInformationA(LPCSTR,LPSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPSTR,DWORD);
 WINBASEAPI BOOL        WINAPI GetVolumeInformationW(LPCWSTR,LPWSTR,DWORD,LPDWORD,LPDWORD,LPDWORD,LPWSTR,DWORD);
 #define                       GetVolumeInformation WINELIB_NAME_AW(GetVolumeInformation)
@@ -2117,9 +2047,6 @@ WINBASEAPI BOOL        WINAPI GetVolumePathNamesForVolumeNameA(LPCSTR,LPSTR,DWOR
 WINBASEAPI BOOL        WINAPI GetVolumePathNamesForVolumeNameW(LPCWSTR,LPWSTR,DWORD,PDWORD);
 #define                       GetVolumePathNamesForVolumeName WINELIB_NAME_AW(GetVolumePathNamesForVolumeName)
 WINADVAPI  BOOL        WINAPI GetWindowsAccountDomainSid(PSID,PSID,DWORD*);
-WINBASEAPI UINT        WINAPI GetWindowsDirectoryA(LPSTR,UINT);
-WINBASEAPI UINT        WINAPI GetWindowsDirectoryW(LPWSTR,UINT);
-#define                       GetWindowsDirectory WINELIB_NAME_AW(GetWindowsDirectory)
 WINBASEAPI UINT        WINAPI GetWriteWatch(DWORD,LPVOID,SIZE_T,LPVOID*,ULONG_PTR*,ULONG*);
 WINBASEAPI BOOL        WINAPI GetXStateFeaturesMask(CONTEXT*,DWORD64*);
 WINBASEAPI ATOM        WINAPI GlobalAddAtomA(LPCSTR);
@@ -2140,7 +2067,6 @@ WINBASEAPI UINT        WINAPI GlobalGetAtomNameW(ATOM,LPWSTR,INT);
 WINBASEAPI HGLOBAL     WINAPI GlobalHandle(LPCVOID);
 WINBASEAPI LPVOID      WINAPI GlobalLock(HGLOBAL);
 WINBASEAPI VOID        WINAPI GlobalMemoryStatus(LPMEMORYSTATUS);
-WINBASEAPI BOOL        WINAPI GlobalMemoryStatusEx(LPMEMORYSTATUSEX);
 WINBASEAPI HGLOBAL     WINAPI GlobalReAlloc(HGLOBAL,SIZE_T,UINT) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(GlobalFree);
 WINBASEAPI SIZE_T      WINAPI GlobalSize(HGLOBAL);
 WINBASEAPI VOID        WINAPI GlobalUnfix(HGLOBAL);
@@ -2406,12 +2332,6 @@ WINBASEAPI BOOL        WINAPI SetCommBreak(HANDLE);
 WINBASEAPI BOOL        WINAPI SetCommMask(HANDLE,DWORD);
 WINBASEAPI BOOL        WINAPI SetCommState(HANDLE,LPDCB);
 WINBASEAPI BOOL        WINAPI SetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
-WINBASEAPI BOOL        WINAPI SetComputerNameA(LPCSTR);
-WINBASEAPI BOOL        WINAPI SetComputerNameW(LPCWSTR);
-#define                       SetComputerName WINELIB_NAME_AW(SetComputerName)
-WINBASEAPI BOOL        WINAPI SetComputerNameExA(COMPUTER_NAME_FORMAT,LPCSTR);
-WINBASEAPI BOOL        WINAPI SetComputerNameExW(COMPUTER_NAME_FORMAT,LPCWSTR);
-#define                       SetComputerNameEx WINELIB_NAME_AW(SetComputerNameEx)
 WINBASEAPI DWORD       WINAPI SetCriticalSectionSpinCount(LPCRITICAL_SECTION,DWORD);
 WINBASEAPI BOOL        WINAPI SetCurrentDirectoryA(LPCSTR);
 WINBASEAPI BOOL        WINAPI SetCurrentDirectoryW(LPCWSTR);
@@ -2449,7 +2369,6 @@ WINBASEAPI UINT        WINAPI SetHandleCount(UINT);
 WINBASEAPI BOOL        WINAPI SetHandleInformation(HANDLE,DWORD,DWORD);
 WINBASEAPI BOOL        WINAPI SetInformationJobObject(HANDLE,JOBOBJECTINFOCLASS,LPVOID,DWORD);
 WINADVAPI  BOOL        WINAPI SetKernelObjectSecurity(HANDLE,SECURITY_INFORMATION,PSECURITY_DESCRIPTOR);
-WINBASEAPI BOOL        WINAPI SetLocalTime(const SYSTEMTIME*);
 WINBASEAPI BOOL        WINAPI SetMailslotInfo(HANDLE,DWORD);
 WINBASEAPI BOOL        WINAPI SetNamedPipeHandleState(HANDLE,LPDWORD,LPDWORD,LPDWORD);
 WINBASEAPI BOOL        WINAPI SetPriorityClass(HANDLE,DWORD);
@@ -2471,8 +2390,6 @@ WINBASEAPI BOOL        WINAPI SetStdHandle(DWORD,HANDLE);
 WINBASEAPI BOOL        WINAPI SetStdHandleEx(DWORD,HANDLE,HANDLE*);
 #define                       SetSwapAreaSize(w) (w)
 WINBASEAPI BOOL        WINAPI SetSystemPowerState(BOOL,BOOL);
-WINBASEAPI BOOL        WINAPI SetSystemTime(const SYSTEMTIME*);
-WINBASEAPI BOOL        WINAPI SetSystemTimeAdjustment(DWORD,BOOL);
 WINBASEAPI DWORD       WINAPI SetTapeParameters(HANDLE,DWORD,LPVOID);
 WINBASEAPI DWORD       WINAPI SetTapePosition(HANDLE,DWORD,DWORD,DWORD,DWORD,BOOL);
 WINBASEAPI DWORD_PTR   WINAPI SetThreadAffinityMask(HANDLE,DWORD_PTR);
