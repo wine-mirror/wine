@@ -468,6 +468,9 @@ SOURCES = \
 	mmreg.h \
 	mmstream.idl \
 	mmsystem.h \
+	mpeg2bits.h \
+	mpeg2data.idl \
+	mpeg2structs.idl \
 	mpegtype.idl \
 	mprapi.h \
 	mprerror.h \
