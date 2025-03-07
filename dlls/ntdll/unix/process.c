@@ -1159,7 +1159,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                             pbi.ExitStatus = reply->exit_code;
                             pbi.PebBaseAddress = wine_server_get_ptr( reply->peb );
                             pbi.AffinityMask = reply->affinity & affinity_mask;
-                            pbi.BasePriority = reply->priority;
+                            pbi.BasePriority = reply->base_priority;
                             pbi.UniqueProcessId = reply->pid;
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
                             if (is_old_wow64())
@@ -1653,7 +1653,7 @@ NTSTATUS WINAPI NtWow64QueryInformationProcess64( HANDLE handle, PROCESSINFOCLAS
                             pbi.ExitStatus = reply->exit_code;
                             pbi.PebBaseAddress = (ULONG)wine_server_get_ptr( reply->peb );
                             pbi.AffinityMask = reply->affinity & affinity_mask;
-                            pbi.BasePriority = reply->priority;
+                            pbi.BasePriority = reply->base_priority;
                             pbi.UniqueProcessId = reply->pid;
                             pbi.InheritedFromUniqueProcessId = reply->ppid;
                         }

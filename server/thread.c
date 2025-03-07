@@ -787,7 +787,7 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
     return STATUS_SUCCESS;
 }
 
-static int priority_from_class_and_level( int priority_class, int priority_level )
+int priority_from_class_and_level( int priority_class, int priority_level )
 {
     /* offsets taken from https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities */
     static const int class_offsets[] = { 4, 8, 13, 24, 6, 10 };

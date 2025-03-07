@@ -3334,8 +3334,8 @@ static void test_priority(void)
         thread_base_priority, tbi.BasePriority );
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_HIGHEST;
-    todo_wine ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
-                  tbi.Priority, expected_nt_priority );
+    ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
+        tbi.Priority, expected_nt_priority );
 
     /* Test setting the thread priority to THREAD_PRIORITY_LOWEST now, but using
      * pNtSetInformationThread, also testing NT priority directly afterwards. */
@@ -3349,8 +3349,8 @@ static void test_priority(void)
     ok( nt_thread_priority == tbi.BasePriority, "After setting, BasePriority (%ld) does not match set BasePriority (%ld)\n",
         nt_thread_priority, tbi.BasePriority );
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_LOWEST;
-    todo_wine ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
-                  tbi.Priority, expected_nt_priority );
+    ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
+        tbi.Priority, expected_nt_priority );
     /* Now set NT thread priority directly to 12, a value normally impossible to
      * reach in NORMAL_PRIORITY_CLASS without boost. */
     nt_thread_priority = 12;
@@ -3374,8 +3374,8 @@ static void test_priority(void)
     ok( status == STATUS_SUCCESS, "NtQueryInformationThread failed after setting priority: %08lx\n", status );
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_LOWEST;
-    todo_wine ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
-                  tbi.Priority, expected_nt_priority );
+    ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
+        tbi.Priority, expected_nt_priority );
     /* Setting an out of range priority above HIGH_PRIORITY (31) or LOW_PRIORITY (0)
      * and lower fails. */
     nt_thread_priority = 42;

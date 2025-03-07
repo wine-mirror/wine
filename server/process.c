@@ -1512,6 +1512,7 @@ DECL_HANDLER(get_process_info)
         reply->ppid             = process->parent_id;
         reply->exit_code        = process->exit_code;
         reply->priority         = process->priority;
+        reply->base_priority    = priority_from_class_and_level( process->priority, THREAD_PRIORITY_NORMAL );
         reply->affinity         = process->affinity;
         reply->peb              = process->peb;
         reply->start_time       = process->start_time;

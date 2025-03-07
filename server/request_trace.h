@@ -204,6 +204,7 @@ static void dump_get_process_info_reply( const struct get_process_info_reply *re
     fprintf( stderr, ", session_id=%08x", req->session_id );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
+    fprintf( stderr, ", base_priority=%04x", req->base_priority );
     fprintf( stderr, ", machine=%04x", req->machine );
     dump_varargs_pe_image_info( ", image=", cur_size );
 }
