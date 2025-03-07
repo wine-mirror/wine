@@ -128,6 +128,14 @@ static struct opengl_context *opengl_context_from_handle( HGLRC handle, const st
     return entry->u.context;
 }
 
+static struct wgl_pbuffer *wgl_pbuffer_from_handle( HPBUFFERARB handle, const struct opengl_funcs **funcs )
+{
+    struct wgl_handle *entry;
+    if (!(entry = get_handle_ptr( handle ))) return NULL;
+    *funcs = entry->funcs;
+    return entry->u.pbuffer;
+}
+
 static HANDLE alloc_handle( enum wgl_handle_type type, const struct opengl_funcs *funcs, void *user_ptr )
 {
     HANDLE handle = 0;
@@ -752,9 +760,10 @@ static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
 
 static BOOL wrap_wglBindTexImageARB( HPBUFFERARB handle, int buffer )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    return ptr->funcs->p_wglBindTexImageARB( ptr->u.pbuffer, buffer );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
+    return funcs->p_wglBindTexImageARB( pbuffer, buffer );
 }
 
 static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
@@ -818,19 +827,22 @@ static HPBUFFERARB wrap_wglCreatePbufferARB( HDC hdc, int format, int width, int
 
 static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
 {
+    struct wgl_pbuffer *pbuffer;
     struct wgl_handle *ptr;
 
     if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    ptr->funcs->p_wglDestroyPbufferARB( ptr->u.pbuffer );
+    pbuffer = ptr->u.pbuffer;
+    ptr->funcs->p_wglDestroyPbufferARB( pbuffer );
     free_handle_ptr( ptr );
     return TRUE;
 }
 
 static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return 0;
-    return ptr->funcs->p_wglGetPbufferDCARB( ptr->u.pbuffer );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return 0;
+    return funcs->p_wglGetPbufferDCARB( pbuffer );
 }
 
 static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
@@ -875,30 +887,34 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
 
 static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    return ptr->funcs->p_wglQueryPbufferARB( ptr->u.pbuffer, attrib, value );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
+    return funcs->p_wglQueryPbufferARB( pbuffer, attrib, value );
 }
 
 static int wrap_wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    return ptr->funcs->p_wglReleasePbufferDCARB( ptr->u.pbuffer, hdc );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
+    return funcs->p_wglReleasePbufferDCARB( pbuffer, hdc );
 }
 
 static BOOL wrap_wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    return ptr->funcs->p_wglReleaseTexImageARB( ptr->u.pbuffer, buffer );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
+    return funcs->p_wglReleaseTexImageARB( pbuffer, buffer );
 }
 
 static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
 {
-    struct wgl_handle *ptr;
-    if (!(ptr = get_handle_ptr( handle ))) return FALSE;
-    return ptr->funcs->p_wglSetPbufferAttribARB( ptr->u.pbuffer, attribs );
+    const struct opengl_funcs *funcs;
+    struct wgl_pbuffer *pbuffer;
+    if (!(pbuffer = wgl_pbuffer_from_handle( handle, &funcs ))) return FALSE;
+    return funcs->p_wglSetPbufferAttribARB( pbuffer, attribs );
 }
 
 static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GLenum severity,
