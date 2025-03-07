@@ -24,6 +24,7 @@ import "unknwn.idl";
 import "mmdeviceapi.idl";
 
 import "audiosessiontypes.h";
+import "mmreg.h";
 
 cpp_quote("#include <pshpack1.h>")
 
@@ -77,32 +78,6 @@ coclass XAudio2Debug {
 }
 
 #endif
-
-cpp_quote("#if 0")
-typedef struct WAVEFORMATEX
-{
-    WORD wFormatTag;
-    WORD nChannels;
-    DWORD nSamplesPerSec;
-    DWORD nAvgBytesPerSec;
-    WORD nBlockAlign;
-    WORD wBitsPerSample;
-    WORD cbSize;
-} WAVEFORMATEX;
-
-typedef struct {
-    WAVEFORMATEX    Format;
-    union {
-        WORD        wValidBitsPerSample;
-        WORD        wSamplesPerBlock;
-        WORD        wReserved;
-    } Samples;
-    DWORD           dwChannelMask;
-    GUID            SubFormat;
-} WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
-cpp_quote("#else")
-cpp_quote("#include <mmreg.h>")
-cpp_quote("#endif")
 
 interface IXAudio2Voice;
 
