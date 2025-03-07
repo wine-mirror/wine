@@ -1,7 +1,6 @@
 PROGRAMS = winegcc
 
 SOURCES = \
-	utils.c \
 	winegcc.c \
 	winegcc.man.in
 
