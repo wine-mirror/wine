@@ -407,8 +407,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         else strarray_add( &flags, opts->gui_app ? "-mwindows" : "-mconsole" );
 
         if (opts->unicode_app) strarray_add( &flags, "-municode" );
-        if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( &flags, "-nodefaultlibs" );
-        if (opts->nostartfiles || opts->use_msvcrt) strarray_add( &flags, "-nostartfiles" );
+        strarray_add( &flags, "-nodefaultlibs" );
+        strarray_add( &flags, "-nostartfiles" );
         if (opts->subsystem) strarray_add( &flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
 
         strarray_add( &flags, "-Wl,--exclude-all-symbols" );
@@ -420,10 +420,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
 
         if (opts->large_address_aware && opts->target.cpu == CPU_i386)
             strarray_add( &flags, "-Wl,--large-address-aware" );
-
-        /* make sure we don't need a libgcc_s dll on Windows */
-        if (!opts->nodefaultlibs && !opts->use_msvcrt)
-            strarray_add( &flags, "-static-libgcc" );
 
         if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
             strarray_add(&link_args, strmake("-Wl,--pdb=%s", opts->debug_file));
@@ -453,9 +449,9 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add( &flags, "-Wl,-kill-at" );
         }
         if (opts->unicode_app) strarray_add( &flags, "-municode" );
-        if (opts->nodefaultlibs || opts->use_msvcrt) strarray_add( &flags, "-nodefaultlibs" );
+        strarray_add( &flags, "-nodefaultlibs" );
+        strarray_add( &flags, "-nostdlib" );
         if (opts->nostartfiles) strarray_add( &flags, "-nostartfiles" );
-        if (opts->use_msvcrt) strarray_add( &flags, "-nostdlib" );
         if (opts->image_base) strarray_add( &flags, strmake("-Wl,-base:%s", opts->image_base ));
         if (opts->subsystem)
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", opts->subsystem ));
@@ -1253,18 +1249,15 @@ static void build(struct options* opts)
     /* link everything together now */
     link_args = get_link_args( opts, output_name );
 
-    if (opts->nodefaultlibs || opts->use_msvcrt)
+    switch (opts->target.platform)
     {
-        switch (opts->target.platform)
-        {
-        case PLATFORM_MINGW:
-        case PLATFORM_CYGWIN:
-            libgcc = find_libgcc( opts->prefix, link_args );
-            if (!libgcc) libgcc = "-lgcc";
-            break;
-        default:
-            break;
-        }
+    case PLATFORM_MINGW:
+    case PLATFORM_CYGWIN:
+        libgcc = find_libgcc( opts->prefix, link_args );
+        if (!libgcc) libgcc = "-lgcc";
+        break;
+    default:
+        break;
     }
 
     strarray_add(&link_args, "-o");
@@ -1273,7 +1266,7 @@ static void build(struct options* opts)
     for ( j = 0; j < lib_dirs.count; j++ )
 	strarray_add(&link_args, strmake("-L%s", lib_dirs.str[j]));
 
-    if (is_pe && opts->use_msvcrt && !entry_point && (opts->shared || opts->win16_app))
+    if (is_pe && !entry_point && (opts->shared || opts->win16_app))
         entry_point = opts->target.cpu == CPU_i386 ? "DllMainCRTStartup@12" : "DllMainCRTStartup";
 
     if (is_pe && entry_point)
@@ -1314,27 +1307,12 @@ static void build(struct options* opts)
 	    case 'a':
                 if (!opts->use_msvcrt && !opts->lib_suffix && strchr(name, '/'))
                 {
-                    /* turn the path back into -Ldir -lfoo options
-                     * this makes sure that we use the specified libs even
-                     * when mingw adds its own import libs to the link */
                     const char *p = get_basename( name );
 
-                    if (is_pe)
-                    {
-                        if (!strncmp( p, "lib", 3 ) && strcmp( p, "libmsvcrt.a" ))
-                        {
-                            strarray_add(&link_args, strmake("-L%s", get_dirname(name) ));
-                            strarray_add(&link_args, strmake("-l%s", get_basename_noext( p + 3 )));
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        /* don't link to ntdll or ntoskrnl in non-msvcrt mode
-                         * since they export CRT functions */
-                        if (!strcmp( p, "libntdll.a" )) break;
-                        if (!strcmp( p, "libntoskrnl.a" )) break;
-                    }
+                    /* don't link to ntdll or ntoskrnl in non-msvcrt mode
+                     * since they export CRT functions */
+                    if (!strcmp( p, "libntdll.a" )) break;
+                    if (!strcmp( p, "libntoskrnl.a" )) break;
                 }
 		strarray_add(&link_args, name);
 		break;
