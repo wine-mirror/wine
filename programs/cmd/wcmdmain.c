@@ -4491,23 +4491,22 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
   }
 
   if (opt_c) {
+      RETURN_CODE return_code = NO_ERROR;
       /* If we do a "cmd /c command", we don't want to allocate a new
        * console since the command returns immediately. Rather, we use
        * the currently allocated input and output handles. This allows
        * us to pipe to and read from the command interpreter.
        */
-
       /* Parse the command string, without reading any more input */
       rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
       if (rpl_status == RPL_SUCCESS && toExecute)
       {
-          node_execute(toExecute);
+          return_code = node_execute(toExecute);
           node_dispose_tree(toExecute);
       }
       else if (rpl_status == RPL_SYNTAXERROR)
-          errorlevel = RETURN_CODE_SYNTAX_ERROR;
-
-      return errorlevel;
+          return_code = ERROR_INVALID_FUNCTION;
+      return return_code;
   }
 
   GetStartupInfoW(&startupInfo);

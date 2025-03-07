@@ -702,9 +702,9 @@ FAILURE 457
 FAILURE 459
 FAILURE 460
 FAILURE 461
-@todo_wine@FAILURE 267
-@todo_wine@FAILURE 1
-@todo_wine@FAILURE 1
+FAILURE 267
+FAILURE 1
+FAILURE 1
 --------- success/failure when invoking cmd /k --------------
 a
 @todo_wine@ERRORLEVEL 0
