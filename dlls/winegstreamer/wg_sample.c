@@ -339,7 +339,7 @@ HRESULT wg_transform_push_mf(wg_transform_t transform, IMFSample *sample,
 }
 
 HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD sample_size, DWORD *flags)
+        DWORD sample_size, DWORD *flags, bool *preserve_timestamps)
 {
     struct wg_sample *wg_sample;
     IMFMediaBuffer *buffer;
@@ -368,6 +368,8 @@ HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
         IMFSample_SetUINT32(sample, &MFSampleExtension_CleanPoint, 1);
     if (wg_sample->flags & WG_SAMPLE_FLAG_DISCONTINUITY)
         IMFSample_SetUINT32(sample, &MFSampleExtension_Discontinuity, 1);
+    if (preserve_timestamps)
+        *preserve_timestamps = !!(wg_sample->flags & WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS);
 
     if (SUCCEEDED(hr = IMFSample_ConvertToContiguousBuffer(sample, &buffer)))
     {

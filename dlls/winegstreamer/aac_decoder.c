@@ -563,7 +563,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return hr;
 
     if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, samples->pSample,
-            info.cbSize, &samples->dwStatus)))
+            info.cbSize, &samples->dwStatus, NULL)))
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
     else
         samples->dwStatus = MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE;

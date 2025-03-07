@@ -179,6 +179,7 @@ enum wg_sample_flag
     WG_SAMPLE_FLAG_HAS_DURATION = 4,
     WG_SAMPLE_FLAG_SYNC_POINT = 8,
     WG_SAMPLE_FLAG_DISCONTINUITY = 0x10,
+    WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS = 0x20,
 };
 
 struct wg_sample
@@ -335,6 +336,7 @@ struct wg_transform_attrs
     UINT32 input_queue_length;
     BOOL allow_format_change;
     BOOL low_latency;
+    BOOL preserve_timestamps;
 };
 
 struct wg_transform_create_params

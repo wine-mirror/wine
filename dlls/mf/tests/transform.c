@@ -5386,11 +5386,9 @@ static void test_h264_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(i)
             ok(time == exp_sample_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_ts[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_sample_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_ts[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);
@@ -5452,11 +5450,10 @@ static void test_h264_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(i)
+            todo_wine_if(exp_sample_neg_ts[i].time < 0)
             ok(time == exp_sample_neg_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_neg_ts[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_sample_neg_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_neg_ts[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);
@@ -6835,28 +6832,12 @@ static void test_wmv_decoder(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
-        .todo_duration = TRUE,
-    };
-    const struct sample_desc output_sample_desc_nv12_todo_time =
-    {
-        .attributes = output_sample_attributes,
-        .sample_time = 0, .sample_duration = 333333,
-        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
-        .todo_time = TRUE, .todo_duration = TRUE,
     };
     const struct sample_desc output_sample_desc_rgb =
     {
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
-        .todo_duration = TRUE,
-    };
-    const struct sample_desc output_sample_desc_rgb_todo_time =
-    {
-        .attributes = output_sample_attributes,
-        .sample_time = 0, .sample_duration = 333333,
-        .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
-        .todo_time = TRUE, .todo_duration = TRUE,
     };
 
     const struct transform_desc
@@ -6890,7 +6871,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc,
             .expect_input_info = &expect_input_info,
             .expect_output_info = &expect_output_info,
-            .output_sample_desc = &output_sample_desc_nv12_todo_time,
+            .output_sample_desc = &output_sample_desc_nv12,
             .result_bitmap = L"nv12frame.bmp",
             .delta = 0,
         },
@@ -6901,7 +6882,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6912,7 +6893,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6923,7 +6904,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6946,7 +6927,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .output_sample_desc = &output_sample_desc_rgb,
             .result_bitmap = L"rgb32frame.bmp",
             .delta = 5,
         },
@@ -7423,11 +7404,9 @@ static void test_wmv_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(i)
             ok(time == exp_sample_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_ts[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_sample_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_ts[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);

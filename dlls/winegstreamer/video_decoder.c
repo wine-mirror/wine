@@ -944,6 +944,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     LONGLONG duration;
     IMFSample *sample;
     UINT64 frame_size, frame_rate;
+    bool preserve_timestamps;
     GUID subtype;
     DWORD size;
     HRESULT hr;
@@ -989,19 +990,22 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     }
 
     if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample,
-            sample_size, &samples->dwStatus)))
+            sample_size, &samples->dwStatus, &preserve_timestamps)))
     {
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
 
-        if (FAILED(IMFMediaType_GetUINT64(decoder->input_type, &MF_MT_FRAME_RATE, &frame_rate)))
-            frame_rate = (UINT64)30000 << 32 | 1001;
+        if (!preserve_timestamps)
+        {
+            if (FAILED(IMFMediaType_GetUINT64(decoder->input_type, &MF_MT_FRAME_RATE, &frame_rate)))
+                frame_rate = (UINT64)30000 << 32 | 1001;
 
-        duration = (UINT64)10000000 * (UINT32)frame_rate / (frame_rate >> 32);
-        if (FAILED(IMFSample_SetSampleTime(sample, decoder->sample_time)))
-            WARN("Failed to set sample time\n");
-        if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
-            WARN("Failed to set sample duration\n");
-        decoder->sample_time += duration;
+            duration = (UINT64)10000000 * (UINT32)frame_rate / (frame_rate >> 32);
+            if (FAILED(IMFSample_SetSampleTime(sample, decoder->sample_time)))
+                WARN("Failed to set sample time\n");
+            if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
+                WARN("Failed to set sample duration\n");
+            decoder->sample_time += duration;
+        }
     }
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
@@ -1633,6 +1637,7 @@ static HRESULT video_decoder_create_with_types(const GUID *const *input_types, U
         goto failed;
 
     decoder->wg_transform_attrs.input_queue_length = 15;
+    decoder->wg_transform_attrs.preserve_timestamps = TRUE;
 
     *out = decoder;
     TRACE("Created decoder %p\n", decoder);
