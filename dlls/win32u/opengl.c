@@ -457,6 +457,31 @@ static UINT nulldrv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
     return -1; /* use default implementation */
 }
 
+static BOOL nulldrv_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_context_destroy( void *private )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_context_copy( void *src_private, void *dst_private, UINT mask )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_context_share( void *src_private, void *dst_private )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
+{
+    return FALSE;
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_init_pixel_formats = nulldrv_init_pixel_formats,
@@ -467,6 +492,11 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_pbuffer_destroy = nulldrv_pbuffer_destroy,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
+    .p_context_create = nulldrv_context_create,
+    .p_context_destroy = nulldrv_context_destroy,
+    .p_context_copy = nulldrv_context_copy,
+    .p_context_share = nulldrv_context_share,
+    .p_context_make_current = nulldrv_context_make_current,
 };
 
 static const struct opengl_driver_funcs *memory_driver_funcs = &nulldrv_funcs;
@@ -1148,6 +1178,12 @@ static void display_funcs_init(void)
     display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
     display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
+    display_funcs->p_wglCreateContext = win32u_wglCreateContext;
+    display_funcs->p_wglDeleteContext = win32u_wglDeleteContext;
+    display_funcs->p_wglCopyContext = win32u_wglCopyContext;
+    display_funcs->p_wglShareLists = win32u_wglShareLists;
+    display_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
+
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
     display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
 
@@ -1165,23 +1201,14 @@ static void display_funcs_init(void)
     display_funcs->p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     display_funcs->p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
-    if (display_driver_funcs->p_context_create)
-    {
-        display_funcs->p_wglCreateContext = win32u_wglCreateContext;
-        display_funcs->p_wglDeleteContext = win32u_wglDeleteContext;
-        display_funcs->p_wglCopyContext = win32u_wglCopyContext;
-        display_funcs->p_wglShareLists = win32u_wglShareLists;
-        display_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_profile" );
+    display_funcs->p_wglCreateContextAttribsARB = win32u_wglCreateContextAttribsARB;
 
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_profile" );
-        display_funcs->p_wglCreateContextAttribsARB = win32u_wglCreateContextAttribsARB;
-
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_make_current_read" );
-        display_funcs->p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-        display_funcs->p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
-    }
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_make_current_read" );
+    display_funcs->p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+    display_funcs->p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
     display_funcs->p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
