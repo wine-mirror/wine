@@ -1221,7 +1221,8 @@ struct obj_locator
     client_ptr_t entry_point;   /* thread entry point */
     affinity_t   affinity;      /* thread affinity mask */
     int          exit_code;     /* thread exit code */
-    int          priority;      /* thread priority level */
+    int          priority;      /* current thread priority */
+    int          base_priority; /* base priority level (relative to process base priority class) */
     int          suspend_count; /* thread suspend count */
     unsigned int flags;         /* GET_THREAD_INFO_FLAG_ flags */
     data_size_t  desc_len;      /* description length in bytes */

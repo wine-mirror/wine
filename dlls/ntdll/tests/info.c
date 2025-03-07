@@ -3362,8 +3362,8 @@ static void test_priority(void)
     ok( status == STATUS_SUCCESS, "NtQueryInformationThread failed after setting priority: %08lx\n", status );
     ok( THREAD_PRIORITY_LOWEST == tbi.BasePriority, "After setting, BasePriority (%ld) does not match set BasePriority THREAD_PRIORITY_LOWEST.\n",
         tbi.BasePriority );
-    todo_wine ok( nt_thread_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %lu.\n",
-                  tbi.Priority, nt_thread_priority );
+    ok( nt_thread_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %lu.\n",
+        tbi.Priority, nt_thread_priority );
     /* Changing process priority recalculates all priorities again and
      * overwrites our custom priority of 12. */
     ret = SetPriorityClass( GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS );

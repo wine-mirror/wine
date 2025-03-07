@@ -274,7 +274,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetThreadPriority( HANDLE thread )
     if (!set_ntstatus( NtQueryInformationThread( thread, ThreadBasicInformation,
                                                  &info, sizeof(info), NULL )))
         return THREAD_PRIORITY_ERROR_RETURN;
-    return info.Priority;
+    return info.BasePriority;
 }
 
 

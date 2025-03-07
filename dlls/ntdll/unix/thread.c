@@ -2061,7 +2061,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 info.ClientId.UniqueThread  = ULongToHandle(reply->tid);
                 info.AffinityMask           = reply->affinity & affinity_mask;
                 info.Priority               = reply->priority;
-                info.BasePriority           = reply->priority;  /* FIXME */
+                info.BasePriority           = reply->base_priority;
             }
         }
         SERVER_END_REQ;
