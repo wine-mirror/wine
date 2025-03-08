@@ -68,6 +68,7 @@ struct android_context
 struct gl_drawable
 {
     struct opengl_drawable base;
+    LONG            ref;
     struct list     entry;
     ANativeWindow  *window;
     EGLSurface      surface;
@@ -88,6 +89,12 @@ static inline EGLConfig egl_config_for_format(int format)
     return egl->configs[format - egl->config_count - 1];
 }
 
+static struct gl_drawable *gl_drawable_grab( struct gl_drawable *gl )
+{
+    InterlockedIncrement( &gl->ref );
+    return gl;
+}
+
 static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
 {
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
@@ -98,11 +105,13 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     gl->base.hdc    = hdc;
     gl->base.format = format;
 
+    gl->ref = 1;
     gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     gl->surface = 0;
     gl->pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
     pthread_mutex_lock( &drawable_mutex );
     list_add_head( &gl_drawables, &gl->entry );
+    gl_drawable_grab( gl );
 
     TRACE( "Created drawable %s with client window %p\n", debugstr_opengl_drawable( &gl->base ), gl->window );
     return gl;
@@ -115,16 +124,25 @@ static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
     pthread_mutex_lock( &drawable_mutex );
     LIST_FOR_EACH_ENTRY( gl, &gl_drawables, struct gl_drawable, entry )
     {
-        if (hwnd && gl->base.hwnd == hwnd) return gl;
-        if (hdc && gl->base.hdc == hdc) return gl;
+        if (hwnd && gl->base.hwnd == hwnd) return gl_drawable_grab( gl );
+        if (hdc && gl->base.hdc == hdc) return gl_drawable_grab( gl );
     }
     pthread_mutex_unlock( &drawable_mutex );
     return NULL;
 }
 
+static void gl_drawable_destroy( struct gl_drawable *gl )
+{
+    if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
+    if (gl->pbuffer) funcs->p_eglDestroySurface( egl->display, gl->pbuffer );
+    release_ioctl_window( gl->window );
+    free( gl );
+}
+
 static void release_gl_drawable( struct gl_drawable *gl )
 {
-    if (gl) pthread_mutex_unlock( &drawable_mutex );
+    if (!InterlockedDecrement( &gl->ref )) gl_drawable_destroy( gl );
+    pthread_mutex_unlock( &drawable_mutex );
 }
 
 void destroy_gl_drawable( HWND hwnd )
@@ -136,11 +154,7 @@ void destroy_gl_drawable( HWND hwnd )
     {
         if (gl->base.hwnd != hwnd) continue;
         list_remove( &gl->entry );
-        if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
-        if (gl->pbuffer) funcs->p_eglDestroySurface( egl->display, gl->pbuffer );
-        release_ioctl_window( gl->window );
-        free( gl );
-        break;
+        return release_gl_drawable( gl );
     }
     pthread_mutex_unlock( &drawable_mutex );
 }
@@ -201,7 +215,7 @@ static BOOL android_set_pixel_format( HWND hwnd, int old_format, int new_format,
             gl->base.format = new_format;
         }
     }
-    else gl = create_gl_drawable( hwnd, 0, new_format );
+    else if (!(gl = create_gl_drawable( hwnd, 0, new_format ))) return FALSE;
     release_gl_drawable( gl );
 
     return TRUE;
@@ -295,8 +309,8 @@ static BOOL android_context_make_current( HDC draw_hdc, HDC read_hdc, void *priv
     RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
 
 done:
-    release_gl_drawable( read_gl );
-    release_gl_drawable( draw_gl );
+    if (read_gl) release_gl_drawable( read_gl );
+    if (draw_gl) release_gl_drawable( draw_gl );
     return ret;
 }
 
