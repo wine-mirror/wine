@@ -1025,7 +1025,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    unsigned __int64 placeholder;
+    struct user_entry user_entries[MAX_USER_HANDLES];
 } session_shm_t;
 
 struct obj_locator

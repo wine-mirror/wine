@@ -36,8 +36,6 @@ struct clipboard;
 
 #define DESKTOP_ATOM  ((atom_t)32769)
 
-#define MAX_USER_HANDLES ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
-
 struct winstation
 {
     struct object      obj;                /* object header */

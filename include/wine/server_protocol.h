@@ -1009,7 +1009,7 @@ typedef volatile struct
 
 typedef volatile struct
 {
-    unsigned __int64 placeholder;
+    struct user_entry user_entries[MAX_USER_HANDLES];
 } session_shm_t;
 
 struct obj_locator
@@ -6810,6 +6810,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 867
+#define SERVER_PROTOCOL_VERSION 868
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

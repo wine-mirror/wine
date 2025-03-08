@@ -34,10 +34,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-#define NB_USER_HANDLES  ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
 
-static void *user_handles[NB_USER_HANDLES];
+static void *user_handles[MAX_USER_HANDLES];
 
 #define SWP_AGG_NOGEOMETRYCHANGE \
     (SWP_NOSIZE | SWP_NOCLIENTSIZE | SWP_NOZORDER)
@@ -70,7 +69,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
     {
         UINT index = USER_HANDLE_TO_INDEX( handle );
 
-        assert( index < NB_USER_HANDLES );
+        assert( index < MAX_USER_HANDLES );
         ptr->handle = handle;
         ptr->type = type;
         InterlockedExchangePointer( &user_handles[index], ptr );
@@ -86,7 +85,7 @@ void *get_user_handle_ptr( HANDLE handle, unsigned short type )
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
 
-    if (index >= NB_USER_HANDLES) return NULL;
+    if (index >= MAX_USER_HANDLES) return NULL;
 
     user_lock();
     if ((ptr = user_handles[index]))
@@ -112,7 +111,7 @@ void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
     struct user_object *ptr;
     WORD index = *handle ? USER_HANDLE_TO_INDEX( *handle ) + 1 : 0;
 
-    while (index < NB_USER_HANDLES)
+    while (index < MAX_USER_HANDLES)
     {
         if (!(ptr = user_handles[index++])) continue;  /* OBJ_OTHER_PROCESS */
         if (ptr->type != type) continue;
@@ -128,7 +127,7 @@ void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
 static void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
 {
     WORD index = USER_HANDLE_TO_INDEX(handle);
-    assert( index < NB_USER_HANDLES );
+    assert( index < MAX_USER_HANDLES );
     InterlockedExchangePointer( &user_handles[index], ptr );
 }
 
