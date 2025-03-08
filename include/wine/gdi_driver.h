@@ -402,7 +402,4 @@ struct user_driver_funcs
 
 W32KAPI void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
 
-W32KAPI BOOL win32u_set_window_pixel_format( HWND hwnd, int format, BOOL internal );
-W32KAPI int win32u_get_window_pixel_format( HWND hwnd );
-
 #endif /* __WINE_WINE_GDI_DRIVER_H */

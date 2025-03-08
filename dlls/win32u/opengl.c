@@ -418,7 +418,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     DC *dc;
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
-        ret = win32u_get_window_pixel_format( hwnd );
+        ret = get_window_pixel_format( hwnd );
     else if ((dc = get_dc_ptr( hdc )))
     {
         BOOL is_display = dc->is_display;
@@ -462,9 +462,9 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
 
         TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
 
-        if ((old_format = win32u_get_window_pixel_format( hwnd )) && !internal) return old_format == new_format;
+        if ((old_format = get_window_pixel_format( hwnd )) && !internal) return old_format == new_format;
         if (!driver_funcs->p_set_pixel_format( hwnd, old_format, new_format, internal )) return FALSE;
-        return win32u_set_window_pixel_format( hwnd, new_format, internal );
+        return set_window_pixel_format( hwnd, new_format, internal );
     }
 
     TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
