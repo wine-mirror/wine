@@ -382,9 +382,15 @@ static const char *nulldrv_init_wgl_extensions(void)
     return "";
 }
 
+static BOOL nulldrv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+{
+    return TRUE;
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
+    .p_set_pixel_format = nulldrv_set_pixel_format,
 };
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
 
@@ -497,6 +503,8 @@ static void display_funcs_init(void)
     if (!display_funcs) return;
 
     strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions() );
+    display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
+    display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
     display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
@@ -504,17 +512,11 @@ static void display_funcs_init(void)
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_extensions_string" );
     display_funcs->p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
 
-    if (driver_funcs->p_set_pixel_format)
-    {
-        display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
-        display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
-
-        /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
-         * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
-         */
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
-        display_funcs->p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
-    }
+    /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
+     * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
+     */
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
+    display_funcs->p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
