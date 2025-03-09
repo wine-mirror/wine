@@ -2907,7 +2907,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
     curPos = WCMD_strip_for_command_start(curPos);
     /* Parse every character on the line being processed */
-    while (*curPos != 0x00) {
+    for (;;) {
 
       WCHAR thisChar;
 
@@ -2921,10 +2921,30 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         return RPL_SYNTAXERROR;
       }
 
+      /* If we have reached the end, add this command into the list
+         Do not add command to list if escape char ^ was last */
+      if (*curPos == L'\0') {
+          /* Add an entry to the command list */
+          lexer_push_command(&builder, curString, &curStringLen,
+                             curRedirs, &curRedirsLen,
+                             &curCopyTo, &curLen);
+          node_builder_push_token(&builder, TKN_EOL);
+
+          /* If we have reached the end of the string, see if bracketing is outstanding */
+          if (builder.opened_parenthesis > 0 && optionalcmd == NULL &&
+              (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
+          {
+              TRACE("Need to read more data as outstanding brackets or carets\n");
+              inOneLine = FALSE;
+              inQuotes = 0;
+              acceptCommand = TRUE;
+          }
+          else break;
+      }
+
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        if (acceptCommand)
-          curPos = WCMD_strip_for_command_start(curPos);
+        if (acceptCommand && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
         /* If command starts with 'rem ' or identifies a label, ignore any &&, ( etc. */
         if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == ':') {
           inOneLine = TRUE;
@@ -3172,30 +3192,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       }
 
       curPos++;
-
-      /* If we have reached the end, add this command into the list
-         Do not add command to list if escape char ^ was last */
-      if (*curPos == L'\0') {
-          /* Add an entry to the command list */
-          lexer_push_command(&builder, curString, &curStringLen,
-                             curRedirs, &curRedirsLen,
-                             &curCopyTo, &curLen);
-          node_builder_push_token(&builder, TKN_EOL);
-
-          /* If we have reached the end of the string, see if bracketing is outstanding */
-          if (builder.opened_parenthesis > 0 && optionalcmd == NULL) {
-              TRACE("Need to read more data as outstanding brackets or carets\n");
-              inOneLine = FALSE;
-              inQuotes = 0;
-              acceptCommand = TRUE;
-
-              /* fetch next non empty line */
-              do {
-                  curPos = fetch_next_line(TRUE, FALSE, extraSpace);
-              } while (curPos && *curPos == L'\0');
-              curPos = curPos ? WCMD_strip_for_command_start(curPos) : extraSpace;
-          }
-      }
     }
 
     ret = node_builder_generate(&builder, output);
