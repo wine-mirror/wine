@@ -2852,9 +2852,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     curPos = WCMD_strip_for_command_start(curPos);
     /* Parse every character on the line being processed */
     for (;;) {
-
-      WCHAR thisChar;
-
       /* Debugging AID:
       WINE_TRACE("Looking at '%c' (len:%d)\n", *curPos, *curLen);
       */
@@ -2969,9 +2966,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         }
       }
 
-      thisChar = *curPos;
-
-      switch (thisChar) {
+      switch (*curPos) {
 
       case L'=': /* drop through - ignore token delimiters at the start of a command */
       case L',': /* drop through - ignore token delimiters at the start of a command */
@@ -3013,7 +3008,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
           /* If a redirect is immediately followed by '&' (ie. 2>&1) then
              do not process that ampersand as an AND operator */
-          if ((thisChar == '>' || thisChar == '<') && *(curPos+1) == '&') {
+          if ((*curPos == L'>' || *curPos == L'<') && curPos[1] == L'&') {
               curCopyTo[(*curLen)++] = *(curPos+1);
               curPos++;
           }
