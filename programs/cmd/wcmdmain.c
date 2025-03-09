@@ -2362,6 +2362,11 @@ static BOOL node_builder_expect_token(struct node_builder *builder, enum builder
     return TRUE;
 }
 
+static enum builder_token node_builder_top(const struct node_builder *builder, unsigned d)
+{
+    return builder->num > d ? builder->stack[builder->num - (d + 1)].token : TKN_EOF;
+}
+
 static void redirection_list_append(CMD_REDIRECTION **redir, CMD_REDIRECTION *last)
 {
     if (last)
@@ -2828,6 +2833,16 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
     return buffer;
 }
 
+static BOOL lexer_can_accept_do(const struct node_builder *builder)
+{
+    unsigned d = 0;
+
+    if (node_builder_top(builder, d++) != TKN_CLOSEPAR) return FALSE;
+    while (node_builder_top(builder, d) == TKN_COMMAND || node_builder_top(builder, d) == TKN_EOL) d++;
+    if (node_builder_top(builder, d++) != TKN_OPENPAR) return FALSE;
+    return node_builder_top(builder, d) == TKN_IN;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -2854,17 +2869,9 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     int      *curLen;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      inOneLine = FALSE;
-    BOOL      inFor = FALSE;
-    BOOL      inIf  = FALSE;
-    BOOL      inElse= FALSE;
     BOOL      onlyWhiteSpace = FALSE;
     BOOL      lastWasWhiteSpace = FALSE;
-    BOOL      lastWasDo   = FALSE;
-    BOOL      lastWasIn   = FALSE;
-    BOOL      lastWasElse = FALSE;
     BOOL      lastWasRedirect = TRUE;
-    BOOL      ignoreBracket = FALSE;         /* Some expressions after if (set) require */
-                                             /* handling brackets as a normal character */
     BOOL      acceptCommand = TRUE;
     struct node_builder builder;
     BOOL      ret;
@@ -2918,7 +2925,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           inOneLine = TRUE;
 
         } else if (WCMD_keyword_ws_found(L"for", curPos)) {
-          inFor = TRUE;
           node_builder_push_token(&builder, TKN_FOR);
 
           curPos = WCMD_skip_leading_spaces(curPos + 3); /* "for */
@@ -2932,8 +2938,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           WCHAR *command;
 
           node_builder_push_token(&builder, TKN_IF);
-
-          inIf = TRUE;
 
           curPos = WCMD_skip_leading_spaces(curPos + 2); /* "if" */
           if (if_condition_parse(curPos, &command, NULL))
@@ -2951,14 +2955,10 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                  &curCopyTo, &curLen);
 
           }
-          if (WCMD_keyword_ws_found(L"set", curPos))
-              ignoreBracket = TRUE;
           acceptCommand = TRUE;
           onlyWhiteSpace = TRUE;
           continue;
         } else if (WCMD_keyword_ws_found(L"else", curPos)) {
-          inElse = TRUE;
-          lastWasElse = TRUE;
           acceptCommand = TRUE;
           onlyWhiteSpace = TRUE;
           node_builder_push_token(&builder, TKN_ELSE);
@@ -2969,12 +2969,9 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         /* In a for loop, the DO command will follow a close bracket followed by
            whitespace, followed by DO, ie closeBracket inserts a NULL entry, curLen
            is then 0, and all whitespace is skipped                                */
-        } else if (inFor && lastWasIn && WCMD_keyword_ws_found(L"do", curPos)) {
+        } else if (lexer_can_accept_do(&builder) && WCMD_keyword_ws_found(L"do", curPos)) {
 
           WINE_TRACE("Found 'DO '\n");
-          inFor = FALSE;
-          lastWasIn = FALSE;
-          lastWasDo = TRUE;
           acceptCommand = TRUE;
           onlyWhiteSpace = TRUE;
 
@@ -2985,7 +2982,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       } else if (curCopyTo == curString) {
 
         /* Special handling for the 'FOR' command */
-          if (inFor && lastWasWhiteSpace) {
+          if (node_builder_top(&builder, 0) == TKN_FOR && lastWasWhiteSpace) {
           WINE_TRACE("Found 'FOR ', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
           if (WCMD_keyword_ws_found(L"in", curPos)) {
@@ -2995,7 +2992,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                curRedirs, &curRedirsLen,
                                &curCopyTo, &curLen);
             node_builder_push_token(&builder, TKN_IN);
-            lastWasIn = TRUE;
             onlyWhiteSpace = TRUE;
             curPos = WCMD_skip_leading_spaces(curPos + 2 /* in */);
             continue;
@@ -3103,13 +3099,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       case '(': /* If a '(' is the first non whitespace in a command portion
                    ie start of line or just after &&, then we read until an
                    unquoted ) is found                                       */
-                WINE_TRACE("Found '(' conditions: curLen(%d), inQ(%d), onlyWS(%d)"
-                           ", for(%d, In:%d, Do:%d)"
-                           ", if(%d, else:%d, lwe:%d)\n",
-                           *curLen, inQuotes,
-                           onlyWhiteSpace,
-                           inFor, lastWasIn, lastWasDo,
-                           inIf, inElse, lastWasElse);
                 lastWasRedirect = FALSE;
 
                 if (inQuotes) {
@@ -3123,9 +3112,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                       the ELSE and whitespace
                  */
                 } else if ((acceptCommand && onlyWhiteSpace) ||
-                           (inIf && !ignoreBracket) ||
-                           (inElse && lastWasElse && onlyWhiteSpace) ||
-                           (inFor && (lastWasIn || lastWasDo) && onlyWhiteSpace)) {
+                           (node_builder_top(&builder, 0) == TKN_IN && onlyWhiteSpace)) {
 
                   /* Add the current command */
                   lexer_push_command(&builder, curString, &curStringLen,
@@ -3225,7 +3212,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           if (builder.opened_parenthesis > 0 && optionalcmd == NULL) {
               TRACE("Need to read more data as outstanding brackets or carets\n");
               inOneLine = FALSE;
-              ignoreBracket = FALSE;
               inQuotes = 0;
               acceptCommand = TRUE;
               onlyWhiteSpace = TRUE;

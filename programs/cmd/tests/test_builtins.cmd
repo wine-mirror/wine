@@ -1528,7 +1528,6 @@ echo   echo with closing bracket>> blockclosing.cmd
 echo )>> blockclosing.cmd
 cmd.exe /Q /C blockclosing.cmd
 echo %ERRORLEVEL% ok
-echo ---
 ::
 echo @if 1 == 1 (> blockclosing.cmd
 echo   echo without closing bracket first>> blockclosing.cmd

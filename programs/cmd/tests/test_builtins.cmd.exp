@@ -989,9 +989,8 @@ block containing a line with just space and tab seems to work
 block containing a line with just tab and space seems to work
 block containing two lines with just space seems to work
 block containing two lines with just tab seems to work
-@todo_wine@with closing bracket
-@todo_wine@0 ok
-@todo_wine@---
+with closing bracket
+0 ok
 255 two lines
 before both blocks
 255 nested
