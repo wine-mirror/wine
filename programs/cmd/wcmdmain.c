@@ -2789,6 +2789,24 @@ static BOOL lexer_can_accept_do(const struct node_builder *builder)
     return node_builder_top(builder, d) == TKN_IN;
 }
 
+static BOOL lexer_at_command_start(const struct node_builder *builder)
+{
+    switch (node_builder_top(builder, 0))
+    {
+    case TKN_EOF:
+    case TKN_EOL:
+    case TKN_DO:
+    case TKN_ELSE:
+    case TKN_AMP:
+    case TKN_AMPAMP:
+    case TKN_BAR:
+    case TKN_BARBAR:   return TRUE;
+    case TKN_OPENPAR:  return node_builder_top(builder, 1) != TKN_IN;
+    case TKN_COMMAND:  return node_builder_top(builder, 1) == TKN_IF;
+    default:           return FALSE;
+    }
+}
+
 static BOOL lexer_white_space_only(const WCHAR *string, int len)
 {
     int i;
@@ -2823,7 +2841,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     int      *curLen;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      lastWasRedirect = TRUE;
-    BOOL      acceptCommand = TRUE;
     struct node_builder builder;
     BOOL      ret;
 
@@ -2876,14 +2893,13 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
           {
               TRACE("Need to read more data as outstanding brackets or carets\n");
-              acceptCommand = TRUE;
           }
           else break;
       }
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        if (acceptCommand && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
+        if (lexer_at_command_start(&builder) && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
         /* If command starts with 'rem ' or identifies a label, use whole line */
         if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == L':') {
             size_t line_len = wcslen(curPos);
@@ -2904,8 +2920,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
            should suffice for now.
            To be able to handle ('s in the condition part take as much as evaluate_if_condition
            would take and skip parsing it here. */
-          acceptCommand = FALSE;
-        } else if (acceptCommand && WCMD_keyword_ws_found(L"if", curPos)) {
+        } else if (lexer_at_command_start(&builder) && WCMD_keyword_ws_found(L"if", curPos)) {
           WCHAR *command;
 
           node_builder_push_token(&builder, TKN_IF);
@@ -2926,10 +2941,8 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                  &curCopyTo, &curLen);
 
           }
-          acceptCommand = TRUE;
           continue;
         } else if (WCMD_keyword_ws_found(L"else", curPos)) {
-          acceptCommand = TRUE;
           node_builder_push_token(&builder, TKN_ELSE);
 
           curPos = WCMD_skip_leading_spaces(curPos + 4 /* else */);
@@ -2941,7 +2954,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         } else if (lexer_can_accept_do(&builder) && WCMD_keyword_ws_found(L"do", curPos)) {
 
           WINE_TRACE("Found 'DO '\n");
-          acceptCommand = TRUE;
 
           node_builder_push_token(&builder, TKN_DO);
           curPos = WCMD_skip_leading_spaces(curPos + 2 /* do */);
@@ -3027,7 +3039,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           } else {
               node_builder_push_token(&builder, TKN_BAR);
           }
-          acceptCommand = TRUE;
           break;
 
       case L'"':
@@ -3053,10 +3064,9 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
              In an ELSE statement, only allow it straight away after
              the ELSE and whitespace
           */
-          if ((acceptCommand || node_builder_top(&builder, 0) == TKN_IN) &&
+          if ((lexer_at_command_start(&builder) || node_builder_top(&builder, 0) == TKN_IN) &&
               lexer_white_space_only(curString, curStringLen)) {
               node_builder_push_token(&builder, TKN_OPENPAR);
-              acceptCommand = TRUE;
           } else {
               curCopyTo[(*curLen)++] = *curPos;
           }
@@ -3096,7 +3106,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           } else {
               node_builder_push_token(&builder, TKN_AMP);
           }
-          acceptCommand = TRUE;
           break;
 
       case L')':
@@ -3108,7 +3117,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                  curRedirs, &curRedirsLen,
                                  &curCopyTo, &curLen);
               node_builder_push_token(&builder, TKN_CLOSEPAR);
-              acceptCommand = FALSE;
           } else {
               curCopyTo[(*curLen)++] = *curPos;
           }
