@@ -2009,60 +2009,6 @@ static WCHAR *find_chr(WCHAR *in, WCHAR *last, const WCHAR *delims)
     return NULL;
 }
 
-/***************************************************************************
- * WCMD_IsEndQuote
- *
- *   Checks if the quote pointed to is the end-quote.
- *
- *   Quotes end if:
- *
- *   1) The current parameter ends at EOL or at the beginning
- *      of a redirection or pipe and not in a quote section.
- *
- *   2) If the next character is a space and not in a quote section.
- *
- *   Returns TRUE if this is an end quote, and FALSE if it is not.
- *
- */
-static BOOL WCMD_IsEndQuote(const WCHAR *quote, int quoteIndex)
-{
-    int quoteCount = quoteIndex;
-    int i;
-
-    /* If we are not in a quoted section, then we are not an end-quote */
-    if(quoteIndex == 0)
-    {
-        return FALSE;
-    }
-
-    /* Check how many quotes are left for this parameter */
-    for(i=0;quote[i];i++)
-    {
-        if(quote[i] == '"')
-        {
-            quoteCount++;
-        }
-
-        /* Quote counting ends at EOL, redirection, space or pipe if current quote is complete */
-        else if(((quoteCount % 2) == 0)
-            && ((quote[i] == '<') || (quote[i] == '>') || (quote[i] == '|') || (quote[i] == ' ') ||
-                (quote[i] == '&')))
-        {
-            break;
-        }
-    }
-
-    /* If the quote is part of the last part of a series of quotes-on-quotes, then it must
-       be an end-quote */
-    if(quoteIndex >= (quoteCount / 2))
-    {
-        return TRUE;
-    }
-
-    /* No cigar */
-    return FALSE;
-}
-
 static WCHAR *for_fileset_option_split(WCHAR *from, const WCHAR* key)
 {
     size_t len = wcslen(key);
@@ -2869,7 +2815,6 @@ static BOOL lexer_white_space_only(const WCHAR *string, int len)
 enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output)
 {
     WCHAR    *curPos;
-    int       inQuotes = 0;
     WCHAR     curString[MAXSTRING];
     int       curStringLen = 0;
     WCHAR     curRedirs[MAXSTRING];
@@ -2934,7 +2879,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
           {
               TRACE("Need to read more data as outstanding brackets or carets\n");
-              inQuotes = 0;
               acceptCommand = TRUE;
           }
           else break;
@@ -3029,166 +2973,154 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
       switch (thisChar) {
 
-      case '=': /* drop through - ignore token delimiters at the start of a command */
-      case ',': /* drop through - ignore token delimiters at the start of a command */
-      case '\t':/* drop through - ignore token delimiters at the start of a command */
-      case ' ':
-                /* If a redirect in place, it ends here */
-                if (!inQuotes && !lastWasRedirect) {
+      case L'=': /* drop through - ignore token delimiters at the start of a command */
+      case L',': /* drop through - ignore token delimiters at the start of a command */
+      case L'\t':/* drop through - ignore token delimiters at the start of a command */
+      case L' ':
+          /* If a redirect in place, it ends here */
+          if (!lastWasRedirect) {
 
-                  /* If finishing off a redirect, add a whitespace delimiter */
-                  if (curCopyTo == curRedirs) {
-                      curCopyTo[(*curLen)++] = ' ';
-                  }
-                  curCopyTo = curString;
-                  curLen = &curStringLen;
-                }
-                if (*curLen > 0) {
-                  curCopyTo[(*curLen)++] = *curPos;
-                }
-                break;
+              /* If finishing off a redirect, add a whitespace delimiter */
+              if (curCopyTo == curRedirs) {
+                  curCopyTo[(*curLen)++] = L' ';
+              }
+              curCopyTo = curString;
+              curLen = &curStringLen;
+          }
+          if (*curLen > 0) {
+              curCopyTo[(*curLen)++] = *curPos;
+          }
+          break;
 
-      case '>': /* drop through - handle redirect chars the same */
-      case '<':
-                /* Make a redirect start here */
-                if (!inQuotes) {
-                  curCopyTo = curRedirs;
-                  curLen = &curRedirsLen;
-                  lastWasRedirect = TRUE;
-                }
+      case L'>': /* drop through - handle redirect chars the same */
+      case L'<':
+          /* Make a redirect start here */
+          curCopyTo = curRedirs;
+          curLen = &curRedirsLen;
+          lastWasRedirect = TRUE;
 
-                /* See if 1>, 2> etc, in which case we have some patching up
-                   to do (provided there's a preceding whitespace, and enough
-                   chars read so far) */
-                if (curPos[-1] >= '1' && curPos[-1] <= '9'
-                        && (curStringLen == 1 ||
-                            curPos[-2] == ' ' || curPos[-2] == '\t')) {
-                    curStringLen--;
-                    curString[curStringLen] = 0x00;
-                    curCopyTo[(*curLen)++] = *(curPos-1);
-                }
+          /* See if 1>, 2> etc, in which case we have some patching up
+             to do (provided there's a preceding whitespace, and enough
+             chars read so far) */
+          if (curPos[-1] >= L'1' && curPos[-1] <= L'9' && (curStringLen == 1 || iswspace(curPos[-2])))
+          {
+              curStringLen--;
+              curString[curStringLen] = L'\0';
+              curCopyTo[(*curLen)++] = *(curPos-1);
+          }
 
-                curCopyTo[(*curLen)++] = *curPos;
+          curCopyTo[(*curLen)++] = *curPos;
 
-                /* If a redirect is immediately followed by '&' (ie. 2>&1) then
-                    do not process that ampersand as an AND operator */
-                if ((thisChar == '>' || thisChar == '<') && *(curPos+1) == '&') {
-                    curCopyTo[(*curLen)++] = *(curPos+1);
-                    curPos++;
-                }
-                break;
+          /* If a redirect is immediately followed by '&' (ie. 2>&1) then
+             do not process that ampersand as an AND operator */
+          if ((thisChar == '>' || thisChar == '<') && *(curPos+1) == '&') {
+              curCopyTo[(*curLen)++] = *(curPos+1);
+              curPos++;
+          }
+          break;
 
-      case '|': /* Pipe character only if not || */
-                if (!inQuotes) {
-                  lastWasRedirect = FALSE;
+      case L'|': /* Pipe character only if not || */
+          lastWasRedirect = FALSE;
 
-                  lexer_push_command(&builder, curString, &curStringLen,
-                                     curRedirs, &curRedirsLen,
-                                     &curCopyTo, &curLen);
+          lexer_push_command(&builder, curString, &curStringLen,
+                             curRedirs, &curRedirsLen,
+                             &curCopyTo, &curLen);
 
-                  if (*(curPos+1) == '|') {
-                    curPos++; /* Skip other | */
-                    node_builder_push_token(&builder, TKN_BARBAR);
-                  } else {
-                    node_builder_push_token(&builder, TKN_BAR);
-                  }
-                  acceptCommand = TRUE;
-                } else {
-                  curCopyTo[(*curLen)++] = *curPos;
-                }
-                break;
+          if (curPos[1] == L'|') {
+              curPos++; /* Skip other | */
+              node_builder_push_token(&builder, TKN_BARBAR);
+          } else {
+              node_builder_push_token(&builder, TKN_BAR);
+          }
+          acceptCommand = TRUE;
+          break;
 
-      case '"': if (WCMD_IsEndQuote(curPos, inQuotes)) {
-                    inQuotes--;
-                } else {
-                    inQuotes++; /* Quotes within quotes are fun! */
-                }
-                curCopyTo[(*curLen)++] = *curPos;
-                lastWasRedirect = FALSE;
-                break;
+      case L'"':
+          /* copy all chars between a pair of " */
+          curCopyTo[(*curLen)++] = *curPos;
+          while (curPos[1])
+          {
+              curCopyTo[(*curLen)++] = *++curPos;
+              if (*curPos == L'"') break;
+          }
+          lastWasRedirect = FALSE;
+          break;
 
-      case '(': /* If a '(' is the first non whitespace in a command portion
+      case L'(': /* If a '(' is the first non whitespace in a command portion
                    ie start of line or just after &&, then we read until an
                    unquoted ) is found                                       */
-                lastWasRedirect = FALSE;
+          lastWasRedirect = FALSE;
 
-                if (inQuotes) {
-                  curCopyTo[(*curLen)++] = *curPos;
+          /* In a FOR loop, an unquoted '(' may occur straight after
+             IN or DO
+             In an IF statement just handle it regardless as we don't
+             parse the operands
+             In an ELSE statement, only allow it straight away after
+             the ELSE and whitespace
+          */
+          if ((acceptCommand || node_builder_top(&builder, 0) == TKN_IN) &&
+              lexer_white_space_only(curString, curStringLen)) {
+              node_builder_push_token(&builder, TKN_OPENPAR);
+              acceptCommand = TRUE;
+          } else {
+              curCopyTo[(*curLen)++] = *curPos;
+          }
+          break;
 
-                /* In a FOR loop, an unquoted '(' may occur straight after
-                      IN or DO
-                   In an IF statement just handle it regardless as we don't
-                      parse the operands
-                   In an ELSE statement, only allow it straight away after
-                      the ELSE and whitespace
-                 */
-                } else if ((acceptCommand || node_builder_top(&builder, 0) == TKN_IN) &&
-                           lexer_white_space_only(curString, curStringLen)) {
-                  node_builder_push_token(&builder, TKN_OPENPAR);
-                  acceptCommand = TRUE;
-                } else {
-                  curCopyTo[(*curLen)++] = *curPos;
-                }
-                break;
+      case L'^': /* If we reach the end of the input, we need to wait for more */
+          if (curPos[1] == L'\0') {
+              TRACE("Caret found at end of line\n");
+              extraSpace[0] = L'^';
+              if (optionalcmd) break;
+              if (!fetch_next_line(TRUE, FALSE, extraSpace + 1))
+                  break;
+              if (!extraSpace[1]) /* empty line */
+              {
+                  extraSpace[1] = L'\r';
+                  if (!fetch_next_line(TRUE, FALSE, extraSpace + 2))
+                      break;
+              }
+              curPos = extraSpace;
+              break;
+          }
+          curPos++;
+          curCopyTo[(*curLen)++] = *curPos;
+          break;
 
-      case '^': if (!inQuotes) {
-                  /* If we reach the end of the input, we need to wait for more */
-                  if (curPos[1] == L'\0') {
-                    TRACE("Caret found at end of line\n");
-                    extraSpace[0] = L'^';
-                    if (optionalcmd) break;
-                    if (!fetch_next_line(TRUE, FALSE, extraSpace + 1))
-                        break;
-                    if (!extraSpace[1]) /* empty line */
-                    {
-                        extraSpace[1] = L'\r';
-                        if (!fetch_next_line(TRUE, FALSE, extraSpace + 2))
-                            break;
-                    }
-                    curPos = extraSpace;
-                    break;
-                  }
-                  curPos++;
-                }
-                curCopyTo[(*curLen)++] = *curPos;
-                break;
+      case L'&':
+          lastWasRedirect = FALSE;
 
-      case '&': if (!inQuotes) {
-                  lastWasRedirect = FALSE;
+          /* Add an entry to the command list */
+          lexer_push_command(&builder, curString, &curStringLen,
+                             curRedirs, &curRedirsLen,
+                             &curCopyTo, &curLen);
 
-                  /* Add an entry to the command list */
-                  lexer_push_command(&builder, curString, &curStringLen,
-                                     curRedirs, &curRedirsLen,
-                                     &curCopyTo, &curLen);
+          if (*(curPos+1) == L'&') {
+              curPos++; /* Skip other & */
+              node_builder_push_token(&builder, TKN_AMPAMP);
+          } else {
+              node_builder_push_token(&builder, TKN_AMP);
+          }
+          acceptCommand = TRUE;
+          break;
 
-                  if (*(curPos+1) == '&') {
-                    curPos++; /* Skip other & */
-                    node_builder_push_token(&builder, TKN_AMPAMP);
-                  } else {
-                    node_builder_push_token(&builder, TKN_AMP);
-                  }
-                  acceptCommand = TRUE;
-                } else {
-                  curCopyTo[(*curLen)++] = *curPos;
-                }
-                break;
+      case L')':
+          if (builder.opened_parenthesis > 0) {
+              lastWasRedirect = FALSE;
 
-      case ')': if (!inQuotes && builder.opened_parenthesis > 0) {
-                  lastWasRedirect = FALSE;
-
-                  /* Add the current command if there is one */
-                  lexer_push_command(&builder, curString, &curStringLen,
-                                     curRedirs, &curRedirsLen,
-                                     &curCopyTo, &curLen);
-                  node_builder_push_token(&builder, TKN_CLOSEPAR);
-                  acceptCommand = FALSE;
-                } else {
-                  curCopyTo[(*curLen)++] = *curPos;
-                }
-                break;
+              /* Add the current command if there is one */
+              lexer_push_command(&builder, curString, &curStringLen,
+                                 curRedirs, &curRedirsLen,
+                                 &curCopyTo, &curLen);
+              node_builder_push_token(&builder, TKN_CLOSEPAR);
+              acceptCommand = FALSE;
+          } else {
+              curCopyTo[(*curLen)++] = *curPos;
+          }
+          break;
       default:
-                lastWasRedirect = FALSE;
-                curCopyTo[(*curLen)++] = *curPos;
+          lastWasRedirect = FALSE;
+          curCopyTo[(*curLen)++] = *curPos;
       }
 
       curPos++;
