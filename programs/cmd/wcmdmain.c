@@ -2840,7 +2840,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     WCHAR    *curCopyTo;
     int      *curLen;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
-    BOOL      lastWasRedirect = TRUE;
     struct node_builder builder;
     BOOL      ret;
 
@@ -2864,7 +2863,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     curRedirsLen = 0;
     curCopyTo    = curString;
     curLen       = &curStringLen;
-    lastWasRedirect = FALSE;  /* Required e.g. for spaces between > and filename */
 
     curPos = WCMD_strip_for_command_start(curPos);
     /* Parse every character on the line being processed */
@@ -2984,19 +2982,14 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       case L',': /* drop through - ignore token delimiters at the start of a command */
       case L'\t':/* drop through - ignore token delimiters at the start of a command */
       case L' ':
-          /* If a redirect in place, it ends here */
-          if (!lastWasRedirect) {
-
-              /* If finishing off a redirect, add a whitespace delimiter */
-              if (curCopyTo == curRedirs) {
-                  curCopyTo[(*curLen)++] = L' ';
-              }
+          /* If finishing off a redirect, add a whitespace delimiter */
+          if (curCopyTo == curRedirs) {
+              curCopyTo[(*curLen)++] = L' ';
               curCopyTo = curString;
               curLen = &curStringLen;
           }
-          if (*curLen > 0) {
+          if (*curLen > 0)
               curCopyTo[(*curLen)++] = *curPos;
-          }
           break;
 
       case L'>': /* drop through - handle redirect chars the same */
@@ -3004,7 +2997,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           /* Make a redirect start here */
           curCopyTo = curRedirs;
           curLen = &curRedirsLen;
-          lastWasRedirect = TRUE;
 
           /* See if 1>, 2> etc, in which case we have some patching up
              to do (provided there's a preceding whitespace, and enough
@@ -3013,22 +3005,27 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           {
               curStringLen--;
               curString[curStringLen] = L'\0';
-              curCopyTo[(*curLen)++] = *(curPos-1);
+              curCopyTo[(*curLen)++] = curPos[-1];
           }
 
           curCopyTo[(*curLen)++] = *curPos;
 
           /* If a redirect is immediately followed by '&' (ie. 2>&1) then
              do not process that ampersand as an AND operator */
-          if ((*curPos == L'>' || *curPos == L'<') && curPos[1] == L'&') {
-              curCopyTo[(*curLen)++] = *(curPos+1);
+          if ((*curPos == L'>' || *curPos == L'<') && curPos[1] == L'&')
+          {
+              curCopyTo[(*curLen)++] = curPos[1];
+              curPos++;
+          }
+          /* advance until start of filename */
+          while (iswspace(curPos[1]) || curPos[1] == L',' || curPos[1] == L'=')
+          {
+              curCopyTo[(*curLen)++] = curPos[1];
               curPos++;
           }
           break;
 
       case L'|': /* Pipe character only if not || */
-          lastWasRedirect = FALSE;
-
           lexer_push_command(&builder, curString, &curStringLen,
                              curRedirs, &curRedirsLen,
                              &curCopyTo, &curLen);
@@ -3049,13 +3046,11 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               curCopyTo[(*curLen)++] = *++curPos;
               if (*curPos == L'"') break;
           }
-          lastWasRedirect = FALSE;
           break;
 
       case L'(': /* If a '(' is the first non whitespace in a command portion
                    ie start of line or just after &&, then we read until an
                    unquoted ) is found                                       */
-          lastWasRedirect = FALSE;
 
           /* In a FOR loop, an unquoted '(' may occur straight after
              IN or DO
@@ -3093,8 +3088,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           break;
 
       case L'&':
-          lastWasRedirect = FALSE;
-
           /* Add an entry to the command list */
           lexer_push_command(&builder, curString, &curStringLen,
                              curRedirs, &curRedirsLen,
@@ -3110,8 +3103,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
       case L')':
           if (builder.opened_parenthesis > 0) {
-              lastWasRedirect = FALSE;
-
               /* Add the current command if there is one */
               lexer_push_command(&builder, curString, &curStringLen,
                                  curRedirs, &curRedirsLen,
@@ -3122,7 +3113,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           }
           break;
       default:
-          lastWasRedirect = FALSE;
           curCopyTo[(*curLen)++] = *curPos;
       }
 
