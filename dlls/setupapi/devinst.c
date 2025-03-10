@@ -4317,7 +4317,7 @@ static CONFIGRET get_device_id_list(const WCHAR *filter, WCHAR *buffer, ULONG *l
     unsigned int i, id_len;
     ULONG query_flags = 0;
     HDEVINFO set;
-    WCHAR id[64];
+    WCHAR id[256];
     ULONG needed;
     WCHAR *p;
 
