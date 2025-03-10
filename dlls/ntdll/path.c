@@ -36,21 +36,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
 /***********************************************************************
  *             RtlDetermineDosPathNameType_U   (NTDLL.@)
  */
-DOS_PATHNAME_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
+RTL_PATH_TYPE WINAPI RtlDetermineDosPathNameType_U( PCWSTR path )
 {
     if (IS_SEPARATOR(path[0]))
     {
-        if (!IS_SEPARATOR(path[1])) return ABSOLUTE_PATH;       /* "/foo" */
-        if (path[2] != '.' && path[2] != '?') return UNC_PATH;  /* "//foo" */
-        if (IS_SEPARATOR(path[3])) return DEVICE_PATH;          /* "//./foo" or "//?/foo" */
-        if (path[3]) return UNC_PATH;                           /* "//.foo" or "//?foo" */
-        return UNC_DOT_PATH;                                    /* "//." or "//?" */
+        if (!IS_SEPARATOR(path[1])) return RtlPathTypeRooted;                   /* "/foo" */
+        if (path[2] != '.' && path[2] != '?') return RtlPathTypeUncAbsolute;    /* "//foo" */
+        if (IS_SEPARATOR(path[3])) return RtlPathTypeLocalDevice;               /* "//./foo" or "//?/foo" */
+        if (path[3]) return RtlPathTypeUncAbsolute;                             /* "//.foo" or "//?foo" */
+        return RtlPathTypeRootLocalDevice;                                      /* "//." or "//?" */
     }
     else
     {
-        if (!path[0] || path[1] != ':') return RELATIVE_PATH;   /* "foo" */
-        if (IS_SEPARATOR(path[2])) return ABSOLUTE_DRIVE_PATH;  /* "c:/foo" */
-        return RELATIVE_DRIVE_PATH;                             /* "c:foo" */
+        if (!path[0] || path[1] != ':') return RtlPathTypeRelative; /* "foo" */
+        if (IS_SEPARATOR(path[2])) return RtlPathTypeDriveAbsolute; /* "c:/foo" */
+        return RtlPathTypeDriveRelative;                            /* "c:foo" */
     }
 }
 
@@ -78,15 +78,15 @@ ULONG WINAPI RtlIsDosDeviceName_U( PCWSTR dos_name )
 
     switch(RtlDetermineDosPathNameType_U( dos_name ))
     {
-    case INVALID_PATH:
-    case UNC_PATH:
+    case RtlPathTypeUnknown:
+    case RtlPathTypeUncAbsolute:
         return 0;
-    case DEVICE_PATH:
+    case RtlPathTypeLocalDevice:
         if (!wcsicmp( dos_name, L"\\\\.\\CON" ))
             return MAKELONG( sizeof(conW), 4 * sizeof(WCHAR) );  /* 4 is length of \\.\ prefix */
         return 0;
-    case ABSOLUTE_DRIVE_PATH:
-    case RELATIVE_DRIVE_PATH:
+    case RtlPathTypeDriveAbsolute:
+    case RtlPathTypeDriveRelative:
         start = dos_name + 2;  /* skip drive letter */
         break;
     default:
@@ -271,11 +271,11 @@ NTSTATUS WINAPI RtlDosPathNameToNtPathName_U_WithStatus(const WCHAR *dos_path, U
     wcscpy(ntpath->Buffer, L"\\??\\");
     switch (RtlDetermineDosPathNameType_U(ptr))
     {
-    case UNC_PATH: /* \\foo */
+    case RtlPathTypeUncAbsolute: /* \\foo */
         offset = 2;
         wcscat(ntpath->Buffer, L"UNC\\");
         break;
-    case DEVICE_PATH: /* \\.\foo */
+    case RtlPathTypeLocalDevice: /* \\.\foo */
         offset = 4;
         break;
     default:
@@ -361,10 +361,10 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
                                 ULONG buffer_size, LPWSTR buffer, 
                                 LPWSTR* file_part)
 {
-    DOS_PATHNAME_TYPE type = RtlDetermineDosPathNameType_U(search);
+    RTL_PATH_TYPE type = RtlDetermineDosPathNameType_U(search);
     ULONG len = 0;
 
-    if (type == RELATIVE_PATH)
+    if (type == RtlPathTypeRelative)
     {
         ULONG allocated = 0, needed, filelen;
         WCHAR *name = NULL;
@@ -535,16 +535,16 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     switch (RtlDetermineDosPathNameType_U(name))
     {
-    case UNC_PATH:              /* \\foo   */
+    case RtlPathTypeUncAbsolute:    /* \\foo   */
         ptr = skip_unc_prefix( name );
         mark = (ptr - name);
         break;
 
-    case DEVICE_PATH:           /* \\.\foo */
+    case RtlPathTypeLocalDevice:    /* \\.\foo */
         mark = 4;
         break;
 
-    case ABSOLUTE_DRIVE_PATH:   /* c:\foo  */
+    case RtlPathTypeDriveAbsolute:  /* c:\foo  */
         reqsize = sizeof(WCHAR);
         tmp[0] = name[0];
         ins_str = tmp;
@@ -552,7 +552,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         mark = 3;
         break;
 
-    case RELATIVE_DRIVE_PATH:   /* c:foo   */
+    case RtlPathTypeDriveRelative:  /* c:foo   */
         dep = 2;
         if (wcsnicmp( name, cd->Buffer, 2 ))
         {
@@ -601,7 +601,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         }
         /* fall through */
 
-    case RELATIVE_PATH:         /* foo     */
+    case RtlPathTypeRelative:   /* foo     */
         reqsize = cd->Length;
         ins_str = cd->Buffer;
         if (cd->Buffer[1] != ':')
@@ -612,7 +612,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         else mark = 3;
         break;
 
-    case ABSOLUTE_PATH:         /* \xxx    */
+    case RtlPathTypeRooted:     /* \xxx    */
         if (name[0] == '/')  /* may be a Unix path */
         {
             char *unix_name;
@@ -667,7 +667,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         }
         break;
 
-    case UNC_DOT_PATH:         /* \\.     */
+    case RtlPathTypeRootLocalDevice:    /* \\.     */
         reqsize = 4 * sizeof(WCHAR);
         dep = 3;
         tmp[0] = '\\';
@@ -678,7 +678,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         mark = 4;
         break;
 
-    case INVALID_PATH:
+    case RtlPathTypeUnknown:
         goto done;
     }
 

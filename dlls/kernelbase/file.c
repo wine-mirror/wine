@@ -101,7 +101,7 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
  */
 static inline BOOL contains_path( const WCHAR *name )
 {
-    if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH) return TRUE;
+    if (RtlDetermineDosPathNameType_U( name ) != RtlPathTypeRelative) return TRUE;
     if (name[0] != '.') return FALSE;
     if (name[1] == '/' || name[1] == '\\') return TRUE;
     return (name[1] == '.' && (name[2] == '/' || name[2] == '\\'));

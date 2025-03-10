@@ -738,7 +738,7 @@ static BOOL PROFILE_Open( LPCWSTR filename, BOOL write_access )
     if (!filename)
         filename = L"win.ini";
 
-    if ((RtlDetermineDosPathNameType_U(filename) == RELATIVE_PATH) &&
+    if ((RtlDetermineDosPathNameType_U(filename) == RtlPathTypeRelative) &&
         !wcschr(filename, '\\') && !wcschr(filename, '/'))
     {
         WCHAR windirW[MAX_PATH];

@@ -3968,7 +3968,7 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
             HeapFree( GetProcessHeap(), 0, path );
             path = str;
         }
-        else if (RtlDetermineDosPathNameType_U( path ) == RELATIVE_PATH)
+        else if (RtlDetermineDosPathNameType_U( path ) == RtlPathTypeRelative)
         {
             str = get_windir_path( path );
             HeapFree( GetProcessHeap(), 0, path );
