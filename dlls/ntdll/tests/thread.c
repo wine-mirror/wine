@@ -235,9 +235,9 @@ static void test_NtCreateUserProcess(void)
     status = NtCreateUserProcess( &process, &thread, PROCESS_TERMINATE, SYNCHRONIZE,
                                   NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
                                   &create_info, &ps_attr );
-    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
     status = NtTerminateProcess( process, 0 );
-    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
     CloseHandle( process );
     CloseHandle( thread );
 }

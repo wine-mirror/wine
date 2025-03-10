@@ -1520,7 +1520,7 @@ DECL_HANDLER(new_thread)
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
     int request_fd = thread_get_inflight_fd( current, req->request_fd );
 
-    if (!(process = get_process_from_handle( req->process, PROCESS_CREATE_THREAD )))
+    if (!(process = get_process_from_handle( req->process, 0 )))
     {
         if (request_fd != -1) close( request_fd );
         return;
@@ -1544,6 +1544,12 @@ DECL_HANDLER(new_thread)
     {
         if (request_fd != -1) close( request_fd );
         set_error( STATUS_INVALID_HANDLE );
+        goto done;
+    }
+    else if (!(get_handle_access( current->process, req->process ) & PROCESS_CREATE_THREAD))
+    {
+        close( request_fd );
+        set_error( STATUS_ACCESS_DENIED );
         goto done;
     }
 
