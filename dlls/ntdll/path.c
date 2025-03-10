@@ -420,7 +420,7 @@ ULONG WINAPI RtlDosSearchPath_U(LPCWSTR paths, LPCWSTR search, LPCWSTR ext,
 /******************************************************************
  *		collapse_path
  *
- * Helper for RtlGetFullPathName_U.
+ * Helper for RtlGetFullPathName_UEx.
  * Get rid of . and .. components in the path.
  */
 static inline void collapse_path( WCHAR *path, UINT mark )
@@ -511,10 +511,10 @@ static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
 /******************************************************************
  *		get_full_path_helper
  *
- * Helper for RtlGetFullPathName_U
+ * Helper for RtlGetFullPathName_UEx.
  * Note: name and buffer are allowed to point to the same memory spot
  */
-static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
+static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size, RTL_PATH_TYPE type)
 {
     ULONG                       reqsize = 0, mark = 0, dep = 0, deplen;
     LPWSTR                      ins_str = NULL;
@@ -533,7 +533,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     else
         cd = &NtCurrentTeb()->Peb->ProcessParameters->CurrentDirectory.DosPath;
 
-    switch (RtlDetermineDosPathNameType_U(name))
+    switch (type)
     {
     case RtlPathTypeUncAbsolute:    /* \\foo   */
         ptr = skip_unc_prefix( name );
@@ -719,15 +719,41 @@ done:
 DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
                                   WCHAR** file_part)
 {
-    WCHAR*      ptr;
-    DWORD       dosdev;
-    DWORD       reqsize;
-
     TRACE("(%s %lu %p %p)\n", debugstr_w(name), size, buffer, file_part);
+
+    return RtlGetFullPathName_UEx(name, size, buffer, file_part, NULL);
+}
+
+
+/******************************************************************
+ *		RtlGetFullPathName_UEx  (NTDLL.@)
+ *
+ * Returns the number of bytes written to buffer (not including the
+ * terminating NULL) if the function succeeds, or the required number of bytes
+ * (including the terminating NULL) if the buffer is too small.
+ *
+ * file_part will point to the filename part inside buffer (except if we use
+ * DOS device name, in which case file_in_buf is NULL)
+ *
+ * type is an optional parameter that will receive the type of the path
+ *
+ */
+ULONG WINAPI RtlGetFullPathName_UEx(const WCHAR* name, ULONG size, WCHAR* buffer,
+                                    WCHAR** file_part, RTL_PATH_TYPE* type)
+{
+    WCHAR*          ptr;
+    DWORD           dosdev;
+    DWORD           reqsize;
+    RTL_PATH_TYPE   path_type;
+
+    TRACE("(%s %lu %p %p %p)\n", debugstr_w(name), size, buffer, file_part, type);
 
     if (!name || !*name) return 0;
 
     if (file_part) *file_part = NULL;
+
+    path_type = RtlDetermineDosPathNameType_U(name);
+    if (type) *type = path_type;
 
     /* check for DOS device name */
     dosdev = RtlIsDosDeviceName_U(name);
@@ -744,12 +770,12 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
         return sz + 8;
     }
 
-    reqsize = get_full_path_helper(name, buffer, size);
+    reqsize = get_full_path_helper(name, buffer, size, path_type);
     if (!reqsize) return 0;
     if (reqsize > size)
     {
         LPWSTR tmp = RtlAllocateHeap(GetProcessHeap(), 0, reqsize);
-        reqsize = get_full_path_helper(name, tmp, reqsize);
+        reqsize = get_full_path_helper(name, tmp, reqsize, path_type);
         if (reqsize + sizeof(WCHAR) > size)  /* it may have worked the second time */
         {
             RtlFreeHeap(GetProcessHeap(), 0, tmp);

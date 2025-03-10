@@ -750,6 +750,7 @@
 # @ stub RtlGetFirstRange
 @ stdcall RtlGetFrame()
 @ stdcall RtlGetFullPathName_U(wstr long ptr ptr)
+@ stdcall RtlGetFullPathName_UEx(wstr long ptr ptr ptr)
 @ stdcall RtlGetGroupSecurityDescriptor(ptr ptr ptr)
 @ stdcall RtlGetLastNtStatus()
 @ stdcall RtlGetLastWin32Error()
