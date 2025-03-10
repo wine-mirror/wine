@@ -1789,6 +1789,7 @@ static void test_include(void)
     delete_file(L"include\\include1.h");
     delete_file(L"include1.h");
     delete_file(L"include\\include2.h");
+    delete_file(L"include\\include3.h");
     delete_directory(L"include");
 }
 
