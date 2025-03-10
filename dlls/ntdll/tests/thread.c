@@ -204,6 +204,44 @@ static void test_errno(void)
     ok( val == 0xbeef, "wrong value %x\n", val );
 }
 
+static void test_NtCreateUserProcess(void)
+{
+    RTL_USER_PROCESS_PARAMETERS *params;
+    PS_CREATE_INFO create_info;
+    PS_ATTRIBUTE_LIST ps_attr;
+    WCHAR path[MAX_PATH + 4];
+    HANDLE process, thread;
+    UNICODE_STRING imageW;
+    NTSTATUS status;
+
+    lstrcpyW( path, L"\\??\\" );
+    GetModuleFileNameW( NULL, path + 4, MAX_PATH );
+
+    RtlInitUnicodeString( &imageW, path );
+
+    memset( &ps_attr, 0, sizeof(ps_attr) );
+    ps_attr.Attributes[0].Attribute = PS_ATTRIBUTE_IMAGE_NAME;
+    ps_attr.Attributes[0].Size = lstrlenW(path) * sizeof(WCHAR);
+    ps_attr.Attributes[0].ValuePtr = path;
+    ps_attr.TotalLength = sizeof(ps_attr);
+
+    status = RtlCreateProcessParametersEx( &params, &imageW, NULL, NULL,
+                                           NULL, NULL, NULL, NULL,
+                                           NULL, NULL, PROCESS_PARAMS_FLAG_NORMALIZED );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    memset( &create_info, 0, sizeof(create_info) );
+    create_info.Size = sizeof(create_info);
+    status = NtCreateUserProcess( &process, &thread, PROCESS_TERMINATE, SYNCHRONIZE,
+                                  NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
+                                  &create_info, &ps_attr );
+    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    status = NtTerminateProcess( process, 0 );
+    todo_wine ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+    CloseHandle( process );
+    CloseHandle( thread );
+}
+
 START_TEST(thread)
 {
     init_function_pointers();
@@ -211,4 +249,5 @@ START_TEST(thread)
     test_dbg_hidden_thread_creation();
     test_unique_teb();
     test_errno();
+    test_NtCreateUserProcess();
 }
