@@ -9842,6 +9842,10 @@ static LRESULT LISTVIEW_VScroll(LISTVIEW_INFO *infoPtr, INT nScrollCode,
 	nScrollDiff = scrollInfo.nPage;
         break;
 
+    case SB_TOP:
+        nScrollDiff = -nOldScrollPos;
+        break;
+
     case SB_THUMBPOSITION:
     case SB_THUMBTRACK:
 	nScrollDiff = scrollInfo.nTrackPos - scrollInfo.nPos;
