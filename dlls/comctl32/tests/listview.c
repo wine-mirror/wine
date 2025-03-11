@@ -2443,7 +2443,6 @@ static void test_LVM_GETORIGIN(BOOL is_v6)
     position.x = position.y = 0;
     r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     ok(r == 1, "Unexpected return value %lu.\n", r);
-    todo_wine
     ok(position.y == 50, "Unexpected position %ld.\n", position.y);
 
     DestroyWindow(hwnd);
