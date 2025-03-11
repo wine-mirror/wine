@@ -5794,8 +5794,8 @@ static void test_mpeg4_media_sink(void)
 {
     IMFMediaSink *sink = NULL, *sink2 = NULL, *sink_audio = NULL, *sink_video = NULL, *sink_empty = NULL;
     IMFByteStream *bytestream, *bytestream_audio, *bytestream_video, *bytestream_empty;
+    IMFMediaType *audio_type, *video_type, *media_type, *media_type_out;
     DWORD id, count, flags, width = 96, height = 96;
-    IMFMediaType *audio_type, *video_type, *media_type;
     IMFMediaTypeHandler *type_handler = NULL;
     IMFPresentationClock *clock;
     IMFStreamSink *stream_sink;
@@ -6032,6 +6032,14 @@ static void test_mpeg4_media_sink(void)
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 1, &media_type_out);
+    ok(hr == MF_E_NO_MORE_TYPES, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 0, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    hr = IMFMediaTypeHandler_GetMediaTypeByIndex(type_handler, 0, &media_type_out);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(media_type_out == media_type, "Got different media type pointer.\n");
 
     hr = IMFMediaType_SetUINT32(media_type, &MF_MT_AUDIO_NUM_CHANNELS, 1);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

@@ -433,9 +433,18 @@ static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeCount(IMFMediaTypeHan
 static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,
         IMFMediaType **type)
 {
-    FIXME("iface %p, index %lu, type %p.\n", iface, index, type);
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %lu, type %p.\n", iface, index, type);
+
+    if (!type)
+        return E_POINTER;
+    if (index > 0)
+        return MF_E_NO_MORE_TYPES;
+
+    IMFMediaType_AddRef((*type = stream_sink->type));
+
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_sink_type_handler_SetCurrentMediaType(IMFMediaTypeHandler *iface, IMFMediaType *type)
