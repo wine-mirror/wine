@@ -421,9 +421,13 @@ static HRESULT WINAPI stream_sink_type_handler_IsMediaTypeSupported(IMFMediaType
 
 static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeCount(IMFMediaTypeHandler *iface, DWORD *count)
 {
-    FIXME("iface %p, count %p.\n", iface, count);
+    TRACE("iface %p, count %p.\n", iface, count);
 
-    return E_NOTIMPL;
+    if (!count)
+        return E_POINTER;
+
+    *count = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI stream_sink_type_handler_GetMediaTypeByIndex(IMFMediaTypeHandler *iface, DWORD index,

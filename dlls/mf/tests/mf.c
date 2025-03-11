@@ -6024,10 +6024,10 @@ static void test_mpeg4_media_sink(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(IsEqualGUID(&guid, &MFMediaType_Audio), "Unexpected major type.\n");
 
+    hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     hr = IMFMediaTypeHandler_GetMediaTypeCount(type_handler, &count);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %lu.\n", count);
 
     hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, &media_type);
