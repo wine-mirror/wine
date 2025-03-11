@@ -2877,7 +2877,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     WCHAR    *curCopyTo;
     int      *curLen;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
-    BOOL      inOneLine = FALSE;
     BOOL      lastWasRedirect = TRUE;
     BOOL      acceptCommand = TRUE;
     struct node_builder builder;
@@ -2935,7 +2934,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
           {
               TRACE("Need to read more data as outstanding brackets or carets\n");
-              inOneLine = FALSE;
               inQuotes = 0;
               acceptCommand = TRUE;
           }
@@ -2945,10 +2943,17 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
         if (acceptCommand && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
-        /* If command starts with 'rem ' or identifies a label, ignore any &&, ( etc. */
-        if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == ':') {
-          inOneLine = TRUE;
-
+        /* If command starts with 'rem ' or identifies a label, use whole line */
+        if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == L':') {
+            size_t line_len = wcslen(curPos);
+            memcpy(curString, curPos, (line_len + 1) * sizeof(WCHAR));
+            curPos += line_len;
+            curStringLen += line_len;
+            curRedirsLen = 0; /* even '>foo rem' doesn't touch foo */
+            lexer_push_command(&builder, curString, &curStringLen,
+                             curRedirs, &curRedirsLen,
+                             &curCopyTo, &curLen);
+            continue;
         } else if (WCMD_keyword_ws_found(L"for", curPos)) {
           node_builder_push_token(&builder, TKN_FOR);
 
@@ -3020,12 +3025,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
         }
       }
 
-      /* Nothing 'ends' a one line statement (e.g. REM or :labels mean
-         the &&, quotes and redirection etc are ineffective, so just force
-         the use of the default processing by skipping character specific
-         matching below)                                                   */
-      if (!inOneLine) thisChar = *curPos;
-      else            thisChar = 'X';  /* Character with no special processing */
+      thisChar = *curPos;
 
       switch (thisChar) {
 
