@@ -39,6 +39,7 @@
 #include "iads.h"
 #include "advapi32_misc.h"
 #include "lmcons.h"
+#include "userenv.h"
 
 #include "wine/debug.h"
 
@@ -2686,8 +2687,22 @@ BOOL WINAPI CreateProcessWithLogonW( LPCWSTR user_name, LPCWSTR domain, LPCWSTR 
 
     if (LogonUserW(user_name, domain, password, 0, 0, &token))
     {
-        BOOL ret = CreateProcessAsUserW( token, application_name, command_line, NULL, NULL, FALSE, creation_flags,
-                                         environment, current_directory, startup_info, process_information );
+        void *env = environment;
+        BOOL ret = TRUE;
+
+        if (!environment)
+        {
+            ret = CreateEnvironmentBlock(&env, token, FALSE);
+            creation_flags |= CREATE_UNICODE_ENVIRONMENT;
+        }
+
+        if (ret)
+        {
+            ret = CreateProcessAsUserW( token, application_name, command_line, NULL, NULL, FALSE,
+                    creation_flags, env, current_directory, startup_info, process_information );
+        }
+        if (env != environment)
+            DestroyEnvironmentBlock(env);
         CloseHandle(token);
         return ret;
     }
