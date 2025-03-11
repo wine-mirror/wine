@@ -2403,51 +2403,75 @@ static void test_item_position(void)
     DestroyWindow(hwnd);
 }
 
-static void test_getorigin(void)
+static void test_LVM_GETORIGIN(BOOL is_v6)
 {
-    /* LVM_GETORIGIN */
-
+    POINT position;
     HWND hwnd;
     DWORD r;
-    POINT position;
-
-    position.x = position.y = 0;
 
     hwnd = create_listview_control(LVS_ICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    position.x = position.y = 123;
     r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
-    expect(TRUE, r);
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ok(r == 1, "Unexpected return value %lu.\n", r);
+    ok(!position.x && !position.y, "Unexpected position %ld,%ld.\n", position.x, position.y);
     DestroyWindow(hwnd);
 
     hwnd = create_listview_control(LVS_SMALLICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    position.x = position.y = 123;
     r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
-    expect(TRUE, r);
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ok(r == 1, "Unexpected return value %lu.\n", r);
+    ok(!position.x && !position.y, "Unexpected position %ld,%ld.\n", position.x, position.y);
     DestroyWindow(hwnd);
 
-    hwnd = create_listview_control(LVS_LIST);
-    ok(hwnd != NULL, "failed to create a listview window\n");
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    if (is_v6)
+    {
+        hwnd = create_listview_control(LVS_LIST);
+        ok(hwnd != NULL, "failed to create a listview window\n");
 
-    r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
-    expect(FALSE, r);
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    DestroyWindow(hwnd);
+        position.x = position.y = 123;
+        r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+        todo_wine
+        ok(r, "Unexpected return value %lu.\n", r);
+        todo_wine
+        ok(!position.x && !position.y, "Unexpected position %ld,%ld.\n", position.x, position.y);
+        DestroyWindow(hwnd);
 
-    hwnd = create_listview_control(LVS_REPORT);
-    ok(hwnd != NULL, "failed to create a listview window\n");
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+        hwnd = create_listview_control(LVS_REPORT);
+        ok(hwnd != NULL, "failed to create a listview window\n");
 
-    r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
-    expect(FALSE, r);
-    flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    DestroyWindow(hwnd);
+        position.x = position.y = 123;
+        r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+        todo_wine
+        ok(r, "Unexpected return value %lu.\n", r);
+        todo_wine
+        ok(!position.x && !position.y, "Unexpected position %ld,%ld.\n", position.x, position.y);
+        DestroyWindow(hwnd);
+    }
+    else
+    {
+        hwnd = create_listview_control(LVS_LIST);
+        ok(hwnd != NULL, "failed to create a listview window\n");
+
+        position.x = position.y = 123;
+        r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+        ok(!r, "Unexpected return value %lu.\n", r);
+        ok(position.x == 123 && position.y == 123, "Unexpected position %ld,%ld.\n", position.x, position.y);
+        DestroyWindow(hwnd);
+
+        hwnd = create_listview_control(LVS_REPORT);
+        ok(hwnd != NULL, "failed to create a listview window\n");
+
+        position.x = position.y = 123;
+        r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+        ok(!r, "Unexpected return value %lu.\n", r);
+        ok(position.x == 123 && position.y == 123, "Unexpected position %ld,%ld.\n", position.x, position.y);
+        DestroyWindow(hwnd);
+    }
 }
 
 static void test_multiselect(void)
@@ -7293,7 +7317,7 @@ START_TEST(listview)
     test_item_count();
     test_item_position();
     test_columns();
-    test_getorigin();
+    test_LVM_GETORIGIN(FALSE);
     test_multiselect();
     test_getitemrect();
     test_subitem_rect();
@@ -7387,6 +7411,7 @@ START_TEST(listview)
     test_LVM_GETNEXTITEM();
     test_LVM_SETBKIMAGE(TRUE);
     test_LVM_GETHOTCURSOR();
+    test_LVM_GETORIGIN(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
 
