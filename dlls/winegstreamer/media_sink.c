@@ -240,8 +240,7 @@ static ULONG WINAPI stream_sink_Release(IMFStreamSink *iface)
     {
         IMFMediaEventQueue_Release(stream_sink->event_queue);
         IMFFinalizableMediaSink_Release(stream_sink->media_sink);
-        if (stream_sink->type)
-            IMFMediaType_Release(stream_sink->type);
+        IMFMediaType_Release(stream_sink->type);
         free(stream_sink);
     }
 
@@ -450,8 +449,6 @@ static HRESULT WINAPI stream_sink_type_handler_GetCurrentMediaType(IMFMediaTypeH
 
     if (!type)
         return E_POINTER;
-    if (!stream_sink->type)
-        return MF_E_NOT_INITIALIZED;
 
     IMFMediaType_AddRef((*type = stream_sink->type));
 
@@ -500,8 +497,7 @@ static HRESULT stream_sink_create(DWORD stream_sink_id, IMFMediaType *media_type
     stream_sink->IMFMediaTypeHandler_iface.lpVtbl = &stream_sink_type_handler_vtbl;
     stream_sink->refcount = 1;
     stream_sink->id = stream_sink_id;
-    if (media_type)
-        IMFMediaType_AddRef((stream_sink->type = media_type));
+    IMFMediaType_AddRef((stream_sink->type = media_type));
     IMFFinalizableMediaSink_AddRef((stream_sink->media_sink = &media_sink->IMFFinalizableMediaSink_iface));
 
     TRACE("Created stream sink %p.\n", stream_sink);
