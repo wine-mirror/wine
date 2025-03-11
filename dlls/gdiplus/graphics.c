@@ -6014,6 +6014,7 @@ static GpStatus draw_string_callback(struct gdip_format_string_info *info)
 
         GetOutlineTextMetricsW(info->hdc, sizeof(otm), &otm);
 
+        position.X = args->x + info->bounds->X / args->rel_width;
         underline_height = otm.otmsUnderscoreSize / args->rel_height;
         underline_y = position.Y - otm.otmsUnderscorePosition / args->rel_height - underline_height / 2;
 
