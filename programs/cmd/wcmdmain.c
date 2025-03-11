@@ -270,8 +270,10 @@ RETURN_CODE WCMD_wait_for_input(HANDLE hIn)
         }
         SetConsoleMode(hIn, oldmode);
     }
-    else if (WCMD_ReadFile(hIn, &key, 1, &count))
+    else if (WCMD_ReadFile(hIn, &key, 1, &count) && count)
         return_code = NO_ERROR;
+    else
+        return_code = ERROR_INVALID_FUNCTION;
     return return_code;
 }
 
