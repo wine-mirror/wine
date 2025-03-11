@@ -457,9 +457,14 @@ static HRESULT WINAPI stream_sink_type_handler_GetCurrentMediaType(IMFMediaTypeH
 
 static HRESULT WINAPI stream_sink_type_handler_GetMajorType(IMFMediaTypeHandler *iface, GUID *type)
 {
-    FIXME("iface %p, type %p.\n", iface, type);
+    struct stream_sink *stream_sink = impl_from_IMFMediaTypeHandler(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, type %p.\n", iface, type);
+
+    if (!type)
+        return E_POINTER;
+
+    return IMFMediaType_GetMajorType(stream_sink->type, type);
 }
 
 static const IMFMediaTypeHandlerVtbl stream_sink_type_handler_vtbl =
