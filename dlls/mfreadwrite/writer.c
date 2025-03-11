@@ -177,6 +177,26 @@ static void stream_release_transforms(struct stream *stream)
     stream->encoder = NULL;
 }
 
+static HRESULT stream_get_type(struct stream *stream, IMFMediaType **out_type)
+{
+    IMFMediaTypeHandler *type_handler;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFStreamSink_GetMediaTypeHandler(stream->stream_sink, &type_handler)))
+        return hr;
+    hr = IMFMediaTypeHandler_GetCurrentMediaType(type_handler, out_type);
+
+    IMFMediaTypeHandler_Release(type_handler);
+    return hr;
+}
+
+static struct stream *sink_writer_get_stream(const struct sink_writer *writer, DWORD index)
+{
+    if (index >= writer->streams.count)
+        return NULL;
+    return &writer->streams.items[index];
+}
+
 static void sink_writer_release_pending_item(struct pending_item *item)
 {
     list_remove(&item->entry);
@@ -320,9 +340,48 @@ static HRESULT WINAPI sink_writer_AddStream(IMFSinkWriterEx *iface, IMFMediaType
 static HRESULT WINAPI sink_writer_SetInputMediaType(IMFSinkWriterEx *iface, DWORD index, IMFMediaType *type,
         IMFAttributes *parameters)
 {
-    FIXME("%p, %lu, %p, %p.\n", iface, index, type, parameters);
+    struct sink_writer *writer = impl_from_IMFSinkWriterEx(iface);
+    IMFMediaType *stream_type = NULL;
+    struct stream *stream;
+    DWORD flags;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %lu, %p, %p.\n", iface, index, type, parameters);
+
+    if (!type)
+        return E_INVALIDARG;
+
+    EnterCriticalSection(&writer->cs);
+
+    if (!(stream = sink_writer_get_stream(writer, index)))
+    {
+        hr = MF_E_INVALIDSTREAMNUMBER;
+        goto done;
+    }
+
+    if (FAILED(hr = stream_get_type(stream, &stream_type))
+            || FAILED(hr = IMFMediaType_IsEqual(type, stream_type, &flags)))
+        goto done;
+
+    if (!(flags & MF_MEDIATYPE_EQUAL_MAJOR_TYPES))
+    {
+        hr = MF_E_INVALIDMEDIATYPE;
+        goto done;
+    }
+
+    /* Types are not compatible, create transforms. */
+    if (!(flags & MF_MEDIATYPE_EQUAL_FORMAT_DATA))
+    {
+        /* TODO: Try only using converter first, then try again with encoder. */
+        FIXME("Not implemented.\n");
+        hr = E_NOTIMPL;
+    }
+
+done:
+    if (stream_type)
+        IMFMediaType_Release(stream_type);
+    LeaveCriticalSection(&writer->cs);
+    return hr;
 }
 
 static HRESULT sink_writer_set_presentation_clock(struct sink_writer *writer)
@@ -385,12 +444,6 @@ static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriterEx *iface)
     LeaveCriticalSection(&writer->cs);
 
     return hr;
-}
-
-static struct stream * sink_writer_get_stream(const struct sink_writer *writer, DWORD index)
-{
-    if (index >= writer->streams.count) return NULL;
-    return &writer->streams.items[index];
 }
 
 static HRESULT sink_writer_get_buffer_length(IMFSample *sample, LONGLONG *timestamp, DWORD *length)

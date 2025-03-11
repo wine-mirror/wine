@@ -1844,15 +1844,12 @@ static void test_sink_writer_add_stream(void)
     init_media_type(input_type, video_input_type_desc, -1);
 
     hr = IMFSinkWriter_SetInputMediaType(writer, 0xdeadbeef, NULL, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "SetInputMediaType returned %#lx.\n", hr);
 
     hr = IMFSinkWriter_SetInputMediaType(writer, 0, NULL, NULL);
-    todo_wine
     ok(hr == E_INVALIDARG, "SetInputMediaType returned %#lx.\n", hr);
 
     hr = IMFSinkWriter_SetInputMediaType(writer, 0xdeadbeef, input_type, NULL);
-    todo_wine
     ok(hr == MF_E_INVALIDSTREAMNUMBER, "SetInputMediaType returned %#lx.\n", hr);
 
     hr = IMFSinkWriter_SetInputMediaType(writer, 0, input_type, NULL);
