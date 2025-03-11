@@ -2843,6 +2843,15 @@ static BOOL lexer_can_accept_do(const struct node_builder *builder)
     return node_builder_top(builder, d) == TKN_IN;
 }
 
+static BOOL lexer_white_space_only(const WCHAR *string, int len)
+{
+    int i;
+
+    for (i = 0; i < len; i++)
+        if (!iswspace(string[i])) return FALSE;
+    return TRUE;
+}
+
 /***************************************************************************
  * WCMD_ReadAndParseLine
  *
@@ -2869,8 +2878,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     int      *curLen;
     static WCHAR    *extraSpace = NULL;  /* Deliberately never freed */
     BOOL      inOneLine = FALSE;
-    BOOL      onlyWhiteSpace = FALSE;
-    BOOL      lastWasWhiteSpace = FALSE;
     BOOL      lastWasRedirect = TRUE;
     BOOL      acceptCommand = TRUE;
     struct node_builder builder;
@@ -2897,7 +2904,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     curCopyTo    = curString;
     curLen       = &curStringLen;
     lastWasRedirect = FALSE;  /* Required e.g. for spaces between > and filename */
-    onlyWhiteSpace = TRUE;
 
     curPos = WCMD_strip_for_command_start(curPos);
     /* Parse every character on the line being processed */
@@ -2906,8 +2912,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       WCHAR thisChar;
 
       /* Debugging AID:
-      WINE_TRACE("Looking at '%c' (len:%d, lws:%d, ows:%d)\n", *curPos, *curLen,
-                 lastWasWhiteSpace, onlyWhiteSpace);
+      WINE_TRACE("Looking at '%c' (len:%d)\n", *curPos, *curLen);
       */
 
       /* Prevent overflow caused by the caret escape char */
@@ -2956,11 +2961,9 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
           }
           acceptCommand = TRUE;
-          onlyWhiteSpace = TRUE;
           continue;
         } else if (WCMD_keyword_ws_found(L"else", curPos)) {
           acceptCommand = TRUE;
-          onlyWhiteSpace = TRUE;
           node_builder_push_token(&builder, TKN_ELSE);
 
           curPos = WCMD_skip_leading_spaces(curPos + 4 /* else */);
@@ -2973,7 +2976,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
 
           WINE_TRACE("Found 'DO '\n");
           acceptCommand = TRUE;
-          onlyWhiteSpace = TRUE;
 
           node_builder_push_token(&builder, TKN_DO);
           curPos = WCMD_skip_leading_spaces(curPos + 2 /* do */);
@@ -2982,7 +2984,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       } else if (curCopyTo == curString) {
 
         /* Special handling for the 'FOR' command */
-          if (node_builder_top(&builder, 0) == TKN_FOR && lastWasWhiteSpace) {
+          if (node_builder_top(&builder, 0) == TKN_FOR) {
           WINE_TRACE("Found 'FOR ', comparing next parm: '%s'\n", wine_dbgstr_w(curPos));
 
           if (WCMD_keyword_ws_found(L"in", curPos)) {
@@ -2992,7 +2994,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                curRedirs, &curRedirsLen,
                                &curCopyTo, &curLen);
             node_builder_push_token(&builder, TKN_IN);
-            onlyWhiteSpace = TRUE;
             curPos = WCMD_skip_leading_spaces(curPos + 2 /* in */);
             continue;
           }
@@ -3006,8 +3007,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       if (!inOneLine) thisChar = *curPos;
       else            thisChar = 'X';  /* Character with no special processing */
 
-      lastWasWhiteSpace = FALSE; /* Will be reset below */
-
       switch (thisChar) {
 
       case '=': /* drop through - ignore token delimiters at the start of a command */
@@ -3020,8 +3019,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                   /* If finishing off a redirect, add a whitespace delimiter */
                   if (curCopyTo == curRedirs) {
                       curCopyTo[(*curLen)++] = ' ';
-                      if (curStringLen == 0)
-                          onlyWhiteSpace = TRUE;
                   }
                   curCopyTo = curString;
                   curLen = &curStringLen;
@@ -3029,10 +3026,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                 if (*curLen > 0) {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
-
-                /* Remember just processed whitespace */
-                lastWasWhiteSpace = TRUE;
-
                 break;
 
       case '>': /* drop through - handle redirect chars the same */
@@ -3080,8 +3073,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                     node_builder_push_token(&builder, TKN_BAR);
                   }
                   acceptCommand = TRUE;
-                  onlyWhiteSpace = TRUE;
-                  thisChar = L' ';
                 } else {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
@@ -3111,17 +3102,10 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                    In an ELSE statement, only allow it straight away after
                       the ELSE and whitespace
                  */
-                } else if ((acceptCommand && onlyWhiteSpace) ||
-                           (node_builder_top(&builder, 0) == TKN_IN && onlyWhiteSpace)) {
-
-                  /* Add the current command */
-                  lexer_push_command(&builder, curString, &curStringLen,
-                                     curRedirs, &curRedirsLen,
-                                     &curCopyTo, &curLen);
+                } else if ((acceptCommand || node_builder_top(&builder, 0) == TKN_IN) &&
+                           lexer_white_space_only(curString, curStringLen)) {
                   node_builder_push_token(&builder, TKN_OPENPAR);
                   acceptCommand = TRUE;
-                  onlyWhiteSpace = TRUE;
-                  thisChar = ' ';
                 } else {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
@@ -3164,8 +3148,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                     node_builder_push_token(&builder, TKN_AMP);
                   }
                   acceptCommand = TRUE;
-                  onlyWhiteSpace = TRUE;
-                  thisChar = ' ';
                 } else {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
@@ -3180,8 +3162,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
                                      &curCopyTo, &curLen);
                   node_builder_push_token(&builder, TKN_CLOSEPAR);
                   acceptCommand = FALSE;
-                  onlyWhiteSpace = TRUE;
-                  thisChar = ' ';
                 } else {
                   curCopyTo[(*curLen)++] = *curPos;
                 }
@@ -3192,12 +3172,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
       }
 
       curPos++;
-
-      /* At various times we need to know if we have only skipped whitespace,
-         so reset this variable and then it will remain true until a non
-         whitespace is found                                               */
-      if ((thisChar != ' ') && (thisChar != '\t') && (thisChar != '\n'))
-        onlyWhiteSpace = FALSE;
 
       /* If we have reached the end, add this command into the list
          Do not add command to list if escape char ^ was last */
@@ -3214,7 +3188,6 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
               inOneLine = FALSE;
               inQuotes = 0;
               acceptCommand = TRUE;
-              onlyWhiteSpace = TRUE;
 
               /* fetch next non empty line */
               do {
