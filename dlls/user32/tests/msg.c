@@ -15378,9 +15378,7 @@ static const struct message WmShowMinimized_1[] = {
     { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
-    { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam|wine_only, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
-    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam|wine_only, OBJID_CLIENT, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },

@@ -3826,10 +3826,11 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
 
     if (!(winpos->flags & (SWP_NOACTIVATE|SWP_HIDEWINDOW)))
     {
+        UINT style = get_window_long( winpos->hwnd, GWL_STYLE );
         /* child windows get WM_CHILDACTIVATE message */
-        if ((get_window_long( winpos->hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD)
+        if ((style & (WS_CHILD | WS_POPUP)) == WS_CHILD)
             send_message( winpos->hwnd, WM_CHILDACTIVATE, 0, 0 );
-        else
+        else if (!(style & WS_MINIMIZE))
             set_foreground_window( winpos->hwnd, FALSE );
     }
 
