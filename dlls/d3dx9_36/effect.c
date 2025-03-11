@@ -6128,7 +6128,6 @@ static HRESULT d3dx_parse_array_selector(struct d3dx_effect *effect, struct d3dx
         FIXME("Referenced parameter %s not found.\n", ptr + 4);
         return D3DXERR_INVALIDDATA;
     }
-    TRACE("Unknown u32: 0x%.8x.\n", *(uint32_t *)(ptr + string_size));
 
     if (string_size % sizeof(uint32_t))
         FIXME("Unaligned string_size %u.\n", string_size);
