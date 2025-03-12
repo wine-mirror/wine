@@ -30,27 +30,35 @@
 #include "winbase.h"
 #include "winedump.h"
 
+#define NUMBER_OF(x, y) (((x) + (y) - 1) / (y))
+
 struct pdb_reader
 {
+    int fd;
     union
     {
         struct
         {
-            const struct PDB_JG_HEADER* header;
+            const struct PDB_JG_HEADER  header;
             const struct PDB_JG_TOC*    toc;
             const struct PDB_JG_ROOT*   root;
         } jg;
         struct
         {
-            const struct PDB_DS_HEADER* header;
+            const struct PDB_DS_HEADER  header;
             const struct PDB_DS_TOC*    toc;
             const struct PDB_DS_ROOT*   root;
         } ds;
     } u;
     void*       (*read_stream)(struct pdb_reader*, DWORD);
-    DWORD       stream_used[1024];
+    DWORD       *stream_used;
     PDB_STRING_TABLE* global_string_table;
 };
+
+static ssize_t pdb_read_at(int fd, void *buffer, size_t count, off_t offset)
+{
+    return lseek(fd, offset, SEEK_SET) == (off_t)-1 ? (ssize_t)-1 : read(fd, buffer, count);
+}
 
 static inline BOOL has_stream_been_read(struct pdb_reader* reader, unsigned stream_nr)
 {
@@ -67,20 +75,23 @@ static inline void clear_stream_been_read(struct pdb_reader* reader, unsigned st
     reader->stream_used[stream_nr / 32] &= ~(1 << (stream_nr % 32));
 }
 
-static void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* block_list, int size)
+static void* pdb_jg_read(int fd, const struct PDB_JG_HEADER* pdb, const WORD* block_list, int size)
 {
     int                 i, nBlocks;
     BYTE*               buffer;
 
     if (!size) return NULL;
 
-    nBlocks = (size + pdb->block_size - 1) / pdb->block_size;
+    nBlocks = NUMBER_OF(size, pdb->block_size);
     buffer = xmalloc(nBlocks * pdb->block_size);
 
     for (i = 0; i < nBlocks; i++)
-        memcpy(buffer + i * pdb->block_size,
-               (const char*)pdb + block_list[i] * pdb->block_size, pdb->block_size);
-
+        if (pdb_read_at(fd, buffer + i * pdb->block_size, pdb->block_size,
+                        block_list[i] * pdb->block_size) != pdb->block_size)
+        {
+            free(buffer);
+            return NULL;
+        }
     return buffer;
 }
 
@@ -97,25 +108,36 @@ static void* pdb_jg_read_stream(struct pdb_reader* reader, DWORD stream_nr)
         return NULL;
     block_list = (const WORD*) &reader->u.jg.toc->streams[reader->u.jg.toc->num_streams];
     for (i = 0; i < stream_nr; i++)
-        block_list += (reader->u.jg.toc->streams[i].size +
-                       reader->u.jg.header->block_size - 1) / reader->u.jg.header->block_size;
+        block_list += NUMBER_OF(reader->u.jg.toc->streams[i].size, reader->u.jg.header.block_size);
 
-    return pdb_jg_read(reader->u.jg.header, block_list,
+    return pdb_jg_read(reader->fd, &reader->u.jg.header, block_list,
                        reader->u.jg.toc->streams[stream_nr].size);
 }
 
-static BOOL pdb_jg_init(struct pdb_reader* reader)
+static BOOL pdb_jg_init(int fd, struct pdb_reader* reader)
 {
-    reader->u.jg.header = PRD(0, sizeof(struct PDB_JG_HEADER));
-    if (!reader->u.jg.header) return FALSE;
+    unsigned size_blocks;
+    WORD    *blocks;
+    BOOL     ret = FALSE;
+
+    if (pdb_read_at(fd, (void*)&reader->u.jg.header, sizeof(reader->u.jg.header), 0) != sizeof(reader->u.jg.header)) return FALSE;
+    reader->fd = fd;
     reader->read_stream = pdb_jg_read_stream;
-    reader->u.jg.toc = pdb_jg_read(reader->u.jg.header,
-                                   (unsigned short *)(reader->u.jg.header + 1),
-                                   reader->u.jg.header->toc.size);
-    memset(reader->stream_used, 0, sizeof(reader->stream_used));
-    reader->u.jg.root = reader->read_stream(reader, 1);
-    if (!reader->u.jg.root) return FALSE;
-    return TRUE;
+    size_blocks = NUMBER_OF(reader->u.jg.header.toc.size, reader->u.jg.header.block_size) * sizeof(blocks[0]);
+    blocks = xmalloc(size_blocks);
+    ret = pdb_read_at(fd, blocks, size_blocks, sizeof(struct PDB_JG_HEADER)) == size_blocks;
+
+    if (ret)
+        ret = (reader->u.jg.toc = pdb_jg_read(fd, &reader->u.jg.header, blocks,
+                                              reader->u.jg.header.toc.size)) != NULL;
+    free(blocks);
+    if (ret)
+        ret = (reader->stream_used = calloc(sizeof(DWORD),
+                                            NUMBER_OF(reader->u.jg.toc->num_streams, sizeof(DWORD) * 8))) != NULL;
+    if (ret)
+        ret = (reader->u.jg.root = reader->read_stream(reader, 1)) != NULL;
+
+    return ret;
 }
 
 static DWORD    pdb_get_num_streams(const struct pdb_reader* reader)
@@ -156,6 +178,7 @@ static void pdb_exit(struct pdb_reader* reader)
         }
     }
     free(reader->global_string_table);
+    free(reader->stream_used);
     if (reader->read_stream == pdb_jg_read_stream)
     {
         free((char*)reader->u.jg.root);
@@ -1139,11 +1162,11 @@ static void pdb_jg_dump_header_root(struct pdb_reader* reader)
            "\tblock_size:        %08x\n"
            "\tfree_list_block:   %04x\n"
            "\ttotal_alloc:       %04x\n",
-           (int)sizeof(pdb2) - 1, reader->u.jg.header->ident,
-           reader->u.jg.header->signature,
-           reader->u.jg.header->block_size,
-           reader->u.jg.header->free_list_block,
-           reader->u.jg.header->total_alloc);
+           (int)sizeof(pdb2) - 1, reader->u.jg.header.ident,
+           reader->u.jg.header.signature,
+           reader->u.jg.header.block_size,
+           reader->u.jg.header.free_list_block,
+           reader->u.jg.header.total_alloc);
 
     printf("Root:\n"
            "\tVersion:       %u\n"
@@ -1195,19 +1218,23 @@ static void pdb_jg_dump_header_root(struct pdb_reader* reader)
     }
 }
 
-static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const UINT *block_list, int size)
+static void* pdb_ds_read(int fd, const struct PDB_DS_HEADER* header, const UINT *block_list, unsigned int size)
 {
-    int                 i, nBlocks;
+    unsigned int        i, nBlocks;
     BYTE*               buffer;
 
     if (!size) return NULL;
 
-    nBlocks = (size + header->block_size - 1) / header->block_size;
+    nBlocks = NUMBER_OF(size, header->block_size);
     buffer = xmalloc(nBlocks * header->block_size);
 
     for (i = 0; i < nBlocks; i++)
-        memcpy(buffer + i * header->block_size,
-               (const char*)header + block_list[i] * header->block_size, header->block_size);
+        if (pdb_read_at(fd, buffer + i * header->block_size, header->block_size,
+                        (size_t)block_list[i] * header->block_size) != header->block_size)
+        {
+            free(buffer);
+            return NULL;
+        }
 
     return buffer;
 }
@@ -1225,24 +1252,35 @@ static void* pdb_ds_read_stream(struct pdb_reader* reader, DWORD stream_number)
         return NULL;
     block_list = reader->u.ds.toc->stream_size + reader->u.ds.toc->num_streams;
     for (i = 0; i < stream_number; i++)
-        block_list += (reader->u.ds.toc->stream_size[i] + reader->u.ds.header->block_size - 1) /
-            reader->u.ds.header->block_size;
+        block_list += NUMBER_OF(reader->u.ds.toc->stream_size[i], reader->u.ds.header.block_size);
 
-    return pdb_ds_read(reader->u.ds.header, block_list, reader->u.ds.toc->stream_size[stream_number]);
+    return pdb_ds_read(reader->fd, &reader->u.ds.header, block_list, reader->u.ds.toc->stream_size[stream_number]);
 }
 
-static BOOL pdb_ds_init(struct pdb_reader* reader)
+static BOOL pdb_ds_init(int fd, struct pdb_reader* reader)
 {
-    reader->u.ds.header = PRD(0, sizeof(*reader->u.ds.header));
-    if (!reader->u.ds.header) return FALSE;
+    unsigned  size_blocks;
+    unsigned *blocks;
+    BOOL      ret;
+
+    if (pdb_read_at(fd, (void*)&reader->u.ds.header, sizeof(reader->u.ds.header), 0) != sizeof(reader->u.ds.header)) return FALSE;
+    reader->fd = fd;
     reader->read_stream = pdb_ds_read_stream;
-    reader->u.ds.toc = pdb_ds_read(reader->u.ds.header,
-                                   (const UINT *)((const char*)reader->u.ds.header + reader->u.ds.header->toc_block * reader->u.ds.header->block_size),
-                                   reader->u.ds.header->toc_size);
-    memset(reader->stream_used, 0, sizeof(reader->stream_used));
-    reader->u.ds.root = reader->read_stream(reader, 1);
-    if (!reader->u.ds.root) return FALSE;
-    return TRUE;
+    size_blocks = NUMBER_OF(reader->u.ds.header.toc_size, reader->u.ds.header.block_size) * sizeof(blocks[0]);
+    blocks = xmalloc(size_blocks);
+    ret = pdb_read_at(fd, blocks, size_blocks,
+                      (size_t)reader->u.ds.header.toc_block * reader->u.ds.header.block_size) == size_blocks;
+    if (ret)
+        ret = (reader->u.ds.toc = pdb_ds_read(reader->fd, &reader->u.ds.header,
+                                              blocks, reader->u.ds.header.toc_size)) != NULL;
+    free(blocks);
+    if (ret)
+        ret = (reader->stream_used = calloc(sizeof(DWORD),
+                                            NUMBER_OF(reader->u.ds.toc->num_streams, sizeof(DWORD) * 8))) != NULL;
+    if (ret)
+        ret = (reader->u.ds.root = reader->read_stream(reader, 1)) != NULL;
+
+    return ret;
 }
 
 static const char       pdb7[] = "Microsoft C/C++ MSF 7.00";
@@ -1265,19 +1303,19 @@ static void pdb_ds_dump_header_root(struct pdb_reader* reader)
            "\ttoc_size:         %08x\n"
            "\tunknown2:         %08x\n"
            "\ttoc_block:        %08x\n",
-           (int)sizeof(pdb7) - 1, reader->u.ds.header->signature,
-           reader->u.ds.header->block_size,
-           reader->u.ds.header->free_list_block,
-           reader->u.ds.header->num_blocks,
-           reader->u.ds.header->toc_size,
-           reader->u.ds.header->unknown2,
-           reader->u.ds.header->toc_block);
+           (int)sizeof(pdb7) - 1, reader->u.ds.header.signature,
+           reader->u.ds.header.block_size,
+           reader->u.ds.header.free_list_block,
+           reader->u.ds.header.num_blocks,
+           reader->u.ds.header.toc_size,
+           reader->u.ds.header.unknown2,
+           reader->u.ds.header.toc_block);
 
     block_list = reader->u.ds.toc->stream_size + reader->u.ds.toc->num_streams;
     printf("\t\tnum_streams:    %u\n", reader->u.ds.toc->num_streams);
     for (ofs = i = 0; i < reader->u.ds.toc->num_streams; i++)
     {
-        unsigned int nblk = (reader->u.ds.toc->stream_size[i] + reader->u.ds.header->block_size - 1) / reader->u.ds.header->block_size;
+        unsigned int nblk = NUMBER_OF(reader->u.ds.toc->stream_size[i], reader->u.ds.header.block_size);
         printf("\t\tstream[%#x]:\tsize: %u\n", i, reader->u.ds.toc->stream_size[i]);
         if (nblk)
         {
@@ -1355,46 +1393,46 @@ static void pdb_ds_dump_header_root(struct pdb_reader* reader)
     }
 }
 
-enum FileSig get_kind_pdb(void)
+enum FileSig get_kind_pdb(int fd)
 {
-    const char* head;
+    char tmp[max(sizeof(pdb7), sizeof(pdb2)) - 1];
 
-    head = PRD(0, sizeof(pdb2) - 1);
-    if (head && !memcmp(head, pdb2, sizeof(pdb2) - 1))
-        return SIG_PDB;
-    head = PRD(0, sizeof(pdb7) - 1);
-    if (head && !memcmp(head, pdb7, sizeof(pdb7) - 1))
+    if (read(fd, tmp, sizeof(tmp)) == sizeof(tmp) &&
+        (!memcmp(tmp, pdb2, sizeof(pdb2) - 1) ||
+         !memcmp(tmp, pdb7, sizeof(pdb7) - 1)))
         return SIG_PDB;
     return SIG_UNKNOWN;
 }
 
-void pdb_dump(void)
+void pdb_dump(int fd)
 {
-    const BYTE* head;
+    char tmp[max(sizeof(pdb2), sizeof(pdb7)) - 1];
     const char** saved_dumpsect = globals.dumpsect;
     static const char* default_dumpsect[] = {"DBI", "TPI", "IPI", NULL};
     struct pdb_reader reader;
 
     if (!globals.dumpsect) globals.dumpsect = default_dumpsect;
 
-    if ((head = PRD(0, sizeof(pdb2) - 1)) && !memcmp(head, pdb2, sizeof(pdb2) - 1))
+    if (read(fd, tmp, sizeof(tmp)) == sizeof(tmp))
     {
-        if (!pdb_jg_init(&reader))
+        if (!memcmp(tmp, pdb2, sizeof(pdb2) - 1))
         {
-            printf("Unable to get header information\n");
-            return;
+            if (!pdb_jg_init(fd, &reader))
+            {
+                printf("Unable to get header information\n");
+                return;
+            }
+            pdb_jg_dump_header_root(&reader);
         }
-
-        pdb_jg_dump_header_root(&reader);
-    }
-    else if ((head = PRD(0, sizeof(pdb7) - 1)) && !memcmp(head, pdb7, sizeof(pdb7) - 1))
-    {
-        if (!pdb_ds_init(&reader))
+        else if (!memcmp(tmp, pdb7, sizeof(pdb7) - 1))
         {
-            printf("Unable to get header information\n");
-            return;
+            if (!pdb_ds_init(fd, &reader))
+            {
+                printf("Unable to get header information\n");
+                return;
+            }
+            pdb_ds_dump_header_root(&reader);
         }
-        pdb_ds_dump_header_root(&reader);
     }
     mark_stream_been_read(&reader, 0); /* mark stream #0 (old TOC) as read */
 
