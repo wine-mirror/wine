@@ -3376,6 +3376,10 @@ static void test_async_file_errors(void)
     }
     ok(completion_count == 0, "completion routine should only be called when ReadFileEx succeeds (this rule was violated %d times)\n", completion_count);
     /*printf("Error = %ld\n", GetLastError());*/
+
+    SleepEx(0, TRUE); /* Flush pending APCs */
+    ok(CloseHandle(hFile), "CloseHandle: error %ld\n", GetLastError());
+    ok(CloseHandle(hSem), "CloseHandle: error %ld\n", GetLastError());
     HeapFree(GetProcessHeap(), 0, lpBuffer);
 }
 
