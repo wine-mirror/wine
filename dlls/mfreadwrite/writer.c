@@ -58,9 +58,9 @@ struct pending_item
 struct stream
 {
     IMFStreamSink *stream_sink;
-    IMFTransform *encoder;
+    IMFTransform *converter, *encoder;
     MF_SINK_WRITER_STATISTICS stats;
-    struct list queue;
+    struct list queue; /* struct pending_item. */
 };
 
 struct sink_writer
@@ -166,6 +166,16 @@ static HRESULT create_marker_context(unsigned int marker_type, void *user_contex
 
     return S_OK;
 }
+static void stream_release_transforms(struct stream *stream)
+{
+    if (stream->converter)
+        IMFTransform_Release(stream->converter);
+    stream->converter = NULL;
+
+    if (stream->encoder)
+        IMFTransform_Release(stream->encoder);
+    stream->encoder = NULL;
+}
 
 static void sink_writer_release_pending_item(struct pending_item *item)
 {
@@ -236,8 +246,7 @@ static ULONG WINAPI sink_writer_Release(IMFSinkWriter *iface)
 
             if (stream->stream_sink)
                 IMFStreamSink_Release(stream->stream_sink);
-            if (stream->encoder)
-                IMFTransform_Release(stream->encoder);
+            stream_release_transforms(stream);
             sink_writer_drop_pending_items(stream);
         }
         DeleteCriticalSection(&writer->cs);
@@ -360,6 +369,8 @@ static HRESULT WINAPI sink_writer_BeginWriting(IMFSinkWriter *iface)
                 WARN("Failed to subscribe to events for steam %u, hr %#lx.\n", i, hr);
             }
 
+            if (stream->converter)
+                IMFTransform_ProcessMessage(stream->converter, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
             if (stream->encoder)
                 IMFTransform_ProcessMessage(stream->encoder, MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
         }
@@ -469,6 +480,8 @@ static HRESULT sink_writer_flush(struct sink_writer *writer, unsigned int index)
 
     IMFStreamSink_Flush(stream->stream_sink);
 
+    if (stream->converter)
+        IMFTransform_ProcessMessage(stream->converter, MFT_MESSAGE_COMMAND_FLUSH, 0);
     if (stream->encoder)
         IMFTransform_ProcessMessage(stream->encoder, MFT_MESSAGE_COMMAND_FLUSH, 0);
 
@@ -743,6 +756,9 @@ static HRESULT WINAPI sink_writer_GetServiceForStream(IMFSinkWriter *iface, DWOR
     {
         if (stream->encoder)
             hr = sink_writer_get_service(stream->encoder, service, riid, object);
+        else if (stream->converter)
+            hr = sink_writer_get_service(stream->converter, service, riid, object);
+
         if (FAILED(hr))
             hr = sink_writer_get_service(stream->stream_sink, service, riid, object);
     }
