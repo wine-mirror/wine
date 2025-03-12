@@ -314,8 +314,12 @@ static bool init_test_context(struct d3d9_test_context *context)
     memset(context, 0, sizeof(*context));
 
     context->window = create_window();
-    context->d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    ok(!!context->d3d, "Failed to create a D3D object.\n");
+    if (!(context->d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D object.\n");
+        DestroyWindow(context->window);
+        return false;
+    }
     if (!(context->device = create_device(context->d3d, context->window, context->window, TRUE)))
     {
         skip("Failed to create a D3D device.\n");
