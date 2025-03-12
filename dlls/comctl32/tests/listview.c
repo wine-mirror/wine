@@ -561,6 +561,21 @@ static void release_key(int vk)
     ok(res, "SetKeyboardState failed.\n");
 }
 
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -2408,6 +2423,7 @@ static void test_LVM_GETORIGIN(BOOL is_v6)
     POINT position;
     HWND hwnd;
     DWORD r;
+    int i;
 
     hwnd = create_listview_control(LVS_ICON);
     ok(hwnd != NULL, "failed to create a listview window\n");
@@ -2416,6 +2432,20 @@ static void test_LVM_GETORIGIN(BOOL is_v6)
     r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
     ok(r == 1, "Unexpected return value %lu.\n", r);
     ok(!position.x && !position.y, "Unexpected position %ld,%ld.\n", position.x, position.y);
+
+    for (i = 0; i < 10; i++)
+        insert_item(hwnd, i);
+    flush_events();
+
+    r = SendMessageA(hwnd, LVM_SCROLL, 0, 50);
+    ok(r, "Unexpected return value %lu.\n", r);
+
+    position.x = position.y = 0;
+    r = SendMessageA(hwnd, LVM_GETORIGIN, 0, (LPARAM)&position);
+    ok(r == 1, "Unexpected return value %lu.\n", r);
+    todo_wine
+    ok(position.y == 50, "Unexpected position %ld.\n", position.y);
+
     DestroyWindow(hwnd);
 
     hwnd = create_listview_control(LVS_SMALLICON);
@@ -6512,21 +6542,6 @@ static void test_header_proc(void)
 
     DestroyWindow(hdr);
     DestroyWindow(hwnd);
-}
-
-static void flush_events(void)
-{
-    MSG msg;
-    int diff = 200;
-    int min_timeout = 100;
-    DWORD time = GetTickCount() + diff;
-
-    while (diff > 0)
-    {
-        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
-        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
-        diff = time - GetTickCount();
-    }
 }
 
 static void test_oneclickactivate(void)
