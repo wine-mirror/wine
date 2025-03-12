@@ -2091,7 +2091,7 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags, stru
             extra_rects[0] = extra_rects[1] = new_rects->visible;
             if (new_surface)
             {
-                extra_rects[1] = new_surface->rect;
+                extra_rects[1] = is_layered ? dummy_surface.rect : new_surface->rect;
                 OffsetRect( &extra_rects[1], new_rects->visible.left, new_rects->visible.top );
             }
             if (valid_rects) extra_rects[2] = valid_rects[0];
