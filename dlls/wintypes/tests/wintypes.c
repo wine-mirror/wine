@@ -134,6 +134,54 @@ static void test_interfaces(void)
     RoUninitialize();
 }
 
+static void test_IBufferStatics(void)
+{
+    static const WCHAR *class_name = L"Windows.Storage.Streams.Buffer";
+    IBufferFactory *buffer_factory = NULL;
+    IActivationFactory *factory = NULL;
+    IBuffer *buffer = NULL;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        RoUninitialize();
+        return;
+    }
+
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IBufferFactory, (void **)&buffer_factory);
+    ok(hr == S_OK, "QueryInterface IID_IBufferFactory failed, hr %#lx.\n", hr);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBufferFactory_Create(buffer_factory, 0, NULL);
+    ok(hr == E_INVALIDARG, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+    }
+
+    hr = IBufferFactory_Create(buffer_factory, 0, &buffer);
+    todo_wine
+    ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+    if (hr == S_OK) IBuffer_Release(buffer);
+
+    IBufferFactory_Release(buffer_factory);
+    IActivationFactory_Release(factory);
+    RoUninitialize();
+}
+
 static void test_IApiInformationStatics(void)
 {
     static const struct
@@ -1065,6 +1113,7 @@ START_TEST(wintypes)
 
     test_interfaces();
     test_IApiInformationStatics();
+    test_IBufferStatics();
     test_IPropertyValueStatics();
     test_RoParseTypeName();
     test_RoResolveNamespace();

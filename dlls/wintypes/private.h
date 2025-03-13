@@ -39,3 +39,4 @@
 #include "wintypes_private.h"
 
 extern IActivationFactory *data_writer_activation_factory;
+extern IActivationFactory *buffer_activation_factory;

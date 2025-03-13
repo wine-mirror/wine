@@ -1304,6 +1304,8 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
         IActivationFactory_AddRef((*factory = &api_information_statics.IActivationFactory_iface));
     if (!wcscmp(buffer, L"Windows.Foundation.PropertyValue"))
         IActivationFactory_AddRef((*factory = &property_value_statics.IActivationFactory_iface));
+    if (!wcscmp(buffer, L"Windows.Storage.Streams.Buffer"))
+        IActivationFactory_AddRef((*factory = buffer_activation_factory));
     if (!wcscmp(buffer, L"Windows.Storage.Streams.DataWriter"))
         IActivationFactory_AddRef((*factory = data_writer_activation_factory));
 
