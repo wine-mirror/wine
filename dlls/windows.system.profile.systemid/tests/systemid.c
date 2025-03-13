@@ -48,6 +48,7 @@ static void test_SystemIdentification_Statics(void)
     static const WCHAR *system_id_statics_name = L"Windows.System.Profile.SystemIdentification";
     ISystemIdentificationStatics *system_id_statics = (void *)0xdeadbeef;
     ISystemIdentificationInfo *system_id_info = (void *)0xdeadbeef;
+    SystemIdentificationSource system_id_source = 0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str = NULL;
     HRESULT hr;
@@ -77,6 +78,15 @@ static void test_SystemIdentification_Statics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     check_interface( system_id_info, &IID_IAgileObject, FALSE );
+
+    hr = ISystemIdentificationInfo_get_Source( system_id_info, NULL );
+    todo_wine
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = ISystemIdentificationInfo_get_Source( system_id_info, &system_id_source );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine
+    ok( system_id_source == SystemIdentificationSource_Uefi, "ISystemIdentificationInfo_get_Source returned %u.\n", system_id_source );
 
     ref = ISystemIdentificationInfo_Release( system_id_info );
     ok( ref == 0, "got ref %ld.\n", ref );
