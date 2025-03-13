@@ -1096,6 +1096,8 @@ static char *get_device_mount_point( dev_t dev )
 #if defined(HAVE_GETATTRLIST) && defined(ATTR_VOL_CAPABILITIES) && \
     defined(VOL_CAPABILITIES_FORMAT) && defined(VOL_CAP_FMT_CASE_SENSITIVE)
 
+static pthread_mutex_t fs_cache_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 struct get_fsid
 {
     ULONG size;
@@ -1172,6 +1174,7 @@ static void add_fs_cache( dev_t dev, fsid_t fsid, BOOLEAN case_sensitive )
  */
 static int get_dir_case_sensitivity_attr( const char *dir )
 {
+    BOOLEAN ret = FALSE;
     char *mntpoint;
     struct attrlist attr;
     struct vol_caps caps;
@@ -1187,13 +1190,18 @@ static int get_dir_case_sensitivity_attr( const char *dir )
     if (getattrlist( dir, &attr, &get_fsid, sizeof(get_fsid), 0 ) != 0 ||
         get_fsid.size != sizeof(get_fsid))
         return -1;
+
     /* Try to look it up in the cache */
+    mutex_lock( &fs_cache_mutex );
     entry = look_up_fs_cache( get_fsid.dev );
     if (entry && !memcmp( &entry->fsid, &get_fsid.fsid, sizeof(fsid_t) ))
+    {
         /* Cache lookup succeeded */
-        return entry->case_sensitive;
-    /* Cache is stale at this point, we have to update it */
+        ret = entry->case_sensitive;
+        goto done;
+    }
 
+    /* Cache is stale at this point, we have to update it */
     mntpoint = get_device_mount_point( get_fsid.dev );
     /* Now look up the case-sensitivity */
     attr.commonattr = 0;
@@ -1202,7 +1210,8 @@ static int get_dir_case_sensitivity_attr( const char *dir )
     {
         free( mntpoint );
         add_fs_cache( get_fsid.dev, get_fsid.fsid, TRUE );
-        return TRUE;
+        ret = TRUE;
+        goto done;
     }
     free( mntpoint );
     if (caps.size == sizeof(caps) &&
@@ -1210,8 +1219,6 @@ static int get_dir_case_sensitivity_attr( const char *dir )
          (VOL_CAP_FMT_CASE_SENSITIVE | VOL_CAP_FMT_CASE_PRESERVING)) ==
         (VOL_CAP_FMT_CASE_SENSITIVE | VOL_CAP_FMT_CASE_PRESERVING))
     {
-        BOOLEAN ret;
-
         if ((caps.caps.capabilities[VOL_CAPABILITIES_FORMAT] &
             VOL_CAP_FMT_CASE_SENSITIVE) != VOL_CAP_FMT_CASE_SENSITIVE)
             ret = FALSE;
@@ -1219,9 +1226,12 @@ static int get_dir_case_sensitivity_attr( const char *dir )
             ret = TRUE;
         /* Update the cache */
         add_fs_cache( get_fsid.dev, get_fsid.fsid, ret );
-        return ret;
+        goto done;
     }
-    return FALSE;
+
+done:
+    mutex_unlock( &fs_cache_mutex );
+    return ret;
 }
 #endif
 
