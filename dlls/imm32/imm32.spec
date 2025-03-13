@@ -7,7 +7,7 @@
 @ stub CtfImmGetGuidAtom
 @ stub CtfImmGetIMEFileName
 @ stub CtfImmGetTMAEFlags
-@ stub CtfImmHideToolbarWnd
+@ stdcall CtfImmHideToolbarWnd()
 @ stdcall CtfImmIsCiceroEnabled()
 @ stub CtfImmIsCiceroStartedInThread
 @ stub CtfImmIsGuidMapEnable

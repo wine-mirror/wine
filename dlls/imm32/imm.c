@@ -3342,3 +3342,13 @@ BOOL WINAPI CtfImmIsCiceroEnabled(void)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/***********************************************************************
+ *      CtfImmHideToolbarWnd (IMM32.@)
+ */
+BOOL WINAPI CtfImmHideToolbarWnd(void)
+{
+    FIXME("(): stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
