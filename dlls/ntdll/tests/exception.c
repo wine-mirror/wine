@@ -304,6 +304,147 @@ static void test_hwbpt_in_syscall(void)
     RemoveVectoredExceptionHandler(handler);
     TlsFree(ind);
 }
+
+static void *test_single_step_exc_address;
+static int test_single_step_address_test;
+static volatile LONG test_single_step_address_thread_wait;
+static HANDLE test_single_step_address_signal, test_single_step_address_wait;
+
+static LONG CALLBACK test_single_step_address_handler(EXCEPTION_POINTERS *info)
+{
+    EXCEPTION_RECORD *rec = info->ExceptionRecord;
+
+    test_single_step_exc_address = rec->ExceptionAddress;
+    ok(rec->ExceptionCode == EXCEPTION_SINGLE_STEP, "got %#lx, address %p.\n", rec->ExceptionCode, rec->ExceptionAddress);
+    ExitThread(0);
+    ok(0, "got here.\n");
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static DWORD WINAPI test_single_step_address_thread(void *dummy)
+{
+    CONTEXT c;
+
+    memset( code_mem, 0x90 /* nop */, 3 );
+
+    if (test_single_step_address_test == 1) do
+    {
+        InterlockedIncrement(&test_single_step_address_thread_wait);
+    } while (1);
+
+    if (test_single_step_address_test == 3)
+    {
+        SignalObjectAndWait(test_single_step_address_signal, test_single_step_address_wait, INFINITE, FALSE);
+        ok(0, "got here.\n");
+    }
+
+    c.ContextFlags = CONTEXT_FULL;
+    GetThreadContext(GetCurrentThread(), &c);
+#ifdef __x86_64__
+    c.Rip = (ULONG_PTR)code_mem;
+#else
+    c.Eip = (ULONG_PTR)code_mem;
+#endif
+    c.EFlags |= 0x100;
+    if (test_single_step_address_test == 2)
+        NtContinue( &c, FALSE );
+    else
+        SetThreadContext(GetCurrentThread(), &c);
+    ok(0, "got here.\n");
+    return 0;
+}
+
+static void test_single_step_address_run(void *handler, int test)
+{
+    HANDLE thread;
+    CONTEXT c;
+
+    winetest_push_context("test %d", test);
+
+    test_single_step_address_signal = CreateEventW(NULL, FALSE, FALSE, NULL);
+    test_single_step_address_wait = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    test_single_step_exc_address = NULL;
+    test_single_step_address_test = test;
+    test_single_step_address_thread_wait = 0;
+    thread = CreateThread(NULL, 0, test_single_step_address_thread, NULL, 0, NULL);
+
+    switch (test)
+    {
+        case 1:
+        case 3:
+            if (test == 1)
+            {
+                while (!test_single_step_address_thread_wait)
+                    Sleep(10);
+            }
+            else
+            {
+                WaitForSingleObject(test_single_step_address_signal, INFINITE);
+            }
+            SuspendThread(thread);
+            c.ContextFlags = CONTEXT_FULL;
+            GetThreadContext(thread, &c);
+#ifdef __x86_64__
+            c.Rip = (ULONG_PTR)code_mem;
+#else
+            c.Eip = (ULONG_PTR)code_mem;
+#endif
+            c.EFlags |= 0x100;
+            SetThreadContext(thread, &c);
+            ResumeThread(thread);
+            if (test == 3)
+                SetEvent(test_single_step_address_wait);
+            break;
+    }
+
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    CloseHandle(test_single_step_address_signal);
+    CloseHandle(test_single_step_address_wait);
+
+    /* Vectored handler stays referenced because it execution ends with TerminateThread() and it never returns,
+     * decrement its reference count each time. */
+    pRtlRemoveVectoredExceptionHandler(handler);
+    winetest_pop_context();
+}
+
+static void test_single_step_address(void)
+{
+    void *handler;
+
+    handler = pRtlAddVectoredExceptionHandler(TRUE, test_single_step_address_handler);
+    ok(!!handler, "got NULL.\n");
+    memset( code_mem, 0x90 /* nop */, 3 );
+
+    test_single_step_address_run(handler, 0);
+
+    if (is_wow64)
+        ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
+                test_single_step_exc_address, (char *)code_mem + 1);
+    else
+        todo_wine ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
+
+
+    test_single_step_address_run(handler, 1);
+    ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n", test_single_step_exc_address,
+            (char *)code_mem + 1);
+
+    test_single_step_address_run(handler, 2);
+
+    ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n", test_single_step_exc_address,
+            (char *)code_mem + 1);
+
+    test_single_step_address_run(handler, 3);
+
+    if (is_wow64)
+        ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
+                test_single_step_exc_address, (char *)code_mem + 1);
+    else
+        todo_wine ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
+
+    pRtlRemoveVectoredExceptionHandler(handler);
+}
 #endif
 
 #ifdef __i386__
@@ -12003,6 +12144,7 @@ START_TEST(exception)
     test_set_live_context();
     test_hwbpt_in_syscall();
     test_instrumentation_callback();
+    test_single_step_address();
 
 #elif defined(__x86_64__)
 
@@ -12035,6 +12177,7 @@ START_TEST(exception)
     test_hwbpt_in_syscall();
     test_instrumentation_callback();
     test_direct_syscalls();
+    test_single_step_address();
 
 #elif defined(__aarch64__)
 
