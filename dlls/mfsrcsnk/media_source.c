@@ -1262,6 +1262,9 @@ static HRESULT WINAPI media_source_Start(IMFMediaSource *iface, IMFPresentationD
     TRACE("source %p, descriptor %p, format %s, position %s\n", source, descriptor,
             debugstr_guid(format), debugstr_propvar(position));
 
+    if (!format)
+        format = &GUID_NULL;
+
     EnterCriticalSection(&source->cs);
 
     if (source->state == SOURCE_SHUTDOWN)
