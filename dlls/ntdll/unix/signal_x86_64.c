@@ -2269,7 +2269,11 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     if (instrumentation_callback) frame->restore_flags |= RESTORE_FLAGS_INSTRUMENTATION;
     RCX_sig(ucontext) = (ULONG_PTR)frame;
     R11_sig(ucontext) = frame->eflags;
-    EFL_sig(ucontext) &= ~0x100;  /* clear single-step flag */
+    if (EFL_sig(ucontext) & 0x100)
+    {
+        EFL_sig(ucontext) &= ~0x100;  /* clear single-step flag */
+        frame->restore_flags |= CONTEXT_CONTROL;
+    }
     RIP_sig(ucontext) = (ULONG64)__wine_syscall_dispatcher_prolog_end_ptr;
 }
 #endif
