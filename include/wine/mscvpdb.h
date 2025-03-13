@@ -2409,7 +2409,7 @@ struct PDB_JG_HEADER
     unsigned short      free_list_block;
     unsigned short      total_alloc;
     struct PDB_JG_STREAM toc;
-    unsigned short      toc_block[];
+    /* unsigned short      toc_block[]; */
 };
 
 struct PDB_DS_HEADER

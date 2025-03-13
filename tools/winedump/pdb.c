@@ -110,7 +110,7 @@ static BOOL pdb_jg_init(struct pdb_reader* reader)
     if (!reader->u.jg.header) return FALSE;
     reader->read_stream = pdb_jg_read_stream;
     reader->u.jg.toc = pdb_jg_read(reader->u.jg.header,
-                                   reader->u.jg.header->toc_block,
+                                   (unsigned short *)(reader->u.jg.header + 1),
                                    reader->u.jg.header->toc.size);
     memset(reader->stream_used, 0, sizeof(reader->stream_used));
     reader->u.jg.root = reader->read_stream(reader, 1);

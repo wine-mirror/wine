@@ -3484,7 +3484,7 @@ static BOOL pdb_init(struct pdb_file_info* pdb_file, const char* image)
         struct PDB_JG_ROOT*         root;
         struct PDB_JG_TOC*          jg_toc;
 
-        jg_toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
+        jg_toc = pdb_jg_read(pdb, (unsigned short *)(pdb + 1), pdb->toc.size);
         if (!jg_toc)
         {
             ERR("-Unable to get TOC from .PDB\n");
@@ -3591,7 +3591,7 @@ DWORD pdb_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
         struct PDB_JG_ROOT*         root;
         DWORD                       ec = ERROR_SUCCESS;
 
-        jg_toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
+        jg_toc = pdb_jg_read(pdb, (unsigned short*)(pdb + 1), pdb->toc.size);
         root = pdb_read_jg_stream(pdb, jg_toc, 1);
         if (!root)
         {
