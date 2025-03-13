@@ -53,9 +53,6 @@ typedef struct {
     LONG ref;
 } IAssemblyCacheItemImpl;
 
-static const WCHAR cache_mutex_nameW[] =
-    {'_','_','W','I','N','E','_','F','U','S','I','O','N','_','C','A','C','H','E','_','M','U','T','E','X','_','_',0};
-
 static BOOL create_full_path(LPCWSTR path)
 {
     LPWSTR new_path;
@@ -106,11 +103,8 @@ static BOOL create_full_path(LPCWSTR path)
 
 static BOOL get_assembly_directory(LPWSTR dir, DWORD size, const char *version, PEKIND architecture)
 {
-    static const WCHAR dotnet[] = {'\\','M','i','c','r','o','s','o','f','t','.','N','E','T','\\',0};
-    static const WCHAR gac[] = {'\\','a','s','s','e','m','b','l','y','\\','G','A','C',0};
-    static const WCHAR msil[] = {'_','M','S','I','L',0};
-    static const WCHAR x86[] = {'_','3','2',0};
-    static const WCHAR amd64[] = {'_','6','4',0};
+    static const WCHAR dotnet[] = L"\\Microsoft.NET\\";
+    static const WCHAR gac[] = L"\\assembly\\GAC";
     DWORD len = GetWindowsDirectoryW(dir, size);
 
     if (!strcmp(version, "v4.0.30319"))
@@ -131,15 +125,15 @@ static BOOL get_assembly_directory(LPWSTR dir, DWORD size, const char *version, 
             break;
 
         case peMSIL:
-            lstrcpyW(dir + len, msil);
+            lstrcpyW(dir + len, L"_MSIL");
             break;
 
         case peI386:
-            lstrcpyW(dir + len, x86);
+            lstrcpyW(dir + len, L"_32");
             break;
 
         case peAMD64:
-            lstrcpyW(dir + len, amd64);
+            lstrcpyW(dir + len, L"_64");
             break;
 
         default:
@@ -419,12 +413,6 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
                                                          LPCWSTR pszManifestFilePath,
                                                          LPCFUSION_INSTALL_REFERENCE pRefData)
 {
-    static const WCHAR format[] =
-        {'%','s','\\','%','s','\\','%','s','_','_','%','s','\\',0};
-    static const WCHAR format_v40[] =
-        {'%','s','\\','%','s','\\','v','4','.','0','_','%','s','_','_','%','s','\\',0};
-    static const WCHAR ext_exe[] = {'.','e','x','e',0};
-    static const WCHAR ext_dll[] = {'.','d','l','l',0};
     IAssemblyCacheImpl *cache = impl_from_IAssemblyCache(iface);
     ASSEMBLY *assembly;
     const WCHAR *extension, *filename, *src_dir;
@@ -432,7 +420,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     WCHAR asmdir[MAX_PATH], *p, **external_files = NULL, *dst_dir = NULL;
     PEKIND architecture;
     char *clr_version;
-    DWORD i, count = 0, src_len, dst_len = ARRAY_SIZE(format_v40);
+    DWORD i, count = 0, src_len, dst_len = sizeof("\\\\v4.0___\\");
     HRESULT hr;
 
     TRACE("(%p, %ld, %s, %p)\n", iface, dwFlags,
@@ -444,7 +432,7 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
     if (!(extension = wcsrchr(pszManifestFilePath, '.')))
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
 
-    if (lstrcmpiW(extension, ext_exe) && lstrcmpiW(extension, ext_dll))
+    if (lstrcmpiW(extension, L".exe") && lstrcmpiW(extension, L".dll"))
         return HRESULT_FROM_WIN32(ERROR_INVALID_NAME);
 
     if (GetFileAttributesW(pszManifestFilePath) == INVALID_FILE_ATTRIBUTES)
@@ -489,9 +477,9 @@ static HRESULT WINAPI IAssemblyCacheImpl_InstallAssembly(IAssemblyCache *iface,
         goto done;
     }
     if (!strcmp(clr_version, "v4.0.30319"))
-        dst_len = swprintf(dst_dir, dst_len, format_v40, asmdir, name, version, token);
+        dst_len = swprintf(dst_dir, dst_len, L"%s\\%s\\v4.0_%s__%s\\", asmdir, name, version, token);
     else
-        dst_len = swprintf(dst_dir, dst_len, format, asmdir, name, version, token);
+        dst_len = swprintf(dst_dir, dst_len, L"%s\\%s\\%s__%s\\", asmdir, name, version, token);
 
     create_full_path(dst_dir);
 
@@ -564,7 +552,7 @@ HRESULT WINAPI CreateAssemblyCache(IAssemblyCache **ppAsmCache, DWORD dwReserved
 
     cache->IAssemblyCache_iface.lpVtbl = &AssemblyCacheVtbl;
     cache->ref = 1;
-    cache->lock = CreateMutexW( NULL, FALSE, cache_mutex_nameW );
+    cache->lock = CreateMutexW( NULL, FALSE, L"__WINE_FUSION_CACHE_MUTEX__" );
     if (!cache->lock)
     {
         free( cache );

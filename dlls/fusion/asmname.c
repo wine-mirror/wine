@@ -59,14 +59,6 @@ typedef struct {
     LONG ref;
 } IAssemblyNameImpl;
 
-static const WCHAR separator[] = {',',' ',0};
-static const WCHAR version[] = {'V','e','r','s','i','o','n',0};
-static const WCHAR culture[] = {'C','u','l','t','u','r','e',0};
-static const WCHAR pubkey[] =
-    {'P','u','b','l','i','c','K','e','y','T','o','k','e','n',0};
-static const WCHAR procarch[] = {'p','r','o','c','e','s','s','o','r',
-    'A','r','c','h','i','t','e','c','t','u','r','e',0};
-
 #define CHARS_PER_PUBKEY 16
 
 static inline IAssemblyNameImpl *impl_from_IAssemblyName(IAssemblyName *iface)
@@ -263,7 +255,6 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
                                                        LPDWORD pccDisplayName,
                                                        DWORD dwDisplayFlags)
 {
-    static const WCHAR equals[] = {'=',0};
     IAssemblyNameImpl *name = impl_from_IAssemblyName(iface);
     WCHAR verstr[30], *cultureval = NULL;
     DWORD size;
@@ -298,37 +289,33 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
 
     if ((dwDisplayFlags & ASM_DISPLAYF_VERSION) && (name->versize > 0))
     {
-        static const WCHAR spec[] = {'%','d',0};
-        static const WCHAR period[] = {'.',0};
         DWORD i;
 
-        wsprintfW(verstr, spec, name->version[0]);
+        wsprintfW(verstr, L"%d", name->version[0]);
 
         for (i = 1; i < name->versize; i++)
         {
             WCHAR value[6];
-            wsprintfW(value, spec, name->version[i]);
+            wsprintfW(value, L"%d", name->version[i]);
 
-            lstrcatW(verstr, period);
+            lstrcatW(verstr, L".");
             lstrcatW(verstr, value);
         }
 
-        size += lstrlenW(separator) + lstrlenW(version) + lstrlenW(equals) + lstrlenW(verstr);
+        size += lstrlenW(L", Version=") + lstrlenW(verstr);
     }
 
     if ((dwDisplayFlags & ASM_DISPLAYF_CULTURE) && (name->culture))
     {
-        static const WCHAR neutral[] = {'n','e','u','t','r','a','l', 0};
-
-        cultureval = (lstrlenW(name->culture) == 2) ? name->culture : (LPWSTR) neutral;
-        size += lstrlenW(separator) + lstrlenW(culture) + lstrlenW(equals) + lstrlenW(cultureval);
+        cultureval = (lstrlenW(name->culture) == 2) ? name->culture : (WCHAR *)L"neutral";
+        size += lstrlenW(L", Culture=") + lstrlenW(cultureval);
     }
 
     if ((dwDisplayFlags & ASM_DISPLAYF_PUBLIC_KEY_TOKEN) && (name->haspubkey))
-        size += lstrlenW(separator) + lstrlenW(pubkey) + lstrlenW(equals) + CHARS_PER_PUBKEY;
+        size += lstrlenW(L", PublicKeyToken=") + CHARS_PER_PUBKEY;
 
     if ((dwDisplayFlags & ASM_DISPLAYF_PROCESSORARCHITECTURE) && (name->procarch))
-        size += lstrlenW(separator) + lstrlenW(procarch) + lstrlenW(equals) + lstrlenW(name->procarch);
+        size += lstrlenW(L", processorArchitecture=") + lstrlenW(name->procarch);
 
     if (size > *pccDisplayName)
     {
@@ -341,46 +328,32 @@ static HRESULT WINAPI IAssemblyNameImpl_GetDisplayName(IAssemblyName *iface,
 
     if ((dwDisplayFlags & ASM_DISPLAYF_VERSION) && (name->versize > 0))
     {
-        lstrcatW(szDisplayName, separator);
-
-        lstrcatW(szDisplayName, version);
-        lstrcatW(szDisplayName, equals);
+        lstrcatW(szDisplayName, L", Version=");
         lstrcatW(szDisplayName, verstr);
     }
 
     if ((dwDisplayFlags & ASM_DISPLAYF_CULTURE) && (name->culture))
     {
-        lstrcatW(szDisplayName, separator);
-
-        lstrcatW(szDisplayName, culture);
-        lstrcatW(szDisplayName, equals);
+        lstrcatW(szDisplayName, L", Culture=");
         lstrcatW(szDisplayName, cultureval);
     }
 
     if ((dwDisplayFlags & ASM_DISPLAYF_PUBLIC_KEY_TOKEN) && (name->haspubkey))
     {
         WCHAR pkt[CHARS_PER_PUBKEY + 1];
-        static const WCHAR spec[] = {'%','0','2','x','%','0','2','x','%','0','2','x',
-            '%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x','%','0','2','x',0};
 
-        lstrcatW(szDisplayName, separator);
+        lstrcatW(szDisplayName, L", PublicKeyToken=");
 
-        lstrcatW(szDisplayName, pubkey);
-        lstrcatW(szDisplayName, equals);
-
-        wsprintfW(pkt, spec, name->pubkey[0], name->pubkey[1], name->pubkey[2],
-            name->pubkey[3], name->pubkey[4], name->pubkey[5], name->pubkey[6],
-            name->pubkey[7]);
+        wsprintfW(pkt, L"%02x%02x%02x%02x%02x%02x%02x%02x",
+            name->pubkey[0], name->pubkey[1], name->pubkey[2], name->pubkey[3],
+            name->pubkey[4], name->pubkey[5], name->pubkey[6], name->pubkey[7]);
 
         lstrcatW(szDisplayName, pkt);
     }
 
     if ((dwDisplayFlags & ASM_DISPLAYF_PROCESSORARCHITECTURE) && (name->procarch))
     {
-        lstrcatW(szDisplayName, separator);
-
-        lstrcatW(szDisplayName, procarch);
-        lstrcatW(szDisplayName, equals);
+        lstrcatW(szDisplayName, L", processorArchitecture=");
         lstrcatW(szDisplayName, name->procarch);
     }
 
@@ -606,9 +579,8 @@ static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
 {
     int i;
     BYTE val;
-    static const WCHAR nullstr[] = {'n','u','l','l',0};
 
-    if(lstrcmpiW(pubkey, nullstr) == 0)
+    if(lstrcmpiW(pubkey, L"null") == 0)
         return FUSION_E_PRIVATE_ASM_DISALLOWED;
 
     if (lstrlenW(pubkey) < CHARS_PER_PUBKEY)
@@ -631,18 +603,13 @@ static HRESULT parse_pubkey(IAssemblyNameImpl *name, LPCWSTR pubkey)
 
 static HRESULT parse_procarch(IAssemblyNameImpl *name, LPCWSTR procarch)
 {
-    static const WCHAR msilW[] = {'m','s','i','l',0};
-    static const WCHAR x86W[] = {'x','8','6',0};
-    static const WCHAR ia64W[] = {'i','a','6','4',0};
-    static const WCHAR amd64W[] = {'a','m','d','6','4',0};
-
-    if (!lstrcmpiW(procarch, msilW))
+    if (!lstrcmpiW(procarch, L"msil"))
         name->pekind = peMSIL;
-    else if (!lstrcmpiW(procarch, x86W))
+    else if (!lstrcmpiW(procarch, L"x86"))
         name->pekind = peI386;
-    else if (!lstrcmpiW(procarch, ia64W))
+    else if (!lstrcmpiW(procarch, L"ia64"))
         name->pekind = peIA64;
-    else if (!lstrcmpiW(procarch, amd64W))
+    else if (!lstrcmpiW(procarch, L"amd64"))
         name->pekind = peAMD64;
     else
     {
@@ -753,13 +720,13 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
         }
         while (*str == ' ') str++;
 
-        if (!lstrcmpiW(str, version))
+        if (!lstrcmpiW(str, L"Version"))
             hr = parse_version( name, value );
-        else if (!lstrcmpiW(str, culture))
+        else if (!lstrcmpiW(str, L"Culture"))
             hr = parse_culture( name, value );
-        else if (!lstrcmpiW(str, pubkey))
+        else if (!lstrcmpiW(str, L"PublicKeyToken"))
             hr = parse_pubkey( name, value );
-        else if (!lstrcmpiW(str, procarch))
+        else if (!lstrcmpiW(str, L"processorArchitecture"))
         {
             name->procarch = value;
             value = NULL;
