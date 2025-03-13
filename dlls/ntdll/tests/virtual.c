@@ -1604,7 +1604,6 @@ static void test_NtMapViewOfSection(void)
         offset.QuadPart = 0;
         status = NtMapViewOfSection(mapping, process, &ptr2, 0, 0, &offset,
                                     &size, 1, AT_ROUND_TO_PAGE, PAGE_READWRITE);
-        todo_wine
         ok(status == STATUS_INVALID_PARAMETER_9 || status == STATUS_INVALID_PARAMETER,
            "NtMapViewOfSection returned %08lx\n", status);
     }
@@ -1784,9 +1783,7 @@ static void test_NtMapViewOfSectionEx(void)
         size = 0;
         offset.QuadPart = 0;
         status = pNtMapViewOfSectionEx(mapping, process, &ptr2, &offset, &size, AT_ROUND_TO_PAGE, PAGE_READWRITE, NULL, 0);
-        todo_wine
-        ok(status == STATUS_INVALID_PARAMETER_9 || status == STATUS_INVALID_PARAMETER,
-           "NtMapViewOfSection returned %08lx\n", status);
+        ok(status == STATUS_INVALID_PARAMETER, "NtMapViewOfSectionEx returned %08lx\n", status);
     }
 
     status = NtUnmapViewOfSection(process, ptr);
