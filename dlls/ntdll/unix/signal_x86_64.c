@@ -2948,6 +2948,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jnz 1f\n\t"
                    /* CONTEXT_CONTROL */
                    "movq (%rsp),%rcx\n\t"          /* frame->rip */
+                   "pushq %r11\n\t"
+                   /* make sure that if trap flag is set the trap happens on the first instruction after iret */
+                   "popfq\n\t"
                    "iretq\n"
                    /* CONTEXT_INTEGER */
                    "1:\tmovq 0x00(%rcx),%rax\n\t"
@@ -2971,6 +2974,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "testl $0x2,%edx\n\t"          /* CONTEXT_INTEGER */
                    "jnz 1b\n\t"
                    "xchgq %r10,(%rsp)\n\t"
+                   "pushq %r11\n\t"
+                   /* make sure that if trap flag is set the trap happens on the first instruction after iret */
+                   "popfq\n\t"
                    "iretq\n\t"
 
                    /* pop rbp-based kernel stack cfi */

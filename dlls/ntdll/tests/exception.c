@@ -423,7 +423,7 @@ static void test_single_step_address(void)
         ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
                 test_single_step_exc_address, (char *)code_mem + 1);
     else
-        todo_wine ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
+        ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
 
 
     test_single_step_address_run(handler, 1);
@@ -441,7 +441,7 @@ static void test_single_step_address(void)
         ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
                 test_single_step_exc_address, (char *)code_mem + 1);
     else
-        todo_wine ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
+        ok(test_single_step_exc_address == code_mem, "got %p, expected %p.\n", test_single_step_exc_address, code_mem);
 
     pRtlRemoveVectoredExceptionHandler(handler);
 }
