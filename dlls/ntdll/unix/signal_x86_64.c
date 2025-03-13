@@ -2200,6 +2200,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     {
         struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
         ULONG64 saved_compaction = 0;
+        I386_CONTEXT *wow_context;
         struct xcontext *context;
 
         context = (struct xcontext *)(((ULONG_PTR)RSP_sig(ucontext) - 128 /* red zone */ - sizeof(*context)) & ~15);
@@ -2223,6 +2224,13 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
             /* xstate is updated directly in frame's xstate */
             context->c.ContextFlags &= ~0x40;
             frame->restore_flags |= 0x40;
+        }
+        if ((wow_context = get_cpu_area( IMAGE_FILE_MACHINE_I386 ))
+             && (wow_context->ContextFlags & CONTEXT_I386_CONTROL) == CONTEXT_I386_CONTROL)
+        {
+            WOW64_CPURESERVED *cpu = NtCurrentTeb()->TlsSlots[WOW64_TLS_CPURESERVED];
+
+            cpu->Flags |= WOW64_CPURESERVED_FLAG_RESET_STATE;
         }
         NtSetContextThread( GetCurrentThread(), &context->c );
     }
