@@ -1046,6 +1046,9 @@ static BOOL get_event(IMFMediaEventGenerator *generator, MediaEventType expected
 
             break;
         }
+
+        IMFMediaEvent_Release(callback->media_event);
+        callback->media_event = NULL;
     }
 
     if (callback->media_event)
