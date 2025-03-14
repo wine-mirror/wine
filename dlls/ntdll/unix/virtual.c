@@ -2442,15 +2442,18 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
  *
  * Map the header of a PE file into memory.
  */
-static NTSTATUS map_pe_header( void *ptr, size_t size, int fd, BOOL *removable )
+static NTSTATUS map_pe_header( void *ptr, size_t size, size_t map_size, int fd, BOOL *removable )
 {
     if (!size) return STATUS_INVALID_IMAGE_FORMAT;
 
-    if (!*removable)
+    if (!*removable && map_size)
     {
-        if (mmap( ptr, size, PROT_READ|PROT_WRITE|PROT_EXEC, MAP_FIXED|MAP_PRIVATE, fd, 0 ) != MAP_FAILED)
+        if (mmap( ptr, map_size, PROT_READ | PROT_WRITE | PROT_EXEC,
+                  MAP_FIXED | MAP_PRIVATE, fd, 0 ) != MAP_FAILED)
+        {
+            if (size > map_size) pread( fd, (char *)ptr + map_size, size - map_size, map_size );
             return STATUS_SUCCESS;
-
+        }
         switch (errno)
         {
         case EPERM:
@@ -2744,7 +2747,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
-    IMAGE_SECTION_HEADER *sections, *sec;
+    IMAGE_SECTION_HEADER *sections = NULL, *sec;
     IMAGE_DATA_DIRECTORY *imports, *dir;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
@@ -2761,7 +2764,8 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     fstat( fd, &st );
     header_size = min( image_info->header_size, st.st_size );
-    if ((status = map_pe_header( view->base, header_size, fd, &removable ))) return status;
+    if ((status = map_pe_header( view->base, header_size, image_info->header_map_size, fd, &removable )))
+        return status;
 
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     dos = (IMAGE_DOS_HEADER *)ptr;
@@ -2771,12 +2775,14 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     if ((char *)(nt + 1) > header_end) return status;
     sec = IMAGE_FIRST_SECTION( nt );
     if ((char *)(sec + nt->FileHeader.NumberOfSections) > header_end) return status;
-    /* Some applications (e.g. the Steam version of Borderlands) map over the top of the section headers,
-     * copying the headers into local memory is necessary to properly load such applications. */
-    if (!(sections = malloc( sizeof(*sections) * nt->FileHeader.NumberOfSections )))
-        return STATUS_NO_MEMORY;
-    memcpy(sections, sec, sizeof(*sections) * nt->FileHeader.NumberOfSections);
-    sec = sections;
+    if ((char *)(sec + nt->FileHeader.NumberOfSections) > ptr + image_info->header_map_size)
+    {
+        /* copy section data since it will get overwritten by a section mapping */
+        if (!(sections = malloc( sizeof(*sections) * nt->FileHeader.NumberOfSections )))
+            return STATUS_NO_MEMORY;
+        memcpy( sections, sec, sizeof(*sections) * nt->FileHeader.NumberOfSections );
+        sec = sections;
+    }
     imports = get_data_dir( nt, total_size, IMAGE_DIRECTORY_ENTRY_IMPORT );
 
     /* check for non page-aligned binary */
@@ -2809,54 +2815,54 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     /* map all the sections */
 
-    for (i = pos = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    for (i = pos = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
         static const SIZE_T sector_align = 0x1ff;
         SIZE_T map_size, file_start, file_size, end;
 
-        if (!sec->Misc.VirtualSize)
-            map_size = ROUND_SIZE( 0, sec->SizeOfRawData );
+        if (!sec[i].Misc.VirtualSize)
+            map_size = ROUND_SIZE( 0, sec[i].SizeOfRawData );
         else
-            map_size = ROUND_SIZE( 0, sec->Misc.VirtualSize );
+            map_size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
 
         /* file positions are rounded to sector boundaries regardless of OptionalHeader.FileAlignment */
-        file_start = sec->PointerToRawData & ~sector_align;
-        file_size = (sec->SizeOfRawData + (sec->PointerToRawData & sector_align) + sector_align) & ~sector_align;
+        file_start = sec[i].PointerToRawData & ~sector_align;
+        file_size = (sec[i].SizeOfRawData + (sec[i].PointerToRawData & sector_align) + sector_align) & ~sector_align;
         if (file_size > map_size) file_size = map_size;
 
         /* a few sanity checks */
-        end = sec->VirtualAddress + ROUND_SIZE( sec->VirtualAddress, map_size );
-        if (sec->VirtualAddress > total_size || end > total_size || end < sec->VirtualAddress)
+        end = sec[i].VirtualAddress + ROUND_SIZE( sec[i].VirtualAddress, map_size );
+        if (sec[i].VirtualAddress > total_size || end > total_size || end < sec[i].VirtualAddress)
         {
             WARN_(module)( "%s section %.8s too large (%x+%lx/%lx)\n",
-                           debugstr_w(filename), sec->Name, (int)sec->VirtualAddress, map_size, total_size );
+                           debugstr_w(filename), sec[i].Name, (int)sec[i].VirtualAddress, map_size, total_size );
             goto done;
         }
 
-        if ((sec->Characteristics & IMAGE_SCN_MEM_SHARED) &&
-            (sec->Characteristics & IMAGE_SCN_MEM_WRITE))
+        if ((sec[i].Characteristics & IMAGE_SCN_MEM_SHARED) &&
+            (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE))
         {
             TRACE_(module)( "%s mapping shared section %.8s at %p off %x (%x) size %lx (%lx) flags %x\n",
-                            debugstr_w(filename), sec->Name, ptr + sec->VirtualAddress,
-                            (int)sec->PointerToRawData, (int)pos, file_size, map_size,
-                            (int)sec->Characteristics );
-            if (map_file_into_view( view, shared_fd, sec->VirtualAddress, map_size, pos,
+                            debugstr_w(filename), sec[i].Name, ptr + sec[i].VirtualAddress,
+                            (int)sec[i].PointerToRawData, (int)pos, file_size, map_size,
+                            (int)sec[i].Characteristics );
+            if (map_file_into_view( view, shared_fd, sec[i].VirtualAddress, map_size, pos,
                                     VPROT_COMMITTED | VPROT_READ | VPROT_WRITE, FALSE ) != STATUS_SUCCESS)
             {
-                ERR_(module)( "Could not map %s shared section %.8s\n", debugstr_w(filename), sec->Name );
+                ERR_(module)( "Could not map %s shared section %.8s\n", debugstr_w(filename), sec[i].Name );
                 goto done;
             }
 
             /* check if the import directory falls inside this section */
-            if (imports && imports->VirtualAddress >= sec->VirtualAddress &&
-                imports->VirtualAddress < sec->VirtualAddress + map_size)
+            if (imports && imports->VirtualAddress >= sec[i].VirtualAddress &&
+                imports->VirtualAddress < sec[i].VirtualAddress + map_size)
             {
                 UINT_PTR base = imports->VirtualAddress & ~page_mask;
                 UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size );
-                if (end > sec->VirtualAddress + map_size) end = sec->VirtualAddress + map_size;
+                if (end > sec[i].VirtualAddress + map_size) end = sec[i].VirtualAddress + map_size;
                 if (end > base)
                     map_file_into_view( view, shared_fd, base, end - base,
-                                        pos + (base - sec->VirtualAddress),
+                                        pos + (base - sec[i].VirtualAddress),
                                         VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY, FALSE );
             }
             pos += map_size;
@@ -2864,25 +2870,25 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         }
 
         TRACE_(module)( "mapping %s section %.8s at %p off %x size %x virt %x flags %x\n",
-                        debugstr_w(filename), sec->Name, ptr + sec->VirtualAddress,
-                        (int)sec->PointerToRawData, (int)sec->SizeOfRawData,
-                        (int)sec->Misc.VirtualSize, (int)sec->Characteristics );
+                        debugstr_w(filename), sec[i].Name, ptr + sec[i].VirtualAddress,
+                        (int)sec[i].PointerToRawData, (int)sec[i].SizeOfRawData,
+                        (int)sec[i].Misc.VirtualSize, (int)sec[i].Characteristics );
 
-        if (!sec->PointerToRawData || !file_size) continue;
+        if (!sec[i].PointerToRawData || !file_size) continue;
 
         /* Note: if the section is not aligned properly map_file_into_view will magically
          *       fall back to read(), so we don't need to check anything here.
          */
         end = file_start + file_size;
-        if (sec->PointerToRawData >= st.st_size ||
+        if (sec[i].PointerToRawData >= st.st_size ||
             end > ((st.st_size + sector_align) & ~sector_align) ||
             end < file_start ||
-            map_file_into_view( view, fd, sec->VirtualAddress, file_size, file_start,
+            map_file_into_view( view, fd, sec[i].VirtualAddress, file_size, file_start,
                                 VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
                                 removable ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map %s section %.8s, file probably truncated\n",
-                          debugstr_w(filename), sec->Name );
+                          debugstr_w(filename), sec[i].Name );
             goto done;
         }
 
@@ -2891,9 +2897,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             end = ROUND_SIZE( 0, file_size );
             if (end > map_size) end = map_size;
             TRACE_(module)("clearing %p - %p\n",
-                           ptr + sec->VirtualAddress + file_size,
-                           ptr + sec->VirtualAddress + end );
-            memset( ptr + sec->VirtualAddress + file_size, 0, end - file_size );
+                           ptr + sec[i].VirtualAddress + file_size,
+                           ptr + sec[i].VirtualAddress + end );
+            memset( ptr + sec[i].VirtualAddress + file_size, 0, end - file_size );
         }
     }
 
@@ -2904,7 +2910,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             (machine == IMAGE_FILE_MACHINE_AMD64 ||
              (!machine && main_image_info.Machine == IMAGE_FILE_MACHINE_AMD64)))
         {
-            update_arm64x_mapping( view, nt, dir, sections );
+            update_arm64x_mapping( view, nt, dir, sec );
             /* reload changed machine from NT header */
             image_info->machine = nt->FileHeader.Machine;
         }
@@ -2944,24 +2950,23 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     set_vprot( view, ptr, ROUND_SIZE( 0, header_size ), VPROT_COMMITTED | VPROT_READ );
 
-    sec = sections;
-    for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
         SIZE_T size;
         BYTE vprot = VPROT_COMMITTED;
 
-        if (sec->Misc.VirtualSize)
-            size = ROUND_SIZE( sec->VirtualAddress, sec->Misc.VirtualSize );
+        if (sec[i].Misc.VirtualSize)
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize );
         else
-            size = ROUND_SIZE( sec->VirtualAddress, sec->SizeOfRawData );
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].SizeOfRawData );
 
-        if (sec->Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
-        if (sec->Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITECOPY;
-        if (sec->Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITECOPY;
+        if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) vprot |= VPROT_EXEC;
 
-        if (!set_vprot( view, ptr + sec->VirtualAddress, size, vprot ) && (vprot & VPROT_EXEC))
+        if (!set_vprot( view, ptr + sec[i].VirtualAddress, size, vprot ) && (vprot & VPROT_EXEC))
             ERR( "failed to set %08x protection on %s section %.8s, noexec filesystem?\n",
-                 (int)sec->Characteristics, debugstr_w(filename), sec->Name );
+                 (int)sec[i].Characteristics, debugstr_w(filename), sec[i].Name );
     }
 
 #ifdef VALGRIND_LOAD_PDB_DEBUGINFO
