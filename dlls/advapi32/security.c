@@ -1210,7 +1210,7 @@ static void split_domain_account( const LSA_UNICODE_STRING *str, LSA_UNICODE_STR
 
     while (p > str->Buffer && *p != '\\') p--;
 
-    if (*p == '\\')
+    if (p >= str->Buffer && *p == '\\')
     {
         domain->Buffer = str->Buffer;
         domain->Length = (p - str->Buffer) * sizeof(WCHAR);
