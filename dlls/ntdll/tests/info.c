@@ -3274,7 +3274,7 @@ static void test_HideFromDebugger(void)
 {
     NTSTATUS status;
     HANDLE thread, stop_event;
-    ULONG dummy;
+    ULONG dummy, ret_len;
 
     dummy = 0;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadHideFromDebugger, &dummy, sizeof(ULONG) );
@@ -3320,6 +3320,27 @@ static void test_HideFromDebugger(void)
     status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, NULL );
     ok( status == STATUS_SUCCESS, "got %#lx\n", status );
     ok( dummy == 1, "Expected dummy == 1, got %08lx\n", dummy );
+
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, (ULONG *)1 );
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status );
+
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 0, (ULONG *)1 );
+    ok( status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got %08lx\n", status );
+
+    ret_len = 0xdeadbeef;
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 0, &ret_len );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#lx\n", status );
+    ok( ret_len == 0xdeadbeef, "Expected ret_len == deadbeef, got %08lx\n", ret_len );
+
+    ret_len = 0xdeadbeef;
+    status = NtQueryInformationThread( (HANDLE)0xdeadbeef, ThreadHideFromDebugger, &dummy, 1, &ret_len );
+    ok( status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %#lx\n", status );
+    ok( ret_len == 0xdeadbeef, "Expected ret_len == deadbeef, got %08lx\n", ret_len );
+
+    ret_len = 0xdeadbeef;
+    status = NtQueryInformationThread( thread, ThreadHideFromDebugger, &dummy, 1, &ret_len );
+    ok( status == STATUS_SUCCESS, "got %#lx\n", status );
+    ok( ret_len == 1, "Expected ret_len == 1, got %08lx\n", ret_len );
 
     SetEvent( stop_event );
     WaitForSingleObject( thread, INFINITE );
