@@ -910,13 +910,13 @@ static void test_lastpoint(void)
 static path_test_t addcurve_path[] = {
     {0.0, 0.0,   PathPointTypeStart,  0, 0}, /*0*/
     {3.3, 3.3,   PathPointTypeBezier, 0, 0}, /*1*/
-    {6.7, 3.3,   PathPointTypeBezier, 0, 1}, /*2*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
-    {13.3, 16.7, PathPointTypeBezier, 0, 1}, /*4*/
-    {3.3,  20.0, PathPointTypeBezier, 0, 1}, /*5*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*4*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*5*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*6*/
-    {16.7, 20.0, PathPointTypeBezier, 0, 1}, /*7*/
-    {23.3, 13.3, PathPointTypeBezier, 0, 1}, /*8*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*8*/
     {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*9*/
     };
 static path_test_t addcurve_path_default_tension[] = {
@@ -936,34 +936,34 @@ static path_test_t addcurve_path2[] = {
     {123.0,10.0, PathPointTypeLine,   0, 0}, /*1*/
     {0.0, 0.0,   PathPointTypeLine,   0, 0}, /*2*/
     {3.3, 3.3,   PathPointTypeBezier, 0, 0}, /*3*/
-    {6.7, 3.3,   PathPointTypeBezier, 0, 1}, /*4*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*4*/
     {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*5*/
-    {13.3, 16.7, PathPointTypeBezier, 0, 1}, /*6*/
-    {3.3,  20.0, PathPointTypeBezier, 0, 1}, /*7*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*6*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*7*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*8*/
-    {16.7, 20.0, PathPointTypeBezier, 0, 1}, /*9*/
-    {23.3, 13.3, PathPointTypeBezier, 0, 1}, /*10*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*9*/
+    {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*10*/
     {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*11*/
     };
 static path_test_t addcurve_path3[] = {
     {10.0, 10.0, PathPointTypeStart,  0, 0}, /*0*/
-    {13.3, 16.7, PathPointTypeBezier, 0, 1}, /*1*/
-    {3.3,  20.0, PathPointTypeBezier, 0, 1}, /*2*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*1*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*3*/
-    {16.7, 20.0, PathPointTypeBezier, 0, 1}, /*4*/
-    {23.3, 13.3, PathPointTypeBezier, 0, 1}, /*5*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*4*/
+    {23.3, 13.3, PathPointTypeBezier, 0, 0}, /*5*/
     {30.0, 10.0, PathPointTypeBezier, 0, 0}  /*6*/
     };
 static path_test_t addcurve_path4[] = {
     {0.0,  0.0,  PathPointTypeStart,  0, 0}, /*0*/
     {3.33, 3.33, PathPointTypeBezier, 0, 0}, /*1*/
-    {6.66, 3.33, PathPointTypeBezier, 0, 1}, /*2*/
+    {6.66, 3.33, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
     };
 static path_test_t addcurve_path5[] = {
     {10.0, 10.0, PathPointTypeStart,  0, 0}, /*0*/
-    {13.3, 16.6, PathPointTypeBezier, 0, 1}, /*1*/
-    {3.33, 20.0, PathPointTypeBezier, 0, 1}, /*2*/
+    {13.3, 16.6, PathPointTypeBezier, 0, 0}, /*1*/
+    {3.33, 20.0, PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}  /*3*/
     };
 
@@ -1063,17 +1063,17 @@ static void test_addcurve(void)
 
 static path_test_t addclosedcurve_path[] = {
     {0.0, 0.0,   PathPointTypeStart,  0, 0}, /*0*/
-    {-6.7, 0.0,  PathPointTypeBezier, 0, 1}, /*1*/
-    {6.7, 3.3,   PathPointTypeBezier, 0, 1}, /*2*/
+    {-6.7, 0.0,  PathPointTypeBezier, 0, 0}, /*1*/
+    {6.7, 3.3,   PathPointTypeBezier, 0, 0}, /*2*/
     {10.0, 10.0, PathPointTypeBezier, 0, 0}, /*3*/
-    {13.3, 16.7, PathPointTypeBezier, 0, 1}, /*4*/
-    {3.3,  20.0, PathPointTypeBezier, 0, 1}, /*5*/
+    {13.3, 16.7, PathPointTypeBezier, 0, 0}, /*4*/
+    {3.3,  20.0, PathPointTypeBezier, 0, 0}, /*5*/
     {10.0, 20.0, PathPointTypeBezier, 0, 0}, /*6*/
-    {16.7, 20.0, PathPointTypeBezier, 0, 1}, /*7*/
-    {33.3, 16.7, PathPointTypeBezier, 0, 1}, /*8*/
+    {16.7, 20.0, PathPointTypeBezier, 0, 0}, /*7*/
+    {33.3, 16.7, PathPointTypeBezier, 0, 0}, /*8*/
     {30.0, 10.0, PathPointTypeBezier, 0, 0}, /*9*/
-    {26.7, 3.3,  PathPointTypeBezier, 0, 1}, /*10*/
-    {6.7,  0.0,  PathPointTypeBezier, 0, 1}, /*11*/
+    {26.7, 3.3,  PathPointTypeBezier, 0, 0}, /*10*/
+    {6.7,  0.0,  PathPointTypeBezier, 0, 0}, /*11*/
     {0.0,  0.0,  PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}  /*12*/
     };
 static path_test_t addclosedcurve_path_default_tension[] = {
