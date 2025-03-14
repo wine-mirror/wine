@@ -808,7 +808,7 @@
 @ stub SystemFunction029
 @ stdcall SystemFunction030(ptr ptr)
 @ stdcall SystemFunction031(ptr ptr) SystemFunction030
-@ stdcall SystemFunction032(ptr ptr)
+@ stdcall SystemFunction032(ptr ptr) cryptsp.SystemFunction032
 @ stub SystemFunction033
 @ stub SystemFunction034
 @ stdcall SystemFunction035(str)

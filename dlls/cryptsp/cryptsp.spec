@@ -60,6 +60,6 @@
 @ stdcall -import SystemFunction027(ptr ptr ptr)
 @ stdcall -import SystemFunction030(ptr ptr)
 @ stdcall -import SystemFunction031(ptr ptr)
-@ stdcall -import SystemFunction032(ptr ptr)
+@ stdcall SystemFunction032(ptr ptr)
 @ stub SystemFunction033
 @ stdcall -import SystemFunction035(str)

@@ -27,7 +27,12 @@
 #include "windef.h"
 #include "winternl.h"
 
-#include "crypt.h"
+struct ustring
+{
+    DWORD Length;
+    DWORD MaximumLength;
+    unsigned char *Buffer;
+};
 
 typedef struct tag_arc4_info {
     unsigned char state[256];
@@ -79,20 +84,7 @@ static void arc4_ProcessString(arc4_info *a4i, BYTE *inoutString, unsigned int l
 }
 
 /******************************************************************************
- * SystemFunction032  [ADVAPI32.@]
- *
- * Encrypts a string data using ARC4
- *
- * PARAMS
- *   data    [I/O] data to encrypt
- *   key     [I] key data
- *
- * RETURNS
- *  Success: STATUS_SUCCESS
- *  Failure: STATUS_UNSUCCESSFUL
- *
- * NOTES
- *  see http://web.it.kth.se/~rom/ntsec.html#crypto-strongavail
+ *     SystemFunction032   (cryptsp.@)
  */
 NTSTATUS WINAPI SystemFunction032(struct ustring *data, const struct ustring *key)
 {
