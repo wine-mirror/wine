@@ -3992,13 +3992,13 @@ static void pdlg_to_pdlgex(const PRINTDLGW *pdlg, PRINTDLGEXW *pdlgex)
     pdlgex->hDevMode = pdlg->hDevMode;
     pdlgex->hDevNames = pdlg->hDevNames;
     pdlgex->hDC = pdlg->hDC;
-    if (!(pdlgex->Flags & PD_NOPAGENUMS) && pdlgex->nPageRanges && pdlgex->lpPageRanges)
+    pdlgex->Flags = pdlg->Flags;
+    if ((pdlgex->Flags & PD_PAGENUMS) && pdlgex->nMaxPageRanges && pdlgex->lpPageRanges)
     {
+        pdlgex->nPageRanges = 1;
         pdlgex->lpPageRanges[0].nFromPage = pdlg->nFromPage;
         pdlgex->lpPageRanges[0].nToPage = pdlg->nToPage;
     }
-    pdlgex->nMinPage = pdlg->nMinPage;
-    pdlgex->nMaxPage = pdlg->nMaxPage;
     pdlgex->nCopies = pdlg->nCopies;
 }
 
