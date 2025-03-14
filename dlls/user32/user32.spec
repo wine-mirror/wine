@@ -10,131 +10,131 @@
 2001 stub @
 2002 stub @
 
-2005 stub @
+2005 stub -noname SetChildWindowNoActivate  # NtUserSetChildWindowNoActivate
 
-2010 stub @
+2010 stub -noname SlicerControl  # NtUserSlicerControl
 
-# 2503 stub DelegateInput
-# 2504 stub UndelegateInput
-# 2505 stub HandleDelegatedInput
+2503 stub DelegateInput  # NtUserDelegateInput
+2504 stub UndelegateInput  # NtUserUndelegateInput
+2505 stub HandleDelegatedInput  # NtUserHandleDelegatedInput
 2506 stub @
-2507 stub @
-2508 stub @
-2509 stub @
+2507 stub -noname SetAutoRotation  # NtUserSetAutoRotation
+2508 stub -noname PromotePointer  # NtUserPromotePointer
+2509 stub -noname AcquireIAMKey  # NtUserAcquireIAMKey
 2510 stub @
-2511 stub @
-2512 stub @
-2513 stub @
+2511 stub -noname SetFallbackForeground  # NtUserSetFallbackForeground
+2512 stub -noname GetDisplayAutoRotationPreferencesByProcessId  # NtUserGetDisplayAutoRotationPreferencesByProcessId
+2513 stub -noname SetActiveProcessForMonitor  # NtUserSetActiveProcessForMonitor
 2514 stub @
 2515 stub @
-2516 stub @
-2517 stub @
+2516 stub -noname DelegateCapturePointers  # NtUserDelegateCapturePointers
+2517 stub -noname GetTouchValidationStatus  # NtUserGetTouchValidationStatus
 2518 stub @
-2519 stub @
-2520 stub @
-# 2521 stub GetProcessUIContextInformation
-2522 stub @
+2519 stub -noname EnableMouseInputForCursorSuppression  # NtUserEnableMouseInputForCursorSuppression
+2520 stub -noname IsMouseInputEnabled  # NtUserIsMouseInputEnabled
+2521 stub GetProcessUIContextInformation  # NtUserGetProcessUIContextInformation
+2522 stub -noname SetBrokeredForeground  # NtUserSetBrokeredForeground
 2523 stub @
 2524 stub @
 2525 stub @
 2526 stub @
 2527 stub @
-# 2528 stub IsThreadMessageQueueAttached
-2529 stub @
-2530 stub @
-2531 stub @
-2532 stub @
-2533 stub @
+2528 stub IsThreadMessageQueueAttached  # NtUserThreadMessageQueueAttached
+2529 stub -noname DisableImmersiveOwner  # NtUserDisableImmersiveOwner
+2530 stub -noname WaitAvailableMessageEx  # NtUserWaitAvailableMessageEx
+2531 stub -noname SetCalibrationData  # NtUserSetCalibrationData
+2532 stub -noname SetDisplayMapping  # NtUserSetDisplayMapping
+2533 stub -noname CanBrokerForceForeground  # NtUserCanBrokerForceForeground
 2534 stub @
 2535 stub @
 2536 stub @
-2537 stub @
-2538 stub @
-2539 stub @
-2540 stub @
-2541 stub @
-# 2542 stub SetCoveredWindowStates
+2537 stub -noname SendEventMessage  # NtUserSendEventMessage
+2538 stub -noname LayoutCompleted  # NtUserLayoutCompleted
+2539 stub -noname HidePointerContactVisualization  # NtUserHidePointerContactVisualization
+2540 stub -noname SetCancelRotationDelayHintWindow  # NtUserSetCancelRotationDelayHintWindow
+2541 stub -noname GetQueueStatusReadonly  # NtUserGetQueueStatusReadonly
+2542 stub SetCoveredWindowStates  # NtUserSetCoveredWindowStates
 
-2544 stub @
-2545 stub @
+2544 stub -noname EnableTouchPad  # NtUserEnableTouchPad
+2545 stub -noname GetPhysicalDeviceRect  # NtUserGetPhysicalDeviceRect
 2546 stdcall -noname RegisterTouchPadCapable(long) NtUserRegisterTouchPadCapable
 
-2548 stub @
-2549 stub @
-2550 stub @
+2548 stub -noname GetPrecisionTouchPadConfiguration  # NtUserGetPrecisionTouchPadConfiguration
+2549 stub -noname SetPrecisionTouchPadConfiguration  # NtUserSetPrecisionTouchPadConfiguration
+2550 stub -noname CompositionInputSinkLuidFromPoint  # NtUserCompositionInputSinkLuidFromPoint
 # 2551 stub ReportInertia
 2552 stub @
 2553 stub @
 2554 stub @
 2555 stub @
-2556 stub @
+2556 stub -noname SetActivationFilter  # NtUserSetActivationFilter
 2557 stub @
 2558 stub @
-2559 stub @
+2559 stub -noname GetOwnerTransformedMonitorRect  # NtUserGetOwnerTransformedMonitorRect
 2560 stub @
 2561 stdcall -noname EnableMouseInPointerForThread() NtUserEnableMouseInPointerForThread
 
-2563 stub @
-2564 stub @
+2563 stub -noname ClearForeground  # NtUserClearForeground
+2564 stub -noname RegisterWindowArrangementCallout  # NtUserRegisterWindowArrangementCallout
 2565 stub @
 2566 stub @
-2567 stub @
-2568 stub @
-2569 stub @
+2567 stub -noname EnableShellWindowManagementBehavior  # NtUserEnableShellWindowManagementBehavior
+2568 stub -noname SetModernAppWindow  # NtUserSetModernAppWindow
+2569 stub -noname GetModernAppWindow  # NtUserGetModernAppWindow
 2570 stub @
-# 2571 stub SetCoreWindow
+2571 stub SetCoreWindow  # NtUserSetCoreWindow
 2572 stub @
 2573 stub @
 2574 stub @
 2575 stub @
-2576 stub @
+2576 stub -noname SetCoreWindowPartner  # NtUserSetCoreWindowPartner
 
-2578 stub @
-2579 stub @
+2578 stub -noname NavigateFocus  # NtUserNavigateFocus
+2579 stub -noname SetWindowShowState  # NtUserSetWindowShowState
 
-2581 stub @
-2582 stub @
+2581 stub -noname GetWindowTrackInfoAsync  # NtUserGetWindowTrackInfoAsync
+2582 stub -noname ScheduleDispatchNotification  # NtUserScheduleDispatchNotification
 
-2584 stub @
-2585 stub @
-2586 stub @
+2584 stub -noname EnableModernAppWindowKeyboardIntercept  # NtUserEnableModernAppWindowKeyboardIntercept
+2585 stub -noname UpdateWindowTrackingInfo  # NtUserUpdateWindowTrackingInfo
+2586 stub -noname SetInputServiceState  # NtUserSetInputServiceState
 2587 stub @
-2588 stub @
-2589 stub @
-2590 stub @
-2591 stub @
-2592 stub @
-2593 stub @
-2594 stub @
-2595 stub @
+2588 stub -noname AcquireInteractiveControlBackgroundAccess  # NtUserAcquireInteractiveControlBackgroundAccess
+2589 stub -noname GetInteractiveControlInfo  # NtUserGetInteractiveControlInfo
+2590 stub -noname GetInteractiveControlDeviceInfo  # NtUserGetInteractiveControlDeviceInfo
+2591 stub -noname SendInteractiveControlHapticsReport  # NtUserSendInteractiveControlHapticsReport
+2592 stub -noname SetInteractiveControlFocus  # NtUserSetInteractiveControlFocus
+2593 stub -noname InteractiveControlQueryUsage  # NtUserInteractiveControlQueryUsage
+2594 stub -noname SetInteractiveCtrlRotationAngle  # NtUserSetInteractiveCtrlRotationAngle
+2595 stub -noname SetProcessInteractionFlags  # NtUserSetProcessInteractionFlags
 
-2597 stub @
+2597 stub -noname CitSetInfo  # NtUserCitSetInfo
 2598 stub @
 2599 stub @
-2600 stub @
+2600 stub -noname ForceEnableNumpadTranslation  # NtUserForceEnableNumpadTranslation
 
-2606 stub @
+2606 stub -noname EnableSoftwareCursorForScreenCapture  # NtUserEnableSoftwareCursorForScreenCapture
 
-2608 stub @
-2609 stub @
-2610 stub @
-2611 stub @
-2612 stub @
-2613 stub @
-2614 stub @
-2615 stub @
-2616 stub @
-2617 stub @
+2608 stub -noname ProcessInkFeedbackCommand  # NtUserProcessInkFeedbackCommand
+2609 stub -noname GetInteractiveCtrlSupportedWaveforms  # NtUserGetInteractiveCtrlSupportedWaveforms
+2610 stub -noname CompositionInputSinkViewInstanceIdFromPoint  # NtUserCompositionInputSinkViewInstanceIdFromPoint
+2611 stub -noname EnableWindowResizeOptimization  # NtUserEnableWindowResizeOptimization
+2612 stub -noname InitThreadCoreMessagingIocp  # NtUserInitThreadCoreMessagingIocp
+2613 stub -noname DrainThreadCoreMessagingCompletions  # NtUserDrainThreadCoreMessagingCompletions
+2614 stub -noname GetResizeDCompositionSynchronizationObject  # NtUserGetResizeDCompositionSynchronizationObject
+2615 stub -noname EnableResizeLayoutSynchronization  # NtUserEnableResizeLayoutSynchronization
+2616 stub -noname BeginLayoutUpdate  # NtUserBeginLayoutUpdate
+2617 stub -noname IsResizeLayoutSynchronizationEnabled  # NtUserIsResizeLayoutSynchronizationEnabled
 2618 stub @
 2619 stub @
 2620 stub @
-2621 stub @
-2622 stub @
+2621 stub -noname ConfirmResizeCommit  # NtUserConfirmResizeCommit
+2622 stub -noname SetTargetForResourceBrokering  # NtUserSetTargetForResourceBrokering
 
-2627 stub @
+2627 stub -noname SetBridgeWindowChild  # NtUserSetBridgeWindowChild
 
-2633 stub @
-2634 stub @
+2633 stub -noname CreateActivationObject  # NtUserCreateActivationObject
+2634 stub -noname SetTSFEventState  # NtUserSetTSFEventState
 2635 stub @
 2636 stub @
 2637 stub @
@@ -142,51 +142,51 @@
 2639 stub @
 2640 stub @
 2641 stub @
-2642 stub @
-2643 stub @
-2644 stub @
+2642 stub -noname ForceWindowToDpiForTest  # NtUserForceWindowToDpiForTest
+2643 stub -noname RestoreWindowDpiChanges  # NtUserRestoreWindowDpiChanges
+2644 stub -noname DeferWindowDpiChanges  # NtUserDeferWindowDpiChanges
 2645 stub @
 
-2647 stub @
-2648 stub @
-2649 stub @
-2650 stub @
-2651 stub @
-2652 stub @
-2653 stub @
+2647 stub -noname ConfigureActivationObject  # NtUserConfigureActivationObject
+2648 stub -noname DestroyActivationObject  # NtUserDestroyActivationObject
+2649 stub -noname SetForegroundWindowForApplication  # NtUserSetForegroundWindowForApplication
+2650 stub -noname GetInputContainerId  # NtUserGetInputContainerId
+2651 stub -noname DownlevelTouchpad  # NtUserDownlevelTouchpad
+2652 stub -noname GetUniformSpaceMapping  # NtUserGetUniformSpaceMapping
+2653 stub -noname GetPointerProprietaryId  # NtUserGetPointerProprietaryId
 
-2656 stub @
-2657 stub @
-2658 stub @
+2656 stub -noname EnableMouseInPointerForWindow  # NtUserEnableMouseInPointerForWindow
+2657 stub -noname SetProcessMousewheelRoutingMode  # NtUserSetProcessMousewheelRoutingMode
+2658 stub -noname SetDesktopVisualInputSink  # NtUserSetDesktopVisualInputSink
 2659 stub @
 
-2661 stub @
+2661 stub -noname SetDpiForWindow  # NtUserSetDpiForWindow
 # 2662 stub RIMRegisterForInputEx
 # 2663 stub RIMOnAsyncPnpWorkNotification
-# 2664 stub ShellMigrateWindow
-# 2665 stub SetAdditionalForegroundBoostProcesses
-# 2666 stub RegisterForTooltipDismissNotification
-# 2667 stub RegisterForCustomDockTargets
-# 2668 stub GetClipboardMetadata
-2669 stub @
-2670 stub @
-# 2671 stub ShellRegisterHotKey
-# 2672 stub SetUserObjectCapability
-# 2673 stub SetWindowMessageCapability
-# 2674 stub ShellForegroundBoostProcess
-# 2675 stub SuppressWindowActions
-# 2676 stub GetSuppressedWindowActions
+2664 stub ShellMigrateWindow  # NtUserShellMigrateWindow
+2665 stub SetAdditionalForegroundBoostProcesses  # NtUserSetAdditionalForegroundBoostProcesses
+2666 stub RegisterForTooltipDismissNotification  # NtUserRegisterForTooltipDismissNotification
+2667 stub RegisterForCustomDockTargets  # NtUserRegisterForCustomDockTargets
+2668 stub GetClipboardMetadata  # NtUserGetClipboardMetadata
+2669 stub -noname InitThreadCoreMessagingIocp2  # NtUserInitThreadCoreMessagingIocp2
+2670 stub -noname DrainThreadCoreMessagingCompletions2  # NtUserDrainThreadCoreMessagingCompletions2
+2671 stub ShellRegisterHotKey  # NtUserShellRegisterHotKey
+2672 stub SetUserObjectCapability  # NtUserSetUserObjectCapability
+2673 stub SetWindowMessageCapability  # NtUserSetWindowMessageCapability
+2674 stub ShellForegroundBoostProcess  # NtUserShellForegroundBoostProcess
+2675 stub SuppressWindowActions  # NtUserSuppressWindowActions
+2676 stub GetSuppressedWindowActions  # NtUserGetSuppressedWindowActions
 
-# 2680 stub DwmWindowNotificationsEnabled
-# 2681 stub ApplyWindowAction
-# 2682 stub RegisterCloakedNotification
+2680 stub DwmWindowNotificationsEnabled  # NtUserDwmWindowNotificationsEnabled
+2681 stub ApplyWindowAction  # NtUserApplyWindowAction
+2682 stub RegisterCloakedNotification  # NtUserRegisterCloakedNotification
 # 2683 stub GetCurrentMonitorTopologyId
-# 2684 stub SuppressWindowDisplayChange
-# 2685 stub IsWindowDisplayChangeSuppressed
-# 2686 stub InternalStartMoveSize
-# 2687 stub RaiseLowerShellWindow
+2684 stub SuppressWindowDisplayChange  # NtUserSuppressWindowDisplayChange
+2685 stub IsWindowDisplayChangeSuppressed  # NtUserIsWindowDisplayChangeSuppressed
+2686 stub InternalStartMoveSize  # NtUserInternalStartMoveSize
+2687 stub RaiseLowerShellWindow  # NtUserRaiseLowerShellWindow
 # 2688 stub RegisterPrecisionTouchpadThread
-# 2689 stub RegisterPrecisionTouchpadWindow
+2689 stub RegisterPrecisionTouchpadWindow  # NtUserRegisterPrecisionTouchpadWindow
 # 2690 stub CreateSyntheticPointerDevice2
 # 2691 stub GetPointerTouchpadInfo
 # 2692 stub GetPointerTouchpadInfoHistory
@@ -196,25 +196,25 @@
 
 2700 stub @
 
-2703 stub @
-2704 stub @
-2705 stub @
-2706 stub @
+2703 stub -noname IsNonClientDpiScalingEnabled  # NtUserIsNonClientDpiScalingEnabled
+2704 stub -noname EnableChildWindowDpiMessage  # NtUserEnableChildWindowDpiMessage
+2705 stub -noname IsChildWindowDpiMessageEnabled  # NtUserIsChildWindowDpiMessageEnabled
+2706 stub -noname IsWindowBroadcastingDpiToChildren  # NtUserIsWindowBroadcastingDpiToChildren
 2707 stub @
-2708 stub @
-2709 stub @
-2710 stub @
-2711 stub @
+2708 stub -noname BroadcastThemeChangeEvent  # NtUserBroadcastThemeChangeEvent
+2709 stub -noname EnableWindowGDIScaledDpiMessage  # NtUserEnableWindowGDIScaledDpiMessage
+2710 stub -noname IsWindowGDIScaledDpiMessageEnabled  # NtUserIsWindowGDIScaledDpiMessageEnabled
+2711 stub -noname GetActiveProcessesDpis  # NtUserGetActiveProcessesDpis
 2712 stub @
 2713 stub @
 2714 stub @
-2715 stub @
-2716 stub @
+2715 stub -noname LogicalToPhysicalDpiPointForWindow  # NtUserLogicalToPhysicalDpiPointForWindow
+2716 stub -noname PhysicalToLogicalDpiPointForWindow  # NtUserPhysicalToLogicalDpiPointForWindow
 
-# 2800 stub ShellHandwritingDelegateInput
-# 2801 stub ShellHandwritingUndelegateInput
-# 2802 stub ShellHandwritingHandleDelegatedInput
-# 2804 stub EnableWindowShellWindowManagementBehavior
+2800 stub ShellHandwritingDelegateInput  # NtUserShellHandwritingDelegateInput
+2801 stub ShellHandwritingUndelegateInput  # NtUserShellHandwritingUndelegateInput
+2802 stub ShellHandwritingHandleDelegatedInput  # NtUserShellHandwritingHandleDelegatedInput
+2804 stub EnableWindowShellWindowManagementBehavior  # NtUserEnableWindowShellWindowManagementBehavior
 
 @ stdcall ActivateKeyboardLayout(long long) NtUserActivateKeyboardLayout
 @ stdcall AddClipboardFormatListener(long) NtUserAddClipboardFormatListener
