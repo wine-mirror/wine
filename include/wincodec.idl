@@ -1235,17 +1235,6 @@ interface IWICDdsFrameDecode : IUnknown
         [out, size_is(bufferSize)] BYTE *buffer);
 };
 
-[
-    object,
-    uuid(b9bd430d-28a8-41d3-a1f5-f36ee02840bf)
-]
-interface IWICWineDecoder : IUnknown
-{
-    HRESULT Initialize(
-        [in] IStream *stream,
-        [in] WICDecodeOptions options);
-};
-
 cpp_quote("HRESULT WINAPI WICConvertBitmapSource(REFWICPixelFormatGUID dstFormat, IWICBitmapSource *pISrc, IWICBitmapSource **ppIDst);")
 cpp_quote("HRESULT WINAPI WICCreateBitmapFromSection(UINT width, UINT height, REFWICPixelFormatGUID format, HANDLE section, UINT stride, UINT offset, IWICBitmap **bitmap);")
 cpp_quote("HRESULT WINAPI WICCreateBitmapFromSectionEx(UINT width, UINT height, REFWICPixelFormatGUID format, HANDLE section, UINT stride, UINT offset, WICSectionAccessLevel access, IWICBitmap **bitmap);")

@@ -135,7 +135,7 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
     IEnumUnknown *enumdecoders = NULL;
     IUnknown *unkdecoderinfo = NULL;
     GUID vendor;
-    HRESULT res, res_wine;
+    HRESULT res;
     ULONG num_fetched;
     BOOL matches, found;
 
@@ -148,7 +148,6 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
     while (IEnumUnknown_Next(enumdecoders, 1, &unkdecoderinfo, &num_fetched) == S_OK)
     {
         IWICBitmapDecoderInfo *decoderinfo = NULL;
-        IWICWineDecoder *wine_decoder = NULL;
 
         res = IUnknown_QueryInterface(unkdecoderinfo, &IID_IWICBitmapDecoderInfo, (void**)&decoderinfo);
         if (FAILED(res)) goto next;
@@ -171,27 +170,12 @@ static HRESULT find_decoder(IStream *pIStream, const GUID *pguidVendor,
         res = IWICBitmapDecoder_Initialize(*decoder, pIStream, metadataOptions);
         if (FAILED(res))
         {
-            res_wine = IWICBitmapDecoder_QueryInterface(*decoder, &IID_IWICWineDecoder, (void **)&wine_decoder);
-            if (FAILED(res_wine))
-            {
-                IWICBitmapDecoder_Release(*decoder);
-                *decoder = NULL;
-                goto next;
-            }
-
-            res_wine = IWICWineDecoder_Initialize(wine_decoder, pIStream, metadataOptions);
-            if (FAILED(res_wine))
-            {
-                IWICBitmapDecoder_Release(*decoder);
-                *decoder = NULL;
-                goto next;
-            }
-
-            res = res_wine;
+            IWICBitmapDecoder_Release(*decoder);
+            *decoder = NULL;
+            goto next;
         }
 
     next:
-        if (wine_decoder) IWICWineDecoder_Release(wine_decoder);
         if (decoderinfo) IWICBitmapDecoderInfo_Release(decoderinfo);
         IUnknown_Release(unkdecoderinfo);
         if (found) break;
