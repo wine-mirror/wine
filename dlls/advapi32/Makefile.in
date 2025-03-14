@@ -9,7 +9,6 @@ SOURCES = \
 	cred.c \
 	crypt.c \
 	crypt_des.c \
-	crypt_lmhash.c \
 	eventlog.c \
 	lsa.c \
 	registry.c \

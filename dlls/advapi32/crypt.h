@@ -86,11 +86,6 @@ typedef struct tagCRYPTHASH
 
 #define MAXPROVTYPES 999
 
-extern unsigned char *CRYPT_DEShash( unsigned char *dst, const unsigned char *key,
-                                     const unsigned char *src );
-extern unsigned char *CRYPT_DESunhash( unsigned char *dst, const unsigned char *key,
-                                       const unsigned char *src );
-
 struct ustring {
     DWORD Length;
     DWORD MaximumLength;
