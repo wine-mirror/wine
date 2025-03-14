@@ -8,7 +8,6 @@ SOURCES = \
 	advapi.c \
 	cred.c \
 	crypt.c \
-	crypt_des.c \
 	eventlog.c \
 	lsa.c \
 	registry.c \

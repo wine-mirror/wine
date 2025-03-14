@@ -777,11 +777,11 @@
 @ stdcall StopTraceA(int64 str ptr)
 @ stdcall -import StopTraceW(int64 wstr ptr)
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
-@ stdcall SystemFunction001(ptr ptr ptr)
-@ stdcall SystemFunction002(ptr ptr ptr)
-@ stdcall SystemFunction003(ptr ptr)
-@ stdcall SystemFunction004(ptr ptr ptr)
-@ stdcall SystemFunction005(ptr ptr ptr)
+@ stdcall SystemFunction001(ptr ptr ptr) cryptbase.SystemFunction001
+@ stdcall SystemFunction002(ptr ptr ptr) cryptbase.SystemFunction002
+@ stdcall SystemFunction003(ptr ptr) cryptbase.SystemFunction003
+@ stdcall SystemFunction004(ptr ptr ptr) cryptbase.SystemFunction004
+@ stdcall SystemFunction005(ptr ptr ptr) cryptbase.SystemFunction005
 @ stdcall SystemFunction006(ptr ptr) cryptsp.SystemFunction006
 @ stdcall SystemFunction007(ptr ptr) cryptsp.SystemFunction007
 @ stdcall SystemFunction008(ptr ptr ptr) cryptsp.SystemFunction008

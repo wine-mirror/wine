@@ -21,10 +21,18 @@
  *  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
-#include "crypt.h"
+#include "winternl.h"
+
+struct ustring
+{
+    DWORD Length;
+    DWORD MaximumLength;
+    unsigned char *Buffer;
+};
 
 static const unsigned char InitialPermuteMap[64] =
 {
@@ -337,7 +345,7 @@ static unsigned char *DESunhash( unsigned char *dst, const unsigned char *key, c
 
 
 /******************************************************************************
- * SystemFunction001  [ADVAPI32.@]
+ *     SystemFunction001   (cryptbase.@)
  *
  * Encrypts a single block of data using DES
  *
@@ -360,7 +368,7 @@ NTSTATUS WINAPI SystemFunction001( const BYTE *data, const BYTE *key, BYTE *outp
 }
 
 /******************************************************************************
- * SystemFunction002  [ADVAPI32.@]
+ *     SystemFunction002   (cryptbase.@)
  *
  * Decrypts a single block of data using DES
  *
@@ -383,7 +391,7 @@ NTSTATUS WINAPI SystemFunction002( const BYTE *data, const BYTE *key, BYTE *outp
 }
 
 /******************************************************************************
- * SystemFunction003  [ADVAPI32.@]
+ *     SystemFunction003   (cryptbase.@)
  *
  * Hashes a key using DES and a fixed datablock
  *
@@ -407,7 +415,7 @@ NTSTATUS WINAPI SystemFunction003( const BYTE *key, BYTE *output )
 }
 
 /******************************************************************************
- * SystemFunction004  [ADVAPI32.@]
+ *     SystemFunction004   (cryptbase.@)
  *
  * Encrypts a block of data with DES in ECB mode, preserving the length
  *
@@ -469,7 +477,7 @@ NTSTATUS WINAPI SystemFunction004( const struct ustring *in, const struct ustrin
 }
 
 /******************************************************************************
- * SystemFunction005  [ADVAPI32.@]
+ *     SystemFunction005   (cryptbase.@)
  *
  * Decrypts a block of data with DES in ECB mode
  *

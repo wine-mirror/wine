@@ -1025,6 +1025,7 @@ enable_coremessaging
 enable_credui
 enable_crtdll
 enable_crypt32
+enable_cryptbase
 enable_cryptdlg
 enable_cryptdll
 enable_cryptext
@@ -22179,6 +22180,7 @@ wine_fn_config_makefile dlls/credui/tests enable_tests
 wine_fn_config_makefile dlls/crtdll enable_crtdll
 wine_fn_config_makefile dlls/crypt32 enable_crypt32
 wine_fn_config_makefile dlls/crypt32/tests enable_tests
+wine_fn_config_makefile dlls/cryptbase enable_cryptbase
 wine_fn_config_makefile dlls/cryptdlg enable_cryptdlg
 wine_fn_config_makefile dlls/cryptdll enable_cryptdll
 wine_fn_config_makefile dlls/cryptext enable_cryptext
