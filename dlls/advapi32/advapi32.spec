@@ -783,11 +783,11 @@
 @ stdcall SystemFunction004(ptr ptr ptr)
 @ stdcall SystemFunction005(ptr ptr ptr)
 @ stdcall SystemFunction006(ptr ptr) cryptsp.SystemFunction006
-@ stdcall SystemFunction007(ptr ptr)
+@ stdcall SystemFunction007(ptr ptr) cryptsp.SystemFunction007
 @ stdcall SystemFunction008(ptr ptr ptr) cryptsp.SystemFunction008
 @ stdcall SystemFunction009(ptr ptr ptr) cryptsp.SystemFunction009
-@ stdcall SystemFunction010(ptr ptr ptr)
-@ stdcall SystemFunction011(ptr ptr ptr) SystemFunction010
+@ stdcall SystemFunction010(ptr ptr ptr) cryptsp.SystemFunction010
+@ stdcall SystemFunction011(ptr ptr ptr) cryptsp.SystemFunction011
 @ stdcall SystemFunction012(ptr ptr ptr) cryptsp.SystemFunction012
 @ stdcall SystemFunction013(ptr ptr ptr) cryptsp.SystemFunction013
 @ stdcall SystemFunction014(ptr ptr ptr) cryptsp.SystemFunction014
@@ -806,12 +806,12 @@
 @ stdcall SystemFunction027(ptr ptr ptr) cryptsp.SystemFunction027
 @ stub SystemFunction028
 @ stub SystemFunction029
-@ stdcall SystemFunction030(ptr ptr)
-@ stdcall SystemFunction031(ptr ptr) SystemFunction030
+@ stdcall SystemFunction030(ptr ptr) cryptsp.SystemFunction030
+@ stdcall SystemFunction031(ptr ptr) cryptsp.SystemFunction031
 @ stdcall SystemFunction032(ptr ptr) cryptsp.SystemFunction032
 @ stub SystemFunction033
 @ stub SystemFunction034
-@ stdcall SystemFunction035(str)
+@ stdcall SystemFunction035(str) cryptsp.SystemFunction035
 @ stdcall SystemFunction036(ptr long) # RtlGenRandom
 @ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
 @ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory

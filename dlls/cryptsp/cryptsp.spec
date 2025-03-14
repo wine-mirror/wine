@@ -1,4 +1,4 @@
-@ stub CheckSignatureInFile
+@ stdcall CheckSignatureInFile(str)
 @ stdcall -import CryptAcquireContextA(ptr str str long long)
 @ stdcall -import CryptAcquireContextW(ptr wstr wstr long long)
 @ stdcall -import CryptContextAddRef(long ptr long)
@@ -39,11 +39,11 @@
 @ stdcall -import CryptVerifySignatureA(long ptr long long str long)
 @ stdcall -import CryptVerifySignatureW(long ptr long long wstr long)
 @ stdcall SystemFunction006(ptr ptr)
-@ stdcall -import SystemFunction007(ptr ptr)
+@ stdcall SystemFunction007(ptr ptr)
 @ stdcall SystemFunction008(ptr ptr ptr)
 @ stdcall SystemFunction009(ptr ptr ptr) SystemFunction008
-@ stdcall -import SystemFunction010(ptr ptr ptr)
-@ stdcall -import SystemFunction011(ptr ptr ptr)
+@ stdcall SystemFunction010(ptr ptr ptr)
+@ stdcall SystemFunction011(ptr ptr ptr) SystemFunction010
 @ stdcall SystemFunction012(ptr ptr ptr)
 @ stdcall SystemFunction013(ptr ptr ptr)
 @ stdcall SystemFunction014(ptr ptr ptr) SystemFunction012
@@ -58,8 +58,8 @@
 @ stdcall SystemFunction025(ptr ptr ptr)
 @ stdcall SystemFunction026(ptr ptr ptr) SystemFunction024
 @ stdcall SystemFunction027(ptr ptr ptr) SystemFunction025
-@ stdcall -import SystemFunction030(ptr ptr)
-@ stdcall -import SystemFunction031(ptr ptr)
+@ stdcall SystemFunction030(ptr ptr)
+@ stdcall SystemFunction031(ptr ptr) SystemFunction030
 @ stdcall SystemFunction032(ptr ptr)
 @ stub SystemFunction033
-@ stdcall -import SystemFunction035(str)
+@ stdcall SystemFunction035(str) CheckSignatureInFile

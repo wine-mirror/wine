@@ -42,17 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-typedef struct tagMD4_CTX {
-    unsigned int buf[4];
-    unsigned int i[2];
-    unsigned char in[64];
-    unsigned char digest[16];
-} MD4_CTX;
-
-void WINAPI MD4Init(MD4_CTX *ctx);
-void WINAPI MD4Update(MD4_CTX *ctx, const unsigned char *buf, unsigned int len);
-void WINAPI MD4Final(MD4_CTX *ctx);
-
 static HWND crypt_hWindow;
 
 #define CRYPT_Alloc(size) (LocalAlloc(LMEM_ZEROINIT, size))
@@ -2293,92 +2282,6 @@ DWORD WINAPI ReadEncryptedFileRaw(PFE_EXPORT_FUNC export, PVOID callback, PVOID 
 {
     FIXME("(%p, %p, %p): stub\n", export, callback, context);
     return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-/******************************************************************************
- * SystemFunction007  [ADVAPI32.@]
- *
- * MD4 hash a unicode string
- *
- * PARAMS
- *   string  [I] the string to hash
- *   output  [O] the md4 hash of the string (16 bytes)
- *
- * RETURNS
- *  Success: STATUS_SUCCESS
- *  Failure: STATUS_UNSUCCESSFUL
- *
- */
-NTSTATUS WINAPI SystemFunction007(const UNICODE_STRING *string, LPBYTE hash)
-{
-    MD4_CTX ctx;
-
-    MD4Init( &ctx );
-    MD4Update( &ctx, (const BYTE *)string->Buffer, string->Length );
-    MD4Final( &ctx );
-    memcpy( hash, ctx.digest, 0x10 );
-
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- * SystemFunction010  [ADVAPI32.@]
- * SystemFunction011  [ADVAPI32.@]
- *
- * MD4 hashes 16 bytes of data
- *
- * PARAMS
- *   unknown []  seems to have no effect on the output
- *   data    [I] pointer to data to hash (16 bytes)
- *   output  [O] the md4 hash of the data (16 bytes)
- *
- * RETURNS
- *  Success: STATUS_SUCCESS
- *  Failure: STATUS_UNSUCCESSFUL
- *
- */
-NTSTATUS WINAPI SystemFunction010(LPVOID unknown, const BYTE *data, LPBYTE hash)
-{
-    MD4_CTX ctx;
-
-    MD4Init( &ctx );
-    MD4Update( &ctx, data, 0x10 );
-    MD4Final( &ctx );
-    memcpy( hash, ctx.digest, 0x10 );
-
-    return STATUS_SUCCESS;
-}
-
-/******************************************************************************
- * SystemFunction030   (ADVAPI32.@)
- *
- * Tests if two blocks of 16 bytes are equal
- *
- * PARAMS
- *  b1,b2   [I] block of 16 bytes
- *
- * RETURNS
- *  TRUE  if blocks are the same
- *  FALSE if blocks are different
- */
-BOOL WINAPI SystemFunction030(LPCVOID b1, LPCVOID b2)
-{
-    return !memcmp(b1, b2, 0x10);
-}
-
-/******************************************************************************
- * SystemFunction035   (ADVAPI32.@)
- *
- * Described here:
-http://disc.server.com/discussion.cgi?disc=148775;article=942;title=Coding%2FASM%2FSystem
- *
- * NOTES
- *  Stub, always return TRUE.
- */
-BOOL WINAPI SystemFunction035(LPCSTR lpszDllFilePath)
-{
-    FIXME("%s: stub\n", debugstr_a(lpszDllFilePath));
-    return TRUE;
 }
 
 static CRITICAL_SECTION random_cs;
