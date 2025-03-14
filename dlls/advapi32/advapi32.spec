@@ -782,28 +782,28 @@
 @ stdcall SystemFunction003(ptr ptr)
 @ stdcall SystemFunction004(ptr ptr ptr)
 @ stdcall SystemFunction005(ptr ptr ptr)
-@ stdcall SystemFunction006(ptr ptr)
+@ stdcall SystemFunction006(ptr ptr) cryptsp.SystemFunction006
 @ stdcall SystemFunction007(ptr ptr)
-@ stdcall SystemFunction008(ptr ptr ptr)
-@ stdcall SystemFunction009(ptr ptr ptr)
+@ stdcall SystemFunction008(ptr ptr ptr) cryptsp.SystemFunction008
+@ stdcall SystemFunction009(ptr ptr ptr) cryptsp.SystemFunction009
 @ stdcall SystemFunction010(ptr ptr ptr)
 @ stdcall SystemFunction011(ptr ptr ptr) SystemFunction010
-@ stdcall SystemFunction012(ptr ptr ptr)
-@ stdcall SystemFunction013(ptr ptr ptr)
-@ stdcall SystemFunction014(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction015(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction016(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction017(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction018(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction019(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction020(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction021(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction022(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction023(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction024(ptr ptr ptr)
-@ stdcall SystemFunction025(ptr ptr ptr)
-@ stdcall SystemFunction026(ptr ptr ptr) SystemFunction024
-@ stdcall SystemFunction027(ptr ptr ptr) SystemFunction025
+@ stdcall SystemFunction012(ptr ptr ptr) cryptsp.SystemFunction012
+@ stdcall SystemFunction013(ptr ptr ptr) cryptsp.SystemFunction013
+@ stdcall SystemFunction014(ptr ptr ptr) cryptsp.SystemFunction014
+@ stdcall SystemFunction015(ptr ptr ptr) cryptsp.SystemFunction015
+@ stdcall SystemFunction016(ptr ptr ptr) cryptsp.SystemFunction016
+@ stdcall -import SystemFunction017(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction018(ptr ptr ptr) cryptsp.SystemFunction018
+@ stdcall -import SystemFunction019(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction020(ptr ptr ptr) cryptsp.SystemFunction020
+@ stdcall SystemFunction021(ptr ptr ptr) cryptsp.SystemFunction021
+@ stdcall SystemFunction022(ptr ptr ptr) cryptsp.SystemFunction022
+@ stdcall SystemFunction023(ptr ptr ptr) cryptsp.SystemFunction023
+@ stdcall SystemFunction024(ptr ptr ptr) cryptsp.SystemFunction024
+@ stdcall SystemFunction025(ptr ptr ptr) cryptsp.SystemFunction025
+@ stdcall SystemFunction026(ptr ptr ptr) cryptsp.SystemFunction026
+@ stdcall SystemFunction027(ptr ptr ptr) cryptsp.SystemFunction027
 @ stub SystemFunction028
 @ stub SystemFunction029
 @ stdcall SystemFunction030(ptr ptr)

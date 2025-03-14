@@ -3,4 +3,5 @@ IMPORTLIB = cryptsp
 IMPORTS = advapi32
 
 SOURCES = \
-	arc4.c
+	arc4.c \
+	lmhash.c
