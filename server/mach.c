@@ -418,7 +418,6 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     kern_return_t ret;
-    unsigned int page_size = get_page_size();
     mach_port_t process_port = get_process_port( process );
     mach_vm_offset_t data;
 
@@ -432,7 +431,7 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-    if (posix_memalign( (void **)&data, page_size, size ))
+    if (posix_memalign( (void **)&data, get_page_size(), size ))
     {
         set_error( STATUS_NO_MEMORY );
         return 0;

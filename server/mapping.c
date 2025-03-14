@@ -1287,7 +1287,7 @@ void free_map_addr( client_ptr_t base, mem_size_t size )
     range->count++;
 }
 
-int get_page_size(void)
+size_t get_page_size(void)
 {
     return page_mask + 1;
 }
@@ -1296,7 +1296,7 @@ struct mapping *create_session_mapping( struct object *root, const struct unicod
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
-    mem_size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
+    size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
 
     return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
 }
@@ -1304,7 +1304,7 @@ struct mapping *create_session_mapping( struct object *root, const struct unicod
 void set_session_mapping( struct mapping *mapping )
 {
     int unix_fd = get_unix_fd( mapping->fd );
-    mem_size_t size = mapping->size;
+    size_t size = mapping->size;
     struct session_block *block;
     void *tmp;
 
@@ -1326,7 +1326,7 @@ void set_session_mapping( struct mapping *mapping )
 
 static struct session_block *grow_session_mapping( mem_size_t needed )
 {
-    mem_size_t old_size = session_mapping->size, new_size;
+    size_t old_size = session_mapping->size, new_size;
     struct session_block *block;
     int unix_fd;
     void *tmp;

@@ -432,7 +432,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 /* len is the total size (in longs) */
 static int check_process_write_access( struct thread *thread, long *addr, data_size_t len )
 {
-    int page = get_page_size() / sizeof(long);
+    size_t page = get_page_size() / sizeof(long);
 
     for (;;)
     {
