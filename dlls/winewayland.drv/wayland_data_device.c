@@ -537,6 +537,64 @@ static const struct zwlr_data_control_device_v1_listener data_control_device_lis
     data_control_device_finished,
 };
 
+/**********************************************************************
+ *          wl_data_source handling
+ */
+
+static void data_source_target(void *data, struct wl_data_source *source,
+                               const char *mime_type)
+{
+}
+
+static void data_source_send(void *data, struct wl_data_source *source,
+                             const char *mime_type, int32_t fd)
+{
+    struct data_device_format *format;
+    const char *normalized;
+
+    if ((normalized = normalize_mime_type(mime_type)) &&
+        (format = data_device_format_for_mime_type(normalized)))
+    {
+        wayland_data_source_export(format, fd);
+    }
+    close(fd);
+}
+
+static void data_source_cancelled(void *data, struct wl_data_source *source)
+{
+    struct wayland_data_device *data_device = data;
+
+    pthread_mutex_lock(&data_device->mutex);
+    wl_data_source_destroy(source);
+    if (source == data_device->wl_data_source)
+        data_device->wl_data_source = NULL;
+    pthread_mutex_unlock(&data_device->mutex);
+}
+
+static void data_source_dnd_drop_performed(void *data,
+                                           struct wl_data_source *source)
+{
+}
+
+static void data_source_dnd_finished(void *data, struct wl_data_source *source)
+{
+}
+
+static void data_source_action(void *data, struct wl_data_source *source,
+                               uint32_t dnd_action)
+{
+}
+
+static const struct wl_data_source_listener data_source_listener =
+{
+    data_source_target,
+    data_source_send,
+    data_source_cancelled,
+    data_source_dnd_drop_performed,
+    data_source_dnd_finished,
+    data_source_action,
+};
+
 void wayland_data_device_init(void)
 {
     struct wayland_data_device *data_device = &process_wayland.data_device;
@@ -581,16 +639,33 @@ void wayland_data_device_init(void)
 static void clipboard_update(void)
 {
     struct wayland_data_device *data_device = &process_wayland.data_device;
-    struct zwlr_data_control_source_v1 *source;
+    struct zwlr_data_control_source_v1 *zwlr_source = NULL;
+    struct wl_data_source *wl_source = NULL;
     UINT *formats, formats_size = 256, i;
+    uint32_t serial = 0;
 
-    if (!process_wayland.zwlr_data_control_manager_v1) return;
+    if (process_wayland.zwlr_data_control_manager_v1)
+    {
+        zwlr_source = zwlr_data_control_manager_v1_create_data_source(
+            process_wayland.zwlr_data_control_manager_v1);
+    }
+    else
+    {
+        serial = InterlockedCompareExchange(&process_wayland.input_serial, 0, 0);
+        pthread_mutex_lock(&process_wayland.keyboard.mutex);
+        if (!process_wayland.keyboard.focused_hwnd) serial = 0;
+        pthread_mutex_unlock(&process_wayland.keyboard.mutex);
+        if (process_wayland.wl_data_device_manager && serial)
+        {
+            wl_source = wl_data_device_manager_create_data_source(
+                process_wayland.wl_data_device_manager);
+        }
+        else return;
+    }
 
     TRACE("\n");
 
-    source = zwlr_data_control_manager_v1_create_data_source(
-        process_wayland.zwlr_data_control_manager_v1);
-    if (!source)
+    if (!zwlr_source && !wl_source)
     {
         ERR("failed to create data source\n");
         return;
@@ -608,7 +683,8 @@ static void clipboard_update(void)
     if (!formats && formats_size)
     {
         ERR("failed to get clipboard formats\n");
-        zwlr_data_control_source_v1_destroy(source);
+        if (wl_source) wl_data_source_destroy(wl_source);
+        else zwlr_data_control_source_v1_destroy(zwlr_source);
         return;
     }
 
@@ -619,23 +695,43 @@ static void clipboard_update(void)
         if (format)
         {
             TRACE("offering mime=%s for format=%u\n", format->mime_type, formats[i]);
-            zwlr_data_control_source_v1_offer(source, format->mime_type);
+            if (wl_source) wl_data_source_offer(wl_source, format->mime_type);
+            else zwlr_data_control_source_v1_offer(zwlr_source, format->mime_type);
         }
     }
 
     free(formats);
 
-    zwlr_data_control_source_v1_offer(source, WINEWAYLAND_TAG_MIME_TYPE);
-    zwlr_data_control_source_v1_add_listener(source, &data_control_source_listener, data_device);
+    if (wl_source)
+    {
+        wl_data_source_offer(wl_source, WINEWAYLAND_TAG_MIME_TYPE);
+        wl_data_source_add_listener(wl_source, &data_source_listener, data_device);
+    }
+    else
+    {
+        zwlr_data_control_source_v1_offer(zwlr_source, WINEWAYLAND_TAG_MIME_TYPE);
+        zwlr_data_control_source_v1_add_listener(zwlr_source, &data_control_source_listener, data_device);
+    }
 
     pthread_mutex_lock(&data_device->mutex);
-    if (data_device->zwlr_data_control_device_v1)
-        zwlr_data_control_device_v1_set_selection(data_device->zwlr_data_control_device_v1, source);
     /* Destroy any previous source only after setting the new source, to
      * avoid spurious 'selection(nil)' events. */
-    if (data_device->zwlr_data_control_source_v1)
-        zwlr_data_control_source_v1_destroy(data_device->zwlr_data_control_source_v1);
-    data_device->zwlr_data_control_source_v1 = source;
+    if (wl_source)
+    {
+        if (data_device->wl_data_device)
+            wl_data_device_set_selection(data_device->wl_data_device, wl_source, serial);
+        if (data_device->wl_data_source)
+            wl_data_source_destroy(data_device->wl_data_source);
+        data_device->wl_data_source = wl_source;
+    }
+    else
+    {
+        if (data_device->zwlr_data_control_device_v1)
+            zwlr_data_control_device_v1_set_selection(data_device->zwlr_data_control_device_v1, zwlr_source);
+        if (data_device->zwlr_data_control_source_v1)
+            zwlr_data_control_source_v1_destroy(data_device->zwlr_data_control_source_v1);
+        data_device->zwlr_data_control_source_v1 = zwlr_source;
+    }
     pthread_mutex_unlock(&data_device->mutex);
 
     wl_display_flush(process_wayland.wl_display);

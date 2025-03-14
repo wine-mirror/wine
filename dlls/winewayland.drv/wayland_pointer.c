@@ -112,6 +112,8 @@ static void pointer_handle_enter(void *data, struct wl_pointer *wl_pointer,
     struct wayland_pointer *pointer = &process_wayland.pointer;
     HWND hwnd;
 
+    InterlockedExchange(&process_wayland.input_serial, serial);
+
     if (!wl_surface) return;
     /* The wl_surface user data remains valid and immutable for the whole
      * lifetime of the object, so it's safe to access without locking. */
@@ -139,6 +141,8 @@ static void pointer_handle_leave(void *data, struct wl_pointer *wl_pointer,
 {
     struct wayland_pointer *pointer = &process_wayland.pointer;
 
+    InterlockedExchange(&process_wayland.input_serial, serial);
+
     if (!wl_surface) return;
 
     TRACE("hwnd=%p\n", wl_surface_get_user_data(wl_surface));
@@ -156,6 +160,8 @@ static void pointer_handle_button(void *data, struct wl_pointer *wl_pointer,
     struct wayland_pointer *pointer = &process_wayland.pointer;
     INPUT input = {0};
     HWND hwnd;
+
+    InterlockedExchange(&process_wayland.input_serial, serial);
 
     if (!(hwnd = wayland_pointer_get_focused_hwnd())) return;
 

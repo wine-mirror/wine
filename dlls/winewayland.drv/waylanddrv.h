@@ -144,6 +144,7 @@ struct wayland_data_device
         struct
         {
             struct wl_data_device *wl_data_device;
+            struct wl_data_source *wl_data_source;
         };
     };
     pthread_mutex_t mutex;
@@ -174,6 +175,7 @@ struct wayland
     struct wl_list output_list;
     /* Protects the output_list and the wayland_output.current states. */
     pthread_mutex_t output_mutex;
+    LONG input_serial;
 };
 
 struct wayland_output_mode
