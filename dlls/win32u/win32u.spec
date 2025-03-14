@@ -1165,7 +1165,7 @@
 @ stub NtUserInternalToUnicode
 @ stdcall -syscall NtUserInvalidateRect(long ptr long)
 @ stdcall -syscall NtUserInvalidateRgn(long long long)
-@ stub NtUserIsChildWindowDpiMessageEnabled
+@ stdcall -syscall NtUserIsChildWindowDpiMessageEnabled(ptr)
 @ stdcall -syscall NtUserIsClipboardFormatAvailable(long)
 @ stdcall -syscall NtUserIsMouseInPointerEnabled()
 @ stub NtUserIsMouseInputEnabled

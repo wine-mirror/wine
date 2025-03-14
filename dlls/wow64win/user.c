@@ -3293,6 +3293,13 @@ NTSTATUS WINAPI wow64_NtUserInvalidateRgn( UINT *args )
     return NtUserInvalidateRgn( hwnd, hrgn, erase );
 }
 
+NTSTATUS WINAPI wow64_NtUserIsChildWindowDpiMessageEnabled( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserIsChildWindowDpiMessageEnabled( hwnd );
+}
+
 NTSTATUS WINAPI wow64_NtUserIsClipboardFormatAvailable( UINT *args )
 {
     UINT format = get_ulong( &args );
