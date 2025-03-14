@@ -98,6 +98,10 @@ my @dll_groups =
   "sechost",
  ],
  [
+  "cryptbase",
+  "advapi32",
+ ],
+ [
   "netapi32",
   "srvcli",
  ],

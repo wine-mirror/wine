@@ -812,9 +812,9 @@
 @ stub SystemFunction033
 @ stub SystemFunction034
 @ stdcall SystemFunction035(str) cryptsp.SystemFunction035
-@ stdcall SystemFunction036(ptr long) # RtlGenRandom
-@ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
-@ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
+@ stdcall SystemFunction036(ptr long) cryptbase.SystemFunction036
+@ stdcall SystemFunction040(ptr long long) cryptbase.SystemFunction040
+@ stdcall SystemFunction041(ptr long long) cryptbase.SystemFunction041
 @ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
 @ stub TraceEventInstance
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage

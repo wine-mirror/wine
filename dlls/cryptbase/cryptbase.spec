@@ -6,6 +6,6 @@
 @ stub SystemFunction028
 @ stub SystemFunction029
 @ stub SystemFunction034
-@ stub SystemFunction036
-@ stub SystemFunction040
-@ stub SystemFunction041
+@ stdcall SystemFunction036(ptr long)
+@ stdcall SystemFunction040(ptr long long)
+@ stdcall SystemFunction041(ptr long long)
