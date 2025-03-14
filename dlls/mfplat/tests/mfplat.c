@@ -6346,6 +6346,9 @@ static void test_local_handlers(void)
         return;
     }
 
+    hr = MFStartup(MF_VERSION, MFSTARTUP_FULL);
+    ok(hr == S_OK, "Failed to start up, hr %#lx.\n", hr);
+
     hr = pMFRegisterLocalSchemeHandler(NULL, NULL);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
@@ -6375,6 +6378,9 @@ static void test_local_handlers(void)
 
     hr = pMFRegisterLocalByteStreamHandler(localW, localW, &local_activate);
     ok(hr == S_OK, "Failed to register stream handler, hr %#lx.\n", hr);
+
+    hr = MFShutdown();
+    ok(hr == S_OK, "Failed to shut down, hr %#lx.\n", hr);
 }
 
 static void test_create_property_store(void)
