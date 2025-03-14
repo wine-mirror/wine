@@ -336,6 +336,8 @@ DATETIME_SetFormatW (DATETIME_INFO *infoPtr, LPCWSTR format)
     DATETIME_UseFormat (infoPtr, format);
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
 
+    NotifyWinEvent(EVENT_OBJECT_VALUECHANGE, infoPtr->hwndSelf, OBJID_CLIENT, CHILDID_SELF);
+
     return TRUE;
 }
 
