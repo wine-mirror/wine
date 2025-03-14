@@ -844,10 +844,12 @@ struct pe_image_info
     unsigned char  image_flags;
     unsigned int   loader_flags;
     unsigned int   header_size;
+    unsigned int   header_map_size;
     unsigned int   file_size;
     unsigned int   checksum;
     unsigned int   dbg_offset;
     unsigned int   dbg_size;
+    unsigned int   __pad;
 };
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
 #define IMAGE_FLAGS_ComPlusILOnly             0x02
@@ -6794,6 +6796,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 856
+#define SERVER_PROTOCOL_VERSION 857
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

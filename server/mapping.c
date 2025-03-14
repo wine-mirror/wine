@@ -927,8 +927,12 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     ret = STATUS_INVALID_FILE_FOR_SECTION;
     if (pread( unix_fd, sec, size, pos ) != size) goto done;
 
-    for (i = 0; i < nt.FileHeader.NumberOfSections && !mapping->image.contains_code; i++)
+    mapping->image.header_map_size = mapping->image.map_size;
+    for (i = 0; i < nt.FileHeader.NumberOfSections; i++)
+    {
+        mapping->image.header_map_size = min( mapping->image.header_map_size, sec[i].VirtualAddress );
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
+    }
 
     if (load_clr_header( &clr, clr_va, clr_size, unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
         (clr.Flags & COMIMAGE_FLAGS_ILONLY))

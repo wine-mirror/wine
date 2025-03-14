@@ -627,7 +627,7 @@ C_ASSERT( sizeof(struct luid_attr) == 12 );
 C_ASSERT( sizeof(struct obj_locator) == 16 );
 C_ASSERT( sizeof(struct object_attributes) == 16 );
 C_ASSERT( sizeof(struct object_type_info) == 44 );
-C_ASSERT( sizeof(struct pe_image_info) == 88 );
+C_ASSERT( sizeof(struct pe_image_info) == 96 );
 C_ASSERT( sizeof(struct process_info) == 40 );
 C_ASSERT( sizeof(struct property_data) == 16 );
 C_ASSERT( sizeof(struct rawinput_device) == 12 );
