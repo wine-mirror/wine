@@ -1466,6 +1466,29 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExA( HANDLE process, HMODULE mod
 }
 
 
+static NTSTATUS get_process_image_file_name( HANDLE process, BYTE *buffer, size_t buffer_size,
+                                             void **dynamic_buffer, UNICODE_STRING **result )
+{
+    NTSTATUS status;
+    DWORD needed;
+
+    /* FIXME: Use ProcessImageFileName for the PROCESS_NAME_NATIVE case */
+    status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, buffer,
+                                        sizeof(buffer) - sizeof(WCHAR), &needed );
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        *dynamic_buffer = HeapAlloc( GetProcessHeap(), 0, needed + sizeof(WCHAR) );
+        status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, *dynamic_buffer,
+                                            needed, &needed );
+        if (status) HeapFree( GetProcessHeap(), 0, *dynamic_buffer );
+        *result = *dynamic_buffer;
+    }
+    else
+        *result = (UNICODE_STRING *)buffer;
+    return status;
+}
+
+
 /***********************************************************************
  *         GetModuleFileNameExW   (kernelbase.@)
  *         K32GetModuleFileNameExW   (kernelbase.@)
@@ -1764,25 +1787,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH QueryFullProcessImageNameW( HANDLE process, DWORD 
                                                           WCHAR *name, DWORD *size )
 {
     BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
-    UNICODE_STRING *dynamic_buffer = NULL;
-    UNICODE_STRING *result = NULL;
+    void *dynamic_buffer = NULL;
+    UNICODE_STRING *result;
     NTSTATUS status;
-    DWORD needed;
 
-    /* FIXME: Use ProcessImageFileName for the PROCESS_NAME_NATIVE case */
-    status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, buffer,
-                                        sizeof(buffer) - sizeof(WCHAR), &needed );
-    if (status == STATUS_INFO_LENGTH_MISMATCH)
-    {
-        dynamic_buffer = HeapAlloc( GetProcessHeap(), 0, needed + sizeof(WCHAR) );
-        status = NtQueryInformationProcess( process, ProcessImageFileNameWin32, dynamic_buffer,
-                                            needed, &needed );
-        result = dynamic_buffer;
-    }
-    else
-        result = (UNICODE_STRING *)buffer;
-
-    if (status) goto cleanup;
+    status = get_process_image_file_name( process, buffer, sizeof(buffer), &dynamic_buffer, &result );
+    if (status) return set_ntstatus( status );
 
     if (flags & PROCESS_NAME_NATIVE && result->Length > 2 * sizeof(WCHAR))
     {
