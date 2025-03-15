@@ -197,9 +197,7 @@ static void test_IBufferStatics(void)
 
     length = 0xdeadbeef;
     hr = IBuffer_get_Length(buffer, &length);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
-    todo_wine
     ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
 
     hr = IBuffer_put_Length(buffer, 1);
@@ -217,18 +215,14 @@ static void test_IBufferStatics(void)
 
     length = 0xdeadbeef;
     hr = IBuffer_get_Length(buffer, &length);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
-    todo_wine
     ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
 
     hr = IBuffer_put_Length(buffer, 1);
     ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
     length = 0xdeadbeef;
     hr = IBuffer_get_Length(buffer, &length);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
-    todo_wine
     ok(length == 1, "IBuffer_get_Length returned length %u.\n", length);
 
     hr = IBuffer_put_Length(buffer, 100 + 1);
@@ -238,9 +232,7 @@ static void test_IBufferStatics(void)
     ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
     length = 0;
     hr = IBuffer_get_Length(buffer, &length);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
-    todo_wine
     ok(length == 100, "IBuffer_get_Length returned length %u.\n", length);
 
     IBuffer_Release(buffer);
