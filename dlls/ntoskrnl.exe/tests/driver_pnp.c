@@ -654,8 +654,8 @@ static void test_device_properties( DEVICE_OBJECT *device )
         if (status == STATUS_SUCCESS)
         {
             void *buf;
-            ULONG req_size;
-            DEVPROPTYPE stored_type;
+            ULONG req_size = 0;
+            DEVPROPTYPE stored_type = DEVPROP_TYPE_EMPTY;
 
             status = IoGetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, 0, NULL, &req_size,
                                               &stored_type );
@@ -669,11 +669,16 @@ static void test_device_properties( DEVICE_OBJECT *device )
             ok( buf != NULL, "Failed to allocate buffer.\n" );
             if (buf != NULL)
             {
+                req_size = 0;
+                stored_type = DEVPROP_TYPE_EMPTY;
                 memset( buf, 0, size );
-                status = IoGetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, size, buf, NULL,
-                                                  &stored_type );
+                status = IoGetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, size, buf,
+                                                  &req_size, &stored_type );
                 ok( status == STATUS_SUCCESS, "Failed to get device property, status %#lx.\n",
                     status );
+                ok( req_size == size, "Expected required size %lu, got %lu.\n", req_size, size );
+                ok( stored_type == type, "Expected DEVPROPTYPE value %#lx, got %#lx.\n", type,
+                    stored_type );
                 if (status == STATUS_SUCCESS)
                     ok( memcmp( buf, value, size ) == 0,
                         "Got unexpected device property value.\n" );
@@ -683,7 +688,6 @@ static void test_device_properties( DEVICE_OBJECT *device )
         status = IoSetDevicePropertyData( device, key, LOCALE_NEUTRAL, 0, type, 0, NULL );
         ok( status == STATUS_SUCCESS, "Failed to delete device property, status %#lx.\n", status );
     }
-    return;
 }
 
 static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
