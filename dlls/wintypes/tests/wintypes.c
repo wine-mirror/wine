@@ -139,6 +139,7 @@ static void test_IBufferStatics(void)
     static const WCHAR *class_name = L"Windows.Storage.Streams.Buffer";
     IBufferFactory *buffer_factory = NULL;
     IActivationFactory *factory = NULL;
+    UINT32 capacity, length;
     IBuffer *buffer = NULL;
     HSTRING str;
     HRESULT hr;
@@ -175,8 +176,87 @@ static void test_IBufferStatics(void)
     hr = IBufferFactory_Create(buffer_factory, 0, &buffer);
     todo_wine
     ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
-    if (hr == S_OK) IBuffer_Release(buffer);
+    if (hr != S_OK) goto done;
 
+    check_interface(buffer, &IID_IAgileObject, TRUE);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBuffer_get_Capacity(buffer, NULL);
+    ok(hr == E_INVALIDARG, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    }
+
+    capacity = 0xdeadbeef;
+    hr = IBuffer_get_Capacity(buffer, &capacity);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(capacity == 0, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBuffer_get_Length(buffer, NULL);
+    ok(hr == E_INVALIDARG, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    }
+
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+
+    IBuffer_Release(buffer);
+
+    hr = IBufferFactory_Create(buffer_factory, 100, &buffer);
+    todo_wine
+    ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+    if (hr != S_OK) goto done;
+
+    capacity = 0;
+    hr = IBuffer_get_Capacity(buffer, &capacity);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(capacity == 100, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
+
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 1);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 1, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 100 + 1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+
+    hr = IBuffer_put_Length(buffer, 100);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    length = 0;
+    hr = IBuffer_get_Length(buffer, &length);
+    todo_wine
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(length == 100, "IBuffer_get_Length returned length %u.\n", length);
+
+    IBuffer_Release(buffer);
+done:
     IBufferFactory_Release(buffer_factory);
     IActivationFactory_Release(factory);
     RoUninitialize();
