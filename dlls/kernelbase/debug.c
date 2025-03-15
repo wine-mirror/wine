@@ -1501,29 +1501,47 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
 
     if (!size) return 0;
 
-    if (!IsWow64Process( process, &wow64 )) return 0;
-
-    if (is_win64 && wow64)
+    if (module)
     {
-        LDR_DATA_TABLE_ENTRY32 ldr_module32;
+        if (!IsWow64Process( process, &wow64 )) return 0;
 
-        if (get_ldr_module32( process, module, &ldr_module32 ))
+        if (is_win64 && wow64)
         {
-            len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
-            if (ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
-                                   name, min( len, size ) * sizeof(WCHAR), NULL ))
-                found = TRUE;
+            LDR_DATA_TABLE_ENTRY32 ldr_module32;
+
+            if (get_ldr_module32( process, module, &ldr_module32 ))
+            {
+                len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
+                if (ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
+                                       name, min( len, size ) * sizeof(WCHAR), NULL ))
+                    found = TRUE;
+            }
+        }
+        if (!found)
+        {
+            LDR_DATA_TABLE_ENTRY ldr_module;
+
+            if (!get_ldr_module(process, module, &ldr_module)) return 0;
+            len = ldr_module.FullDllName.Length / sizeof(WCHAR);
+            if (!ReadProcessMemory( process, ldr_module.FullDllName.Buffer,
+                                    name, min( len, size ) * sizeof(WCHAR), NULL ))
+                return 0;
         }
     }
-    if (!found)
+    else
     {
-        LDR_DATA_TABLE_ENTRY ldr_module;
+        BYTE buffer[sizeof(UNICODE_STRING) + MAX_PATH*sizeof(WCHAR)];  /* this buffer should be enough */
+        void *dynamic_buffer = NULL;
+        UNICODE_STRING *result;
+        NTSTATUS status;
 
-        if (!get_ldr_module(process, module, &ldr_module)) return 0;
-        len = ldr_module.FullDllName.Length / sizeof(WCHAR);
-        if (!ReadProcessMemory( process, ldr_module.FullDllName.Buffer,
-                                name, min( len, size ) * sizeof(WCHAR), NULL ))
-            return 0;
+        status = get_process_image_file_name( process, buffer, sizeof(buffer), &dynamic_buffer, &result );
+        if (!status)
+        {
+            len = result->Length / sizeof(WCHAR);
+            memcpy( name, result->Buffer, min( len, size - 1 ) * sizeof(WCHAR) );
+            HeapFree( GetProcessHeap(), 0, dynamic_buffer );
+        }
     }
 
     if (len < size)

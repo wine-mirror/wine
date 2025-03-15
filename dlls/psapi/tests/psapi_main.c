@@ -991,9 +991,11 @@ static void test_GetProcessImageFileName(void)
 static void test_GetModuleFileNameEx(void)
 {
     HMODULE hMod = GetModuleHandleA(NULL);
+    STARTUPINFOW si = { sizeof(si) };
+    PROCESS_INFORMATION pi;
     char szModExPath[MAX_PATH+1], szModPath[MAX_PATH+1];
-    WCHAR buffer[MAX_PATH];
-    DWORD ret;
+    WCHAR buffer[MAX_PATH], buffer2[MAX_PATH];
+    DWORD ret, size, size2;
 
     SetLastError(0xdeadbeef);
     ret = GetModuleFileNameExA(NULL, hMod, szModExPath, sizeof(szModExPath));
@@ -1051,6 +1053,25 @@ static void test_GetModuleFileNameEx(void)
         ok(GetLastError() == 0xdeadbeef, "got error %ld\n", GetLastError());
         ok( buffer[0] == 0xcc, "buffer modified %s\n", wine_dbgstr_w(buffer) );
     }
+
+    /* Verify that retrieving the main process image file name works on a suspended process,
+     * where the loader has not yet had a chance to initialize the PEB. */
+    wcscpy(buffer, L"C:\\windows\\system32\\msinfo32.exe");
+    ret = CreateProcessW(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
+
+    size = GetModuleFileNameExW(pi.hProcess, NULL, buffer, ARRAYSIZE(buffer));
+    ok(size, "GetModuleFileNameExW failed: %lu\n", GetLastError());
+    ok(size == wcslen(buffer), "unexpected size %lu\n", size);
+
+    size2 = ARRAYSIZE(buffer2);
+    ret = QueryFullProcessImageNameW(pi.hProcess, 0, buffer2, &size2);
+    ok(size == size2, "got size %lu, expected %lu\n", size, size2);
+    ok(!wcscmp(buffer, buffer2), "unexpected image name %s, expected %s\n", debugstr_w(buffer), debugstr_w(buffer2));
+
+    TerminateProcess(pi.hProcess, 0);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
 }
 
 static void test_GetModuleBaseName(void)
