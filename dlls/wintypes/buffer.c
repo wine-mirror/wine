@@ -191,8 +191,12 @@ static HRESULT WINAPI buffer_GetTrustLevel( IBuffer *iface, TrustLevel *trust_le
 
 static HRESULT WINAPI buffer_get_Capacity( IBuffer *iface, UINT32 *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct buffer *impl = impl_from_IBuffer( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->capacity;
+    return S_OK;
 }
 
 static HRESULT WINAPI buffer_get_Length( IBuffer *iface, UINT32 *value )

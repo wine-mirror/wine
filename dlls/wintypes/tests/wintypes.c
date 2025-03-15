@@ -186,9 +186,7 @@ static void test_IBufferStatics(void)
 
     capacity = 0xdeadbeef;
     hr = IBuffer_get_Capacity(buffer, &capacity);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
-    todo_wine
     ok(capacity == 0, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
 
     if (0) /* Crash on Windows */
@@ -215,9 +213,7 @@ static void test_IBufferStatics(void)
 
     capacity = 0;
     hr = IBuffer_get_Capacity(buffer, &capacity);
-    todo_wine
     ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
-    todo_wine
     ok(capacity == 100, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
 
     length = 0xdeadbeef;
