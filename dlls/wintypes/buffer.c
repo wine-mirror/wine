@@ -114,12 +114,134 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct buffer
+{
+    IBuffer IBuffer_iface;
+    LONG ref;
+
+    UINT32 capacity;
+    UINT32 length;
+    BYTE data[];
+};
+
+C_ASSERT( offsetof( struct buffer, data ) <= sizeof( struct buffer ) );
+
+static inline struct buffer *impl_from_IBuffer( IBuffer *iface )
+{
+    return CONTAINING_RECORD( iface, struct buffer, IBuffer_iface );
+}
+
+static HRESULT WINAPI buffer_QueryInterface( IBuffer *iface, REFIID iid, void **out )
+{
+    struct buffer *impl = impl_from_IBuffer( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IBuffer ))
+    {
+        *out = &impl->IBuffer_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI buffer_AddRef( IBuffer *iface )
+{
+    struct buffer *impl = impl_from_IBuffer( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI buffer_Release( IBuffer *iface )
+{
+    struct buffer *impl = impl_from_IBuffer( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI buffer_GetIids( IBuffer *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetRuntimeClassName( IBuffer *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_GetTrustLevel( IBuffer *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_get_Capacity( IBuffer *iface, UINT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_get_Length( IBuffer *iface, UINT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI buffer_put_Length( IBuffer *iface, UINT32 value )
+{
+    FIXME( "iface %p, value %u stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IBufferVtbl buffer_vtbl =
+{
+    buffer_QueryInterface,
+    buffer_AddRef,
+    buffer_Release,
+    /* IInspectable methods */
+    buffer_GetIids,
+    buffer_GetRuntimeClassName,
+    buffer_GetTrustLevel,
+    /* IBuffer methods */
+    buffer_get_Capacity,
+    buffer_get_Length,
+    buffer_put_Length,
+};
+
 DEFINE_IINSPECTABLE( buffer_factory_statics, IBufferFactory, struct buffer_factory_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI buffer_factory_statics_Create( IBufferFactory *iface, UINT32 capacity, IBuffer **value )
 {
-    FIXME( "iface %p, capacity %u, value %p stub!\n", iface, capacity, value );
-    return E_NOTIMPL;
+    struct buffer *impl;
+
+    TRACE( "iface %p, capacity %u, value %p\n", iface, capacity, value );
+
+    *value = NULL;
+
+    if (!(impl = malloc( offsetof( struct buffer, data[capacity] ) ))) return E_OUTOFMEMORY;
+
+    impl->IBuffer_iface.lpVtbl = &buffer_vtbl;
+    impl->ref = 1;
+    impl->capacity = capacity;
+    impl->length = 0;
+
+    *value = &impl->IBuffer_iface;
+    TRACE( "created IBuffer %p.\n", *value );
+    return S_OK;
 }
 
 static const struct IBufferFactoryVtbl buffer_factory_statics_vtbl =

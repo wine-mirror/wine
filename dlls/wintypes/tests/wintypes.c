@@ -174,9 +174,7 @@ static void test_IBufferStatics(void)
     }
 
     hr = IBufferFactory_Create(buffer_factory, 0, &buffer);
-    todo_wine
     ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
-    if (hr != S_OK) goto done;
 
     check_interface(buffer, &IID_IAgileObject, TRUE);
 
@@ -213,9 +211,7 @@ static void test_IBufferStatics(void)
     IBuffer_Release(buffer);
 
     hr = IBufferFactory_Create(buffer_factory, 100, &buffer);
-    todo_wine
     ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
-    if (hr != S_OK) goto done;
 
     capacity = 0;
     hr = IBuffer_get_Capacity(buffer, &capacity);
@@ -256,7 +252,6 @@ static void test_IBufferStatics(void)
     ok(length == 100, "IBuffer_get_Length returned length %u.\n", length);
 
     IBuffer_Release(buffer);
-done:
     IBufferFactory_Release(buffer_factory);
     IActivationFactory_Release(factory);
     RoUninitialize();
