@@ -2954,6 +2954,18 @@ VOID WINAPI MmLockPagableSectionByHandle(PVOID ImageSectionHandle)
 }
 
 /***********************************************************************
+ *           MmMapLockedPages   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmMapLockedPages( MDL *mdl, KPROCESSOR_MODE mode )
+{
+    TRACE( "%p %u\n", mdl, mode );
+
+    mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
+    mdl->MappedSystemVa = (char *)mdl->StartVa + mdl->ByteOffset;
+    return mdl->MappedSystemVa;
+}
+
+/***********************************************************************
  *           MmMapLockedPagesSpecifyCache  (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI  MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, MEMORY_CACHING_TYPE CacheType,

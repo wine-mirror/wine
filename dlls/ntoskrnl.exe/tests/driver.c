@@ -284,12 +284,22 @@ static void test_mdl_map(void)
 
     MmProbeAndLockPages(mdl, KernelMode, IoReadAccess);
 
-    addr = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
-    todo_wine
-    ok(addr != NULL, "MmMapLockedPagesSpecifyCache failed\n");
+    addr = MmMapLockedPages(mdl, KernelMode);
+    ok(addr != NULL, "MmMapLockedPages failed\n");
+    if (addr != NULL)
+        ok(!kmemcmp(addr, buffer, sizeof(buffer)), "Unexpected data in mapped memory\n");
 
     MmUnmapLockedPages(addr, mdl);
 
+    addr = MmMapLockedPagesSpecifyCache(mdl, KernelMode, MmCached, NULL, FALSE, NormalPagePriority);
+    todo_wine
+    ok(addr != NULL, "MmMapLockedPagesSpecifyCache failed\n");
+    if (addr != NULL)
+        ok(!kmemcmp(addr, buffer, sizeof(buffer)), "Unexpected data in mapped memory\n");
+
+    MmUnmapLockedPages(addr, mdl);
+
+    MmUnlockPages(mdl);
     IoFreeMdl(mdl);
 }
 
