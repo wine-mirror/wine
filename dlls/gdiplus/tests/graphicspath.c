@@ -1270,6 +1270,21 @@ static path_test_t flattenarc_path3[] = {
     {50.0, 50.0, PathPointTypeLine,  0, 1}  /*6*/
     };
 
+static path_test_t flattenarc_path4[] = {
+    {100.0,25.0, PathPointTypeStart, 0, 0}, /*0*/
+    {99.8, 27.6, PathPointTypeLine,  0, 0}, /*1*/
+    {99.0, 30.1, PathPointTypeLine,  0, 0}, /*2*/
+    {97.8, 32.4, PathPointTypeLine,  0, 0}, /*3*/
+    {96.0, 34.8, PathPointTypeLine,  0, 0}, /*4*/
+    {93.9, 36.9, PathPointTypeLine,  0, 0}, /*5*/
+    {91.4, 39.0, PathPointTypeLine,  0, 0}, /*6*/
+    {85.4, 42.7, PathPointTypeLine,  0, 1}, /*7*/
+    {77.9, 45.8, PathPointTypeLine,  0, 1}, /*8*/
+    {69.5, 48.0, PathPointTypeLine,  0, 1}, /*9*/
+    {60.0, 49.5, PathPointTypeLine,  0, 1}, /*10*/
+    {50.0, 50.0, PathPointTypeLine,  0, 1}  /*11*/
+    };
+
 static path_test_t flattenquater_path[] = {
     {100.0, 50.0,PathPointTypeStart, 0, 0}, /*0*/
     {99.0, 60.0, PathPointTypeLine,  0, 0}, /*1*/
@@ -1321,6 +1336,16 @@ static void test_flatten(void)
     expect(Ok, status);
     ok_path(path, flattenline_path, ARRAY_SIZE(flattenline_path), FALSE);
 
+    // Flatten line with FlatnessDefault (0.25f)
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 100.0);
+    expect(Ok, status);
+    status = GdipFlattenPath(path, NULL, FlatnessDefault);
+    expect(Ok, status);
+    ok_path(path, flattenline_path, ARRAY_SIZE(flattenline_path), FALSE);
+
+    /* Flatten arc path with Flatness = 1.0) */
     status = GdipResetPath(path);
     expect(Ok, status);
     status = GdipAddPathArc(path, 0.0, 0.0, 100.0, 50.0, 0.0, 90.0);
@@ -1330,6 +1355,16 @@ static void test_flatten(void)
     status = GdipFlattenPath(path, NULL, 1.0);
     expect(Ok, status);
     ok_path(path, flattenarc_path3, ARRAY_SIZE(flattenarc_path3), TRUE);
+
+    /* Flatten arc path with FlatnessDefault (0.25f) */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathArc(path, 0.0, 0.0, 100.0, 50.0, 0.0, 90.0);
+    expect(Ok, status);
+
+    status = GdipFlattenPath(path, NULL, FlatnessDefault);
+    expect(Ok, status);
+    ok_path(path, flattenarc_path4, ARRAY_SIZE(flattenarc_path4), TRUE);
 
     /* easy case - quater of a full circle */
     status = GdipResetPath(path);
