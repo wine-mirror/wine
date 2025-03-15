@@ -207,8 +207,14 @@ static HRESULT WINAPI buffer_get_Length( IBuffer *iface, UINT32 *value )
 
 static HRESULT WINAPI buffer_put_Length( IBuffer *iface, UINT32 value )
 {
-    FIXME( "iface %p, value %u stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct buffer *impl = impl_from_IBuffer( iface );
+
+    TRACE( "iface %p, value %u\n", iface, value );
+
+    if (value > impl->capacity) return E_INVALIDARG;
+
+    impl->length = value;
+    return S_OK;
 }
 
 static const struct IBufferVtbl buffer_vtbl =
