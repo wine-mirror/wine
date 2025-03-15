@@ -73,23 +73,6 @@ static const DWORD shader_with_invalid_ctab[] = {
                 0x00000000, 0x00000000,
     0x0000ffff};                                                            /* END                          */
 
-static const DWORD shader_with_ctab_constants[] = {
-    0xfffe0300,                                                             /* vs_3_0                       */
-    0x002efffe, FCC_CTAB,                                                   /* CTAB comment                 */
-    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
-    0x0000009c,
-    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc              */
-    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc              */
-    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc              */
-    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string       */
-    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
-    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string       */
-    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc     */
-    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string       */
-    0x335f7376, 0xab00305f,                                                 /* Target name string           */
-    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
-    0x0000ffff};                                                            /* END                          */
-
 static const DWORD ctab_basic[] = {
     0xfffe0300,                                                             /* vs_3_0                       */
     0x0040fffe, FCC_CTAB,                                                   /* CTAB comment                 */
@@ -282,25 +265,6 @@ static const D3DXCONSTANT_DESC ctab_samplers_expected[] = {
     {"sampler1",   D3DXRS_SAMPLER, 0, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER2D, 1, 1, 1, 0, 4,  NULL},
     {"sampler2",   D3DXRS_SAMPLER, 3, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER3D, 1, 1, 1, 0, 4,  NULL},
     {"notsampler", D3DXRS_FLOAT4,  2, 1, D3DXPC_VECTOR, D3DXPT_FLOAT,     1, 4, 1, 0, 16, NULL}};
-
-static const DWORD fx_shader_with_ctab[] =
-{
-    0x46580200,                                                             /* FX20                     */
-    0x002efffe, FCC_CTAB,                                                   /* CTAB comment             */
-    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                   */
-    0x0000009c,
-    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc          */
-    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc          */
-    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc          */
-    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string   */
-    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc     */
-    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string   */
-    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc */
-    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string   */
-    0x335f7376, 0xab00305f,                                                 /* Target name string       */
-    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
-    0x0000ffff                                                              /* END                      */
-};
 
 struct d3d9_test_context
 {
@@ -593,6 +557,43 @@ static void test_find_shader_comment(void)
     ok(size == 4, "Got result %u, expected 4\n", size);
 }
 
+#if D3DX_SDK_VERSION >= 36
+static const DWORD shader_with_ctab_constants[] = {
+    0xfffe0300,                                                             /* vs_3_0                       */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc              */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc              */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc              */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string       */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string       */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string       */
+    0x335f7376, 0xab00305f,                                                 /* Target name string           */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
+    0x0000ffff};                                                            /* END                          */
+
+static const DWORD fx_shader_with_ctab[] =
+{
+    0x46580200,                                                             /* FX20                     */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment             */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                   */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc          */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc          */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc          */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string   */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string   */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string   */
+    0x335f7376, 0xab00305f,                                                 /* Target name string       */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
+    0x0000ffff                                                              /* END                      */
+};
+
 static void test_get_shader_constant_table_ex(void)
 {
     D3DXCONSTANT_DESC constant_desc_save;
@@ -780,6 +781,7 @@ static void test_get_shader_constant_table_ex(void)
     ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
 }
+#endif
 
 static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
         const D3DXCONSTANT_DESC *expecteds, UINT count)
@@ -6825,6 +6827,46 @@ static void test_fragment_linker(void)
     ok(!!linker, "Unexpected linker %p.\n", linker);
     linker->lpVtbl->Release(linker);
 
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3D9_Release(d3d);
+    ok(!refcount, "The D3D object has %lu references left.\n", refcount);
+    DestroyWindow(window);
+}
+#endif
+
+#if (D3DX_SDK_VERSION >= 36 && D3DX_SDK_VERSION <= 41)
+static void test_fragment_linker_ex(void)
+{
+    ID3DXFragmentLinker *linker;
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D object.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a D3D device, hr %#lx.\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
     hr = D3DXCreateFragmentLinkerEx(device, 1024, 0, &linker);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!linker, "Unexpected linker %p.\n", linker);
@@ -6917,7 +6959,9 @@ START_TEST(shader)
     test_get_shader_size();
     test_get_shader_version();
     test_find_shader_comment();
+#if D3DX_SDK_VERSION >= 36
     test_get_shader_constant_table_ex();
+#endif
     test_constant_tables();
     test_setting_constants();
     test_get_sampler_index();
@@ -6928,6 +6972,9 @@ START_TEST(shader)
     test_shader_semantics();
 #if D3DX_SDK_VERSION <= 41
     test_fragment_linker();
+#endif
+#if (D3DX_SDK_VERSION >= 36 && D3DX_SDK_VERSION <= 41)
+    test_fragment_linker_ex();
 #endif
     test_hlsl_double();
     test_implicit_truncation_warning();

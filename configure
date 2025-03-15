@@ -22271,6 +22271,7 @@ wine_fn_config_makefile dlls/d3dx9_32 enable_d3dx9_32
 wine_fn_config_makefile dlls/d3dx9_33 enable_d3dx9_33
 wine_fn_config_makefile dlls/d3dx9_34 enable_d3dx9_34
 wine_fn_config_makefile dlls/d3dx9_35 enable_d3dx9_35
+wine_fn_config_makefile dlls/d3dx9_35/tests enable_tests
 wine_fn_config_makefile dlls/d3dx9_36 enable_d3dx9_36
 wine_fn_config_makefile dlls/d3dx9_36/tests enable_tests
 wine_fn_config_makefile dlls/d3dx9_37 enable_d3dx9_37
