@@ -202,6 +202,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     struct list jobs;
     struct flatten_bezier_job *current, *next;
 
+    flatness = 0.62f * flatness;
     list_init( &jobs );
     flatten_bezier_add(&jobs, start, x2, y2, x3, y3, end);
     LIST_FOR_EACH_ENTRY( current, &jobs, struct flatten_bezier_job, entry )
@@ -238,7 +239,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          * Also avoids limited-precision errors in flatness check
          */
         if((fabs(pt.X - mp[2].X) + fabs(pt.Y - mp[2].Y) +
-            fabs(pt_st.X - mp[2].X) + fabs(pt_st.Y - mp[2].Y) ) <= flatness * 0.5)
+            fabs(pt_st.X - mp[2].X) + fabs(pt_st.Y - mp[2].Y) ) <= flatness)
             continue;
 
         /* check flatness as a half of distance between middle point and a linearized path
@@ -250,7 +251,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          */
         area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
         distance_start_end = hypotf(pt.Y - pt_st.Y, pt_st.X - pt.X);
-        if(fabs(area_triangle) <= (0.5 * flatness * distance_start_end)){
+        if(fabs(area_triangle) <= flatness * distance_start_end){
             continue;
         }
         else
