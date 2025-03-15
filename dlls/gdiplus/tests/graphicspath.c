@@ -1253,7 +1253,14 @@ static path_test_t flattenline_path[] = {
     {50.0, 100.0, PathPointTypeLine,  0, 0} /*1*/
     };
 
-static path_test_t flattenarc_path[] = {
+static path_test_t arc_path3[] = {
+    {100.0, 25.0, PathPointTypeStart,  0, 0}, /*0*/
+    {100.0, 38.8, PathPointTypeBezier, 0, 0}, /*1*/
+    {77.6,  50.0, PathPointTypeBezier, 0, 0}, /*2*/
+    {50.0,  50.0, PathPointTypeBezier, 0, 0}  /*3*/
+    };
+
+static path_test_t flattenarc_path3[] = {
     {100.0, 25.0,PathPointTypeStart, 0, 0}, /*0*/
     {99.0, 30.0, PathPointTypeLine,  0, 0}, /*1*/
     {96.0, 34.8, PathPointTypeLine,  0, 0}, /*2*/
@@ -1318,9 +1325,11 @@ static void test_flatten(void)
     expect(Ok, status);
     status = GdipAddPathArc(path, 0.0, 0.0, 100.0, 50.0, 0.0, 90.0);
     expect(Ok, status);
+    ok_path(path, arc_path3, ARRAY_SIZE(arc_path3), FALSE);
+
     status = GdipFlattenPath(path, NULL, 1.0);
     expect(Ok, status);
-    ok_path(path, flattenarc_path, ARRAY_SIZE(flattenarc_path), TRUE);
+    ok_path(path, flattenarc_path3, ARRAY_SIZE(flattenarc_path3), TRUE);
 
     /* easy case - quater of a full circle */
     status = GdipResetPath(path);
