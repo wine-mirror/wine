@@ -2348,7 +2348,7 @@
 @ cdecl ilogbf(float)
 @ cdecl ilogbl(double) ilogb
 @ cdecl -ret64 imaxabs(int64)
-@ stub imaxdiv
+@ cdecl -norelay imaxdiv(int64 int64)
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)
