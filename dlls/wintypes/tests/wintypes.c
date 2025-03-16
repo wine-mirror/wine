@@ -146,6 +146,7 @@ static void test_IBufferStatics(void)
     IBuffer *buffer = NULL;
     HSTRING str;
     HRESULT hr;
+    BYTE *data;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
@@ -214,6 +215,19 @@ static void test_IBufferStatics(void)
     check_interface(buffer_byte_access, &IID_IAgileObject, TRUE);
     check_interface(buffer_byte_access, &IID_IBuffer, TRUE);
 
+    if (0) /* Crash on Windows */
+    {
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, NULL);
+    ok(hr == E_INVALIDARG, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+    }
+
+    data = NULL;
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, &data);
+    todo_wine
+    ok(hr == S_OK, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(data != NULL, "IBufferByteAccess_Buffer returned NULL data.\n");
+
     IBufferByteAccess_Release(buffer_byte_access);
     IBuffer_Release(buffer);
 
@@ -247,6 +261,33 @@ static void test_IBufferStatics(void)
     ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
     ok(length == 100, "IBuffer_get_Length returned length %u.\n", length);
 
+    hr = IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&buffer_byte_access);
+    ok(hr == S_OK, "QueryInterface IID_IBufferByteAccess failed, hr %#lx.\n", hr);
+
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, &data);
+    todo_wine
+    ok(hr == S_OK, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+    if (hr != S_OK) goto done2;
+
+    /* Windows does not zero out data when changing Length */
+
+    hr = IBuffer_put_Length(buffer, 0);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    data[0] = 1;
+    data[10] = 10;
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+    hr = IBuffer_put_Length(buffer, 1);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    todo_wine
+    ok(data[0] == 1, "Buffer returned %#x.\n", data[0]);
+    todo_wine
+    ok(data[10] == 10, "Buffer returned %#x.\n", data[10]);
+
+    IBufferByteAccess_Release(buffer_byte_access);
+done2:
     IBuffer_Release(buffer);
     IBufferFactory_Release(buffer_factory);
     IActivationFactory_Release(factory);
