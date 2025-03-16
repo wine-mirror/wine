@@ -35,6 +35,8 @@
 #define WIDL_using_Windows_Storage_Streams
 #include "windows.storage.streams.h"
 
+#include "robuffer.h"
+
 #include "wine/test.h"
 
 static BOOL is_wow64;
@@ -137,6 +139,7 @@ static void test_interfaces(void)
 static void test_IBufferStatics(void)
 {
     static const WCHAR *class_name = L"Windows.Storage.Streams.Buffer";
+    IBufferByteAccess *buffer_byte_access = NULL;
     IBufferFactory *buffer_factory = NULL;
     IActivationFactory *factory = NULL;
     UINT32 capacity, length;
@@ -163,6 +166,7 @@ static void test_IBufferStatics(void)
     check_interface(factory, &IID_IUnknown, TRUE);
     check_interface(factory, &IID_IInspectable, TRUE);
     check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IBufferByteAccess, FALSE);
 
     hr = IActivationFactory_QueryInterface(factory, &IID_IBufferFactory, (void **)&buffer_factory);
     ok(hr == S_OK, "QueryInterface IID_IBufferFactory failed, hr %#lx.\n", hr);
@@ -203,6 +207,14 @@ static void test_IBufferStatics(void)
     hr = IBuffer_put_Length(buffer, 1);
     ok(hr == E_INVALIDARG, "IBuffer_put_Length failed, hr %#lx.\n", hr);
 
+    hr = IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&buffer_byte_access);
+    ok(hr == S_OK, "QueryInterface IID_IBufferByteAccess failed, hr %#lx.\n", hr);
+
+    check_interface(buffer_byte_access, &IID_IInspectable, TRUE);
+    check_interface(buffer_byte_access, &IID_IAgileObject, TRUE);
+    check_interface(buffer_byte_access, &IID_IBuffer, TRUE);
+
+    IBufferByteAccess_Release(buffer_byte_access);
     IBuffer_Release(buffer);
 
     hr = IBufferFactory_Create(buffer_factory, 100, &buffer);

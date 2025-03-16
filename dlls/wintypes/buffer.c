@@ -18,6 +18,8 @@
  */
 
 #include "private.h"
+#include "initguid.h"
+#include "robuffer.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wintypes);
 
@@ -117,6 +119,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 struct buffer
 {
     IBuffer IBuffer_iface;
+    IBufferByteAccess IBufferByteAccess_iface;
     LONG ref;
 
     UINT32 capacity;
@@ -143,6 +146,13 @@ static HRESULT WINAPI buffer_QueryInterface( IBuffer *iface, REFIID iid, void **
         IsEqualGUID( iid, &IID_IBuffer ))
     {
         *out = &impl->IBuffer_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IBufferByteAccess ))
+    {
+        *out = &impl->IBufferByteAccess_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -236,6 +246,44 @@ static const struct IBufferVtbl buffer_vtbl =
     buffer_put_Length,
 };
 
+static inline struct buffer *impl_from_IBufferByteAccess( IBufferByteAccess *iface )
+{
+    return CONTAINING_RECORD( iface, struct buffer, IBufferByteAccess_iface );
+}
+
+static HRESULT WINAPI buffer_byte_access_QueryInterface( IBufferByteAccess *iface, REFIID iid, void **out )
+{
+    struct buffer *impl = impl_from_IBufferByteAccess( iface );
+    return IBuffer_QueryInterface( &impl->IBuffer_iface, iid, out );
+}
+
+static ULONG WINAPI buffer_byte_access_AddRef( IBufferByteAccess *iface )
+{
+    struct buffer *impl = impl_from_IBufferByteAccess( iface );
+    return IBuffer_AddRef( &impl->IBuffer_iface );
+}
+
+static ULONG WINAPI buffer_byte_access_Release( IBufferByteAccess *iface )
+{
+    struct buffer *impl = impl_from_IBufferByteAccess( iface );
+    return IBuffer_Release( &impl->IBuffer_iface );
+}
+
+static HRESULT WINAPI buffer_byte_access_Buffer( IBufferByteAccess *iface, byte **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IBufferByteAccessVtbl buffer_byte_access_vtbl =
+{
+    buffer_byte_access_QueryInterface,
+    buffer_byte_access_AddRef,
+    buffer_byte_access_Release,
+    /* IBufferByteAccess methods */
+    buffer_byte_access_Buffer,
+};
+
 DEFINE_IINSPECTABLE( buffer_factory_statics, IBufferFactory, struct buffer_factory_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI buffer_factory_statics_Create( IBufferFactory *iface, UINT32 capacity, IBuffer **value )
@@ -249,6 +297,7 @@ static HRESULT WINAPI buffer_factory_statics_Create( IBufferFactory *iface, UINT
     if (!(impl = malloc( offsetof( struct buffer, data[capacity] ) ))) return E_OUTOFMEMORY;
 
     impl->IBuffer_iface.lpVtbl = &buffer_vtbl;
+    impl->IBufferByteAccess_iface.lpVtbl = &buffer_byte_access_vtbl;
     impl->ref = 1;
     impl->capacity = capacity;
     impl->length = 0;
