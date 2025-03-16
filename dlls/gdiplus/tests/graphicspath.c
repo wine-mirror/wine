@@ -1698,14 +1698,14 @@ static path_test_t widenline_capdiamondanchor_path[] = {
     };
 
 static path_test_t widenline_caparrowanchor_path[] = {
-    {15.0, 5.0,       PathPointTypeStart, 0, 1}, /*0*/
-    {40.0, 5.0,       PathPointTypeLine,  0, 1}, /*1*/
-    {40.0, 15.0,      PathPointTypeLine,  0, 1}, /*2*/
-    {15.0, 15.0,      PathPointTypeLine|PathPointTypeCloseSubpath, 0, 1}, /*3*/
-    {5.0, 10.0,       PathPointTypeStart, 0, 0}, /*4*/
+    {15.0,      5.0,  PathPointTypeStart, 0, 0}, /*0*/
+    {40.0,      5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {40.0,      15.0, PathPointTypeLine,  0, 0}, /*2*/
+    {15.0,      15.0, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {5.0,       10.0, PathPointTypeStart, 0, 0}, /*4*/
     {22.320507, 0.0,  PathPointTypeLine,  0, 0}, /*5*/
     {22.320507, 20.0, PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*6*/
-    {50.0, 10.0,      PathPointTypeStart, 0, 0}, /*7*/
+    {50.0,      10.0, PathPointTypeStart, 0, 0}, /*7*/
     {32.679489, 20.0, PathPointTypeLine,  0, 0}, /*8*/
     {32.679489, 0.0,  PathPointTypeLine|PathPointTypeCloseSubpath, 0, 0}, /*9*/
     };

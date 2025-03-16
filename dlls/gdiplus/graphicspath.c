@@ -2037,8 +2037,8 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
         }
         else if (cap == LineCapArrowAnchor)
         {
-            extend_dx = -3.0 * extend_dx;
-            extend_dy = -3.0 * extend_dy;
+            extend_dx = -2.0 * extend_dx;
+            extend_dy = -2.0 * extend_dy;
         }
 
         if (add_first_points)
