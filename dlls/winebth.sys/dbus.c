@@ -116,6 +116,8 @@ const int bluez_timeout = -1;
 #define BLUEZ_DEST "org.bluez"
 #define BLUEZ_INTERFACE_ADAPTER "org.bluez.Adapter1"
 #define BLUEZ_INTERFACE_DEVICE  "org.bluez.Device1"
+#define BLUEZ_INTERFACE_AGENT_MANAGER "org.bluez.AgentManager1"
+#define BLUEZ_INTERFACE_AGENT "org.bluez.Agent1"
 
 #define DO_FUNC( f ) typeof( f ) (*p_##f)
 DBUS_FUNCS;
@@ -846,6 +848,115 @@ void bluez_dbus_free( void *connection )
     TRACE_(dbus)( "(%s)\n", dbgstr_dbus_connection( connection ) );
 
     p_dbus_connection_unref( connection );
+}
+
+static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection *connection, DBusMessage *message,
+                                                                  void *data )
+{
+    DBusMessage *reply;
+    dbus_bool_t success;
+
+    FIXME_(dbus)( "(%s, %s, %p): stub!\n", dbgstr_dbus_connection( connection ), dbgstr_dbus_message( message ),
+                  data );
+
+    reply = p_dbus_message_new_error( message, "org.bluez.Error.Rejected", "" );
+    if (!reply)
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+
+    success = p_dbus_connection_send( connection, reply, NULL );
+    p_dbus_message_unref( reply );
+    return success ? DBUS_HANDLER_RESULT_HANDLED : DBUS_HANDLER_RESULT_NEED_MEMORY;
+}
+
+const static struct DBusObjectPathVTable bluez_auth_agent_object_vtable = {
+    .message_function = bluez_auth_agent_vtable_message_handler };
+
+#define WINE_BLUEZ_AUTH_AGENT_PATH "/org/winehq/wine/winebth/AuthAgent"
+
+NTSTATUS bluez_auth_agent_start( void *connection )
+{
+    static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
+    static const char *capability = "KeyboardDisplay";
+    DBusMessage *request;
+    dbus_bool_t success;
+    DBusError error;
+    NTSTATUS status;
+
+    TRACE( "(%s)\n", dbgstr_dbus_connection( connection ) );
+
+    p_dbus_error_init( &error );
+    TRACE_(dbus)( "Registering an org.bluez.Agent1 object at %s\n", WINE_BLUEZ_AUTH_AGENT_PATH );
+    success = p_dbus_connection_try_register_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH,
+                                                          &bluez_auth_agent_object_vtable, NULL, &error );
+    if (!success)
+    {
+        ERR_(dbus)( "Failed to register object: %s: %s\n", debugstr_a( error.name ),
+                    debugstr_a( error.message ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        goto done;
+    }
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER,
+                                              "RegisterAgent" );
+    if (!request)
+    {
+        status = STATUS_NO_MEMORY;
+        goto failure;
+    }
+
+    success = p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &wine_bluez_auth_agent_path, DBUS_TYPE_STRING,
+                                          &capability, DBUS_TYPE_INVALID );
+    if (!success)
+    {
+        status = STATUS_NO_MEMORY;
+        goto failure;
+    }
+
+    success = p_dbus_connection_send( connection, request, NULL );
+    p_dbus_message_unref( request );
+    if (!success)
+    {
+        status = STATUS_NO_MEMORY;
+        goto failure;
+    }
+    status = STATUS_SUCCESS;
+    goto done;
+
+failure:
+    p_dbus_connection_unregister_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH );
+done:
+    p_dbus_error_free( &error );
+    return status;
+}
+
+NTSTATUS bluez_auth_agent_stop( void *connection )
+{
+    static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
+    DBusMessage *request;
+    dbus_bool_t success;
+
+    TRACE( "(%s)\n", dbgstr_dbus_connection( connection ) );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER,
+                                              "UnregisterAgent" );
+    if (!request)
+        return STATUS_NO_MEMORY;
+
+    success = p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &wine_bluez_auth_agent_path,
+                                          DBUS_TYPE_INVALID );
+    if (!success)
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    success = p_dbus_connection_send( connection, request, NULL );
+    p_dbus_message_unref( request );
+    if (!success)
+        return STATUS_NO_MEMORY;
+
+    success = p_dbus_connection_unregister_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH );
+    return success ? STATUS_SUCCESS : STATUS_NO_MEMORY;
 }
 
 struct bluez_watcher_event
@@ -1727,5 +1838,7 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
 {
     return STATUS_NOT_SUPPORTED;
 }
+NTSTATUS bluez_auth_agent_start( void *connection ) { return STATUS_NOT_SUPPORTED; }
+NTSTATUS bluez_auth_agent_stop( void *connection ) { return STATUS_NOT_SUPPORTED; }
 
 #endif /* SONAME_LIBDBUS_1 */

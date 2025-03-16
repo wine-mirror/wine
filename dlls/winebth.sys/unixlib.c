@@ -102,9 +102,19 @@ static NTSTATUS bluetooth_init ( void *params )
     if (!dbus_connection)
         return STATUS_INTERNAL_ERROR;
 
+    status = bluez_auth_agent_start( dbus_connection );
+    if (status)
+    {
+        bluez_dbus_close( dbus_connection );
+        return status;
+    }
+
     status = bluez_watcher_init( dbus_connection, &bluetooth_watcher );
     if (status)
+    {
+        bluez_auth_agent_stop( dbus_connection );
         bluez_dbus_close( dbus_connection );
+    }
     else
         TRACE( "dbus_connection=%p bluetooth_watcher=%p\n", dbus_connection, bluetooth_watcher );
     return status;
@@ -114,6 +124,7 @@ static NTSTATUS bluetooth_shutdown( void *params )
 {
     if (!dbus_connection) return STATUS_NOT_SUPPORTED;
 
+    bluez_auth_agent_stop( dbus_connection );
     bluez_dbus_close( dbus_connection );
     bluez_watcher_close( dbus_connection, bluetooth_watcher );
     bluez_dbus_free( dbus_connection );

@@ -659,6 +659,7 @@ static NTSTATUS WINAPI fdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
                 CreateThread( NULL, 0, bluetooth_event_loop_thread_proc, NULL, 0, NULL );
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
+
         case IRP_MN_SURPRISE_REMOVAL:
             irp->IoStatus.Status = STATUS_SUCCESS;
             break;
@@ -666,6 +667,7 @@ static NTSTATUS WINAPI fdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
         {
             struct bluetooth_radio *device, *cur;
             NTSTATUS ret;
+
             winebluetooth_shutdown();
             WaitForSingleObject( event_loop_thread, INFINITE );
             CloseHandle( event_loop_thread );
