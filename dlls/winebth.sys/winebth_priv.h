@@ -24,6 +24,7 @@
 
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
+#include <bthdef.h>
 #include <ddk/wdm.h>
 
 #include <wine/debug.h>
@@ -198,12 +199,16 @@ NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
                                            union winebluetooth_property *property );
 NTSTATUS winebluetooth_radio_start_discovery( winebluetooth_radio_t radio );
 NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio );
+NTSTATUS winebluetooth_auth_agent_enable_incoming( void );
 
 void winebluetooth_device_free( winebluetooth_device_t device );
 static inline BOOL winebluetooth_device_equal( winebluetooth_device_t d1, winebluetooth_device_t d2 )
 {
     return d1.handle == d2.handle;
 }
+void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t props_mask,
+                                              const struct winebluetooth_device_properties *props,
+                                              BTH_DEVICE_INFO *info );
 
 enum winebluetooth_watcher_event_type
 {
@@ -272,6 +277,14 @@ struct winebluetooth_watcher_event
 enum winebluetooth_event_type
 {
     WINEBLUETOOTH_EVENT_WATCHER_EVENT,
+    WINEBLUETOOTH_EVENT_AUTH_EVENT
+};
+
+struct winebluetooth_auth_event
+{
+    winebluetooth_device_t device;
+    BLUETOOTH_AUTHENTICATION_METHOD method;
+    UINT32 numeric_value_or_passkey;
 };
 
 struct winebluetooth_event
@@ -279,6 +292,7 @@ struct winebluetooth_event
     enum winebluetooth_event_type status;
     union {
         struct winebluetooth_watcher_event watcher_event;
+        struct winebluetooth_auth_event auth_event;
     } data;
 };
 

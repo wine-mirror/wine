@@ -45,6 +45,7 @@
 #include <winbase.h>
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
+#include <bthdef.h>
 #include <wine/winebth.h>
 
 #include <wine/debug.h>
@@ -814,6 +815,34 @@ struct bluez_init_entry
     struct list entry;
 };
 
+/* The status of a pairing session initiated by BlueZ. */
+enum bluez_pairing_session_status
+{
+    /* No pairing session is active. */
+    BLUEZ_PAIRING_SESSION_NONE,
+    /* We have received an authentication request from BlueZ, which should be queued to the PE driver. */
+    BLUEZ_PAIRING_SESSION_INCOMING,
+    /* The authentication request has been relayed to the driver, and we're waiting for a response from userspace. */
+    BLUEZ_PAIRING_SESSION_PENDING_REPLY,
+    /* The authentication request has been cancelled by BlueZ. */
+    BLUEZ_PAIRING_SESSION_CANCELLED,
+};
+
+struct bluez_auth_agent_ctx
+{
+    LONG refcnt;
+
+    pthread_mutex_t lock; /* Guards all fields below. */
+    enum bluez_pairing_session_status status;
+    struct unix_name *device;
+    BLUETOOTH_AUTHENTICATION_METHOD method;
+    UINT32 passkey;
+    /* The auth request we received from BlueZ. */
+    DBusMessage *auth_request;
+    DBusPreallocatedSend *preallocate_send;
+    DBusConnection *connection;
+};
+
 void *bluez_dbus_init( void )
 {
     DBusError error;
@@ -850,22 +879,97 @@ void bluez_dbus_free( void *connection )
     p_dbus_connection_unref( connection );
 }
 
+static struct bluez_auth_agent_ctx *bluez_auth_agent_ctx_incref( struct bluez_auth_agent_ctx *ctx )
+{
+    InterlockedIncrement( &ctx->refcnt );
+    return ctx;
+}
+
+static void bluez_auth_agent_ctx_decref( struct bluez_auth_agent_ctx *ctx )
+{
+    if (InterlockedDecrement( &ctx->refcnt ))
+        return;
+
+    if (ctx->status != BLUEZ_PAIRING_SESSION_NONE)
+    {
+        unix_name_free( ctx->device );
+        if (ctx->status != BLUEZ_PAIRING_SESSION_CANCELLED)
+        {
+            p_dbus_connection_free_preallocated_send( ctx->connection, ctx->preallocate_send );
+            p_dbus_message_unref( ctx->auth_request );
+            p_dbus_connection_unref( ctx->connection );
+        }
+    }
+    pthread_mutex_destroy( &ctx->lock );
+    free( ctx );
+}
+
 static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection *connection, DBusMessage *message,
                                                                   void *data )
 {
+    struct bluez_auth_agent_ctx *ctx = data;
+    DBusPreallocatedSend *prealloc_send;
     DBusMessage *reply;
-    dbus_bool_t success;
 
-    FIXME_(dbus)( "(%s, %s, %p): stub!\n", dbgstr_dbus_connection( connection ), dbgstr_dbus_message( message ),
+    TRACE_(dbus)( "(%s, %s, %p)\n", dbgstr_dbus_connection( connection ), dbgstr_dbus_message( message ),
                   data );
 
-    reply = p_dbus_message_new_error( message, "org.bluez.Error.Rejected", "" );
-    if (!reply)
+    prealloc_send = p_dbus_connection_preallocate_send( connection );
+    if (!prealloc_send)
         return DBUS_HANDLER_RESULT_NEED_MEMORY;
 
-    success = p_dbus_connection_send( connection, reply, NULL );
+    if (p_dbus_message_is_method_call( message, BLUEZ_INTERFACE_AGENT, "RequestConfirmation" ))
+    {
+        struct unix_name *device;
+        const char *device_path;
+        dbus_uint32_t passkey;
+        DBusError error;
+
+        p_dbus_error_init( &error );
+        if (!p_dbus_message_get_args( message, &error, DBUS_TYPE_OBJECT_PATH, &device_path, DBUS_TYPE_UINT32, &passkey,
+                                      DBUS_TYPE_INVALID ))
+        {
+            ERR( "Failed to get message args: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+            p_dbus_error_free( &error );
+            p_dbus_connection_free_preallocated_send( connection, prealloc_send );
+            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+        }
+        p_dbus_error_free( &error );
+        device = unix_name_get_or_create( device_path );
+        if (!device)
+        {
+            ERR( "Failed to allocate memory for device path %s\n", device_path );
+            p_dbus_connection_free_preallocated_send( connection, prealloc_send );
+            return DBUS_HANDLER_RESULT_NEED_MEMORY;
+        }
+
+        TRACE( "Received a numeric confirmation request for device %s\n", debugstr_a( device_path ) );
+        pthread_mutex_lock( &ctx->lock );
+        ctx->status = BLUEZ_PAIRING_SESSION_INCOMING;
+        ctx->device = device;
+        ctx->method = BLUETOOTH_AUTHENTICATION_METHOD_NUMERIC_COMPARISON;
+        ctx->passkey = passkey;
+        ctx->auth_request = p_dbus_message_ref( message );
+        ctx->preallocate_send = prealloc_send;
+        ctx->connection = p_dbus_connection_ref( connection );
+        pthread_mutex_unlock( &ctx->lock );
+
+        return DBUS_HANDLER_RESULT_HANDLED;
+    }
+    else
+    {
+        FIXME( "Unsupported method call: %s\n", debugstr_a( p_dbus_message_get_member( message ) ) );
+        reply = p_dbus_message_new_error( message, "org.bluez.Error.Rejected", "" );
+    }
+
+    if (!reply)
+    {
+        p_dbus_connection_free_preallocated_send( connection, prealloc_send );
+        return DBUS_HANDLER_RESULT_NEED_MEMORY;
+    }
+    p_dbus_connection_send_preallocated( connection, prealloc_send, reply, NULL );
     p_dbus_message_unref( reply );
-    return success ? DBUS_HANDLER_RESULT_HANDLED : DBUS_HANDLER_RESULT_NEED_MEMORY;
+    return DBUS_HANDLER_RESULT_HANDLED;
 }
 
 const static struct DBusObjectPathVTable bluez_auth_agent_object_vtable = {
@@ -873,26 +977,38 @@ const static struct DBusObjectPathVTable bluez_auth_agent_object_vtable = {
 
 #define WINE_BLUEZ_AUTH_AGENT_PATH "/org/winehq/wine/winebth/AuthAgent"
 
-NTSTATUS bluez_auth_agent_start( void *connection )
+NTSTATUS bluez_auth_agent_start( void *connection, void **auth_agent_ctx )
 {
     static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
     static const char *capability = "KeyboardDisplay";
+    struct bluez_auth_agent_ctx *ctx;
     DBusMessage *request;
     dbus_bool_t success;
     DBusError error;
     NTSTATUS status;
 
-    TRACE( "(%s)\n", dbgstr_dbus_connection( connection ) );
+    TRACE( "(%s, %p)\n", dbgstr_dbus_connection( connection ), auth_agent_ctx );
+
+    ctx = malloc( sizeof( *ctx ) );
+    if (!ctx)
+        return STATUS_NO_MEMORY;
+
+    pthread_mutex_init( &ctx->lock, NULL );
+    ctx->status = BLUEZ_PAIRING_SESSION_NONE;
+    ctx->refcnt = 1;
 
     p_dbus_error_init( &error );
     TRACE_(dbus)( "Registering an org.bluez.Agent1 object at %s\n", WINE_BLUEZ_AUTH_AGENT_PATH );
+    /* No need to increase the reference count on the auth agent context here, as the vtable handlers only get called
+     * inside bluez_dbus_loop, where the reference count gets incremented at start. */
     success = p_dbus_connection_try_register_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH,
-                                                          &bluez_auth_agent_object_vtable, NULL, &error );
+                                                          &bluez_auth_agent_object_vtable, ctx, &error );
     if (!success)
     {
         ERR_(dbus)( "Failed to register object: %s: %s\n", debugstr_a( error.name ),
                     debugstr_a( error.message ) );
         status = bluez_dbus_error_to_ntstatus( &error );
+        bluez_auth_agent_ctx_decref( ctx );
         goto done;
     }
 
@@ -920,23 +1036,27 @@ NTSTATUS bluez_auth_agent_start( void *connection )
         goto failure;
     }
     status = STATUS_SUCCESS;
+    *auth_agent_ctx = ctx;
     goto done;
 
 failure:
     p_dbus_connection_unregister_object_path( connection, WINE_BLUEZ_AUTH_AGENT_PATH );
+    bluez_auth_agent_ctx_decref( ctx );
 done:
     p_dbus_error_free( &error );
     return status;
 }
 
-NTSTATUS bluez_auth_agent_stop( void *connection )
+NTSTATUS bluez_auth_agent_stop( void *connection, void *auth_agent_ctx )
 {
     static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
+    struct bluez_auth_agent_ctx *ctx = auth_agent_ctx;
     DBusMessage *request;
     dbus_bool_t success;
 
-    TRACE( "(%s)\n", dbgstr_dbus_connection( connection ) );
+    TRACE( "(%s, %p)\n", dbgstr_dbus_connection( connection ), auth_agent_ctx );
 
+    bluez_auth_agent_ctx_decref( ctx );
     request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER,
                                               "UnregisterAgent" );
     if (!request)
@@ -1758,11 +1878,32 @@ static BOOL bluez_watcher_event_queue_ready( struct bluez_watcher_ctx *ctx, stru
     return FALSE;
 }
 
-NTSTATUS bluez_dbus_loop( void *c, void *watcher,
+static BOOL bluez_auth_agent_ctx_have_event( struct bluez_auth_agent_ctx *ctx,
+                                             struct winebluetooth_auth_event *event )
+{
+    BOOL have_event = FALSE;
+
+    pthread_mutex_lock( &ctx->lock );
+    if (ctx->status == BLUEZ_PAIRING_SESSION_INCOMING)
+    {
+        event->device.handle = (UINT_PTR)unix_name_dup( ctx->device );
+        event->method = ctx->method;
+        event->numeric_value_or_passkey = ctx->passkey;
+
+        ctx->status = BLUEZ_PAIRING_SESSION_PENDING_REPLY;
+        have_event = TRUE;
+    }
+    pthread_mutex_unlock( &ctx->lock );
+
+    return have_event;
+}
+
+NTSTATUS bluez_dbus_loop( void *c, void *watcher, void *auth_agent,
                           struct winebluetooth_event *result )
 {
     DBusConnection *connection;
     struct bluez_watcher_ctx *watcher_ctx = watcher;
+    auth_agent = bluez_auth_agent_ctx_incref( auth_agent );
 
     TRACE( "(%p, %p, %p)\n", c, watcher, result );
     connection = p_dbus_connection_ref( c );
@@ -1773,11 +1914,20 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher,
         {
             result->status = WINEBLUETOOTH_EVENT_WATCHER_EVENT;
             p_dbus_connection_unref( connection );
+            bluez_auth_agent_ctx_decref( auth_agent );
+            return STATUS_PENDING;
+        }
+        else if (bluez_auth_agent_ctx_have_event( auth_agent, &result->data.auth_event ))
+        {
+            result->status = WINEBLUETOOTH_EVENT_AUTH_EVENT;
+            p_dbus_connection_unref( connection );
+            bluez_auth_agent_ctx_decref( auth_agent );
             return STATUS_PENDING;
         }
         else if (!p_dbus_connection_read_write_dispatch( connection, 100 ))
         {
             bluez_watcher_free( watcher_ctx );
+            bluez_auth_agent_ctx_decref( auth_agent );
             p_dbus_connection_unref( connection );
             TRACE( "Disconnected from DBus\n" );
             return STATUS_SUCCESS;
@@ -1801,6 +1951,7 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher,
                 p_dbus_error_free( &error );
                 p_dbus_message_unref( reply );
                 p_dbus_connection_unref( connection );
+                bluez_auth_agent_ctx_decref( auth_agent );
                 return STATUS_NO_MEMORY;
             }
             status = bluez_build_initial_device_lists( reply, &watcher_ctx->initial_radio_list,
@@ -1810,6 +1961,7 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher,
             {
                 WARN( "Error building initial bluetooth devices list: %#x\n", (int)status );
                 p_dbus_connection_unref( connection );
+                bluez_auth_agent_ctx_decref( auth_agent );
                 return status;
             }
         }
@@ -1822,7 +1974,7 @@ void bluez_dbus_close( void *connection ) {}
 void bluez_dbus_free( void *connection ) {}
 NTSTATUS bluez_watcher_init( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
 void bluez_watcher_close( void *connection, void *ctx ) {}
-NTSTATUS bluez_dbus_loop( void *c, void *watcher, struct winebluetooth_event *result )
+NTSTATUS bluez_dbus_loop( void *c, void *watcher, void *auth_agent, struct winebluetooth_event *result )
 {
     return STATUS_NOT_SUPPORTED;
 }
@@ -1838,7 +1990,7 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
 {
     return STATUS_NOT_SUPPORTED;
 }
-NTSTATUS bluez_auth_agent_start( void *connection ) { return STATUS_NOT_SUPPORTED; }
+NTSTATUS bluez_auth_agent_start( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_auth_agent_stop( void *connection ) { return STATUS_NOT_SUPPORTED; }
 
 #endif /* SONAME_LIBDBUS_1 */

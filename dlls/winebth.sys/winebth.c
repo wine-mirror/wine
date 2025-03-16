@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL( winebth );
 
 static DRIVER_OBJECT *driver_obj;
 
-static DEVICE_OBJECT *bus_fdo, *bus_pdo;
+static DEVICE_OBJECT *bus_fdo, *bus_pdo, *device_auth;
 
 #define DECLARE_CRITICAL_SECTION( cs )                                                             \
     static CRITICAL_SECTION cs;                                                                    \
@@ -93,6 +93,17 @@ struct bluetooth_remote_device
     struct winebluetooth_device_properties props; /* Guarded by props_cs */
 };
 
+static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+
+    FIXME( "device %p irp %p code %#lx: stub!\n", device, irp, code );
+
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return irp->IoStatus.Status;
+}
+
 static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
 {
     struct bluetooth_radio *ext = (struct bluetooth_radio *)device->DeviceExtension;
@@ -103,6 +114,9 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
     NTSTATUS status = irp->IoStatus.Status;
 
     TRACE( "device %p irp %p code %#lx\n", device, irp, code );
+
+    if (device == device_auth)
+        return dispatch_auth( device, irp );
 
     switch (code)
     {
@@ -182,38 +196,7 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
                 memset( info, 0, sizeof( *info ) );
 
                 EnterCriticalSection( &device->props_cs );
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME)
-                {
-                    info->flags |= BDIF_NAME;
-                    memcpy( info->name, device->props.name, sizeof( info->name ) );
-                }
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
-                {
-                    info->flags |= BDIF_ADDRESS;
-                    info->address = RtlUlonglongByteSwap( device->props.address.ullLong ) >> 16;
-                }
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED &&
-                    device->props.connected)
-                    info->flags |= BDIF_CONNECTED;
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED &&
-                    device->props.paired)
-                    info->flags |= (BDIF_PAIRED | BDIF_PERSONAL);
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING &&
-                    !device->props.legacy_pairing)
-                {
-                    info->flags |= BDIF_SSP_SUPPORTED;
-                    if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED &&
-                        device->props.paired)
-                        info->flags |= BDIF_SSP_PAIRED;
-                }
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED &&
-                    device->props.trusted)
-                    info->flags |= BDIF_PERSONAL;
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
-                {
-                    info->classOfDevice = device->props.class;
-                    info->flags |= BDIF_COD;
-                }
+                winebluetooth_device_properties_to_info( device->props_mask, &device->props, info );
                 LeaveCriticalSection( &device->props_cs );
 
                 irp->IoStatus.Information += sizeof( *info );
@@ -559,6 +542,61 @@ done:
     winebluetooth_device_free( event.device );
 }
 
+static void bluetooth_radio_report_auth_event( struct winebluetooth_auth_event event )
+{
+    TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
+    struct winebth_authentication_request *request;
+    struct bluetooth_radio *radio;
+    SIZE_T notif_size;
+
+    notif_size = offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof( *request )] );
+    notification = ExAllocatePool( PagedPool, notif_size );
+    if (!notification)
+        return;
+
+    notification->Version = 1;
+    notification->Size = notif_size;
+    notification->Event = GUID_WINEBTH_AUTHENTICATION_REQUEST;
+    notification->FileObject = NULL;
+    notification->NameBufferOffset = -1;
+    request = (struct winebth_authentication_request *)notification->CustomDataBuffer;
+    memset( request, 0, sizeof( *request ) );
+    request->auth_method = event.method;
+    request->numeric_value_or_passkey = event.numeric_value_or_passkey;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
+    {
+        struct bluetooth_remote_device *device;
+
+        EnterCriticalSection( &radio->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &radio->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            if (winebluetooth_device_equal( event.device, device->device ))
+            {
+                NTSTATUS ret;
+
+                EnterCriticalSection( &device->props_cs );
+                winebluetooth_device_properties_to_info( device->props_mask, &device->props, &request->device_info );
+                LeaveCriticalSection( &device->props_cs );
+                LeaveCriticalSection( &radio->remote_devices_cs );
+                LeaveCriticalSection( &device_list_cs );
+
+                ret = IoReportTargetDeviceChange( device_auth, notification );
+                if (ret)
+                    ERR( "IoReportTargetDeviceChange failed: %#lx\n", ret );
+
+                ExFreePool( notification );
+                return;
+            }
+        }
+        LeaveCriticalSection( &radio->remote_devices_cs );
+    }
+    LeaveCriticalSection( &device_list_cs );
+
+    ExFreePool( notification );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -599,6 +637,10 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                 }
                 break;
             }
+            case WINEBLUETOOTH_EVENT_AUTH_EVENT:
+                bluetooth_radio_report_auth_event( result.data.auth_event);
+                winebluetooth_device_free( result.data.auth_event.device );
+                break;
             default:
                 FIXME( "Unknown bluetooth event loop status code: %#x\n", result.status );
         }
@@ -824,10 +866,40 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
     return ret;
 }
 
+static NTSTATUS auth_pnp( DEVICE_OBJECT *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret = irp->IoStatus.Status;
+
+    TRACE( "device_obj %p, irp %p, minor function %s\n", device, irp, debugstr_minor_function_code( stack->MinorFunction ) );
+    switch (stack->MinorFunction)
+    {
+    case IRP_MN_QUERY_ID:
+    case IRP_MN_START_DEVICE:
+    case IRP_MN_SURPRISE_REMOVAL:
+        ret = STATUS_SUCCESS;
+        break;
+    case IRP_MN_REMOVE_DEVICE:
+        IoDeleteDevice( device );
+        ret = STATUS_SUCCESS;
+        break;
+        ret = STATUS_SUCCESS;
+    default:
+        FIXME( "Unhandled minor function %s.\n", debugstr_minor_function_code( stack->MinorFunction ) );
+        break;
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return ret;
+}
+
 static NTSTATUS WINAPI bluetooth_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
     if (device == bus_fdo)
         return fdo_pnp( device, irp );
+    else if (device == device_auth)
+        return auth_pnp( device, irp );
     return pdo_pnp( device, irp );
 }
 
@@ -853,7 +925,10 @@ static void WINAPI driver_unload( DRIVER_OBJECT *driver ) {}
 
 NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 {
+    UNICODE_STRING device_winebth_auth = RTL_CONSTANT_STRING( L"\\Device\\WINEBTHAUTH" );
+    UNICODE_STRING object_winebth_auth = RTL_CONSTANT_STRING( WINEBTH_AUTH_DEVICE_PATH );
     NTSTATUS status;
+
     TRACE( "(%p, %s)\n", driver, debugstr_w( path->Buffer ) );
 
     status = winebluetooth_init();
@@ -866,5 +941,15 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = bluetooth_pnp;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = dispatch_bluetooth;
+
+    status = IoCreateDevice( driver, 0, &device_winebth_auth, 0, 0, FALSE, &device_auth );
+    if (!status)
+    {
+        status = IoCreateSymbolicLink( &object_winebth_auth, &device_winebth_auth );
+        if (status)
+            ERR( "IoCreateSymbolicLink failed: %#lx\n", status );
+    }
+    else
+        ERR( "IoCreateDevice failed: %#lx\n", status );
     return STATUS_SUCCESS;
 }

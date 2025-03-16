@@ -30,6 +30,12 @@
 /* Stop device inquiry for a local radio. */
 #define IOCTL_WINEBTH_RADIO_STOP_DISCOVERY  CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa7, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
+
+DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,
+             0xd5, 0x5e, 0xa1, 0x26, 0xe8 );
+
+#define WINEBTH_AUTH_DEVICE_PATH L"\\??\\WINEBTHAUTH"
+
 #include <pshpack1.h>
 
 #define LOCAL_RADIO_DISCOVERABLE 0x0001
@@ -41,6 +47,13 @@ struct winebth_radio_set_flag_params
     unsigned int enable : 1;
 };
 
+/* Associated data for GUID_WINEBTH_AUTHENTICATION_REQUEST events. */
+struct winebth_authentication_request
+{
+    BTH_DEVICE_INFO device_info;
+    BLUETOOTH_AUTHENTICATION_METHOD auth_method;
+    ULONG numeric_value_or_passkey;
+};
 #include <poppack.h>
 
 #endif /* __WINEBTH_H__ */

@@ -105,6 +105,39 @@ void winebluetooth_device_free( winebluetooth_device_t device )
     UNIX_BLUETOOTH_CALL( bluetooth_device_free, &args );
 }
 
+void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t props_mask,
+                                              const struct winebluetooth_device_properties *props,
+                                              BTH_DEVICE_INFO *info )
+{
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME)
+    {
+        info->flags |= BDIF_NAME;
+        memcpy( info->name, props->name, sizeof( info->name ) );
+    }
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+    {
+        info->flags |= BDIF_ADDRESS;
+        info->address = RtlUlonglongByteSwap( props->address.ullLong ) >> 16;
+    }
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CONNECTED && props->connected)
+        info->flags |= BDIF_CONNECTED;
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED && props->paired)
+        info->flags |= (BDIF_PAIRED | BDIF_PERSONAL);
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_LEGACY_PAIRING && !props->legacy_pairing)
+    {
+        info->flags |= BDIF_SSP_SUPPORTED;
+        if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_PAIRED && props->paired)
+            info->flags |= BDIF_SSP_PAIRED;
+    }
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_TRUSTED && props->trusted)
+        info->flags |= BDIF_PERSONAL;
+    if (props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
+    {
+        info->classOfDevice = props->class;
+        info->flags |= BDIF_COD;
+    }
+}
+
 NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )
 {
     struct bluetooth_get_event_params params = {0};

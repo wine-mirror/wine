@@ -32,11 +32,11 @@
 #include "bluetoothapis.h"
 #include "setupapi.h"
 #include "winioctl.h"
-#include "wine/winebth.h"
 
 #include "initguid.h"
 #include "bthdef.h"
 #include "bthioctl.h"
+#include "wine/winebth.h"
 
 #include "wine/debug.h"
 
