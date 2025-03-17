@@ -4707,6 +4707,35 @@ static void test_editbox(void)
     expect(lstrlenA(item.pszText), r);
     ok(strcmp(buffer, testitem2A) == 0, "Expected item text to change\n");
 
+    /* Modify to empty text, check notification data. */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessageA(hwnd, LVM_EDITLABELA, 0, 0);
+    ok(!!hwndedit, "Failed to edit a label.\n");
+    r = SendMessageA(hwndedit, WM_SETTEXT, 0, (LPARAM)"");
+    ok(r, "Unexpected return value %d.\n", r);
+    g_editbox_disp_info.item.pszText = NULL;
+    r = SendMessageA(hwndedit, WM_KEYDOWN, VK_RETURN, 0);
+    ok(!r, "Unexpected return value %d.\n", r);
+    todo_wine
+    ok(g_editbox_disp_info.item.pszText != NULL, "Unexpected notification text.\n");
+    memset(&item, 0, sizeof(item));
+    item.pszText = buffer;
+    item.cchTextMax = sizeof(buffer);
+    r = SendMessageA(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
+    todo_wine
+    ok(!r, "Unexpected return value %d.\n", r);
+    todo_wine
+    ok(!*buffer, "Unexpected item text %s.\n", debugstr_a(buffer));
+
+    /* end edit with saving */
+    SetFocus(hwnd);
+    hwndedit = (HWND)SendMessageA(hwnd, LVM_EDITLABELA, 0, 0);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    r = SendMessageA(hwndedit, WM_KEYDOWN, VK_RETURN, 0);
+    expect(0, r);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, edit_end_nochange,
+                "edit box - end edit, no change, return", TRUE);
+
     /* LVM_EDITLABEL with -1 destroys current edit */
     hwndedit = (HWND)SendMessageA(hwnd, LVM_GETEDITCONTROL, 0, 0);
     ok(hwndedit == NULL, "Expected Edit window not to be created\n");
