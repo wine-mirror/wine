@@ -311,6 +311,14 @@ BOOL wayland_process_init(void)
     if (!process_wayland.zwp_text_input_manager_v3)
         ERR("Wayland compositor doesn't support optional zwp_text_input_manager_v3 (host input methods won't work)\n");
 
+    if (!process_wayland.zwlr_data_control_manager_v1)
+    {
+        if (!process_wayland.wl_data_device_manager)
+            ERR("Wayland compositor doesn't support optional wl_data_device_manager (clipboard won't work)\n");
+        else
+            ERR("Wayland compositor doesn't support optional zwlr_data_control_manager_v1 (clipboard functionality will be limited)\n");
+    }
+
     process_wayland.initialized = TRUE;
 
     return TRUE;
