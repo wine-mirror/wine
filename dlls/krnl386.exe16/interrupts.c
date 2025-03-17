@@ -148,9 +148,7 @@ static void DOSVM_PushFlags( CONTEXT *context, BOOL islong, BOOL isstub )
 {
     if (islong)
     {
-        DWORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                          context->SegSs, 
-                                          context->Esp);
+        DWORD *stack = ldt_get_ptr(context->SegSs, context->Esp);
         context->Esp += -4; /* One item will be added to stack. */
 
         if (isstub)
@@ -163,13 +161,11 @@ static void DOSVM_PushFlags( CONTEXT *context, BOOL islong, BOOL isstub )
             *(--stack) = ip;
         }
         else
-            *(--stack) = context->EFlags;            
+            *(--stack) = context->EFlags;
     }
     else
     {
-        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                         context->SegSs, 
-                                         context->Esp);
+        WORD *stack = ldt_get_ptr(context->SegSs, context->Esp);
         ADD_LOWORD( context->Esp, -2 ); /* One item will be added to stack. */
 
         if (isstub)
@@ -253,8 +249,7 @@ BOOL DOSVM_EmulateInterruptPM( CONTEXT *context, BYTE intnum )
     if (context->SegCs == int16_sel)
     {
         /* Restore original flags stored into the stack by the caller. */
-        WORD *stack = CTX_SEG_OFF_TO_LIN(context, 
-                                         context->SegSs, context->Esp);
+        WORD *stack = ldt_get_ptr(context->SegSs, context->Esp);
         context->EFlags = (DWORD)MAKELONG( stack[2], HIWORD(context->EFlags) );
 
         if (intnum != context->Eip / DOSVM_STUB_PM16)

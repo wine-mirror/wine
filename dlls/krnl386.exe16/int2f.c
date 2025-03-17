@@ -893,7 +893,7 @@ static void MSCDEX_Handler(CONTEXT* context)
            CDROM_DEVICE_HEADER* dev = &cdrom_heap->hdr;
            SEGPTR ptr_dev = MAKESEGPTR( cdrom_heap->cdrom_selector, FIELD_OFFSET(CDROM_HEAP, hdr) );
 
-           p = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+           p = ldt_get_ptr(context->SegEs, context->Ebx);
            for (drive = 0; drive < dev->units; drive++) {
                *p = drive; /* subunit */
                ++p;
@@ -915,7 +915,7 @@ static void MSCDEX_Handler(CONTEXT* context)
        break;
 
     case 0x0D: /* get drive letters */
-       p = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+       p = ldt_get_ptr(context->SegEs, context->Ebx);
        memset(p, 0, 26);
        for (drive = 0; drive < 26; drive++) {
            if (is_cdrom(drive)) *p++ = drive;
@@ -935,7 +935,7 @@ static void MSCDEX_Handler(CONTEXT* context)
                return;
            }
 
-           driver_request = CTX_SEG_OFF_TO_LIN(context, context->SegEs, context->Ebx);
+           driver_request = ldt_get_ptr(context->SegEs, context->Ebx);
 
            if (!driver_request) {
                /* FIXME - to be deleted ?? */

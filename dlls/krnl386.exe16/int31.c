@@ -325,18 +325,13 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
 
     case 0x000b:  /* Get descriptor */
         TRACE( "get descriptor (0x%04x)\n", BX_reg(context) );
-        {
-            LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
-                                                   context->Edi );
-            ldt_get_entry( BX_reg(context), entry );
-        }
+        ldt_get_entry( BX_reg(context), ldt_get_ptr( context->SegEs, context->Edi ));
         break;
 
     case 0x000c:  /* Set descriptor */
         TRACE( "set descriptor (0x%04x)\n", BX_reg(context) );
         {
-            LDT_ENTRY *entry = CTX_SEG_OFF_TO_LIN( context, context->SegEs,
-                                                   context->Edi );
+            LDT_ENTRY *entry = ldt_get_ptr( context->SegEs, context->Edi );
             if (!ldt_is_system( BX_reg(context) )) ldt_set_entry( BX_reg(context), *entry );
         }
         break;
@@ -432,8 +427,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
 
     case 0x0300:  /* Simulate real mode interrupt */
         TRACE( "Simulate real mode interrupt %02x\n", BL_reg(context) );
-        simulate_real_mode_interrupt( CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi ),
-                                      BL_reg(context) );
+        simulate_real_mode_interrupt( ldt_get_ptr( context->SegEs, context->Edi ), BL_reg(context) );
         break;
 
     case 0x0301:  /* Call real mode procedure with far return */
@@ -512,7 +506,7 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
                 DWORD dwFreeLinearSpace;
                 DWORD dwSwapFilePages;
                 WORD  wPageSize;
-            } *info = CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi );
+            } *info = ldt_get_ptr( context->SegEs, context->Edi );
 
             GlobalMemoryStatus( &status );
             NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );

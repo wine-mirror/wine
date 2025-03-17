@@ -79,7 +79,7 @@ BOOL DOSVM_RawRead(BYTE drive, DWORD begin, DWORD nr_sect, BYTE *dataptr, BOOL f
 void WINAPI DOSVM_Int25Handler( CONTEXT *context )
 {
     WCHAR drivespec[] = {'A', ':', '\\', 0};
-    BYTE *dataptr = CTX_SEG_OFF_TO_LIN( context, context->SegDs, context->Ebx );
+    BYTE *dataptr = ldt_get_ptr( context->SegDs, context->Ebx );
     DWORD begin;
     DWORD length;
 
@@ -97,9 +97,7 @@ void WINAPI DOSVM_Int25Handler( CONTEXT *context )
     {
         begin   = *(DWORD *)dataptr;
         length  = *(WORD *)(dataptr + 4);
-        dataptr = (BYTE *)CTX_SEG_OFF_TO_LIN( context,
-                                              *(WORD *)(dataptr + 8), 
-                                              *(DWORD *)(dataptr + 6) );
+        dataptr = ldt_get_ptr( *(WORD *)(dataptr + 8), *(DWORD *)(dataptr + 6) );
     }
     else
     {
