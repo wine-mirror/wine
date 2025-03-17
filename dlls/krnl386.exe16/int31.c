@@ -35,6 +35,42 @@ WINE_DEFAULT_DEBUG_CHANNEL(int31);
 
 static void* lastvalloced = NULL;
 
+/* Structure for real-mode callbacks */
+typedef struct
+{
+    DWORD Edi;
+    DWORD Esi;
+    DWORD Ebp;
+    DWORD reserved;
+    DWORD Ebx;
+    DWORD Edx;
+    DWORD Ecx;
+    DWORD Eax;
+    WORD  EFlags;
+    WORD  es;
+    WORD  ds;
+    WORD  fs;
+    WORD  gs;
+    WORD  ip;
+    WORD  cs;
+    WORD  sp;
+    WORD  ss;
+} REALMODECALL;
+
+static void *real_mode_ptr( WORD seg, WORD off ) { return (void *)((int)seg * 16 + off); }
+
+static void simulate_real_mode_interrupt( REALMODECALL *ctx, int num )
+{
+    if (num == 0x21 && AX_reg(ctx) == 0x440d && CX_reg(ctx) == 0x0866)
+    {
+        /* int 21/440d block ioctl, used by Myst */
+        memset( real_mode_ptr( ctx->ds, DX_reg(ctx) ), 0, 25 );
+        return;
+    }
+    WARN( "%02x ax %04x bx %04x cx %04x dx %04x si %04x di %04x ds %04x es %04x - unsupported\n", num,
+          AX_reg(ctx), BX_reg(ctx), CX_reg(ctx), DX_reg(ctx), SI_reg(ctx), DI_reg(ctx), ctx->ds, ctx->es );
+}
+
 /**********************************************************************
  *          DPMI_xalloc
  * special virtualalloc, allocates linearly monoton growing memory.
@@ -395,7 +431,9 @@ void WINAPI DOSVM_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0300:  /* Simulate real mode interrupt */
-        TRACE( "Simulate real mode interrupt %02x - not supported\n", BL_reg(context));
+        TRACE( "Simulate real mode interrupt %02x\n", BL_reg(context) );
+        simulate_real_mode_interrupt( CTX_SEG_OFF_TO_LIN( context, context->SegEs, context->Edi ),
+                                      BL_reg(context) );
         break;
 
     case 0x0301:  /* Call real mode procedure with far return */
