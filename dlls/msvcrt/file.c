@@ -3834,7 +3834,7 @@ int CDECL _filbuf(FILE* file)
             return EOF;
     }
 
-    if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF))) {
+    if(!(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF))) {
         int r;
         if ((r = _read(file->_file,&c,1)) != 1) {
             file->_flag |= (r == 0) ? _IOEOF : _IOERR;
