@@ -577,10 +577,7 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWOR
         return I_ScRegisterDeviceNotification( handle, (DEV_BROADCAST_HDR *)&iface, callback );
     }
     if (header->dbch_devicetype == DBT_DEVTYP_HANDLE)
-    {
-        FIXME( "DBT_DEVTYP_HANDLE not implemented\n" );
         return I_ScRegisterDeviceNotification( handle, header, callback );
-    }
 
     FIXME( "type %#lx not implemented\n", header->dbch_devicetype );
     SetLastError( ERROR_INVALID_DATA );
