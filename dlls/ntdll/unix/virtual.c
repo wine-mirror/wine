@@ -2218,12 +2218,12 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, size_t max
  * Decommit some pages of a given view.
  * virtual_mutex must be held by caller.
  */
-static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t size )
+static NTSTATUS decommit_pages( struct file_view *view, char *base, size_t size )
 {
     if (!size) size = view->size;
-    if (anon_mmap_fixed( (char *)view->base + start, size, PROT_NONE, 0 ) != MAP_FAILED)
+    if (anon_mmap_fixed( base, size, PROT_NONE, 0 ) != MAP_FAILED)
     {
-        set_page_vprot_bits( (char *)view->base + start, size, 0, VPROT_COMMITTED );
+        set_page_vprot_bits( base, size, 0, VPROT_COMMITTED );
         return STATUS_SUCCESS;
     }
     return STATUS_NO_MEMORY;
@@ -4935,7 +4935,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     else switch (type)
     {
     case MEM_DECOMMIT:
-        status = decommit_pages( view, base - (char *)view->base, size );
+        status = decommit_pages( view, base, size );
         break;
     case MEM_RELEASE:
         if (!size) size = view->size;
