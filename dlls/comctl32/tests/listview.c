@@ -5694,7 +5694,7 @@ static void test_LVM_FINDITEM(void)
     fi.psz = f;
     r = SendMessageA(hwnd, LVM_FINDITEMA, -1, (LPARAM)&fi);
     ok(!r, "Unexpected return value %d.\n", r);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, finditem_ownerdata_parent_seq, "LVM_FINDITEMA owner data test", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, finditem_ownerdata_parent_seq, "LVM_FINDITEMA owner data test", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     wcscpy(strW, L"foo");
@@ -5702,7 +5702,7 @@ static void test_LVM_FINDITEM(void)
     fiW.psz = strW;
     r = SendMessageA(hwnd, LVM_FINDITEMW, -1, (LPARAM)&fiW);
     ok(!r, "Unexpected return value %d.\n", r);
-    ok_sequence(sequences, PARENT_SEQ_INDEX, finditem_ownerdata_parent_seq, "LVM_FINDITEMW owner data test", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, finditem_ownerdata_parent_seq, "LVM_FINDITEMW owner data test", FALSE);
 
     /* Force Unicode notifications */
     notifyFormat = NFR_UNICODE;
