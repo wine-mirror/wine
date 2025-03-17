@@ -271,8 +271,12 @@ static ULONG WINAPI buffer_byte_access_Release( IBufferByteAccess *iface )
 
 static HRESULT WINAPI buffer_byte_access_Buffer( IBufferByteAccess *iface, byte **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct buffer *impl = impl_from_IBufferByteAccess( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    *value = impl->data;
+    return S_OK;
 }
 
 static const struct IBufferByteAccessVtbl buffer_byte_access_vtbl =
