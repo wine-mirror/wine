@@ -279,3 +279,28 @@ HRESULT WINAPI D3DXLoadVolumeFromVolume(IDirect3DVolume9 *dst_volume, const PALE
     IDirect3DVolume9_UnlockBox(src_volume);
     return hr;
 }
+
+HRESULT WINAPI D3DXSaveVolumeToFileInMemory(ID3DXBuffer **dst_buffer, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DVolume9 *src_volume, const PALETTEENTRY *src_palette, const D3DBOX *src_box)
+{
+    FIXME("dst_buffer %p, file_format %#x, src_volume %p, src_palette %p, src_box %p, stub.\n",
+        dst_buffer, file_format, src_volume, src_palette, src_box);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DXSaveVolumeToFileA(const char *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DVolume9 *src_volume, const PALETTEENTRY *src_palette, const D3DBOX *src_box)
+{
+    FIXME("dst_filename %s, file_format %#x, src_volume %p, src_palette %p, src_box %p stub.\n",
+            wine_dbgstr_a(dst_filename), file_format, src_volume, src_palette, src_box);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DXSaveVolumeToFileW(const WCHAR *dst_filename, D3DXIMAGE_FILEFORMAT file_format,
+        IDirect3DVolume9 *src_volume, const PALETTEENTRY *src_palette, const D3DBOX *src_box)
+{
+    FIXME("dst_filename %s, file_format %#x, src_volume %p, src_palette %p, src_box %p stub.\n",
+            wine_dbgstr_w(dst_filename), file_format, src_volume, src_palette, src_box);
+    return E_NOTIMPL;
+}
