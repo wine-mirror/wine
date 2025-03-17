@@ -5921,18 +5921,15 @@ static BOOL LISTVIEW_EndEditLabelT(LISTVIEW_INFO *infoPtr, BOOL storeText, BOOL 
 
     if (storeText)
     {
-        DWORD len = isW ? GetWindowTextLengthW(infoPtr->hwndEdit) : GetWindowTextLengthA(infoPtr->hwndEdit);
+        DWORD len = (isW ? GetWindowTextLengthW(infoPtr->hwndEdit) : GetWindowTextLengthA(infoPtr->hwndEdit)) + 1;
 
-        if (len++)
-        {
-            if (!(pszText = Alloc(len * (isW ? sizeof(WCHAR) : sizeof(CHAR)))))
-                return FALSE;
+        if (!(pszText = Alloc(len * (isW ? sizeof(WCHAR) : sizeof(CHAR)))))
+            return FALSE;
 
-            if (isW)
-                GetWindowTextW(infoPtr->hwndEdit, pszText, len);
-            else
-                GetWindowTextA(infoPtr->hwndEdit, (CHAR*)pszText, len);
-        }
+        if (isW)
+            GetWindowTextW(infoPtr->hwndEdit, pszText, len);
+        else
+            GetWindowTextA(infoPtr->hwndEdit, (CHAR*)pszText, len);
     }
 
     TRACE("(pszText=%s, isW=%d)\n", debugtext_t(pszText, isW), isW);

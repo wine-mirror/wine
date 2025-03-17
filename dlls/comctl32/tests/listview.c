@@ -4716,15 +4716,12 @@ static void test_editbox(void)
     g_editbox_disp_info.item.pszText = NULL;
     r = SendMessageA(hwndedit, WM_KEYDOWN, VK_RETURN, 0);
     ok(!r, "Unexpected return value %d.\n", r);
-    todo_wine
     ok(g_editbox_disp_info.item.pszText != NULL, "Unexpected notification text.\n");
     memset(&item, 0, sizeof(item));
     item.pszText = buffer;
     item.cchTextMax = sizeof(buffer);
     r = SendMessageA(hwnd, LVM_GETITEMTEXTA, 0, (LPARAM)&item);
-    todo_wine
     ok(!r, "Unexpected return value %d.\n", r);
-    todo_wine
     ok(!*buffer, "Unexpected item text %s.\n", debugstr_a(buffer));
 
     /* end edit with saving */
