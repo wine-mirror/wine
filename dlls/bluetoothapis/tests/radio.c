@@ -119,7 +119,7 @@ void test_BluetoothFindRadioClose( void )
     ok( err == ERROR_INVALID_HANDLE, "%lu != %d\n", err, ERROR_INVALID_HANDLE );
 }
 
-void test_for_all_radios( void (*test)( HANDLE radio, void *data ), void *data )
+void test_for_all_radios( const char *file, int line, void (*test)( HANDLE radio, void *data ), void *data )
 {
     DWORD err, idx = 0;
     HANDLE radio;
@@ -132,7 +132,7 @@ void test_for_all_radios( void (*test)( HANDLE radio, void *data ), void *data )
     {
         err = GetLastError();
         ok( err == ERROR_NO_MORE_ITEMS, "%lu != %d\n", err, ERROR_NO_MORE_ITEMS );
-        skip( "No Bluetooth radios found.\n" );
+        skip_(file, line)( "No Bluetooth radios found.\n" );
         return;
     }
 
@@ -196,7 +196,7 @@ void test_BluetoothIsConnectable( void )
 
     ret = BluetoothIsConnectable( NULL );
     /* If ret is true, then at least one radio must be connectable. If ret returns false, then no radios are connectable. */
-    test_for_all_radios( test_radio_BluetoothIsConnectable, &result );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothIsConnectable, &result );
 
     ok( ret == result, "%d != %d\n", ret, result );
 }
@@ -214,7 +214,7 @@ void test_BluetoothIsDiscoverable( void )
     BOOL result = FALSE;
 
     ret = BluetoothIsDiscoverable( NULL );
-    test_for_all_radios( test_radio_BluetoothIsDiscoverable, &result );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothIsDiscoverable, &result );
 
     ok( ret == result, "%d != %d\n", ret, result );
 }
@@ -239,7 +239,7 @@ void test_BluetoothEnableIncomingConnections( void )
 {
     BOOL result = FALSE;
 
-    test_for_all_radios( test_radio_BluetoothEnableIncomingConnections, &result );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothEnableIncomingConnections, &result );
     if (result)
     {
         BOOL connectable;
@@ -272,7 +272,7 @@ void test_radio_BluetoothEnableDiscovery( HANDLE radio, void *data )
 
 void test_BluetoothEnableDiscovery( void )
 {
-    test_for_all_radios( test_radio_BluetoothEnableDiscovery, NULL );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothEnableDiscovery, NULL );
 }
 
 START_TEST( radio )
@@ -281,7 +281,7 @@ START_TEST( radio )
     test_BluetoothFindNextRadio();
     test_BluetoothFindRadioClose();
 
-    test_for_all_radios( test_BluetoothGetRadioInfo, NULL );
+    test_for_all_radios( __FILE__, __LINE__, test_BluetoothGetRadioInfo, NULL );
     test_BluetoothIsDiscoverable();
     test_BluetoothIsConnectable();
     test_BluetoothEnableIncomingConnections();

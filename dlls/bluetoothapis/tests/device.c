@@ -29,7 +29,7 @@
 
 #include <wine/test.h>
 
-extern void test_for_all_radios( void (*test)( HANDLE radio, void *data ), void *data );
+extern void test_for_all_radios( const char *file, int line, void (*test)( HANDLE radio, void *data ), void *data );
 
 void test_radio_BluetoothFindFirstDevice( HANDLE radio, void *data )
 {
@@ -91,7 +91,7 @@ void test_BluetoothFindFirstDevice( void )
     err = GetLastError();
     ok( err == ERROR_REVISION_MISMATCH, "%lu != %d\n", err, ERROR_REVISION_MISMATCH );
 
-    test_for_all_radios( test_radio_BluetoothFindFirstDevice, NULL );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothFindFirstDevice, NULL );
 }
 
 void test_radio_BluetoothFindNextDevice( HANDLE radio, void *data )
@@ -171,7 +171,7 @@ void test_BluetoothFindNextDevice( void )
         params.cTimeoutMultiplier = 5;
     }
 
-    test_for_all_radios( test_radio_BluetoothFindNextDevice, &params );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothFindNextDevice, &params );
 }
 
 void test_BluetoothFindDeviceClose( void )
