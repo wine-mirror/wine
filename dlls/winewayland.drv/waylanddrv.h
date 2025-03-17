@@ -145,6 +145,7 @@ struct wayland_data_device
         {
             struct wl_data_device *wl_data_device;
             struct wl_data_source *wl_data_source;
+            struct wl_data_offer *clipboard_wl_data_offer;
         };
     };
     pthread_mutex_t mutex;

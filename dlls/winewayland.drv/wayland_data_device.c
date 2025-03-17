@@ -49,7 +49,11 @@ struct data_device_format
 
 struct wayland_data_offer
 {
-    struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1;
+    union
+    {
+        struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1;
+        struct wl_data_offer *wl_data_offer;
+    };
     struct wl_array types;
 };
 
@@ -365,7 +369,17 @@ static const struct zwlr_data_control_offer_v1_listener data_control_offer_liste
     data_control_offer_offer,
 };
 
-static void wayland_data_offer_create(struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
+static void data_offer_offer(void *data, struct wl_data_offer *wl_data_offer, const char *type)
+{
+    data_control_offer_offer(data, NULL, type);
+}
+
+static const struct wl_data_offer_listener data_offer_listener =
+{
+    data_offer_offer,
+};
+
+static void wayland_data_offer_create(void *offer_proxy)
 {
     struct wayland_data_offer *data_offer;
 
@@ -375,17 +389,30 @@ static void wayland_data_offer_create(struct zwlr_data_control_offer_v1 *zwlr_da
         return;
     }
 
-    data_offer->zwlr_data_control_offer_v1 = zwlr_data_control_offer_v1;
     wl_array_init(&data_offer->types);
-    zwlr_data_control_offer_v1_add_listener(data_offer->zwlr_data_control_offer_v1,
-                                            &data_control_offer_listener, data_offer);
+    if (process_wayland.zwlr_data_control_manager_v1)
+    {
+        data_offer->zwlr_data_control_offer_v1 = offer_proxy;
+        zwlr_data_control_offer_v1_add_listener(data_offer->zwlr_data_control_offer_v1,
+                                                &data_control_offer_listener, data_offer);
+    }
+    else
+    {
+        data_offer->wl_data_offer = offer_proxy;
+        wl_data_offer_add_listener(data_offer->wl_data_offer, &data_offer_listener,
+                                   data_offer);
+
+    }
 }
 
 static void wayland_data_offer_destroy(struct wayland_data_offer *data_offer)
 {
     char **p;
 
-    zwlr_data_control_offer_v1_destroy(data_offer->zwlr_data_control_offer_v1);
+    if (process_wayland.zwlr_data_control_manager_v1)
+        zwlr_data_control_offer_v1_destroy(data_offer->zwlr_data_control_offer_v1);
+    else
+        wl_data_offer_destroy(data_offer->wl_data_offer);
     wl_array_for_each(p, &data_offer->types)
         free(*p);
     wl_array_release(&data_offer->types);
@@ -410,8 +437,15 @@ static int wayland_data_offer_get_import_fd(struct wayland_data_offer *data_offe
         fcntl(data_pipe[1], F_SETFD, FD_CLOEXEC);
     }
 
-    zwlr_data_control_offer_v1_receive(data_offer->zwlr_data_control_offer_v1,
-                                       mime_type, data_pipe[1]);
+    if (process_wayland.zwlr_data_control_manager_v1)
+    {
+        zwlr_data_control_offer_v1_receive(data_offer->zwlr_data_control_offer_v1,
+                                           mime_type, data_pipe[1]);
+    }
+    else
+    {
+        wl_data_offer_receive(data_offer->wl_data_offer, mime_type, data_pipe[1]);
+    }
     close(data_pipe[1]);
 
     /* Flush to ensure our receive request reaches the server. */
@@ -431,20 +465,30 @@ static void *import_format(int fd, struct data_device_format *format, size_t *re
     return ret;
 }
 
+static void wayland_data_device_destroy_clipboard_data_offer(struct wayland_data_device *data_device)
+{
+    struct wayland_data_offer *data_offer = NULL;
+
+    if (process_wayland.zwlr_data_control_manager_v1 &&
+        data_device->clipboard_zwlr_data_control_offer_v1)
+    {
+        data_offer = zwlr_data_control_offer_v1_get_user_data(
+            data_device->clipboard_zwlr_data_control_offer_v1);
+        data_device->clipboard_zwlr_data_control_offer_v1 = NULL;
+    }
+    else if (!process_wayland.zwlr_data_control_manager_v1 &&
+             data_device->clipboard_wl_data_offer)
+    {
+        data_offer = wl_data_offer_get_user_data(data_device->clipboard_wl_data_offer);
+        data_device->clipboard_wl_data_offer = NULL;
+    }
+
+    if (data_offer) wayland_data_offer_destroy(data_offer);
+}
+
 /**********************************************************************
  *          zwlr_data_control_device_v1 handling
  */
-
-static void wayland_data_device_destroy_clipboard_data_offer(struct wayland_data_device *data_device)
-{
-    if (data_device->clipboard_zwlr_data_control_offer_v1)
-    {
-        struct wayland_data_offer *data_offer =
-            zwlr_data_control_offer_v1_get_user_data(data_device->clipboard_zwlr_data_control_offer_v1);
-        if (data_offer) wayland_data_offer_destroy(data_offer);
-        data_device->clipboard_zwlr_data_control_offer_v1 = NULL;
-    }
-}
 
 static void data_control_device_data_offer(
     void *data,
@@ -454,19 +498,12 @@ static void data_control_device_data_offer(
     wayland_data_offer_create(zwlr_data_control_offer_v1);
 }
 
-static void clipboard_update(void);
-
-static void data_control_device_selection(
-    void *data,
-    struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
-    struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
+static void handle_selection(struct wayland_data_device *data_device,
+                             struct wayland_data_offer *data_offer)
 {
-    struct wayland_data_device *data_device = data;
-    struct wayland_data_offer *data_offer = NULL;
     char **p;
 
-    if (!zwlr_data_control_offer_v1 ||
-        !(data_offer = zwlr_data_control_offer_v1_get_user_data(zwlr_data_control_offer_v1)))
+    if (!data_offer)
     {
         TRACE("empty offer, clearing clipboard\n");
         if (NtUserOpenClipboard(clipboard_hwnd, 0))
@@ -521,8 +558,26 @@ static void data_control_device_selection(
 done:
     pthread_mutex_lock(&data_device->mutex);
     wayland_data_device_destroy_clipboard_data_offer(data_device);
-    if (data_offer) data_device->clipboard_zwlr_data_control_offer_v1 = zwlr_data_control_offer_v1;
+    if (data_offer)
+    {
+        if (process_wayland.zwlr_data_control_manager_v1)
+            data_device->clipboard_zwlr_data_control_offer_v1 = data_offer->zwlr_data_control_offer_v1;
+        else
+            data_device->clipboard_wl_data_offer = data_offer->wl_data_offer;
+    }
     pthread_mutex_unlock(&data_device->mutex);
+
+}
+
+static void data_control_device_selection(
+    void *data,
+    struct zwlr_data_control_device_v1 *zwlr_data_control_device_v1,
+    struct zwlr_data_control_offer_v1 *zwlr_data_control_offer_v1)
+{
+    handle_selection(data,
+                     zwlr_data_control_offer_v1 ?
+                         zwlr_data_control_offer_v1_get_user_data(zwlr_data_control_offer_v1) :
+                         NULL);
 }
 
 static void data_control_device_finished(
@@ -595,6 +650,52 @@ static const struct wl_data_source_listener data_source_listener =
     data_source_action,
 };
 
+/**********************************************************************
+ *          wl_data_device handling
+ */
+
+static void data_device_data_offer(void *data, struct wl_data_device *wl_data_device,
+                                   struct wl_data_offer *wl_data_offer)
+{
+    wayland_data_offer_create(wl_data_offer);
+}
+
+static void data_device_enter(void *data, struct wl_data_device *wl_data_device,
+                              uint32_t serial, struct wl_surface *wl_surface,
+                              wl_fixed_t x_w, wl_fixed_t y_w,
+                              struct wl_data_offer *wl_data_offer)
+{
+}
+
+static void data_device_leave(void *data, struct wl_data_device *wl_data_device)
+{
+}
+
+static void data_device_motion(void *data, struct wl_data_device *wl_data_device,
+                               uint32_t time, wl_fixed_t x_w, wl_fixed_t y_w)
+{
+}
+
+static void data_device_drop(void *data, struct wl_data_device *wl_data_device)
+{
+}
+
+static void data_device_selection(void *data, struct wl_data_device *wl_data_device,
+                                  struct wl_data_offer *wl_data_offer)
+{
+    handle_selection(data, wl_data_offer ? wl_data_offer_get_user_data(wl_data_offer) : NULL);
+}
+
+static const struct wl_data_device_listener data_device_listener =
+{
+    data_device_data_offer,
+    data_device_enter,
+    data_device_leave,
+    data_device_motion,
+    data_device_drop,
+    data_device_selection,
+};
+
 void wayland_data_device_init(void)
 {
     struct wayland_data_device *data_device = &process_wayland.data_device;
@@ -626,6 +727,11 @@ void wayland_data_device_init(void)
             wl_data_device_manager_get_data_device(
                 process_wayland.wl_data_device_manager,
                 process_wayland.seat.wl_seat);
+        if (data_device->wl_data_device)
+        {
+            wl_data_device_add_listener(data_device->wl_data_device,
+                                        &data_device_listener, data_device);
+        }
     }
     pthread_mutex_unlock(&data_device->mutex);
 
@@ -740,15 +846,26 @@ static void clipboard_update(void)
 static void render_format(UINT clipboard_format)
 {
     struct wayland_data_device *data_device = &process_wayland.data_device;
-    struct wayland_data_offer *data_offer;
+    struct wayland_data_offer *data_offer = NULL;
     struct data_device_format *format;
     int import_fd = -1;
 
     TRACE("clipboard_format=%u\n", clipboard_format);
 
     pthread_mutex_lock(&data_device->mutex);
-    if (data_device->clipboard_zwlr_data_control_offer_v1 &&
-        (data_offer = zwlr_data_control_offer_v1_get_user_data(data_device->clipboard_zwlr_data_control_offer_v1)) &&
+    if (process_wayland.zwlr_data_control_manager_v1 &&
+        data_device->clipboard_zwlr_data_control_offer_v1)
+    {
+        data_offer = zwlr_data_control_offer_v1_get_user_data(
+            data_device->clipboard_zwlr_data_control_offer_v1);
+    }
+    else if (!process_wayland.zwlr_data_control_manager_v1 &&
+             data_device->clipboard_wl_data_offer)
+    {
+        data_offer = wl_data_offer_get_user_data(data_device->clipboard_wl_data_offer);
+    }
+
+    if (data_offer &&
         (format = data_device_format_for_clipboard_format(clipboard_format,
                                                           &data_offer->types)))
     {
