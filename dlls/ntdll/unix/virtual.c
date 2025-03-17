@@ -192,7 +192,7 @@ static int teb_block_pos;
 static struct list teb_list = LIST_INIT( teb_list );
 
 #define ROUND_ADDR(addr,mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
-#define ROUND_SIZE(addr,size) (((SIZE_T)(size) + ((UINT_PTR)(addr) & page_mask) + page_mask) & ~page_mask)
+#define ROUND_SIZE(addr,size,mask) (((SIZE_T)(size) + ((UINT_PTR)(addr) & (mask)) + (mask)) & ~(UINT_PTR)(mask))
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) do { if (TRACE_ON(virtual)) dump_view(view); } while (0)
 #define VIRTUAL_DEBUG_DUMP_RANGES() do { if (TRACE_ON(virtual_ranges)) dump_free_ranges(); } while (0)
@@ -922,7 +922,7 @@ static SIZE_T get_vprot_range_size( char *base, SIZE_T size, BYTE mask, BYTE *vp
     curr_idx = start_idx = (size_t)base >> page_shift;
     end_idx = start_idx + (size >> page_shift);
 
-    aligned_start_idx = (start_idx + index_align_mask) & ~index_align_mask;
+    aligned_start_idx = ROUND_SIZE( 0, start_idx, index_align_mask );
     if (aligned_start_idx > end_idx) aligned_start_idx = end_idx;
 
 #ifdef _WIN64
@@ -1736,7 +1736,7 @@ static void mprotect_range( void *base, size_t size, BYTE set, BYTE clear )
     char *addr = ROUND_ADDR( base, page_mask );
     int prot, next;
 
-    size = ROUND_SIZE( base, size );
+    size = ROUND_SIZE( base, size, page_mask );
     prot = get_unix_prot( (get_page_vprot( addr ) & ~clear ) | set );
     for (count = i = 1; i < size >> page_shift; i++, count++)
     {
@@ -1808,7 +1808,7 @@ static void commit_arm64ec_map( struct file_view *view )
 {
     size_t start = ((size_t)view->base >> page_shift) / 8;
     size_t end = (((size_t)view->base + view->size) >> page_shift) / 8;
-    size_t size = ROUND_SIZE( start, end + 1 - start );
+    size_t size = ROUND_SIZE( start, end + 1 - start, page_mask );
     void *base = ROUND_ADDR( (char *)arm64ec_view->base + start, page_mask );
 
     view->protect |= VPROT_ARM64EC;
@@ -2514,7 +2514,7 @@ static void alloc_arm64ec_map(void)
     unsigned int status;
     SIZE_T size = ((ULONG_PTR)address_space_limit + page_size) >> (page_shift + 3);  /* one bit per page */
 
-    size = ROUND_SIZE( 0, size );
+    size = ROUND_SIZE( 0, size, page_mask );
     status = map_view( &arm64ec_view, NULL, size, MEM_TOP_DOWN, VPROT_READ | VPROT_COMMITTED, 0, 0, granularity_mask );
     if (status)
     {
@@ -2770,7 +2770,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
-    header_end = ptr + ROUND_SIZE( 0, header_size );
+    header_end = ptr + ROUND_SIZE( 0, header_size, page_mask );
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) return status;
     sec = IMAGE_FIRST_SECTION( nt );
@@ -2792,7 +2792,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         /* unaligned sections, this happens for native subsystem binaries */
         /* in that case Windows simply maps in the whole file */
 
-        total_size = min( total_size, ROUND_SIZE( 0, st.st_size ));
+        total_size = min( total_size, ROUND_SIZE( 0, st.st_size, page_mask ));
         if (map_file_into_view( view, fd, 0, total_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
                                 removable ) != STATUS_SUCCESS) goto done;
 
@@ -2821,17 +2821,17 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         SIZE_T map_size, file_start, file_size, end;
 
         if (!sec[i].Misc.VirtualSize)
-            map_size = ROUND_SIZE( 0, sec[i].SizeOfRawData );
+            map_size = ROUND_SIZE( 0, sec[i].SizeOfRawData, page_mask );
         else
-            map_size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
+            map_size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize, page_mask );
 
         /* file positions are rounded to sector boundaries regardless of OptionalHeader.FileAlignment */
         file_start = sec[i].PointerToRawData & ~sector_align;
-        file_size = (sec[i].SizeOfRawData + (sec[i].PointerToRawData & sector_align) + sector_align) & ~sector_align;
+        file_size = ROUND_SIZE( sec[i].PointerToRawData, sec[i].SizeOfRawData, sector_align );
         if (file_size > map_size) file_size = map_size;
 
         /* a few sanity checks */
-        end = sec[i].VirtualAddress + ROUND_SIZE( sec[i].VirtualAddress, map_size );
+        end = sec[i].VirtualAddress + ROUND_SIZE( sec[i].VirtualAddress, map_size, page_mask );
         if (sec[i].VirtualAddress > total_size || end > total_size || end < sec[i].VirtualAddress)
         {
             WARN_(module)( "%s section %.8s too large (%x+%lx/%lx)\n",
@@ -2858,7 +2858,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
                 imports->VirtualAddress < sec[i].VirtualAddress + map_size)
             {
                 UINT_PTR base = imports->VirtualAddress & ~page_mask;
-                UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size );
+                UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size, page_mask );
                 if (end > sec[i].VirtualAddress + map_size) end = sec[i].VirtualAddress + map_size;
                 if (end > base)
                     map_file_into_view( view, shared_fd, base, end - base,
@@ -2894,7 +2894,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
         if (file_size & page_mask)
         {
-            end = ROUND_SIZE( 0, file_size );
+            end = ROUND_SIZE( 0, file_size, page_mask );
             if (end > map_size) end = map_size;
             TRACE_(module)("clearing %p - %p\n",
                            ptr + sec[i].VirtualAddress + file_size,
@@ -2948,7 +2948,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     /* set the image protections */
 
-    set_vprot( view, ptr, ROUND_SIZE( 0, header_size ), VPROT_COMMITTED | VPROT_READ );
+    set_vprot( view, ptr, ROUND_SIZE( 0, header_size, page_mask ), VPROT_COMMITTED | VPROT_READ );
 
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
@@ -2956,9 +2956,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         BYTE vprot = VPROT_COMMITTED;
 
         if (sec[i].Misc.VirtualSize)
-            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize );
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize, page_mask );
         else
-            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].SizeOfRawData );
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].SizeOfRawData, page_mask );
 
         if (sec[i].Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITECOPY;
@@ -3253,7 +3253,7 @@ static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_P
             return STATUS_INVALID_PARAMETER;
         }
     }
-    if (!(size = ROUND_SIZE( 0, size ))) return STATUS_INVALID_PARAMETER;  /* wrap-around */
+    if (!(size = ROUND_SIZE( 0, size, page_mask ))) return STATUS_INVALID_PARAMETER;  /* wrap-around */
 
     get_vprot_flags( protect, &vprot, FALSE );
     vprot |= sec_flags;
@@ -3609,7 +3609,7 @@ NTSTATUS virtual_relocate_module( void *module )
     IMAGE_DATA_DIRECTORY *relocs;
     IMAGE_BASE_RELOCATION *rel, *end;
     IMAGE_SECTION_HEADER *sec;
-    ULONG total_size = ROUND_SIZE( 0, nt->OptionalHeader.SizeOfImage );
+    ULONG total_size = ROUND_SIZE( 0, nt->OptionalHeader.SizeOfImage, page_mask );
     ULONG *protect_old, i;
     ULONG_PTR image_base;
     INT_PTR delta;
@@ -3916,7 +3916,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
 
     size = max( reserve_size, commit_size );
     if (size < 1024 * 1024) size = 1024 * 1024;  /* Xlib needs a large stack */
-    size = (size + 0xffff) & ~0xffff;  /* round to 64K boundary */
+    size = ROUND_SIZE( 0, size, granularity_mask );
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
 
@@ -4168,7 +4168,7 @@ static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_wat
     size_t i;
     char *addr = ROUND_ADDR( base, page_mask );
 
-    size = ROUND_SIZE( base, size );
+    size = ROUND_SIZE( base, size, page_mask );
     for (i = 0; i < size; i += page_size)
     {
         BYTE vprot = get_page_vprot( addr + i );
@@ -4594,7 +4594,7 @@ static NTSTATUS allocate_virtual_memory( void **ret, SIZE_T *size_ptr, ULONG typ
     else
     {
         base = NULL;
-        size = (size + page_mask) & ~page_mask;
+        size = ROUND_SIZE( 0, size, page_mask );
     }
 
     /* Compute the alloc type flags */
@@ -4912,7 +4912,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 
     /* Fix the parameters */
 
-    if (size) size = ROUND_SIZE( addr, size );
+    if (size) size = ROUND_SIZE( addr, size, page_mask );
     base = ROUND_ADDR( addr, page_mask );
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
@@ -5011,7 +5011,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
     /* Fix the parameters */
 
-    size = ROUND_SIZE( addr, size );
+    size = ROUND_SIZE( addr, size, page_mask );
     base = ROUND_ADDR( addr, page_mask );
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
@@ -5604,7 +5604,7 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, 
         return result.virtual_lock.status;
     }
 
-    *size = ROUND_SIZE( *addr, *size );
+    *size = ROUND_SIZE( *addr, *size, page_mask );
     *addr = ROUND_ADDR( *addr, page_mask );
 
     if (mlock( *addr, *size )) status = STATUS_ACCESS_DENIED;
@@ -5641,7 +5641,7 @@ NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size
         return result.virtual_unlock.status;
     }
 
-    *size = ROUND_SIZE( *addr, *size );
+    *size = ROUND_SIZE( *addr, *size, page_mask );
     *addr = ROUND_ADDR( *addr, page_mask );
 
     if (munlock( *addr, *size )) status = STATUS_ACCESS_DENIED;
@@ -6039,7 +6039,7 @@ NTSTATUS WINAPI NtGetWriteWatch( HANDLE process, ULONG flags, PVOID base, SIZE_T
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t sigset;
 
-    size = ROUND_SIZE( base, size );
+    size = ROUND_SIZE( base, size, page_mask );
     base = ROUND_ADDR( base, page_mask );
 
     if (!count || !granularity) return STATUS_ACCESS_VIOLATION;
@@ -6084,7 +6084,7 @@ NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
     NTSTATUS status = STATUS_SUCCESS;
     sigset_t sigset;
 
-    size = ROUND_SIZE( base, size );
+    size = ROUND_SIZE( base, size, page_mask );
     base = ROUND_ADDR( base, page_mask );
 
     TRACE( "%p %p-%p\n", process, base, (char *)base + size );
@@ -6242,7 +6242,7 @@ static NTSTATUS prefetch_memory( HANDLE process, ULONG_PTR count,
     for (i = 0; i < count; i++)
     {
         base = ROUND_ADDR( addresses[i].VirtualAddress, page_mask );
-        size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes );
+        size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes, page_mask );
         madvise( base, size, MADV_WILLNEED );
     }
 
@@ -6259,7 +6259,7 @@ static NTSTATUS set_dirty_state_information( ULONG_PTR count, MEMORY_RANGE_ENTRY
     for (i = 0; i < count; i++)
     {
         void *base = ROUND_ADDR( addresses[i].VirtualAddress, page_mask );
-        SIZE_T size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes );
+        SIZE_T size = ROUND_SIZE( addresses[i].VirtualAddress, addresses[i].NumberOfBytes, page_mask );
         struct file_view *view = find_view( base, size );
 
         if (view)
