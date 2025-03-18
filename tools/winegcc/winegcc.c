@@ -193,8 +193,6 @@ struct options
     const char* lib_suffix;
     const char* subsystem;
     const char* entry_point;
-    const char* debug_file;
-    const char* out_implib;
     const char* native_arch;
     struct strarray prefix;
     struct strarray lib_dirs;
@@ -587,14 +585,14 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         if (opts->large_address_aware && target.cpu == CPU_i386)
             strarray_add( &flags, "-Wl,--large-address-aware" );
 
-        if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
-            strarray_add(&link_args, strmake("-Wl,--pdb=%s", opts->debug_file));
+        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
+            strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_file));
 
         if (opts->build_id)
             strarray_add( &link_args, "-Wl,--build-id");
 
-        if (opts->out_implib)
-            strarray_add(&link_args, strmake("-Wl,--out-implib,%s", opts->out_implib));
+        if (output_implib)
+            strarray_add(&link_args, strmake("-Wl,--out-implib,%s", output_implib));
 
         if (!try_link( opts, link_args, "-Wl,--file-alignment,0x1000" ))
             strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s",
@@ -625,10 +623,10 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         else
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", opts->gui_app ? "windows" : "console" ));
 
-        if (opts->debug_file && strendswith(opts->debug_file, ".pdb"))
+        if (output_debug_file && strendswith(output_debug_file, ".pdb"))
         {
             strarray_add(&link_args, "-Wl,-debug");
-            strarray_add(&link_args, strmake("-Wl,-pdb:%s", opts->debug_file));
+            strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_file));
         }
         else if (!opts->strip)
             strarray_add(&link_args, "-Wl,-debug:dwarf");
@@ -636,8 +634,8 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         if (opts->build_id)
             strarray_add( &link_args, "-Wl,-build-id");
 
-        if (opts->out_implib)
-            strarray_add(&link_args, strmake("-Wl,-implib:%s", opts->out_implib));
+        if (output_implib)
+            strarray_add(&link_args, strmake("-Wl,-implib:%s", output_implib));
         else
             strarray_add(&link_args, strmake("-Wl,-implib:%s", make_temp_file( output_name, ".lib" )));
 
@@ -1244,7 +1242,7 @@ static void build(struct options* opts)
     struct strarray lib_dirs = empty_strarray;
     struct strarray files = empty_strarray;
     struct strarray link_args;
-    char *output_file, *output_path;
+    char *output_file;
     const char *output_name, *spec_file, *lang;
     const char *libgcc = NULL;
     int generate_app_loader = 1;
@@ -1281,7 +1279,7 @@ static void build(struct options* opts)
         output_file = strmake("%s.%s", output_file, opts->shared ? "dll" : "exe");
     else if (strendswith(output_file, ".so"))
 	output_file[strlen(output_file) - 3] = 0;
-    output_path = is_pe ? output_file : strmake( "%s.so", output_file );
+    output_file_name = is_pe ? output_file : strmake( "%s.so", output_file );
 
     /* get the filename from the path */
     output_name = get_basename( output_file );
@@ -1430,7 +1428,7 @@ static void build(struct options* opts)
     }
 
     strarray_add(&link_args, "-o");
-    strarray_add(&link_args, output_path);
+    strarray_add(&link_args, output_file_name);
 
     for ( j = 0; j < lib_dirs.count; j++ )
 	strarray_add(&link_args, strmake("-L%s", lib_dirs.str[j]));
@@ -1500,39 +1498,36 @@ static void build(struct options* opts)
 
     if (libgcc) strarray_add(&link_args, libgcc);
 
-    output_file_name = output_path;
-    output_debug_file = opts->debug_file;
-    output_implib = opts->out_implib;
     atexit( cleanup_output_files );
 
     spawn(opts->prefix, link_args, 0);
 
-    if (opts->debug_file && !strendswith(opts->debug_file, ".pdb"))
+    if (output_debug_file && !strendswith(output_debug_file, ".pdb"))
     {
         struct strarray tool, objcopy = build_tool_name(opts, target_alias, WINEGCC_TOOL_OBJCOPY);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--only-keep-debug");
-        strarray_add(&tool, output_path);
-        strarray_add(&tool, opts->debug_file);
+        strarray_add(&tool, output_file_name);
+        strarray_add(&tool, output_debug_file);
         spawn(opts->prefix, tool, 1);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--strip-debug");
-        strarray_add(&tool, output_path);
+        strarray_add(&tool, output_file_name);
         spawn(opts->prefix, tool, 1);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--add-gnu-debuglink");
-        strarray_add(&tool, opts->debug_file);
-        strarray_add(&tool, output_path);
+        strarray_add(&tool, output_debug_file);
+        strarray_add(&tool, output_file_name);
         spawn(opts->prefix, tool, 0);
     }
 
-    if (opts->out_implib && !is_pe)
+    if (output_implib && !is_pe)
     {
         struct strarray tool, implib_args;
 
@@ -1547,15 +1542,15 @@ static void build(struct options* opts)
 
         strarray_add(&implib_args, "--implib");
         strarray_add(&implib_args, "-o");
-        strarray_add(&implib_args, opts->out_implib);
+        strarray_add(&implib_args, output_implib);
         strarray_add(&implib_args, "--export");
         strarray_add(&implib_args, spec_file);
 
         spawn(opts->prefix, implib_args, 0);
     }
 
-    if (!is_pe) fixup_constructors( opts, output_path );
-    else if (opts->wine_builtin) make_wine_builtin( opts, output_path );
+    if (!is_pe) fixup_constructors( opts, output_file_name );
+    else if (opts->wine_builtin) make_wine_builtin( opts, output_file_name );
 
     /* create the loader script */
     if (generate_app_loader)
@@ -1984,7 +1979,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--debug-file") && j < Wl.count - 1)
                             {
-                                opts.debug_file = xstrdup( Wl.str[++j] );
+                                output_debug_file = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--whole-archive") ||
@@ -1997,7 +1992,7 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--out-implib"))
                             {
-                                opts.out_implib = xstrdup( Wl.str[++j] );
+                                output_implib = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp( Wl.str[j], "--build-id" ))
