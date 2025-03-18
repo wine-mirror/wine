@@ -62,6 +62,7 @@ struct console
     struct async_queue           ioctl_q;       /* ioctl queue */
     struct async_queue           read_q;        /* read queue */
     struct list                  screen_buffers;/* attached screen buffers */
+    struct list                  inputs;        /* attached console inputs */
 };
 
 static void console_dump( struct object *obj, int verbose );
@@ -297,12 +298,14 @@ struct console_input
 {
     struct object         obj;         /* object header */
     struct fd            *fd;          /* pseudo-fd */
+    struct list           entry;       /* entry in console->inputs */
+    struct console       *console;     /* associated console at creation time */
 };
 
 static void console_input_dump( struct object *obj, int verbose );
+static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
-static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_input_get_fd( struct object *obj );
 static void console_input_destroy( struct object *obj );
 
@@ -311,9 +314,9 @@ static const struct object_ops console_input_ops =
     sizeof(struct console_input),     /* size */
     &device_type,                     /* type */
     console_input_dump,               /* dump */
-    console_input_add_queue,          /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
+    add_queue,                        /* add_queue */
+    remove_queue,                     /* remove_queue */
+    console_input_signaled,           /* signaled */
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_input_get_fd,             /* get_fd */
@@ -539,6 +542,7 @@ static struct object *create_console(void)
     console->fd            = NULL;
     console->last_id       = 0;
     list_init( &console->screen_buffers );
+    list_init( &console->inputs );
     init_async_queue( &console->ioctl_q );
     init_async_queue( &console->read_q );
 
@@ -742,6 +746,7 @@ static void console_dump( struct object *obj, int verbose )
 static void console_destroy( struct object *obj )
 {
     struct console *console = (struct console *)obj;
+    struct console_input *input;
     struct screen_buffer *curr;
 
     assert( obj->ops == &console_ops );
@@ -757,6 +762,9 @@ static void console_destroy( struct object *obj )
 
     LIST_FOR_EACH_ENTRY( curr, &console->screen_buffers, struct screen_buffer, entry )
         curr->input = NULL;
+
+    LIST_FOR_EACH_ENTRY( input, &console->inputs, struct console_input, entry )
+        input->console = NULL;
 
     free_async_queue( &console->ioctl_q );
     free_async_queue( &console->read_q );
@@ -1328,6 +1336,8 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
             release_object( console_input );
             return NULL;
         }
+        console_input->console = current->process->console;
+        list_add_head( &current->process->console->inputs, &console_input->entry );
         return &console_input->obj;
     }
 
@@ -1403,14 +1413,12 @@ static void console_input_dump( struct object *obj, int verbose )
     fputs( "console Input device\n", stderr );
 }
 
-static int console_input_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry )
 {
-    if (!current->process->console)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-    return console_add_queue( &current->process->console->obj, entry );
+    struct console_input *console_input = (struct console_input *)obj;
+    assert( obj->ops == &console_input_ops );
+    if (!console_input->console) return 0;
+    return console_input->console->signaled;
 }
 
 static struct fd *console_input_get_fd( struct object *obj )
@@ -1432,6 +1440,7 @@ static void console_input_destroy( struct object *obj )
 
     assert( obj->ops == &console_input_ops );
     if (console_input->fd) release_object( console_input->fd );
+    if (console_input->console) list_remove( &console_input->entry );
 }
 
 static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -1542,6 +1551,7 @@ DECL_HANDLER(get_next_console_request)
     struct console_host_ioctl *ioctl = NULL, *next;
     struct screen_buffer *screen_buffer;
     struct console_server *server;
+    struct console_input *input;
     struct iosb *iosb = NULL;
 
     server = (struct console_server *)get_handle_obj( current->process, req->handle, 0, &console_server_ops );
@@ -1563,6 +1573,8 @@ DECL_HANDLER(get_next_console_request)
         wake_up( &server->console->obj, 0 );
         LIST_FOR_EACH_ENTRY( screen_buffer, &server->console->screen_buffers, struct screen_buffer, entry )
             wake_up( &screen_buffer->obj, 0 );
+        LIST_FOR_EACH_ENTRY( input, &server->console->inputs, struct console_input, entry )
+            wake_up( &input->obj, 0 );
     }
 
     if (req->read)

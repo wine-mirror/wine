@@ -4168,7 +4168,7 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ok(ret, "got error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(parent_input, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
     todo_wine ok(!ret, "got %d\n", ret);
 
@@ -4220,18 +4220,18 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ret = WaitForSingleObject(unbound_input, 0);
     ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(parent_input, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     CloseHandle(input);
     ret = FreeConsole();
     ok(ret == TRUE, "got error %lu\n", GetLastError());
 
     ret = WaitForSingleObject(unbound_input, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     CloseHandle(unbound_input);
 
     ret = WaitForSingleObject(parent_input, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
     todo_wine ok(!ret, "got %d\n", ret);
 
@@ -4241,7 +4241,7 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ok(!ret, "got %d\n", ret);
 
     ret = WaitForSingleObject(parent_input, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
     todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
 }
@@ -4353,7 +4353,7 @@ static void test_FreeConsole(HANDLE input, HANDLE orig_output)
     ret = WaitForSingleObject(unbound_output, 0);
     todo_wine ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(unbound_input, 0);
-    todo_wine ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
 
     /* Create a new console.
      *
