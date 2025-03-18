@@ -3466,12 +3466,12 @@ struct get_window_info_request
 struct get_window_info_reply
 {
     struct reply_header __header;
-    user_handle_t  full_handle;
     user_handle_t  last_active;
     process_id_t   pid;
     thread_id_t    tid;
     int            is_unicode;
     unsigned int   dpi_context;
+    char __pad_28[4];
 };
 
 
@@ -6808,6 +6808,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 869
+#define SERVER_PROTOCOL_VERSION 870
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2321,7 +2321,6 @@ DECL_HANDLER(get_window_info)
 
     if (!win) return;
 
-    reply->full_handle = win->handle;
     reply->last_active = win->handle;
     reply->is_unicode  = win->is_unicode;
     reply->dpi_context = win->dpi_context;

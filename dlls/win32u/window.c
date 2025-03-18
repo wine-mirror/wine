@@ -229,36 +229,16 @@ HWND get_hwnd_message_parent(void)
  */
 HWND get_full_window_handle( HWND hwnd )
 {
-    WND *win;
+    struct user_entry entry;
+    HANDLE handle;
 
     if (!hwnd || (ULONG_PTR)hwnd >> 16) return hwnd;
     if (LOWORD(hwnd) <= 1 || LOWORD(hwnd) == 0xffff) return hwnd;
     /* do sign extension for -2 and -3 */
     if (LOWORD(hwnd) >= (WORD)-3) return (HWND)(LONG_PTR)(INT16)LOWORD(hwnd);
 
-    if (!(win = get_win_ptr( hwnd ))) return hwnd;
-
-    if (win == WND_DESKTOP)
-    {
-        if (LOWORD(hwnd) == LOWORD(get_desktop_window())) return get_desktop_window();
-        else return get_hwnd_message_parent();
-    }
-
-    if (win != WND_OTHER_PROCESS)
-    {
-        hwnd = win->obj.handle;
-        release_win_ptr( win );
-    }
-    else  /* may belong to another process */
-    {
-        SERVER_START_REQ( get_window_info )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            if (!wine_server_call_err( req )) hwnd = wine_server_ptr_handle( reply->full_handle );
-        }
-        SERVER_END_REQ;
-    }
-    return hwnd;
+    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle )) return 0;
+    return handle;
 }
 
 /*******************************************************************

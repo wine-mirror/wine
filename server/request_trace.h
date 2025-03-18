@@ -1708,8 +1708,7 @@ static void dump_get_window_info_request( const struct get_window_info_request *
 
 static void dump_get_window_info_reply( const struct get_window_info_reply *req )
 {
-    fprintf( stderr, " full_handle=%08x", req->full_handle );
-    fprintf( stderr, ", last_active=%08x", req->last_active );
+    fprintf( stderr, " last_active=%08x", req->last_active );
     fprintf( stderr, ", pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
     fprintf( stderr, ", is_unicode=%d", req->is_unicode );
