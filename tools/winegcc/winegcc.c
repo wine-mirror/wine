@@ -149,6 +149,9 @@ struct strarray temp_files = { 0 };
 static const char *bindir;
 static const char *libdir;
 static const char *includedir;
+static const char *wine_objdir;
+static const char *sysroot;
+static const char *isysroot;
 static const char *target_alias;
 static const char *target_version;
 static struct target target;
@@ -182,14 +185,11 @@ struct options
     int pic;
     int no_default_config;
     int build_id;
-    const char* wine_objdir;
     const char* winebuild;
     const char* output_name;
     const char* image_base;
     const char* section_align;
     const char* file_align;
-    const char* sysroot;
-    const char* isysroot;
     const char* lib_suffix;
     const char* subsystem;
     const char* entry_point;
@@ -687,11 +687,11 @@ static const char *get_multiarch_dir( struct target target )
    return NULL;
 }
 
-static char *get_lib_dir( struct options *opts )
+static char *get_lib_dir(void)
 {
     const char *stdlibpath[] = { libdir, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     const char *bit_suffix, *other_bit_suffix, *build_multiarch, *target_multiarch, *winecrt0;
-    const char *root = opts->sysroot ? opts->sysroot : "";
+    const char *root = sysroot ? sysroot : "";
     unsigned int i;
     struct stat st;
     size_t build_len, target_len;
@@ -706,7 +706,7 @@ static char *get_lib_dir( struct options *opts )
 
     for (i = 0; i < ARRAY_SIZE(stdlibpath); i++)
     {
-        const char *root = (i && opts->sysroot) ? opts->sysroot : "";
+        const char *root = (i && sysroot) ? sysroot : "";
         char *p, *buffer;
 
         if (!stdlibpath[i]) continue;
@@ -791,7 +791,7 @@ static struct strarray get_compat_defines( const struct options *opts, int gcc_d
 
     if (opts->processor != proc_cpp)
     {
-	if (gcc_defs && !opts->wine_objdir && !opts->noshortwchar)
+	if (gcc_defs && !wine_objdir && !opts->noshortwchar)
 	{
             strarray_add(&args, "-fshort-wchar");
             strarray_add(&args, "-DWINE_UNICODE_NATIVE");
@@ -930,10 +930,10 @@ static void compile(struct options* opts, const char* lang)
     }
 
     /* standard includes come last in the include search path */
-    if (!opts->wine_objdir && !opts->nostdinc)
+    if (!wine_objdir && !opts->nostdinc)
     {
         const char *incl_dirs[] = { INCLUDEDIR, "/usr/include", "/usr/local/include" };
-        const char *root = opts->isysroot ? opts->isysroot : opts->sysroot ? opts->sysroot : "";
+        const char *root = isysroot ? isysroot : sysroot ? sysroot : "";
         const char *isystem = gcc_defs ? "-isystem" : "-I";
         const char *idirafter = gcc_defs ? "-idirafter" : "-I";
 
@@ -959,8 +959,8 @@ static void compile(struct options* opts, const char* lang)
             if (!opts->use_msvcrt) strarray_add(&comp_args, strmake( "%s%s%s", idirafter, root, incl_dirs[j] ));
         }
     }
-    else if (opts->wine_objdir)
-        strarray_add(&comp_args, strmake("-I%s/include", opts->wine_objdir) );
+    else if (wine_objdir)
+        strarray_add(&comp_args, strmake("-I%s/include", wine_objdir) );
 
     spawn(opts->prefix, comp_args, 0);
 }
@@ -990,8 +990,8 @@ static struct strarray get_winebuild_args( struct options *opts, const char *tar
 
     if (opts->winebuild)
         binary = opts->winebuild;
-    else if (opts->wine_objdir)
-        binary = strmake( "%s/tools/winebuild/winebuild%s", opts->wine_objdir, EXEEXT );
+    else if (wine_objdir)
+        binary = strmake( "%s/tools/winebuild/winebuild%s", wine_objdir, EXEEXT );
     else if (winebuild)
         binary = find_binary( opts->prefix, winebuild );
     else if (bindir)
@@ -1287,16 +1287,16 @@ static void build(struct options* opts)
     output_name = get_basename( output_file );
 
     /* prepare the linking path */
-    if (!opts->wine_objdir)
+    if (!wine_objdir)
     {
-        char *lib_dir = get_lib_dir( opts );
+        char *lib_dir = get_lib_dir();
         strarray_addall( &lib_dirs, opts->lib_dirs );
         strarray_add( &lib_dirs, strmake( "%s/wine%s", lib_dir, get_arch_dir( target )));
         strarray_add( &lib_dirs, lib_dir );
     }
     else
     {
-        strarray_add(&lib_dirs, strmake("%s/dlls", opts->wine_objdir));
+        strarray_add(&lib_dirs, strmake("%s/dlls", wine_objdir));
         strarray_addall(&lib_dirs, opts->lib_dirs);
     }
 
@@ -1354,7 +1354,7 @@ static void build(struct options* opts)
 
     /* add the default libraries, if needed */
 
-    if (!opts->wine_objdir && !opts->nodefaultlibs)
+    if (!wine_objdir && !opts->nodefaultlibs)
     {
         if (opts->gui_app)
 	{
@@ -1808,7 +1808,7 @@ int main(int argc, char **argv)
                         opts.pic = 0;
 		    break;
                 case 'i':
-                    if (!strcmp( "-isysroot", args.str[i] )) opts.isysroot = args.str[i + 1];
+                    if (!strcmp( "-isysroot", args.str[i] )) isysroot = args.str[i + 1];
                     break;
 		case 'l':
 		    strarray_add(&opts.files, strmake("-l%s", option_arg));
@@ -2039,7 +2039,7 @@ int main(int argc, char **argv)
                     }
                     else if (is_option( args, i, "--sysroot", &option_arg ))
                     {
-                        opts.sysroot = option_arg;
+                        sysroot = option_arg;
                         raw_linker_arg = 1;
                     }
                     else if (is_option( args, i, "--target", &option_arg ))
@@ -2049,7 +2049,7 @@ int main(int argc, char **argv)
                     }
                     else if (is_option( args, i, "--wine-objdir", &option_arg ))
                     {
-                        opts.wine_objdir = option_arg;
+                        wine_objdir = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (is_option( args, i, "--winebuild", &option_arg ))
