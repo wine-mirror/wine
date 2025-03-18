@@ -864,12 +864,29 @@ DECLARE_INTERFACE_(IActiveDesktop, IUnknown)
 /****************************************************************************
 * SHAddToRecentDocs API
 */
-#define SHARD_PIDL      __MSABI_LONG(0x00000001)
-#define SHARD_PATHA     __MSABI_LONG(0x00000002)
-#define SHARD_PATHW     __MSABI_LONG(0x00000003)
+#define SHARD_PIDL            __MSABI_LONG(0x00000001)
+#define SHARD_PATHA           __MSABI_LONG(0x00000002)
+#define SHARD_PATHW           __MSABI_LONG(0x00000003)
+#define SHARD_APPIDINFO       __MSABI_LONG(0x00000004)
+#define SHARD_APPIDINFOIDLIST __MSABI_LONG(0x00000005)
+#define SHARD_LINK            __MSABI_LONG(0x00000006)
+#define SHARD_APPIDINFOLINK   __MSABI_LONG(0x00000007)
+#define SHARD_SHELLITEM       __MSABI_LONG(0x00000008)
 #define SHARD_PATH WINELIB_NAME_AW(SHARD_PATH)
 
 WINSHELLAPI void WINAPI SHAddToRecentDocs(UINT,LPCVOID);
+
+typedef struct SHARDAPPIDINFO
+{
+    IShellItem *psi;
+    PCWSTR      pszAppID;
+} SHARDAPPIDINFO;
+
+typedef struct SHARDAPPIDINFOIDLIST
+{
+    PCIDLIST_ABSOLUTE pidl;
+    PCWSTR pszAppID;
+} SHARDAPPIDINFOIDLIST;
 
 /****************************************************************************
  * SHBrowseForFolder API
