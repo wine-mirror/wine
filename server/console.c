@@ -215,7 +215,7 @@ struct screen_buffer
 
 static void screen_buffer_dump( struct object *obj, int verbose );
 static void screen_buffer_destroy( struct object *obj );
-static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry );
+static int screen_buffer_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *screen_buffer_get_fd( struct object *obj );
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
@@ -225,10 +225,10 @@ static const struct object_ops screen_buffer_ops =
     sizeof(struct screen_buffer),     /* size */
     &file_type,                       /* type */
     screen_buffer_dump,               /* dump */
-    screen_buffer_add_queue,          /* add_queue */
-    NULL,                             /* remove_queue */
-    NULL,                             /* signaled */
-    NULL,                             /* satisfied */
+    add_queue,                        /* add_queue */
+    remove_queue,                     /* remove_queue */
+    screen_buffer_signaled,           /* signaled */
+    no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     screen_buffer_get_fd,             /* get_fd */
     default_map_access,               /* map_access */
@@ -840,21 +840,18 @@ static void screen_buffer_destroy( struct object *obj )
     free_async_queue( &screen_buffer->ioctl_q );
 }
 
+static int screen_buffer_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct screen_buffer *screen_buffer = (struct screen_buffer *)obj;
+    assert( obj->ops == &screen_buffer_ops );
+    if (!screen_buffer->input) return 0;
+    return screen_buffer->input->signaled;
+}
+
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options )
 {
     return grab_object( obj );
-}
-
-static int screen_buffer_add_queue( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct screen_buffer *screen_buffer = (struct screen_buffer*)obj;
-    if (!screen_buffer->input)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return 0;
-    }
-    return console_add_queue( &screen_buffer->input->obj, entry );
 }
 
 static struct fd *screen_buffer_get_fd( struct object *obj )
@@ -1543,6 +1540,7 @@ struct object *create_console_device( struct object *root, const struct unicode_
 DECL_HANDLER(get_next_console_request)
 {
     struct console_host_ioctl *ioctl = NULL, *next;
+    struct screen_buffer *screen_buffer;
     struct console_server *server;
     struct iosb *iosb = NULL;
 
@@ -1563,6 +1561,8 @@ DECL_HANDLER(get_next_console_request)
     {
         server->console->signaled = 1;
         wake_up( &server->console->obj, 0 );
+        LIST_FOR_EACH_ENTRY( screen_buffer, &server->console->screen_buffers, struct screen_buffer, entry )
+            wake_up( &screen_buffer->obj, 0 );
     }
 
     if (req->read)

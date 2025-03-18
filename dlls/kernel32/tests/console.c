@@ -4349,7 +4349,7 @@ static void test_FreeConsole(HANDLE input, HANDLE orig_output)
      * Windows 11 is weirdly inconsistent; the state seems to be very sensitive
      * to timing, in unclear ways. */
     ret = WaitForSingleObject(output, 0);
-    todo_wine ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(unbound_output, 0);
     todo_wine ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(unbound_input, 0);
