@@ -453,6 +453,7 @@ static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
         D3DXIMAGE_FILEFORMAT iff;
         D3DFORMAT saved_format;
         uint8_t max_diff;
+        BOOL wine_todo;
     } tests[] =
     {
         { "D3DXIFF_BMP", D3DXIFF_BMP, D3DFMT_A8R8G8B8 },
@@ -460,9 +461,9 @@ static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
         { "D3DXIFF_TGA", D3DXIFF_TGA, D3DFMT_A8R8G8B8 },
         { "D3DXIFF_PNG", D3DXIFF_PNG, D3DFMT_A8R8G8B8 },
         { "D3DXIFF_DDS", D3DXIFF_DDS, D3DFMT_A8R8G8B8 },
-        { "D3DXIFF_HDR", D3DXIFF_HDR, D3DFMT_A32B32G32R32F, .max_diff = 1 },
-        { "D3DXIFF_PFM", D3DXIFF_PFM, D3DFMT_A32B32G32R32F },
-        { "D3DXIFF_PPM", D3DXIFF_PPM, D3DFMT_X8R8G8B8 },
+        { "D3DXIFF_HDR", D3DXIFF_HDR, D3DFMT_A32B32G32R32F, .max_diff = 1, .wine_todo = TRUE },
+        { "D3DXIFF_PFM", D3DXIFF_PFM, D3DFMT_A32B32G32R32F, .wine_todo = TRUE },
+        { "D3DXIFF_PPM", D3DXIFF_PPM, D3DFMT_X8R8G8B8, .wine_todo = TRUE },
     };
     struct
     {
@@ -481,12 +482,6 @@ static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
     unsigned int i, j;
     D3DBOX box;
     HRESULT hr;
-
-    if (!strcmp(winetest_platform, "wine"))
-    {
-        skip("Skipping D3DXSaveVolumeToFile{A,W,InMemory}() tests.\n");
-        return;
-    }
 
     hr = IDirect3DDevice9_CreateVolumeTexture(device, 32, 32, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
             &volume_texture, NULL);
@@ -544,13 +539,18 @@ static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
             set_box(&box, 0, 0, 32, 32, j, 2);
 
             hr = D3DXSaveVolumeToFileA(name_buf_a, tests[i].iff, volume, NULL, &box);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            todo_wine_if(tests[i].wine_todo) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             hr = D3DXSaveVolumeToFileW(name_buf_w, tests[i].iff, volume, NULL, &box);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            todo_wine_if(tests[i].wine_todo) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             hr = D3DXSaveVolumeToFileInMemory(&buffer, tests[i].iff, volume, NULL, &box);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            todo_wine_if(tests[i].wine_todo) ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            if (!strcmp(winetest_platform, "wine") && tests[i].wine_todo)
+            {
+                winetest_pop_context();
+                continue;
+            }
 
             /* ASCII string. */
             hr = D3DXFillVolumeTexture(volume_texture, fill_func_volume, (void *)&clear_val);

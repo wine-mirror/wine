@@ -316,6 +316,9 @@ HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLO
         IDirect3DSurface9 **temp_surface, BOOL write);
 HRESULT unlock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect,
         IDirect3DSurface9 *temp_surface, BOOL update);
+HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
+        D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer);
+const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format);
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
         uint32_t bottom, uint32_t front, uint32_t back, struct d3dx_pixels *pixels);

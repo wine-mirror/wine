@@ -508,6 +508,12 @@ static HRESULT d3dx_init_dds_header(struct dds_header *header, D3DRESOURCETYPE r
     header->height = size->height;
     header->width = size->width;
     header->caps = DDS_CAPS_TEXTURE;
+    if (size->depth > 1)
+    {
+        header->flags |= DDS_DEPTH;
+        header->depth = size->depth;
+        header->caps2 |= DDS_CAPS2_VOLUME;
+    }
     if (header->pixel_format.flags & DDS_PF_ALPHA || header->pixel_format.flags & DDS_PF_ALPHA_ONLY)
         header->caps |= DDSCAPS_ALPHA;
     if (header->pixel_format.flags & DDS_PF_INDEXED)
@@ -799,7 +805,7 @@ static enum d3dx_pixel_format_id d3dx_get_closest_d3dx_pixel_format_id(const enu
     return (bestfmt) ? bestfmt->format : D3DX_PIXEL_FORMAT_COUNT;
 }
 
-static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
+HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const struct pixel_format_desc *src_fmt_desc,
         D3DXIMAGE_FILEFORMAT file_format, ID3DXBuffer **dst_buffer)
 {
     enum d3dx_pixel_format_id dst_format = src_fmt_desc->format;
@@ -871,6 +877,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
     }
 
     dst_fmt_desc = get_d3dx_pixel_format_info(dst_format);
+    src_pixels->size.depth = (file_format == D3DXIFF_DDS) ? src_pixels->size.depth : 1;
     hr = d3dx_calculate_pixels_size(dst_format, src_pixels->size.width, src_pixels->size.height, &dst_row_pitch,
             &dst_slice_pitch);
     if (FAILED(hr))
@@ -884,7 +891,7 @@ static HRESULT d3dx_save_pixels_to_memory(struct d3dx_pixels *src_pixels, const 
             uint32_t header_size;
 
             header_size = is_index_format(dst_fmt_desc) ? sizeof(*header) + DDS_PALETTE_SIZE : sizeof(*header);
-            hr = D3DXCreateBuffer(dst_slice_pitch + header_size, &buffer);
+            hr = D3DXCreateBuffer((dst_slice_pitch * src_pixels->size.depth) + header_size, &buffer);
             if (FAILED(hr))
                 return hr;
 
@@ -1226,7 +1233,7 @@ static BOOL image_is_argb(IWICBitmapFrameDecode *frame, struct d3dx_image *image
     return FALSE;
 }
 
-static const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
+const char *debug_d3dx_image_file_format(D3DXIMAGE_FILEFORMAT format)
 {
     switch (format)
     {
