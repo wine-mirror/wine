@@ -1314,6 +1314,13 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     if (name->len == sizeof(inputW) && !memcmp( name->str, inputW, name->len ))
     {
         struct console_input *console_input;
+
+        if (!current->process->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
+
         name->len = 0;
         if (!(console_input = alloc_object( &console_input_ops ))) return NULL;
         console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
@@ -1329,6 +1336,13 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
     if (name->len == sizeof(outputW) && !memcmp( name->str, outputW, name->len ))
     {
         struct console_output *console_output;
+
+        if (!current->process->console)
+        {
+            set_error( STATUS_INVALID_HANDLE );
+            return NULL;
+        }
+
         name->len = 0;
         if (!(console_output = alloc_object( &console_output_ops ))) return NULL;
         console_output->fd = alloc_pseudo_fd( &console_output_fd_ops, &console_output->obj,

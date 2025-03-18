@@ -4185,8 +4185,13 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
                            FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
                            FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    todo_wine ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
-    if (!status) NtClose( unbound_input );
+    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
+    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\Output" );
+    status = NtCreateFile( &unbound_input, FILE_READ_DATA | FILE_WRITE_DATA | SYNCHRONIZE | FILE_READ_ATTRIBUTES |
+                           FILE_WRITE_ATTRIBUTES, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_CREATE,
+                           FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
+    ok(status == STATUS_INVALID_HANDLE, "got %#lx\n", status);
 
     /* Allocate a console. */
 
