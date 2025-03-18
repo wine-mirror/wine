@@ -55,12 +55,13 @@ static void *user_handles[NB_USER_HANDLES];
 /***********************************************************************
  *           alloc_user_handle
  */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
 {
     HANDLE handle = 0;
 
     SERVER_START_REQ( alloc_user_handle )
     {
+        req->type = type;
         if (!wine_server_call_err( req )) handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
@@ -80,7 +81,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
 /***********************************************************************
  *           get_user_handle_ptr
  */
-void *get_user_handle_ptr( HANDLE handle, unsigned int type )
+void *get_user_handle_ptr( HANDLE handle, unsigned short type )
 {
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
@@ -106,7 +107,7 @@ void *get_user_handle_ptr( HANDLE handle, unsigned int type )
  *
  * user_lock must be held by caller.
  */
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type )
+void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
 {
     struct user_object *ptr;
     WORD index = *handle ? USER_HANDLE_TO_INDEX( *handle ) + 1 : 0;
@@ -143,7 +144,7 @@ void release_user_handle_ptr( void *ptr )
 /***********************************************************************
  *           free_user_handle
  */
-void *free_user_handle( HANDLE handle, unsigned int type )
+void *free_user_handle( HANDLE handle, unsigned short type )
 {
     struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
@@ -152,6 +153,7 @@ void *free_user_handle( HANDLE handle, unsigned int type )
     {
         SERVER_START_REQ( free_user_handle )
         {
+            req->type = type;
             req->handle = wine_server_user_handle( handle );
             if (wine_server_call( req )) ptr = NULL;
             else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );

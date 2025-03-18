@@ -5618,7 +5618,8 @@ struct set_window_layered_info_reply
 struct alloc_user_handle_request
 {
     struct request_header __header;
-    char __pad_12[4];
+    unsigned short type;
+    char __pad_14[2];
 };
 struct alloc_user_handle_reply
 {
@@ -5632,7 +5633,10 @@ struct alloc_user_handle_reply
 struct free_user_handle_request
 {
     struct request_header __header;
+    unsigned short type;
+    char __pad_14[2];
     user_handle_t  handle;
+    char __pad_20[4];
 };
 struct free_user_handle_reply
 {
@@ -6801,6 +6805,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 865
+#define SERVER_PROTOCOL_VERSION 866
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

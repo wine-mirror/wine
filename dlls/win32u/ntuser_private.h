@@ -231,11 +231,11 @@ extern BOOL vulkan_init(void);
 extern void vulkan_detach_surfaces( struct list *surfaces );
 
 /* window.c */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type );
-void *free_user_handle( HANDLE handle, unsigned int type );
-void *get_user_handle_ptr( HANDLE handle, unsigned int type );
+HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type );
+void *free_user_handle( HANDLE handle, unsigned short type );
+void *get_user_handle_ptr( HANDLE handle, unsigned short type );
 void release_user_handle_ptr( void *ptr );
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned int type );
+void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type );
 UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask );
 
 static inline UINT win_get_flags( HWND hwnd )

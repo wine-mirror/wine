@@ -3931,6 +3931,7 @@ struct handle_info
 
 /* Allocate an arbitrary user handle */
 @REQ(alloc_user_handle)
+    unsigned short type;          /* user object type */
 @REPLY
     user_handle_t  handle;        /* allocated handle */
 @END
@@ -3938,6 +3939,7 @@ struct handle_info
 
 /* Free an arbitrary user handle */
 @REQ(free_user_handle)
+    unsigned short type;          /* user object type */
     user_handle_t  handle;        /* handle to free*/
 @END
 

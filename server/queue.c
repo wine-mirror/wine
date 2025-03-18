@@ -3337,7 +3337,7 @@ DECL_HANDLER(get_message)
     queue_shm_t *queue_shm;
     unsigned int filter;
 
-    if (get_win && get_win != 1 && get_win != -1 && !get_user_object( get_win, USER_WINDOW ))
+    if (get_win && get_win != 1 && get_win != -1 && !get_user_object( get_win, NTUSER_OBJ_WINDOW ))
     {
         set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
         return;
@@ -4053,7 +4053,7 @@ DECL_HANDLER(set_cursor)
     reply->prev_y      = desktop_shm->cursor.y;
 
     if ((req->flags & SET_CURSOR_HANDLE) && req->handle &&
-        !get_user_object( req->handle, USER_CLIENT ))
+        !get_user_object( req->handle, NTUSER_OBJ_ICON ))
     {
         set_win32_error( ERROR_INVALID_CURSOR_HANDLE );
         return;

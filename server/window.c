@@ -185,7 +185,7 @@ static void window_destroy( struct object *obj )
 /* retrieve a pointer to a window from its handle */
 static inline struct window *get_window( user_handle_t handle )
 {
-    struct window *ret = get_user_object( handle, USER_WINDOW );
+    struct window *ret = get_user_object( handle, NTUSER_OBJ_WINDOW );
     if (!ret) set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
     return ret;
 }
@@ -672,7 +672,7 @@ static struct window *create_window( struct window *parent, struct window *owner
         memset( win->extra_bytes, 0, extra_bytes );
         win->nb_extra_bytes = extra_bytes;
     }
-    if (!(win->handle = alloc_user_handle( win, USER_WINDOW ))) goto failed;
+    if (!(win->handle = alloc_user_handle( win, NTUSER_OBJ_WINDOW ))) goto failed;
     win->last_active = win->handle;
 
     /* if parent belongs to a different thread and the window isn't */
@@ -728,7 +728,7 @@ void destroy_thread_windows( struct thread *thread )
     user_handle_t handle = 0;
     struct window *win;
 
-    while ((win = next_user_handle( &handle, USER_WINDOW )))
+    while ((win = next_user_handle( &handle, NTUSER_OBJ_WINDOW )))
     {
         if (win->thread != thread) continue;
         if (is_desktop_window( win )) detach_window_thread( win );
@@ -751,8 +751,8 @@ static struct window *get_desktop_window( struct thread *thread )
 /* check whether child is a descendant of parent */
 int is_child_window( user_handle_t parent, user_handle_t child )
 {
-    struct window *child_ptr = get_user_object( child, USER_WINDOW );
-    struct window *parent_ptr = get_user_object( parent, USER_WINDOW );
+    struct window *child_ptr = get_user_object( child, NTUSER_OBJ_WINDOW );
+    struct window *parent_ptr = get_user_object( parent, NTUSER_OBJ_WINDOW );
 
     if (!child_ptr || !parent_ptr) return 0;
     while (child_ptr->parent)
@@ -766,7 +766,7 @@ int is_child_window( user_handle_t parent, user_handle_t child )
 /* check if window can be set as foreground window */
 int is_valid_foreground_window( user_handle_t window )
 {
-    struct window *win = get_user_object( window, USER_WINDOW );
+    struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
     return win && (win->style & (WS_POPUP|WS_CHILD)) != WS_CHILD;
 }
 
@@ -782,7 +782,7 @@ int make_window_active( user_handle_t window )
     while (owner)
     {
         owner->last_active = win->handle;
-        owner = get_user_object( owner->owner, USER_WINDOW );
+        owner = get_user_object( owner->owner, NTUSER_OBJ_WINDOW );
     }
     return 1;
 }
@@ -860,14 +860,14 @@ static int is_visible( const struct window *win )
 /* same as is_visible but takes a window handle */
 int is_window_visible( user_handle_t window )
 {
-    struct window *win = get_user_object( window, USER_WINDOW );
+    struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
     if (!win) return 0;
     return is_visible( win );
 }
 
 int is_window_transparent( user_handle_t window )
 {
-    struct window *win = get_user_object( window, USER_WINDOW );
+    struct window *win = get_user_object( window, NTUSER_OBJ_WINDOW );
     if (!win) return 0;
     return (win->ex_style & (WS_EX_LAYERED|WS_EX_TRANSPARENT)) == (WS_EX_LAYERED|WS_EX_TRANSPARENT);
 }
@@ -1026,7 +1026,7 @@ user_handle_t shallow_window_from_point( struct desktop *desktop, int x, int y )
 /* return thread of top-most window containing point (in absolute raw coords) */
 struct thread *window_thread_from_point( user_handle_t scope, int x, int y )
 {
-    struct window *win = get_user_object( scope, USER_WINDOW );
+    struct window *win = get_user_object( scope, NTUSER_OBJ_WINDOW );
 
     if (!win) return NULL;
 
@@ -1068,7 +1068,7 @@ static int all_windows_from_point( struct window *top, int x, int y, unsigned in
 /* return the thread owning a window */
 struct thread *get_window_thread( user_handle_t handle )
 {
-    struct window *win = get_user_object( handle, USER_WINDOW );
+    struct window *win = get_user_object( handle, NTUSER_OBJ_WINDOW );
     if (!win || !win->thread) return NULL;
     return (struct thread *)grab_object( win->thread );
 }
@@ -2326,7 +2326,7 @@ DECL_HANDLER(get_window_info)
     reply->is_unicode  = win->is_unicode;
     reply->dpi_context = win->dpi_context;
 
-    if (get_user_object( win->last_active, USER_WINDOW )) reply->last_active = win->last_active;
+    if (get_user_object( win->last_active, NTUSER_OBJ_WINDOW )) reply->last_active = win->last_active;
     if (win->thread)
     {
         reply->tid  = get_thread_id( win->thread );

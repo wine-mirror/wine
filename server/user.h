@@ -34,13 +34,6 @@ struct window_class;
 struct atom_table;
 struct clipboard;
 
-enum user_object
-{
-    USER_WINDOW = 1,
-    USER_HOOK,
-    USER_CLIENT  /* arbitrary client handle */
-};
-
 #define DESKTOP_ATOM  ((atom_t)32769)
 
 #define MAX_USER_HANDLES ((LAST_USER_HANDLE - FIRST_USER_HANDLE + 1) >> 1)
@@ -99,12 +92,12 @@ struct desktop
 
 /* user handles functions */
 
-extern user_handle_t alloc_user_handle( void *ptr, enum user_object type );
-extern void *get_user_object( user_handle_t handle, enum user_object type );
-extern void *get_user_object_handle( user_handle_t *handle, enum user_object type );
+extern user_handle_t alloc_user_handle( void *ptr, unsigned short type );
+extern void *get_user_object( user_handle_t handle, unsigned short type );
+extern void *get_user_object_handle( user_handle_t *handle, unsigned short type );
 extern user_handle_t get_user_full_handle( user_handle_t handle );
 extern void *free_user_handle( user_handle_t handle );
-extern void *next_user_handle( user_handle_t *handle, enum user_object type );
+extern void *next_user_handle( user_handle_t *handle, unsigned short type );
 extern void free_process_user_handles( struct process *process );
 
 /* clipboard functions */
@@ -314,7 +307,7 @@ static inline void union_rect( struct rectangle *dest, const struct rectangle *s
 /* validate a window handle and return the full handle */
 static inline user_handle_t get_valid_window_handle( user_handle_t win )
 {
-    if (get_user_object_handle( &win, USER_WINDOW )) return win;
+    if (get_user_object_handle( &win, NTUSER_OBJ_WINDOW )) return win;
     set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
     return 0;
 }
