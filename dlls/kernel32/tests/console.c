@@ -4170,7 +4170,7 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ret = WaitForSingleObject(parent_input, 0);
     ok(!ret, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     ret = PeekConsoleInputW(parent_input, &ir, 1, &count);
     ok(!ret, "got %d\n", ret);
@@ -4233,7 +4233,7 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ret = WaitForSingleObject(parent_input, 0);
     ok(!ret, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     /* Parent will consume its input, designalling those handles. */
     SetEvent(child_event);
@@ -4243,7 +4243,7 @@ static void test_unbound_handles_child(DWORD parent_pid, UINT_PTR parent_input_i
     ret = WaitForSingleObject(parent_input, 0);
     ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(parent_output, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
 }
 
 static void test_FreeConsole(HANDLE input, HANDLE orig_output)
@@ -4351,7 +4351,7 @@ static void test_FreeConsole(HANDLE input, HANDLE orig_output)
     ret = WaitForSingleObject(output, 0);
     ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(unbound_output, 0);
-    todo_wine ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
     ret = WaitForSingleObject(unbound_input, 0);
     ok(!ret || ret == WAIT_TIMEOUT, "got %d\n", ret);
 
