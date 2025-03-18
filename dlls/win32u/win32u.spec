@@ -1330,7 +1330,7 @@
 @ stub NtUserSetActivationFilter
 @ stub NtUserSetActiveProcessForMonitor
 @ stdcall -syscall NtUserSetActiveWindow(long)
-@ stub NtUserSetAdditionalForegroundBoostProcesses
+@ stdcall -syscall NtUserSetAdditionalForegroundBoostProcesses(ptr long ptr)
 @ stub NtUserSetAppImeLevel
 @ stub NtUserSetAutoRotation
 @ stub NtUserSetBridgeWindowChild

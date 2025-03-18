@@ -164,7 +164,7 @@
 # 2662 stub RIMRegisterForInputEx
 # 2663 stub RIMOnAsyncPnpWorkNotification
 2664 stub ShellMigrateWindow  # NtUserShellMigrateWindow
-2665 stub SetAdditionalForegroundBoostProcesses  # NtUserSetAdditionalForegroundBoostProcesses
+2665 stdcall SetAdditionalForegroundBoostProcesses(ptr long ptr) NtUserSetAdditionalForegroundBoostProcesses
 2666 stub RegisterForTooltipDismissNotification  # NtUserRegisterForTooltipDismissNotification
 2667 stub RegisterForCustomDockTargets  # NtUserRegisterForCustomDockTargets
 2668 stub GetClipboardMetadata  # NtUserGetClipboardMetadata

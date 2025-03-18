@@ -2055,6 +2055,11 @@ HWND SYSCALL_API NtUserSetActiveWindow( HWND hwnd )
     SYSCALL_FUNC( NtUserSetActiveWindow );
 }
 
+BOOL SYSCALL_API NtUserSetAdditionalForegroundBoostProcesses( HWND hwnd, DWORD count, HANDLE *handles )
+{
+    SYSCALL_FUNC( NtUserSetAdditionalForegroundBoostProcesses );
+}
+
 HWND SYSCALL_API NtUserSetCapture( HWND hwnd )
 {
     SYSCALL_FUNC( NtUserSetCapture );

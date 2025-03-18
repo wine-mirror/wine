@@ -6973,6 +6973,16 @@ BOOL WINAPI NtUserMessageBeep( UINT type )
     return TRUE;
 }
 
+/***********************************************************************
+ *	     NtUserSetAdditionalForegroundBoostProcesses    (win32u.@)
+ */
+BOOL WINAPI NtUserSetAdditionalForegroundBoostProcesses( HWND hwnd, DWORD count, HANDLE *handles )
+{
+    FIXME( "%p %u %p stub!\n", hwnd, (unsigned int)count, handles );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 static DWORD exiting_thread_id;
 
 /**********************************************************************
