@@ -785,6 +785,92 @@ static char *get_lib_dir( struct options *opts )
     return strmake( "%s%s", root, LIBDIR );
 }
 
+/* add compatibility defines to make non-PE platforms more Windows-like */
+static struct strarray get_compat_defines( const struct options *opts, int gcc_defs )
+{
+    struct strarray args = empty_strarray;
+
+    if (opts->processor != proc_cpp)
+    {
+	if (gcc_defs && !opts->wine_objdir && !opts->noshortwchar)
+	{
+            strarray_add(&args, "-fshort-wchar");
+            strarray_add(&args, "-DWINE_UNICODE_NATIVE");
+	}
+        strarray_add(&args, "-D_REENTRANT");
+        if (opts->pic)
+            strarray_add(&args, "-fPIC");
+        else
+            strarray_add(&args, "-fno-PIC");
+    }
+
+    if (get_target_ptr_size( target ) == 8)
+    {
+        strarray_add(&args, "-DWIN64");
+        strarray_add(&args, "-D_WIN64");
+        strarray_add(&args, "-D__WIN64");
+        strarray_add(&args, "-D__WIN64__");
+    }
+
+    strarray_add(&args, "-DWIN32");
+    strarray_add(&args, "-D_WIN32");
+    strarray_add(&args, "-D__WIN32");
+    strarray_add(&args, "-D__WIN32__");
+    strarray_add(&args, "-D__WINNT");
+    strarray_add(&args, "-D__WINNT__");
+
+    if (gcc_defs)
+    {
+        switch (target.cpu)
+        {
+        case CPU_x86_64:
+        case CPU_ARM64:
+            strarray_add(&args, "-D__stdcall=__attribute__((ms_abi))");
+            strarray_add(&args, "-D__cdecl=__stdcall");
+            strarray_add(&args, "-D__fastcall=__stdcall");
+            break;
+        case CPU_i386:
+            strarray_add(&args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
+            strarray_add(&args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
+            strarray_add(&args, "-D__fastcall=__attribute__((__fastcall__))");
+            break;
+        case CPU_ARM:
+            strarray_add(&args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
+            strarray_add(&args, "-D__cdecl=__stdcall");
+            strarray_add(&args, "-D__fastcall=__stdcall");
+            break;
+        case CPU_ARM64EC:
+            break;
+        }
+        strarray_add(&args, "-D_stdcall=__stdcall");
+        strarray_add(&args, "-D_cdecl=__cdecl");
+        strarray_add(&args, "-D_fastcall=__fastcall");
+	strarray_add(&args, "-D__declspec(x)=__declspec_##x");
+	strarray_add(&args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
+	strarray_add(&args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
+	strarray_add(&args, "-D__declspec_deprecated=__attribute__((deprecated))");
+	strarray_add(&args, "-D__declspec_dllimport=__attribute__((dllimport))");
+	strarray_add(&args, "-D__declspec_dllexport=__attribute__((dllexport))");
+	strarray_add(&args, "-D__declspec_naked=__attribute__((naked))");
+	strarray_add(&args, "-D__declspec_noinline=__attribute__((noinline))");
+	strarray_add(&args, "-D__declspec_noreturn=__attribute__((noreturn))");
+	strarray_add(&args, "-D__declspec_nothrow=__attribute__((nothrow))");
+	strarray_add(&args, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
+	strarray_add(&args, "-D__declspec_selectany=__attribute__((weak))");
+	strarray_add(&args, "-D__declspec_thread=__thread");
+    }
+
+    strarray_add(&args, "-D__int8=char");
+    strarray_add(&args, "-D__int16=short");
+    strarray_add(&args, "-D__int32=int");
+    if (get_target_ptr_size( target ) == 8)
+        strarray_add(&args, "-D__int64=long");
+    else
+        strarray_add(&args, "-D__int64=long long");
+
+    return args;
+}
+
 static void compile(struct options* opts, const char* lang)
 {
     struct strarray comp_args = get_translator(opts);
@@ -817,87 +903,8 @@ static void compile(struct options* opts, const char* lang)
             break;
     }
 
-    if (is_pe) goto no_compat_defines;
+    if (!is_pe) strarray_addall( &comp_args, get_compat_defines( opts, gcc_defs ));
 
-    if (opts->processor != proc_cpp)
-    {
-	if (gcc_defs && !opts->wine_objdir && !opts->noshortwchar)
-	{
-            strarray_add(&comp_args, "-fshort-wchar");
-            strarray_add(&comp_args, "-DWINE_UNICODE_NATIVE");
-	}
-        strarray_add(&comp_args, "-D_REENTRANT");
-        if (opts->pic)
-            strarray_add(&comp_args, "-fPIC");
-        else
-            strarray_add(&comp_args, "-fno-PIC");
-    }
-
-    if (get_target_ptr_size( target ) == 8)
-    {
-        strarray_add(&comp_args, "-DWIN64");
-        strarray_add(&comp_args, "-D_WIN64");
-        strarray_add(&comp_args, "-D__WIN64");
-        strarray_add(&comp_args, "-D__WIN64__");
-    }
-
-    strarray_add(&comp_args, "-DWIN32");
-    strarray_add(&comp_args, "-D_WIN32");
-    strarray_add(&comp_args, "-D__WIN32");
-    strarray_add(&comp_args, "-D__WIN32__");
-    strarray_add(&comp_args, "-D__WINNT");
-    strarray_add(&comp_args, "-D__WINNT__");
-
-    if (gcc_defs)
-    {
-        switch (target.cpu)
-        {
-        case CPU_x86_64:
-        case CPU_ARM64:
-            strarray_add(&comp_args, "-D__stdcall=__attribute__((ms_abi))");
-            strarray_add(&comp_args, "-D__cdecl=__stdcall");
-            strarray_add(&comp_args, "-D__fastcall=__stdcall");
-            break;
-        case CPU_i386:
-            strarray_add(&comp_args, "-D__stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
-            strarray_add(&comp_args, "-D__cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
-            strarray_add(&comp_args, "-D__fastcall=__attribute__((__fastcall__))");
-            break;
-        case CPU_ARM:
-            strarray_add(&comp_args, "-D__stdcall=__attribute__((pcs(\"aapcs-vfp\")))");
-            strarray_add(&comp_args, "-D__cdecl=__stdcall");
-            strarray_add(&comp_args, "-D__fastcall=__stdcall");
-            break;
-        case CPU_ARM64EC:
-            break;
-        }
-        strarray_add(&comp_args, "-D_stdcall=__stdcall");
-        strarray_add(&comp_args, "-D_cdecl=__cdecl");
-        strarray_add(&comp_args, "-D_fastcall=__fastcall");
-	strarray_add(&comp_args, "-D__declspec(x)=__declspec_##x");
-	strarray_add(&comp_args, "-D__declspec_align(x)=__attribute__((aligned(x)))");
-	strarray_add(&comp_args, "-D__declspec_allocate(x)=__attribute__((section(x)))");
-	strarray_add(&comp_args, "-D__declspec_deprecated=__attribute__((deprecated))");
-	strarray_add(&comp_args, "-D__declspec_dllimport=__attribute__((dllimport))");
-	strarray_add(&comp_args, "-D__declspec_dllexport=__attribute__((dllexport))");
-	strarray_add(&comp_args, "-D__declspec_naked=__attribute__((naked))");
-	strarray_add(&comp_args, "-D__declspec_noinline=__attribute__((noinline))");
-	strarray_add(&comp_args, "-D__declspec_noreturn=__attribute__((noreturn))");
-	strarray_add(&comp_args, "-D__declspec_nothrow=__attribute__((nothrow))");
-	strarray_add(&comp_args, "-D__declspec_novtable=__attribute__(())"); /* ignore it */
-	strarray_add(&comp_args, "-D__declspec_selectany=__attribute__((weak))");
-	strarray_add(&comp_args, "-D__declspec_thread=__thread");
-    }
-
-    strarray_add(&comp_args, "-D__int8=char");
-    strarray_add(&comp_args, "-D__int16=short");
-    strarray_add(&comp_args, "-D__int32=int");
-    if (get_target_ptr_size( target ) == 8)
-        strarray_add(&comp_args, "-D__int64=long");
-    else
-        strarray_add(&comp_args, "-D__int64=long long");
-
-no_compat_defines:
     strarray_add(&comp_args, "-D__WINE__");
 
     /* options we handle explicitly */
