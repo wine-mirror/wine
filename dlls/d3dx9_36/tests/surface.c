@@ -26,22 +26,6 @@
 #include <stdint.h>
 #include "d3dx9_test_images.h"
 
-/*
- * MAKE_DDHRESULT is first defined in d3dx9.h, with the same definition as the
- * one in ddraw.h.
- */
-#ifdef MAKE_DDHRESULT
-#undef MAKE_DDHRESULT
-#endif
-#include "ddraw.h"
-
-static BOOL compare_uint(uint32_t x, uint32_t y, uint32_t max_diff)
-{
-    uint32_t diff = x > y ? x - y : y - x;
-
-    return diff <= max_diff;
-}
-
 static BOOL compare_float(float f, float g, uint32_t ulps)
 {
     int32_t x = *(int32_t *)&f;
@@ -148,46 +132,6 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
     CloseHandle(hfile);
     return D3DERR_INVALIDCALL;
 }
-
-/* dds_pixel_format.flags */
-#define DDS_PF_ALPHA 0x00000001
-#define DDS_PF_ALPHA_ONLY 0x00000002
-#define DDS_PF_FOURCC 0x00000004
-#define DDS_PF_INDEXED 0x00000020
-#define DDS_PF_RGB 0x00000040
-#define DDS_PF_LUMINANCE 0x00020000
-#define DDS_PF_BUMPLUMINANCE 0x00040000
-#define DDS_PF_BUMPDUDV 0x00080000
-
-struct dds_pixel_format
-{
-    DWORD size;
-    DWORD flags;
-    DWORD fourcc;
-    DWORD bpp;
-    DWORD rmask;
-    DWORD gmask;
-    DWORD bmask;
-    DWORD amask;
-};
-
-struct dds_header
-{
-    DWORD size;
-    DWORD flags;
-    DWORD height;
-    DWORD width;
-    DWORD pitch_or_linear_size;
-    DWORD depth;
-    DWORD miplevels;
-    DWORD reserved[11];
-    struct dds_pixel_format pixel_format;
-    DWORD caps;
-    DWORD caps2;
-    DWORD caps3;
-    DWORD caps4;
-    DWORD reserved2;
-};
 
 /* fills dds_header with reasonable default values */
 static void fill_dds_header(struct dds_header *header)
@@ -3423,82 +3367,6 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* cleanup */
     if(testdummy_ok) DeleteFileA("testdummy.bmp");
     if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
-}
-
-#define check_dds_pixel_format_struct(pixel_format, expected_pixel_format, wine_todo) \
-    check_dds_pixel_format_struct_(__FILE__, __LINE__, pixel_format, expected_pixel_format, wine_todo)
-static void check_dds_pixel_format_struct_(const char *file, uint32_t line, const struct dds_pixel_format *pixel_format,
-        const struct dds_pixel_format *expected_pixel_format, BOOL wine_todo)
-{
-    BOOL matched;
-
-    matched = !memcmp(expected_pixel_format, pixel_format, sizeof(*pixel_format));
-    todo_wine_if(wine_todo) ok_(file, line)(matched, "Got unexpected dds pixel format values.\n");
-    if (matched)
-        return;
-
-    todo_wine_if(wine_todo && pixel_format->flags != expected_pixel_format->flags)
-        ok_(file, line)(pixel_format->flags == expected_pixel_format->flags, "Unexpected DDS pixel format flags %#lx.\n",
-                pixel_format->flags);
-    todo_wine_if(wine_todo && pixel_format->fourcc != expected_pixel_format->fourcc)
-        ok_(file, line)(pixel_format->fourcc == expected_pixel_format->fourcc, "Unexpected DDS pixel format fourcc %#lx.\n",
-                pixel_format->fourcc);
-    todo_wine_if(wine_todo && pixel_format->bpp != expected_pixel_format->bpp)
-        ok_(file, line)(pixel_format->bpp == expected_pixel_format->bpp, "Unexpected DDS pixel format bpp %#lx.\n",
-                pixel_format->bpp);
-    todo_wine_if(wine_todo && pixel_format->rmask != expected_pixel_format->rmask)
-        ok_(file, line)(pixel_format->rmask == expected_pixel_format->rmask, "Unexpected DDS pixel format rmask %#lx.\n",
-                pixel_format->rmask);
-    todo_wine_if(wine_todo && pixel_format->gmask != expected_pixel_format->gmask)
-        ok_(file, line)(pixel_format->gmask == expected_pixel_format->gmask, "Unexpected DDS pixel format gmask %#lx.\n",
-                pixel_format->gmask);
-    todo_wine_if(wine_todo && pixel_format->bmask != expected_pixel_format->bmask)
-        ok_(file, line)(pixel_format->bmask == expected_pixel_format->bmask, "Unexpected DDS pixel format bmask %#lx.\n",
-                pixel_format->bmask);
-    todo_wine_if(wine_todo && pixel_format->amask != expected_pixel_format->amask)
-        ok_(file, line)(pixel_format->amask == expected_pixel_format->amask, "Unexpected DDS pixel format amask %#lx.\n",
-                pixel_format->amask);
-}
-
-#define check_dds_header(header, flags, height, width, pitch, depth, mip_levels, pixel_format, caps, caps2, wine_todo) \
-    check_dds_header_(__FILE__, __LINE__, header, flags, height, width, pitch, depth, mip_levels, pixel_format, \
-                      caps, caps2, wine_todo)
-static void check_dds_header_(const char *file, uint32_t line, const struct dds_header *header, uint32_t flags,
-        uint32_t height, uint32_t width, uint32_t pitch, uint32_t depth, uint32_t mip_levels,
-        const struct dds_pixel_format *pixel_format, uint32_t caps, uint32_t caps2, BOOL wine_todo)
-{
-    const struct dds_header expected_header = { sizeof(*header), flags, height, width, pitch, depth, mip_levels, { 0 },
-                                                *pixel_format, caps, caps2, 0, 0, 0 };
-    BOOL matched;
-
-    matched = !memcmp(&expected_header, header, sizeof(*header));
-    todo_wine_if(wine_todo) ok_(file, line)(matched, "Got unexpected dds header values.\n");
-    if (matched)
-        return;
-
-    todo_wine_if(wine_todo && header->flags != flags)
-        ok_(file, line)(header->flags == flags, "Unexpected DDS header flags %#lx.\n", header->flags);
-    todo_wine_if(wine_todo && header->width != width)
-        ok_(file, line)(header->width == width, "Unexpected DDS header width %#lx.\n", header->width);
-    todo_wine_if(wine_todo && header->height != height)
-        ok_(file, line)(header->height == height, "Unexpected DDS header height %#lx.\n", header->height);
-    todo_wine_if(wine_todo && header->pitch_or_linear_size != pitch)
-        ok_(file, line)(header->pitch_or_linear_size == pitch, "Unexpected DDS header pitch %#lx.\n",
-                header->pitch_or_linear_size);
-    todo_wine_if(wine_todo && header->depth != depth)
-        ok_(file, line)(header->depth == depth, "Unexpected DDS header depth %#lx.\n", header->depth);
-    todo_wine_if(wine_todo && header->miplevels != mip_levels)
-        ok_(file, line)(header->miplevels == mip_levels, "Unexpected DDS header mip levels %#lx.\n", header->miplevels);
-    ok_(file, line)(!memcmp(header->reserved, expected_header.reserved, sizeof(header->reserved)),
-            "Unexpected values in DDS header reserved field.");
-    check_dds_pixel_format_struct(&header->pixel_format, pixel_format, FALSE);
-    todo_wine_if(wine_todo && header->caps != caps)
-        ok_(file, line)(header->caps == caps, "Unexpected DDS header caps %#lx.\n", header->caps);
-    todo_wine_if(wine_todo && header->caps2 != caps2)
-        ok_(file, line)(header->caps2 == caps2, "Unexpected DDS header caps2 %#lx.\n", header->caps2);
-    ok_(file, line)(!header->caps3, "Unexpected DDS header caps3 %#lx.\n", header->caps3);
-    ok_(file, line)(!header->caps4, "Unexpected DDS header caps4 %#lx.\n", header->caps4);
-    ok_(file, line)(!header->reserved2, "Unexpected DDS header reserved2 %#lx.\n", header->reserved2);
 }
 
 #define DDS_FILE_HEADER_SIZE (sizeof(uint32_t) + sizeof(struct dds_header))

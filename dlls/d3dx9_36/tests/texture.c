@@ -168,13 +168,6 @@ static inline void check_texture_mip_levels_(uint32_t line, IDirect3DBaseTexture
             mip_levels, expected_mip_levels);
 }
 
-static BOOL compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
-{
-    unsigned int diff = x > y ? x - y : y - x;
-
-    return diff <= max_diff;
-}
-
 static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
 {
     return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)

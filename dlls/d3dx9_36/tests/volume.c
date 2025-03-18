@@ -392,6 +392,273 @@ static void test_D3DXLoadVolumeFromFileInMemory(IDirect3DDevice9 *device)
     IDirect3DVolumeTexture9_Release(volume_texture);
 }
 
+static void set_vec3(D3DXVECTOR3 *v, float x, float y, float z)
+{
+    v->x = x;
+    v->y = y;
+    v->z = z;
+}
+
+static const D3DXVECTOR4 quadrant_color[] =
+{
+    { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },
+    { 1.0f, 1.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f },
+};
+
+static void WINAPI fill_func_volume(D3DXVECTOR4 *value, const D3DXVECTOR3 *coord, const D3DXVECTOR3 *size, void *data)
+{
+    D3DXVECTOR3 vec = *coord;
+    uint32_t idx;
+
+    if (data)
+    {
+        *value = *(D3DXVECTOR4 *)data;
+        return;
+    }
+
+    set_vec3(&vec, (vec.x / size->x) - 0.5f, (vec.y / size->y) - 0.5f, (vec.z / size->z) - 0.5f);
+    if (vec.x < 16.0f)
+        idx = vec.y < 16.0f ? 0 : 2;
+    else
+        idx = vec.y < 16.0f ? 1 : 3;
+    idx += vec.z < 1.0f ? 0 : 4;
+
+    *value = quadrant_color[idx];
+}
+
+#define check_volume_readback_slice_quadrants(rb, width, height, slice, expected, max_diff) \
+    _check_volume_readback_slice_quadrants(__LINE__, rb, width, height, slice, expected, max_diff)
+static inline void _check_volume_readback_slice_quadrants(unsigned int line, struct volume_readback *rb,
+        uint32_t width, uint32_t height, uint32_t slice, const uint32_t *expected, uint8_t max_diff)
+{
+    /* Order is: top left, top right, bottom left, bottom right. */
+    _check_volume_readback_pixel_4bpp_diff(__FILE__, line, rb, 0, 0, slice, expected[0], max_diff, FALSE);
+    _check_volume_readback_pixel_4bpp_diff(__FILE__, line, rb, (width - 1), 0, slice, expected[1], max_diff, FALSE);
+    _check_volume_readback_pixel_4bpp_diff(__FILE__, line, rb, 0, (height - 1), slice, expected[2], max_diff, FALSE);
+    _check_volume_readback_pixel_4bpp_diff(__FILE__, line, rb, (width - 1), (height - 1), slice, expected[3], max_diff,
+            FALSE);
+}
+
+static void test_d3dx_save_volume_to_file(IDirect3DDevice9 *device)
+{
+    static const struct dds_pixel_format d3dfmt_a8r8g8b8_pf = { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32,
+                                                                0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
+    static const uint32_t front_expected[] = { 0xffff0000, 0xff00ff00, 0xff0000ff, 0xffffffff };
+    static const uint32_t empty_expected[] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
+    static const uint32_t back_expected[] = { 0xffffffff, 0xff0000ff, 0xffff0000, 0xff00ff00 };
+    static const struct
+    {
+        const char *name;
+
+        D3DXIMAGE_FILEFORMAT iff;
+        D3DFORMAT saved_format;
+        uint8_t max_diff;
+    } tests[] =
+    {
+        { "D3DXIFF_BMP", D3DXIFF_BMP, D3DFMT_A8R8G8B8 },
+        { "D3DXIFF_JPG", D3DXIFF_JPG, D3DFMT_X8R8G8B8, .max_diff = 1 },
+        { "D3DXIFF_TGA", D3DXIFF_TGA, D3DFMT_A8R8G8B8 },
+        { "D3DXIFF_PNG", D3DXIFF_PNG, D3DFMT_A8R8G8B8 },
+        { "D3DXIFF_DDS", D3DXIFF_DDS, D3DFMT_A8R8G8B8 },
+        { "D3DXIFF_HDR", D3DXIFF_HDR, D3DFMT_A32B32G32R32F, .max_diff = 1 },
+        { "D3DXIFF_PFM", D3DXIFF_PFM, D3DFMT_A32B32G32R32F },
+        { "D3DXIFF_PPM", D3DXIFF_PPM, D3DFMT_X8R8G8B8 },
+    };
+    struct
+    {
+         DWORD magic;
+         struct dds_header header;
+         BYTE *data;
+    } *dds;
+    const D3DXVECTOR4 clear_val = { 0.0f, 0.0f, 0.0f, 0.0f };
+    IDirect3DVolumeTexture9 *volume_texture;
+    struct volume_readback volume_rb;
+    ID3DXBuffer *buffer = NULL;
+    WCHAR name_buf_w[MAX_PATH];
+    char name_buf_a[MAX_PATH];
+    IDirect3DVolume9 *volume;
+    D3DXIMAGE_INFO info;
+    unsigned int i, j;
+    D3DBOX box;
+    HRESULT hr;
+
+    if (!strcmp(winetest_platform, "wine"))
+    {
+        skip("Skipping D3DXSaveVolumeToFile{A,W,InMemory}() tests.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVolumeTexture(device, 32, 32, 2, 1, D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT,
+            &volume_texture, NULL);
+    if (FAILED(hr))
+    {
+        skip("Failed to create volume texture.\n");
+        return;
+    }
+
+    hr = D3DXFillVolumeTexture(volume_texture, fill_func_volume, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DVolumeTexture9_GetVolumeLevel(volume_texture, 0, &volume);
+
+    hr = D3DXSaveVolumeToFileInMemory(&buffer, D3DXIFF_DDS, volume, NULL, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_DEPTH | DDSD_PIXELFORMAT, 32, 32, 0,
+            2, 0, &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, DDSCAPS2_VOLUME, FALSE);
+    ID3DXBuffer_Release(buffer);
+
+    /*
+     * Save with a box that has a depth of 1. This results in a DDS header
+     * without any depth/volume flags set, even though we're saving a volume.
+     */
+    set_box(&box, 0, 0, 32, 32, 1, 2);
+    hr = D3DXSaveVolumeToFileInMemory(&buffer, D3DXIFF_DDS, volume, NULL, &box);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    check_dds_header(&dds->header, DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT, 32, 32, 0, 0, 0,
+            &d3dfmt_a8r8g8b8_pf, DDSCAPS_TEXTURE | DDSCAPS_ALPHA, 0, FALSE);
+    ID3DXBuffer_Release(buffer);
+
+    GetTempPathA(ARRAY_SIZE(name_buf_a), name_buf_a);
+    GetTempFileNameA(name_buf_a, "dxa", 0, name_buf_a);
+
+    GetTempPathW(ARRAY_SIZE(name_buf_w), name_buf_w);
+    GetTempFileNameW(name_buf_w, L"dxw", 0, name_buf_w);
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("File format %u (%s)", i, tests[i].name);
+
+        /*
+         * Test twice, first with a box that has a depth of 2, then second
+         * with a box that has a depth of 1.
+         */
+        for (j = 0; j < 2; ++j)
+        {
+            winetest_push_context("Depth %u", 2 - j);
+            hr = D3DXFillVolumeTexture(volume_texture, fill_func_volume, NULL);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            set_box(&box, 0, 0, 32, 32, j, 2);
+
+            hr = D3DXSaveVolumeToFileA(name_buf_a, tests[i].iff, volume, NULL, &box);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = D3DXSaveVolumeToFileW(name_buf_w, tests[i].iff, volume, NULL, &box);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            hr = D3DXSaveVolumeToFileInMemory(&buffer, tests[i].iff, volume, NULL, &box);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            /* ASCII string. */
+            hr = D3DXFillVolumeTexture(volume_texture, fill_func_volume, (void *)&clear_val);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            memset(&info, 0, sizeof(info));
+            hr = D3DXLoadVolumeFromFileA(volume, NULL, NULL, name_buf_a, NULL, D3DX_FILTER_NONE, 0, &info);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+            if (tests[i].iff == D3DXIFF_DDS)
+            {
+                if (!j)
+                {
+                    check_image_info(&info, 32, 32, 2, 1, D3DFMT_A8R8G8B8, D3DRTYPE_VOLUMETEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, front_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, back_expected, 0);
+                }
+                else
+                {
+                    check_image_info(&info, 32, 32, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, back_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, 0);
+                }
+            }
+            else
+            {
+                check_image_info(&info, 32, 32, 1, 1, tests[i].saved_format, D3DRTYPE_TEXTURE, tests[i].iff, FALSE);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, !j ? front_expected : back_expected,
+                        tests[i].max_diff);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, tests[i].max_diff);
+            }
+            release_volume_readback(&volume_rb);
+
+            /* Wide string. */
+            hr = D3DXFillVolumeTexture(volume_texture, fill_func_volume, (void *)&clear_val);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+            memset(&info, 0, sizeof(info));
+            hr = D3DXLoadVolumeFromFileW(volume, NULL, NULL, name_buf_w, NULL, D3DX_FILTER_NONE, 0, &info);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+            if (tests[i].iff == D3DXIFF_DDS)
+            {
+                if (!j)
+                {
+                    check_image_info(&info, 32, 32, 2, 1, D3DFMT_A8R8G8B8, D3DRTYPE_VOLUMETEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, front_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, back_expected, 0);
+                }
+                else
+                {
+                    check_image_info(&info, 32, 32, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, back_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, 0);
+                }
+            }
+            else
+            {
+                check_image_info(&info, 32, 32, 1, 1, tests[i].saved_format, D3DRTYPE_TEXTURE, tests[i].iff, FALSE);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, !j ? front_expected : back_expected,
+                        tests[i].max_diff);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, tests[i].max_diff);
+            }
+            release_volume_readback(&volume_rb);
+
+            /* File in memory. */
+            memset(&info, 0, sizeof(info));
+            hr = D3DXLoadVolumeFromFileInMemory(volume, NULL, NULL, ID3DXBuffer_GetBufferPointer(buffer),
+                    ID3DXBuffer_GetBufferSize(buffer), NULL, D3DX_FILTER_NONE, 0, &info);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            get_texture_volume_readback(device, volume_texture, 0, &volume_rb);
+            if (tests[i].iff == D3DXIFF_DDS)
+            {
+                if (!j)
+                {
+                    check_image_info(&info, 32, 32, 2, 1, D3DFMT_A8R8G8B8, D3DRTYPE_VOLUMETEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, front_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, back_expected, 0);
+                }
+                else
+                {
+                    check_image_info(&info, 32, 32, 1, 1, D3DFMT_A8R8G8B8, D3DRTYPE_TEXTURE, D3DXIFF_DDS, FALSE);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, back_expected, 0);
+                    check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, 0);
+                }
+            }
+            else
+            {
+                check_image_info(&info, 32, 32, 1, 1, tests[i].saved_format, D3DRTYPE_TEXTURE, tests[i].iff, FALSE);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 0, !j ? front_expected : back_expected,
+                        tests[i].max_diff);
+                check_volume_readback_slice_quadrants(&volume_rb, 32, 32, 1, empty_expected, tests[i].max_diff);
+            }
+            release_volume_readback(&volume_rb);
+
+            ID3DXBuffer_Release(buffer);
+            DeleteFileA(name_buf_a);
+            DeleteFileW(name_buf_w);
+            winetest_pop_context();
+        }
+
+        winetest_pop_context();
+    }
+
+    IDirect3DVolume9_Release(volume);
+    IDirect3DVolumeTexture9_Release(volume_texture);
+}
+
 START_TEST(volume)
 {
     HWND wnd;
@@ -428,6 +695,7 @@ START_TEST(volume)
 
     test_D3DXLoadVolumeFromMemory(device);
     test_D3DXLoadVolumeFromFileInMemory(device);
+    test_d3dx_save_volume_to_file(device);
 
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
