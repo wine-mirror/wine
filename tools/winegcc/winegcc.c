@@ -153,6 +153,8 @@ static const char *includedir;
 enum processor { proc_cc, proc_cxx, proc_cpp, proc_as };
 enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, file_dll, file_so, file_spec };
 
+static int is_pe;
+
 struct options
 {
     enum processor processor;
@@ -220,19 +222,6 @@ static void clean_temp_files(void)
 static void exit_on_signal( int sig )
 {
     exit(1);  /* this will call the atexit functions */
-}
-
-static int is_pe_target( const struct options *opts )
-{
-    switch (opts->target.platform)
-    {
-    case PLATFORM_MINGW:
-    case PLATFORM_CYGWIN:
-    case PLATFORM_WINDOWS:
-        return 1;
-    default:
-        return 0;
-    }
 }
 
 static void error(const char* s, ...)
@@ -326,9 +315,7 @@ static enum file_type guess_lib_type(struct target target, const char* dir,
 {
     const char *arch_dir = "";
 
-    if (target.platform != PLATFORM_WINDOWS &&
-        target.platform != PLATFORM_MINGW &&
-        target.platform != PLATFORM_CYGWIN)
+    if (!is_pe)
     {
         /* Unix shared object */
         if ((*file = try_lib_path(dir, "", prefix, library, ".so", file_so)))
@@ -512,7 +499,7 @@ static int try_link( const struct options *opts, struct strarray link_tool, cons
     int sout = -1, serr = -1;
     int ret;
 
-    create_file( in, 0644, "int %s(void){return 1;}\n", is_pe_target(opts) ? "mainCRTStartup" : "main");
+    create_file( in, 0644, "int %s(void){return 1;}\n", is_pe ? "mainCRTStartup" : "main");
 
     strarray_addall( &link, link_tool );
     strarray_add( &link, "-o" );
@@ -831,10 +818,7 @@ static void compile(struct options* opts, const char* lang)
             break;
     }
 
-    if (opts->target.platform == PLATFORM_WINDOWS ||
-        opts->target.platform == PLATFORM_CYGWIN ||
-        opts->target.platform == PLATFORM_MINGW)
-        goto no_compat_defines;
+    if (is_pe) goto no_compat_defines;
 
     if (opts->processor != proc_cpp)
     {
@@ -1133,7 +1117,6 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
                             const char *entry_point, struct strarray *spec_objs )
 {
     unsigned int i;
-    int is_pe = is_pe_target( opts );
     struct strarray spec_args = get_winebuild_args( opts, target );
     struct strarray tool;
     const char *spec_o_name, *output_name;
@@ -1261,7 +1244,6 @@ static void build(struct options* opts)
     const char *libgcc = NULL;
     int generate_app_loader = 1;
     const char *crt_lib = NULL, *entry_point = NULL;
-    int is_pe = is_pe_target( opts );
     unsigned int i, j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -2112,7 +2094,8 @@ int main(int argc, char **argv)
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
-    if (is_pe_target( &opts )) opts.use_msvcrt = 1;
+    is_pe = is_pe_target( opts.target );
+    if (is_pe) opts.use_msvcrt = 1;
 
     if (opts.files.count == 0 && !opts.fake_module) forward(&opts);
     else if (linking) build(&opts);

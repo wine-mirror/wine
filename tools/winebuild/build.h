@@ -177,7 +177,7 @@ static inline unsigned int get_ptr_size(void)
 
 static inline int is_pe(void)
 {
-    return target.platform == PLATFORM_MINGW || target.platform == PLATFORM_WINDOWS;
+    return is_pe_target( target );
 }
 
 /* entry point flags */

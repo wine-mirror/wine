@@ -903,19 +903,17 @@ void output_rva( const char *format, ... )
     va_list valist;
 
     va_start( valist, format );
-    switch (target.platform)
+    if (is_pe())
     {
-    case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
         output( "\t.rva " );
         vfprintf( output_file, format, valist );
         fputc( '\n', output_file );
-        break;
-    default:
+    }
+    else
+    {
         output( "\t.long " );
         vfprintf( output_file, format, valist );
         output( " - .L__wine_spec_rva_base\n" );
-        break;
     }
     va_end( valist );
 }
@@ -928,20 +926,18 @@ void output_thunk_rva( int ordinal, const char *format, ... )
         va_list valist;
 
         va_start( valist, format );
-        switch (target.platform)
+        if (is_pe())
         {
-        case PLATFORM_MINGW:
-        case PLATFORM_WINDOWS:
             output( "\t.rva " );
             vfprintf( output_file, format, valist );
             fputc( '\n', output_file );
             if (get_ptr_size() == 8) output( "\t.long 0\n" );
-            break;
-        default:
+        }
+        else
+        {
             output( "\t%s ", get_asm_ptr_keyword() );
             vfprintf( output_file, format, valist );
             output( " - .L__wine_spec_rva_base\n" );
-            break;
         }
         va_end( valist );
     }

@@ -550,6 +550,14 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
 }
 
 
+static inline int is_pe_target( struct target target )
+{
+    return (target.platform == PLATFORM_WINDOWS ||
+            target.platform == PLATFORM_MINGW ||
+            target.platform == PLATFORM_CYGWIN);
+}
+
+
 static inline int get_cpu_from_name( const char *name )
 {
     static const struct
@@ -619,16 +627,7 @@ static inline const char *get_arch_dir( struct target target )
     };
 
     if (!cpu_names[target.cpu]) return "";
-
-    switch (target.platform)
-    {
-    case PLATFORM_WINDOWS:
-    case PLATFORM_CYGWIN:
-    case PLATFORM_MINGW:
-        return strmake( "/%s-windows", cpu_names[target.cpu] );
-    default:
-        return strmake( "/%s-unix", cpu_names[target.cpu] );
-    }
+    return strmake( "/%s-%s", cpu_names[target.cpu], is_pe_target( target ) ? "windows" : "unix" );
 }
 
 static inline int parse_target( const char *name, struct target *target )
