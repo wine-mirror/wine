@@ -416,6 +416,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             return status;
 
         case IRP_MN_SURPRISE_REMOVAL:
+            if ((status = minidriver->PNPDispatch( device, irp ))) return status;
             KeSetEvent( &fdo->halt_event, IO_NO_INCREMENT, FALSE );
             return STATUS_SUCCESS;
 
