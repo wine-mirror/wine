@@ -260,6 +260,12 @@ struct set_promisc_params
     int enable;
 };
 
+struct set_immediate_mode_params
+{
+    UINT64 handle;
+    int mode;
+};
+
 struct set_rfmon_params
 {
     UINT64 handle;
@@ -366,6 +372,7 @@ enum pcap_funcs
     unix_sendpacket,
     unix_set_buffer_size,
     unix_set_datalink,
+    unix_set_immediate_mode,
     unix_set_promisc,
     unix_set_rfmon,
     unix_set_snaplen,

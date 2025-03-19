@@ -1163,6 +1163,18 @@ int CDECL pcap_set_datalink( struct pcap *pcap, int link )
     return PCAP_CALL( set_datalink, &params );
 }
 
+int CDECL pcap_set_immediate_mode( struct pcap *pcap, int mode )
+{
+    struct set_immediate_mode_params params;
+
+    TRACE( "%p, %d\n", pcap, mode );
+
+    if (!pcap) return PCAP_ERROR;
+    params.handle = pcap->handle;
+    params.mode = mode;
+    return PCAP_CALL( set_immediate_mode, &params );
+}
+
 int CDECL pcap_set_promisc( struct pcap *pcap, int enable )
 {
     struct set_promisc_params params;

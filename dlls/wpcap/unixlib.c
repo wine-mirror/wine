@@ -366,6 +366,12 @@ static NTSTATUS wrap_set_datalink( void *args )
     return pcap_set_datalink( (pcap_t *)(ULONG_PTR)params->handle, params->link );
 }
 
+static NTSTATUS wrap_set_immediate_mode( void *args )
+{
+    const struct set_immediate_mode_params *params = args;
+    return pcap_set_immediate_mode( (pcap_t *)(ULONG_PTR)params->handle, params->mode );
+}
+
 static NTSTATUS wrap_set_promisc( void *args )
 {
     const struct set_promisc_params *params = args;
@@ -509,6 +515,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_sendpacket,
     wrap_set_buffer_size,
     wrap_set_datalink,
+    wrap_set_immediate_mode,
     wrap_set_promisc,
     wrap_set_rfmon,
     wrap_set_snaplen,
@@ -974,6 +981,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_sendpacket,
     wrap_set_buffer_size,
     wrap_set_datalink,
+    wrap_set_immediate_mode,
     wrap_set_promisc,
     wrap_set_rfmon,
     wrap_set_snaplen,

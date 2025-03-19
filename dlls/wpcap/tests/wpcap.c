@@ -111,6 +111,7 @@ static int (CDECL *ppcap_loop)( pcap_t *, int,
                                 unsigned char * );
 static int (CDECL *ppcap_set_buffer_size)( pcap_t *, int );
 static int (CDECL *ppcap_set_datalink)( pcap_t *, int );
+static int (CDECL *ppcap_set_immediate_mode)( pcap_t *, int );
 static int (CDECL *ppcap_set_promisc)( pcap_t *, int );
 static int (CDECL *ppcap_set_timeout)( pcap_t *, int );
 static int (CDECL *ppcap_set_tstamp_precision)( pcap_t *, int );
@@ -141,6 +142,9 @@ static void test_capture( void )
 
     pcap = ppcap_create( dev, errbuf );
     ok( pcap != NULL, "got NULL (%s)\n", errbuf );
+
+    ret = ppcap_set_immediate_mode( pcap, 1 );
+    ok( !ret, "got %d\n", ret );
 
     ret = ppcap_set_promisc( pcap, 1 );
     ok( !ret, "got %d\n", ret );
@@ -361,6 +365,7 @@ START_TEST( wpcap )
     ppcap_loop = (void *)GetProcAddress( module, "pcap_loop" );
     ppcap_set_buffer_size = (void *)GetProcAddress( module, "pcap_set_buffer_size" );
     ppcap_set_datalink = (void *)GetProcAddress( module, "pcap_set_datalink" );
+    ppcap_set_immediate_mode = (void *)GetProcAddress( module, "pcap_set_immediate_mode" );
     ppcap_set_promisc = (void *)GetProcAddress( module, "pcap_set_promisc" );
     ppcap_set_timeout = (void *)GetProcAddress( module, "pcap_set_timeout" );
     ppcap_set_tstamp_precision = (void *)GetProcAddress( module, "pcap_set_tstamp_precision" );
