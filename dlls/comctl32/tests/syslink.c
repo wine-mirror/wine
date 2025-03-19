@@ -351,7 +351,7 @@ static void test_msaa(void)
         ok(!name, "unexpected default action %s\n", debugstr_w(name));
 
     hr = IAccessible_accDoDefaultAction(acc, varChild);
-    todo_wine ok(hr == E_INVALIDARG, "accDoDefaultAction should fail, hr=%lx\n", hr);
+    ok(hr == E_INVALIDARG, "accDoDefaultAction should fail, hr=%lx\n", hr);
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
@@ -403,9 +403,9 @@ static void test_msaa(void)
 
     g_link_id = -1;
     hr = IAccessible_accDoDefaultAction(acc, varChild);
-    todo_wine ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
+    ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
     wait_link_click(500);
-    todo_wine ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
+    ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
@@ -453,9 +453,9 @@ static void test_msaa(void)
 
     g_link_id = -1;
     hr = IAccessible_accDoDefaultAction(acc, varChild);
-    todo_wine ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
+    ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
     wait_link_click(500);
-    todo_wine ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
+    ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);

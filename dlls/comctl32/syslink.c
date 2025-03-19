@@ -529,10 +529,27 @@ static HRESULT WINAPI Accessible_accHitTest(IAccessible *iface, LONG left, LONG 
     return E_NOTIMPL;
 }
 
+static LRESULT SYSLINK_SendParentNotify (const SYSLINK_INFO *infoPtr, UINT code, const DOC_ITEM *Link, int iLink);
+
 static HRESULT WINAPI Accessible_accDoDefaultAction(IAccessible *iface, VARIANT childid)
 {
-    FIXME("%p\n", iface);
-    return E_NOTIMPL;
+    SYSLINK_ACC *This = impl_from_IAccessible(iface);
+    HRESULT hr;
+    DOC_ITEM* item;
+
+    TRACE("%p, %s\n", iface, debugstr_variant(&childid));
+
+    hr = Accessible_FindChild(This, childid, &item);
+    if (FAILED(hr))
+        return hr;
+
+    if (!item)
+        /* Not supported for whole control. */
+        return E_INVALIDARG;
+
+    SYSLINK_SendParentNotify(This->infoPtr, NM_CLICK, item, V_I4(&childid) - 1);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Accessible_put_accName(IAccessible *iface, VARIANT childid, BSTR name)
