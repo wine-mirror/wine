@@ -150,6 +150,7 @@ static const char *bindir;
 static const char *libdir;
 static const char *includedir;
 static const char *wine_objdir;
+static const char *lib_suffix;
 static const char *sysroot;
 static const char *isysroot;
 static const char *target_alias;
@@ -191,7 +192,6 @@ struct options
     const char* image_base;
     const char* section_align;
     const char* file_align;
-    const char* lib_suffix;
     const char* subsystem;
     const char* entry_point;
     const char* native_arch;
@@ -280,22 +280,21 @@ static enum file_type get_file_type(const char* filename)
     return file_other;
 }
 
-static char* try_lib_path(const char *dir, const char *arch_dir, const char *pre,
-			  const char* library, const char* ext,
-			  enum file_type expected_type)
+static char* try_lib_path(const char *dir, const char *arch_dir, const char* library,
+                          const char* ext, enum file_type expected_type)
 {
     char *fullname;
     enum file_type type;
 
     /* first try a subdir named from the library we are looking for */
-    fullname = strmake("%s/%s%s/%s%s%s", dir, library, arch_dir, pre, library, ext);
+    fullname = strmake("%s/%s%s/lib%s%s", dir, library, arch_dir, library, ext);
     if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
     type = get_file_type(fullname);
     if (verbose > 1) fprintf(stderr, type == expected_type ? "FOUND!\n" : "no\n");
     if (type == expected_type) return fullname;
     free( fullname );
 
-    fullname = strmake("%s/%s%s%s", dir, pre, library, ext);
+    fullname = strmake("%s/lib%s%s", dir, library, ext);
     if (verbose > 1) fprintf(stderr, "Try %s...", fullname);
     type = get_file_type(fullname);
     if (verbose > 1) fprintf(stderr, type == expected_type ? "FOUND!\n" : "no\n");
@@ -304,19 +303,19 @@ static char* try_lib_path(const char *dir, const char *arch_dir, const char *pre
     return 0;
 }
 
-static enum file_type guess_lib_type(const char* dir, const char* library, const char *prefix,
-                                     const char *suffix, char** file)
+static enum file_type guess_lib_type(const char* dir, const char* library, char** file)
 {
     const char *arch_dir = "";
+    const char *suffix = lib_suffix ? lib_suffix : ".a";
 
     if (!is_pe)
     {
         /* Unix shared object */
-        if ((*file = try_lib_path(dir, "", prefix, library, ".so", file_so)))
+        if ((*file = try_lib_path(dir, "", library, ".so", file_so)))
             return file_so;
 
         /* Mach-O (Darwin/Mac OS X) Dynamic Library behaves mostly like .so */
-        if ((*file = try_lib_path(dir, "", prefix, library, ".dylib", file_so)))
+        if ((*file = try_lib_path(dir, "", library, ".dylib", file_so)))
             return file_so;
     }
     else
@@ -324,27 +323,25 @@ static enum file_type guess_lib_type(const char* dir, const char* library, const
         arch_dir = get_arch_dir( target );
         if (!strcmp( suffix, ".a" ))  /* try Mingw-style .dll.a import lib */
         {
-            if ((*file = try_lib_path(dir, arch_dir, prefix, library, ".dll.a", file_arh)))
+            if ((*file = try_lib_path(dir, arch_dir, library, ".dll.a", file_arh)))
                 return file_arh;
         }
     }
 
     /* static archives */
-    if ((*file = try_lib_path(dir, arch_dir, prefix, library, suffix, file_arh)))
+    if ((*file = try_lib_path(dir, arch_dir, library, suffix, file_arh)))
 	return file_arh;
 
     return file_na;
 }
 
-static enum file_type get_lib_type(struct strarray path, const char *library,
-                                   const char *prefix, const char *suffix, char** file)
+static enum file_type get_lib_type(struct strarray path, const char *library, char** file)
 {
     unsigned int i;
 
-    if (!suffix) suffix = ".a";
     for (i = 0; i < path.count; i++)
     {
-        enum file_type type = guess_lib_type(path.str[i], library, prefix, suffix, file);
+        enum file_type type = guess_lib_type(path.str[i], library, file);
 	if (type != file_na) return type;
     }
     return file_na;
@@ -1081,7 +1078,7 @@ static void add_library( struct options *opts, struct strarray lib_dirs,
 {
     char *static_lib, *fullname = 0;
 
-    switch(get_lib_type(lib_dirs, library, "lib", opts->lib_suffix, &fullname))
+    switch(get_lib_type(lib_dirs, library, &fullname))
     {
     case file_arh:
         strarray_add(files, strmake("-a%s", fullname));
@@ -1461,7 +1458,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
 		strarray_add(&link_args, name);
 		break;
 	    case 'a':
-                if (!opts->use_msvcrt && !opts->lib_suffix && strchr(name, '/'))
+                if (!opts->use_msvcrt && !lib_suffix && strchr(name, '/'))
                 {
                     const char *p = get_basename( name );
 
@@ -2047,7 +2044,7 @@ int main(int argc, char **argv)
                     }
                     else if (is_option( args, i, "--lib-suffix", &option_arg ))
                     {
-                        opts.lib_suffix = option_arg;
+                        lib_suffix = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
