@@ -827,6 +827,7 @@ struct pe_image_info
     mem_size_t     stack_commit;
     unsigned int   entry_point;
     unsigned int   map_size;
+    unsigned int   alignment;
     unsigned int   zerobits;
     unsigned int   subsystem;
     unsigned short subsystem_minor;
@@ -849,7 +850,6 @@ struct pe_image_info
     unsigned int   checksum;
     unsigned int   dbg_offset;
     unsigned int   dbg_size;
-    unsigned int   __pad;
 };
 #define IMAGE_FLAGS_ComPlusNativeReady        0x01
 #define IMAGE_FLAGS_ComPlusILOnly             0x02
@@ -6796,6 +6796,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 857
+#define SERVER_PROTOCOL_VERSION 858
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2756,6 +2756,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     char *header_end;
     char *ptr = view->base;
     SIZE_T header_size, total_size = view->size;
+    SIZE_T align_mask = max( image_info->alignment - 1, page_mask );
     INT_PTR delta;
 
     TRACE_(module)( "mapping PE file %s at %p-%p\n", debugstr_w(filename), ptr, ptr + total_size );
@@ -2770,7 +2771,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
-    header_end = ptr + ROUND_SIZE( 0, header_size, page_mask );
+    header_end = ptr + ROUND_SIZE( 0, header_size, align_mask );
     memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) return status;
     sec = IMAGE_FIRST_SECTION( nt );
@@ -2821,9 +2822,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         SIZE_T map_size, file_start, file_size, end;
 
         if (!sec[i].Misc.VirtualSize)
-            map_size = ROUND_SIZE( 0, sec[i].SizeOfRawData, page_mask );
+            map_size = ROUND_SIZE( 0, sec[i].SizeOfRawData, align_mask );
         else
-            map_size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize, page_mask );
+            map_size = ROUND_SIZE( 0, sec[i].Misc.VirtualSize, align_mask );
 
         /* file positions are rounded to sector boundaries regardless of OptionalHeader.FileAlignment */
         file_start = sec[i].PointerToRawData & ~sector_align;
@@ -2831,7 +2832,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         if (file_size > map_size) file_size = map_size;
 
         /* a few sanity checks */
-        end = sec[i].VirtualAddress + ROUND_SIZE( sec[i].VirtualAddress, map_size, page_mask );
+        end = sec[i].VirtualAddress + ROUND_SIZE( sec[i].VirtualAddress, map_size, align_mask );
         if (sec[i].VirtualAddress > total_size || end > total_size || end < sec[i].VirtualAddress)
         {
             WARN_(module)( "%s section %.8s too large (%x+%lx/%lx)\n",
@@ -2892,9 +2893,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             goto done;
         }
 
-        if (file_size & page_mask)
+        if (file_size & align_mask)
         {
-            end = ROUND_SIZE( 0, file_size, page_mask );
+            end = ROUND_SIZE( 0, file_size, align_mask );
             if (end > map_size) end = map_size;
             TRACE_(module)("clearing %p - %p\n",
                            ptr + sec[i].VirtualAddress + file_size,
@@ -2948,7 +2949,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     /* set the image protections */
 
-    set_vprot( view, ptr, ROUND_SIZE( 0, header_size, page_mask ), VPROT_COMMITTED | VPROT_READ );
+    set_vprot( view, ptr, ROUND_SIZE( 0, header_size, align_mask ), VPROT_COMMITTED | VPROT_READ );
 
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
     {
@@ -2956,9 +2957,9 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
         BYTE vprot = VPROT_COMMITTED;
 
         if (sec[i].Misc.VirtualSize)
-            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize, page_mask );
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].Misc.VirtualSize, align_mask );
         else
-            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].SizeOfRawData, page_mask );
+            size = ROUND_SIZE( sec[i].VirtualAddress, sec[i].SizeOfRawData, align_mask );
 
         if (sec[i].Characteristics & IMAGE_SCN_MEM_READ)    vprot |= VPROT_READ;
         if (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)   vprot |= VPROT_WRITECOPY;
