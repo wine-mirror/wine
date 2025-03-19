@@ -199,7 +199,6 @@ struct options
     struct strarray linker_args;
     struct strarray compiler_args;
     struct strarray winebuild_args;
-    struct strarray files;
     struct strarray delayimports;
 };
 
@@ -868,7 +867,7 @@ static struct strarray get_compat_defines( const struct options *opts, int gcc_d
     return args;
 }
 
-static void compile(struct options* opts, const char* lang)
+static void compile(struct options* opts, struct strarray files, const char* lang)
 {
     struct strarray comp_args = get_translator(opts);
     unsigned int i, j;
@@ -921,10 +920,10 @@ static void compile(struct options* opts, const char* lang)
 	strarray_add(&comp_args, lang);
 
     /* last, but not least, the files */
-    for ( j = 0; j < opts->files.count; j++ )
+    for ( j = 0; j < files.count; j++ )
     {
-	if (opts->files.str[j][0] != '-' || !opts->files.str[j][1]) /* not an option or bare '-' (i.e. stdin) */
-	    strarray_add(&comp_args, opts->files.str[j]);
+	if (files.str[j][0] != '-' || !files.str[j][1]) /* not an option or bare '-' (i.e. stdin) */
+	    strarray_add(&comp_args, files.str[j]);
     }
 
     /* standard includes come last in the include search path */
@@ -966,15 +965,15 @@ static void compile(struct options* opts, const char* lang)
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
 {
     struct options copts;
+    struct strarray files = empty_strarray;
 
     /* make a copy so we don't change any of the initial stuff */
     /* a shallow copy is exactly what we want in this case */
     copts = *opts;
     copts.output_name = make_temp_file(get_basename_noext(file), ".o");
     copts.compile_only = 1;
-    copts.files = empty_strarray;
-    strarray_add(&copts.files, file);
-    compile(&copts, lang);
+    strarray_add(&files, file);
+    compile(&copts, files, lang);
     return copts.output_name;
 }
 
@@ -1235,7 +1234,7 @@ static void build_data_lib( struct options *opts, const char *spec_file, const c
     spawn(opts->prefix, spec_args, 0);
 }
 
-static void build(struct options* opts)
+static void build(struct options* opts, struct strarray input_files)
 {
     struct strarray resources = empty_strarray;
     struct strarray spec_objs = empty_strarray;
@@ -1262,9 +1261,9 @@ static void build(struct options* opts)
     output_file = xstrdup( opts->output_name ? opts->output_name : "a.out" );
 
     /* 'winegcc -o app xxx.exe.so' only creates the load script */
-    if (opts->files.count == 1 && strendswith(opts->files.str[0], ".exe.so"))
+    if (input_files.count == 1 && strendswith(input_files.str[0], ".exe.so"))
     {
-	create_file(output_file, 0755, app_loader_template, opts->files.str[0]);
+	create_file(output_file, 0755, app_loader_template, input_files.str[0]);
 	return;
     }
 
@@ -1300,9 +1299,9 @@ static void build(struct options* opts)
 
     /* mark the files with their appropriate type */
     spec_file = lang = 0;
-    for ( j = 0; j < opts->files.count; j++ )
+    for ( j = 0; j < input_files.count; j++ )
     {
-	const char* file = opts->files.str[j];
+	const char* file = input_files.str[j];
 	if (file[0] != '-')
 	{
 	    switch(get_file_type(file))
@@ -1633,6 +1632,7 @@ int main(int argc, char **argv)
     int i, c, next_is_arg = 0, linking = 1;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
     struct strarray args = empty_strarray;
+    struct strarray files = empty_strarray;
     const char* option_arg;
     struct options opts;
     char* lang = 0;
@@ -1806,7 +1806,7 @@ int main(int argc, char **argv)
                     if (!strcmp( "-isysroot", args.str[i] )) isysroot = args.str[i + 1];
                     break;
 		case 'l':
-		    strarray_add(&opts.files, strmake("-l%s", option_arg));
+		    strarray_add(&files, strmake("-l%s", option_arg));
                     raw_compiler_arg = 0;
 		    break;
 		case 'L':
@@ -1987,7 +1987,7 @@ int main(int argc, char **argv)
                                 !strcmp(Wl.str[j], "--start-group") ||
                                 !strcmp(Wl.str[j], "--end-group"))
                             {
-                                strarray_add( &opts.files, strmake( "-Wl,%s", Wl.str[j] ));
+                                strarray_add( &files, strmake( "-Wl,%s", Wl.str[j] ));
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--out-implib"))
@@ -2020,7 +2020,7 @@ int main(int argc, char **argv)
                     break;
 		case 'x':
 		    lang = strmake("-x%s", option_arg);
-		    strarray_add(&opts.files, lang);
+		    strarray_add(&files, lang);
 		    /* we'll pass these flags ourselves, explicitly */
                     raw_compiler_arg = raw_linker_arg = 0;
 		    break;
@@ -2085,7 +2085,7 @@ int main(int argc, char **argv)
         }
 	else
 	{
-	    strarray_add( &opts.files, args.str[i] );
+	    strarray_add( &files, args.str[i] );
 	}
     }
 
@@ -2096,9 +2096,9 @@ int main(int argc, char **argv)
     is_pe = is_pe_target( target );
     if (is_pe) opts.use_msvcrt = 1;
 
-    if (opts.files.count == 0 && !opts.fake_module) forward(&opts);
-    else if (linking) build(&opts);
-    else compile(&opts, lang);
+    if (files.count == 0 && !opts.fake_module) forward(&opts);
+    else if (linking) build(&opts, files);
+    else compile(&opts, files, lang);
 
     output_file_name = NULL;
     output_debug_file = NULL;
