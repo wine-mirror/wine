@@ -155,6 +155,9 @@ static const char *isysroot;
 static const char *target_alias;
 static const char *target_version;
 static struct target target;
+static struct strarray prefix_dirs;
+static struct strarray path_dirs;
+static struct strarray lib_path_dirs;
 
 static enum processor { proc_cc, proc_cxx, proc_cpp } processor = proc_cc;
 
@@ -192,8 +195,6 @@ struct options
     const char* subsystem;
     const char* entry_point;
     const char* native_arch;
-    struct strarray prefix;
-    struct strarray lib_dirs;
     struct strarray linker_args;
     struct strarray compiler_args;
     struct strarray winebuild_args;
@@ -349,11 +350,10 @@ static enum file_type get_lib_type(struct strarray path, const char *library,
     return file_na;
 }
 
-static const char *find_binary( struct strarray prefix, const char *name )
+static const char *find_binary( const char *name )
 {
     char *file_name, *args;
     struct strarray dirs = empty_strarray;
-    static struct strarray path;
     unsigned int i;
 
     if (strchr( name, '/' )) return name;
@@ -361,10 +361,8 @@ static const char *find_binary( struct strarray prefix, const char *name )
     file_name = xstrdup( name );
     if ((args = strchr( file_name, ' ' ))) *args++ = 0;
 
-    if (!path.count) strarray_addall( &path, strarray_frompath( getenv( "PATH" )));
-
-    strarray_addall( &dirs, prefix );
-    strarray_addall( &dirs, path );
+    strarray_addall( &dirs, prefix_dirs );
+    strarray_addall( &dirs, path_dirs );
     for (i = 0; i < dirs.count; i++)
     {
         struct stat st;
@@ -376,12 +374,12 @@ static const char *find_binary( struct strarray prefix, const char *name )
     return NULL;
 }
 
-static int spawn(struct strarray prefix, struct strarray args, int ignore_errors)
+static int spawn(struct strarray args, int ignore_errors)
 {
     int status;
     const char *cmd;
 
-    cmd = args.str[0] = find_binary( prefix, args.str[0] );
+    cmd = args.str[0] = find_binary( args.str[0] );
     if (verbose) strarray_trace( args );
 
     if ((status = strarray_spawn( args )) && !ignore_errors)
@@ -441,11 +439,11 @@ static struct strarray build_tool_name( struct options *opts, const char *target
     else
         str = xstrdup((deflt && *deflt) ? deflt : base);
 
-    if ((path = find_binary( opts->prefix, str ))) return strarray_fromstring( path, " " );
+    if ((path = find_binary( str ))) return strarray_fromstring( path, " " );
 
     if (!target_version) str = xstrdup( llvm_base );
     else str = strmake( "%s-%s", llvm_base, target_version );
-    path = find_binary( opts->prefix, str );
+    path = find_binary( str );
     if (!path)
     {
         error( "Could not find %s\n", base );
@@ -503,7 +501,7 @@ static int try_link( const struct options *opts, struct strarray link_tool, cons
     freopen( err, "w", stdout );
     serr = dup( fileno(stderr) );
     freopen( err, "w", stderr );
-    ret = spawn( opts->prefix, link, 1 );
+    ret = spawn( link, 1 );
     if (sout >= 0)
     {
         dup2( sout, fileno(stdout) );
@@ -956,7 +954,7 @@ static void compile( struct options *opts, struct strarray files, const char* la
     else if (wine_objdir)
         strarray_add(&comp_args, strmake("-I%s/include", wine_objdir) );
 
-    spawn(opts->prefix, comp_args, 0);
+    spawn(comp_args, 0);
 }
 
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
@@ -982,11 +980,11 @@ static struct strarray get_winebuild_args( struct options *opts, const char *tar
     else if (wine_objdir)
         binary = strmake( "%s/tools/winebuild/winebuild%s", wine_objdir, EXEEXT );
     else if (winebuild)
-        binary = find_binary( opts->prefix, winebuild );
+        binary = find_binary( winebuild );
     else if (bindir)
         binary = strmake( "%s/winebuild%s", bindir, EXEEXT );
     else
-        binary = find_binary( opts->prefix, "winebuild" );
+        binary = find_binary( "winebuild" );
     if (!binary) error( "Could not find winebuild\n" );
     strarray_add( &spec_args, binary );
     if (verbose) strarray_add( &spec_args, "-v" );
@@ -998,8 +996,8 @@ static struct strarray get_winebuild_args( struct options *opts, const char *tar
     }
     if (opts->force_pointer_size)
         strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
-    for (i = 0; i < opts->prefix.count; i++)
-        strarray_add( &spec_args, strmake( "-B%s", opts->prefix.str[i] ));
+    for (i = 0; i < prefix_dirs.count; i++)
+        strarray_add( &spec_args, strmake( "-B%s", prefix_dirs.str[i] ));
     strarray_addall( &spec_args, opts->winebuild_args );
     return spec_args;
 }
@@ -1010,7 +1008,7 @@ static void fixup_constructors( struct options *opts, const char *file )
 
     strarray_add( &args, "--fixup-ctors" );
     strarray_add( &args, file );
-    spawn( opts->prefix, args, 0 );
+    spawn( args, 0 );
 }
 
 static void make_wine_builtin( struct options *opts, const char *file )
@@ -1019,7 +1017,7 @@ static void make_wine_builtin( struct options *opts, const char *file )
 
     strarray_add( &args, "--builtin" );
     strarray_add( &args, file );
-    spawn( opts->prefix, args, 0 );
+    spawn( args, 0 );
 }
 
 /* check if there is a static lib associated to a given dll */
@@ -1031,7 +1029,7 @@ static char *find_static_lib( const char *dll )
     return NULL;
 }
 
-static const char *find_libgcc(struct strarray prefix, struct strarray link_tool)
+static const char *find_libgcc(struct strarray link_tool)
 {
     const char *out = make_temp_file( "find_libgcc", ".out" );
     const char *err = make_temp_file( "find_libgcc", ".err" );
@@ -1052,7 +1050,7 @@ static const char *find_libgcc(struct strarray prefix, struct strarray link_tool
     freopen( out, "w", stdout );
     serr = dup( fileno(stderr) );
     freopen( err, "w", stderr );
-    ret = spawn( prefix, link, 1 );
+    ret = spawn( link, 1 );
     if (sout >= 0)
     {
         dup2( sout, fileno(stdout) );
@@ -1200,7 +1198,7 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
 	}
     }
 
-    spawn(opts->prefix, spec_args, 0);
+    spawn(spec_args, 0);
     strarray_add( spec_objs, spec_o_name );
 }
 
@@ -1223,7 +1221,7 @@ static void build_data_lib( struct options *opts, const char *spec_file, const c
     for (i = 0; i < files.count; i++)
 	if (files.str[i][1] == 'r') strarray_add(&spec_args, files.str[i]);
 
-    spawn(opts->prefix, spec_args, 0);
+    spawn(spec_args, 0);
 }
 
 static void build(struct options* opts, struct strarray input_files, const char *output)
@@ -1279,14 +1277,14 @@ static void build(struct options* opts, struct strarray input_files, const char 
     if (!wine_objdir)
     {
         char *lib_dir = get_lib_dir();
-        strarray_addall( &lib_dirs, opts->lib_dirs );
+        strarray_addall( &lib_dirs, lib_path_dirs );
         strarray_add( &lib_dirs, strmake( "%s/wine%s", lib_dir, get_arch_dir( target )));
         strarray_add( &lib_dirs, lib_dir );
     }
     else
     {
         strarray_add(&lib_dirs, strmake("%s/dlls", wine_objdir));
-        strarray_addall(&lib_dirs, opts->lib_dirs);
+        strarray_addall(&lib_dirs, lib_path_dirs);
     }
 
     /* mark the files with their appropriate type */
@@ -1411,7 +1409,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
     {
     case PLATFORM_MINGW:
     case PLATFORM_CYGWIN:
-        libgcc = find_libgcc( opts->prefix, link_args );
+        libgcc = find_libgcc( link_args );
         if (!libgcc) libgcc = "-lgcc";
         break;
     default:
@@ -1491,7 +1489,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
 
     atexit( cleanup_output_files );
 
-    spawn(opts->prefix, link_args, 0);
+    spawn(link_args, 0);
 
     if (output_debug_file && !strendswith(output_debug_file, ".pdb"))
     {
@@ -1502,20 +1500,20 @@ static void build(struct options* opts, struct strarray input_files, const char 
         strarray_add(&tool, "--only-keep-debug");
         strarray_add(&tool, output_file_name);
         strarray_add(&tool, output_debug_file);
-        spawn(opts->prefix, tool, 1);
+        spawn(tool, 1);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--strip-debug");
         strarray_add(&tool, output_file_name);
-        spawn(opts->prefix, tool, 1);
+        spawn(tool, 1);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
         strarray_add(&tool, "--add-gnu-debuglink");
         strarray_add(&tool, output_debug_file);
         strarray_add(&tool, output_file_name);
-        spawn(opts->prefix, tool, 0);
+        spawn(tool, 0);
     }
 
     if (output_implib && !is_pe)
@@ -1537,7 +1535,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
         strarray_add(&implib_args, "--export");
         strarray_add(&implib_args, spec_file);
 
-        spawn(opts->prefix, implib_args, 0);
+        spawn(implib_args, 0);
     }
 
     if (!is_pe) fixup_constructors( opts, output_file_name );
@@ -1555,7 +1553,7 @@ static void forward( struct options *opts )
 
     strarray_addall(&args, opts->compiler_args);
     strarray_addall(&args, opts->linker_args);
-    spawn(opts->prefix, args, 0);
+    spawn(args, 0);
 }
 
 static int is_linker_arg(const char* arg)
@@ -1637,6 +1635,7 @@ int main(int argc, char **argv)
     libdir = get_libdir( bindir );
     includedir = get_includedir( bindir );
     target = init_argv0_target( argv[0] );
+    path_dirs = strarray_frompath( getenv( "PATH" ));
 
     /* setup tmp file removal at exit */
     atexit(clean_temp_files);
@@ -1763,7 +1762,7 @@ int main(int argc, char **argv)
 		case 'B':
 		    str = xstrdup(option_arg);
 		    if (strendswith(str, "/")) str[strlen(str) - 1] = 0;
-                    strarray_add(&opts.prefix, str);
+                    strarray_add(&prefix_dirs, str);
                     raw_linker_arg = 1;
 		    break;
                 case 'b':
@@ -1804,7 +1803,7 @@ int main(int argc, char **argv)
                     raw_compiler_arg = 0;
 		    break;
 		case 'L':
-		    strarray_add(&opts.lib_dirs, option_arg);
+		    strarray_add(&lib_path_dirs, option_arg);
                     raw_compiler_arg = 0;
 		    break;
                 case 'M':        /* map file generation */
