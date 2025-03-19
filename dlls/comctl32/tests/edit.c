@@ -48,6 +48,47 @@ enum msg_id
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from an edit control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_EDITA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 struct edit_notify {
     int en_change, en_maxtext, en_update;
 };
@@ -3409,6 +3450,7 @@ static void test_wordbreak_proc(void)
 static const struct message setfocus_combined_seq[] =
 {
     { WM_KILLFOCUS,    sent|id,            0, 0,                      PARENT_ID },
+    { EVENT_OBJECT_FOCUS, winevent_hook|lparam, 0, 0 },
     { WM_SETFOCUS,     sent|id,            0, 0,                      EDIT_ID   },
     { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_SETFOCUS), 0, PARENT_ID },
     { WM_PAINT,        sent|id,            0, 0,                      EDIT_ID   },
@@ -3430,6 +3472,7 @@ static const struct message killfocus_combined_seq[] =
 static const struct message setfocus_sent_only_combined_seq[] =
 {
     { WM_KILLFOCUS,    sent|id,            0, 0,                      PARENT_ID },
+    { EVENT_OBJECT_FOCUS, winevent_hook|lparam, 0, 0 },
     { WM_SETFOCUS,     sent|id,            0, 0,                      EDIT_ID   },
     { WM_COMMAND,      sent|wparam|id, MAKEWPARAM(1, EN_SETFOCUS), 0, PARENT_ID },
     { 0 }
@@ -3582,9 +3625,13 @@ static const struct message wm_ime_composition_seq[] =
     {WM_IME_CHAR, sent | wparam | defwinproc, 'e'},
     {WM_IME_ENDCOMPOSITION, sent},
     {WM_CHAR, sent | wparam, 'W'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'i'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'n'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'e'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {0}
 };
 
@@ -3597,9 +3644,13 @@ static const struct message wm_ime_composition_korean_seq[] =
     {WM_IME_CHAR, sent | wparam | defwinproc, 'n'},
     {WM_IME_CHAR, sent | wparam | defwinproc, 'e'},
     {WM_CHAR, sent | wparam, 'W'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'i'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'n'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_CHAR, sent | wparam, 'e'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {0}
 };
 
@@ -3607,6 +3658,7 @@ static const struct message wm_ime_char_seq[] =
 {
     {WM_IME_CHAR, sent | wparam, '0'},
     {WM_CHAR, sent | wparam, '0'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {0}
 };
 
@@ -3614,6 +3666,7 @@ static const struct message eimes_getcompstratonce_seq[] =
 {
     {WM_IME_STARTCOMPOSITION, sent},
     {WM_IME_COMPOSITION, sent | wparam, 'W'},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook|lparam, 0, 0},
     {WM_IME_ENDCOMPOSITION, sent},
     {0}
 };
@@ -3850,6 +3903,8 @@ START_TEST(edit)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     hinst = GetModuleHandleA(NULL);
     b = register_classes();
     ok(b, "Failed to register test classes.\n");
@@ -3889,6 +3944,8 @@ START_TEST(edit)
     test_format_rect();
 
     UnregisterWindowClasses();
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 }
