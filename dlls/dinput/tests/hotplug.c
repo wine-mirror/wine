@@ -596,7 +596,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_count = 0;
 
     ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
-    todo_wine ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
     device_change_expect = 2;
@@ -623,10 +623,10 @@ static void test_RegisterDeviceNotification(void)
     for (i = 0; i < cm_ctx.device_change_expect; i++)
     {
         ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
-        todo_wine ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
-    todo_wine ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
-                  cm_ctx.device_change_count, cm_ctx.device_change_expect );
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -648,7 +648,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_count = 0;
 
     ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
-    todo_wine ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
     device_change_expect = 2;
@@ -675,10 +675,10 @@ static void test_RegisterDeviceNotification(void)
     for (i = 0; i < cm_ctx.device_change_expect; i++)
     {
         ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
-        todo_wine ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
-    todo_wine ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
-                  cm_ctx.device_change_count, cm_ctx.device_change_expect );
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -697,7 +697,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_count = 0;
     ret = CM_Register_Notification( &cm_all_ifaces_filter, &cm_ctx, cm_notify_callback,
                                     &cm_ctx.hnotify );
-    todo_wine ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
     device_change_expect = 4;
@@ -724,10 +724,10 @@ static void test_RegisterDeviceNotification(void)
     for (i = 0; i < cm_ctx.device_change_expect; i++)
     {
         ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
-        todo_wine ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
-    todo_wine ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
-                  cm_ctx.device_change_count, cm_ctx.device_change_expect );
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -746,7 +746,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_count = 0;
     cm_iface_filter.Flags = 0;
     ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
-    todo_wine ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
     device_change_expect = 2;
@@ -775,7 +775,7 @@ static void test_RegisterDeviceNotification(void)
             UINT i;
 
             ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
-            todo_wine ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
             swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
             ret = find_hid_device_path( device_path );
@@ -791,7 +791,7 @@ static void test_RegisterDeviceNotification(void)
 
             cm_handle_filter.u.DeviceHandle.hTarget = file;
             ret = CM_Register_Notification( &cm_handle_filter, &cm_ctx, cm_notify_callback, &handle_cmnotify );
-            todo_wine ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+            ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
             device_change_expect_handle = file;
             device_change_expect_event = device_change_events;
@@ -812,7 +812,8 @@ static void test_RegisterDeviceNotification(void)
     for (i = 1; i < cm_ctx.device_change_expect; i++)
     {
         ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
-        todo_wine ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+        todo_wine_if(i == cm_ctx.device_change_expect - 1)
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
     todo_wine ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
                   cm_ctx.device_change_count, cm_ctx.device_change_expect );

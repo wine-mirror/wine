@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2023 Mohamad Al-Jaf
+ * Copyright (C) 2025 Vibhav Pant
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +20,9 @@
 #include "wine/debug.h"
 #include "winreg.h"
 #include "cfgmgr32.h"
+#include "winuser.h"
+#include "dbt.h"
+#include "wine/plugplay.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -58,15 +62,168 @@ DWORD WINAPI CM_MapCrToWin32Err( CONFIGRET code, DWORD default_error )
     return default_error;
 }
 
+struct cm_notify_context
+{
+    HDEVNOTIFY notify;
+    void *user_data;
+    PCM_NOTIFY_CALLBACK callback;
+};
+
+CALLBACK DWORD devnotify_callback( HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header )
+{
+    struct cm_notify_context *ctx = handle;
+    CM_NOTIFY_EVENT_DATA *event_data;
+    CM_NOTIFY_ACTION action;
+    DWORD size, ret;
+
+    TRACE( "(%p, %#lx, %p)\n", handle, flags, header );
+
+    switch (flags)
+    {
+    case DBT_DEVICEARRIVAL:
+        action = CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL;
+        break;
+    case DBT_DEVICEREMOVECOMPLETE:
+        FIXME( "CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE not implemented\n" );
+        action = CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL;
+        break;
+    case DBT_CUSTOMEVENT:
+        action = CM_NOTIFY_ACTION_DEVICECUSTOMEVENT;
+        break;
+    default:
+        FIXME( "Unexpected flags value: %#lx\n", flags );
+        return 0;
+    }
+
+    switch (header->dbch_devicetype)
+    {
+    case DBT_DEVTYP_DEVICEINTERFACE:
+    {
+        const DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)header;
+        UINT data_size = wcslen( iface->dbcc_name ) + 1;
+
+        size = offsetof( CM_NOTIFY_EVENT_DATA, u.DeviceInterface.SymbolicLink[data_size] );
+        if (!(event_data = calloc( 1, size ))) return 0;
+
+        event_data->FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE;
+        event_data->u.DeviceInterface.ClassGuid = iface->dbcc_classguid;
+        memcpy( event_data->u.DeviceInterface.SymbolicLink, iface->dbcc_name, data_size * sizeof(WCHAR) );
+        break;
+    }
+    case DBT_DEVTYP_HANDLE:
+    {
+        const DEV_BROADCAST_HANDLE *handle = (DEV_BROADCAST_HANDLE *)header;
+        UINT data_size = handle->dbch_size - 2 * sizeof(WCHAR) - offsetof( DEV_BROADCAST_HANDLE, dbch_data );
+
+        size = offsetof( CM_NOTIFY_EVENT_DATA, u.DeviceHandle.Data[data_size] );
+        if (!(event_data = calloc( 1, size ))) return 0;
+
+        event_data->FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE;
+        event_data->u.DeviceHandle.EventGuid = handle->dbch_eventguid;
+        event_data->u.DeviceHandle.NameOffset = handle->dbch_nameoffset;
+        event_data->u.DeviceHandle.DataSize = data_size;
+        memcpy( event_data->u.DeviceHandle.Data, handle->dbch_data, data_size );
+        break;
+    }
+    default:
+        FIXME( "Unexpected devicetype value: %#lx\n", header->dbch_devicetype );
+        return 0;
+    }
+
+    ret = ctx->callback( ctx, ctx->user_data, action, event_data, size );
+    free( event_data );
+    return ret;
+}
+
+static const char *debugstr_CM_NOTIFY_FILTER( const CM_NOTIFY_FILTER *filter )
+{
+    switch (filter->FilterType)
+    {
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE:
+        return wine_dbg_sprintf( "{%#lx %lx CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE %lu {{%s}}}", filter->cbSize,
+                                 filter->Flags, filter->Reserved,
+                                 debugstr_guid( &filter->u.DeviceInterface.ClassGuid ) );
+    case CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE:
+        return wine_dbg_sprintf( "{%#lx %lx CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE %lu {{%p}}}", filter->cbSize,
+                                 filter->Flags, filter->Reserved, filter->u.DeviceHandle.hTarget );
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE:
+        return wine_dbg_sprintf( "{%#lx %lx CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE %lu {{%s}}}", filter->cbSize,
+                                 filter->Flags, filter->Reserved, debugstr_w( filter->u.DeviceInstance.InstanceId ) );
+    default:
+        return wine_dbg_sprintf( "{%#lx %lx (unknown FilterType %d) %lu}", filter->cbSize, filter->Flags,
+                                 filter->FilterType, filter->Reserved );
+    }
+}
+
+static CONFIGRET create_notify_context( const CM_NOTIFY_FILTER *filter, HCMNOTIFICATION *notify_handle,
+                                        PCM_NOTIFY_CALLBACK callback, void *user_data )
+{
+    union
+    {
+        DEV_BROADCAST_HDR header;
+        DEV_BROADCAST_DEVICEINTERFACE_W iface;
+        DEV_BROADCAST_HANDLE handle;
+    } notify_filter = {0};
+    struct cm_notify_context *ctx;
+    static const GUID GUID_NULL;
+
+    switch (filter->FilterType)
+    {
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE:
+        notify_filter.iface.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+        if (filter->Flags & CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES)
+        {
+            if (!IsEqualGUID( &filter->u.DeviceInterface.ClassGuid, &GUID_NULL )) return CR_INVALID_DATA;
+            notify_filter.iface.dbcc_size = offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_classguid );
+        }
+        else
+        {
+            notify_filter.iface.dbcc_size = offsetof( DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name );
+            notify_filter.iface.dbcc_classguid = filter->u.DeviceInterface.ClassGuid;
+        }
+        break;
+    case CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE:
+        notify_filter.handle.dbch_devicetype = DBT_DEVTYP_HANDLE;
+        notify_filter.handle.dbch_size = sizeof(notify_filter.handle);
+        notify_filter.handle.dbch_handle = filter->u.DeviceHandle.hTarget;
+        break;
+    case CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE:
+        FIXME( "CM_NOTIFY_FILTER_TYPE_DEVICEINSTANCE is not supported!\n" );
+        return CR_CALL_NOT_IMPLEMENTED;
+    default:
+        return CR_INVALID_DATA;
+    }
+
+    if (!(ctx = calloc( 1, sizeof(*ctx) ))) return CR_OUT_OF_MEMORY;
+
+    ctx->user_data = user_data;
+    ctx->callback = callback;
+    if (!(ctx->notify = I_ScRegisterDeviceNotification( ctx, &notify_filter.header, devnotify_callback )))
+    {
+        free( ctx );
+        switch (GetLastError())
+        {
+        case ERROR_NOT_ENOUGH_MEMORY: return CR_OUT_OF_MEMORY;
+        case ERROR_INVALID_PARAMETER: return CR_INVALID_DATA;
+        default: return CR_FAILURE;
+        }
+    }
+    *notify_handle = ctx;
+    return CR_SUCCESS;
+}
+
 /***********************************************************************
  *           CM_Register_Notification (cfgmgr32.@)
  */
 CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *context,
                                            PCM_NOTIFY_CALLBACK callback, HCMNOTIFICATION *notify_context )
 {
-    FIXME("%p %p %p %p stub!\n", filter, context, callback, notify_context);
+    TRACE( "(%s %p %p %p)\n", debugstr_CM_NOTIFY_FILTER( filter ), context, callback, notify_context );
 
-    return CR_CALL_NOT_IMPLEMENTED;
+    if (!notify_context) return CR_FAILURE;
+    if (!filter || !callback || filter->cbSize != sizeof(*filter)) return CR_INVALID_DATA;
+
+    return create_notify_context( filter, notify_context, callback, context );
 }
 
 /***********************************************************************
@@ -74,9 +231,16 @@ CONFIGRET WINAPI CM_Register_Notification( CM_NOTIFY_FILTER *filter, void *conte
  */
 CONFIGRET WINAPI CM_Unregister_Notification( HCMNOTIFICATION notify )
 {
-    FIXME( "(%p) stub!\n", notify );
+    struct cm_notify_context *ctx = notify;
 
-    return CR_CALL_NOT_IMPLEMENTED;
+    TRACE( "(%p)\n", notify );
+
+    if (!notify) return CR_INVALID_DATA;
+
+    I_ScUnregisterDeviceNotification( ctx->notify );
+    free( ctx );
+
+    return CR_SUCCESS;
 }
 
 /***********************************************************************

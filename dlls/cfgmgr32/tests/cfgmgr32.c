@@ -325,10 +325,10 @@ static void test_CM_Register_Notification( void )
     CONFIGRET ret;
 
     ret = CM_Register_Notification( NULL, NULL, NULL, NULL );
-    todo_wine ok( ret == CR_FAILURE, "Expected 0x13, got %#lx.\n", ret );
+    ok( ret == CR_FAILURE, "Expected 0x13, got %#lx.\n", ret );
 
     ret = CM_Register_Notification( NULL, NULL, NULL, &notify );
-    todo_wine ok( ret == CR_INVALID_DATA, "Expected 0x1f, got %#lx.\n", ret );
+    ok( ret == CR_INVALID_DATA, "Expected 0x1f, got %#lx.\n", ret );
     ok( !notify, "Expected handle to be NULL, got %p\n", notify );
 
     for (i = 0; i < ARRAY_SIZE( test_cases ); i++)
@@ -336,7 +336,7 @@ static void test_CM_Register_Notification( void )
         notify = NULL;
         winetest_push_context( "test_cases %lu", i );
         ret = CM_Register_Notification( &test_cases[i].filter, NULL, notify_callback, &notify );
-        todo_wine ok( test_cases[i].ret == ret, "Expected %#lx, got %#lx\n", test_cases[i].ret, ret );
+        ok( test_cases[i].ret == ret, "Expected %#lx, got %#lx\n", test_cases[i].ret, ret );
         if (test_cases[i].ret)
             ok( !notify, "Expected handle to be NULL, got %p\n", notify );
         if (notify)
