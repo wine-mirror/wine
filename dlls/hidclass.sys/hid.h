@@ -63,6 +63,10 @@ struct func_device
     HANDLE thread;
 
     HID_XFER_PACKET *io_packet;
+    IO_STATUS_BLOCK io;
+    KEVENT io_event;
+    IRP *io_irp;
+
     DEVICE_OBJECT **child_pdos;
     UINT child_count;
 };

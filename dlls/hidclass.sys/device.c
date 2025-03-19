@@ -316,16 +316,15 @@ DWORD CALLBACK hid_device_thread(void *args)
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
     struct func_device *fdo = fdo_from_DEVICE_OBJECT( device );
     HIDP_REPORT_IDS *report;
-    IO_STATUS_BLOCK io;
     NTSTATUS status;
-    IRP *irp;
 
     do
     {
         LARGE_INTEGER delay = {.QuadPart = (LONGLONG)fdo->poll_interval * -10000};
         HID_XFER_PACKET packet = *fdo->io_packet;
         BYTE *buffer = packet.reportBuffer;
-        KEVENT irp_event;
+        KEVENT *io_event = &fdo->io_event;
+        IO_STATUS_BLOCK *io = &fdo->io;
 
         if (!(packet.reportBuffer[0] = packet.reportId))
         {
@@ -333,23 +332,24 @@ DWORD CALLBACK hid_device_thread(void *args)
             packet.reportBufferLen--;
         }
 
-        KeInitializeEvent( &irp_event, NotificationEvent, FALSE );
-        irp = IoBuildDeviceIoControlRequest( IOCTL_HID_READ_REPORT, device, NULL, 0, packet.reportBuffer,
-                                             packet.reportBufferLen, TRUE, &irp_event, &io );
-        if (IoCallDriver( device, irp ) == STATUS_PENDING)
+        KeInitializeEvent( io_event, NotificationEvent, FALSE );
+        fdo->io_irp = IoBuildDeviceIoControlRequest( IOCTL_HID_READ_REPORT, device, NULL, 0, packet.reportBuffer,
+                                                     packet.reportBufferLen, TRUE, io_event, io );
+        if (IoCallDriver( device, fdo->io_irp ) == STATUS_PENDING)
         {
-            void *events[2] = {&irp_event, &fdo->halt_event};
+            void *events[2] = {io_event, &fdo->halt_event};
             status = KeWaitForMultipleObjects( 2, events, WaitAny, Executive, KernelMode, FALSE, NULL, NULL );
             if (status) break;
         }
+        fdo->io_irp = NULL;
 
-        if (io.Status == STATUS_SUCCESS)
+        if (io->Status == STATUS_SUCCESS)
         {
-            if (!packet.reportId) io.Information++;
+            if (!packet.reportId) io->Information++;
             if (!(report = find_report_with_type_and_id( &fdo->device_desc, 0, HidP_Input, buffer[0], FALSE )))
                 ERR( "dropping unknown input id %u\n", buffer[0] );
-            else if (!fdo->poll_interval && io.Information < report->InputLength)
-                ERR( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
+            else if (!fdo->poll_interval && io->Information < report->InputLength)
+                ERR( "dropping short report, len %Iu expected %u\n", io->Information, report->InputLength );
             else if (!report->CollectionNumber || report->CollectionNumber > fdo->child_count)
                 ERR( "dropping report for unknown child %u\n", report->CollectionNumber );
             else
@@ -357,7 +357,7 @@ DWORD CALLBACK hid_device_thread(void *args)
                 struct phys_device *pdo = pdo_from_DEVICE_OBJECT( fdo->child_pdos[report->CollectionNumber - 1] );
                 packet.reportId = buffer[0];
                 packet.reportBuffer = buffer;
-                packet.reportBufferLen = io.Information;
+                packet.reportBufferLen = io->Information;
                 hid_device_queue_input( pdo, &packet, !!fdo->poll_interval );
             }
         }

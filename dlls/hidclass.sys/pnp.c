@@ -407,6 +407,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             }
 
             if ((status = minidriver->PNPDispatch( device, irp ))) return status;
+            if (fdo->io_irp) KeWaitForSingleObject( &fdo->io_event, Executive, KernelMode, FALSE, NULL );
             free( fdo->io_packet );
 
             HidP_FreeCollectionDescription( &fdo->device_desc );
