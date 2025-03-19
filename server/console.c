@@ -53,6 +53,7 @@ struct history_line
 struct console
 {
     struct object                obj;           /* object header */
+    struct event_sync           *sync;          /* sync object for wait/signal */
     int                          signaled;      /* is console signaled */
     struct thread               *renderer;      /* console renderer thread */
     struct screen_buffer        *active;        /* active screen buffer */
@@ -68,26 +69,25 @@ struct console
 
 static void console_dump( struct object *obj, int verbose );
 static void console_destroy( struct object *obj );
-static int console_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_get_fd( struct object *obj );
+static struct object *console_get_sync( struct object *obj );
 static struct object *console_lookup_name( struct object *obj, struct unicode_str *name,
                                            unsigned int attr, struct object *root );
 static struct object *console_open_file( struct object *obj, unsigned int access,
                                          unsigned int sharing, unsigned int options );
-static int console_add_queue( struct object *obj, struct wait_queue_entry *entry );
 
 static const struct object_ops console_ops =
 {
     sizeof(struct console),           /* size */
     &file_type,                       /* type */
     console_dump,                     /* dump */
-    console_add_queue,                /* add_queue */
-    remove_queue,                     /* remove_queue */
-    console_signaled,                 /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     console_get_fd,                   /* get_fd */
-    default_get_sync,                 /* get_sync */
+    console_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -479,10 +479,18 @@ static const struct fd_ops console_connection_fd_ops =
 static int queue_host_ioctl( struct console_server *server, unsigned int code, unsigned int output,
                              struct async *async, struct async_queue *queue );
 
-static int console_add_queue( struct object *obj, struct wait_queue_entry *entry )
+static struct fd *console_get_fd( struct object *obj )
 {
-    struct console *console = (struct console*)obj;
+    struct console *console = (struct console *)obj;
     assert( obj->ops == &console_ops );
+    return (struct fd *)grab_object( console->fd );
+}
+
+static struct object *console_get_sync( struct object *obj )
+{
+    struct console *console = (struct console *)obj;
+    assert( obj->ops == &console_ops );
+
     /* before waiting, ensure conhost's input thread has been started */
     if (console->server && !console->server->once_input)
     {
@@ -490,20 +498,8 @@ static int console_add_queue( struct object *obj, struct wait_queue_entry *entry
         if (console->server->term_fd == -1)
             queue_host_ioctl( console->server, IOCTL_CONDRV_PEEK, 0, NULL, NULL );
     }
-    return add_queue( &console->obj, entry );
-}
 
-static int console_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct console *console = (struct console*)obj;
-    return console->signaled;
-}
-
-static struct fd *console_get_fd( struct object *obj )
-{
-    struct console *console = (struct console *)obj;
-    assert( obj->ops == &console_ops );
-    return (struct fd *)grab_object( console->fd );
+    return grab_object( console->sync );
 }
 
 static enum server_fd_type console_get_fd_type( struct fd *fd )
@@ -542,9 +538,8 @@ static struct object *create_console(void)
 {
     struct console *console;
 
-    if (!(console = alloc_object( &console_ops )))
-        return NULL;
-
+    if (!(console = alloc_object( &console_ops ))) return NULL;
+    console->sync          = NULL;
     console->renderer      = NULL;
     console->signaled      = 0;
     console->active        = NULL;
@@ -557,14 +552,14 @@ static struct object *create_console(void)
     init_async_queue( &console->ioctl_q );
     init_async_queue( &console->read_q );
 
-    console->fd = alloc_pseudo_fd( &console_fd_ops, &console->obj, FILE_SYNCHRONOUS_IO_NONALERT );
-    if (!console->fd)
-    {
-        release_object( console );
-        return NULL;
-    }
+    if (!(console->sync = create_event_sync( 1, 0 ))) goto error;
+    if (!(console->fd = alloc_pseudo_fd( &console_fd_ops, &console->obj, FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
     allow_fd_caching( console->fd );
     return &console->obj;
+
+error:
+    release_object( console );
+    return NULL;
 }
 
 static void console_host_ioctl_terminate( struct console_host_ioctl *call, unsigned int status )
@@ -780,6 +775,8 @@ static void console_destroy( struct object *obj )
 
     LIST_FOR_EACH_ENTRY( output, &console->outputs, struct console_output, entry )
         output->console = NULL;
+
+    if (console->sync) release_object( console->sync );
 
     free_async_queue( &console->ioctl_q );
     free_async_queue( &console->read_q );
@@ -1583,11 +1580,15 @@ DECL_HANDLER(get_next_console_request)
 
     if (!server->console->renderer) server->console->renderer = current;
 
-    if (!req->signal) server->console->signaled = 0;
+    if (!req->signal)
+    {
+        server->console->signaled = 0;
+        reset_sync( server->console->sync );
+    }
     else if (!server->console->signaled)
     {
         server->console->signaled = 1;
-        wake_up( &server->console->obj, 0 );
+        signal_sync( server->console->sync );
         LIST_FOR_EACH_ENTRY( screen_buffer, &server->console->screen_buffers, struct screen_buffer, entry )
             wake_up( &screen_buffer->obj, 0 );
         LIST_FOR_EACH_ENTRY( input, &server->console->inputs, struct console_input, entry )
