@@ -135,6 +135,7 @@ struct console_host_ioctl
 struct console_server
 {
     struct object         obj;            /* object header */
+    struct event_sync    *sync;           /* sync object for wait/signal */
     struct fd            *fd;             /* pseudo-fd for ioctls */
     struct console       *console;        /* attached console */
     struct list           queue;          /* ioctl queue */
@@ -147,8 +148,8 @@ struct console_server
 
 static void console_server_dump( struct object *obj, int verbose );
 static void console_server_destroy( struct object *obj );
-static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *console_server_get_fd( struct object *obj );
+static struct object *console_server_get_sync( struct object *obj );
 static struct object *console_server_lookup_name( struct object *obj, struct unicode_str *name,
                                                 unsigned int attr, struct object *root );
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
@@ -159,13 +160,13 @@ static const struct object_ops console_server_ops =
     sizeof(struct console_server),    /* size */
     &file_type,                       /* type */
     console_server_dump,              /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    console_server_signaled,          /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     console_server_get_fd,            /* get_fd */
-    default_get_sync,                 /* get_sync */
+    console_server_get_sync,          /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -587,7 +588,7 @@ static int queue_host_ioctl( struct console_server *server, unsigned int code, u
         queue_async( queue, async );
     }
     list_add_tail( &server->queue, &ioctl->entry );
-    wake_up( &server->obj, 0 );
+    signal_sync( server->sync );
     if (async) set_error( STATUS_PENDING );
     return 1;
 }
@@ -619,7 +620,7 @@ static void disconnect_console_server( struct console_server *server )
         assert( server->console->server == server );
         server->console->server = NULL;
         server->console = NULL;
-        wake_up( &server->obj, 0 );
+        signal_sync( server->sync );
     }
 }
 
@@ -895,6 +896,7 @@ static void console_server_destroy( struct object *obj )
     struct console_server *server = (struct console_server *)obj;
     assert( obj->ops == &console_server_ops );
     disconnect_console_server( server );
+    if (server->sync) release_object( server->sync );
     if (server->fd) release_object( server->fd );
 }
 
@@ -930,17 +932,11 @@ static struct object *console_server_lookup_name( struct object *obj, struct uni
         release_object( screen_buffer );
         server->console->server = server;
 
+        if (list_empty( &server->queue )) reset_sync( server->sync );
         return &server->console->obj;
     }
 
     return NULL;
-}
-
-static int console_server_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct console_server *server = (struct console_server*)obj;
-    assert( obj->ops == &console_server_ops );
-    return !server->console || !list_empty( &server->queue );
 }
 
 static struct fd *console_server_get_fd( struct object* obj )
@@ -948,6 +944,13 @@ static struct fd *console_server_get_fd( struct object* obj )
     struct console_server *server = (struct console_server*)obj;
     assert( obj->ops == &console_server_ops );
     return (struct fd *)grab_object( server->fd );
+}
+
+static struct object *console_server_get_sync( struct object *obj )
+{
+    struct console_server *server = (struct console_server *)obj;
+    assert( obj->ops == &console_server_ops );
+    return grab_object( server->sync );
 }
 
 static struct object *console_server_open_file( struct object *obj, unsigned int access,
@@ -961,21 +964,23 @@ static struct object *create_console_server( void )
     struct console_server *server;
 
     if (!(server = alloc_object( &console_server_ops ))) return NULL;
+    server->sync       = NULL;
+    server->fd         = NULL;
     server->console    = NULL;
     server->busy       = 0;
     server->once_input = 0;
     server->term_fd    = -1;
     list_init( &server->queue );
     list_init( &server->read_queue );
-    server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT );
-    if (!server->fd)
-    {
-        release_object( server );
-        return NULL;
-    }
-    allow_fd_caching(server->fd);
 
+    if (!(server->sync = create_event_sync( 1, 1 ))) goto error;
+    if (!(server->fd = alloc_pseudo_fd( &console_server_fd_ops, &server->obj, FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
+    allow_fd_caching(server->fd);
     return &server->obj;
+
+error:
+    release_object( server );
+    return NULL;
 }
 
 static int is_blocking_read_ioctl( unsigned int code )
@@ -1639,11 +1644,7 @@ DECL_HANDLER(get_next_console_request)
         free( ioctl );
         if (iosb) release_object( iosb );
 
-        if (req->read)
-        {
-            release_object( server );
-            return;
-        }
+        if (req->read) goto done;
         server->busy = 0;
     }
 
@@ -1702,5 +1703,7 @@ DECL_HANDLER(get_next_console_request)
         set_error( STATUS_PENDING );
     }
 
+done:
+    if (list_empty( &server->queue )) reset_sync( server->sync );
     release_object( server );
 }
