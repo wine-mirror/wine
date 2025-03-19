@@ -156,14 +156,14 @@ static const char *target_alias;
 static const char *target_version;
 static struct target target;
 
-enum processor { proc_cc, proc_cxx, proc_cpp, proc_as };
+static enum processor { proc_cc, proc_cxx, proc_cpp } processor = proc_cc;
+
 enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, file_dll, file_so, file_spec };
 
 static int is_pe;
 
 struct options
 {
-    enum processor processor;
     int shared;
     int use_msvcrt;
     int nostdinc;
@@ -469,12 +469,11 @@ static struct strarray build_tool_name( struct options *opts, const char *target
 
 static struct strarray get_translator(struct options *opts)
 {
-    switch(opts->processor)
+    switch(processor)
     {
     case proc_cpp:
         return build_tool_name( opts, target_alias, WINEGCC_TOOL_CPP );
     case proc_cc:
-    case proc_as:
         return build_tool_name( opts, target_alias, WINEGCC_TOOL_CC );
     case proc_cxx:
         return build_tool_name( opts, target_alias, WINEGCC_TOOL_CXX );
@@ -784,7 +783,7 @@ static struct strarray get_compat_defines( const struct options *opts, int gcc_d
 {
     struct strarray args = empty_strarray;
 
-    if (opts->processor != proc_cpp)
+    if (processor != proc_cpp)
     {
 	if (gcc_defs && !wine_objdir && !opts->noshortwchar)
 	{
@@ -876,10 +875,9 @@ static void compile( struct options *opts, struct strarray files, const char* la
 
     if (opts->force_pointer_size)
         strarray_add( &comp_args, strmake("-m%u", 8 * opts->force_pointer_size ) );
-    switch(opts->processor)
+    switch(processor)
     {
 	case proc_cpp: gcc_defs = 1; break;
-	case proc_as:  gcc_defs = 0; break;
 	/* Note: if the C compiler is gcc we assume the C++ compiler is too */
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
@@ -1648,9 +1646,9 @@ int main(int argc, char **argv)
     opts.pic = 1;
 
     /* determine the processor type */
-    if (strendswith(argv[0], "winecpp")) opts.processor = proc_cpp;
-    else if (strendswith(argv[0], "++")) opts.processor = proc_cxx;
-    
+    if (strendswith(argv[0], "winecpp")) processor = proc_cpp;
+    else if (strendswith(argv[0], "++")) processor = proc_cxx;
+
     for (i = 1; i < argc; i++)
     {
         char *input_buffer = NULL, *iter, *opt, *out;
@@ -2086,7 +2084,7 @@ int main(int argc, char **argv)
     }
 
     if (opts.force_pointer_size) set_target_ptr_size( &target, opts.force_pointer_size );
-    if (opts.processor == proc_cpp) linking = 0;
+    if (processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
     is_pe = is_pe_target( target );
