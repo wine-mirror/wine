@@ -58,26 +58,6 @@ struct device
             DEVICE_OBJECT **child_pdos;
             UINT child_count;
         } fdo;
-
-        struct
-        {
-            DEVICE_OBJECT *parent_fdo;
-
-            HIDP_COLLECTION_DESC *collection_desc;
-            HID_COLLECTION_INFORMATION information;
-
-            UINT32 rawinput_handle;
-            UNICODE_STRING link_name;
-
-            KSPIN_LOCK lock;
-            struct list queues;
-            BOOL removed;
-
-            BOOL is_mouse;
-            UNICODE_STRING mouse_link_name;
-            BOOL is_keyboard;
-            UNICODE_STRING keyboard_link_name;
-        } pdo;
     } u;
 
     /* These are unique to the parent FDO, but stored in the children as well
@@ -90,9 +70,31 @@ struct device
     BOOL is_fdo;
 };
 
-static inline struct device *impl_from_DEVICE_OBJECT( DEVICE_OBJECT *device )
+struct phys_device
 {
-    return (struct device *)device->DeviceExtension;
+    struct device base;
+    DEVICE_OBJECT *parent_fdo;
+
+    HIDP_COLLECTION_DESC *collection_desc;
+    HID_COLLECTION_INFORMATION information;
+
+    UINT32 rawinput_handle;
+    UNICODE_STRING link_name;
+
+    KSPIN_LOCK lock;
+    struct list queues;
+    BOOL removed;
+
+    BOOL is_mouse;
+    UNICODE_STRING mouse_link_name;
+    BOOL is_keyboard;
+    UNICODE_STRING keyboard_link_name;
+};
+
+static inline struct phys_device *pdo_from_DEVICE_OBJECT( DEVICE_OBJECT *device )
+{
+    struct device *impl = device->DeviceExtension;
+    return CONTAINING_RECORD( impl, struct phys_device, base );
 }
 
 struct hid_report
