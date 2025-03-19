@@ -150,6 +150,7 @@ static const char *bindir;
 static const char *libdir;
 static const char *includedir;
 static const char *wine_objdir;
+static const char *winebuild;
 static const char *lib_suffix;
 static const char *sysroot;
 static const char *isysroot;
@@ -188,7 +189,6 @@ struct options
     int pic;
     int no_default_config;
     int build_id;
-    const char* winebuild;
     const char* image_base;
     const char* section_align;
     const char* file_align;
@@ -967,22 +967,11 @@ static const char* compile_to_object(struct options* opts, const char* file, con
 /* return the initial set of options needed to run winebuild */
 static struct strarray get_winebuild_args( struct options *opts, const char *target )
 {
-    const char* winebuild = getenv("WINEBUILD");
-    const char *binary = NULL;
+    const char *binary;
     struct strarray spec_args = empty_strarray;
     unsigned int i;
 
-    if (opts->winebuild)
-        binary = opts->winebuild;
-    else if (wine_objdir)
-        binary = strmake( "%s/tools/winebuild/winebuild%s", wine_objdir, EXEEXT );
-    else if (winebuild)
-        binary = find_binary( winebuild );
-    else if (bindir)
-        binary = strmake( "%s/winebuild%s", bindir, EXEEXT );
-    else
-        binary = find_binary( "winebuild" );
-    if (!binary) error( "Could not find winebuild\n" );
+    if (!(binary = find_binary( winebuild ))) error( "Could not find winebuild\n" );
     strarray_add( &spec_args, binary );
     if (verbose) strarray_add( &spec_args, "-v" );
     if (keep_generated) strarray_add( &spec_args, "--save-temps" );
@@ -2039,7 +2028,7 @@ int main(int argc, char **argv)
                     }
                     else if (is_option( args, i, "--winebuild", &option_arg ))
                     {
-                        opts.winebuild = option_arg;
+                        winebuild = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (is_option( args, i, "--lib-suffix", &option_arg ))
@@ -2085,6 +2074,16 @@ int main(int argc, char **argv)
 
     is_pe = is_pe_target( target );
     if (is_pe) opts.use_msvcrt = 1;
+
+    if (!winebuild)
+    {
+        if (wine_objdir) winebuild = strmake( "%s/tools/winebuild/winebuild%s", wine_objdir, EXEEXT );
+        else if (!(winebuild = getenv( "WINEBUILD" )))
+        {
+            if (bindir) winebuild = strmake( "%s/winebuild%s", bindir, EXEEXT );
+            else winebuild = "winebuild";
+        }
+    }
 
     if (files.count == 0 && !opts.fake_module) forward(&opts);
     else if (linking) build(&opts, files, output_name);
