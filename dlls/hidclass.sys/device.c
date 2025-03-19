@@ -314,7 +314,7 @@ static HIDP_REPORT_IDS *find_report_with_type_and_id( HIDP_DEVICE_DESC *desc, UC
 DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    struct device *ext = device->DeviceExtension;
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT( device );
     ULONG i, input_length = 0, report_id = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
@@ -324,23 +324,23 @@ DWORD CALLBACK hid_device_thread(void *args)
     BYTE *buffer;
     IRP *irp;
 
-    for (i = 0; i < ext->u.fdo.device_desc.CollectionDescLength; i++)
+    for (i = 0; i < fdo->device_desc.CollectionDescLength; i++)
     {
-        HIDP_COLLECTION_DESC *desc = ext->u.fdo.device_desc.CollectionDesc + i;
+        HIDP_COLLECTION_DESC *desc = fdo->device_desc.CollectionDesc + i;
         input_length = max(input_length, desc->InputLength);
     }
 
     packet = malloc( sizeof(*packet) + input_length );
     buffer = (BYTE *)(packet + 1);
 
-    desc = &ext->u.fdo.device_desc;
+    desc = &fdo->device_desc;
     report = find_report_with_type_and_id( desc, 0, HidP_Input, 0, TRUE );
     if (!report) WARN("no input report found.\n");
     else report_id = report->ReportID;
 
     do
     {
-        LARGE_INTEGER delay = {.QuadPart = (LONGLONG)ext->u.fdo.poll_interval * -10000};
+        LARGE_INTEGER delay = {.QuadPart = (LONGLONG)fdo->poll_interval * -10000};
         KEVENT irp_event;
 
         packet->reportId = buffer[0] = report_id;
@@ -358,7 +358,7 @@ DWORD CALLBACK hid_device_thread(void *args)
                                              packet->reportBufferLen, TRUE, &irp_event, &io );
         if (IoCallDriver( device, irp ) == STATUS_PENDING)
         {
-            void *events[2] = {&irp_event, &ext->u.fdo.halt_event};
+            void *events[2] = {&irp_event, &fdo->halt_event};
             status = KeWaitForMultipleObjects( 2, events, WaitAny, Executive, KernelMode, FALSE, NULL, NULL );
             if (status) break;
         }
@@ -368,21 +368,21 @@ DWORD CALLBACK hid_device_thread(void *args)
             if (!report_id) io.Information++;
             if (!(report = find_report_with_type_and_id( desc, 0, HidP_Input, buffer[0], FALSE )))
                 ERR( "dropping unknown input id %u\n", buffer[0] );
-            else if (!ext->u.fdo.poll_interval && io.Information < report->InputLength)
+            else if (!fdo->poll_interval && io.Information < report->InputLength)
                 ERR( "dropping short report, len %Iu expected %u\n", io.Information, report->InputLength );
-            else if (!report->CollectionNumber || report->CollectionNumber > ext->u.fdo.child_count)
+            else if (!report->CollectionNumber || report->CollectionNumber > fdo->child_count)
                 ERR( "dropping report for unknown child %u\n", report->CollectionNumber );
             else
             {
-                struct phys_device *pdo = pdo_from_DEVICE_OBJECT( ext->u.fdo.child_pdos[report->CollectionNumber - 1] );
+                struct phys_device *pdo = pdo_from_DEVICE_OBJECT( fdo->child_pdos[report->CollectionNumber - 1] );
                 packet->reportId = buffer[0];
                 packet->reportBuffer = buffer;
                 packet->reportBufferLen = io.Information;
-                hid_device_queue_input( pdo, packet, !!ext->u.fdo.poll_interval );
+                hid_device_queue_input( pdo, packet, !!fdo->poll_interval );
             }
         }
 
-        status = KeWaitForSingleObject( &ext->u.fdo.halt_event, Executive, KernelMode, FALSE, &delay );
+        status = KeWaitForSingleObject( &fdo->halt_event, Executive, KernelMode, FALSE, &delay );
     } while (status == STATUS_TIMEOUT);
 
     if (status) WARN( "device thread exiting with status %#lx\n", status );
@@ -459,8 +459,8 @@ static NTSTATUS hid_device_xfer_report( struct phys_device *pdo, ULONG code, IRP
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG offset, report_len = 0, buffer_len = 0, collection = pdo->collection_desc->CollectionNumber;
-    struct device *fdo_ext = pdo->parent_fdo->DeviceExtension;
-    HIDP_DEVICE_DESC *desc = &fdo_ext->u.fdo.device_desc;
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT( pdo->parent_fdo );
+    HIDP_DEVICE_DESC *desc = &fdo->device_desc;
     struct completion_params *params;
     HIDP_REPORT_IDS *report = NULL;
     BYTE *buffer = NULL;
@@ -572,8 +572,8 @@ NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
                 status = STATUS_BUFFER_OVERFLOW;
             else
             {
-                struct device *ext = pdo->parent_fdo->DeviceExtension;
-                *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.fdo.poll_interval;
+                struct func_device *fdo = fdo_from_DEVICE_OBJECT( pdo->parent_fdo );
+                *(ULONG *)irp->AssociatedIrp.SystemBuffer = fdo->poll_interval;
                 irp->IoStatus.Information = sizeof(ULONG);
                 status = STATUS_SUCCESS;
             }
@@ -585,9 +585,9 @@ NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
                 status = STATUS_BUFFER_TOO_SMALL;
             else
             {
-                struct device *ext = pdo->parent_fdo->DeviceExtension;
+                struct func_device *fdo = fdo_from_DEVICE_OBJECT( pdo->parent_fdo );
                 poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
-                if (poll_interval) ext->u.fdo.poll_interval = min( poll_interval, MAX_POLL_INTERVAL_MSEC );
+                if (poll_interval) fdo->poll_interval = min( poll_interval, MAX_POLL_INTERVAL_MSEC );
                 status = STATUS_SUCCESS;
             }
             break;
