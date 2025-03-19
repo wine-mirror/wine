@@ -175,7 +175,6 @@ struct options
     int gui_app;
     int unicode_app;
     int win16_app;
-    int compile_only;
     int force_pointer_size;
     int large_address_aware;
     int wine_builtin;
@@ -186,7 +185,6 @@ struct options
     int no_default_config;
     int build_id;
     const char* winebuild;
-    const char* output_name;
     const char* image_base;
     const char* section_align;
     const char* file_align;
@@ -867,7 +865,8 @@ static struct strarray get_compat_defines( const struct options *opts, int gcc_d
     return args;
 }
 
-static void compile(struct options* opts, struct strarray files, const char* lang)
+static void compile( struct options *opts, struct strarray files, const char* lang,
+                     const char *output_name, int compile_only )
 {
     struct strarray comp_args = get_translator(opts);
     unsigned int i, j;
@@ -904,12 +903,12 @@ static void compile(struct options* opts, struct strarray files, const char* lan
     strarray_add(&comp_args, "-D__WINE__");
 
     /* options we handle explicitly */
-    if (opts->compile_only)
+    if (compile_only)
 	strarray_add(&comp_args, "-c");
-    if (opts->output_name)
+    if (output_name)
     {
 	strarray_add(&comp_args, "-o");
-	strarray_add(&comp_args, opts->output_name);
+	strarray_add(&comp_args, output_name);
     }
 
     /* the rest of the pass-through parameters */
@@ -964,17 +963,12 @@ static void compile(struct options* opts, struct strarray files, const char* lan
 
 static const char* compile_to_object(struct options* opts, const char* file, const char* lang)
 {
-    struct options copts;
+    char *output_name = make_temp_file(get_basename_noext(file), ".o");
     struct strarray files = empty_strarray;
 
-    /* make a copy so we don't change any of the initial stuff */
-    /* a shallow copy is exactly what we want in this case */
-    copts = *opts;
-    copts.output_name = make_temp_file(get_basename_noext(file), ".o");
-    copts.compile_only = 1;
     strarray_add(&files, file);
-    compile(&copts, files, lang);
-    return copts.output_name;
+    compile(opts, files, lang, output_name, 1);
+    return output_name;
 }
 
 /* return the initial set of options needed to run winebuild */
@@ -1234,7 +1228,7 @@ static void build_data_lib( struct options *opts, const char *spec_file, const c
     spawn(opts->prefix, spec_args, 0);
 }
 
-static void build(struct options* opts, struct strarray input_files)
+static void build(struct options* opts, struct strarray input_files, const char *output)
 {
     struct strarray resources = empty_strarray;
     struct strarray spec_objs = empty_strarray;
@@ -1258,7 +1252,7 @@ static void build(struct options* opts, struct strarray input_files)
      *    -xlll:  lll is the language (c, c++, etc.)
      */
 
-    output_file = xstrdup( opts->output_name ? opts->output_name : "a.out" );
+    output_file = xstrdup( output ? output : "a.out" );
 
     /* 'winegcc -o app xxx.exe.so' only creates the load script */
     if (input_files.count == 1 && strendswith(input_files.str[0], ".exe.so"))
@@ -1631,8 +1625,10 @@ int main(int argc, char **argv)
 {
     int i, c, next_is_arg = 0, linking = 1;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
+    int compile_only = 0;
     struct strarray args = empty_strarray;
     struct strarray files = empty_strarray;
+    const char *output_name = NULL;
     const char* option_arg;
     struct options opts;
     char* lang = 0;
@@ -1782,7 +1778,7 @@ int main(int argc, char **argv)
                     break;
                 case 'c':        /* compile or assemble */
                     raw_compiler_arg = 0;
-		    if (args.str[i][2] == 0) opts.compile_only = 1;
+		    if (args.str[i][2] == 0) compile_only = 1;
 		    /* fall through */
                 case 'S':        /* generate assembler code */
                 case 'E':        /* preprocess only */
@@ -1888,7 +1884,7 @@ int main(int argc, char **argv)
                         opts.nostartfiles = 1;
                     break;
 		case 'o':
-		    opts.output_name = option_arg;
+		    output_name = option_arg;
                     raw_compiler_arg = 0;
 		    break;
                 case 'p':
@@ -2097,8 +2093,8 @@ int main(int argc, char **argv)
     if (is_pe) opts.use_msvcrt = 1;
 
     if (files.count == 0 && !opts.fake_module) forward(&opts);
-    else if (linking) build(&opts, files);
-    else compile(&opts, files, lang);
+    else if (linking) build(&opts, files, output_name);
+    else compile(&opts, files, lang, output_name, compile_only);
 
     output_file_name = NULL;
     output_debug_file = NULL;
