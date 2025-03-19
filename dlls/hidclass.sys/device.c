@@ -218,7 +218,7 @@ static struct hid_report *hid_queue_pop_report( struct hid_queue *queue )
 
 static void hid_device_queue_input( DEVICE_OBJECT *device, HID_XFER_PACKET *packet, BOOL polled )
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
     ULONG size, report_len = polled ? packet->reportBufferLen : desc->InputLength;
     struct hid_report *last_report, *report;
@@ -315,7 +315,7 @@ static HIDP_REPORT_IDS *find_report_with_type_and_id( HIDP_DEVICE_DESC *desc, UC
 DWORD CALLBACK hid_device_thread(void *args)
 {
     DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     ULONG i, input_length = 0, report_id = 0;
     HIDP_REPORT_IDS *report;
     HID_XFER_PACKET *packet;
@@ -456,11 +456,11 @@ static NTSTATUS CALLBACK xfer_completion( DEVICE_OBJECT *device, IRP *irp, void 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
+static NTSTATUS hid_device_xfer_report( struct device *ext, ULONG code, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG offset, report_len = 0, buffer_len = 0, collection = ext->u.pdo.collection_desc->CollectionNumber;
-    BASE_DEVICE_EXTENSION *fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
+    struct device *fdo_ext = ext->u.pdo.parent_fdo->DeviceExtension;
     HIDP_DEVICE_DESC *desc = &fdo_ext->u.fdo.device_desc;
     struct completion_params *params;
     HIDP_REPORT_IDS *report = NULL;
@@ -544,7 +544,7 @@ static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     NTSTATUS status = irp->IoStatus.Status;
     ULONG code, index;
     const WCHAR *str;
@@ -710,7 +710,7 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
 {
     struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
     struct hid_report *report;
@@ -753,7 +753,7 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
 
 NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     NTSTATUS status = hid_device_xfer_report( ext, IOCTL_HID_WRITE_REPORT, irp );
     if (status != STATUS_PENDING)
     {
@@ -765,7 +765,7 @@ NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp)
 
 NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     struct hid_queue *queue;
     BOOL removed;
     KIRQL irql;
@@ -801,7 +801,7 @@ NTSTATUS WINAPI pdo_create(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI pdo_close(DEVICE_OBJECT *device, IRP *irp)
 {
     struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     BOOL removed;
     KIRQL irql;
 

@@ -111,7 +111,7 @@ static UINT32 alloc_rawinput_handle(void)
 /* make sure bRawData can hold UsagePage and Usage without requiring additional allocation */
 C_ASSERT(offsetof(RAWINPUT, data.hid.bRawData[2 * sizeof(USAGE)]) < sizeof(RAWINPUT));
 
-static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param)
+static void send_wm_input_device_change(struct device *ext, LPARAM param)
 {
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
     INPUT input = {.type = INPUT_HARDWARE};
@@ -133,7 +133,7 @@ static void send_wm_input_device_change(BASE_DEVICE_EXTENSION *ext, LPARAM param
 static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *bus_pdo)
 {
     WCHAR device_id[MAX_DEVICE_ID_LEN], instance_id[MAX_DEVICE_ID_LEN];
-    BASE_DEVICE_EXTENSION *ext;
+    struct device *ext;
     BOOL is_xinput_class;
     DEVICE_OBJECT *fdo;
     NTSTATUS status;
@@ -217,7 +217,7 @@ static NTSTATUS get_hid_device_desc( minidriver *minidriver, DEVICE_OBJECT *devi
 
 static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device )
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     ULONG index = HID_STRING_ID_ISERIALNUMBER;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
@@ -257,7 +257,7 @@ static NTSTATUS initialize_device( minidriver *minidriver, DEVICE_OBJECT *device
 
 static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device )
 {
-    BASE_DEVICE_EXTENSION *fdo_ext = device->DeviceExtension, *pdo_ext;
+    struct device *fdo_ext = device->DeviceExtension, *pdo_ext;
     DEVICE_OBJECT *child_pdo;
     UNICODE_STRING string;
     WCHAR pdo_name[255];
@@ -332,7 +332,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     minidriver *minidriver = find_minidriver(device->DriverObject);
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     NTSTATUS status;
 
     TRACE("irp %p, minor function %#x.\n", irp, stack->MinorFunction);
@@ -404,7 +404,7 @@ static WCHAR *query_hardware_ids(DEVICE_OBJECT *device)
     static const WCHAR usage_format[] = L"HID_DEVICE_UP:%04X_U:%04X";
     static const WCHAR hid_format[] = L"HID_DEVICE";
 
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
     HID_COLLECTION_INFORMATION *info = &ext->u.pdo.information;
     WCHAR *dst;
@@ -437,7 +437,7 @@ static WCHAR *query_compatible_ids(DEVICE_OBJECT *device)
 
 static WCHAR *query_device_id(DEVICE_OBJECT *device)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     DWORD size = (wcslen(ext->device_id) + 1) * sizeof(WCHAR);
     WCHAR *dst;
 
@@ -449,7 +449,7 @@ static WCHAR *query_device_id(DEVICE_OBJECT *device)
 
 static WCHAR *query_instance_id(DEVICE_OBJECT *device)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     DWORD size = (wcslen(ext->instance_id) + 1) * sizeof(WCHAR);
     WCHAR *dst;
 
@@ -461,7 +461,7 @@ static WCHAR *query_instance_id(DEVICE_OBJECT *device)
 
 static WCHAR *query_container_id(DEVICE_OBJECT *device)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     DWORD size = (wcslen(ext->container_id) + 1) * sizeof(WCHAR);
     WCHAR *dst;
 
@@ -474,7 +474,7 @@ static WCHAR *query_container_id(DEVICE_OBJECT *device)
 static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
     HIDP_COLLECTION_DESC *desc = ext->u.pdo.collection_desc;
     NTSTATUS status = irp->IoStatus.Status;
     struct hid_queue *queue, *next;
@@ -606,7 +606,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
 
     if (ext->is_fdo)
         return fdo_pnp(device, irp);
@@ -616,7 +616,7 @@ static NTSTATUS WINAPI driver_pnp(DEVICE_OBJECT *device, IRP *irp)
 
 static NTSTATUS WINAPI driver_create(DEVICE_OBJECT *device, IRP *irp)
 {
-    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    struct device *ext = device->DeviceExtension;
 
     if (ext->is_fdo)
     {

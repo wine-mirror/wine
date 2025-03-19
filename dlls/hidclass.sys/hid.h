@@ -39,7 +39,7 @@
 /* Ring buffer functions */
 struct ReportRingBuffer;
 
-typedef struct _BASE_DEVICE_EXTENSION
+struct device
 {
     union
     {
@@ -89,7 +89,12 @@ typedef struct _BASE_DEVICE_EXTENSION
     const GUID *class_guid;
 
     BOOL is_fdo;
-} BASE_DEVICE_EXTENSION;
+};
+
+static inline struct device *impl_from_DEVICE_OBJECT( DEVICE_OBJECT *device )
+{
+    return (struct device *)device->DeviceExtension;
+}
 
 struct hid_report
 {
