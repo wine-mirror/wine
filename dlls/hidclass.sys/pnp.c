@@ -330,6 +330,29 @@ static NTSTATUS create_child_pdos( minidriver *minidriver, DEVICE_OBJECT *device
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS create_device_thread( DEVICE_OBJECT *device )
+{
+    struct func_device *fdo = fdo_from_DEVICE_OBJECT( device );
+    ULONG i, input_length = 0;
+    HIDP_REPORT_IDS *report;
+
+    for (i = 0; i < fdo->device_desc.CollectionDescLength; i++)
+    {
+        HIDP_COLLECTION_DESC *desc = fdo->device_desc.CollectionDesc + i;
+        input_length = max( input_length, desc->InputLength );
+    }
+
+    if (!(fdo->io_packet = malloc( sizeof(*fdo->io_packet) + input_length ))) return STATUS_NO_MEMORY;
+
+    if (!(report = find_report_with_type_and_id( &fdo->device_desc, 0, HidP_Input, 0, TRUE ))) WARN( "no input report found.\n" );
+    fdo->io_packet->reportId = report ? report->ReportID : 0;
+    fdo->io_packet->reportBuffer = (BYTE *)(fdo->io_packet + 1);
+    fdo->io_packet->reportBufferLen = input_length;
+
+    if (!(fdo->thread = CreateThread( NULL, 0, hid_device_thread, device, 0, NULL ))) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
 {
     minidriver *minidriver = find_minidriver(device->DriverObject);
@@ -373,7 +396,7 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
             status = minidriver->PNPDispatch( device, irp );
             if (!status) status = initialize_device( minidriver, device );
             if (!status) status = create_child_pdos( minidriver, device );
-            if (!status) fdo->thread = CreateThread( NULL, 0, hid_device_thread, device, 0, NULL );
+            if (!status) status = create_device_thread( device );
             return status;
 
         case IRP_MN_REMOVE_DEVICE:
@@ -383,7 +406,9 @@ static NTSTATUS fdo_pnp(DEVICE_OBJECT *device, IRP *irp)
                 WaitForSingleObject( fdo->thread, INFINITE );
             }
 
-            status = minidriver->PNPDispatch( device, irp );
+            if ((status = minidriver->PNPDispatch( device, irp ))) return status;
+            free( fdo->io_packet );
+
             HidP_FreeCollectionDescription( &fdo->device_desc );
             free( fdo->child_pdos );
             IoDetachDevice( fdo->base.hid.NextDeviceObject );

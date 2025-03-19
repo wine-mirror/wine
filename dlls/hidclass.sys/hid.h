@@ -62,6 +62,7 @@ struct func_device
     KEVENT halt_event;
     HANDLE thread;
 
+    HID_XFER_PACKET *io_packet;
     DEVICE_OBJECT **child_pdos;
     UINT child_count;
 };
@@ -132,6 +133,8 @@ typedef struct _minidriver
 
 void call_minidriver( ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size,
                       void *out_buff, ULONG out_size, IO_STATUS_BLOCK *io );
+HIDP_REPORT_IDS *find_report_with_type_and_id( HIDP_DEVICE_DESC *desc, UCHAR collection,
+                                               BYTE type, BYTE id, BOOL any_id );
 
 /* Internal device functions */
 DWORD CALLBACK hid_device_thread(void *args);
