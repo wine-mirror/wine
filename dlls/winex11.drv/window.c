@@ -1521,20 +1521,6 @@ static void map_window( HWND hwnd, DWORD new_style )
     release_win_data( data );
 }
 
-
-/***********************************************************************
- *     unmap_window
- */
-static void unmap_window( HWND hwnd )
-{
-    struct x11drv_win_data *data;
-
-    if (!(data = get_win_data( hwnd ))) return;
-    TRACE( "win %p/%lx\n", data->hwnd, data->whole_window );
-    window_set_wm_state( data, WithdrawnState );
-    release_win_data( data );
-}
-
 static UINT window_update_client_state( struct x11drv_win_data *data )
 {
     UINT old_style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), new_style;
@@ -2988,8 +2974,8 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UIN
         if (((swp_flags & SWP_HIDEWINDOW) && !(new_style & WS_VISIBLE)) ||
             (!(new_style & WS_MINIMIZE) && !is_window_rect_mapped( &new_rects->window ) && is_window_rect_mapped( &old_rects.window )))
         {
+            window_set_wm_state( data, WithdrawnState );
             release_win_data( data );
-            unmap_window( hwnd );
             if (was_fullscreen) NtUserClipCursor( NULL );
             if (!(data = get_win_data( hwnd ))) return;
         }
