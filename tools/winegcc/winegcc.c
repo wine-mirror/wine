@@ -167,6 +167,10 @@ enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, fil
 
 static int is_pe;
 
+static struct strarray linker_args;
+static struct strarray compiler_args;
+static struct strarray winebuild_args;
+
 struct options
 {
     int shared;
@@ -195,9 +199,6 @@ struct options
     const char* subsystem;
     const char* entry_point;
     const char* native_arch;
-    struct strarray linker_args;
-    struct strarray compiler_args;
-    struct strarray winebuild_args;
     struct strarray delayimports;
 };
 
@@ -517,7 +518,7 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
     struct strarray link_args = get_translator( opts );
     struct strarray flags = empty_strarray;
 
-    strarray_addall( &link_args, opts->linker_args );
+    strarray_addall( &link_args, linker_args );
 
     if (verbose > 1) strarray_add( &flags, "-v" );
 
@@ -905,7 +906,7 @@ static void compile( struct options *opts, struct strarray files, const char* la
     }
 
     /* the rest of the pass-through parameters */
-    strarray_addall(&comp_args, opts->compiler_args);
+    strarray_addall(&comp_args, compiler_args);
 
     /* the language option, if any */
     if (lang && strcmp(lang, "-xnone"))
@@ -984,7 +985,7 @@ static struct strarray get_winebuild_args( struct options *opts, const char *tar
         strarray_add(&spec_args, strmake("-m%u", 8 * opts->force_pointer_size ));
     for (i = 0; i < prefix_dirs.count; i++)
         strarray_add( &spec_args, strmake( "-B%s", prefix_dirs.str[i] ));
-    strarray_addall( &spec_args, opts->winebuild_args );
+    strarray_addall( &spec_args, winebuild_args );
     return spec_args;
 }
 
@@ -1537,8 +1538,8 @@ static void forward( struct options *opts )
 {
     struct strarray args = get_translator(opts);
 
-    strarray_addall(&args, opts->compiler_args);
-    strarray_addall(&args, opts->linker_args);
+    strarray_addall(&args, compiler_args);
+    strarray_addall(&args, linker_args);
     spawn(args, 0);
 }
 
@@ -1980,7 +1981,7 @@ int main(int argc, char **argv)
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "-static")) linking = -1;
-                            strarray_add(&opts.linker_args, strmake("-Wl,%s",Wl.str[j]));
+                            strarray_add(&linker_args, strmake("-Wl,%s",Wl.str[j]));
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
@@ -1992,7 +1993,7 @@ int main(int argc, char **argv)
                         {
                             if (!strcmp(Wb.str[j], "--data-only")) opts.data_only = 1;
                             if (!strcmp(Wb.str[j], "--fake-module")) opts.fake_module = 1;
-                            else strarray_add( &opts.winebuild_args, Wb.str[j] );
+                            else strarray_add( &winebuild_args, Wb.str[j] );
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
@@ -2042,21 +2043,21 @@ int main(int argc, char **argv)
 	    /* put the arg into the appropriate bucket */
 	    if (raw_linker_arg)
 	    {
-		strarray_add( &opts.linker_args, args.str[i] );
+		strarray_add( &linker_args, args.str[i] );
 		if (next_is_arg && (i + 1 < args.count))
-		    strarray_add( &opts.linker_args, args.str[i + 1] );
+		    strarray_add( &linker_args, args.str[i + 1] );
 	    }
 	    if (raw_compiler_arg)
 	    {
-		strarray_add( &opts.compiler_args, args.str[i] );
+		strarray_add( &compiler_args, args.str[i] );
 		if (next_is_arg && (i + 1 < args.count))
-		    strarray_add( &opts.compiler_args, args.str[i + 1] );
+		    strarray_add( &compiler_args, args.str[i + 1] );
 	    }
             if (raw_winebuild_arg)
             {
-                strarray_add( &opts.winebuild_args, args.str[i] );
+                strarray_add( &winebuild_args, args.str[i] );
 		if (next_is_arg && (i + 1 < args.count))
-		    strarray_add( &opts.winebuild_args, args.str[i + 1] );
+		    strarray_add( &winebuild_args, args.str[i + 1] );
             }
 
 	    /* skip the next token if it's an argument */
