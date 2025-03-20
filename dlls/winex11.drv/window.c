@@ -1168,27 +1168,15 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     if (!X11DRV_DisplayDevices_SupportEventHandlers())
         return;
 
-    if (!xinerama_get_fullscreen_monitors( &data->rects.visible, monitors ))
-        return;
-
-    /* If _NET_WM_FULLSCREEN_MONITORS is not set and the fullscreen monitors are spanning only one
-     * monitor then do not set _NET_WM_FULLSCREEN_MONITORS.
-     *
-     * If _NET_WM_FULLSCREEN_MONITORS is set then the property needs to be updated because it can't
-     * be deleted by sending a _NET_WM_FULLSCREEN_MONITORS client message to the root window
-     * according to the wm-spec version 1.5. Having the window spanning more than two monitors also
-     * needs the property set. In other cases, _NET_WM_FULLSCREEN_MONITORS doesn't need to be set.
-     * What's more, setting _NET_WM_FULLSCREEN_MONITORS adds a constraint on Mutter so that such a
-     * window can't be moved to another monitor by using the Shift+Super+Up/Down/Left/Right
-     * shortcut. So the property should be added only when necessary. */
-    if (monitors[0] == monitors[1] && monitors[1] == monitors[2] && monitors[2] == monitors[3]
-        && !data->net_wm_fullscreen_monitors_set)
-        return;
+    xinerama_get_fullscreen_monitors( &data->rects.visible, monitors );
 
     if (data->pending_state.wm_state == WithdrawnState)
     {
-        XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
-                         XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors, 4 );
+        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %ld,%ld,%ld,%ld serial %lu\n", data->hwnd, data->whole_window,
+               monitors[0], monitors[1], monitors[2], monitors[3], NextRequest( data->display ) );
+        if (monitors[0] == -1) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS) );
+        else XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
+                              XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors, 4 );
     }
     else
     {
@@ -1201,10 +1189,12 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         xev.xclient.format = 32;
         xev.xclient.data.l[4] = 1;
         memcpy( xev.xclient.data.l, monitors, sizeof(monitors) );
-        XSendEvent( data->display, root_window, False,
+
+        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %ld,%ld,%ld,%ld serial %lu\n", data->hwnd, data->whole_window,
+               monitors[0], monitors[1], monitors[2], monitors[3], NextRequest( data->display ) );
+        XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                     SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     }
-    data->net_wm_fullscreen_monitors_set = TRUE;
 }
 
 static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_state )
