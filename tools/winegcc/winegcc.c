@@ -390,66 +390,46 @@ static int spawn(struct strarray args, int ignore_errors)
     return status;
 }
 
-enum tool
-{
-    WINEGCC_TOOL_CC,
-    WINEGCC_TOOL_CXX,
-    WINEGCC_TOOL_CPP,
-    WINEGCC_TOOL_LD,
-    WINEGCC_TOOL_OBJCOPY,
-};
 
-static const struct
+struct tool_names
 {
     const char *base;
     const char *llvm_base;
     const char *deflt;
-} tool_names[] =
-{
-    { "gcc",     "clang --driver-mode=gcc", CC },
-    { "g++",     "clang --driver-mode=g++", CXX },
-    { "cpp",     "clang --driver-mode=cpp", CPP },
-    { "ld",      "ld.lld",                  LD },
-    { "objcopy", "llvm-objcopy" },
 };
 
-static struct strarray build_tool_name( struct options *opts, const char *target_name, enum tool tool )
+static const struct tool_names tool_cc      = { "gcc",     "clang --driver-mode=gcc", CC };
+static const struct tool_names tool_cxx     = { "g++",     "clang --driver-mode=g++", CXX };
+static const struct tool_names tool_cpp     = { "cpp",     "clang --driver-mode=cpp", CPP };
+static const struct tool_names tool_ld      = { "ld",      "ld.lld",                  LD };
+static const struct tool_names tool_objcopy = { "objcopy", "llvm-objcopy" };
+
+static struct strarray build_tool_name( struct options *opts, const char *target_name,
+                                        struct tool_names tool )
 {
-    const char *base = tool_names[tool].base;
-    const char *llvm_base = tool_names[tool].llvm_base;
-    const char *deflt = tool_names[tool].deflt;
-    const char *path;
-    struct strarray ret = empty_strarray;
-    char* str;
+    const char *path, *str;
+    struct strarray ret;
 
     if (target_name && target_version)
-    {
-        str = strmake( "%s-%s-%s", target_name, base, target_version );
-    }
+        str = strmake( "%s-%s-%s", target_name, tool.base, target_version );
     else if (target_name)
-    {
-        str = strmake( "%s-%s", target_name, base );
-    }
+        str = strmake( "%s-%s", target_name, tool.base );
     else if (target_version)
-    {
-        str = strmake("%s-%s", base, target_version);
-    }
+        str = strmake("%s-%s", tool.base, target_version);
     else
-        str = xstrdup((deflt && *deflt) ? deflt : base);
+        str = tool.deflt && *tool.deflt ? tool.deflt : tool.base;
 
     if ((path = find_binary( str ))) return strarray_fromstring( path, " " );
 
-    if (!target_version) str = xstrdup( llvm_base );
-    else str = strmake( "%s-%s", llvm_base, target_version );
-    path = find_binary( str );
-    if (!path)
-    {
-        error( "Could not find %s\n", base );
-        return ret;
-    }
+    if (target_version)
+        str = strmake( "%s-%s", tool.llvm_base, target_version );
+    else
+        str = tool.llvm_base;
+
+    if (!(path = find_binary( str ))) error( "Could not find %s\n", tool.base );
 
     ret = strarray_fromstring( path, " " );
-    if (!strncmp( llvm_base, "clang", 5 ))
+    if (!strncmp( tool.llvm_base, "clang", 5 ))
     {
         if (target_name)
         {
@@ -468,11 +448,11 @@ static struct strarray get_translator(struct options *opts)
     switch(processor)
     {
     case proc_cpp:
-        return build_tool_name( opts, target_alias, WINEGCC_TOOL_CPP );
+        return build_tool_name( opts, target_alias, tool_cpp );
     case proc_cc:
-        return build_tool_name( opts, target_alias, WINEGCC_TOOL_CC );
+        return build_tool_name( opts, target_alias, tool_cc );
     case proc_cxx:
-        return build_tool_name( opts, target_alias, WINEGCC_TOOL_CXX );
+        return build_tool_name( opts, target_alias, tool_cxx );
     }
     assert(0);
     return empty_strarray;
@@ -878,8 +858,8 @@ static void compile( struct options *opts, struct strarray files, const char* la
 	/* mixing different C and C++ compilers isn't supported in configure anyway */
 	case proc_cc:
 	case proc_cxx:
-            gcc = build_tool_name( opts, target_alias, WINEGCC_TOOL_CC );
-            gpp = build_tool_name( opts, target_alias, WINEGCC_TOOL_CXX );
+            gcc = build_tool_name( opts, target_alias, tool_cc );
+            gpp = build_tool_name( opts, target_alias, tool_cxx );
             for ( j = 0; !gcc_defs && j < comp_args.count; j++ )
             {
                 const char *cc = comp_args.str[j];
@@ -1103,11 +1083,11 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
     /* get the filename from the path */
     output_name = get_basename( output_file );
 
-    tool = build_tool_name( opts, target_name, WINEGCC_TOOL_CC );
+    tool = build_tool_name( opts, target_name, tool_cc );
     strarray_add( &spec_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
     if (!is_pe)
     {
-        tool = build_tool_name( opts, target_name, WINEGCC_TOOL_LD );
+        tool = build_tool_name( opts, target_name, tool_ld );
         strarray_add( &spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
     }
 
@@ -1480,7 +1460,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
 
     if (output_debug_file && !strendswith(output_debug_file, ".pdb"))
     {
-        struct strarray tool, objcopy = build_tool_name(opts, target_alias, WINEGCC_TOOL_OBJCOPY);
+        struct strarray tool, objcopy = build_tool_name(opts, target_alias, tool_objcopy);
 
         tool = empty_strarray;
         strarray_addall( &tool, objcopy );
@@ -1511,9 +1491,9 @@ static void build(struct options* opts, struct strarray input_files, const char 
             error("--out-implib requires a .spec or .def file\n");
 
         implib_args = get_winebuild_args( opts, target_alias );
-        tool = build_tool_name( opts, target_alias, WINEGCC_TOOL_CC );
+        tool = build_tool_name( opts, target_alias, tool_cc );
         strarray_add( &implib_args, strmake( "--cc-cmd=%s", strarray_tostring( tool, " " )));
-        tool = build_tool_name( opts, target_alias, WINEGCC_TOOL_LD );
+        tool = build_tool_name( opts, target_alias, tool_ld );
         strarray_add( &implib_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
 
         strarray_add(&implib_args, "--implib");
