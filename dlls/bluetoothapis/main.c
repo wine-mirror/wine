@@ -30,6 +30,7 @@
 
 #include "bthsdpdef.h"
 #include "bluetoothapis.h"
+#include "cfgmgr32.h"
 #include "setupapi.h"
 #include "winioctl.h"
 
@@ -39,6 +40,7 @@
 #include "wine/winebth.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bluetoothapis);
 
@@ -63,6 +65,14 @@ static const char *debugstr_BLUETOOTH_DEVICE_SEARCH_PARAMS( const BLUETOOTH_DEVI
     return wine_dbg_sprintf( "{ %ld %d %d %d %d %d %u %p }", params->dwSize, params->fReturnAuthenticated,
                              params->fReturnRemembered, params->fReturnUnknown, params->fReturnConnected,
                              params->fIssueInquiry, params->cTimeoutMultiplier, params->hRadio );
+}
+
+static const char *debugstr_addr( const BYTE *addr )
+{
+    if (!addr)
+        return wine_dbg_sprintf( "(null)" );
+
+    return wine_dbg_sprintf( "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
 }
 
 static BOOL radio_set_inquiry( HANDLE radio, BOOL enable )
@@ -648,22 +658,212 @@ BOOL WINAPI BluetoothFindNextDevice( HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVI
     return success;
 }
 
+struct bluetooth_auth_listener
+{
+    struct list entry;
+
+    unsigned int all_devices : 1;
+    BLUETOOTH_ADDRESS addr;
+
+    PFN_AUTHENTICATION_CALLBACK_EX callback;
+
+    void *user_data;
+};
+
+static const char *debugstr_bluetooth_auth_listener( const struct bluetooth_auth_listener *listener )
+{
+    if (!listener)
+        return wine_dbg_sprintf( "(null)" );
+    if (listener->all_devices)
+        return wine_dbg_sprintf( "{ all_devices=1 %p %p }", listener->callback, listener->user_data );
+    return wine_dbg_sprintf( "{ all_devices=0 %s %p %p }", debugstr_addr( listener->addr.rgBytes ),
+                             listener->callback, listener->user_data );
+}
+
+static SRWLOCK bluetooth_auth_lock = SRWLOCK_INIT;
+static struct list bluetooth_auth_listeners = LIST_INIT( bluetooth_auth_listeners ); /* Guarded by bluetooth_auth_lock */
+static HCMNOTIFICATION bluetooth_auth_event_notify; /* Guarded by bluetooth_auth_lock */
+
+struct auth_callback_data
+{
+    PFN_AUTHENTICATION_CALLBACK_EX callback;
+    struct winebth_authentication_request request;
+    void *user_data;
+};
+
+static CALLBACK void tp_auth_callback_proc( TP_CALLBACK_INSTANCE *instance, void *ctx )
+{
+    BLUETOOTH_AUTHENTICATION_CALLBACK_PARAMS params;
+    struct auth_callback_data *data = ctx;
+
+    device_info_from_bth_info( &params.deviceInfo, &data->request.device_info );
+    /* For some reason, Windows uses the *local* time here. */
+    GetLocalTime( &params.deviceInfo.stLastSeen );
+    GetLocalTime( &params.deviceInfo.stLastUsed );
+    params.authenticationMethod = data->request.auth_method;
+    params.ioCapability = BLUETOOTH_IO_CAPABILITY_UNDEFINED;
+    params.authenticationRequirements = BLUETOOTH_MITM_ProtectionNotDefined;
+    params.Numeric_Value = data->request.numeric_value_or_passkey;
+    data->callback( data->user_data, &params );
+    free( data );
+}
+
+static CALLBACK DWORD bluetooth_auth_event_callback( HCMNOTIFICATION notify, void *ctx, CM_NOTIFY_ACTION action,
+                                                     CM_NOTIFY_EVENT_DATA *event_data, DWORD size )
+{
+    struct winebth_authentication_request *request = (struct winebth_authentication_request *)event_data->u.DeviceHandle.Data;
+    struct bluetooth_auth_listener *listener;
+
+    TRACE( "(%p, %p, %d, %p, %lu)\n", notify, ctx, action, event_data, size );
+
+    switch (action)
+    {
+    case CM_NOTIFY_ACTION_DEVICECUSTOMEVENT:
+        if (!IsEqualGUID( &event_data->u.DeviceHandle.EventGuid, &GUID_WINEBTH_AUTHENTICATION_REQUEST ))
+        {
+            FIXME( "Unexpected EventGUID: %s\n", debugstr_guid(&event_data->u.DeviceHandle.EventGuid) );
+            break;
+        }
+
+        AcquireSRWLockShared( &bluetooth_auth_lock );
+        LIST_FOR_EACH_ENTRY( listener, &bluetooth_auth_listeners, struct bluetooth_auth_listener, entry )
+        {
+            struct auth_callback_data *data;
+
+            if (!(listener->all_devices || listener->addr.ullLong == request->device_info.address))
+                continue;
+            data = calloc( 1, sizeof( *data ) );
+            if (!data)
+                continue;
+
+            data->request = *request;
+            data->callback = listener->callback;
+            data->user_data = listener->user_data;
+            if (!TrySubmitThreadpoolCallback( tp_auth_callback_proc, data, NULL ))
+            {
+                ERR( "TrySubmitThreadpoolCallback failed: %lu\n", GetLastError() );
+                free( data );
+                continue;
+            }
+        }
+        ReleaseSRWLockShared( &bluetooth_auth_lock );
+        break;
+    default:
+        FIXME( "Unexpected CM_NOTIFY_ACTION: %d\n", action );
+        break;
+    }
+
+    return 0;
+}
+
+static DWORD bluetooth_auth_register( void )
+{
+    DWORD ret;
+    CM_NOTIFY_FILTER handle_filter = {0};
+    HANDLE winebth_auth;
+    DWORD bytes;
+
+
+    winebth_auth = CreateFileW( WINEBTH_AUTH_DEVICE_PATH, GENERIC_READ | GENERIC_WRITE,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    if (winebth_auth == INVALID_HANDLE_VALUE)
+        return GetLastError();
+
+    handle_filter.cbSize = sizeof( handle_filter );
+    handle_filter.FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE;
+    handle_filter.u.DeviceHandle.hTarget = winebth_auth;
+
+    ret = CM_Register_Notification( &handle_filter, NULL, bluetooth_auth_event_callback,
+                                    &bluetooth_auth_event_notify );
+    if (ret)
+    {
+        ERR( "CM_Register_Notification failed: %#lx\n", ret );
+        CloseHandle( winebth_auth );
+        return CM_MapCrToWin32Err( ret, ERROR_INTERNAL_ERROR );
+    }
+
+    if (!DeviceIoControl( winebth_auth, IOCTL_WINEBTH_AUTH_REGISTER, NULL, 0, NULL, 0, &bytes, NULL ))
+        ret = GetLastError();
+
+    CloseHandle( winebth_auth );
+    return ret;
+}
+
 /*********************************************************************
  *  BluetoothRegisterForAuthenticationEx
  */
-DWORD WINAPI BluetoothRegisterForAuthenticationEx(const BLUETOOTH_DEVICE_INFO *info, HBLUETOOTH_AUTHENTICATION_REGISTRATION *out,
-                                                  PFN_AUTHENTICATION_CALLBACK_EX callback, void *param)
+DWORD WINAPI BluetoothRegisterForAuthenticationEx( const BLUETOOTH_DEVICE_INFO *device_info,
+                                                   HBLUETOOTH_AUTHENTICATION_REGISTRATION *out,
+                                                   PFN_AUTHENTICATION_CALLBACK_EX callback, void *param )
 {
-    FIXME("(%p, %p, %p, %p): stub!\n", info, out, callback, param);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD ret;
+    struct bluetooth_auth_listener *listener;
+
+    TRACE( "(%p, %p, %p, %p)\n", device_info, out, callback, param );
+
+    if (!out || (device_info && device_info->dwSize != sizeof ( *device_info )) || !callback)
+        return ERROR_INVALID_PARAMETER;
+
+    listener = calloc( 1, sizeof( *listener ) );
+    if (!listener)
+        return ERROR_OUTOFMEMORY;
+    listener->all_devices = !device_info;
+    if (!listener->all_devices)
+    {
+        TRACE( "Registering for authentication events from %s\n", debugstr_addr( device_info->Address.rgBytes ) );
+        listener->addr = device_info->Address;
+    }
+    listener->callback = callback;
+    listener->user_data = param;
+
+    AcquireSRWLockExclusive( &bluetooth_auth_lock );
+    if (list_empty( &bluetooth_auth_listeners ))
+    {
+        ret = bluetooth_auth_register();
+        if (ret)
+        {
+            free( listener );
+            ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+            return ret;
+        }
+    }
+    /* The MSDN documentation for BluetoothRegisterForAuthentication states if applications call this method
+     * multiple times, only the first callback registered is invoked during an authentication session.
+     * This is incorrect, at least for Windows 11, where all registered callbacks do get called. */
+    list_add_tail( &bluetooth_auth_listeners, &listener->entry );
+    ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+
+    *out = listener;
+    ret = ERROR_SUCCESS;
+    return ret;
 }
 
 /*********************************************************************
  *  BluetoothUnregisterAuthentication
  */
-BOOL WINAPI BluetoothUnregisterAuthentication(HBLUETOOTH_AUTHENTICATION_REGISTRATION handle)
+BOOL WINAPI BluetoothUnregisterAuthentication( HBLUETOOTH_AUTHENTICATION_REGISTRATION handle )
 {
-    FIXME("(%p): stub!\n", handle);
-    if (!handle) SetLastError(ERROR_INVALID_HANDLE);
-    return FALSE;
+    struct bluetooth_auth_listener *listener = handle;
+    DWORD ret = ERROR_SUCCESS;
+
+    TRACE( "(%s)\n", debugstr_bluetooth_auth_listener( handle ) );
+
+    if (!handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    AcquireSRWLockExclusive( &bluetooth_auth_lock );
+    list_remove( &listener->entry );
+    if (list_empty( &bluetooth_auth_listeners ))
+    {
+        ret = CM_Unregister_Notification( bluetooth_auth_event_notify );
+        if (ret)
+            ERR( "CM_Unregister_Notification failed: %#lx\n", ret );
+    }
+    ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+
+    SetLastError( ret );
+    return !ret;
 }
