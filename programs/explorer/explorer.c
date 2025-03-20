@@ -866,6 +866,7 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
         {
             parameters->explorer_mode = FALSE;
             p += len_n;
+            if (*p == ',') p++;
         }
         else if (wcsnicmp(p, arg_e, len_e )==0)
         {
