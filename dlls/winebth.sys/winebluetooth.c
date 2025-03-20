@@ -87,6 +87,11 @@ NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio )
     return UNIX_BLUETOOTH_CALL(bluetooth_adapter_stop_discovery, &params);
 }
 
+NTSTATUS winebluetooth_auth_agent_enable_incoming( void )
+{
+    return UNIX_BLUETOOTH_CALL( bluetooth_auth_agent_enable_incoming, NULL );
+}
+
 void winebluetooth_radio_free( winebluetooth_radio_t radio )
 {
     struct bluetooth_adapter_free_params args = { 0 };

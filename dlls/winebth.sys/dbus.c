@@ -1079,6 +1079,50 @@ NTSTATUS bluez_auth_agent_stop( void *connection, void *auth_agent_ctx )
     return success ? STATUS_SUCCESS : STATUS_NO_MEMORY;
 }
 
+NTSTATUS bluez_auth_agent_request_default( void *connection )
+{
+    static const char *wine_bluez_auth_agent_path = WINE_BLUEZ_AUTH_AGENT_PATH;
+    DBusMessage *request, *reply;
+    dbus_bool_t success;
+    NTSTATUS status;
+    DBusError error;
+
+    TRACE( "(%p)\n", connection );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, "/org/bluez", BLUEZ_INTERFACE_AGENT_MANAGER,
+                                              "RequestDefaultAgent" );
+    if (!request)
+        return STATUS_NO_MEMORY;
+
+    success = p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &wine_bluez_auth_agent_path,
+                                          DBUS_TYPE_INVALID );
+    if (!success)
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_message_unref( request );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        status = bluez_dbus_error_to_ntstatus( &error );
+        ERR( "RequestDefaultAgent failed: %s: %s\n", debugstr_a( error.name ), debugstr_a( error.message ) );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_error_free( &error );
+    p_dbus_message_unref( reply );
+
+    return STATUS_SUCCESS;
+}
+
 struct bluez_watcher_event
 {
     struct list entry;
@@ -1991,6 +2035,7 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
     return STATUS_NOT_SUPPORTED;
 }
 NTSTATUS bluez_auth_agent_start( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
-NTSTATUS bluez_auth_agent_stop( void *connection ) { return STATUS_NOT_SUPPORTED; }
+NTSTATUS bluez_auth_agent_stop( void *connection, void *ctx ) { return STATUS_NOT_SUPPORTED; }
+NTSTATUS bluez_auth_agent_request_default( void *connection ) { return STATUS_NOT_SUPPORTED; }
 
 #endif /* SONAME_LIBDBUS_1 */

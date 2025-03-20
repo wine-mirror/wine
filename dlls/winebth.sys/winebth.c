@@ -97,9 +97,20 @@ static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    NTSTATUS status = irp->IoStatus.Status;
 
-    FIXME( "device %p irp %p code %#lx: stub!\n", device, irp, code );
+    TRACE( "device %p irp %p code %#lx\n", device, irp, code );
 
+    switch (code)
+    {
+    case IOCTL_WINEBTH_AUTH_REGISTER:
+        status = winebluetooth_auth_agent_enable_incoming();
+        break;
+    default:
+        break;
+    }
+
+    irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return irp->IoStatus.Status;
 }

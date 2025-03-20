@@ -24,11 +24,13 @@
 
 /* Set the discoverability or connectable flag for a local radio. Enabling discoverability will also enable incoming
  * connections, while disabling incoming connections disables discoverability as well. */
-#define IOCTL_WINEBTH_RADIO_SET_FLAG CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa3, METHOD_BUFFERED, FILE_ANY_ACCESS)
+#define IOCTL_WINEBTH_RADIO_SET_FLAG        CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa3, METHOD_BUFFERED, FILE_ANY_ACCESS)
 /* Start device inquiry for a local radio. */
 #define IOCTL_WINEBTH_RADIO_START_DISCOVERY CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa6, METHOD_BUFFERED, FILE_ANY_ACCESS)
 /* Stop device inquiry for a local radio. */
 #define IOCTL_WINEBTH_RADIO_STOP_DISCOVERY  CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa7, METHOD_BUFFERED, FILE_ANY_ACCESS)
+/* Ask the system's Bluetooth service to send all incoming authentication requests to Wine. */
+#define IOCTL_WINEBTH_AUTH_REGISTER         CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa8, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 
 DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,

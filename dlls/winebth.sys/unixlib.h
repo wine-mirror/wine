@@ -98,6 +98,8 @@ enum bluetoothapis_funcs
 
     unix_bluetooth_device_free,
 
+    unix_bluetooth_auth_agent_enable_incoming,
+
     unix_bluetooth_get_event,
 
     unix_funcs_count
