@@ -1269,7 +1269,7 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
         HKL hkl = NtUserGetKeyboardLayout( 0 );
         vkey = NtUserMapVirtualKeyEx( code & 0xff, MAPVK_VSC_TO_VK, hkl );
         buffer[0] = NtUserMapVirtualKeyEx( vkey, MAPVK_VK_TO_CHAR, hkl );
-        len = 1;
+        len = buffer[0] ? 1 : 0;
     }
     buffer[len] = 0;
 
