@@ -3355,7 +3355,7 @@ static void test_priority(void)
      * reach in NORMAL_PRIORITY_CLASS without boost. */
     nt_thread_priority = 12;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadPriority, &nt_thread_priority, sizeof(ULONG) );
-    todo_wine ok( status == STATUS_SUCCESS, "NtSetInformationThread(ThreadPriority) failed: %08lx\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetInformationThread(ThreadPriority) failed: %08lx\n", status );
     /* Effective thread priority should be now 12, BasePriority should be
      * unchanged. */
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
@@ -3380,14 +3380,14 @@ static void test_priority(void)
      * and lower fails. */
     nt_thread_priority = 42;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadPriority, &nt_thread_priority, sizeof(ULONG) );
-    todo_wine ok( status == STATUS_INVALID_PARAMETER, "got %08lx, expected STATUS_INVALID_PARAMETER.\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "got %08lx, expected STATUS_INVALID_PARAMETER.\n", status );
     nt_thread_priority = 0; /* 0 also fails in addition to negative values. */
     status = pNtSetInformationThread( GetCurrentThread(), ThreadPriority, &nt_thread_priority, sizeof(ULONG) );
-    todo_wine ok( status == STATUS_INVALID_PARAMETER, "got %08lx, expected STATUS_INVALID_PARAMETER.\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "got %08lx, expected STATUS_INVALID_PARAMETER.\n", status );
     /* Moving a thread into the realtime band is normally not possible in a non-realtime process. */
     nt_thread_priority = 24;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadPriority, &nt_thread_priority, sizeof(ULONG) );
-    todo_wine ok( status == STATUS_PRIVILEGE_NOT_HELD, "got %08lx, expected STATUS_PRIVILEGE_NOT_HELD.\n", status );
+    ok( status == STATUS_PRIVILEGE_NOT_HELD, "got %08lx, expected STATUS_PRIVILEGE_NOT_HELD.\n", status );
 
     /* Restore thread priority and boosting behaviour back to normal */
     SetThreadPriorityBoost( GetCurrentThread(), FALSE );

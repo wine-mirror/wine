@@ -405,6 +405,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->wait_fd         = NULL;
     thread->state           = RUNNING;
     thread->exit_code       = 0;
+    thread->priority        = 0;
     thread->base_priority   = 0;
     thread->suspend         = 0;
     thread->dbg_hidden      = 0;
@@ -771,6 +772,21 @@ affinity_t get_thread_affinity( struct thread *thread )
     return mask;
 }
 
+unsigned int set_thread_priority( struct thread *thread, int priority )
+{
+    int priority_class = thread->process->priority;
+
+    if (priority < LOW_PRIORITY + 1 || priority > HIGH_PRIORITY) return STATUS_INVALID_PARAMETER;
+    if (priority_class != PROCESS_PRIOCLASS_REALTIME && priority >= LOW_REALTIME_PRIORITY) return STATUS_PRIVILEGE_NOT_HELD;
+
+    thread->priority = priority;
+
+    /* if thread is gone or hasn't started yet, this will be called again from init_thread with a unix_tid */
+    if (thread->state == RUNNING && thread->unix_tid != -1) apply_thread_priority( thread, priority );
+
+    return STATUS_SUCCESS;
+}
+
 static int priority_from_class_and_level( int priority_class, int priority_level )
 {
     /* offsets taken from https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities */
@@ -812,18 +828,18 @@ unsigned int set_thread_base_priority( struct thread *thread, int base_priority 
         return STATUS_INVALID_PARAMETER;
 
     thread->base_priority = base_priority;
-
-    /* if thread is gone or hasn't started yet, this will be called again from init_thread with a unix_tid */
-    if (thread->state == RUNNING && thread->unix_tid != -1)
-        apply_thread_priority( thread, priority_from_class_and_level( priority_class, base_priority ) );
-
-    return STATUS_SUCCESS;
+    return set_thread_priority( thread, priority_from_class_and_level( priority_class, base_priority ) );
 }
 
 /* set all information about a thread */
 static void set_thread_info( struct thread *thread,
                              const struct set_thread_info_request *req )
 {
+    if (req->mask & SET_THREAD_INFO_PRIORITY)
+    {
+        unsigned int status = set_thread_priority( thread, req->priority );
+        if (status) set_error( status );
+    }
     if (req->mask & SET_THREAD_INFO_BASE_PRIORITY)
     {
         unsigned int status = set_thread_base_priority( thread, req->base_priority );

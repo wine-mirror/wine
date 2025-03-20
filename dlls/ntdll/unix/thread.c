@@ -2371,6 +2371,21 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return status;
     }
 
+    case ThreadPriority:
+    {
+        const DWORD *priority = data;
+        if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
+        SERVER_START_REQ( set_thread_info )
+        {
+            req->handle    = wine_server_obj_handle( handle );
+            req->priority  = *priority;
+            req->mask      = SET_THREAD_INFO_PRIORITY;
+            status = wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        return status;
+    }
+
     case ThreadBasePriority:
     {
         const DWORD *base_priority = data;
@@ -2548,7 +2563,6 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadBasicInformation:
     case ThreadTimes:
-    case ThreadPriority:
     case ThreadDescriptorTableEntry:
     case ThreadEventPair_Reusable:
     case ThreadPerformanceCount:

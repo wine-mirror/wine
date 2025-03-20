@@ -986,6 +986,7 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
     switch (class)
     {
     case ThreadZeroTlsCell:   /* ULONG */
+    case ThreadPriority:   /* ULONG */
     case ThreadBasePriority:   /* ULONG */
     case ThreadHideFromDebugger:   /* void */
     case ThreadEnableAlignmentFaultFixup:   /* BOOLEAN */
