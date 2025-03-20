@@ -167,6 +167,12 @@ enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, fil
 
 static int is_pe;
 
+static const char *image_base;
+static const char *section_align;
+static const char *file_align;
+static const char *subsystem;
+static const char *entry_point;
+static const char *native_arch;
 static struct strarray linker_args;
 static struct strarray compiler_args;
 static struct strarray winebuild_args;
@@ -193,12 +199,6 @@ struct options
     int pic;
     int no_default_config;
     int build_id;
-    const char* image_base;
-    const char* section_align;
-    const char* file_align;
-    const char* subsystem;
-    const char* entry_point;
-    const char* native_arch;
     struct strarray delayimports;
 };
 
@@ -508,10 +508,10 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         strarray_add( &flags, "-bundle" );
         strarray_add( &flags, "-multiply_defined" );
         strarray_add( &flags, "suppress" );
-        if (opts->image_base)
+        if (image_base)
         {
             strarray_add( &flags, "-image_base" );
-            strarray_add( &flags, opts->image_base );
+            strarray_add( &flags, image_base );
         }
         if (opts->strip) strarray_add( &flags, "-Wl,-x" );
         strarray_addall( &link_args, flags );
@@ -520,9 +520,7 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
     case PLATFORM_SOLARIS:
         {
             char *mapfile = make_temp_file( output_name, ".map" );
-            const char *align = opts->section_align ? opts->section_align : "0x1000";
-
-            create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
+            create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", section_align, section_align );
             strarray_add( &flags, strmake("-Wl,-M,%s", mapfile) );
         }
         break;
@@ -545,14 +543,14 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         else strarray_add( &flags, opts->gui_app ? "-mwindows" : "-mconsole" );
 
         if (opts->unicode_app) strarray_add( &flags, "-municode" );
-        if (opts->subsystem) strarray_add( &flags, strmake("-Wl,--subsystem,%s", opts->subsystem ));
+        if (subsystem) strarray_add( &flags, strmake("-Wl,--subsystem,%s", subsystem ));
 
         strarray_add( &flags, "-Wl,--exclude-all-symbols" );
         strarray_add( &flags, "-Wl,--nxcompat" );
         strarray_add( &flags, "-Wl,--dynamicbase" );
         strarray_add( &flags, "-Wl,--disable-auto-image-base" );
 
-        if (opts->image_base) strarray_add( &flags, strmake("-Wl,--image-base,%s", opts->image_base ));
+        if (image_base) strarray_add( &flags, strmake("-Wl,--image-base,%s", image_base ));
 
         if (opts->large_address_aware && target.cpu == CPU_i386)
             strarray_add( &flags, "-Wl,--large-address-aware" );
@@ -567,13 +565,11 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add(&link_args, strmake("-Wl,--out-implib,%s", output_implib));
 
         if (!try_link( opts, link_args, "-Wl,--file-alignment,0x1000" ))
-            strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s",
-                                              opts->file_align ? opts->file_align : "0x1000" ));
+            strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s", file_align ));
         else if (!try_link( opts, link_args, "-Wl,-Xlink=-filealign:0x1000" ))
             /* lld from llvm 10 does not support mingw style --file-alignment,
              * but it's possible to use msvc syntax */
-            strarray_add( &link_args, strmake( "-Wl,-Xlink=-filealign:%s",
-                                              opts->file_align ? opts->file_align : "0x1000" ));
+            strarray_add( &link_args, strmake( "-Wl,-Xlink=-filealign:%s", file_align ));
 
         strarray_addall( &link_args, flags );
         return link_args;
@@ -589,9 +585,9 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         }
         if (opts->unicode_app) strarray_add( &flags, "-municode" );
         if (opts->nostartfiles) strarray_add( &flags, "-nostartfiles" );
-        if (opts->image_base) strarray_add( &flags, strmake("-Wl,-base:%s", opts->image_base ));
-        if (opts->subsystem)
-            strarray_add( &flags, strmake("-Wl,-subsystem:%s", opts->subsystem ));
+        if (image_base) strarray_add( &flags, strmake("-Wl,-base:%s", image_base ));
+        if (subsystem)
+            strarray_add( &flags, strmake("-Wl,-subsystem:%s", subsystem ));
         else
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", opts->gui_app ? "windows" : "console" ));
 
@@ -611,16 +607,16 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         else
             strarray_add(&link_args, strmake("-Wl,-implib:%s", make_temp_file( output_name, ".lib" )));
 
-        strarray_add( &link_args, strmake( "-Wl,-filealign:%s", opts->file_align ? opts->file_align : "0x1000" ));
+        strarray_add( &link_args, strmake( "-Wl,-filealign:%s", file_align ));
 
         strarray_addall( &link_args, flags );
         return link_args;
 
     default:
-        if (opts->image_base)
+        if (image_base)
         {
-            if (!try_link( opts, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)) )
-                strarray_add( &flags, strmake("-Wl,-Ttext-segment=%s", opts->image_base) );
+            if (!try_link( opts, link_args, strmake("-Wl,-Ttext-segment=%s", image_base)) )
+                strarray_add( &flags, strmake("-Wl,-Ttext-segment=%s", image_base) );
         }
         if (!try_link( opts, link_args, "-Wl,-z,max-page-size=0x1000"))
             strarray_add( &flags, "-Wl,-z,max-page-size=0x1000");
@@ -1073,7 +1069,7 @@ static void add_library( struct options *opts, struct strarray lib_dirs,
 /* run winebuild to generate the .spec.o file */
 static void build_spec_obj( struct options *opts, const char *spec_file, const char *output_file,
                             const char *target_name, struct strarray files, struct strarray resources,
-                            const char *entry_point, struct strarray *spec_objs )
+                            struct strarray *spec_objs )
 {
     unsigned int i;
     struct strarray spec_args = get_winebuild_args( opts, target_name );
@@ -1137,10 +1133,10 @@ static void build_spec_obj( struct options *opts, const char *spec_file, const c
         strarray_add(&spec_args, entry_point);
     }
 
-    if (opts->subsystem)
+    if (subsystem)
     {
         strarray_add(&spec_args, "--subsystem");
-        strarray_add(&spec_args, opts->subsystem);
+        strarray_add(&spec_args, subsystem);
     }
 
     if (!is_pe)
@@ -1202,7 +1198,7 @@ static void build(struct options* opts, struct strarray input_files, const char 
     const char *output_name, *spec_file, *lang;
     const char *libgcc = NULL;
     int generate_app_loader = 1;
-    const char *crt_lib = NULL, *entry_point = NULL;
+    const char *crt_lib = NULL;
     unsigned int i, j;
 
     /* NOTE: for the files array we'll use the following convention:
@@ -1338,14 +1334,13 @@ static void build(struct options* opts, struct strarray input_files, const char 
     }
 
     /* set default entry point, if needed */
-    if (!opts->entry_point)
+    if (!entry_point)
     {
-        if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
+        if (subsystem && !strcmp( subsystem, "native" ))
             entry_point = (is_pe && target.cpu == CPU_i386) ? "DriverEntry@8" : "DriverEntry";
         else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
             entry_point = opts->unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
     }
-    else entry_point = opts->entry_point;
 
     /* run winebuild to generate the .spec.o file */
     if (opts->data_only)
@@ -1357,14 +1352,13 @@ static void build(struct options* opts, struct strarray input_files, const char 
     for (i = 0; i < files.count; i++)
 	if (files.str[i][1] == 'r') strarray_add( &resources, files.str[i] );
 
-    build_spec_obj( opts, spec_file, output_file, target_alias, files, resources,
-                    entry_point, &spec_objs );
-    if (opts->native_arch)
+    build_spec_obj( opts, spec_file, output_file, target_alias, files, resources, &spec_objs );
+    if (native_arch)
     {
         const char *suffix = strchr( target_alias, '-' );
         if (!suffix) suffix = "";
-        build_spec_obj( opts, spec_file, output_file, strmake( "%s%s", opts->native_arch, suffix ),
-                        files, empty_strarray, entry_point, &spec_objs );
+        build_spec_obj( opts, spec_file, output_file, strmake( "%s%s", native_arch, suffix ),
+                        files, empty_strarray, &spec_objs );
     }
 
     if (opts->fake_module) return;  /* nothing else to do */
@@ -1830,7 +1824,7 @@ int main(int argc, char **argv)
                     else if (!strcmp("-marm64x", args.str[i] ))
                     {
                         raw_linker_arg = 1;
-                        opts.native_arch = "aarch64";
+                        native_arch = "aarch64";
                     }
                     else if (!strncmp("-mcpu=", args.str[i], 6) ||
                              !strncmp("-mfpu=", args.str[i], 6) ||
@@ -1899,17 +1893,17 @@ int main(int argc, char **argv)
                         {
                             if (!strcmp(Wl.str[j], "--image-base") && j < Wl.count - 1)
                             {
-                                opts.image_base = xstrdup( Wl.str[++j] );
+                                image_base = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--section-alignment") && j < Wl.count - 1)
                             {
-                                opts.section_align = xstrdup( Wl.str[++j] );
+                                section_align = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--file-alignment") && j < Wl.count - 1)
                             {
-                                opts.file_align = xstrdup( Wl.str[++j] );
+                                file_align = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--large-address-aware"))
@@ -1924,12 +1918,12 @@ int main(int argc, char **argv)
                             }
                             if (!strcmp(Wl.str[j], "--subsystem") && j < Wl.count - 1)
                             {
-                                opts.subsystem = xstrdup( Wl.str[++j] );
+                                subsystem = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--entry") && j < Wl.count - 1)
                             {
-                                opts.entry_point = xstrdup( Wl.str[++j] );
+                                entry_point = xstrdup( Wl.str[++j] );
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "-delayload") && j < Wl.count - 1)
@@ -2055,6 +2049,9 @@ int main(int argc, char **argv)
 
     is_pe = is_pe_target( target );
     if (is_pe) opts.use_msvcrt = 1;
+
+    if (!section_align) section_align = "0x1000";
+    if (!file_align) file_align = section_align;
 
     if (!winebuild)
     {
