@@ -299,7 +299,7 @@ static void apply_thread_priority( struct thread *thread, int effective_priority
     thread_extended_policy.timeshare = effective_priority > 14 ? 0 : 1;
     thread_precedence_policy.importance = get_mach_importance( effective_priority );
     /* adapted from the QoS table at xnu/osfmk/kern/thread_policy.c */
-    switch (thread->priority)
+    switch (thread->base_priority)
     {
     case THREAD_PRIORITY_IDLE: /* THREAD_QOS_MAINTENANCE */
     case THREAD_PRIORITY_LOWEST: /* THREAD_QOS_BACKGROUND */
@@ -405,7 +405,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->wait_fd         = NULL;
     thread->state           = RUNNING;
     thread->exit_code       = 0;
-    thread->priority        = 0;
+    thread->base_priority   = 0;
     thread->suspend         = 0;
     thread->dbg_hidden      = 0;
     thread->desktop_users   = 0;
@@ -794,7 +794,8 @@ static int priority_from_class_and_level( int priority_class, int priority_level
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
 #define THREAD_PRIORITY_REALTIME_LOWEST -7
 
-unsigned int set_thread_priority( struct thread *thread, int priority )
+/* sets the thread base priority level, relative to its process base priority class */
+unsigned int set_thread_base_priority( struct thread *thread, int base_priority )
 {
     int priority_class = thread->process->priority;
     int max = THREAD_PRIORITY_HIGHEST;
@@ -805,16 +806,16 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
         max = THREAD_PRIORITY_REALTIME_HIGHEST;
         min = THREAD_PRIORITY_REALTIME_LOWEST;
     }
-    if ((priority < min || priority > max) &&
-        priority != THREAD_PRIORITY_IDLE &&
-        priority != THREAD_PRIORITY_TIME_CRITICAL)
+    if ((base_priority < min || base_priority > max) &&
+        base_priority != THREAD_PRIORITY_IDLE &&
+        base_priority != THREAD_PRIORITY_TIME_CRITICAL)
         return STATUS_INVALID_PARAMETER;
 
-    thread->priority = priority;
+    thread->base_priority = base_priority;
 
     /* if thread is gone or hasn't started yet, this will be called again from init_thread with a unix_tid */
     if (thread->state == RUNNING && thread->unix_tid != -1)
-        apply_thread_priority( thread, priority_from_class_and_level( priority_class, priority ) );
+        apply_thread_priority( thread, priority_from_class_and_level( priority_class, base_priority ) );
 
     return STATUS_SUCCESS;
 }
@@ -823,9 +824,9 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
 static void set_thread_info( struct thread *thread,
                              const struct set_thread_info_request *req )
 {
-    if (req->mask & SET_THREAD_INFO_PRIORITY)
+    if (req->mask & SET_THREAD_INFO_BASE_PRIORITY)
     {
-        unsigned int status = set_thread_priority( thread, req->priority );
+        unsigned int status = set_thread_base_priority( thread, req->base_priority );
         if (status) set_error( status );
     }
     if (req->mask & SET_THREAD_INFO_AFFINITY)
@@ -1628,7 +1629,7 @@ DECL_HANDLER(init_first_thread)
     else
         set_thread_affinity( current, current->affinity );
 
-    set_thread_priority( current, current->priority );
+    set_thread_base_priority( current, current->base_priority );
 
     debug_level = max( debug_level, req->debug_level );
 
@@ -1659,7 +1660,7 @@ DECL_HANDLER(init_thread)
 
     init_thread_context( current );
     generate_debug_event( current, DbgCreateThreadStateChange, &req->entry );
-    set_thread_priority( current, current->priority );
+    set_thread_base_priority( current, current->base_priority );
     set_thread_affinity( current, current->affinity );
 
     reply->suspend = (current->suspend || current->process->suspend || current->context != NULL);
@@ -1708,7 +1709,7 @@ DECL_HANDLER(get_thread_info)
         reply->teb            = thread->teb;
         reply->entry_point    = thread->entry_point;
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
-        reply->priority       = thread->priority;
+        reply->priority       = thread->base_priority;
         reply->affinity       = thread->affinity;
         reply->last           = thread->process->running_threads == 1;
         reply->suspend_count  = thread->suspend;

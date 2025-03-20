@@ -2373,13 +2373,13 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadBasePriority:
     {
-        const DWORD *pprio = data;
+        const DWORD *base_priority = data;
         if (length != sizeof(DWORD)) return STATUS_INVALID_PARAMETER;
         SERVER_START_REQ( set_thread_info )
         {
-            req->handle   = wine_server_obj_handle( handle );
-            req->priority = *pprio;
-            req->mask     = SET_THREAD_INFO_PRIORITY;
+            req->handle         = wine_server_obj_handle( handle );
+            req->base_priority  = *base_priority;
+            req->mask           = SET_THREAD_INFO_BASE_PRIORITY;
             status = wine_server_call( req );
         }
         SERVER_END_REQ;

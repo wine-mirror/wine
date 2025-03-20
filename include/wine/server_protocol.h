@@ -1331,7 +1331,7 @@ struct set_thread_info_request
     struct request_header __header;
     obj_handle_t handle;
     int          mask;
-    int          priority;
+    int          base_priority;
     affinity_t   affinity;
     client_ptr_t entry_point;
     obj_handle_t token;
@@ -1342,12 +1342,12 @@ struct set_thread_info_reply
 {
     struct reply_header __header;
 };
-#define SET_THREAD_INFO_PRIORITY    0x01
-#define SET_THREAD_INFO_AFFINITY    0x02
-#define SET_THREAD_INFO_TOKEN       0x04
-#define SET_THREAD_INFO_ENTRYPOINT  0x08
-#define SET_THREAD_INFO_DESCRIPTION 0x10
-#define SET_THREAD_INFO_DBG_HIDDEN  0x20
+#define SET_THREAD_INFO_BASE_PRIORITY   0x01
+#define SET_THREAD_INFO_AFFINITY        0x02
+#define SET_THREAD_INFO_TOKEN           0x04
+#define SET_THREAD_INFO_ENTRYPOINT      0x08
+#define SET_THREAD_INFO_DESCRIPTION     0x10
+#define SET_THREAD_INFO_DBG_HIDDEN      0x20
 
 
 
@@ -6796,6 +6796,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 858
+#define SERVER_PROTOCOL_VERSION 859
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

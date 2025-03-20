@@ -1641,7 +1641,7 @@ void set_process_priority( struct process *process, int priority )
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
-        set_thread_priority( thread, thread->priority );
+        set_thread_base_priority( thread, thread->base_priority );
     }
 }
 
@@ -2013,8 +2013,8 @@ DECL_HANDLER(list_processes)
 
             thread_info->start_time = thread->creation_time;
             thread_info->tid = thread->id;
-            thread_info->base_priority = thread->priority;
-            thread_info->current_priority = thread->priority; /* FIXME */
+            thread_info->base_priority = thread->base_priority;
+            thread_info->current_priority = thread->base_priority; /* FIXME */
             thread_info->unix_tid = thread->unix_tid;
             thread_info->entry_point = thread->entry_point;
             thread_info->teb = thread->teb;

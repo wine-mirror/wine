@@ -782,7 +782,7 @@ C_ASSERT( offsetof(struct get_thread_times_reply, unix_tid) == 28 );
 C_ASSERT( sizeof(struct get_thread_times_reply) == 32 );
 C_ASSERT( offsetof(struct set_thread_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct set_thread_info_request, mask) == 16 );
-C_ASSERT( offsetof(struct set_thread_info_request, priority) == 20 );
+C_ASSERT( offsetof(struct set_thread_info_request, base_priority) == 20 );
 C_ASSERT( offsetof(struct set_thread_info_request, affinity) == 24 );
 C_ASSERT( offsetof(struct set_thread_info_request, entry_point) == 32 );
 C_ASSERT( offsetof(struct set_thread_info_request, token) == 40 );
