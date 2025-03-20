@@ -862,27 +862,27 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
     while (*p)
     {
         while (iswspace(*p)) p++;
-        if (wcsncmp(p, arg_n, len_n )==0)
+        if (wcsnicmp(p, arg_n, len_n )==0)
         {
             parameters->explorer_mode = FALSE;
             p += len_n;
         }
-        else if (wcsncmp(p, arg_e, len_e )==0)
+        else if (wcsnicmp(p, arg_e, len_e )==0)
         {
             parameters->explorer_mode = TRUE;
             p += len_e;
         }
-        else if (wcsncmp(p, arg_cd, len_cd )==0)
+        else if (wcsnicmp(p, arg_cd, len_cd )==0)
         {
             p += len_cd;
             p = copy_path_string(parameters->root,p);
         }
-        else if (wcsncmp(p, arg_root, len_root )==0)
+        else if (wcsnicmp(p, arg_root, len_root )==0)
         {
             p += len_root;
             p = copy_path_string(parameters->root,p);
         }
-        else if (wcsncmp(p, arg_select, len_select )==0)
+        else if (wcsnicmp(p, arg_select, len_select )==0)
         {
             p += len_select;
             p = copy_path_string(parameters->selection,p);
@@ -890,13 +890,13 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
                 copy_path_root(parameters->root,
                                parameters->selection);
         }
-        else if (wcsncmp(p, arg_desktop, len_desktop )==0)
+        else if (wcsnicmp(p, arg_desktop, len_desktop )==0)
         {
             p += len_desktop;
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         /* workaround for Worms Armageddon that hardcodes a /desktop option with quotes */
-        else if (wcsncmp(p, arg_desktop_quotes, len_desktop_quotes )==0)
+        else if (wcsnicmp(p, arg_desktop_quotes, len_desktop_quotes )==0)
         {
             p += len_desktop_quotes;
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
