@@ -32,6 +32,10 @@
 #include <wsnwlink.h>
 #include <mswsock.h>
 #include <mstcpip.h>
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
+#include <bthdef.h>
+#include <ws2bth.h>
 #include <stdio.h>
 #include "wine/test.h"
 
@@ -3711,6 +3715,50 @@ static void test_WSASocket(void)
 
           closesocket(sock);
         }
+    }
+
+    /* Bluetooth RFCOMM socket tests */
+    SetLastError(0xdeadbeef);
+    sock = WSASocketA(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM, NULL, 0, 0);
+    if (sock == INVALID_SOCKET)
+    {
+        ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %d\n", WSAGetLastError());
+        skip("Bluetooth is not supported\n");
+    }
+    else
+    {
+        WSAPROTOCOL_INFOA info;
+        closesocket(sock);
+
+        sock = WSASocketA(0, SOCK_STREAM, BTHPROTO_RFCOMM, NULL, 0, 0 );
+        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n", WSAGetLastError());
+
+        size = sizeof(socktype);
+        socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(socktype == SOCK_STREAM, "Wrong socket type, expected %d received %d\n",
+           SOCK_STREAM, socktype);
+
+        size = sizeof(WSAPROTOCOL_INFOA);
+        err = getsockopt(sock, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &info, &size);
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(info.iProtocol == BTHPROTO_RFCOMM, "expected protocol %d, received %d\n",
+           BTHPROTO_RFCOMM, info.iProtocol);
+        ok(info.iAddressFamily == AF_BTH, "expected family %d, received %d\n",
+           AF_IPX, info.iProtocol);
+        ok(info.iSocketType == SOCK_STREAM, "expected type %d, received %d\n",
+           SOCK_DGRAM, info.iSocketType);
+        closesocket(sock);
+
+        /* SOCK_DGRAM is not supported by Bluetooth */
+        SetLastError(0xdeadbeef);
+        ok(WSASocketA(AF_BTH, SOCK_DGRAM, BTHPROTO_RFCOMM, NULL, 0, 0) == INVALID_SOCKET,
+           "WSASocketA should have failed\n");
+        err = WSAGetLastError();
+        ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
+
+        closesocket(sock);
     }
 }
 
