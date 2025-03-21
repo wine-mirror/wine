@@ -309,7 +309,7 @@ void CDECL pcap_dump_close( struct dumper *dumper )
 
     if (!dumper) return;
     params.handle = dumper->handle;
-    PCAP_CALL( dump, &params );
+    PCAP_CALL( dump_close, &params );
     free( dumper );
 }
 
