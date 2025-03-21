@@ -61,6 +61,7 @@ struct console
     struct fd                   *fd;            /* for bare console, attached input fd */
     struct async_queue           ioctl_q;       /* ioctl queue */
     struct async_queue           read_q;        /* read queue */
+    struct list                  screen_buffers;/* attached screen buffers */
 };
 
 static void console_dump( struct object *obj, int verbose );
@@ -462,8 +463,6 @@ static const struct fd_ops console_connection_fd_ops =
     default_fd_reselect_async     /* reselect_async */
 };
 
-static struct list screen_buffer_list = LIST_INIT(screen_buffer_list);
-
 static int queue_host_ioctl( struct console_server *server, unsigned int code, unsigned int output,
                              struct async *async, struct async_queue *queue );
 
@@ -539,6 +538,7 @@ static struct object *create_console(void)
     console->server        = NULL;
     console->fd            = NULL;
     console->last_id       = 0;
+    list_init( &console->screen_buffers );
     init_async_queue( &console->ioctl_q );
     init_async_queue( &console->read_q );
 
@@ -639,7 +639,7 @@ static struct object *create_screen_buffer( struct console *console )
     screen_buffer->id    = ++console->last_id;
     screen_buffer->input = console;
     init_async_queue( &screen_buffer->ioctl_q );
-    list_add_head( &screen_buffer_list, &screen_buffer->entry );
+    list_add_head( &console->screen_buffers, &screen_buffer->entry );
 
     screen_buffer->fd = alloc_pseudo_fd( &screen_buffer_fd_ops, &screen_buffer->obj,
                                          FILE_SYNCHRONOUS_IO_NONALERT );
@@ -755,10 +755,8 @@ static void console_destroy( struct object *obj )
     if (console->active) release_object( console->active );
     console->active = NULL;
 
-    LIST_FOR_EACH_ENTRY( curr, &screen_buffer_list, struct screen_buffer, entry )
-    {
-        if (curr->input == console) curr->input = NULL;
-    }
+    LIST_FOR_EACH_ENTRY( curr, &console->screen_buffers, struct screen_buffer, entry )
+        curr->input = NULL;
 
     free_async_queue( &console->ioctl_q );
     free_async_queue( &console->read_q );
@@ -831,10 +829,13 @@ static void screen_buffer_destroy( struct object *obj )
 
     assert( obj->ops == &screen_buffer_ops );
 
-    list_remove( &screen_buffer->entry );
-    if (screen_buffer->input && screen_buffer->input->server)
-        queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_CLOSE_OUTPUT,
-                          screen_buffer->id, NULL, NULL );
+    if (screen_buffer->input)
+    {
+        list_remove( &screen_buffer->entry );
+        if (screen_buffer->input->server)
+            queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_CLOSE_OUTPUT,
+                              screen_buffer->id, NULL, NULL );
+    }
     if (screen_buffer->fd) release_object( screen_buffer->fd );
     free_async_queue( &screen_buffer->ioctl_q );
 }
