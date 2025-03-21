@@ -1806,7 +1806,7 @@ static BOOL lineinfo_copy_toW64(const struct lineinfo_t* line_info, IMAGEHLP_LIN
     return TRUE;
 }
 
-static BOOL lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* line_info, char* str, BOOL copy)
+static BOOL lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* line_info, char* str)
 {
     DWORD len;
 
@@ -1818,32 +1818,22 @@ static BOOL lineinfo_set_nameA(struct process* pcs, struct lineinfo_t* line_info
     }
     else
     {
-        if (copy)
-        {
-            len = strlen(str) + 1;
-            if (!(line_info->file_nameA = fetch_buffer(pcs, len))) return FALSE;
-            memcpy(line_info->file_nameA, str, len);
-        }
-        else
-            line_info->file_nameA = str;
+        len = strlen(str) + 1;
+        if (!(line_info->file_nameA = fetch_buffer(pcs, len))) return FALSE;
+        memcpy(line_info->file_nameA, str, len);
     }
     return TRUE;
 }
 
-static BOOL lineinfo_set_nameW(struct process* pcs, struct lineinfo_t* line_info, WCHAR* wstr, BOOL copy)
+static BOOL lineinfo_set_nameW(struct process* pcs, struct lineinfo_t* line_info, WCHAR* wstr)
 {
     DWORD len;
 
     if (line_info->unicode)
     {
-        if (copy)
-        {
-            len = (lstrlenW(wstr) + 1) * sizeof(WCHAR);
-            if (!(line_info->file_nameW = fetch_buffer(pcs, len))) return FALSE;
-            memcpy(line_info->file_nameW, wstr, len);
-        }
-        else
-            line_info->file_nameW = wstr;
+        len = (lstrlenW(wstr) + 1) * sizeof(WCHAR);
+        if (!(line_info->file_nameW = fetch_buffer(pcs, len))) return FALSE;
+        memcpy(line_info->file_nameW, wstr, len);
     }
     else
     {
@@ -1879,12 +1869,12 @@ static BOOL get_line_from_function(struct module_pair* pair, struct symt_functio
             if (dbghelp_opt_source_actual_path)
             {
                 /* Return native file paths when using winedbg */
-                ret = lineinfo_set_nameA(pair->pcs, line_info, (char*)source_get(pair->effective, dli->u.source_file), FALSE);
+                ret = lineinfo_set_nameA(pair->pcs, line_info, (char*)source_get(pair->effective, dli->u.source_file));
             }
             else
             {
                 WCHAR *dospath = wine_get_dos_file_name(source_get(pair->effective, dli->u.source_file));
-                ret = lineinfo_set_nameW(pair->pcs, line_info, dospath, TRUE);
+                ret = lineinfo_set_nameW(pair->pcs, line_info, dospath);
                 HeapFree( GetProcessHeap(), 0, dospath );
             }
             if (ret && pdwDisplacement) *pdwDisplacement = addr - found_dli->u.address;
@@ -2032,7 +2022,7 @@ static BOOL symt_get_func_line_prev(HANDLE hProcess, struct lineinfo_t* line_inf
             /* search source file */
             for (srcli = li; !srcli->is_source_file; srcli--);
 
-            return lineinfo_set_nameA(pair.pcs, line_info, (char*)source_get(pair.effective, srcli->u.source_file), FALSE);
+            return lineinfo_set_nameA(pair.pcs, line_info, (char*)source_get(pair.effective, srcli->u.source_file));
         }
     }
     SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
@@ -2108,7 +2098,7 @@ static BOOL symt_get_func_line_next(HANDLE hProcess, struct lineinfo_t* line_inf
             line_info->line_number = li->line_number;
             line_info->address     = li->u.address;
             line_info->key         = li;
-            return lineinfo_set_nameA(pair.pcs, line_info, (char*)source_get(pair.effective, srcli->u.source_file), FALSE);
+            return lineinfo_set_nameA(pair.pcs, line_info, (char*)source_get(pair.effective, srcli->u.source_file));
         }
         srcli = li;
     }
