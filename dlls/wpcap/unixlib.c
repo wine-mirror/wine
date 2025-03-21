@@ -153,7 +153,7 @@ static NTSTATUS wrap_dump( void *args )
         hdr32.ts.tv_usec = params->hdr->ts.tv_usec;
         hdr32.caplen     = params->hdr->caplen;
         hdr32.len        = params->hdr->len;
-        pcap_dump( params->user, (const struct pcap_pkthdr *)&hdr32, params->packet );
+        pcap_dump( (unsigned char *)(ULONG_PTR)params->handle, (const struct pcap_pkthdr *)&hdr32, params->packet );
     }
     else
     {
@@ -162,7 +162,7 @@ static NTSTATUS wrap_dump( void *args )
         hdr64.ts.tv_usec = params->hdr->ts.tv_usec;
         hdr64.caplen     = params->hdr->caplen;
         hdr64.len        = params->hdr->len;
-        pcap_dump( params->user, &hdr64, params->packet );
+        pcap_dump( (unsigned char *)(ULONG_PTR)params->handle, &hdr64, params->packet );
     }
     return STATUS_SUCCESS;
 }
@@ -634,14 +634,14 @@ static NTSTATUS wow64_dump( void *args )
 {
     struct
     {
-        PTR32 user;
+        UINT64 handle;
         PTR32 hdr;
         PTR32 packet;
     } const *params32 = args;
 
     struct dump_params params =
     {
-        ULongToPtr(params32->user),
+        params32->handle,
         ULongToPtr(params32->hdr),
         ULongToPtr(params32->packet)
     };

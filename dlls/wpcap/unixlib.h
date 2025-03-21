@@ -133,7 +133,7 @@ struct datalink_val_to_name_params
 
 struct dump_params
 {
-    unsigned char *user;
+    UINT64 handle;
     const struct pcap_pkthdr_win32 *hdr;
     const unsigned char *packet;
 };

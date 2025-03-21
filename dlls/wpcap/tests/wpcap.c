@@ -124,7 +124,7 @@ static const char * (CDECL *ppcap_tstamp_type_val_to_name)( int );
 
 static void CDECL capture_callback( unsigned char *user, const struct pcap_pkthdr *hdr, const unsigned char *bytes )
 {
-    trace( "user %p hdr %p byte %p\n", user, hdr, bytes );
+    trace( "user %p hdr %p bytes %p\n", user, hdr, bytes );
 }
 
 static void test_capture( void )
@@ -314,7 +314,7 @@ static void test_dump( void )
     dumper = ppcap_dump_open( pcap, filename );
     ok( dumper != NULL, "got NULL\n" );
 
-    ret = ppcap_dispatch( pcap, 1, dump_callback, NULL );
+    ret = ppcap_dispatch( pcap, 2, dump_callback, (unsigned char *)dumper );
     ok( ret >= 0, "got %d\n", ret );
 
     ppcap_dump_close( dumper );

@@ -289,17 +289,23 @@ const char * CDECL pcap_datalink_val_to_name( int link )
     return (datalinks[link].name = params.buf);
 }
 
-void CDECL pcap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
-{
-    struct dump_params params = { user, hdr, packet };
-    TRACE( "%p, %p, %p\n", user, hdr, packet );
-    PCAP_CALL( dump, &params );
-}
-
 struct dumper
 {
     UINT64 handle;
 };
+
+void CDECL pcap_dump( unsigned char *user, const struct pcap_pkthdr_win32 *hdr, const unsigned char *packet )
+{
+    struct dump_params params;
+    struct dumper *dumper = (struct dumper *)user;
+
+    TRACE( "%p, %p, %p\n", user, hdr, packet );
+
+    params.handle = dumper->handle;
+    params.hdr = hdr;
+    params.packet = packet;
+    PCAP_CALL( dump, &params );
+}
 
 void CDECL pcap_dump_close( struct dumper *dumper )
 {
