@@ -657,7 +657,7 @@ static NTSTATUS wow64_dump_open( void *args )
         PTR32 ret_handle;
     } const *params32 = args;
 
-    struct datalink_val_to_name_params params =
+    struct dump_open_params params =
     {
         params32->handle,
         ULongToPtr(params32->name),
