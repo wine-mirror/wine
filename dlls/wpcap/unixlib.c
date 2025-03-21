@@ -176,8 +176,9 @@ static NTSTATUS wrap_dump_close( void *args )
 
 static NTSTATUS wrap_dump_open( void *args )
 {
-    const struct dump_open_params *params = args;
-    *params->ret_handle = (ULONG_PTR)pcap_dump_open( (pcap_t *)(ULONG_PTR)params->handle, params->name );
+    struct dump_open_params *params = args;
+    if (!(*params->ret_handle = (ULONG_PTR)pcap_dump_open( (pcap_t *)(ULONG_PTR)params->handle, params->name )))
+        return STATUS_NO_MEMORY;
     return STATUS_SUCCESS;
 }
 
