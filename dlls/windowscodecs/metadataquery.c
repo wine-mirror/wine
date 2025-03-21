@@ -528,8 +528,8 @@ static void parse_query_component(struct query_parser *parser)
 static HRESULT parser_set_top_level_metadata_handler(struct query_handler *query_handler,
         struct query_parser *parser)
 {
+    IWICMetadataReader *handler = NULL;
     struct query_component *comp;
-    IWICMetadataReader *handler;
     HRESULT hr;
     GUID format;
     UINT count, i, matched_index;
