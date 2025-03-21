@@ -678,6 +678,24 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
     }
 #endif
 
+#ifdef HAS_BLUETOOTH
+    case WS_AF_BTH:
+    {
+        SOCKADDR_BTH win = {0};
+        BLUETOOTH_ADDRESS addr = {0};
+
+        if (wsaddrlen != sizeof(win)) return 0;
+        memcpy( &win, wsaddr, sizeof(win) );
+        addr.ullLong = win.btAddr;
+
+        uaddr->rfcomm.rc_family = AF_BLUETOOTH;
+        memcpy( &uaddr->rfcomm.rc_bdaddr, addr.rgBytes, sizeof( addr.rgBytes ) );
+        /* There can only be a maximum of 30 RFCOMM channels, so UINT8_MAX is safe to use here. */
+        uaddr->rfcomm.rc_channel = win.port == BT_PORT_ANY ? UINT8_MAX : win.port;
+        return sizeof(uaddr->rfcomm);
+    }
+#endif
+
     case WS_AF_UNSPEC:
         switch (wsaddrlen)
         {
@@ -3065,6 +3083,40 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (check_addr_usage( sock, &bind_addr, v6only ))
             return;
 
+#ifdef HAS_BLUETOOTH
+        if (unix_addr.rfcomm.rc_family == AF_BLUETOOTH
+            && !(unix_addr.rfcomm.rc_channel >= 1 && unix_addr.rfcomm.rc_channel <= 30))
+        {
+            int i;
+            if (unix_addr.rfcomm.rc_channel != UINT8_MAX)
+            {
+                set_error( sock_get_ntstatus( EADDRNOTAVAIL ) );
+                return;
+            }
+            /* If the RFCOMM channel was set to BT_PORT_ANY, we need to find an available RFCOMM
+             *  channel. The Linux kernel has a similar mechanism, but the channel is only assigned
+             *  on listen(), which we cannot call yet. The other, albeit hacky/race-y way to find an available
+             *  channel is to loop through all valid channel values (1 to 30) until bind() succeeds.
+             */
+            for (i = 1; i <= 30; i++)
+            {
+                bind_addr.rfcomm.rc_channel = i;
+                if (!bind( unix_fd, &bind_addr.addr, unix_len ))
+                    break;
+                if (errno != EADDRINUSE)
+                {
+                    set_error( sock_get_ntstatus( errno ) );
+                    return;
+                }
+            }
+            if (i > 30)
+            {
+                set_error( sock_get_ntstatus( EADDRINUSE ) );
+                return;
+            }
+        }
+        else
+#endif
         if (bind( unix_fd, &bind_addr.addr, unix_len ) < 0)
         {
             if (errno == EADDRINUSE && sock->reuseaddr)

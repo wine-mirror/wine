@@ -12827,19 +12827,19 @@ static void test_bind_bluetooth(void)
     ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
     err = WSAGetLastError();
     ok(ret == -1, "expected bind to fail\n");
-    todo_wine ok(err == WSAEADDRNOTAVAIL || err == WSAENETDOWN, "got error %d\n", err);
+    ok(err == WSAEADDRNOTAVAIL || err == WSAENETDOWN, "got error %d\n", err);
 
     addr.port = 20;
     ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
     err = WSAGetLastError();
-    todo_wine ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+    ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
 
     sock2 = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
     ok(sock2 != INVALID_SOCKET, "got error %d\n", WSAGetLastError());
     addr.port = BT_PORT_ANY;
     ret = bind(sock2, (struct sockaddr *)&addr, sizeof(addr));
     err = WSAGetLastError();
-    todo_wine ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+    ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
 
     closesocket(sock);
     closesocket(sock2);

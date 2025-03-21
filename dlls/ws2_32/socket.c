@@ -1173,7 +1173,13 @@ int WINAPI bind( SOCKET s, const struct sockaddr *addr, int len )
                 return -1;
             }
             break;
-
+        case AF_BTH:
+            if (len < sizeof(SOCKADDR_BTH))
+            {
+                SetLastError( WSAEFAULT );
+                return -1;
+            }
+            break;
         default:
             FIXME( "unknown protocol %u\n", addr->sa_family );
             SetLastError( WSAEAFNOSUPPORT );
