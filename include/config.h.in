@@ -21,6 +21,12 @@
 /* Define to 1 if you have the <asm/user.h> header file. */
 #undef HAVE_ASM_USER_H
 
+/* Define to 1 if you have the <bluetooth/bluetooth.h> header file. */
+#undef HAVE_BLUETOOTH_BLUETOOTH_H
+
+/* Define to 1 if you have the <bluetooth/rfcomm.h> header file. */
+#undef HAVE_BLUETOOTH_RFCOMM_H
+
 /* Define to 1 if you have the <capi20.h> header file. */
 #undef HAVE_CAPI20_H
 

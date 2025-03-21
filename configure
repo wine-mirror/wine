@@ -7704,6 +7704,12 @@ then :
   printf "%s\n" "#define HAVE_ASM_USER_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "bluetooth/bluetooth.h" "ac_cv_header_bluetooth_bluetooth_h" "$ac_includes_default"
+if test "x$ac_cv_header_bluetooth_bluetooth_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_BLUETOOTH_BLUETOOTH_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "elf.h" "ac_cv_header_elf_h" "$ac_includes_default"
 if test "x$ac_cv_header_elf_h" = xyes
 then :
@@ -8827,6 +8833,17 @@ ac_fn_c_check_header_compile "$LINENO" "libprocstat.h" "ac_cv_header_libprocstat
 if test "x$ac_cv_header_libprocstat_h" = xyes
 then :
   printf "%s\n" "#define HAVE_LIBPROCSTAT_H 1" >>confdefs.h
+
+fi
+
+
+ac_fn_c_check_header_compile "$LINENO" "bluetooth/rfcomm.h" "ac_cv_header_bluetooth_rfcomm_h" "#ifdef HAVE_BLUETOOTH_BLUETOOTH_H
+#include <bluetooth/bluetooth.h>
+#endif
+"
+if test "x$ac_cv_header_bluetooth_rfcomm_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_BLUETOOTH_RFCOMM_H 1" >>confdefs.h
 
 fi
 

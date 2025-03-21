@@ -379,6 +379,7 @@ AC_CHECK_HEADERS(\
 	asm/termbits.h \
 	asm/types.h \
 	asm/user.h \
+        bluetooth/bluetooth.h \
 	elf.h \
 	gettext-po.h \
 	link.h \
@@ -579,6 +580,11 @@ AC_CHECK_HEADERS([libprocstat.h],,,
 #include <sys/socket.h>
 #ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
+#endif])
+
+AC_CHECK_HEADERS([bluetooth/rfcomm.h],,,
+[#ifdef HAVE_BLUETOOTH_BLUETOOTH_H
+#include <bluetooth/bluetooth.h>
 #endif])
 
 if test "x$ac_cv_header_sys_xattr_h" = xyes

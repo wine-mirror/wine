@@ -3383,8 +3383,7 @@ static void test_WSASocket(void)
     {
         SetLastError( 0xdeadbeef );
         sock = WSASocketA( tests[i].family, tests[i].type, tests[i].protocol, NULL, 0, 0 );
-        todo_wine_if (i == 7)
-            ok(WSAGetLastError() == tests[i].error, "Test %u: got wrong error %u\n", i, WSAGetLastError());
+        ok(WSAGetLastError() == tests[i].error, "Test %u: got wrong error %u\n", i, WSAGetLastError());
         if (tests[i].error)
         {
             ok(sock == INVALID_SOCKET, "Test %u: expected failure\n", i);
