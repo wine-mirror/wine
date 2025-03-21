@@ -27,6 +27,8 @@
 #define WS_BTHPROTO_RFCOMM 0x03
 #endif
 
+#define BT_PORT_ANY -1
+
 typedef struct _SOCKADDR_BTH
 {
     USHORT addressFamily;

@@ -12806,6 +12806,45 @@ static void test_bind(void)
     free(adapters);
 }
 
+static void test_bind_bluetooth(void)
+{
+    SOCKADDR_BTH addr = {0};
+    SOCKET sock, sock2;
+    INT err, ret;
+
+    sock = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+    err = WSAGetLastError();
+    if (sock == INVALID_SOCKET)
+    {
+        ok(err == WSAEAFNOSUPPORT, "got error %d\n", err);
+        skip("Bluetooth is not supported\n");
+        return;
+    }
+
+    addr.addressFamily = AF_BTH;
+    addr.btAddr = 0;
+    addr.port = 200;
+    ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    ok(ret == -1, "expected bind to fail\n");
+    todo_wine ok(err == WSAEADDRNOTAVAIL || err == WSAENETDOWN, "got error %d\n", err);
+
+    addr.port = 20;
+    ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    todo_wine ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+
+    sock2 = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+    ok(sock2 != INVALID_SOCKET, "got error %d\n", WSAGetLastError());
+    addr.port = BT_PORT_ANY;
+    ret = bind(sock2, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    todo_wine ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+
+    closesocket(sock);
+    closesocket(sock2);
+}
+
 /* Test calling methods on a socket which is currently connecting. */
 static void test_connecting_socket(void)
 {
@@ -14495,6 +14534,7 @@ START_TEST( sock )
     test_connect_completion_port();
     test_shutdown_completion_port();
     test_bind();
+    test_bind_bluetooth();
     test_connecting_socket();
     test_WSAGetOverlappedResult();
     test_nonblocking_async_recv();
