@@ -176,6 +176,23 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
             && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
 }
 
+static uint8_t pixel_4bpp_max_channel_diff(uint32_t c1, uint32_t c2)
+{
+    uint8_t max_diff = 0;
+    unsigned int i;
+
+    for (i = 0; i < 4; ++i)
+    {
+        uint8_t x, y;
+
+        x = (c1 >> (i * 8)) & 0xff;
+        y = (c2 >> (i * 8)) & 0xff;
+        max_diff = max(max_diff, (x > y ? x - y : y - x));
+    }
+
+    return max_diff;
+}
+
 struct surface_readback
 {
     IDirect3DSurface9 *surface;
@@ -3089,8 +3106,42 @@ static void WINAPI fill_cube_positive_x(D3DXVECTOR4 *out, const D3DXVECTOR3 *tex
         out->x = 1;
 }
 
+static void set_vec2(D3DXVECTOR2 *v, float x, float y)
+{
+    v->x = x;
+    v->y = y;
+}
+
+static const D3DXVECTOR4 quadrant_color[] =
+{
+    { 1.0f, 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },
+};
+
+static void WINAPI fill_func(D3DXVECTOR4 *value, const D3DXVECTOR2 *coord, const D3DXVECTOR2 *size, void *data)
+{
+    D3DXVECTOR2 vec = *coord;
+    unsigned int idx;
+
+    if (data)
+    {
+        *value = *(D3DXVECTOR4 *)data;
+        return;
+    }
+
+    set_vec2(&vec, (vec.x / size->x) - 0.5f, (vec.y / size->y) - 0.5f);
+    if (vec.x < 8.0f)
+        idx = vec.y < 8.0f ? 0 : 2;
+    else
+        idx = vec.y < 8.0f ? 1 : 3;
+
+    *value = quadrant_color[idx];
+}
+
 static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
 {
+    const D3DXVECTOR4 clear_val = { 0.0f, 0.0f, 0.0f, 0.0f };
+    IDirect3DSurface9 *surface;
+    struct surface_readback rb;
     HRESULT hr;
     IDirect3DTexture9 *texture;
     IDirect3DCubeTexture9 *cube_texture;
@@ -3165,8 +3216,6 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXSaveTextureToFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
-        IDirect3DSurface9 *surface;
-
         buffer_pointer = ID3DXBuffer_GetBufferPointer(buffer);
         buffer_size = ID3DXBuffer_GetBufferSize(buffer);
         hr = D3DXGetImageInfoFromFileInMemory(buffer_pointer, buffer_size, &info);
@@ -3269,6 +3318,57 @@ static void test_D3DXSaveTextureToFileInMemory(IDirect3DDevice9 *device)
     }
 
     IDirect3DVolumeTexture9_Release(volume_texture);
+
+    /* Test JPEG compression quality. */
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXFillTexture(texture, fill_func, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXSaveTextureToFileInMemory(&buffer, D3DXIFF_JPG, (IDirect3DBaseTexture9 *)texture, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXFillTexture(texture, fill_func, (void *)&clear_val);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXLoadSurfaceFromFileInMemory(surface, NULL, NULL, ID3DXBuffer_GetBufferPointer(buffer),
+            ID3DXBuffer_GetBufferSize(buffer), NULL, D3DX_FILTER_NONE, 0, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDirect3DSurface9_Release(surface);
+    ID3DXBuffer_Release(buffer);
+
+    /*
+     * Wine's JPEG compression quality is worse than native. Native uses 4:2:0
+     * subsampling which is the same as what we use, but whatever compression
+     * settings they're using results in a JPEG image that is much closer to
+     * the original uncompressed surface. Native compresses with a quality
+     * setting of 95 while currently we use the libjpeg default of 75.
+     * However, even if we up our quality to 95 to match we still end up with
+     * a max_diff of 14, so there must also be some other setting(s) involved.
+     * The quality difference is most apparent in 16x16 blocks with multiple
+     * colors.
+     */
+    get_texture_surface_readback(device, texture, 0, &rb);
+    todo_wine ok(compare_color(get_readback_color(&rb,  0,  0),  0xffff0000, 5),
+            "Unexpected color %#x, max_diff %d.\n", get_readback_color(&rb, 0, 0),
+            pixel_4bpp_max_channel_diff(get_readback_color(&rb, 0, 0), 0xffff0000));
+    todo_wine ok(compare_color(get_readback_color(&rb, 15,  0),  0xff00ff00, 3),
+            "Unexpected color %#x, max_diff %d.\n", get_readback_color(&rb, 15, 0),
+            pixel_4bpp_max_channel_diff(get_readback_color(&rb, 15, 0), 0xff00ff00));
+    todo_wine ok(compare_color(get_readback_color(&rb,  0, 15),  0xff0000ff, 6),
+            "Unexpected color %#x, max_diff %d.\n", get_readback_color(&rb, 0, 15),
+            pixel_4bpp_max_channel_diff(get_readback_color(&rb, 0, 15), 0xff0000ff));
+    todo_wine ok(compare_color(get_readback_color(&rb, 15, 15),  0xffffffff, 1),
+            "Unexpected color %#x, max_diff %d.\n", get_readback_color(&rb, 15, 15),
+            pixel_4bpp_max_channel_diff(get_readback_color(&rb, 15, 15), 0xffffffff));
+    release_surface_readback(&rb);
+
+    IDirect3DTexture9_Release(texture);
 }
 
 static void test_texture_shader(void)

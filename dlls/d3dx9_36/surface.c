@@ -580,6 +580,9 @@ static HRESULT d3dx_pixels_save_wic(struct d3dx_pixels *pixels, const struct pix
     if (FAILED(hr))
         goto exit;
 
+    if (image_file_format == D3DXIFF_JPG)
+        FIXME("JPEG saving quality adjustment currently unimplemented, expect lower quality JPEG.\n");
+
     hr = IWICBitmapFrameEncode_SetSize(wic_frame, pixels->size.width, pixels->size.height);
     if (FAILED(hr))
         goto exit;
