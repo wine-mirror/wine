@@ -345,8 +345,6 @@ struct dumper * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
         return NULL;
     }
 
-    TRACE( "unix_path %s\n", debugstr_a(params.name) );
-
     params.handle     = pcap->handle;
     params.ret_handle = &dumper->handle;
     if (PCAP_CALL( dump_open, &params ))
