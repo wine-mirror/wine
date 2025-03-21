@@ -64,6 +64,8 @@ struct pcap
 {
     UINT64 handle;
     struct pcap_pkthdr_win32 hdr;
+    unsigned char *buf;
+    UINT32 bufsize;
     char errbuf[PCAP_ERRBUF_SIZE];
 };
 
@@ -133,12 +135,14 @@ int CDECL pcap_can_set_rfmon( struct pcap *pcap )
 void CDECL pcap_close( struct pcap *pcap )
 {
     struct close_params params;
+    SIZE_T size = 0;
 
     TRACE( "%p\n", pcap );
 
     if (!pcap) return;
     params.handle = pcap->handle;
     PCAP_CALL( close, &params );
+    if (pcap->buf) NtFreeVirtualMemory( GetCurrentProcess(), (void **)&pcap->buf, &size, MEM_RELEASE );
     free( pcap );
 }
 
@@ -946,10 +950,17 @@ int CDECL pcap_next_ex( struct pcap *pcap, struct pcap_pkthdr_win32 **hdr, const
     TRACE( "%p, %p, %p\n", pcap, hdr, data );
 
     if (!pcap) return PCAP_ERROR;
-    params.handle = pcap->handle;
-    params.hdr    = &pcap->hdr;
-    params.data   = data;
-    if ((ret = PCAP_CALL( next_ex, &params )) == 1) *hdr = &pcap->hdr;
+    params.handle  = pcap->handle;
+    params.hdr     = &pcap->hdr;
+    params.buf     = pcap->buf;
+    params.bufsize = pcap->bufsize;
+    if ((ret = PCAP_CALL( next_ex, &params )) == 1)
+    {
+        *hdr = &pcap->hdr;
+        *data = params.data;
+        pcap->buf = params.buf;
+        pcap->bufsize = params.bufsize;
+    }
     return ret;
 }
 
@@ -1466,7 +1477,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     {
         DisableThreadLibraryCalls( hinst );
         if (__wine_init_unix_call()) ERR( "No pcap support, expect problems\n" );
-        else
+        else if (!PCAP_CALL( process_attach, NULL ))
         {
             char errbuf[PCAP_ERRBUF_SIZE];
             struct init_params params = { PCAP_CHAR_ENC_UTF_8, errbuf };

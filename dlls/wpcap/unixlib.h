@@ -222,7 +222,9 @@ struct next_ex_params
 {
     UINT64 handle;
     struct pcap_pkthdr_win32 *hdr;
-    const unsigned char **data;
+    const unsigned char *data;
+    unsigned char *buf;
+    UINT32 bufsize;
 };
 
 struct open_live_params
@@ -342,6 +344,7 @@ struct tstamp_type_val_to_name_params
 
 enum pcap_funcs
 {
+    unix_process_attach,
     unix_activate,
     unix_breakloop,
     unix_bufsize,
