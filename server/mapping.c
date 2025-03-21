@@ -527,7 +527,7 @@ static void add_committed_range( struct memory_view *view, file_pos_t start, fil
     struct range *ranges;
 
     if ((start & page_mask) || (end & page_mask) ||
-        start >= view->size || end >= view->size ||
+        start >= view->size || end > view->size ||
         start >= end)
     {
         set_error( STATUS_INVALID_PARAMETER );
