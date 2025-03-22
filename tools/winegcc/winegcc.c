@@ -142,6 +142,7 @@ static const char* app_loader_template =
 static const char *output_file_name;
 static const char *output_debug_file;
 static const char *output_implib;
+static const char *output;
 static int keep_generated = 0;
 static int verbose;
 const char *temp_dir = NULL;
@@ -1578,7 +1579,6 @@ int main(int argc, char **argv)
     int compile_only = 0;
     struct strarray args = empty_strarray;
     struct strarray files = empty_strarray;
-    const char *output_name = NULL;
     const char* option_arg;
     char* lang = 0;
     char* str;
@@ -1830,7 +1830,7 @@ int main(int argc, char **argv)
                         nostartfiles = true;
                     break;
 		case 'o':
-		    output_name = option_arg;
+		    output = option_arg;
                     raw_compiler_arg = 0;
 		    break;
                 case 'p':
@@ -2037,7 +2037,7 @@ int main(int argc, char **argv)
 
     is_pe = is_pe_target( target );
     if (is_pe) use_msvcrt = true;
-    if (strendswith( output_name, ".fake" )) fake_module = true;
+    if (output && strendswith( output, ".fake" )) fake_module = true;
 
     if (!section_align) section_align = "0x1000";
     if (!file_align) file_align = section_align;
@@ -2052,8 +2052,8 @@ int main(int argc, char **argv)
         }
     }
     if (files.count == 0 && !fake_module) forward();
-    else if (linking) build(files, output_name);
-    else compile(files, lang, output_name, compile_only);
+    else if (linking) build(files, output);
+    else compile(files, lang, output, compile_only);
 
     output_file_name = NULL;
     output_debug_file = NULL;
