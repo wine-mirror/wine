@@ -609,6 +609,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     struct wined3d_context *context;
     struct wined3d_range dst_range;
     unsigned int texture_level;
+    BYTE *tmp_buffer = NULL;
     HRESULT hr = WINED3D_OK;
     BOOL same_sub_resource;
     BOOL upload = FALSE;
@@ -808,18 +809,43 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             else
             {
                 /* Stretching in y direction only. */
+
+                if (same_sub_resource)
+                {
+                    /* Use a temporary buffer if blitting a surface to itself. */
+                    if ((tmp_buffer = malloc(src_height * src_map.row_pitch)))
+                    {
+                        memcpy(tmp_buffer, sbase, src_height * src_map.row_pitch);
+                        sbase = tmp_buffer;
+                    }
+                }
+
                 for (y = sy = 0; y < dst_height; ++y, sy += yinc)
                 {
                     sbuf = sbase + (sy >> 16) * src_map.row_pitch;
                     memcpy(dbuf, sbuf, row_byte_count);
                     dbuf += dst_map.row_pitch;
                 }
+
+                if (same_sub_resource)
+                    free(tmp_buffer);
             }
         }
         else
         {
             /* Stretching in X direction. */
             unsigned int last_sy = ~0u;
+
+            if (same_sub_resource)
+            {
+                /* Use a temporary buffer if blitting a surface to itself. */
+                if ((tmp_buffer = malloc(src_height * src_map.row_pitch)))
+                {
+                    memcpy(tmp_buffer, sbase, src_height * src_map.row_pitch);
+                    sbase = tmp_buffer;
+                }
+            }
+
             for (y = sy = 0; y < dst_height; ++y, sy += yinc)
             {
                 sbuf = sbase + (sy >> 16) * src_map.row_pitch;
@@ -878,6 +904,9 @@ do { \
                 dbuf += dst_map.row_pitch;
                 last_sy = sy;
             }
+
+            if (same_sub_resource)
+                free(tmp_buffer);
         }
     }
     else
