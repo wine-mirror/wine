@@ -1132,6 +1132,17 @@ static void test_addclosedcurve(void)
     GdipDeletePath(path);
 }
 
+static path_test_t line_path[] = {
+
+    {0.0,  50.0, PathPointTypeStart, 0, 0}, /*0*/
+    {5.0,  45.0, PathPointTypeLine,  0, 0}, /*1*/
+    {0.0,  40.0, PathPointTypeLine,  0, 0}, /*2*/
+    {15.0, 35.0, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}, /*3*/
+    {0.0,  30.0, PathPointTypeStart, 0, 0}, /*4*/
+    {25.0, 25.0, PathPointTypeLine,  0, 0}, /*5*/
+    {0.0,  20.0, PathPointTypeLine,  0, 0} /*6*/
+};
+
 static path_test_t reverse_path[] = {
     {0.0,  20.0, PathPointTypeStart, 0, 0}, /*0*/
     {25.0, 25.0, PathPointTypeLine,  0, 0}, /*1*/
@@ -1140,7 +1151,23 @@ static path_test_t reverse_path[] = {
     {0.0,  40.0, PathPointTypeLine,  0, 0}, /*4*/
     {5.0,  45.0, PathPointTypeLine,  0, 0}, /*5*/
     {0.0,  50.0, PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}  /*6*/
-    };
+};
+
+static path_test_t pie_path[] = {
+    {2.5,  4.0,  PathPointTypeStart,  0, 0}, /*0*/
+    {3.99, 4.26, PathPointTypeLine,   0, 0}, /*1*/
+    {3.96, 4.44, PathPointTypeBezier, 0, 0}, /*2*/
+    {3.93, 4.62, PathPointTypeBezier, 0, 0}, /*3*/
+    {3.88, 4.79, PathPointTypeBezier | PathPointTypeCloseSubpath, 0, 0}  /*4*/
+};
+
+static path_test_t reverse_pie_path[] = {
+    {3.88, 4.79, PathPointTypeStart,  0, 0}, /*0*/
+    {3.93, 4.62, PathPointTypeBezier, 0, 0}, /*1*/
+    {3.96, 4.44, PathPointTypeBezier, 0, 0}, /*2*/
+    {3.99, 4.26, PathPointTypeBezier, 0, 1}, /*3*/
+    {2.5,  4.0,  PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}  /*4*/
+};
 
 static void test_reverse(void)
 {
@@ -1164,14 +1191,39 @@ static void test_reverse(void)
     status = GdipReversePath(path);
     expect(Ok, status);
 
-    GdipAddPathLine2(path, pts, 4);
-    GdipClosePathFigure(path);
-    GdipAddPathLine2(path, &(pts[4]), 3);
+    status = GdipAddPathLine2(path, pts, 4);
+    expect(Ok, status);
+    status = GdipClosePathFigure(path);
+    expect(Ok, status);
+    status = GdipAddPathLine2(path, &(pts[4]), 3);
+    expect(Ok, status);
+    ok_path(path, line_path, ARRAY_SIZE(line_path), FALSE);
 
     status = GdipReversePath(path);
     expect(Ok, status);
     ok_path(path, reverse_path, ARRAY_SIZE(reverse_path), FALSE);
 
+    /* Double reverse should go back to original Line Path */
+    status = GdipReversePath(path);
+    expect(Ok, status);
+    ok_path(path, line_path, ARRAY_SIZE(line_path), FALSE);
+    GdipDeletePath(path);
+
+    /* Reverse test for Path Pie */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipAddPathPie(path, 1.0, 2.0, 3.0, 4.0, 10.0, 20.0);
+    expect(Ok, status);
+    ok_path(path, pie_path, ARRAY_SIZE(pie_path), FALSE);
+
+    status = GdipReversePath(path);
+    expect(Ok, status);
+    ok_path(path, reverse_pie_path, ARRAY_SIZE(reverse_pie_path), FALSE);
+
+    /* Double reverse should go back to original Pie Path*/
+    status = GdipReversePath(path);
+    expect(Ok, status);
+    ok_path(path, pie_path, ARRAY_SIZE(pie_path), FALSE);
     GdipDeletePath(path);
 }
 
