@@ -511,6 +511,8 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add( &flags, "-image_base" );
             strarray_add( &flags, image_base );
         }
+        /* On Mac, change -s into -Wl,-x. ld's -s switch is deprecated,
+         * and it doesn't work on Tiger with MH_BUNDLEs anyway */
         if (strip) strarray_add( &flags, "-Wl,-x" );
         strarray_addall( &link_args, flags );
         return link_args;
@@ -562,6 +564,8 @@ static struct strarray get_link_args( const char *output_name )
         if (output_implib)
             strarray_add(&link_args, strmake("-Wl,--out-implib,%s", output_implib));
 
+        if (strip) strarray_add( &link_args, "-s" );
+
         if (!try_link( link_args, "-Wl,--file-alignment,0x1000" ))
             strarray_add( &link_args, strmake( "-Wl,--file-alignment,%s", file_align ));
         else if (!try_link( link_args, "-Wl,-Xlink=-filealign:0x1000" ))
@@ -594,7 +598,9 @@ static struct strarray get_link_args( const char *output_name )
             strarray_add(&link_args, "-Wl,-debug");
             strarray_add(&link_args, strmake("-Wl,-pdb:%s", output_debug_file));
         }
-        else if (!strip)
+        else if (strip)
+            strarray_add( &link_args, "-s" );
+        else
             strarray_add(&link_args, "-Wl,-debug:dwarf");
 
         if (use_build_id)
@@ -626,6 +632,7 @@ static struct strarray get_link_args( const char *output_name )
 
     /* generic Unix shared library flags */
 
+    if (strip) strarray_add( &link_args, "-s" );
     strarray_add( &link_args, "-shared" );
     strarray_add( &link_args, "-Wl,-Bsymbolic" );
     if (!noshortwchar && target.cpu == CPU_ARM)
@@ -1852,12 +1859,8 @@ int main(int argc, char **argv)
 			is_shared = true;
                         raw_compiler_arg = raw_linker_arg = 0;
 		    }
-                    else if (strcmp("-s", args.str[i]) == 0 && target.platform == PLATFORM_APPLE)
+                    else if (strcmp("-s", args.str[i]) == 0)
                     {
-                        /* On Mac, change -s into -Wl,-x. ld's -s switch
-                         * is deprecated, and it doesn't work on Tiger with
-                         * MH_BUNDLEs anyway
-                         */
                         strip = true;
                         raw_linker_arg = 0;
                     }
