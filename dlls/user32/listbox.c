@@ -608,7 +608,7 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
     if (index < descr->nb_items)
     {
         item_str = get_item_string(descr, index);
-        selected = is_item_selected(descr, index);
+        selected = !(descr->style & LBS_NOSEL) && is_item_selected(descr, index);
     }
 
     focused = !ignoreFocus && descr->focus_item == index && descr->caret_on && descr->in_focus;
