@@ -1557,12 +1557,6 @@ static int is_linker_arg(const char* arg)
     return 0;
 }
 
-static void parse_target_option( const char *name )
-{
-    target_alias = xstrdup( name );
-    if (!parse_target( name, &target )) error( "Invalid target specification '%s'\n", name );
-}
-
 static int is_option( struct strarray args, int i, const char *option, const char **option_arg )
 {
     if (!strcmp( args.str[i], option ))
@@ -1722,7 +1716,7 @@ int main(int argc, char **argv)
                     raw_linker_arg = 1;
 		    break;
                 case 'b':
-                    parse_target_option( option_arg );
+                    target_alias = option_arg;
                     raw_compiler_arg = 0;
                     break;
                 case 'V':
@@ -1868,7 +1862,7 @@ int main(int argc, char **argv)
                 case 't':
                     if (is_option( args, i, "-target", &option_arg ))
                     {
-                        parse_target_option( option_arg );
+                        target_alias = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     break;
@@ -1984,7 +1978,7 @@ int main(int argc, char **argv)
                     }
                     else if (is_option( args, i, "--target", &option_arg ))
                     {
-                        parse_target_option( option_arg );
+                        target_alias = option_arg;
                         raw_compiler_arg = raw_linker_arg = 0;
                     }
                     else if (is_option( args, i, "--wine-objdir", &option_arg ))
@@ -2034,7 +2028,10 @@ int main(int argc, char **argv)
 	}
     }
 
+    if (target_alias && !parse_target( target_alias, &target ))
+        error( "Invalid target specification '%s'\n", target_alias );
     if (force_pointer_size) set_target_ptr_size( &target, force_pointer_size );
+
     if (processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
