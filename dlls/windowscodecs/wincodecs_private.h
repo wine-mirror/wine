@@ -245,6 +245,8 @@ extern HRESULT MetadataQueryReader_CreateInstance(IWICMetadataReader *, IWICMeta
 extern HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataWriter *, IWICMetadataQueryWriter **);
 extern HRESULT stream_initialize_from_filehandle(IWICStream *iface, HANDLE hfile);
 
+extern bool wincodecs_array_reserve(void **elements, size_t *capacity, size_t count, size_t size);
+
 static inline const char *debug_wic_rect(const WICRect *rect)
 {
     if (!rect) return "(null)";

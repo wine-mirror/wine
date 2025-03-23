@@ -247,7 +247,7 @@ struct query_parser
     HRESULT hr;
 };
 
-static bool wincodecs_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
+bool wincodecs_array_reserve(void **elements, size_t *capacity, size_t count, size_t size)
 {
     size_t new_capacity, max_capacity;
     void *new_elements;
