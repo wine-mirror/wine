@@ -574,7 +574,7 @@ static struct strarray get_link_args( const char *output_name )
 
     case PLATFORM_WINDOWS:
         strarray_add( &link_args, "-nodefaultlibs" );
-        strarray_add( &link_args, "-nostartfiles" );
+        strarray_add( &link_args, "-nostdlib" );
 
         if (is_shared || is_win16_app)
         {
