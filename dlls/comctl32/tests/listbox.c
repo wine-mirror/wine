@@ -751,6 +751,39 @@ static void test_LB_SETCURSEL(void)
     ok(ret == -1, "Unexpected anchor index %d.\n", ret);
 
     DestroyWindow(hLB);
+
+    /* LBS_NOSEL */
+    hLB = create_listbox(LBS_NOSEL, 0);
+    ok(hLB != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == -1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 0, 0);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
+    todo_wine
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 2, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 3, 0);
+    todo_wine
+    ok(ret == 3, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 3, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == 3, "Unexpected return value %d.\n", ret);
+
+    DestroyWindow(hLB);
+
     DestroyWindow(parent);
 }
 
