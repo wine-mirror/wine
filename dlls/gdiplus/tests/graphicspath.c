@@ -586,6 +586,7 @@ static void test_worldbounds(void)
     expectf(266.8, bounds.Width);
     expectf(289.6, bounds.Height);
 
+    /* Bounds from path without any points */
     GdipCreatePath(FillModeAlternate, &path);
     status = GdipGetPathWorldBounds(path, &bounds, matrix, pen);
     expect(Ok, status);
@@ -596,6 +597,19 @@ static void test_worldbounds(void)
     expectf(0.0, bounds.Width);
     expectf(0.0, bounds.Height);
 
+    /* Bounds from path with single point */
+    GdipCreatePath(FillModeAlternate, &path);
+    GdipAddPathLine2(path, &(line2_points[0]), 1);
+    status = GdipGetPathWorldBounds(path, &bounds, NULL, pen);
+    expect(Ok, status);
+    GdipDeletePath(path);
+
+    todo_wine expectf(0.0, bounds.X);
+    todo_wine expectf(0.0, bounds.Y);
+    todo_wine expectf(0.0, bounds.Width);
+    todo_wine expectf(0.0, bounds.Height);
+
+    /* Bounds from path with two points */
     GdipCreatePath(FillModeAlternate, &path);
     GdipAddPathLine2(path, &(line2_points[0]), 2);
     status = GdipGetPathWorldBounds(path, &bounds, matrix, pen);
