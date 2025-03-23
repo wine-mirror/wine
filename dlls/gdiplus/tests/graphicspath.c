@@ -604,10 +604,10 @@ static void test_worldbounds(void)
     expect(Ok, status);
     GdipDeletePath(path);
 
-    todo_wine expectf(0.0, bounds.X);
-    todo_wine expectf(0.0, bounds.Y);
-    todo_wine expectf(0.0, bounds.Width);
-    todo_wine expectf(0.0, bounds.Height);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf(0.0, bounds.Width);
+    expectf(0.0, bounds.Height);
 
     /* Bounds from path with two points */
     GdipCreatePath(FillModeAlternate, &path);

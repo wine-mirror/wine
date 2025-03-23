@@ -1624,7 +1624,7 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
 
     /* If path is empty just return. */
     count = path->pathdata.Count;
-    if(count == 0){
+    if(count < 2){
         bounds->X = bounds->Y = bounds->Width = bounds->Height = 0.0;
         return Ok;
     }
