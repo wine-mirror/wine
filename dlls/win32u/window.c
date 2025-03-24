@@ -147,11 +147,11 @@ void *get_user_handle_ptr( HANDLE handle, unsigned short type )
 }
 
 /***********************************************************************
- *           next_process_user_handle_ptr
+ *           next_thread_user_object
  *
  * user_lock must be held by caller.
  */
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
+void *next_thread_user_object( UINT tid, HANDLE *handle, unsigned short type )
 {
     WORD index = *handle ? USER_HANDLE_TO_INDEX( *handle ) + 1 : 0;
     struct user_entry entry;
@@ -161,6 +161,7 @@ void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
     {
         if (!get_user_entry_at( i, type, &entry, handle )) continue;
         if (entry.pid != GetCurrentProcessId()) continue;
+        if (tid != -1 && entry.tid != tid) continue;
         return client_objects[i];
     }
 
@@ -5210,9 +5211,8 @@ void destroy_thread_windows(void)
     HANDLE handle = 0;
 
     user_lock();
-    while ((win = next_process_user_handle_ptr( &handle, NTUSER_OBJ_WINDOW )))
+    while ((win = next_thread_user_object( GetCurrentThreadId(), &handle, NTUSER_OBJ_WINDOW )))
     {
-        if (win->tid != GetCurrentThreadId()) continue;
         free_dce( win->dce, win->obj.handle );
         set_user_handle_ptr( handle, NULL );
         win->userdata = (UINT_PTR)free_list;

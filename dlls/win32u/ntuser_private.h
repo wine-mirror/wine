@@ -235,7 +235,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type );
 void *free_user_handle( HANDLE handle, unsigned short type );
 void *get_user_handle_ptr( HANDLE handle, unsigned short type );
 void release_user_handle_ptr( void *ptr );
-void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type );
+void *next_thread_user_object( UINT tid, HANDLE *handle, unsigned short type );
 UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask );
 
 static inline UINT win_get_flags( HWND hwnd )

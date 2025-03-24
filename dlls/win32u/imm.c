@@ -425,9 +425,8 @@ NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, U
 
     *size = 0;
     user_lock();
-    while (count && (imc = next_process_user_handle_ptr( &handle, NTUSER_OBJ_IMC )))
+    while (count && (imc = next_thread_user_object( thread_id, &handle, NTUSER_OBJ_IMC )))
     {
-        if (thread_id != -1 && imc->thread_id != thread_id) continue;
         buffer[(*size)++] = handle;
         count--;
     }
