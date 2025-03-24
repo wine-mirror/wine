@@ -2753,7 +2753,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
     struct stat st;
     char *header_end;
     char *ptr = view->base;
-    SIZE_T header_size, total_size = view->size;
+    SIZE_T header_size, header_map_size, total_size = view->size;
     SIZE_T align_mask = max( image_info->alignment - 1, page_mask );
     INT_PTR delta;
 
@@ -2763,7 +2763,8 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     fstat( fd, &st );
     header_size = min( image_info->header_size, st.st_size );
-    if ((status = map_pe_header( view->base, header_size, image_info->header_map_size, fd, &removable )))
+    header_map_size = min( image_info->header_map_size, ROUND_SIZE( 0, st.st_size, page_mask ));
+    if ((status = map_pe_header( view->base, header_size, header_map_size, fd, &removable )))
         return status;
 
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
