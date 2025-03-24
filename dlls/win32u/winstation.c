@@ -80,13 +80,6 @@ static struct session_thread_data *get_session_thread_data(void)
     return thread_info->session_data;
 }
 
-#if defined(__i386__) || defined(__x86_64__)
-/* this prevents compilers from incorrectly reordering non-volatile reads (e.g., memcpy) from shared memory */
-#define __SHARED_READ_FENCE do { __asm__ __volatile__( "" ::: "memory" ); } while (0)
-#else
-#define __SHARED_READ_FENCE __atomic_thread_fence( __ATOMIC_ACQUIRE )
-#endif
-
 static void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
 {
     while ((*seq = ReadNoFence64( &object->seq )) & 1) YieldProcessor();

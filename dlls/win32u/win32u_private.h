@@ -212,6 +212,13 @@ struct object_lock
 };
 #define OBJECT_LOCK_INIT {0}
 
+#if defined(__i386__) || defined(__x86_64__)
+/* this prevents compilers from incorrectly reordering non-volatile reads (e.g., memcpy) from shared memory */
+#define __SHARED_READ_FENCE do { __asm__ __volatile__( "" ::: "memory" ); } while (0)
+#else
+#define __SHARED_READ_FENCE __atomic_thread_fence( __ATOMIC_ACQUIRE )
+#endif
+
 /* Get shared session object's data pointer, must be called in a loop while STATUS_PENDING
  * is returned, lock must be initialized with OBJECT_LOCK_INIT.
  *

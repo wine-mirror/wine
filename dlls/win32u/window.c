@@ -35,8 +35,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 #define USER_HANDLE_TO_INDEX(hwnd) ((LOWORD(hwnd) - FIRST_USER_HANDLE) >> 1)
+#define USER_HANDLE_FROM_INDEX(index, generation) UlongToHandle( (index << 1) + FIRST_USER_HANDLE + (generation << 16) )
 
-static void *user_handles[MAX_USER_HANDLES];
+static void *client_objects[MAX_USER_HANDLES];
 
 #define SWP_AGG_NOGEOMETRYCHANGE \
     (SWP_NOSIZE | SWP_NOCLIENTSIZE | SWP_NOZORDER)
@@ -72,7 +73,7 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
         assert( index < MAX_USER_HANDLES );
         ptr->handle = handle;
         ptr->type = type;
-        InterlockedExchangePointer( &user_handles[index], ptr );
+        InterlockedExchangePointer( &client_objects[index], ptr );
     }
     return handle;
 }
@@ -91,27 +92,57 @@ static BOOL is_valid_entry( HANDLE handle, unsigned short type )
     return is_valid_entry_uniq( handle, type, ReadAcquire64( (LONG64 *)&entries[index].uniq ) );
 }
 
+static BOOL read_acquire_user_entry( HANDLE handle, unsigned short type, const volatile struct user_entry *src, struct user_entry *dst )
+{
+    UINT64 uniq = ReadAcquire64( (LONG64 *)&src->uniq );
+    if (!is_valid_entry_uniq( handle, type, uniq )) return FALSE;
+    dst->offset = src->offset;
+    dst->tid = src->tid;
+    dst->pid = src->pid;
+    dst->padding = src->padding;
+    __SHARED_READ_FENCE;
+    dst->uniq = ReadNoFence64( &src->uniq );
+    return dst->uniq == uniq;
+}
+
+static BOOL get_user_entry( HANDLE handle, unsigned short type, struct user_entry *entry, HANDLE *full )
+{
+    const volatile struct user_entry *entries = shared_session->user_entries;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+
+    if (index >= MAX_USER_HANDLES) return FALSE;
+    if (!read_acquire_user_entry( handle, type, entries + index, entry )) return FALSE;
+    *full = USER_HANDLE_FROM_INDEX( index, entry->generation );
+    return TRUE;
+}
+
+static BOOL get_user_entry_at( WORD index, unsigned short type, struct user_entry *entry, HANDLE *full )
+{
+    const volatile struct user_entry *entries = shared_session->user_entries;
+    if (index >= MAX_USER_HANDLES) return FALSE;
+    if (!read_acquire_user_entry( 0, type, entries + index, entry )) return FALSE;
+    *full = USER_HANDLE_FROM_INDEX( index, entry->generation );
+    return TRUE;
+}
+
 /***********************************************************************
  *           get_user_handle_ptr
  */
 void *get_user_handle_ptr( HANDLE handle, unsigned short type )
 {
-    struct user_object *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
+    struct user_object *ptr = NULL;
+    struct user_entry entry;
 
     if (index >= MAX_USER_HANDLES) return NULL;
 
     user_lock();
-    if ((ptr = user_handles[index]))
-    {
-        if (ptr->type == type &&
-            ((UINT)(UINT_PTR)ptr->handle == (UINT)(UINT_PTR)handle ||
-             !HIWORD(handle) || HIWORD(handle) == 0xffff))
-            return ptr;
-        ptr = NULL;
-    }
-    else ptr = OBJ_OTHER_PROCESS;
-    user_unlock();
+
+    if (!get_user_entry( handle, type, &entry, &handle )) ptr = NULL;
+    else if (entry.pid != GetCurrentProcessId()) ptr = OBJ_OTHER_PROCESS;
+    else ptr = client_objects[index];
+
+    if (!ptr || ptr == OBJ_OTHER_PROCESS) user_unlock();
     return ptr;
 }
 
@@ -122,16 +153,17 @@ void *get_user_handle_ptr( HANDLE handle, unsigned short type )
  */
 void *next_process_user_handle_ptr( HANDLE *handle, unsigned short type )
 {
-    struct user_object *ptr;
     WORD index = *handle ? USER_HANDLE_TO_INDEX( *handle ) + 1 : 0;
+    struct user_entry entry;
+    UINT i;
 
-    while (index < MAX_USER_HANDLES)
+    for (i = index; i < MAX_USER_HANDLES; i++)
     {
-        if (!(ptr = user_handles[index++])) continue;  /* OBJ_OTHER_PROCESS */
-        if (ptr->type != type) continue;
-        *handle = ptr->handle;
-        return ptr;
+        if (!get_user_entry_at( i, type, &entry, handle )) continue;
+        if (entry.pid != GetCurrentProcessId()) continue;
+        return client_objects[i];
     }
+
     return NULL;
 }
 
@@ -142,7 +174,7 @@ static void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
 {
     WORD index = USER_HANDLE_TO_INDEX(handle);
     assert( index < MAX_USER_HANDLES );
-    InterlockedExchangePointer( &user_handles[index], ptr );
+    InterlockedExchangePointer( &client_objects[index], ptr );
 }
 
 /***********************************************************************
@@ -169,7 +201,7 @@ void *free_user_handle( HANDLE handle, unsigned short type )
             req->type = type;
             req->handle = wine_server_user_handle( handle );
             if (wine_server_call( req )) ptr = NULL;
-            else InterlockedCompareExchangePointer( &user_handles[index], NULL, ptr );
+            else InterlockedCompareExchangePointer( &client_objects[index], NULL, ptr );
         }
         SERVER_END_REQ;
         user_unlock();
