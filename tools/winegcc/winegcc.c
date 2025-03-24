@@ -168,6 +168,7 @@ static enum processor { proc_cc, proc_cxx, proc_cpp } processor = proc_cc;
 enum file_type { file_na, file_other, file_obj, file_res, file_rc, file_arh, file_dll, file_so, file_spec };
 
 static bool is_pe;
+static bool is_static;
 static bool is_shared;
 static bool is_gui_app;
 static bool is_unicode_app;
@@ -186,6 +187,8 @@ static bool large_address_aware;
 static bool wine_builtin;
 static bool unwind_tables;
 static bool strip;
+static bool compile_only;
+static bool skip_link;
 static bool no_default_config;
 static int force_pointer_size;
 
@@ -1224,6 +1227,8 @@ static void build(struct strarray input_files, const char *output)
 	return;
     }
 
+    if (is_static) error("Static linking is not supported\n");
+
     /* generate app loader only for .exe */
     if (is_shared || is_pe || strendswith(output_file, ".so"))
 	generate_app_loader = 0;
@@ -1576,9 +1581,8 @@ static int is_option( struct strarray args, int i, const char *option, const cha
 
 int main(int argc, char **argv)
 {
-    int i, c, next_is_arg = 0, linking = 1;
+    int i, c, next_is_arg = 0;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
-    int compile_only = 0;
     struct strarray args = empty_strarray;
     struct strarray files = empty_strarray;
     const char* option_arg;
@@ -1725,11 +1729,11 @@ int main(int argc, char **argv)
                     break;
                 case 'c':        /* compile or assemble */
                     raw_compiler_arg = 0;
-		    if (args.str[i][2] == 0) compile_only = 1;
-		    /* fall through */
+		    if (args.str[i][2] == 0) compile_only = true;
+                    break;
                 case 'S':        /* generate assembler code */
                 case 'E':        /* preprocess only */
-                    if (args.str[i][2] == 0) linking = 0;
+                    if (args.str[i][2] == 0) skip_link = true;
                     break;
 		case 'f':
 		    if (strcmp("-fno-short-wchar", args.str[i]) == 0)
@@ -1757,7 +1761,7 @@ int main(int argc, char **argv)
                     raw_compiler_arg = 0;
 		    break;
                 case 'M':        /* map file generation */
-                    linking = 0;
+                    skip_link = true;
                     break;
 		case 'm':
 		    if (strcmp("-mno-cygwin", args.str[i]) == 0)
@@ -1843,7 +1847,7 @@ int main(int argc, char **argv)
                     break;
                 case 's':
                     if (strcmp("-static", args.str[i]) == 0)
-			linking = -1;
+			is_static = true;
 		    else if(strcmp("-save-temps", args.str[i]) == 0)
 			keep_generated = 1;
                     else if (strncmp("-specs=", args.str[i], 7) == 0)
@@ -1939,7 +1943,7 @@ int main(int argc, char **argv)
                                 use_build_id = true;
                                 continue;
                             }
-                            if (!strcmp(Wl.str[j], "-static")) linking = -1;
+                            if (!strcmp(Wl.str[j], "-static")) is_static = true;
                             strarray_add(&linker_args, strmake("-Wl,%s",Wl.str[j]));
                         }
                         raw_compiler_arg = raw_linker_arg = 0;
@@ -1964,7 +1968,7 @@ int main(int argc, char **argv)
 		    break;
                 case '-':
                     if (strcmp("-static", args.str[i]+1) == 0)
-                        linking = -1;
+                        is_static = true;
                     else if (!strcmp( "-no-default-config", args.str[i] + 1 ))
                     {
                         no_default_config = true;
@@ -2031,8 +2035,7 @@ int main(int argc, char **argv)
         error( "Invalid target specification '%s'\n", target_alias );
     if (force_pointer_size) set_target_ptr_size( &target, force_pointer_size );
 
-    if (processor == proc_cpp) linking = 0;
-    if (linking == -1) error("Static linking is not supported\n");
+    if (processor == proc_cpp) skip_link = true;
 
     is_pe = is_pe_target( target );
     if (is_pe) use_msvcrt = true;
@@ -2051,7 +2054,7 @@ int main(int argc, char **argv)
         }
     }
     if (files.count == 0 && !fake_module) forward();
-    else if (linking) build(files, output);
+    else if (!skip_link && !compile_only) build(files, output);
     else compile(files, output, compile_only);
 
     output_file_name = NULL;
