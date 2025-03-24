@@ -390,13 +390,9 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
 
     user_check_not_lock();
 
+    if (!is_current_thread_window( hwnd )) return FALSE;
     if (!(win = get_win_ptr( hwnd ))) return FALSE;
     if (win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
-    if (win->tid != GetCurrentThreadId())
-    {
-        release_win_ptr( win );
-        return FALSE;
-    }
     params->func = win->winproc;
     params->ansi_dst = !(win->flags & WIN_ISUNICODE);
     is_dialog = win->dlgInfo != NULL;

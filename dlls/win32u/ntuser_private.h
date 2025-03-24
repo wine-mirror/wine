@@ -54,7 +54,6 @@ typedef struct tagWND
     struct tagCLASS   *class;         /* Window class */
     struct dce        *dce;           /* DCE pointer */
     WNDPROC            winproc;       /* Window procedure */
-    UINT               tid;           /* Owner thread id */
     HINSTANCE          hInstance;     /* Window hInstance (from CreateWindow) */
     struct window_rects rects;        /* window rects in window DPI, relative to the parent client area */
     RECT               normal_rect;   /* Normal window rect saved when maximized/minimized */

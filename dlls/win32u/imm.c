@@ -212,11 +212,10 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
             return AICR_FAILED;
     }
 
-    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-        return AICR_FAILED;
+    if (ctx && !is_current_thread_window( hwnd )) return AICR_FAILED;
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return AICR_FAILED;
 
-    if (ctx && win->tid != GetCurrentThreadId()) ret = AICR_FAILED;
-    else if (flags != IACE_IGNORENOCONTEXT || win->imc)
+    if (flags != IACE_IGNORENOCONTEXT || win->imc)
     {
         if (win->imc != ctx && get_focus() == hwnd) ret = AICR_FOCUS_CHANGED;
         win->imc = ctx;

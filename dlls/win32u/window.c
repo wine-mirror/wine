@@ -5507,7 +5507,6 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     /* Fill the window structure */
 
-    win->tid         = GetCurrentThreadId();
     win->hInstance   = cs.hInstance;
     win->text        = NULL;
     win->dwStyle     = style;
