@@ -1165,7 +1165,7 @@ static path_test_t reverse_pie_path[] = {
     {3.88, 4.79, PathPointTypeStart,  0, 0}, /*0*/
     {3.93, 4.62, PathPointTypeBezier, 0, 0}, /*1*/
     {3.96, 4.44, PathPointTypeBezier, 0, 0}, /*2*/
-    {3.99, 4.26, PathPointTypeBezier, 0, 1}, /*3*/
+    {3.99, 4.26, PathPointTypeBezier, 0, 0}, /*3*/
     {2.5,  4.0,  PathPointTypeLine | PathPointTypeCloseSubpath, 0, 0}  /*4*/
 };
 

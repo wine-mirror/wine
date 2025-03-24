@@ -1749,20 +1749,24 @@ GpStatus WINGDIPAPI GdipReversePath(GpPath* path)
     }
 
     for(i = 0; i < count; i++){
-
         /* find next start point */
         if(path->pathdata.Types[count-i-1] == PathPointTypeStart){
             INT j;
             for(j = start; j <= i; j++){
+                /* copy points coordinate of subpath in reverse order */
                 revpath.Points[j] = path->pathdata.Points[count-j-1];
-                revpath.Types[j] = path->pathdata.Types[count-j-1];
+                /* copy points type shifted by one (j + 1), as the first point type is always PathPointTypeStart */
+                if (j < i)
+                    revpath.Types[j + 1] = path->pathdata.Types[count - j - 1];
             }
-            /* mark start point */
+            /* first point of subpath is always Start point */
             revpath.Types[start] = PathPointTypeStart;
-            /* set 'figure' endpoint type */
+            /* check if subpath contains more than 1 point */
             if(i-start > 1){
-                revpath.Types[i] = path->pathdata.Types[count-start-1] & ~PathPointTypePathTypeMask;
-                revpath.Types[i] |= revpath.Types[i-1];
+                /* add e.g. PathPointTypeCloseSubpath type to endpoint, if existing in original subpath */
+                revpath.Types[i] |= path->pathdata.Types[count - start - 1] & ~PathPointTypePathTypeMask;
+                /* remove e.g. PathPointTypeCloseSubpath type from second point */
+                revpath.Types[start + 1] &= PathPointTypePathTypeMask;
             }
             else
                 revpath.Types[i] = path->pathdata.Types[start];
