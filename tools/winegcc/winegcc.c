@@ -841,7 +841,7 @@ static struct strarray get_compat_defines( int gcc_defs )
     return args;
 }
 
-static void compile( struct strarray files, const char* lang, const char *output_name, int compile_only )
+static void compile( struct strarray files, const char *output_name, int compile_only )
 {
     struct strarray comp_args = get_translator();
     unsigned int i, j;
@@ -888,15 +888,15 @@ static void compile( struct strarray files, const char* lang, const char *output
     /* the rest of the pass-through parameters */
     strarray_addall(&comp_args, compiler_args);
 
-    /* the language option, if any */
-    if (lang && strcmp(lang, "-xnone"))
-	strarray_add(&comp_args, lang);
-
     /* last, but not least, the files */
     for ( j = 0; j < files.count; j++ )
     {
-	if (files.str[j][0] != '-' || !files.str[j][1]) /* not an option or bare '-' (i.e. stdin) */
-	    strarray_add(&comp_args, files.str[j]);
+        if (files.str[j][0] == '-')
+        {
+            /* keep -x and bare '-' (i.e. stdin) options */
+            if (files.str[j][1] && files.str[j][1] != 'x') continue;
+        }
+	strarray_add(&comp_args, files.str[j]);
     }
 
     /* standard includes come last in the include search path */
@@ -940,8 +940,9 @@ static const char* compile_to_object(const char* file, const char* lang)
     char *output_name = make_temp_file(get_basename_noext(file), ".o");
     struct strarray files = empty_strarray;
 
+    if (lang) strarray_add(&files, lang);
     strarray_add(&files, file);
-    compile(files, lang, output_name, 1);
+    compile(files, output_name, 1);
     return output_name;
 }
 
@@ -1581,7 +1582,6 @@ int main(int argc, char **argv)
     struct strarray args = empty_strarray;
     struct strarray files = empty_strarray;
     const char* option_arg;
-    char* lang = 0;
     char* str;
 
     init_signals( exit_on_signal );
@@ -1958,8 +1958,7 @@ int main(int argc, char **argv)
 		    }
                     break;
 		case 'x':
-		    lang = strmake("-x%s", option_arg);
-		    strarray_add(&files, lang);
+		    strarray_add(&files, args.str[i]);
 		    /* we'll pass these flags ourselves, explicitly */
                     raw_compiler_arg = raw_linker_arg = 0;
 		    break;
@@ -2053,7 +2052,7 @@ int main(int argc, char **argv)
     }
     if (files.count == 0 && !fake_module) forward();
     else if (linking) build(files, output);
-    else compile(files, lang, output, compile_only);
+    else compile(files, output, compile_only);
 
     output_file_name = NULL;
     output_debug_file = NULL;
