@@ -198,6 +198,7 @@ static const char *file_align;
 static const char *subsystem;
 static const char *entry_point;
 static const char *native_arch;
+static struct strarray file_args;
 static struct strarray linker_args;
 static struct strarray compiler_args;
 static struct strarray winebuild_args;
@@ -1584,7 +1585,6 @@ int main(int argc, char **argv)
     int i, c, next_is_arg = 0;
     int raw_compiler_arg, raw_linker_arg, raw_winebuild_arg;
     struct strarray args = empty_strarray;
-    struct strarray files = empty_strarray;
     const char* option_arg;
     char* str;
 
@@ -1753,7 +1753,7 @@ int main(int argc, char **argv)
                     if (!strcmp( "-isysroot", args.str[i] )) isysroot = args.str[i + 1];
                     break;
 		case 'l':
-		    strarray_add(&files, strmake("-l%s", option_arg));
+		    strarray_add(&file_args, strmake("-l%s", option_arg));
                     raw_compiler_arg = 0;
 		    break;
 		case 'L':
@@ -1930,7 +1930,7 @@ int main(int argc, char **argv)
                                 !strcmp(Wl.str[j], "--start-group") ||
                                 !strcmp(Wl.str[j], "--end-group"))
                             {
-                                strarray_add( &files, strmake( "-Wl,%s", Wl.str[j] ));
+                                strarray_add( &file_args, strmake( "-Wl,%s", Wl.str[j] ));
                                 continue;
                             }
                             if (!strcmp(Wl.str[j], "--out-implib"))
@@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
 		    }
                     break;
 		case 'x':
-		    strarray_add(&files, args.str[i]);
+		    strarray_add(&file_args, args.str[i]);
 		    /* we'll pass these flags ourselves, explicitly */
                     raw_compiler_arg = raw_linker_arg = 0;
 		    break;
@@ -2027,7 +2027,7 @@ int main(int argc, char **argv)
         }
 	else
 	{
-	    strarray_add( &files, args.str[i] );
+	    strarray_add( &file_args, args.str[i] );
 	}
     }
 
@@ -2053,9 +2053,9 @@ int main(int argc, char **argv)
             else winebuild = "winebuild";
         }
     }
-    if (files.count == 0 && !fake_module) forward();
-    else if (!skip_link && !compile_only) build(files, output);
-    else compile(files, output, compile_only);
+    if (file_args.count == 0 && !fake_module) forward();
+    else if (!skip_link && !compile_only) build(file_args, output);
+    else compile(file_args, output, compile_only);
 
     output_file_name = NULL;
     output_debug_file = NULL;
