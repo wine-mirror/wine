@@ -284,6 +284,7 @@ struct wined3d_vk_info
     bool dynamic_multisample_state;
     bool dynamic_blend_state;
     bool dynamic_rasterizer_state;
+    bool uav_read_without_format;
 };
 
 #define VK_CALL(f) (vk_info->vk_ops.f)
