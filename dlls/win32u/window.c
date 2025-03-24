@@ -287,14 +287,12 @@ WND *get_win_ptr( HWND hwnd )
  */
 HWND is_current_thread_window( HWND hwnd )
 {
-    WND *win;
-    HWND ret = 0;
+    struct user_entry entry;
+    HANDLE handle;
 
-    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS || win == WND_DESKTOP)
-        return 0;
-    if (win->tid == GetCurrentThreadId()) ret = win->obj.handle;
-    release_win_ptr( win );
-    return ret;
+    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle )) return 0;
+    if (entry.tid != GetCurrentThreadId()) return 0;
+    return handle;
 }
 
 /***********************************************************************
