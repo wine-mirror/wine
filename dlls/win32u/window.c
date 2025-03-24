@@ -302,13 +302,12 @@ HWND is_current_thread_window( HWND hwnd )
  */
 HWND is_current_process_window( HWND hwnd )
 {
-    WND *ptr;
-    HWND ret;
+    struct user_entry entry;
+    HANDLE handle;
 
-    if (!(ptr = get_win_ptr( hwnd )) || ptr == WND_OTHER_PROCESS || ptr == WND_DESKTOP) return 0;
-    ret = ptr->obj.handle;
-    release_win_ptr( ptr );
-    return ret;
+    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle )) return 0;
+    if (entry.pid != GetCurrentProcessId()) return 0;
+    return handle;
 }
 
 /* see IsWindow */
