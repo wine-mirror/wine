@@ -8043,6 +8043,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
             shader_addline(buffer, "vpos = floor(gl_FragCoord);\n");
         else
             shader_addline(buffer, "vpos = gl_FragCoord;\n");
+        shader_addline(buffer, "vpos.w = 1 / vpos.w;\n");
     }
 
     if (reg_maps->shader_version.major < 3 || args->vp_mode != WINED3D_VP_MODE_SHADER)
