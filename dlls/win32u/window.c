@@ -77,6 +77,20 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
     return handle;
 }
 
+static BOOL is_valid_entry_uniq( HANDLE handle, unsigned short type, UINT64 uniq )
+{
+    if (!HIWORD(handle) || HIWORD(handle) == 0xffff) return LOWORD(uniq) == type;
+    return uniq == MAKELONG(type, HIWORD(handle));
+}
+
+static BOOL is_valid_entry( HANDLE handle, unsigned short type )
+{
+    const volatile struct user_entry *entries = shared_session->user_entries;
+    WORD index = USER_HANDLE_TO_INDEX( handle );
+    if (index >= MAX_USER_HANDLES) return FALSE;
+    return is_valid_entry_uniq( handle, type, ReadAcquire64( (LONG64 *)&entries[index].uniq ) );
+}
+
 /***********************************************************************
  *           get_user_handle_ptr
  */
@@ -290,26 +304,13 @@ HWND is_current_process_window( HWND hwnd )
 /* see IsWindow */
 BOOL is_window( HWND hwnd )
 {
-    WND *win;
-    BOOL ret;
-
-    if (!(win = get_win_ptr( hwnd ))) return FALSE;
-    if (win == WND_DESKTOP) return TRUE;
-
-    if (win != WND_OTHER_PROCESS)
+    if (!hwnd) return FALSE;
+    if (!is_valid_entry( hwnd, NTUSER_OBJ_WINDOW ))
     {
-        release_win_ptr( win );
-        return TRUE;
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
     }
-
-    /* check other processes */
-    SERVER_START_REQ( get_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-    return ret;
+    return TRUE;
 }
 
 /* see GetWindowThreadProcessId */
