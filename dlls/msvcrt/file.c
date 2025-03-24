@@ -4101,6 +4101,8 @@ int CDECL _flsbuf(int c, FILE* file)
         int res = 0;
 
         if(file->_cnt <= 0) {
+            if(!file->_cnt && get_ioinfo_nolock(file->_file)->wxflag & WX_APPEND)
+                _lseek(file->_file, 0, FILE_END);
             res = msvcrt_flush_buffer(file);
             if(res)
                 return res;

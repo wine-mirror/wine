@@ -695,11 +695,9 @@ static void test_fputc( void )
 
 static void test_flsbuf( void )
 {
+  int bufmode, ret, c, pos;
   char* tempf;
   FILE *tempfh;
-  int  c;
-  int  ret;
-  int  bufmode;
   static const int bufmodes[] = {_IOFBF,_IONBF};
 
   tempf=_tempnam(".","wne");
@@ -754,6 +752,16 @@ static void test_flsbuf( void )
   ok(c == 'Q', "first byte should be 'Q'\n");
   c = fgetc(tempfh);
   ok(c == EOF, "there should only be one byte\n");
+  fclose(tempfh);
+
+  tempfh = fopen(tempf,"ab");
+  ok(tempfh != NULL, "fopen failed\n");
+  pos = _lseek(_fileno(tempfh), 0, SEEK_CUR);
+  ok(!pos, "incorrect stream position: %d\n", pos);
+  ret = _flsbuf(0, tempfh);
+  ok(!ret, "_flsbuf returned %x\n", ret);
+  pos = _lseek(_fileno(tempfh), 0, SEEK_CUR);
+  ok(pos == 1, "incorrect stream position: %d\n", pos);
   fclose(tempfh);
 
   unlink(tempf);
