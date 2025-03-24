@@ -402,6 +402,25 @@ static const char animatedgif[] = {
 0x21,0x01,0x0C,'p','l','a','i','n','t','e','x','t',' ','#','2',0x00,0x3B
 };
 
+/* convert -size 4x8 canvas:white white.jpeg */
+static const char jpeg[] =
+{
+    0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+    0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43,
+    0x00, 0x03, 0x02, 0x02, 0x02, 0x02, 0x02, 0x03, 0x02, 0x02, 0x02, 0x03,
+    0x03, 0x03, 0x03, 0x04, 0x06, 0x04, 0x04, 0x04, 0x04, 0x04, 0x08, 0x06,
+    0x06, 0x05, 0x06, 0x09, 0x08, 0x0a, 0x0a, 0x09, 0x08, 0x09, 0x09, 0x0a,
+    0x0c, 0x0f, 0x0c, 0x0a, 0x0b, 0x0e, 0x0b, 0x09, 0x09, 0x0d, 0x11, 0x0d,
+    0x0e, 0x0f, 0x10, 0x10, 0x11, 0x10, 0x0a, 0x0c, 0x12, 0x13, 0x12, 0x10,
+    0x13, 0x0f, 0x10, 0x10, 0x10, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x08,
+    0x00, 0x04, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x14, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x09, 0xff, 0xc4, 0x00, 0x14, 0x10, 0x01, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00,
+    0x54, 0xdf, 0xff, 0xd9
+};
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
@@ -620,8 +639,12 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
             ok(td[i].count == value.blob.cbSize, "Expected count %d, got %ld\n", td[i].count, value.blob.cbSize);
             ok(!memcmp(td[i].string, value.blob.pBlobData, td[i].count), "Expected %s, got %s\n", td[i].string, value.blob.pBlobData);
         }
+        else if (value.vt == VT_UI1)
+        {
+            ok(value.bVal == td[i].value[0], "Expected value %#x got %#x.\n", (BYTE)td[i].value[0], value.bVal);
+        }
         else
-            ok(value.uhVal.QuadPart == td[i].value[0], "Eexpected value %#I64x got %#lx/%#lx\n",
+            ok(value.uhVal.QuadPart == td[i].value[0], "Expected value %#I64x got %#lx/%#lx\n",
                td[i].value[0], value.uhVal.u.LowPart, value.uhVal.u.HighPart);
 
         PropVariantClear(&schema);
@@ -5578,6 +5601,103 @@ static void test_metadata_App1(void)
     IWICComponentFactory_Release(factory);
 }
 
+static void test_metadata_App0(void)
+{
+    static const struct test_data default_data[] =
+    {
+        { VT_UI2, 0, 0, { 0 }, NULL, L"Version" },
+        { VT_UI1, 1, 0, { 0 }, NULL, L"Units" },
+        { VT_UI2, 2, 0, { 0 }, NULL, L"DpiX" },
+        { VT_UI2, 3, 0, { 0 }, NULL, L"DpiY" },
+        { VT_UI1, 4, 0, { 0 }, NULL, L"Xthumbnail" },
+        { VT_UI1, 5, 0, { 0 }, NULL, L"Ythumbnail" },
+        { VT_BLOB, 6, 0, { 0 }, NULL, L"ThumbnailData" },
+    };
+
+    static const struct test_data td[] =
+    {
+        { VT_UI2, 0, 0, { 0x101 }, NULL, L"Version" },
+        { VT_UI1, 1, 0, { 0 }, NULL, L"Units" },
+        { VT_UI2, 2, 0, { 0x1 }, NULL, L"DpiX" },
+        { VT_UI2, 3, 0, { 0x1 }, NULL, L"DpiY" },
+        { VT_UI1, 4, 0, { 0 }, NULL, L"Xthumbnail" },
+        { VT_UI1, 5, 0, { 0 }, NULL, L"Ythumbnail" },
+        { VT_BLOB, 6, 0, { 0 }, NULL, L"ThumbnailData" },
+    };
+
+    IWICMetadataReader *reader;
+    IWICMetadataWriter *writer;
+    PROPVARIANT id;
+    UINT count, i;
+    GUID format;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICApp0MetadataReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataReader, (void **)&reader);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    check_interface(reader, &IID_IWICMetadataReader, TRUE);
+    check_interface(reader, &IID_IPersist, TRUE);
+    check_interface(reader, &IID_IPersistStream, TRUE);
+    check_interface(reader, &IID_IWICPersistStream, TRUE);
+    check_interface(reader, &IID_IWICStreamProvider, TRUE);
+    check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
+    check_persist_classid(reader, &CLSID_WICApp0MetadataReader);
+
+    hr = IWICMetadataReader_GetCount(reader, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    count = 0;
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 7, "Unexpected count %u.\n", count);
+    compare_metadata(reader, default_data, count);
+
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_UI2, "Unexpected id type %d.\n", id.vt);
+    }
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatApp0), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
+    test_reader_container_format(reader, &GUID_ContainerFormatJpeg);
+
+    load_stream(reader, (const char *)jpeg + 6, 16, 0);
+    check_persist_options(reader, 0);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 7, "Unexpected count %u.\n", count);
+    compare_metadata(reader, td, count);
+
+    IWICMetadataReader_Release(reader);
+
+    hr = CoCreateInstance(&CLSID_WICApp0MetadataWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataWriter, (void **)&writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(writer, &IID_IWICMetadataWriter, TRUE);
+    check_interface(writer, &IID_IWICMetadataReader, TRUE);
+    check_interface(writer, &IID_IPersist, TRUE);
+    check_interface(writer, &IID_IPersistStream, TRUE);
+    check_interface(writer, &IID_IWICPersistStream, TRUE);
+    check_interface(writer, &IID_IWICStreamProvider, TRUE);
+    check_persist_classid(writer, &CLSID_WICApp0MetadataWriter);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 7, "Unexpected count %u.\n", count);
+
+    IWICMetadataWriter_Release(writer);
+}
+
 static void test_CreateMetadataWriterFromReader(void)
 {
     IStream *stream, *stream2, *ifd_stream, *writer_stream;
@@ -6380,6 +6500,7 @@ START_TEST(metadata)
     test_metadata_GIF_comment();
     test_metadata_query_writer();
     test_metadata_App1();
+    test_metadata_App0();
     test_CreateMetadataWriterFromReader();
     test_CreateMetadataWriter();
     test_metadata_writer();
