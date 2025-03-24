@@ -2583,8 +2583,6 @@ enum message_type
     user_handle_t  handle;      /* handle to the window */
 @REPLY
     user_handle_t  last_active; /* last active popup */
-    process_id_t   pid;         /* process owning the window */
-    thread_id_t    tid;         /* thread owning the window */
     int            is_unicode;  /* ANSI or unicode */
     unsigned int   dpi_context; /* window DPI context */
 @END

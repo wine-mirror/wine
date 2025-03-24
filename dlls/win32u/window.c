@@ -325,36 +325,17 @@ BOOL is_window( HWND hwnd )
 /* see GetWindowThreadProcessId */
 DWORD get_window_thread( HWND hwnd, DWORD *process )
 {
-    WND *ptr;
-    DWORD tid = 0;
+    struct user_entry entry;
+    HANDLE handle;
 
-    if (!(ptr = get_win_ptr( hwnd )))
+    if (!get_user_entry( hwnd, NTUSER_OBJ_WINDOW, &entry, &handle ))
     {
-        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE);
+        RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return 0;
     }
 
-    if (ptr != WND_OTHER_PROCESS && ptr != WND_DESKTOP)
-    {
-        /* got a valid window */
-        tid = ptr->tid;
-        if (process) *process = GetCurrentProcessId();
-        release_win_ptr( ptr );
-        return tid;
-    }
-
-    /* check other processes */
-    SERVER_START_REQ( get_window_info )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        if (!wine_server_call_err( req ))
-        {
-            tid = (DWORD)reply->tid;
-            if (process) *process = (DWORD)reply->pid;
-        }
-    }
-    SERVER_END_REQ;
-    return tid;
+    if (process) *process = entry.pid;
+    return entry.tid;
 }
 
 /* see GetParent */
@@ -6078,7 +6059,7 @@ HANDLE WINAPI NtUserQueryWindow( HWND hwnd, WINDOWINFOCLASS cls )
     {
     case WindowProcess:
     case WindowProcess2:
-        get_window_thread( hwnd, &pid );
+        if (!get_window_thread( hwnd, &pid )) return NULL;
         return UlongToHandle( pid );
 
     case WindowThread:
