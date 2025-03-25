@@ -525,6 +525,7 @@ static const char *get_root_relative_path( struct makefile *make )
         while (*dir && *dir != '/') dir++;
         while (*dir == '/') dir++;
     }
+    assert(dotdots);
     ret = xmalloc( 3 * dotdots );
     for (p = ret; dotdots; dotdots--, p += 3) memcpy( p, "../", 3 );
     p[-1] = 0;  /* remove trailing slash */
