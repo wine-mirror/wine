@@ -922,6 +922,30 @@ static BYTE get_page_vprot( const void *addr )
 
 
 /***********************************************************************
+ *           get_host_page_vprot
+ *
+ * Return the union of the page protection bytes of all the pages making up the host page.
+ */
+static BYTE get_host_page_vprot( const void *addr )
+{
+    size_t i, idx = (size_t)ROUND_ADDR( addr, host_page_mask ) >> page_shift;
+    const BYTE *vprot_ptr;
+    BYTE vprot = 0;
+
+#ifdef _WIN64
+    if ((idx >> pages_vprot_shift) >= pages_vprot_size) return 0;
+    if (!pages_vprot[idx >> pages_vprot_shift]) return 0;
+    assert( host_page_mask >> page_shift <= pages_vprot_mask );
+    vprot_ptr = pages_vprot[idx >> pages_vprot_shift] + (idx & pages_vprot_mask);
+#else
+    vprot_ptr = pages_vprot + idx;
+#endif
+    for (i = 0; i < host_page_size / page_size; i++) vprot |= vprot_ptr[i];
+    return vprot;
+}
+
+
+/***********************************************************************
  *           get_vprot_range_size
  *
  * Return the size of the region with equal masked vprot byte.
@@ -1755,24 +1779,28 @@ static inline int mprotect_exec( void *base, size_t size, int unix_prot )
  *
  * Call mprotect on a page range, applying the protections from the per-page byte.
  */
-static void mprotect_range( void *base, size_t size, BYTE set, BYTE clear )
+static int mprotect_range( void *base, size_t size, BYTE set, BYTE clear )
 {
     size_t i, count;
-    char *addr = ROUND_ADDR( base, page_mask );
+    char *addr = ROUND_ADDR( base, host_page_mask );
     int prot, next;
+    BYTE vprot;
 
-    size = ROUND_SIZE( base, size, page_mask );
-    prot = get_unix_prot( (get_page_vprot( addr ) & ~clear ) | set );
-    for (count = i = 1; i < size >> page_shift; i++, count++)
+    size = ROUND_SIZE( base, size, host_page_mask );
+
+    vprot = get_host_page_vprot( addr );
+    prot = get_unix_prot( (vprot & ~clear) | set );
+    for (count = i = 1; i < size / host_page_size; i++, count++)
     {
-        next = get_unix_prot( (get_page_vprot( addr + (count << page_shift) ) & ~clear) | set );
+        vprot = get_host_page_vprot( addr + count * host_page_size );
+        next = get_unix_prot( (vprot & ~clear) | set );
         if (next == prot) continue;
-        mprotect_exec( addr, count << page_shift, prot );
-        addr += count << page_shift;
+        if (mprotect_exec( addr, count * host_page_size, prot )) return -1;
+        addr += count * host_page_size;
         prot = next;
         count = 0;
     }
-    if (count) mprotect_exec( addr, count << page_shift, prot );
+    return mprotect_exec( addr, count * host_page_size, prot );
 }
 
 
@@ -1787,13 +1815,13 @@ static BOOL set_vprot( struct file_view *view, void *base, size_t size, BYTE vpr
     {
         /* each page may need different protections depending on write watch flag */
         set_page_vprot_bits( base, size, vprot & ~VPROT_WRITEWATCH, ~vprot & ~VPROT_WRITEWATCH );
-        mprotect_range( base, size, 0, 0 );
-        return TRUE;
     }
-    if (enable_write_exceptions && is_vprot_exec_write( vprot )) vprot |= VPROT_WRITEWATCH;
-    if (mprotect_exec( base, size, get_unix_prot(vprot) )) return FALSE;
-    set_page_vprot( base, size, vprot );
-    return TRUE;
+    else
+    {
+        if (enable_write_exceptions && is_vprot_exec_write( vprot )) vprot |= VPROT_WRITEWATCH;
+        set_page_vprot( base, size, vprot );
+    }
+    return !mprotect_range( base, size, 0, 0 );
 }
 
 
@@ -4251,12 +4279,12 @@ void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *r
 static NTSTATUS check_write_access( void *base, size_t size, BOOL *has_write_watch )
 {
     size_t i;
-    char *addr = ROUND_ADDR( base, page_mask );
+    char *addr = ROUND_ADDR( base, host_page_mask );
 
-    size = ROUND_SIZE( base, size, page_mask );
-    for (i = 0; i < size; i += page_size)
+    size = ROUND_SIZE( base, size, host_page_mask );
+    for (i = 0; i < size; i += host_page_size)
     {
-        BYTE vprot = get_page_vprot( addr + i );
+        BYTE vprot = get_host_page_vprot( addr + i );
         if (vprot & VPROT_WRITEWATCH) *has_write_watch = TRUE;
         if (!(get_unix_prot( vprot & ~VPROT_WRITEWATCH ) & PROT_WRITE))
             return STATUS_INVALID_USER_BUFFER;
@@ -4277,7 +4305,7 @@ unsigned int virtual_locked_server_call( void *req_ptr )
     void *addr = req->reply_data;
     data_size_t size = req->u.req.request_header.reply_size;
     BOOL has_write_watch = FALSE;
-    unsigned int ret = STATUS_ACCESS_VIOLATION;
+    unsigned int ret;
 
     if (!size) return wine_server_call( req_ptr );
 
@@ -4407,11 +4435,11 @@ BOOL virtual_check_buffer_for_read( const void *ptr, SIZE_T size )
         char dummy __attribute__((unused));
         SIZE_T count = size;
 
-        while (count > page_size)
+        while (count > host_page_size)
         {
             dummy = *p;
-            p += page_size;
-            count -= page_size;
+            p += host_page_size;
+            count -= host_page_size;
         }
         dummy = p[0];
         dummy = p[count - 1];
@@ -4440,11 +4468,11 @@ BOOL virtual_check_buffer_for_write( void *ptr, SIZE_T size )
         volatile char *p = ptr;
         SIZE_T count = size;
 
-        while (count > page_size)
+        while (count > host_page_size)
         {
             *p |= 0;
-            p += page_size;
-            count -= page_size;
+            p += host_page_size;
+            count -= host_page_size;
         }
         p[0] |= 0;
         p[count - 1] |= 0;
@@ -4478,9 +4506,9 @@ SIZE_T virtual_uninterrupted_read_memory( const void *addr, void *buffer, SIZE_T
     {
         if (!(view->protect & VPROT_SYSTEM))
         {
-            while (bytes_read < size && (get_unix_prot( get_page_vprot( addr )) & PROT_READ))
+            while (bytes_read < size && (get_unix_prot( get_host_page_vprot( addr )) & PROT_READ))
             {
-                SIZE_T block_size = min( size - bytes_read, page_size - ((UINT_PTR)addr & page_mask) );
+                SIZE_T block_size = min( size - bytes_read, host_page_size - ((UINT_PTR)addr & host_page_mask) );
                 memcpy( buffer, addr, block_size );
 
                 addr   = (const void *)((const char *)addr + block_size);
