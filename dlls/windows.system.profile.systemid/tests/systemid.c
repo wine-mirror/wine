@@ -25,8 +25,12 @@
 
 #include "roapi.h"
 
+#define WIDL_using_Windows_Storage_Streams
+#include "windows.storage.streams.h"
 #define WIDL_using_Windows_System_Profile
 #include "windows.system.profile.h"
+
+#include "robuffer.h"
 
 #include "wine/test.h"
 
@@ -49,8 +53,13 @@ static void test_SystemIdentification_Statics(void)
     ISystemIdentificationStatics *system_id_statics = (void *)0xdeadbeef;
     ISystemIdentificationInfo *system_id_info = (void *)0xdeadbeef;
     SystemIdentificationSource system_id_source = 0xdeadbeef;
+    IBufferByteAccess *byte_access = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
+    IBuffer *system_id_buffer2 = (void *)0xdeadbeef;
+    IBuffer *system_id_buffer = (void *)0xdeadbeef;
+    BYTE *system_id = (void *)0xdeadbeef;
     HSTRING str = NULL;
+    UINT32 capacity;
     HRESULT hr;
     LONG ref;
 
@@ -85,6 +94,53 @@ static void test_SystemIdentification_Statics(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     todo_wine
     ok( system_id_source == SystemIdentificationSource_Uefi, "ISystemIdentificationInfo_get_Source returned %u.\n", system_id_source );
+
+    hr = ISystemIdentificationInfo_get_Id( system_id_info, NULL );
+    todo_wine
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = ISystemIdentificationInfo_get_Id( system_id_info, &system_id_buffer );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (hr == S_OK)
+    {
+    hr = ISystemIdentificationInfo_get_Id( system_id_info, &system_id_buffer2 );
+    todo_wine
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ref = IBuffer_Release( system_id_buffer2 );
+    todo_wine
+    ok( ref == 3, "got ref %ld.\n", ref );
+
+    hr = IBuffer_get_Capacity( system_id_buffer, &capacity );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine
+    ok( capacity != 0, "got 0 capacity.\n" );
+    hr = IBuffer_QueryInterface( system_id_buffer, &IID_IBufferByteAccess, (void **)&byte_access );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IBufferByteAccess_Buffer( byte_access, &system_id );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    if (capacity)
+    {
+        BOOL empty_id = TRUE;
+
+        for ( UINT32 i = 0; i < capacity; i++ )
+        {
+            if (system_id[i] != 0)
+            {
+                empty_id = FALSE;
+                break;
+            }
+        }
+
+        todo_wine
+        ok( !empty_id, "got empty system_id.\n" );
+    }
+    ref = IBufferByteAccess_Release( byte_access );
+    todo_wine
+    ok( ref == 3, "got ref %ld.\n", ref );
+    ref = IBuffer_Release( system_id_buffer );
+    todo_wine
+    ok( ref == 2, "got ref %ld.\n", ref );
+    }
 
     ref = ISystemIdentificationInfo_Release( system_id_info );
     ok( ref == 0, "got ref %ld.\n", ref );
