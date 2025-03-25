@@ -251,6 +251,7 @@ static inline BOOL is_vprot_exec_write( BYTE vprot )
 void *anon_mmap_fixed( void *start, size_t size, int prot, int flags )
 {
     assert( !((UINT_PTR)start & host_page_mask) );
+    assert( !(size & host_page_mask) );
 
     return mmap( start, size, prot, MAP_PRIVATE | MAP_ANON | MAP_FIXED | flags, -1, 0 );
 }
@@ -2158,7 +2159,8 @@ done:
 static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start, size_t size,
                                     off_t offset, unsigned int vprot, BOOL removable )
 {
-    void *ptr;
+    char *map_addr, *host_addr;
+    size_t map_size, host_size;
     int prot = PROT_READ | PROT_WRITE;
     unsigned int flags = MAP_FIXED;
 
@@ -2187,16 +2189,23 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
         prot |= PROT_EXEC;
     }
 
-    /* only try mmap if media is not removable (or if we require write access) */
-    if (!removable || (flags & MAP_SHARED))
+    map_size = ROUND_SIZE( start, size, page_mask );
+    map_addr = ROUND_ADDR( (char *)view->base + start, page_mask );
+    host_addr = ROUND_ADDR( (char *)view->base + start, host_page_mask );
+    /* last page doesn't need to be a full page */
+    if (map_addr + map_size >= (char *)view->base + view->size) host_size = map_size;
+    else host_size = ROUND_SIZE( 0, map_size, host_page_mask );
+
+    /* only try mmap if media is not removable (or if we require write access),
+       and if alignment is correct */
+    if ((!removable || (flags & MAP_SHARED)) && host_addr == map_addr && host_size == map_size)
     {
-        if (mmap( (char *)view->base + start, size, prot, flags, fd, offset ) != MAP_FAILED)
+        if (mmap( host_addr, host_size, prot, flags, fd, offset ) != MAP_FAILED)
             return STATUS_SUCCESS;
 
         switch (errno)
         {
         case EINVAL:  /* file offset is not page-aligned, fall back to read() */
-            if (flags & MAP_SHARED) return STATUS_INVALID_PARAMETER;
             break;
         case ENOEXEC:
         case ENODEV:  /* filesystem doesn't support mmap(), fall back to read() */
@@ -2217,21 +2226,19 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             break;
         default:
             ERR( "mmap error %s, range %p-%p, unix_prot %#x\n",
-                 strerror(errno), (char *)view->base + start, (char *)view->base + start + size, prot );
+                 strerror(errno), map_addr, map_addr + map_size, prot );
             return STATUS_NO_MEMORY;
         }
     }
 
-    /* Reserve the memory with an anonymous mmap */
-    ptr = anon_mmap_fixed( (char *)view->base + start, size, PROT_READ | PROT_WRITE, 0 );
-    if (ptr == MAP_FAILED)
+    if (vprot & VPROT_WRITE)
     {
-        ERR( "anon mmap error %s, range %p-%p\n",
-             strerror(errno), (char *)view->base + start, (char *)view->base + start + size );
-        return STATUS_NO_MEMORY;
+        ERR( "unaligned shared mapping %p-%p not supported\n", map_addr, map_addr + map_size );
+        return STATUS_INVALID_PARAMETER;
     }
-    /* Now read in the file */
-    pread( fd, ptr, size, offset );
+
+    mprotect( map_addr, map_size, PROT_READ | PROT_WRITE );
+    pread( fd, map_addr, size, offset );
     return STATUS_SUCCESS;
 }
 
@@ -2545,6 +2552,8 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 static NTSTATUS map_pe_header( void *ptr, size_t size, size_t map_size, int fd, BOOL *removable )
 {
     if (!size) return STATUS_INVALID_IMAGE_FORMAT;
+
+    map_size &= ~host_page_mask;
 
     if (!*removable && map_size)
     {
@@ -2865,7 +2874,7 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 
     fstat( fd, &st );
     header_size = min( image_info->header_size, st.st_size );
-    header_map_size = min( image_info->header_map_size, ROUND_SIZE( 0, st.st_size, page_mask ));
+    header_map_size = min( image_info->header_map_size, ROUND_SIZE( 0, st.st_size, host_page_mask ));
     if ((status = map_pe_header( view->base, header_size, header_map_size, fd, &removable )))
         return status;
 
@@ -2959,8 +2968,8 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
             if (imports && imports->VirtualAddress >= sec[i].VirtualAddress &&
                 imports->VirtualAddress < sec[i].VirtualAddress + map_size)
             {
-                UINT_PTR base = imports->VirtualAddress & ~page_mask;
-                UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size, page_mask );
+                UINT_PTR base = imports->VirtualAddress & ~host_page_mask;
+                UINT_PTR end = base + ROUND_SIZE( imports->VirtualAddress, imports->Size, host_page_mask );
                 if (end > sec[i].VirtualAddress + map_size) end = sec[i].VirtualAddress + map_size;
                 if (end > base)
                     map_file_into_view( view, shared_fd, base, end - base,
