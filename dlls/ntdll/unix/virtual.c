@@ -63,11 +63,13 @@
 # include <valgrind/valgrind.h>
 #endif
 #if defined(__APPLE__)
+#define host_page_size mac_host_page_size
 # include <mach/mach_init.h>
 # include <mach/mach_vm.h>
 # include <mach/task.h>
 # include <mach/thread_state.h>
 # include <mach/vm_map.h>
+#undef host_page_size
 #endif
 
 #include "ntstatus.h"
@@ -161,6 +163,14 @@ static pthread_mutex_t virtual_mutex;
 static const UINT page_shift = 12;
 static const UINT_PTR page_mask = 0xfff;
 static const UINT_PTR granularity_mask = 0xffff;
+
+#ifdef __aarch64__
+static UINT_PTR host_page_size;
+static UINT_PTR host_page_mask;
+#else
+static const UINT_PTR host_page_size = 0x1000;
+static const UINT_PTR host_page_mask = 0xfff;
+#endif
 
 /* Note: these are Windows limits, you cannot change them. */
 #ifdef __i386__
@@ -2502,10 +2512,10 @@ static void *get_host_addr_space_limit(void)
 
     while (addr >> 32)
     {
-        void *ret = mmap( (void *)addr, page_size, PROT_NONE, flags, -1, 0 );
+        void *ret = mmap( (void *)addr, host_page_size, PROT_NONE, flags, -1, 0 );
         if (ret != MAP_FAILED)
         {
-            munmap( ret, page_size );
+            munmap( ret, host_page_size );
             if (ret >= (void *)addr) break;
         }
         else if (errno == EEXIST) break;
@@ -3321,6 +3331,8 @@ static void *alloc_virtual_heap( SIZE_T size )
     struct reserved_area *area;
     void *ret;
 
+    assert( !(size & host_page_mask) );
+
     LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
     {
         void *base = area->base;
@@ -3365,6 +3377,12 @@ void virtual_init(void)
     pthread_mutex_init( &virtual_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
 
+#ifdef __aarch64__
+    host_page_size = sysconf( _SC_PAGESIZE );
+    host_page_mask = host_page_size - 1;
+    TRACE( "host page size: %uk\n", (UINT)host_page_size / 1024 );
+#endif
+
 #ifdef _WIN64
     host_addr_space_limit = get_host_addr_space_limit();
     TRACE( "host addr space limit: %p\n", host_addr_space_limit );
@@ -3383,8 +3401,8 @@ void virtual_init(void)
         unsigned long start, end;
         if (sscanf( preload, "%lx-%lx", &start, &end ) == 2)
         {
-            preload_reserve_start = (void *)start;
-            preload_reserve_end = (void *)end;
+            preload_reserve_start = ROUND_ADDR( start, host_page_mask );
+            preload_reserve_end = (void *)ROUND_SIZE( 0, end, host_page_mask );
             /* some apps start inside the DOS area */
             if (preload_reserve_start)
                 address_space_start = min( address_space_start, preload_reserve_start );

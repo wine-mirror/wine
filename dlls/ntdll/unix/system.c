@@ -2318,8 +2318,8 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 
             if (host_page_size(host, &mac_page_size) != KERN_SUCCESS)
             {
-                WARN("Can't get host's page size, fallback to %lx.\n", page_size);
-                mac_page_size = page_size;
+                mac_page_size = sysconf( _SC_PAGESIZE );
+                WARN("Can't get host's page size, fallback to %lx.\n", mac_page_size);
             }
 
             count = HOST_VM_INFO64_COUNT;
