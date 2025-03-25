@@ -2259,13 +2259,18 @@ static SIZE_T get_committed_size( struct file_view *view, void *base, size_t max
  */
 static NTSTATUS decommit_pages( struct file_view *view, char *base, size_t size )
 {
-    if (!size) size = view->size;
-    if (anon_mmap_fixed( base, size, PROT_NONE, 0 ) != MAP_FAILED)
+    char *host_end, *host_start = (char *)ROUND_SIZE( 0, base, host_page_mask );
+
+    if (!size)
     {
-        set_page_vprot_bits( base, size, 0, VPROT_COMMITTED );
-        return STATUS_SUCCESS;
+        size = view->size;
+        host_end = host_start + view->size;
     }
-    return STATUS_NO_MEMORY;
+    else host_end = ROUND_ADDR( base + size, host_page_mask );
+
+    if (host_start < host_end) anon_mmap_fixed( host_start, host_end - host_start, PROT_NONE, 0 );
+    set_page_vprot_bits( base, size, 0, VPROT_COMMITTED );
+    return STATUS_SUCCESS;
 }
 
 
@@ -2333,6 +2338,13 @@ static NTSTATUS free_pages_preserve_placeholder( struct file_view *view, char *b
 
     if (size < view->size)
     {
+        if ((UINT_PTR)base & host_page_mask ||
+            ((size & host_page_mask) && base + size != (char *)view->base + view->size))
+        {
+            ERR( "unaligned partial free %p-%p\n", base, base + size );
+            return STATUS_CONFLICTING_ADDRESSES;
+        }
+
         status = remove_pages_from_view( view, base, size );
         if (status) return status;
 
@@ -2342,7 +2354,7 @@ static NTSTATUS free_pages_preserve_placeholder( struct file_view *view, char *b
 
     view->protect = VPROT_PLACEHOLDER | VPROT_FREE_PLACEHOLDER;
     set_page_vprot( view->base, view->size, 0 );
-    anon_mmap_fixed( view->base, view->size, PROT_NONE, 0 );
+    anon_mmap_fixed( view->base, ROUND_SIZE( 0, view->size, host_page_mask ), PROT_NONE, 0 );
     return STATUS_SUCCESS;
 }
 
@@ -2355,6 +2367,8 @@ static NTSTATUS free_pages_preserve_placeholder( struct file_view *view, char *b
  */
 static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
 {
+    char *host_base = (char *)ROUND_SIZE( 0, base, host_page_mask );
+    char *host_end = base + size;
     NTSTATUS status;
 
     if (size == view->size)
@@ -2364,12 +2378,31 @@ static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
         return STATUS_SUCCESS;
     }
 
+    /* new view needs to start on page boundary */
+
+    if (view->base == base)  /* shrink from the start */
+    {
+        if (size & host_page_mask)
+        {
+            ERR( "unaligned partial free %p-%p\n", base, base + size );
+            return STATUS_CONFLICTING_ADDRESSES;
+        }
+    }
+    else if (base + size < (char *)view->base + view->size)  /* create a hole */
+    {
+        if ((UINT_PTR)(base + size) & host_page_mask)
+        {
+            ERR( "unaligned partial free %p-%p\n", base, base + size );
+            return STATUS_CONFLICTING_ADDRESSES;
+        }
+    }
+
     status = remove_pages_from_view( view, base, size );
     if (!status)
     {
         set_page_vprot( base, size, 0 );
         if (view->protect & VPROT_ARM64EC) clear_arm64ec_range( base, size );
-        unmap_area( base, size );
+        if (host_base < host_end) unmap_area( host_base, host_end - host_base );
     }
     return status;
 }
