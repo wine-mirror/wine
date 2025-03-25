@@ -2082,7 +2082,7 @@ HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
 
     if (hwnd)
     {
-        LONG style;
+        DWORD style;
 
         hwnd = get_full_window_handle( hwnd );
         if (!is_window( hwnd ))
@@ -2123,7 +2123,7 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
         for (;;)
         {
             HWND parent;
-            LONG style = get_window_long( hwndTop, GWL_STYLE );
+            DWORD style = get_window_long( hwndTop, GWL_STYLE );
             if (style & (WS_MINIMIZE | WS_DISABLED)) return 0;
             if (!(style & WS_CHILD)) break;
             parent = NtUserGetAncestor( hwndTop, GA_PARENT );

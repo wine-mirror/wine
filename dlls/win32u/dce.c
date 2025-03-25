@@ -1241,7 +1241,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     BOOL update_vis_rgn = TRUE;
     struct dce *dce;
     HWND parent;
-    LONG window_style = get_window_long( hwnd, GWL_STYLE );
+    DWORD window_style = get_window_long( hwnd, GWL_STYLE );
 
     if (!hwnd) hwnd = get_desktop_window();
     else hwnd = get_full_window_handle( hwnd );
@@ -1280,7 +1280,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
 
     if( flags & DCX_PARENTCLIP )
     {
-        LONG parent_style = get_window_long( parent, GWL_STYLE );
+        DWORD parent_style = get_window_long( parent, GWL_STYLE );
         if( (window_style & WS_VISIBLE) && (parent_style & WS_VISIBLE) )
         {
             flags &= ~DCX_CLIPCHILDREN;

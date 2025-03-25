@@ -360,7 +360,7 @@ HWND get_parent( HWND hwnd )
     if (win == WND_DESKTOP) return 0;
     if (win == WND_OTHER_PROCESS)
     {
-        LONG style = get_window_long( hwnd, GWL_STYLE );
+        DWORD style = get_window_long( hwnd, GWL_STYLE );
         if (style & (WS_POPUP | WS_CHILD))
         {
             SERVER_START_REQ( get_window_tree )
@@ -744,7 +744,7 @@ BOOL is_window_drawable( HWND hwnd, BOOL icon )
     HWND *list;
     BOOL retval = TRUE;
     int i;
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
 
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & WS_MINIMIZE) && icon && get_class_long_ptr( hwnd, GCLP_HICON, FALSE ))  return FALSE;
@@ -849,7 +849,7 @@ static BOOL is_hung_app_window( HWND hwnd )
 /* see IsWindowEnabled */
 BOOL is_window_enabled( HWND hwnd )
 {
-    LONG ret;
+    DWORD ret;
 
     RtlSetLastWin32Error( NO_ERROR );
     ret = get_window_long( hwnd, GWL_STYLE );
@@ -2592,7 +2592,7 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
 
     for (i = 0; list[i]; i++)
     {
-        LONG style = get_window_long( list[i], GWL_STYLE );
+        DWORD style = get_window_long( list[i], GWL_STYLE );
 
         /* If window is minimized or disabled, return at once */
         if (style & WS_DISABLED)
@@ -2652,7 +2652,7 @@ HWND WINAPI NtUserChildWindowFromPointEx( HWND parent, LONG x, LONG y, UINT flag
         if (!PtInRect( &rect, pt )) continue;
         if (flags & (CWP_SKIPINVISIBLE|CWP_SKIPDISABLED))
         {
-            LONG style = get_window_long( list[i], GWL_STYLE );
+            DWORD style = get_window_long( list[i], GWL_STYLE );
             if ((flags & CWP_SKIPINVISIBLE) && !(style & WS_VISIBLE)) continue;
             if ((flags & CWP_SKIPDISABLED) && (style & WS_DISABLED)) continue;
         }
@@ -4129,7 +4129,7 @@ UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
  */
 static BOOL can_activate_window( HWND hwnd )
 {
-    LONG style;
+    DWORD style;
 
     if (!hwnd) return FALSE;
     style = get_window_long( hwnd, GWL_STYLE );
@@ -4205,11 +4205,11 @@ static void send_parent_notify( HWND hwnd, UINT msg )
  */
 MINMAXINFO get_min_max_info( HWND hwnd )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
-    LONG exstyle = get_window_long( hwnd, GWL_EXSTYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD exstyle = get_window_long( hwnd, GWL_EXSTYLE );
     UINT context;
     RECT rc_work, rc_primary;
-    LONG adjusted_style;
+    DWORD adjusted_style;
     MINMAXINFO minmax;
     INT xinc, yinc;
     RECT rc;
@@ -4426,7 +4426,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
 static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
 {
     UINT swp_flags = 0;
-    LONG old_style;
+    DWORD old_style;
     MINMAXINFO minmax;
     WINDOWPLACEMENT wpl;
 
@@ -4615,7 +4615,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 {
     WND *win;
     HWND parent;
-    LONG style = get_window_long( hwnd, GWL_STYLE ), new_style;
+    DWORD style = get_window_long( hwnd, GWL_STYLE ), new_style;
     BOOL was_visible = (style & WS_VISIBLE) != 0;
     BOOL show_flag = TRUE;
     RECT newPos = {0, 0, 0, 0};

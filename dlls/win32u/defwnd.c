@@ -471,7 +471,7 @@ static LRESULT handle_set_cursor( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
 static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
 
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
@@ -1850,8 +1850,8 @@ static LRESULT handle_nc_activate( HWND hwnd, WPARAM wparam, LPARAM lparam )
 static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
 {
     RECT rect = { 0, 0, 0, 0 };
-    LONG style = get_window_long( hwnd, GWL_STYLE );
-    LONG ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
 
     if (!win_rect) return;
 
@@ -2178,7 +2178,7 @@ static void track_close_button( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
 static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
 
     switch (wparam)  /* Hit test */
     {
@@ -2372,7 +2372,7 @@ static LRESULT handle_nc_mouse_move( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
 static LRESULT handle_nc_mouse_leave( HWND hwnd )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
     POINT pt = {0, 0};
 
     TRACE( "hwnd=%p\n", hwnd );
@@ -2687,7 +2687,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SHOWWINDOW:
         {
-            LONG style = get_window_long( hwnd, GWL_STYLE );
+            DWORD style = get_window_long( hwnd, GWL_STYLE );
             WND *win;
             if (!lparam) break; /* sent from ShowWindow */
             if ((style & WS_VISIBLE) && wparam) break;
