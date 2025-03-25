@@ -2105,10 +2105,24 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
 {
     void *ptr;
     int prot = PROT_READ | PROT_WRITE;
-    unsigned int flags = MAP_FIXED | ((vprot & VPROT_WRITE) ? MAP_SHARED : MAP_PRIVATE);
+    unsigned int flags = MAP_FIXED;
 
     assert( start < view->size );
     assert( start + size <= view->size );
+
+    if (vprot & VPROT_WRITE) flags |= MAP_SHARED;
+    else if (vprot & VPROT_WRITECOPY) flags |= MAP_PRIVATE;
+    else
+    {
+        /* changes to the file are not guaranteed to be visible in read-only MAP_PRIVATE mappings,
+         * but they are on Linux so we take advantage of it */
+#ifdef __linux__
+        flags |= MAP_PRIVATE;
+#else
+        flags |= MAP_SHARED;
+        prot &= ~PROT_WRITE;
+#endif
+    }
 
     if ((vprot & VPROT_EXEC) || force_exec_prot)
     {
@@ -2131,7 +2145,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             break;
         case ENOEXEC:
         case ENODEV:  /* filesystem doesn't support mmap(), fall back to read() */
-            if (flags & MAP_SHARED)
+            if (vprot & VPROT_WRITE)
             {
                 ERR( "shared writable mmap not supported, broken filesystem?\n" );
                 return STATUS_NOT_SUPPORTED;
@@ -2139,7 +2153,7 @@ static NTSTATUS map_file_into_view( struct file_view *view, int fd, size_t start
             break;
         case EACCES:
         case EPERM:  /* noexec filesystem, fall back to read() */
-            if (flags & MAP_SHARED)
+            if (vprot & VPROT_WRITE)
             {
                 if (prot & PROT_EXEC) ERR( "failed to set PROT_EXEC on file map, noexec filesystem?\n" );
                 return STATUS_ACCESS_DENIED;
