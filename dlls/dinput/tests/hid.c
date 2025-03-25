@@ -55,6 +55,7 @@
 #include "dinput.h"
 #include "dinputd.h"
 #include "hidusage.h"
+#include "gameinput.h"
 
 #include "wine/mssign.h"
 
