@@ -220,8 +220,9 @@ struct addr_range
     } *free;
 };
 
-static size_t page_mask;
-static const mem_size_t granularity_mask = 0xffff;
+static size_t host_page_mask;
+static const size_t page_mask = 0xfff;
+static const size_t granularity_mask = 0xffff;
 static struct addr_range ranges32;
 static struct addr_range ranges64;
 
@@ -262,12 +263,9 @@ static inline mem_size_t round_size( mem_size_t size, mem_size_t mask )
 
 void init_memory(void)
 {
-    page_mask = sysconf( _SC_PAGESIZE ) - 1;
+    host_page_mask = sysconf( _SC_PAGESIZE ) - 1;
     free_map_addr( 0x60000000, 0x1c000000 );
     free_map_addr( 0x600000000000, 0x100000000000 );
-    if (page_mask != 0xfff)
-        fprintf( stderr, "wineserver: page size is %uk but Wine requires 4k pages, expect problems\n",
-                 (int)(page_mask + 1) / 1024 );
 }
 
 static void ranges_dump( struct object *obj, int verbose )
@@ -421,7 +419,7 @@ static int is_valid_view_addr( struct process *process, client_ptr_t addr, mem_s
     struct memory_view *view;
 
     if (!size) return 0;
-    if (addr & page_mask) return 0;
+    if (addr & host_page_mask) return 0;
     if (addr + size < addr) return 0;  /* overflow */
 
     /* check for overlapping view */
@@ -1298,7 +1296,7 @@ void free_map_addr( client_ptr_t base, mem_size_t size )
 
 size_t get_page_size(void)
 {
-    return page_mask + 1;
+    return host_page_mask + 1;
 }
 
 struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
@@ -1307,6 +1305,7 @@ struct mapping *create_session_mapping( struct object *root, const struct unicod
     static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
     size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
 
+    size = round_size( size, host_page_mask );
     return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
 }
 
@@ -1341,7 +1340,7 @@ static struct session_block *grow_session_mapping( mem_size_t needed )
     void *tmp;
 
     new_size = max( old_size * 3 / 2, old_size + max( needed, 0x10000 ) );
-    new_size = round_size( new_size, page_mask );
+    new_size = round_size( new_size, host_page_mask );
     assert( new_size > old_size );
 
     unix_fd = get_unix_fd( session_mapping->fd );
