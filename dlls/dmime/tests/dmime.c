@@ -1751,7 +1751,7 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(position.QuadPart == sizeof(header), "got %lld\n", position.QuadPart);
+    ok(position.QuadPart == sizeof(header), "got %s\n", wine_dbgstr_longlong(position.QuadPart));
     IPersistStream_Release(persist);
     IStream_Release(stream);
     /* TempoTrack and TimeSigTrack seems to be optional. */
@@ -1788,7 +1788,7 @@ static void test_midi(void)
     hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(position.QuadPart == sizeof(header) + sizeof(track_header) + sizeof(midi_meta_set_tempo),
-            "got %lld\n", position.QuadPart);
+            "got %s\n", wine_dbgstr_longlong(position.QuadPart));
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
@@ -1836,7 +1836,8 @@ static void test_midi(void)
     ok(hr == S_OK, "got %#lx\n", hr);
     hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
     ok(hr == S_OK, "got %#lx\n", hr);
-    ok(position.QuadPart == sizeof(header) + sizeof(track_header) + 4, "got %lld\n", position.QuadPart);
+    ok(position.QuadPart == sizeof(header) + sizeof(track_header) + 4,
+            "got %s\n", wine_dbgstr_longlong(position.QuadPart));
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
@@ -1899,7 +1900,7 @@ static void test_midi(void)
     hr = IStream_Seek(stream, zero, STREAM_SEEK_CUR, &position);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(position.QuadPart == sizeof(header) + sizeof(track_header) * 2 + track_length + trace2_length,
-            "got %lld\n", position.QuadPart);
+            "got %s\n", wine_dbgstr_longlong(position.QuadPart));
     IPersistStream_Release(persist);
     IStream_Release(stream);
     expect_track(segment, BandTrack, -1, 0);
