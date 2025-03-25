@@ -1036,6 +1036,7 @@ struct testfilter
     HRESULT wait_state_hr;
     HRESULT is_format_supported_hr;
     HRESULT qc_notify_hr;
+    HRESULT query_accept_hr;
 };
 
 static inline struct testfilter *impl_from_BaseFilter(struct strmbase_filter *iface)
@@ -1141,6 +1142,13 @@ static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid
     return S_OK;
 }
 
+static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDIA_TYPE *mt)
+{
+    struct testfilter *filter = impl_from_base_pin(iface);
+
+    return filter->query_accept_hr;
+}
+
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface, IMemInputPin *pin, IMemAllocator **alloc)
 {
     struct testfilter *filter = impl_from_base_pin(&iface->pin);
@@ -1187,6 +1195,7 @@ static const struct strmbase_source_ops testsource_ops =
 {
     .base.pin_get_media_type = testsource_get_media_type,
     .base.pin_query_interface = testsource_query_interface,
+    .base.pin_query_accept = testsource_query_accept,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = testsource_DecideBufferSize,
     .pfnDecideAllocator = testsource_DecideAllocator,
@@ -1198,6 +1207,7 @@ static void testfilter_init(struct testfilter *filter)
     memset(filter, 0, sizeof(*filter));
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
+    filter->query_accept_hr = S_OK;
     filter->use_input_pin_allocator = FALSE;
     filter->stop_position = 0x8000000000000000ULL;
     filter->wait_state_event = CreateEventW(NULL, TRUE, TRUE, NULL);
@@ -8629,6 +8639,137 @@ static void test_ddrawstream_mem_allocator(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_ddrawstream_set_format_dynamic(void)
+{
+    IDirectDrawMediaStream *ddraw_stream;
+    IAMMultiMediaStream *mmstream;
+    DDSURFACEDESC current_format;
+    DDSURFACEDESC desired_format;
+    struct testfilter source;
+    IGraphBuilder *graph;
+    DDSURFACEDESC format;
+    IMediaStream *stream;
+    VIDEOINFO video_info;
+    AM_MEDIA_TYPE mt;
+    HRESULT hr;
+    ULONG ref;
+    IPin *pin;
+
+    mmstream = create_ammultimediastream();
+
+    hr = IAMMultiMediaStream_AddMediaStream(mmstream, NULL, &MSPID_PrimaryVideo, 0, &stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IDirectDrawMediaStream, (void **)&ddraw_stream);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IMediaStream_QueryInterface(stream, &IID_IPin, (void **)&pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_GetFilterGraph(mmstream, &graph);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!!graph, "Expected non-NULL graph.\n");
+
+    testfilter_init(&source);
+    source.use_input_pin_allocator = TRUE;
+
+    hr = IGraphBuilder_AddFilter(graph, &source.filter.IBaseFilter_iface, L"source");
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IGraphBuilder_ConnectDirect(graph, &source.source.pin.IPin_iface, pin, &rgb8_mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    source.preferred_mt = NULL;
+    source.query_accept_hr = S_OK;
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
+            "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+
+    format = rgb555_format;
+    format.dwFlags = 0;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
+            "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
+
+    source.preferred_mt = &rgb555_mt;
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb8_format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
+            "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+
+    video_info = rgb555_video_info;
+    video_info.bmiHeader.biWidth = 222;
+    video_info.bmiHeader.biHeight = -555;
+    mt = rgb555_mt;
+    mt.pbFormat = (BYTE *)&video_info;
+    source.preferred_mt = &mt;
+
+    format = rgb555_format;
+    format.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
+    format.dwWidth = 222;
+    format.dwHeight = 555;
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
+            "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
+    ok(((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth == 333,
+            "Got width %ld.\n", ((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biWidth);
+    ok(((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biHeight == -444,
+            "Got height %ld.\n", ((VIDEOINFO *)source.source.pin.mt.pbFormat)->bmiHeader.biHeight);
+
+    source.query_accept_hr = S_FALSE;
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb8_format, NULL);
+    todo_wine ok(hr == DDERR_INVALIDSURFACETYPE, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
+            "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
+    memset(&current_format, 0, sizeof(current_format));
+    memset(&desired_format, 0, sizeof(desired_format));
+    hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
+    /* FIXME: The peer is not able to reconnect while the stream is running, so it stays disconnected. */
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
+    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+            "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
+
+    hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_STOP);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IGraphBuilder_Disconnect(graph, &source.source.pin.IPin_iface);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IGraphBuilder_Disconnect(graph, pin);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ref = IAMMultiMediaStream_Release(mmstream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IGraphBuilder_Release(graph);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IPin_Release(pin);
+    IDirectDrawMediaStream_Release(ddraw_stream);
+    ref = IMediaStream_Release(stream);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 static void test_ddrawstreamsample_get_media_stream(void)
 {
     IAMMultiMediaStream *mmstream = create_ammultimediastream();
@@ -9957,6 +10098,7 @@ START_TEST(amstream)
     test_ddrawstream_get_time_per_frame();
     test_ddrawstream_qc();
     test_ddrawstream_mem_allocator();
+    test_ddrawstream_set_format_dynamic();
 
     test_ddrawstreamsample_get_media_stream();
     test_ddrawstreamsample_update();
