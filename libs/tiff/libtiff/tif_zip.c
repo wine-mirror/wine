@@ -678,6 +678,25 @@ static const TIFFField zipFields[] = {
      TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "", NULL},
 };
 
+static void *TIFF_zalloc(void *opaque, unsigned int items, unsigned int size)
+{
+    static const char module[] = "TIFF_zalloc";
+    TIFF *tif = opaque;
+
+    if (items > ~(size_t)0 / size)
+    {
+        TIFFErrorExtR(tif, module, "Overflow");
+        return NULL;
+    }
+
+    return _TIFFmallocExt(tif, items * size);
+}
+
+static void TIFF_zfree(void *opaque, void *ptr)
+{
+    _TIFFfreeExt((TIFF *)opaque, ptr);
+}
+
 int TIFFInitZIP(TIFF *tif, int scheme)
 {
     static const char module[] = "TIFFInitZIP";
@@ -706,9 +725,9 @@ int TIFFInitZIP(TIFF *tif, int scheme)
     if (tif->tif_data == NULL)
         goto bad;
     sp = GetZIPState(tif);
-    sp->stream.zalloc = NULL;
-    sp->stream.zfree = NULL;
-    sp->stream.opaque = NULL;
+    sp->stream.zalloc = TIFF_zalloc;
+    sp->stream.zfree = TIFF_zfree;
+    sp->stream.opaque = tif;
     sp->stream.data_type = Z_BINARY;
 
     /*
