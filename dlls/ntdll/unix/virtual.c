@@ -4053,10 +4053,10 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
     /* setup no access guard page */
     if (guard_page)
     {
-        set_page_vprot( view->base, page_size, VPROT_COMMITTED );
-        set_page_vprot( (char *)view->base + page_size, page_size,
+        set_page_vprot( view->base, host_page_size, VPROT_COMMITTED );
+        set_page_vprot( (char *)view->base + host_page_size, host_page_size,
                         VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
-        mprotect_range( view->base, 2 * page_size , 0, 0 );
+        mprotect_range( view->base, 2 * host_page_size , 0, 0 );
     }
     VIRTUAL_DEBUG_DUMP_VIEW( view );
 
@@ -4065,7 +4065,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
     stack->OldStackLimit = 0;
     stack->DeallocationStack = view->base;
     stack->StackBase = (char *)view->base + view->size;
-    stack->StackLimit = (char *)view->base + (guard_page ? 2 * page_size : 0);
+    stack->StackLimit = (char *)view->base + (guard_page ? 2 * host_page_size : 0);
 done:
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
@@ -4117,11 +4117,12 @@ static BOOL is_inside_thread_stack( void *ptr, struct thread_stack_info *stack )
 {
     TEB *teb = NtCurrentTeb();
     WOW_TEB *wow_teb = get_wow_teb( teb );
+    size_t min_guaranteed = max( page_size * (is_win64 ? 2 : 1), host_page_size );
 
     stack->start = teb->DeallocationStack;
     stack->limit = teb->Tib.StackLimit;
     stack->end   = teb->Tib.StackBase;
-    stack->guaranteed = max( teb->GuaranteedStackBytes, page_size * (is_win64 ? 2 : 1) );
+    stack->guaranteed = max( teb->GuaranteedStackBytes, min_guaranteed );
     stack->is_wow = FALSE;
     if ((char *)ptr > stack->start && (char *)ptr <= stack->end) return TRUE;
 
@@ -4129,7 +4130,7 @@ static BOOL is_inside_thread_stack( void *ptr, struct thread_stack_info *stack )
     stack->start = ULongToPtr( wow_teb->DeallocationStack );
     stack->limit = ULongToPtr( wow_teb->Tib.StackLimit );
     stack->end   = ULongToPtr( wow_teb->Tib.StackBase );
-    stack->guaranteed = max( wow_teb->GuaranteedStackBytes, page_size * (is_win64 ? 1 : 2) );
+    stack->guaranteed = max( wow_teb->GuaranteedStackBytes, min_guaranteed );
     stack->is_wow = TRUE;
     return ((char *)ptr > stack->start && (char *)ptr <= stack->end);
 }
@@ -4142,16 +4143,16 @@ static NTSTATUS grow_thread_stack( char *page, struct thread_stack_info *stack_i
 {
     NTSTATUS ret = 0;
 
-    set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
-    mprotect_range( page, page_size, 0, 0 );
-    if (page >= stack_info->start + page_size + stack_info->guaranteed)
+    set_page_vprot_bits( page, host_page_size, 0, VPROT_GUARD );
+    mprotect_range( page, host_page_size, 0, 0 );
+    if (page >= stack_info->start + host_page_size + stack_info->guaranteed)
     {
-        set_page_vprot_bits( page - page_size, page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
-        mprotect_range( page - page_size, page_size, 0, 0 );
+        set_page_vprot_bits( page - host_page_size, host_page_size, VPROT_COMMITTED | VPROT_GUARD, 0 );
+        mprotect_range( page - host_page_size, host_page_size, 0, 0 );
     }
     else  /* inside guaranteed space -> overflow exception */
     {
-        page = stack_info->start + page_size;
+        page = stack_info->start + host_page_size;
         set_page_vprot_bits( page, stack_info->guaranteed, VPROT_COMMITTED, VPROT_GUARD );
         mprotect_range( page, stack_info->guaranteed, 0, 0 );
         ret = STATUS_STACK_OVERFLOW;
@@ -4174,11 +4175,11 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
     ULONG_PTR err = rec->ExceptionInformation[0];
     void *addr = (void *)rec->ExceptionInformation[1];
-    char *page = ROUND_ADDR( addr, page_mask );
+    char *page = ROUND_ADDR( addr, host_page_mask );
     BYTE vprot;
 
     mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
-    vprot = get_page_vprot( page );
+    vprot = get_host_page_vprot( page );
 
 #ifdef __APPLE__
     /* Rosetta on Apple Silicon misreports certain write faults as read faults. */
@@ -4194,8 +4195,8 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
         struct thread_stack_info stack_info;
         if (!is_inside_thread_stack( page, &stack_info ))
         {
-            set_page_vprot_bits( page, page_size, 0, VPROT_GUARD );
-            mprotect_range( page, page_size, 0, 0 );
+            set_page_vprot_bits( page, host_page_size, 0, VPROT_GUARD );
+            mprotect_range( page, host_page_size, 0, 0 );
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
         else ret = grow_thread_stack( page, &stack_info );
@@ -4212,14 +4213,14 @@ NTSTATUS virtual_handle_fault( EXCEPTION_RECORD *rec, void *stack )
             }
             else
             {
-                set_page_vprot_bits( page, page_size, 0, VPROT_WRITEWATCH );
-                mprotect_range( page, page_size, 0, 0 );
+                set_page_vprot_bits( page, host_page_size, 0, VPROT_WRITEWATCH );
+                mprotect_range( page, host_page_size, 0, 0 );
             }
         }
         /* ignore fault if page is writable now */
-        if (get_unix_prot( get_page_vprot( page )) & PROT_WRITE)
+        if (get_unix_prot( get_host_page_vprot( page )) & PROT_WRITE)
         {
-            if ((vprot & VPROT_WRITEWATCH) || is_write_watch_range( page, page_size ))
+            if ((vprot & VPROT_WRITEWATCH) || is_write_watch_range( page, 1 ))
                 ret = STATUS_SUCCESS;
         }
     }
@@ -4252,19 +4253,19 @@ void *virtual_setup_exception( void *stack_ptr, size_t size, EXCEPTION_RECORD *r
 
     stack -= size;
 
-    if (stack < stack_info.start + 4096)
+    if (stack < stack_info.start + host_page_size)
     {
         /* stack overflow on last page, unrecoverable */
-        UINT diff = stack_info.start + 4096 - stack;
+        UINT diff = stack_info.start + host_page_size - stack;
         ERR( "stack overflow %u bytes addr %p stack %p (%p-%p-%p)\n",
              diff, rec->ExceptionAddress, stack, stack_info.start, stack_info.limit, stack_info.end );
         abort_thread(1);
     }
     else if (stack < stack_info.limit)
     {
+        char *page = ROUND_ADDR( stack, host_page_mask );
         mutex_lock( &virtual_mutex );  /* no need for signal masking inside signal handler */
-        if ((get_page_vprot( stack ) & VPROT_GUARD) &&
-            grow_thread_stack( ROUND_ADDR( stack, page_mask ), &stack_info ))
+        if ((get_host_page_vprot( page ) & VPROT_GUARD) && grow_thread_stack( page, &stack_info ))
         {
             rec->ExceptionCode = STATUS_STACK_OVERFLOW;
             rec->NumberParameters = 0;
