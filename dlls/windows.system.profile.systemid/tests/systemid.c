@@ -96,15 +96,10 @@ static void test_SystemIdentification_Statics(void)
     ok( system_id_source == SystemIdentificationSource_Uefi, "ISystemIdentificationInfo_get_Source returned %u.\n", system_id_source );
 
     hr = ISystemIdentificationInfo_get_Id( system_id_info, NULL );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     hr = ISystemIdentificationInfo_get_Id( system_id_info, &system_id_buffer );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
-    if (hr == S_OK)
-    {
     hr = ISystemIdentificationInfo_get_Id( system_id_info, &system_id_buffer2 );
-    todo_wine
     ok( hr == S_OK, "got hr %#lx.\n", hr );
     ref = IBuffer_Release( system_id_buffer2 );
     todo_wine
@@ -140,7 +135,6 @@ static void test_SystemIdentification_Statics(void)
     ref = IBuffer_Release( system_id_buffer );
     todo_wine
     ok( ref == 2, "got ref %ld.\n", ref );
-    }
 
     ref = ISystemIdentificationInfo_Release( system_id_info );
     ok( ref == 0, "got ref %ld.\n", ref );
