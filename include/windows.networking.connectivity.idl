@@ -432,7 +432,7 @@ namespace Windows.Networking.Connectivity
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Networking.Connectivity.NetworkInformation),
+        exclusiveto(Windows.Networking.Connectivity.NetworkItem),
         uuid(01bc4d39-f5e0-4567-a28c-42080c831b2b),
     ]
     interface INetworkItem : IInspectable
@@ -454,7 +454,7 @@ namespace Windows.Networking.Connectivity
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        exclusiveto(Windows.Networking.Connectivity.NetworkSecuritySettings),
+        exclusiveto(Windows.Networking.Connectivity.ProxyConfiguration),
         uuid(ef3a60b4-9004-4dd6-b7d8-b3e502f4aad0),
     ]
     interface IProxyConfiguration : IInspectable
