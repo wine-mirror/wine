@@ -342,6 +342,8 @@ struct synth
     IKsControl IKsControl_iface;
     LONG ref;
 
+    LONG volume0;
+    LONG volume1;
     DMUS_PORTCAPS caps;
     DMUS_PORTPARAMS params;
     BOOL active;
@@ -450,6 +452,12 @@ static ULONG WINAPI synth_Release(IDirectMusicSynth8 *iface)
     return ref;
 }
 
+static void update_channel_volume(struct synth *This, int chan)
+{
+    double attenuation = (This->volume0 + This->volume1) * -0.1;
+    fluid_synth_set_gen(This->fluid_synth, chan, GEN_ATTENUATION, attenuation);
+}
+
 static void synth_reset_default_values(struct synth *This)
 {
     BYTE chan;
@@ -493,6 +501,8 @@ static void synth_reset_default_values(struct synth *This)
 
         fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x64 /* RPN_LSB */, 127);
         fluid_synth_cc(This->fluid_synth, chan | 0xb0 /* CONTROL_CHANGE */, 0x65 /* RPN_MSB */, 127);
+
+        update_channel_volume(This, chan);
     }
 }
 
@@ -1107,10 +1117,13 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
 {
     struct synth *This = impl_from_IDirectMusicSynth8(iface);
     struct event *event, *next;
+    int chan;
 
     TRACE("(%p, %p, %ld, %I64d)\n", This, buffer, length, position);
 
     EnterCriticalSection(&This->cs);
+    for (chan = 0; chan < 0x10; chan++)
+        update_channel_volume(This, chan);
     LIST_FOR_EACH_ENTRY_SAFE(event, next, &This->events, struct event, entry)
     {
         BYTE status = event->midi[0] & 0xf0, chan = event->midi[0] & 0x0f;
@@ -1331,9 +1344,43 @@ static ULONG WINAPI synth_control_Release(IKsControl* iface)
 static HRESULT WINAPI synth_control_KsProperty(IKsControl* iface, PKSPROPERTY Property,
         ULONG PropertyLength, LPVOID PropertyData, ULONG DataLength, ULONG* BytesReturned)
 {
+    struct synth *This = impl_from_IKsControl(iface);
+
     TRACE("(%p, %p, %lu, %p, %lu, %p)\n", iface, Property, PropertyLength, PropertyData, DataLength, BytesReturned);
 
     TRACE("Property = %s - %lu - %lu\n", debugstr_guid(&Property->Set), Property->Id, Property->Flags);
+
+    if (Property->Flags == KSPROPERTY_TYPE_SET)
+    {
+        if (DataLength < sizeof(LONG))
+            return E_NOT_SUFFICIENT_BUFFER;
+
+        if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_Volume))
+        {
+            LONG volume = max(DMUS_VOLUME_MIN, min(DMUS_VOLUME_MAX, *(LONG*)PropertyData));
+
+            if (Property->Id == 0)
+            {
+                EnterCriticalSection(&This->cs);
+                This->volume0 = volume;
+                LeaveCriticalSection(&This->cs);
+            }
+            else if (Property->Id == 1)
+            {
+                EnterCriticalSection(&This->cs);
+                This->volume1 = volume;
+                LeaveCriticalSection(&This->cs);
+            }
+            else
+                return DMUS_E_UNKNOWN_PROPERTY;
+        }
+        else
+        {
+            FIXME("Unknown property %s\n", debugstr_guid(&Property->Set));
+        }
+
+        return S_OK;
+    }
 
     if (Property->Flags != KSPROPERTY_TYPE_GET)
     {
@@ -1368,6 +1415,12 @@ static HRESULT WINAPI synth_control_KsProperty(IKsControl* iface, PKSPROPERTY Pr
     {
         *(DWORD*)PropertyData = FALSE;
         *BytesReturned = sizeof(DWORD);
+    }
+    else if (IsEqualGUID(&Property->Set, &GUID_DMUS_PROP_Volume))
+    {
+        if (Property->Id >= 2)
+            return DMUS_E_UNKNOWN_PROPERTY;
+        return DMUS_E_GET_UNSUPPORTED;
     }
     else
     {
@@ -1976,6 +2029,9 @@ HRESULT synth_create(IUnknown **ret_iface)
     obj->IDirectMusicSynth8_iface.lpVtbl = &synth_vtbl;
     obj->IKsControl_iface.lpVtbl = &synth_control_vtbl;
     obj->ref = 1;
+
+    obj->volume0 = 0;
+    obj->volume1 = 600;
 
     obj->caps.dwSize = sizeof(DMUS_PORTCAPS);
     obj->caps.dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;

@@ -1743,27 +1743,27 @@ static void test_IKsControl(void)
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_GET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
 
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 1;
     property.Flags = KSPROPERTY_TYPE_GET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
 
     /* out of range id results in DMUS_E_UNKNOWN_PROPERTY */
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 2;
     property.Flags = KSPROPERTY_TYPE_GET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
 
     volume = 0;
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 2;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
 
     /* default value for volume 0 is 0 */
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
@@ -1773,7 +1773,7 @@ static void test_IKsControl(void)
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
 
     /* total voice gain is limited to 6 dB */
@@ -1782,7 +1782,7 @@ static void test_IKsControl(void)
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain = 60.;
     envelope.channel_gain[0] = 0.;
@@ -1795,7 +1795,7 @@ static void test_IKsControl(void)
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 60.;
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
@@ -1806,7 +1806,7 @@ static void test_IKsControl(void)
     property.Id = 1;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 60.;
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
@@ -1817,7 +1817,7 @@ static void test_IKsControl(void)
     property.Id = 1;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
     envelope = default_volume_envelope;
     envelope.gain -= 120.;
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
