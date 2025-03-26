@@ -64,6 +64,19 @@ static const struct message parent_visible_syslink_wnd_seq[] = {
     {0}
 };
 
+static const struct message settext_syslink_wnd_seq[] = {
+    { WM_SETTEXT, sent },
+    { WM_PAINT, sent },
+    { WM_ERASEBKGND, sent|defwinproc|optional }, /* Wine only */
+    {0}
+};
+
+static const struct message parent_settext_syslink_wnd_seq[] = {
+    { WM_CTLCOLORSTATIC, sent },
+    { WM_NOTIFY, sent|wparam|lparam|optional, 0, NM_CUSTOMDRAW }, /* FIXME: Not sent on Wine */
+    {0}
+};
+
 /* Try to make sure pending X events have been processed before continuing */
 static void flush_events(void)
 {
@@ -101,6 +114,8 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
+        if (message == WM_NOTIFY && lParam)
+            msg.lParam = ((NMHDR*)lParam)->code;
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
@@ -199,6 +214,8 @@ static void test_create_syslink(void)
 {
     HWND hWndSysLink;
     LONG oldstyle;
+    LRESULT ret;
+    LITEM item;
 
     /* Create an invisible SysLink control */
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
@@ -208,6 +225,13 @@ static void test_create_syslink(void)
     ok_sequence(sequences, SYSLINK_SEQ_INDEX, empty_wnd_seq, "create SysLink", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_create_syslink_wnd_seq, "create SysLink (parent)", TRUE);
 
+    /* Get first item */
+    item.mask = LIF_ITEMINDEX|LIF_ITEMID|LIF_URL;
+    item.iLink = 0;
+    ret = SendMessageW(hWndSysLink, LM_GETITEM, 0, (LPARAM)&item);
+    ok(ret == 1, "LM_GETITEM failed\n");
+    ok(!wcscmp(item.szUrl, L"link1"), "unexpected url %s\n", debugstr_w(item.szUrl));
+
     /* Make the SysLink control visible */
     flush_sequences(sequences, NUM_MSG_SEQUENCE);
     oldstyle = GetWindowLongA(hWndSysLink, GWL_STYLE);
@@ -216,6 +240,20 @@ static void test_create_syslink(void)
     flush_events();
     ok_sequence(sequences, SYSLINK_SEQ_INDEX, visible_syslink_wnd_seq, "visible SysLink", TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_visible_syslink_wnd_seq, "visible SysLink (parent)", TRUE);
+
+    /* Change contents */
+    flush_sequences(sequences, NUM_MSG_SEQUENCE);
+    SetWindowTextW(hWndSysLink, L"Head <a href=\"link\">link</a> Tail");
+    flush_events();
+    ok_sequence(sequences, SYSLINK_SEQ_INDEX, settext_syslink_wnd_seq, "SetWindowText", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_settext_syslink_wnd_seq, "SetWindowText (parent)", FALSE);
+
+    /* Get first item */
+    item.mask = LIF_ITEMINDEX|LIF_ITEMID|LIF_URL;
+    item.iLink = 0;
+    ret = SendMessageW(hWndSysLink, LM_GETITEM, 0, (LPARAM)&item);
+    ok(ret == 1, "LM_GETITEM failed\n");
+    ok(!wcscmp(item.szUrl, L"link"), "unexpected url %s\n", debugstr_w(item.szUrl));
 
     DestroyWindow(hWndSysLink);
 }
