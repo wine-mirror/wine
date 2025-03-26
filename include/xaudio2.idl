@@ -26,7 +26,7 @@ import "mmdeviceapi.idl";
 import "audiosessiontypes.h";
 import "mmreg.h";
 
-cpp_quote("#include <pshpack1.h>")
+#pragma pack(push,1)
 
 #if XAUDIO2_VER <= 7
 
@@ -599,7 +599,7 @@ cpp_quote("inline static float XAudio2CutoffFrequencyToRadians(float cutofffreq,
 cpp_quote("inline static float XAudio2RadiansToCutoffFrequency(float radians, float samplerate) { return samplerate * asinf(radians/2.0f) / (float)M_PI; }")
 cpp_quote("#endif")
 
-cpp_quote("#include <poppack.h>")
+#pragma pack(pop)
 
 #if XAUDIO2_VER >= 8
 cpp_quote("HRESULT WINAPI XAudio2Create(IXAudio2** pxaudio2, UINT32 flags, XAUDIO2_PROCESSOR processor);")

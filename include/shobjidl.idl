@@ -863,7 +863,7 @@ interface IShellView : IOleWindow
 interface IShellView2 : IShellView
 {
     typedef GUID SHELLVIEWID;
-cpp_quote("#include <pshpack8.h>")
+#pragma pack(push,8)
     typedef struct _SV2CVW2_PARAMS
     {
         DWORD cbSize;
@@ -874,7 +874,7 @@ cpp_quote("#include <pshpack8.h>")
         SHELLVIEWID const *pvid;
         HWND hwndView;
     } SV2CVW2_PARAMS, *LPSV2CVW2_PARAMS;
-cpp_quote("#include <poppack.h>")
+#pragma pack(pop)
 
     HRESULT GetView(
         [in, out] SHELLVIEWID *view_guid,
@@ -1609,7 +1609,7 @@ cpp_quote("#define DWFAF_HIDDEN           0x0001")
         [out] LPVOID *ppvObj);
 }
 
-cpp_quote("#include <pshpack8.h>")
+#pragma pack(push,8)
 typedef struct
 {
     SIZE     sizeDragImage;
@@ -1617,7 +1617,7 @@ typedef struct
     HBITMAP  hbmpDragImage;
     COLORREF crColorKey;
 } SHDRAGIMAGE, *LPSHDRAGIMAGE;
-cpp_quote("#include <poppack.h>")
+#pragma pack(pop)
 
 cpp_quote("#define DI_GETDRAGIMAGE TEXT(\"ShellGetDragImage\")")
 
@@ -2188,7 +2188,7 @@ typedef [v1_enum] enum THUMBBUTTONMASK {
 
 cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(THUMBBUTTONMASK)")
 
-cpp_quote("#include <pshpack8.h>")
+#pragma pack(push,8)
 typedef struct THUMBBUTTON {
     THUMBBUTTONMASK dwMask;
     UINT iId;
@@ -2197,7 +2197,7 @@ typedef struct THUMBBUTTON {
     WCHAR szTip[260];
     THUMBBUTTONFLAGS dwFlags;
 } THUMBBUTTON, *LPTHUMBBUTTON;
-cpp_quote("#include <poppack.h>")
+#pragma pack(pop)
 
 [
     uuid(ea1afb91-9e28-4b86-90e9-9e9f8a5eefaf),

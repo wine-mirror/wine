@@ -16,9 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 cpp_quote("#ifdef _WIN64")
-cpp_quote("#include <pshpack8.h>")
+cpp_quote("#pragma pack(push,8)")
 cpp_quote("#else")
-cpp_quote("#include <pshpack2.h>")
+cpp_quote("#pragma pack(push,2)")
 cpp_quote("#endif")
 cpp_quote("")
 
@@ -91,5 +91,5 @@ typedef LONG_PTR DB_LRESERVE;
 
 cpp_quote("#include <accctrl.h>")
 
-cpp_quote("#include <poppack.h>")
+cpp_quote("#pragma pack(pop)")
 cpp_quote("")
