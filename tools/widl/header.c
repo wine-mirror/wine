@@ -2017,7 +2017,6 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           write_forward(header, stmt->u.type);
         break;
       case STMT_IMPORTLIB:
-      case STMT_PRAGMA:
         /* not included in header */
         break;
       case STMT_IMPORT:
@@ -2042,6 +2041,9 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         fprintf(header, "#define __%s_MODULE_DEFINED__\n", stmt->u.type->name);
         write_header_stmts(header, stmt->u.type->details.module->stmts, stmt->u.type, FALSE);
         fprintf(header, "#endif /* __%s_MODULE_DEFINED__ */\n", stmt->u.type->name);
+        break;
+      case STMT_PRAGMA:
+        if (!strncmp( stmt->u.str, "pack", 4 )) fprintf(header, "#pragma %s\n", stmt->u.str);
         break;
       case STMT_CPPQUOTE:
         fprintf(header, "%s\n", stmt->u.str);
