@@ -918,14 +918,7 @@ static void test_copy(void)
     FILEOP_FLAGS tmp_flags;
     DWORD retval;
     LPSTR ptr;
-    BOOL on_nt4 = FALSE;
     BOOL ret;
-
-    if (old_shell32)
-    {
-        win_skip("Too many differences for old shell32\n");
-        return;
-    }
 
     shfo.hwnd = NULL;
     shfo.wFunc = FO_COPY;
@@ -938,22 +931,14 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("test6.txt"))
-    {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied - many files "
-           "are specified as a target\n");
-        DeleteFileA("test6.txt\\test2.txt");
-        RemoveDirectoryA("test6.txt\\test4.txt");
-        RemoveDirectoryA("test6.txt");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(!file_exists("test6.txt"), "The file is copied - many files are "
-           "specified as a target\n");
-    }
+    todo_wine
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    todo_wine
+    ok(DeleteFileA("test6.txt\\test1.txt"), "test6.txt\\test1.txt is not copied.\n");
+    todo_wine
+    ok(DeleteFileA("test6.txt\\test2.txt"), "test6.txt\\test2.txt is not copied.\n");
+    RemoveDirectoryA("test6.txt\\test4.txt");
+    RemoveDirectoryA("test6.txt");
 
     memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
     shfo2.fFlags |= FOF_MULTIDESTFILES;
@@ -971,23 +956,14 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     retval = SHFileOperationA(&shfo2);
-    if (dir_exists("test6.txt"))
-    {
-        /* Vista and W2K8 (broken or new behavior?) */
-        ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %ld\n", retval);
-        ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied - many files "
-           "are specified as a target\n");
-        RemoveDirectoryA("test6.txt");
-        ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not copied - many files "
-           "are specified as a target\n");
-        RemoveDirectoryA("test7.txt");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(!file_exists("test6.txt"), "The file is copied - many files are "
-           "specified as a target\n");
-    }
+    todo_wine
+    ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %ld\n", retval);
+    todo_wine
+    ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied.\n");
+    RemoveDirectoryA("test6.txt");
+    todo_wine
+    ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not copied.\n");
+    RemoveDirectoryA("test7.txt");
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
@@ -1030,17 +1006,9 @@ static void test_copy(void)
     ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
     ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
     retval = SHFileOperationA(&shfo);
-    if (retval == ERROR_SUCCESS)
-        /* Win 95/NT returns success but copies only the files up to the nonexistent source */
-        ok(file_exists("testdir2\\test1.txt"), "The file is not copied\n");
-    else
-    {
-        /* Failure if one source file does not exist */
-        ok(retval == 1026 || /* Win 98/ME/2K/XP */
-           retval == ERROR_FILE_NOT_FOUND, /* Vista and W2K8 */
-           "Files are copied to other directory\n");
-        ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
-    }
+    todo_wine
+    ok(retval == ERROR_FILE_NOT_FOUND, "Files are copied to other directory\n");
+    ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(!file_exists("testdir2\\test2.txt"), "The file is copied\n");
     shfo.fFlags = tmp_flags;
 
@@ -1078,8 +1046,7 @@ static void test_copy(void)
     retval = CopyFileA(shfo.pFrom, shfo.pTo, FALSE);
     ok(!retval && GetLastError() == ERROR_ACCESS_DENIED, "CopyFileA should have fail with ERROR_ACCESS_DENIED\n");
     retval = SHFileOperationA(&shfo);
-    /* Does not work on Win95, Win95B, NT4WS and NT4SRV */
-    ok(!retval || broken(retval == DE_OPCANCELLED), "SHFileOperationA failed to copy (error %lx)\n", retval);
+    ok(!retval, "SHFileOperationA failed to copy (error %lx)\n", retval);
     /* Set back normal attributes to make the file deletion succeed */
     ret = SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_NORMAL);
     ok(ret, "Failure to set file attributes (error %lx)\n", GetLastError());
@@ -1096,20 +1063,11 @@ static void test_copy(void)
     set_curr_dir_path(to, "test3.txt\0");
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(shfo.fAnyOperationsAborted != 0xdeadbeef ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
-    if (retval == DE_FLDDESTISFILE || /* Vista and W2K8 */
-        retval == DE_INVALIDFILES)    /* Win7 */
-    {
-        /* Most likely new behavior */
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted, "Expected aborted operations\n");
-    }
+    ok(shfo.fAnyOperationsAborted != 0xdeadbeef, "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
+    todo_wine
+    ok(retval == DE_INVALIDFILES, "Expected DE_INVALIDFILES, got %ld\n", retval);
+    todo_wine
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
     ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
 
     /* try to copy many files to nonexistent directory */
@@ -1117,9 +1075,7 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_NOERRORUI;
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(!shfo.fAnyOperationsAborted ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Didn't expect aborted operations\n");
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     ok(DeleteFileA("test3.txt\\test1.txt"), "Expected test3.txt\\test1.txt to exist\n");
     ok(DeleteFileA("test3.txt\\test2.txt"), "Expected test3.txt\\test1.txt to exist\n");
@@ -1132,73 +1088,46 @@ static void test_copy(void)
     shfo.fFlags |= FOF_NOERRORUI | FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(shfo.fAnyOperationsAborted != 0xdeadbeef ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
-    if (dir_exists("testdir2\\a.txt"))
+    ok(shfo.fAnyOperationsAborted != 0xdeadbeef, "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
-        RemoveDirectoryA("testdir2\\a.txt");
-        ok(DeleteFileA("testdir2\\b.txt\\test2.txt"), "Expected testdir2\\b.txt\\test2.txt to exist\n");
-        RemoveDirectoryA("testdir2\\b.txt");
-        ok(DeleteFileA("testdir2\\c.txt\\test3.txt"), "Expected testdir2\\c.txt\\test3.txt to exist\n");
-        RemoveDirectoryA("testdir2\\c.txt");
-        ok(!file_exists("testdir2\\d.txt"), "Expected testdir2\\d.txt to not exist\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
+    RemoveDirectoryA("testdir2\\a.txt");
+    ok(DeleteFileA("testdir2\\b.txt\\test2.txt"), "Expected testdir2\\b.txt\\test2.txt to exist\n");
+    RemoveDirectoryA("testdir2\\b.txt");
+    ok(DeleteFileA("testdir2\\c.txt\\test3.txt"), "Expected testdir2\\c.txt\\test3.txt to exist\n");
     }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(!shfo.fAnyOperationsAborted), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\a.txt to not exist\n");
-    }
+    RemoveDirectoryA("testdir2\\c.txt");
+    ok(!file_exists("testdir2\\d.txt"), "Expected testdir2\\d.txt to not exist\n");
 
     /* send in FOF_MULTIDESTFILES with too many destination files */
     shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
     shfo.pTo = "e.txt\0f.txt\0";
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(shfo.fAnyOperationsAborted != 0xdeadbeef ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
-    if (dir_exists("e.txt"))
+    ok(shfo.fAnyOperationsAborted != 0xdeadbeef, "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %ld\n", retval);
-        ok(DeleteFileA("e.txt\\test1.txt"), "Expected e.txt\\test1.txt to exist\n");
-        RemoveDirectoryA("e.txt");
-        ok(DeleteFileA("f.txt\\test2.txt"), "Expected f.txt\\test2.txt to exist\n");
-        RemoveDirectoryA("f.txt");
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %ld\n", retval);
+    ok(DeleteFileA("e.txt\\test1.txt"), "Expected e.txt\\test1.txt to exist\n");
+    RemoveDirectoryA("e.txt");
+    ok(DeleteFileA("f.txt\\test2.txt"), "Expected f.txt\\test2.txt to exist\n");
     }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(!shfo.fAnyOperationsAborted), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!file_exists("e.txt"), "Expected e.txt to not exist\n");
-    }
+    RemoveDirectoryA("f.txt");
 
     /* use FOF_MULTIDESTFILES with files and a source directory */
     shfo.pFrom = "test1.txt\0test2.txt\0test4.txt\0";
     shfo.pTo = "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0";
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(!shfo.fAnyOperationsAborted ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Didn't expect aborted operations\n");
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == 0x100a1), /* WinMe */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     ok(DeleteFileA("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
     ok(DeleteFileA("testdir2\\b.txt"), "Expected testdir2\\b.txt to exist\n");
-    if (retval == ERROR_SUCCESS)
-        ok(RemoveDirectoryA("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
+    ok(RemoveDirectoryA("testdir2\\c.txt"), "Expected testdir2\\c.txt to exist\n");
 
     /* try many dest files without FOF_MULTIDESTFILES flag */
     shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
@@ -1206,37 +1135,24 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     retval = SHFileOperationA(&shfo);
-    ok(shfo.fAnyOperationsAborted != 0xdeadbeef ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
-    if (dir_exists("a.txt"))
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(DeleteFileA("a.txt\\test1.txt"), "Expected a.txt\\test1.txt to exist\n");
-        ok(DeleteFileA("a.txt\\test2.txt"), "Expected a.txt\\test2.txt to exist\n");
-        ok(DeleteFileA("a.txt\\test3.txt"), "Expected a.txt\\test3.txt to exist\n");
-        RemoveDirectoryA("a.txt");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations.\n");
+    ok(DeleteFileA("a.txt\\test1.txt"), "Expected a.txt\\test1.txt to exist\n");
+    ok(DeleteFileA("a.txt\\test2.txt"), "Expected a.txt\\test2.txt to exist\n");
+    ok(DeleteFileA("a.txt\\test3.txt"), "Expected a.txt\\test3.txt to exist\n");
     }
-    else
-    {
-
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(!shfo.fAnyOperationsAborted), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
-    }
+    ok(!dir_exists("b.txt"), "Expected b.txt directory to not exist.\n");
+    ok(!dir_exists("c.txt"), "Expected c.txt directory to not exist.\n");
+    RemoveDirectoryA("a.txt");
 
     /* try a glob */
     shfo.pFrom = "test?.txt\0";
     shfo.pTo = "testdir2\0";
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == 0x100a1), /* WinMe */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
 
     /* try a glob with FOF_FILESONLY */
@@ -1258,24 +1174,15 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_FILESONLY;
     shfo.fFlags |= FOF_MULTIDESTFILES;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("testdir2\\a.txt"))
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
-        ok(DeleteFileA("testdir2\\a.txt\\test2.txt"), "Expected testdir2\\a.txt\\test2.txt to exist\n");
-        ok(DeleteFileA("testdir2\\a.txt\\test3.txt"), "Expected testdir2\\a.txt\\test3.txt to exist\n");
-        ok(RemoveDirectoryA("testdir2\\a.txt\\test4.txt"), "Expected testdir2\\a.txt\\test4.txt to exist\n");
-        RemoveDirectoryA("testdir2\\a.txt");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
+    ok(DeleteFileA("testdir2\\a.txt\\test2.txt"), "Expected testdir2\\a.txt\\test2.txt to exist\n");
+    ok(DeleteFileA("testdir2\\a.txt\\test3.txt"), "Expected testdir2\\a.txt\\test3.txt to exist\n");
+    ok(RemoveDirectoryA("testdir2\\a.txt\\test4.txt"), "Expected testdir2\\a.txt\\test4.txt to exist\n");
     }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(!shfo.fAnyOperationsAborted), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!file_exists("testdir2\\a.txt"), "Expected testdir2\\test1.txt to not exist\n");
-    }
+    RemoveDirectoryA("testdir2\\a.txt");
     ok(!RemoveDirectoryA("b.txt"), "b.txt should not exist\n");
 
     /* copy one file to two others, second is ignored */
@@ -1285,71 +1192,39 @@ static void test_copy(void)
     shfo.pTo = "b.txt\0c.txt\0";
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    ok(!shfo.fAnyOperationsAborted ||
-       broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-       "Didn't expect aborted operations\n");
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
-        /* Needed to skip some tests */
-        win_skip("Skipping some tests on NT4\n");
-        on_nt4 = TRUE;
-    }
-    else
-    {
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
-    }
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
     ok(!DeleteFileA("c.txt"), "Expected c.txt to not exist\n");
 
-    /* copy two file to three others, all fail */
+    /* Copy two file to three others. */
     shfo.pFrom = "test1.txt\0test2.txt\0";
     shfo.pTo = "b.txt\0c.txt\0d.txt\0";
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("b.txt"))
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
-        RemoveDirectoryA("b.txt");
-        ok(DeleteFileA("c.txt\\test2.txt"), "Expected c.txt\\test2.txt to exist\n");
-        RemoveDirectoryA("c.txt");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
+    RemoveDirectoryA("b.txt");
+    ok(DeleteFileA("c.txt\\test2.txt"), "Expected c.txt\\test2.txt to exist\n");
     }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!DeleteFileA("b.txt"), "Expected b.txt to not exist\n");
-    }
+    RemoveDirectoryA("c.txt");
 
     /* copy one file and one directory to three others */
     shfo.pFrom = "test1.txt\0test4.txt\0";
     shfo.pTo = "b.txt\0c.txt\0d.txt\0";
     shfo.fAnyOperationsAborted = 0xdeadbeef;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("b.txt"))
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
-        RemoveDirectoryA("b.txt");
-        ok(RemoveDirectoryA("c.txt\\test4.txt"), "Expected c.txt\\test4.txt to exist\n");
-        RemoveDirectoryA("c.txt");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(shfo.fAnyOperationsAborted == 0xdeadbeef), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!DeleteFileA("b.txt"), "Expected b.txt to not exist\n");
-        ok(!DeleteFileA("c.txt"), "Expected c.txt to not exist\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
+    RemoveDirectoryA("b.txt");
+    ok(RemoveDirectoryA("c.txt\\test4.txt"), "Expected c.txt\\test4.txt to exist\n");
+    RemoveDirectoryA("c.txt");
     }
 
     /* copy a directory with a file beneath it, plus some files */
@@ -1359,50 +1234,31 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == 0x100a1), /* WinMe */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
-    if (retval == ERROR_SUCCESS)
-    {
-        ok(DeleteFileA("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
-        ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
-        ok(RemoveDirectoryA("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("testdir2\\test1.txt"), "Expected testdir2\\test1.txt to exist\n");
+    ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+    ok(RemoveDirectoryA("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
 
     /* copy one directory and a file in that dir to another dir */
     shfo.pFrom = "test4.txt\0test4.txt\\a.txt\0";
     shfo.pTo = "testdir2\0";
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == 0x100a1), /* WinMe */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
-    if (retval == ERROR_SUCCESS)
-    {
-        ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
-        ok(DeleteFileA("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
+    ok(DeleteFileA("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
 
     /* copy a file in a directory first, and then the directory to a nonexistent dir */
     shfo.pFrom = "test4.txt\\a.txt\0test4.txt\0";
     shfo.pTo = "nonexistent\0";
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("nonexistent"))
-    {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("nonexistent\\test4.txt\\a.txt"), "Expected nonexistent\\test4.txt\\a.txt to exist\n");
-        RemoveDirectoryA("nonexistent\\test4.txt");
-        ok(DeleteFileA("nonexistent\\a.txt"), "Expected nonexistent\\a.txt to exist\n");
-        RemoveDirectoryA("nonexistent");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(shfo.fAnyOperationsAborted ||
-           broken(!shfo.fAnyOperationsAborted), /* NT4 */
-           "Expected aborted operations\n");
-        ok(!file_exists("nonexistent\\test4.txt"), "Expected nonexistent\\test4.txt to not exist\n");
-    }
+    todo_wine
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    todo_wine
+    ok(DeleteFileA("nonexistent\\test4.txt\\a.txt"), "Expected nonexistent\\test4.txt\\a.txt to exist\n");
+    RemoveDirectoryA("nonexistent\\test4.txt");
+    todo_wine
+    ok(DeleteFileA("nonexistent\\a.txt"), "Expected nonexistent\\a.txt to exist\n");
+    RemoveDirectoryA("nonexistent");
     DeleteFileA("test4.txt\\a.txt");
 
     /* destination is same as source file */
@@ -1411,16 +1267,8 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = FALSE;
     shfo.fFlags = FOF_NOERRORUI | FOF_MULTIDESTFILES;
     retval = SHFileOperationA(&shfo);
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
-    }
-    else
-    {
-        ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %ld\n", retval);
-        ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
-    }
+    ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %ld\n", retval);
+    ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
     ok(!shfo.fAnyOperationsAborted, "Expected no operations to be aborted\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
 
@@ -1429,18 +1277,9 @@ static void test_copy(void)
     shfo.pTo = "b.txt\0test4.txt\0c.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
-    }
-    else
-    {
-        ok(retval == ERROR_SUCCESS ||
-           retval == DE_DESTSAMETREE, /* Vista */
-           "Expected ERROR_SUCCESS or DE_DESTSAMETREE, got %ld\n", retval);
-        ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
-    }
+    todo_wine
+    ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %ld\n", retval);
+    ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
 
     /* copy a directory into itself, error displayed in UI */
@@ -1449,9 +1288,8 @@ static void test_copy(void)
     shfo.fFlags &= ~FOF_MULTIDESTFILES;
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       retval == DE_DESTSUBTREE, /* Vista */
-       "Expected ERROR_SUCCESS or DE_DESTSUBTREE, got %ld\n", retval);
+    todo_wine
+    ok(retval == DE_DESTSUBTREE, "Expected DE_DESTSUBTREE, got %ld\n", retval);
     ok(!RemoveDirectoryA("test4.txt\\newdir"), "Expected test4.txt\\newdir to not exist\n");
 
     /* copy a directory to itself, error displayed in UI */
@@ -1459,9 +1297,8 @@ static void test_copy(void)
     shfo.pTo = "test4.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       retval == DE_DESTSUBTREE, /* Vista */
-       "Expected ERROR_SUCCESS or DE_DESTSUBTREE, got %ld\n", retval);
+    todo_wine
+    ok(retval == DE_DESTSUBTREE, "Expected DE_DESTSUBTREE, got %ld\n", retval);
 
     /* copy a file into a directory, and the directory into itself */
     shfo.pFrom = "test1.txt\0test4.txt\0";
@@ -1469,9 +1306,8 @@ static void test_copy(void)
     shfo.fAnyOperationsAborted = FALSE;
     shfo.fFlags |= FOF_NOCONFIRMATION;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       retval == DE_DESTSUBTREE, /* Vista */
-       "Expected ERROR_SUCCESS or DE_DESTSUBTREE, got %ld\n", retval);
+    todo_wine
+    ok(retval == DE_DESTSUBTREE, "Expected DE_DESTSUBTREE, got %ld\n", retval);
     ok(DeleteFileA("test4.txt\\test1.txt"), "Expected test4.txt\\test1.txt to exist\n");
 
     /* copy a file to a file, and the directory into itself */
@@ -1479,65 +1315,50 @@ static void test_copy(void)
     shfo.pTo = "test4.txt\\a.txt\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("test4.txt\\a.txt"))
-    {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == DE_DESTSUBTREE, "Expected DE_DESTSUBTREE, got %ld\n", retval);
-        ok(DeleteFileA("test4.txt\\a.txt\\test1.txt"), "Expected test4.txt\\a.txt\\test1.txt to exist\n");
-        RemoveDirectoryA("test4.txt\\a.txt");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(!file_exists("test4.txt\\a.txt"), "Expected test4.txt\\a.txt to not exist\n");
-    }
+    todo_wine
+    ok(retval == DE_DESTSUBTREE, "Expected DE_DESTSUBTREE, got %ld\n", retval);
+    todo_wine
+    ok(DeleteFileA("test4.txt\\a.txt\\test1.txt"), "Expected test4.txt\\a.txt\\test1.txt to exist\n");
+    RemoveDirectoryA("test4.txt\\a.txt");
 
     /* copy a nonexistent file to a nonexistent directory */
     shfo.pFrom = "e.txt\0";
     shfo.pTo = "nonexistent\0";
     shfo.fAnyOperationsAborted = FALSE;
     retval = SHFileOperationA(&shfo);
-    ok(retval == 1026 ||
-       retval == ERROR_FILE_NOT_FOUND || /* Vista */
-       broken(retval == ERROR_SUCCESS), /* NT4 */
-       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %ld\n", retval);
+    todo_wine
+    ok(retval == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %ld\n", retval);
     ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
     ok(!file_exists("nonexistent"), "Expected nonexistent to not exist\n");
 
     /* Overwrite tests */
     clean_after_shfo_tests();
     init_shfo_tests();
-    if (!on_nt4)
-    {
-        /* NT4 would throw up some dialog boxes and doesn't copy files that are needed
-         * in subsequent tests.
-         */
-        shfo.fFlags = FOF_NOCONFIRMATION;
-        shfo.pFrom = "test1.txt\0";
-        shfo.pTo = "test2.txt\0";
-        shfo.fAnyOperationsAborted = 0xdeadbeef;
-        /* without FOF_NOCONFIRMATION the confirmation is Yes/No */
-        retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-        ok(file_has_content("test2.txt", "test1.txt\n"), "The file was not copied\n");
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "test2.txt\0";
+    shfo.fAnyOperationsAborted = 0xdeadbeef;
+    /* without FOF_NOCONFIRMATION the confirmation is Yes/No */
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    ok(file_has_content("test2.txt", "test1.txt\n"), "The file was not copied\n");
 
-        shfo.pFrom = "test3.txt\0test1.txt\0";
-        shfo.pTo = "test2.txt\0one.txt\0";
-        shfo.fFlags = FOF_NOCONFIRMATION | FOF_MULTIDESTFILES;
-        /* without FOF_NOCONFIRMATION the confirmation is Yes/Yes to All/No/Cancel */
-        retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(file_has_content("test2.txt", "test3.txt\n"), "The file was not copied\n");
+    shfo.pFrom = "test3.txt\0test1.txt\0";
+    shfo.pTo = "test2.txt\0one.txt\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_MULTIDESTFILES;
+    /* without FOF_NOCONFIRMATION the confirmation is Yes/Yes to All/No/Cancel */
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(file_has_content("test2.txt", "test3.txt\n"), "The file was not copied\n");
 
-        shfo.pFrom = "one.txt\0";
-        shfo.pTo = "testdir2\0";
-        shfo.fFlags = FOF_NOCONFIRMATION;
-        /* without FOF_NOCONFIRMATION the confirmation is Yes/No */
-        retval = SHFileOperationA(&shfo);
-        ok(retval == 0, "Expected 0, got %ld\n", retval);
-        ok(file_has_content("testdir2\\one.txt", "test1.txt\n"), "The file was not copied\n");
-    }
+    shfo.pFrom = "one.txt\0";
+    shfo.pTo = "testdir2\0";
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    /* without FOF_NOCONFIRMATION the confirmation is Yes/No */
+    retval = SHFileOperationA(&shfo);
+    ok(retval == 0, "Expected 0, got %ld\n", retval);
+    ok(file_has_content("testdir2\\one.txt", "test1.txt\n"), "The file was not copied\n");
 
     createTestFile("test4.txt\\test1.txt");
     shfo.pFrom = "test4.txt\0";
@@ -1545,9 +1366,7 @@ static void test_copy(void)
     /* WinMe needs FOF_NOERRORUI */
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == 0x100a1), /* WinMe */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     shfo.fFlags = FOF_NOCONFIRMATION;
     if (ERROR_SUCCESS)
     {
@@ -1568,16 +1387,11 @@ static void test_copy(void)
     shfo.pTo = "two.txt\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    ok(retval == 1148 || retval == 1026 ||
-       retval == ERROR_ACCESS_DENIED || /* win2k */
-       retval == DE_INVALIDFILES, /* Vista */
-       "Unexpected return value, got %ld\n", retval);
+    todo_wine
+    ok(retval == DE_INVALIDFILES, "Unexpected return value, got %ld\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-    if (dir_exists("two.txt"))
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(RemoveDirectoryA("two.txt"), "Expected two.txt to exist\n");
-    else
-        ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+    todo_wine
+    ok(RemoveDirectoryA("two.txt"), "Expected two.txt to exist\n");
 
     createTestFile("one.txt");
 
@@ -1589,16 +1403,8 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("two.txt"), "Expected two.txt to not exist\n");
-    }
-    else
-    {
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
 
     createTestFile("one.txt");
@@ -1608,16 +1414,8 @@ static void test_copy(void)
     shfo.pTo = "two.txt\0three.txt\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("two.txt"), "Expected two.txt to not exist\n");
-    }
-    else
-    {
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
 
     createTestFile("one.txt");
@@ -1633,16 +1431,11 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    ok(retval == 1148 || retval == 1026 ||
-       retval == ERROR_ACCESS_DENIED ||  /* win2k */
-       retval == DE_INVALIDFILES, /* Vista */
-       "Unexpected return value, got %ld\n", retval);
+    todo_wine
+    ok(retval == DE_INVALIDFILES, "Unexpected return value, got %ld\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-    if (dir_exists("two.txt"))
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(RemoveDirectoryA("two.txt"), "Expected two.txt to exist\n");
-    else
-        ok(!DeleteFileA("two.txt"), "Expected file to not exist\n");
+    todo_wine
+    ok(RemoveDirectoryA("two.txt"), "Expected two.txt to exist\n");
 
     createTestFile("one.txt");
 
@@ -1655,16 +1448,8 @@ static void test_copy(void)
     shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    if (retval == DE_OPCANCELLED)
-    {
-        /* NT4 fails and doesn't copy any files */
-        ok(!file_exists("two.txt"), "Expected two.txt to not exist\n");
-    }
-    else
-    {
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
 
     createTestFile("one.txt");
@@ -1681,21 +1466,12 @@ static void test_copy(void)
     shfo.pTo = to;
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("threedir"))
+    todo_wine
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
-        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
-        ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
-        ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
-        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
-        ok(!DeleteFileA("threedir"), "Expected file to not exist\n");
-        ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld.\n", retval);
+    ok(DeleteFileA("threedir\\one.txt"), "Expected threedir\\one.txt to exist.\n");
+    ok(DeleteFileA("threedir\\two.txt"), "Expected threedir\\one.txt to exist.\n");
+    ok(RemoveDirectoryA("threedir"), "Expected threedir to exist.\n");
     }
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
@@ -1722,37 +1498,28 @@ static void test_copy(void)
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
 
-    if (0) {
-        /* this crashes on win9x */
-        createTestFile("one.txt");
-        createTestFile("two.txt");
+    createTestFile("one.txt");
+    createTestFile("two.txt");
 
-        /* pTo contains bogus 2nd name longer than MAX_PATH,
-         * multiple source files, FOF_MULTIDESTFILES
-         * dest dir does not exist
-         */
-
-        memset(to, 'a', 2 * MAX_PATH);
-        memset(to+MAX_PATH*2, 0, 2);
-        lstrcpyA(to, "threedir");
-        shfo.pFrom = "one.txt\0two.txt\0";
-        shfo.pTo = to;
-        shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
+    /* pTo contains bogus 2nd name longer than MAX_PATH,
+     * multiple source files, FOF_MULTIDESTFILES
+     * dest dir does not exist
+     */
+    memset(to, 'a', 2 * MAX_PATH);
+    memset(to+MAX_PATH*2, 0, 2);
+    lstrcpyA(to, "threedir");
+    shfo.pFrom = "one.txt\0two.txt\0";
+    shfo.pTo = to;
+    shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                       FOF_SILENT | FOF_NOERRORUI;
-        retval = SHFileOperationA(&shfo);
-        ok(retval == ERROR_CANCELLED ||
-           retval == ERROR_SUCCESS, /* win2k3 */
-           "Expected ERROR_CANCELLED or ERROR_SUCCESS, got %ld\n", retval);
-        ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
-        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
-        ok(DeleteFileA("one.txt"), "Expected file to exist\n");
-        ok(DeleteFileA("two.txt"), "Expected file to exist\n");
-        ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
-
-        /* file exists in win2k */
-        DeleteFileA("threedir");
-    }
-
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    ok(retval == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", retval);
+    ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
+    ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+    ok(DeleteFileA("one.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    ok(!RemoveDirectoryA("threedir"), "Expected dir to not exist\n");
 
     createTestFile("one.txt");
     createTestFile("two.txt");
@@ -1772,23 +1539,17 @@ static void test_copy(void)
     shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
+    todo_wine
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    todo_wine
     ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
-    if (dir_exists("fourdir"))
-    {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
-        ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
-        RemoveDirectoryA("fourdir");
-    }
-    else
-    {
-        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
-        ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
-        ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
-    }
+    ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+    todo_wine
+    ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
+    RemoveDirectoryA("fourdir");
+    todo_wine
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
 
     createTestFile("one.txt");
@@ -1804,20 +1565,15 @@ static void test_copy(void)
     shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_CANCELLED ||
-       retval == DE_FILEDESTISFLD || /* Vista */
-       broken(retval == DE_OPCANCELLED), /* Win9x, NT4 */
-       "Expected ERROR_CANCELLED or DE_FILEDESTISFLD. got %ld\n", retval);
-    if (file_exists("threedir\\threedir"))
-    {
-        /* NT4 */
-        ok(DeleteFileA("threedir\\threedir"), "Expected file to exist\n");
-    }
+    todo_wine
+    ok(retval == DE_FILEDESTISFLD, "Expected DE_FILEDESTISFLD. got %ld\n", retval);
     ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
     ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    todo_wine
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
+    todo_wine
     ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
     ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
 
@@ -1834,23 +1590,17 @@ static void test_copy(void)
     shfo.fFlags = FOF_MULTIDESTFILES | FOF_NOCONFIRMATION |
                   FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
+    todo_wine
     ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
+    todo_wine
     ok(DeleteFileA("threedir\\one.txt"), "Expected file to exist\n");
-    if (dir_exists("fourdir"))
-    {
-        /* Vista and W2K8 (broken or new behavior ?) */
-        ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
-        ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
-        RemoveDirectoryA("fourdir");
-    }
-    else
-    {
-        ok(DeleteFileA("threedir\\two.txt"), "Expected file to exist\n");
-        ok(!DeleteFileA("fourdir"), "Expected file to not exist\n");
-        ok(!RemoveDirectoryA("fourdir"), "Expected dir to not exist\n");
-    }
+    ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
+    todo_wine
+    ok(DeleteFileA("fourdir\\two.txt"), "Expected file to exist\n");
+    RemoveDirectoryA("fourdir");
+    todo_wine
     ok(RemoveDirectoryA("threedir"), "Expected dir to exist\n");
     ok(!DeleteFileA("five"), "Expected file to not exist\n");
     ok(!RemoveDirectoryA("five"), "Expected dir to not exist\n");
@@ -1891,11 +1641,8 @@ static void test_copy(void)
     shfo.pTo = "\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS ||
-       broken(retval == DE_OPCANCELLED), /* NT4 */
-       "Expected ERROR_SUCCESS, got %ld\n", retval);
-    if (retval == ERROR_SUCCESS)
-        ok(DeleteFileA("abcdefgh.abc"), "Expected file to exist\n");
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("abcdefgh.abc"), "Expected file to exist\n");
     ok(DeleteFileA("dir\\abcdefgh.abc"), "Expected file to exist\n");
     ok(RemoveDirectoryA("dir"), "Expected dir to exist\n");
 
@@ -1931,16 +1678,9 @@ static void test_copy(void)
     shfo.pTo = "dir\\destdir/aa.txt\0";
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_NOCONFIRMMKDIR | FOF_SILENT | FOF_NOERRORUI;
     retval = SHFileOperationA(&shfo);
-    if (dir_exists("dir\\destdir"))
-    {
-        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
-        ok(DeleteFileA("dir\\destdir\\aa.txt"), "Expected file to exist\n");
-        ok(RemoveDirectoryA("dir\\destdir"), "Expected dir to exist\n");
-    }
-    else
-    {
-        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* WinXp, Win2k */);
-    }
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("dir\\destdir\\aa.txt"), "Expected file to exist\n");
+    ok(RemoveDirectoryA("dir\\destdir"), "Expected dir to exist\n");
     ok(DeleteFileA("dir\\subdir\\aa.txt"), "Expected file to exist\n");
     ok(RemoveDirectoryA("dir\\subdir"), "Expected dir to exist\n");
     ok(RemoveDirectoryA("dir"), "Expected dir to exist\n");
