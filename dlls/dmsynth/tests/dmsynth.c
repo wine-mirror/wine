@@ -2198,7 +2198,7 @@ static void test_dls(void)
     envelope.sustain.start_value = -96.;
     envelope.sustain.end_value = -96.;
     envelope.release.start_value = -96.;
-    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* EG1 decay time */
 
@@ -2429,7 +2429,7 @@ static void test_dls(void)
     envelope.sustain.start_value = 600.;
     envelope.sustain.end_value = 600.;
     envelope.release.start_value = 600.;
-    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
 
     /* EG2 decay time */
 
