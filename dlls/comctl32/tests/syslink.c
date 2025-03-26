@@ -38,7 +38,46 @@ static int g_link_id;
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 
-static const struct message empty_wnd_seq[] = {
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    WCHAR class_name[256];
+
+    /* ignore events not from a syslink control */
+    if (!GetClassNameW(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        wcscmp(class_name, WC_LINK) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, SYSLINK_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
+static const struct message create_syslink_wnd_seq[] = {
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_WINDOW, CHILDID_SELF },
     {0}
 };
 
@@ -66,6 +105,7 @@ static const struct message parent_visible_syslink_wnd_seq[] = {
 
 static const struct message settext_syslink_wnd_seq[] = {
     { WM_SETTEXT, sent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, OBJID_WINDOW, CHILDID_SELF },
     { WM_PAINT, sent },
     { WM_ERASEBKGND, sent|defwinproc|optional }, /* Wine only */
     {0}
@@ -222,7 +262,7 @@ static void test_create_syslink(void)
     hWndSysLink = create_syslink(WS_CHILD | WS_TABSTOP, hWndParent);
     ok(hWndSysLink != NULL, "Expected non NULL value (le %lu)\n", GetLastError());
     flush_events();
-    ok_sequence(sequences, SYSLINK_SEQ_INDEX, empty_wnd_seq, "create SysLink", FALSE);
+    ok_sequence(sequences, SYSLINK_SEQ_INDEX, create_syslink_wnd_seq, "create SysLink", FALSE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_create_syslink_wnd_seq, "create SysLink (parent)", TRUE);
 
     /* Get first item */
@@ -544,6 +584,8 @@ START_TEST(syslink)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCE);
 
+    init_winevent_hook();
+
     /* Create parent window */
     hWndParent = create_parent_window();
     ok(hWndParent != NULL, "Failed to create parent Window!\n");
@@ -554,6 +596,8 @@ START_TEST(syslink)
     test_LM_GETIDEALSIZE();
     test_link_id();
     test_msaa();
+
+    uninit_winevent_hook();
 
     DestroyWindow(hWndParent);
     unload_v6_module(ctx_cookie, hCtx);
