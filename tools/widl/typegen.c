@@ -5047,7 +5047,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
 
     needs_packing = (align > pointer_size);
 
-    if (needs_packing) print_file( file, 0, "#include <pshpack%u.h>\n", pointer_size );
+    if (needs_packing) print_file( file, 0, "#pragma pack(push,%u)\n", pointer_size );
     print_file(file, 1, "struct _PARAM_STRUCT\n" );
     print_file(file, 1, "{\n" );
     if (is_object( iface )) print_file(file, 2, "%s *This;\n", iface->name );
@@ -5081,7 +5081,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         fprintf( file, "%s;\n", retval->name );
     }
     print_file(file, 1, "} %s;\n", var_decl );
-    if (needs_packing) print_file( file, 0, "#include <poppack.h>\n" );
+    if (needs_packing) print_file( file, 0, "#pragma pack(pop)\n" );
     print_file( file, 0, "\n" );
 }
 
