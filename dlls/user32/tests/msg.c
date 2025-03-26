@@ -3548,6 +3548,7 @@ static const struct message WmCreateMDIchildInvisibleMaxSeq4[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOREDRAW|SWP_STATECHANGED },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MAXIMIZED },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -3849,6 +3850,7 @@ static const struct message WmMaximizeMDIchildInvisibleSeq[] = {
     { WM_MDIACTIVATE, sent|optional|defwinproc },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_STATECHANGED },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MAXIMIZED },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -3966,6 +3968,7 @@ static const struct message WmMaximizeMDIchildVisibleSeq[] = {
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_STATECHANGED },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_MAXIMIZED },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -3982,6 +3985,7 @@ static const struct message WmRestoreMDIchildVisibleSeq[] = {
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_STATECHANGED },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -4031,6 +4035,7 @@ static const struct message WmRestoreMDIchildInvisibleSeq[] = {
     { WM_CHILDACTIVATE, sent|wparam|lparam, 0, 0 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOMOVE|SWP_NOCLIENTMOVE|SWP_STATECHANGED },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
      /* in MDI frame */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -6629,6 +6634,7 @@ static const struct message WmSetTextButtonSeq[] =
     { WM_SETTEXT, sent },
     { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { WM_CTLCOLORBTN, sent|parent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
     { WM_CTLCOLORBTN, sent|parent },
     { WM_COMMAND, sent|parent|optional },
     { WM_DRAWITEM, sent|parent|optional },
@@ -6639,6 +6645,7 @@ static const struct message WmSetTextStaticSeq[] =
     { WM_SETTEXT, sent },
     { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|wine_only, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent },
     { 0 }
 };
@@ -6646,7 +6653,7 @@ static const struct message WmSetTextGroupSeq[] =
 {
     { WM_SETTEXT, sent },
     { WM_CTLCOLORSTATIC, sent|parent },
-    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { WM_CTLCOLORSTATIC, sent|parent|msg_todo }, /* FIXME: Missing in Wine */
     { WM_CTLCOLORSTATIC, sent|parent|msg_todo }, /* FIXME: Missing in Wine */
     { 0 }
@@ -6654,7 +6661,7 @@ static const struct message WmSetTextGroupSeq[] =
 static const struct message WmSetTextInvisibleSeq[] =
 {
     { WM_SETTEXT, sent },
-    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam|msg_todo, 0, 0 },
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { 0 }
 };
 static const struct message WmSetStyleButtonSeq[] =
@@ -12019,6 +12026,11 @@ static const struct message WmMouseLLHookSeq[] = {
     { 0 }
 };
 
+static const struct message WmSetText[] = {
+    { EVENT_OBJECT_NAMECHANGE, winevent_hook|wparam|lparam, OBJID_WINDOW, CHILDID_SELF },
+    { 0 }
+};
+
 static void CALLBACK win_event_global_hook_proc(HWINEVENTHOOK hevent,
 					 DWORD event,
 					 HWND hwnd,
@@ -12220,6 +12232,10 @@ static void test_winevents(void)
 			   CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
 			   NULL, NULL, 0);
     ok(!!hwnd, "Failed to create window, error %lu.\n", GetLastError());
+
+    flush_sequence();
+    DefWindowProcA(hwnd, WM_SETTEXT, 0, (LPARAM)"test");
+    ok_sequence(WmSetText, "SetText on a simple window", FALSE);
 
     /****** start of global hook test *************/
     hCBT_global_hook = SetWindowsHookExA(WH_CBT, cbt_global_hook_proc, GetModuleHandleA(0), 0);
