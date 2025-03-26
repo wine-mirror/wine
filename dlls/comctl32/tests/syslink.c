@@ -279,6 +279,21 @@ static void test_link_id(void)
     DestroyWindow(hwnd);
 }
 
+static void wait_link_click(DWORD timeout)
+{
+    DWORD start_time = GetTickCount();
+    DWORD time_waited;
+
+    if (g_link_id == -1)
+        flush_events();
+
+    while (g_link_id == -1 && (time_waited = GetTickCount() - start_time) < timeout)
+    {
+        MsgWaitForMultipleObjects(0, NULL, FALSE, timeout - time_waited, QS_ALLEVENTS);
+        flush_events();
+    }
+}
+
 static void test_msaa(void)
 {
     HWND hwnd, ret_hwnd;
@@ -335,6 +350,9 @@ static void test_msaa(void)
     if (SUCCEEDED(hr))
         ok(!name, "unexpected default action %s\n", debugstr_w(name));
 
+    hr = IAccessible_accDoDefaultAction(acc, varChild);
+    todo_wine ok(hr == E_INVALIDARG, "accDoDefaultAction should fail, hr=%lx\n", hr);
+
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
@@ -383,6 +401,12 @@ static void test_msaa(void)
         SysFreeString(name);
     }
 
+    g_link_id = -1;
+    hr = IAccessible_accDoDefaultAction(acc, varChild);
+    todo_wine ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
+    wait_link_click(500);
+    todo_wine ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
+
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
 
@@ -426,6 +450,12 @@ static void test_msaa(void)
         }
         SysFreeString(name);
     }
+
+    g_link_id = -1;
+    hr = IAccessible_accDoDefaultAction(acc, varChild);
+    todo_wine ok(hr == S_OK, "accDoDefaultAction failed, hr=%lx\n", hr);
+    wait_link_click(500);
+    todo_wine ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
