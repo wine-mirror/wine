@@ -664,15 +664,18 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
     BYTE *addr = (BYTE *)module;
-    DWORD code_start, code_end, data_start, data_end, align_mask;
+    DWORD code_start, code_end, data_start, data_end;
+    DWORD align_mask = nt_descr->OptionalHeader.SectionAlignment - 1;
     int delta, nb_sections = 2;  /* code + data */
     unsigned int i;
-    DWORD size = (sizeof(IMAGE_DOS_HEADER)
+
+    code_start = (sizeof(IMAGE_DOS_HEADER)
                   + sizeof(builtin_signature)
                   + sizeof(IMAGE_NT_HEADERS)
-                  + nb_sections * sizeof(IMAGE_SECTION_HEADER));
+                  + nb_sections * sizeof(IMAGE_SECTION_HEADER)
+                  + align_mask) & ~align_mask;
 
-    if (anon_mmap_fixed( addr, size, PROT_READ | PROT_WRITE, 0 ) != addr) return STATUS_NO_MEMORY;
+    if (anon_mmap_fixed( addr, code_start, PROT_READ | PROT_WRITE, 0 ) != addr) return STATUS_NO_MEMORY;
 
     dos = (IMAGE_DOS_HEADER *)addr;
     nt  = (IMAGE_NT_HEADERS *)((BYTE *)(dos + 1) + sizeof(builtin_signature));
@@ -694,8 +697,6 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     *nt = *nt_descr;
 
     delta      = (const BYTE *)nt_descr - addr;
-    align_mask = nt->OptionalHeader.SectionAlignment - 1;
-    code_start = (size + align_mask) & ~align_mask;
     data_start = delta & ~align_mask;
 #ifdef __APPLE__
     {
