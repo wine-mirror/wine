@@ -302,7 +302,7 @@ static void test_msaa(void)
     IAccessible *acc;
     VARIANT varChild, varResult;
     BSTR name;
-    LONG left, top, width, height, count=0;
+    LONG left, top, width, height, hwnd_left, hwnd_top, count=0;
     IDispatch *child;
     IOleWindow *ole_window;
 
@@ -355,6 +355,8 @@ static void test_msaa(void)
 
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+    hwnd_left = left;
+    hwnd_top = top;
 
     hr = IAccessible_get_accChildCount(acc, &count);
     ok(hr == S_OK, "accChildCount failed, hr=%lx\n", hr);
@@ -407,8 +409,12 @@ static void test_msaa(void)
     wait_link_click(500);
     ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
 
+    g_link_id = -1;
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(left - hwnd_left + width / 2, top - hwnd_top + height / 2));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(left - hwnd_left + width / 2, top - hwnd_top + height / 2));
+    ok(g_link_id == 0, "Got unexpected link id %d.\n", g_link_id);
 
     /* child 2 */
     V_I4(&varChild) = 2;
@@ -457,8 +463,12 @@ static void test_msaa(void)
     wait_link_click(500);
     ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
 
+    g_link_id = -1;
     hr = IAccessible_accLocation(acc, &left, &top, &width, &height, varChild);
     ok(hr == S_OK, "accLocation failed, hr=%lx\n", hr);
+    SendMessageA(hwnd, WM_LBUTTONDOWN, 1, MAKELPARAM(left - hwnd_left + width / 2, top - hwnd_top + height / 2));
+    SendMessageA(hwnd, WM_LBUTTONUP, 0, MAKELPARAM(left - hwnd_left + width / 2, top - hwnd_top + height / 2));
+    ok(g_link_id == 1, "Got unexpected link id %d.\n", g_link_id);
 
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ole_window);
     ok(hr == S_OK, "QueryInterface failed, hr=%lx\n", hr);
