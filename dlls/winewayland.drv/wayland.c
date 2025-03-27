@@ -194,6 +194,12 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.xdg_toplevel_icon_manager_v1 =
             wl_registry_bind(registry, id, &xdg_toplevel_icon_manager_v1_interface, 1);
     }
+    else if (strcmp(interface, "wp_cursor_shape_manager_v1") == 0)
+    {
+        process_wayland.wp_cursor_shape_manager_v1 =
+            wl_registry_bind(registry, id, &wp_cursor_shape_manager_v1_interface,
+                             version < 2 ? version : 2);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,

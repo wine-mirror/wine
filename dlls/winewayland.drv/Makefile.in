@@ -5,6 +5,7 @@ UNIX_LIBS = -lwin32u $(WAYLAND_CLIENT_LIBS) $(WAYLAND_EGL_LIBS) $(XKBCOMMON_LIBS
 IMPORTS = user32 win32u
 
 SOURCES = \
+	cursor-shape-v1.xml \
 	display.c \
 	dllmain.c \
 	opengl.c \
