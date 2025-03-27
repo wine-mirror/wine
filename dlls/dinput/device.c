@@ -1802,7 +1802,7 @@ static HRESULT WINAPI dinput_device_WriteEffectToFile( IDirectInputDevice8W *ifa
 BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DIOBJECTDATAFORMAT *object,
                                      DWORD semantic, BOOL exact )
 {
-    DWORD value = semantic & 0xff, axis = (semantic >> 15) & 3, type;
+    DWORD value = semantic & 0xff, axis = (semantic >> 15) & 15, type;
 
     switch (semantic & 0x700)
     {
@@ -1814,17 +1814,20 @@ BOOL device_object_matches_semantic( const DIDEVICEINSTANCEW *instance, const DI
     }
 
     if (!(DIDFT_GETTYPE( object->dwType ) & type)) return FALSE;
-    if ((semantic & 0xf0000000) == 0x80000000)
+    switch (semantic & 0xff000000)
     {
-        switch (semantic & 0x0f000000)
-        {
-        case 0x01000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_KEYBOARD && object->dwOfs == value;
-        case 0x02000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_MOUSE && object->dwOfs == value;
-        default: return FALSE;
-        }
+    case 0x81000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_KEYBOARD && object->dwOfs == value;
+    case 0x82000000: return (instance->dwDevType & 0xf) == DIDEVTYPE_MOUSE && object->dwOfs == value;
+    case 0x83000000: return FALSE;
+
+    default:
+        if ((instance->dwDevType & 0xf) == DIDEVTYPE_KEYBOARD) return FALSE;
+        if ((instance->dwDevType & 0xf) == DIDEVTYPE_MOUSE) return FALSE;
+        /* fallthrough */
+    case 0xff000000:
+        if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
+        return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
     }
-    if (axis && (axis - 1) != DIDFT_GETINSTANCE( object->dwType )) return FALSE;
-    return !exact || !value || value == DIDFT_GETINSTANCE( object->dwType ) + 1;
 }
 
 static HRESULT WINAPI dinput_device_BuildActionMap( IDirectInputDevice8W *iface, DIACTIONFORMATW *format,
