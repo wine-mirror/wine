@@ -277,10 +277,7 @@ static LONG WINTRUST_DefaultVerify(HWND hwnd, GUID *actionID,
     if (WVT_ISINSTRUCT(WINTRUST_DATA, data->cbStruct, pSignatureSettings))
         provData->pSigSettings = data->pSignatureSettings;
 
-    if (hwnd == INVALID_HANDLE_VALUE)
-        provData->hWndParent = GetDesktopWindow();
-    else
-        provData->hWndParent = hwnd;
+    provData->hWndParent = hwnd;
     provData->pgActionID = actionID;
     WintrustGetRegPolicyFlags(&provData->dwRegPolicySettings);
 
@@ -468,10 +465,7 @@ static LONG WINTRUST_CertVerify(HWND hwnd, GUID *actionID,
 
     data->hWVTStateData = provData;
     provData->pWintrustData = data;
-    if (hwnd == INVALID_HANDLE_VALUE)
-        provData->hWndParent = GetDesktopWindow();
-    else
-        provData->hWndParent = hwnd;
+    provData->hWndParent = hwnd;
     provData->pgActionID = actionID;
     WintrustGetRegPolicyFlags(&provData->dwRegPolicySettings);
 
