@@ -728,6 +728,23 @@ static void test_metadata_unknown(void)
     check_interface(reader, &IID_IWICMetadataBlockReader, FALSE);
     check_persist_classid(reader, &CLSID_WICUnknownMetadataReader);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
+        ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
+        ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
+        PropVariantClear(&value);
+    }
+
     load_stream(reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
 
     /* Item enumerator. */
@@ -858,7 +875,7 @@ static void test_metadata_unknown(void)
     {
         ok(schema.vt == VT_EMPTY, "Unexpected type %d.\n", schema.vt);
         ok(id.vt == VT_EMPTY, "Unexpected type %d.\n", id.vt);
-        ok(value.vt == VT_BLOB, "Unexpected type %d.\n", id.vt);
+        ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
         ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
         ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
     }
@@ -1097,6 +1114,27 @@ static void test_metadata_gAMA(void)
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngGamaMetadataReader);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    id.vt = value.vt = VT_EMPTY;
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        ok(id.vt == VT_LPWSTR, "Unexpected vt %d.\n", id.vt);
+        ok(!lstrcmpW(id.pwszVal, L"ImageGamma"), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
+        PropVariantClear(&id);
+
+        ok(value.vt == VT_UI4, "Unexpected vt %d.\n", value.vt);
+        ok(value.ulVal == 45455, "Unexpected value %lu.\n", value.ulVal);
+        PropVariantClear(&value);
+    }
+
     load_stream(reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
@@ -1218,6 +1256,24 @@ static void test_metadata_cHRM(void)
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngChrmMetadataReader);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 8, "unexpected count %i.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)expected_names[i];
+        value.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        ok(value.vt == VT_UI4, "Unexpected type %d.\n", value.vt);
+        ok(value.ulVal == default_values[i], "Got %lu, expected %lu.\n", value.ulVal, default_values[i]);
+        PropVariantClear(&value);
+    }
+
     load_stream(reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -1230,6 +1286,9 @@ static void test_metadata_cHRM(void)
 
     for (i=0; i<8; i++)
     {
+        PropVariantInit(&schema);
+        PropVariantInit(&id);
+        PropVariantInit(&value);
         hr = IWICMetadataReader_GetValueByIndex(reader, i, &schema, &id, &value);
         ok(hr == S_OK, "GetValue failed, hr=%lx\n", hr);
 
@@ -1238,6 +1297,10 @@ static void test_metadata_cHRM(void)
 
         ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
         ok(!lstrcmpW(id.pwszVal, expected_names[i]), "got %s, expected %s\n", wine_dbgstr_w(id.pwszVal), wine_dbgstr_w(expected_names[i]));
+
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
         PropVariantClear(&id);
 
         ok(value.vt == VT_UI4, "unexpected vt: %i\n", value.vt);
@@ -1322,6 +1385,11 @@ static void test_metadata_hIST(void)
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngHistMetadataReader);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
     load_stream(reader, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -1340,6 +1408,10 @@ static void test_metadata_hIST(void)
 
     ok(id.vt == VT_LPWSTR, "unexpected vt: %i\n", id.vt);
     ok(!lstrcmpW(id.pwszVal, L"Frequencies"), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     PropVariantClear(&id);
 
     ok(value.vt == (VT_UI2|VT_VECTOR), "unexpected vt: %i\n", value.vt);
@@ -1400,7 +1472,7 @@ static void test_metadata_tIME(void)
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
     IEnumString *enum_string;
-    PROPVARIANT value;
+    PROPVARIANT value, id;
     UINT i, count;
     ULONG fetched;
     WCHAR *str;
@@ -1439,6 +1511,24 @@ static void test_metadata_tIME(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngTimeMetadataReader);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == ARRAY_SIZE(td), "unexpected count %i\n", count);
+    compare_metadata(reader, default_data, count);
+
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataReader_GetValueByIndex(reader, 2, NULL, &id, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+        ok(!lstrcmpW(id.pwszVal, L"Day"), "Unexpected id %s.\n", debugstr_w(id.pwszVal));
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&id);
 
     load_stream(reader, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionDefault);
 
@@ -3029,9 +3119,10 @@ static void test_metadata_LSD(void)
     IWICMetadataWriter *writer;
     IWICMetadataHandlerInfo *info;
     WCHAR name[64];
-    UINT count, dummy;
+    UINT i, count, dummy;
+    PROPVARIANT id;
     GUID format;
-    CLSID id;
+    CLSID clsid;
 
     hr = CoCreateInstance(&CLSID_WICLSDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
@@ -3045,6 +3136,10 @@ static void test_metadata_LSD(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICLSDMetadataReader);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
 
     stream = create_stream(LSD_data, sizeof(LSD_data));
 
@@ -3067,6 +3162,20 @@ static void test_metadata_LSD(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
 
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
+
     compare_metadata(reader, td, count);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -3076,9 +3185,9 @@ static void test_metadata_LSD(void)
     hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
     ok(hr == S_OK, "GetMetadataHandlerInfo error %#lx\n", hr);
 
-    hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+    hr = IWICMetadataHandlerInfo_GetCLSID(info, &clsid);
     ok(hr == S_OK, "GetCLSID error %#lx\n", hr);
-    ok(IsEqualGUID(&id, &CLSID_WICLSDMetadataReader), "wrong CLSID %s\n", wine_dbgstr_guid(&id));
+    ok(IsEqualGUID(&clsid, &CLSID_WICLSDMetadataReader), "Unexpected CLSID %s.\n", wine_dbgstr_guid(&clsid));
 
     hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
     ok(hr == S_OK, "GetFriendlyName error %#lx\n", hr);
@@ -3135,9 +3244,10 @@ static void test_metadata_IMD(void)
     IWICMetadataWriter *writer;
     IWICMetadataHandlerInfo *info;
     WCHAR name[64];
-    UINT count, dummy;
+    UINT i, count, dummy;
+    PROPVARIANT id;
     GUID format;
-    CLSID id;
+    CLSID clsid;
 
     hr = CoCreateInstance(&CLSID_WICIMDMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
@@ -3173,6 +3283,20 @@ static void test_metadata_IMD(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
 
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
+
     compare_metadata(reader, td, count);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -3182,9 +3306,9 @@ static void test_metadata_IMD(void)
     hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
     ok(hr == S_OK, "GetMetadataHandlerInfo error %#lx\n", hr);
 
-    hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+    hr = IWICMetadataHandlerInfo_GetCLSID(info, &clsid);
     ok(hr == S_OK, "GetCLSID error %#lx\n", hr);
-    ok(IsEqualGUID(&id, &CLSID_WICIMDMetadataReader), "wrong CLSID %s\n", wine_dbgstr_guid(&id));
+    ok(IsEqualGUID(&clsid, &CLSID_WICIMDMetadataReader), "Unexpected CLSID %s.\n", wine_dbgstr_guid(&clsid));
 
     hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
     ok(hr == S_OK, "GetFriendlyName error %#lx\n", hr);
@@ -3247,8 +3371,9 @@ static void test_metadata_GCE(void)
     IWICMetadataHandlerInfo *info;
     WCHAR name[64];
     UINT i, count, dummy;
+    PROPVARIANT id;
     GUID format;
-    CLSID id;
+    CLSID clsid;
 
     hr = CoCreateInstance(&CLSID_WICGCEMetadataReader, NULL, CLSCTX_INPROC_SERVER,
                           &IID_IWICMetadataReader, (void **)&reader);
@@ -3284,6 +3409,20 @@ static void test_metadata_GCE(void)
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
 
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
+
     compare_metadata(reader, td, count);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -3293,9 +3432,9 @@ static void test_metadata_GCE(void)
     hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
     ok(hr == S_OK, "GetMetadataHandlerInfo error %#lx\n", hr);
 
-    hr = IWICMetadataHandlerInfo_GetCLSID(info, &id);
+    hr = IWICMetadataHandlerInfo_GetCLSID(info, &clsid);
     ok(hr == S_OK, "GetCLSID error %#lx\n", hr);
-    ok(IsEqualGUID(&id, &CLSID_WICGCEMetadataReader), "wrong CLSID %s\n", wine_dbgstr_guid(&id));
+    ok(IsEqualGUID(&clsid, &CLSID_WICGCEMetadataReader), "Unexpected CLSID %s.\n", wine_dbgstr_guid(&clsid));
 
     hr = IWICMetadataHandlerInfo_GetFriendlyName(info, 64, name, &dummy);
     ok(hr == S_OK, "GetFriendlyName error %#lx\n", hr);
@@ -3399,6 +3538,20 @@ static void test_metadata_APE(void)
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
 
     compare_metadata(reader, td, count);
 
@@ -3511,6 +3664,39 @@ static void test_metadata_GIF_comment(void)
 
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
+
+    PropVariantInit(&value);
+    id.vt = VT_LPWSTR;
+    id.pwszVal = (WCHAR *)L"TextEntry";
+
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(value.vt == VT_LPSTR, "Unexpected vt %i.\n", value.vt);
+        ok(!strcmp(value.pszVal, ""), "Unexpected value: %s\n", value.pszVal);
+        PropVariantClear(&value);
+    }
+
     stream = create_stream(GIF_comment_data, sizeof(GIF_comment_data));
 
     hr = IUnknown_QueryInterface(reader, &IID_IWICPersistStream, (void **)&persist);
@@ -3525,6 +3711,20 @@ static void test_metadata_GIF_comment(void)
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount error %#lx\n", hr);
     ok(count == ARRAY_SIZE(td), "unexpected count %u\n", count);
+
+    for (i = 0; i < count; ++i)
+    {
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)td[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_LPWSTR, "Unexpected id type %d.\n", id.vt);
+        PropVariantClear(&id);
+    }
 
     compare_metadata(reader, td, count);
 
@@ -5661,6 +5861,11 @@ static void test_metadata_App0(void)
         hr = IWICMetadataReader_GetValueByIndex(reader, i, NULL, &id, NULL);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(id.vt == VT_UI2, "Unexpected id type %d.\n", id.vt);
+
+        id.vt = VT_LPWSTR;
+        id.pwszVal = (WCHAR *)default_data[i].id_string;
+        hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+        ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
     }
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
