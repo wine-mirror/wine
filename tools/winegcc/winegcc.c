@@ -1003,20 +1003,20 @@ static char *find_static_lib( const char *dll )
     return NULL;
 }
 
-static const char *find_libgcc(struct strarray link_tool)
+static const char *find_libgcc(void)
 {
     const char *out = make_temp_file( "find_libgcc", ".out" );
     const char *err = make_temp_file( "find_libgcc", ".err" );
-    struct strarray link = empty_strarray;
+    struct strarray link = get_translator();
     int sout = -1, serr = -1, i;
     char *libgcc, *p;
     struct stat st;
     size_t cnt;
     int ret;
 
-    for (i = 0; i < link_tool.count; i++)
-	if (strcmp(link_tool.str[i], "--no-default-config" ))
-            strarray_add( &link, link_tool.str[i] );
+    for (i = 0; i < linker_args.count; i++)
+	if (strcmp(linker_args.str[i], "--no-default-config" ))
+            strarray_add( &link, linker_args.str[i] );
 
     strarray_add( &link, "-print-libgcc-file-name" );
 
@@ -1380,7 +1380,7 @@ static void build(struct strarray input_files, const char *output)
     {
     case PLATFORM_MINGW:
     case PLATFORM_CYGWIN:
-        libgcc = find_libgcc( link_args );
+        libgcc = find_libgcc();
         if (!libgcc) libgcc = "-lgcc";
         break;
     default:
