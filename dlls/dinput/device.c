@@ -415,16 +415,17 @@ static BOOL load_mapping_settings( struct dinput_device *This, LPDIACTIONFORMATW
     /* Try to read each action in the DIACTIONFORMAT from registry */
     for (i = 0; i < lpdiaf->dwNumActions; i++)
     {
+        DIACTIONW *action = lpdiaf->rgoAction + i;
         DWORD id, size = sizeof(DWORD);
         WCHAR label[9];
 
         swprintf( label, 9, L"%x", lpdiaf->rgoAction[i].dwSemantic );
 
-        if (!RegQueryValueExW(hkey, label, 0, NULL, (LPBYTE) &id, &size))
+        if (!action->dwHow && !RegQueryValueExW( hkey, label, 0, NULL, (BYTE *)&id, &size ))
         {
-            lpdiaf->rgoAction[i].dwObjID = id;
-            lpdiaf->rgoAction[i].guidInstance = didev.guidInstance;
-            lpdiaf->rgoAction[i].dwHow = DIAH_DEFAULT;
+            action->dwObjID = id;
+            action->guidInstance = didev.guidInstance;
+            action->dwHow = DIAH_DEFAULT;
             mapped += 1;
         }
     }
