@@ -1,5 +1,5 @@
 TESTDLL   = dinput.dll
-IMPORTS   = dinput dinput8 ole32 version user32 advapi32 hid uuid crypt32 newdev setupapi wintrust winmm cfgmgr32
+IMPORTS   = dinput dinput8 ole32 version user32 advapi32 hid uuid crypt32 newdev setupapi wintrust winmm
 
 driver_bus_IMPORTS = winecrt0 ntoskrnl hal
 driver_bus_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native

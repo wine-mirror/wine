@@ -471,6 +471,18 @@ static CALLBACK DWORD cm_notify_callback( HCMNOTIFICATION hnotify, void *ctx, CM
     return ERROR_SUCCESS;
 }
 
+static DWORD WINAPI cm_register_notification( PCM_NOTIFY_FILTER filter, void *ctx, PCM_NOTIFY_CALLBACK callback, HCMNOTIFICATION *notify )
+{
+    struct cm_notify_callback_data *cb_data = ctx;
+    ReleaseSemaphore( cb_data->device_change_sem, cb_data->device_change_expect, NULL );
+    return TRUE;
+}
+
+static DWORD WINAPI cm_unregister_notification( HCMNOTIFICATION notify )
+{
+    return TRUE;
+}
+
 static void test_RegisterDeviceNotification(void)
 {
     DEV_BROADCAST_DEVICEINTERFACE_A iface_filter_a =
@@ -492,11 +504,13 @@ static void test_RegisterDeviceNotification(void)
         .lpfnWndProc = devnotify_wndproc,
     };
     CM_NOTIFY_FILTER cm_iface_filter =
-    {.cbSize = sizeof(CM_NOTIFY_FILTER),
-     .Flags = 0,
-     .FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE,
-     .Reserved = 0,
-     .u = {.DeviceInterface = {.ClassGuid = GUID_DEVINTERFACE_HID}}};
+    {
+        .cbSize = sizeof(CM_NOTIFY_FILTER),
+        .Flags = 0,
+        .FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE,
+        .Reserved = 0,
+        .u = {.DeviceInterface = {.ClassGuid = GUID_DEVINTERFACE_HID}}
+    };
     CM_NOTIFY_FILTER cm_all_ifaces_filter =
     {
         .cbSize = sizeof(CM_NOTIFY_FILTER),
@@ -513,11 +527,27 @@ static void test_RegisterDeviceNotification(void)
     };
     char buffer[1024] = {0};
     DEV_BROADCAST_HDR *header = (DEV_BROADCAST_HDR *)buffer;
+
+    DWORD (WINAPI *pCM_Register_Notification)(PCM_NOTIFY_FILTER,PVOID,PCM_NOTIFY_CALLBACK,PHCMNOTIFICATION);
+    DWORD (WINAPI *pCM_Unregister_Notification)(HCMNOTIFICATION);
+    HMODULE cfgmgr32 = LoadLibraryW( L"cfgmgr32" );
     struct cm_notify_callback_data cm_ctx = {0};
     HANDLE hwnd, thread, stop_event;
     HDEVNOTIFY devnotify;
     DWORD i, ret;
     MSG msg;
+
+    if (cfgmgr32)
+    {
+        pCM_Register_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Register_Notification" );
+        pCM_Unregister_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Unregister_Notification" );
+    }
+    else
+    {
+        pCM_Register_Notification = cm_register_notification;
+        pCM_Unregister_Notification = cm_unregister_notification;
+        win_skip( "cfgmgr32 not found, skipping tests\n" );
+    }
 
     RegisterClassExW( &class );
 
@@ -595,7 +625,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_expect = 2;
     cm_ctx.device_change_count = 0;
 
-    ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
     ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
@@ -634,7 +664,7 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
-    CM_Unregister_Notification( cm_ctx.hnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
 
     memcpy( buffer, &iface_filter_a, sizeof(iface_filter_a) );
     strcpy( ((DEV_BROADCAST_DEVICEINTERFACE_A *)buffer)->dbcc_name, "device name" );
@@ -647,7 +677,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_expect = 2;
     cm_ctx.device_change_count = 0;
 
-    ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
     ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
@@ -686,7 +716,7 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
-    CM_Unregister_Notification( cm_ctx.hnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES );
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
@@ -695,7 +725,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_all = TRUE;
     cm_ctx.device_change_expect = 4;
     cm_ctx.device_change_count = 0;
-    ret = CM_Register_Notification( &cm_all_ifaces_filter, &cm_ctx, cm_notify_callback,
+    ret = pCM_Register_Notification( &cm_all_ifaces_filter, &cm_ctx, cm_notify_callback,
                                     &cm_ctx.hnotify );
     ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
@@ -735,7 +765,7 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
-    CM_Unregister_Notification( cm_ctx.hnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
@@ -745,7 +775,7 @@ static void test_RegisterDeviceNotification(void)
     cm_ctx.device_change_expect = 2 + ARRAY_SIZE(device_change_events);
     cm_ctx.device_change_count = 0;
     cm_iface_filter.Flags = 0;
-    ret = CM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
     ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
@@ -790,7 +820,7 @@ static void test_RegisterDeviceNotification(void)
             ok( !!handle_devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
 
             cm_handle_filter.u.DeviceHandle.hTarget = file;
-            ret = CM_Register_Notification( &cm_handle_filter, &cm_ctx, cm_notify_callback, &handle_cmnotify );
+            ret = pCM_Register_Notification( &cm_handle_filter, &cm_ctx, cm_notify_callback, &handle_cmnotify );
             ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
             device_change_expect_handle = file;
@@ -825,15 +855,17 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     if (handle_devnotify) UnregisterDeviceNotification( handle_devnotify );
-    if (handle_cmnotify) CM_Unregister_Notification( handle_cmnotify );
+    if (handle_cmnotify) pCM_Unregister_Notification( handle_cmnotify );
     UnregisterDeviceNotification( devnotify );
-    CM_Unregister_Notification( cm_ctx.hnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
     device_change_expect_event = NULL;
     handle_devnotify = 0;
     CloseHandle( cm_ctx.device_change_sem );
 
     DestroyWindow( hwnd );
     UnregisterClassW( class.lpszClassName, class.hInstance );
+
+    if (cfgmgr32) FreeLibrary( cfgmgr32 );
 }
 
 struct controller_handler
