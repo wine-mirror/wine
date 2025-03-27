@@ -148,7 +148,8 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     if (hFile == INVALID_HANDLE_VALUE)
     {
       TRACE("File '%s' not found\n", (char*)pvSource);
-      return DXFILEERR_FILENOTFOUND;
+      hr = DXFILEERR_FILENOTFOUND;
+      goto error;
     }
 
     file_size = GetFileSize(hFile, NULL);
