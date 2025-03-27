@@ -1161,7 +1161,7 @@ static void test_dump(void)
     if (!pDirectXFileCreate)
     {
         win_skip("DirectXFileCreate is not available\n");
-        goto exit;
+        return;
     }
 
     /* Dump data only if there is an object and a template */
@@ -1207,10 +1207,9 @@ static void test_dump(void)
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(!ref, "Unexpected refcount %lu.\n", ref);
 
-    CloseHandle(hFile);
-
 exit:
     HeapFree(GetProcessHeap(), 0, pvData);
+    CloseHandle(hFile);
 }
 
 START_TEST(d3dxof)
