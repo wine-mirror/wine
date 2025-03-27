@@ -1147,6 +1147,24 @@ static void test_copy(void)
     ok(!dir_exists("c.txt"), "Expected c.txt directory to not exist.\n");
     RemoveDirectoryA("a.txt");
 
+    /* Test many dest files without FOF_MULTIDESTFILES flag,
+     * with dest files less than source files. */
+    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
+    shfo.pTo = "a.txt\0b.txt\0";
+    shfo.fAnyOperationsAborted = 0xdeadbeef;
+    shfo.fFlags &= ~FOF_MULTIDESTFILES;
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations.\n");
+    ok(DeleteFileA("a.txt\\test1.txt"), "Expected a.txt\\test1.txt to exist\n");
+    ok(DeleteFileA("a.txt\\test2.txt"), "Expected a.txt\\test2.txt to exist\n");
+    ok(DeleteFileA("a.txt\\test3.txt"), "Expected a.txt\\test3.txt to exist\n");
+    }
+    ok(!dir_exists("b.txt"), "Expected b.txt directory to not exist.\n");
+    RemoveDirectoryA("a.txt");
+
     /* try a glob */
     shfo.pFrom = "test?.txt\0";
     shfo.pTo = "testdir2\0";
@@ -1607,6 +1625,7 @@ static void test_copy(void)
 
     createTestFile("aa.txt");
     createTestFile("ab.txt");
+    createTestFile("bb.txt");
     CreateDirectoryA("one", NULL);
     CreateDirectoryA("two", NULL);
 
@@ -1629,8 +1648,36 @@ static void test_copy(void)
     ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two\\aa.txt"), "Expected file to not exist\n");
     ok(!DeleteFileA("two\\ab.txt"), "Expected file to not exist\n");
+
+    /* pFrom has more than one glob, pTo has more than one dest, without FOF_MULTIDESTFILES. */
+    shfo.pFrom = "a*.txt\0*b.txt\0";
+    shfo.pTo = "one\0two\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
+    retval = SHFileOperationA(&shfo);
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("one\\bb.txt"), "Expected file to exist\n");
+    ok(!DeleteFileA("two\\ab.txt"), "Expected file to exist\n");
+    ok(!DeleteFileA("two\\bb.txt"), "Expected file to exist\n");
+
+    /* pFrom has more than one glob, pTo has more than one dest, with FOF_MULTIDESTFILES. */
+    shfo.pFrom = "a*.txt\0*b.txt\0";
+    shfo.pTo = "one\0two\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_MULTIDESTFILES;
+    retval = SHFileOperationA(&shfo);
+    todo_wine
+    {
+    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two\\ab.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("two\\bb.txt"), "Expected file to exist\n");
+    }
+
     ok(DeleteFileA("aa.txt"), "Expected file to exist\n");
     ok(DeleteFileA("ab.txt"), "Expected file to exist\n");
+    ok(DeleteFileA("bb.txt"), "Expected file to exist\n");
     ok(RemoveDirectoryA("one"), "Expected dir to exist\n");
     ok(RemoveDirectoryA("two"), "Expected dir to exist\n");
 
