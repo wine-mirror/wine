@@ -889,6 +889,8 @@ static void compile( struct strarray files, const char *output_name, int compile
 	strarray_add(&comp_args, output_name);
     }
 
+    if (verbose > 1) strarray_add( &comp_args, "-v" );
+
     /* the rest of the pass-through parameters */
     strarray_addall(&comp_args, compiler_args);
 
@@ -1871,7 +1873,11 @@ int main(int argc, char **argv)
                     }
                     break;
                 case 'v':
-                    if (args.str[i][2] == 0) verbose++;
+                    if (args.str[i][2] == 0)
+                    {
+                        verbose++;
+                        raw_compiler_arg = raw_linker_arg = 0;
+                    }
                     break;
                 case 'W':
                     if (strncmp("-Wl,", args.str[i], 4) == 0)
