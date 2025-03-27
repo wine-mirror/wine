@@ -1574,7 +1574,7 @@ void CDECL RtlRestoreContext( CONTEXT *context, EXCEPTION_RECORD *rec )
     }
 
     /* hack: remove no longer accessible TEB frames */
-    while ((ULONG64)teb_frame < context->Rsp)
+    while (is_valid_frame( (ULONG_PTR)teb_frame ) && (ULONG64)teb_frame < context->Rsp)
     {
         TRACE( "removing TEB frame: %p\n", teb_frame );
         teb_frame = __wine_pop_frame( teb_frame );
