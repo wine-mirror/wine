@@ -1038,6 +1038,17 @@ static HRESULT copypixels_to_32bppPRGBA(struct FormatConverter *This, const WICR
     }
 }
 
+static void set_24bppbgr_pixel(BYTE **dstpixel, WICColor color)
+{
+    BYTE *dst = *dstpixel;
+
+    *dst++ = color;
+    *dst++ = color >> 8;
+    *dst++ = color >> 16;
+
+    *dstpixel += 3;
+}
+
 static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRect *prc,
     UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
 {
@@ -1045,6 +1056,55 @@ static HRESULT copypixels_to_24bppBGR(struct FormatConverter *This, const WICRec
 
     switch (source_format)
     {
+    case format_BlackWhite:
+        if (prc)
+        {
+            static const WICColor colors[2] = { 0, 0xffffff };
+            BYTE *srcdata, *dstpixel, *dstrow;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcbyte;
+            const BYTE *srcrow;
+            HRESULT res;
+            INT x, y;
+
+            srcstride = (prc->Width+7)/8;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = malloc(srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y=0; y<prc->Height; y++) {
+                    srcbyte = srcrow;
+                    dstpixel= dstrow;
+                    for (x=0; x<prc->Width; x+=8) {
+                        BYTE srcval;
+                        srcval=*srcbyte++;
+
+                        set_24bppbgr_pixel(&dstpixel, colors[srcval>>7&1]);
+                        if (x+1 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>6&1]);
+                        if (x+2 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>5&1]);
+                        if (x+3 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>4&1]);
+                        if (x+4 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>3&1]);
+                        if (x+5 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>2&1]);
+                        if (x+6 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>1&1]);
+                        if (x+7 < prc->Width) set_24bppbgr_pixel(&dstpixel, colors[srcval>>0&1]);
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            free(srcdata);
+
+            return res;
+        }
+        return S_OK;
     case format_24bppBGR:
     case format_24bppRGB:
         if (prc)

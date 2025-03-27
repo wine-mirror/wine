@@ -433,6 +433,19 @@ static const BYTE bits_24bppBGR[] = {
 static const struct bitmap_data testdata_24bppBGR = {
     &GUID_WICPixelFormat24bppBGR, 24, bits_24bppBGR, 32, 2, 96.0, 96.0};
 
+static const BYTE bits_24bppBGR_BW[] = {
+    0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255,
+    0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255,
+    0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255,
+    0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255,
+
+    255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0,
+    255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0,
+    255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0,
+    255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0, 255,255,255, 0,0,0};
+static const struct bitmap_data testdata_24bppBGR_BW = {
+    &GUID_WICPixelFormat24bppBGR, 24, bits_24bppBGR_BW, 32, 2, 96.0, 96.0};
+
 static const BYTE bits_24bppRGB[] = {
     0,0,255, 0,255,0, 255,0,0, 0,0,0, 0,0,255, 0,255,0, 255,0,0, 0,0,0,
     0,0,255, 0,255,0, 255,0,0, 0,0,0, 0,0,255, 0,255,0, 255,0,0, 0,0,0,
@@ -725,11 +738,11 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(1bppIndexed), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(2bppIndexed), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(4bppIndexed), TRUE, TRUE, 35},
-        {WIC_PIXEL_FORMAT(8bppIndexed), TRUE, TRUE, 27},
+        {WIC_PIXEL_FORMAT(8bppIndexed), TRUE, TRUE, 26},
         {WIC_PIXEL_FORMAT(BlackWhite), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(2bppGray), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(4bppGray), TRUE, TRUE, 35},
-        {WIC_PIXEL_FORMAT(8bppGray), TRUE, TRUE, 27},
+        {WIC_PIXEL_FORMAT(8bppGray), TRUE, TRUE, 26},
         {WIC_PIXEL_FORMAT(16bppGray), TRUE, TRUE, 35},
 
         {WIC_PIXEL_FORMAT(8bppAlpha), TRUE, TRUE, 35, TRUE},
@@ -737,7 +750,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(16bppBGR555), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(16bppBGR565), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(16bppBGRA5551), TRUE, TRUE, 33, TRUE},
-        {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 28},
+        {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 27},
         {WIC_PIXEL_FORMAT(24bppRGB), TRUE, TRUE, 30},
         {WIC_PIXEL_FORMAT(32bppBGR), TRUE, TRUE, 15},
         {WIC_PIXEL_FORMAT(32bppBGRA), TRUE, TRUE, 15},
@@ -2216,7 +2229,8 @@ START_TEST(converter)
     test_conversion(&testdata_24bppRGB, &testdata_4bppIndexed, "24bppRGB -> 4bppIndexed", TRUE);
     test_conversion(&testdata_24bppRGB, &testdata_8bppIndexed, "24bppRGB -> 8bppIndexed", FALSE);
 
-    test_conversion(&testdata_BlackWhite, &testdata_8bppIndexed_BW, "BlackWhite -> 8bppIndexed", TRUE);
+    test_conversion(&testdata_BlackWhite, &testdata_8bppIndexed_BW, "BlackWhite -> 8bppIndexed", FALSE);
+    test_conversion(&testdata_BlackWhite, &testdata_24bppBGR_BW, "BlackWhite -> 24bppBGR", FALSE);
     test_conversion(&testdata_1bppIndexed, &testdata_8bppIndexed_BW, "1bppIndexed -> 8bppIndexed", TRUE);
     test_conversion(&testdata_2bppIndexed, &testdata_8bppIndexed_4colors, "2bppIndexed -> 8bppIndexed", TRUE);
     test_conversion(&testdata_4bppIndexed, &testdata_8bppIndexed, "4bppIndexed -> 8bppIndexed", TRUE);
