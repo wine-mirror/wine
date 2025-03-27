@@ -1415,6 +1415,10 @@ static HRESULT d3dx_image_tga_rle_decode_row(const uint8_t **src, uint32_t src_b
     return D3D_OK;
 }
 
+static void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
+        const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
+        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key,
+        const PALETTEENTRY *palette);
 static HRESULT d3dx_image_tga_decode(const void *src_data, uint32_t src_data_size, uint32_t src_header_size,
         struct d3dx_image *image)
 {
@@ -2411,7 +2415,7 @@ void format_from_d3dx_color(const struct pixel_format_desc *format, const struct
  * Works for any pixel format.
  * The source and the destination must be block-aligned.
  */
-void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
+static void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
         BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch, const struct volume *size,
         const struct pixel_format_desc *format)
 {
@@ -2442,7 +2446,7 @@ void copy_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
  * any necessary format conversion and color keying.
  * Pixels outsize the source rect are blacked out.
  */
-void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
+static void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
         const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
         const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key,
         const PALETTEENTRY *palette)
@@ -2542,10 +2546,10 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
  * any necessary format conversion, color keying and stretching
  * using a point filter.
  */
-void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch, const struct volume *src_size,
-        const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch, UINT dst_slice_pitch,
-        const struct volume *dst_size, const struct pixel_format_desc *dst_format, D3DCOLOR color_key,
-        const PALETTEENTRY *palette)
+static void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pitch,
+        const struct volume *src_size, const struct pixel_format_desc *src_format, BYTE *dst, UINT dst_row_pitch,
+        UINT dst_slice_pitch, const struct volume *dst_size, const struct pixel_format_desc *dst_format,
+        D3DCOLOR color_key, const PALETTEENTRY *palette)
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format;
