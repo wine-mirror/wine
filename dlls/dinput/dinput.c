@@ -466,13 +466,23 @@ static BOOL CALLBACK enum_device_by_semantics( const DIDEVICEINSTANCEW *instance
 
     if (FAILED(hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_username.diph )))
         WARN( "Failed to get device capabilities, hr %#lx\n", hr );
-    else if ((params->flags & DIEDBSFL_THISUSER) && *params->username && wcscmp( params->username, prop_username.wsz ))
-        goto done;
-    else if ((params->flags & DIEDBSFL_AVAILABLEDEVICES) && *prop_username.wsz)
-        goto done;
 
-    IDirectInputDevice_AddRef( device );
-    params->devices[params->device_count++] = device;
+    if ((params->flags & DIEDBSFL_AVAILABLEDEVICES) && !*prop_username.wsz)
+    {
+        params->devices[params->device_count++] = device;
+        return DIENUM_CONTINUE;
+    }
+    if ((params->flags & DIEDBSFL_THISUSER) && *prop_username.wsz &&
+        (!*params->username || !wcscmp( params->username, prop_username.wsz )))
+    {
+        params->devices[params->device_count++] = device;
+        return DIENUM_CONTINUE;
+    }
+    if (!params->flags)
+    {
+        params->devices[params->device_count++] = device;
+        return DIENUM_CONTINUE;
+    }
 
 done:
     IDirectInputDevice8_Release( device );
