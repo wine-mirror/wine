@@ -40,8 +40,8 @@ static inline ULONG read_ulong_be(BYTE* data)
     return data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
 }
 
-static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadTextMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
 {
     HRESULT hr;
     BYTE type[4];
@@ -92,8 +92,9 @@ static HRESULT LoadTextMetadata(IStream *stream, const GUID *preferred_vendor,
     result[0].value.vt = VT_LPSTR;
     result[0].value.pszVal = value;
 
-    *items = result;
-    *item_count = 1;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     free(data);
 
@@ -111,8 +112,8 @@ HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&TextReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadGamaMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
 {
     HRESULT hr;
     BYTE type[4];
@@ -153,8 +154,9 @@ static HRESULT LoadGamaMetadata(IStream *stream, const GUID *preferred_vendor,
     result[0].value.vt = VT_UI4;
     result[0].value.ulVal = gamma;
 
-    *items = result;
-    *item_count = 1;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     return S_OK;
 }
@@ -170,8 +172,8 @@ HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&GamaReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
 {
     HRESULT hr;
     BYTE type[4];
@@ -228,8 +230,9 @@ static HRESULT LoadChrmMetadata(IStream *stream, const GUID *preferred_vendor,
         result[i].value.ulVal = read_ulong_be(&data[i*4]);
     }
 
-    *items = result;
-    *item_count = 8;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 8;
 
     free(data);
 
@@ -247,8 +250,8 @@ HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&ChrmReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadHistMetadata(IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadHistMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
 {
     HRESULT hr;
     BYTE type[4];
@@ -293,8 +296,9 @@ static HRESULT LoadHistMetadata(IStream *stream, const GUID *preferred_vendor,
     result[0].value.caui.cElems = element_count;
     result[0].value.caui.pElems = elements;
 
-    *items = result;
-    *item_count = 1;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     return S_OK;
 }
@@ -310,8 +314,8 @@ HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&HistReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
 {
     HRESULT hr;
     BYTE type[4];
@@ -377,8 +381,9 @@ static HRESULT LoadTimeMetadata(IStream *stream, const GUID *preferred_vendor,
     result[5].value.vt = VT_UI1;
     result[5].value.bVal = data[6];
 
-    *items = result;
-    *item_count = 6;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 6;
 
     free(data);
 

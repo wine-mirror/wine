@@ -33,20 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-typedef struct MetadataHandler {
-    IWICMetadataWriter IWICMetadataWriter_iface;
-    LONG ref;
-    IWICPersistStream IWICPersistStream_iface;
-    IWICStreamProvider IWICStreamProvider_iface;
-    const MetadataHandlerVtbl *vtable;
-    MetadataItem *items;
-    DWORD item_count;
-    DWORD persist_options;
-    IStream *stream;
-    ULARGE_INTEGER origin;
-    CRITICAL_SECTION lock;
-} MetadataHandler;
-
 static inline MetadataHandler *impl_from_IWICMetadataWriter(IWICMetadataWriter *iface)
 {
     return CONTAINING_RECORD(iface, MetadataHandler, IWICMetadataWriter_iface);
@@ -69,7 +55,7 @@ static void clear_metadata_item(MetadataItem *item)
     PropVariantClear(&item->value);
 }
 
-static void MetadataHandler_FreeItems(MetadataHandler *This)
+void MetadataHandler_FreeItems(MetadataHandler *This)
 {
     DWORD i;
 
@@ -516,8 +502,6 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
 {
     MetadataHandler *This = impl_from_IWICPersistStream(iface);
     HRESULT hr = S_OK;
-    MetadataItem *new_items=NULL;
-    DWORD item_count=0;
     LARGE_INTEGER move;
 
     TRACE("(%p,%p,%s,%lx)\n", iface, stream, debugstr_guid(pguidPreferredVendor), dwPersistOptions);
@@ -530,8 +514,7 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
         move.QuadPart = 0;
         hr = IStream_Seek(stream, move, STREAM_SEEK_CUR, &This->origin);
         if (SUCCEEDED(hr))
-            hr = This->vtable->fnLoad(stream, pguidPreferredVendor, dwPersistOptions,
-                    &new_items, &item_count);
+            hr = This->vtable->fnLoad(This, stream, pguidPreferredVendor, dwPersistOptions);
     }
 
     if (This->stream)
@@ -545,13 +528,6 @@ static HRESULT WINAPI MetadataHandler_LoadEx(IWICPersistStream *iface,
             IStream_AddRef(This->stream);
     }
     This->persist_options = dwPersistOptions & WICPersistOptionMask;
-
-    if (new_items)
-    {
-        MetadataHandler_FreeItems(This);
-        This->items = new_items;
-        This->item_count = item_count;
-    }
 
     LeaveCriticalSection(&This->lock);
 
@@ -892,8 +868,8 @@ static HRESULT MetadataHandlerEnum_Create(MetadataHandler *parent, DWORD index,
     return S_OK;
 }
 
-static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
-    DWORD persist_options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadUnknownMetadata(MetadataHandler *handler, IStream *input, const GUID *preferred_vendor,
+        DWORD persist_options)
 {
     HRESULT hr;
     MetadataItem *result;
@@ -933,8 +909,9 @@ static HRESULT LoadUnknownMetadata(IStream *input, const GUID *preferred_vendor,
     result[0].value.blob.cbSize = bytesread;
     result[0].value.blob.pBlobData = data;
 
-    *items = result;
-    *item_count = 1;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     return S_OK;
 }
@@ -1398,8 +1375,8 @@ static HRESULT load_IFD_entry(IStream *input, const GUID *vendor, DWORD options,
     return hr;
 }
 
-static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
-    DWORD persist_options, bool resolve_pointer_tags, bool is_writer, MetadataItem **items, DWORD *item_count)
+static HRESULT load_ifd_metadata_internal(MetadataHandler *handler, IStream *input, const GUID *vendor,
+    DWORD persist_options, bool resolve_pointer_tags, bool is_writer)
 {
     HRESULT hr;
     MetadataItem *result;
@@ -1489,64 +1466,66 @@ static HRESULT load_ifd_metadata_internal(IStream *input, const GUID *vendor,
 
     free(entry);
 
-    *items = result;
-    *item_count = count;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = count;
 
     return S_OK;
 }
 
-static HRESULT LoadIfdMetadataReader(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadIfdMetadataReader(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
 {
     TRACE("%p, %#lx.\n", input, options);
-    return load_ifd_metadata_internal(input, vendor, options, true, false, items, item_count);
+    return load_ifd_metadata_internal(handler, input, vendor, options, true, false);
 }
 
-static HRESULT LoadIfdMetadataWriter(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadIfdMetadataWriter(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
 {
     TRACE("%p, %#lx.\n", input, options);
-    return load_ifd_metadata_internal(input, vendor, options, true, true, items, item_count);
+    return load_ifd_metadata_internal(handler, input, vendor, options, true, true);
 }
 
-static HRESULT LoadExifMetadataReader(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
-{
-    TRACE("%p, %#lx.\n", input, options);
-
-    return load_ifd_metadata_internal(input, vendor, options, false, false, items, item_count);
-}
-
-static HRESULT LoadExifMetadataWriter(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadExifMetadataReader(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
 {
     TRACE("%p, %#lx.\n", input, options);
 
-    return load_ifd_metadata_internal(input, vendor, options, false, true, items, item_count);
+    return load_ifd_metadata_internal(handler, input, vendor, options, false, false);
 }
 
-static HRESULT LoadGpsMetadataReader(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadExifMetadataWriter(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
 {
     TRACE("%p, %#lx.\n", input, options);
 
-    return load_ifd_metadata_internal(input, vendor, options, false, false, items, item_count);
+    return load_ifd_metadata_internal(handler, input, vendor, options, false, true);
 }
 
-static HRESULT LoadGpsMetadataWriter(IStream *input, const GUID *vendor,
-        DWORD options, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadGpsMetadataReader(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
 {
     TRACE("%p, %#lx.\n", input, options);
 
-    return load_ifd_metadata_internal(input, vendor, options, false, true, items, item_count);
+    return load_ifd_metadata_internal(handler, input, vendor, options, false, false);
 }
 
-static HRESULT load_app1_metadata_internal(IStream *input, const GUID *vendor, DWORD options,
-        bool is_writer, MetadataItem **items, DWORD *item_count)
+static HRESULT LoadGpsMetadataWriter(MetadataHandler *handler, IStream *input, const GUID *vendor,
+        DWORD options)
+{
+    TRACE("%p, %#lx.\n", input, options);
+
+    return load_ifd_metadata_internal(handler, input, vendor, options, false, true);
+}
+
+static HRESULT load_app1_metadata_internal(MetadataHandler *handler, IStream *input, const GUID *vendor, DWORD options,
+        bool is_writer)
 {
     static const char exif_header[] = {'E','x','i','f',0,0};
     IWICMetadataReader *ifd_reader = NULL;
     BOOL native_byte_order;
+    MetadataItem *result;
     LARGE_INTEGER move;
 
 #include "pshpack2.h"
@@ -1613,31 +1592,32 @@ static HRESULT load_app1_metadata_internal(IStream *input, const GUID *vendor, D
         return hr;
     }
 
-    if (!(*items = calloc(1, sizeof(**items))))
+    if (!(result = calloc(1, sizeof(*result))))
     {
         IWICMetadataReader_Release(ifd_reader);
         return E_OUTOFMEMORY;
     }
 
-    (*items)[0].id.vt = VT_UI2;
-    (*items)[0].id.uiVal = 0;
-    (*items)[0].value.vt = VT_UNKNOWN;
-    (*items)[0].value.punkVal = (IUnknown *)ifd_reader;
-    *item_count = 1;
+    result->id.vt = VT_UI2;
+    result->id.uiVal = 0;
+    result->value.vt = VT_UNKNOWN;
+    result->value.punkVal = (IUnknown *)ifd_reader;
+
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     return S_OK;
 }
 
-static HRESULT LoadApp1MetadataReader(IStream *input, const GUID *vendor, DWORD options,
-        MetadataItem **items, DWORD *item_count)
+static HRESULT LoadApp1MetadataReader(MetadataHandler *handler, IStream *input, const GUID *vendor, DWORD options)
 {
-    return load_app1_metadata_internal(input, vendor, options, false, items, item_count);
+    return load_app1_metadata_internal(handler, input, vendor, options, false);
 }
 
-static HRESULT LoadApp1MetadataWriter(IStream *input, const GUID *vendor, DWORD options,
-        MetadataItem **items, DWORD *item_count)
+static HRESULT LoadApp1MetadataWriter(MetadataHandler *handler, IStream *input, const GUID *vendor, DWORD options)
 {
-    return load_app1_metadata_internal(input, vendor, options, true, items, item_count);
+    return load_app1_metadata_internal(handler, input, vendor, options, true);
 }
 
 static const MetadataHandlerVtbl IfdMetadataReader_Vtbl = {

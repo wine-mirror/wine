@@ -78,16 +78,12 @@ struct image_descriptor
 
 #include "poppack.h"
 
-static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD options,
-                                 MetadataItem **items, DWORD *count)
+static HRESULT load_LSD_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
     struct logical_screen_descriptor lsd_data;
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
-
-    *items = NULL;
-    *count = 0;
 
     hr = IStream_Read(stream, &lsd_data, sizeof(lsd_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(lsd_data)) return S_OK;
@@ -149,8 +145,9 @@ static HRESULT load_LSD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[8].value.vt = VT_UI1;
     result[8].value.bVal = lsd_data.pixel_aspect_ratio;
 
-    *items = result;
-    *count = 9;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 9;
 
     return S_OK;
 }
@@ -166,16 +163,12 @@ HRESULT LSDReader_CreateInstance(REFIID iid, void **ppv)
     return MetadataReader_Create(&LSDReader_Vtbl, iid, ppv);
 }
 
-static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD options,
-                                 MetadataItem **items, DWORD *count)
+static HRESULT load_IMD_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
     struct image_descriptor imd_data;
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
-
-    *items = NULL;
-    *count = 0;
 
     hr = IStream_Read(stream, &imd_data, sizeof(imd_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(imd_data)) return S_OK;
@@ -230,8 +223,9 @@ static HRESULT load_IMD_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[7].value.vt = VT_UI1;
     result[7].value.bVal = imd_data.packed & 7;
 
-    *items = result;
-    *count = 8;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 8;
 
     return S_OK;
 }
@@ -247,8 +241,7 @@ HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv)
     return MetadataReader_Create(&IMDReader_Vtbl, iid, ppv);
 }
 
-static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD options,
-                                 MetadataItem **items, DWORD *count)
+static HRESULT load_GCE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
 #include "pshpack1.h"
     struct graphic_control_extension
@@ -266,9 +259,6 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
-
-    *items = NULL;
-    *count = 0;
 
     hr = IStream_Read(stream, &gce_data, sizeof(gce_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(gce_data)) return S_OK;
@@ -308,8 +298,9 @@ static HRESULT load_GCE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[4].value.vt = VT_UI1;
     result[4].value.bVal = gce_data.transparent_color_index;
 
-    *items = result;
-    *count = 5;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 5;
 
     return S_OK;
 }
@@ -325,8 +316,7 @@ HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv)
     return MetadataReader_Create(&GCEReader_Vtbl, iid, ppv);
 }
 
-static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD options,
-                                 MetadataItem **items, DWORD *count)
+static HRESULT load_APE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
 #include "pshpack1.h"
     struct application_extension
@@ -342,9 +332,6 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     MetadataItem *result;
     BYTE subblock_size;
     BYTE *data;
-
-    *items = NULL;
-    *count = 0;
 
     hr = IStream_Read(stream, &ape_data, sizeof(ape_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(ape_data)) return S_OK;
@@ -415,8 +402,9 @@ static HRESULT load_APE_metadata(IStream *stream, const GUID *vendor, DWORD opti
     result[1].value.caub.cElems = data_size;
     result[1].value.caub.pElems = data;
 
-    *items = result;
-    *count = 2;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 2;
 
     return S_OK;
 }
@@ -432,8 +420,7 @@ HRESULT APEReader_CreateInstance(REFIID iid, void **ppv)
     return MetadataReader_Create(&APEReader_Vtbl, iid, ppv);
 }
 
-static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWORD options,
-                                        MetadataItem **items, DWORD *count)
+static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
 #include "pshpack1.h"
     struct gif_extension
@@ -447,9 +434,6 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     MetadataItem *result;
     BYTE subblock_size;
     char *data;
-
-    *items = NULL;
-    *count = 0;
 
     hr = IStream_Read(stream, &ext_data, sizeof(ext_data), &bytesread);
     if (FAILED(hr) || bytesread != sizeof(ext_data)) return S_OK;
@@ -509,8 +493,9 @@ static HRESULT load_GifComment_metadata(IStream *stream, const GUID *vendor, DWO
     result->value.vt = VT_LPSTR;
     result->value.pszVal = data;
 
-    *items = result;
-    *count = 1;
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
 
     return S_OK;
 }
