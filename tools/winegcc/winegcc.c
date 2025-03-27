@@ -559,6 +559,9 @@ static struct strarray get_link_args( const char *output_name )
         if (large_address_aware && target.cpu == CPU_i386)
             strarray_add( &flags, "-Wl,--large-address-aware" );
 
+        if (entry_point)
+            strarray_add( &flags, strmake( "-Wl,--entry,%s%s", target.cpu == CPU_i386 ? "_" : "", entry_point ));
+
         if (output_debug_file && strendswith(output_debug_file, ".pdb"))
             strarray_add(&link_args, strmake("-Wl,--pdb=%s", output_debug_file));
 
@@ -592,6 +595,8 @@ static struct strarray get_link_args( const char *output_name )
         if (is_unicode_app) strarray_add( &flags, "-municode" );
         if (nostartfiles) strarray_add( &flags, "-nostartfiles" );
         if (image_base) strarray_add( &flags, strmake("-Wl,-base:%s", image_base ));
+        if (entry_point) strarray_add( &flags, strmake( "-Wl,-entry:%s", entry_point ));
+
         if (subsystem)
             strarray_add( &flags, strmake("-Wl,-subsystem:%s", subsystem ));
         else
@@ -1373,6 +1378,9 @@ static void build(struct strarray input_files, const char *output)
 
     if (fake_module) return;  /* nothing else to do */
 
+    if (is_pe && !entry_point && (is_shared || is_win16_app))
+        entry_point = target.cpu == CPU_i386 ? "DllMainCRTStartup@12" : "DllMainCRTStartup";
+
     /* link everything together now */
     link_args = get_link_args( output_name );
 
@@ -1392,19 +1400,6 @@ static void build(struct strarray input_files, const char *output)
 
     for ( j = 0; j < lib_dirs.count; j++ )
 	strarray_add(&link_args, strmake("-L%s", lib_dirs.str[j]));
-
-    if (is_pe && !entry_point && (is_shared || is_win16_app))
-        entry_point = target.cpu == CPU_i386 ? "DllMainCRTStartup@12" : "DllMainCRTStartup";
-
-    if (is_pe && entry_point)
-    {
-        if (target.platform == PLATFORM_WINDOWS)
-            strarray_add(&link_args, strmake("-Wl,-entry:%s", entry_point));
-        else
-            strarray_add(&link_args, strmake("-Wl,--entry,%s%s",
-                                            is_pe && target.cpu == CPU_i386 ? "_" : "",
-                                            entry_point));
-    }
 
     strarray_addall( &link_args, spec_objs );
 
