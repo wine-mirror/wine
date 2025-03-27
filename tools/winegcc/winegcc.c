@@ -1577,6 +1577,48 @@ static int is_option( struct strarray args, int i, const char *option, const cha
     return 0;
 }
 
+static struct strarray read_args_from_file( const char *name )
+{
+    struct strarray args = empty_strarray;
+    char *input_buffer = NULL, *iter, *end, *opt, *out;
+    struct stat st;
+    int fd;
+
+    if ((fd = open( name, O_RDONLY | O_BINARY )) == -1) error( "Cannot open %s\n", name );
+    fstat( fd, &st );
+    if (st.st_size)
+    {
+        input_buffer = xmalloc( st.st_size + 1 );
+        if (read( fd, input_buffer, st.st_size ) != st.st_size) error( "Cannot read %s\n", name );
+    }
+    close( fd );
+    end = input_buffer + st.st_size;
+    for (iter = input_buffer; iter < end; iter++)
+    {
+        char quote = 0;
+        while (iter < end && isspace(*iter)) iter++;
+        if (iter == end) break;
+        opt = out = iter;
+        while (iter < end && (quote || !isspace(*iter)))
+        {
+            if (*iter == quote)
+            {
+                iter++;
+                quote = 0;
+            }
+            else if (*iter == '\'' || *iter == '"') quote = *iter++;
+            else
+            {
+                if (*iter == '\\' && iter + 1 < end) iter++;
+                *out++ = *iter++;
+            }
+        }
+        *out = 0;
+        strarray_add( &args, opt );
+    }
+    return args;
+}
+
 int main(int argc, char **argv)
 {
     int i, c, next_is_arg = 0;
@@ -1600,47 +1642,10 @@ int main(int argc, char **argv)
     else if (strendswith(argv[0], "++")) processor = proc_cxx;
 
     for (i = 1; i < argc; i++)
-    {
-        char *input_buffer = NULL, *iter, *opt, *out;
-        struct stat st;
-        int fd;
-
-        if (argv[i][0] != '@' || (fd = open( argv[i] + 1, O_RDONLY | O_BINARY )) == -1)
-        {
+        if (argv[i][0] == '@')
+            strarray_addall( &args, read_args_from_file( argv[i] + 1 ));
+        else
             strarray_add( &args, argv[i] );
-            continue;
-        }
-        if ((fstat( fd, &st ) == -1)) error( "Cannot stat %s\n", argv[i] + 1 );
-        if (st.st_size)
-        {
-            input_buffer = xmalloc( st.st_size + 1 );
-            if (read( fd, input_buffer, st.st_size ) != st.st_size) error( "Cannot read %s\n", argv[i] + 1 );
-        }
-        close( fd );
-        for (iter = input_buffer; iter < input_buffer + st.st_size; iter++)
-        {
-            char quote = 0;
-            while (iter < input_buffer + st.st_size && isspace(*iter)) iter++;
-            if (iter == input_buffer + st.st_size) break;
-            opt = out = iter;
-            while (iter < input_buffer + st.st_size && (quote || !isspace(*iter)))
-            {
-                if (*iter == quote)
-                {
-                    iter++;
-                    quote = 0;
-                }
-                else if (*iter == '\'' || *iter == '"') quote = *iter++;
-                else
-                {
-                    if (*iter == '\\' && iter + 1 < input_buffer + st.st_size) iter++;
-                    *out++ = *iter++;
-                }
-            }
-            *out = 0;
-            strarray_add( &args, opt );
-        }
-    }
 
     /* parse options */
     for (i = 0; i < args.count; i++)
