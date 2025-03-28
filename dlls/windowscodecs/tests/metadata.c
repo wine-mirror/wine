@@ -31,6 +31,8 @@
 #include "propvarutil.h"
 #include "wine/test.h"
 
+static const VARTYPE integer_types[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8 };
+
 #define expect_ref(obj,ref) expect_ref_((IUnknown *)obj, ref, __LINE__)
 static void expect_ref_(IUnknown *obj, ULONG ref, int line)
 {
@@ -920,7 +922,15 @@ static void test_metadata_unknown(void)
     hr = IWICMetadataWriter_GetCount(writer, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
-    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, NULL, &value);
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id.vt == VT_EMPTY, "Unexpected id type %u.\n", id.vt);
+    compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
+    PropVariantClear(&value);
+
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataWriter_GetValue(writer, NULL, &id, &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     compare_blob(&value, metadata_unknown, sizeof(metadata_unknown));
     PropVariantClear(&value);
@@ -1017,6 +1027,23 @@ static void test_metadata_tEXt(void)
     hr = IWICMetadataReader_GetMetadataFormat(reader, NULL);
     ok(hr == E_INVALIDARG, "GetMetadataFormat failed, hr=%lx\n", hr);
 
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id.vt == VT_LPSTR, "Unexpected type %i.\n", id.vt);
+    ok(!strcmp(id.pszVal, "winetest"), "Unexpected id %s.\n", wine_dbgstr_a(id.pszVal));
+    PropVariantClear(&id);
+
+    /* Using WCHAR string for an id. */
+    id.vt = VT_LPWSTR;
+    id.pwszVal = (WCHAR *)L"winetest";
+    value.vt = VT_EMPTY;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_LPSTR, "Unexpected type %i.\n", value.vt);
+    ok(!strcmp(value.pszVal, "value"), "Unexpected value %s.\n", wine_dbgstr_a(value.pszVal));
+    PropVariantClear(&value);
+
     id.vt = VT_LPSTR;
     id.pszVal = CoTaskMemAlloc(strlen("winetest") + 1);
     strcpy(id.pszVal, "winetest");
@@ -1029,7 +1056,7 @@ static void test_metadata_tEXt(void)
 
     hr = IWICMetadataReader_GetValue(reader, &schema, &id, &value);
     ok(hr == S_OK, "GetValue failed, hr=%lx\n", hr);
-    ok(value.vt == VT_LPSTR, "unexpected vt: %i\n", id.vt);
+    ok(value.vt == VT_LPSTR, "Unexpected type %i.\n", value.vt);
     ok(!strcmp(value.pszVal, "value"), "unexpected value: %s\n", value.pszVal);
     PropVariantClear(&value);
 
@@ -1165,6 +1192,18 @@ static void test_metadata_gAMA(void)
     ok(value.ulVal == 33333, "unexpected value: %lu\n", value.ulVal);
     PropVariantClear(&value);
 
+    /* Using char id. */
+    id.vt = VT_LPSTR;
+    id.pszVal = (char *)"ImageGamma";
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_UI2;
+    id.uiVal = 0;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     IWICMetadataReader_Release(reader);
 
     hr = CoCreateInstance(&CLSID_WICPngGamaMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
@@ -1185,6 +1224,9 @@ static void test_metadata_gAMA(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(count == 1, "Unexpected count %u.\n", count);
 
+    PropVariantInit(&schema);
+    PropVariantInit(&id);
+    PropVariantInit(&value);
     hr = IWICMetadataWriter_GetValueByIndex(writer, 0, &schema, &id, &value);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -1274,6 +1316,24 @@ static void test_metadata_cHRM(void)
         PropVariantClear(&value);
     }
 
+    id.vt = VT_LPSTR;
+    id.pszVal = (char *)"RedX";
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_LPSTR;
+    id.pszVal = (char *)"REDX";
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_UI2;
+    id.uiVal = 0;
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
     load_stream(reader, metadata_cHRM, sizeof(metadata_cHRM), WICPersistOptionDefault);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
@@ -1345,6 +1405,16 @@ static void test_metadata_cHRM(void)
         ok(value.ulVal == default_values[i], "Got %lu, expected %lu.\n", value.ulVal, default_values[i]);
         PropVariantClear(&value);
     }
+
+    id.vt = VT_LPSTR;
+    id.pszVal = (char *)"RedX";
+    hr = IWICMetadataWriter_GetValue(writer, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_UI2;
+    id.uiVal = 0;
+    hr = IWICMetadataWriter_GetValue(writer, NULL, &id, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < count; ++i)
     {
@@ -5294,14 +5364,14 @@ static void test_metadata_App1(void)
     IStream *app1_stream, *stream, *ifd_stream, *gps_stream, *exif_stream;
     IWICMetadataQueryReader *query_reader, *query_reader2;
     IWICMetadataQueryWriter *query_writer, *query_writer2;
+    IWICMetadataWriter *writer, *ifd_writer;
     IWICPersistStream *persist_stream;
     IWICEnumMetadataItem *enumerator;
     IWICComponentFactory *factory;
     PROPVARIANT schema, id, value;
-    IWICMetadataWriter *writer;
+    UINT i, length, count;
     ULARGE_INTEGER pos;
     LARGE_INTEGER move;
-    UINT length, count;
     WCHAR path[64];
     ULONG fetched;
     GUID format;
@@ -5787,6 +5857,10 @@ static void test_metadata_App1(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!count, "Unexpected count %u.\n", count);
 
+    hr = CoCreateInstance(&CLSID_WICIfdMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataWriter, (void **)&ifd_writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
     id.vt = VT_UI2;
     id.uiVal = 0x300;
     value.vt = VT_UI2;
@@ -5796,6 +5870,90 @@ static void test_metadata_App1(void)
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    id.vt = VT_UI2;
+    id.uiVal = 0x300;
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(integer_types); ++i)
+    {
+        id.vt = integer_types[i];
+        id.uhVal.QuadPart = 0;
+        value.vt = VT_UNKNOWN;
+        value.punkVal = (IUnknown *)ifd_writer;
+        PropVariantInit(&schema);
+        hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IWICMetadataWriter_GetCount(writer, &count);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        todo_wine
+        ok(count == 1, "Unexpected count %u.\n", count);
+
+        id.vt = VT_EMPTY;
+        hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, &id, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(id.vt == VT_UI2, "Unexpected id type %u.\n", id.vt);
+    }
+
+    id.vt = VT_LPWSTR;
+    id.pwszVal = (WCHAR *)L"0";
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_PROPERTYNOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_R4;
+    id.fltVal = 0.6f;
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_R4;
+    id.fltVal = 0.5f;
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id.vt == VT_UI2, "Unexpected id type %u.\n", id.vt);
+
+    id.vt = VT_R8;
+    id.dblVal = 0.6;
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    todo_wine
+    ok(hr == WINCODEC_ERR_UNEXPECTEDMETADATATYPE, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_R8;
+    id.dblVal = 0.5;
+    value.vt = VT_UNKNOWN;
+    value.punkVal = (IUnknown *)ifd_writer;
+    PropVariantInit(&schema);
+    hr = IWICMetadataWriter_SetValue(writer, &schema, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataWriter_GetValueByIndex(writer, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id.vt == VT_UI2, "Unexpected id type %u.\n", id.vt);
+
+    IWICMetadataWriter_Release(ifd_writer);
     IWICMetadataWriter_Release(writer);
 
     IWICComponentFactory_Release(factory);
