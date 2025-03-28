@@ -121,8 +121,6 @@ struct table
     UINT flags;
     struct list entry;
     LONG refs;
-    CRITICAL_SECTION cs;
-    BOOL removed;
 };
 
 struct property
@@ -216,17 +214,15 @@ void destroy_view( struct view * );
 HRESULT execute_view( struct view * );
 struct table *get_view_table( const struct view *, UINT );
 void init_table_list( void );
+void free_dynamic_tables( void );
 enum wbm_namespace get_namespace_from_string( const WCHAR *namespace );
-struct table *find_table( enum wbm_namespace, const WCHAR * );
+struct table *alloc_table( void );
+struct table *create_table( enum wbm_namespace, const WCHAR * );
 struct table *grab_table( struct table * );
 void release_table( struct table * );
-struct table *create_table( const WCHAR *, UINT, const struct column *, UINT, UINT, BYTE *,
-                            enum fill_status (*)(struct table *, const struct expr *) );
 BOOL add_table( enum wbm_namespace, struct table * );
 void free_columns( struct column *, UINT );
 void free_row_values( const struct table *, UINT );
-void clear_table( struct table * );
-void free_table( struct table * );
 UINT get_type_size( CIMTYPE );
 HRESULT eval_cond( const struct table *, UINT, const struct expr *, LONGLONG *, UINT * );
 HRESULT get_column_index( const struct table *, const WCHAR *, UINT * );

@@ -4635,13 +4635,27 @@ void init_table_list( void )
     {
         list_init( &tables[ns] );
         for (i = 0; i < builtin_namespaces[ns].table_count; i++)
-        {
-            struct table *table = &builtin_namespaces[ns].tables[i];
-            InitializeCriticalSectionEx( &table->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
-            table->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": table.cs" );
-            list_add_tail( &tables[ns], &table->entry );
-        }
+            list_add_tail( &tables[ns], &builtin_namespaces[ns].tables[i].entry );
         table_list[ns] = &tables[ns];
+    }
+}
+
+void free_dynamic_tables( void )
+{
+    UINT ns;
+
+    for (ns = 0; ns < ARRAY_SIZE(builtin_namespaces); ns++)
+    {
+        struct table *table, *next;
+
+        LIST_FOR_EACH_ENTRY_SAFE( table, next, table_list[ns], struct table, entry )
+        {
+            if (table->flags & TABLE_FLAG_DYNAMIC)
+            {
+                list_remove( &table->entry );
+                release_table( table );
+            }
+        }
     }
 }
 

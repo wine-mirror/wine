@@ -54,7 +54,7 @@ HRESULT create_view( enum view_type type, enum wbm_namespace ns, const WCHAR *pa
 
     case VIEW_TYPE_SELECT:
     {
-        struct table *table = find_table( ns, class );
+        struct table *table = create_table( ns, class );
         HRESULT hr;
 
         if (table && (hr = append_table( view, table )) != S_OK)
@@ -702,12 +702,9 @@ static HRESULT exec_select_view( struct view *view )
     if (!view->table_count) return S_OK;
 
     table = view->table[0];
-    if (table->fill)
-    {
-        clear_table( table );
-        status = table->fill( table, view->cond );
-    }
+    if (table->fill) status = table->fill( table, view->cond );
     if (status == FILL_STATUS_FAILED) return WBEM_E_FAILED;
+
     if (!table->num_rows) return S_OK;
 
     len = min( table->num_rows, 16 );
