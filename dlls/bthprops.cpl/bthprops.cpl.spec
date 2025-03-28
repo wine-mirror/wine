@@ -52,7 +52,7 @@
 @ stub BluetoothSelectDevices
 @ stub BluetoothSelectDevicesFree
 @ stub BluetoothSendAuthenticationResponse
-@ stub BluetoothSendAuthenticationResponseEx
+@ stdcall -import BluetoothSendAuthenticationResponseEx(ptr ptr)
 @ stub BluetoothSetLocalServiceInfo
 @ stub BluetoothSetServiceState
 @ stdcall -import BluetoothUnregisterAuthentication(long)

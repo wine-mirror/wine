@@ -867,3 +867,17 @@ BOOL WINAPI BluetoothUnregisterAuthentication( HBLUETOOTH_AUTHENTICATION_REGISTR
     SetLastError( ret );
     return !ret;
 }
+
+static const char *debugstr_BLUETOOTH_AUTHENTICATE_RESPONSE( const BLUETOOTH_AUTHENTICATE_RESPONSE *resp )
+{
+    if (!resp)
+        return wine_dbg_sprintf("(null)");
+    return wine_dbg_sprintf("{ bthAddressRemote: %s, authMethod: %d, negativeResponse: %d }",
+                            debugstr_addr( resp->bthAddressRemote.rgBytes ), resp->authMethod, resp->negativeResponse );
+}
+
+DWORD WINAPI BluetoothSendAuthenticationResponseEx( HANDLE handle_radio, BLUETOOTH_AUTHENTICATE_RESPONSE *auth_response )
+{
+    FIXME( "(%p, %s): stub!\n", handle_radio, debugstr_BLUETOOTH_AUTHENTICATE_RESPONSE( auth_response ) );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
