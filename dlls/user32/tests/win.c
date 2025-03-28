@@ -7805,7 +7805,6 @@ static void test_ShowWindow(void)
             style = GetWindowLongA(hwnd, GWL_STYLE);
             ok(style & WS_MAXIMIZE, "Test %u: window should be maximized.\n", i);
             GetWindowRect(hwnd, &rc);
-            todo_wine_if(test_style[i] & WS_MAXIMIZEBOX)
             ok(EqualRect(&rcMaximized, &rc), "Test %u: expected %s, got %s.\n", i,
                wine_dbgstr_rect(&rcMaximized), wine_dbgstr_rect(&rc));
         }
@@ -8137,7 +8136,6 @@ static void test_ShowWindow_child(HWND hwndMain)
         style = GetWindowLongA(hwnd2, GWL_STYLE);
         ok(style & WS_MAXIMIZE, "window should be maximized.\n");
         GetWindowRect(hwnd2, &rect);
-        todo_wine_if((test_style[i] & WS_CAPTION) == WS_CAPTION && test_style[i] & WS_MAXIMIZEBOX)
         ok(EqualRect(&maximized_rect, &rect), "expected %s, got %s.\n",
            wine_dbgstr_rect(&maximized_rect), wine_dbgstr_rect(&rect));
 

@@ -2690,11 +2690,8 @@ static BOOL get_work_rect( HWND hwnd, RECT *rect )
     *rect = mon_info.rcMonitor;
 
     style = get_window_long( hwnd, GWL_STYLE );
-    if (style & WS_MAXIMIZEBOX)
-    {
-        if ((style & WS_CAPTION) == WS_CAPTION || !(style & (WS_CHILD | WS_POPUP)))
-            *rect = mon_info.rcWork;
-    }
+    if (style & WS_MAXIMIZEBOX && (style & WS_CAPTION) == WS_CAPTION && !(style & WS_CHILD))
+        *rect = mon_info.rcWork;
     return TRUE;
 }
 
