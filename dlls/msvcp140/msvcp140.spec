@@ -175,9 +175,9 @@
 @ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z(ptr ptr long) codecvt_char16_ctor_locinfo
 @ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z(ptr ptr long) codecvt_char16_ctor_locinfo
 @ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z(ptr ptr long) codecvt_char16_ctor_locinfo
-@ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr long long long) codecvt_char16_ctor_mode
-@ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr long long long) codecvt_char16_ctor_mode
-@ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z(ptr long long long) codecvt_char16_ctor_mode
+@ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr ptr long long long) codecvt_char16_ctor_mode
+@ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr ptr long long long) codecvt_char16_ctor_mode
+@ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z(ptr ptr long long long) codecvt_char16_ctor_mode
 @ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z(ptr long) codecvt_char16_ctor_refs
 @ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z(ptr long) codecvt_char16_ctor_refs
 @ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z(ptr long) codecvt_char16_ctor_refs

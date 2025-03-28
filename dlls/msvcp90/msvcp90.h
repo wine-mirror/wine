@@ -194,7 +194,11 @@ _Yarn_wchar* __thiscall _Yarn_wchar_op_assign_cstr(_Yarn_wchar*, const wchar_t*)
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;
+#if _MSVCP_VER >= 110
+    unsigned int refs;
+#else
     size_t refs;
+#endif
 } locale_facet;
 
 typedef enum {
@@ -248,6 +252,8 @@ typedef enum convert_mode
 /* class codecvt<char16> */
 typedef struct {
     codecvt_base base;
+    unsigned int max_code;
+    codecvt_convert_mode convert_mode;
 } codecvt_char16;
 
 /* class codecvt<char32> */

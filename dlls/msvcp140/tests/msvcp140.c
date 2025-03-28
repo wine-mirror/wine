@@ -89,6 +89,8 @@ struct thiscall_thunk
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
+        const void *c, const void *d );
 
 static void init_thiscall_thunk(void)
 {
@@ -101,16 +103,20 @@ static void init_thiscall_thunk(void)
     thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
+    call_thiscall_func5 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,a)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c), (const void*)(d))
 
 #else
 
 #define init_thiscall_thunk()
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
+#define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
 
 #endif /* __i386__ */
 typedef unsigned char MSVCP_bool;
@@ -284,6 +290,40 @@ static int (__cdecl *p__unlink)(const char*);
 
 static BOOLEAN (WINAPI *pCreateSymbolicLinkW)(const WCHAR *, const WCHAR *, DWORD);
 
+typedef void (*vtable_ptr)(void);
+typedef SIZE_T MSVCP_size_t;
+
+/* class locale::facet */
+typedef struct {
+    const vtable_ptr *vtable;
+    unsigned int refs;
+} locale_facet;
+
+/* class codecvt_base */
+typedef struct {
+    locale_facet facet;
+} codecvt_base;
+
+typedef enum convert_mode
+{
+    consume_header = 4,
+    generate_header = 2,
+    little_endian = 1
+} codecvt_convert_mode;
+
+/* class codecvt<char16> */
+typedef struct {
+    codecvt_base base;
+    unsigned int max_code;
+    codecvt_convert_mode convert_mode;
+} codecvt_char16;
+
+static codecvt_char16 *(__thiscall * p_codecvt_char16_ctor)(codecvt_char16 *this);
+static codecvt_char16 *(__thiscall * p_codecvt_char16_ctor_refs)(codecvt_char16 *this, size_t refs);
+static codecvt_char16 * (__thiscall * p_codecvt_char16_ctor_mode)(codecvt_char16 *this, void *locinfo,
+        ULONG max_code, codecvt_convert_mode mode, size_t refs);
+static void (__thiscall * p_codecvt_char16_dtor)(codecvt_char16 *this);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -323,6 +363,10 @@ static BOOL init(void)
 
         SET(p__Fiopen_wchar, "?_Fiopen@std@@YAPEAU_iobuf@@PEB_WHH@Z");
         SET(p__Fiopen, "?_Fiopen@std@@YAPEAU_iobuf@@PEBDHH@Z");
+        SET(p_codecvt_char16_ctor, "??_F?$codecvt@_SDU_Mbstatet@@@std@@QEAAXXZ");
+        SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z");
+        SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z");
+        SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MEAA@XZ");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -336,6 +380,10 @@ static BOOL init(void)
         SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
         SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
         SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAAXXZ");
+        SET(p_codecvt_char16_ctor, "??_F?$codecvt@_SDU_Mbstatet@@@std@@QAAXXZ");
+        SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z");
+        SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z");
+        SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ(ptr)");
 #else
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
         SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z");
@@ -348,6 +396,10 @@ static BOOL init(void)
         SET(p__TaskEventLogger__LogTaskExecutionCompleted, "?_LogTaskExecutionCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
         SET(p__TaskEventLogger__LogWorkItemCompleted, "?_LogWorkItemCompleted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
         SET(p__TaskEventLogger__LogWorkItemStarted, "?_LogWorkItemStarted@_TaskEventLogger@details@Concurrency@@QAEXXZ");
+        SET(p_codecvt_char16_ctor, "??_F?$codecvt@_SDU_Mbstatet@@@std@@QAEXXZ");
+        SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z");
+        SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z");
+        SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAE@XZ");
 #endif
         SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z");
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
@@ -1810,6 +1862,32 @@ static void test__Fiopen(void)
     p_setlocale(LC_ALL, "C");
 }
 
+void test_codecvt_char16(void)
+{
+    codecvt_char16 this;
+
+    memset(&this, 0xcc, sizeof(this));
+    call_func1(p_codecvt_char16_ctor, &this);
+    ok(!this.base.facet.refs, "got %u.\n", this.base.facet.refs);
+    ok(this.convert_mode == consume_header, "got %#x.\n", this.max_code);
+    ok(this.max_code == MAX_UCSCHAR, "got %#x.\n", this.max_code);
+    call_func1(p_codecvt_char16_dtor, &this);
+
+    memset(&this, 0xcc, sizeof(this));
+    call_func2(p_codecvt_char16_ctor_refs, &this, 12);
+    ok(this.base.facet.refs == 12, "got %u.\n", this.base.facet.refs);
+    ok(this.convert_mode == consume_header, "got %#x.\n", this.max_code);
+    ok(this.max_code == MAX_UCSCHAR, "got %#x.\n", this.max_code);
+    call_func1(p_codecvt_char16_dtor, &this);
+
+    memset(&this, 0xcc, sizeof(this));
+    call_func5(p_codecvt_char16_ctor_mode, &this, (void *)0xdeadbeef, 0x55, 0x44, 12);
+    ok(this.base.facet.refs == 12, "got %#x.\n", this.base.facet.refs);
+    ok(this.convert_mode == 0x44, "got %#x.\n", this.convert_mode);
+    ok(this.max_code == 0x55, "got %#x.\n", this.max_code);
+    call_func1(p_codecvt_char16_dtor, &this);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -1839,5 +1917,6 @@ START_TEST(msvcp140)
     test_Copy_file();
     test__Mtx();
     test__Fiopen();
+    test_codecvt_char16();
     FreeLibrary(msvcp);
 }

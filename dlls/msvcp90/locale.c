@@ -4006,6 +4006,22 @@ void __thiscall codecvt_char16__Init(codecvt_char16 *this, const _Locinfo *locin
     FIXME("(%p %p) stub\n", this, locinfo);
 }
 
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_mode, 16)
+codecvt_char16* __thiscall codecvt_char16_ctor_mode(codecvt_char16 *this, const _Locinfo *locinfo,
+        ULONG max_code, codecvt_convert_mode mode, size_t refs)
+{
+    TRACE("(%p %ld %d %Iu)\n", this, max_code, mode, refs);
+
+    codecvt_base_ctor_refs(&this->base, refs);
+    this->base.facet.vtable = &codecvt_char16_vtable;
+    this->convert_mode = mode;
+    this->max_code = max_code;
+    return this;
+}
+
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
@@ -4013,39 +4029,28 @@ DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_locinfo, 12)
 codecvt_char16* __thiscall codecvt_char16_ctor_locinfo(codecvt_char16 *this,
         const _Locinfo *locinfo, size_t refs)
 {
-    FIXME("(%p %p %Iu) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %Iu)\n", this, locinfo, refs);
+    return codecvt_char16_ctor_mode(this, locinfo, MAX_UCSCHAR, consume_header, refs);
 }
 
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z */
 DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_refs, 8)
-codecvt_char* __thiscall codecvt_char16_ctor_refs(codecvt_char16 *this, size_t refs)
+codecvt_char16* __thiscall codecvt_char16_ctor_refs(codecvt_char16 *this, size_t refs)
 {
-    FIXME("(%p %Iu) stub\n", this, refs);
-    return NULL;
-}
-
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z */
-DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_mode, 16)
-codecvt_char16* __thiscall codecvt_char16_ctor_mode(codecvt_char16 *this,
-        ULONG max_code, codecvt_convert_mode mode, size_t refs)
-{
-    FIXME("(%p %ld %d %Iu) stub\n", this, max_code, mode, refs);
-    return NULL;
+    TRACE("(%p %Iu)\n", this, refs);
+    return codecvt_char16_ctor_locinfo(this, NULL, refs);
 }
 
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAAXXZ */
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAEXXZ */
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor, 4)
-codecvt_char* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
+codecvt_char16* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return codecvt_char16_ctor_refs(this, 0);
 }
 
 /* ??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ */
@@ -4054,7 +4059,8 @@ codecvt_char* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
 DEFINE_THISCALL_WRAPPER(codecvt_char16_dtor, 4)
 void __thiscall codecvt_char16_dtor(codecvt_char16 *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    codecvt_base_dtor(&this->base);
 }
 
 DEFINE_THISCALL_WRAPPER(codecvt_char16_vector_dtor, 8)
