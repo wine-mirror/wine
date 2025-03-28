@@ -878,6 +878,72 @@ static const char *debugstr_BLUETOOTH_AUTHENTICATE_RESPONSE( const BLUETOOTH_AUT
 
 DWORD WINAPI BluetoothSendAuthenticationResponseEx( HANDLE handle_radio, BLUETOOTH_AUTHENTICATE_RESPONSE *auth_response )
 {
-    FIXME( "(%p, %s): stub!\n", handle_radio, debugstr_BLUETOOTH_AUTHENTICATE_RESPONSE( auth_response ) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    struct winebth_radio_send_auth_response_params params = {0};
+    DWORD ret, bytes;
+
+    TRACE( "(%p, %s)\n", handle_radio, debugstr_BLUETOOTH_AUTHENTICATE_RESPONSE( auth_response ) );
+
+    if (!auth_response)
+        return ERROR_INVALID_PARAMETER;
+    switch (auth_response->authMethod)
+    {
+    case BLUETOOTH_AUTHENTICATION_METHOD_NUMERIC_COMPARISON:
+        break;
+    case BLUETOOTH_AUTHENTICATION_METHOD_LEGACY:
+    case BLUETOOTH_AUTHENTICATION_METHOD_OOB:
+    case BLUETOOTH_AUTHENTICATION_METHOD_PASSKEY_NOTIFICATION:
+    case BLUETOOTH_AUTHENTICATION_METHOD_PASSKEY:
+        FIXME( "Unsupported authMethod: %d\n", auth_response->authMethod );
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    default:
+        return ERROR_INVALID_PARAMETER;
+    }
+    if (!handle_radio)
+    {
+        HBLUETOOTH_RADIO_FIND radio_find;
+        BLUETOOTH_FIND_RADIO_PARAMS find_params = {.dwSize = sizeof( find_params ) };
+
+        radio_find = BluetoothFindFirstRadio( &find_params, &handle_radio );
+        if (!radio_find)
+            return GetLastError();
+        for(;;)
+        {
+            ret = BluetoothSendAuthenticationResponseEx( handle_radio, auth_response );
+            CloseHandle( handle_radio );
+            if (!ret)
+            {
+                BluetoothFindRadioClose( radio_find );
+                return ERROR_SUCCESS;
+            }
+
+            if (!BluetoothFindNextRadio( radio_find, &handle_radio ))
+            {
+                BluetoothFindRadioClose( radio_find );
+                return ret;
+            }
+        }
+    }
+
+    AcquireSRWLockShared( &bluetooth_auth_lock );
+    if (list_empty( &bluetooth_auth_listeners ))
+    {
+        ret = ERROR_INVALID_PARAMETER;
+        goto done;
+    }
+    params.address = RtlUlonglongByteSwap( auth_response->bthAddressRemote.ullLong ) >> 16;
+    params.method = auth_response->authMethod;
+    params.numeric_value_or_passkey = auth_response->numericCompInfo.NumericValue;
+    params.negative = !!auth_response->negativeResponse;
+
+    if (!DeviceIoControl( handle_radio, IOCTL_WINEBTH_RADIO_SEND_AUTH_RESPONSE, &params, sizeof( params ),
+                          &params, sizeof( params ), &bytes, NULL ))
+    {
+        ret = GetLastError();
+        goto done;
+    }
+    ret = params.authenticated ? ERROR_SUCCESS : ERROR_NOT_AUTHENTICATED;
+
+ done:
+    ReleaseSRWLockShared( &bluetooth_auth_lock );
+    return ret;
 }
