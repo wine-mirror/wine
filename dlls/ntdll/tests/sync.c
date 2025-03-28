@@ -159,12 +159,7 @@ static DWORD WINAPI keyed_event_thread( void *arg )
     UNICODE_STRING str;
     ULONG_PTR i;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &str;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtOpenKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr );
@@ -208,12 +203,7 @@ static void test_keyed_events(void)
         return;
     }
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &str;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS | SYNCHRONIZE, &attr, 0 );

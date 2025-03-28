@@ -182,14 +182,7 @@ static NTSTATUS create_pipe(PHANDLE handle, ULONG access, ULONG sharing, ULONG o
     NTSTATUS res;
 
     pRtlInitUnicodeString(&name, testpipe_nt);
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     timeout.QuadPart = -100000000;
 
     res = pNtCreateNamedPipeFile(handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE | access, &attr, &iosb, sharing,
@@ -265,14 +258,7 @@ static void test_create_invalid(void)
     FILE_PIPE_LOCAL_INFORMATION info;
 
     pRtlInitUnicodeString(&name, testpipe_nt);
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     timeout.QuadPart = -100000000;
 
 /* create a pipe with FILE_OVERWRITE */
@@ -809,14 +795,7 @@ static void test_filepipeinfo(void)
     NTSTATUS res;
 
     pRtlInitUnicodeString(&name, testpipe_nt);
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     timeout.QuadPart = -100000000;
 
     /* test with INVALID_HANDLE_VALUE */
@@ -1752,12 +1731,7 @@ static void test_blocking(ULONG options)
     ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile returned %lx\n", status);
 
     pRtlInitUnicodeString(&name, testpipe_nt);
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtCreateFile(&ctx.client, SYNCHRONIZE | GENERIC_READ | GENERIC_WRITE, &attr, &io,
                           NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
                           options, NULL, 0 );
@@ -2275,14 +2249,7 @@ static HANDLE create_local_info_test_pipe(void)
     NTSTATUS status;
 
     pRtlInitUnicodeString(&name, testpipe_nt);
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     timeout.QuadPart = -100000000;
 
     status = pNtCreateNamedPipeFile(&pipe, FILE_READ_ATTRIBUTES | SYNCHRONIZE | GENERIC_WRITE,
@@ -2351,14 +2318,7 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
 
         /* try to create another, incompatible, instance of pipe */
         pRtlInitUnicodeString(&name, testpipe_nt);
-
-        attr.Length                   = sizeof(attr);
-        attr.RootDirectory            = 0;
-        attr.ObjectName               = &name;
-        attr.Attributes               = OBJ_CASE_INSENSITIVE;
-        attr.SecurityDescriptor       = NULL;
-        attr.SecurityQualityOfService = NULL;
-
+        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
         timeout.QuadPart = -100000000;
 
         status = pNtCreateNamedPipeFile(&new_pipe, FILE_READ_ATTRIBUTES | SYNCHRONIZE | GENERIC_READ,
@@ -2759,15 +2719,8 @@ static void test_empty_name(void)
 
     hpipe = hwrite = NULL;
 
-    attr.Length                   = sizeof(attr);
-    attr.Attributes               = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, 0, NULL );
     pRtlInitUnicodeString(&name, L"\\Device\\NamedPipe");
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &name;
-
     status = NtCreateFile(&hdirectory, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
     ok(!status, "Got unexpected status %#lx.\n", status);

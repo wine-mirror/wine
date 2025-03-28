@@ -1999,14 +1999,7 @@ static void test_type_mismatch(void)
 {
     HANDLE h;
     NTSTATUS res;
-    OBJECT_ATTRIBUTES attr;
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
 
     res = pNtCreateEvent( &h, 0, &attr, NotificationEvent, 0 );
     ok(!res, "can't create event: %lx\n", res);
