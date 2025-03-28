@@ -956,6 +956,21 @@ static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection
 
         return DBUS_HANDLER_RESULT_HANDLED;
     }
+    if (p_dbus_message_is_method_call( message, BLUEZ_INTERFACE_AGENT, "Cancel" ))
+    {
+        pthread_mutex_lock( &ctx->lock );
+        if (ctx->status == BLUEZ_PAIRING_SESSION_INCOMING || ctx->status == BLUEZ_PAIRING_SESSION_PENDING_REPLY)
+        {
+            TRACE( "Cancelling authentication request from device %s\n", debugstr_a( ctx->device->str ) );
+            ctx->status = BLUEZ_PAIRING_SESSION_CANCELLED;
+            unix_name_free( ctx->device );
+            p_dbus_message_unref( ctx->auth_request );
+            p_dbus_connection_free_preallocated_send( ctx->connection, ctx->preallocate_send );
+            p_dbus_connection_unref( ctx->connection );
+        }
+        pthread_mutex_unlock( &ctx->lock );
+        reply = p_dbus_message_new_method_return( message );
+    }
     else
     {
         FIXME( "Unsupported method call: %s\n", debugstr_a( p_dbus_message_get_member( message ) ) );
