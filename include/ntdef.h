@@ -51,6 +51,16 @@ typedef enum _WAIT_TYPE {
 #define NT_WARNING(status)      ((((NTSTATUS)(status)) & 0xc0000000) == 0x80000000)
 #define NT_ERROR(status)        ((((NTSTATUS)(status)) & 0xc0000000) == 0xc0000000)
 
+#define InitializeObjectAttributes(p,n,a,r,s) \
+    do { \
+        (p)->Length = sizeof(OBJECT_ATTRIBUTES); \
+        (p)->RootDirectory = r; \
+        (p)->Attributes = a; \
+        (p)->ObjectName = n; \
+        (p)->SecurityDescriptor = s; \
+        (p)->SecurityQualityOfService = NULL; \
+    } while (0)
+
 #ifndef BASETYPES
 #define BASETYPES
 typedef unsigned char UCHAR, *PUCHAR;

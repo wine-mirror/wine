@@ -5253,16 +5253,6 @@ NTSYSAPI NTSTATUS WINAPI wine_unix_to_nt_file_name( const char *name, WCHAR *buf
  * Inline functions
  */
 
-#define InitializeObjectAttributes(p,n,a,r,s) \
-    do { \
-        (p)->Length = sizeof(OBJECT_ATTRIBUTES); \
-        (p)->RootDirectory = r; \
-        (p)->Attributes = a; \
-        (p)->ObjectName = n; \
-        (p)->SecurityDescriptor = s; \
-        (p)->SecurityQualityOfService = NULL; \
-    } while (0)
-
 #define NtCurrentProcess() ((HANDLE)~(ULONG_PTR)0)
 #define NtCurrentThread()  ((HANDLE)~(ULONG_PTR)1)
 
