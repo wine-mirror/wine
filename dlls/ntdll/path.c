@@ -146,13 +146,7 @@ static BOOL is_valid_directory(LPCWSTR path)
     if (!RtlDosPathNameToNtPathName_U(path, &ntpath, NULL, NULL))
         return FALSE;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &ntpath;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &ntpath, OBJ_CASE_INSENSITIVE, 0, NULL );
     nts = NtOpenFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &io,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                      FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
@@ -964,13 +958,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
         goto out;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &newdir;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &newdir, OBJ_CASE_INSENSITIVE, 0, NULL );
     nts = NtOpenFile( &handle, FILE_TRAVERSE | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                       FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     if (nts != STATUS_SUCCESS) goto out;

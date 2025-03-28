@@ -2677,12 +2677,7 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
 
     if ((*pwm = find_fullname_module( nt_name ))) return STATUS_SUCCESS;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     if ((status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_DELETE,
                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
@@ -3736,13 +3731,7 @@ NTSTATUS WINAPI LdrQueryImageFileExecutionOptions( const UNICODE_STRING *key, LP
     ULONG len;
     WCHAR *p;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &name_str;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &name_str, OBJ_CASE_INSENSITIVE, 0, NULL );
     p = key->Buffer + key->Length / sizeof(WCHAR);
     while (p > key->Buffer && p[-1] != '\\') p--;
     len = key->Length - (p - key->Buffer) * sizeof(WCHAR);
@@ -4146,13 +4135,7 @@ static void load_global_options(void)
     is_prefix_bootstrap =
         RtlQueryEnvironmentVariable_U( NULL, &bootstrap_mode_str, &val_str ) != STATUS_VARIABLE_NOT_FOUND;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &session_manager_str;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &session_manager_str, OBJ_CASE_INSENSITIVE, 0, NULL );
     if (!NtOpenKey( &hkey, KEY_QUERY_VALUE, &attr ))
     {
         query_dword_option( hkey, L"SafeProcessSearchMode", &path_safe_mode );
@@ -4670,12 +4653,7 @@ NTSTATUS WINAPI LdrAddDllDirectory( const UNICODE_STRING *dir, void **cookie )
         return STATUS_NO_MEMORY;
     memcpy( ptr->dir, nt_name.Buffer, len * sizeof(WCHAR) );
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtQueryAttributesFile( &attr, &info );
     RtlFreeUnicodeString( &nt_name );
 

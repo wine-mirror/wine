@@ -204,15 +204,8 @@ void set_native_thread_name( DWORD tid, const char *name )
 
     if (tid != -1)
     {
-        OBJECT_ATTRIBUTES attr;
+        OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
         CLIENT_ID cid;
-
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = 0;
-        attr.Attributes = 0;
-        attr.ObjectName = NULL;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
 
         cid.UniqueProcess = 0;
         cid.UniqueThread = ULongToHandle( tid );

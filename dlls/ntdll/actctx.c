@@ -2931,12 +2931,7 @@ static NTSTATUS open_nt_file( HANDLE *handle, UNICODE_STRING *name )
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, name, OBJ_CASE_INSENSITIVE, 0, NULL );
     return NtOpenFile( handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                        FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_ALERT );
 }
@@ -3033,13 +3028,7 @@ static NTSTATUS get_manifest_in_pe_file( struct actctx_loader* acl, struct assem
 
     TRACE( "looking for res %s in %s\n", debugstr_w(resname), debugstr_w(filename) );
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, NULL, OBJ_CASE_INSENSITIVE, 0, NULL );
     size.QuadPart = 0;
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
                               &attr, &size, PAGE_READONLY, SEC_COMMIT, file );
@@ -3079,13 +3068,7 @@ static NTSTATUS get_manifest_in_manifest_file( struct actctx_loader* acl, struct
 
     TRACE( "loading manifest file %s\n", debugstr_w(filename) );
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = OBJ_CASE_INSENSITIVE | OBJ_OPENIF;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, NULL, OBJ_CASE_INSENSITIVE, 0, NULL );
     size.QuadPart = 0;
     status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ,
                               &attr, &size, PAGE_READONLY, SEC_COMMIT, file );
@@ -3264,14 +3247,7 @@ static NTSTATUS lookup_winsxs(struct actctx_loader* acl, struct assembly_identit
         return STATUS_NO_SUCH_FILE;
     }
     RtlFreeHeap( GetProcessHeap(), 0, path );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &path_us;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &path_us, OBJ_CASE_INSENSITIVE, 0, NULL );
     if (!NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                      FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
     {
