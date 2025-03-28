@@ -8600,21 +8600,15 @@ static void test_ddrawstream_mem_allocator(void)
     hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample1, NULL, NULL, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (sample_mt)
-    {
-        ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555), "Got subtype %s.\n", wine_dbgstr_guid(&sample_mt->subtype));
-        DeleteMediaType(sample_mt);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555), "Got subtype %s.\n", wine_dbgstr_guid(&sample_mt->subtype));
+    DeleteMediaType(sample_mt);
     hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample2, NULL, NULL, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_GetMediaType(media_sample2, &sample_mt);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (sample_mt)
-    {
-        ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555), "Got subtype %s.\n", wine_dbgstr_guid(&sample_mt->subtype));
-        DeleteMediaType(sample_mt);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555), "Got subtype %s.\n", wine_dbgstr_guid(&sample_mt->subtype));
+    DeleteMediaType(sample_mt);
     IMediaSample_Release(media_sample1);
     IMediaSample_Release(media_sample2);
     IDirectDrawStreamSample_Release(ddraw_sample1);
@@ -8684,14 +8678,14 @@ static void test_ddrawstream_set_format_dynamic(void)
     source.query_accept_hr = S_OK;
 
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
             "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
-    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
             "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
 
     format = rgb555_format;
@@ -8711,10 +8705,10 @@ static void test_ddrawstream_set_format_dynamic(void)
     ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(current_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
             "Got rgb bit count %lu.\n", current_format.ddpfPixelFormat.u1.dwRGBBitCount);
-    todo_wine ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
+    ok(desired_format.ddpfPixelFormat.u1.dwRGBBitCount == 16,
             "Got rgb bit count %lu.\n", desired_format.ddpfPixelFormat.u1.dwRGBBitCount);
 
     video_info = rgb555_video_info;
@@ -8740,7 +8734,7 @@ static void test_ddrawstream_set_format_dynamic(void)
     source.query_accept_hr = S_FALSE;
 
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb8_format, NULL);
-    todo_wine ok(hr == DDERR_INVALIDSURFACETYPE, "Got hr %#lx.\n", hr);
+    ok(hr == DDERR_INVALIDSURFACETYPE, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&source.source.pin.mt.subtype, &MEDIASUBTYPE_RGB8),
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     memset(&current_format, 0, sizeof(current_format));
