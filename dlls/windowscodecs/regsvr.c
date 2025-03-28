@@ -1683,6 +1683,7 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat48bppRGB,
     &GUID_WICPixelFormat64bppRGBA,
     &GUID_WICPixelFormat32bppCMYK,
+    &GUID_WICPixelFormat128bppRGBFloat,
     NULL
 };
 
@@ -2460,6 +2461,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         channel_masks_128bit,
         WICPixelFormatNumericRepresentationFloat,
         1
+    },
+    {   &GUID_WICPixelFormat128bppRGBFloat,
+        "The Wine Project",
+        "128bpp RGBFloat",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        128, /* bitsperpixel */
+        3, /* channel count */
+        channel_masks_128bit,
+        WICPixelFormatNumericRepresentationFloat,
+        0
     },
     { NULL }			/* list terminator */
 };

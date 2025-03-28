@@ -101,12 +101,13 @@ static inline float to_sRGB_component(float f)
     return 1.055f * powf(f, 1.0f/2.4f) - 0.055f;
 }
 
-#if 0 /* FIXME: enable once needed */
 static inline float from_sRGB_component(float f)
 {
     if (f <= 0.04045f) return f / 12.92f;
     return powf((f + 0.055f) / 1.055f, 2.4f);
 }
+
+#if 0 /* FIXME: enable once needed */
 
 static void from_sRGB(BYTE *bgr)
 {
@@ -1687,6 +1688,62 @@ static HRESULT copypixels_to_64bppRGBA(struct FormatConverter *This, const WICRe
     }
 }
 
+static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const WICRect *prc,
+    UINT cbStride, UINT cbBufferSize, BYTE *pbBuffer, enum pixelformat source_format)
+{
+    HRESULT hr;
+
+    switch (source_format)
+    {
+    case format_48bppRGB:
+    {
+        UINT srcstride, srcdatasize;
+        const USHORT *srcpixel;
+        const BYTE *srcrow;
+        float *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 6 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = (USHORT *)srcrow;
+                dstpixel= (float *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    *dstpixel++ = from_sRGB_component(*srcpixel++ / 65535.0f);
+                    *dstpixel++ = from_sRGB_component(*srcpixel++ / 65535.0f);
+                    *dstpixel++ = from_sRGB_component(*srcpixel++ / 65535.0f);
+                    *dstpixel++ = 1.0f;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+
+        free(srcdata);
+        return S_OK;
+    }
+    default:
+        FIXME("Unimplemented conversion path %d.\n", source_format);
+        return WINCODEC_ERR_UNSUPPORTEDOPERATION;
+    }
+}
+
 static const struct pixelformatinfo supported_formats[] = {
     {format_1bppIndexed, &GUID_WICPixelFormat1bppIndexed, NULL, TRUE},
     {format_2bppIndexed, &GUID_WICPixelFormat2bppIndexed, NULL, TRUE},
@@ -1722,7 +1779,7 @@ static const struct pixelformatinfo supported_formats[] = {
     {format_96bppRGBFloat, &GUID_WICPixelFormat96bppRGBFloat, NULL},
     {format_128bppRGBAFloat, &GUID_WICPixelFormat128bppRGBAFloat, NULL},
     {format_128bppPRGBAFloat, &GUID_WICPixelFormat128bppPRGBAFloat, NULL},
-    {format_128bppRGBFloat, &GUID_WICPixelFormat128bppRGBFloat, NULL},
+    {format_128bppRGBFloat, &GUID_WICPixelFormat128bppRGBFloat, copypixels_to_128bppRGBFloat },
     {format_32bppR10G10B10A2, &GUID_WICPixelFormat32bppR10G10B10A2, NULL},
     {0}
 };

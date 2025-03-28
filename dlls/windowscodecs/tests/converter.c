@@ -233,7 +233,7 @@ static void DeleteTestBitmap(BitmapTestSrc *This)
 
 static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, const BYTE *converted_bits)
 {
-    BOOL equal;
+    BOOL equal, is_float = FALSE;
 
     if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppBGR))
     {
@@ -248,11 +248,13 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
                 break;
             }
     }
-    else if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppGrayFloat))
+    else if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppGrayFloat)
+            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBFloat))
     {
         UINT i;
         const float *a=(const float*)expect->bits, *b=(const float*)converted_bits;
         equal=TRUE;
+        is_float = TRUE;
         for (i=0; i<(buffersize/4); i++)
             if (!near_equal(a[i], b[i]))
             {
@@ -297,14 +299,28 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
     if (!equal && winetest_debug > 1)
     {
         UINT i, bps;
+
         bps = expect->bpp / 8;
         if (!bps) bps = buffersize;
         printf("converted_bits (%u bytes):\n    ", buffersize);
-        for (i = 0; i < buffersize; i++)
+        if (is_float)
         {
-            printf("%u,", converted_bits[i]);
-            if (!((i + 1) % 32)) printf("\n    ");
-            else if (!((i+1) % bps)) printf(" ");
+            const float *src = (const float *)converted_bits;
+            for (i = 0; i < buffersize / 4; i++)
+            {
+                printf("%f,", src[i]);
+                if (!((i + 1) % 32)) printf("\n    ");
+                else if (!((i+1) % bps)) printf(" ");
+            }
+        }
+        else
+        {
+            for (i = 0; i < buffersize; i++)
+            {
+                printf("%u,", converted_bits[i]);
+                if (!((i + 1) % 32)) printf("\n    ");
+                else if (!((i+1) % bps)) printf(" ");
+            }
         }
         printf("\n");
     }
@@ -649,6 +665,12 @@ static const WORD bits_64bppRGBA_2[] = {
 static const struct bitmap_data testdata_64bppRGBA_2 = {
     &GUID_WICPixelFormat64bppRGBA, 64, (BYTE*)bits_64bppRGBA_2, 3, 2, 96.0, 96.0};
 
+static const float bits_128bppRGBFloat[] = {
+    0.0f,0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f,1.0f, 0.214039f,0.214053f,0.214039f,1.0f,
+    1.0f,1.0f,1.0f,1.0f, 0.000012f,0.000012f,0.000012f,1.0f, 0.0f,0.0f,0.000012f,1.0f,};
+static const struct bitmap_data testdata_128bppRGBFloat = {
+    &GUID_WICPixelFormat128bppRGBFloat, 128, (const BYTE *)bits_128bppRGBFloat, 3, 2, 96.0, 96.0};
+
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
     BitmapTestSrc *src_obj;
@@ -776,7 +798,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
         {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
-        {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 34},
 
         {WIC_PIXEL_FORMAT(32bppCMYK)},
 
@@ -2271,6 +2293,8 @@ START_TEST(converter)
     test_conversion(&testdata_32bppGrayFloat, &testdata_8bppGray, "32bppGrayFloat -> 8bppGray", FALSE);
     test_conversion(&testdata_32bppBGRA, &testdata_16bppBGRA5551, "32bppBGRA -> 16bppBGRA5551", FALSE);
     test_conversion(&testdata_48bppRGB, &testdata_64bppRGBA_2, "48bppRGB -> 64bppRGBA", FALSE);
+
+    test_conversion(&testdata_48bppRGB, &testdata_128bppRGBFloat, "48bppRGB -> 128bppRGBFloat", FALSE);
 
     test_invalid_conversion();
     test_default_converter();
