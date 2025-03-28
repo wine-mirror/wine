@@ -590,6 +590,7 @@
 @ stub RtlCreatePropertySet
 @ stdcall RtlCreateQueryDebugBuffer(long long)
 @ stdcall RtlCreateRegistryKey(long wstr)
+@ stdcall RtlCreateServiceSid(ptr ptr ptr)
 @ stdcall RtlCreateSecurityDescriptor(ptr long)
 # @ stub RtlCreateSystemVolumeInformationFolder
 @ stub RtlCreateTagHeap

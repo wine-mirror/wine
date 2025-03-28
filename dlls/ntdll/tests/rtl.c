@@ -34,6 +34,7 @@
 #include "in6addr.h"
 #include "inaddr.h"
 #include "ip2string.h"
+#include "sddl.h"
 #include "ddk/ntifs.h"
 #include "wine/test.h"
 #include "wine/asm.h"
@@ -127,6 +128,7 @@ static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD
 static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
 static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
 static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
+static NTSTATUS  (WINAPI *pRtlCreateServiceSid)(PUNICODE_STRING, PSID, PULONG);
 static NTSTATUS  (WINAPI *pRtlDeriveCapabilitySidsFromName)(UNICODE_STRING *, PSID, PSID);
 static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
                                                     const UINT64 *client_procsW, ULONG procsW_size,
@@ -194,6 +196,7 @@ static void InitFunctionPtrs(void)
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
+        pRtlCreateServiceSid = (void *)GetProcAddress(hntdll, "RtlCreateServiceSid");
         pRtlDeriveCapabilitySidsFromName = (void *)GetProcAddress(hntdll, "RtlDeriveCapabilitySidsFromName");
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
         pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
@@ -5388,6 +5391,31 @@ static void test_RtlGetElementGenericTable(void)
     }
 }
 
+static void test_RtlCreateServiceSid(void)
+{
+    UNICODE_STRING service_name;
+    SID* service_sid;
+    ULONG service_sid_length = 0;
+    LPWSTR string_sid;
+
+    if (!pRtlCreateServiceSid)
+    {
+        win_skip( "RtlCreateServiceSid is not available.\n" );
+        return;
+    }
+
+    RtlInitUnicodeString( &service_name, L"TestService" );
+    ok( pRtlCreateServiceSid(NULL, NULL, &service_sid_length) == STATUS_INVALID_PARAMETER, "NULL pServiceName is invalid.\n" );
+    ok( pRtlCreateServiceSid(&service_name, NULL, NULL) == STATUS_INVALID_PARAMETER, "NULL pServiceSidLength is invalid.\n" );
+    ok( pRtlCreateServiceSid(&service_name, NULL, &service_sid_length) == STATUS_BUFFER_TOO_SMALL, "SID buffer must be big enough.\n" );
+    ok( service_sid_length != 0, "The length should be written if the buffer is too small" );
+    service_sid = malloc( service_sid_length );
+    ok( pRtlCreateServiceSid(&service_name, service_sid, &service_sid_length) == STATUS_SUCCESS, "The length from the a previous call should be enough.\n" );
+    ConvertSidToStringSidW(service_sid, &string_sid);
+    ok( wcscmp(string_sid, L"S-1-5-80-3892056402-659729507-4115993473-1921682939-1565901394") == 0, "TestService SID is wrong");
+    free(service_sid);
+}
+
 static void test_RtlDeriveCapabilitySidsFromName(void)
 {
     static const SID_IDENTIFIER_AUTHORITY app_authority = { SECURITY_APP_PACKAGE_AUTHORITY };
@@ -5516,5 +5544,6 @@ START_TEST(rtl)
     test_RtlEnumerateGenericTableWithoutSplaying();
     test_RtlEnumerateGenericTable();
     test_RtlGetElementGenericTable();
+    test_RtlCreateServiceSid();
     test_RtlDeriveCapabilitySidsFromName();
 }
