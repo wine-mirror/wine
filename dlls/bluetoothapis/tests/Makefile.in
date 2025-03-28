@@ -1,5 +1,5 @@
 TESTDLL = bluetoothapis.dll
-IMPORTS = bluetoothapis
+IMPORTS = bluetoothapis user32
 
 SOURCES = \
 	device.c \

@@ -23,6 +23,7 @@
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
+#include <winuser.h>
 
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
@@ -235,7 +236,54 @@ static void test_auth_callback_params( int line, const BLUETOOTH_AUTHENTICATION_
 
 static CALLBACK BOOL auth_ex_callback( void *data, BLUETOOTH_AUTHENTICATION_CALLBACK_PARAMS *auth_params )
 {
+    char msg[400];
+
     test_auth_callback_params( __LINE__, auth_params );
+    if (auth_params)
+    {
+        DWORD ret, exp;
+        BLUETOOTH_AUTHENTICATE_RESPONSE resp = {0};
+
+        /* Invalid parameters with an active registration */
+        ret = BluetoothSendAuthenticationResponseEx( NULL, NULL );
+        ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+        resp.bthAddressRemote.ullLong = 0xdeadbeefcafe;
+        ret = BluetoothSendAuthenticationResponseEx( NULL, &resp );
+        ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+        /* Non-existent device. */
+        resp.authMethod = auth_params->authenticationMethod;
+        ret = BluetoothSendAuthenticationResponseEx( NULL, &resp );
+        ok( ret == ERROR_DEVICE_NOT_CONNECTED, "%lu != %d\n", ret, ERROR_DEVICE_NOT_CONNECTED );
+
+        /* Invalid auth method */
+        resp.bthAddressRemote = auth_params->deviceInfo.Address;
+        resp.authMethod = 0xdeadbeef;
+        ret = BluetoothSendAuthenticationResponseEx( NULL, &resp );
+        ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+        resp.authMethod = auth_params->authenticationMethod;
+        resp.numericCompInfo.NumericValue = auth_params->Numeric_Value;
+
+        snprintf( msg, ARRAY_SIZE( msg ), "Accept auth request from %s (address %s, method %d, passkey %lu)?",
+                  debugstr_w( auth_params->deviceInfo.szName ),
+                  debugstr_bluetooth_address( auth_params->deviceInfo.Address.rgBytes ),
+                  auth_params->authenticationMethod, auth_params->Numeric_Value );
+        ret = MessageBoxA( NULL, msg, __FILE__, MB_YESNO );
+        ok( ret, "MessageBoxA failed: %lu\n", GetLastError() );
+
+        resp.negativeResponse = ret != IDYES;
+
+        ret = BluetoothSendAuthenticationResponseEx( NULL, &resp );
+        exp = resp.negativeResponse ? ERROR_NOT_AUTHENTICATED : ERROR_SUCCESS;
+        todo_wine_if( auth_params->authenticationMethod != BLUETOOTH_AUTHENTICATION_METHOD_NUMERIC_COMPARISON )
+            ok( ret == exp, "%lu != %lu\n", ret, exp );
+
+        ret = BluetoothSendAuthenticationResponseEx( NULL, &resp );
+        todo_wine_if( auth_params->authenticationMethod != BLUETOOTH_AUTHENTICATION_METHOD_NUMERIC_COMPARISON )
+            ok( ret == ERROR_NOT_READY, "%lu != %d\n", ret, ERROR_NOT_READY );
+    }
     SetEvent( auth_events[0] );
     return TRUE;
 }
@@ -281,10 +329,38 @@ static void test_BluetoothRegisterForAuthenticationEx( void )
 
     success = BluetoothUnregisterAuthentication( hreg );
     ok( success, "BluetoothUnregisterAuthentication failed: %lu\n", GetLastError() );
-    success = BluetoothUnregisterAuthentication( hreg );
+    success = BluetoothUnregisterAuthentication( hreg2 );
     ok( success, "BluetoothUnregisterAuthentication failed: %lu\n", GetLastError() );
 
     BluetoothEnableDiscovery( NULL, FALSE );
+}
+
+
+static void test_radio_BluetoothSendAuthenticationResponseEx( HANDLE radio , void *data )
+{
+    BLUETOOTH_AUTHENTICATE_RESPONSE resp = {0};
+    DWORD ret;
+
+    ret = BluetoothSendAuthenticationResponseEx( radio, NULL );
+
+    ok( ret == ERROR_INVALID_PARAMETER || (!radio && ret == ERROR_NO_MORE_ITEMS),
+        "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+    ret = BluetoothSendAuthenticationResponseEx( radio, &resp );
+    ok( ret == ERROR_INVALID_PARAMETER || (!radio && ret == ERROR_NO_MORE_ITEMS),
+        "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+    resp.bthAddressRemote.ullLong = 0xdeadbeefcafe;
+    ret = BluetoothSendAuthenticationResponseEx( radio, &resp );
+    ok( ret == ERROR_INVALID_PARAMETER || (!radio && ret == ERROR_NO_MORE_ITEMS),
+        "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+}
+
+/* Test BluetoothSendAuthenticationResponseEx when no authentication registrations exist. */
+static void test_BluetoothSendAuthenticationResponseEx( void )
+{
+    test_radio_BluetoothSendAuthenticationResponseEx( NULL, (void *)__LINE__ );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothSendAuthenticationResponseEx, NULL );
 }
 
 START_TEST( device )
@@ -295,4 +371,5 @@ START_TEST( device )
 
     if (winetest_interactive)
         test_BluetoothRegisterForAuthenticationEx();
+    test_BluetoothSendAuthenticationResponseEx();
 }
