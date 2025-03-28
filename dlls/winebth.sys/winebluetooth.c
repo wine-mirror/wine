@@ -143,6 +143,21 @@ void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t 
     }
 }
 
+NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETOOTH_AUTHENTICATION_METHOD method,
+                                           UINT32 numeric_or_passkey, BOOL negative, BOOL *authenticated )
+{
+    struct bluetooth_auth_send_response_params args = {0};
+
+    TRACE( "device=%p method=%d negative=%d authenticated=%p\n", (void *)device.handle, method, negative, authenticated );
+
+    args.device = device.handle;
+    args.method = method;
+    args.numeric_or_passkey = numeric_or_passkey;
+    args.negative = negative;
+    args.authenticated = authenticated;
+    return UNIX_BLUETOOTH_CALL( bluetooth_auth_send_response, &args );
+}
+
 NTSTATUS winebluetooth_get_event( struct winebluetooth_event *result )
 {
     struct bluetooth_get_event_params params = {0};

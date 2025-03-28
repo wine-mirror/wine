@@ -251,6 +251,51 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_WINEBTH_RADIO_STOP_DISCOVERY:
         status = winebluetooth_radio_stop_discovery( ext->radio );
         break;
+    case IOCTL_WINEBTH_RADIO_SEND_AUTH_RESPONSE:
+    {
+        struct winebth_radio_send_auth_response_params *params = irp->AssociatedIrp.SystemBuffer;
+        struct bluetooth_remote_device *device;
+
+        if (!params)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (insize < sizeof( *params ))
+        {
+            status = STATUS_INVALID_BUFFER_SIZE;
+            break;
+        }
+        if (outsize < sizeof( *params ))
+        {
+            status = STATUS_INVALID_BUFFER_SIZE;
+            break;
+        }
+
+        status = STATUS_DEVICE_NOT_CONNECTED;
+        EnterCriticalSection( &ext->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            BOOL matches;
+            EnterCriticalSection( &device->props_cs );
+            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                      device->props.address.ullLong == params->address;
+            LeaveCriticalSection( &device->props_cs );
+            if (matches)
+            {
+                BOOL authenticated = FALSE;
+                status = winebluetooth_auth_send_response( device->device, params->method,
+                                                           params->numeric_value_or_passkey, params->negative,
+                                                           &authenticated );
+                params->authenticated = !!authenticated;
+                break;
+            }
+        }
+        if (!status)
+            irp->IoStatus.Information = sizeof( *params );
+        LeaveCriticalSection( &ext->remote_devices_cs );
+        break;
+    }
     default:
         FIXME( "Unimplemented IOCTL code: %#lx\n", code );
         break;

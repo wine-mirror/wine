@@ -1138,6 +1138,58 @@ NTSTATUS bluez_auth_agent_request_default( void *connection )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS bluez_auth_agent_send_response( void *auth_agent, struct unix_name *device,
+                                         BLUETOOTH_AUTHENTICATION_METHOD method, UINT32 numeric_or_passkey,
+                                         BOOL negative, BOOL *authenticated )
+{
+    struct bluez_auth_agent_ctx *ctx = auth_agent;
+    NTSTATUS ret;
+
+    TRACE( "auth_agent=%p device=%s negative=%d\n", auth_agent, debugstr_a( device->str ), negative );
+
+    pthread_mutex_lock( &ctx->lock );
+    switch (ctx->status)
+    {
+    case BLUEZ_PAIRING_SESSION_PENDING_REPLY:
+    {
+        DBusMessage *reply;
+        if (device != ctx->device)
+        {
+            ret = STATUS_DEVICE_NOT_CONNECTED;
+            goto done;
+        }
+        if (numeric_or_passkey != ctx->passkey || method != ctx->method)
+            negative = TRUE;
+
+        reply = negative ? p_dbus_message_new_error( ctx->auth_request, "org.bluez.Rejected", "" )
+                         : p_dbus_message_new_method_return( ctx->auth_request );
+        if (!reply)
+        {
+            ret = STATUS_NO_MEMORY;
+            goto done;
+        }
+        p_dbus_connection_send_preallocated( ctx->connection, ctx->preallocate_send, reply, NULL );
+
+        unix_name_free( ctx->device );
+        p_dbus_message_unref( ctx->auth_request );
+        p_dbus_connection_unref( ctx->connection );
+        ctx->status = BLUEZ_PAIRING_SESSION_NONE;
+        *authenticated = !negative;
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    case BLUEZ_PAIRING_SESSION_CANCELLED:
+        ret = STATUS_CANCELLED;
+        break;
+    default:
+        ret = STATUS_DEVICE_NOT_READY;
+        break;
+    }
+done:
+    pthread_mutex_unlock( &ctx->lock );
+    return ret;
+}
+
 struct bluez_watcher_event
 {
     struct list entry;
@@ -2052,5 +2104,11 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
 NTSTATUS bluez_auth_agent_start( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_auth_agent_stop( void *connection, void *ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_auth_agent_request_default( void *connection ) { return STATUS_NOT_SUPPORTED; }
+NTSTATUS bluez_auth_agent_send_response( void *auth_agent, struct unix_name *device,
+                                         BLUETOOTH_AUTHENTICATION_METHOD method, UINT32 numeric_or_passkey,
+                                         BOOL negative, BOOL *authenticated )
+{
+    return STATUS_NOT_SUPPORTED;
+}
 
 #endif /* SONAME_LIBDBUS_1 */

@@ -210,6 +210,9 @@ void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t 
                                               const struct winebluetooth_device_properties *props,
                                               BTH_DEVICE_INFO *info );
 
+NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETOOTH_AUTHENTICATION_METHOD method,
+                                           UINT32 numeric_or_passkey, BOOL negative, BOOL *authenticated );
+
 enum winebluetooth_watcher_event_type
 {
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
