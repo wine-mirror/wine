@@ -956,7 +956,11 @@ static DBusHandlerResult bluez_auth_agent_vtable_message_handler( DBusConnection
 
         return DBUS_HANDLER_RESULT_HANDLED;
     }
-    if (p_dbus_message_is_method_call( message, BLUEZ_INTERFACE_AGENT, "Cancel" ))
+    if (p_dbus_message_is_method_call( message, BLUEZ_INTERFACE_AGENT, "AuthorizeService" ))
+        /* Services are handled by BlueZ and other services, so we can just allow them here, as
+         * this method only gets called for authenticated devices. */
+        reply = p_dbus_message_new_method_return( message );
+    else if (p_dbus_message_is_method_call( message, BLUEZ_INTERFACE_AGENT, "Cancel" ))
     {
         pthread_mutex_lock( &ctx->lock );
         if (ctx->status == BLUEZ_PAIRING_SESSION_INCOMING || ctx->status == BLUEZ_PAIRING_SESSION_PENDING_REPLY)
