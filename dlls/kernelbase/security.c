@@ -148,11 +148,7 @@ static NTSTATUS open_file( LPCWSTR name, DWORD access, HANDLE *file )
     NTSTATUS status;
 
     if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, &file_nameW, NULL, NULL ))) return status;
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &file_nameW;
-    attr.SecurityDescriptor = NULL;
+    InitializeObjectAttributes( &attr, &file_nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtCreateFile( file, access|SYNCHRONIZE, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
                            FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
                            FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );

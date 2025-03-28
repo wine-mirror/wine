@@ -344,13 +344,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenThread( DWORD access, BOOL inherit, DWORD id
     OBJECT_ATTRIBUTES attr;
     CLIENT_ID cid;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = inherit ? OBJ_INHERIT : 0;
-    attr.ObjectName = NULL;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, NULL, inherit ? OBJ_INHERIT : 0, 0, NULL );
     cid.UniqueProcess = 0;
     cid.UniqueThread = ULongToHandle( id );
 

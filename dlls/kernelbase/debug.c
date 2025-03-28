@@ -518,13 +518,7 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     format_exception_msg( epointers, buffer, sizeof(buffer) );
     MESSAGE( "wine: %s (thread %04lx), starting debugger...\n", buffer, GetCurrentThreadId() );
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if (!NtOpenKey( &dbg_key, KEY_READ, &attr ))
     {
         KEY_VALUE_PARTIAL_INFORMATION *info;
@@ -667,12 +661,7 @@ static BOOL start_debugger_atomic( EXCEPTION_POINTERS *epointers )
 	OBJECT_ATTRIBUTES attr;
 	HANDLE event;
 
-	attr.Length                   = sizeof(attr);
-	attr.RootDirectory            = 0;
-	attr.Attributes               = OBJ_INHERIT;
-	attr.ObjectName               = NULL;
-	attr.SecurityDescriptor       = NULL;
-	attr.SecurityQualityOfService = NULL;
+        InitializeObjectAttributes( &attr, NULL, OBJ_INHERIT, 0, NULL );
 
 	/* ask for manual reset, so that once the debugger is started,
 	 * every thread will know it */

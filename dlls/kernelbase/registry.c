@@ -159,12 +159,7 @@ static HANDLE open_wow6432node( HANDLE key )
     OBJECT_ATTRIBUTES attr;
     HANDLE ret;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = key;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &nameW, 0, key, NULL );
     if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED | KEY_WOW64_64KEY, &attr, 0 )) return key;
     return ret;
 }
@@ -176,12 +171,7 @@ static HANDLE open_classes_root( void )
     UNICODE_STRING nameW;
     HANDLE ret = 0;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     RtlInitUnicodeString( &nameW, root_key_names[0] );
     NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 );
     return ret;
@@ -323,13 +313,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
     {
         OBJECT_ATTRIBUTES attr;
 
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = root;
-        attr.ObjectName = name;
-        attr.Attributes = 0;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
-
+        InitializeObjectAttributes( &attr, name, 0, root, NULL );
         if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
         status = NtOpenKeyEx( (HANDLE *)retkey, access, &attr, options );
         if (status == STATUS_PREDEFINED_HANDLE)
@@ -421,12 +405,7 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
     {
         OBJECT_ATTRIBUTES attr;
 
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = root;
-        attr.ObjectName = &name;
-        attr.Attributes = 0;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
+        InitializeObjectAttributes( &attr, &name, 0, root, NULL );
         if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
 
         status = NtCreateKey( (HANDLE *)retkey, access, &attr, 0, class, options, dispos );
@@ -2442,20 +2421,10 @@ LSTATUS WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 
     if (!(hkey = get_special_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
 
-    destkey.Length = sizeof(destkey);
-    destkey.RootDirectory = hkey;               /* root key: HKLM or HKU */
-    destkey.ObjectName = &subkeyW;              /* name of the key */
-    destkey.Attributes = 0;
-    destkey.SecurityDescriptor = NULL;
-    destkey.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &destkey, &subkeyW, 0, hkey, NULL );
     RtlInitUnicodeString(&subkeyW, subkey);
 
-    file.Length = sizeof(file);
-    file.RootDirectory = NULL;
-    file.ObjectName = &filenameW;               /* file containing the hive */
-    file.Attributes = OBJ_CASE_INSENSITIVE;
-    file.SecurityDescriptor = NULL;
-    file.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &file, &filenameW, OBJ_CASE_INSENSITIVE, 0, NULL );
     if (!RtlDosPathNameToNtPathName_U(filename, &filenameW, NULL, NULL))
         return ERROR_INVALID_PARAMETER;
 
