@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <locale.h>
 #include <share.h>
+#include <uchar.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -91,6 +92,8 @@ static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
 static void * (WINAPI *call_thiscall_func5)( void *func, void *this, const void *a, const void *b,
         const void *c, const void *d );
+static void * (WINAPI *call_thiscall_func8)( void *func, void *this, const void *a, const void *b,
+        const void *c, const void *d, const void *e, const void *f, const void *g );
 
 static void init_thiscall_thunk(void)
 {
@@ -104,12 +107,15 @@ static void init_thiscall_thunk(void)
     call_thiscall_func1 = (void *)thunk;
     call_thiscall_func2 = (void *)thunk;
     call_thiscall_func5 = (void *)thunk;
+    call_thiscall_func8 = (void *)thunk;
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
 #define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
 #define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),(const void*)(b), \
         (const void*)(c), (const void*)(d))
+#define call_func8(func,_this,a,b,c,d,e,f,g) call_thiscall_func8(func,_this,(const void*)(a),(const void*)(b), \
+        (const void*)(c), (const void*)(d), (const void*)(e), (const void*)(f), (const void*)(g))
 
 #else
 
@@ -117,6 +123,7 @@ static void init_thiscall_thunk(void)
 #define call_func1(func,_this) func(_this)
 #define call_func2(func,_this,a) func(_this,a)
 #define call_func5(func,_this,a,b,c,d) func(_this,a,b,c,d)
+#define call_func8(func,_this,a,b,c,d,e,f,g) func(_this,a,b,c,d,e,f,g)
 
 #endif /* __i386__ */
 typedef unsigned char MSVCP_bool;
@@ -318,11 +325,26 @@ typedef struct {
     codecvt_convert_mode convert_mode;
 } codecvt_char16;
 
+typedef struct {
+    int wchar;
+    unsigned short byte, state;
+} _Mbstatet;
+
+typedef enum {
+    CODECVT_ok      = 0,
+    CODECVT_partial = 1,
+    CODECVT_error   = 2,
+    CODECVT_noconv  = 3
+} codecvt_base_result;
+
 static codecvt_char16 *(__thiscall * p_codecvt_char16_ctor)(codecvt_char16 *this);
 static codecvt_char16 *(__thiscall * p_codecvt_char16_ctor_refs)(codecvt_char16 *this, size_t refs);
 static codecvt_char16 * (__thiscall * p_codecvt_char16_ctor_mode)(codecvt_char16 *this, void *locinfo,
         ULONG max_code, codecvt_convert_mode mode, size_t refs);
 static void (__thiscall * p_codecvt_char16_dtor)(codecvt_char16 *this);
+static int (__thiscall * p_codecvt_char16_do_out)(const codecvt_char16 *this, _Mbstatet *state,
+        const char16_t *from, const char16_t *from_end, const char16_t **from_next,
+        char *to, char *to_end, char **to_next);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -367,6 +389,7 @@ static BOOL init(void)
         SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z");
         SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z");
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MEAA@XZ");
+        SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MEBAHAEAU_Mbstatet@@PEB_S1AEAPEB_SPEAD3AEAPEAD@Z");
     } else {
 #ifdef __arm__
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAA@XZ");
@@ -384,6 +407,7 @@ static BOOL init(void)
         SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z");
         SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z");
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ(ptr)");
+        SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z");
 #else
         SET(p_task_continuation_context_ctor, "??0task_continuation_context@Concurrency@@AAE@XZ");
         SET(p__ContextCallback__Assign, "?_Assign@_ContextCallback@details@Concurrency@@AAEXPAX@Z");
@@ -400,6 +424,7 @@ static BOOL init(void)
         SET(p_codecvt_char16_ctor_refs, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z");
         SET(p_codecvt_char16_ctor_mode, "??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z");
         SET(p_codecvt_char16_dtor, "??1?$codecvt@_SDU_Mbstatet@@@std@@MAE@XZ");
+        SET(p_codecvt_char16_do_out, "?do_out@?$codecvt@_SDU_Mbstatet@@@std@@MBEHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z");
 #endif
         SET(p__Schedule_chore, "?_Schedule_chore@details@Concurrency@@YAHPAU_Threadpool_chore@12@@Z");
         SET(p__Reschedule_chore, "?_Reschedule_chore@details@Concurrency@@YAHPBU_Threadpool_chore@12@@Z");
@@ -1862,9 +1887,42 @@ static void test__Fiopen(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static const char bom_header[] = { 0xef, 0xbb, 0xbf };
+
 void test_codecvt_char16(void)
 {
+    static const struct
+    {
+        const WCHAR *wstr;
+        const char *str;
+        int short_output;
+    }
+    tests[] =
+    {
+        { L"\xfeff", "\xef\xbb\xbf" },
+        { L"\xfffe", "\xef\xbf\xbe" },
+        { L"\xfeff""a", "\xef\xbb\xbf""a", 1 },
+        { L"abc", "abc", 1 },
+        { L"\x2a8", "\xca\xa8" },
+        { L"\xd83d\xdcd8\xd83d\xde79", "\xf0\x9f\x93\x98\xf0\x9f\x99\xb9", 3 },
+        { L"\x08a4", "\xe0\xa2\xa4", },
+        { L"\x01a7", "\xc6\xa7", },
+        { L"\x01a7\x08a4", "\xc6\xa7\xe0\xa2\xa4", 3},
+    };
+    static DWORD test_flags[] =
+    {
+        0,
+        consume_header,
+        generate_header,
+        consume_header | generate_header,
+    };
+    char16_t str16[16], *str16_ptr = NULL;
+    char buffer[256], *str_ptr = NULL;
     codecvt_char16 this;
+    unsigned int i, j, len, wlen;
+    char str[16], expect_str[16];
+    _Mbstatet state;
+    int ret;
 
     memset(&this, 0xcc, sizeof(this));
     call_func1(p_codecvt_char16_ctor, &this);
@@ -1881,11 +1939,202 @@ void test_codecvt_char16(void)
     call_func1(p_codecvt_char16_dtor, &this);
 
     memset(&this, 0xcc, sizeof(this));
-    call_func5(p_codecvt_char16_ctor_mode, &this, (void *)0xdeadbeef, 0x55, 0x44, 12);
+    call_func5(p_codecvt_char16_ctor_mode, &this, (void *)0xdeadbeef, 0xffffffff, 0x44, 12);
     ok(this.base.facet.refs == 12, "got %#x.\n", this.base.facet.refs);
     ok(this.convert_mode == 0x44, "got %#x.\n", this.convert_mode);
-    ok(this.max_code == 0x55, "got %#x.\n", this.max_code);
+    ok(this.max_code == 0xffffffff, "got %#x.\n", this.max_code);
     call_func1(p_codecvt_char16_dtor, &this);
+
+    for (j = 0; j < ARRAY_SIZE(test_flags); ++j)
+    {
+        winetest_push_context("flags %#lx", test_flags[j]);
+        memset(buffer, 0xcc, sizeof(buffer));
+        call_func5(p_codecvt_char16_ctor_mode, &this, (void *)0xdeadbeef, MAX_UCSCHAR, test_flags[j], 0);
+
+        str16[0] = 'a';
+        memset(&state, 0, sizeof(state));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str, &str_ptr);
+        ok(ret == CODECVT_partial, "got %d.\n", ret);
+        ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+        ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+        ok(state.wchar == 0, "got %#x.\n", state.wchar);
+
+        memset(&state, 0, sizeof(state));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16, (const char16_t **)&str16_ptr, str,
+                str, &str_ptr);
+        ok(ret == CODECVT_partial, "got %d.\n", ret);
+        ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+        ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+        ok(state.wchar == 0, "got %#x.\n", state.wchar);
+
+        wcscpy(str16, L"\xd83d\xdcd8\xd83d\xde79");
+
+        memset(&state, 0, sizeof(state));
+        memset(str, 0, sizeof(str));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str + 1, &str_ptr);
+        if (test_flags[j] & generate_header)
+        {
+            ok(ret == CODECVT_partial, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+            ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0, "got %#x.\n", state.wchar);
+        }
+        else
+        {
+            ok(ret == CODECVT_ok, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 1, "got %Id.\n", str16_ptr - str16);
+            ok(!strcmp(str, "\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 1, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0x7d, "got %#x.\n", state.wchar);
+        }
+
+        memset(&state, 0, sizeof(state));
+        memset(str, 0, sizeof(str));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str + 2, &str_ptr);
+        if (test_flags[j] & generate_header)
+        {
+            ok(ret == CODECVT_partial, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+            ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0, "got %#x.\n", state.wchar);
+        }
+        else
+        {
+            ok(ret == CODECVT_ok, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 1, "got %Id.\n", str16_ptr - str16);
+            ok(!strcmp(str, "\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 1, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0x7d, "got %#x.\n", state.wchar);
+        }
+
+        memset(&state, 0, sizeof(state));
+        memset(str, 0, sizeof(str));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str + 3, &str_ptr);
+        if (test_flags[j] & generate_header)
+        {
+            ok(ret == CODECVT_partial, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+            ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0, "got %#x.\n", state.wchar);
+        }
+        else
+        {
+            ok(ret == CODECVT_ok, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 1, "got %Id.\n", str16_ptr - str16);
+            ok(!strcmp(str, "\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 1, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0x7d, "got %#x.\n", state.wchar);
+        }
+
+        memset(&state, 0, sizeof(state));
+        memset(str, 0, sizeof(str));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str + 4, &str_ptr);
+        ok(ret == CODECVT_ok, "got %d.\n", ret);
+        ok(str16_ptr - str16 == 1, "got %Id.\n", str16_ptr - str16);
+        if (test_flags[j] & generate_header)
+        {
+            ok(!strcmp(str, "\xef\xbb\xbf\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 4, "got %Id.\n", str_ptr - str);
+        }
+        else
+        {
+            ok(!strcmp(str, "\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 1, "got %Id.\n", str_ptr - str);
+        }
+        ok(state.wchar == 0x7d, "got %#x.\n", state.wchar);
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16_ptr, str16 + wcslen(str16),
+                (const char16_t **)&str16_ptr, str, str + 8, &str_ptr);
+        ok(ret == CODECVT_ok, "got %d.\n", ret);
+        ok(str16_ptr - str16 == 4, "got %Id.\n", str16_ptr - str16);
+        ok(str_ptr - str == 7, "got %Id.\n", str_ptr - str);
+        ok(!strcmp(str, "\x9f\x93\x98\xf0\x9f\x99\xb9"), "got %s.\n", debugstr_a(str));
+        ok(state.wchar == 1, "got %#x.\n", state.wchar);
+
+        memset(&state, 0, sizeof(state));
+        memset(str, 0, sizeof(str));
+        ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + 1, (const char16_t **)&str16_ptr,
+                str, str + 3, &str_ptr);
+        if (test_flags[j] & generate_header)
+        {
+            ok(ret == CODECVT_partial, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 0, "got %Id.\n", str16_ptr - str16);
+            ok(str_ptr - str == 0, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0, "got %#x.\n", state.wchar);
+        }
+        else
+        {
+            ok(ret == CODECVT_ok, "got %d.\n", ret);
+            ok(str16_ptr - str16 == 1, "got %Id.\n", str16_ptr - str16);
+            ok(!strcmp(str, "\xf0"), "got %s.\n", debugstr_a(str));
+            ok(str_ptr - str == 1, "got %Id.\n", str_ptr - str);
+            ok(state.wchar == 0x7d, "got %#x.\n", state.wchar);
+        }
+
+        for (i = 0; i < ARRAY_SIZE(tests); ++i)
+        {
+            winetest_push_context("test %u", i);
+            wcscpy(str16, tests[i].wstr);
+            wlen = wcslen(str16);
+            len = strlen(tests[i].str);
+            memset(&state, 0, sizeof(state));
+            if (test_flags[j] & generate_header)
+            {
+                ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + wlen,
+                        (const char16_t **)&str16_ptr, str, str + len + 3, &str_ptr);
+                ok(ret == CODECVT_ok, "got %d.\n", ret);
+                ok(str16_ptr - str16 == wlen, "got %Id, expected %u.\n", str16_ptr - str16, wlen);
+                ok(str_ptr - str == len + 3, "got %Id, expected %u.\n", str_ptr - str, len + 3);
+                memcpy(expect_str, bom_header, sizeof(bom_header));
+                strcpy(expect_str + sizeof(bom_header), tests[i].str);
+                ok(!strncmp(str, expect_str, len + 3), "got %s, expected %s.\n", debugstr_an(str, len),
+                        debugstr_an(expect_str, len + 3));
+
+                memset(&state, 0, sizeof(state));
+                ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + wlen,
+                        (const char16_t **)&str16_ptr, str, str + 2, &str_ptr);
+                ok(ret == CODECVT_partial, "got %d.\n", ret);
+                ok(str16_ptr - str16 == 0, "got %Id, expected %u.\n", str16_ptr - str16, 0);
+                ok(str_ptr - str == 0, "got %Id, expected %u.\n", str_ptr - str, 0);
+            }
+            else
+            {
+                ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + wlen,
+                        (const char16_t **)&str16_ptr, str, str + len, &str_ptr);
+                ok(ret == CODECVT_ok, "got %d.\n", ret);
+                ok(str16_ptr - str16 == wlen, "got %Id, expected %u.\n", str16_ptr - str16, wlen);
+                ok(str_ptr - str == len, "got %Id, expected %u.\n", str_ptr - str, len);
+                ok(!strncmp(str, tests[i].str, len), "got %s, expected %s.\n",
+                        debugstr_an(str, len), debugstr_an(tests[i].str, len));
+
+                ret = (int)call_func8(p_codecvt_char16_do_out, &this, &state, str16, str16 + wlen,
+                        (const char16_t **)&str16_ptr, str, str + len - 1, &str_ptr);
+                if (tests[i].short_output)
+                {
+                    ok(ret == CODECVT_ok, "got %d.\n", ret);
+                    ok(str16_ptr - str16 == wlen - 1, "got %Id, expected %u.\n", str16_ptr - str16, wlen - 1);
+                    ok(str_ptr - str == len - tests[i].short_output, "got %Id, expected %u.\n",
+                            str_ptr - str, len - tests[i].short_output);
+                    ok(!strncmp(str, tests[i].str, len - 1), "got %s, expected %s.\n",
+                            debugstr_an(str, len - 1), debugstr_an(tests[i].str, len - 1));
+                }
+                else
+                {
+                    ok(ret == CODECVT_partial, "got %d.\n", ret);
+                    ok(str16_ptr - str16 == 0, "got %Id, expected %u.\n", str16_ptr - str16, 0);
+                    ok(str_ptr - str == 0, "got %Id, expected %u.\n", str_ptr - str, 0);
+                }
+            }
+
+            winetest_pop_context();
+        }
+        call_func1(p_codecvt_char16_dtor, &this);
+        winetest_pop_context();
+    }
 }
 
 START_TEST(msvcp140)

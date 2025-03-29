@@ -4193,9 +4193,91 @@ int __thiscall codecvt_char16_do_out(const codecvt_char16 *this, _Mbstatet *stat
         const char16_t *from, const char16_t *from_end, const char16_t **from_next,
         char *to, char *to_end, char **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    static const char bom_header[] = { 0xef, 0xbb, 0xbf };
+    unsigned int ch, out_len;
+    BOOL surrogate;
+
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    if (this->convert_mode & ~(generate_header | consume_header))
+        FIXME("convert_mode %#x.\n", this->convert_mode);
+
+    *from_next = from;
+    *to_next = to;
+
+    while(*from_next != from_end && *to_next != to_end)
+    {
+        surrogate = FALSE;
+
+        if ((ch = MBSTATET_TO_INT(state)) & ~1)
+        {
+            if (!IS_LOW_SURROGATE(**from_next))
+                return CODECVT_error;
+            ch = (ch << 10) + (**from_next & 0x3ff);
+        }
+        else if (IS_HIGH_SURROGATE(**from_next))
+        {
+            surrogate = TRUE;
+            ch = 0x10000 + ((**from_next & 0x3ff) << 10);
+        }
+        else
+        {
+            ch = **from_next;
+        }
+
+        if (ch < 0x80 || surrogate)
+            out_len = 1;
+        else if (ch < 0x800)
+            out_len = 2;
+        else
+            out_len = 3;
+
+        if (this->convert_mode & generate_header && !MBSTATET_TO_INT(state))
+        {
+            if (out_len + sizeof(bom_header) > to_end - *to_next)
+                break;
+            memcpy(*to_next, bom_header, sizeof(bom_header));
+            *to_next += sizeof(bom_header);
+        }
+        else if (out_len > to_end - *to_next)
+            break;
+
+        ++*from_next;
+        if (surrogate)
+        {
+            MBSTATET_TO_INT(state) = ((ch - 0x10000) >> 10) + 0x40;
+            *(*to_next)++ = 0xf0 | (ch >> 18);
+            continue;
+        }
+        if (ch < 0x80)
+        {
+            *(*to_next)++ = ch;
+        }
+        else if (ch < 0x800)
+        {
+            *(*to_next)++ = 0xc0 | (ch >> 6);
+            *(*to_next)++ = 0x80 |  (ch & 0x3f);
+        }
+        else if (ch < 0x10000)
+        {
+            *(*to_next)++ = 0xe0 | (ch >> 12);
+            *(*to_next)++ = 0x80 | ((ch >> 6) & 0x3f);
+            *(*to_next)++ = 0x80 | (ch & 0x3f);
+        }
+        else
+        {
+            *(*to_next)++ = 0x80 | ((ch >> 12) & 0x3f);
+            *(*to_next)++ = 0x80 | ((ch >> 6) & 0x3f);
+            *(*to_next)++ = 0x80 | (ch & 0x3f);
+        }
+        MBSTATET_TO_INT(state) = 1;
+    }
+
+    if (*from_next != from)
+        return CODECVT_ok;
+
+    return CODECVT_partial;
 }
 
 /* ?out@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
