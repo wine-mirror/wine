@@ -3315,7 +3315,7 @@ static void test_SetWindowPos(HWND hwnd, HWND hwnd2)
     ret = SetWindowPos(hwnd_child, NULL, 0, 0, 0, 0, SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
     ok(ret, "Got %d\n", ret);
     flush_events( TRUE );
-    flaky todo_wine check_active_state(hwnd2, hwnd2, hwnd2);
+    flaky check_active_state(hwnd2, hwnd2, hwnd2);
     DestroyWindow(hwnd_child);
 }
 

@@ -650,23 +650,25 @@ static void set_input_focus( struct x11drv_win_data *data )
 /**********************************************************************
  *              set_focus
  */
-static void set_focus( Display *display, HWND hwnd, Time time )
+static void set_focus( Display *display, HWND focus, Time time )
 {
-    HWND focus;
     Window win;
     GUITHREADINFO threadinfo;
 
-    TRACE( "setting foreground window to %p\n", hwnd );
-    NtUserSetForegroundWindow( hwnd );
+    TRACE( "setting foreground window to %p\n", focus );
 
-    threadinfo.cbSize = sizeof(threadinfo);
-    NtUserGetGUIThreadInfo( 0, &threadinfo );
-    focus = threadinfo.hwndFocus;
-    if (!focus) focus = threadinfo.hwndActive;
-    if (focus) focus = NtUserGetAncestor( focus, GA_ROOT );
-    win = X11DRV_get_whole_window(focus);
+    if (!is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) ))
+    {
+        NtUserSetForegroundWindow( focus );
 
-    if (win)
+        threadinfo.cbSize = sizeof(threadinfo);
+        NtUserGetGUIThreadInfo( 0, &threadinfo );
+        focus = threadinfo.hwndFocus;
+        if (!focus) focus = threadinfo.hwndActive;
+        if (focus) focus = NtUserGetAncestor( focus, GA_ROOT );
+    }
+
+    if ((win = X11DRV_get_whole_window( focus )))
     {
         TRACE( "setting focus to %p (%lx) time=%ld\n", focus, win, time );
         XSetInputFocus( display, win, RevertToParent, time );
@@ -909,7 +911,7 @@ static void focus_out( Display *display , HWND hwnd )
     /* don't reset the foreground window, if the window which is
        getting the focus is a Wine window */
 
-    if (!is_current_process_focused())
+    if (!is_net_supported( x11drv_atom(_NET_ACTIVE_WINDOW) ) && !is_current_process_focused())
     {
         /* Abey : 6-Oct-99. Check again if the focus out window is the
            Foreground window, because in most cases the messages sent
@@ -1222,12 +1224,15 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event )
 {
     struct x11drv_win_data *data;
     UINT value = 0;
+    BOOL activate;
 
     if (!(data = get_win_data( hwnd ))) return;
     if (event->state == PropertyNewValue) value = get_window_wm_state( event->display, event->window );
     window_wm_state_notify( data, event->serial, value, event->time );
+    activate = value == NormalState && !data->wm_state_serial && data->current_state.activate;
     release_win_data( data );
 
+    if (hwnd == NtUserGetForegroundWindow() && activate) set_net_active_window( hwnd, 0 );
     NtUserPostMessage( hwnd, WM_WINE_WINDOW_STATE_CHANGED, 0, 0 );
 }
 
@@ -1304,6 +1309,9 @@ static BOOL X11DRV_PropertyNotify( HWND hwnd, XEvent *xev )
 void X11DRV_ActivateWindow( HWND hwnd, HWND previous )
 {
     struct x11drv_win_data *data;
+
+    set_net_active_window( hwnd, previous );
+
     if (!(data = get_win_data( hwnd ))) return;
     if (!data->managed || data->embedder) set_input_focus( data );
     release_win_data( data );
