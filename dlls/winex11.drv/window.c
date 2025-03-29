@@ -1433,7 +1433,7 @@ static void window_set_wm_state( struct x11drv_win_data *data, UINT new_state )
         break;
     }
 
-    if (new_state == NormalState) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)-1 );
+    if (new_state == NormalState && data->managed) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)-1 );
 
     data->pending_state.wm_state = new_state;
     data->wm_state_serial = NextRequest( data->display );
