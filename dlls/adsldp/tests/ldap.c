@@ -447,6 +447,7 @@ static void test_DirectorySearch(void)
 
             hr = IDirectorySearch_FreeColumn(ds, &col);
             ok(hr == S_OK, "got %#lx\n", hr);
+            FreeADsMem(name);
         }
 
         name = (void *)0xdeadbeef;
