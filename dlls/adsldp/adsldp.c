@@ -1459,6 +1459,7 @@ exit:
         return S_ADS_NOMORE_ROWS;
 
     ldap_ctx->pos++;
+    if (ldap_ctx->ber) ber_free(ldap_ctx->ber, 0);
     ldap_ctx->ber = NULL;
 
     return S_OK;
