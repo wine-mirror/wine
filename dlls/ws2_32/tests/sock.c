@@ -3721,7 +3721,8 @@ static void test_WSASocket(void)
     sock = WSASocketA(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM, NULL, 0, 0);
     if (sock == INVALID_SOCKET)
     {
-        ok(WSAGetLastError() == WSAEAFNOSUPPORT, "got error %d\n", WSAGetLastError());
+        err = WSAGetLastError();
+        ok(err == WSAEAFNOSUPPORT || err == WSAEPROTONOSUPPORT, "got error %d\n", err);
         skip("Bluetooth is not supported\n");
     }
     else
