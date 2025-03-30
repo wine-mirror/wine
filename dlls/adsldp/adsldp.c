@@ -1366,6 +1366,8 @@ static HRESULT WINAPI search_ExecuteSearch(IDirectorySearch *iface, LPWSTR filte
     if (err != LDAP_SUCCESS)
     {
         TRACE("ldap_search_sW error %#lx\n", err);
+        if (ldap_ctx->res)
+            ldap_msgfree(ldap_ctx->res);
         if (ldap_ctx->page)
             ldap_search_abandon_page(ldap->ld, ldap_ctx->page);
         free(ldap_ctx);
