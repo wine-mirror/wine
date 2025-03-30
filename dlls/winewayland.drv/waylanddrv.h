@@ -120,7 +120,7 @@ struct wayland_text_input
     WCHAR *preedit_string;
     DWORD preedit_cursor_pos;
     WCHAR *commit_string;
-    struct wl_surface *wl_surface;
+    HWND focused_hwnd;
     pthread_mutex_t mutex;
 };
 

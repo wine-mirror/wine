@@ -204,6 +204,11 @@ void wayland_surface_destroy(struct wayland_surface *surface)
         process_wayland.keyboard.focused_hwnd = NULL;
     pthread_mutex_unlock(&process_wayland.keyboard.mutex);
 
+    pthread_mutex_lock(&process_wayland.text_input.mutex);
+    if (process_wayland.text_input.focused_hwnd == surface->hwnd)
+        process_wayland.text_input.focused_hwnd = NULL;
+    pthread_mutex_unlock(&process_wayland.text_input.mutex);
+
     wayland_surface_clear_role(surface);
 
     if (surface->wp_viewport)
