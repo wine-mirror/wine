@@ -275,12 +275,12 @@ static HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, 
         pkrect.Width = This->frame.width;
         pkrect.Height = This->frame.height;
         This->frame_stride = (This->frame.width * This->frame.bpp + 7) / 8;
-        if (!(frame_data = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, This->frame.height * This->frame_stride)))
+        if (!(frame_data = calloc(This->frame.height, This->frame_stride)))
             return E_FAIL;
         if (This->decoder->Copy(This->decoder, &pkrect, frame_data, stride))
         {
             ERR("Failed to copy frame data!\n");
-            RtlFreeHeap(GetProcessHeap(), 0, frame_data);
+            free(frame_data);
             return E_FAIL;
         }
 
@@ -319,14 +319,14 @@ static HRESULT CDECL wmp_decoder_get_color_context(struct decoder* iface, UINT f
     }
     *datasize = count;
 
-    bytes = RtlAllocateHeap(GetProcessHeap(), 0, count);
+    bytes = malloc(count);
     if (!bytes)
         return E_OUTOFMEMORY;
 
     if (This->decoder->GetColorContext(This->decoder, bytes, &count))
     {
         ERR("Failed to get frame color context!\n");
-        RtlFreeHeap(GetProcessHeap(), 0, bytes);
+        free(bytes);
         return E_FAIL;
     }
 
@@ -341,8 +341,8 @@ static void CDECL wmp_decoder_destroy(struct decoder* iface)
     TRACE("iface %p\n", iface);
 
     This->decoder->Release(&This->decoder);
-    RtlFreeHeap(GetProcessHeap(), 0, This->frame_data);
-    RtlFreeHeap(GetProcessHeap(), 0, This);
+    free(This->frame_data);
+    free(This);
 }
 
 static const struct decoder_funcs wmp_decoder_vtable = {
@@ -361,7 +361,7 @@ HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **res
     PKImageDecode *decoder;
 
     if (PKImageDecode_Create_WMP(&decoder)) return E_FAIL;
-    This = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if (!This)
     {
         decoder->Release(&decoder);
@@ -377,10 +377,6 @@ HRESULT CDECL wmp_decoder_create(struct decoder_info *info, struct decoder **res
     This->WMPStream_iface.GetPos = &wmp_stream_GetPos;
 
     This->decoder = decoder;
-    This->stream = NULL;
-    memset(&This->frame, 0, sizeof(This->frame));
-    This->frame_stride = 0;
-    This->frame_data = NULL;
 
     *result = &This->decoder_iface;
 
