@@ -2074,11 +2074,16 @@ static void test_BCryptDecrypt(void)
 
 static void test_key_import_export(void)
 {
+    static const UCHAR encrypted_blob[24] = {0xa9,0x4b,
+        0x2a,0x67,0x52,0x56,0x29,0xed,0xe2,0x87,0x48,0x34,0x50,
+        0xa8,0x8f,0xdf,0x98,0xa1,0x3e,0xb1,0x16,0x7f,0x1c,0xf1 };
     UCHAR buffer1[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16];
     UCHAR buffer2[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16], *buf;
+    UCHAR buffer3[16 + 8];
     BCRYPT_KEY_DATA_BLOB_HEADER *key_data1 = (void*)buffer1;
+    BCRYPT_KEY_DATA_BLOB_HEADER *key_data2 = (void*)buffer2;
     BCRYPT_ALG_HANDLE aes;
-    BCRYPT_KEY_HANDLE key;
+    BCRYPT_KEY_HANDLE key, key2, key3;
     NTSTATUS ret;
     ULONG size;
 
@@ -2094,6 +2099,48 @@ static void test_key_import_export(void)
     ret = BCryptImportKey(aes, NULL, BCRYPT_KEY_DATA_BLOB, &key, NULL, 0, buffer1, sizeof(buffer1), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(key != NULL, "key not set\n");
+
+    key_data2->dwMagic = BCRYPT_KEY_DATA_BLOB_MAGIC;
+    key_data2->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
+    key_data2->cbKeyData = 16;
+    memset(&key_data2[1], 0x22, 16);
+    key2 = NULL;
+    ret = BCryptImportKey(aes, NULL, BCRYPT_KEY_DATA_BLOB, &key2, NULL, 0, buffer2, sizeof(buffer2), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    ok(key2 != NULL, "key not set\n");
+
+    size = 0;
+    ret = BCryptExportKey(key, key2, BCRYPT_AES_WRAP_KEY_BLOB, NULL, 0, &size, 0);
+    todo_wine
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
+    ok(size == sizeof(buffer3), "got %lu\n", size);
+
+    ret = BCryptExportKey(key, key2, BCRYPT_AES_WRAP_KEY_BLOB, buffer3, size, &size, 0);
+    todo_wine
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
+    ok(!memcmp(buffer3, encrypted_blob, sizeof(encrypted_blob)), "blobs didn't match\n");
+
+    key3 = NULL;
+    ret = BCryptImportKey(aes, key2, BCRYPT_AES_WRAP_KEY_BLOB, &key3, NULL, 0, buffer3, sizeof(buffer3), 0);
+    todo_wine
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
+    ok(key3 != NULL, "key not set\n");
+
+    size = 0;
+    memset(buffer2, 0xff, sizeof(buffer2));
+    ret = BCryptExportKey(key3, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, sizeof(buffer2), &size, 0);
+    todo_wine
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
+    ok(size == sizeof(buffer2), "Got %lu\n", size);
+    todo_wine
+    ok(!memcmp(buffer1, buffer2, sizeof(buffer1)), "Expected exported key to match imported key\n");
+
+    BCryptDestroyKey(key3);
+    BCryptDestroyKey(key2);
 
     size = 0;
     ret = BCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, 0, &size, 0);
