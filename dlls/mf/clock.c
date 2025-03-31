@@ -1037,7 +1037,9 @@ static ULONG WINAPI present_clock_sink_callback_Release(IMFAsyncCallback *iface)
 
 static HRESULT WINAPI present_clock_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags, DWORD *queue)
 {
-    return E_NOTIMPL;
+    *flags = 0;
+    *queue = MFASYNC_CALLBACK_QUEUE_MULTITHREADED;
+    return S_OK;
 }
 
 static HRESULT WINAPI present_clock_sink_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
