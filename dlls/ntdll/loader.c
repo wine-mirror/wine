@@ -97,6 +97,7 @@ static UNICODE_STRING dll_directory;  /* extra path for LdrSetDllDirectory */
 static UNICODE_STRING system_dll_path; /* path to search for system dependency dlls */
 static DWORD default_search_flags;  /* default flags set by LdrSetDefaultDllDirectories */
 static WCHAR *default_load_path;    /* default dll search path */
+static HANDLE known_dlls_ntdir;  /* NT directory containing known dlls sections */
 
 struct dll_dir_entry
 {
@@ -2735,6 +2736,35 @@ static NTSTATUS open_dll_file( UNICODE_STRING *nt_name, WINE_MODREF **pwm, HANDL
 }
 
 
+/***********************************************************************
+ *	open_known_dll
+ *
+ * Open a dll from the KnownDlls NT directory.
+ */
+static NTSTATUS open_known_dll( const WCHAR *libname, UNICODE_STRING *nt_name, WINE_MODREF **pwm,
+                                HANDLE *mapping, SECTION_IMAGE_INFORMATION *image_info, struct file_id *id )
+{
+    NTSTATUS status;
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+
+    if (!known_dlls_ntdir) return STATUS_DLL_NOT_FOUND;
+    RtlInitUnicodeString( &str, libname );
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, known_dlls_ntdir, NULL );
+    if ((status = NtOpenSection( mapping, MAXIMUM_ALLOWED, &attr ))) return status;
+    build_sysdir_nt_name( libname, nt_name );
+    if ((*pwm = find_fullname_module( nt_name )))
+    {
+        NtClose( *mapping );
+        return STATUS_SUCCESS;
+    }
+    NtQuerySection( *mapping, SectionImageInformation, image_info, sizeof(*image_info), NULL );
+    memset( id, 0, sizeof(*id) );
+    TRACE( "loaded %s from known dlls\n", debugstr_us(nt_name) );
+    return STATUS_SUCCESS;
+}
+
+
 /******************************************************************************
  *	find_existing_module
  *
@@ -3250,6 +3280,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
                 TRACE( "Skipping file search for %s.\n", debugstr_w(libname) );
                 return STATUS_DLL_NOT_FOUND;
             }
+            if (!open_known_dll( libname, nt_name, pwm, mapping, image_info, id )) return STATUS_SUCCESS;
         }
     }
 
@@ -4176,6 +4207,26 @@ static void elevate_token(void)
     NtClose( linked.LinkedToken );
 }
 
+static void open_known_dll_ntdir(void)
+{
+    UNICODE_STRING dir = RTL_CONSTANT_STRING( L"\\KnownDlls" );
+    OBJECT_ATTRIBUTES attr;
+
+    switch (current_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:
+        if (NtCurrentTeb()->WowTebOffset) RtlInitUnicodeString( &dir, L"\\KnownDlls32" );
+        break;
+    case IMAGE_FILE_MACHINE_ARMNT:
+        if (NtCurrentTeb()->WowTebOffset) RtlInitUnicodeString( &dir, L"\\KnownDllsArm32" );
+        break;
+    default:
+        break;
+    }
+    InitializeObjectAttributes( &attr, &dir, OBJ_CASE_INSENSITIVE, 0, NULL );
+    NtOpenDirectoryObject( &known_dlls_ntdir, DIRECTORY_ALL_ACCESS, &attr );
+}
+
 #ifdef __arm64ec__
 
 static void load_arm64ec_module(void)
@@ -4384,6 +4435,7 @@ void loader_init( CONTEXT *context, void **entry )
         init_user_process_params();
         load_global_options();
         version_init();
+        open_known_dll_ntdir();
 
         default_load_path = peb->ProcessParameters->DllPath.Buffer;
         if (!default_load_path)
