@@ -3771,6 +3771,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         "    if (position < p_low)\n"
         "        return c_low;\n"
         "\n"
+        "    [loop]\n"
         "    for (i = 1; i < stop_count; ++i)\n"
         "    {\n"
         "        p_high = gradient.Load(i * 2).x;\n"
