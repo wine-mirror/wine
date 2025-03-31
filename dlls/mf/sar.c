@@ -74,6 +74,7 @@ struct audio_renderer
     IMFSimpleAudioVolume IMFSimpleAudioVolume_iface;
     IMFAudioStreamVolume IMFAudioStreamVolume_iface;
     IMFAudioPolicy IMFAudioPolicy_iface;
+    IMFPresentationTimeSource IMFPresentationTimeSource_iface;
     IMFAsyncCallback render_callback;
     LONG refcount;
     IMFMediaEventQueue *event_queue;
@@ -86,6 +87,7 @@ struct audio_renderer
     IAudioRenderClient *audio_render_client;
     IAudioStreamVolume *stream_volume;
     ISimpleAudioVolume *audio_volume;
+    IAudioClock *audio_clock;
     struct
     {
         unsigned int flags;
@@ -101,6 +103,10 @@ struct audio_renderer
     CRITICAL_SECTION cs;
 
     MFCLOCK_STATE clock_state;
+    DWORD sample_rate;
+    LONGLONG pts;
+    UINT64 position;
+    UINT64 audio_clock_frequency;
 };
 
 static void release_pending_object(struct queued_object *object)
@@ -169,6 +175,11 @@ static struct audio_renderer *impl_from_IMFMediaTypeHandler(IMFMediaTypeHandler 
     return CONTAINING_RECORD(iface, struct audio_renderer, IMFMediaTypeHandler_iface);
 }
 
+static struct audio_renderer *impl_from_IMFPresentationTimeSource(IMFPresentationTimeSource *iface)
+{
+    return CONTAINING_RECORD(iface, struct audio_renderer, IMFPresentationTimeSource_iface);
+}
+
 static struct audio_renderer *impl_from_render_callback_IMFAsyncCallback(IMFAsyncCallback *iface)
 {
     return CONTAINING_RECORD(iface, struct audio_renderer, render_callback);
@@ -200,6 +211,10 @@ static HRESULT WINAPI audio_renderer_sink_QueryInterface(IMFMediaSink *iface, RE
     else if (IsEqualIID(riid, &IID_IMFGetService))
     {
         *obj = &renderer->IMFGetService_iface;
+    }
+    else if (IsEqualIID(riid, &IID_IMFPresentationTimeSource))
+    {
+        *obj = &renderer->IMFPresentationTimeSource_iface;
     }
     else
     {
@@ -238,6 +253,8 @@ static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
         IAudioClient_Reset(renderer->audio_client);
         IAudioClient_Release(renderer->audio_client);
     }
+    renderer->position = 0;
+    renderer->pts = 0;
     renderer->audio_client = NULL;
     if (renderer->audio_render_client)
         IAudioRenderClient_Release(renderer->audio_render_client);
@@ -248,6 +265,9 @@ static void audio_renderer_release_audio_client(struct audio_renderer *renderer)
     if (renderer->audio_volume)
         ISimpleAudioVolume_Release(renderer->audio_volume);
     renderer->audio_volume = NULL;
+    if (renderer->audio_clock)
+        IAudioClock_Release(renderer->audio_clock);
+    renderer->audio_clock = NULL;
     renderer->flags &= ~SAR_PREROLLED;
 }
 
@@ -662,7 +682,12 @@ static HRESULT WINAPI audio_renderer_clock_sink_OnClockStop(IMFClockStateSink *i
         {
             if (SUCCEEDED(hr = IAudioClient_Stop(renderer->audio_client)))
             {
-                if (FAILED(hr = IAudioClient_Reset(renderer->audio_client)))
+                if (SUCCEEDED(hr = IAudioClient_Reset(renderer->audio_client)))
+                {
+                    renderer->position = 0;
+                    renderer->pts = 0;
+                }
+                else
                     WARN("Failed to reset audio client, hr %#lx.\n", hr);
             }
             else
@@ -1139,6 +1164,113 @@ static const IMFAudioPolicyVtbl audio_renderer_policy_vtbl =
     audio_renderer_policy_GetIconPath,
 };
 
+static HRESULT WINAPI audio_renderer_time_source_QueryInterface(IMFPresentationTimeSource *iface, REFIID riid, void **obj)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    return IMFMediaSink_QueryInterface(&renderer->IMFMediaSink_iface, riid, obj);
+}
+
+static ULONG WINAPI audio_renderer_time_source_AddRef(IMFPresentationTimeSource *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    return IMFMediaSink_AddRef(&renderer->IMFMediaSink_iface);
+}
+
+static ULONG WINAPI audio_renderer_time_source_Release(IMFPresentationTimeSource *iface)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    return IMFMediaSink_Release(&renderer->IMFMediaSink_iface);
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetClockCharacteristics(IMFPresentationTimeSource *iface, DWORD *flags)
+{
+    TRACE("%p, %p.\n", iface, flags);
+
+    *flags = MFCLOCK_CHARACTERISTICS_FLAG_FREQUENCY_10MHZ;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetCorrelatedTime(IMFPresentationTimeSource *iface, DWORD reserved, LONGLONG *clock_time,
+        MFTIME *system_time)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    UINT64 position, counter;
+    HRESULT hr;
+
+    TRACE("%p, %#lx, %p, %p.\n", iface, reserved, clock_time, system_time);
+
+    if (!renderer->audio_clock)
+        return MF_E_NOT_INITIALIZED;
+
+    if (FAILED(hr = IAudioClock_GetPosition(renderer->audio_clock, &position, &counter)))
+        return hr;
+
+    *clock_time = renderer->pts + (INT64)(position - renderer->position) * MFCLOCK_FREQUENCY_HNS / (INT64)renderer->audio_clock_frequency;
+    *system_time = counter;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetContinuityKey(IMFPresentationTimeSource *iface, DWORD *key)
+{
+    TRACE("%p, %p.\n", iface, key);
+
+    *key = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetState(IMFPresentationTimeSource *iface, DWORD reserved, MFCLOCK_STATE *state)
+{
+    struct audio_renderer *renderer = impl_from_IMFPresentationTimeSource(iface);
+    TRACE("%p, %#lx, %p.\n", iface, reserved, state);
+
+    *state = renderer->clock_state;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetProperties(IMFPresentationTimeSource *iface, MFCLOCK_PROPERTIES *props)
+{
+    TRACE("%p, %p.\n", iface, props);
+
+    if (!props)
+        return E_POINTER;
+
+    memset(props, 0, sizeof(*props));
+    props->qwClockFrequency = MFCLOCK_FREQUENCY_HNS;
+    props->dwClockTolerance = MFCLOCK_TOLERANCE_UNKNOWN;
+    props->dwClockJitter = 1;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI audio_renderer_time_source_GetUnderlyingClock(IMFPresentationTimeSource *iface, IMFClock **ppClock)
+{
+    TRACE("%p, %p.\n", iface, ppClock);
+
+    if (!ppClock)
+        return E_POINTER;
+
+    *ppClock = NULL;
+
+    return MF_E_NO_CLOCK;
+}
+
+static const IMFPresentationTimeSourceVtbl audio_renderer_time_source_vtbl =
+{
+    audio_renderer_time_source_QueryInterface,
+    audio_renderer_time_source_AddRef,
+    audio_renderer_time_source_Release,
+    audio_renderer_time_source_GetClockCharacteristics,
+    audio_renderer_time_source_GetCorrelatedTime,
+    audio_renderer_time_source_GetContinuityKey,
+    audio_renderer_time_source_GetState,
+    audio_renderer_time_source_GetProperties,
+    audio_renderer_time_source_GetUnderlyingClock,
+};
+
 static HRESULT sar_create_mmdevice(IMFAttributes *attributes, struct audio_renderer *renderer)
 {
     WCHAR *endpoint;
@@ -1331,12 +1463,22 @@ static HRESULT WINAPI audio_renderer_stream_GetMediaTypeHandler(IMFStreamSink *i
 
 static HRESULT stream_queue_sample(struct audio_renderer *renderer, IMFSample *sample)
 {
+    DWORD sample_len, sample_frames, buffer_count;
     struct queued_object *object;
-    DWORD sample_len, sample_frames;
+    LONGLONG start_time;
     HRESULT hr;
+
+    if (FAILED(hr = IMFSample_GetBufferCount(sample, &buffer_count)))
+        return hr;
+
+    if (!buffer_count)
+        return E_INVALIDARG;
 
     if (FAILED(hr = IMFSample_GetTotalLength(sample, &sample_len)))
         return hr;
+
+    if (FAILED(hr = IMFSample_GetSampleTime(sample, &start_time)))
+        return MF_E_INVALID_TIMESTAMP;
 
     sample_frames = sample_len / renderer->frame_size;
 
@@ -1452,7 +1594,12 @@ static HRESULT WINAPI audio_renderer_stream_Flush(IMFStreamSink *iface)
         }
     }
     renderer->queued_frames = 0;
-    if (FAILED(hr = IAudioClient_Reset(renderer->audio_client)))
+    if (SUCCEEDED(hr = IAudioClient_Reset(renderer->audio_client)))
+    {
+        renderer->position = 0;
+        renderer->pts = 0;
+    }
+    else
         WARN("Failed to reset audio client, hr %#lx.\n", hr);
     LeaveCriticalSection(&renderer->cs);
 
@@ -1597,6 +1744,7 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
     }
 
     renderer->frame_size = wfx->wBitsPerSample * wfx->nChannels / 8;
+    renderer->sample_rate = wfx->nSamplesPerSec;
 
     flags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
     if (renderer->stream_config.flags & MF_AUDIO_RENDERER_ATTRIBUTE_FLAGS_CROSSPROCESS)
@@ -1629,6 +1777,19 @@ static HRESULT audio_renderer_create_audio_client(struct audio_renderer *rendere
             (void **)&renderer->audio_render_client)))
     {
         WARN("Failed to get audio render client, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClient_GetService(renderer->audio_client, &IID_IAudioClock,
+            (void **)&renderer->audio_clock)))
+    {
+        WARN("Failed to get audio clock, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (FAILED(hr = IAudioClock_GetFrequency(renderer->audio_clock, &renderer->audio_clock_frequency)))
+    {
+        WARN("Failed to get audio clock frequency, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1819,8 +1980,10 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
     struct queued_object *obj, *obj2;
     BOOL keep_sample = FALSE;
     IMFMediaBuffer *buffer;
+    UINT64 position;
     BYTE *dst, *src;
     DWORD src_len;
+    LONGLONG pts;
     HRESULT hr;
 
     LIST_FOR_EACH_ENTRY_SAFE(obj, obj2, &renderer->queue, struct queued_object, entry)
@@ -1843,15 +2006,27 @@ static void audio_renderer_render(struct audio_renderer *renderer, IMFAsyncResul
                             if (SUCCEEDED(IAudioClient_GetCurrentPadding(renderer->audio_client, &pad_frames)))
                             {
                                 max_frames -= pad_frames;
+
+                                IMFSample_GetSampleTime(obj->u.sample.sample, &pts);
+                                IAudioClock_GetPosition(renderer->audio_clock, &position, NULL);
+                                position += pad_frames * renderer->audio_clock_frequency / renderer->sample_rate;
+
                                 src_frames -= obj->u.sample.frame_offset;
                                 dst_frames = min(src_frames, max_frames);
+                                hr = S_OK;
 
-                                if (SUCCEEDED(hr = IAudioRenderClient_GetBuffer(renderer->audio_render_client, dst_frames, &dst)))
+                                if (dst_frames && SUCCEEDED(hr = IAudioRenderClient_GetBuffer(renderer->audio_render_client, dst_frames, &dst)))
                                 {
                                     memcpy(dst, src + obj->u.sample.frame_offset * renderer->frame_size,
                                             dst_frames * renderer->frame_size);
 
                                     IAudioRenderClient_ReleaseBuffer(renderer->audio_render_client, dst_frames, 0);
+
+                                    if (obj->u.sample.frame_offset == 0)
+                                    {
+                                        renderer->pts = pts;
+                                        renderer->position = position;
+                                    }
 
                                     obj->u.sample.frame_offset += dst_frames;
                                     renderer->queued_frames -= dst_frames;
@@ -1925,6 +2100,7 @@ static HRESULT sar_create_object(IMFAttributes *attributes, void *user_context, 
     renderer->IMFSimpleAudioVolume_iface.lpVtbl = &audio_renderer_simple_volume_vtbl;
     renderer->IMFAudioStreamVolume_iface.lpVtbl = &audio_renderer_stream_volume_vtbl;
     renderer->IMFAudioPolicy_iface.lpVtbl = &audio_renderer_policy_vtbl;
+    renderer->IMFPresentationTimeSource_iface.lpVtbl = &audio_renderer_time_source_vtbl;
     renderer->render_callback.lpVtbl = &audio_renderer_render_callback_vtbl;
     renderer->refcount = 1;
     InitializeCriticalSection(&renderer->cs);
