@@ -5362,6 +5362,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
     DWORD string_codepages;
     WORD *glyph_indices;
     HRESULT hr;
+    GpStatus stat;
 
     list_init(&info->font_link_info.sections);
     info->font_link_info.base_font = base_font;
@@ -5400,10 +5401,13 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
             if (SUCCEEDED(hr))
             {
                 old_font = SelectObject(info->hdc, map_hfont);
-                GdipCreateFontFromDC(info->hdc, &gpfont);
+                stat = GdipCreateFontFromDC(info->hdc, &gpfont);
                 SelectObject(info->hdc, old_font);
                 IMLangFontLink_ReleaseFont(iMLFL, map_hfont);
-                section->font = gpfont;
+                if (stat == Ok)
+                    section->font = gpfont;
+                else
+                    section->font = (GpFont *)base_font;
             }
             else
                 section->font = (GpFont *)base_font;
