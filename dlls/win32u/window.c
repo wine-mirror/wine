@@ -2677,11 +2677,11 @@ HWND WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y )
 }
 
 /*******************************************************************
- *           get_work_rect
+ *           get_maximized_rect
  *
- * Get the work area that a maximized window can cover, depending on style.
+ * Get the area that a maximized window can cover, depending on style.
  */
-static BOOL get_work_rect( HWND hwnd, RECT *rect )
+static BOOL get_maximized_rect( HWND hwnd, RECT *rect )
 {
     MONITORINFO mon_info;
     DWORD style;
@@ -4200,7 +4200,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
     DWORD style = get_window_long( hwnd, GWL_STYLE );
     DWORD exstyle = get_window_long( hwnd, GWL_EXSTYLE );
     UINT context;
-    RECT rc_work, rc_primary;
+    RECT rc_max, rc_primary;
     DWORD adjusted_style;
     MINMAXINFO minmax;
     INT xinc, yinc;
@@ -4253,19 +4253,19 @@ MINMAXINFO get_min_max_info( HWND hwnd )
 
     /* if the app didn't change the values, adapt them for the current monitor */
 
-    if (get_work_rect( hwnd, &rc_work ))
+    if (get_maximized_rect( hwnd, &rc_max ))
     {
         rc_primary = get_primary_monitor_rect( get_thread_dpi() );
         if (minmax.ptMaxSize.x == (rc_primary.right - rc_primary.left) + 2 * xinc &&
             minmax.ptMaxSize.y == (rc_primary.bottom - rc_primary.top) + 2 * yinc)
         {
-            minmax.ptMaxSize.x = (rc_work.right - rc_work.left) + 2 * xinc;
-            minmax.ptMaxSize.y = (rc_work.bottom - rc_work.top) + 2 * yinc;
+            minmax.ptMaxSize.x = (rc_max.right - rc_max.left) + 2 * xinc;
+            minmax.ptMaxSize.y = (rc_max.bottom - rc_max.top) + 2 * yinc;
         }
         if (minmax.ptMaxPosition.x == -xinc && minmax.ptMaxPosition.y == -yinc)
         {
-            minmax.ptMaxPosition.x = rc_work.left - xinc;
-            minmax.ptMaxPosition.y = rc_work.top - yinc;
+            minmax.ptMaxPosition.x = rc_max.left - xinc;
+            minmax.ptMaxPosition.y = rc_max.top - yinc;
         }
     }
 
