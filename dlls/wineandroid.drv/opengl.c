@@ -72,7 +72,7 @@ struct egl_pixel_format
     EGLConfig config;
 };
 
-struct wgl_context
+struct android_context
 {
     struct list entry;
     EGLConfig  config;
@@ -163,7 +163,7 @@ void destroy_gl_drawable( HWND hwnd )
     pthread_mutex_unlock( &drawable_mutex );
 }
 
-static BOOL refresh_context( struct wgl_context *ctx )
+static BOOL refresh_context( struct android_context *ctx )
 {
     BOOL ret = InterlockedExchange( &ctx->refresh, FALSE );
 
@@ -179,19 +179,19 @@ static BOOL refresh_context( struct wgl_context *ctx )
 void update_gl_drawable( HWND hwnd )
 {
     struct gl_drawable *gl;
-    struct wgl_context *ctx;
+    struct android_context *ctx;
 
     if ((gl = get_gl_drawable( hwnd, 0 )))
     {
         if (!gl->surface &&
             (gl->surface = p_eglCreateWindowSurface( display, pixel_formats[gl->format - 1].config, gl->window, NULL )))
         {
-            LIST_FOR_EACH_ENTRY( ctx, &gl_contexts, struct wgl_context, entry )
+            LIST_FOR_EACH_ENTRY( ctx, &gl_contexts, struct android_context, entry )
             {
                 if (ctx->hwnd != hwnd) continue;
-                TRACE( "hwnd %p refreshing %p %scurrent\n", hwnd, ctx, NtCurrentTeb()->glContext == ctx ? "" : "not " );
+                TRACE( "hwnd %p refreshing %p %scurrent\n", hwnd, ctx, NtCurrentTeb()->glReserved2 == ctx ? "" : "not " );
                 ctx->surface = gl->surface;
-                if (NtCurrentTeb()->glContext == ctx)
+                if (NtCurrentTeb()->glReserved2 == ctx)
                     p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
                 else
                     InterlockedExchange( &ctx->refresh, TRUE );
@@ -224,24 +224,54 @@ static BOOL android_set_pixel_format( HWND hwnd, int old_format, int new_format,
     return TRUE;
 }
 
-static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, const int *attribs )
+static BOOL android_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
 {
-    struct gl_drawable *gl;
-    struct wgl_context *ctx;
+    struct android_context *ctx, *shared_ctx = share;
+    int count = 0, egl_attribs[3];
+    BOOL opengl_es = FALSE;
 
-    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc ))) return NULL;
+    if (!attribs) opengl_es = TRUE;
+    while (attribs && *attribs && count < 2)
+    {
+        switch (*attribs)
+        {
+        case WGL_CONTEXT_PROFILE_MASK_ARB:
+            if (attribs[1] == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+                opengl_es = TRUE;
+            break;
+        case WGL_CONTEXT_MAJOR_VERSION_ARB:
+            egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
+            egl_attribs[count++] = attribs[1];
+            break;
+        default:
+            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
+        }
+        attribs += 2;
+    }
+    if (!opengl_es)
+    {
+        WARN("Requested creation of an OpenGL (non ES) context, that's not supported.\n");
+        return FALSE;
+    }
+    if (!count)  /* FIXME: force version if not specified */
+    {
+        egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
+        egl_attribs[count++] = egl_client_version;
+    }
+    egl_attribs[count] = EGL_NONE;
+    attribs = egl_attribs;
 
     ctx = malloc( sizeof(*ctx) );
 
-    ctx->config  = pixel_formats[gl->format - 1].config;
+    ctx->config  = pixel_formats[format - 1].config;
     ctx->surface = 0;
     ctx->refresh = FALSE;
-    ctx->context = p_eglCreateContext( display, ctx->config,
-                                       share ? share->context : EGL_NO_CONTEXT, attribs );
-    TRACE( "%p fmt %d ctx %p\n", hdc, gl->format, ctx->context );
+    ctx->context = p_eglCreateContext( display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
+    TRACE( "%p fmt %d ctx %p\n", hdc, format, ctx->context );
     list_add_head( &gl_contexts, &ctx->entry );
-    release_gl_drawable( gl );
-    return ctx;
+
+    *private = ctx;
+    return TRUE;
 }
 
 static BOOL android_describe_pixel_format( int format, struct wgl_pixel_format *desc )
@@ -282,52 +312,9 @@ static BOOL android_describe_pixel_format( int format, struct wgl_pixel_format *
     return TRUE;
 }
 
-/***********************************************************************
- *		android_wglCreateContextAttribsARB
- */
-static struct wgl_context *android_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *share,
-                                                               const int *attribs )
+static BOOL android_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
 {
-    int count = 0, egl_attribs[3];
-    BOOL opengl_es = FALSE;
-
-    while (attribs && *attribs && count < 2)
-    {
-        switch (*attribs)
-        {
-        case WGL_CONTEXT_PROFILE_MASK_ARB:
-            if (attribs[1] == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-                opengl_es = TRUE;
-            break;
-        case WGL_CONTEXT_MAJOR_VERSION_ARB:
-            egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
-            egl_attribs[count++] = attribs[1];
-            break;
-        default:
-            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
-        }
-        attribs += 2;
-    }
-    if (!opengl_es)
-    {
-        WARN("Requested creation of an OpenGL (non ES) context, that's not supported.\n");
-        return NULL;
-    }
-    if (!count)  /* FIXME: force version if not specified */
-    {
-        egl_attribs[count++] = EGL_CONTEXT_CLIENT_VERSION;
-        egl_attribs[count++] = egl_client_version;
-    }
-    egl_attribs[count] = EGL_NONE;
-
-    return create_context( hdc, share, egl_attribs );
-}
-
-/***********************************************************************
- *		android_wglMakeContextCurrentARB
- */
-static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *ctx )
-{
+    struct android_context *ctx = private;
     BOOL ret = FALSE;
     struct gl_drawable *draw_gl, *read_gl = NULL;
     EGLSurface draw_surface, read_surface;
@@ -335,10 +322,10 @@ static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct
 
     TRACE( "%p %p %p\n", draw_hdc, read_hdc, ctx );
 
-    if (!ctx)
+    if (!private)
     {
         p_eglMakeCurrent( display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-        NtCurrentTeb()->glContext = NULL;
+        NtCurrentTeb()->glReserved2 = NULL;
         return TRUE;
     }
 
@@ -356,7 +343,7 @@ static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct
             ctx->surface = draw_gl->surface;
             ctx->hwnd    = draw_hwnd;
             ctx->refresh = FALSE;
-            NtCurrentTeb()->glContext = ctx;
+            NtCurrentTeb()->glReserved2 = ctx;
             goto done;
         }
     }
@@ -404,27 +391,18 @@ static int android_wglGetSwapIntervalEXT(void)
 /***********************************************************************
  *		android_wglCopyContext
  */
-static BOOL android_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
+static BOOL android_context_copy( void *src, void *dst, UINT mask )
 {
     FIXME( "%p -> %p mask %#x unsupported\n", src, dst, mask );
     return FALSE;
 }
 
 /***********************************************************************
- *		android_wglCreateContext
- */
-static struct wgl_context *android_wglCreateContext( HDC hdc )
-{
-    int egl_attribs[3] = { EGL_CONTEXT_CLIENT_VERSION, egl_client_version, EGL_NONE };
-
-    return create_context( hdc, NULL, egl_attribs );
-}
-
-/***********************************************************************
  *		android_wglDeleteContext
  */
-static BOOL android_wglDeleteContext( struct wgl_context *ctx )
+static BOOL android_context_destroy( void *private )
 {
+    struct android_context *ctx = private;
     pthread_mutex_lock( &drawable_mutex );
     list_remove( &ctx->entry );
     pthread_mutex_unlock( &drawable_mutex );
@@ -445,50 +423,7 @@ static PROC android_wglGetProcAddress( LPCSTR name )
     return ret;
 }
 
-/***********************************************************************
- *		android_wglMakeCurrent
- */
-static BOOL android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
-{
-    BOOL ret = FALSE;
-    struct gl_drawable *gl;
-    HWND hwnd;
-
-    TRACE( "%p %p\n", hdc, ctx );
-
-    if (!ctx)
-    {
-        p_eglMakeCurrent( display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
-        NtCurrentTeb()->glContext = NULL;
-        return TRUE;
-    }
-
-    hwnd = NtUserWindowFromDC( hdc );
-    if ((gl = get_gl_drawable( hwnd, hdc )))
-    {
-        EGLSurface surface = gl->surface ? gl->surface : gl->pbuffer;
-        TRACE( "%p hwnd %p context %p surface %p\n", hdc, gl->hwnd, ctx->context, surface );
-        ret = p_eglMakeCurrent( display, surface, surface, ctx->context );
-        if (ret)
-        {
-            ctx->surface = gl->surface;
-            ctx->hwnd    = hwnd;
-            ctx->refresh = FALSE;
-            NtCurrentTeb()->glContext = ctx;
-            goto done;
-        }
-    }
-    RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-
-done:
-    release_gl_drawable( gl );
-    return ret;
-}
-
-/***********************************************************************
- *		android_wglShareLists
- */
-static BOOL android_wglShareLists( struct wgl_context *org, struct wgl_context *dest )
+static BOOL android_context_share( void *org, void *dest )
 {
     FIXME( "%p %p\n", org, dest );
     return FALSE;
@@ -499,7 +434,7 @@ static BOOL android_wglShareLists( struct wgl_context *org, struct wgl_context *
  */
 static BOOL android_wglSwapBuffers( HDC hdc )
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct android_context *ctx = NtCurrentTeb()->glReserved2;
 
     if (!ctx) return FALSE;
 
@@ -512,7 +447,7 @@ static BOOL android_wglSwapBuffers( HDC hdc )
 
 static void wglFinish(void)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct android_context *ctx = NtCurrentTeb()->glReserved2;
 
     if (!ctx) return;
     TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
@@ -522,7 +457,7 @@ static void wglFinish(void)
 
 static void wglFlush(void)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct android_context *ctx = NtCurrentTeb()->glReserved2;
 
     if (!ctx) return;
     TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
@@ -539,14 +474,6 @@ static void register_extension( const char *ext )
 
 static const char *android_init_wgl_extensions(void)
 {
-    register_extension("WGL_ARB_create_context");
-    register_extension("WGL_ARB_create_context_profile");
-    egl_funcs.p_wglCreateContextAttribsARB = android_wglCreateContextAttribsARB;
-
-    register_extension("WGL_ARB_make_current_read");
-    egl_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-    egl_funcs.p_wglMakeContextCurrentARB = android_wglMakeContextCurrentARB;
-
     register_extension("WGL_EXT_swap_control");
     egl_funcs.p_wglSwapIntervalEXT = android_wglSwapIntervalEXT;
     egl_funcs.p_wglGetSwapIntervalEXT = android_wglGetSwapIntervalEXT;
@@ -905,6 +832,11 @@ static const struct opengl_driver_funcs android_driver_funcs =
     .p_describe_pixel_format = android_describe_pixel_format,
     .p_init_wgl_extensions = android_init_wgl_extensions,
     .p_set_pixel_format = android_set_pixel_format,
+    .p_context_create = android_context_create,
+    .p_context_destroy = android_context_destroy,
+    .p_context_copy = android_context_copy,
+    .p_context_share = android_context_share,
+    .p_context_make_current = android_context_make_current,
 };
 
 /**********************************************************************
@@ -975,12 +907,7 @@ ALL_GL_FUNCS
 
 static struct opengl_funcs egl_funcs =
 {
-    .p_wglCopyContext = android_wglCopyContext,
-    .p_wglCreateContext = android_wglCreateContext,
-    .p_wglDeleteContext = android_wglDeleteContext,
     .p_wglGetProcAddress = android_wglGetProcAddress,
-    .p_wglMakeCurrent = android_wglMakeCurrent,
-    .p_wglShareLists = android_wglShareLists,
     .p_wglSwapBuffers = android_wglSwapBuffers,
 #define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
     ALL_GL_FUNCS
