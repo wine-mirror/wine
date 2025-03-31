@@ -82,7 +82,7 @@ unixlib_handle_t __wine_unixlib_handle = 0;
 /* windows directory */
 const WCHAR windows_dir[] = L"C:\\windows";
 /* system directory with trailing backslash */
-const WCHAR system_dir[] = L"C:\\windows\\system32\\";
+static const WCHAR system_dir[] = L"C:\\windows\\system32\\";
 
 /* system search path */
 static const WCHAR system_path[] = L"C:\\windows\\system32;C:\\windows\\system;C:\\windows";
@@ -549,6 +549,16 @@ static ULONG hash_basename( const UNICODE_STRING *basename )
 
     RtlHashUnicodeString( basename, TRUE, HASH_STRING_ALGORITHM_DEFAULT, &hash );
     return hash % HASH_MAP_SIZE;
+}
+
+/* build NT name for dll in system directory */
+static void build_sysdir_nt_name( const WCHAR *name, UNICODE_STRING *nt_name )
+{
+    nt_name->Length = (4 + wcslen(system_dir) + wcslen(name)) * sizeof(WCHAR);
+    nt_name->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, nt_name->Length + sizeof(WCHAR) );
+    wcscpy( nt_name->Buffer, L"\\??\\" );
+    wcscat( nt_name->Buffer, system_dir );
+    wcscat( nt_name->Buffer, name );
 }
 
 /*************************************************************************
@@ -3147,14 +3157,7 @@ static NTSTATUS find_builtin_without_file( const WCHAR *name, UNICODE_STRING *ne
 
 done:
     RtlFreeUnicodeString( new_name );
-    if (!status)
-    {
-        new_name->Length = (4 + wcslen(system_dir) + wcslen(name)) * sizeof(WCHAR);
-        new_name->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, new_name->Length + sizeof(WCHAR) );
-        wcscpy( new_name->Buffer, L"\\??\\" );
-        wcscat( new_name->Buffer, system_dir );
-        wcscat( new_name->Buffer, name );
-    }
+    if (!status) build_sysdir_nt_name( name, new_name );
     return status;
 }
 
