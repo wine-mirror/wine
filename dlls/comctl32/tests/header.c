@@ -68,6 +68,47 @@ static inline void expect_(unsigned line, DWORD expected, DWORD got)
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a header control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_HEADERA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, HEADER_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 static const struct message create_parent_wnd_seq[] = {
     { WM_GETMINMAXINFO, sent },
     { WM_NCCREATE, sent },
@@ -104,9 +145,13 @@ static const struct message add_header_to_parent_seq[] = {
 
 static const struct message insertItem_seq[] = {
     { HDM_INSERTITEMA, sent|wparam, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { HDM_INSERTITEMA, sent|wparam, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { HDM_INSERTITEMA, sent|wparam, 2 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { HDM_INSERTITEMA, sent|wparam, 3 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 4 },
     { 0 }
 };
 
@@ -119,16 +164,19 @@ static const struct message getItem_seq[] = {
 
 static const struct message deleteItem_getItemCount_seq[] = {
     { HDM_DELETEITEM, sent|wparam, 3 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 4 },
     { HDM_GETITEMCOUNT, sent },
     { HDM_DELETEITEM, sent|wparam, 3 },
     { HDM_GETITEMCOUNT, sent },
     { HDM_DELETEITEM, sent|wparam, 2 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { HDM_GETITEMCOUNT, sent },
     { 0 }
 };
 
 static const struct message orderArray_seq[] = {
     { HDM_SETORDERARRAY, sent|wparam, 2 },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, OBJID_CLIENT, CHILDID_SELF },
     { HDM_GETORDERARRAY, sent|wparam, 2 },
     { 0 }
 };
@@ -140,6 +188,8 @@ static const struct message setItem_seq[] = {
 };
 
 static const struct message getItemRect_seq[] = {
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { HDM_GETITEMRECT, sent|wparam, 1 },
     { HDM_GETITEMRECT, sent|wparam, 0 },
     { HDM_GETITEMRECT, sent|wparam, 10 },
@@ -1849,6 +1899,8 @@ START_TEST(header)
     init_functions();
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     if (!init())
         return;
 
@@ -1888,6 +1940,8 @@ START_TEST(header)
     test_hds_nosizing(parent_hwnd);
     test_item_auto_format(parent_hwnd);
     test_hdm_layout(parent_hwnd);
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 

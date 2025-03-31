@@ -1202,6 +1202,8 @@ HEADER_DeleteItem (HEADER_INFO *infoPtr, INT iItem)
     HEADER_SetItemBounds (infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
 
+    NotifyWinEvent(EVENT_OBJECT_DESTROY, infoPtr->hwndSelf, OBJID_CLIENT, iItem + 1);
+
     return TRUE;
 }
 
@@ -1371,6 +1373,9 @@ HEADER_SetOrderArray(HEADER_INFO *infoPtr, INT size, const INT *order)
     }
     HEADER_SetItemBounds(infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
+    NotifyWinEvent(EVENT_OBJECT_REORDER, infoPtr->hwndSelf, OBJID_CLIENT, CHILDID_SELF);
+
     return TRUE;
 }
 
@@ -1457,6 +1462,8 @@ HEADER_InsertItemT (HEADER_INFO *infoPtr, INT nItem, const HDITEMW *phdi, BOOL b
 
     HEADER_SetItemBounds (infoPtr);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
+
+    NotifyWinEvent(EVENT_OBJECT_CREATE, infoPtr->hwndSelf, OBJID_CLIENT, nItem + 1);
 
     return nItem;
 }
