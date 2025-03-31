@@ -1,8 +1,8 @@
 EXTRADEFS = -D_COMDLG32_
 MODULE    = comdlg32.dll
 IMPORTLIB = comdlg32
-IMPORTS   = uuid shell32 shlwapi comctl32 winspool user32 gdi32 advapi32
-DELAYIMPORTS = ole32
+IMPORTS   = uuid shell32 shlwapi comctl32 user32 gdi32 advapi32
+DELAYIMPORTS = ole32 winspool
 
 SOURCES = \
 	cdlg32.c \
