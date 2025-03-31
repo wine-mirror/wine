@@ -145,7 +145,7 @@
 @ stdcall -syscall NtAlertThread(long)
 @ stdcall -syscall NtAlertThreadByThreadId(ptr)
 @ stdcall -syscall NtAllocateLocallyUniqueId(ptr)
-@ stdcall -syscall NtAllocateReserveObject(ptr long long)
+@ stdcall -syscall NtAllocateReserveObject(ptr ptr long)
 # @ stub NtAllocateUserPhysicalPages
 @ stdcall -syscall NtAllocateUuids(ptr ptr ptr ptr)
 @ stdcall -syscall NtAllocateVirtualMemory(long ptr long ptr long long)
@@ -1219,7 +1219,7 @@
 @ stdcall -private -syscall ZwAlertThread(long) NtAlertThread
 @ stdcall -private -syscall ZwAlertThreadByThreadId(ptr) NtAlertThreadByThreadId
 @ stdcall -private -syscall ZwAllocateLocallyUniqueId(ptr) NtAllocateLocallyUniqueId
-@ stdcall -private -syscall ZwAllocateReserveObject(ptr long long) NtAllocateReserveObject
+@ stdcall -private -syscall ZwAllocateReserveObject(ptr ptr long) NtAllocateReserveObject
 # @ stub ZwAllocateUserPhysicalPages
 @ stdcall -private -syscall ZwAllocateUuids(ptr ptr ptr ptr) NtAllocateUuids
 @ stdcall -private -syscall ZwAllocateVirtualMemory(long ptr long ptr long long) NtAllocateVirtualMemory
