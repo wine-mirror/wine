@@ -4125,9 +4125,127 @@ int __thiscall codecvt_char16_do_in(const codecvt_char16 *this, _Mbstatet *state
         const char *from, const char *from_end, const char **from_next,
         char16_t *to, char16_t *to_end, char16_t **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xc0-0xcf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xd0-0xdf */
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, /* 0xe0-0xef */
+        4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+    /* first byte mask depending on UTF-8 sequence length */
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    unsigned int res, len;
+    unsigned char ch;
+    const char *end;
+    BOOL fourbyte;
+
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    if (this->convert_mode & ~(generate_header | consume_header))
+        FIXME("convert_mode %#x.\n", this->convert_mode);
+
+    *from_next = from;
+    *to_next = to;
+
+    while (*from_next != from_end && *to_next != to_end)
+    {
+        fourbyte = FALSE;
+        ch = **from_next;
+        if ((res = MBSTATET_TO_INT(state)) & ~1)
+        {
+            ch = ch ^ 0x80;
+            if (ch >= 0x40)
+                return CODECVT_error;
+            res |= ch;
+            ++*from_next;
+            MBSTATET_TO_INT(state) = 1;
+        }
+        else if (ch < 0x80)
+        {
+            res = ch;
+            ++*from_next;
+        }
+        else
+        {
+            if (!(len = utf8_length[ch - 0x80]))
+            {
+                ++*from_next;
+                return CODECVT_error;
+            }
+
+            if (from_end - *from_next < min(len, 3))
+                break;
+            ++*from_next;
+            res = ch & utf8_mask[len - 1];
+            end = *from_next + len - 1;
+            switch (len)
+            {
+                case 4:
+                    if ((ch = end[-3] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    fourbyte = TRUE;
+                    /* fallthrough */
+                case 3:
+                    if ((ch = end[-2] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    ++*from_next;
+                    /* fallthrough */
+                case 2:
+                    if (len == 4)
+                        ch = 0;
+                    else if ((ch = end[-1] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    ++*from_next;
+                    break;
+            }
+        }
+
+        if (res > this->max_code)
+            return CODECVT_error;
+
+        if (fourbyte)
+        {
+            if (res > 0x10000)
+            {
+                res -= 0x10000;
+                MBSTATET_TO_INT(state) = 0xdc00 | (res & 0x3ff);
+                res = 0xd800 | (res >> 10);
+            }
+            else
+            {
+                 MBSTATET_TO_INT(state) = res;
+                 continue;
+            }
+        }
+        if (!MBSTATET_TO_INT(state))
+        {
+            MBSTATET_TO_INT(state) = 1;
+            if (this->convert_mode & consume_header && res == 0xfeff)
+            {
+                if (*from_next == from_end)
+                {
+                    *from_next = from;
+                    break;
+                }
+                continue;
+            }
+        }
+        *(*to_next)++ = res;
+    }
+
+    if (*from_next != from)
+        return CODECVT_ok;
+
+    return CODECVT_partial;
 }
 
 /* ?in@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
