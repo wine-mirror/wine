@@ -88,6 +88,7 @@ extern void kill_processes( BOOL kill_desktop );
 
 static WCHAR windowsdir[MAX_PATH];
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+static SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
 
 /* retrieve the path to the wine.inf file */
 static WCHAR *get_wine_inf_path(void)
@@ -385,7 +386,6 @@ static UINT64 read_tsc_frequency(void)
 
 static void create_user_shared_data(void)
 {
-    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     struct _KUSER_SHARED_DATA *data;
     RTL_OSVERSIONINFOEXW version;
     SYSTEM_CPU_INFORMATION sci;
@@ -396,7 +396,6 @@ static void create_user_shared_data(void)
     NTSTATUS status;
     HANDLE handle;
     ULONG i;
-    HANDLE process = 0;
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
@@ -489,29 +488,25 @@ static void create_user_shared_data(void)
         features[PF_NX_ENABLED]                           = TRUE;
         features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
         /* add features for other architectures supported by wow64 */
-        if (!NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
-                                         machines, sizeof(machines), NULL ))
+        for (i = 0; machines[i].Machine; i++)
         {
-            for (i = 0; machines[i].Machine; i++)
+            switch (machines[i].Machine)
             {
-                switch (machines[i].Machine)
-                {
-                case IMAGE_FILE_MACHINE_ARMNT:
-                    features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
-                    features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    break;
-                case IMAGE_FILE_MACHINE_I386:
-                    features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
-                    features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                    features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
-                    features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                    features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
-                    features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
-                    features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    break;
-                }
+            case IMAGE_FILE_MACHINE_ARMNT:
+                features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
+                features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
+                break;
+            case IMAGE_FILE_MACHINE_I386:
+                features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+                features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
+                features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
+                features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
+                features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
+                features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+                break;
             }
         }
         break;
@@ -1677,12 +1672,8 @@ static void update_wineprefix( BOOL force )
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
-        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
-        HANDLE process = 0;
+        HANDLE process;
         DWORD count = 0;
-
-        if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
-                                        machines, sizeof(machines), NULL )) machines[0].Machine = 0;
 
         if ((process = start_rundll32( inf_path, L"PreInstall", IMAGE_FILE_MACHINE_TARGET_HOST )))
         {
@@ -1820,6 +1811,7 @@ int __cdecl main( int argc, char *argv[] )
     HANDLE event;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wineboot_event" );
+    HANDLE process = 0;
     BOOL is_wow64;
 
     end_session = force = init = kill = restart = shutdown = update = FALSE;
@@ -1897,6 +1889,9 @@ int __cdecl main( int argc, char *argv[] )
     if (kill) kill_processes( shutdown );
 
     if (shutdown) return 0;
+
+    if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                    machines, sizeof(machines), NULL )) machines[0].Machine = 0;
 
     /* create event to be inherited by services.exe */
     InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF | OBJ_INHERIT, 0, NULL );
