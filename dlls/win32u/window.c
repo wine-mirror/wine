@@ -2695,18 +2695,6 @@ static BOOL get_work_rect( HWND hwnd, RECT *rect )
     return TRUE;
 }
 
-static RECT get_maximized_work_rect( HWND hwnd )
-{
-    RECT work_rect = { 0 };
-
-    if ((get_window_long( hwnd, GWL_STYLE ) & (WS_MINIMIZE | WS_MAXIMIZE)) == WS_MAXIMIZE)
-    {
-        if (!get_work_rect( hwnd, &work_rect ))
-            work_rect = get_primary_monitor_rect( get_thread_dpi() );
-    }
-    return work_rect;
-}
-
 /*******************************************************************
  *           update_maximized_pos
  *
@@ -2719,15 +2707,24 @@ static RECT get_maximized_work_rect( HWND hwnd )
  *
  * Some applications (e.g. Imperiums: Greek Wars) depend on this.
  */
-static void update_maximized_pos( WND *wnd, RECT *work_rect )
+static void update_maximized_pos( WND *wnd )
 {
+    RECT work_rect = { 0 };
+    MONITORINFO mon_info;
+
     if (wnd->parent && wnd->parent != get_desktop_window())
         return;
 
     if (wnd->dwStyle & WS_MAXIMIZE)
     {
-        if (wnd->rects.window.left  <= work_rect->left  && wnd->rects.window.top    <= work_rect->top &&
-            wnd->rects.window.right >= work_rect->right && wnd->rects.window.bottom >= work_rect->bottom)
+        if (!(wnd->dwStyle & WS_MINIMIZE))
+        {
+            mon_info = monitor_info_from_window( wnd->obj.handle, MONITOR_DEFAULTTOPRIMARY );
+            work_rect = mon_info.rcWork;
+        }
+
+        if (wnd->rects.window.left  <= work_rect.left  && wnd->rects.window.top    <= work_rect.top &&
+            wnd->rects.window.right >= work_rect.right && wnd->rects.window.bottom >= work_rect.bottom)
             wnd->max_pos.x = wnd->max_pos.y = -1;
     }
     else
@@ -2744,7 +2741,6 @@ static BOOL empty_point( POINT pt )
  */
 BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
-    RECT work_rect = get_maximized_work_rect( hwnd );
     WND *win = get_win_ptr( hwnd );
     UINT win_dpi;
 
@@ -2803,7 +2799,7 @@ BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
     {
         win->normal_rect = win->rects.window;
     }
-    update_maximized_pos( win, &work_rect );
+    update_maximized_pos( win );
 
     placement->length  = sizeof(*placement);
     if (win->dwStyle & WS_MINIMIZE)
@@ -2884,7 +2880,6 @@ static void make_point_onscreen( POINT *pt )
 
 static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT flags )
 {
-    RECT work_rect = get_maximized_work_rect( hwnd );
     WND *win = get_win_ptr( hwnd );
     WINDOWPLACEMENT wp = *wndpl;
     DWORD style;
@@ -2907,7 +2902,7 @@ static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT 
     if (flags & PLACE_MAX)
     {
         win->max_pos = point_thread_to_win_dpi( hwnd, wp.ptMaxPosition );
-        update_maximized_pos( win, &work_rect );
+        update_maximized_pos( win );
     }
     if (flags & PLACE_RECT) win->normal_rect = rect_thread_to_win_dpi( hwnd, wp.rcNormalPosition );
 
