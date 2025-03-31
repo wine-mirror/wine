@@ -12826,6 +12826,79 @@ static void test_window_placement(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError());
 
     DestroyWindow(hwnd);
+
+    /* Test that when forgetting the maximized position for top level windows covering the work
+     * area, the work area means the monitor work area, not the the work area that a maximized
+     * window can cover depending on style. For example, a maximized WS_POPUP window can cover the
+     * whole screen when maximized. Also see See win32u/window.c#update_maximized_pos() */
+    hwnd = CreateWindowA("MainWindowClass", "wp", WS_POPUP, orig.left, orig.top,
+        orig.right - orig.left, orig.bottom - orig.top, 0, 0, 0, 0);
+    ok(!!hwnd, "failed to create window, error %lu\n", GetLastError());
+    ShowWindow(hwnd, SW_MAXIMIZE);
+
+    GetWindowRect(hwnd, &rect);
+    ok(EqualRect(&rect, &mon_info.rcMonitor), "got unexpected maximized rect %s\n", wine_dbgstr_rect(&rect));
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    SetWindowPos(hwnd, 0, 100, 100, 100, 100, SWP_NOZORDER | SWP_NOACTIVATE);
+
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == 100 && wp.ptMaxPosition.y == 100,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    SetWindowPos(hwnd, 0, work_rect.left, work_rect.top, work_rect.right - work_rect.left,
+        work_rect.bottom - work_rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    todo_wine
+    ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    SetWindowPos(hwnd, 0, work_rect.left, work_rect.top, work_rect.right - work_rect.left - 1,
+        work_rect.bottom - work_rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == work_rect.left && wp.ptMaxPosition.y == work_rect.top,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    SetWindowPos(hwnd, 0, work_rect.left, work_rect.top, work_rect.right - work_rect.left,
+        work_rect.bottom - work_rect.top - 1, SWP_NOZORDER | SWP_NOACTIVATE);
+    ret = GetWindowPlacement(hwnd, &wp);
+    ok(ret, "failed to get window placement, error %lu\n", GetLastError());
+    ok(wp.showCmd == SW_SHOWMAXIMIZED, "got show cmd %u\n", wp.showCmd);
+    ok(wp.ptMinPosition.x == -1 && wp.ptMinPosition.y == -1,
+        "got minimized pos (%ld,%ld)\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
+    ok(wp.ptMaxPosition.x == work_rect.left && wp.ptMaxPosition.y == work_rect.top,
+        "got maximized pos (%ld,%ld)\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
+    ok(EqualRect(&wp.rcNormalPosition, &orig), "got normal pos %s\n",
+        wine_dbgstr_rect(&wp.rcNormalPosition));
+
+    DestroyWindow(hwnd);
 }
 
 static void test_arrange_iconic_windows(void)
