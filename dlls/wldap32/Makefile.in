@@ -1,7 +1,8 @@
 MODULE    = wldap32.dll
 IMPORTLIB = wldap32
-IMPORTS   = $(LDAP_PE_LIBS) crypt32 secur32 ws2_32 user32 netapi32
+IMPORTS   = $(LDAP_PE_LIBS) user32 ws2_32
 EXTRAINCL = $(LDAP_PE_CFLAGS)
+DELAYIMPORTS = crypt32 secur32 netapi32
 
 SOURCES = \
 	add.c \
