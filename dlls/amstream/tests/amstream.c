@@ -396,6 +396,7 @@ static void test_interfaces(void)
     check_interface(stream, &IID_IAMMediaStream, TRUE);
     check_interface(stream, &IID_IDirectDrawMediaStream, TRUE);
     check_interface(stream, &IID_IMediaStream, TRUE);
+    check_interface(stream, &IID_IMemAllocator, TRUE);
     check_interface(stream, &IID_IMemInputPin, TRUE);
     check_interface(stream, &IID_IPin, TRUE);
     check_interface(stream, &IID_IUnknown, TRUE);

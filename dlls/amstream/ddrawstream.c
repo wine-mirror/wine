@@ -41,6 +41,7 @@ struct ddraw_stream
     IAMMediaStream IAMMediaStream_iface;
     IDirectDrawMediaStream IDirectDrawMediaStream_iface;
     IMemInputPin IMemInputPin_iface;
+    IMemAllocator IMemAllocator_iface;
     IPin IPin_iface;
     LONG ref;
     LONG sample_refs;
@@ -199,6 +200,12 @@ static HRESULT WINAPI ddraw_IAMMediaStream_QueryInterface(IAMMediaStream *iface,
     {
         IAMMediaStream_AddRef(iface);
         *ret_iface = &This->IMemInputPin_iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_IMemAllocator))
+    {
+        IAMMediaStream_AddRef(iface);
+        *ret_iface = &This->IMemAllocator_iface;
         return S_OK;
     }
 
@@ -1274,6 +1281,80 @@ static const IPinVtbl ddraw_sink_vtbl =
     ddraw_sink_NewSegment,
 };
 
+static struct ddraw_stream *impl_from_IMemAllocator(IMemAllocator *iface)
+{
+    return CONTAINING_RECORD(iface, struct ddraw_stream, IMemAllocator_iface);
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_QueryInterface(IMemAllocator *iface, REFIID iid, void **out)
+{
+    struct ddraw_stream *stream = impl_from_IMemAllocator(iface);
+    return IAMMediaStream_QueryInterface(&stream->IAMMediaStream_iface, iid, out);
+}
+
+static ULONG WINAPI ddraw_mem_allocator_AddRef(IMemAllocator *iface)
+{
+    struct ddraw_stream *stream = impl_from_IMemAllocator(iface);
+    return IAMMediaStream_AddRef(&stream->IAMMediaStream_iface);
+}
+
+static ULONG WINAPI ddraw_mem_allocator_Release(IMemAllocator *iface)
+{
+    struct ddraw_stream *stream = impl_from_IMemAllocator(iface);
+    return IAMMediaStream_Release(&stream->IAMMediaStream_iface);
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_SetProperties(IMemAllocator *iface,
+        ALLOCATOR_PROPERTIES *req_props, ALLOCATOR_PROPERTIES *ret_props)
+{
+    FIXME("iface %p, req_props %p, ret_props %p, stub!\n", iface, req_props, ret_props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_GetProperties(IMemAllocator *iface, ALLOCATOR_PROPERTIES *props)
+{
+    FIXME("iface %p, props %p, stub!\n", iface, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_Commit(IMemAllocator *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_Decommit(IMemAllocator *iface)
+{
+    FIXME("iface %p, stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_GetBuffer(IMemAllocator *iface,
+        IMediaSample **sample, REFERENCE_TIME *start, REFERENCE_TIME *end, DWORD flags)
+{
+    FIXME("iface %p, sample %p, start %p, end %p, flags %#lx, stub!\n", iface, sample, start, end, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ddraw_mem_allocator_ReleaseBuffer(IMemAllocator *iface, IMediaSample *sample)
+{
+    FIXME("iface %p, sample %p, stub!\n", iface, sample);
+    return E_NOTIMPL;
+}
+
+static const IMemAllocatorVtbl ddraw_mem_allocator_vtbl =
+{
+    ddraw_mem_allocator_QueryInterface,
+    ddraw_mem_allocator_AddRef,
+    ddraw_mem_allocator_Release,
+    ddraw_mem_allocator_SetProperties,
+    ddraw_mem_allocator_GetProperties,
+    ddraw_mem_allocator_Commit,
+    ddraw_mem_allocator_Decommit,
+    ddraw_mem_allocator_GetBuffer,
+    ddraw_mem_allocator_ReleaseBuffer,
+};
+
 static inline struct ddraw_stream *impl_from_IMemInputPin(IMemInputPin *iface)
 {
     return CONTAINING_RECORD(iface, struct ddraw_stream, IMemInputPin_iface);
@@ -1484,6 +1565,7 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     object->IDirectDrawMediaStream_iface.lpVtbl = &ddraw_IDirectDrawMediaStream_Vtbl;
     object->IMemInputPin_iface.lpVtbl = &ddraw_meminput_vtbl;
     object->IPin_iface.lpVtbl = &ddraw_sink_vtbl;
+    object->IMemAllocator_iface.lpVtbl = &ddraw_mem_allocator_vtbl;
     object->ref = 1;
 
     object->format.width = 100;
