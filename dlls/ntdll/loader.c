@@ -3224,16 +3224,12 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
     ULONG wow64_old_value = 0;
 
     *pwm = NULL;
-
-    /* Win 7/2008R2 and up seem to re-enable WoW64 FS redirection when loading libraries */
-    RtlWow64EnableFsRedirectionEx( 0, &wow64_old_value );
-
     nt_name->Buffer = NULL;
 
     if (!contains_path( libname ))
     {
         status = find_apiset_dll( libname, &fullname );
-        if (status == STATUS_DLL_NOT_FOUND) goto done;
+        if (status == STATUS_DLL_NOT_FOUND) return status;
 
         if (status) status = find_actctx_dll( libname, &fullname );
 
@@ -3244,20 +3240,18 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
         }
         else
         {
-            if (status != STATUS_SXS_KEY_NOT_FOUND) goto done;
-            if ((*pwm = find_basename_module( libname )) != NULL)
-            {
-                status = STATUS_SUCCESS;
-                goto done;
-            }
+            if (status != STATUS_SXS_KEY_NOT_FOUND) return status;
+            if ((*pwm = find_basename_module( libname ))) return STATUS_SUCCESS;
             if (find_loaded)
             {
                 TRACE( "Skipping file search for %s.\n", debugstr_w(libname) );
-                status = STATUS_DLL_NOT_FOUND;
-                goto done;
+                return STATUS_DLL_NOT_FOUND;
             }
         }
     }
+
+    /* Win 7/2008R2 and up seem to re-enable WoW64 FS redirection when loading libraries */
+    RtlWow64EnableFsRedirectionEx( 0, &wow64_old_value );
 
     if (RtlDetermineDosPathNameType_U( libname ) == RtlPathTypeRelative)
     {
@@ -3270,7 +3264,6 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname, UNI
 
     if (status == STATUS_NOT_SUPPORTED) status = STATUS_INVALID_IMAGE_FORMAT;
 
-done:
     RtlFreeHeap( GetProcessHeap(), 0, fullname );
     if (wow64_old_value) RtlWow64EnableFsRedirectionEx( 1, &wow64_old_value );
     return status;
