@@ -729,7 +729,9 @@ static ULONG WINAPI sample_grabber_stream_timer_callback_Release(IMFAsyncCallbac
 static HRESULT WINAPI sample_grabber_stream_timer_callback_GetParameters(IMFAsyncCallback *iface, DWORD *flags,
         DWORD *queue)
 {
-    return E_NOTIMPL;
+    *flags = 0;
+    *queue = MFASYNC_CALLBACK_QUEUE_MULTITHREADED;
+    return S_OK;
 }
 
 static HRESULT WINAPI sample_grabber_stream_timer_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
