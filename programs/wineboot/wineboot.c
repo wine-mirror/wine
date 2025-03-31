@@ -69,6 +69,7 @@
 #include <ddk/wdm.h>
 #include <sddl.h>
 #include <wine/svcctl.h>
+#include <wine/list.h>
 #include <wine/asm.h>
 #include <wine/debug.h>
 
@@ -1078,6 +1079,146 @@ static void create_volatile_environment_registry_key(void)
     RegCloseKey( hkey );
 }
 
+static const WCHAR *get_known_dll_ntdir( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_TARGET_HOST: return L"\\KnownDlls";
+    case IMAGE_FILE_MACHINE_I386:        return L"\\KnownDlls32";
+    case IMAGE_FILE_MACHINE_ARMNT:       return L"\\KnownDllsArm32";
+    default: return NULL;
+    }
+}
+
+static HANDLE create_known_dll_section( const WCHAR *sysdir, HANDLE root, const WCHAR *name )
+{
+    WCHAR buffer[MAX_PATH];
+    HANDLE handle, mapping;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING strW;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER size;
+
+    swprintf( buffer, MAX_PATH, L"\\??\\%s\\%s", sysdir, name );
+    RtlInitUnicodeString( &strW, buffer );
+    InitializeObjectAttributes( &attr, &strW, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    if (NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                    FILE_SHARE_READ | FILE_SHARE_DELETE,
+                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))
+        return 0;
+
+    RtlInitUnicodeString( &strW, name );
+    InitializeObjectAttributes( &attr, &strW, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, root, NULL );
+    size.QuadPart = 0;
+    if (NtCreateSection( &mapping,
+                         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                         &attr, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle ))
+        mapping = 0;
+    NtClose( handle );
+    return mapping;
+}
+
+struct known_dll
+{
+    struct list entry;
+    WCHAR       name[64];
+};
+
+static void add_known_dll( struct list *dll_list, const WCHAR *name )
+{
+    struct known_dll *dll;
+
+    LIST_FOR_EACH_ENTRY( dll, dll_list, struct known_dll, entry )
+        if (!wcsicmp( name, dll->name )) return;
+
+    dll = malloc( sizeof(*dll) );
+    wcscpy( dll->name, name );
+    list_add_tail( dll_list, &dll->entry );
+}
+
+static void add_imports( struct list *dll_list, HANDLE mapping )
+{
+    const IMAGE_IMPORT_DESCRIPTOR *imp;
+    DWORD i, size;
+    void *module;
+
+    if (!(module = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 ))) return;
+    if ((imp = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+    {
+        for ( ; imp->Name; imp++)
+        {
+            unsigned char *str = (unsigned char *)module + imp->Name;
+            WCHAR name[64];
+            for (i = 0; str[i] && i < ARRAY_SIZE(name); i++) name[i] = (unsigned char)str[i];
+            if (i == ARRAY_SIZE(name)) continue;
+            name[i] = 0;
+            add_known_dll( dll_list, name );
+        }
+    }
+    UnmapViewOfFile( module );
+}
+
+
+static void create_known_dlls(void)
+{
+    struct list dlls = LIST_INIT( dlls );
+    struct known_dll *dll, *next;
+    WCHAR name[64], value[64], sysdir[MAX_PATH];
+    UNICODE_STRING str, target;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle, root, mapping;
+    DWORD type, idx = 0;
+    HKEY key;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE,
+                       L"System\\CurrentControlSet\\Control\\Session Manager\\KnownDLLs",
+                       0, KEY_ALL_ACCESS, &key ))
+        return;
+
+    for (;;)
+    {
+        DWORD name_size = ARRAY_SIZE(name);
+        DWORD val_size = sizeof(value);
+        DWORD res = RegEnumValueW( key, idx++, name, &name_size, 0, &type, (BYTE *)value, &val_size );
+        if (res == ERROR_MORE_DATA) continue;  /* ignore it */
+        if (res) break;
+        add_known_dll( &dlls, value );
+    }
+
+    for (int i = 0; machines[i].Machine; i++)
+    {
+        WORD machine = machines[i].Native ? IMAGE_FILE_MACHINE_TARGET_HOST : machines[i].Machine;
+
+        if (!GetSystemWow64Directory2W( sysdir, MAX_PATH, machine )) continue;
+        RtlInitUnicodeString( &str, get_known_dll_ntdir( machine ));
+        InitializeObjectAttributes( &attr, &str, OBJ_PERMANENT, 0, NULL );
+        if (NtCreateDirectoryObject( &root, DIRECTORY_ALL_ACCESS, &attr )) continue;
+
+        RtlInitUnicodeString( &target, sysdir );
+        RtlInitUnicodeString( &str, L"KnownDllPath" );
+        InitializeObjectAttributes( &attr, &str, OBJ_PERMANENT, root, NULL );
+        if (!NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &target ))
+            NtClose( handle );
+
+        LIST_FOR_EACH_ENTRY( dll, &dlls, struct known_dll, entry )
+        {
+            if (!(mapping = create_known_dll_section( sysdir, root, dll->name ))) continue;
+            if (machines[i].Native) add_imports( &dlls, mapping );
+            NtClose( mapping );
+        }
+        NtClose( root );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( dll, next, &dlls, struct known_dll, entry )
+    {
+        list_remove( &dll->entry );
+        free( dll );
+    }
+    RegCloseKey( key );
+}
+
+
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
  */
@@ -1917,6 +2058,7 @@ int __cdecl main( int argc, char *argv[] )
     if (init || update) update_wineprefix( update );
 
     create_volatile_environment_registry_key();
+    create_known_dlls();
 
     ProcessRunKeys( HKEY_LOCAL_MACHINE, L"RunOnce", TRUE, TRUE );
 
