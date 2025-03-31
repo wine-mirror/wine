@@ -237,20 +237,23 @@ static BOOL osmesa_set_pixel_format( HWND hwnd, int old_format, int new_format, 
     return TRUE;
 }
 
-static struct wgl_context *osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
+static struct wgl_context *osmesa_create_context( HDC hdc, int format )
 {
+    PIXELFORMATDESCRIPTOR descr;
     struct wgl_context *context;
     UINT gl_format;
 
-    switch (descr->cColorBits)
+    describe_pixel_format( format, &descr );
+
+    switch (descr.cColorBits)
     {
     case 32:
-        if (descr->cRedShift == 8) gl_format = OSMESA_ARGB;
-        else if (descr->cRedShift == 16) gl_format = OSMESA_BGRA;
+        if (descr.cRedShift == 8) gl_format = OSMESA_ARGB;
+        else if (descr.cRedShift == 16) gl_format = OSMESA_BGRA;
         else gl_format = OSMESA_RGBA;
         break;
     case 24:
-        gl_format = descr->cRedShift == 16 ? OSMESA_BGR : OSMESA_RGB;
+        gl_format = descr.cRedShift == 16 ? OSMESA_BGR : OSMESA_RGB;
         break;
     case 16:
         gl_format = OSMESA_RGB_565;
@@ -258,14 +261,16 @@ static struct wgl_context *osmesa_create_context( HDC hdc, const PIXELFORMATDESC
     default:
         return NULL;
     }
+
     if (!(context = malloc( sizeof(*context) ))) return NULL;
     context->format = gl_format;
-    if (!(context->context = pOSMesaCreateContextExt( gl_format, descr->cDepthBits, descr->cStencilBits,
-                                                      descr->cAccumBits, 0 )))
+    if (!(context->context = pOSMesaCreateContextExt( gl_format, descr.cDepthBits, descr.cStencilBits,
+                                                      descr.cAccumBits, 0 )))
     {
         free( context );
         return NULL;
     }
+
     return context;
 }
 
@@ -324,7 +329,7 @@ static struct wgl_context *osmesa_wglCreateContext( HDC hdc )
     if (!(format = funcs->p_wglGetPixelFormat( hdc ))) format = 1;
     describe_pixel_format( format, &descr );
 
-    return osmesa_create_context( hdc, &descr );
+    return osmesa_create_context( hdc, format );
 }
 
 static PROC osmesa_wglGetProcAddress( const char *proc )
