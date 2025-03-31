@@ -1409,7 +1409,7 @@ static void test_bitmap_rendering( BOOL use_dib )
     /* cannot create a GL context without a pixel format */
 
     hglrc = wglCreateContext( hdc );
-    todo_wine ok( !hglrc, "wglCreateContext succeeded\n" );
+    ok( !hglrc, "wglCreateContext succeeded\n" );
     if (hglrc) wglDeleteContext( hglrc );
 
     /* cannot set pixel format twice */
@@ -1695,7 +1695,7 @@ static void test_d3dkmt_rendering(void)
     /* cannot create a GL context without a pixel format */
 
     hglrc = wglCreateContext( desc.hDc );
-    todo_wine ok( !hglrc, "wglCreateContext succeeded\n" );
+    ok( !hglrc, "wglCreateContext succeeded\n" );
     if (hglrc) wglDeleteContext( hglrc );
 
     /* cannot set pixel format twice */
