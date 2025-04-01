@@ -3876,7 +3876,7 @@ int __thiscall codecvt_wchar_do_out(const codecvt_wchar *this, _Mbstatet *state,
         case -1:
             return CODECVT_error;
         default:
-            if(size > from_end-*from_next) {
+            if(size > to_end - *to_next) {
                 *state = old_state;
                 return CODECVT_partial;
             }
