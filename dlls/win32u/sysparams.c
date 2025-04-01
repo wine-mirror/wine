@@ -1881,6 +1881,52 @@ static UINT monitor_get_dpi( struct monitor *monitor, MONITOR_DPI_TYPE type, UIN
 }
 
 /* display_lock must be held */
+static RECT map_monitor_rect( struct monitor *monitor, RECT rect, UINT dpi_from, MONITOR_DPI_TYPE type_from,
+                              UINT dpi_to, MONITOR_DPI_TYPE type_to )
+{
+    UINT x, y;
+
+    assert( type_from != type_to );
+
+    if (monitor->source)
+    {
+        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)}, *mode_from, *mode_to;
+        UINT num, den, dpi;
+
+        source_get_current_settings( monitor->source, &current_mode );
+
+        dpi = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
+        if (!dpi_from) dpi_from = dpi;
+        if (!dpi_to) dpi_to = dpi;
+
+        if (type_from == MDT_RAW_DPI)
+        {
+            monitor_virt_to_raw_ratio( monitor, &den, &num );
+            mode_from = &monitor->source->physical;
+            mode_to = &current_mode;
+        }
+        else
+        {
+            monitor_virt_to_raw_ratio( monitor, &num, &den );
+            mode_from = &current_mode;
+            mode_to = &monitor->source->physical;
+        }
+
+        rect = map_dpi_rect( rect, dpi_from, dpi * 2 );
+        OffsetRect( &rect, -mode_from->dmPosition.x * 2 - mode_from->dmPelsWidth,
+                    -mode_from->dmPosition.y * 2 - mode_from->dmPelsHeight );
+        rect = map_dpi_rect( rect, den, num );
+        OffsetRect( &rect, mode_to->dmPosition.x * 2 + mode_to->dmPelsWidth,
+                    mode_to->dmPosition.y * 2 + mode_to->dmPelsHeight );
+        return map_dpi_rect( rect, dpi * 2, dpi_to );
+    }
+
+    if (!dpi_from) dpi_from = monitor_get_dpi( monitor, type_from, &x, &y );
+    if (!dpi_to) dpi_to = monitor_get_dpi( monitor, type_to, &x, &y );
+    return map_dpi_rect( rect, dpi_from, dpi_to );
+}
+
+/* display_lock must be held */
 static RECT monitor_get_rect( struct monitor *monitor, UINT dpi, MONITOR_DPI_TYPE type )
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
@@ -1908,10 +1954,8 @@ static RECT monitor_get_rect( struct monitor *monitor, UINT dpi, MONITOR_DPI_TYP
 /* display_lock must be held */
 static void monitor_get_info( struct monitor *monitor, MONITORINFO *info, UINT dpi )
 {
-    UINT x, y;
-
     info->rcMonitor = monitor_get_rect( monitor, dpi, MDT_DEFAULT );
-    info->rcWork = map_dpi_rect( monitor->rc_work, monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y ), dpi );
+    info->rcWork = map_monitor_rect( monitor, monitor->rc_work, 0, MDT_RAW_DPI, dpi, MDT_DEFAULT );
     info->dwFlags = is_monitor_primary( monitor ) ? MONITORINFOF_PRIMARY : 0;
 
     if (info->cbSize >= sizeof(MONITORINFOEXW))
@@ -2524,51 +2568,6 @@ static RECT monitors_get_union_rect( UINT dpi, MONITOR_DPI_TYPE type )
     }
 
     return rect;
-}
-
-static RECT map_monitor_rect( struct monitor *monitor, RECT rect, UINT dpi_from, MONITOR_DPI_TYPE type_from,
-                              UINT dpi_to, MONITOR_DPI_TYPE type_to )
-{
-    UINT x, y;
-
-    assert( type_from != type_to );
-
-    if (monitor->source)
-    {
-        DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)}, *mode_from, *mode_to;
-        UINT num, den, dpi;
-
-        source_get_current_settings( monitor->source, &current_mode );
-
-        dpi = monitor_get_dpi( monitor, MDT_DEFAULT, &x, &y );
-        if (!dpi_from) dpi_from = dpi;
-        if (!dpi_to) dpi_to = dpi;
-
-        if (type_from == MDT_RAW_DPI)
-        {
-            monitor_virt_to_raw_ratio( monitor, &den, &num );
-            mode_from = &monitor->source->physical;
-            mode_to = &current_mode;
-        }
-        else
-        {
-            monitor_virt_to_raw_ratio( monitor, &num, &den );
-            mode_from = &current_mode;
-            mode_to = &monitor->source->physical;
-        }
-
-        rect = map_dpi_rect( rect, dpi_from, dpi * 2 );
-        OffsetRect( &rect, -mode_from->dmPosition.x * 2 - mode_from->dmPelsWidth,
-                    -mode_from->dmPosition.y * 2 - mode_from->dmPelsHeight );
-        rect = map_dpi_rect( rect, den, num );
-        OffsetRect( &rect, mode_to->dmPosition.x * 2 + mode_to->dmPelsWidth,
-                    mode_to->dmPosition.y * 2 + mode_to->dmPelsHeight );
-        return map_dpi_rect( rect, dpi * 2, dpi_to );
-    }
-
-    if (!dpi_from) dpi_from = monitor_get_dpi( monitor, type_from, &x, &y );
-    if (!dpi_to) dpi_to = monitor_get_dpi( monitor, type_to, &x, &y );
-    return map_dpi_rect( rect, dpi_from, dpi_to );
 }
 
 /* map a monitor rect from MDT_RAW_DPI to MDT_DEFAULT coordinates */
