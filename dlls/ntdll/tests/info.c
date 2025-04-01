@@ -31,16 +31,6 @@
 #include "psapi.h"
 #include "wine/test.h"
 
-struct PROCESS_BASIC_INFORMATION_PRIVATE
-{
-    NTSTATUS  ExitStatus;
-    PPEB      PebBaseAddress;
-    DWORD_PTR AffinityMask;
-    DWORD_PTR BasePriority;
-    ULONG_PTR UniqueProcessId;
-    ULONG_PTR InheritedFromUniqueProcessId;
-};
-
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 static NTSTATUS (WINAPI * pNtSetSystemInformation)(SYSTEM_INFORMATION_CLASS, PVOID, ULONG);
@@ -1827,17 +1817,7 @@ static void test_query_process_basic(void)
 {
     NTSTATUS status;
     ULONG ReturnLength;
-
-    typedef struct _PROCESS_BASIC_INFORMATION_PRIVATE {
-        DWORD_PTR ExitStatus;
-        PPEB      PebBaseAddress;
-        DWORD_PTR AffinityMask;
-        DWORD_PTR BasePriority;
-        ULONG_PTR UniqueProcessId;
-        ULONG_PTR InheritedFromUniqueProcessId;
-    } PROCESS_BASIC_INFORMATION_PRIVATE;
-
-    PROCESS_BASIC_INFORMATION_PRIVATE pbi;
+    PROCESS_BASIC_INFORMATION pbi;
 
     /* This test also covers some basic parameter testing that should be the same for
      * every information class
@@ -3283,7 +3263,7 @@ static void test_priority(void)
     ULONG nt_thread_priority;
     THREAD_BASIC_INFORMATION tbi;
     DECLSPEC_ALIGN(8) PROCESS_PRIORITY_CLASS ppc; /* needs align, or STATUS_DATATYPE_MISALIGNMENT is returned */
-    struct PROCESS_BASIC_INFORMATION_PRIVATE pbi;
+    PROCESS_BASIC_INFORMATION pbi;
     BOOL ret;
 
     /* Change process priority class to HIGH_PRIORITY_CLASS and test */
@@ -3332,7 +3312,14 @@ static void test_priority(void)
     ok( status == STATUS_SUCCESS, "NtQueryInformationThread failed after setting priority: %08lx\n", status );
     ok( thread_base_priority == tbi.BasePriority, "After setting, API priority (%d) does not match NT BasePriority (%ld)\n",
         thread_base_priority, tbi.BasePriority );
+    memset( &pbi, 0xcd, sizeof(pbi) );
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( status == STATUS_SUCCESS, "NtQueryInformationProcess failed after setting priority: %08lx\n", status );
+    if (is_wow64)
+    {
+        todo_wine ok( pbi.BasePriority == 0xcdcdcdcd, "got %#lx\n", pbi.BasePriority );
+        pbi.BasePriority = tbi.Priority - THREAD_PRIORITY_HIGHEST;
+    }
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_HIGHEST;
     ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
         tbi.Priority, expected_nt_priority );
@@ -3372,7 +3359,14 @@ static void test_priority(void)
      * value (6) + THREAD_PRIORITY_LOWEST (-2) = 4. */
     status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
     ok( status == STATUS_SUCCESS, "NtQueryInformationThread failed after setting priority: %08lx\n", status );
+    memset( &pbi, 0xcd, sizeof(pbi) );
     status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( status == STATUS_SUCCESS, "NtQueryInformationProcess failed after setting priority: %08lx\n", status );
+    if (is_wow64)
+    {
+        todo_wine ok( pbi.BasePriority == 0xcdcdcdcd, "got %#lx\n", pbi.BasePriority );
+        pbi.BasePriority = tbi.Priority - THREAD_PRIORITY_LOWEST;
+    }
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_LOWEST;
     ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
         tbi.Priority, expected_nt_priority );
