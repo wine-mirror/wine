@@ -441,8 +441,12 @@ static nsresult handle_htmlevent(HTMLDocumentNode *doc, nsIDOMEvent *nsevent)
     }else {
         hres = get_node(nsnode, TRUE, &node);
         nsIDOMNode_Release(nsnode);
-        if(FAILED(hres) || !node->doc->script_global)
+        if(FAILED(hres))
             return NS_OK;
+        if(!node->doc->script_global) {
+            IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
+            return NS_OK;
+        }
         target = &node->event_target;
     }
 
