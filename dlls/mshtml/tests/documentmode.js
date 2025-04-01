@@ -2300,7 +2300,6 @@ async_test("storage events", function() {
             return;
         }
         var s = Object.prototype.toString.call(e);
-        todo_wine_if(e.target != window && e.target != document).
         ok(s === "[object StorageEvent]", "Object.toString = " + s);
         ok(e.key === key, "key = " + e.key + ", expected " + key);
         ok(e.oldValue === oldValue, "oldValue = " + e.oldValue + ", expected " + oldValue);

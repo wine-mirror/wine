@@ -293,13 +293,8 @@ HRESULT variant_to_jsval(script_ctx_t *ctx, VARIANT *var, jsval_t *r)
                 hres = IWineJSDispatchHost_GetJSDispatch(disp_host, &jsdisp_iface);
                 IWineJSDispatchHost_Release(disp_host);
                 if(SUCCEEDED(hres)) {
-                    jsdisp_t *jsdisp = as_jsdisp((IDispatch *)jsdisp_iface);
-                    if(jsdisp->ctx == ctx) {
-                        *r = jsval_obj(jsdisp);
-                        return S_OK;
-                    }else {
-                        jsdisp_release(jsdisp);
-                    }
+                    *r = jsval_obj(as_jsdisp((IDispatch *)jsdisp_iface));
+                    return S_OK;
                 }
             }
         }

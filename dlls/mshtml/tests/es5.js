@@ -2848,6 +2848,7 @@ async_test("script_global", function() {
     todo_wine.
     ok(doc instanceof Object, "created doc is not an instance of Object");
     ok(doc.implementation instanceof Object, "created doc.implementation is not an instance of Object");
+    ok(doc.implementation instanceof DOMImplementation, "created doc.implementation is not an instance of DOMImplementation");
 
     document.body.innerHTML = "";
     var iframe = document.createElement("iframe");
@@ -2858,10 +2859,24 @@ async_test("script_global", function() {
         var doc = iframe.contentWindow.document;
         ok(!(doc instanceof Object), "doc is an instance of Object");
         ok(!(doc.implementation instanceof Object), "doc.implementation is an instance of Object");
+        ok(!(doc.implementation instanceof DOMImplementation), "doc.implementation is an instance of DOMImplementation");
+        ok(doc.implementation instanceof iframe.contentWindow.DOMImplementation, "doc.implementation is not an instance of iframe's DOMImplementation");
+        ok(Object.getPrototypeOf(doc) !== Object.getPrototypeOf(document), "doc's prototype same as doc prototype");
+        ok(Object.getPrototypeOf(doc) === iframe.contentWindow.HTMLDocument.prototype, "doc's prototype not iframe's HTMLDocument.prototype");
 
         doc = doc.implementation.createHTMLDocument("test");
         ok(!(doc instanceof Object), "created iframe doc is an instance of Object");
         ok(!(doc.implementation instanceof Object), "created iframe doc.implementation is an instance of Object");
+        ok(!(doc.implementation instanceof DOMImplementation), "created iframe doc.implementation is an instance of DOMImplementation");
+        ok(doc.implementation instanceof iframe.contentWindow.DOMImplementation, "created iframe doc.implementation is not an instance of iframe's DOMImplementation");
+        ok(Object.getPrototypeOf(doc) !== Object.getPrototypeOf(document), "created iframe doc's prototype same as doc prototype");
+        todo_wine.
+        ok(Object.getPrototypeOf(doc) === iframe.contentWindow.HTMLDocument.prototype, "created iframe doc's prototype not iframe's HTMLDocument.prototype");
+
+        var r = Object.prototype.toString.call(iframe.contentWindow);
+        ok(r === "[object Window]", "iframe's Window toString = " + r);
+        r = Object.prototype.toString.call(iframe.contentWindow.DOMImplementation);
+        ok(r === "[object DOMImplementation]", "iframe's DOMImplementation toString = " + r);
 
         next_test();
     });
