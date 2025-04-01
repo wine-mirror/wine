@@ -586,6 +586,29 @@ static void set_curr_dir_path(CHAR *buf, const CHAR* files)
     buf[0] = 0;
 }
 
+#define check_file_operation(func, flags, from, to, expect_ret, expect_aborted, todo_ret, todo_aborted) \
+        check_file_operation_(__LINE__, func, flags, from, to, expect_ret, expect_aborted, todo_ret, todo_aborted)
+void check_file_operation_(unsigned int line, UINT func, FILEOP_FLAGS flags, const char *from, const char *to,
+        DWORD expect_ret, BOOL expect_aborted, BOOL todo_ret, BOOL todo_aborted)
+{
+    SHFILEOPSTRUCTA op;
+    DWORD ret;
+
+    memset(&op, 0, sizeof(op));
+    op.wFunc = func;
+    op.fFlags = flags;
+    op.pFrom = from;
+    op.pTo = to;
+    op.fAnyOperationsAborted = 0xdeadbeef;
+
+    ret = SHFileOperationA(&op);
+    todo_wine_if(todo_ret)
+    ok_(__FILE__, line)(ret == expect_ret, "SHFileOperationA returned %ld, expected %ld.\n", ret, expect_ret);
+    todo_wine_if(todo_aborted)
+    ok_(__FILE__, line)(op.fAnyOperationsAborted == expect_aborted,
+            "Unexpected fAnyOperationsAborted %d, expected %d.\n",
+            op.fAnyOperationsAborted, expect_aborted);
+}
 
 /* tests the FO_DELETE action */
 static void test_delete(void)
@@ -912,27 +935,22 @@ static void test_rename(void)
 /* tests the FO_COPY action */
 static void test_copy(void)
 {
-    SHFILEOPSTRUCTA shfo, shfo2;
-    CHAR from[5*MAX_PATH];
-    CHAR to[5*MAX_PATH];
-    FILEOP_FLAGS tmp_flags;
+    char from[5 * MAX_PATH], to[5 * MAX_PATH];
+    SHFILEOPSTRUCTA shfo;
     DWORD retval;
     LPSTR ptr;
     BOOL ret;
 
     shfo.hwnd = NULL;
     shfo.wFunc = FO_COPY;
-    shfo.pFrom = from;
-    shfo.pTo = to;
-    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
     shfo.hNameMappings = NULL;
     shfo.lpszProgressTitle = NULL;
 
+    /* Sources and targets have the same number, no FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    retval = SHFileOperationA(&shfo);
-    todo_wine
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     todo_wine
     ok(DeleteFileA("test6.txt\\test1.txt"), "test6.txt\\test1.txt is not copied.\n");
     todo_wine
@@ -940,24 +958,22 @@ static void test_copy(void)
     RemoveDirectoryA("test6.txt\\test4.txt");
     RemoveDirectoryA("test6.txt");
 
-    memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
-    shfo2.fFlags |= FOF_MULTIDESTFILES;
-
+    /* Sources and targets have the same number, with FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    ok(!SHFileOperationA(&shfo2), "Can't copy many files\n");
+    check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("test6.txt"), "The file is not copied - many files are "
        "specified as a target\n");
     DeleteFileA("test6.txt");
     DeleteFileA("test7.txt");
     RemoveDirectoryA("test8.txt");
 
-    /* number of sources does not correspond to number of targets */
+    /* Sources outnumber targets, with FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
-    retval = SHFileOperationA(&shfo2);
-    todo_wine
-    ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %ld\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            DE_DESTSAMETREE, FALSE, TRUE, TRUE);
     todo_wine
     ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied.\n");
     RemoveDirectoryA("test6.txt");
@@ -965,118 +981,93 @@ static void test_copy(void)
     ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not copied.\n");
     RemoveDirectoryA("test7.txt");
 
-    set_curr_dir_path(from, "test1.txt\0");
-    set_curr_dir_path(to, "test4.txt\0");
-    ok(!SHFileOperationA(&shfo), "Prepare test to check how directories are copied recursively\n");
-    ok(file_exists("test4.txt\\test1.txt"), "The file is copied\n");
-
+    /* Wildcard source. */
+    createTestFile("test4.txt\\test1.txt");
     set_curr_dir_path(from, "test?.txt\0");
     set_curr_dir_path(to, "testdir2\0");
-    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists("testdir2\\test4.txt"), "The directory is not copied yet\n");
-    ok(!SHFileOperationA(&shfo), "Files and directories are copied to directory\n");
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(file_exists("testdir2\\test4.txt"), "The directory is copied\n");
     ok(file_exists("testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is copied\n");
     clean_after_shfo_tests();
 
+    /* Wildcard source, with FOF_FILESONLY. */
     init_shfo_tests();
-    shfo.fFlags |= FOF_FILESONLY;
-    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists("testdir2\\test4.txt"), "The directory is not copied yet\n");
-    ok(!SHFileOperationA(&shfo), "Files are copied to other directory\n");
+    set_curr_dir_path(from, "test?.txt\0");
+    set_curr_dir_path(to, "testdir2\0");
+    check_file_operation(FO_COPY, FOF_NO_UI | FOF_FILESONLY, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(!file_exists("testdir2\\test4.txt"), "The directory is copied\n");
     clean_after_shfo_tests();
 
+    /* Multiple sources, with FOF_FILESONLY. */
     init_shfo_tests();
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
-    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
-    ok(!SHFileOperationA(&shfo), "Files are copied to other directory\n");
+    set_curr_dir_path(to, "testdir2\0");
+    check_file_operation(FO_COPY, FOF_NO_UI | FOF_FILESONLY, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(file_exists("testdir2\\test2.txt"), "The file is copied\n");
     clean_after_shfo_tests();
 
-    /* Copying multiple files with one not existing as source, fails the
-       entire operation in Win98/ME/2K/XP, but not in 95/NT */
+    /* Multiple sources, one not existing. */
     init_shfo_tests();
-    tmp_flags = shfo.fFlags;
     set_curr_dir_path(from, "test1.txt\0test10.txt\0test2.txt\0");
-    ok(!file_exists("testdir2\\test1.txt"), "The file is not copied yet\n");
-    ok(!file_exists("testdir2\\test2.txt"), "The file is not copied yet\n");
-    retval = SHFileOperationA(&shfo);
-    todo_wine
-    ok(retval == ERROR_FILE_NOT_FOUND, "Files are copied to other directory\n");
+    set_curr_dir_path(to, "testdir2\0");
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
     ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(!file_exists("testdir2\\test2.txt"), "The file is copied\n");
-    shfo.fFlags = tmp_flags;
+    clean_after_shfo_tests();
 
-    /* copy into a nonexistent directory */
+    /* Nonexistent target directory. */
     init_shfo_tests();
-    shfo.fFlags = FOF_NOCONFIRMMKDIR;
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "nonexistent\\notreal\\test2.txt\0");
-    retval= SHFileOperationA(&shfo);
-    ok(!retval, "Error copying into nonexistent directory\n");
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("nonexistent"), "nonexistent not created\n");
     ok(file_exists("nonexistent\\notreal"), "nonexistent\\notreal not created\n");
     ok(file_exists("nonexistent\\notreal\\test2.txt"), "Directory not created\n");
     ok(!file_exists("nonexistent\\notreal\\test1.txt"), "test1.txt should not exist\n");
-
-    /* a relative dest directory is OK */
     clean_after_shfo_tests();
+
+    /* Relative path. */
     init_shfo_tests();
-    shfo.pFrom = "test1.txt\0test2.txt\0test3.txt\0";
-    shfo.pTo = "testdir2\0";
-    retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI,"test1.txt\0test2.txt\0test3.txt\0", "testdir2\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2\\test1.txt"), "Expected testdir2\\test1 to exist\n");
-
-    /* try to overwrite an existing write protected file */
     clean_after_shfo_tests();
+
+    /* Overwrite an existing write protected file. */
     init_shfo_tests();
-    tmp_flags = shfo.fFlags;
-    shfo.pFrom = "test1.txt\0";
-    shfo.pTo = "test2.txt\0";
-    /* suppress the error-dialog in win9x here */
-    shfo.fFlags = FOF_NOERRORUI | FOF_NOCONFIRMATION | FOF_SILENT;
-    ret = SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_READONLY);
+    ret = SetFileAttributesA("test2.txt", FILE_ATTRIBUTE_READONLY);
     ok(ret, "Failure to set file attributes (error %lx)\n", GetLastError());
-    retval = CopyFileA(shfo.pFrom, shfo.pTo, FALSE);
+    retval = CopyFileA("test1.txt", "test2.txt", FALSE);
     ok(!retval && GetLastError() == ERROR_ACCESS_DENIED, "CopyFileA should have fail with ERROR_ACCESS_DENIED\n");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "SHFileOperationA failed to copy (error %lx)\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI,"test1.txt\0", "test2.txt\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     /* Set back normal attributes to make the file deletion succeed */
-    ret = SetFileAttributesA(shfo.pTo, FILE_ATTRIBUTE_NORMAL);
+    ret = SetFileAttributesA("test2.txt", FILE_ATTRIBUTE_NORMAL);
     ok(ret, "Failure to set file attributes (error %lx)\n", GetLastError());
-    shfo.fFlags = tmp_flags;
-
-    /* try to copy files to a file */
     clean_after_shfo_tests();
+
+    /* Copy files to a file */
     init_shfo_tests();
-    shfo.pFrom = from;
-    shfo.pTo = to;
-    /* suppress the error-dialog in win9x here */
-    shfo.fFlags |= FOF_NOERRORUI;
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test3.txt\0");
-    shfo.fAnyOperationsAborted = 0xdeadbeef;
-    retval = SHFileOperationA(&shfo);
-    ok(shfo.fAnyOperationsAborted != 0xdeadbeef, "Expected TRUE/FALSE fAnyOperationsAborted not 0xdeadbeef\n");
-    todo_wine
-    ok(retval == DE_INVALIDFILES, "Expected DE_INVALIDFILES, got %ld\n", retval);
-    todo_wine
-    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            DE_INVALIDFILES, FALSE, TRUE, TRUE);
     ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
 
-    /* try to copy many files to nonexistent directory */
+    /* Copy many files to a nonexistent directory. */
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0");
+    set_curr_dir_path(to, "test3.txt\0");
     DeleteFileA(to);
-    shfo.fFlags &= ~FOF_NOERRORUI;
-    shfo.fAnyOperationsAborted = 0xdeadbeef;
-    retval = SHFileOperationA(&shfo);
-    ok(!shfo.fAnyOperationsAborted, "Didn't expect aborted operations\n");
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test3.txt\\test1.txt"), "Expected test3.txt\\test1.txt to exist\n");
     ok(DeleteFileA("test3.txt\\test2.txt"), "Expected test3.txt\\test1.txt to exist\n");
     ok(RemoveDirectoryA(to), "Expected test3.txt to exist\n");
