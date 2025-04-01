@@ -320,14 +320,29 @@ static void test_CM_Register_Notification( void )
             CR_SUCCESS
         }
     };
+    DWORD (WINAPI *pCM_Register_Notification)(PCM_NOTIFY_FILTER,PVOID,PCM_NOTIFY_CALLBACK,PHCMNOTIFICATION) = NULL;
+    DWORD (WINAPI *pCM_Unregister_Notification)(HCMNOTIFICATION) = NULL;
+    HMODULE cfgmgr32 = GetModuleHandleW( L"cfgmgr32" );
     DWORD i;
     HCMNOTIFICATION notify = NULL;
     CONFIGRET ret;
 
-    ret = CM_Register_Notification( NULL, NULL, NULL, NULL );
+    if (cfgmgr32)
+    {
+        pCM_Register_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Register_Notification" );
+        pCM_Unregister_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Unregister_Notification" );
+    }
+
+    if (!pCM_Register_Notification)
+    {
+        win_skip( "CM_Register_Notification not found, skipping tests\n" );
+        return;
+    }
+
+    ret = pCM_Register_Notification( NULL, NULL, NULL, NULL );
     ok( ret == CR_FAILURE, "Expected 0x13, got %#lx.\n", ret );
 
-    ret = CM_Register_Notification( NULL, NULL, NULL, &notify );
+    ret = pCM_Register_Notification( NULL, NULL, NULL, &notify );
     ok( ret == CR_INVALID_DATA, "Expected 0x1f, got %#lx.\n", ret );
     ok( !notify, "Expected handle to be NULL, got %p\n", notify );
 
@@ -335,13 +350,13 @@ static void test_CM_Register_Notification( void )
     {
         notify = NULL;
         winetest_push_context( "test_cases %lu", i );
-        ret = CM_Register_Notification( &test_cases[i].filter, NULL, notify_callback, &notify );
+        ret = pCM_Register_Notification( &test_cases[i].filter, NULL, notify_callback, &notify );
         ok( test_cases[i].ret == ret, "Expected %#lx, got %#lx\n", test_cases[i].ret, ret );
         if (test_cases[i].ret)
             ok( !notify, "Expected handle to be NULL, got %p\n", notify );
         if (notify)
         {
-            ret = CM_Unregister_Notification( notify );
+            ret = pCM_Unregister_Notification( notify );
             ok( !ret, "Expected 0, got %#lx\n", ret );
         }
         winetest_pop_context();
