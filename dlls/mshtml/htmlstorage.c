@@ -332,7 +332,6 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
 
     ctx.url = NULL;
 
-    /* FIXME: Events are actually sent to the current window on native, even if we're detached. */
     if(!window->base.outer_window)
         goto done;
 

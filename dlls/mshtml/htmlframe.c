@@ -79,7 +79,7 @@ static HRESULT WINAPI HTMLFrameBase_put_src(IHTMLFrameBase *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->content_window || !This->element.node.doc || !This->element.node.doc->window || !This->element.node.doc->window->base.outer_window) {
+    if(!This->content_window || !This->element.node.doc || !This->element.node.doc->window || is_detached_window(This->element.node.doc->window)) {
         nsAString nsstr;
         nsresult nsres;
 

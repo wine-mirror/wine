@@ -752,6 +752,7 @@ struct HTMLOuterWindow {
     BSTR url;
     DWORD load_flags;
 
+    struct list inner_windows;
     struct list sibling_entry;
     struct wine_rb_entry entry;
 };
@@ -818,6 +819,8 @@ struct HTMLInnerWindow {
     ULONGLONG load_event_start_time;
     ULONGLONG load_event_end_time;
     ULONGLONG first_paint_time;
+
+    struct list outer_window_entry;
 };
 
 typedef enum {
@@ -1310,6 +1313,11 @@ HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret);
 static inline BOOL is_main_content_window(HTMLOuterWindow *window)
 {
     return window->browser && window == window->browser->content_window;
+}
+
+static inline BOOL is_detached_window(HTMLInnerWindow *window)
+{
+    return !window->base.outer_window || (window->base.outer_window->base.inner_window != window && window->base.outer_window->pending_window != window);
 }
 
 struct HTMLAttributeCollection {

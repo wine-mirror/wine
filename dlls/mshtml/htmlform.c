@@ -519,7 +519,7 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 
     if(This->element.node.doc) {
         HTMLDocumentNode *doc = This->element.node.doc;
-        if(doc->window && doc->window->base.outer_window)
+        if(doc->window && !is_detached_window(doc->window))
             this_window = doc->window->base.outer_window;
     }
     if(!this_window) {

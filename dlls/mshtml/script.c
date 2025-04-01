@@ -419,7 +419,7 @@ static HRESULT WINAPI ActiveScriptSite_GetItemInfo(IActiveScriptSite *iface, LPC
     if(wcscmp(pstrName, L"window"))
         return DISP_E_MEMBERNOTFOUND;
 
-    if(!This->window || !This->window->base.outer_window)
+    if(!This->window || is_detached_window(This->window))
         return E_FAIL;
 
     if(dispex_compat_mode(&This->window->event_target.dispex) >= COMPAT_MODE_IE9)
@@ -565,7 +565,7 @@ static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *
 
     TRACE("(%p)->(%p)\n", This, phwnd);
 
-    if(!This->window || !This->window->base.outer_window)
+    if(!This->window || is_detached_window(This->window))
         return E_UNEXPECTED;
 
     *phwnd = This->window->base.outer_window->browser->doc->hwnd;
@@ -1433,7 +1433,7 @@ static ScriptHost *get_script_host(HTMLInnerWindow *window, const GUID *guid)
 
 void initialize_script_global(HTMLInnerWindow *script_global)
 {
-    if(!script_global->base.outer_window)
+    if(is_detached_window(script_global))
         return;
     get_script_host(script_global, &CLSID_JScript);
 }

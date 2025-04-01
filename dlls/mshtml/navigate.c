@@ -578,7 +578,7 @@ static HRESULT WINAPI BindCallbackRedirect_Redirect(IBindCallbackRedirect *iface
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(url), vbCancel);
 
-    if(This->window && This->window->base.outer_window && (browser = This->window->base.outer_window->browser)
+    if(This->window && !is_detached_window(This->window) && (browser = This->window->base.outer_window->browser)
        && browser->doc->doc_object_service) {
         if(is_main_content_window(This->window->base.outer_window)) {
             hres = IHTMLWindow2_get_name(&This->window->base.IHTMLWindow2_iface, &frame_name);
@@ -1269,7 +1269,7 @@ static nsresult NSAPI nsAsyncVerifyRedirectCallback_OnRedirectVerifyCallback(nsI
             ERR("AddRequest failed: %08lx\n", nsres);
     }
 
-    if(This->bsc->is_doc_channel && This->bsc->bsc.window && This->bsc->bsc.window->base.outer_window) {
+    if(This->bsc->is_doc_channel && This->bsc->bsc.window && !is_detached_window(This->bsc->bsc.window)) {
         IUri *uri = nsuri_get_uri(This->nschannel->uri);
 
         if(uri) {
@@ -1445,7 +1445,7 @@ static void handle_navigation_error(nsChannelBSC *This, DWORD result)
     BSTR unk;
     HRESULT hres;
 
-    if(!This->is_doc_channel || !This->bsc.window || !This->bsc.window->base.outer_window
+    if(!This->is_doc_channel || !This->bsc.window || is_detached_window(This->bsc.window)
        || !This->bsc.window->base.outer_window->browser)
         return;
 
@@ -1644,7 +1644,7 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
     VARIANT flags;
     HRESULT hres;
 
-    if(!This->bsc.window || !This->bsc.window->base.outer_window || !This->bsc.window->base.outer_window->browser)
+    if(!This->bsc.window || is_detached_window(This->bsc.window) || !This->bsc.window->base.outer_window->browser)
         return;
 
     doc_obj = This->bsc.window->base.outer_window->browser->doc;

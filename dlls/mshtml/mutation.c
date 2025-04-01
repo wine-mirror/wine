@@ -446,7 +446,7 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
 
     TRACE("%p: %d\n", doc, document_mode);
 
-    max_compat_mode = doc->window && doc->window->base.outer_window
+    max_compat_mode = doc->window && !is_detached_window(doc->window)
         ? get_max_compat_mode(doc->window->base.outer_window->uri)
         : COMPAT_MODE_IE11;
     if(max_compat_mode < document_mode) {

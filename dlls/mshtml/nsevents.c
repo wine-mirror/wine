@@ -316,7 +316,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
     TRACE("(%p)\n", doc);
 
-    if(!doc->window || !doc->window->base.outer_window)
+    if(!doc->window || is_detached_window(doc->window))
         return NS_ERROR_FAILURE;
     if(doc->doc_obj && doc->doc_obj->doc_node == doc) {
         doc_obj = doc->doc_obj;
@@ -328,7 +328,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
         handle_docobj_load(doc_obj);
 
     doc->window->dom_complete_time = get_time_stamp();
-    if(doc->window->base.outer_window)
+    if(!is_detached_window(doc->window))
         set_ready_state(doc->window->base.outer_window, READYSTATE_COMPLETE);
 
     if(doc_obj) {
@@ -339,7 +339,7 @@ static nsresult handle_load(HTMLDocumentNode *doc, nsIDOMEvent *event)
 
         update_title(doc_obj);
 
-        if(doc_obj->doc_object_service && doc->window->base.outer_window && !(doc->window->base.outer_window->load_flags & BINDING_REFRESH))
+        if(doc_obj->doc_object_service && !is_detached_window(doc->window) && !(doc->window->base.outer_window->load_flags & BINDING_REFRESH))
             IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                     &doc->window->base.outer_window->base.IHTMLWindow2_iface, 0);
 
