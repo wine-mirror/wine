@@ -709,7 +709,7 @@ static const builtin_info_t FunctionInst_info = {
 };
 
 static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_info, const function_vtbl_t *vtbl, size_t size,
-        DWORD flags, BOOL funcprot, jsdisp_t *prototype, void **ret)
+        DWORD flags, jsdisp_t *prototype, void **ret)
 {
     FunctionInstance *function;
     HRESULT hres;
@@ -718,7 +718,7 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     if(!function)
         return E_OUTOFMEMORY;
 
-    if(funcprot)
+    if(prototype)
         hres = init_dispex(&function->dispex, ctx, builtin_info, prototype);
     else if(builtin_info)
         hres = init_dispex_from_constr(&function->dispex, ctx, builtin_info, ctx->function_constr);
@@ -779,7 +779,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     if(!ctx->function_constr)
         return E_UNEXPECTED;
 
-    hres = create_function(ctx, builtin_info, &NativeFunctionVtbl, sizeof(NativeFunction), flags, FALSE, NULL, (void**)&function);
+    hres = create_function(ctx, builtin_info, &NativeFunctionVtbl, sizeof(NativeFunction), flags, NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
 
@@ -957,7 +957,7 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     HRESULT hres;
 
     hres = create_function(ctx, &InterpretedFunction_info, &InterpretedFunctionVtbl, sizeof(InterpretedFunction),
-                           PROPF_CONSTR, FALSE, NULL, (void**)&function);
+                           PROPF_CONSTR, NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
 
@@ -1078,7 +1078,7 @@ HRESULT create_host_function(script_ctx_t *ctx, const struct property_info *desc
         return E_UNEXPECTED;
 
     hres = create_function(ctx, &HostFunction_info, &HostFunctionVtbl, sizeof(HostFunction), PROPF_METHOD,
-                           FALSE, NULL, (void**)&function);
+                           NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
 
@@ -1194,7 +1194,7 @@ HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_const
     HRESULT hres;
 
     hres = create_function(ctx, &HostConstructor_info, &HostConstructorVtbl, sizeof(*function), PROPF_METHOD,
-                           FALSE, NULL, (void**)&function);
+                           NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
     function->host_iface = host_constr;
@@ -1322,7 +1322,7 @@ static HRESULT create_bind_function(script_ctx_t *ctx, FunctionInstance *target,
     HRESULT hres;
 
     hres = create_function(ctx, &BindFunction_info, &BindFunctionVtbl, FIELD_OFFSET(BindFunction, args[argc]), PROPF_METHOD,
-                           FALSE, NULL, (void**)&function);
+                           NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
 
@@ -1479,7 +1479,7 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     HRESULT hres;
 
     hres = create_function(ctx, &Function_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR,
-                           TRUE, object_prototype, (void**)&prot);
+                           object_prototype, (void**)&prot);
     if(FAILED(hres))
         return hres;
 
@@ -1487,7 +1487,7 @@ HRESULT init_function_constr(script_ctx_t *ctx, jsdisp_t *object_prototype)
     prot->name = L"prototype";
 
     hres = create_function(ctx, &FunctionInst_info, &NativeFunctionVtbl, sizeof(NativeFunction), PROPF_CONSTR|1,
-                           TRUE, &prot->function.dispex, (void**)&constr);
+                           &prot->function.dispex, (void**)&constr);
     if(SUCCEEDED(hres)) {
         constr->proc = FunctionConstr_value;
         constr->name = L"Function";
