@@ -113,6 +113,7 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
 {
     HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
     HTMLDocumentNode *new_document_node;
+    compat_mode_t compat_mode;
     nsIDOMDocument *doc;
     nsAString title_str;
     nsresult nsres;
@@ -131,11 +132,16 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
         return E_FAIL;
     }
 
+    compat_mode = dispex_compat_mode(&This->dispex);
     hres = create_document_node(doc, This->doc->browser, NULL, This->doc->script_global,
-                                dispex_compat_mode(&This->dispex), &new_document_node);
+                                compat_mode, &new_document_node);
     nsIDOMDocument_Release(doc);
     if(FAILED(hres))
         return hres;
+
+    /* make sure dispex info is initialized for the prototype */
+    if(compat_mode >= COMPAT_MODE_IE9)
+        dispex_compat_mode(&new_document_node->node.event_target.dispex);
 
     *new_document = &new_document_node->IHTMLDocument7_iface;
     return S_OK;

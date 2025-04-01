@@ -2845,7 +2845,6 @@ async_test("script_global", function() {
     // Created documents share script global, so their objects are instances of Object from
     // the current script context.
     var doc = document.implementation.createHTMLDocument("test");
-    todo_wine.
     ok(doc instanceof Object, "created doc is not an instance of Object");
     ok(doc.implementation instanceof Object, "created doc.implementation is not an instance of Object");
     ok(doc.implementation instanceof DOMImplementation, "created doc.implementation is not an instance of DOMImplementation");
@@ -2870,8 +2869,16 @@ async_test("script_global", function() {
         ok(!(doc.implementation instanceof DOMImplementation), "created iframe doc.implementation is an instance of DOMImplementation");
         ok(doc.implementation instanceof iframe.contentWindow.DOMImplementation, "created iframe doc.implementation is not an instance of iframe's DOMImplementation");
         ok(Object.getPrototypeOf(doc) !== Object.getPrototypeOf(document), "created iframe doc's prototype same as doc prototype");
-        todo_wine.
         ok(Object.getPrototypeOf(doc) === iframe.contentWindow.HTMLDocument.prototype, "created iframe doc's prototype not iframe's HTMLDocument.prototype");
+
+        Object.defineProperty(doc, "winetest", { writable: true, enumerable: true, configurable: true, value: 42 });
+        test_own_data_prop_desc(doc, "winetest", true, true, true);
+
+        ok(Object.isFrozen(doc) === false, "created iframe doc isFrozen is not false");
+        ok(Object.isSealed(doc) === false, "created iframe doc isSealed is not false");
+        Object.freeze(doc);
+        ok(Object.isFrozen(doc) === true, "created iframe doc isFrozen is not true after freezing it");
+        ok(Object.isSealed(doc) === true, "created iframe doc isSealed is not true after freezing it");
 
         var r = Object.prototype.toString.call(iframe.contentWindow);
         ok(r === "[object Window]", "iframe's Window toString = " + r);
