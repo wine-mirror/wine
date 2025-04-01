@@ -232,7 +232,7 @@ static void test_NtCreateUserProcess(void)
 
     memset( &create_info, 0, sizeof(create_info) );
     create_info.Size = sizeof(create_info);
-    status = NtCreateUserProcess( &process, &thread, PROCESS_TERMINATE, SYNCHRONIZE,
+    status = NtCreateUserProcess( &process, &thread, PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION, SYNCHRONIZE,
                                   NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, params,
                                   &create_info, &ps_attr );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
