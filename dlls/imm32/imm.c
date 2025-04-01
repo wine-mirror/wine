@@ -3346,9 +3346,19 @@ BOOL WINAPI CtfImmIsCiceroEnabled(void)
 /***********************************************************************
  *      CtfImmHideToolbarWnd (IMM32.@)
  */
-BOOL WINAPI CtfImmHideToolbarWnd(void)
+DWORD WINAPI CtfImmHideToolbarWnd(void)
 {
     FIXME("(): stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return 0;
+}
+
+/***********************************************************************
+ *      CtfImmRestoreToolbarWnd (IMM32.@)
+ */
+DWORD WINAPI CtfImmRestoreToolbarWnd(DWORD unknown)
+{
+    FIXME("%lx: stub\n", unknown);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
 }

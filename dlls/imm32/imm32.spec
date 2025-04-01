@@ -15,7 +15,7 @@
 @ stub CtfImmLastEnabledWndDestroy
 @ stub CtfImmLeaveCoInitCountSkipMode
 @ stub CtfImmNotify
-@ stub CtfImmRestoreToolbarWnd
+@ stdcall CtfImmRestoreToolbarWnd(long)
 @ stub CtfImmSetAppCompatFlags
 @ stub CtfImmSetCiceroStartInThread
 @ stub CtfImmSetDefaultRemoteKeyboardLayout
