@@ -87,6 +87,24 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
     }
 }
 
+static void redirect_path( UNICODE_STRING *path )
+{
+#ifndef _WIN64
+    static const WCHAR nt_sysdir[] = L"\\??\\C:\\windows\\system32\\";
+#ifdef __arm__
+    const WCHAR *dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_ARMNT );
+#else
+    const WCHAR *dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_I386 );
+#endif
+
+    if (!NtCurrentTeb()->GdiBatchCount) return;  /* not wow64 */
+    if (((TEB64 *)NtCurrentTeb()->GdiBatchCount)->TlsSlots[WOW64_TLS_FILESYSREDIR]) return; /* disabled */
+    if (path->Length <= sizeof(nt_sysdir)) return;
+    if (wcsnicmp( path->Buffer, nt_sysdir, wcslen(nt_sysdir))) return;
+    memcpy( path->Buffer + 4, dir, wcslen(dir) * sizeof(WCHAR) );
+#endif
+}
+
 
 /***********************************************************************
  * Operations on file names
@@ -167,6 +185,9 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
+
+    redirect_path( &source_name );
+    if (dest) redirect_path( &dest_name );
 
     InitializeObjectAttributes( &attr, &session_manager, 0, 0, NULL );
     if (NtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
