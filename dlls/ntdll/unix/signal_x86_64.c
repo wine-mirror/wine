@@ -1648,7 +1648,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    /* switch to user stack */
                    "movq %rdi,%rsp\n\t"        /* user_rsp */
 #ifdef __linux__
-                   "testl $12,%r14d\n\t"       /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "testl $4,%r14d\n\t"        /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 1f\n\t"
                    "movw 0x338(%r8),%fs\n"     /* amd64_thread_data()->fs */
                    "1:\n\t"
@@ -2504,6 +2504,9 @@ void signal_init_process(void)
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
+#ifdef AT_HWCAP2
+    if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
+#endif
 
 #ifdef __linux__
     if (wow_teb)
@@ -2515,9 +2518,6 @@ void signal_init_process(void)
         {
             amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
             syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
-#ifdef AT_HWCAP2
-            if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
-#endif
         }
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
@@ -2804,7 +2804,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     * (on macOS, signal handlers set gsbase to pthread_teb when on the kernel stack).
                     */
 #ifdef __linux__
-                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 2f\n\t"
                    "movq 0xb8(%rcx),%rsi\n\t"      /* frame->teb */
                    "movq 0x320(%rsi),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
@@ -2862,7 +2862,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI_CFA_IS_AT2(rcx, 0xa8, 0x01) /* frame->syscall_cfa */
                    "leaq 0x70(%rcx),%rsp\n\t"      /* %rsp > frame means no longer inside syscall */
 #ifdef __linux__
-                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 1f\n\t"
                    "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
@@ -3055,7 +3055,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_undefined %rdi\n\t")
                    __ASM_CFI(".cfi_undefined %rsi\n\t")
 #ifdef __linux__
-                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 2f\n\t"
                    "movq %gs:0x320,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
@@ -3091,7 +3091,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
 #ifdef __linux__
-                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 1f\n\t"
                    "movw %gs:0x338,%fs\n"          /* amd64_thread_data()->fs */
                    "1:\n\t"
