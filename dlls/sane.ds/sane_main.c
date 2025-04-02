@@ -387,6 +387,7 @@ DS_Entry ( pTW_IDENTITY pOrigin,
 
 void SANE_Notify (TW_UINT16 message)
 {
+    TRACE("%04x\n", message);
     SANE_dsmentry (&activeDS.identity, &activeDS.appIdentity, DG_CONTROL, DAT_NULL, message, NULL);
 }
 
