@@ -517,7 +517,22 @@ static HANDLE create_dest_file( const WCHAR *name, BOOL delete )
         }
         CloseHandle( h );
         h = INVALID_HANDLE_VALUE;
-        ERR( "failed to create %s, file in use\n", debugstr_w(name) );
+
+        if (!delete)
+        {
+            WCHAR *p, *path = wcsdup( name );
+            WCHAR tmpname[MAX_PATH];
+
+            if ((p = wcsrchr( path, '\\' ))) *p = 0;
+            if (GetTempFileNameW( path, L"dll", 0, tmpname ))
+            {
+                h = CreateFileW( tmpname, GENERIC_READ|GENERIC_WRITE, 0, NULL, TRUNCATE_EXISTING, 0, NULL );
+                if (h != INVALID_HANDLE_VALUE)
+                    MoveFileExW( tmpname, name, MOVEFILE_DELAY_UNTIL_REBOOT | MOVEFILE_REPLACE_EXISTING );
+            }
+            free( path );
+        }
+        else MoveFileExW( name, NULL, MOVEFILE_DELAY_UNTIL_REBOOT );
     }
     else if (!delete)
     {
