@@ -363,9 +363,63 @@ static void test_CM_Register_Notification( void )
     }
 }
 
+static void test_CM_Get_Device_Interface_List(void)
+{
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    SP_DEVINFO_DATA device = { sizeof(device) };
+    unsigned int count, count2;
+    WCHAR *buffer, *p;
+    CONFIGRET ret;
+    HDEVINFO set;
+    ULONG size;
+    GUID guid;
+    BOOL bret;
+
+    guid = GUID_DEVINTERFACE_DISPLAY_ADAPTER;
+
+    ret = CM_Get_Device_Interface_List_SizeW(&size, &guid, NULL, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+    ok(!ret, "got %#lx.\n", ret);
+
+    buffer = malloc(size * sizeof(*buffer));
+    ret = CM_Get_Device_Interface_ListW( &guid, NULL, buffer, size, CM_GET_DEVICE_INTERFACE_LIST_PRESENT);
+    ok(!ret, "got %#lx.\n", ret);
+
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+
+    count = 0;
+    p = buffer;
+    while (*p)
+    {
+        set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+        ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+        bret = SetupDiOpenDeviceInterfaceW(set, p, 0, &iface);
+        ok(bret, "got error %lu.\n", GetLastError());
+        memset(iface_detail_buffer, 0xcc, sizeof(iface_detail_buffer));
+        iface_data->cbSize = sizeof(*iface_data);
+        bret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data, sizeof(iface_detail_buffer), NULL, &device);
+        ok(bret, "got error %lu.\n", GetLastError());
+        ok(!wcsicmp(iface_data->DevicePath, p), "got %s, expected %s.\n", debugstr_w(p), debugstr_w(iface_data->DevicePath));
+        SetupDiDestroyDeviceInfoList(set);
+        p += wcslen(p) + 1;
+        ++count;
+    }
+
+    free(buffer);
+
+    set = SetupDiGetClassDevsW(&guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+    for (count2 = 0; SetupDiEnumDeviceInterfaces(set, NULL, &guid, count2, &iface); ++count2)
+        ;
+    SetupDiDestroyDeviceInfoList(set);
+    ok(count == count2, "got %u, expected %u.\n", count, count2);
+}
+
 START_TEST(cfgmgr32)
 {
     test_CM_MapCrToWin32Err();
     test_CM_Get_Device_ID_List();
     test_CM_Register_Notification();
+    test_CM_Get_Device_Interface_List();
 }

@@ -4587,6 +4587,119 @@ CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA(ULONG *len, const char *filter, ULO
     return CM_Get_Device_ID_List_Size_ExA(len, filter, flags, NULL);
 }
 
+static CONFIGRET get_device_interface_list(const GUID *class_guid, DEVINSTID_W device_id, WCHAR *buffer, ULONG *len,
+        ULONG flags)
+{
+    const ULONG supported_flags = CM_GET_DEVICE_INTERFACE_LIST_ALL_DEVICES;
+
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    SP_DEVINFO_DATA device = { sizeof(device) };
+    ULONG query_flags = DIGCF_DEVICEINTERFACE;
+    CONFIGRET ret = CR_SUCCESS;
+    unsigned int i, id_len;
+    HDEVINFO set;
+    ULONG needed;
+    WCHAR *p;
+
+    if (!len || (buffer && !*len))
+        return CR_INVALID_POINTER;
+
+    needed = 1;
+
+    if (buffer)
+        *buffer = 0;
+    if (flags & ~supported_flags)
+        FIXME("Flags %#lx are not supported.\n", flags);
+
+    if (!buffer)
+        *len = 0;
+
+    if (!buffer)
+        *len = needed;
+
+    if (!(flags & CM_GET_DEVICE_INTERFACE_LIST_ALL_DEVICES)) query_flags |= DIGCF_PRESENT;
+    set = SetupDiGetClassDevsW(class_guid, device_id, NULL, query_flags);
+    if (set == INVALID_HANDLE_VALUE)
+        return CR_SUCCESS;
+
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+    iface_data->cbSize = sizeof(*iface_data);
+
+    p = buffer;
+    for (i = 0; SetupDiEnumDeviceInterfaces(set, NULL, class_guid, i, &iface); ++i)
+    {
+        ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data, sizeof(iface_detail_buffer), NULL, &device);
+        if (!ret) continue;
+        id_len = wcslen(iface_data->DevicePath) + 1;
+        needed += id_len;
+        if (buffer)
+        {
+            if (needed > *len)
+            {
+                SetupDiDestroyDeviceInfoList(set);
+                *buffer = 0;
+                return CR_BUFFER_SMALL;
+            }
+            memcpy(p, iface_data->DevicePath, sizeof(*p) * id_len);
+            p += id_len;
+        }
+    }
+    SetupDiDestroyDeviceInfoList(set);
+    *len = needed;
+    if (buffer)
+        *p = 0;
+    return CR_SUCCESS;
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_List_Size_ExW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class, DEVINSTID_W id,
+                                                       ULONG flags, HMACHINE machine)
+{
+    TRACE("%p %s %s 0x%08lx %p\n", len, debugstr_guid(class), debugstr_w(id), flags, machine);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    return get_device_interface_list(class, id, NULL, len, flags);
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_List_SizeW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeW(PULONG len, LPGUID class, DEVINSTID_W id, ULONG flags)
+{
+    TRACE("%p %s %s 0x%08lx\n", len, debugstr_guid(class), debugstr_w(id), flags);
+    return get_device_interface_list(class, id, NULL, len, flags);
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_List_W (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_List_ExW(LPGUID class, DEVINSTID_W id, PZZWSTR buffer, ULONG len, ULONG flags,
+        HMACHINE machine)
+{
+    TRACE("%s %s %p %lu %#lx\n", debugstr_guid(class), debugstr_w(id), buffer, len, flags);
+
+    if (machine)
+        FIXME("machine %p.\n", machine);
+
+    return get_device_interface_list(class, id, buffer, &len, flags);
+}
+
+/***********************************************************************
+ *      CM_Get_Device_Interface_List_W (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_Device_Interface_ListW(LPGUID class, DEVINSTID_W id, PZZWSTR buffer, ULONG len, ULONG flags)
+{
+    TRACE("%s %s %p %lu %#lx\n", debugstr_guid(class), debugstr_w(id), buffer, len, flags);
+
+    return get_device_interface_list(class, id, buffer, &len, flags);
+}
+
 /***********************************************************************
  *      SetupDiGetINFClassA (SETUPAPI.@)
  */

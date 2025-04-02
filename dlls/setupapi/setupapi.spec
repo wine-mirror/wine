@@ -94,9 +94,9 @@
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
 @ stub CM_Get_Device_Interface_ListA
-@ stub CM_Get_Device_Interface_ListW
+@ stdcall CM_Get_Device_Interface_ListW(ptr ptr ptr long long)
 @ stub CM_Get_Device_Interface_List_ExA
-@ stub CM_Get_Device_Interface_List_ExW
+@ stdcall CM_Get_Device_Interface_List_ExW(ptr ptr ptr long long ptr)
 @ stdcall CM_Get_Device_Interface_List_SizeA(ptr ptr str long)
 @ stdcall CM_Get_Device_Interface_List_SizeW(ptr ptr wstr long)
 @ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr)

@@ -278,32 +278,12 @@ CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeA(PULONG len, LPGUID class, DE
 }
 
 /***********************************************************************
- *      CM_Get_Device_Interface_List_SizeW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeW(PULONG len, LPGUID class, DEVINSTID_W id,
-                                                    ULONG flags)
-{
-    FIXME("%p %p %s 0x%08lx: stub\n", len, class, debugstr_w(id), flags);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
  *      CM_Get_Device_Interface_List_Size_ExA (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExA(PULONG len, LPGUID class, DEVINSTID_A id,
                                                        ULONG flags, HMACHINE machine)
 {
     FIXME("%p %p %s 0x%08lx %p: stub\n", len, class, debugstr_a(id), flags, machine);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_Device_Interface_List_Size_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class, DEVINSTID_W id,
-                                                       ULONG flags, HMACHINE machine)
-{
-    FIXME("%p %p %s 0x%08lx %p: stub\n", len, class, debugstr_w(id), flags, machine);
     return CR_FAILURE;
 }
 
