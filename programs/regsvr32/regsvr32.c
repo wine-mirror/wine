@@ -337,6 +337,8 @@ int __cdecl wmain(int argc, WCHAR* argv[])
             case 's':
                 Silent = TRUE;
                 break;
+            case 'c':  /* output to console, ignored in recent Windows */
+                break;
             case 'i':
                 CallInstall = TRUE;
                 wsCommandLine = parse_command_line(argv[i] + 2); /* argv[i] + strlen("/i") */
