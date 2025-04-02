@@ -1,6 +1,7 @@
 MODULE    = wineps.drv
 UNIXLIB   = wineps.so
-IMPORTS   = user32 gdi32 winspool advapi32 win32u
+IMPORTS   = user32 gdi32 advapi32 win32u
+DELAYIMPORTS = winspool
 UNIX_LIBS = -lwin32u -lm
 
 SOURCES = \
