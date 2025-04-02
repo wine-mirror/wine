@@ -371,7 +371,7 @@ TW_UINT16 SANE_DisableDSUserInterface (pTW_IDENTITY pOrigin,
 
     TRACE ("DG_CONTROL/DAT_USERINTERFACE/MSG_DISABLEDS\n");
 
-    if (activeDS.currentState != 5)
+    if (activeDS.currentState != 5 && activeDS.currentState != 6)
     {
         twRC = TWRC_FAILURE;
         activeDS.twCC = TWCC_SEQERROR;
