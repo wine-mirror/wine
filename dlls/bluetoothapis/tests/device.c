@@ -171,7 +171,8 @@ void test_radio_BluetoothFindNextDevice( HANDLE radio, void *data )
             break;
     }
 
-    ok( BluetoothFindDeviceClose( hfind ), "BluetoothFindDeviceClose failed: %lu\n", GetLastError() );
+    success = BluetoothFindDeviceClose( hfind );
+    ok( success, "BluetoothFindDeviceClose failed: %lu\n", GetLastError() );
 }
 
 void test_BluetoothFindNextDevice( void )
