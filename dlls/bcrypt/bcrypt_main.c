@@ -1129,7 +1129,7 @@ static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG 
     return STATUS_SUCCESS;
 }
 
-static struct key *create_symmetric_key( enum alg_id alg, enum chain_mode mode, ULONG block_size, UCHAR *secret,
+static struct key *key_symmetric_create( enum alg_id alg, enum chain_mode mode, ULONG block_size, const UCHAR *secret,
                                          ULONG secret_len )
 {
     struct key *ret;
@@ -1160,7 +1160,7 @@ static ULONG get_block_size( struct algorithm *alg )
     return ret;
 }
 
-static NTSTATUS generate_symmetric_key( struct algorithm *alg, BCRYPT_KEY_HANDLE *ret_handle, UCHAR *secret,
+static NTSTATUS key_symmetric_generate( struct algorithm *alg, BCRYPT_KEY_HANDLE *ret_handle, const UCHAR *secret,
                                         ULONG secret_len )
 {
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
@@ -1188,7 +1188,7 @@ static NTSTATUS generate_symmetric_key( struct algorithm *alg, BCRYPT_KEY_HANDLE
         }
     }
 
-    if (!(key = create_symmetric_key( alg->id, alg->mode, block_size, secret, secret_len ))) status = STATUS_NO_MEMORY;
+    if (!(key = key_symmetric_create( alg->id, alg->mode, block_size, secret, secret_len ))) status = STATUS_NO_MEMORY;
     else
     {
         *ret_handle = key;
@@ -1217,7 +1217,7 @@ static NTSTATUS key_import( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY
         len = header->cbKeyData;
         if (len + sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) > input_len) return STATUS_INVALID_PARAMETER;
 
-        return generate_symmetric_key( alg, key, (UCHAR *)&header[1], len );
+        return key_symmetric_generate( alg, key, (UCHAR *)&header[1], len );
     }
     else if (!wcscmp( type, BCRYPT_OPAQUE_KEY_BLOB ))
     {
@@ -1225,7 +1225,7 @@ static NTSTATUS key_import( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY
         len = *(ULONG *)input;
         if (len + sizeof(len) > input_len) return STATUS_INVALID_PARAMETER;
 
-        return generate_symmetric_key( alg, key, input + sizeof(len), len );
+        return key_symmetric_generate( alg, key, input + sizeof(len), len );
     }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
@@ -1879,7 +1879,7 @@ NTSTATUS WINAPI BCryptGenerateSymmetricKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY
     }
 
     if (!alg) return STATUS_INVALID_HANDLE;
-    if ((status = generate_symmetric_key( alg, ret_handle, secret, secret_len ))) return status;
+    if ((status = key_symmetric_generate( alg, ret_handle, secret, secret_len ))) return status;
     TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
 }
