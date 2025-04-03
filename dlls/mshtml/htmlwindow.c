@@ -108,7 +108,7 @@ static inline HRESULT get_window_event(HTMLWindow *window, eventid_t eid, VARIAN
 
 static void detach_inner_window(HTMLInnerWindow *window)
 {
-    HTMLOuterWindow *outer_window = window->base.outer_window;
+    HTMLOuterWindow *outer_window = is_detached_window(window) ? NULL : window->base.outer_window;
     HTMLDocumentNode *doc = window->doc, *doc_iter;
 
     while(!list_empty(&window->children)) {
