@@ -613,166 +613,114 @@ void check_file_operation_(unsigned int line, UINT func, FILEOP_FLAGS flags, con
 /* tests the FO_DELETE action */
 static void test_delete(void)
 {
-    SHFILEOPSTRUCTA shfo;
-    DWORD ret;
-    CHAR buf[sizeof(CURR_DIR)+sizeof("/test?.txt")+1];
+    char from[MAX_PATH * 5];
 
-    sprintf(buf, "%s\\%s", CURR_DIR, "test?.txt");
-    buf[strlen(buf) + 1] = '\0';
-
-    shfo.hwnd = NULL;
-    shfo.wFunc = FO_DELETE;
-    shfo.pFrom = buf;
-    shfo.pTo = NULL;
-    shfo.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_SILENT;
-    shfo.hNameMappings = NULL;
-    shfo.lpszProgressTitle = NULL;
-
-    ok(!SHFileOperationA(&shfo), "Deletion was not successful\n");
+    /* Wildcard source, with FOF_FILESONLY. */
+    set_curr_dir_path(from, "test?.txt\0");
+    check_file_operation(FO_DELETE, FOF_NO_UI | FOF_FILESONLY, from, NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(dir_exists("test4.txt"), "Directory should not have been removed\n");
     ok(!file_exists("test1.txt"), "File should have been removed\n");
     ok(!file_exists("test2.txt"), "File should have been removed\n");
     ok(!file_exists("test3.txt"), "File should have been removed\n");
 
-    ret = SHFileOperationA(&shfo);
-    ok(ret == ERROR_SUCCESS, "Directory exists, but is not removed, ret=%ld\n", ret);
+    set_curr_dir_path(from, "test?.txt\0");
+    check_file_operation(FO_DELETE, FOF_NO_UI | FOF_FILESONLY, from, NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(dir_exists("test4.txt"), "Directory should not have been removed\n");
 
-    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
-
-    ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
+    /* Wildcard source, no FOF_FILESONLY. */
+    set_curr_dir_path(from, "test?.txt\0");
+    check_file_operation(FO_DELETE, FOF_NO_UI, from, NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!dir_exists("test4.txt"), "Directory should have been removed\n");
 
-    ret = SHFileOperationA(&shfo);
-    ok(!ret, "The requested file does not exist, ret=%ld\n", ret);
+    /* Nonexistent wildcard source. */
+    set_curr_dir_path(from, "test?.txt\0");
+    check_file_operation(FO_DELETE, FOF_NO_UI, from, NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
+    /* Delete a dir with a file inside. */
     init_shfo_tests();
-    sprintf(buf, "%s\\%s", CURR_DIR, "test4.txt");
-    buf[strlen(buf) + 1] = '\0';
+    set_curr_dir_path(from, "test4.txt\0");
     ok(MoveFileA("test1.txt", "test4.txt\\test1.txt"), "Filling the subdirectory failed\n");
-    ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
+    check_file_operation(FO_DELETE, FOF_NO_UI, from, NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!dir_exists("test4.txt"), "Directory is not removed\n");
 
+    /* Remove a dir and a file. */
     init_shfo_tests();
-    shfo.pFrom = "test1.txt\0test4.txt\0";
-    ok(!SHFileOperationA(&shfo), "Directory and a file are not removed\n");
+    check_file_operation(FO_DELETE, FOF_NO_UI, "test1.txt\0test4.txt\0", NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test1.txt"), "The file should have been removed\n");
     ok(!dir_exists("test4.txt"), "Directory should have been removed\n");
     ok(file_exists("test2.txt"), "This file should not have been removed\n");
 
-    /* FOF_FILESONLY does not delete a dir matching a wildcard */
+    /* Wildcard source, with FOF_FILESONLY. */
     init_shfo_tests();
-    shfo.fFlags |= FOF_FILESONLY;
-    shfo.pFrom = "*.txt\0";
-    ok(!SHFileOperationA(&shfo), "Failed to delete files\n");
+    check_file_operation(FO_DELETE, FOF_NO_UI | FOF_FILESONLY, "*.txt\0", NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test1.txt"), "test1.txt should have been removed\n");
     ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
     ok(dir_exists("test4.txt"), "test4.txt should not have been removed\n");
 
-    /* FOF_FILESONLY only deletes a dir if explicitly specified */
+    /* Explicitly specify a dir, with FOF_FILESONLY. */
     init_shfo_tests();
-    shfo.pFrom = "test_?.txt\0test4.txt\0";
-    ok(!SHFileOperationA(&shfo), "Failed to delete files and directory\n");
-    ok(!dir_exists("test4.txt") ||
-       broken(dir_exists("test4.txt")), /* NT4 */
-      "test4.txt should have been removed\n");
+    check_file_operation(FO_DELETE, FOF_NO_UI | FOF_FILESONLY, "test_?.txt\0test4.txt\0", NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
+    ok(!dir_exists("test4.txt"), "test4.txt should have been removed\n");
     ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
     ok(file_exists("test1.txt"), "test1.txt should not have been removed\n");
 
-    /* try to delete an invalid filename */
-    if (0) {
-        /* this crashes on win9x */
-        init_shfo_tests();
-        shfo.pFrom = "\0";
-        shfo.fFlags &= ~FOF_FILESONLY;
-        shfo.fAnyOperationsAborted = FALSE;
-        ret = SHFileOperationA(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", ret);
-        ok(!shfo.fAnyOperationsAborted, "Expected no aborted operations\n");
-        ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
-    }
-
-    /* try an invalid function */
+    /* Empty filename. */
     init_shfo_tests();
-    shfo.pFrom = "test1.txt\0";
-    shfo.wFunc = 0;
-    ret = SHFileOperationA(&shfo);
-    ok(ret == ERROR_INVALID_PARAMETER ||
-       broken(ret == ERROR_SUCCESS), /* Win9x, NT4 */
-       "Expected ERROR_INVALID_PARAMETER, got %ld\n", ret);
+    check_file_operation(FO_DELETE, FOF_NO_UI, "\0", NULL,
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
-    /* try an invalid list, only one null terminator */
-    if (0) {
-        /* this crashes on win9x */
-        init_shfo_tests();
-        shfo.pFrom = "";
-        shfo.wFunc = FO_DELETE;
-        ret = SHFileOperationA(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %ld\n", ret);
-        ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
-    }
-
-    /* delete a nonexistent file */
-    shfo.pFrom = "nonexistent.txt\0";
-    shfo.wFunc = FO_DELETE;
-    ret = SHFileOperationA(&shfo);
-    ok(ret == 1026 ||
-       ret == ERROR_FILE_NOT_FOUND || /* Vista */
-       broken(ret == ERROR_SUCCESS), /* NT4 */
-       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
-
-    /* delete a dir, and then a file inside the dir, same as
-    * deleting a nonexistent file
-    */
-    if (ret != ERROR_FILE_NOT_FOUND)
-    {
-        /* Vista would throw up a dialog box that we can't suppress */
-        init_shfo_tests();
-        shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
-        ret = SHFileOperationA(&shfo);
-        ok(ret == ERROR_PATH_NOT_FOUND ||
-           broken(ret == ERROR_SUCCESS), /* NT4 */
-           "Expected ERROR_PATH_NOT_FOUND, got %ld\n", ret);
-        ok(!dir_exists("testdir2"), "Expected testdir2 to not exist\n");
-        ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
-    }
-    else
-        skip("Test would show a dialog box\n");
-
-    /* delete an existent file and a nonexistent file */
+    /* Invalid function. */
     init_shfo_tests();
-    shfo.pFrom = "test1.txt\0nonexistent.txt\0test2.txt\0";
-    shfo.wFunc = FO_DELETE;
-    ret = SHFileOperationA(&shfo);
-    ok(ret == 1026 ||
-       ret == ERROR_FILE_NOT_FOUND || /* Vista */
-       broken(ret == ERROR_SUCCESS), /* NT4 */
-       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %ld\n", ret);
+    check_file_operation(0, FOF_NO_UI, "test1.txt\0", NULL,
+            ERROR_INVALID_PARAMETER, FALSE, FALSE, FALSE);
+    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+
+    /* Empty filename, only one null terminator */
+    init_shfo_tests();
+    check_file_operation(FO_DELETE, FOF_NO_UI, "", NULL,
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+
+    /* Nonexistent file. */
+    check_file_operation(FO_DELETE, FOF_NO_UI, "nonexistent.txt\0", NULL,
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
+
+    /* Delete a dir, and then a file inside the dir,
+     * same as deleting a nonexistent file. */
+    init_shfo_tests();
+    check_file_operation(FO_DELETE, FOF_NO_UI, "testdir2\0testdir2\\one.txt\0", NULL,
+            DE_INVALIDFILES, FALSE, TRUE, FALSE);
+    ok(!dir_exists("testdir2"), "Expected testdir2 to not exist\n");
+    ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
+
+    /* Delete an existent file and a nonexistent file. */
+    init_shfo_tests();
+    check_file_operation(FO_DELETE, FOF_NO_UI, "test1.txt\0nonexistent.txt\0test2.txt\0", NULL,
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     todo_wine
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
 
-    /* delete a nonexistent file in an existent dir or a nonexistent dir */
+    /* Delete a nonexistent file in an existent dir or a nonexistent dir. */
     init_shfo_tests();
-    shfo.pFrom = "testdir2\\nonexistent.txt\0";
-    ret = SHFileOperationA(&shfo);
-    ok(ret == ERROR_FILE_NOT_FOUND || /* Vista */
-       broken(ret == 0x402) || /* XP */
-       broken(ret == ERROR_SUCCESS), /* NT4 */
-       "Expected 0x402 or ERROR_FILE_NOT_FOUND, got %lx\n", ret);
-    shfo.pFrom = "nonexistent\\one.txt\0";
-    ret = SHFileOperationA(&shfo);
-    ok(ret == DE_INVALIDFILES || /* Vista or later */
-       broken(ret == 0x402), /* XP */
-       "Expected 0x402 or DE_INVALIDFILES, got %lx\n", ret);
+    check_file_operation(FO_DELETE, FOF_NO_UI, "testdir2\\nonexistent.txt\0", NULL,
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
+    check_file_operation(FO_DELETE, FOF_NO_UI, "nonexistent\\one.txt\0", NULL,
+            DE_INVALIDFILES, FALSE, FALSE, FALSE);
 
-    /* try the FOF_NORECURSION flag, continues deleting subdirs */
+    /* With FOF_NORECURSION, subdirs are still deleted. */
     init_shfo_tests();
-    shfo.pFrom = "testdir2\0";
-    shfo.fFlags |= FOF_NORECURSION;
-    ret = SHFileOperationA(&shfo);
-    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", ret);
+    check_file_operation(FO_DELETE, FOF_NO_UI | FOF_NORECURSION, "testdir2\0", NULL,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
     ok(!dir_exists("testdir2\\nested"), "Expected testdir2\\nested to not exist\n");
 }
