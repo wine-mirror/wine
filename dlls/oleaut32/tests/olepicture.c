@@ -1809,12 +1809,12 @@ START_TEST(olepicture)
 
     /* Test regular 1x1 pixel images of gif, jpg, bmp type */
     test_pic(gifimage, sizeof(gifimage), 1, TRUE);
-    test_pic(jpgimage, sizeof(jpgimage), 24, TRUE);
-    test_pic(bmpimage, sizeof(bmpimage), 1, TRUE);
+    test_pic(jpgimage, sizeof(jpgimage), 24, FALSE);
+    test_pic(bmpimage, sizeof(bmpimage), 1, FALSE);
     test_pic(bmpimage_rle8, sizeof(bmpimage_rle8), 4, TRUE);
-    test_pic(bmpimage4, sizeof(bmpimage4), 4, TRUE);
-    test_pic(bmpimage8, sizeof(bmpimage8), 8, TRUE);
-    test_pic(bmpimage24, sizeof(bmpimage24), 24, TRUE);
+    test_pic(bmpimage4, sizeof(bmpimage4), 4, FALSE);
+    test_pic(bmpimage8, sizeof(bmpimage8), 8, FALSE);
+    test_pic(bmpimage24, sizeof(bmpimage24), 24, FALSE);
     test_pic(gif4pixel, sizeof(gif4pixel), 4, TRUE);
     /* FIXME: No PNG support in Windows... */
     if (0) test_pic(pngimage, sizeof(pngimage), 32, TRUE);

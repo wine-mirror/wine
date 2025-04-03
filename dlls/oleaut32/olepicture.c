@@ -100,6 +100,21 @@ typedef struct
 
 #include "poppack.h"
 
+typedef struct
+{
+    const WICPixelFormatGUID *guid;
+    UINT bpp;
+} WICFORMAT;
+
+const WICFORMAT wicformats[] =
+{
+    {&GUID_WICPixelFormat1bppIndexed, 1},
+    {&GUID_WICPixelFormat4bppIndexed, 4},
+    {&GUID_WICPixelFormat8bppIndexed, 8},
+    {&GUID_WICPixelFormat24bppBGR,    24},
+    {&GUID_WICPixelFormat32bppBGR,    32},
+};
+
 /*************************************************************************
  *  Declaration of implementation class
  */
@@ -169,6 +184,11 @@ static inline OLEPictureImpl *impl_from_IPersistStream( IPersistStream *iface )
 static inline OLEPictureImpl *impl_from_IConnectionPointContainer( IConnectionPointContainer *iface )
 {
     return CONTAINING_RECORD(iface, OLEPictureImpl, IConnectionPointContainer_iface);
+}
+
+static inline int get_dib_stride(int width, int bpp)
+{
+    return ((width * bpp + 31) >> 3) & ~3;
 }
 
 /*
@@ -987,12 +1007,31 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     UINT stride, buffersize;
     BYTE *bits, *mask = NULL;
     WICRect rc;
+    WICPixelFormatGUID guid;
     IWICBitmapSource *real_source;
-    UINT x, y;
+    UINT x, y, i;
     COLORREF white = RGB(255, 255, 255), black = RGB(0, 0, 0);
     BOOL has_alpha=FALSE;
 
-    hr = WICConvertBitmapSource(&GUID_WICPixelFormat32bppBGRA, src, &real_source);
+    hr = IWICBitmapSource_GetPixelFormat(src, &guid);
+    if (FAILED(hr)) return hr;
+
+    for (i = 0; i < ARRAY_SIZE(wicformats); i++)
+    {
+        if (IsEqualGUID(&guid, wicformats[i].guid))
+        {
+            bih.biBitCount = wicformats[i].bpp;
+            break;
+        }
+    }
+
+    if (i == ARRAY_SIZE(wicformats))
+    {
+        memcpy(&guid, &GUID_WICPixelFormat32bppBGRA, sizeof(guid));
+        bih.biBitCount = 32;
+    }
+
+    hr = WICConvertBitmapSource(&guid, src, &real_source);
     if (FAILED(hr)) return hr;
 
     hr = IWICBitmapSource_GetSize(real_source, &width, &height);
@@ -1002,7 +1041,6 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     bih.biWidth = width;
     bih.biHeight = -height;
     bih.biPlanes = 1;
-    bih.biBitCount = 32;
     bih.biCompression = BI_RGB;
     bih.biSizeImage = 0;
     bih.biXPelsPerMeter = 4085; /* olepicture ignores the stored resolution */
@@ -1010,7 +1048,7 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     bih.biClrUsed = 0;
     bih.biClrImportant = 0;
 
-    stride = 4 * width;
+    stride = get_dib_stride(width, bih.biBitCount);
     buffersize = stride * height;
 
     mask = malloc(buffersize);
@@ -1041,17 +1079,20 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
     This->desc.picType = PICTYPE_BITMAP;
     OLEPictureImpl_SetBitmap(This);
 
-    /* set transparent pixels to black, all others to white */
-    for(y = 0; y < height; y++){
-        for(x = 0; x < width; x++){
-            DWORD *pixel = (DWORD*)(bits + stride*y + 4*x);
-            if((*pixel & 0x80000000) == 0)
-            {
-                has_alpha = TRUE;
-                *(DWORD *)(mask + stride * y + 4 * x) = black;
+    if (IsEqualGUID(&guid, &GUID_WICPixelFormat32bppBGRA))
+    {
+        /* set transparent pixels to black, all others to white */
+        for(y = 0; y < height; y++){
+            for(x = 0; x < width; x++){
+                DWORD *pixel = (DWORD*)(bits + stride*y + 4*x);
+                if((*pixel & 0x80000000) == 0)
+                {
+                    has_alpha = TRUE;
+                    *(DWORD *)(mask + stride * y + 4 * x) = black;
+                }
+                else
+                    *(DWORD *)(mask + stride * y + 4 * x) = white;
             }
-            else
-                *(DWORD *)(mask + stride * y + 4 * x) = white;
         }
     }
 
