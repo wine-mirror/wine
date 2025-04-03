@@ -2236,85 +2236,75 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
  *
  * WGL_ARB_pbuffer: wglQueryPbufferARB
  */
-static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribute, int *piValue )
+static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int attrib, int *value )
 {
-    TRACE("(%p, 0x%x, %p)\n", object, iAttribute, piValue);
+    TRACE( "(%p, 0x%x, %p)\n", object, attrib, value );
 
-    switch (iAttribute) {
-        case WGL_PBUFFER_WIDTH_ARB:
-            pglXQueryDrawable(gdi_display, object->gl->drawable, GLX_WIDTH, (unsigned int*) piValue);
-            break;
-        case WGL_PBUFFER_HEIGHT_ARB:
-            pglXQueryDrawable(gdi_display, object->gl->drawable, GLX_HEIGHT, (unsigned int*) piValue);
-            break;
+    switch (attrib)
+    {
+    case WGL_PBUFFER_WIDTH_ARB:
+        pglXQueryDrawable( gdi_display, object->gl->drawable, GLX_WIDTH, (unsigned int *)value );
+        break;
+    case WGL_PBUFFER_HEIGHT_ARB:
+        pglXQueryDrawable( gdi_display, object->gl->drawable, GLX_HEIGHT, (unsigned int *)value );
+        break;
 
-        case WGL_PBUFFER_LOST_ARB:
-            /* GLX Pbuffers cannot be lost by default. We can support this by
-             * setting GLX_PRESERVED_CONTENTS to False and using glXSelectEvent
-             * to receive pixel buffer clobber events, however that may or may
-             * not give any benefit */
-            *piValue = GL_FALSE;
-            break;
+    case WGL_PBUFFER_LOST_ARB:
+        /* GLX Pbuffers cannot be lost by default. We can support this by
+         * setting GLX_PRESERVED_CONTENTS to False and using glXSelectEvent
+         * to receive pixel buffer clobber events, however that may or may
+         * not give any benefit */
+        *value = GL_FALSE;
+        break;
 
-        case WGL_TEXTURE_FORMAT_ARB:
-            if (!object->use_render_texture) {
-                *piValue = WGL_NO_TEXTURE_ARB;
-            } else {
-                if (!use_render_texture_emulation) {
-                    RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
-                    return GL_FALSE;
-                }
-                switch(object->use_render_texture) {
-                    case GL_RGB:
-                        *piValue = WGL_TEXTURE_RGB_ARB;
-                        break;
-                    case GL_RGBA:
-                        *piValue = WGL_TEXTURE_RGBA_ARB;
-                        break;
-                    /* WGL_FLOAT_COMPONENTS_NV */
-                    case GL_FLOAT_R_NV:
-                        *piValue = WGL_TEXTURE_FLOAT_R_NV;
-                        break;
-                    case GL_FLOAT_RG_NV:
-                        *piValue = WGL_TEXTURE_FLOAT_RG_NV;
-                        break;
-                    case GL_FLOAT_RGB_NV:
-                        *piValue = WGL_TEXTURE_FLOAT_RGB_NV;
-                        break;
-                    case GL_FLOAT_RGBA_NV:
-                        *piValue = WGL_TEXTURE_FLOAT_RGBA_NV;
-                        break;
-                    default:
-                        ERR("Unknown texture format: %x\n", object->use_render_texture);
-                }
-            }
-            break;
+    case WGL_TEXTURE_FORMAT_ARB:
+        if (!object->use_render_texture)
+        {
+            *value = WGL_NO_TEXTURE_ARB;
+        }
+        else if (!use_render_texture_emulation)
+        {
+            RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+            return GL_FALSE;
+        }
+        else switch (object->use_render_texture)
+        {
+        case GL_RGB: *value = WGL_TEXTURE_RGB_ARB; break;
+        case GL_RGBA: *value = WGL_TEXTURE_RGBA_ARB; break;
+        /* WGL_FLOAT_COMPONENTS_NV */
+        case GL_FLOAT_R_NV: *value = WGL_TEXTURE_FLOAT_R_NV; break;
+        case GL_FLOAT_RG_NV: *value = WGL_TEXTURE_FLOAT_RG_NV; break;
+        case GL_FLOAT_RGB_NV: *value = WGL_TEXTURE_FLOAT_RGB_NV; break;
+        case GL_FLOAT_RGBA_NV: *value = WGL_TEXTURE_FLOAT_RGBA_NV; break;
+        default: ERR( "Unknown texture format: %x\n", object->use_render_texture );
+        }
+        break;
 
-        case WGL_TEXTURE_TARGET_ARB:
-            if (!object->texture_target){
-                *piValue = WGL_NO_TEXTURE_ARB;
-            } else {
-                if (!use_render_texture_emulation) {
-                    RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                    return GL_FALSE;
-                }
-                switch (object->texture_target) {
-                    case GL_TEXTURE_1D:       *piValue = WGL_TEXTURE_1D_ARB; break;
-                    case GL_TEXTURE_2D:       *piValue = WGL_TEXTURE_2D_ARB; break;
-                    case GL_TEXTURE_CUBE_MAP: *piValue = WGL_TEXTURE_CUBE_MAP_ARB; break;
-                    case GL_TEXTURE_RECTANGLE_NV: *piValue = WGL_TEXTURE_RECTANGLE_NV; break;
-                }
-            }
-            break;
+    case WGL_TEXTURE_TARGET_ARB:
+        if (!object->texture_target)
+        {
+            *value = WGL_NO_TEXTURE_ARB;
+        }
+        else if (!use_render_texture_emulation)
+        {
+            RtlSetLastWin32Error( ERROR_INVALID_DATA );
+            return GL_FALSE;
+        }
+        else switch (object->texture_target)
+        {
+        case GL_TEXTURE_1D: *value = WGL_TEXTURE_1D_ARB; break;
+        case GL_TEXTURE_2D: *value = WGL_TEXTURE_2D_ARB; break;
+        case GL_TEXTURE_CUBE_MAP: *value = WGL_TEXTURE_CUBE_MAP_ARB; break;
+        case GL_TEXTURE_RECTANGLE_NV: *value = WGL_TEXTURE_RECTANGLE_NV; break;
+        }
+        break;
 
-        case WGL_MIPMAP_TEXTURE_ARB:
-            *piValue = GL_FALSE; /** don't support that */
-            FIXME("unsupported WGL_ARB_render_texture attribute query for 0x%x\n", iAttribute);
-            break;
+    case WGL_MIPMAP_TEXTURE_ARB:
+        *value = GL_FALSE; /** don't support that */
+        FIXME( "unsupported WGL_ARB_render_texture attribute query for 0x%x\n", attrib );
+        break;
 
-        default:
-            FIXME("unexpected attribute %x\n", iAttribute);
-            break;
+    default: FIXME( "unexpected attribute %x\n", attrib ); break;
     }
 
     return GL_TRUE;
