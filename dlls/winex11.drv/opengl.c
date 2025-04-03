@@ -321,9 +321,6 @@ static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("\n");
 }
 
-#define PUSH1(attribs,att)        do { attribs[nAttribs++] = (att); } while (0)
-#define PUSH2(attribs,att,value)  do { attribs[nAttribs++] = (att); attribs[nAttribs++] = (value); } while(0)
-
 /* GLX 1.0 */
 static XVisualInfo* (*pglXChooseVisual)( Display *dpy, int screen, int *attribList );
 static GLXContext (*pglXCreateContext)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
@@ -1986,195 +1983,199 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
  *
  * WGL_ARB_pbuffer: wglCreatePbufferARB
  */
-static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth, int iHeight,
-                                                       const int *piAttribList )
+static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int format, int width, int height,
+                                                       const int *attribs )
 {
-    struct wgl_pbuffer* object;
+    int glx_attribs[256], count = 0, value;
     const struct glx_pixel_format *fmt;
-    int attribs[256];
-    int nAttribs = 0;
+    struct wgl_pbuffer *object;
 
-    TRACE("(%p, %d, %d, %d, %p)\n", hdc, iPixelFormat, iWidth, iHeight, piAttribList);
+    TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
 
     /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
-    fmt = get_pixel_format(gdi_display, iPixelFormat, TRUE /* Offscreen */);
-    if(!fmt) {
-        ERR("(%p): invalid pixel format %d\n", hdc, iPixelFormat);
-        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
+    if (!(fmt = get_pixel_format( gdi_display, format, TRUE /* Offscreen */ )))
+    {
+        ERR( "(%p): invalid pixel format %d\n", hdc, format );
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
     }
 
-    object = calloc( 1, sizeof(*object) );
-    if (NULL == object) {
-        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
+    if (!(object = calloc( 1, sizeof(*object) )))
+    {
+        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
         return NULL;
     }
-    object->width = iWidth;
-    object->height = iHeight;
-    object->pixel_format = iPixelFormat;
+    object->width = width;
+    object->height = height;
+    object->pixel_format = format;
     object->fmt = fmt;
 
-    PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
-    PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
-    while (piAttribList && 0 != *piAttribList) {
-        int attr_v;
-        switch (*piAttribList) {
-            case WGL_PBUFFER_LARGEST_ARB: {
-                ++piAttribList;
-                attr_v = *piAttribList;
-                TRACE("WGL_LARGEST_PBUFFER_ARB = %d\n", attr_v);
-                PUSH2(attribs, GLX_LARGEST_PBUFFER, attr_v);
-                break;
+    glx_attribs[count++] = GLX_PBUFFER_WIDTH;
+    glx_attribs[count++] = width;
+    glx_attribs[count++] = GLX_PBUFFER_HEIGHT;
+    glx_attribs[count++] = height;
+
+    while (attribs && 0 != *attribs)
+    {
+        switch (*attribs)
+        {
+        case WGL_PBUFFER_LARGEST_ARB:
+            ++attribs;
+            value = *attribs;
+            TRACE( "WGL_LARGEST_PBUFFER_ARB = %d\n", value );
+            glx_attribs[count++] = GLX_LARGEST_PBUFFER;
+            glx_attribs[count++] = value;
+            break;
+
+        case WGL_TEXTURE_FORMAT_ARB:
+            ++attribs;
+            value = *attribs;
+            TRACE( "WGL_render_texture Attribute: WGL_TEXTURE_FORMAT_ARB as %x\n", value );
+            if (WGL_NO_TEXTURE_ARB == value)
+            {
+                object->use_render_texture = 0;
             }
-
-            case WGL_TEXTURE_FORMAT_ARB: {
-                ++piAttribList;
-                attr_v = *piAttribList;
-                TRACE("WGL_render_texture Attribute: WGL_TEXTURE_FORMAT_ARB as %x\n", attr_v);
-                if (WGL_NO_TEXTURE_ARB == attr_v) {
-                    object->use_render_texture = 0;
-                } else {
-                    if (!use_render_texture_emulation) {
-                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                        goto create_failed;
-                    }
-                    switch (attr_v) {
-                        case WGL_TEXTURE_RGB_ARB:
-                            object->use_render_texture = GL_RGB;
-                            object->texture_bpp = 3;
-                            object->texture_format = GL_RGB;
-                            object->texture_type = GL_UNSIGNED_BYTE;
-                            break;
-                        case WGL_TEXTURE_RGBA_ARB:
-                            object->use_render_texture = GL_RGBA;
-                            object->texture_bpp = 4;
-                            object->texture_format = GL_RGBA;
-                            object->texture_type = GL_UNSIGNED_BYTE;
-                            break;
-
-                        /* WGL_FLOAT_COMPONENTS_NV */
-                        case WGL_TEXTURE_FLOAT_R_NV:
-                            object->use_render_texture = GL_FLOAT_R_NV;
-                            object->texture_bpp = 4;
-                            object->texture_format = GL_RED;
-                            object->texture_type = GL_FLOAT;
-                            break;
-                        case WGL_TEXTURE_FLOAT_RG_NV:
-                            object->use_render_texture = GL_FLOAT_RG_NV;
-                            object->texture_bpp = 8;
-                            object->texture_format = GL_LUMINANCE_ALPHA;
-                            object->texture_type = GL_FLOAT;
-                            break;
-                        case WGL_TEXTURE_FLOAT_RGB_NV:
-                            object->use_render_texture = GL_FLOAT_RGB_NV;
-                            object->texture_bpp = 12;
-                            object->texture_format = GL_RGB;
-                            object->texture_type = GL_FLOAT;
-                            break;
-                        case WGL_TEXTURE_FLOAT_RGBA_NV:
-                            object->use_render_texture = GL_FLOAT_RGBA_NV;
-                            object->texture_bpp = 16;
-                            object->texture_format = GL_RGBA;
-                            object->texture_type = GL_FLOAT;
-                            break;
-                        default:
-                            ERR("Unknown texture format: %x\n", attr_v);
-                            RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                            goto create_failed;
-                    }
-                }
-                break;
+            else if (!use_render_texture_emulation)
+            {
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                goto create_failed;
             }
-
-            case WGL_TEXTURE_TARGET_ARB: {
-                ++piAttribList;
-                attr_v = *piAttribList;
-                TRACE("WGL_render_texture Attribute: WGL_TEXTURE_TARGET_ARB as %x\n", attr_v);
-                if (WGL_NO_TEXTURE_ARB == attr_v) {
-                    object->texture_target = 0;
-                } else {
-                    if (!use_render_texture_emulation) {
-                        RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                        goto create_failed;
-                    }
-                    switch (attr_v) {
-                        case WGL_TEXTURE_CUBE_MAP_ARB: {
-                            if (iWidth != iHeight) {
-                                RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                                goto create_failed;
-                            }
-                            object->texture_target = GL_TEXTURE_CUBE_MAP;
-                            object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
-                           break;
-                        }
-                        case WGL_TEXTURE_1D_ARB: {
-                            if (1 != iHeight) {
-                                RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                                goto create_failed;
-                            }
-                            object->texture_target = GL_TEXTURE_1D;
-                            object->texture_bind_target = GL_TEXTURE_BINDING_1D;
-                            break;
-                        }
-                        case WGL_TEXTURE_2D_ARB: {
-                            object->texture_target = GL_TEXTURE_2D;
-                            object->texture_bind_target = GL_TEXTURE_BINDING_2D;
-                            break;
-                        }
-                        case WGL_TEXTURE_RECTANGLE_NV: {
-                            object->texture_target = GL_TEXTURE_RECTANGLE_NV;
-                            object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
-                            break;
-                        }
-                        default:
-                            ERR("Unknown texture target: %x\n", attr_v);
-                            RtlSetLastWin32Error(ERROR_INVALID_DATA);
-                            goto create_failed;
-                    }
-                }
+            else switch (value)
+            {
+            case WGL_TEXTURE_RGB_ARB:
+                object->use_render_texture = GL_RGB;
+                object->texture_bpp = 3;
+                object->texture_format = GL_RGB;
+                object->texture_type = GL_UNSIGNED_BYTE;
                 break;
-            }
+            case WGL_TEXTURE_RGBA_ARB:
+                object->use_render_texture = GL_RGBA;
+                object->texture_bpp = 4;
+                object->texture_format = GL_RGBA;
+                object->texture_type = GL_UNSIGNED_BYTE;
+                break;
 
-            case WGL_MIPMAP_TEXTURE_ARB: {
-                ++piAttribList;
-                attr_v = *piAttribList;
-                TRACE("WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", attr_v);
-                if (!use_render_texture_emulation) {
-                    RtlSetLastWin32Error(ERROR_INVALID_DATA);
+            /* WGL_FLOAT_COMPONENTS_NV */
+            case WGL_TEXTURE_FLOAT_R_NV:
+                object->use_render_texture = GL_FLOAT_R_NV;
+                object->texture_bpp = 4;
+                object->texture_format = GL_RED;
+                object->texture_type = GL_FLOAT;
+                break;
+            case WGL_TEXTURE_FLOAT_RG_NV:
+                object->use_render_texture = GL_FLOAT_RG_NV;
+                object->texture_bpp = 8;
+                object->texture_format = GL_LUMINANCE_ALPHA;
+                object->texture_type = GL_FLOAT;
+                break;
+            case WGL_TEXTURE_FLOAT_RGB_NV:
+                object->use_render_texture = GL_FLOAT_RGB_NV;
+                object->texture_bpp = 12;
+                object->texture_format = GL_RGB;
+                object->texture_type = GL_FLOAT;
+                break;
+            case WGL_TEXTURE_FLOAT_RGBA_NV:
+                object->use_render_texture = GL_FLOAT_RGBA_NV;
+                object->texture_bpp = 16;
+                object->texture_format = GL_RGBA;
+                object->texture_type = GL_FLOAT;
+                break;
+            default:
+                ERR( "Unknown texture format: %x\n", value );
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                goto create_failed;
+            }
+            break;
+
+        case WGL_TEXTURE_TARGET_ARB:
+            ++attribs;
+            value = *attribs;
+            TRACE( "WGL_render_texture Attribute: WGL_TEXTURE_TARGET_ARB as %x\n", value );
+            if (WGL_NO_TEXTURE_ARB == value)
+            {
+                object->texture_target = 0;
+            }
+            else if (!use_render_texture_emulation)
+            {
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                goto create_failed;
+            }
+            else switch (value)
+            {
+            case WGL_TEXTURE_CUBE_MAP_ARB:
+                if (width != height)
+                {
+                    RtlSetLastWin32Error( ERROR_INVALID_DATA );
                     goto create_failed;
                 }
+                object->texture_target = GL_TEXTURE_CUBE_MAP;
+                object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
                 break;
+            case WGL_TEXTURE_1D_ARB:
+                if (1 != height)
+                {
+                    RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                    goto create_failed;
+                }
+                object->texture_target = GL_TEXTURE_1D;
+                object->texture_bind_target = GL_TEXTURE_BINDING_1D;
+                break;
+            case WGL_TEXTURE_2D_ARB:
+                object->texture_target = GL_TEXTURE_2D;
+                object->texture_bind_target = GL_TEXTURE_BINDING_2D;
+                break;
+            case WGL_TEXTURE_RECTANGLE_NV:
+                object->texture_target = GL_TEXTURE_RECTANGLE_NV;
+                object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
+                break;
+            default:
+                ERR( "Unknown texture target: %x\n", value );
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                goto create_failed;
             }
-        }
-        ++piAttribList;
-    }
+            break;
 
-    PUSH1(attribs, None);
+        case WGL_MIPMAP_TEXTURE_ARB:
+            ++attribs;
+            value = *attribs;
+            TRACE( "WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", value );
+            if (!use_render_texture_emulation)
+            {
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                goto create_failed;
+            }
+            break;
+        }
+        ++attribs;
+    }
+    glx_attribs[count++] = 0;
+
     if (!(object->gl = calloc( 1, sizeof(*object->gl) )))
     {
-        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
+        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
         goto create_failed;
     }
     object->gl->type = DC_GL_PBUFFER;
     object->gl->format = object->fmt;
     object->gl->ref = 1;
 
-    object->gl->drawable = pglXCreatePbuffer(gdi_display, fmt->fbconfig, attribs);
-    TRACE("new Pbuffer drawable as %p (%lx)\n", object->gl, object->gl->drawable);
-    if (!object->gl->drawable) {
+    object->gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
+    TRACE( "new Pbuffer drawable as %p (%lx)\n", object->gl, object->gl->drawable );
+    if (!object->gl->drawable)
+    {
         free( object->gl );
-        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
+        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
         goto create_failed; /* unexpected error */
     }
     pthread_mutex_lock( &context_mutex );
     list_add_head( &pbuffer_list, &object->entry );
     pthread_mutex_unlock( &context_mutex );
-    TRACE("->(%p)\n", object);
+    TRACE( "->(%p)\n", object );
     return object;
 
 create_failed:
     free( object );
-    TRACE("->(FAILED)\n");
+    TRACE( "->(FAILED)\n" );
     return NULL;
 }
 
