@@ -1584,28 +1584,15 @@ static void test_copy(void)
 /* tests the FO_MOVE action */
 static void test_move(void)
 {
-    SHFILEOPSTRUCTA shfo, shfo2;
-    CHAR from[5*MAX_PATH];
-    CHAR to[5*MAX_PATH];
-    DWORD retval;
+    char from[MAX_PATH * 5], to[MAX_PATH * 5];
 
     clean_after_shfo_tests();
     init_shfo_tests();
 
-    shfo.hwnd = NULL;
-    shfo.wFunc = FO_MOVE;
-    shfo.pFrom = from;
-    shfo.pTo = to;
-    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI | FOF_NOCONFIRMMKDIR;
-    shfo.hNameMappings = NULL;
-    shfo.lpszProgressTitle = NULL;
-    shfo.fAnyOperationsAborted = FALSE;
-
     set_curr_dir_path(from, "testdir2\\*.*\0");
     set_curr_dir_path(to, "test4.txt\\*.*\0");
-    retval = SHFileOperationA(&shfo);
-    ok(retval != 0, "SHFileOperation should fail\n");
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_INVALID_NAME, FALSE, TRUE, FALSE);
 
     ok(file_exists("testdir2"), "dir should not be moved\n");
     ok(file_exists("testdir2\\one.txt"), "file should not be moved\n");
@@ -1614,9 +1601,8 @@ static void test_move(void)
 
     set_curr_dir_path(from, "testdir2\\*.*\0");
     set_curr_dir_path(to, "test4.txt\0");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "SHFileOperation error %#lx\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(file_exists("testdir2"), "dir should not be moved\n");
     ok(!file_exists("testdir2\\one.txt"), "file should be moved\n");
@@ -1634,9 +1620,8 @@ static void test_move(void)
     /* same tests above, but with / */
     set_curr_dir_path(from, "testdir2/*.*\0");
     set_curr_dir_path(to, "test4.txt\0");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(dir_exists("testdir2"), "dir should not be moved\n");
     ok(!file_exists("testdir2\\one.txt"), "file should be moved\n");
@@ -1650,17 +1635,11 @@ static void test_move(void)
     clean_after_shfo_tests();
     init_shfo_tests();
 
-    shfo.hwnd = NULL;
-    shfo.wFunc = FO_MOVE;
-    shfo.pFrom = from;
-    shfo.pTo = to;
-    shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
-    shfo.hNameMappings = NULL;
-    shfo.lpszProgressTitle = NULL;
-
+    /* Prepare test to check how directories are moved recursively. */
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
-    ok(!SHFileOperationA(&shfo), "Prepare test to check how directories are moved recursively\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test1.txt"), "test1.txt should not exist\n");
     ok(file_exists("test4.txt\\test1.txt"), "The file is not moved\n");
 
@@ -1668,7 +1647,8 @@ static void test_move(void)
     set_curr_dir_path(to, "testdir2\0");
     ok(!file_exists("testdir2\\test2.txt"), "The file is not moved yet\n");
     ok(!file_exists("testdir2\\test4.txt"), "The directory is not moved yet\n");
-    ok(!SHFileOperationA(&shfo), "Files and directories are moved to directory\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2\\test2.txt"), "The file is moved\n");
     ok(file_exists("testdir2\\test4.txt"), "The directory is moved\n");
     ok(file_exists("testdir2\\test4.txt\\test1.txt"), "The file in subdirectory is moved\n");
@@ -1679,9 +1659,8 @@ static void test_move(void)
     /* test moving dir to destination containing dir of the same name */
     set_curr_dir_path(from, "testdir2\\nested\0");
     set_curr_dir_path(to, "testdir4\0");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1697,9 +1676,8 @@ static void test_move(void)
     DeleteFileA("testdir2\\nested\\two.txt");
     set_curr_dir_path(from, "testdir2\\nested\0");
     set_curr_dir_path(to, "testdir4\0");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
 
@@ -1712,9 +1690,8 @@ static void test_move(void)
     /* test moving multiple dirs to destination containing dir of the same name */
     set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
     set_curr_dir_path(to, "testdir6\0");
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1733,15 +1710,11 @@ static void test_move(void)
     clean_after_shfo_tests();
     init_shfo_tests();
 
-    memcpy(&shfo2, &shfo, sizeof(SHFILEOPSTRUCTA));
-    shfo2.fFlags |= FOF_MULTIDESTFILES;
-
     /* test moving dir to destination containing dir of the same name with FOF_MULTIDESTFILES set */
     set_curr_dir_path(from, "testdir2\\nested\0");
     set_curr_dir_path(to, "testdir6\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1756,9 +1729,8 @@ static void test_move(void)
     /* same as above, without 'nested' in from path */
     set_curr_dir_path(from, "testdir2\0");
     set_curr_dir_path(to, "testdir6\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1773,9 +1745,8 @@ static void test_move(void)
     /* test moving multiple dirs to multiple destinations containing dir of the same name */
     set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
     set_curr_dir_path(to, "testdir6\0testdir8\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1803,9 +1774,8 @@ static void test_move(void)
     /* same as above, but include subdir in destinations */
     set_curr_dir_path(from, "testdir2\\nested\0testdir4\\nested\0");
     set_curr_dir_path(to, "testdir6\\nested\0testdir8\\nested\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(!retval, "got %ld\n", retval);
-    ok(!shfo.fAnyOperationsAborted, "fAnyOperationsAborted %d\n", shfo.fAnyOperationsAborted);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     ok(!dir_exists("testdir2\\nested"), "dir should be moved\n");
     ok(!file_exists("testdir2\\nested\\two.txt"), "file should be moved\n");
@@ -1829,9 +1799,11 @@ static void test_move(void)
     clean_after_shfo_tests();
     init_shfo_tests();
 
+    /* Move many files. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    ok(!SHFileOperationA(&shfo2), "Move many files\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt"), "The file is not moved - many files are "
        "specified as a target\n");
     ok(DeleteFileA("test7.txt"), "The file is not moved\n");
@@ -1839,39 +1811,33 @@ static void test_move(void)
 
     init_shfo_tests();
 
-    /* number of sources does not correspond to number of targets,
-       include directories */
+    /* Sources outnumber targets. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(retval == DE_DESTSAMETREE, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            DE_DESTSAMETREE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved\n");
     RemoveDirectoryA("test6.txt");
     ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not moved\n");
     RemoveDirectoryA("test7.txt");
 
     init_shfo_tests();
-    /* number of sources does not correspond to number of targets,
-       files only,
-       from exceeds to */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(retval == DE_SAMEFILE, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            DE_SAMEFILE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved\n");
     RemoveDirectoryA("test6.txt");
     ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not moved\n");
     RemoveDirectoryA("test7.txt");
     ok(file_exists("test3.txt"), "File should not be moved\n");
 
+    /* Targets outnumber sources. */
     init_shfo_tests();
-    /* number of sources does not correspond to number of targets,
-       files only,
-       too exceeds from */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt\\test1.txt"),"The file is not moved\n");
     ok(DeleteFileA("test7.txt\\test2.txt"),"The file is not moved\n");
     ok(!dir_exists("test8.txt") && !file_exists("test8.txt"), "Directory should not be created\n");
@@ -1879,46 +1845,44 @@ static void test_move(void)
     RemoveDirectoryA("test7.txt");
 
     init_shfo_tests();
-    /* number of sources does not correspond to number of targets,
-       target directories */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
     set_curr_dir_path(to, "test4.txt\0test5.txt\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(retval == DE_SAMEFILE, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            DE_SAMEFILE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test4.txt\\test1.txt"),"The file is not moved\n");
     ok(DeleteFileA("test5.txt\\test2.txt"),"The file is not moved\n");
     ok(file_exists("test3.txt"), "The file is not moved\n");
     RemoveDirectoryA("test4.txt");
     RemoveDirectoryA("test5.txt");
 
-
+    /* Empty source. */
     init_shfo_tests();
-    /*  0 incoming files */
     set_curr_dir_path(from, "\0\0");
     set_curr_dir_path(to, "test6.txt\0\0");
-    retval = SHFileOperationA(&shfo2);
-    todo_wine ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     ok(!file_exists("test6.txt"), "The file should not exist\n");
 
+    /* Empty target. */
     init_shfo_tests();
-    /*  0 outgoing files */
     set_curr_dir_path(from, "test1\0\0");
     set_curr_dir_path(to, "\0\0");
-    retval = SHFileOperationA(&shfo2);
-    ok(retval == ERROR_FILE_NOT_FOUND, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     ok(!file_exists("test6.txt"), "The file should not exist\n");
 
     init_shfo_tests();
 
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
-    ok(!SHFileOperationA(&shfo), "Can't move file to other directory\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("test4.txt\\test1.txt"), "The file is not moved\n");
 
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
-    retval = SHFileOperationA(&shfo);
-    todo_wine ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     todo_wine ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
     todo_wine ok(DeleteFileA("test6.txt\\test2.txt"), "The file is not moved. Many files are specified\n");
     todo_wine ok(DeleteFileA("test6.txt\\test4.txt\\test1.txt"), "The file is not moved. Many files are specified\n");
@@ -1928,37 +1892,39 @@ static void test_move(void)
 
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
-    ok(!SHFileOperationA(&shfo), "Move file failed\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test1.txt"), "The file is not moved\n");
     ok(file_exists("test6.txt"), "The file is not moved\n");
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
-    ok(!SHFileOperationA(&shfo), "Move file back failed\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0");
-    ok(!SHFileOperationA(&shfo), "Move dir failed\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!dir_exists("test4.txt"), "The dir is not moved\n");
     ok(dir_exists("test6.txt"), "The dir is moved\n");
     set_curr_dir_path(from, "test6.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
-    ok(!SHFileOperationA(&shfo), "Move dir back failed\n");
+    check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     /* move one file to two others */
     init_shfo_tests();
-    shfo.pFrom = "test1.txt\0";
-    shfo.pTo = "a.txt\0b.txt\0";
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI,
+            "test1.txt\0", "a.txt\0b.txt\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("a.txt"), "Expected a.txt to exist\n");
     ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
     ok(!file_exists("b.txt"), "Expected b.txt to not exist\n");
 
     /* move two files to one other */
-    shfo.pFrom = "test2.txt\0test3.txt\0";
-    shfo.pTo = "test1.txt\0";
-    retval = SHFileOperationA(&shfo);
-    todo_wine ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI,
+            "test2.txt\0test3.txt\0", "test1.txt\0",
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     todo_wine ok(DeleteFileA("test1.txt\\test2.txt"), "Expected test1.txt\\test2.txt to exist\n");
     todo_wine ok(DeleteFileA("test1.txt\\test3.txt"), "Expected test1.txt\\test3.txt to exist\n");
     RemoveDirectoryA("test1.txt");
@@ -1966,18 +1932,16 @@ static void test_move(void)
     createTestFile("test3.txt");
 
     /* move a directory into itself */
-    shfo.pFrom = "test4.txt\0";
-    shfo.pTo = "test4.txt\\b.txt\0";
-    retval = SHFileOperationA(&shfo);
-    todo_wine ok(retval == DE_DESTSUBTREE, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI,
+            "test4.txt\0", "test4.txt\\b.txt\0",
+            DE_DESTSUBTREE, FALSE, TRUE, FALSE);
     ok(!RemoveDirectoryA("test4.txt\\b.txt"), "Expected test4.txt\\b.txt to not exist\n");
     ok(dir_exists("test4.txt"), "Expected test4.txt to exist\n");
 
     /* move many files without FOF_MULTIDESTFILES */
-    shfo.pFrom = "test2.txt\0test3.txt\0";
-    shfo.pTo = "d.txt\0e.txt\0";
-    retval = SHFileOperationA(&shfo);
-    todo_wine ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI,
+            "test2.txt\0test3.txt\0", "d.txt\0e.txt\0",
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     todo_wine ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
     todo_wine ok(DeleteFileA("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to exist\n");
     RemoveDirectoryA("d.txt");
@@ -1985,29 +1949,27 @@ static void test_move(void)
     createTestFile("test3.txt");
 
     /* number of sources != number of targets */
-    shfo.pTo = "d.txt\0";
-    shfo.fFlags |= FOF_MULTIDESTFILES;
-    retval = SHFileOperationA(&shfo);
-    ok(retval == DE_SAMEFILE, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES,
+            "test2.txt\0test3.txt\0", "d.txt\0",
+            DE_SAMEFILE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("d.txt\\test2.txt"), "Expected d.txt\\test2.txt to exist\n");
     ok(!file_exists("d.txt\\test3.txt"), "Expected d.txt\\test3.txt to not exist\n");
     RemoveDirectoryA("d.txt");
     createTestFile("test2.txt");
 
     /* FO_MOVE does not create dest directories */
-    shfo.pFrom = "test2.txt\0";
-    shfo.pTo = "dir1\\dir2\\test2.txt\0";
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES,
+            "test2.txt\0", "dir1\\dir2\\test2.txt\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("dir1\\dir2\\test2.txt"), "Expected dir1\\dir2\\test2.txt to exist\n");
     RemoveDirectoryA("dir1\\dir2");
     RemoveDirectoryA("dir1");
     createTestFile("test2.txt");
 
     /* try to overwrite an existing file */
-    shfo.pTo = "test3.txt\0";
-    retval = SHFileOperationA(&shfo);
-    ok(!retval, "got %ld\n", retval);
+    check_file_operation(FO_MOVE, FOF_NO_UI | FOF_MULTIDESTFILES,
+            "test2.txt\0", "test3.txt\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test2.txt"), "Expected test2.txt to not exist\n");
     ok(file_exists("test3.txt"), "Expected test3.txt to exist\n");
 }
