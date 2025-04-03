@@ -369,10 +369,12 @@ static void test_CM_Get_Device_Interface_List(void)
     SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
     SP_DEVINFO_DATA device = { sizeof(device) };
+    WCHAR instance_id[256], expected_id[256];
     unsigned int count, count2;
     char *buffera, *pa;
     WCHAR *buffer, *p;
     ULONG size, size2;
+    DEVPROPTYPE type;
     CONFIGRET ret;
     HDEVINFO set;
     GUID guid;
@@ -422,7 +424,48 @@ static void test_CM_Get_Device_Interface_List(void)
         bret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data, sizeof(iface_detail_buffer), NULL, &device);
         ok(bret, "got error %lu.\n", GetLastError());
         ok(!wcsicmp(iface_data->DevicePath, p), "got %s, expected %s.\n", debugstr_w(p), debugstr_w(iface_data->DevicePath));
+        bret = SetupDiGetDeviceInstanceIdW(set, &device, expected_id, ARRAY_SIZE(expected_id), NULL);
+        ok(bret, "got error %lu.\n", GetLastError());
         SetupDiDestroyDeviceInfoList(set);
+
+        size = 0xdeadbeef;
+        type = 0xdeadbeef;
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, NULL, &size, 0);
+        ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+        ok(type == 0xdeadbeef, "got type %#lx.\n", type);
+        ok(size == 0xdeadbeef, "got %#lx.\n", size);
+
+        size = 0;
+        type = 0xdeadbeef;
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, NULL, &size, 0);
+        ok(ret == CR_BUFFER_SMALL, "got %#lx.\n", ret);
+        ok(type == DEVPROP_TYPE_STRING, "got type %#lx.\n", type);
+        ok(size && size != 0xdeadbeef, "got %#lx.\n", size);
+
+        ret = CM_Get_Device_Interface_PropertyW(p, NULL, &type, (BYTE *)instance_id, &size, 0);
+        ok(ret == CR_FAILURE, "got %#lx.\n", ret);
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, NULL, (BYTE *)instance_id, &size, 0);
+        ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+        ret = CM_Get_Device_Interface_PropertyW(NULL, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0);
+        ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, NULL, 0);
+        ok(ret == CR_INVALID_POINTER, "got %#lx.\n", ret);
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 1);
+        ok(ret == CR_INVALID_FLAG, "got %#lx.\n", ret);
+
+        size = 0;
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, NULL, &size, 0);
+        ok(ret == CR_BUFFER_SMALL, "got %#lx.\n", ret);
+
+        --size;
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0);
+        ok(ret == CR_BUFFER_SMALL, "got %#lx.\n", ret);
+
+        type = 0xdeadbeef;
+        ret = CM_Get_Device_Interface_PropertyW(p, &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0);
+        ok(!ret, "got %#lx.\n", ret);
+        ok(type == DEVPROP_TYPE_STRING, "got type %#lx.\n", type);
+        ok(!wcsicmp(instance_id, expected_id), "got %s, expected %s.\n", debugstr_w(instance_id), debugstr_w(expected_id));
         p += wcslen(p) + 1;
         ++count;
     }
@@ -435,6 +478,9 @@ static void test_CM_Get_Device_Interface_List(void)
         ;
     SetupDiDestroyDeviceInfoList(set);
     ok(count == count2, "got %u, expected %u.\n", count, count2);
+
+    ret = CM_Get_Device_Interface_PropertyW(L"qqq", &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0);
+    ok(ret == CR_NO_SUCH_DEVICE_INTERFACE, "got %#lx.\n", ret);
 }
 
 START_TEST(cfgmgr32)

@@ -23,6 +23,10 @@
 #include "winuser.h"
 #include "dbt.h"
 #include "wine/plugplay.h"
+#include "setupapi.h"
+
+#include "initguid.h"
+#include "devpkey.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
@@ -250,8 +254,45 @@ CONFIGRET WINAPI CM_Get_Device_Interface_PropertyW( LPCWSTR device_interface, co
                                                     DEVPROPTYPE *property_type, BYTE *property_buffer,
                                                     ULONG *property_buffer_size, ULONG flags )
 {
-    FIXME("%s %p %p %p %p %ld stub!\n", debugstr_w(device_interface), property_key, property_type,
-          property_buffer, property_buffer_size, flags);
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    SP_DEVINFO_DATA device = { sizeof(device) };
+    HDEVINFO set;
+    DWORD err;
+    BOOL ret;
 
-    return CR_CALL_NOT_IMPLEMENTED;
+    TRACE( "%s %p %p %p %p %ld.\n", debugstr_w(device_interface), property_key, property_type, property_buffer,
+           property_buffer_size, flags);
+
+    if (!property_key) return CR_FAILURE;
+    if (!device_interface || !property_type || !property_buffer_size) return CR_INVALID_POINTER;
+    if (*property_buffer_size && !property_buffer) return CR_INVALID_POINTER;
+    if (flags) return CR_INVALID_FLAG;
+
+    if (memcmp( property_key, &DEVPKEY_Device_InstanceId, sizeof(*property_key) ))
+    {
+        FIXME( "property %s\\%lx.\n", debugstr_guid( &property_key->fmtid ), property_key->pid );
+        return CR_NO_SUCH_VALUE;
+    }
+
+    set = SetupDiCreateDeviceInfoListExW( NULL, NULL, NULL, NULL );
+    if (set == INVALID_HANDLE_VALUE) return CR_OUT_OF_MEMORY;
+    if (!SetupDiOpenDeviceInterfaceW( set, device_interface, 0, &iface ))
+    {
+        SetupDiDestroyDeviceInfoList( set );
+        TRACE( "No interface %s, err %lu.\n", debugstr_w( device_interface ), GetLastError());
+        return CR_NO_SUCH_DEVICE_INTERFACE;
+    }
+    if (!SetupDiEnumDeviceInfo( set, 0, &device ))
+    {
+        SetupDiDestroyDeviceInfoList( set );
+        return CR_FAILURE;
+    }
+    ret = SetupDiGetDeviceInstanceIdW( set, &device, (WCHAR *)property_buffer, *property_buffer_size / sizeof(WCHAR),
+                                       property_buffer_size );
+    err = ret ? 0 : GetLastError();
+    SetupDiDestroyDeviceInfoList( set );
+    *property_type = DEVPROP_TYPE_STRING;
+    *property_buffer_size *= sizeof(WCHAR);
+    if (!err) return CR_SUCCESS;
+    return err == ERROR_INSUFFICIENT_BUFFER ? CR_BUFFER_SMALL : CR_FAILURE;
 }
