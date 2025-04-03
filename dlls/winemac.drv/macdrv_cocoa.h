@@ -568,8 +568,8 @@ extern void macdrv_view_release_metal_view(macdrv_metal_view v);
 extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]);
 extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2]);
 extern uint32_t macdrv_window_background_color(void);
-extern void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
-                                         void* data, int* done);
+extern void macdrv_send_keydown_to_input_source(unsigned int flags, int repeat, int keyc,
+                                                void* data, int* done);
 extern int macdrv_is_any_wine_window_visible(void);
 
 

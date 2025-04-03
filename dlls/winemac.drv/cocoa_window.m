@@ -3977,9 +3977,13 @@ uint32_t macdrv_window_background_color(void)
 }
 
 /***********************************************************************
- *              macdrv_send_text_input_event
+ *              macdrv_send_keydown_to_input_source
+ *
+ * Sends a key down event to the active window's inputContext so that it can be
+ * processed by input sources (AKA IMEs). This is only called when there is an
+ * active non-keyboard input source.
  */
-void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* himc, int* done)
+void macdrv_send_keydown_to_input_source(unsigned int flags, int repeat, int keyc, void* himc, int* done)
 {
     OnMainThreadAsync(^{
         BOOL ret;
@@ -4004,7 +4008,7 @@ void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, i
             // An NSEvent created with +keyEventWithType:... is internally marked
             // as synthetic and doesn't get sent through input methods.  But one
             // created from a CGEvent doesn't have that problem.
-            c = CGEventCreateKeyboardEvent(NULL, keyc, pressed);
+            c = CGEventCreateKeyboardEvent(NULL, keyc, true);
             CGEventSetFlags(c, localFlags);
             CGEventSetIntegerValueField(c, kCGKeyboardEventAutorepeat, repeat);
             event = [NSEvent eventWithCGEvent:c];

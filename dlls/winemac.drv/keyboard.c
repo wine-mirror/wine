@@ -1239,6 +1239,14 @@ UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_s
 
     if (!macdrv_using_input_method()) return 0;
 
+    if (!pressed)
+    {
+        /* Only key down events should be sent to the Cocoa input context. We do
+           not handle key ups, and instead let those go through as a normal
+           WM_KEYUP. */
+        return 0;
+    }
+
     switch (vkey)
     {
         case VK_SHIFT:
@@ -1274,7 +1282,7 @@ UINT macdrv_ImeProcessKey(HIMC himc, UINT wparam, UINT lparam, const BYTE *key_s
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
-    macdrv_send_text_input_event(pressed, flags, repeat, keyc, himc, &done);
+    macdrv_send_keydown_to_input_source(flags, repeat, keyc, himc, &done);
     while (!done) NtUserMsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
 
     return done > 0;
