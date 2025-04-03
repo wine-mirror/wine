@@ -1392,7 +1392,8 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
             memcpy( key->u.s.vector, output + *ret_len - key->u.s.vector_len, key->u.s.vector_len );
             if (iv) memcpy( iv, key->u.s.vector, min( iv_len, key->u.s.vector_len ));
         }
-        else FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
+        else if (key->u.s.vector)
+            FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
     }
 
     return status;
