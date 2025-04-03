@@ -988,7 +988,6 @@ static void test_basics(void)
     HDWP hdwp;
     RECT rc;
     HRESULT hr;
-    static const WCHAR winetest[] = {'W','i','n','e','T','e','s','t',0};
 
     ebrowser_instantiate(&peb);
     ebrowser_initialize(peb);
@@ -1090,7 +1089,7 @@ static void test_basics(void)
     /* SetPropertyBag */
     hr = IExplorerBrowser_SetPropertyBag(peb, NULL);
     ok(hr == E_INVALIDARG, "Got 0x%08lx\n", hr);
-    hr = IExplorerBrowser_SetPropertyBag(peb, winetest);
+    hr = IExplorerBrowser_SetPropertyBag(peb, L"WineTest");
     ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
     /* TODO: Test after browsing somewhere. */
@@ -1281,8 +1280,7 @@ static void test_navigation(void)
     LONG lres;
     WCHAR current_path[MAX_PATH];
     WCHAR child_path[MAX_PATH];
-    static const WCHAR testfolderW[] =
-        {'w','i','n','e','t','e','s','t','f','o','l','d','e','r','\0'};
+    static WCHAR testfolderW[] = L"winetestfolder";
 
     ok(pSHCreateShellItem != NULL, "pSHCreateShellItem unexpectedly missing.\n");
 
@@ -1362,8 +1360,7 @@ static void test_navigation(void)
 
         hr = IFolderView_GetFolder(pfv, &IID_IShellFolder, (void**)&psf);
         ok(hr == S_OK, "Got 0x%08lx\n", hr);
-        hr = IShellFolder_ParseDisplayName(psf, NULL, NULL, (LPWSTR)testfolderW,
-                                           NULL, &pidl_relative, NULL);
+        hr = IShellFolder_ParseDisplayName(psf, NULL, NULL, testfolderW, NULL, &pidl_relative, NULL);
         ok(hr == S_OK, "Got 0x%08lx\n", hr);
 
         /* Browsing to another location here before using the
@@ -1676,13 +1673,12 @@ static BOOL test_instantiate_control(void)
 static void setup_window(void)
 {
     WNDCLASSW wc;
-    static const WCHAR ebtestW[] = {'e','b','t','e','s','t',0};
 
     ZeroMemory(&wc, sizeof(WNDCLASSW));
     wc.lpfnWndProc      = DefWindowProcW;
-    wc.lpszClassName    = ebtestW;
+    wc.lpszClassName    = L"ebtest";
     RegisterClassW(&wc);
-    hwnd = CreateWindowExW(0, ebtestW, NULL, 0,
+    hwnd = CreateWindowExW(0, L"ebtest", NULL, 0,
                            0, 0, 500, 500,
                            NULL, 0, 0, NULL);
     ok(hwnd != NULL, "Failed to create window for tests.\n");

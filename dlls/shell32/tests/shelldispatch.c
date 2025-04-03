@@ -40,8 +40,6 @@ static void _expect_ref(IUnknown *obj, ULONG ref, int line)
     ok_(__FILE__,line)(rc == ref, "Unexpected refcount %ld, expected %ld\n", rc, ref);
 }
 
-static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
-
 static HRESULT (WINAPI *pSHGetNameFromIDList)(PCIDLIST_ABSOLUTE,SIGDN,PWSTR*);
 
 /* Updated Windows 7 has a new IShellDispatch6 in its typelib */
@@ -105,11 +103,7 @@ static void test_namespace(void)
         ssfPROGRAMFILESx86,
     };
 
-    static const WCHAR backslashW[] = {'\\',0};
-    static const WCHAR clsidW[] = {
-        ':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-',
-                    '1','0','1','B','-','9','F','0','8','-',
-                    '0','0','A','A','0','0','2','F','9','5','4','E','}',0};
+    static const WCHAR clsidW[] = L"::{645FF040-5081-101B-9F08-00AA002F954E}";
 
     static WCHAR tempW[MAX_PATH], curW[MAX_PATH];
     WCHAR *long_pathW = NULL;
@@ -252,14 +246,14 @@ static void test_namespace(void)
     GetTempPathW(MAX_PATH, tempW);
     GetCurrentDirectoryW(MAX_PATH, curW);
     SetCurrentDirectoryW(tempW);
-    CreateDirectoryW(winetestW, NULL);
+    CreateDirectoryW(L"winetest", NULL);
     V_VT(&var) = VT_BSTR;
-    V_BSTR(&var) = SysAllocString(winetestW);
+    V_BSTR(&var) = SysAllocString(L"winetest");
     r = IShellDispatch_NameSpace(sd, var, &folder);
     ok(r == S_FALSE, "expected S_FALSE, got %08lx\n", r);
     SysFreeString(V_BSTR(&var));
 
-    GetFullPathNameW(winetestW, MAX_PATH, tempW, NULL);
+    GetFullPathNameW(L"winetest", MAX_PATH, tempW, NULL);
 
     len = GetLongPathNameW(tempW, NULL, 0);
     long_pathW = malloc(len * sizeof(WCHAR));
@@ -277,7 +271,7 @@ static void test_namespace(void)
 
     r = Folder_get_Title(folder, &title);
     ok(r == S_OK, "Failed to get folder title: %#lx.\n", r);
-    ok(!lstrcmpW(title, winetestW), "Unexpected title: %s\n",  wine_dbgstr_w(title));
+    ok(!lstrcmpW(title, L"winetest"), "Unexpected title: %s\n",  wine_dbgstr_w(title));
     SysFreeString(title);
 
     r = Folder_QueryInterface(folder, &IID_Folder2, (void **)&folder2);
@@ -297,7 +291,7 @@ static void test_namespace(void)
     len = lstrlenW(tempW);
     if (len < MAX_PATH - 1)
     {
-        lstrcatW(tempW, backslashW);
+        lstrcatW(tempW, L"\\");
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(tempW);
         r = IShellDispatch_NameSpace(sd, var, &folder);
@@ -308,7 +302,7 @@ static void test_namespace(void)
             ok(r == S_OK, "Folder::get_Title failed: %08lx\n", r);
             if (r == S_OK)
             {
-                ok(!lstrcmpW(title, winetestW), "bad title: %s\n",
+                ok(!lstrcmpW(title, L"winetest"), "bad title: %s\n",
                  wine_dbgstr_w(title));
                 SysFreeString(title);
             }
@@ -335,7 +329,7 @@ static void test_namespace(void)
     }
 
     free(long_pathW);
-    RemoveDirectoryW(winetestW);
+    RemoveDirectoryW(L"winetest");
     SetCurrentDirectoryW(curW);
     IShellDispatch_Release(sd);
 }
@@ -384,9 +378,9 @@ static void test_items(void)
     GetTempPathW(MAX_PATH, path);
     GetCurrentDirectoryW(MAX_PATH, orig_dir);
     SetCurrentDirectoryW(path);
-    ret = CreateDirectoryW(winetestW, NULL);
+    ret = CreateDirectoryW(L"winetest", NULL);
     ok(ret, "CreateDirectory failed: %08lx\n", GetLastError());
-    GetFullPathNameW(winetestW, MAX_PATH, path, NULL);
+    GetFullPathNameW(L"winetest", MAX_PATH, path, NULL);
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = SysAllocString(path);
 
@@ -398,7 +392,7 @@ static void test_items(void)
     EXPECT_REF(sd, 1);
 
     VariantClear(&var);
-    SetCurrentDirectoryW(winetestW);
+    SetCurrentDirectoryW(L"winetest");
     GetCurrentDirectoryW(MAX_PATH, path);
     GetLongPathNameW(path, cur_dir, MAX_PATH);
 
@@ -792,7 +786,7 @@ static void test_items(void)
     /* remove the temporary directory and restore the original working directory */
     GetTempPathW(MAX_PATH, path);
     SetCurrentDirectoryW(path);
-    ret = RemoveDirectoryW(winetestW);
+    ret = RemoveDirectoryW(L"winetest");
     ok(ret, "RemoveDirectory failed: %08lx\n", GetLastError());
     SetCurrentDirectoryW(orig_dir);
 
@@ -824,8 +818,6 @@ static void test_items(void)
 
 static void test_service(void)
 {
-    static const WCHAR spooler[] = {'S','p','o','o','l','e','r',0};
-    static const WCHAR dummyW[] = {'d','u','m','m','y',0};
     SERVICE_STATUS_PROCESS status;
     SC_HANDLE scm, service;
     IShellDispatch2 *sd;
@@ -850,13 +842,13 @@ static void test_service(void)
     EXPECT_HR(hr, S_OK);
 
     scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
-    service = OpenServiceW(scm, spooler, SERVICE_QUERY_STATUS);
+    service = OpenServiceW(scm, L"Spooler", SERVICE_QUERY_STATUS);
     QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (BYTE *)&status, sizeof(SERVICE_STATUS_PROCESS), &dummy);
     CloseServiceHandle(service);
     CloseServiceHandle(scm);
 
     /* service should exist */
-    name = SysAllocString(spooler);
+    name = SysAllocString(L"Spooler");
     V_VT(&v) = VT_I2;
     hr = IShellDispatch2_IsServiceRunning(sd, name, &v);
     EXPECT_HR(hr, S_OK);
@@ -868,7 +860,7 @@ static void test_service(void)
     SysFreeString(name);
 
     /* service doesn't exist */
-    name = SysAllocString(dummyW);
+    name = SysAllocString(L"dummy");
     V_VT(&v) = VT_I2;
     hr = IShellDispatch2_IsServiceRunning(sd, name, &v);
     EXPECT_HR(hr, S_OK);
@@ -1216,7 +1208,6 @@ if (hr == S_OK) {
 
 static void test_ParseName(void)
 {
-    static const WCHAR cadabraW[] = {'c','a','d','a','b','r','a',0};
     WCHAR pathW[MAX_PATH];
     IShellDispatch *sd;
     FolderItem *item;
@@ -1250,7 +1241,7 @@ static void test_ParseName(void)
     SysFreeString(str);
 
     /* path doesn't exist */
-    str = SysAllocString(cadabraW);
+    str = SysAllocString(L"cadabra");
     item = (void*)0xdeadbeef;
     hr = Folder_ParseName(folder, str, &item);
     ok(hr == S_FALSE || broken(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)) /* win2k */,
@@ -1258,10 +1249,10 @@ static void test_ParseName(void)
     ok(item == NULL, "got %p\n", item);
     SysFreeString(str);
 
-    lstrcatW(pathW, cadabraW);
+    lstrcatW(pathW, L"cadabra");
     CreateDirectoryW(pathW, NULL);
 
-    str = SysAllocString(cadabraW);
+    str = SysAllocString(L"cadabra");
     item = NULL;
     hr = Folder_ParseName(folder, str, &item);
     ok(hr == S_OK, "got 0x%08lx\n", hr);
@@ -1544,8 +1535,6 @@ static void test_ShellExecute(void)
     BSTR name;
     VARIANT args, dir, op, show;
 
-    static const WCHAR regW[] = {'r','e','g',0};
-
     hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
         &IID_IShellDispatch2, (void**)&sd);
     if (hr != S_OK)
@@ -1562,7 +1551,7 @@ static void test_ShellExecute(void)
     V_VT(&show) = VT_I4;
     V_I4(&show) = 0;
 
-    name = SysAllocString(regW);
+    name = SysAllocString(L"reg");
 
     hr = IShellDispatch2_ShellExecute(sd, name, args, dir, op, show);
     ok(hr == S_OK, "ShellExecute failed: %08lx\n", hr);

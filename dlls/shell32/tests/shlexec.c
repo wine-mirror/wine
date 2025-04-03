@@ -1388,7 +1388,6 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
 
 static void test_commandline2argv(void)
 {
-    static const WCHAR exeW[] = {'e','x','e',0};
     const cmdline_tests_t* test;
     WCHAR strW[MAX_PATH];
     LPWSTR *args;
@@ -1404,7 +1403,7 @@ static void test_commandline2argv(void)
     }
 
     SetLastError(0xdeadbeef);
-    args = CommandLineToArgvW(exeW, NULL);
+    args = CommandLineToArgvW(L"exe", NULL);
     le = GetLastError();
     ok(args == NULL && le == ERROR_INVALID_PARAMETER, "expected NULL with ERROR_INVALID_PARAMETER got %p with %lu\n", args, le);
 

@@ -90,13 +90,10 @@ struct assoc_getstring_test
     HRESULT      brokenhr;
 };
 
-static const WCHAR httpW[] = {'h','t','t','p',0};
-static const WCHAR badW[] = {'b','a','d','b','a','d',0};
-
 static struct assoc_getstring_test getstring_tests[] =
 {
-    { httpW, 0, ASSOCSTR_EXECUTABLE, 2, 0x8007007a /* E_NOT_SUFFICIENT_BUFFER */, S_OK },
-    { httpW, ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, 2, E_POINTER },
+    { L"http", 0, ASSOCSTR_EXECUTABLE, 2, 0x8007007a /* E_NOT_SUFFICIENT_BUFFER */, S_OK },
+    { L"http", ASSOCF_NOTRUNCATE, ASSOCSTR_EXECUTABLE, 2, E_POINTER },
     { NULL }
 };
 
@@ -138,11 +135,8 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
 
 static void test_IQueryAssociations_GetString(void)
 {
-    static WCHAR test_extensionW[] = {'.','t','e','s','t',0};
-    static WCHAR test_progidW[] = {'t','e','s','t','f','i','l','e',0};
-    static WCHAR DefaultIconW[] = {'D','e','f','a','u','l','t','I','c','o','n',0};
-    /* folder.ico, why not */
-    static WCHAR test_iconW[] = {'s','h','e','l','l','3','2','.','d','l','l',',','1',0};
+    static WCHAR test_progidW[] = L"testfile";
+    static WCHAR test_iconW[] = L"shell32.dll,1"; /* folder.ico, why not */
     HKEY test_extension_key;
     HKEY test_progid_key;
     HKEY test_defaulticon_key;
@@ -154,7 +148,7 @@ static void test_IQueryAssociations_GetString(void)
     DWORD len;
     int i = 0;
 
-    r = RegCreateKeyExW(HKEY_CLASSES_ROOT, test_extensionW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_extension_key, NULL);
+    r = RegCreateKeyExW(HKEY_CLASSES_ROOT, L".test", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_extension_key, NULL);
     if (r == ERROR_ACCESS_DENIED)
     {
         win_skip("Not enough permissions to create a test key.\n");
@@ -168,27 +162,27 @@ static void test_IQueryAssociations_GetString(void)
     /* adding progid key with no information should fail to return information */
     r = RegCreateKeyExW(HKEY_CLASSES_ROOT, test_progidW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_progid_key, NULL);
     ok(r == ERROR_SUCCESS, "RegCreateKeyExW(HKCR, \"testfile\") failed: 0x%Ix\n", r);
-    getstring_test(test_extensionW, NULL, ASSOCSTR_DEFAULTICON, NULL, __LINE__);
+    getstring_test(L".test", NULL, ASSOCSTR_DEFAULTICON, NULL, __LINE__);
     getstring_test(test_progidW, NULL, ASSOCSTR_DEFAULTICON, NULL, __LINE__);
     getstring_test(NULL, test_progid_key, ASSOCSTR_DEFAULTICON, NULL, __LINE__);
 
     /* adding information to the progid should return that information */
-    r = RegCreateKeyExW(test_progid_key, DefaultIconW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_defaulticon_key, NULL);
+    r = RegCreateKeyExW(test_progid_key, L"DefaultIcon", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &test_defaulticon_key, NULL);
     ok(r == ERROR_SUCCESS, "RegCreateKeyExW(HKCR\\testfile\\DefaultIcon) failed: 0x%Ix\n", r);
     r = RegSetValueExW(test_defaulticon_key, NULL, 0, REG_SZ, (PBYTE)test_iconW, sizeof(test_iconW));
     ok(r == ERROR_SUCCESS, "RegSetValueExW(HKCR\\testfile\\DefaultIcon, NULL, \"folder.ico\") failed: 0x%Ix\n", r);
-    getstring_test(test_extensionW, NULL, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
+    getstring_test(L".test", NULL, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
     getstring_test(test_progidW, NULL, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
     getstring_test(NULL, test_progid_key, ASSOCSTR_DEFAULTICON, test_iconW, __LINE__);
 
-    RegDeleteKeyW(test_progid_key, DefaultIconW);
+    RegDeleteKeyW(test_progid_key, L"DefaultIcon");
     RegDeleteKeyW(HKEY_CLASSES_ROOT, test_progidW);
-    RegDeleteKeyW(HKEY_CLASSES_ROOT, test_extensionW);
+    RegDeleteKeyW(HKEY_CLASSES_ROOT, L".test");
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
     ok(hr == S_OK, "failed to create object, 0x%lx\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, httpW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, L"http", NULL, NULL);
     ok(hr == S_OK, "Init failed, 0x%lx\n", hr);
 
     len = 0;
@@ -241,10 +235,10 @@ static void test_IQueryAssociations_Init(void)
     hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "Init failed, 0x%08lx\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, httpW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, L"http", NULL, NULL);
     ok(hr == S_OK, "Init failed, 0x%08lx\n", hr);
 
-    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, badW, NULL, NULL);
+    hr = IQueryAssociations_Init(assoc, ASSOCF_NONE, L"badbad", NULL, NULL);
     ok(hr == S_OK || broken(hr == S_FALSE) /* pre-vista */, "Init failed, 0x%08lx\n", hr);
 
     len = 0;
@@ -256,37 +250,34 @@ static void test_IQueryAssociations_Init(void)
 
 static void test_IApplicationAssociationRegistration_QueryCurrentDefault(IApplicationAssociationRegistration *appreg)
 {
-    static const WCHAR emptyW[] = {0};
-    static const WCHAR txtW[] = {'.','t','x','t',0};
-    static const WCHAR spacetxtW[] = {' ','.','t','x','t',0};
     HRESULT hr;
     LPWSTR assocprog = NULL;
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, emptyW, AT_URLPROTOCOL, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"", AT_URLPROTOCOL, AL_EFFECTIVE, &assocprog);
     ok(hr == E_INVALIDARG, "got 0x%lx\n", hr);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, emptyW, AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"", AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
     ok(hr == E_INVALIDARG, "got 0x%lx\n", hr);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, spacetxtW, AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L" .txt", AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
     ok(hr == E_INVALIDARG || hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION) /*Win8*/, "got 0x%lx\n", hr);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, httpW, AT_URLPROTOCOL, AL_EFFECTIVE, NULL);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"http", AT_URLPROTOCOL, AL_EFFECTIVE, NULL);
     ok(hr == E_INVALIDARG, "got 0x%lx\n", hr);
 
     /* AT_FILEEXTENSION must start with a period */
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, txtW, AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L".txt", AT_FILEEXTENSION, AL_EFFECTIVE, &assocprog);
     ok(hr == S_OK, "got 0x%lx\n", hr);
     trace("%s\n", wine_dbgstr_w(assocprog));
     CoTaskMemFree(assocprog);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, emptyW, AT_STARTMENUCLIENT, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"", AT_STARTMENUCLIENT, AL_EFFECTIVE, &assocprog);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), "got 0x%lx\n", hr);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, emptyW, AT_MIMETYPE, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"", AT_MIMETYPE, AL_EFFECTIVE, &assocprog);
     ok(hr == HRESULT_FROM_WIN32(ERROR_NO_ASSOCIATION), "got 0x%lx\n", hr);
 
-    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, httpW, AT_URLPROTOCOL, AL_EFFECTIVE, &assocprog);
+    hr = IApplicationAssociationRegistration_QueryCurrentDefault(appreg, L"http", AT_URLPROTOCOL, AL_EFFECTIVE, &assocprog);
     ok(hr == S_OK, "got 0x%lx\n", hr);
     trace("%s\n", wine_dbgstr_w(assocprog));
 

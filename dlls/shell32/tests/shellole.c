@@ -972,10 +972,8 @@ static void test_DragQueryFile(BOOL non_client_flag)
 
 static void test_SHCreateSessionKey(void)
 {
-    static const WCHAR session_format[] = {
-                'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
-                'W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                'E','x','p','l','o','r','e','r','\\','S','e','s','s','i','o','n','I','n','f','o','\\','%','u',0};
+    static const WCHAR session_format[] =
+                L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SessionInfo\\%u";
     HKEY hkey, hkey2;
     HRESULT hr;
     DWORD session;

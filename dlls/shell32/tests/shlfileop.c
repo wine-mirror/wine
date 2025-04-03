@@ -49,7 +49,7 @@
 static BOOL old_shell32 = FALSE;
 
 static CHAR CURR_DIR[MAX_PATH];
-static const WCHAR UNICODE_PATH[] = {'c',':','\\',0x00ae,'\0','\0'};
+static const WCHAR UNICODE_PATH[] = L"c:\\\x00ae\0";
     /* "c:\®" can be used in all codepages */
     /* Double-null termination needed for pFrom field of SHFILEOPSTRUCT */
 
@@ -2175,7 +2175,7 @@ static void test_unicode(void)
     SHFILEOPSTRUCTW shfoW;
     int ret;
     HANDLE file;
-    static const WCHAR UNICODE_PATH_TO[] = {'c',':','\\',0x00ae,0x00ae,'\0'};
+    static const WCHAR UNICODE_PATH_TO[] = L"c:\\\x00ae\x00ae";
     HWND hwnd;
 
     shfoW.hwnd = NULL;
