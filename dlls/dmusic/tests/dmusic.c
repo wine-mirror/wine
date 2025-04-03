@@ -1054,27 +1054,27 @@ static void test_port_kscontrol(void)
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_GET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
 
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 1;
     property.Flags = KSPROPERTY_TYPE_GET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
 
     volume = 0;
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 0;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
 
     volume = 0;
     property.Set = GUID_DMUS_PROP_Volume;
     property.Id = 1;
     property.Flags = KSPROPERTY_TYPE_SET;
     hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
-    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+    ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
 
     IDirectMusicPort_Release(port);
     IDirectMusic_Release(dmusic);
