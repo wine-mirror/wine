@@ -245,7 +245,6 @@ struct wgl_pbuffer
     int        pixel_format;
     int*       attribList;
     int        use_render_texture; /* This is also the internal texture format */
-    int        texture_bind_target;
     int        texture_bpp;
     GLint      texture_format;
     GLuint     texture_target;
@@ -2109,7 +2108,6 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int format, int 
                     goto create_failed;
                 }
                 object->texture_target = GL_TEXTURE_CUBE_MAP;
-                object->texture_bind_target = GL_TEXTURE_BINDING_CUBE_MAP;
                 break;
             case WGL_TEXTURE_1D_ARB:
                 if (1 != height)
@@ -2118,15 +2116,12 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int format, int 
                     goto create_failed;
                 }
                 object->texture_target = GL_TEXTURE_1D;
-                object->texture_bind_target = GL_TEXTURE_BINDING_1D;
                 break;
             case WGL_TEXTURE_2D_ARB:
                 object->texture_target = GL_TEXTURE_2D;
-                object->texture_bind_target = GL_TEXTURE_BINDING_2D;
                 break;
             case WGL_TEXTURE_RECTANGLE_NV:
                 object->texture_target = GL_TEXTURE_RECTANGLE_NV;
-                object->texture_bind_target = GL_TEXTURE_BINDING_RECTANGLE_NV;
                 break;
             default:
                 ERR( "Unknown texture target: %x\n", value );
@@ -2356,6 +2351,19 @@ static BOOL X11DRV_wglSetPbufferAttribARB( struct wgl_pbuffer *object, const int
     return ret;
 }
 
+static GLenum binding_from_target( GLenum target )
+{
+    switch (target)
+    {
+    case GL_TEXTURE_CUBE_MAP: return GL_TEXTURE_BINDING_CUBE_MAP;
+    case GL_TEXTURE_1D: return GL_TEXTURE_BINDING_1D;
+    case GL_TEXTURE_2D: return GL_TEXTURE_BINDING_2D;
+    case GL_TEXTURE_RECTANGLE_NV: return GL_TEXTURE_BINDING_RECTANGLE_NV;
+    }
+    FIXME( "Unsupported target %#x\n", target );
+    return 0;
+}
+
 /**
  * X11DRV_wglBindTexImageARB
  *
@@ -2400,7 +2408,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         object->prev_context = prev_context;
     }
 
-    opengl_funcs.p_glGetIntegerv( object->texture_bind_target, &prev_binded_texture );
+    opengl_funcs.p_glGetIntegerv( binding_from_target( object->texture_target ), &prev_binded_texture );
 
     /* Switch to our pbuffer */
     pglXMakeCurrent( gdi_display, object->gl->drawable, object->tmp_context );
