@@ -2363,6 +2363,10 @@ static BOOL X11DRV_wglSetPbufferAttribARB( struct wgl_pbuffer *object, const int
  */
 static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
 {
+    static BOOL initialized = FALSE;
+    int prev_binded_texture = 0;
+    GLXContext prev_context;
+    GLXDrawable prev_drawable;
     GLboolean ret = GL_FALSE;
 
     TRACE("(%p, %d)\n", object, iBuffer);
@@ -2372,48 +2376,44 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         return GL_FALSE;
     }
 
-    if (use_render_texture_emulation) {
-        static BOOL initialized = FALSE;
-        int prev_binded_texture = 0;
-        GLXContext prev_context;
-        GLXDrawable prev_drawable;
+    if (!use_render_texture_emulation) return ret;
 
-        prev_context = pglXGetCurrentContext();
-        prev_drawable = pglXGetCurrentDrawable();
+    prev_context = pglXGetCurrentContext();
+    prev_drawable = pglXGetCurrentDrawable();
 
-        /* Our render_texture emulation is basic and lacks some features (1D/Cube support).
-           This is mostly due to lack of demos/games using them. Further the use of glReadPixels
-           isn't ideal performance wise but I wasn't able to get other ways working.
-        */
-        if(!initialized) {
-            initialized = TRUE; /* Only show the FIXME once for performance reasons */
-            FIXME("partial stub!\n");
-        }
-
-        TRACE("drawable=%p (%lx), context=%p\n", object->gl, object->gl->drawable, prev_context);
-        if (!object->tmp_context || object->prev_context != prev_context) {
-            if (object->tmp_context)
-                pglXDestroyContext(gdi_display, object->tmp_context);
-            object->tmp_context = pglXCreateNewContext(gdi_display, object->fmt->fbconfig, object->fmt->render_type, prev_context, True);
-            object->prev_context = prev_context;
-        }
-
-        opengl_funcs.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
-
-        /* Switch to our pbuffer */
-        pglXMakeCurrent(gdi_display, object->gl->drawable, object->tmp_context);
-
-        /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
-         * After that copy the pbuffer texture data. */
-        opengl_funcs.p_glBindTexture(object->texture_target, prev_binded_texture);
-        opengl_funcs.p_glCopyTexImage2D(object->texture_target, 0, object->use_render_texture, 0, 0, object->width, object->height, 0);
-
-        /* Switch back to the original drawable and context */
-        pglXMakeCurrent(gdi_display, prev_drawable, prev_context);
-        return GL_TRUE;
+    /* Our render_texture emulation is basic and lacks some features (1D/Cube support).
+       This is mostly due to lack of demos/games using them. Further the use of glReadPixels
+       isn't ideal performance wise but I wasn't able to get other ways working.
+    */
+    if (!initialized)
+    {
+        initialized = TRUE; /* Only show the FIXME once for performance reasons */
+        FIXME( "partial stub!\n" );
     }
 
-    return ret;
+    TRACE( "drawable=%p (%lx), context=%p\n", object->gl, object->gl->drawable, prev_context );
+    if (!object->tmp_context || object->prev_context != prev_context)
+    {
+        if (object->tmp_context) pglXDestroyContext( gdi_display, object->tmp_context );
+        object->tmp_context = pglXCreateNewContext( gdi_display, object->fmt->fbconfig,
+                                                    object->fmt->render_type, prev_context, True );
+        object->prev_context = prev_context;
+    }
+
+    opengl_funcs.p_glGetIntegerv( object->texture_bind_target, &prev_binded_texture );
+
+    /* Switch to our pbuffer */
+    pglXMakeCurrent( gdi_display, object->gl->drawable, object->tmp_context );
+
+    /* Make sure that the prev_binded_texture is set as the current texture state isn't shared
+     * between contexts. After that copy the pbuffer texture data. */
+    opengl_funcs.p_glBindTexture( object->texture_target, prev_binded_texture );
+    opengl_funcs.p_glCopyTexImage2D( object->texture_target, 0, object->use_render_texture, 0, 0,
+                                     object->width, object->height, 0 );
+
+    /* Switch back to the original drawable and context */
+    pglXMakeCurrent( gdi_display, prev_drawable, prev_context );
+    return GL_TRUE;
 }
 
 /**
