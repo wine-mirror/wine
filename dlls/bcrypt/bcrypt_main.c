@@ -1213,10 +1213,165 @@ static NTSTATUS key_symmetric_generate( struct algorithm *alg, BCRYPT_KEY_HANDLE
     return status;
 }
 
-static NTSTATUS key_import( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *key, UCHAR *object,
-                            ULONG object_len, UCHAR *input, ULONG input_len )
+static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
+                                       ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
+{
+    struct key_symmetric_set_auth_data_params auth_params;
+    struct key_symmetric_decrypt_params decrypt_params;
+    struct key_symmetric_get_tag_params tag_params;
+    ULONG bytes_left = input_len;
+    NTSTATUS status;
+
+    if (key->u.s.mode == CHAIN_MODE_GCM)
+    {
+        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
+        UCHAR tag[16];
+
+        if (!auth_info) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
+        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
+        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
+
+        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce, TRUE )))
+            return status;
+
+        *ret_len = input_len;
+        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
+        if (!output) return STATUS_SUCCESS;
+        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+        auth_params.key = key;
+        auth_params.auth_data = auth_info->pbAuthData;
+        auth_params.len = auth_info->cbAuthData;
+        if ((status = UNIX_CALL( key_symmetric_set_auth_data, &auth_params ))) return status;
+
+        decrypt_params.key = key;
+        decrypt_params.input = input;
+        decrypt_params.input_len = input_len;
+        decrypt_params.output = output;
+        decrypt_params.output_len = output_len;
+        if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
+
+        tag_params.key = key;
+        tag_params.tag = tag;
+        tag_params.len = sizeof(tag);
+        if ((status = UNIX_CALL( key_symmetric_get_tag, &tag_params ))) return status;
+        if (memcmp( tag, auth_info->pbTag, auth_info->cbTag )) return STATUS_AUTH_TAG_MISMATCH;
+
+        return STATUS_SUCCESS;
+    }
+
+    *ret_len = input_len;
+
+    if (input_len & (key->u.s.block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
+    if (!output) return STATUS_SUCCESS;
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        if (output_len + key->u.s.block_size < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+        if (input_len < key->u.s.block_size) return STATUS_BUFFER_TOO_SMALL;
+        bytes_left -= key->u.s.block_size;
+    }
+    else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
+
+    if (key->u.s.mode == CHAIN_MODE_ECB && iv) return STATUS_INVALID_PARAMETER;
+    if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
+
+    decrypt_params.key = key;
+    decrypt_params.input = input;
+    decrypt_params.input_len = key->u.s.block_size;
+    decrypt_params.output = output;
+    decrypt_params.output_len = key->u.s.block_size;
+    while (bytes_left >= key->u.s.block_size)
+    {
+        if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
+        if (key->u.s.mode == CHAIN_MODE_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
+            return status;
+        bytes_left -= key->u.s.block_size;
+        decrypt_params.input += key->u.s.block_size;
+        decrypt_params.output += key->u.s.block_size;
+    }
+
+    if (flags & BCRYPT_BLOCK_PADDING)
+    {
+        UCHAR *buf, *dst = decrypt_params.output;
+        if (!(buf = malloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
+        decrypt_params.output = buf;
+        status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params );
+        if (!status && buf[ key->u.s.block_size - 1 ] <= key->u.s.block_size)
+        {
+            *ret_len -= buf[ key->u.s.block_size - 1 ];
+            if (output_len < *ret_len) status = STATUS_BUFFER_TOO_SMALL;
+            else memcpy( dst, buf, key->u.s.block_size - buf[ key->u.s.block_size - 1 ] );
+        }
+        else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
+        free( buf );
+    }
+
+    if (!status)
+    {
+        if (key->u.s.vector && input_len >= key->u.s.vector_len)
+        {
+            memcpy( key->u.s.vector, input + input_len - key->u.s.vector_len, key->u.s.vector_len );
+            if (iv) memcpy( iv, key->u.s.vector, min( iv_len, key->u.s.vector_len ));
+        }
+        else if (key->u.s.vector)
+            FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
+    }
+
+    return status;
+}
+
+/* AES Key Wrap Algorithm (RFC3394) */
+static NTSTATUS aes_unwrap( const UCHAR *secret, ULONG secret_len, const UCHAR *cipher, UCHAR *plain )
+{
+    UCHAR a[8], *r, b[16];
+    ULONG len, t, i, n = secret_len / 8;
+    int j;
+    struct key *key;
+
+    memcpy( a, cipher, 8 );
+    r = plain;
+    memcpy( r, cipher + 8, 8 * n );
+
+    if (!(key = key_symmetric_create( ALG_ID_AES, CHAIN_MODE_ECB, 16, secret, secret_len ))) return STATUS_NO_MEMORY;
+
+    for (j = 5; j >= 0; j--)
+    {
+        r = plain + (n - 1) * 8;
+        for (i = n; i >= 1; i--)
+        {
+            memcpy( b, a, 8 );
+            t = n * j + i;
+            b[7] ^= t;
+            b[6] ^= t >> 8;
+            b[5] ^= t >> 16;
+            b[4] ^= t >> 24;
+
+            memcpy( b + 8, r, 8 );
+            key_symmetric_decrypt( key, b, 16, NULL, NULL, 0, b, 16, &len, 0 );
+            memcpy( a, b, 8 );
+            memcpy( r, b + 8, 8 );
+            r -= 8;
+        }
+    }
+
+    key_destroy( key );
+
+    for (i = 0; i < 8; i++) if (a[i] != 0xa6) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_import( struct algorithm *alg, struct key *decrypt_key, const WCHAR *type, BCRYPT_KEY_HANDLE *key,
+                            UCHAR *object, ULONG object_len, UCHAR *input, ULONG input_len )
 {
     ULONG len;
+    NTSTATUS status;
+
+    if (decrypt_key && wcscmp( type, BCRYPT_AES_WRAP_KEY_BLOB ))
+    {
+        FIXME( "decryption of key not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
 
     if (!wcscmp( type, BCRYPT_KEY_DATA_BLOB ))
     {
@@ -1241,6 +1396,25 @@ static NTSTATUS key_import( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY
         if (len + sizeof(len) > input_len) return STATUS_INVALID_PARAMETER;
 
         return key_symmetric_generate( alg, key, input + sizeof(len), len );
+    }
+    else if (!wcscmp( type, BCRYPT_AES_WRAP_KEY_BLOB ))
+    {
+        UCHAR output[BLOCK_LENGTH_AES];
+
+        if (!decrypt_key || input_len < 8) return STATUS_INVALID_PARAMETER;
+
+        len = input_len - 8;
+        if (len < BLOCK_LENGTH_AES || len & (BLOCK_LENGTH_AES - 1)) return STATUS_INVALID_PARAMETER;
+        if (len > sizeof(output))
+        {
+            FIXME( "key length %lu not supported yet\n", len );
+            return STATUS_NOT_IMPLEMENTED;
+        }
+
+        if ((status = aes_unwrap( decrypt_key->u.s.secret, decrypt_key->u.s.secret_len, input, output )))
+            return status;
+
+        return key_symmetric_generate( alg, key, output, len );
     }
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
@@ -1478,113 +1652,6 @@ static NTSTATUS key_export( struct key *key, struct key *encrypt_key, const WCHA
 
     FIXME( "unsupported key type %s\n", debugstr_w(type) );
     return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG input_len, void *padding, UCHAR *iv,
-                                       ULONG iv_len, UCHAR *output, ULONG output_len, ULONG *ret_len, ULONG flags )
-{
-    struct key_symmetric_set_auth_data_params auth_params;
-    struct key_symmetric_decrypt_params decrypt_params;
-    struct key_symmetric_get_tag_params tag_params;
-    ULONG bytes_left = input_len;
-    NTSTATUS status;
-
-    if (key->u.s.mode == CHAIN_MODE_GCM)
-    {
-        BCRYPT_AUTHENTICATED_CIPHER_MODE_INFO *auth_info = padding;
-        UCHAR tag[16];
-
-        if (!auth_info) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbNonce) return STATUS_INVALID_PARAMETER;
-        if (!auth_info->pbTag) return STATUS_INVALID_PARAMETER;
-        if (auth_info->cbTag < 12 || auth_info->cbTag > 16) return STATUS_INVALID_PARAMETER;
-
-        if ((status = key_symmetric_set_vector( key, auth_info->pbNonce, auth_info->cbNonce, TRUE )))
-            return status;
-
-        *ret_len = input_len;
-        if (flags & BCRYPT_BLOCK_PADDING) return STATUS_INVALID_PARAMETER;
-        if (!output) return STATUS_SUCCESS;
-        if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-
-        auth_params.key = key;
-        auth_params.auth_data = auth_info->pbAuthData;
-        auth_params.len = auth_info->cbAuthData;
-        if ((status = UNIX_CALL( key_symmetric_set_auth_data, &auth_params ))) return status;
-
-        decrypt_params.key = key;
-        decrypt_params.input = input;
-        decrypt_params.input_len = input_len;
-        decrypt_params.output = output;
-        decrypt_params.output_len = output_len;
-        if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
-
-        tag_params.key = key;
-        tag_params.tag = tag;
-        tag_params.len = sizeof(tag);
-        if ((status = UNIX_CALL( key_symmetric_get_tag, &tag_params ))) return status;
-        if (memcmp( tag, auth_info->pbTag, auth_info->cbTag )) return STATUS_AUTH_TAG_MISMATCH;
-
-        return STATUS_SUCCESS;
-    }
-
-    *ret_len = input_len;
-
-    if (input_len & (key->u.s.block_size - 1)) return STATUS_INVALID_BUFFER_SIZE;
-    if (!output) return STATUS_SUCCESS;
-    if (flags & BCRYPT_BLOCK_PADDING)
-    {
-        if (output_len + key->u.s.block_size < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-        if (input_len < key->u.s.block_size) return STATUS_BUFFER_TOO_SMALL;
-        bytes_left -= key->u.s.block_size;
-    }
-    else if (output_len < *ret_len) return STATUS_BUFFER_TOO_SMALL;
-
-    if (key->u.s.mode == CHAIN_MODE_ECB && iv) return STATUS_INVALID_PARAMETER;
-    if ((status = key_symmetric_set_vector( key, iv, iv_len, flags & BCRYPT_BLOCK_PADDING ))) return status;
-
-    decrypt_params.key = key;
-    decrypt_params.input = input;
-    decrypt_params.input_len = key->u.s.block_size;
-    decrypt_params.output = output;
-    decrypt_params.output_len = key->u.s.block_size;
-    while (bytes_left >= key->u.s.block_size)
-    {
-        if ((status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params ))) return status;
-        if (key->u.s.mode == CHAIN_MODE_ECB && (status = key_symmetric_set_vector( key, NULL, 0, TRUE )))
-            return status;
-        bytes_left -= key->u.s.block_size;
-        decrypt_params.input += key->u.s.block_size;
-        decrypt_params.output += key->u.s.block_size;
-    }
-
-    if (flags & BCRYPT_BLOCK_PADDING)
-    {
-        UCHAR *buf, *dst = decrypt_params.output;
-        if (!(buf = malloc( key->u.s.block_size ))) return STATUS_NO_MEMORY;
-        decrypt_params.output = buf;
-        status = UNIX_CALL( key_symmetric_decrypt, &decrypt_params );
-        if (!status && buf[ key->u.s.block_size - 1 ] <= key->u.s.block_size)
-        {
-            *ret_len -= buf[ key->u.s.block_size - 1 ];
-            if (output_len < *ret_len) status = STATUS_BUFFER_TOO_SMALL;
-            else memcpy( dst, buf, key->u.s.block_size - buf[ key->u.s.block_size - 1 ] );
-        }
-        else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
-        free( buf );
-    }
-
-    if (!status)
-    {
-        if (key->u.s.vector && input_len >= key->u.s.vector_len)
-        {
-            memcpy( key->u.s.vector, input + input_len - key->u.s.vector_len, key->u.s.vector_len );
-            if (iv) memcpy( iv, key->u.s.vector, min( iv_len, key->u.s.vector_len ));
-        }
-        else FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
-    }
-
-    return status;
 }
 
 static NTSTATUS convert_legacy_rsaprivate_blob( struct algorithm *alg, BCRYPT_RSAKEY_BLOB **rsa_data,
@@ -1982,25 +2049,22 @@ NTSTATUS WINAPI BCryptFinalizeKeyPair( BCRYPT_KEY_HANDLE handle, ULONG flags )
     return ret;
 }
 
-NTSTATUS WINAPI BCryptImportKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE decrypt_key, const WCHAR *type,
+NTSTATUS WINAPI BCryptImportKey( BCRYPT_ALG_HANDLE handle, BCRYPT_KEY_HANDLE decrypt_key_handle, const WCHAR *type,
                                  BCRYPT_KEY_HANDLE *ret_handle, UCHAR *object, ULONG object_len, UCHAR *input,
                                  ULONG input_len, ULONG flags )
 {
     struct algorithm *alg = get_alg_object( handle );
+    struct key *decrypt_key = NULL;
     NTSTATUS status;
 
-    TRACE( "%p, %p, %s, %p, %p, %lu, %p, %lu, %#lx\n", handle, decrypt_key, debugstr_w(type), ret_handle, object,
-          object_len, input, input_len, flags );
+    TRACE( "%p, %p, %s, %p, %p, %lu, %p, %lu, %#lx\n", handle, decrypt_key_handle, debugstr_w(type), ret_handle,
+           object, object_len, input, input_len, flags );
 
     if (!alg) return STATUS_INVALID_HANDLE;
     if (!ret_handle || !type || !input) return STATUS_INVALID_PARAMETER;
-    if (decrypt_key)
-    {
-        FIXME( "decryption of key not yet supported\n" );
-        return STATUS_NOT_IMPLEMENTED;
-    }
+    if (decrypt_key_handle && !(decrypt_key = get_key_object( decrypt_key_handle ))) return STATUS_INVALID_HANDLE;
 
-    if ((status = key_import( alg, type, ret_handle, object, object_len, input, input_len ))) return status;
+    if ((status = key_import( alg, decrypt_key, type, ret_handle, object, object_len, input, input_len ))) return status;
     TRACE( "returning handle %p\n", *ret_handle );
     return STATUS_SUCCESS;
 }
