@@ -495,6 +495,7 @@ static BOOL is_redirect_response(DWORD status_code)
     case HTTP_STATUS_MOVED:
     case HTTP_STATUS_REDIRECT_KEEP_VERB:
     case HTTP_STATUS_REDIRECT_METHOD:
+    case HTTP_STATUS_PERMANENT_REDIRECT:
         return TRUE;
     }
     return FALSE;
