@@ -142,12 +142,24 @@ static HRESULT stack_pop_object(script_ctx_t *ctx, IDispatch **r)
 
 static inline HRESULT stack_pop_int(script_ctx_t *ctx, INT *r)
 {
-    return to_int32(ctx, stack_pop(ctx), r);
+    jsval_t v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    hres = to_int32(ctx, v, r);
+    jsval_release(v);
+    return hres;
 }
 
 static inline HRESULT stack_pop_uint(script_ctx_t *ctx, UINT32 *r)
 {
-    return to_uint32(ctx, stack_pop(ctx), r);
+    jsval_t v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    hres = to_uint32(ctx, v, r);
+    jsval_release(v);
+    return hres;
 }
 
 static inline unsigned local_off(call_frame_t *frame, int ref)
