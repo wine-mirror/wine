@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cryptui);
 
 static HINSTANCE hInstance;
 
-static const WCHAR empty[] = {0};
-
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
@@ -780,8 +778,7 @@ static void cert_mgr_clear_cert_selection(HWND hwnd)
     EnableWindow(GetDlgItem(hwnd, IDC_MGR_EXPORT), FALSE);
     EnableWindow(GetDlgItem(hwnd, IDC_MGR_REMOVE), FALSE);
     EnableWindow(GetDlgItem(hwnd, IDC_MGR_VIEW), FALSE);
-    SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0,
-     (LPARAM)empty);
+    SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0, (LPARAM)L"");
     refresh_store_certs(hwnd);
 }
 
@@ -1148,8 +1145,7 @@ static INT_PTR CALLBACK cert_mgr_dlg_proc(HWND hwnd, UINT msg, WPARAM wp,
             if (numSelected == 1)
                 cert_mgr_show_cert_usages(hwnd, nm->iItem);
             else
-                SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0,
-                 (LPARAM)empty);
+                SendMessageW(GetDlgItem(hwnd, IDC_MGR_PURPOSES), WM_SETTEXT, 0, (LPARAM)L"");
             break;
         }
         case NM_DBLCLK:
