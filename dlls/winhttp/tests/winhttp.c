@@ -2285,10 +2285,16 @@ static const char switchprotocols[] =
 "Upgrade: websocket\r\n"
 "Connection: Upgrade\r\n";
 
-static const char redirectmsg[] =
+static const char temp_redirectmsg[] =
 "HTTP/1.1 307 Temporary Redirect\r\n"
 "Content-Length: 0\r\n"
 "Location: /temporary\r\n"
+"Connection: close\r\n\r\n";
+
+static const char perm_redirectmsg[] =
+"HTTP/1.1 308 Permanent Redirect\r\n"
+"Content-Length: 0\r\n"
+"Location: /permanent\r\n"
 "Connection: close\r\n\r\n";
 
 static const char badreplyheadermsg[] =
@@ -2546,11 +2552,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
             }
             else send(c, notokmsg, sizeof(notokmsg) - 1, 0);
         }
-        else if (strstr(buffer, "POST /redirect"))
+        else if (strstr(buffer, "POST /redirect-temp"))
         {
-            send(c, redirectmsg, sizeof redirectmsg - 1, 0);
+            send(c, temp_redirectmsg, sizeof temp_redirectmsg - 1, 0);
         }
-        else if (strstr(buffer, "POST /temporary"))
+        else if (strstr(buffer, "POST /redirect-perm"))
+        {
+            send(c, perm_redirectmsg, sizeof perm_redirectmsg - 1, 0);
+        }
+        else if (strstr(buffer, "POST /temporary") || strstr(buffer, "POST /permanent"))
         {
             char buf[32];
             recv(c, buf, sizeof(buf), 0);
@@ -3327,7 +3337,7 @@ static void test_head_request(int port)
     WinHttpCloseHandle(ses);
 }
 
-static void test_redirect(int port)
+static void test_redirect(int port, const WCHAR *path, const WCHAR *target)
 {
     HINTERNET ses, con, req;
     char buf[128];
@@ -3341,14 +3351,14 @@ static void test_redirect(int port)
     con = WinHttpConnect(ses, L"localhost", port, 0);
     ok(con != NULL, "failed to open a connection %lu\n", GetLastError());
 
-    req = WinHttpOpenRequest(con, L"POST", L"/redirect", NULL, NULL, NULL, 0);
+    req = WinHttpOpenRequest(con, L"POST", path, NULL, NULL, NULL, 0);
     ok(req != NULL, "failed to open a request %lu\n", GetLastError());
 
     url[0] = 0;
     size = sizeof(url);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_URL, url, &size);
     ok(ret, "got %lu\n", GetLastError());
-    swprintf(expected, ARRAY_SIZE(expected), L"http://localhost:%u/redirect", port);
+    swprintf(expected, ARRAY_SIZE(expected), L"http://localhost:%u%s", port, path);
     ok(!wcscmp(url, expected), "expected %s got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(url));
 
     ret = WinHttpSendRequest(req, NULL, 0, (void *)"data", sizeof("data"), sizeof("data"), 0);
@@ -3374,7 +3384,7 @@ static void test_redirect(int port)
     size = sizeof(url);
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_URL, url, &size);
     ok(ret, "got %lu\n", GetLastError());
-    swprintf(expected, ARRAY_SIZE(expected), L"http://localhost:%u/temporary", port);
+    swprintf(expected, ARRAY_SIZE(expected), L"http://localhost:%u/%s", port, target);
     ok(!wcscmp(url, expected), "expected %s got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(url));
 
     status = 0xdeadbeef;
@@ -6328,7 +6338,8 @@ START_TEST (winhttp)
     test_request_path_escapes(si.port);
     test_passport_auth(si.port);
     test_websocket(si.port);
-    test_redirect(si.port);
+    test_redirect(si.port, L"/redirect-temp", L"temporary");
+    test_redirect(si.port, L"/redirect-perm", L"permanent");
     test_WinHttpGetProxyForUrl(si.port);
     test_connection_cache(si.port);
 
