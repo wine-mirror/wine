@@ -2601,22 +2601,29 @@ RECT map_rect_virt_to_raw( RECT rect, UINT dpi_from )
 /* map (absolute) window rects from MDT_DEFAULT to MDT_RAW_DPI coordinates */
 struct window_rects map_window_rects_virt_to_raw( struct window_rects rects, UINT dpi_from )
 {
+    RECT rect, monitor_rect, virt_visible_rect = rects.visible;
     struct monitor *monitor;
-    RECT rect, monitor_rect;
     BOOL is_fullscreen;
 
     if (!lock_display_devices( FALSE )) return rects;
     if ((monitor = get_monitor_from_rect( rects.window, MONITOR_DEFAULTTONEAREST, dpi_from, MDT_DEFAULT )))
     {
-        /* if the visible rect is fullscreen, make it cover the full raw monitor, regardless of aspect ratio */
-        monitor_rect = monitor_get_rect( monitor, dpi_from, MDT_DEFAULT );
-
-        is_fullscreen = intersect_rect( &rect, &monitor_rect, &rects.visible ) && EqualRect( &rect, &monitor_rect );
-        if (is_fullscreen) rects.visible = monitor_get_rect( monitor, 0, MDT_RAW_DPI );
-        else rects.visible = map_monitor_rect( monitor, rects.visible, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
-
+        rects.visible = map_monitor_rect( monitor, rects.visible, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
         rects.window = map_monitor_rect( monitor, rects.window, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
         rects.client = map_monitor_rect( monitor, rects.client, dpi_from, MDT_DEFAULT, 0, MDT_RAW_DPI );
+    }
+    /* if the visible rect is fullscreen, make it cover the full raw monitor, regardless of aspect ratio */
+    LIST_FOR_EACH_ENTRY(monitor, &monitors, struct monitor, entry)
+    {
+        if (!is_monitor_active( monitor ) || monitor->is_clone) continue;
+
+        monitor_rect = monitor_get_rect( monitor, dpi_from, MDT_DEFAULT );
+        is_fullscreen = intersect_rect( &rect, &monitor_rect, &virt_visible_rect ) && EqualRect( &rect, &monitor_rect );
+        if (is_fullscreen)
+        {
+            rect = monitor_get_rect( monitor, 0, MDT_RAW_DPI );
+            union_rect( &rects.visible, &rects.visible, &rect );
+        }
     }
     unlock_display_devices();
 
