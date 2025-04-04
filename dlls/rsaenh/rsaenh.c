@@ -3490,14 +3490,14 @@ static BOOL import_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwDataLen, HC
         return FALSE;
 
     if (dwDataLen < sizeof(BLOBHEADER) || 
-        pBlobHeader->bVersion != CUR_BLOB_VERSION ||
-        pBlobHeader->reserved != 0) 
+        pBlobHeader->bVersion != CUR_BLOB_VERSION)
     {
-        TRACE("bVersion = %d, reserved = %d\n", pBlobHeader->bVersion,
-              pBlobHeader->reserved);
+        TRACE("bVersion = %d", pBlobHeader->bVersion);
         SetLastError(NTE_BAD_DATA);
         return FALSE;
     }
+    if (pBlobHeader->reserved != 0)
+        WARN("reserved != 0: %d\n", pBlobHeader->reserved);
 
     /* If this is a verify-only context, the key is not persisted regardless of
      * fStoreKey's original value.
