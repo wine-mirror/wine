@@ -316,13 +316,13 @@ $1"])])
 
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,enable,condition)
+dnl Usage: WINE_CONFIG_MAKEFILE(file)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1])))dnl
+AS_VAR_PUSHDEF([ac_enable],[enable_]m4_bpatsubst(m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1]),[.*\.\(.*16\|vxd\)$],[win16]))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
-m4_ifval([$3],[$3 || ])wine_fn_config_makefile [$1] ac_enable[]dnl
+m4_if(m4_bregexp([$1],[^tools]),[-1],[],[test "x$enable_tools" = xno || ])wine_fn_config_makefile [$1] ac_enable[]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Append a file to the .gitignore list ****

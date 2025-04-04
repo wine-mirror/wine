@@ -1483,6 +1483,7 @@ enable_vga
 enable_virtdisk
 enable_vssapi
 enable_vulkan_1
+enable_w32skrnl
 enable_wbemdisp
 enable_wbemprox
 enable_wdscore
@@ -1568,6 +1569,7 @@ enable_wmvcore
 enable_wmvdecod
 enable_wnaspi32
 enable_wofutil
+enable_wow32
 enable_wow64
 enable_wow64cpu
 enable_wow64win
@@ -1759,6 +1761,7 @@ enable_winemine
 enable_winemsibuilder
 enable_winepath
 enable_winetest
+enable_winevdm
 enable_winhlp32
 enable_winmgmt
 enable_winver
@@ -22073,7 +22076,6 @@ fi ;;
 esac
 
 
-enable_win16=${enable_win16:-i386}
 enable_vcruntime140_1=${enable_vcruntime140_1:-x86_64,arm64ec}
 
 if test -n "$PE_ARCHS"
@@ -22098,6 +22100,11 @@ enable_msiexec=${enable_msiexec:-yes}
 enable_netsh=${enable_netsh:-yes}
 enable_regsvr32=${enable_regsvr32:-yes}
 enable_rundll32=${enable_rundll32:-yes}
+
+enable_win16=${enable_win16:-i386}
+enable_w32skrnl=${enable_w32skrnl:-$enable_win16}
+enable_wow32=${enable_wow32:-$enable_win16}
+enable_winevdm=${enable_winevdm:-$enable_win16}
 
 enable_winetest=${enable_winetest:-$enable_tests}
 
@@ -22922,7 +22929,7 @@ wine_fn_config_makefile dlls/vtdapi.vxd enable_win16
 wine_fn_config_makefile dlls/vulkan-1 enable_vulkan_1
 wine_fn_config_makefile dlls/vulkan-1/tests enable_tests
 wine_fn_config_makefile dlls/vwin32.vxd enable_win16
-wine_fn_config_makefile dlls/w32skrnl enable_win16
+wine_fn_config_makefile dlls/w32skrnl enable_w32skrnl
 wine_fn_config_makefile dlls/w32sys.dll16 enable_win16
 wine_fn_config_makefile dlls/wbemdisp enable_wbemdisp
 wine_fn_config_makefile dlls/wbemdisp/tests enable_tests
@@ -23065,7 +23072,7 @@ wine_fn_config_makefile dlls/wmvcore/tests enable_tests
 wine_fn_config_makefile dlls/wmvdecod enable_wmvdecod
 wine_fn_config_makefile dlls/wnaspi32 enable_wnaspi32
 wine_fn_config_makefile dlls/wofutil enable_wofutil
-wine_fn_config_makefile dlls/wow32 enable_win16
+wine_fn_config_makefile dlls/wow32 enable_wow32
 wine_fn_config_makefile dlls/wow64 enable_wow64
 wine_fn_config_makefile dlls/wow64cpu enable_wow64cpu
 wine_fn_config_makefile dlls/wow64win enable_wow64win
@@ -23285,7 +23292,7 @@ wine_fn_config_makefile programs/winemine enable_winemine
 wine_fn_config_makefile programs/winemsibuilder enable_winemsibuilder
 wine_fn_config_makefile programs/winepath enable_winepath
 wine_fn_config_makefile programs/winetest enable_winetest
-wine_fn_config_makefile programs/winevdm enable_win16
+wine_fn_config_makefile programs/winevdm enable_winevdm
 wine_fn_config_makefile programs/winhelp.exe16 enable_win16
 wine_fn_config_makefile programs/winhlp32 enable_winhlp32
 wine_fn_config_makefile programs/winmgmt enable_winmgmt

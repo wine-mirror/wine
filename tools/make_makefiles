@@ -21,23 +21,6 @@
 
 use strict;
 
-# Dlls and programs that are 16-bit specific
-my %modules16 =
-(
-  "ifsmgr.vxd" => 1,
-  "mmdevldr.vxd" => 1,
-  "monodebg.vxd" => 1,
-  "vdhcp.vxd" => 1,
-  "vmm.vxd" => 1,
-  "vnbt.vxd" => 1,
-  "vnetbios.vxd" => 1,
-  "vtdapi.vxd" => 1,
-  "vwin32.vxd" => 1,
-  "w32skrnl.dll" => 1,
-  "winevdm.exe" => 1,
-  "wow32.dll" => 1,
-);
-
 my (@makefiles, %makefiles);
 my @nls_files;
 my %deleted_files;
@@ -155,26 +138,18 @@ sub parse_makefile($)
         while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
         next if (/^\s*$/);
 
-        if (/\@[A-Z_]+\@/)  # config.status substitution variable
-        {
-            die "Configure substitution is not allowed in $file" unless $file eq "Makefile.in";
-        }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|STATICLIB|PARENTSRC|EXTRADLLFLAGS)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
             next;
         }
-        if (/^\s*(SOURCES|PROGRAMS|EXTRA_TARGETS|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        if (/^\s*(SOURCES)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
             next;
-        }
-        if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
-        {
-            die "Variable $1 in $file is obsolete";
         }
     }
 
@@ -323,7 +298,6 @@ sub update_makefiles(@)
         next if $file eq "Makefile.in";
         my %make = %{$makefiles{$file}};
         (my $dir = $file) =~ s/^(.*)\/Makefile\.in/$1/;
-        my $args = "";
         if (defined($make{"TESTDLL"}))  # test
         {
             die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile\.in$/;
@@ -358,16 +332,14 @@ sub update_makefiles(@)
                 die "IMPORTLIB not allowed in programs\n" if $file =~ /^programs\//;
                 die "Invalid IMPORTLIB name in $file" if $make{"IMPORTLIB"} =~ /\./;
             }
-            $args = ",enable_win16" if $make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}};
         }
         elsif ($file =~ /^tools.*\/Makefile\.in$/)
         {
             die "MODULE should not be defined in $file" if defined $make{"MODULE"};
             die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             die "EXTRADLLFLAGS should not be defined in $file" if defined $make{"EXTRADLLFLAGS"};
-            $args = ",,[test \"x\$enable_tools\" = xno]";
         }
-        push @lines, "WINE_CONFIG_MAKEFILE($dir$args)\n";
+        push @lines, "WINE_CONFIG_MAKEFILE($dir)\n";
     }
 
     # update the source variables in all the makefiles
