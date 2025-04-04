@@ -2743,70 +2743,70 @@ static void test_metadata_gif(void)
 {
     static const struct test_data gif_LSD[9] =
     {
-        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','7','a'}, NULL, { 'S','i','g','n','a','t','u','r','e',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
-        { VT_BOOL, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'C','o','l','o','r','R','e','s','o','l','u','t','i','o','n',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'P','i','x','e','l','A','s','p','e','c','t','R','a','t','i','o',0 } }
+        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','7','a'}, NULL, L"Signature" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Width" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Height" },
+        { VT_BOOL, 0, 0, { 1 }, NULL, L"GlobalColorTableFlag" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"ColorResolution" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"SortFlag" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"GlobalColorTableSize" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"BackgroundColorIndex" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"PixelAspectRatio" }
     };
     static const struct test_data gif_IMD[8] =
     {
-        { VT_UI2, 0, 0, { 0 }, NULL, { 'L','e','f','t',0 } },
-        { VT_UI2, 0, 0, { 0 }, NULL, { 'T','o','p',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'I','n','t','e','r','l','a','c','e','F','l','a','g',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } }
+        { VT_UI2, 0, 0, { 0 }, NULL, L"Left" },
+        { VT_UI2, 0, 0, { 0 }, NULL, L"Top" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Width" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Height" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"LocalColorTableFlag" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"InterlaceFlag" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"SortFlag" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"LocalColorTableSize" }
     };
     static const struct test_data animated_gif_LSD[9] =
     {
-        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','9','a'}, NULL, { 'S','i','g','n','a','t','u','r','e',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
-        { VT_BOOL, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 2 }, NULL, { 'C','o','l','o','r','R','e','s','o','l','u','t','i','o','n',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 1 }, NULL, { 'G','l','o','b','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'B','a','c','k','g','r','o','u','n','d','C','o','l','o','r','I','n','d','e','x',0 } },
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'P','i','x','e','l','A','s','p','e','c','t','R','a','t','i','o',0 } }
+        { VT_UI1|VT_VECTOR, 0, 6, {'G','I','F','8','9','a'}, NULL, L"Signature" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Width" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Height" },
+        { VT_BOOL, 0, 0, { 1 }, NULL, L"GlobalColorTableFlag" },
+        { VT_UI1, 0, 0, { 2 }, NULL, L"ColorResolution" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"SortFlag" },
+        { VT_UI1, 0, 0, { 1 }, NULL, L"GlobalColorTableSize" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"BackgroundColorIndex" },
+        { VT_UI1, 0, 0, { 0 }, NULL, L"PixelAspectRatio" }
     };
     static const struct test_data animated_gif_IMD[8] =
     {
-        { VT_UI2, 0, 0, { 0 }, NULL, { 'L','e','f','t',0 } },
-        { VT_UI2, 0, 0, { 0 }, NULL, { 'T','o','p',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'W','i','d','t','h',0 } },
-        { VT_UI2, 0, 0, { 1 }, NULL, { 'H','e','i','g','h','t',0 } },
-        { VT_BOOL, 0, 0, { 1 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','F','l','a','g',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'I','n','t','e','r','l','a','c','e','F','l','a','g',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'S','o','r','t','F','l','a','g',0 } },
-        { VT_UI1, 0, 0, { 1 }, NULL, { 'L','o','c','a','l','C','o','l','o','r','T','a','b','l','e','S','i','z','e',0 } }
+        { VT_UI2, 0, 0, { 0 }, NULL, L"Left" },
+        { VT_UI2, 0, 0, { 0 }, NULL, L"Top" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Width" },
+        { VT_UI2, 0, 0, { 1 }, NULL, L"Height" },
+        { VT_BOOL, 0, 0, { 1 }, NULL, L"LocalColorTableFlag" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"InterlaceFlag" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"SortFlag" },
+        { VT_UI1, 0, 0, { 1 }, NULL, L"LocalColorTableSize" }
     };
     static const struct test_data animated_gif_GCE[5] =
     {
-        { VT_UI1, 0, 0, { 0 }, NULL, { 'D','i','s','p','o','s','a','l',0 } },
-        { VT_BOOL, 0, 0, { 0 }, NULL, { 'U','s','e','r','I','n','p','u','t','F','l','a','g',0 } },
-        { VT_BOOL, 0, 0, { 1 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','c','y','F','l','a','g',0 } },
-        { VT_UI2, 0, 0, { 10 }, NULL, { 'D','e','l','a','y',0 } },
-        { VT_UI1, 0, 0, { 1 }, NULL, { 'T','r','a','n','s','p','a','r','e','n','t','C','o','l','o','r','I','n','d','e','x',0 } }
+        { VT_UI1, 0, 0, { 0 }, NULL, L"Disposal" },
+        { VT_BOOL, 0, 0, { 0 }, NULL, L"UserInputFlag" },
+        { VT_BOOL, 0, 0, { 1 }, NULL, L"TransparencyFlag" },
+        { VT_UI2, 0, 0, { 10 }, NULL, L"Delay" },
+        { VT_UI1, 0, 0, { 1 }, NULL, L"TransparentColorIndex" }
     };
     static const struct test_data animated_gif_APE[2] =
     {
-        { VT_UI1|VT_VECTOR, 0, 11, { 'A','N','I','M','E','X','T','S','1','.','0' }, NULL, { 'A','p','p','l','i','c','a','t','i','o','n',0 } },
-        { VT_UI1|VT_VECTOR, 0, 4, { 0x03,0x01,0x05,0x00 }, NULL, { 'D','a','t','a',0 } }
+        { VT_UI1|VT_VECTOR, 0, 11, { 'A','N','I','M','E','X','T','S','1','.','0' }, NULL, L"Application" },
+        { VT_UI1|VT_VECTOR, 0, 4, { 0x03,0x01,0x05,0x00 }, NULL, L"Data" }
     };
     static const struct test_data animated_gif_comment_1[1] =
     {
-        { VT_LPSTR, 0, 0, { 0 }, "Hello World!", { 'T','e','x','t','E','n','t','r','y',0 } }
+        { VT_LPSTR, 0, 0, { 0 }, "Hello World!", L"TextEntry" }
     };
     static const struct test_data animated_gif_comment_2[1] =
     {
-        { VT_LPSTR, 0, 0, { 0 }, "image #1", { 'T','e','x','t','E','n','t','r','y',0 } }
+        { VT_LPSTR, 0, 0, { 0 }, "image #1", L"TextEntry" }
     };
     static const struct test_data animated_gif_plain_1[1] =
     {
@@ -3769,7 +3769,6 @@ static void test_metadata_APE(void)
         { VT_EMPTY, 0, 0, { 0 }, NULL, L"Application" },
         { VT_UI1|VT_VECTOR, 0, 0, { 0 }, NULL, L"Data" }
     };
-    WCHAR dataW[] = { 'd','a','t','a',0 };
     HRESULT hr;
     IStream *stream;
     IWICPersistStream *persist;
@@ -3834,7 +3833,7 @@ static void test_metadata_APE(void)
 
     PropVariantInit(&value);
     id.vt = VT_LPWSTR;
-    id.pwszVal = dataW;
+    id.pwszVal = (WCHAR *)L"data";
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
     ok(hr == S_OK, "GetValue error %#lx\n", hr);
