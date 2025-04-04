@@ -1195,20 +1195,16 @@ static void test_copy(void)
     ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
     ok(RemoveDirectoryA("testdir2\\test4.txt"), "Expected testdir2\\test4.txt to exist\n");
 
-    /* copy one directory and a file in that dir to another dir */
-    shfo.pFrom = "test4.txt\0test4.txt\\a.txt\0";
-    shfo.pTo = "testdir2\0";
-    retval = SHFileOperationA(&shfo);
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    /* Copy one dir and a file in that dir to another dir. */
+    check_file_operation(FO_COPY, FOF_NO_UI,
+            "test4.txt\\a.txt\0test4.txt\0", "testdir2\0",
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("testdir2\\test4.txt\\a.txt"), "Expected a.txt to exist\n");
     ok(DeleteFileA("testdir2\\a.txt"), "Expected testdir2\\a.txt to exist\n");
 
-    /* copy a file in a directory first, and then the directory to a nonexistent dir */
-    shfo.pFrom = "test4.txt\\a.txt\0test4.txt\0";
-    shfo.pTo = "nonexistent\0";
-    retval = SHFileOperationA(&shfo);
-    todo_wine
-    ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", retval);
+    check_file_operation(FO_COPY, FOF_NO_UI,
+            "test4.txt\\a.txt\0test4.txt\0", "nonexistent\0",
+            ERROR_SUCCESS, FALSE, TRUE, TRUE);
     todo_wine
     ok(DeleteFileA("nonexistent\\test4.txt\\a.txt"), "Expected nonexistent\\test4.txt\\a.txt to exist\n");
     RemoveDirectoryA("nonexistent\\test4.txt");
