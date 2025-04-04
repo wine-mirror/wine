@@ -2367,6 +2367,17 @@ else
     enable_compiler_rt=${enable_compiler_rt:-no}
 fi
 
+dnl Disable some programs for other PE archs
+enable_conhost=${enable_conhost:-$HOST_ARCH}
+enable_plugplay=${enable_plugplay:-$HOST_ARCH}
+enable_rpcss=${enable_rpcss:-$HOST_ARCH}
+enable_services=${enable_services:-$HOST_ARCH}
+enable_spoolsv=${enable_spoolsv:-$HOST_ARCH}
+enable_termsv=${enable_termsv:-$HOST_ARCH}
+enable_wineboot=${enable_wineboot:-$HOST_ARCH}
+enable_winemenubuilder=${enable_winemenubuilder:-$HOST_ARCH}
+enable_wuauserv=${enable_wuauserv:-$HOST_ARCH}
+
 dnl Explicitly enable some programs for arm64ec
 enable_cmd=${enable_cmd:-yes}
 enable_dllhost=${enable_dllhost:-yes}

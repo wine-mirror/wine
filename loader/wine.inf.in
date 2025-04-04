@@ -2255,9 +2255,14 @@ HKLM,SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x86,"Version",2,"14.42.344
 11,,presentationfontcache.exe,-
 ; some programs are 64-bit only
 11,,conhost.exe,-
+11,,plugplay.exe,-
+11,,rpcss.exe,-
 11,,services.exe,-
 11,,spoolsv.exe,-
+11,,termsv.exe,-
+11,,wineboot.exe,-
 11,,winemenubuilder.exe,-
+11,,wuauserv.exe,-
 ; registration order matters for these
 11,,msxml.dll
 11,,msxml2.dll
