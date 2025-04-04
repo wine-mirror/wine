@@ -5195,6 +5195,58 @@ static void test_h264_decoder_timestamps(void)
         { 4003999, 333667 },
         { 4337666, 333666 },
     };
+    static const struct timestamps input_sample_neg_ts[] =
+    {
+        { -333667, 333667, -1001000 },
+        { -333667, 333667, -1001000 },
+        { -333667, 333667, -1001000 },
+        { 1000999, 333667, -667334 },
+        { 333666, 333666, -333667 },
+        { 0, 333666 },
+        { 667332, 333667, 333666 },
+        { 2335666, 333667, 667333 },
+        { 1668333, 333666, 1001000 },
+        { 1334666, 333667 },
+        { 2001999, 333667, 1668333 },
+        { 3670333, 333667, 2002000 },
+        { 3002999, 333667, 2335666 },
+        { 2669333, 333666 },
+        { 3336666, 333667, 3003000 },
+        { 5004999, 333667, 3336666 },
+        { 4337666, 333666, 3670333 },
+        { 4004000, 333666 },
+        { 4671332, 333667, 4337666 },
+        { 6339666, 333667, 4671333 },
+        { 5672333, 333666, 5005000 },
+        { 5338666, 333667 },
+        { 6005999, 333667, 5672333 },
+        { 7674333, 333667, 6006000 },
+        { 7006999, 333667, 6339666 },
+        { 6673333, 333666 },
+        { 7340666, 333667, 7007000 },
+        { 9008999, 333667, 7340666 },
+        { 8341666, 333666, 7674333 },
+        { 8008000, 333666 },
+        { 8675332, 333667, 8341666 },
+        { 10343666, 333667, 8675333 },
+        { 9676333, 333666, 9009000 },
+        { 9342666, 333667 },
+        { 10009999, 333667, 9676333 },
+        { 11678333, 333667, 10010000 },
+    };
+    static const struct timestamps exp_sample_neg_ts[] =
+    {
+        { -333667, 333667 },
+        {       0, 333666 },
+        {  333666, 333666 },
+        {  667332, 333667 },
+        { 1000999, 333667 },
+        { 1334666, 333667 },
+        { 1668333, 333666 },
+        { 2001999, 333667 },
+        { 2335666, 333667 },
+        { 2669333, 333666 },
+    };
 
     IMFSample *input_sample, *output_sample;
     const BYTE *h264_encoded_data;
@@ -5367,6 +5419,72 @@ static void test_h264_decoder_timestamps(void)
         {
             ok(0, "no more input to provide\n");
             i = ARRAYSIZE(exp_sample_ts);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when supplied sample timestamps include negative values */
+    hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    j = 0;
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_sample_neg_ts);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_sample_neg_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_neg_ts[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_sample_neg_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_neg_ts[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j < ARRAYSIZE(input_sample_neg_ts))
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFSample_SetSampleTime(input_sample, input_sample_neg_ts[j].time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            hr = IMFSample_SetSampleDuration(input_sample, input_sample_neg_ts[j].duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            if (input_sample_neg_ts[j].dts)
+            {
+                hr = IMFSample_SetUINT64(input_sample, &MFSampleExtension_DecodeTimestamp, input_sample_neg_ts[j].dts);
+                ok(hr == S_OK, "Got %#lx\n", hr);
+            }
+            j++;
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j == ARRAYSIZE(input_sample_neg_ts))
+        {
+            ok(0, "no more input to provide\n");
+            i = ARRAYSIZE(exp_sample_neg_ts);
         }
         winetest_pop_context();
     }
