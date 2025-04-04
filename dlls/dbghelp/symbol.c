@@ -70,7 +70,7 @@ int __cdecl symt_cmp_addr(const void* p1, const void* p2)
  *     which is exposed to the caller and index is the index of the symbol in
  *     this array
  */
-DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
+DWORD             symt_ptr_to_index(struct module* module, const struct symt* sym)
 {
     struct vector* vector;
     DWORD offset;
@@ -105,7 +105,7 @@ DWORD             symt_ptr2index(struct module* module, const struct symt* sym)
     return len + offset;
 }
 
-struct symt*      symt_index2ptr(struct module* module, DWORD id)
+struct symt*      symt_index_to_ptr(struct module* module, DWORD id)
 {
     struct vector* vector;
     if (id >= BASE_CUSTOM_SYMT)
@@ -704,7 +704,7 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
 
     if (!symt_get_info(pair->effective, sym, TI_GET_TYPE, &sym_info->TypeIndex))
         sym_info->TypeIndex = 0;
-    sym_info->Index = symt_ptr2index(pair->effective, sym);
+    sym_info->Index = symt_ptr_to_index(pair->effective, sym);
     sym_info->Reserved[0] = sym_info->Reserved[1] = 0;
     if (!symt_get_info(pair->effective, sym, TI_GET_LENGTH, &size) &&
         (!sym_info->TypeIndex ||
@@ -2655,7 +2655,7 @@ BOOL WINAPI SymFromIndex(HANDLE hProcess, ULONG64 BaseOfDll, DWORD index, PSYMBO
           hProcess, BaseOfDll, index, symbol);
 
     if (!module_init_pair(&pair, hProcess, BaseOfDll)) return FALSE;
-    if ((sym = symt_index2ptr(pair.effective, index)) == NULL) return FALSE;
+    if ((sym = symt_index_to_ptr(pair.effective, index)) == NULL) return FALSE;
     symt_fill_sym_info(&pair, NULL, sym, symbol);
     return TRUE;
 }
