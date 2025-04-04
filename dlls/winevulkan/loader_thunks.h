@@ -45,6 +45,7 @@ enum unix_call
     unix_vkBuildMicromapsEXT,
     unix_vkCmdBeginConditionalRenderingEXT,
     unix_vkCmdBeginDebugUtilsLabelEXT,
+    unix_vkCmdBeginPerTileExecutionQCOM,
     unix_vkCmdBeginQuery,
     unix_vkCmdBeginQueryIndexedEXT,
     unix_vkCmdBeginRenderPass,
@@ -109,7 +110,6 @@ enum unix_call
     unix_vkCmdCopyMicromapToMemoryEXT,
     unix_vkCmdCopyQueryPoolResults,
     unix_vkCmdCuLaunchKernelNVX,
-    unix_vkCmdCudaLaunchKernelNV,
     unix_vkCmdDebugMarkerBeginEXT,
     unix_vkCmdDebugMarkerEndEXT,
     unix_vkCmdDebugMarkerInsertEXT,
@@ -120,6 +120,7 @@ enum unix_call
     unix_vkCmdDispatchBase,
     unix_vkCmdDispatchBaseKHR,
     unix_vkCmdDispatchIndirect,
+    unix_vkCmdDispatchTileQCOM,
     unix_vkCmdDraw,
     unix_vkCmdDrawClusterHUAWEI,
     unix_vkCmdDrawClusterIndirectHUAWEI,
@@ -144,12 +145,14 @@ enum unix_call
     unix_vkCmdEncodeVideoKHR,
     unix_vkCmdEndConditionalRenderingEXT,
     unix_vkCmdEndDebugUtilsLabelEXT,
+    unix_vkCmdEndPerTileExecutionQCOM,
     unix_vkCmdEndQuery,
     unix_vkCmdEndQueryIndexedEXT,
     unix_vkCmdEndRenderPass,
     unix_vkCmdEndRenderPass2,
     unix_vkCmdEndRenderPass2KHR,
     unix_vkCmdEndRendering,
+    unix_vkCmdEndRendering2EXT,
     unix_vkCmdEndRenderingKHR,
     unix_vkCmdEndTransformFeedbackEXT,
     unix_vkCmdEndVideoCodingKHR,
@@ -330,8 +333,6 @@ enum unix_call
     unix_vkCreateComputePipelines,
     unix_vkCreateCuFunctionNVX,
     unix_vkCreateCuModuleNVX,
-    unix_vkCreateCudaFunctionNV,
-    unix_vkCreateCudaModuleNV,
     unix_vkCreateDebugReportCallbackEXT,
     unix_vkCreateDebugUtilsMessengerEXT,
     unix_vkCreateDeferredOperationKHR,
@@ -385,8 +386,6 @@ enum unix_call
     unix_vkDestroyCommandPool,
     unix_vkDestroyCuFunctionNVX,
     unix_vkDestroyCuModuleNVX,
-    unix_vkDestroyCudaFunctionNV,
-    unix_vkDestroyCudaModuleNV,
     unix_vkDestroyDebugReportCallbackEXT,
     unix_vkDestroyDebugUtilsMessengerEXT,
     unix_vkDestroyDeferredOperationKHR,
@@ -456,7 +455,6 @@ enum unix_call
     unix_vkGetCalibratedTimestampsEXT,
     unix_vkGetCalibratedTimestampsKHR,
     unix_vkGetClusterAccelerationStructureBuildSizesNV,
-    unix_vkGetCudaModuleCacheNV,
     unix_vkGetDeferredOperationMaxConcurrencyKHR,
     unix_vkGetDeferredOperationResultKHR,
     unix_vkGetDescriptorEXT,
@@ -839,6 +837,12 @@ struct vkCmdBeginDebugUtilsLabelEXT_params
 {
     VkCommandBuffer commandBuffer;
     const VkDebugUtilsLabelEXT *pLabelInfo;
+};
+
+struct vkCmdBeginPerTileExecutionQCOM_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPerTileBeginInfoQCOM *pPerTileBeginInfo;
 };
 
 struct vkCmdBeginQuery_params
@@ -1340,12 +1344,6 @@ struct vkCmdCuLaunchKernelNVX_params
     const VkCuLaunchInfoNVX *pLaunchInfo;
 };
 
-struct vkCmdCudaLaunchKernelNV_params
-{
-    VkCommandBuffer commandBuffer;
-    const VkCudaLaunchInfoNV *pLaunchInfo;
-};
-
 struct vkCmdDebugMarkerBeginEXT_params
 {
     VkCommandBuffer commandBuffer;
@@ -1419,6 +1417,11 @@ struct vkCmdDispatchIndirect_params
     VkCommandBuffer commandBuffer;
     VkBuffer DECLSPEC_ALIGN(8) buffer;
     VkDeviceSize DECLSPEC_ALIGN(8) offset;
+};
+
+struct vkCmdDispatchTileQCOM_params
+{
+    VkCommandBuffer commandBuffer;
 };
 
 struct vkCmdDraw_params
@@ -1642,6 +1645,12 @@ struct vkCmdEndDebugUtilsLabelEXT_params
     VkCommandBuffer commandBuffer;
 };
 
+struct vkCmdEndPerTileExecutionQCOM_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkPerTileEndInfoQCOM *pPerTileEndInfo;
+};
+
 struct vkCmdEndQuery_params
 {
     VkCommandBuffer commandBuffer;
@@ -1677,6 +1686,12 @@ struct vkCmdEndRenderPass2KHR_params
 struct vkCmdEndRendering_params
 {
     VkCommandBuffer commandBuffer;
+};
+
+struct vkCmdEndRendering2EXT_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkRenderingEndInfoEXT *pRenderingEndInfo;
 };
 
 struct vkCmdEndRenderingKHR_params
@@ -2985,24 +3000,6 @@ struct vkCreateCuModuleNVX_params
     VkResult result;
 };
 
-struct vkCreateCudaFunctionNV_params
-{
-    VkDevice device;
-    const VkCudaFunctionCreateInfoNV *pCreateInfo;
-    const VkAllocationCallbacks *pAllocator;
-    VkCudaFunctionNV *pFunction;
-    VkResult result;
-};
-
-struct vkCreateCudaModuleNV_params
-{
-    VkDevice device;
-    const VkCudaModuleCreateInfoNV *pCreateInfo;
-    const VkAllocationCallbacks *pAllocator;
-    VkCudaModuleNV *pModule;
-    VkResult result;
-};
-
 struct vkCreateDebugReportCallbackEXT_params
 {
     VkInstance instance;
@@ -3468,20 +3465,6 @@ struct vkDestroyCuModuleNVX_params
 {
     VkDevice device;
     VkCuModuleNVX DECLSPEC_ALIGN(8) module;
-    const VkAllocationCallbacks *pAllocator;
-};
-
-struct vkDestroyCudaFunctionNV_params
-{
-    VkDevice device;
-    VkCudaFunctionNV DECLSPEC_ALIGN(8) function;
-    const VkAllocationCallbacks *pAllocator;
-};
-
-struct vkDestroyCudaModuleNV_params
-{
-    VkDevice device;
-    VkCudaModuleNV DECLSPEC_ALIGN(8) module;
     const VkAllocationCallbacks *pAllocator;
 };
 
@@ -3987,15 +3970,6 @@ struct vkGetClusterAccelerationStructureBuildSizesNV_params
     VkDevice device;
     const VkClusterAccelerationStructureInputInfoNV *pInfo;
     VkAccelerationStructureBuildSizesInfoKHR *pSizeInfo;
-};
-
-struct vkGetCudaModuleCacheNV_params
-{
-    VkDevice device;
-    VkCudaModuleNV DECLSPEC_ALIGN(8) module;
-    size_t *pCacheSize;
-    void *pCacheData;
-    VkResult result;
 };
 
 struct vkGetDeferredOperationMaxConcurrencyKHR_params

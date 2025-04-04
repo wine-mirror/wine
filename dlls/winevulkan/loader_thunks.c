@@ -271,6 +271,14 @@ void WINAPI vkCmdBeginDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const Vk
     UNIX_CALL(vkCmdBeginDebugUtilsLabelEXT, &params);
 }
 
+void WINAPI vkCmdBeginPerTileExecutionQCOM(VkCommandBuffer commandBuffer, const VkPerTileBeginInfoQCOM *pPerTileBeginInfo)
+{
+    struct vkCmdBeginPerTileExecutionQCOM_params params;
+    params.commandBuffer = commandBuffer;
+    params.pPerTileBeginInfo = pPerTileBeginInfo;
+    UNIX_CALL(vkCmdBeginPerTileExecutionQCOM, &params);
+}
+
 void WINAPI vkCmdBeginQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query, VkQueryControlFlags flags)
 {
     struct vkCmdBeginQuery_params params;
@@ -898,14 +906,6 @@ void WINAPI vkCmdCuLaunchKernelNVX(VkCommandBuffer commandBuffer, const VkCuLaun
     UNIX_CALL(vkCmdCuLaunchKernelNVX, &params);
 }
 
-void WINAPI vkCmdCudaLaunchKernelNV(VkCommandBuffer commandBuffer, const VkCudaLaunchInfoNV *pLaunchInfo)
-{
-    struct vkCmdCudaLaunchKernelNV_params params;
-    params.commandBuffer = commandBuffer;
-    params.pLaunchInfo = pLaunchInfo;
-    UNIX_CALL(vkCmdCudaLaunchKernelNV, &params);
-}
-
 void WINAPI vkCmdDebugMarkerBeginEXT(VkCommandBuffer commandBuffer, const VkDebugMarkerMarkerInfoEXT *pMarkerInfo)
 {
     struct vkCmdDebugMarkerBeginEXT_params params;
@@ -999,6 +999,13 @@ void WINAPI vkCmdDispatchIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer
     params.buffer = buffer;
     params.offset = offset;
     UNIX_CALL(vkCmdDispatchIndirect, &params);
+}
+
+void WINAPI vkCmdDispatchTileQCOM(VkCommandBuffer commandBuffer)
+{
+    struct vkCmdDispatchTileQCOM_params params;
+    params.commandBuffer = commandBuffer;
+    UNIX_CALL(vkCmdDispatchTileQCOM, &params);
 }
 
 void WINAPI vkCmdDraw(VkCommandBuffer commandBuffer, uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance)
@@ -1270,6 +1277,14 @@ void WINAPI vkCmdEndDebugUtilsLabelEXT(VkCommandBuffer commandBuffer)
     UNIX_CALL(vkCmdEndDebugUtilsLabelEXT, &params);
 }
 
+void WINAPI vkCmdEndPerTileExecutionQCOM(VkCommandBuffer commandBuffer, const VkPerTileEndInfoQCOM *pPerTileEndInfo)
+{
+    struct vkCmdEndPerTileExecutionQCOM_params params;
+    params.commandBuffer = commandBuffer;
+    params.pPerTileEndInfo = pPerTileEndInfo;
+    UNIX_CALL(vkCmdEndPerTileExecutionQCOM, &params);
+}
+
 void WINAPI vkCmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, uint32_t query)
 {
     struct vkCmdEndQuery_params params;
@@ -1317,6 +1332,14 @@ void WINAPI vkCmdEndRendering(VkCommandBuffer commandBuffer)
     struct vkCmdEndRendering_params params;
     params.commandBuffer = commandBuffer;
     UNIX_CALL(vkCmdEndRendering, &params);
+}
+
+void WINAPI vkCmdEndRendering2EXT(VkCommandBuffer commandBuffer, const VkRenderingEndInfoEXT *pRenderingEndInfo)
+{
+    struct vkCmdEndRendering2EXT_params params;
+    params.commandBuffer = commandBuffer;
+    params.pRenderingEndInfo = pRenderingEndInfo;
+    UNIX_CALL(vkCmdEndRendering2EXT, &params);
 }
 
 void WINAPI vkCmdEndRenderingKHR(VkCommandBuffer commandBuffer)
@@ -3021,32 +3044,6 @@ VkResult WINAPI vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoN
     return params.result;
 }
 
-VkResult WINAPI vkCreateCudaFunctionNV(VkDevice device, const VkCudaFunctionCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaFunctionNV *pFunction)
-{
-    struct vkCreateCudaFunctionNV_params params;
-    NTSTATUS status;
-    params.device = device;
-    params.pCreateInfo = pCreateInfo;
-    params.pAllocator = pAllocator;
-    params.pFunction = pFunction;
-    status = UNIX_CALL(vkCreateCudaFunctionNV, &params);
-    assert(!status && "vkCreateCudaFunctionNV");
-    return params.result;
-}
-
-VkResult WINAPI vkCreateCudaModuleNV(VkDevice device, const VkCudaModuleCreateInfoNV *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCudaModuleNV *pModule)
-{
-    struct vkCreateCudaModuleNV_params params;
-    NTSTATUS status;
-    params.device = device;
-    params.pCreateInfo = pCreateInfo;
-    params.pAllocator = pAllocator;
-    params.pModule = pModule;
-    status = UNIX_CALL(vkCreateCudaModuleNV, &params);
-    assert(!status && "vkCreateCudaModuleNV");
-    return params.result;
-}
-
 VkResult WINAPI vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback)
 {
     struct vkCreateDebugReportCallbackEXT_params params;
@@ -3687,28 +3684,6 @@ void WINAPI vkDestroyCuModuleNVX(VkDevice device, VkCuModuleNVX module, const Vk
     params.pAllocator = pAllocator;
     status = UNIX_CALL(vkDestroyCuModuleNVX, &params);
     assert(!status && "vkDestroyCuModuleNVX");
-}
-
-void WINAPI vkDestroyCudaFunctionNV(VkDevice device, VkCudaFunctionNV function, const VkAllocationCallbacks *pAllocator)
-{
-    struct vkDestroyCudaFunctionNV_params params;
-    NTSTATUS status;
-    params.device = device;
-    params.function = function;
-    params.pAllocator = pAllocator;
-    status = UNIX_CALL(vkDestroyCudaFunctionNV, &params);
-    assert(!status && "vkDestroyCudaFunctionNV");
-}
-
-void WINAPI vkDestroyCudaModuleNV(VkDevice device, VkCudaModuleNV module, const VkAllocationCallbacks *pAllocator)
-{
-    struct vkDestroyCudaModuleNV_params params;
-    NTSTATUS status;
-    params.device = device;
-    params.module = module;
-    params.pAllocator = pAllocator;
-    status = UNIX_CALL(vkDestroyCudaModuleNV, &params);
-    assert(!status && "vkDestroyCudaModuleNV");
 }
 
 void WINAPI vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks *pAllocator)
@@ -4435,19 +4410,6 @@ void WINAPI vkGetClusterAccelerationStructureBuildSizesNV(VkDevice device, const
     params.pSizeInfo = pSizeInfo;
     status = UNIX_CALL(vkGetClusterAccelerationStructureBuildSizesNV, &params);
     assert(!status && "vkGetClusterAccelerationStructureBuildSizesNV");
-}
-
-VkResult WINAPI vkGetCudaModuleCacheNV(VkDevice device, VkCudaModuleNV module, size_t *pCacheSize, void *pCacheData)
-{
-    struct vkGetCudaModuleCacheNV_params params;
-    NTSTATUS status;
-    params.device = device;
-    params.module = module;
-    params.pCacheSize = pCacheSize;
-    params.pCacheData = pCacheData;
-    status = UNIX_CALL(vkGetCudaModuleCacheNV, &params);
-    assert(!status && "vkGetCudaModuleCacheNV");
-    return params.result;
 }
 
 uint32_t WINAPI vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDeferredOperationKHR operation)
@@ -6826,6 +6788,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkBuildMicromapsEXT", vkBuildMicromapsEXT},
     {"vkCmdBeginConditionalRenderingEXT", vkCmdBeginConditionalRenderingEXT},
     {"vkCmdBeginDebugUtilsLabelEXT", vkCmdBeginDebugUtilsLabelEXT},
+    {"vkCmdBeginPerTileExecutionQCOM", vkCmdBeginPerTileExecutionQCOM},
     {"vkCmdBeginQuery", vkCmdBeginQuery},
     {"vkCmdBeginQueryIndexedEXT", vkCmdBeginQueryIndexedEXT},
     {"vkCmdBeginRenderPass", vkCmdBeginRenderPass},
@@ -6890,7 +6853,6 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdCopyMicromapToMemoryEXT", vkCmdCopyMicromapToMemoryEXT},
     {"vkCmdCopyQueryPoolResults", vkCmdCopyQueryPoolResults},
     {"vkCmdCuLaunchKernelNVX", vkCmdCuLaunchKernelNVX},
-    {"vkCmdCudaLaunchKernelNV", vkCmdCudaLaunchKernelNV},
     {"vkCmdDebugMarkerBeginEXT", vkCmdDebugMarkerBeginEXT},
     {"vkCmdDebugMarkerEndEXT", vkCmdDebugMarkerEndEXT},
     {"vkCmdDebugMarkerInsertEXT", vkCmdDebugMarkerInsertEXT},
@@ -6901,6 +6863,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDispatchBase", vkCmdDispatchBase},
     {"vkCmdDispatchBaseKHR", vkCmdDispatchBaseKHR},
     {"vkCmdDispatchIndirect", vkCmdDispatchIndirect},
+    {"vkCmdDispatchTileQCOM", vkCmdDispatchTileQCOM},
     {"vkCmdDraw", vkCmdDraw},
     {"vkCmdDrawClusterHUAWEI", vkCmdDrawClusterHUAWEI},
     {"vkCmdDrawClusterIndirectHUAWEI", vkCmdDrawClusterIndirectHUAWEI},
@@ -6925,12 +6888,14 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdEncodeVideoKHR", vkCmdEncodeVideoKHR},
     {"vkCmdEndConditionalRenderingEXT", vkCmdEndConditionalRenderingEXT},
     {"vkCmdEndDebugUtilsLabelEXT", vkCmdEndDebugUtilsLabelEXT},
+    {"vkCmdEndPerTileExecutionQCOM", vkCmdEndPerTileExecutionQCOM},
     {"vkCmdEndQuery", vkCmdEndQuery},
     {"vkCmdEndQueryIndexedEXT", vkCmdEndQueryIndexedEXT},
     {"vkCmdEndRenderPass", vkCmdEndRenderPass},
     {"vkCmdEndRenderPass2", vkCmdEndRenderPass2},
     {"vkCmdEndRenderPass2KHR", vkCmdEndRenderPass2KHR},
     {"vkCmdEndRendering", vkCmdEndRendering},
+    {"vkCmdEndRendering2EXT", vkCmdEndRendering2EXT},
     {"vkCmdEndRenderingKHR", vkCmdEndRenderingKHR},
     {"vkCmdEndTransformFeedbackEXT", vkCmdEndTransformFeedbackEXT},
     {"vkCmdEndVideoCodingKHR", vkCmdEndVideoCodingKHR},
@@ -7111,8 +7076,6 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCreateComputePipelines", vkCreateComputePipelines},
     {"vkCreateCuFunctionNVX", vkCreateCuFunctionNVX},
     {"vkCreateCuModuleNVX", vkCreateCuModuleNVX},
-    {"vkCreateCudaFunctionNV", vkCreateCudaFunctionNV},
-    {"vkCreateCudaModuleNV", vkCreateCudaModuleNV},
     {"vkCreateDeferredOperationKHR", vkCreateDeferredOperationKHR},
     {"vkCreateDescriptorPool", vkCreateDescriptorPool},
     {"vkCreateDescriptorSetLayout", vkCreateDescriptorSetLayout},
@@ -7160,8 +7123,6 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkDestroyCommandPool", vkDestroyCommandPool},
     {"vkDestroyCuFunctionNVX", vkDestroyCuFunctionNVX},
     {"vkDestroyCuModuleNVX", vkDestroyCuModuleNVX},
-    {"vkDestroyCudaFunctionNV", vkDestroyCudaFunctionNV},
-    {"vkDestroyCudaModuleNV", vkDestroyCudaModuleNV},
     {"vkDestroyDeferredOperationKHR", vkDestroyDeferredOperationKHR},
     {"vkDestroyDescriptorPool", vkDestroyDescriptorPool},
     {"vkDestroyDescriptorSetLayout", vkDestroyDescriptorSetLayout},
@@ -7219,7 +7180,6 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetCalibratedTimestampsEXT", vkGetCalibratedTimestampsEXT},
     {"vkGetCalibratedTimestampsKHR", vkGetCalibratedTimestampsKHR},
     {"vkGetClusterAccelerationStructureBuildSizesNV", vkGetClusterAccelerationStructureBuildSizesNV},
-    {"vkGetCudaModuleCacheNV", vkGetCudaModuleCacheNV},
     {"vkGetDeferredOperationMaxConcurrencyKHR", vkGetDeferredOperationMaxConcurrencyKHR},
     {"vkGetDeferredOperationResultKHR", vkGetDeferredOperationResultKHR},
     {"vkGetDescriptorEXT", vkGetDescriptorEXT},
