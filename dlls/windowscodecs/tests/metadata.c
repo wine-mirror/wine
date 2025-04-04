@@ -655,12 +655,7 @@ static void compare_metadata_(IWICMetadataReader *reader, const struct test_data
         }
         else if (value.vt == VT_LPSTR)
         {
-            ok_(__FILE__, line)(td[i].count == strlen(value.pszVal) ||
-               broken(td[i].count == strlen(value.pszVal) + 1), /* before Win7 */
-                   "Expected count %d, got %d\n", td[i].count, lstrlenA(value.pszVal));
-            if (td[i].count == strlen(value.pszVal))
-                ok_(__FILE__, line)(!strcmp(td[i].string, value.pszVal),
-                   "Expected %s, got %s\n", td[i].string, value.pszVal);
+            ok_(__FILE__, line)(!strcmp(td[i].string, value.pszVal), "Expected %s, got %s\n", td[i].string, value.pszVal);
         }
         else if (value.vt == VT_BLOB)
         {
@@ -2044,8 +2039,8 @@ static void test_ifd_content(IWICMetadataReader *reader)
         { VT_I2|VT_VECTOR, 0xf00b, 4, { 0x0101, 0x0202, 0x0303, 0x0404 } },
         { VT_I4|VT_VECTOR, 0xf00c, 2, { 0x11223344, 0x55667788 } },
         { VT_R4|VT_VECTOR, 0xf00d, 2, { 0x449a522b, 0x4608f5ba } },
-        { VT_LPSTR, 0xf00e, 12, { 0 }, "Hello World!" },
-        { VT_LPSTR, 0xf00f, 4, { 0 }, "abcd" },
+        { VT_LPSTR, 0xf00e, 0, { 0 }, "Hello World!" },
+        { VT_LPSTR, 0xf00f, 0, { 0 }, "abcd" },
         { VT_BLOB, 0xf010, 13, { 0 }, "Hello World!" },
         { VT_BLOB, 0xf011, 4, { 0 }, "abcd" },
         { VT_UI1, 0xf012, 0, { 0x44 } },
@@ -2807,11 +2802,11 @@ static void test_metadata_gif(void)
     };
     static const struct test_data animated_gif_comment_1[1] =
     {
-        { VT_LPSTR, 0, 12, { 0 }, "Hello World!", { 'T','e','x','t','E','n','t','r','y',0 } }
+        { VT_LPSTR, 0, 0, { 0 }, "Hello World!", { 'T','e','x','t','E','n','t','r','y',0 } }
     };
     static const struct test_data animated_gif_comment_2[1] =
     {
-        { VT_LPSTR, 0, 8, { 0 }, "image #1", { 'T','e','x','t','E','n','t','r','y',0 } }
+        { VT_LPSTR, 0, 0, { 0 }, "image #1", { 'T','e','x','t','E','n','t','r','y',0 } }
     };
     static const struct test_data animated_gif_plain_1[1] =
     {
@@ -3908,7 +3903,7 @@ static void test_metadata_GIF_comment(void)
                                              /*terminator*/0 };
     static const struct test_data td[1] =
     {
-        { VT_LPSTR, 0, 12, { 0 }, "Hello World!", L"TextEntry" }
+        { VT_LPSTR, 0, 0, { 0 }, "Hello World!", L"TextEntry" }
     };
     static const struct test_data default_data[1] =
     {
