@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <poll.h>
+#include <limits.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -823,11 +824,16 @@ static struct message *find_mouse_message( struct thread_input *input, const str
 static int merge_mousewheel( struct thread_input *input, const struct message *msg )
 {
     struct message *prev;
+    int delta;
 
     if (!(prev = find_mouse_message( input, msg ))) return 0;
     if (prev->x != msg->x || prev->y != msg->y) return 0; /* don't merge if cursor has moved */
 
-    prev->wparam += msg->wparam; /* accumulate wheel delta */
+    /* accumulate wheel delta */
+    delta = GET_WHEEL_DELTA_WPARAM(prev->wparam) + GET_WHEEL_DELTA_WPARAM(msg->wparam);
+    if (delta < SHRT_MIN || delta > SHRT_MAX) return 0;
+
+    prev->wparam  = MAKEWPARAM(GET_KEYSTATE_WPARAM(msg->wparam), delta);
     prev->lparam  = msg->lparam;
     prev->x       = msg->x;
     prev->y       = msg->y;
