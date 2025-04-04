@@ -364,6 +364,27 @@ static const char metadata_tIME[] = {
     0xff,0xff,0xff,0xff
 };
 
+static const char metadata_bKGD_palette[] = {
+    0,0,0,1, /* chunk length */
+    'b','K','G','D', /* chunk type */
+    0x12,
+    0xff,0xff,0xff,0xff
+};
+
+static const char metadata_bKGD_gray[] = {
+    0,0,0,2, /* chunk length */
+    'b','K','G','D', /* chunk type */
+    0x12,0x34,
+    0xff,0xff,0xff,0xff
+};
+
+static const char metadata_bKGD_rgb[] = {
+    0,0,0,6, /* chunk length */
+    'b','K','G','D', /* chunk type */
+    0x12,0x34,0x56,0x78,0x99,01,
+    0xff,0xff,0xff,0xff
+};
+
 static const char pngimage[285] = {
 0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0x00,0x00,0x00,0x0d,0x49,0x48,0x44,0x52,
 0x00,0x00,0x00,0x01,0x00,0x00,0x00,0x01,0x08,0x02,0x00,0x00,0x00,0x90,0x77,0x53,
@@ -1700,6 +1721,188 @@ if (hr == S_OK)
 
     load_stream(writer, metadata_tIME, sizeof(metadata_tIME), 0);
     load_stream(writer, metadata_tIME, sizeof(metadata_tIME), WICPersistOptionNoCacheStream);
+
+    IWICMetadataWriter_Release(writer);
+    IWICComponentFactory_Release(factory);
+}
+
+static void test_metadata_bKGD(void)
+{
+    IWICMetadataQueryReader *query_reader, *query_reader2;
+    IWICComponentFactory *factory;
+    IWICMetadataReader *reader;
+    IWICMetadataWriter *writer;
+    IEnumString *enum_string;
+    PROPVARIANT value, id;
+    ULONG fetched;
+    GUID format;
+    WCHAR *str;
+    UINT count;
+    HRESULT hr;
+
+    static const struct test_data td_palette[] =
+    {
+        { VT_UI1, 0, 0, { 0x12 }, NULL, L"BackgroundColor" },
+    };
+    static const struct test_data td_gray[] =
+    {
+        { VT_UI2, 0, 0, { 0x1234 }, NULL, L"BackgroundColor" },
+    };
+    static const struct test_data td_rgb[] =
+    {
+        { VT_VECTOR | VT_UI2, 0, 3, { 0x1234, 0x5678, 0x9901 }, NULL, L"BackgroundColor" },
+    };
+    static const struct test_data default_data[] =
+    {
+        { VT_EMPTY, 0, 0, { 0 }, NULL, L"BackgroundColor" },
+    };
+
+    hr = CoCreateInstance(&CLSID_WICPngBkgdMetadataReader, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataReader, (void **)&reader);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (FAILED(hr)) return;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(reader, &IID_IWICMetadataReader, TRUE);
+    check_interface(reader, &IID_IPersist, TRUE);
+    check_interface(reader, &IID_IPersistStream, TRUE);
+    check_interface(reader, &IID_IWICPersistStream, TRUE);
+    check_interface(reader, &IID_IWICStreamProvider, TRUE);
+    check_persist_classid(reader, &CLSID_WICPngBkgdMetadataReader);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == ARRAY_SIZE(default_data), "unexpected count %i\n", count);
+    compare_metadata(reader, default_data, count);
+
+    id.vt = VT_EMPTY;
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(id.vt == VT_LPWSTR, "Unexpected id type %u.\n", id.vt);
+    ok(!lstrcmpW(id.pwszVal, L"BackgroundColor"), "Unexpected id %s.\n", debugstr_w(id.pwszVal));
+    PropVariantClear(&id);
+
+    id.vt = VT_LPSTR;
+    id.pszVal = (char *)"BackgroundColor";
+    hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    load_stream(reader, metadata_bKGD_palette, sizeof(metadata_bKGD_palette), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_MetadataFormatChunkbKGD), "unexpected format %s\n", wine_dbgstr_guid(&format));
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == ARRAY_SIZE(td_palette), "unexpected count %i\n", count);
+    compare_metadata(reader, td_palette, count);
+
+    /* Query reader. */
+    hr = create_query_reader_from_metadata_reader(factory, reader, &GUID_ContainerFormatPng, &query_reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IEnumString_Next(enum_string, 1, &str, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!wcscmp(str, L"/bKGD"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+    IEnumString_Release(enum_string);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/bKGD", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
+
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader2, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IEnumString_Next(enum_string, 1, &str, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+
+    ok(!wcscmp(str, L"/BackgroundColor"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    IEnumString_Release(enum_string);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/backgroundcolor", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UI1, "Unexpected type %d.\n", value.vt);
+    ok(value.bVal == 0x12, "Unexpected value %u.\n", value.bVal);
+    PropVariantClear(&value);
+
+    IWICMetadataQueryReader_Release(query_reader2);
+
+    IWICMetadataQueryReader_Release(query_reader);
+
+    /* Gray */
+    load_stream(reader, metadata_bKGD_gray, sizeof(metadata_bKGD_gray), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == ARRAY_SIZE(td_gray), "unexpected count %i\n", count);
+    compare_metadata(reader, td_gray, count);
+
+    /* RGB */
+    load_stream(reader, metadata_bKGD_rgb, sizeof(metadata_bKGD_rgb), WICPersistOptionDefault);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == ARRAY_SIZE(td_rgb), "unexpected count %i\n", count);
+    compare_metadata(reader, td_rgb, count);
+
+    IWICMetadataReader_Release(reader);
+
+    hr = CoCreateInstance(&CLSID_WICPngBkgdMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICMetadataWriter, (void **)&writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_interface(writer, &IID_IWICMetadataWriter, TRUE);
+    check_interface(writer, &IID_IWICMetadataReader, TRUE);
+    check_interface(writer, &IID_IPersist, TRUE);
+    check_interface(writer, &IID_IPersistStream, TRUE);
+    check_interface(writer, &IID_IWICPersistStream, TRUE);
+    check_interface(writer, &IID_IWICStreamProvider, TRUE);
+    check_persist_classid(writer, &CLSID_WICPngBkgdMetadataWriter);
+
+    hr = IWICMetadataWriter_GetCount(writer, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "Unexpected count %u.\n", count);
+
+    compare_metadata((IWICMetadataReader *)writer, default_data, count);
+
+    hr = IWICMetadataWriter_RemoveValueByIndex(writer, 0);
+    ok(hr == WINCODEC_ERR_UNSUPPORTEDOPERATION, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataWriter_RemoveValueByIndex(writer, count);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    load_stream(writer, metadata_bKGD_palette, sizeof(metadata_bKGD_palette), 0);
+    load_stream(writer, metadata_bKGD_palette, sizeof(metadata_bKGD_palette), WICPersistOptionNoCacheStream);
+
+    /* Changing type is allowed. */
+    value.vt = VT_UI2;
+    value.uiVal = 123;
+    id.vt = VT_LPWSTR;
+    id.pwszVal = (WCHAR *)L"BackgroundColor";
+    hr = IWICMetadataWriter_SetValue(writer, NULL, &id, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    value.vt = VT_UI4;
+    hr = IWICMetadataWriter_SetValue(writer, NULL, &id, &value);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     IWICMetadataWriter_Release(writer);
     IWICComponentFactory_Release(factory);
@@ -6849,6 +7052,7 @@ START_TEST(metadata)
     test_metadata_cHRM();
     test_metadata_hIST();
     test_metadata_tIME();
+    test_metadata_bKGD();
     test_metadata_Ifd();
     test_metadata_Exif();
     test_metadata_Gps();
