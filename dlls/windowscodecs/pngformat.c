@@ -294,6 +294,27 @@ HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&ChrmReader_Vtbl, iid, ppv);
 }
 
+static HRESULT create_hist_item(USHORT *data, ULONG count, MetadataItem **item)
+{
+    HRESULT hr;
+
+    if (!(*item = calloc(1, sizeof(**item))))
+        return E_OUTOFMEMORY;
+
+    hr = init_propvar_from_string(L"Frequencies", &(*item)->id);
+    if (FAILED(hr))
+    {
+        free(*item);
+        return hr;
+    }
+
+    (*item)->value.vt = VT_UI2 | VT_VECTOR;
+    (*item)->value.caui.cElems = count;
+    (*item)->value.caui.pElems = data;
+
+    return S_OK;
+}
+
 static HRESULT LoadHistMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
     DWORD persist_options)
 {
@@ -301,7 +322,6 @@ static HRESULT LoadHistMetadata(MetadataHandler *handler, IStream *stream, const
     BYTE type[4];
     BYTE *data;
     ULONG data_size, element_count, i;
-    LPWSTR name;
     MetadataItem *result;
     USHORT *elements;
 
@@ -320,25 +340,11 @@ static HRESULT LoadHistMetadata(MetadataHandler *handler, IStream *stream, const
 
     free(data);
 
-    result = calloc(1, sizeof(MetadataItem));
-    SHStrDupW(L"Frequencies", &name);
-    if (!result || !name) {
-        free(result);
-        CoTaskMemFree(name);
+    if (FAILED(hr = create_hist_item(elements, element_count, &result)))
+    {
         CoTaskMemFree(elements);
         return E_OUTOFMEMORY;
     }
-
-    PropVariantInit(&result[0].schema);
-    PropVariantInit(&result[0].id);
-    PropVariantInit(&result[0].value);
-
-    result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = name;
-
-    result[0].value.vt = VT_UI2|VT_VECTOR;
-    result[0].value.caui.cElems = element_count;
-    result[0].value.caui.pElems = elements;
 
     MetadataHandler_FreeItems(handler);
     handler->items = result;
@@ -347,10 +353,25 @@ static HRESULT LoadHistMetadata(MetadataHandler *handler, IStream *stream, const
     return S_OK;
 }
 
+static HRESULT CreateHistHandler(MetadataHandler *handler)
+{
+    MetadataItem *item;
+    HRESULT hr;
+
+    if (FAILED(hr = create_hist_item(NULL, 0, &item)))
+        return hr;
+
+    handler->items = item;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
 static const MetadataHandlerVtbl HistReader_Vtbl = {
     0,
     &CLSID_WICPngHistMetadataReader,
-    LoadHistMetadata
+    LoadHistMetadata,
+    CreateHistHandler,
 };
 
 HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv)

@@ -1484,8 +1484,14 @@ static void test_metadata_hIST(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
+
+    PropVariantInit(&value);
+    hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == (VT_UI2|VT_VECTOR), "Unexpected value type %u.\n", value.vt);
+    ok(!value.caui.cElems, "Unexpected cElems %lu.\n", value.caub.cElems);
+    ok(!value.caui.pElems, "Unexpected value %p.\n", value.caui.pElems);
 
     load_stream(reader, metadata_hIST, sizeof(metadata_hIST), WICPersistOptionDefault);
 
@@ -1497,6 +1503,7 @@ static void test_metadata_hIST(void)
     ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
     ok(count == 1, "unexpected count %i\n", count);
 
+    PropVariantInit(&value);
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, &schema, &id, &value);
     ok(hr == S_OK, "GetValue failed, hr=%lx\n", hr);
 
