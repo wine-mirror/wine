@@ -2404,7 +2404,7 @@ static void test_strstreambuf(void)
     ssb2.base.eback = ssb2.base.base;
     ssb2.base.gptr = ssb2.base.base + 2;
     ssb2.base.egptr = ssb2.base.base + 4;
-    strcpy(ssb2.base.base, "Check");
+    memcpy(ssb2.base.base, "Check", 5);
     ret = (int) call_func1(p_strstreambuf_doallocate, &ssb2);
     ok(ret == 1, "return value %d\n", ret);
     ok(ssb2.base.ebuf == ssb2.base.base + 10, "expected %p, got %p\n", ssb2.base.base + 10, ssb2.base.ebuf);
