@@ -100,6 +100,12 @@ struct bluetooth_auth_send_response_params
     BOOL *authenticated;
 };
 
+struct bluetooth_device_start_pairing_params
+{
+    unix_name_t device;
+    IRP *irp;
+};
+
 struct bluetooth_get_event_params
 {
     struct winebluetooth_event result;
@@ -119,6 +125,7 @@ enum bluetoothapis_funcs
 
     unix_bluetooth_device_free,
     unix_bluetooth_device_disconnect,
+    unix_bluetooth_device_start_pairing,
 
     unix_bluetooth_auth_agent_enable_incoming,
     unix_bluetooth_auth_send_response,

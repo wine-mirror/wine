@@ -81,6 +81,9 @@ struct bluetooth_radio
 
     CRITICAL_SECTION remote_devices_cs;
     struct list remote_devices; /* Guarded by remote_devices_cs */
+
+    /* Guarded by device_list_cs */
+    LIST_ENTRY irp_list;
 };
 
 struct bluetooth_remote_device
@@ -329,6 +332,47 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         LeaveCriticalSection( &ext->remote_devices_cs );
         break;
     }
+    case IOCTL_WINEBTH_RADIO_START_AUTH:
+    {
+        const struct winebth_radio_start_auth_params *params = irp->AssociatedIrp.SystemBuffer;
+        struct bluetooth_remote_device *device;
+
+        if (!params)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (insize < sizeof( *params ))
+        {
+            status = STATUS_INVALID_BUFFER_SIZE;
+            break;
+        }
+
+        status = STATUS_DEVICE_DOES_NOT_EXIST;
+        EnterCriticalSection( &device_list_cs );
+        EnterCriticalSection( &ext->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            BOOL matches;
+            EnterCriticalSection( &device->props_cs );
+            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                device->props.address.ullLong == params->address;
+            LeaveCriticalSection( &device->props_cs );
+            if (matches)
+            {
+                status = winebluetooth_device_start_pairing( device->device, irp );
+                if (status == STATUS_PENDING)
+                {
+                    IoMarkIrpPending( irp );
+                    InsertTailList( &ext->irp_list, &irp->Tail.Overlay.ListEntry );
+                }
+                break;
+            }
+        }
+        LeaveCriticalSection( &ext->remote_devices_cs );
+        LeaveCriticalSection( &device_list_cs );
+        break;
+    }
     case IOCTL_WINEBTH_RADIO_REMOVE_DEVICE:
     {
         const BTH_ADDR *param = irp->AssociatedIrp.SystemBuffer;
@@ -369,8 +413,11 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         break;
     }
 
-    irp->IoStatus.Status = status;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
     return status;
 }
 
@@ -483,6 +530,7 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
 
     InitializeCriticalSection( &device->props_cs );
     InitializeCriticalSection( &device->remote_devices_cs );
+    InitializeListHead( &device->irp_list );
 
     EnterCriticalSection( &device_list_cs );
     list_add_tail( &device_list, &device->entry );
@@ -797,6 +845,16 @@ static void bluetooth_radio_report_auth_event( struct winebluetooth_auth_event e
     ExFreePool( notification );
 }
 
+static void complete_irp( IRP *irp, NTSTATUS result )
+{
+    EnterCriticalSection( &device_list_cs );
+    RemoveEntryList( &irp->Tail.Overlay.ListEntry );
+    LeaveCriticalSection( &device_list_cs );
+
+    irp->IoStatus.Status = result;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -831,6 +889,10 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_PROPERTIES_CHANGED:
                         bluetooth_radio_update_device_props( event->event_data.device_props_changed);
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_PAIRING_FINISHED:
+                        complete_irp( event->event_data.pairing_finished.irp,
+                                      event->event_data.pairing_finished.result );
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );
@@ -994,6 +1056,21 @@ static void bluetooth_radio_set_properties( DEVICE_OBJECT *obj,
                                  sizeof( props->version ), &props->version );
 }
 
+/* Caller should hold device_list_cs. */
+static void remove_pending_irps( struct bluetooth_radio *radio )
+{
+    LIST_ENTRY *entry;
+    IRP *irp;
+
+    while ((entry = RemoveHeadList( &radio->irp_list )) != &radio->irp_list)
+    {
+        irp = CONTAINING_RECORD( entry, IRP, Tail.Overlay.ListEntry );
+        irp->IoStatus.Status = STATUS_DELETE_PENDING;
+        irp->IoStatus.Information = 0;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+}
+
 static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
@@ -1031,6 +1108,10 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             break;
         case IRP_MN_REMOVE_DEVICE:
             assert( device->removed );
+            EnterCriticalSection( &device_list_cs );
+            remove_pending_irps( device );
+            LeaveCriticalSection( &device_list_cs );
+
             if (device->bthport_symlink_name.Buffer)
             {
                 IoSetDeviceInterfaceState(&device->bthport_symlink_name, FALSE);
@@ -1048,6 +1129,7 @@ static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
             break;
         case IRP_MN_SURPRISE_REMOVAL:
             EnterCriticalSection( &device_list_cs );
+            remove_pending_irps( device );
             if (!device->removed)
             {
                 device->removed = TRUE;

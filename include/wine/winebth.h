@@ -32,6 +32,8 @@
 /* Ask the system's Bluetooth service to send all incoming authentication requests to Wine. */
 #define IOCTL_WINEBTH_AUTH_REGISTER            CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa8, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINEBTH_RADIO_SEND_AUTH_RESPONSE CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xa9, METHOD_BUFFERED, FILE_ANY_ACCESS)
+/* Initiate the authentication procedure with a remote device. */
+#define IOCTL_WINEBTH_RADIO_START_AUTH         CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xaa, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINEBTH_RADIO_REMOVE_DEVICE      CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xab, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,
@@ -66,6 +68,11 @@ struct winebth_radio_send_auth_response_params
     unsigned int negative : 1;
 
     unsigned int authenticated : 1;
+};
+
+struct winebth_radio_start_auth_params
+{
+    BTH_ADDR address;
 };
 
 #pragma pack(pop)
