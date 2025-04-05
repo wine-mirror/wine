@@ -213,6 +213,7 @@ typedef struct _MetadataHandlerVtbl
     const CLSID *clsid;
     HRESULT (*fnLoad)(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
         DWORD persist_options);
+    HRESULT (*fnCreate)(MetadataHandler *handler);
 } MetadataHandlerVtbl;
 
 typedef struct MetadataHandler

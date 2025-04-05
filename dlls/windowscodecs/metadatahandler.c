@@ -648,7 +648,7 @@ static const IWICStreamProviderVtbl MetadataHandler_StreamProvider_Vtbl =
 HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv)
 {
     MetadataHandler *This;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("%s\n", debugstr_guid(vtable->clsid));
 
@@ -666,7 +666,11 @@ HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, voi
     InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": MetadataHandler.lock");
 
-    hr = IWICMetadataWriter_QueryInterface(&This->IWICMetadataWriter_iface, iid, ppv);
+    if (This->vtable->fnCreate)
+        hr = This->vtable->fnCreate(This);
+
+    if (SUCCEEDED(hr))
+        hr = IWICMetadataWriter_QueryInterface(&This->IWICMetadataWriter_iface, iid, ppv);
 
     IWICMetadataWriter_Release(&This->IWICMetadataWriter_iface);
 
@@ -916,10 +920,29 @@ static HRESULT LoadUnknownMetadata(MetadataHandler *handler, IStream *input, con
     return S_OK;
 }
 
+static HRESULT CreateUnknownHandler(MetadataHandler *handler)
+{
+    MetadataItem *item;
+
+    if (!(item = calloc(1, sizeof(*item))))
+        return E_OUTOFMEMORY;
+
+    PropVariantInit(&item->schema);
+    PropVariantInit(&item->id);
+    PropVariantInit(&item->value);
+    item->value.vt = VT_BLOB;
+
+    handler->items = item;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
 static const MetadataHandlerVtbl UnknownMetadataReader_Vtbl =
 {
     .clsid = &CLSID_WICUnknownMetadataReader,
-    .fnLoad = LoadUnknownMetadata
+    .fnLoad = LoadUnknownMetadata,
+    .fnCreate = CreateUnknownHandler,
 };
 
 HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv)
@@ -931,7 +954,8 @@ static const MetadataHandlerVtbl UnknownMetadataWriter_Vtbl =
 {
     .flags = METADATAHANDLER_IS_WRITER | METADATAHANDLER_FIXED_ITEMS,
     .clsid = &CLSID_WICUnknownMetadataWriter,
-    .fnLoad = LoadUnknownMetadata
+    .fnLoad = LoadUnknownMetadata,
+    .fnCreate = CreateUnknownHandler,
 };
 
 HRESULT UnknownMetadataWriter_CreateInstance(REFIID iid, void** ppv)

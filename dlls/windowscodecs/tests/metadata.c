@@ -783,20 +783,15 @@ static void test_metadata_unknown(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
 
     PropVariantInit(&value);
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, NULL, &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
-        ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
-        ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
+    ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
+    ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
+    PropVariantClear(&value);
 
     load_stream(reader, metadata_unknown, sizeof(metadata_unknown), WICPersistOptionDefault);
 
@@ -915,23 +910,18 @@ static void test_metadata_unknown(void)
 
     hr = IWICMetadataWriter_GetCount(writer, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
 
     PropVariantInit(&schema);
     PropVariantInit(&id);
     PropVariantInit(&value);
     hr = IWICMetadataWriter_GetValueByIndex(writer, 0, &schema, &id, &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(schema.vt == VT_EMPTY, "Unexpected type %d.\n", schema.vt);
-        ok(id.vt == VT_EMPTY, "Unexpected type %d.\n", id.vt);
-        ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
-        ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
-        ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
-    }
+    ok(schema.vt == VT_EMPTY, "Unexpected type %d.\n", schema.vt);
+    ok(id.vt == VT_EMPTY, "Unexpected type %d.\n", id.vt);
+    ok(value.vt == VT_BLOB, "Unexpected type %d.\n", value.vt);
+    ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
+    ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
 
     PropVariantInit(&schema);
     PropVariantInit(&value);
@@ -6781,26 +6771,18 @@ static void test_CreateQueryWriter(void)
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryWriter_GetMetadataByName(query_writer, L"/", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_BLOB, "Unexpected value type %u.\n", value.vt);
-        ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
-        ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_BLOB, "Unexpected value type %u.\n", value.vt);
+    ok(!value.blob.cbSize, "Unexpected size %lu.\n", value.blob.cbSize);
+    ok(!value.blob.pBlobData, "Unexpected data pointer %p.\n", value.blob.pBlobData);
+    PropVariantClear(&value);
 
     hr = IWICMetadataQueryWriter_GetEnumerator(query_writer, &enum_string);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, &fetched);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(!wcscmp(str, L"/{}"), "Unexpected string %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
-    }
+    ok(!wcscmp(str, L"/{}"), "Unexpected string %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
     hr = IEnumString_Next(enum_string, 1, &str, &fetched);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
     IEnumString_Release(enum_string);
