@@ -192,6 +192,20 @@ extern HRESULT IcoDibDecoder_CreateInstance(BmpDecoder **ppDecoder);
 extern void BmpDecoder_GetWICDecoder(BmpDecoder *This, IWICBitmapDecoder **ppDecoder);
 extern void BmpDecoder_FindIconMask(BmpDecoder *This, ULONG *mask_offset, int *topdown);
 
+static inline HRESULT init_propvar_from_string(const WCHAR *str, PROPVARIANT *var)
+{
+    size_t size = (wcslen(str) + 1) * sizeof(*str);
+    WCHAR *s;
+
+    if (!(s = CoTaskMemAlloc(size)))
+        return E_OUTOFMEMORY;
+    memcpy(s, str, size);
+
+    var->pwszVal = s;
+    var->vt = VT_LPWSTR;
+    return S_OK;
+}
+
 typedef struct _MetadataItem
 {
     PROPVARIANT schema;

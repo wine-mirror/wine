@@ -341,20 +341,6 @@ static bool parser_unescape(struct query_parser *parser)
     return false;
 }
 
-static HRESULT init_propvar_from_string(const WCHAR *str, PROPVARIANT *var)
-{
-    size_t size = (wcslen(str) + 1) * sizeof(*str);
-    WCHAR *s;
-
-    if (!(s = CoTaskMemAlloc(size)))
-        return E_OUTOFMEMORY;
-    memcpy(s, str, size);
-
-    var->pwszVal = s;
-    var->vt = VT_LPWSTR;
-    return S_OK;
-}
-
 static void parse_query_name(struct query_parser *parser, PROPVARIANT *item)
 {
     size_t len = 0;

@@ -112,6 +112,26 @@ HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&TextReader_Vtbl, iid, ppv);
 }
 
+static HRESULT create_gamma_item(ULONG gamma, MetadataItem **item)
+{
+    HRESULT hr;
+
+    if (!(*item = calloc(1, sizeof(**item))))
+        return E_OUTOFMEMORY;
+
+    hr = init_propvar_from_string(L"ImageGamma", &(*item)->id);
+    if (FAILED(hr))
+    {
+        free(*item);
+        return hr;
+    }
+
+    (*item)->value.vt = VT_UI4;
+    (*item)->value.ulVal = gamma;
+
+    return S_OK;
+}
+
 static HRESULT LoadGamaMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
     DWORD persist_options)
 {
@@ -120,7 +140,6 @@ static HRESULT LoadGamaMetadata(MetadataHandler *handler, IStream *stream, const
     BYTE *data;
     ULONG data_size;
     ULONG gamma;
-    LPWSTR name;
     MetadataItem *result;
 
     hr = read_png_chunk(stream, type, &data, &data_size);
@@ -136,23 +155,8 @@ static HRESULT LoadGamaMetadata(MetadataHandler *handler, IStream *stream, const
 
     free(data);
 
-    result = calloc(1, sizeof(MetadataItem));
-    SHStrDupW(L"ImageGamma", &name);
-    if (!result || !name)
-    {
-        free(result);
-        CoTaskMemFree(name);
-        return E_OUTOFMEMORY;
-    }
-
-    PropVariantInit(&result[0].schema);
-    PropVariantInit(&result[0].id);
-    PropVariantInit(&result[0].value);
-
-    result[0].id.vt = VT_LPWSTR;
-    result[0].id.pwszVal = name;
-    result[0].value.vt = VT_UI4;
-    result[0].value.ulVal = gamma;
+    if (FAILED(hr = create_gamma_item(gamma, &result)))
+        return hr;
 
     MetadataHandler_FreeItems(handler);
     handler->items = result;
@@ -161,10 +165,25 @@ static HRESULT LoadGamaMetadata(MetadataHandler *handler, IStream *stream, const
     return S_OK;
 }
 
+static HRESULT CreateGamaHandler(MetadataHandler *handler)
+{
+    MetadataItem *item;
+    HRESULT hr;
+
+    if (FAILED(hr = create_gamma_item(45455, &item)))
+        return hr;
+
+    handler->items = item;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
 static const MetadataHandlerVtbl GamaReader_Vtbl = {
     0,
     &CLSID_WICPngGamaMetadataReader,
-    LoadGamaMetadata
+    LoadGamaMetadata,
+    CreateGamaHandler,
 };
 
 HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv)

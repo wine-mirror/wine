@@ -1180,24 +1180,19 @@ static void test_metadata_gAMA(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
 
     id.vt = value.vt = VT_EMPTY;
     hr = IWICMetadataReader_GetValueByIndex(reader, 0, NULL, &id, &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    if (hr == S_OK)
-    {
-        ok(id.vt == VT_LPWSTR, "Unexpected vt %d.\n", id.vt);
-        ok(!lstrcmpW(id.pwszVal, L"ImageGamma"), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
-        PropVariantClear(&id);
+    ok(id.vt == VT_LPWSTR, "Unexpected vt %d.\n", id.vt);
+    ok(!lstrcmpW(id.pwszVal, L"ImageGamma"), "unexpected value: %s\n", wine_dbgstr_w(id.pwszVal));
+    PropVariantClear(&id);
 
-        ok(value.vt == VT_UI4, "Unexpected vt %d.\n", value.vt);
-        ok(value.ulVal == 45455, "Unexpected value %lu.\n", value.ulVal);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_UI4, "Unexpected vt %d.\n", value.vt);
+    ok(value.ulVal == 45455, "Unexpected value %lu.\n", value.ulVal);
+    PropVariantClear(&value);
 
     load_stream(reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
 
