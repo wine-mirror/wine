@@ -1620,19 +1620,15 @@ static void test_metadata_tIME(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == ARRAY_SIZE(td), "unexpected count %i\n", count);
     compare_metadata(reader, default_data, count);
 
     id.vt = VT_EMPTY;
     hr = IWICMetadataReader_GetValueByIndex(reader, 2, NULL, &id, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-        ok(!lstrcmpW(id.pwszVal, L"Day"), "Unexpected id %s.\n", debugstr_w(id.pwszVal));
+    ok(!lstrcmpW(id.pwszVal, L"Day"), "Unexpected id %s.\n", debugstr_w(id.pwszVal));
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     PropVariantClear(&id);
 

@@ -379,14 +379,18 @@ HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&HistReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options)
+struct time_data
 {
-    HRESULT hr;
-    BYTE type[4];
-    BYTE *data;
-    ULONG data_size, i;
-    MetadataItem *result;
+    USHORT year;
+    BYTE month;
+    BYTE day;
+    BYTE hour;
+    BYTE minute;
+    BYTE second;
+};
+
+static HRESULT create_time_items(const struct time_data *data, MetadataItem **ret)
+{
     static const WCHAR *names[6] =
     {
         L"Year",
@@ -396,8 +400,56 @@ static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const
         L"Minute",
         L"Second",
     };
-    LPWSTR id_values[6] = {0};
+    MetadataItem *items;
+    HRESULT hr = S_OK;
 
+    if (!(items = calloc(ARRAY_SIZE(names), sizeof(*items))))
+        return E_OUTOFMEMORY;
+
+    for (int i = 0; i < ARRAY_SIZE(names); ++i)
+    {
+        if (FAILED(hr = init_propvar_from_string(names[i], &items[i].id)))
+            break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        items[0].value.vt = VT_UI2;
+        items[0].value.uiVal = data->year;
+        items[1].value.vt = VT_UI1;
+        items[1].value.bVal = data->month;
+        items[2].value.vt = VT_UI1;
+        items[2].value.bVal = data->day;
+        items[3].value.vt = VT_UI1;
+        items[3].value.bVal = data->hour;
+        items[4].value.vt = VT_UI1;
+        items[4].value.bVal = data->minute;
+        items[5].value.vt = VT_UI1;
+        items[5].value.bVal = data->second;
+    }
+
+    if (FAILED(hr))
+    {
+        for (int i = 0; i < ARRAY_SIZE(names); ++i)
+            clear_metadata_item(&items[i]);
+        free(items);
+        items = NULL;
+    }
+
+    *ret = items;
+
+    return hr;
+}
+
+static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size;
+    MetadataItem *result;
+    struct time_data time_data;
 
     hr = read_png_chunk(stream, type, &data, &data_size);
     if (FAILED(hr)) return hr;
@@ -408,49 +460,36 @@ static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const
         return E_FAIL;
     }
 
-    result = calloc(6, sizeof(MetadataItem));
-    for (i = 0; i < 6; i++)
-    {
-        SHStrDupW(names[i], &id_values[i]);
-        if (!id_values[i]) break;
-    }
-    if (!result || i < 6)
-    {
-        free(result);
-        for (i = 0; i < 6; i++)
-            CoTaskMemFree(id_values[i]);
-        free(data);
-        return E_OUTOFMEMORY;
-    }
+    time_data.year   = read_ushort_be(data);
+    time_data.month  = data[2];
+    time_data.day    = data[3];
+    time_data.hour   = data[4];
+    time_data.minute = data[5];
+    time_data.second = data[6];
 
-    for (i = 0; i < 6; i++)
-    {
-        PropVariantInit(&result[i].schema);
-        PropVariantInit(&result[i].id);
-        PropVariantInit(&result[i].value);
+    free(data);
 
-        result[i].id.vt = VT_LPWSTR;
-        result[i].id.pwszVal = id_values[i];
-    }
-
-    result[0].value.vt = VT_UI2;
-    result[0].value.uiVal = read_ushort_be(data);
-    result[1].value.vt = VT_UI1;
-    result[1].value.bVal = data[2];
-    result[2].value.vt = VT_UI1;
-    result[2].value.bVal = data[3];
-    result[3].value.vt = VT_UI1;
-    result[3].value.bVal = data[4];
-    result[4].value.vt = VT_UI1;
-    result[4].value.bVal = data[5];
-    result[5].value.vt = VT_UI1;
-    result[5].value.bVal = data[6];
+    if (FAILED(hr = create_time_items(&time_data, &result)))
+        return hr;
 
     MetadataHandler_FreeItems(handler);
     handler->items = result;
     handler->item_count = 6;
 
-    free(data);
+    return S_OK;
+}
+
+static HRESULT CreateTimeHandler(MetadataHandler *handler)
+{
+    static const struct time_data time_data = { .month = 1, .day = 1 };
+    MetadataItem *items;
+    HRESULT hr;
+
+    if (FAILED(hr = create_time_items(&time_data, &items)))
+        return hr;
+
+    handler->items = items;
+    handler->item_count = 6;
 
     return S_OK;
 }
@@ -458,7 +497,8 @@ static HRESULT LoadTimeMetadata(MetadataHandler *handler, IStream *stream, const
 static const MetadataHandlerVtbl TimeReader_Vtbl = {
     0,
     &CLSID_WICPngTimeMetadataReader,
-    LoadTimeMetadata
+    LoadTimeMetadata,
+    CreateTimeHandler,
 };
 
 HRESULT PngTimeReader_CreateInstance(REFIID iid, void** ppv)
