@@ -211,10 +211,6 @@ typedef struct _MetadataHandlerVtbl
     const CLSID *clsid;
     HRESULT (*fnLoad)(IStream *stream, const GUID *preferred_vendor,
         DWORD persist_options, MetadataItem **items, DWORD *item_count);
-    HRESULT (*fnSave)(IStream *stream, DWORD persist_options,
-        const MetadataItem *items, DWORD item_count);
-    HRESULT (*fnGetSizeMax)(const MetadataItem *items, DWORD item_count,
-        ULARGE_INTEGER *size);
 } MetadataHandlerVtbl;
 
 extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv);
