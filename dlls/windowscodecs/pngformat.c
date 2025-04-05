@@ -191,14 +191,10 @@ HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&GamaReader_Vtbl, iid, ppv);
 }
 
-static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
-    DWORD persist_options)
+static HRESULT create_chrm_items(const ULONG *values, MetadataItem **ret)
 {
-    HRESULT hr;
-    BYTE type[4];
-    BYTE *data;
-    ULONG data_size;
-    static const WCHAR names[8][12] = {
+    static const WCHAR *names[8] =
+    {
         L"WhitePointX",
         L"WhitePointY",
         L"RedX",
@@ -208,8 +204,43 @@ static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const
         L"BlueX",
         L"BlueY",
     };
-    LPWSTR dyn_names[8] = {0};
+    MetadataItem *items;
+    HRESULT hr = S_OK;
+
+    if (!(items = calloc(ARRAY_SIZE(names), sizeof(*items))))
+        return E_OUTOFMEMORY;
+
+    for (int i = 0; i < ARRAY_SIZE(names); ++i)
+    {
+        if (FAILED(hr = init_propvar_from_string(names[i], &items[i].id)))
+            break;
+
+        items[i].value.vt = VT_UI4;
+        items[i].value.ulVal = values[i];
+    }
+
+    if (FAILED(hr))
+    {
+        for (int i = 0; i < ARRAY_SIZE(names); ++i)
+            clear_metadata_item(&items[i]);
+        free(items);
+        items = NULL;
+    }
+
+    *ret = items;
+
+    return hr;
+}
+
+static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+    DWORD persist_options)
+{
+    HRESULT hr;
+    BYTE type[4];
+    BYTE *data;
+    ULONG data_size;
     MetadataItem *result;
+    ULONG values[8];
     int i;
 
     hr = read_png_chunk(stream, type, &data, &data_size);
@@ -221,39 +252,32 @@ static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const
         return E_FAIL;
     }
 
-    result = calloc(8, sizeof(MetadataItem));
-    for (i=0; i<8; i++)
-    {
-        SHStrDupW(names[i], &dyn_names[i]);
-        if (!dyn_names[i]) break;
-    }
-    if (!result || i < 8)
-    {
-        free(result);
-        for (i=0; i<8; i++)
-            CoTaskMemFree(dyn_names[i]);
-        free(data);
-        return E_OUTOFMEMORY;
-    }
+    for (i = 0; i < ARRAY_SIZE(values); ++i)
+        values[i] = read_ulong_be(&data[i*4]);
 
-    for (i=0; i<8; i++)
-    {
-        PropVariantInit(&result[i].schema);
+    free(data);
 
-        PropVariantInit(&result[i].id);
-        result[i].id.vt = VT_LPWSTR;
-        result[i].id.pwszVal = dyn_names[i];
-
-        PropVariantInit(&result[i].value);
-        result[i].value.vt = VT_UI4;
-        result[i].value.ulVal = read_ulong_be(&data[i*4]);
-    }
+    if (FAILED(hr = create_chrm_items(values, &result)))
+        return hr;
 
     MetadataHandler_FreeItems(handler);
     handler->items = result;
-    handler->item_count = 8;
+    handler->item_count = ARRAY_SIZE(values);
 
-    free(data);
+    return S_OK;
+}
+
+static HRESULT CreateChrmHandler(MetadataHandler *handler)
+{
+    const ULONG values[8] = { 31270, 32900, 64000, 33000, 30000, 60000, 15000, 6000 };
+    MetadataItem *items;
+    HRESULT hr;
+
+    if (FAILED(hr = create_chrm_items(values, &items)))
+        return hr;
+
+    handler->items = items;
+    handler->item_count = ARRAY_SIZE(values);
 
     return S_OK;
 }
@@ -261,7 +285,8 @@ static HRESULT LoadChrmMetadata(MetadataHandler *handler, IStream *stream, const
 static const MetadataHandlerVtbl ChrmReader_Vtbl = {
     0,
     &CLSID_WICPngChrmMetadataReader,
-    LoadChrmMetadata
+    LoadChrmMetadata,
+    CreateChrmHandler,
 };
 
 HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv)

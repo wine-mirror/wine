@@ -247,6 +247,7 @@ typedef struct MetadataHandler
 
 extern HRESULT MetadataReader_Create(const MetadataHandlerVtbl *vtable, REFIID iid, void** ppv);
 extern void MetadataHandler_FreeItems(MetadataHandler *handler);
+extern void clear_metadata_item(MetadataItem *item);
 
 extern HRESULT UnknownMetadataReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT UnknownMetadataWriter_CreateInstance(REFIID iid, void** ppv);

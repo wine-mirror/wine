@@ -1328,7 +1328,6 @@ static void test_metadata_cHRM(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 8, "unexpected count %i.\n", count);
 
     for (i = 0; i < count; ++i)
@@ -1347,13 +1346,11 @@ static void test_metadata_cHRM(void)
     id.vt = VT_LPSTR;
     id.pszVal = (char *)"RedX";
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     id.vt = VT_LPSTR;
     id.pszVal = (char *)"REDX";
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, NULL);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     id.vt = VT_UI2;

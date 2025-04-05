@@ -48,7 +48,7 @@ static inline MetadataHandler *impl_from_IWICStreamProvider(IWICStreamProvider *
     return CONTAINING_RECORD(iface, MetadataHandler, IWICStreamProvider_iface);
 }
 
-static void clear_metadata_item(MetadataItem *item)
+void clear_metadata_item(MetadataItem *item)
 {
     PropVariantClear(&item->schema);
     PropVariantClear(&item->id);
