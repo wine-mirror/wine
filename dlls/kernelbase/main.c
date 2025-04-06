@@ -363,6 +363,30 @@ ULONG WINAPI PerfSetULongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE 
 }
 
 /***********************************************************************
+ *           PerfSetULongLongCounterValue   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfSetULongLongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
+                                          ULONG counterid, ULONGLONG value)
+{
+    struct perf_provider *prov = perf_provider_from_handle( provider );
+    PERF_COUNTER_INFO* counter;
+
+    TRACE( "provider %p, instance %p, counterid %lu, address %I64u semi-stub.\n",
+           provider, instance, counterid, value );
+
+    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
+
+    counter = get_performance_counter_info(instance, counterid);
+
+    if (counter == NULL) return ERROR_NOT_FOUND;
+    if (counter->Attrib & PERF_ATTRIB_BY_REFERENCE) return ERROR_INVALID_PARAMETER;
+
+    *(ULONGLONG*)((BYTE *)(instance + 1) + counter->Offset) = value;
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
  *           PerfStartProvider   (KERNELBASE.@)
  */
 ULONG WINAPI PerfStartProvider( GUID *guid, PERFLIBREQUEST callback, HANDLE *provider )
