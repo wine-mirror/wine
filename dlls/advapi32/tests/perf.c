@@ -54,23 +54,34 @@ static ULONG WINAPI test_provider_callback(ULONG code, void *buffer, ULONG size)
     return ERROR_SUCCESS;
 }
 
+struct template
+{
+    PERF_COUNTERSET_INFO counterset;
+    PERF_COUNTER_INFO counter[2];
+};
+
 void test_provider_init(void)
 {
     static GUID test_set_guid = {0xdeadbeef, 0x0002, 0x0003, {0x0f, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
     static GUID test_set_guid2 = {0xdeadbeef, 0x0003, 0x0003, {0x0f, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
     static GUID test_guid = {0xdeadbeef, 0x0001, 0x0002, {0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x00 ,0x0a}};
-    static struct
-    {
-        PERF_COUNTERSET_INFO counterset;
-        PERF_COUNTER_INFO counter[2];
-    }
-    pc_template =
+    struct template pc_template =
     {
         {{0}},
         {
             {1, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO),
                     PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
             {2, PERF_COUNTER_COUNTER, PERF_ATTRIB_BY_REFERENCE, sizeof(PERF_COUNTER_INFO),
+                    PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
+        },
+    };
+    struct template pc_template_val =
+    {
+        {{0}},
+        {
+            {1, PERF_COUNTER_COUNTER, 0, sizeof(PERF_COUNTER_INFO),
+                PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
+                {2, PERF_COUNTER_COUNTER, 0, sizeof(PERF_COUNTER_INFO),
                     PERF_DETAIL_NOVICE, 0, 0xdeadbeef},
         },
     };
@@ -186,6 +197,60 @@ void test_provider_init(void)
             *(void **)(instance + 1));
     ok(*(void **)((BYTE *)instance + sizeof(*instance) + sizeof(UINT64)) == &counter2,
             "Got unexpected counter value %p.\n", *(void **)(instance + 1));
+
+    /*Counter defined as BYREF error if modified with SetValue functions*/
+    ret = PerfSetULongCounterValue(prov, instance, 1, 666L);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ret = PerfSetULongCounterValue(prov, instance, 2, 900000L);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+
+    ret = PerfSetULongCounterValue(prov, instance, 0, 42L);
+    ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %lu.\n", ret);
+
+    ret = PerfDeleteInstance(prov, instance);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+    ret = PerfStopProvider(prov);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+
+    ret = PerfStartProvider(&test_guid, test_provider_callback, &prov);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+
+    pc_template_val.counterset.CounterSetGuid = test_set_guid;
+    pc_template_val.counterset.ProviderGuid = test_guid;
+    pc_template_val.counterset.NumCounters = 2;
+    pc_template_val.counterset.InstanceType = PERF_COUNTERSET_SINGLE_INSTANCE;
+    ret = PerfSetCounterSetInfo(prov, &pc_template_val.counterset, sizeof(pc_template_val));
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+
+    instance = PerfCreateInstance(prov, &test_set_guid, L"11", 1);
+    ok(!!instance, "Got NULL instance.\n");
+    ok(instance->InstanceId == 1, "Got unexpected InstanceId %lu.\n", instance->InstanceId);
+    ok(instance->InstanceNameSize == 6, "Got unexpected InstanceNameSize %lu.\n", instance->InstanceNameSize);
+    ok(IsEqualGUID(&instance->CounterSetGuid, &test_set_guid), "Got unexpected guid %s.\n",
+       debugstr_guid(&instance->CounterSetGuid));
+
+    ret = PerfSetULongCounterValue(prov, instance, 1, 666L);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+    ret = PerfSetULongCounterValue(prov, instance, 2, 900000L);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+
+    ret = PerfSetULongCounterValue(prov, instance, 0, 42);
+    ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %lu.\n", ret);
+
+    ok(*(ULONG *)(instance + 1) == 666L, "Got unexpected counter value %lu.\n",
+       *(ULONG *)(instance + 1));
+    ok(*(ULONG *)((BYTE *)instance + sizeof(*instance) + sizeof(UINT64)) == 900000L,
+       "Got unexpected counter value %lu.\n", *(ULONG *)(instance + 1));
+
+    ret = PerfSetULongCounterValue(prov, instance, 1, 55L);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+    ret = PerfSetULongCounterValue(prov, instance, 2, 9000L);
+    ok(!ret, "Got unexpected ret %lu.\n", ret);
+
+    ret = PerfSetCounterRefValue(prov, instance, 1, &counter1);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ret = PerfSetCounterRefValue(prov, instance, 2, &counter2);
+    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
 
     ret = PerfDeleteInstance(prov, instance);
     ok(!ret, "Got unexpected ret %lu.\n", ret);
