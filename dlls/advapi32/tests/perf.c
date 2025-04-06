@@ -273,9 +273,9 @@ void test_provider_init(void)
     ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %lu.\n", ret);
 
     ret = PerfSetCounterRefValue(prov, instance, 1, &counter1);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
     ret = PerfSetCounterRefValue(prov, instance, 2, &counter2);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
 
     ret = PerfDeleteInstance(prov, instance);
     ok(!ret, "Got unexpected ret %lu.\n", ret);

@@ -333,6 +333,8 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *i
     counter = get_performance_counter_info(instance, counterid);
 
     if (counter == NULL) return ERROR_NOT_FOUND;
+    if (!(counter->Attrib & PERF_ATTRIB_BY_REFERENCE)) return ERROR_INVALID_PARAMETER;
+
     *(void **)((BYTE *)(instance + 1) + counter->Offset) = address;
 
     return STATUS_SUCCESS;
