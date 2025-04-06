@@ -265,9 +265,9 @@ void test_provider_init(void)
 
     /* Cannot be used with PERF_SIZE_DWORD */
     ret = PerfSetULongLongCounterValue(prov, instance, 1, 900000L);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
     ret = PerfSetULongLongCounterValue(prov, instance, 2, 666L);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
 
     ret = PerfSetULongLongCounterValue(prov, instance, 0, 42);
     ok(ret == ERROR_NOT_FOUND, "Got unexpected ret %lu.\n", ret);
@@ -315,9 +315,9 @@ void test_provider_init(void)
 
     /* Don't work on PERF_SIZE_LARGE */
     ret = PerfSetULongCounterValue(prov, instance, 1, 666L);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
     ret = PerfSetULongCounterValue(prov, instance, 2, 900000L);
-    todo_wine ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Got unexpected ret %lu.\n", ret);
 
     ret = PerfDeleteInstance(prov, instance);
     ok(!ret, "Got unexpected ret %lu.\n", ret);

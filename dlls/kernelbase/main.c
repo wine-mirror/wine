@@ -26,6 +26,7 @@
 #include "shlwapi.h"
 #include "perflib.h"
 #include "winternl.h"
+#include "winperf.h"
 
 #include "wine/debug.h"
 #include "kernelbase.h"
@@ -358,6 +359,7 @@ ULONG WINAPI PerfSetULongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE 
 
     if (counter == NULL) return ERROR_NOT_FOUND;
     if (counter->Attrib & PERF_ATTRIB_BY_REFERENCE) return ERROR_INVALID_PARAMETER;
+    if (counter->Type & PERF_SIZE_LARGE) return ERROR_INVALID_PARAMETER;
 
     *(ULONG*)((BYTE *)(instance + 1) + counter->Offset) = value;
 
@@ -382,6 +384,7 @@ ULONG WINAPI PerfSetULongLongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTA
 
     if (counter == NULL) return ERROR_NOT_FOUND;
     if (counter->Attrib & PERF_ATTRIB_BY_REFERENCE) return ERROR_INVALID_PARAMETER;
+    if (!(counter->Type & PERF_SIZE_LARGE)) return ERROR_INVALID_PARAMETER;
 
     *(ULONGLONG*)((BYTE *)(instance + 1) + counter->Offset) = value;
 
