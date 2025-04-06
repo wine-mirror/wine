@@ -1195,7 +1195,7 @@
 # @ stub PerfQueryInstance
 @ stdcall PerfSetCounterRefValue(long ptr long ptr)
 @ stdcall PerfSetCounterSetInfo(long ptr long)
-# @ stub PerfSetULongCounterValue
+@ stdcall PerfSetULongCounterValue(long ptr long long)
 # @ stub PerfSetULongLongCounterValue
 @ stdcall PerfStartProvider(ptr ptr ptr)
 @ stdcall PerfStartProviderEx(ptr ptr ptr)
