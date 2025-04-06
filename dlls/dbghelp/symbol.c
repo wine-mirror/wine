@@ -715,6 +715,8 @@ static void symt_fill_sym_info(struct module_pair* pair,
     sym_info->ModBase = pair->requested->module.BaseOfImage;
     sym_info->Flags = 0;
     sym_info->Value = 0;
+    sym_info->Address = 0;
+    sym_info->Register = 0;
 
     switch (sym->tag)
     {
@@ -750,7 +752,6 @@ static void symt_fill_sym_info(struct module_pair* pair,
                     case loc_register:
                         sym_info->Flags |= SYMFLAG_REGISTER;
                         sym_info->Register = loc.reg;
-                        sym_info->Address = 0;
                         break;
                     case loc_regrel:
                         sym_info->Flags |= SYMFLAG_REGREL;
@@ -779,7 +780,6 @@ static void symt_fill_sym_info(struct module_pair* pair,
                     /* fall through */
                 case loc_absolute:
                     symt_get_address(sym, &sym_info->Address);
-                    sym_info->Register = 0;
                     break;
                 default:
                     FIXME("Shouldn't happen (kind=%d), debug reader backend is broken\n", data->u.var.kind);
@@ -839,7 +839,6 @@ static void symt_fill_sym_info(struct module_pair* pair,
         break;
     default:
         symt_get_address(sym, &sym_info->Address);
-        sym_info->Register = 0;
         break;
     }
     sym_info->Scope = 0; /* FIXME */
