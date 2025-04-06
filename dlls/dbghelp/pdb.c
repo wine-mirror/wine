@@ -583,22 +583,16 @@ struct pdb_reader_linetab2_location
 static enum pdb_result pdb_find_matching_linetab2(struct CV_Line_t *lines, unsigned num_lines, DWORD64 delta, unsigned *index)
 {
     unsigned i;
-    for (i = 0; i + 1 < num_lines; i++)
-    {
-        unsigned j;
-        for (j = i + 1; j < num_lines; j++)
-            if (lines[j].offset != lines[i].offset) break;
-        if (j >= num_lines) break;
-        if (delta < lines[j].offset)
-        {
-            *index = i;
-            return R_PDB_SUCCESS;
-        }
-    }
     /* since the the address is inside the file_hdr, we assume then it's matched by last entry
      * (for which we don't have the next entry)
      */
-    *index = num_lines - 1;
+    for (i = 0; i + 1 < num_lines; i++)
+    {
+        if (lines[i].offset == delta ||
+            (lines[i].offset <= delta && delta < lines[i + 1].offset))
+            break;
+    }
+    *index = i;
     return R_PDB_SUCCESS;
 }
 
