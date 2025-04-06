@@ -103,14 +103,17 @@ static void text_input_preedit_string(void *data, struct zwp_text_input_v3 *zwp_
         const char *text, int32_t cursor_begin, int32_t cursor_end)
 {
     struct wayland_text_input *text_input = data;
-    TRACE("data %p, text_input %p, text %s, cursor_begin %d.\n", data, zwp_text_input_v3,
-            debugstr_a(text), cursor_begin);
+    TRACE("data %p, text_input %p, text %s, cursor %d - %d.\n", data, zwp_text_input_v3,
+            debugstr_a(text), cursor_begin, cursor_end);
 
     pthread_mutex_lock(&text_input->mutex);
-    if ((text_input->preedit_string = strdupUtoW(text)) && cursor_begin > 0)
+    if ((text_input->preedit_string = strdupUtoW(text)))
     {
-        RtlUTF8ToUnicodeN(NULL, 0, &text_input->preedit_cursor_pos, text, cursor_begin);
-        text_input->preedit_cursor_pos /= sizeof(WCHAR);
+        DWORD begin = 0, end = 0;
+
+        if (cursor_begin > 0) RtlUTF8ToUnicodeN(NULL, 0, &begin, text, cursor_begin);
+        if (cursor_end > 0) RtlUTF8ToUnicodeN(NULL, 0, &end, text, cursor_end);
+        text_input->preedit_cursor_pos = MAKELONG(begin / sizeof(WCHAR), end / sizeof(WCHAR));
     }
     pthread_mutex_unlock(&text_input->mutex);
 }
