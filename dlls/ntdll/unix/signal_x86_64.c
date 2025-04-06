@@ -2504,11 +2504,11 @@ void signal_init_process(void)
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
+
+#ifdef __linux__
 #ifdef AT_HWCAP2
     if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
 #endif
-
-#ifdef __linux__
     if (wow_teb)
     {
         int sel;
