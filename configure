@@ -20761,7 +20761,7 @@ else case e in #(
                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <stdarg.h>
-int a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }
+void a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }
 int
 main (void)
 {

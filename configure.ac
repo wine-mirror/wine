@@ -1997,7 +1997,7 @@ then
         *) AC_CACHE_CHECK([for working -mabi=ms], ac_cv_mabi_ms,
                [CFLAGS="$CFLAGS -mabi=ms"
                 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>
-int a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }]])],
+void a(int b, ...) { __builtin_ms_va_list list; __builtin_ms_va_start(list,b); }]])],
                    [ac_cv_mabi_ms=yes],[ac_cv_mabi_ms=no])
                 CFLAGS=$saved_CFLAGS])
            AS_VAR_IF([ac_cv_mabi_ms],[yes],
