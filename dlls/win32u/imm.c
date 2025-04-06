@@ -445,8 +445,8 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     WCHAR *prev_result_str, *tmp;
     struct ime_update *update;
 
-    TRACE( "hwnd %p, cursor_pos %u, comp_str %s, result_str %s\n", hwnd, cursor_pos,
-           debugstr_w(comp_str), debugstr_w(result_str) );
+    TRACE( "hwnd %p, cursor_pos %u - %u, comp_str %s, result_str %s\n", hwnd, LOWORD(cursor_pos),
+           HIWORD(cursor_pos), debugstr_w(comp_str), debugstr_w(result_str) );
 
     comp_len = comp_str ? wcslen( comp_str ) + 1 : 0;
     result_len = result_str ? wcslen( result_str ) + 1 : 0;
@@ -495,6 +495,48 @@ static void post_ime_update( HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR 
     free( tmp );
 }
 
+static UINT get_comp_clause_count( UINT comp_len, UINT cursor_begin, UINT cursor_end )
+{
+    if (cursor_begin == cursor_end || (cursor_begin == 0 && cursor_end == comp_len))
+        return 2;
+    else if (cursor_begin == 0 || cursor_end == comp_len)
+        return 3;
+    else
+        return 4;
+}
+
+static void set_comp_clause( DWORD *comp_clause, UINT comp_clause_count, UINT comp_len,
+                             UINT cursor_begin, UINT cursor_end )
+{
+    comp_clause[0] = 0;
+    switch (comp_clause_count)
+    {
+    case 2:
+        comp_clause[1] = comp_len;
+        break;
+    case 3:
+        comp_clause[1] = cursor_begin == 0 ? cursor_end : cursor_begin;
+        comp_clause[2] = comp_len;
+        break;
+    case 4:
+        comp_clause[1] = cursor_begin;
+        comp_clause[2] = cursor_end;
+        comp_clause[3] = comp_len;
+        break;
+    }
+}
+
+static void set_comp_attr( BYTE *comp_attr, UINT comp_attr_len, UINT cursor_begin, UINT cursor_end )
+{
+    if (cursor_begin == cursor_end)
+        memset( comp_attr, ATTR_INPUT, comp_attr_len );
+    else
+    {
+        memset( comp_attr, ATTR_CONVERTED, comp_attr_len );
+        memset( comp_attr + cursor_begin, ATTR_TARGET_CONVERTED, cursor_end - cursor_begin );
+    }
+}
+
 static struct ime_update *find_ime_update( WORD vkey, WORD scan )
 {
     struct ime_update *update;
@@ -508,7 +550,8 @@ static struct ime_update *find_ime_update( WORD vkey, WORD scan )
 static UINT ime_to_tascii_ex( UINT vkey, UINT lparam, const BYTE *state, COMPOSITIONSTRING *compstr,
                               BOOL *key_consumed, HIMC himc )
 {
-    UINT needed = sizeof(COMPOSITIONSTRING), comp_len, result_len;
+    UINT needed = sizeof(COMPOSITIONSTRING), comp_len, result_len, comp_clause_count = 0;
+    UINT cursor_begin = 0, cursor_end = 0;
     struct ime_update *update;
     void *dst;
 
@@ -528,9 +571,18 @@ static UINT ime_to_tascii_ex( UINT vkey, UINT lparam, const BYTE *state, COMPOSI
     else
     {
         comp_len = wcslen( update->comp_str );
+        cursor_begin = LOWORD(update->cursor_pos);
+        cursor_end   = HIWORD(update->cursor_pos);
+
+        if (cursor_begin > comp_len) cursor_begin = comp_len;
+        if (cursor_end > comp_len) cursor_end = comp_len;
+        if (cursor_end < cursor_begin) cursor_end = cursor_begin;
+
+        comp_clause_count = get_comp_clause_count( comp_len, cursor_begin, cursor_end );
+
         needed += comp_len * sizeof(WCHAR); /* GCS_COMPSTR */
         needed += comp_len; /* GCS_COMPATTR */
-        needed += 2 * sizeof(DWORD); /* GCS_COMPCLAUSE */
+        needed += comp_clause_count * sizeof(DWORD); /* GCS_COMPCLAUSE */
     }
 
     if (!update->result_str) result_len = 0;
@@ -556,7 +608,7 @@ static UINT ime_to_tascii_ex( UINT vkey, UINT lparam, const BYTE *state, COMPOSI
 
     if (update->comp_str)
     {
-        compstr->dwCursorPos = update->cursor_pos;
+        compstr->dwCursorPos = cursor_begin;
 
         compstr->dwCompStrLen = comp_len;
         compstr->dwCompStrOffset = compstr->dwSize;
@@ -564,17 +616,16 @@ static UINT ime_to_tascii_ex( UINT vkey, UINT lparam, const BYTE *state, COMPOSI
         memcpy( dst, update->comp_str, compstr->dwCompStrLen * sizeof(WCHAR) );
         compstr->dwSize += compstr->dwCompStrLen * sizeof(WCHAR);
 
-        compstr->dwCompClauseLen = 2 * sizeof(DWORD);
+        compstr->dwCompClauseLen = comp_clause_count * sizeof(DWORD);
         compstr->dwCompClauseOffset = compstr->dwSize;
         dst = (BYTE *)compstr + compstr->dwCompClauseOffset;
-        *((DWORD *)dst + 0) = 0;
-        *((DWORD *)dst + 1) = compstr->dwCompStrLen;
+        set_comp_clause( dst, comp_clause_count, comp_len, cursor_begin, cursor_end );
         compstr->dwSize += compstr->dwCompClauseLen;
 
         compstr->dwCompAttrLen = compstr->dwCompStrLen;
         compstr->dwCompAttrOffset = compstr->dwSize;
         dst = (BYTE *)compstr + compstr->dwCompAttrOffset;
-        memset( dst, ATTR_INPUT, compstr->dwCompAttrLen );
+        set_comp_attr( dst, compstr->dwCompAttrLen, cursor_begin, cursor_end );
         compstr->dwSize += compstr->dwCompAttrLen;
     }
 
