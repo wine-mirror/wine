@@ -91,6 +91,7 @@ struct gl_drawable
     ANativeWindow  *window;
     EGLSurface      surface;
     EGLSurface      pbuffer;
+    int             swap_interval;
 };
 
 static void *egl_handle;
@@ -98,15 +99,11 @@ static void *opengl_handle;
 static struct egl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static EGLDisplay display;
-static int swap_interval;
 static char wgl_extensions[4096];
 static struct opengl_funcs egl_funcs;
 
 static struct list gl_contexts = LIST_INIT( gl_contexts );
 static struct list gl_drawables = LIST_INIT( gl_drawables );
-
-static void (*pglFinish)(void);
-static void (*pglFlush)(void);
 
 pthread_mutex_t drawable_mutex;
 
@@ -356,39 +353,6 @@ done:
 }
 
 /***********************************************************************
- *		android_wglSwapIntervalEXT
- */
-static BOOL android_wglSwapIntervalEXT( int interval )
-{
-    BOOL ret = TRUE;
-
-    TRACE("(%d)\n", interval);
-
-    if (interval < 0)
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_DATA );
-        return FALSE;
-    }
-
-    ret = p_eglSwapInterval( display, interval );
-
-    if (ret)
-        swap_interval = interval;
-    else
-        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
-
-    return ret;
-}
-
-/***********************************************************************
- *		android_wglGetSwapIntervalEXT
- */
-static int android_wglGetSwapIntervalEXT(void)
-{
-    return swap_interval;
-}
-
-/***********************************************************************
  *		android_wglCopyContext
  */
 static BOOL android_context_copy( void *src, void *dst, UINT mask )
@@ -424,40 +388,49 @@ static BOOL android_context_share( void *org, void *dest )
     return FALSE;
 }
 
-/***********************************************************************
- *		android_wglSwapBuffers
- */
-static BOOL android_wglSwapBuffers( HDC hdc )
+static void set_swap_interval( struct gl_drawable *gl, int interval )
 {
-    struct android_context *ctx = NtCurrentTeb()->glReserved2;
+    if (interval < 0) interval = -interval;
+    if (gl->swap_interval == interval) return;
+    p_eglSwapInterval( display, interval );
+    gl->swap_interval = interval;
+}
+
+static BOOL android_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
+{
+    struct android_context *ctx = private;
+    struct gl_drawable *gl;
 
     if (!ctx) return FALSE;
 
     TRACE( "%p hwnd %p context %p surface %p\n", hdc, ctx->hwnd, ctx->context, ctx->surface );
 
     if (refresh_context( ctx )) return TRUE;
+
+    if ((gl = get_gl_drawable( hwnd, hdc )))
+    {
+        set_swap_interval( gl, interval );
+        release_gl_drawable( gl );
+    }
+
     if (ctx->surface) p_eglSwapBuffers( display, ctx->surface );
     return TRUE;
 }
 
-static void wglFinish(void)
+static BOOL android_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
 {
-    struct android_context *ctx = NtCurrentTeb()->glReserved2;
+    struct android_context *ctx = private;
+    struct gl_drawable *gl;
 
-    if (!ctx) return;
     TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
     refresh_context( ctx );
-    pglFinish();
-}
 
-static void wglFlush(void)
-{
-    struct android_context *ctx = NtCurrentTeb()->glReserved2;
-
-    if (!ctx) return;
-    TRACE( "hwnd %p context %p\n", ctx->hwnd, ctx->context );
-    refresh_context( ctx );
-    pglFlush();
+    if ((gl = get_gl_drawable( hwnd, hdc )))
+    {
+        set_swap_interval( gl, interval );
+        release_gl_drawable( gl );
+    }
+    return FALSE;
 }
 
 static void register_extension( const char *ext )
@@ -469,10 +442,6 @@ static void register_extension( const char *ext )
 
 static const char *android_init_wgl_extensions(void)
 {
-    register_extension("WGL_EXT_swap_control");
-    egl_funcs.p_wglSwapIntervalEXT = android_wglSwapIntervalEXT;
-    egl_funcs.p_wglGetSwapIntervalEXT = android_wglGetSwapIntervalEXT;
-
     register_extension("WGL_EXT_framebuffer_sRGB");
     return wgl_extensions;
 }
@@ -762,14 +731,6 @@ static void init_opengl_funcs(void)
     LOAD_FUNCPTR( glVertexBindingDivisor );
     LOAD_FUNCPTR( glWaitSync );
 #undef LOAD_FUNCPTR
-
-    /* redirect some standard OpenGL functions */
-
-#define REDIRECT(func) \
-    do { p##func = egl_funcs.p_##func; egl_funcs.p_##func = w##func; } while(0)
-    REDIRECT(glFinish);
-    REDIRECT(glFlush);
-#undef REDIRECT
 }
 
 static UINT android_init_pixel_formats( UINT *onscreen_count )
@@ -828,10 +789,12 @@ static const struct opengl_driver_funcs android_driver_funcs =
     .p_describe_pixel_format = android_describe_pixel_format,
     .p_init_wgl_extensions = android_init_wgl_extensions,
     .p_set_pixel_format = android_set_pixel_format,
+    .p_swap_buffers = android_swap_buffers,
     .p_context_create = android_context_create,
     .p_context_destroy = android_context_destroy,
     .p_context_copy = android_context_copy,
     .p_context_share = android_context_share,
+    .p_context_flush = android_context_flush,
     .p_context_make_current = android_context_make_current,
 };
 
@@ -903,7 +866,6 @@ ALL_GL_FUNCS
 
 static struct opengl_funcs egl_funcs =
 {
-    .p_wglSwapBuffers = android_wglSwapBuffers,
 #define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
     ALL_GL_FUNCS
 #undef USE_GL_FUNC
