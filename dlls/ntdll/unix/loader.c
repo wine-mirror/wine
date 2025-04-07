@@ -96,6 +96,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 
+#if defined __i386__ || defined __x86_64__
+#define SO_DLLS_SUPPORTED
+#endif
+
 void *pDbgUiRemoteBreakin = NULL;
 void *pKiRaiseUserExceptionDispatcher = NULL;
 void *pKiUserExceptionDispatcher = NULL;
@@ -614,6 +618,8 @@ BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG li
 }
 
 
+#ifdef SO_DLLS_SUPPORTED
+
 /* adjust an array of pointers to make them into RVAs */
 static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
 {
@@ -1034,6 +1040,36 @@ static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_na
     if (!status) virtual_fill_image_information( &pe_info, image_info );
     return status;
 }
+
+extern NTSTATUS unwind_builtin_dll( void *args );
+
+#else /* SO_DLLS_SUPPORTED */
+
+static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void **module,
+                                      SECTION_IMAGE_INFORMATION *image_info, USHORT search_machine,
+                                      USHORT load_machine, BOOL prefer_native )
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
+static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
+                                         SECTION_IMAGE_INFORMATION *image_info )
+{
+    return STATUS_INVALID_IMAGE_FORMAT;
+}
+
+static NTSTATUS load_so_dll( void *args )
+{
+    return STATUS_INVALID_IMAGE_FORMAT;
+}
+
+static NTSTATUS unwind_builtin_dll( void *args )
+{
+    return STATUS_UNSUCCESSFUL;
+}
+
+#endif /* SO_DLLS_SUPPORTED */
+
 
 static const unixlib_entry_t unix_call_funcs[] =
 {

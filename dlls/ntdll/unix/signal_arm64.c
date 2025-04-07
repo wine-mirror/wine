@@ -231,17 +231,6 @@ void set_process_instrumentation_callback( void *callback )
 
 
 /***********************************************************************
- *           unwind_builtin_dll
- *
- * Equivalent of RtlVirtualUnwind for builtin modules.
- */
-NTSTATUS unwind_builtin_dll( void *args )
-{
-    return STATUS_UNSUCCESSFUL;
-}
-
-
-/***********************************************************************
  *           syscall_frame_fixup_for_fastpath
  *
  * Fixes up the given syscall frame such that the syscall dispatcher

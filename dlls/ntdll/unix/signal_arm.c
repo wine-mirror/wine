@@ -264,15 +264,6 @@ void set_process_instrumentation_callback( void *callback )
 
 
 /***********************************************************************
- *           unwind_builtin_dll
- */
-NTSTATUS unwind_builtin_dll( void *args )
-{
-    return STATUS_UNSUCCESSFUL;
-}
-
-
-/***********************************************************************
  *           get_trap_code
  *
  * Get the trap code for a signal.
