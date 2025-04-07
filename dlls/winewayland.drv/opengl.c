@@ -992,13 +992,13 @@ static BOOL wayland_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const in
     return GL_TRUE;
 }
 
-static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
+static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
 {
     EGLint value, surface_type;
     PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
 
     /* If we can't get basic information, there is no point continuing */
-    if (!p_eglGetConfigAttrib(egl_display, config, EGL_SURFACE_TYPE, &surface_type)) return;
+    if (!p_eglGetConfigAttrib(egl_display, config, EGL_SURFACE_TYPE, &surface_type)) return FALSE;
 
     memset(fmt, 0, sizeof(*fmt));
     pfd->nSize = sizeof(*pfd);
@@ -1116,24 +1116,19 @@ static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
 
 #undef SET_ATTRIB
 #undef SET_ATTRIB_ARB
+    return TRUE;
 }
 
-static void wayland_get_pixel_formats(struct wgl_pixel_format *formats,
-                                      UINT max_formats, UINT *num_formats,
-                                      UINT *num_onscreen_formats)
+static BOOL wayland_describe_pixel_format(int format, struct wgl_pixel_format *desc)
 {
-    UINT i;
-
-    if (formats)
-    {
-        for (i = 0; i < min(max_formats, num_egl_configs); ++i)
-            describe_pixel_format(egl_configs[i], &formats[i], FALSE);
-        /* Add single-buffered pbuffer capable configs. */
-        for (i = num_egl_configs; i < min(max_formats, 2 * num_egl_configs); ++i)
-            describe_pixel_format(egl_configs[i - num_egl_configs], &formats[i], TRUE);
-    }
-    *num_formats = 2 * num_egl_configs;
-    *num_onscreen_formats = num_egl_configs;
+    if (format <= 0)
+        return FALSE;
+    if (format <= num_egl_configs)
+        return describe_pixel_format(egl_configs[format - 1], desc, FALSE);
+    /* Add single-buffered pbuffer capable configs. */
+    if (format <= 2 * num_egl_configs)
+        return describe_pixel_format(egl_configs[format - 1 - num_egl_configs], desc, TRUE);
+    return FALSE;
 }
 
 static BOOL has_extension(const char *list, const char *ext)
@@ -1211,7 +1206,7 @@ static const char *wayland_init_wgl_extensions(void)
     return wgl_extensions;
 }
 
-static BOOL init_egl_configs(void)
+static UINT wayland_init_pixel_formats(UINT *onscreen_count)
 {
     EGLint i;
     const EGLint attribs[] =
@@ -1225,7 +1220,7 @@ static BOOL init_egl_configs(void)
     if (!(egl_configs = malloc(num_egl_configs * sizeof(*egl_configs))))
     {
         ERR("Failed to allocate memory for EGL configs\n");
-        return FALSE;
+        return 0;
     }
     if (!p_eglChooseConfig(egl_display, attribs, egl_configs, num_egl_configs,
                            &num_egl_configs) ||
@@ -1235,7 +1230,7 @@ static BOOL init_egl_configs(void)
         egl_configs = NULL;
         num_egl_configs = 0;
         ERR("Failed to get any configs from eglChooseConfig\n");
-        return FALSE;
+        return 0;
     }
 
     if (TRACE_ON(waylanddrv))
@@ -1262,11 +1257,14 @@ static BOOL init_egl_configs(void)
         }
     }
 
-    return TRUE;
+    *onscreen_count = num_egl_configs;
+    return 2 * num_egl_configs;
 }
 
 static const struct opengl_driver_funcs wayland_driver_funcs =
 {
+    .p_init_pixel_formats = wayland_init_pixel_formats,
+    .p_describe_pixel_format = wayland_describe_pixel_format,
     .p_init_wgl_extensions = wayland_init_wgl_extensions,
     .p_set_pixel_format = wayland_set_pixel_format,
 };
@@ -1364,7 +1362,6 @@ UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct 
     has_egl_ext_pixel_format_float = has_extension(egl_exts, "EGL_EXT_pixel_format_float");
 
     if (!init_opengl_funcs()) goto err;
-    if (!init_egl_configs()) goto err;
     *funcs = &opengl_funcs;
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
@@ -1384,7 +1381,6 @@ static struct opengl_funcs opengl_funcs =
     .p_wglMakeCurrent = wayland_wglMakeCurrent,
     .p_wglShareLists = wayland_wglShareLists,
     .p_wglSwapBuffers = wayland_wglSwapBuffers,
-    .p_get_pixel_formats = wayland_get_pixel_formats,
 };
 
 /**********************************************************************

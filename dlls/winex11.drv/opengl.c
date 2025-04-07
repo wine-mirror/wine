@@ -280,7 +280,6 @@ static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
 static struct opengl_funcs opengl_funcs;
 
-static void init_pixel_formats( Display *display );
 static BOOL glxRequireVersion(int requiredVersion);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
@@ -713,8 +712,6 @@ UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct 
         pglXSwapBuffersMscOML = pglXGetProcAddressARB( (const GLubyte *)"glXSwapBuffersMscOML" );
     }
 
-    init_pixel_formats( gdi_display );
-
     *funcs = &opengl_funcs;
     *driver_funcs = &x11drv_driver_funcs;
     return STATUS_SUCCESS;
@@ -773,7 +770,7 @@ static BOOL check_fbconfig_bitmap_capability(Display *display, GLXFBConfig fbcon
     return !dbuf && (value & GLX_PIXMAP_BIT);
 }
 
-static void init_pixel_formats( Display *display )
+static UINT x11drv_init_pixel_formats( UINT *onscreen_count )
 {
     struct glx_pixel_format *list;
     int size = 0, onscreen_size = 0;
@@ -781,11 +778,11 @@ static void init_pixel_formats( Display *display )
     GLXFBConfig* cfgs;
     XVisualInfo *visinfo;
 
-    cfgs = pglXGetFBConfigs(display, DefaultScreen(display), &nCfgs);
+    cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs);
     if (NULL == cfgs || 0 == nCfgs) {
         if(cfgs != NULL) XFree(cfgs);
         ERR("glXChooseFBConfig returns NULL\n");
-        return;
+        return 0;
     }
 
     /* Bitmap rendering on Windows implies the use of the Microsoft GDI software renderer.
@@ -797,7 +794,7 @@ static void init_pixel_formats( Display *display )
      */
     for(i=0, bmp_formats=0; i<nCfgs; i++)
     {
-        if(check_fbconfig_bitmap_capability(display, cfgs[i]))
+        if(check_fbconfig_bitmap_capability(gdi_display, cfgs[i]))
             bmp_formats++;
     }
     TRACE("Found %d bitmap capable fbconfigs\n", bmp_formats);
@@ -809,8 +806,8 @@ static void init_pixel_formats( Display *display )
     for(run=0; run < 2; run++)
     {
         for(i=0; i<nCfgs; i++) {
-            pglXGetFBConfigAttrib(display, cfgs[i], GLX_FBCONFIG_ID, &fmt_id);
-            visinfo = pglXGetVisualFromFBConfig(display, cfgs[i]);
+            pglXGetFBConfigAttrib(gdi_display, cfgs[i], GLX_FBCONFIG_ID, &fmt_id);
+            visinfo = pglXGetVisualFromFBConfig(gdi_display, cfgs[i]);
 
             /* The first run we only add onscreen formats (ones which have an associated X Visual).
              * The second run we only set offscreen formats. */
@@ -833,19 +830,19 @@ static void init_pixel_formats( Display *display )
                 list[size].fbconfig = cfgs[i];
                 list[size].visual = visinfo;
                 list[size].fmt_id = fmt_id;
-                list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                list[size].render_type = get_render_type_from_fbconfig(gdi_display, cfgs[i]);
                 list[size].dwFlags = 0;
                 size++;
                 onscreen_size++;
 
                 /* Clone a format if it is bitmap capable for indirect rendering to bitmaps */
-                if(check_fbconfig_bitmap_capability(display, cfgs[i]))
+                if(check_fbconfig_bitmap_capability(gdi_display, cfgs[i]))
                 {
                     TRACE("Found bitmap capable format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                     list[size].fbconfig = cfgs[i];
                     list[size].visual = visinfo;
                     list[size].fmt_id = fmt_id;
-                    list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                    list[size].render_type = get_render_type_from_fbconfig(gdi_display, cfgs[i]);
                     list[size].dwFlags = PFD_DRAW_TO_BITMAP | PFD_SUPPORT_GDI | PFD_GENERIC_FORMAT;
                     size++;
                     onscreen_size++;
@@ -869,7 +866,7 @@ static void init_pixel_formats( Display *display )
                 TRACE("Found offscreen format FBCONFIG_ID 0x%x corresponding to iPixelFormat %d at GLX index %d\n", fmt_id, size+1, i);
                 list[size].fbconfig = cfgs[i];
                 list[size].fmt_id = fmt_id;
-                list[size].render_type = get_render_type_from_fbconfig(display, cfgs[i]);
+                list[size].render_type = get_render_type_from_fbconfig(gdi_display, cfgs[i]);
                 list[size].dwFlags = 0;
                 size++;
             }
@@ -882,6 +879,9 @@ static void init_pixel_formats( Display *display )
     pixel_formats = list;
     nb_pixel_formats = size;
     nb_onscreen_formats = onscreen_size;
+
+    *onscreen_count = onscreen_size;
+    return size;
 }
 
 static inline BOOL is_valid_pixel_format( int format )
@@ -1337,12 +1337,7 @@ void destroy_gl_drawable( HWND hwnd )
 }
 
 
-/**
- * describe_pixel_format
- *
- * Get the wgl_pixel_format description for the given id
- */
-static int describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf )
+static BOOL x11drv_describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf )
 {
     int value, drawable_type = 0, render_type = 0;
     int rb, gb, bb, ab;
@@ -1355,7 +1350,7 @@ static int describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf 
     if (!fmt)
     {
         WARN( "unexpected format %d\n", iPixelFormat );
-        return 0;
+        return FALSE;
     }
 
     /* If we can't get basic information, there is no point continuing */
@@ -1536,7 +1531,7 @@ static int describe_pixel_format( int iPixelFormat, struct wgl_pixel_format *pf 
 
     if (TRACE_ON(wgl)) dump_PIXELFORMATDESCRIPTOR( &pf->pfd );
 
-    return nb_onscreen_formats;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2677,23 +2672,10 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
     return TRUE;
 }
 
-static void glxdrv_get_pixel_formats( struct wgl_pixel_format *formats,
-                                      UINT max_formats, UINT *num_formats,
-                                      UINT *num_onscreen_formats )
-{
-    UINT i;
-
-    if (formats)
-    {
-        for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
-            describe_pixel_format( i + 1, &formats[i] );
-    }
-    *num_formats = nb_pixel_formats;
-    *num_onscreen_formats = nb_onscreen_formats;
-}
-
 static const struct opengl_driver_funcs x11drv_driver_funcs =
 {
+    .p_init_pixel_formats = x11drv_init_pixel_formats,
+    .p_describe_pixel_format = x11drv_describe_pixel_format,
     .p_init_wgl_extensions = x11drv_init_wgl_extensions,
     .p_set_pixel_format = x11drv_set_pixel_format,
 };
@@ -2707,7 +2689,6 @@ static struct opengl_funcs opengl_funcs =
     .p_wglMakeCurrent = glxdrv_wglMakeCurrent,
     .p_wglShareLists = glxdrv_wglShareLists,
     .p_wglSwapBuffers = glxdrv_wglSwapBuffers,
-    .p_get_pixel_formats = glxdrv_get_pixel_formats,
 };
 
 #else  /* no OpenGL includes */

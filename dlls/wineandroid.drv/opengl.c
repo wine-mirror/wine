@@ -244,10 +244,14 @@ static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, c
     return ctx;
 }
 
-static void describe_pixel_format( struct egl_pixel_format *fmt, PIXELFORMATDESCRIPTOR *pfd )
+static BOOL android_describe_pixel_format( int format, struct wgl_pixel_format *desc )
 {
+    struct egl_pixel_format *fmt = pixel_formats + format - 1;
+    PIXELFORMATDESCRIPTOR *pfd = &desc->pfd;
     EGLint val;
     EGLConfig config = fmt->config;
+
+    if (format <= 0 || format > nb_pixel_formats) return FALSE;
 
     memset( pfd, 0, sizeof(*pfd) );
     pfd->nSize = sizeof(*pfd);
@@ -275,6 +279,7 @@ static void describe_pixel_format( struct egl_pixel_format *fmt, PIXELFORMATDESC
     pfd->cBlueShift = pfd->cAlphaShift + pfd->cAlphaBits;
     pfd->cGreenShift = pfd->cBlueShift + pfd->cBlueBits;
     pfd->cRedShift = pfd->cGreenShift + pfd->cGreenBits;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -503,24 +508,6 @@ static BOOL android_wglSwapBuffers( HDC hdc )
     if (refresh_context( ctx )) return TRUE;
     if (ctx->surface) p_eglSwapBuffers( display, ctx->surface );
     return TRUE;
-}
-
-/**********************************************************************
- *              android_get_pixel_formats
- */
-static void android_get_pixel_formats( struct wgl_pixel_format *formats,
-                                       UINT max_formats, UINT *num_formats,
-                                       UINT *num_onscreen_formats )
-{
-    UINT i;
-
-    if (formats)
-    {
-        for (i = 0; i < min( max_formats, nb_pixel_formats ); ++i)
-            describe_pixel_format( &pixel_formats[i], &formats[i].pfd );
-    }
-    *num_formats = nb_pixel_formats;
-    *num_onscreen_formats = nb_onscreen_formats;
 }
 
 static void wglFinish(void)
@@ -863,58 +850,10 @@ static void init_opengl_funcs(void)
 #undef REDIRECT
 }
 
-static const struct opengl_driver_funcs android_driver_funcs =
-{
-    .p_init_wgl_extensions = android_init_wgl_extensions,
-    .p_set_pixel_format = android_set_pixel_format,
-};
-
-/**********************************************************************
- *           ANDROID_OpenGLInit
- */
-UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
+static UINT android_init_pixel_formats( UINT *onscreen_count )
 {
     EGLConfig *configs;
-    EGLint major, minor, count, i, pass;
-
-    if (version != WINE_OPENGL_DRIVER_VERSION)
-    {
-        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
-        return STATUS_INVALID_PARAMETER;
-    }
-    if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))
-    {
-        ERR( "failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
-        return STATUS_NOT_SUPPORTED;
-    }
-    if (!(opengl_handle = dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL )))
-    {
-        ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, dlerror() );
-        return STATUS_NOT_SUPPORTED;
-    }
-
-#define LOAD_FUNCPTR(func) do { \
-        if (!(p_##func = dlsym( egl_handle, #func ))) \
-        { ERR( "can't find symbol %s\n", #func); return FALSE; }    \
-    } while(0)
-    LOAD_FUNCPTR( eglCreateContext );
-    LOAD_FUNCPTR( eglCreateWindowSurface );
-    LOAD_FUNCPTR( eglCreatePbufferSurface );
-    LOAD_FUNCPTR( eglDestroyContext );
-    LOAD_FUNCPTR( eglDestroySurface );
-    LOAD_FUNCPTR( eglGetConfigAttrib );
-    LOAD_FUNCPTR( eglGetConfigs );
-    LOAD_FUNCPTR( eglGetDisplay );
-    LOAD_FUNCPTR( eglGetProcAddress );
-    LOAD_FUNCPTR( eglInitialize );
-    LOAD_FUNCPTR( eglMakeCurrent );
-    LOAD_FUNCPTR( eglSwapBuffers );
-    LOAD_FUNCPTR( eglSwapInterval );
-#undef LOAD_FUNCPTR
-
-    display = p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
-    if (!p_eglInitialize( display, &major, &minor )) return 0;
-    TRACE( "display %p version %u.%u\n", display, major, minor );
+    EGLint count, i, pass;
 
     p_eglGetConfigs( display, NULL, 0, &count );
     configs = malloc( count * sizeof(*configs) );
@@ -956,6 +895,64 @@ UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct
         if (!pass) nb_onscreen_formats = nb_pixel_formats;
     }
 
+    *onscreen_count = nb_onscreen_formats;
+    return nb_pixel_formats;
+}
+
+static const struct opengl_driver_funcs android_driver_funcs =
+{
+    .p_init_pixel_formats = android_init_pixel_formats,
+    .p_describe_pixel_format = android_describe_pixel_format,
+    .p_init_wgl_extensions = android_init_wgl_extensions,
+    .p_set_pixel_format = android_set_pixel_format,
+};
+
+/**********************************************************************
+ *           ANDROID_OpenGLInit
+ */
+UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
+{
+    EGLint major, minor;
+
+    if (version != WINE_OPENGL_DRIVER_VERSION)
+    {
+        ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
+        return STATUS_INVALID_PARAMETER;
+    }
+    if (!(egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL )))
+    {
+        ERR( "failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
+        return STATUS_NOT_SUPPORTED;
+    }
+    if (!(opengl_handle = dlopen( SONAME_LIBGLESV2, RTLD_NOW|RTLD_GLOBAL )))
+    {
+        ERR( "failed to load %s: %s\n", SONAME_LIBGLESV2, dlerror() );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+#define LOAD_FUNCPTR(func) do { \
+        if (!(p_##func = dlsym( egl_handle, #func ))) \
+        { ERR( "can't find symbol %s\n", #func); return FALSE; }    \
+    } while(0)
+    LOAD_FUNCPTR( eglCreateContext );
+    LOAD_FUNCPTR( eglCreateWindowSurface );
+    LOAD_FUNCPTR( eglCreatePbufferSurface );
+    LOAD_FUNCPTR( eglDestroyContext );
+    LOAD_FUNCPTR( eglDestroySurface );
+    LOAD_FUNCPTR( eglGetConfigAttrib );
+    LOAD_FUNCPTR( eglGetConfigs );
+    LOAD_FUNCPTR( eglGetDisplay );
+    LOAD_FUNCPTR( eglGetProcAddress );
+    LOAD_FUNCPTR( eglInitialize );
+    LOAD_FUNCPTR( eglMakeCurrent );
+    LOAD_FUNCPTR( eglSwapBuffers );
+    LOAD_FUNCPTR( eglSwapInterval );
+#undef LOAD_FUNCPTR
+
+    display = p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
+    if (!p_eglInitialize( display, &major, &minor )) return 0;
+    TRACE( "display %p version %u.%u\n", display, major, minor );
+
     init_opengl_funcs();
     *funcs = &egl_funcs;
     *driver_funcs = &android_driver_funcs;
@@ -985,7 +982,6 @@ static struct opengl_funcs egl_funcs =
     .p_wglMakeCurrent = android_wglMakeCurrent,
     .p_wglShareLists = android_wglShareLists,
     .p_wglSwapBuffers = android_wglSwapBuffers,
-    .p_get_pixel_formats = android_get_pixel_formats,
 #define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
     ALL_GL_FUNCS
 #undef USE_GL_FUNC

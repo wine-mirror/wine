@@ -41,6 +41,59 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs );
 
+static const struct
+{
+    BYTE color_bits;
+    BYTE red_bits, red_shift;
+    BYTE green_bits, green_shift;
+    BYTE blue_bits, blue_shift;
+    BYTE alpha_bits, alpha_shift;
+    BYTE accum_bits;
+    BYTE depth_bits;
+    BYTE stencil_bits;
+} pixel_formats[] =
+{
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
+    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
+    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
+    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
+    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
+    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
+    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
+};
+
+static void describe_pixel_format( int fmt, PIXELFORMATDESCRIPTOR *descr )
+{
+    memset( descr, 0, sizeof(*descr) );
+    descr->nSize            = sizeof(*descr);
+    descr->nVersion         = 1;
+    descr->dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
+    descr->iPixelType       = PFD_TYPE_RGBA;
+    descr->cColorBits       = pixel_formats[fmt - 1].color_bits;
+    descr->cRedBits         = pixel_formats[fmt - 1].red_bits;
+    descr->cRedShift        = pixel_formats[fmt - 1].red_shift;
+    descr->cGreenBits       = pixel_formats[fmt - 1].green_bits;
+    descr->cGreenShift      = pixel_formats[fmt - 1].green_shift;
+    descr->cBlueBits        = pixel_formats[fmt - 1].blue_bits;
+    descr->cBlueShift       = pixel_formats[fmt - 1].blue_shift;
+    descr->cAlphaBits       = pixel_formats[fmt - 1].alpha_bits;
+    descr->cAlphaShift      = pixel_formats[fmt - 1].alpha_shift;
+    descr->cAccumBits       = pixel_formats[fmt - 1].accum_bits;
+    descr->cAccumRedBits    = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumGreenBits  = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumBlueBits   = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cAccumAlphaBits  = pixel_formats[fmt - 1].accum_bits / 4;
+    descr->cDepthBits       = pixel_formats[fmt - 1].depth_bits;
+    descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
+    descr->cAuxBuffers      = 0;
+    descr->iLayerType       = PFD_MAIN_PLANE;
+}
+
 static BOOL has_extension( const char *list, const char *ext )
 {
     size_t len = strlen( ext );
@@ -220,59 +273,6 @@ static BOOL osmesa_make_current( struct wgl_context *context, void *bits,
     return ret;
 }
 
-static const struct
-{
-    BYTE color_bits;
-    BYTE red_bits, red_shift;
-    BYTE green_bits, green_shift;
-    BYTE blue_bits, blue_shift;
-    BYTE alpha_bits, alpha_shift;
-    BYTE accum_bits;
-    BYTE depth_bits;
-    BYTE stencil_bits;
-} pixel_formats[] =
-{
-    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 32, 8 },
-    { 32,  8, 16, 8, 8,  8, 0,  8, 24,  16, 16, 8 },
-    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 32, 8 },
-    { 32,  8, 0,  8, 8,  8, 16, 8, 24,  16, 16, 8 },
-    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 32, 8 },
-    { 32,  8, 8,  8, 16, 8, 24, 8, 0,   16, 16, 8 },
-    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 32, 8 },
-    { 24,  8, 0,  8, 8,  8, 16, 0, 0,   16, 16, 8 },
-    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 32, 8 },
-    { 24,  8, 16, 8, 8,  8, 0,  0, 0,   16, 16, 8 },
-    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 32, 8 },
-    { 16,  5, 0,  6, 5,  5, 11, 0, 0,   16, 16, 8 },
-};
-
-static void describe_pixel_format( int fmt, PIXELFORMATDESCRIPTOR *descr )
-{
-    memset( descr, 0, sizeof(*descr) );
-    descr->nSize            = sizeof(*descr);
-    descr->nVersion         = 1;
-    descr->dwFlags          = PFD_SUPPORT_GDI | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_BITMAP | PFD_GENERIC_FORMAT;
-    descr->iPixelType       = PFD_TYPE_RGBA;
-    descr->cColorBits       = pixel_formats[fmt - 1].color_bits;
-    descr->cRedBits         = pixel_formats[fmt - 1].red_bits;
-    descr->cRedShift        = pixel_formats[fmt - 1].red_shift;
-    descr->cGreenBits       = pixel_formats[fmt - 1].green_bits;
-    descr->cGreenShift      = pixel_formats[fmt - 1].green_shift;
-    descr->cBlueBits        = pixel_formats[fmt - 1].blue_bits;
-    descr->cBlueShift       = pixel_formats[fmt - 1].blue_shift;
-    descr->cAlphaBits       = pixel_formats[fmt - 1].alpha_bits;
-    descr->cAlphaShift      = pixel_formats[fmt - 1].alpha_shift;
-    descr->cAccumBits       = pixel_formats[fmt - 1].accum_bits;
-    descr->cAccumRedBits    = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumGreenBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumBlueBits   = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cAccumAlphaBits  = pixel_formats[fmt - 1].accum_bits / 4;
-    descr->cDepthBits       = pixel_formats[fmt - 1].depth_bits;
-    descr->cStencilBits     = pixel_formats[fmt - 1].stencil_bits;
-    descr->cAuxBuffers      = 0;
-    descr->iLayerType       = PFD_MAIN_PLANE;
-}
-
 static BOOL osmesa_wglCopyContext( struct wgl_context *src, struct wgl_context *dst, UINT mask )
 {
     FIXME( "not supported yet\n" );
@@ -377,6 +377,19 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
 
 #endif  /* SONAME_LIBOSMESA */
 
+static UINT nulldrv_init_pixel_formats( UINT *onscreen_count )
+{
+    *onscreen_count = ARRAY_SIZE(pixel_formats);
+    return ARRAY_SIZE(pixel_formats);
+}
+
+static BOOL nulldrv_describe_pixel_format( int format, struct wgl_pixel_format *desc )
+{
+    if (format <= 0 || format > ARRAY_SIZE(pixel_formats)) return FALSE;
+    describe_pixel_format( format, &desc->pfd );
+    return TRUE;
+}
+
 static const char *nulldrv_init_wgl_extensions(void)
 {
     return "";
@@ -389,10 +402,13 @@ static BOOL nulldrv_set_pixel_format( HWND hwnd, int old_format, int new_format,
 
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
+    .p_init_pixel_formats = nulldrv_init_pixel_formats,
+    .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
     .p_set_pixel_format = nulldrv_set_pixel_format,
 };
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
+static UINT formats_count, onscreen_count;
 
 static char wgl_extensions[4096];
 
@@ -422,18 +438,13 @@ static int win32u_wglGetPixelFormat( HDC hdc )
     else if ((dc = get_dc_ptr( hdc )))
     {
         BOOL is_display = dc->is_display;
-        UINT total, onscreen;
         ret = dc->pixel_format;
         release_dc_ptr( dc );
 
-        if (is_display && ret >= 0)
-        {
-            /* Offscreen formats can't be used with traditional WGL calls. As has been
-             * verified on Windows GetPixelFormat doesn't fail but returns 1.
-             */
-            display_funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
-            if (ret > onscreen) ret = 1;
-        }
+        /* Offscreen formats can't be used with traditional WGL calls. As has been
+         * verified on Windows GetPixelFormat doesn't fail but returns 1.
+         */
+        if (is_display && ret >= 0 && ret > onscreen_count) ret = 1;
     }
 
     TRACE( "%p/%p -> %d\n", hdc, hwnd, ret );
@@ -481,6 +492,16 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
     return set_dc_pixel_format( hdc, format, TRUE );
 }
 
+static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
+                                      UINT *num_formats, UINT *num_onscreen_formats )
+{
+    UINT i = 0;
+
+    if (formats) while (i < max_formats && driver_funcs->p_describe_pixel_format( i + 1, &formats[i] )) i++;
+    *num_formats = formats_count;
+    *num_onscreen_formats = onscreen_count;
+}
+
 static void memory_funcs_init(void)
 {
     memory_funcs = osmesa_get_wgl_driver();
@@ -500,7 +521,10 @@ static void display_funcs_init(void)
         ERR( "Failed to initialize the driver opengl functions, status %#x\n", status );
         return;
     }
+    if (display_funcs && !(formats_count = driver_funcs->p_init_pixel_formats( &onscreen_count ))) display_funcs = NULL;
     if (!display_funcs) return;
+
+    display_funcs->p_get_pixel_formats = win32u_get_pixel_formats;
 
     strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions() );
     display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
