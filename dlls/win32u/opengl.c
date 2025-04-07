@@ -418,12 +418,37 @@ static BOOL nulldrv_set_pixel_format( HWND hwnd, int old_format, int new_format,
     return TRUE;
 }
 
+static BOOL nulldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                    GLint max_level, GLsizei *width, GLsizei *height, void **private )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_pbuffer_destroy( HDC hdc, void *private )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_pbuffer_updated( HDC hdc, void *private, GLenum cube_face, GLint mipmap_level )
+{
+    return GL_TRUE;
+}
+
+static UINT nulldrv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
+{
+    return -1; /* use default implementation */
+}
+
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
     .p_init_pixel_formats = nulldrv_init_pixel_formats,
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
     .p_set_pixel_format = nulldrv_set_pixel_format,
+    .p_pbuffer_create = nulldrv_pbuffer_create,
+    .p_pbuffer_destroy = nulldrv_pbuffer_destroy,
+    .p_pbuffer_updated = nulldrv_pbuffer_updated,
+    .p_pbuffer_bind = nulldrv_pbuffer_bind,
 };
 static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
 static UINT formats_count, onscreen_count;
@@ -979,20 +1004,17 @@ static void display_funcs_init(void)
     display_funcs->p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     display_funcs->p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
-    if (driver_funcs->p_pbuffer_create)
-    {
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
-        display_funcs->p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
-        display_funcs->p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
-        display_funcs->p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
-        display_funcs->p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
-        display_funcs->p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
+    display_funcs->p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
+    display_funcs->p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
+    display_funcs->p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
+    display_funcs->p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
+    display_funcs->p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
 
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_render_texture" );
-        display_funcs->p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
-        display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
-        display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
-    }
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_render_texture" );
+    display_funcs->p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
+    display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
+    display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
