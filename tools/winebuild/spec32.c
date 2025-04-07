@@ -739,7 +739,7 @@ void output_module( DLLSPEC *spec )
 {
     int machine = 0;
     int i;
-    unsigned int page_size = get_page_size();
+    unsigned int page_size = 0x1000;
     const char *data_dirs[16] = { NULL };
 
     /* Reserve some space for the PE header */
@@ -1304,7 +1304,7 @@ void output_fake_module( DLLSPEC *spec )
     unsigned int i;
 
     resolve_imports( spec );
-    pe.section_align = get_page_size();
+    pe.section_align = 0x1000;
     pe.file_align    = 0x200;
     init_output_buffer();
 
@@ -1373,7 +1373,7 @@ void output_fake_module( DLLSPEC *spec )
  */
 void output_data_module( DLLSPEC *spec )
 {
-    pe.section_align = pe.file_align = get_page_size();
+    pe.section_align = pe.file_align = get_section_alignment();
 
     output_pe_exports( spec );
     if (spec->apiset.count) output_apiset_section( &spec->apiset );

@@ -764,10 +764,17 @@ int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const
 }
 
 
-/* return the page size for the target CPU */
-unsigned int get_page_size(void)
+/* return the section alignment for the target CPU */
+unsigned int get_section_alignment(void)
 {
-    return 0x1000;  /* same on all platforms */
+    switch (target.cpu)
+    {
+    case CPU_ARM64:
+    case CPU_ARM64EC:
+        return 0x10000;
+    default:
+        return 0x1000;
+    }
 }
 
 /* return the total size in bytes of the arguments on the stack */
