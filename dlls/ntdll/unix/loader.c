@@ -154,43 +154,6 @@ const char **system_dll_paths = NULL;
 const char *user_name = NULL;
 SECTION_IMAGE_INFORMATION main_image_info = { NULL };
 
-/* adjust an array of pointers to make them into RVAs */
-static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
-{
-    BYTE **src = array;
-    DWORD *dst = array;
-
-    for ( ; count; count--, src++, dst++) *dst = *src ? *src - base : 0;
-}
-
-/* fixup an array of RVAs by adding the specified delta */
-static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
-{
-    for ( ; count; count--, ptr++) if (*ptr) *ptr += delta;
-}
-
-
-/* fixup an array of name/ordinal RVAs by adding the specified delta */
-static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
-{
-    for ( ; *ptr; ptr++) if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
-}
-
-
-/* fixup RVAs in the resource directory */
-static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
-{
-    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
-    unsigned int i;
-
-    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
-    {
-        void *ptr = root + entry->OffsetToDirectory;
-        if (entry->DataIsDirectory) fixup_so_resources( ptr, root, delta );
-        else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
-    }
-}
-
 /* die on a fatal error; use only during initialization */
 static void fatal_error( const char *err, ... )
 {
@@ -651,6 +614,72 @@ BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG li
 }
 
 
+/* adjust an array of pointers to make them into RVAs */
+static inline void fixup_rva_ptrs( void *array, BYTE *base, unsigned int count )
+{
+    BYTE **src = array;
+    DWORD *dst = array;
+
+    for ( ; count; count--, src++, dst++) *dst = *src ? *src - base : 0;
+}
+
+/* fixup an array of RVAs by adding the specified delta */
+static inline void fixup_rva_dwords( DWORD *ptr, int delta, unsigned int count )
+{
+    for ( ; count; count--, ptr++) if (*ptr) *ptr += delta;
+}
+
+
+/* fixup an array of name/ordinal RVAs by adding the specified delta */
+static inline void fixup_rva_names( UINT_PTR *ptr, int delta )
+{
+    for ( ; *ptr; ptr++) if (!(*ptr & IMAGE_ORDINAL_FLAG)) *ptr += delta;
+}
+
+
+/* fixup RVAs in the resource directory */
+static void fixup_so_resources( IMAGE_RESOURCE_DIRECTORY *dir, BYTE *root, int delta )
+{
+    IMAGE_RESOURCE_DIRECTORY_ENTRY *entry = (IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    unsigned int i;
+
+    for (i = 0; i < dir->NumberOfNamedEntries + dir->NumberOfIdEntries; i++, entry++)
+    {
+        void *ptr = root + entry->OffsetToDirectory;
+        if (entry->DataIsDirectory) fixup_so_resources( ptr, root, delta );
+        else fixup_rva_dwords( &((IMAGE_RESOURCE_DATA_ENTRY *)ptr)->OffsetToData, delta, 1 );
+    }
+}
+
+/***********************************************************************
+ *           fill_builtin_image_info
+ */
+static void fill_builtin_image_info( void *module, struct pe_image_info *info )
+{
+    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
+    const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
+
+    memset( info, 0, sizeof(*info) );
+    info->base            = nt->OptionalHeader.ImageBase;
+    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
+    info->map_size        = nt->OptionalHeader.SizeOfImage;
+    info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
+    info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
+    info->subsystem       = nt->OptionalHeader.Subsystem;
+    info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
+    info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
+    info->osversion_major = nt->OptionalHeader.MajorOperatingSystemVersion;
+    info->osversion_minor = nt->OptionalHeader.MinorOperatingSystemVersion;
+    info->image_charact   = nt->FileHeader.Characteristics;
+    info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
+    info->machine         = nt->FileHeader.Machine;
+    info->contains_code   = TRUE;
+    info->wine_builtin    = TRUE;
+    info->header_size     = nt->OptionalHeader.SizeOfHeaders;
+    info->file_size       = nt->OptionalHeader.SizeOfImage;
+    info->checksum        = nt->OptionalHeader.CheckSum;
+}
+
 /*************************************************************************
  *		map_so_dll
  *
@@ -816,84 +845,6 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
     return STATUS_SUCCESS;
 }
 
-static ULONG_PTR find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports, DWORD ordinal )
-{
-    const DWORD *functions = (const DWORD *)((BYTE *)module + exports->AddressOfFunctions);
-
-    if (ordinal >= exports->NumberOfFunctions) return 0;
-    if (!functions[ordinal]) return 0;
-    return (ULONG_PTR)module + functions[ordinal];
-}
-
-static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
-                                    const char *name )
-{
-    const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
-    const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
-    int min = 0, max = exports->NumberOfNames - 1;
-
-    while (min <= max)
-    {
-        int res, pos = (min + max) / 2;
-        char *ename = (char *)module + names[pos];
-        if (!(res = strcmp( ename, name ))) return find_ordinal_export( module, exports, ordinals[pos] );
-        if (res > 0) max = pos - 1;
-        else min = pos + 1;
-    }
-    return 0;
-}
-
-static inline void *get_rva( void *module, ULONG_PTR addr )
-{
-    return (BYTE *)module + addr;
-}
-
-static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
-{
-    const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
-    const IMAGE_DATA_DIRECTORY *data;
-
-    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
-        data = &((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.DataDirectory[dir];
-    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
-        data = &((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.DataDirectory[dir];
-    else
-        return NULL;
-    if (!data->VirtualAddress || !data->Size) return NULL;
-    if (size) *size = data->Size;
-    return get_rva( module, data->VirtualAddress );
-}
-
-/***********************************************************************
- *           fill_builtin_image_info
- */
-static void fill_builtin_image_info( void *module, struct pe_image_info *info )
-{
-    const IMAGE_DOS_HEADER *dos = (const IMAGE_DOS_HEADER *)module;
-    const IMAGE_NT_HEADERS *nt = (IMAGE_NT_HEADERS *)((const BYTE *)dos + dos->e_lfanew);
-
-    memset( info, 0, sizeof(*info) );
-    info->base            = nt->OptionalHeader.ImageBase;
-    info->entry_point     = nt->OptionalHeader.AddressOfEntryPoint;
-    info->map_size        = nt->OptionalHeader.SizeOfImage;
-    info->stack_size      = nt->OptionalHeader.SizeOfStackReserve;
-    info->stack_commit    = nt->OptionalHeader.SizeOfStackCommit;
-    info->subsystem       = nt->OptionalHeader.Subsystem;
-    info->subsystem_minor = nt->OptionalHeader.MinorSubsystemVersion;
-    info->subsystem_major = nt->OptionalHeader.MajorSubsystemVersion;
-    info->osversion_major = nt->OptionalHeader.MajorOperatingSystemVersion;
-    info->osversion_minor = nt->OptionalHeader.MinorOperatingSystemVersion;
-    info->image_charact   = nt->FileHeader.Characteristics;
-    info->dll_charact     = nt->OptionalHeader.DllCharacteristics;
-    info->machine         = nt->FileHeader.Machine;
-    info->contains_code   = TRUE;
-    info->wine_builtin    = TRUE;
-    info->header_size     = nt->OptionalHeader.SizeOfHeaders;
-    info->file_size       = nt->OptionalHeader.SizeOfImage;
-    info->checksum        = nt->OptionalHeader.CheckSum;
-}
-
-
 /***********************************************************************
  *           dlopen_dll
  */
@@ -984,40 +935,6 @@ static NTSTATUS load_so_dll( void *args )
     return status;
 }
 
-
-static const unixlib_entry_t unix_call_funcs[] =
-{
-    load_so_dll,
-    unwind_builtin_dll,
-    unixcall_wine_dbg_write,
-    unixcall_wine_server_call,
-    unixcall_wine_server_fd_to_handle,
-    unixcall_wine_server_handle_to_fd,
-    unixcall_wine_spawnvp,
-    system_time_precise,
-};
-
-
-#ifdef _WIN64
-
-static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
-static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
-
-const unixlib_entry_t unix_call_wow64_funcs[] =
-{
-    wow64_load_so_dll,
-    wow64_unwind_builtin_dll,
-    wow64_wine_dbg_write,
-    wow64_wine_server_call,
-    wow64_wine_server_fd_to_handle,
-    wow64_wine_server_handle_to_fd,
-    wow64_wine_spawnvp,
-    system_time_precise,
-};
-
-#endif  /* _WIN64 */
-
-
 /* check if the library is the correct architecture */
 /* only returns false for a valid library of the wrong arch */
 static int check_library_arch( int fd )
@@ -1054,6 +971,102 @@ static int check_library_arch( int fd )
     else return header.class == 2; /* ELFCLASS64 */
 #endif
 }
+
+/***********************************************************************
+ *           open_builtin_so_file
+ */
+static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void **module,
+                                      SECTION_IMAGE_INFORMATION *image_info, USHORT search_machine,
+                                      USHORT load_machine, BOOL prefer_native )
+{
+    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    int fd;
+    char *end = name + strlen( name );
+
+    if (search_machine != current_machine) return status;
+    if (load_machine && load_machine != current_machine) return status;
+
+    *module = NULL;
+    strcpy( end, ".so" );
+    if ((fd = open( name, O_RDONLY )) == -1) goto done;
+
+    if (check_library_arch( fd ))
+    {
+        struct pe_image_info info;
+
+        status = dlopen_dll( name, attr->ObjectName, module, &info, prefer_native );
+        if (!status) virtual_fill_image_information( &info, image_info );
+        else if (status != STATUS_IMAGE_ALREADY_LOADED)
+        {
+            ERR( "failed to load .so lib %s\n", debugstr_a(name) );
+            status = STATUS_PROCEDURE_NOT_FOUND;
+        }
+    }
+    else status = STATUS_NOT_SUPPORTED;
+
+    close( fd );
+ done:
+    *end = 0;
+    return status;
+}
+
+/***********************************************************************
+ *           open_main_image_so_file
+ */
+static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
+                                         SECTION_IMAGE_INFORMATION *image_info )
+{
+    struct pe_image_info pe_info;
+    NTSTATUS status;
+
+    /* remove .so extension from Windows name */
+    if (nt_name->Length > 3 * sizeof(WCHAR))
+    {
+        static const WCHAR soW[] = {'.','s','o',0};
+        WCHAR *p = nt_name->Buffer + nt_name->Length / sizeof(WCHAR);
+        if (!wcsicmp( p - 3, soW ))
+        {
+            p[-3] = 0;
+            nt_name->Length -= 3 * sizeof(WCHAR);
+        }
+    }
+    status = dlopen_dll( name, nt_name, module, &pe_info, FALSE );
+    if (!status) virtual_fill_image_information( &pe_info, image_info );
+    return status;
+}
+
+static const unixlib_entry_t unix_call_funcs[] =
+{
+    load_so_dll,
+    unwind_builtin_dll,
+    unixcall_wine_dbg_write,
+    unixcall_wine_server_call,
+    unixcall_wine_server_fd_to_handle,
+    unixcall_wine_server_handle_to_fd,
+    unixcall_wine_spawnvp,
+    system_time_precise,
+};
+
+
+#ifdef _WIN64
+
+static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
+static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
+
+const unixlib_entry_t unix_call_wow64_funcs[] =
+{
+    wow64_load_so_dll,
+    wow64_unwind_builtin_dll,
+    wow64_wine_dbg_write,
+    wow64_wine_server_call,
+    wow64_wine_server_fd_to_handle,
+    wow64_wine_server_handle_to_fd,
+    wow64_wine_spawnvp,
+    system_time_precise,
+};
+
+#endif  /* _WIN64 */
+
 
 static inline char *prepend( char *buffer, const char *str, size_t len )
 {
@@ -1131,70 +1144,6 @@ static NTSTATUS open_builtin_pe_file( const char *name, OBJECT_ATTRIBUTES *attr,
     return status;
 }
 
-
-/***********************************************************************
- *           open_builtin_so_file
- */
-static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void **module,
-                                      SECTION_IMAGE_INFORMATION *image_info, USHORT search_machine,
-                                      USHORT load_machine, BOOL prefer_native )
-{
-    NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    int fd;
-    char *end = name + strlen( name );
-
-    if (search_machine != current_machine) return status;
-    if (load_machine && load_machine != current_machine) return status;
-
-    *module = NULL;
-    strcpy( end, ".so" );
-    if ((fd = open( name, O_RDONLY )) == -1) goto done;
-
-    if (check_library_arch( fd ))
-    {
-        struct pe_image_info info;
-
-        status = dlopen_dll( name, attr->ObjectName, module, &info, prefer_native );
-        if (!status) virtual_fill_image_information( &info, image_info );
-        else if (status != STATUS_IMAGE_ALREADY_LOADED)
-        {
-            ERR( "failed to load .so lib %s\n", debugstr_a(name) );
-            status = STATUS_PROCEDURE_NOT_FOUND;
-        }
-    }
-    else status = STATUS_NOT_SUPPORTED;
-
-    close( fd );
- done:
-    *end = 0;
-    return status;
-}
-
-
-/***********************************************************************
- *           open_main_image_so_file
- */
-static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
-                                         SECTION_IMAGE_INFORMATION *image_info )
-{
-    struct pe_image_info pe_info;
-    NTSTATUS status;
-
-    /* remove .so extension from Windows name */
-    if (nt_name->Length > 3 * sizeof(WCHAR))
-    {
-        static const WCHAR soW[] = {'.','s','o',0};
-        WCHAR *p = nt_name->Buffer + nt_name->Length / sizeof(WCHAR);
-        if (!wcsicmp( p - 3, soW ))
-        {
-            p[-3] = 0;
-            nt_name->Length -= 3 * sizeof(WCHAR);
-        }
-    }
-    status = dlopen_dll( name, nt_name, module, &pe_info, FALSE );
-    if (!status) virtual_fill_image_information( &pe_info, image_info );
-    return status;
-}
 
 /***********************************************************************
  *           find_builtin_dll
@@ -1539,6 +1488,53 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
     return status;
 }
 
+static ULONG_PTR find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports, DWORD ordinal )
+{
+    const DWORD *functions = (const DWORD *)((BYTE *)module + exports->AddressOfFunctions);
+
+    if (ordinal >= exports->NumberOfFunctions) return 0;
+    if (!functions[ordinal]) return 0;
+    return (ULONG_PTR)module + functions[ordinal];
+}
+
+static ULONG_PTR find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
+                                    const char *name )
+{
+    const WORD *ordinals = (const WORD *)((BYTE *)module + exports->AddressOfNameOrdinals);
+    const DWORD *names = (const DWORD *)((BYTE *)module + exports->AddressOfNames);
+    int min = 0, max = exports->NumberOfNames - 1;
+
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        char *ename = (char *)module + names[pos];
+        if (!(res = strcmp( ename, name ))) return find_ordinal_export( module, exports, ordinals[pos] );
+        if (res > 0) max = pos - 1;
+        else min = pos + 1;
+    }
+    return 0;
+}
+
+static inline void *get_rva( void *module, ULONG_PTR addr )
+{
+    return (BYTE *)module + addr;
+}
+
+static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
+{
+    const IMAGE_NT_HEADERS *nt = get_rva( module, ((IMAGE_DOS_HEADER *)module)->e_lfanew );
+    const IMAGE_DATA_DIRECTORY *data;
+
+    if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+        data = &((const IMAGE_NT_HEADERS64 *)nt)->OptionalHeader.DataDirectory[dir];
+    else if (nt->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+        data = &((const IMAGE_NT_HEADERS32 *)nt)->OptionalHeader.DataDirectory[dir];
+    else
+        return NULL;
+    if (!data->VirtualAddress || !data->Size) return NULL;
+    if (size) *size = data->Size;
+    return get_rva( module, data->VirtualAddress );
+}
 
 /***********************************************************************
  *           load_ntdll_functions
