@@ -88,8 +88,6 @@ static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 static CFMutableDictionaryRef dc_pbuffers;
 static pthread_mutex_t dc_pbuffers_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-
-static struct opengl_funcs opengl_funcs;
 static const struct opengl_driver_funcs macdrv_driver_funcs;
 
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
@@ -2778,7 +2776,7 @@ static const char *macdrv_init_wgl_extensions(struct opengl_funcs *funcs)
 /**********************************************************************
  *              macdrv_OpenGLInit
  */
-UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
+UINT macdrv_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     TRACE("()\n");
 
@@ -2824,7 +2822,6 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
         LOAD_FUNCPTR(glFlushRenderAPPLE);
 #undef LOAD_FUNCPTR
 
-    *funcs = &opengl_funcs;
     *driver_funcs = &macdrv_driver_funcs;
     return STATUS_SUCCESS;
 

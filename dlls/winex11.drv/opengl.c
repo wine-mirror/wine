@@ -261,8 +261,6 @@ static pthread_mutex_t context_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const BOOL is_win64 = sizeof(void *) > sizeof(int);
 
-static struct opengl_funcs opengl_funcs;
-
 static BOOL glxRequireVersion(int requiredVersion);
 
 static void dump_PIXELFORMATDESCRIPTOR(const PIXELFORMATDESCRIPTOR *ppfd) {
@@ -502,7 +500,7 @@ static const struct opengl_driver_funcs x11drv_driver_funcs;
 /**********************************************************************
  *           X11DRV_OpenglInit
  */
-UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
+UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     int error_base, event_base;
 
@@ -680,7 +678,6 @@ UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct 
         pglXSwapBuffersMscOML = pglXGetProcAddressARB( (const GLubyte *)"glXSwapBuffersMscOML" );
     }
 
-    *funcs = &opengl_funcs;
     *driver_funcs = &x11drv_driver_funcs;
     return STATUS_SUCCESS;
 
@@ -2099,7 +2096,7 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
 /**********************************************************************
  *           X11DRV_OpenglInit
  */
-UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
+UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     return STATUS_NOT_IMPLEMENTED;
 }

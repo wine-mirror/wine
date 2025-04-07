@@ -70,9 +70,8 @@ struct wgl_pbuffer
 };
 
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
-static struct opengl_funcs null_memory_funcs, null_display_funcs;
-static struct opengl_funcs *display_funcs = &null_display_funcs;
-static struct opengl_funcs *memory_funcs = &null_memory_funcs;
+static struct opengl_funcs display_funcs;
+static struct opengl_funcs memory_funcs;
 
 static PFN_glFinish p_memory_glFinish, p_display_glFinish;
 static PFN_glFlush p_memory_glFlush, p_display_glFlush;
@@ -194,7 +193,6 @@ struct osmesa_context
     UINT          format;
 };
 
-static struct opengl_funcs osmesa_opengl_funcs;
 static const struct opengl_driver_funcs osmesa_driver_funcs;
 
 static OSMesaContext (*pOSMesaCreateContextExt)( GLenum format, GLint depthBits, GLint stencilBits,
@@ -206,7 +204,7 @@ static GLboolean (*pOSMesaMakeCurrent)( OSMesaContext ctx, void *buffer, GLenum 
 static void (*pOSMesaPixelStore)( GLint pname, GLint value );
 static void describe_pixel_format( int fmt, PIXELFORMATDESCRIPTOR *descr );
 
-static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
+static BOOL osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
 {
     static void *osmesa_handle;
 
@@ -214,7 +212,7 @@ static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_fu
     if (osmesa_handle == NULL)
     {
         ERR( "Failed to load OSMesa: %s\n", dlerror() );
-        return NULL;
+        return FALSE;
     }
 
 #define LOAD_FUNCPTR(f) do if (!(p##f = dlsym( osmesa_handle, #f ))) \
@@ -231,12 +229,12 @@ static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_fu
 #undef LOAD_FUNCPTR
 
     *driver_funcs = &osmesa_driver_funcs;
-    return &osmesa_opengl_funcs;
+    return TRUE;
 
 failed:
     dlclose( osmesa_handle );
     osmesa_handle = NULL;
-    return NULL;
+    return FALSE;
 }
 
 static const char *osmesa_init_wgl_extensions( struct opengl_funcs *funcs )
@@ -409,9 +407,9 @@ static const struct opengl_driver_funcs osmesa_driver_funcs =
 
 #else  /* SONAME_LIBOSMESA */
 
-static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
+static BOOL osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
 {
-    return NULL;
+    return FALSE;
 }
 
 #endif  /* SONAME_LIBOSMESA */
@@ -671,14 +669,14 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
     }
 
     if (!(funcs = get_dc_funcs( hdc, NULL ))) return NULL;
-    driver_funcs = funcs == display_funcs ? display_driver_funcs : memory_driver_funcs;
+    driver_funcs = funcs == &display_funcs ? display_driver_funcs : memory_driver_funcs;
 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
     context->driver_funcs = driver_funcs;
     context->funcs = funcs;
     context->pixel_format = format;
-    context->p_glFinish = funcs == display_funcs ? p_display_glFinish : p_memory_glFinish;
-    context->p_glFlush = funcs == display_funcs ? p_display_glFlush : p_memory_glFlush;
+    context->p_glFinish = funcs == &display_funcs ? p_display_glFinish : p_memory_glFinish;
+    context->p_glFlush = funcs == &display_funcs ? p_display_glFlush : p_memory_glFlush;
 
     if (!driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
     {
@@ -809,7 +807,7 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         return NULL;
     }
     NtGdiSetPixelFormat( pbuffer->hdc, format );
-    pbuffer->driver_funcs = funcs == display_funcs ? display_driver_funcs : memory_driver_funcs;
+    pbuffer->driver_funcs = funcs == &display_funcs ? display_driver_funcs : memory_driver_funcs;
     pbuffer->funcs = funcs;
     pbuffer->width = width;
     pbuffer->height = height;
@@ -1237,7 +1235,7 @@ static BOOL win32u_wglSwapBuffers( HDC hdc )
         RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
         return FALSE;
     }
-    driver_funcs = funcs == display_funcs ? display_driver_funcs : memory_driver_funcs;
+    driver_funcs = funcs == &display_funcs ? display_driver_funcs : memory_driver_funcs;
 
     if (!(hwnd = NtUserWindowFromDC( hdc ))) interval = 0;
     else interval = get_window_swap_interval( hwnd );
@@ -1327,25 +1325,25 @@ static void memory_funcs_init(void)
     if (!osmesa_get_wgl_driver( &memory_driver_funcs )) WARN( "Failed to initialize OSMesa functions\n" );
 
     memory_formats_count = memory_driver_funcs->p_init_pixel_formats( &memory_onscreen_count );
-    init_opengl_funcs( memory_funcs, memory_driver_funcs );
+    init_opengl_funcs( &memory_funcs, memory_driver_funcs );
 
-    memory_funcs->p_wglGetProcAddress = win32u_memory_wglGetProcAddress;
-    memory_funcs->p_get_pixel_formats = win32u_memory_get_pixel_formats;
+    memory_funcs.p_wglGetProcAddress = win32u_memory_wglGetProcAddress;
+    memory_funcs.p_get_pixel_formats = win32u_memory_get_pixel_formats;
 
-    memory_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
-    memory_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
+    memory_funcs.p_wglGetPixelFormat = win32u_wglGetPixelFormat;
+    memory_funcs.p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
-    memory_funcs->p_wglCreateContext = win32u_wglCreateContext;
-    memory_funcs->p_wglDeleteContext = win32u_wglDeleteContext;
-    memory_funcs->p_wglCopyContext = win32u_wglCopyContext;
-    memory_funcs->p_wglShareLists = win32u_wglShareLists;
-    memory_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
+    memory_funcs.p_wglCreateContext = win32u_wglCreateContext;
+    memory_funcs.p_wglDeleteContext = win32u_wglDeleteContext;
+    memory_funcs.p_wglCopyContext = win32u_wglCopyContext;
+    memory_funcs.p_wglShareLists = win32u_wglShareLists;
+    memory_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
 
-    memory_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
-    p_memory_glFinish = memory_funcs->p_glFinish;
-    memory_funcs->p_glFinish = win32u_glFinish;
-    p_memory_glFlush = memory_funcs->p_glFlush;
-    memory_funcs->p_glFlush = win32u_glFlush;
+    memory_funcs.p_wglSwapBuffers = win32u_wglSwapBuffers;
+    p_memory_glFinish = memory_funcs.p_glFinish;
+    memory_funcs.p_glFinish = win32u_glFinish;
+    p_memory_glFlush = memory_funcs.p_glFlush;
+    memory_funcs.p_glFlush = win32u_glFlush;
 }
 
 static void display_funcs_init(void)
@@ -1356,69 +1354,69 @@ static void display_funcs_init(void)
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
 
     display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count );
-    init_opengl_funcs( display_funcs, display_driver_funcs );
+    init_opengl_funcs( &display_funcs, display_driver_funcs );
 
-    display_funcs->p_wglGetProcAddress = win32u_display_wglGetProcAddress;
-    display_funcs->p_get_pixel_formats = win32u_display_get_pixel_formats;
+    display_funcs.p_wglGetProcAddress = win32u_display_wglGetProcAddress;
+    display_funcs.p_get_pixel_formats = win32u_display_get_pixel_formats;
 
-    strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions( display_funcs ) );
-    display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
-    display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
+    strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions( &display_funcs ) );
+    display_funcs.p_wglGetPixelFormat = win32u_wglGetPixelFormat;
+    display_funcs.p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
-    display_funcs->p_wglCreateContext = win32u_wglCreateContext;
-    display_funcs->p_wglDeleteContext = win32u_wglDeleteContext;
-    display_funcs->p_wglCopyContext = win32u_wglCopyContext;
-    display_funcs->p_wglShareLists = win32u_wglShareLists;
-    display_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
+    display_funcs.p_wglCreateContext = win32u_wglCreateContext;
+    display_funcs.p_wglDeleteContext = win32u_wglDeleteContext;
+    display_funcs.p_wglCopyContext = win32u_wglCopyContext;
+    display_funcs.p_wglShareLists = win32u_wglShareLists;
+    display_funcs.p_wglMakeCurrent = win32u_wglMakeCurrent;
 
-    display_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
-    p_display_glFinish = display_funcs->p_glFinish;
-    display_funcs->p_glFinish = win32u_glFinish;
-    p_display_glFlush = display_funcs->p_glFlush;
-    display_funcs->p_glFlush = win32u_glFlush;
+    display_funcs.p_wglSwapBuffers = win32u_wglSwapBuffers;
+    p_display_glFinish = display_funcs.p_glFinish;
+    display_funcs.p_glFinish = win32u_glFinish;
+    p_display_glFlush = display_funcs.p_glFlush;
+    display_funcs.p_glFlush = win32u_glFlush;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
-    display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
+    display_funcs.p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_extensions_string" );
-    display_funcs->p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
+    display_funcs.p_wglGetExtensionsStringEXT = win32u_wglGetExtensionsStringEXT;
 
     /* In WineD3D we need the ability to set the pixel format more than once (e.g. after a device reset).
      * The default wglSetPixelFormat doesn't allow this, so add our own which allows it.
      */
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_WINE_pixel_format_passthrough" );
-    display_funcs->p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
+    display_funcs.p_wglSetPixelFormatWINE = win32u_wglSetPixelFormatWINE;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pixel_format" );
-    display_funcs->p_wglChoosePixelFormatARB      = (void *)1; /* never called */
-    display_funcs->p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    display_funcs->p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+    display_funcs.p_wglChoosePixelFormatARB      = (void *)1; /* never called */
+    display_funcs.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
+    display_funcs.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_no_error" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_create_context_profile" );
-    display_funcs->p_wglCreateContextAttribsARB = win32u_wglCreateContextAttribsARB;
+    display_funcs.p_wglCreateContextAttribsARB = win32u_wglCreateContextAttribsARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_make_current_read" );
-    display_funcs->p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
-    display_funcs->p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
+    display_funcs.p_wglGetCurrentReadDCARB   = (void *)1;  /* never called */
+    display_funcs.p_wglMakeContextCurrentARB = win32u_wglMakeContextCurrentARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
-    display_funcs->p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
-    display_funcs->p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
-    display_funcs->p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
-    display_funcs->p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
-    display_funcs->p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
+    display_funcs.p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
+    display_funcs.p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
+    display_funcs.p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
+    display_funcs.p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
+    display_funcs.p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_render_texture" );
-    display_funcs->p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
-    display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
-    display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
+    display_funcs.p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
+    display_funcs.p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
+    display_funcs.p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
 
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control" );
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
-    display_funcs->p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
-    display_funcs->p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
+    display_funcs.p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
+    display_funcs.p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 }
 
 static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs )
@@ -1437,13 +1435,13 @@ static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_fun
     {
         static pthread_once_t display_init_once = PTHREAD_ONCE_INIT;
         pthread_once( &display_init_once, display_funcs_init );
-        return display_funcs;
+        return &display_funcs;
     }
     if (is_memdc)
     {
         static pthread_once_t memory_init_once = PTHREAD_ONCE_INIT;
         pthread_once( &memory_init_once, memory_funcs_init );
-        return memory_funcs;
+        return &memory_funcs;
     }
     return NULL;
 }

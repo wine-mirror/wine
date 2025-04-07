@@ -51,7 +51,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 #endif
 
 static void *egl_handle;
-static struct opengl_funcs opengl_funcs;
 static EGLDisplay egl_display;
 static char wgl_extensions[4096];
 static EGLConfig *egl_configs;
@@ -900,7 +899,7 @@ static const struct opengl_driver_funcs wayland_driver_funcs =
 /**********************************************************************
  *           WAYLAND_OpenGLInit
  */
-UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
+UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     EGLint egl_version[2];
     const char *egl_client_exts, *egl_exts;
@@ -990,7 +989,6 @@ UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct 
     has_egl_ext_pixel_format_float = has_extension(egl_exts, "EGL_EXT_pixel_format_float");
 
     if (!init_opengl_funcs()) goto err;
-    *funcs = &opengl_funcs;
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
 
@@ -1024,7 +1022,7 @@ void wayland_resize_gl_drawable(HWND hwnd)
 
 #else /* No GL */
 
-UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
+UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     return STATUS_NOT_IMPLEMENTED;
 }

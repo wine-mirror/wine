@@ -100,7 +100,6 @@ static struct egl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 static EGLDisplay display;
 static char wgl_extensions[4096];
-static struct opengl_funcs egl_funcs;
 
 static struct list gl_contexts = LIST_INIT( gl_contexts );
 static struct list gl_drawables = LIST_INIT( gl_drawables );
@@ -514,7 +513,7 @@ static const struct opengl_driver_funcs android_driver_funcs =
 /**********************************************************************
  *           ANDROID_OpenGLInit
  */
-UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs )
+UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
     EGLint major, minor;
 
@@ -557,9 +556,6 @@ UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct
     if (!p_eglInitialize( display, &major, &minor )) return 0;
     TRACE( "display %p version %u.%u\n", display, major, minor );
 
-    *funcs = &egl_funcs;
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;
 }
-
-static struct opengl_funcs egl_funcs;
