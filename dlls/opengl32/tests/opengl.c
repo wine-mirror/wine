@@ -219,28 +219,22 @@ static void test_pbuffers( HDC old_hdc )
     if (pbuffer) pwglDestroyPbufferARB( pbuffer );
     SetLastError( 0xdeadbeef );
     pbuffer = pwglCreatePbufferARB( hdc, formats[0], 0, 100, pbuffer_attribs );
-    todo_wine ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
-    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %lu\n", GetLastError() );
+    ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
+    ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %lu\n", GetLastError() );
     if (pbuffer) pwglDestroyPbufferARB( pbuffer );
-    if (!winetest_platform_is_wine) /* triggers a BadAlloc */
-    {
     SetLastError( 0xdeadbeef );
     pbuffer = pwglCreatePbufferARB( hdc, formats[0], -1, 100, pbuffer_attribs );
     ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
     ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %lu\n", GetLastError() );
-    }
     SetLastError( 0xdeadbeef );
     pbuffer = pwglCreatePbufferARB( hdc, formats[0], 100, 0, pbuffer_attribs );
-    todo_wine ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
-    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %lu\n", GetLastError() );
+    ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
+    ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %lu\n", GetLastError() );
     if (pbuffer) pwglDestroyPbufferARB( pbuffer );
-    if (!winetest_platform_is_wine) /* triggers a BadAlloc */
-    {
     SetLastError( 0xdeadbeef );
     pbuffer = pwglCreatePbufferARB( hdc, formats[0], 100, -1, pbuffer_attribs );
     ok( !pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
     ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA, "got %#lx\n", GetLastError() );
-    }
     pbuffer = pwglCreatePbufferARB( hdc, formats[0], 100, 100, NULL );
     ok( !!pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
     pwglDestroyPbufferARB( pbuffer );
@@ -270,29 +264,29 @@ static void test_pbuffers( HDC old_hdc )
 
     /* wglGetPbufferDCARB returns the same DC every time */
     tmp_dc = pwglGetPbufferDCARB( pbuffer );
-    todo_wine ok( tmp_dc == pbuffer_dc, "got %p\n", tmp_dc );
+    ok( tmp_dc == pbuffer_dc, "got %p\n", tmp_dc );
 
     /* releasing the wrong DC returns an error */
     SetLastError( 0xdeadbeef );
     ret = pwglReleasePbufferDCARB( pbuffer, hdc );
     ok( ret == 0, "got %u\n", ret );
-    todo_wine ok( (GetLastError() & 0xffff) == ERROR_DC_NOT_FOUND, "got %#lx\n", GetLastError() );
+    ok( (GetLastError() & 0xffff) == ERROR_DC_NOT_FOUND, "got %#lx\n", GetLastError() );
 
     ret = pwglReleasePbufferDCARB( pbuffer, pbuffer_dc );
     ok( ret == 1, "got %u\n", ret );
     /* releasing the DC more than once may return an error */
     SetLastError( 0xdeadbeef );
     ret = pwglReleasePbufferDCARB( pbuffer, pbuffer_dc );
-    todo_wine ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
     if (!ret) todo_wine ok( (GetLastError() & 0xffff) == ERROR_DC_NOT_FOUND, "got %#lx\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = pwglReleasePbufferDCARB( pbuffer, pbuffer_dc );
-    todo_wine ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
     if (!ret) todo_wine ok( (GetLastError() & 0xffff) == ERROR_DC_NOT_FOUND, "got %#lx\n", GetLastError() );
 
     tmp_dc = pwglGetPbufferDCARB( pbuffer );
     if (!ret) ok( tmp_dc != pbuffer_dc, "got %p\n", tmp_dc );
-    else todo_wine ok( tmp_dc == pbuffer_dc, "got %p\n", tmp_dc );
+    else ok( tmp_dc == pbuffer_dc, "got %p\n", tmp_dc );
     ret = pwglReleasePbufferDCARB( pbuffer, tmp_dc );
     ok( ret == 1, "got %u\n", ret );
 

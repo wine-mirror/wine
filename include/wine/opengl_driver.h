@@ -117,6 +117,9 @@ struct opengl_driver_funcs
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     const char *(*p_init_wgl_extensions)(void);
     BOOL (*p_set_pixel_format)(HWND,int,int,BOOL);
+
+    BOOL (*p_pbuffer_create)(HDC,int,BOOL,GLsizei*,GLsizei*,void **);
+    BOOL (*p_pbuffer_destroy)(HDC,void*);
 };
 
 #endif /* WINE_UNIX_LIB */

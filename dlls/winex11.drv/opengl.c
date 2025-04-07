@@ -236,20 +236,6 @@ struct gl_drawable
     HDC                            hdc_dst;
 };
 
-struct wgl_pbuffer
-{
-    struct gl_drawable *gl;
-    const struct glx_pixel_format* fmt;
-    int        width;
-    int        height;
-    int        pixel_format;
-    GLint      texture_format;
-    GLuint     texture_target;
-    GLXContext tmp_context;
-    GLXContext prev_context;
-    struct list entry;
-};
-
 enum glx_swap_control_method
 {
     GLX_SWAP_CONTROL_NONE,
@@ -264,7 +250,6 @@ static XContext gl_hwnd_context;
 static XContext gl_pbuffer_context;
 
 static struct list context_list = LIST_INIT( context_list );
-static struct list pbuffer_list = LIST_INIT( pbuffer_list );
 static struct glx_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
 
@@ -1592,19 +1577,10 @@ static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
  */
 static BOOL glxdrv_wglDeleteContext(struct wgl_context *ctx)
 {
-    struct wgl_pbuffer *pb;
-
     TRACE("(%p)\n", ctx);
 
     pthread_mutex_lock( &context_mutex );
     list_remove( &ctx->entry );
-    LIST_FOR_EACH_ENTRY( pb, &pbuffer_list, struct wgl_pbuffer, entry )
-    {
-        if (pb->prev_context == ctx->ctx) {
-            pglXDestroyContext(gdi_display, pb->tmp_context);
-            pb->prev_context = pb->tmp_context = NULL;
-        }
-    }
     pthread_mutex_unlock( &context_mutex );
 
     if (ctx->ctx) pglXDestroyContext( gdi_display, ctx->ctx );
@@ -1964,409 +1940,69 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
     return ret;
 }
 
-/**
- * X11DRV_wglCreatePbufferARB
- *
- * WGL_ARB_pbuffer: wglCreatePbufferARB
- */
-static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int format, int width, int height,
-                                                       const int *attribs )
+static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, int *width, int *height, void **private )
 {
-    int glx_attribs[256], count = 0, value;
     const struct glx_pixel_format *fmt;
-    struct wgl_pbuffer *object;
+    int glx_attribs[7], count = 0;
+    struct gl_drawable *surface;
+    RECT rect;
 
-    TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
+    TRACE( "hdc %p, format %d, largest %u, width %d, height %d, private %p\n", hdc, format, largest, *width, *height, private );
 
     /* Convert the WGL pixelformat to a GLX format, if it fails then the format is invalid */
     if (!(fmt = get_pixel_format( gdi_display, format, TRUE /* Offscreen */ )))
     {
         ERR( "(%p): invalid pixel format %d\n", hdc, format );
-        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
-        return NULL;
+        return FALSE;
     }
-
-    if (!(object = calloc( 1, sizeof(*object) )))
-    {
-        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
-        return NULL;
-    }
-    object->width = width;
-    object->height = height;
-    object->pixel_format = format;
-    object->fmt = fmt;
 
     glx_attribs[count++] = GLX_PBUFFER_WIDTH;
-    glx_attribs[count++] = width;
+    glx_attribs[count++] = *width;
     glx_attribs[count++] = GLX_PBUFFER_HEIGHT;
-    glx_attribs[count++] = height;
-
-    while (attribs && 0 != *attribs)
+    glx_attribs[count++] = *height;
+    if (largest)
     {
-        switch (*attribs)
-        {
-        case WGL_PBUFFER_LARGEST_ARB:
-            ++attribs;
-            value = *attribs;
-            TRACE( "WGL_LARGEST_PBUFFER_ARB = %d\n", value );
-            glx_attribs[count++] = GLX_LARGEST_PBUFFER;
-            glx_attribs[count++] = value;
-            break;
-
-        case WGL_TEXTURE_FORMAT_ARB:
-            ++attribs;
-            value = *attribs;
-            TRACE( "WGL_render_texture Attribute: WGL_TEXTURE_FORMAT_ARB as %x\n", value );
-            switch (value)
-            {
-            case WGL_NO_TEXTURE_ARB:
-                object->texture_format = 0;
-                break;
-            case WGL_TEXTURE_RGB_ARB:
-                object->texture_format = GL_RGB;
-                break;
-            case WGL_TEXTURE_RGBA_ARB:
-                object->texture_format = GL_RGBA;
-                break;
-            /* WGL_FLOAT_COMPONENTS_NV */
-            case WGL_TEXTURE_FLOAT_R_NV:
-                object->texture_format = GL_FLOAT_R_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RG_NV:
-                object->texture_format = GL_FLOAT_RG_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RGB_NV:
-                object->texture_format = GL_FLOAT_RGB_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RGBA_NV:
-                object->texture_format = GL_FLOAT_RGBA_NV;
-                break;
-            default:
-                ERR( "Unknown texture format: %x\n", value );
-                RtlSetLastWin32Error( ERROR_INVALID_DATA );
-                goto create_failed;
-            }
-            break;
-
-        case WGL_TEXTURE_TARGET_ARB:
-            ++attribs;
-            value = *attribs;
-            TRACE( "WGL_render_texture Attribute: WGL_TEXTURE_TARGET_ARB as %x\n", value );
-            switch (value)
-            {
-            case WGL_NO_TEXTURE_ARB:
-                object->texture_target = 0;
-                break;
-            case WGL_TEXTURE_CUBE_MAP_ARB:
-                if (width != height)
-                {
-                    RtlSetLastWin32Error( ERROR_INVALID_DATA );
-                    goto create_failed;
-                }
-                object->texture_target = GL_TEXTURE_CUBE_MAP;
-                break;
-            case WGL_TEXTURE_1D_ARB:
-                if (1 != height)
-                {
-                    RtlSetLastWin32Error( ERROR_INVALID_DATA );
-                    goto create_failed;
-                }
-                object->texture_target = GL_TEXTURE_1D;
-                break;
-            case WGL_TEXTURE_2D_ARB:
-                object->texture_target = GL_TEXTURE_2D;
-                break;
-            case WGL_TEXTURE_RECTANGLE_NV:
-                object->texture_target = GL_TEXTURE_RECTANGLE_NV;
-                break;
-            default:
-                ERR( "Unknown texture target: %x\n", value );
-                RtlSetLastWin32Error( ERROR_INVALID_DATA );
-                goto create_failed;
-            }
-            break;
-
-        case WGL_MIPMAP_TEXTURE_ARB:
-            ++attribs;
-            value = *attribs;
-            TRACE( "WGL_render_texture Attribute: WGL_MIPMAP_TEXTURE_ARB as %x\n", value );
-            break;
-        }
-        ++attribs;
+        glx_attribs[count++] = GLX_LARGEST_PBUFFER;
+        glx_attribs[count++] = 1;
     }
     glx_attribs[count++] = 0;
 
-    if (!(object->gl = calloc( 1, sizeof(*object->gl) )))
+    if (!(surface = calloc( 1, sizeof(*surface) ))) return FALSE;
+    surface->type = DC_GL_PBUFFER;
+    surface->format = fmt;
+    surface->ref = 1;
+
+    surface->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
+    TRACE( "new Pbuffer drawable as %p (%lx)\n", surface, surface->drawable );
+    if (!surface->drawable)
     {
-        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
-        goto create_failed;
+        free( surface );
+        return FALSE;
     }
-    object->gl->type = DC_GL_PBUFFER;
-    object->gl->format = object->fmt;
-    object->gl->ref = 1;
-
-    object->gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
-    TRACE( "new Pbuffer drawable as %p (%lx)\n", object->gl, object->gl->drawable );
-    if (!object->gl->drawable)
-    {
-        free( object->gl );
-        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
-        goto create_failed; /* unexpected error */
-    }
-    pthread_mutex_lock( &context_mutex );
-    list_add_head( &pbuffer_list, &object->entry );
-    pthread_mutex_unlock( &context_mutex );
-    TRACE( "->(%p)\n", object );
-    return object;
-
-create_failed:
-    free( object );
-    TRACE( "->(FAILED)\n" );
-    return NULL;
-}
-
-/**
- * X11DRV_wglDestroyPbufferARB
- *
- * WGL_ARB_pbuffer: wglDestroyPbufferARB
- */
-static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
-{
-    TRACE("(%p)\n", object);
+    pglXQueryDrawable( gdi_display, surface->drawable, GLX_WIDTH, (unsigned int *)width );
+    pglXQueryDrawable( gdi_display, surface->drawable, GLX_HEIGHT, (unsigned int *)height );
+    SetRect( &rect, 0, 0, *width, *height );
+    set_dc_drawable( hdc, surface->drawable, &rect, IncludeInferiors );
 
     pthread_mutex_lock( &context_mutex );
-    list_remove( &object->entry );
+    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)surface );
     pthread_mutex_unlock( &context_mutex );
-    release_gl_drawable( object->gl );
-    if (object->tmp_context)
-        pglXDestroyContext(gdi_display, object->tmp_context);
-    free( object );
-    return GL_TRUE;
+
+    *private = surface;
+    return TRUE;
 }
 
-/**
- * X11DRV_wglGetPbufferDCARB
- *
- * WGL_ARB_pbuffer: wglGetPbufferDCARB
- */
-static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
+static BOOL x11drv_pbuffer_destroy( HDC hdc, void *private )
 {
-    struct x11drv_escape_set_drawable escape;
-    struct gl_drawable *prev;
-    HDC hdc;
+    struct gl_drawable *surface = private;
 
-    hdc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
-    if (!hdc) return 0;
+    TRACE( "hdc %p, private %p\n", hdc, surface );
 
     pthread_mutex_lock( &context_mutex );
-    if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&prev ))
-        release_gl_drawable( prev );
-    grab_gl_drawable( object->gl );
-    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)object->gl );
+    XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
     pthread_mutex_unlock( &context_mutex );
+    release_gl_drawable( surface );
 
-    escape.code = X11DRV_SET_DRAWABLE;
-    escape.drawable = object->gl->drawable;
-    escape.mode = IncludeInferiors;
-    SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
-    escape.visual = default_visual;
-    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
-
-    NtGdiSetPixelFormat( hdc, object->pixel_format );
-    TRACE( "(%p)->(%p)\n", object, hdc );
-    return hdc;
-}
-
-/**
- * X11DRV_wglQueryPbufferARB
- *
- * WGL_ARB_pbuffer: wglQueryPbufferARB
- */
-static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int attrib, int *value )
-{
-    TRACE( "(%p, 0x%x, %p)\n", object, attrib, value );
-
-    switch (attrib)
-    {
-    case WGL_PBUFFER_WIDTH_ARB:
-        pglXQueryDrawable( gdi_display, object->gl->drawable, GLX_WIDTH, (unsigned int *)value );
-        break;
-    case WGL_PBUFFER_HEIGHT_ARB:
-        pglXQueryDrawable( gdi_display, object->gl->drawable, GLX_HEIGHT, (unsigned int *)value );
-        break;
-
-    case WGL_PBUFFER_LOST_ARB:
-        /* GLX Pbuffers cannot be lost by default. We can support this by
-         * setting GLX_PRESERVED_CONTENTS to False and using glXSelectEvent
-         * to receive pixel buffer clobber events, however that may or may
-         * not give any benefit */
-        *value = GL_FALSE;
-        break;
-
-    case WGL_TEXTURE_FORMAT_ARB:
-        switch (object->texture_format)
-        {
-        case 0: *value = WGL_NO_TEXTURE_ARB; break;
-        case GL_RGB: *value = WGL_TEXTURE_RGB_ARB; break;
-        case GL_RGBA: *value = WGL_TEXTURE_RGBA_ARB; break;
-        /* WGL_FLOAT_COMPONENTS_NV */
-        case GL_FLOAT_R_NV: *value = WGL_TEXTURE_FLOAT_R_NV; break;
-        case GL_FLOAT_RG_NV: *value = WGL_TEXTURE_FLOAT_RG_NV; break;
-        case GL_FLOAT_RGB_NV: *value = WGL_TEXTURE_FLOAT_RGB_NV; break;
-        case GL_FLOAT_RGBA_NV: *value = WGL_TEXTURE_FLOAT_RGBA_NV; break;
-        default: ERR( "Unknown texture format: %x\n", object->texture_format );
-        }
-        break;
-
-    case WGL_TEXTURE_TARGET_ARB:
-        switch (object->texture_target)
-        {
-        case 0: *value = WGL_NO_TEXTURE_ARB; break;
-        case GL_TEXTURE_1D: *value = WGL_TEXTURE_1D_ARB; break;
-        case GL_TEXTURE_2D: *value = WGL_TEXTURE_2D_ARB; break;
-        case GL_TEXTURE_CUBE_MAP: *value = WGL_TEXTURE_CUBE_MAP_ARB; break;
-        case GL_TEXTURE_RECTANGLE_NV: *value = WGL_TEXTURE_RECTANGLE_NV; break;
-        }
-        break;
-
-    case WGL_MIPMAP_TEXTURE_ARB:
-        *value = GL_FALSE; /** don't support that */
-        FIXME( "unsupported WGL_ARB_render_texture attribute query for 0x%x\n", attrib );
-        break;
-
-    default: FIXME( "unexpected attribute %x\n", attrib ); break;
-    }
-
-    return GL_TRUE;
-}
-
-/**
- * X11DRV_wglReleasePbufferDCARB
- *
- * WGL_ARB_pbuffer: wglReleasePbufferDCARB
- */
-static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
-{
-    struct gl_drawable *gl;
-
-    TRACE("(%p, %p)\n", object, hdc);
-
-    pthread_mutex_lock( &context_mutex );
-
-    if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&gl ))
-    {
-        XDeleteContext( gdi_display, (XID)hdc, gl_pbuffer_context );
-        release_gl_drawable( gl );
-    }
-    else hdc = 0;
-
-    pthread_mutex_unlock( &context_mutex );
-
-    return hdc && NtGdiDeleteObjectApp(hdc);
-}
-
-/**
- * X11DRV_wglSetPbufferAttribARB
- *
- * WGL_ARB_pbuffer: wglSetPbufferAttribARB
- */
-static BOOL X11DRV_wglSetPbufferAttribARB( struct wgl_pbuffer *object, const int *piAttribList )
-{
-    WARN("(%p, %p): alpha-testing, report any problem\n", object, piAttribList);
-
-    if (!object->texture_format)
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return GL_FALSE;
-    }
-    return GL_TRUE;
-}
-
-static GLenum binding_from_target( GLenum target )
-{
-    switch (target)
-    {
-    case GL_TEXTURE_CUBE_MAP: return GL_TEXTURE_BINDING_CUBE_MAP;
-    case GL_TEXTURE_1D: return GL_TEXTURE_BINDING_1D;
-    case GL_TEXTURE_2D: return GL_TEXTURE_BINDING_2D;
-    case GL_TEXTURE_RECTANGLE_NV: return GL_TEXTURE_BINDING_RECTANGLE_NV;
-    }
-    FIXME( "Unsupported target %#x\n", target );
-    return 0;
-}
-
-/**
- * X11DRV_wglBindTexImageARB
- *
- * WGL_ARB_render_texture: wglBindTexImageARB
- */
-static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
-{
-    static BOOL initialized = FALSE;
-    int prev_binded_texture = 0;
-    GLXContext prev_context;
-    GLXDrawable prev_drawable;
-
-    TRACE("(%p, %d)\n", object, iBuffer);
-
-    if (!object->texture_format)
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return GL_FALSE;
-    }
-
-    prev_context = pglXGetCurrentContext();
-    prev_drawable = pglXGetCurrentDrawable();
-
-    /* Our render_texture emulation is basic and lacks some features (1D/Cube support).
-       This is mostly due to lack of demos/games using them. Further the use of glReadPixels
-       isn't ideal performance wise but I wasn't able to get other ways working.
-    */
-    if (!initialized)
-    {
-        initialized = TRUE; /* Only show the FIXME once for performance reasons */
-        FIXME( "partial stub!\n" );
-    }
-
-    TRACE( "drawable=%p (%lx), context=%p\n", object->gl, object->gl->drawable, prev_context );
-    if (!object->tmp_context || object->prev_context != prev_context)
-    {
-        if (object->tmp_context) pglXDestroyContext( gdi_display, object->tmp_context );
-        object->tmp_context = pglXCreateNewContext( gdi_display, object->fmt->fbconfig,
-                                                    object->fmt->render_type, prev_context, True );
-        object->prev_context = prev_context;
-    }
-
-    opengl_funcs.p_glGetIntegerv( binding_from_target( object->texture_target ), &prev_binded_texture );
-
-    /* Switch to our pbuffer */
-    pglXMakeCurrent( gdi_display, object->gl->drawable, object->tmp_context );
-
-    /* Make sure that the prev_binded_texture is set as the current texture state isn't shared
-     * between contexts. After that copy the pbuffer texture data. */
-    opengl_funcs.p_glBindTexture( object->texture_target, prev_binded_texture );
-    opengl_funcs.p_glCopyTexImage2D( object->texture_target, 0, object->texture_format, 0, 0,
-                                     object->width, object->height, 0 );
-
-    /* Switch back to the original drawable and context */
-    pglXMakeCurrent( gdi_display, prev_drawable, prev_context );
-    return GL_TRUE;
-}
-
-/**
- * X11DRV_wglReleaseTexImageARB
- *
- * WGL_ARB_render_texture: wglReleaseTexImageARB
- */
-static BOOL X11DRV_wglReleaseTexImageARB( struct wgl_pbuffer *object, int iBuffer )
-{
-    TRACE("(%p, %d)\n", object, iBuffer);
-
-    if (!object->texture_format)
-    {
-        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        return GL_FALSE;
-    }
     return GL_TRUE;
 }
 
@@ -2506,17 +2142,6 @@ static const char *x11drv_init_wgl_extensions(void)
 
     if (has_extension( glxExtensions, "GLX_ARB_multisample")) register_extension( "WGL_ARB_multisample" );
 
-    if (glxRequireVersion(3))
-    {
-        register_extension( "WGL_ARB_pbuffer" );
-        opengl_funcs.p_wglCreatePbufferARB    = X11DRV_wglCreatePbufferARB;
-        opengl_funcs.p_wglDestroyPbufferARB   = X11DRV_wglDestroyPbufferARB;
-        opengl_funcs.p_wglGetPbufferDCARB     = X11DRV_wglGetPbufferDCARB;
-        opengl_funcs.p_wglQueryPbufferARB     = X11DRV_wglQueryPbufferARB;
-        opengl_funcs.p_wglReleasePbufferDCARB = X11DRV_wglReleasePbufferDCARB;
-        opengl_funcs.p_wglSetPbufferAttribARB = X11DRV_wglSetPbufferAttribARB;
-    }
-
     if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
     {
         register_extension("WGL_ARB_pixel_format_float");
@@ -2526,10 +2151,6 @@ static const char *x11drv_init_wgl_extensions(void)
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (has_extension( glxExtensions, "GLX_ARB_render_texture" ) || glxRequireVersion( 3 ))
     {
-        register_extension( "WGL_ARB_render_texture" );
-        opengl_funcs.p_wglBindTexImageARB    = X11DRV_wglBindTexImageARB;
-        opengl_funcs.p_wglReleaseTexImageARB = X11DRV_wglReleaseTexImageARB;
-
         /* The WGL version of GLX_NV_float_buffer requires render_texture */
         if (has_extension( glxExtensions, "GLX_NV_float_buffer"))
             register_extension("WGL_NV_float_buffer");
@@ -2678,6 +2299,8 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_describe_pixel_format = x11drv_describe_pixel_format,
     .p_init_wgl_extensions = x11drv_init_wgl_extensions,
     .p_set_pixel_format = x11drv_set_pixel_format,
+    .p_pbuffer_create = x11drv_pbuffer_create,
+    .p_pbuffer_destroy = x11drv_pbuffer_destroy,
 };
 
 static struct opengl_funcs opengl_funcs =

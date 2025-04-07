@@ -39,6 +39,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
+struct wgl_pbuffer
+{
+    const struct opengl_driver_funcs *driver_funcs;
+    struct opengl_funcs *funcs;
+    void *driver_private;
+
+    HDC hdc;
+    GLsizei width;
+    GLsizei height;
+    GLenum texture_format;
+    GLenum texture_target;
+
+    struct wgl_context *tmp_context;
+    struct wgl_context *prev_context;
+};
+
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs );
 
 static const struct
@@ -502,6 +518,290 @@ static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
     *num_onscreen_formats = onscreen_count;
 }
 
+static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int width, int height,
+                                                       const int *attribs )
+{
+    struct wgl_pbuffer *pbuffer;
+    struct opengl_funcs *funcs;
+    UINT total, onscreen;
+    BOOL largest = FALSE;
+
+    TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
+
+    if (!(funcs = get_dc_funcs( hdc, NULL ))) return FALSE;
+    funcs->p_get_pixel_formats( NULL, 0, &total, &onscreen );
+    if (format <= 0 || format > total)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        return NULL;
+    }
+    if (width <= 0 || height <= 0)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_DATA );
+        return NULL;
+    }
+
+    if (!(pbuffer = calloc( 1, sizeof(*pbuffer) )) || !(pbuffer->hdc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL )))
+    {
+        RtlSetLastWin32Error( ERROR_NO_SYSTEM_RESOURCES );
+        free( pbuffer );
+        return NULL;
+    }
+    NtGdiSetPixelFormat( pbuffer->hdc, format );
+    pbuffer->driver_funcs = driver_funcs;
+    pbuffer->funcs = funcs;
+    pbuffer->width = width;
+    pbuffer->height = height;
+
+    for (; attribs && attribs[0]; attribs += 2)
+    {
+        switch (attribs[0])
+        {
+        case WGL_PBUFFER_LARGEST_ARB:
+            TRACE( "WGL_PBUFFER_LARGEST_ARB %#x\n", attribs[1] );
+            largest = !!attribs[1];
+            break;
+
+        case WGL_TEXTURE_FORMAT_ARB:
+            TRACE( "WGL_TEXTURE_FORMAT_ARB %#x\n", attribs[1] );
+            switch (attribs[1])
+            {
+            case WGL_NO_TEXTURE_ARB:
+                pbuffer->texture_format = 0;
+                break;
+            case WGL_TEXTURE_RGB_ARB:
+                pbuffer->texture_format = GL_RGB;
+                break;
+            case WGL_TEXTURE_RGBA_ARB:
+                pbuffer->texture_format = GL_RGBA;
+                break;
+            /* WGL_FLOAT_COMPONENTS_NV */
+            case WGL_TEXTURE_FLOAT_R_NV:
+                pbuffer->texture_format = GL_FLOAT_R_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RG_NV:
+                pbuffer->texture_format = GL_FLOAT_RG_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RGB_NV:
+                pbuffer->texture_format = GL_FLOAT_RGB_NV;
+                break;
+            case WGL_TEXTURE_FLOAT_RGBA_NV:
+                pbuffer->texture_format = GL_FLOAT_RGBA_NV;
+                break;
+            default:
+                FIXME( "Unknown texture format: %x\n", attribs[1] );
+                goto failed;
+            }
+            break;
+
+        case WGL_TEXTURE_TARGET_ARB:
+            TRACE( "WGL_TEXTURE_TARGET_ARB %#x\n", attribs[1] );
+            switch (attribs[1])
+            {
+            case WGL_NO_TEXTURE_ARB:
+                pbuffer->texture_target = 0;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_ARB:
+                if (width != height) goto failed;
+                pbuffer->texture_target = GL_TEXTURE_CUBE_MAP;
+                break;
+            case WGL_TEXTURE_1D_ARB:
+                if (height != 1) goto failed;
+                pbuffer->texture_target = GL_TEXTURE_1D;
+                break;
+            case WGL_TEXTURE_2D_ARB:
+                pbuffer->texture_target = GL_TEXTURE_2D;
+                break;
+            case WGL_TEXTURE_RECTANGLE_NV:
+                pbuffer->texture_target = GL_TEXTURE_RECTANGLE_NV;
+                break;
+            default:
+                FIXME( "Unknown texture target: %x\n", attribs[1] );
+                goto failed;
+            }
+            break;
+
+        case WGL_MIPMAP_TEXTURE_ARB:
+            TRACE( "WGL_MIPMAP_TEXTURE_ARB %#x\n", attribs[1] );
+            break;
+
+        default:
+            WARN( "attribute %#x %#x not handled\n", attribs[0], attribs[1] );
+            break;
+        }
+    }
+
+    if (pbuffer->driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, &pbuffer->width,
+                                                 &pbuffer->height, &pbuffer->driver_private ))
+        return pbuffer;
+
+failed:
+    RtlSetLastWin32Error( ERROR_INVALID_DATA );
+    NtGdiDeleteObjectApp( pbuffer->hdc );
+    free( pbuffer );
+    return NULL;
+}
+
+static BOOL win32u_wglDestroyPbufferARB( struct wgl_pbuffer *pbuffer )
+{
+    TRACE( "pbuffer %p\n", pbuffer );
+
+    pbuffer->driver_funcs->p_pbuffer_destroy( pbuffer->hdc, pbuffer->driver_private );
+    if (pbuffer->tmp_context) pbuffer->funcs->p_wglDeleteContext( pbuffer->tmp_context );
+    NtGdiDeleteObjectApp( pbuffer->hdc );
+    free( pbuffer );
+
+    return GL_TRUE;
+}
+
+static HDC win32u_wglGetPbufferDCARB( struct wgl_pbuffer *pbuffer )
+{
+    TRACE( "pbuffer %p\n", pbuffer );
+    return pbuffer->hdc;
+}
+
+static int win32u_wglReleasePbufferDCARB( struct wgl_pbuffer *pbuffer, HDC hdc )
+{
+    TRACE( "pbuffer %p, hdc %p\n", pbuffer, hdc );
+
+    if (hdc != pbuffer->hdc)
+    {
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL win32u_wglQueryPbufferARB( struct wgl_pbuffer *pbuffer, int attrib, int *value )
+{
+    TRACE( "pbuffer %p, attrib %#x, value %p\n", pbuffer, attrib, value );
+
+    switch (attrib)
+    {
+    case WGL_PBUFFER_WIDTH_ARB:
+        *value = pbuffer->width;
+        break;
+    case WGL_PBUFFER_HEIGHT_ARB:
+        *value = pbuffer->height;
+        break;
+    case WGL_PBUFFER_LOST_ARB:
+        *value = GL_FALSE;
+        break;
+
+    case WGL_TEXTURE_FORMAT_ARB:
+        switch (pbuffer->texture_format)
+        {
+        case 0: *value = WGL_NO_TEXTURE_ARB; break;
+        case GL_RGB: *value = WGL_TEXTURE_RGB_ARB; break;
+        case GL_RGBA: *value = WGL_TEXTURE_RGBA_ARB; break;
+        /* WGL_FLOAT_COMPONENTS_NV */
+        case GL_FLOAT_R_NV: *value = WGL_TEXTURE_FLOAT_R_NV; break;
+        case GL_FLOAT_RG_NV: *value = WGL_TEXTURE_FLOAT_RG_NV; break;
+        case GL_FLOAT_RGB_NV: *value = WGL_TEXTURE_FLOAT_RGB_NV; break;
+        case GL_FLOAT_RGBA_NV: *value = WGL_TEXTURE_FLOAT_RGBA_NV; break;
+        default: ERR( "Unknown texture format: %x\n", pbuffer->texture_format );
+        }
+        break;
+
+    case WGL_TEXTURE_TARGET_ARB:
+        switch (pbuffer->texture_target)
+        {
+        case 0: *value = WGL_NO_TEXTURE_ARB; break;
+        case GL_TEXTURE_1D: *value = WGL_TEXTURE_1D_ARB; break;
+        case GL_TEXTURE_2D: *value = WGL_TEXTURE_2D_ARB; break;
+        case GL_TEXTURE_CUBE_MAP: *value = WGL_TEXTURE_CUBE_MAP_ARB; break;
+        case GL_TEXTURE_RECTANGLE_NV: *value = WGL_TEXTURE_RECTANGLE_NV; break;
+        }
+        break;
+
+    case WGL_MIPMAP_TEXTURE_ARB:
+        *value = GL_FALSE;
+        FIXME( "WGL_MIPMAP_TEXTURE_ARB not supported\n" );
+        break;
+
+    default:
+        FIXME( "unexpected attribute %x\n", attrib );
+        break;
+    }
+
+    return GL_TRUE;
+}
+
+static GLenum binding_from_target( GLenum target )
+{
+    switch (target)
+    {
+    case GL_TEXTURE_CUBE_MAP: return GL_TEXTURE_BINDING_CUBE_MAP;
+    case GL_TEXTURE_1D: return GL_TEXTURE_BINDING_1D;
+    case GL_TEXTURE_2D: return GL_TEXTURE_BINDING_2D;
+    case GL_TEXTURE_RECTANGLE_NV: return GL_TEXTURE_BINDING_RECTANGLE_NV;
+    }
+    FIXME( "Unsupported target %#x\n", target );
+    return 0;
+}
+
+static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
+{
+    HDC prev_draw = NtCurrentTeb()->glReserved1[0], prev_read = NtCurrentTeb()->glReserved1[1];
+    struct wgl_context *prev_context = NtCurrentTeb()->glContext;
+    int prev_texture = 0;
+
+    TRACE( "pbuffer %p, buffer %d\n", pbuffer, buffer );
+
+    if (!pbuffer->texture_format)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return GL_FALSE;
+    }
+
+    if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
+    {
+        if (pbuffer->tmp_context) pbuffer->funcs->p_wglDeleteContext( pbuffer->tmp_context );
+        pbuffer->tmp_context = pbuffer->funcs->p_wglCreateContextAttribsARB( pbuffer->hdc, prev_context, NULL );
+        pbuffer->prev_context = prev_context;
+    }
+
+    pbuffer->funcs->p_glGetIntegerv( binding_from_target( pbuffer->texture_target ), &prev_texture );
+
+    /* Switch to our pbuffer */
+    pbuffer->funcs->p_wglMakeCurrent( pbuffer->hdc, pbuffer->tmp_context );
+
+    /* Make sure that the prev_texture is set as the current texture state isn't shared
+     * between contexts. After that copy the pbuffer texture data. */
+    pbuffer->funcs->p_glBindTexture( pbuffer->texture_target, prev_texture );
+    pbuffer->funcs->p_glCopyTexImage2D( pbuffer->texture_target, 0, pbuffer->texture_format, 0, 0,
+                                        pbuffer->width, pbuffer->height, 0 );
+
+    /* Switch back to the original drawable and context */
+    pbuffer->funcs->p_wglMakeContextCurrentARB( prev_draw, prev_read, prev_context );
+    return GL_TRUE;
+}
+
+static BOOL win32u_wglReleaseTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
+{
+    TRACE( "pbuffer %p, buffer %d\n", pbuffer, buffer );
+
+    if (!pbuffer->texture_format)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return GL_FALSE;
+    }
+    return GL_TRUE;
+}
+
+static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const int *attribs )
+{
+    TRACE( "pbuffer %p, attribs %p\n", pbuffer, attribs );
+
+    if (!pbuffer->texture_format)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return GL_FALSE;
+    }
+    return GL_TRUE;
+}
+
 static void memory_funcs_init(void)
 {
     memory_funcs = osmesa_get_wgl_driver();
@@ -546,6 +846,21 @@ static void display_funcs_init(void)
     display_funcs->p_wglChoosePixelFormatARB      = (void *)1; /* never called */
     display_funcs->p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
     display_funcs->p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+
+    if (driver_funcs->p_pbuffer_create)
+    {
+        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_pbuffer" );
+        display_funcs->p_wglCreatePbufferARB    = win32u_wglCreatePbufferARB;
+        display_funcs->p_wglDestroyPbufferARB   = win32u_wglDestroyPbufferARB;
+        display_funcs->p_wglGetPbufferDCARB     = win32u_wglGetPbufferDCARB;
+        display_funcs->p_wglReleasePbufferDCARB = win32u_wglReleasePbufferDCARB;
+        display_funcs->p_wglQueryPbufferARB     = win32u_wglQueryPbufferARB;
+
+        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_render_texture" );
+        display_funcs->p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
+        display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
+        display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
+    }
 }
 
 static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
