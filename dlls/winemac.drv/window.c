@@ -177,7 +177,6 @@ static struct macdrv_win_data *alloc_win_data(HWND hwnd)
     if ((data = calloc(1, sizeof(*data))))
     {
         data->hwnd = hwnd;
-        data->swap_interval = 1;
         pthread_mutex_lock(&win_data_mutex);
         if (!win_datas)
             win_datas = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);

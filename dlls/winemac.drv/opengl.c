@@ -75,7 +75,7 @@ struct macdrv_context
     CGLPBufferObj           read_pbuffer;
     BOOL                    has_been_current;
     BOOL                    sharing;
-    LONG                    update_swap_interval;
+    int                     swap_interval;
     LONG                    view_moved;
     unsigned int            last_flush_time;
     UINT                    major;
@@ -94,7 +94,6 @@ static const struct opengl_driver_funcs macdrv_driver_funcs;
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
 static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
-static void (*pglFinish)(void);
 static void (*pglFlush)(void);
 static void (*pglFlushRenderAPPLE)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
@@ -1459,8 +1458,7 @@ static BOOL create_context(struct macdrv_context *context, CGLContextObj share, 
         return FALSE;
     }
     context->major = major;
-
-    InterlockedExchange(&context->update_swap_interval, TRUE);
+    context->swap_interval = INT_MIN;
 
     TRACE("created context %p/%p/%p\n", context, context->context, context->cglcontext);
 
@@ -1583,6 +1581,11 @@ static BOOL set_swap_interval(struct macdrv_context *context, long interval)
 {
     CGLError err;
 
+    if (!allow_vsync || !context->draw_hwnd) interval = 0;
+
+    if (interval < 0) interval = -interval;
+    if (context->swap_interval == interval) return TRUE;
+
     /* In theory, for single-buffered contexts, there's no such thing as a swap
        so the swap interval shouldn't matter.  But OS X will synchronize flushes
        of single-buffered contexts if the interval is set to non-zero. */
@@ -1592,38 +1595,9 @@ static BOOL set_swap_interval(struct macdrv_context *context, long interval)
     err = CGLSetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&interval);
     if (err != kCGLNoError)
         WARN("CGLSetParameter(kCGLCPSwapInterval) failed; error %d %s\n", err, CGLErrorString(err));
+    context->swap_interval = interval;
 
     return err == kCGLNoError;
-}
-
-
-/**********************************************************************
- *              sync_swap_interval
- */
-static void sync_swap_interval(struct macdrv_context *context)
-{
-    if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE))
-    {
-        int interval;
-
-        if (!allow_vsync)
-            interval = 0;
-        else if (context->draw_hwnd)
-        {
-            struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
-            if (data)
-            {
-                interval = data->swap_interval;
-                release_win_data(data);
-            }
-            else /* window was destroyed? */
-                interval = 1;
-        }
-        else /* pbuffer */
-            interval = 0;
-
-        set_swap_interval(context, interval);
-    }
 }
 
 
@@ -2087,27 +2061,11 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
-/**********************************************************************
- *              macdrv_glFinish
- */
-static void macdrv_glFinish(void)
+static BOOL macdrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = private;
 
-    sync_swap_interval(context);
-    sync_context(context);
-    pglFinish();
-}
-
-
-/**********************************************************************
- *              macdrv_glFlush
- */
-static void macdrv_glFlush(void)
-{
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-
-    sync_swap_interval(context);
+    set_swap_interval(context, interval);
     sync_context(context);
 
     if (skip_single_buffer_flushes)
@@ -2121,7 +2079,7 @@ static void macdrv_glFlush(void)
         {
             TRACE("calling glFlushRenderAPPLE()\n");
             pglFlushRenderAPPLE();
-            return;
+            return TRUE;
         }
         else
         {
@@ -2130,7 +2088,7 @@ static void macdrv_glFlush(void)
         }
     }
 
-    pglFlush();
+    return FALSE;
 }
 
 
@@ -2209,7 +2167,7 @@ static UINT macdrv_pbuffer_bind(HDC hdc, void *private, GLenum source)
     TRACE("hdc %p pbuffer %p source 0x%x\n", hdc, pbuffer, source);
 
     if (!context->draw_view && context->draw_pbuffer == pbuffer && source != GL_NONE)
-        opengl_funcs.p_glFlush();
+        pglFlush();
 
     err = CGLTexImagePBuffer(context->cglcontext, pbuffer, source);
     if (err != kCGLNoError)
@@ -2434,42 +2392,6 @@ static BOOL macdrv_pbuffer_destroy(HDC hdc, void *private)
 }
 
 
-/**********************************************************************
- *              macdrv_wglGetSwapIntervalEXT
- *
- * WGL_EXT_swap_control: wglGetSwapIntervalEXT
- */
-static int macdrv_wglGetSwapIntervalEXT(void)
-{
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-    struct macdrv_win_data *data;
-    long value;
-    CGLError err;
-
-    TRACE("\n");
-
-    if ((data = get_win_data(context->draw_hwnd)))
-    {
-        value = data->swap_interval;
-        release_win_data(data);
-
-        if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE))
-            set_swap_interval(context, allow_vsync ? value : 0);
-    }
-    else
-    {
-        err = CGLGetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
-        if (err != kCGLNoError)
-        {
-            WARN("CGLGetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
-                 err, CGLErrorString(err));
-            value = 1;
-        }
-    }
-
-    return value;
-}
-
 static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *private)
 {
     struct macdrv_context *context = private;
@@ -2494,9 +2416,6 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
             return FALSE;
         }
 
-        if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) || hwnd != context->draw_hwnd)
-            set_swap_interval(context, allow_vsync ? data->swap_interval : 0);
-
         context->draw_hwnd = hwnd;
         context->draw_view = data->client_cocoa_view;
         context->draw_rect = data->rects.client;
@@ -2510,12 +2429,7 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
 
         pthread_mutex_lock(&dc_pbuffers_mutex);
         pbuffer = (CGLPBufferObj)CFDictionaryGetValue(dc_pbuffers, draw_hdc);
-        if (pbuffer)
-        {
-            if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) || pbuffer != context->draw_pbuffer)
-                set_swap_interval(context, 0);
-        }
-        else
+        if (!pbuffer)
         {
             WARN("no window or pbuffer for DC\n");
             pthread_mutex_unlock(&dc_pbuffers_mutex);
@@ -2794,68 +2708,6 @@ static BOOL macdrv_pbuffer_updated(HDC hdc, void *private, GLenum cube_face, GLi
     return GL_TRUE;
 }
 
-
-/**********************************************************************
- *              macdrv_wglSwapIntervalEXT
- *
- * WGL_EXT_swap_control: wglSwapIntervalEXT
- */
-static BOOL macdrv_wglSwapIntervalEXT(int interval)
-{
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
-    BOOL changed = FALSE;
-
-    TRACE("interval %d\n", interval);
-
-    if (interval < 0)
-    {
-        RtlSetLastWin32Error(ERROR_INVALID_DATA);
-        return FALSE;
-    }
-    if (interval > 1)
-        interval = 1;
-
-    if (context->draw_hwnd)
-    {
-        struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
-        if (data)
-        {
-            changed = data->swap_interval != interval;
-            if (changed)
-                data->swap_interval = interval;
-            release_win_data(data);
-        }
-    }
-    else /* pbuffer */
-        interval = 0;
-
-    if (!allow_vsync)
-        interval = 0;
-
-    InterlockedExchange(&context->update_swap_interval, FALSE);
-    if (!set_swap_interval(context, interval))
-    {
-        RtlSetLastWin32Error(ERROR_GEN_FAILURE);
-        return FALSE;
-    }
-
-    if (changed)
-    {
-        struct macdrv_context *ctx;
-
-        pthread_mutex_lock(&context_mutex);
-        LIST_FOR_EACH_ENTRY(ctx, &context_list, struct macdrv_context, entry)
-        {
-            if (ctx != context && ctx->draw_hwnd == context->draw_hwnd)
-                InterlockedExchange(&context->update_swap_interval, TRUE);
-        }
-        pthread_mutex_unlock(&context_mutex);
-    }
-
-    return TRUE;
-}
-
-
 static void register_extension(const char *ext)
 {
     if (gl_info.wglExtensions[0])
@@ -2888,16 +2740,6 @@ static const char *macdrv_init_wgl_extensions(void)
         if (gluCheckExtension((GLubyte*)"GL_ARB_texture_rectangle", (GLubyte*)gl_info.glExtensions) ||
             gluCheckExtension((GLubyte*)"GL_EXT_texture_rectangle", (GLubyte*)gl_info.glExtensions))
             register_extension("WGL_NV_render_texture_rectangle");
-    }
-
-    /*
-     * EXT Extensions
-     */
-    if (allow_vsync)
-    {
-        register_extension("WGL_EXT_swap_control");
-        opengl_funcs.p_wglSwapIntervalEXT = macdrv_wglSwapIntervalEXT;
-        opengl_funcs.p_wglGetSwapIntervalEXT = macdrv_wglGetSwapIntervalEXT;
     }
 
     /* Presumably identical to [W]GL_ARB_framebuffer_sRGB, above, but clients may
@@ -2968,10 +2810,6 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
     REDIRECT(glGetString);
     REDIRECT(glReadPixels);
     REDIRECT(glViewport);
-    if (skip_single_buffer_flushes || allow_vsync)
-        REDIRECT(glFlush);
-    if (allow_vsync)
-        REDIRECT(glFinish);
 #undef REDIRECT
 
     /* redirect some OpenGL extension functions */
@@ -2980,8 +2818,16 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
     REDIRECT(glCopyColorTable);
 #undef REDIRECT
 
+#define LOAD_FUNCPTR(func) \
+        if (!(p##func = dlsym(opengl_handle, #func))) \
+        { \
+            ERR( "%s not found in OpenGL, disabling.\n", #func ); \
+            goto failed; \
+        }
+    LOAD_FUNCPTR(glFlush);
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
-        pglFlushRenderAPPLE = dlsym(opengl_handle, "glFlushRenderAPPLE");
+        LOAD_FUNCPTR(glFlushRenderAPPLE);
+#undef LOAD_FUNCPTR
 
     *funcs = &opengl_funcs;
     *driver_funcs = &macdrv_driver_funcs;
@@ -3191,25 +3037,21 @@ static void *macdrv_get_proc_address(const char *name)
     return dlsym(opengl_handle, name);
 }
 
-/**********************************************************************
- *              macdrv_wglSwapBuffers
- */
-static BOOL macdrv_wglSwapBuffers(HDC hdc)
+static BOOL macdrv_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval)
 {
-    struct macdrv_context *context = NtCurrentTeb()->glReserved2;
+    struct macdrv_context *context = private;
     BOOL match = FALSE;
-    HWND hwnd;
 
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
 
     if (context)
     {
-        sync_swap_interval(context);
+        set_swap_interval(context, interval);
         sync_context(context);
     }
 
-    if ((hwnd = NtUserWindowFromDC(hdc)))
+    if (hwnd)
     {
         struct macdrv_win_data *data;
 
@@ -3242,19 +3084,13 @@ static BOOL macdrv_wglSwapBuffers(HDC hdc)
             match = TRUE;
     }
 
-    if (match)
-        macdrv_flush_opengl_context(context->context);
-    else
+    if (!match)
     {
         FIXME("current context %p doesn't match hdc %p; can't swap\n", context, hdc);
-
-        /* If there is a current context, then wglSwapBuffers should do an implicit
-           glFlush().  That would be taken care of by macdrv_flush_opengl_context()
-           in the other branch, but we have to do it explicitly here. */
-        if (context)
-            pglFlush();
+        return FALSE;
     }
 
+    macdrv_flush_opengl_context(context->context);
     return TRUE;
 }
 
@@ -3265,18 +3101,15 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_describe_pixel_format = macdrv_describe_pixel_format,
     .p_init_wgl_extensions = macdrv_init_wgl_extensions,
     .p_set_pixel_format = macdrv_set_pixel_format,
-    .p_pbuffer_create = macdrv_pbuffer_create,
-    .p_pbuffer_destroy = macdrv_pbuffer_destroy,
-    .p_pbuffer_updated = macdrv_pbuffer_updated,
-    .p_pbuffer_bind = macdrv_pbuffer_bind,
+    .p_swap_buffers = macdrv_swap_buffers,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
     .p_context_copy = macdrv_context_copy,
     .p_context_share = macdrv_context_share,
+    .p_context_flush = macdrv_context_flush,
     .p_context_make_current = macdrv_context_make_current,
-};
-
-static struct opengl_funcs opengl_funcs =
-{
-    .p_wglSwapBuffers = macdrv_wglSwapBuffers,
+    .p_pbuffer_create = macdrv_pbuffer_create,
+    .p_pbuffer_destroy = macdrv_pbuffer_destroy,
+    .p_pbuffer_updated = macdrv_pbuffer_updated,
+    .p_pbuffer_bind = macdrv_pbuffer_bind,
 };
