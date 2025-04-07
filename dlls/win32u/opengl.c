@@ -69,6 +69,14 @@ struct wgl_pbuffer
     struct wgl_context *prev_context;
 };
 
+static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
+static struct opengl_funcs null_memory_funcs, null_display_funcs;
+static struct opengl_funcs *display_funcs = &null_display_funcs;
+static struct opengl_funcs *memory_funcs = &null_memory_funcs;
+
+static PFN_glFinish p_memory_glFinish, p_display_glFinish;
+static PFN_glFlush p_memory_glFlush, p_display_glFlush;
+
 static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs );
 
 static const struct
@@ -531,13 +539,6 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
     return wgl_extensions;
 }
 
-static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
-static struct opengl_funcs *display_funcs;
-static struct opengl_funcs *memory_funcs;
-
-static PFN_glFinish p_memory_glFinish, p_display_glFinish;
-static PFN_glFlush p_memory_glFlush, p_display_glFlush;
-
 static int get_dc_pixel_format( HDC hdc, BOOL internal )
 {
     int ret = 0;
@@ -808,7 +809,7 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         return NULL;
     }
     NtGdiSetPixelFormat( pbuffer->hdc, format );
-    pbuffer->driver_funcs = funcs == memory_funcs ? memory_driver_funcs : display_driver_funcs;
+    pbuffer->driver_funcs = funcs == display_funcs ? display_driver_funcs : memory_driver_funcs;
     pbuffer->funcs = funcs;
     pbuffer->width = width;
     pbuffer->height = height;
@@ -1323,10 +1324,9 @@ static void init_opengl_funcs( struct opengl_funcs *funcs, const struct opengl_d
 
 static void memory_funcs_init(void)
 {
-    memory_funcs = osmesa_get_wgl_driver( &memory_driver_funcs );
-    if (memory_funcs && !(memory_formats_count = memory_driver_funcs->p_init_pixel_formats( &memory_onscreen_count ))) memory_funcs = NULL;
-    if (!memory_funcs) return;
+    if (!osmesa_get_wgl_driver( &memory_driver_funcs )) WARN( "Failed to initialize OSMesa functions\n" );
 
+    memory_formats_count = memory_driver_funcs->p_init_pixel_formats( &memory_onscreen_count );
     init_opengl_funcs( memory_funcs, memory_driver_funcs );
 
     memory_funcs->p_wglGetProcAddress = win32u_memory_wglGetProcAddress;
@@ -1352,15 +1352,10 @@ static void display_funcs_init(void)
 {
     UINT status;
 
-    if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )) &&
-        status != STATUS_NOT_IMPLEMENTED)
-    {
-        ERR( "Failed to initialize the driver opengl functions, status %#x\n", status );
-        return;
-    }
-    if (display_funcs && !(display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count ))) display_funcs = NULL;
-    if (!display_funcs) return;
+    if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )))
+        WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
 
+    display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count );
     init_opengl_funcs( display_funcs, display_driver_funcs );
 
     display_funcs->p_wglGetProcAddress = win32u_display_wglGetProcAddress;
@@ -1442,13 +1437,13 @@ static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_fun
     {
         static pthread_once_t display_init_once = PTHREAD_ONCE_INIT;
         pthread_once( &display_init_once, display_funcs_init );
-        return display_funcs ? display_funcs : null_funcs;
+        return display_funcs;
     }
     if (is_memdc)
     {
         static pthread_once_t memory_init_once = PTHREAD_ONCE_INIT;
         pthread_once( &memory_init_once, memory_funcs_init );
-        return memory_funcs ? memory_funcs : null_funcs;
+        return memory_funcs;
     }
     return NULL;
 }
