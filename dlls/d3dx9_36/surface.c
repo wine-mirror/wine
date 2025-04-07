@@ -2886,6 +2886,11 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
                     uncompressed_desc->format, 0, 0, src_pixels->size.width, src_pixels->size.height,
                     0, src_pixels->size.depth, &uncompressed_pixels);
 
+            if (sizeof(void *) == 4 && color_key)
+            {
+                TRACE("Clearing color key value on compressed source pixels.\n");
+                color_key = 0;
+            }
             hr = d3dx_load_pixels_from_pixels(dst_pixels, dst_desc, &uncompressed_pixels, uncompressed_desc,
                     filter_flags, color_key);
         }

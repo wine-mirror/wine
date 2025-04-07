@@ -2320,7 +2320,6 @@ static void test_color_key(void)
         const void *expected_dst_data_32;
         uint8_t max_diff;
         BOOL todo;
-        BOOL todo_32;
     } tests[] =
     {
         /* Color key with alpha channel unset. */
@@ -2397,7 +2396,6 @@ static void test_color_key(void)
          */
         {
             D3DFMT_DXT5, dxt5_4_4, dxt5_4_4_expected_ck, 0xffff0000, dxt5_4_4_expected_no_ck,
-            .todo_32 = TRUE
         },
         /*
          * Test premultiplied alpha handling with a color key - color key applies
@@ -2474,8 +2472,7 @@ static void test_color_key(void)
         }
         IDirect3DSurface9_UnlockRect(surf);
 
-        todo_wine_if(tests[i].todo || (sizeof(void *) == 4 && tests[i].todo_32)) ok(!mismatch_count,
-                    "Unexpected number of mismatched pixels %u.\n", mismatch_count);
+        todo_wine_if(tests[i].todo) ok(!mismatch_count, "Unexpected number of mismatched pixels %u.\n", mismatch_count);
         winetest_pop_context();
     }
 
