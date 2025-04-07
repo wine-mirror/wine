@@ -175,6 +175,7 @@ struct wgl_context
 };
 
 static struct opengl_funcs osmesa_opengl_funcs;
+static const struct opengl_driver_funcs osmesa_driver_funcs;
 
 static OSMesaContext (*pOSMesaCreateContextExt)( GLenum format, GLint depthBits, GLint stencilBits,
                                                  GLint accumBits, OSMesaContext sharelist );
@@ -184,7 +185,7 @@ static GLboolean (*pOSMesaMakeCurrent)( OSMesaContext ctx, void *buffer, GLenum 
                                         GLsizei width, GLsizei height );
 static void (*pOSMesaPixelStore)( GLint pname, GLint value );
 
-static struct opengl_funcs *osmesa_get_wgl_driver(void)
+static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
 {
     static void *osmesa_handle;
 
@@ -217,12 +218,23 @@ static struct opengl_funcs *osmesa_get_wgl_driver(void)
     ALL_GL_FUNCS
 #undef USE_GL_FUNC
 
+    *driver_funcs = &osmesa_driver_funcs;
     return &osmesa_opengl_funcs;
 
 failed:
     dlclose( osmesa_handle );
     osmesa_handle = NULL;
     return NULL;
+}
+
+static const char *osmesa_init_wgl_extensions(void)
+{
+    return "";
+}
+
+static BOOL osmesa_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+{
+    return TRUE;
 }
 
 static struct wgl_context *osmesa_create_context( HDC hdc, const PIXELFORMATDESCRIPTOR *descr )
@@ -386,9 +398,15 @@ static struct opengl_funcs osmesa_opengl_funcs =
     .p_get_pixel_formats = osmesa_get_pixel_formats,
 };
 
+static const struct opengl_driver_funcs osmesa_driver_funcs =
+{
+    .p_init_wgl_extensions = osmesa_init_wgl_extensions,
+    .p_set_pixel_format = osmesa_set_pixel_format,
+};
+
 #else  /* SONAME_LIBOSMESA */
 
-static struct opengl_funcs *osmesa_get_wgl_driver(void)
+static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_funcs **driver_funcs )
 {
     return NULL;
 }
@@ -450,7 +468,9 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
     .p_pbuffer_bind = nulldrv_pbuffer_bind,
 };
-static const struct opengl_driver_funcs *driver_funcs = &nulldrv_funcs;
+
+static const struct opengl_driver_funcs *memory_driver_funcs = &nulldrv_funcs;
+static const struct opengl_driver_funcs *display_driver_funcs = &nulldrv_funcs;
 static UINT formats_count, onscreen_count;
 
 static char wgl_extensions[4096];
@@ -517,7 +537,7 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
         TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
 
         if ((old_format = get_window_pixel_format( hwnd )) && !internal) return old_format == new_format;
-        if (!driver_funcs->p_set_pixel_format( hwnd, old_format, new_format, internal )) return FALSE;
+        if (!display_driver_funcs->p_set_pixel_format( hwnd, old_format, new_format, internal )) return FALSE;
         return set_window_pixel_format( hwnd, new_format, internal );
     }
 
@@ -535,12 +555,12 @@ static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
     return set_dc_pixel_format( hdc, format, TRUE );
 }
 
-static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
-                                      UINT *num_formats, UINT *num_onscreen_formats )
+static void win32u_display_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
+                                              UINT *num_formats, UINT *num_onscreen_formats )
 {
     UINT i = 0;
 
-    if (formats) while (i < max_formats && driver_funcs->p_describe_pixel_format( i + 1, &formats[i] )) i++;
+    if (formats) while (i < max_formats && display_driver_funcs->p_describe_pixel_format( i + 1, &formats[i] )) i++;
     *num_formats = formats_count;
     *num_onscreen_formats = onscreen_count;
 }
@@ -575,7 +595,7 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         return NULL;
     }
     NtGdiSetPixelFormat( pbuffer->hdc, format );
-    pbuffer->driver_funcs = driver_funcs;
+    pbuffer->driver_funcs = funcs == memory_funcs ? memory_driver_funcs : display_driver_funcs;
     pbuffer->funcs = funcs;
     pbuffer->width = width;
     pbuffer->height = height;
@@ -961,7 +981,7 @@ static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const in
 
 static void memory_funcs_init(void)
 {
-    memory_funcs = osmesa_get_wgl_driver();
+    memory_funcs = osmesa_get_wgl_driver( &memory_driver_funcs );
     if (!memory_funcs) return;
 
     memory_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
@@ -972,18 +992,18 @@ static void display_funcs_init(void)
 {
     UINT status;
 
-    if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &driver_funcs )) &&
+    if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )) &&
         status != STATUS_NOT_IMPLEMENTED)
     {
         ERR( "Failed to initialize the driver opengl functions, status %#x\n", status );
         return;
     }
-    if (display_funcs && !(formats_count = driver_funcs->p_init_pixel_formats( &onscreen_count ))) display_funcs = NULL;
+    if (display_funcs && !(formats_count = display_driver_funcs->p_init_pixel_formats( &onscreen_count ))) display_funcs = NULL;
     if (!display_funcs) return;
 
-    display_funcs->p_get_pixel_formats = win32u_get_pixel_formats;
+    display_funcs->p_get_pixel_formats = win32u_display_get_pixel_formats;
 
-    strcpy( wgl_extensions, driver_funcs->p_init_wgl_extensions() );
+    strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions() );
     display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
     display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 
