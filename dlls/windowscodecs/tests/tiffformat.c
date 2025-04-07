@@ -1359,10 +1359,7 @@ static void test_tiff_4bps_bgra(void)
     ok(hr == S_OK, "CopyPixels error %#lx\n", hr);
 
     for (i = 0; i < 10; i++)
-    {
-        todo_wine_if(i >= 5 && i <= 9)
         ok(data[i] == expected_data_5x2[i], "%u: expected %08lx, got %08lx\n", i, expected_data_5x2[i], data[i]);
-    }
 
     IWICBitmapFrameDecode_Release(frame);
     IWICBitmapDecoder_Release(decoder);
