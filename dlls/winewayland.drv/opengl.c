@@ -523,10 +523,9 @@ static BOOL wayland_context_destroy(void *private)
     return TRUE;
 }
 
-static PROC wayland_wglGetProcAddress(LPCSTR name)
+static void *wayland_get_proc_address(const char *name)
 {
-    if (!strncmp(name, "wgl", 3)) return NULL;
-    return (PROC)p_eglGetProcAddress(name);
+    return p_eglGetProcAddress(name);
 }
 
 static int wayland_wglGetSwapIntervalEXT(void)
@@ -935,6 +934,7 @@ static UINT wayland_init_pixel_formats(UINT *onscreen_count)
 
 static const struct opengl_driver_funcs wayland_driver_funcs =
 {
+    .p_get_proc_address = wayland_get_proc_address,
     .p_init_pixel_formats = wayland_init_pixel_formats,
     .p_describe_pixel_format = wayland_describe_pixel_format,
     .p_init_wgl_extensions = wayland_init_wgl_extensions,
@@ -1055,7 +1055,6 @@ err:
 
 static struct opengl_funcs opengl_funcs =
 {
-    .p_wglGetProcAddress = wayland_wglGetProcAddress,
     .p_wglSwapBuffers = wayland_wglSwapBuffers,
 };
 

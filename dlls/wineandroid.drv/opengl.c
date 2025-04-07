@@ -411,16 +411,11 @@ static BOOL android_context_destroy( void *private )
     return TRUE;
 }
 
-/***********************************************************************
- *		android_wglGetProcAddress
- */
-static PROC android_wglGetProcAddress( LPCSTR name )
+static void *android_get_proc_address( const char *name )
 {
-    PROC ret;
-    if (!strncmp( name, "wgl", 3 )) return NULL;
-    ret = (PROC)p_eglGetProcAddress( name );
-    TRACE( "%s -> %p\n", name, ret );
-    return ret;
+    void *ptr;
+    if ((ptr = dlsym( opengl_handle, name ))) return ptr;
+    return p_eglGetProcAddress( name );
 }
 
 static BOOL android_context_share( void *org, void *dest )
@@ -828,6 +823,7 @@ static UINT android_init_pixel_formats( UINT *onscreen_count )
 
 static const struct opengl_driver_funcs android_driver_funcs =
 {
+    .p_get_proc_address = android_get_proc_address,
     .p_init_pixel_formats = android_init_pixel_formats,
     .p_describe_pixel_format = android_describe_pixel_format,
     .p_init_wgl_extensions = android_init_wgl_extensions,
@@ -907,7 +903,6 @@ ALL_GL_FUNCS
 
 static struct opengl_funcs egl_funcs =
 {
-    .p_wglGetProcAddress = android_wglGetProcAddress,
     .p_wglSwapBuffers = android_wglSwapBuffers,
 #define USE_GL_FUNC(name) .p_##name = (void *)glstub_##name,
     ALL_GL_FUNCS

@@ -311,15 +311,10 @@ static BOOL osmesa_context_destroy( void *private )
     return TRUE;
 }
 
-static PROC osmesa_get_proc_address( const char *proc )
-{
-    return (PROC)pOSMesaGetProcAddress( proc );
-}
-
-static PROC osmesa_wglGetProcAddress( const char *proc )
+static void *osmesa_get_proc_address( const char *proc )
 {
     if (!strncmp( proc, "wgl", 3 )) return NULL;
-    return osmesa_get_proc_address( proc );
+    return (PROC)pOSMesaGetProcAddress( proc );
 }
 
 static BOOL osmesa_wglSwapBuffers( HDC hdc )
@@ -390,12 +385,12 @@ static BOOL osmesa_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
 
 static struct opengl_funcs osmesa_opengl_funcs =
 {
-    .p_wglGetProcAddress = osmesa_wglGetProcAddress,
     .p_wglSwapBuffers = osmesa_wglSwapBuffers,
 };
 
 static const struct opengl_driver_funcs osmesa_driver_funcs =
 {
+    .p_get_proc_address = osmesa_get_proc_address,
     .p_init_pixel_formats = osmesa_init_pixel_formats,
     .p_describe_pixel_format = osmesa_describe_pixel_format,
     .p_init_wgl_extensions = osmesa_init_wgl_extensions,
@@ -415,6 +410,11 @@ static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_fu
 }
 
 #endif  /* SONAME_LIBOSMESA */
+
+static void *nulldrv_get_proc_address( const char *name )
+{
+    return NULL;
+}
 
 static UINT nulldrv_init_pixel_formats( UINT *onscreen_count )
 {
@@ -487,6 +487,7 @@ static BOOL nulldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priv
 
 static const struct opengl_driver_funcs nulldrv_funcs =
 {
+    .p_get_proc_address = nulldrv_get_proc_address,
     .p_init_pixel_formats = nulldrv_init_pixel_formats,
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
@@ -599,6 +600,24 @@ static BOOL win32u_wglSetPixelFormat( HDC hdc, int format, const PIXELFORMATDESC
 static BOOL win32u_wglSetPixelFormatWINE( HDC hdc, int format )
 {
     return set_dc_pixel_format( hdc, format, TRUE );
+}
+
+static PROC win32u_memory_wglGetProcAddress( const char *name )
+{
+    PROC ret;
+    if (!strncmp( name, "wgl", 3 )) return NULL;
+    ret = memory_driver_funcs->p_get_proc_address( name );
+    TRACE( "%s -> %p\n", debugstr_a(name), ret );
+    return ret;
+}
+
+static PROC win32u_display_wglGetProcAddress( const char *name )
+{
+    PROC ret;
+    if (!strncmp( name, "wgl", 3 )) return NULL;
+    ret = display_driver_funcs->p_get_proc_address( name );
+    TRACE( "%s -> %p\n", debugstr_a(name), ret );
+    return ret;
 }
 
 static void win32u_display_get_pixel_formats( struct wgl_pixel_format *formats, UINT max_formats,
@@ -1164,6 +1183,7 @@ static void memory_funcs_init(void)
     if (memory_funcs && !(memory_formats_count = memory_driver_funcs->p_init_pixel_formats( &memory_onscreen_count ))) memory_funcs = NULL;
     if (!memory_funcs) return;
 
+    memory_funcs->p_wglGetProcAddress = win32u_memory_wglGetProcAddress;
     memory_funcs->p_get_pixel_formats = win32u_memory_get_pixel_formats;
 
     memory_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
@@ -1189,6 +1209,7 @@ static void display_funcs_init(void)
     if (display_funcs && !(display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count ))) display_funcs = NULL;
     if (!display_funcs) return;
 
+    display_funcs->p_wglGetProcAddress = win32u_display_wglGetProcAddress;
     display_funcs->p_get_pixel_formats = win32u_display_get_pixel_formats;
 
     strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions() );

@@ -1567,13 +1567,11 @@ static BOOL x11drv_context_destroy(void *private)
     return TRUE;
 }
 
-/***********************************************************************
- *		glxdrv_wglGetProcAddress
- */
-static PROC glxdrv_wglGetProcAddress(LPCSTR lpszProc)
+static void *x11drv_get_proc_address( const char *name )
 {
-    if (!strncmp(lpszProc, "wgl", 3)) return NULL;
-    return pglXGetProcAddressARB((const GLubyte*)lpszProc);
+    void *ptr;
+    if ((ptr = dlsym( opengl_handle, name ))) return ptr;
+    return pglXGetProcAddressARB( (const GLubyte *)name );
 }
 
 static void set_context_drawables( struct x11drv_context *ctx, struct gl_drawable *draw,
@@ -2203,6 +2201,7 @@ static BOOL glxdrv_wglSwapBuffers( HDC hdc )
 
 static const struct opengl_driver_funcs x11drv_driver_funcs =
 {
+    .p_get_proc_address = x11drv_get_proc_address,
     .p_init_pixel_formats = x11drv_init_pixel_formats,
     .p_describe_pixel_format = x11drv_describe_pixel_format,
     .p_init_wgl_extensions = x11drv_init_wgl_extensions,
@@ -2220,7 +2219,6 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
 
 static struct opengl_funcs opengl_funcs =
 {
-    .p_wglGetProcAddress = glxdrv_wglGetProcAddress,
     .p_wglSwapBuffers = glxdrv_wglSwapBuffers,
 };
 

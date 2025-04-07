@@ -113,6 +113,7 @@ struct opengl_funcs
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs
 {
+    void *(*p_get_proc_address)(const char *);
     UINT (*p_init_pixel_formats)(UINT*);
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
     const char *(*p_init_wgl_extensions)(void);
