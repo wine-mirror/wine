@@ -173,6 +173,7 @@ static bool is_shared;
 static bool is_gui_app;
 static bool is_unicode_app;
 static bool is_win16_app;
+static bool is_arm64x;
 static bool use_msvcrt;
 static bool use_pic = true;
 static bool use_build_id;
@@ -197,7 +198,6 @@ static const char *section_align;
 static const char *file_align;
 static const char *subsystem;
 static const char *entry_point;
-static const char *native_arch;
 static struct strarray file_args;
 static struct strarray linker_args;
 static struct strarray compiler_args;
@@ -1370,11 +1370,11 @@ static void build(struct strarray input_files, const char *output)
 	if (files.str[i][1] == 'r') strarray_add( &resources, files.str[i] );
 
     build_spec_obj( spec_file, output_file, target_alias, files, resources, &spec_objs );
-    if (native_arch)
+    if (is_arm64x)
     {
         const char *suffix = strchr( target_alias, '-' );
         if (!suffix) suffix = "";
-        build_spec_obj( spec_file, output_file, strmake( "%s%s", native_arch, suffix ),
+        build_spec_obj( spec_file, output_file, strmake( "aarch64%s", suffix ),
                         files, empty_strarray, &spec_objs );
     }
 
@@ -1820,8 +1820,8 @@ int main(int argc, char **argv)
                     }
                     else if (!strcmp("-marm64x", args.str[i] ))
                     {
+                        is_arm64x = true;
                         raw_linker_arg = 1;
-                        native_arch = "aarch64";
                     }
                     else if (!strncmp("-mcpu=", args.str[i], 6) ||
                              !strncmp("-mfpu=", args.str[i], 6) ||
