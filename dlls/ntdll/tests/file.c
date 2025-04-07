@@ -4905,6 +4905,7 @@ static void test_NtCreateFile(void)
                             0, FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_CREATE,
                             FILE_DIRECTORY_FILE, NULL, 0);
     ok( !status, "failed %s %lx\n", debugstr_w(nameW.Buffer), status );
+    pRtlFreeUnicodeString( &nameW );
     RemoveDirectoryW( path );
 }
 
