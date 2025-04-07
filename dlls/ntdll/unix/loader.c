@@ -1172,6 +1172,31 @@ static NTSTATUS open_builtin_so_file( char *name, OBJECT_ATTRIBUTES *attr, void 
 
 
 /***********************************************************************
+ *           open_main_image_so_file
+ */
+static NTSTATUS open_main_image_so_file( const char *name, UNICODE_STRING *nt_name, void **module,
+                                         SECTION_IMAGE_INFORMATION *image_info )
+{
+    struct pe_image_info pe_info;
+    NTSTATUS status;
+
+    /* remove .so extension from Windows name */
+    if (nt_name->Length > 3 * sizeof(WCHAR))
+    {
+        static const WCHAR soW[] = {'.','s','o',0};
+        WCHAR *p = nt_name->Buffer + nt_name->Length / sizeof(WCHAR);
+        if (!wcsicmp( p - 3, soW ))
+        {
+            p[-3] = 0;
+            nt_name->Length -= 3 * sizeof(WCHAR);
+        }
+    }
+    status = dlopen_dll( name, nt_name, module, &pe_info, FALSE );
+    if (!status) virtual_fill_image_information( &pe_info, image_info );
+    return status;
+}
+
+/***********************************************************************
  *           find_builtin_dll
  */
 static NTSTATUS find_builtin_dll( UNICODE_STRING *nt_name, void **module, SIZE_T *size_ptr,
@@ -1395,15 +1420,12 @@ BOOL is_builtin_path( const UNICODE_STRING *path, WORD *machine )
 static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFORMATION *info,
                                  enum loadorder loadorder, USHORT machine )
 {
-    static const WCHAR soW[] = {'.','s','o',0};
     UNICODE_STRING nt_name;
     OBJECT_ATTRIBUTES attr;
-    struct pe_image_info pe_info;
     SIZE_T size = 0;
     char *unix_name;
     NTSTATUS status;
     HANDLE mapping;
-    WCHAR *p;
 
     if (loadorder == LO_DISABLED) NtTerminateProcess( GetCurrentProcess(), STATUS_DLL_NOT_FOUND );
 
@@ -1424,15 +1446,7 @@ static NTSTATUS open_main_image( WCHAR *image, void **module, SECTION_IMAGE_INFO
     }
     else if (status == STATUS_INVALID_IMAGE_NOT_MZ && loadorder != LO_NATIVE)
     {
-        /* remove .so extension from Windows name */
-        p = image + wcslen(image);
-        if (p - image > 3 && !wcsicmp( p - 3, soW ))
-        {
-            p[-3] = 0;
-            nt_name.Length -= 3 * sizeof(WCHAR);
-        }
-        status = dlopen_dll( unix_name, &nt_name, module, &pe_info, FALSE );
-        if (!status) virtual_fill_image_information( &pe_info, info );
+        status = open_main_image_so_file( unix_name, &nt_name, module, info );
     }
     free( unix_name );
     return status;
