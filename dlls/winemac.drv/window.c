@@ -1895,17 +1895,9 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
-        /* simulate a mouse click on the menu to find out
-         * whether the window wants to be activated */
-        LRESULT ma = send_message(hwnd, WM_MOUSEACTIVATE,
-                                  (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
-                                  MAKELONG(HTMENU, WM_LBUTTONDOWN));
-        if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
-        {
-            TRACE("setting foreground window to %p\n", hwnd);
-            NtUserSetForegroundWindow(hwnd);
-            return;
-        }
+        TRACE("setting foreground window to %p\n", hwnd);
+        NtUserSetForegroundWindow(hwnd);
+        return;
     }
 
     TRACE("win %p/%p rejecting focus\n", hwnd, event->window);
