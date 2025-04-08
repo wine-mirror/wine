@@ -180,13 +180,24 @@ static HRESULT PROPVAR_ConvertNumber(REFPROPVARIANT pv, int dest_bits,
 
 HRESULT WINAPI PropVariantToDouble(REFPROPVARIANT propvarIn, double *ret)
 {
+    HRESULT hr = S_OK;
     LONGLONG res;
-    HRESULT hr;
 
     TRACE("(%p, %p)\n", propvarIn, ret);
 
-    hr = PROPVAR_ConvertNumber(propvarIn, 64, TRUE, &res);
-    if (SUCCEEDED(hr)) *ret = (double)res;
+    switch (propvarIn->vt)
+    {
+        case VT_R8:
+            *ret = propvarIn->dblVal;
+            break;
+        case VT_R4:
+            *ret = propvarIn->fltVal;
+            break;
+        default:
+            hr = PROPVAR_ConvertNumber(propvarIn, 64, TRUE, &res);
+            if (SUCCEEDED(hr)) *ret = (double)res;
+    }
+
     return hr;
 }
 
