@@ -1466,6 +1466,17 @@ static void check_png_format(IStream *stream, const WICPixelFormatGUID *format)
         ok(png.filter == 0, "wrong filter %d\n", png.filter);
         ok(png.interlace == 0 || png.interlace == 1, "wrong interlace %d\n", png.interlace);
     }
+    else if (IsEqualGUID(format, &GUID_WICPixelFormat64bppRGBA))
+    {
+        ok(be_uint(png.width) == 32, "wrong width %u\n", be_uint(png.width));
+        ok(be_uint(png.height) == 2, "wrong height %u\n", be_uint(png.height));
+
+        ok(png.bit_depth == 16, "wrong bit_depth %d\n", png.bit_depth);
+        ok(png.color_type == 6, "wrong color_type %d\n", png.color_type);
+        ok(png.compression == 0, "wrong compression %d\n", png.compression);
+        ok(png.filter == 0, "wrong filter %d\n", png.filter);
+        ok(png.interlace == 0, "wrong interlace %d\n", png.interlace);
+    }
     else
         ok(0, "unknown PNG pixel format %s\n", wine_dbgstr_guid(format));
 }
@@ -2322,6 +2333,8 @@ if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in 
 {
     test_encoder(&testdata_32bppBGR, &CLSID_WICPngEncoder,
                  &testdata_24bppBGR, &CLSID_WICPngDecoder, "PNG encoder 32bppBGR");
+    test_encoder(&testdata_64bppRGBA, &CLSID_WICPngEncoder,
+                 &testdata_64bppRGBA, &CLSID_WICPngDecoder, "PNG encoder 64bppRGBA");
 }
 
     test_encoder(&testdata_BlackWhite, &CLSID_WICBmpEncoder,
