@@ -2276,6 +2276,42 @@ static BOOL macdrv_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int iBuffer)
     return GL_TRUE;
 }
 
+static int get_dc_pixel_format(HDC hdc)
+{
+    int format;
+    HWND hwnd;
+
+    if ((hwnd = NtUserWindowFromDC(hdc)))
+    {
+        struct macdrv_win_data *data;
+
+        if (!(data = get_win_data(hwnd)))
+        {
+            FIXME("DC for window %p of other process: not implemented\n", hwnd);
+            return 0;
+        }
+
+        format = data->pixel_format;
+        release_win_data(data);
+    }
+    else
+    {
+        struct wgl_pbuffer *pbuffer;
+
+        pthread_mutex_lock(&dc_pbuffers_mutex);
+        pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
+        if (pbuffer)
+            format = pbuffer->format;
+        else
+        {
+            WARN("no window or pbuffer for DC %p\n", hdc);
+            format = 0;
+        }
+        pthread_mutex_unlock(&dc_pbuffers_mutex);
+    }
+
+    return format;
+}
 
 /***********************************************************************
  *              macdrv_wglCreateContextAttribsARB
@@ -2295,7 +2331,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
 
     TRACE("hdc %p, share_context %p, attrib_list %p\n", hdc, share_context, attrib_list);
 
-    format = opengl_funcs.p_wglGetPixelFormat(hdc);
+    format = get_dc_pixel_format(hdc);
 
     if (!is_valid_pixel_format(format))
     {
