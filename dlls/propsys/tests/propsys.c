@@ -1530,92 +1530,81 @@ static void test_PropVariantChangeType_R8(void)
     src.fltVal = 10.1f;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 10.1f, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_I4;
     src.lVal = 123;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 123.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_I4;
     src.lVal = -256;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == -256.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_I8;
     src.hVal.QuadPart = -256;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == -256.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_I8;
     src.hVal.QuadPart = 65536;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 65536.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_I8;
     src.hVal.QuadPart = -321;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == -321.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_UI4;
     src.ulVal = 6;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 6.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_UI8;
     src.uhVal.QuadPart = 8;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 8.0, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_R4;
     src.fltVal = 8.1f;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 8.1f, "Unexpected value %f.\n", dest.dblVal);
-}
+
     src.vt = VT_R4;
     src.fltVal = 8.6f;
     dest.vt = VT_EMPTY;
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
-todo_wine {
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
     ok(dest.dblVal == 8.6f, "Unexpected value %f.\n", dest.dblVal);
-}
 }
 
 static void test_PropVariantChangeType(void)
