@@ -1709,17 +1709,17 @@ static void test_PropVariantToDouble(void)
 
     PropVariantClear(&propvar);
     propvar.vt = VT_I8;
-    propvar.lVal = 65536;
+    propvar.hVal.QuadPart = 65536;
     hr = PropVariantToDouble(&propvar, &value);
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
     ok(value == 65536.0, "Unexpected value: %f.\n", value);
 
     PropVariantClear(&propvar);
     propvar.vt = VT_I8;
-    propvar.lVal = -321;
+    propvar.hVal.QuadPart = -321;
     hr = PropVariantToDouble(&propvar, &value);
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
-    ok(value == 4294966975.0, "Unexpected value: %f.\n", value);
+    ok(value == -321.0, "Unexpected value: %f.\n", value);
 
     PropVariantClear(&propvar);
     propvar.vt = VT_UI4;
