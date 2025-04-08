@@ -6128,6 +6128,8 @@ static void test_input_desktop( char **argv )
     test_LoadKeyboardLayoutEx( hkl );
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
+
+    run_in_process( argv, "test_SetFocus" );
 }
 
 static void test_keyboard_layout(void)
@@ -6279,6 +6281,33 @@ static void test_system_messages_with_rawinput_nolegacy(void)
     pump_messages();
 }
 
+static void test_SetFocus_process(void)
+{
+    HWND hwnd, foreground;
+
+    ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
+    foreground = GetForegroundWindow();
+
+    hwnd = CreateWindowExW( 0, L"static", NULL, WS_OVERLAPPEDWINDOW, 100, 100, 200, 200, 0, 0, NULL, NULL );
+    ok( !!hwnd, "CreateWindowExW failed, error %lu\n", GetLastError() );
+    wait_messages( 200, FALSE );
+
+    ShowWindow( hwnd, SW_SHOWNA );
+    wait_messages( 200, FALSE );
+    ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
+    ok( GetForegroundWindow() == foreground, "got foreground %p\n", GetForegroundWindow() );
+
+    SetFocus( hwnd );
+    ok( GetFocus() == hwnd, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == hwnd, "got active %p\n", GetActiveWindow() );
+    todo_wine ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
+
+    SetForegroundWindow( hwnd );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -6305,6 +6334,8 @@ START_TEST(input)
         return test_input_desktop( argv );
     if (argc >= 3 && !strcmp( argv[2], "test_system_messages_with_rawinput_nolegacy" ))
         return test_system_messages_with_rawinput_nolegacy();
+    if (argc >= 3 && !strcmp( argv[2], "test_SetFocus" ))
+        return test_SetFocus_process();
 
     run_in_desktop( argv, "test_input_desktop", 1 );
     test_keynames();

@@ -3657,7 +3657,7 @@ static LRESULT WINAPI set_focus_on_activate_proc(HWND hwnd, UINT msg, WPARAM wp,
 
 static void test_SetFocus(HWND hwnd)
 {
-    HWND child, child2, ret;
+    HWND child, child2, ret, other;
     WNDPROC old_wnd_proc;
 
     /* check if we can set focus to non-visible windows */
@@ -3666,21 +3666,26 @@ static void test_SetFocus(HWND hwnd)
     SetFocus(0);
     SetFocus(hwnd);
     ok( GetFocus() == hwnd, "Failed to set focus to visible window %p\n", hwnd );
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
     ok( GetWindowLongA(hwnd,GWL_STYLE) & WS_VISIBLE, "Window %p not visible\n", hwnd );
     ShowWindow(hwnd, SW_HIDE);
     SetFocus(0);
     SetFocus(hwnd);
     ok( GetFocus() == hwnd, "Failed to set focus to invisible window %p\n", hwnd );
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
     ok( !(GetWindowLongA(hwnd,GWL_STYLE) & WS_VISIBLE), "Window %p still visible\n", hwnd );
     child = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 0, 0, hwnd, 0, 0, NULL);
     assert(child);
     SetFocus(child);
     ok( GetFocus() == child, "Failed to set focus to invisible child %p\n", child );
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
     ok( !(GetWindowLongA(child,GWL_STYLE) & WS_VISIBLE), "Child %p is visible\n", child );
     ShowWindow(child, SW_SHOW);
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
     ok( GetWindowLongA(child,GWL_STYLE) & WS_VISIBLE, "Child %p is not visible\n", child );
     ok( GetFocus() == child, "Focus no longer on child %p\n", child );
     ShowWindow(child, SW_HIDE);
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
     ok( !(GetWindowLongA(child,GWL_STYLE) & WS_VISIBLE), "Child %p is visible\n", child );
     ok( GetFocus() == hwnd, "Focus should be on parent %p, not %p\n", hwnd, GetFocus() );
     ShowWindow(child, SW_SHOW);
@@ -3760,6 +3765,27 @@ static void test_SetFocus(HWND hwnd)
 
     DestroyWindow( child2 );
     DestroyWindow( child );
+
+    SetForegroundWindow( GetDesktopWindow() );
+
+    other = CreateWindowExA( 0, "static", NULL, WS_OVERLAPPEDWINDOW, 100, 100, 200, 200, 0, 0, NULL, NULL );
+    ok( !!other, "CreateWindowExA failed, error %lu\n", GetLastError() );
+    flush_events( TRUE );
+
+    ShowWindow( other, SW_SHOWNA );
+    flush_events( TRUE );
+    ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
+    todo_wine ok( GetForegroundWindow() == 0, "got foreground %p\n", GetForegroundWindow() );
+
+    SetFocus( other );
+    ok( GetFocus() == other, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == other, "got active %p\n", GetActiveWindow() );
+    todo_wine ok( GetForegroundWindow() == 0, "got foreground %p\n", GetForegroundWindow() );
+
+    SetForegroundWindow( hwnd );
+    DestroyWindow( other );
+    flush_events( TRUE );
 }
 
 static void test_SetActiveWindow_0_proc( char **argv )
