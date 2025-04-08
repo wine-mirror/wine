@@ -570,7 +570,7 @@
 @ stdcall -syscall NtGdiIntersectClipRect(long long long long long)
 @ stdcall -syscall NtGdiInvertRgn(long long)
 @ stdcall -syscall NtGdiLineTo(long long long)
-@ stub NtGdiMakeFontDir
+@ stdcall -syscall NtGdiMakeFontDir(long ptr long wstr long)
 @ stub NtGdiMakeInfoDC
 @ stub NtGdiMakeObjectUnXferable
 @ stub NtGdiMakeObjectXferable

@@ -2135,6 +2135,17 @@ NTSTATUS WINAPI wow64_NtGdiLineTo( UINT *args )
     return NtGdiLineTo( hdc, x, y );
 }
 
+NTSTATUS WINAPI wow64_NtGdiMakeFontDir( UINT *args )
+{
+    DWORD embed = get_ulong( &args );
+    BYTE *buffer = get_ptr( &args );
+    UINT size = get_ulong( &args );
+    WCHAR *path = get_ptr( &args );
+    UINT len = get_ulong( &args );
+
+    return NtGdiMakeFontDir( embed, buffer, size, path, len );
+}
+
 NTSTATUS WINAPI wow64_NtGdiMaskBlt( UINT *args )
 {
     HDC hdc = get_handle( &args );

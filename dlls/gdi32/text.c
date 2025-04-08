@@ -2601,43 +2601,6 @@ HANDLE WINAPI AddFontMemResourceEx( void *ptr, DWORD size, void *dv, DWORD *coun
 static const char dos_string[0x40] = "This is a TrueType resource file";
 static const char FONTRES[] = {'F','O','N','T','R','E','S',':'};
 
-#include <pshpack1.h>
-struct fontdir
-{
-    WORD   num_of_resources;
-    WORD   res_id;
-    WORD   dfVersion;
-    DWORD  dfSize;
-    CHAR   dfCopyright[60];
-    WORD   dfType;
-    WORD   dfPoints;
-    WORD   dfVertRes;
-    WORD   dfHorizRes;
-    WORD   dfAscent;
-    WORD   dfInternalLeading;
-    WORD   dfExternalLeading;
-    BYTE   dfItalic;
-    BYTE   dfUnderline;
-    BYTE   dfStrikeOut;
-    WORD   dfWeight;
-    BYTE   dfCharSet;
-    WORD   dfPixWidth;
-    WORD   dfPixHeight;
-    BYTE   dfPitchAndFamily;
-    WORD   dfAvgWidth;
-    WORD   dfMaxWidth;
-    BYTE   dfFirstChar;
-    BYTE   dfLastChar;
-    BYTE   dfDefaultChar;
-    BYTE   dfBreakChar;
-    WORD   dfWidthBytes;
-    DWORD  dfDevice;
-    DWORD  dfFace;
-    DWORD  dfReserved;
-    CHAR   szFaceName[LF_FACESIZE];
-};
-#include <poppack.h>
-
 #include <pshpack2.h>
 
 struct ne_typeinfo

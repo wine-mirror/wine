@@ -248,6 +248,45 @@ struct font_fileinfo
     WCHAR path[1];
 };
 
+#pragma pack(push,1)
+struct fontdir
+{
+    WORD   num_of_resources;
+    WORD   res_id;
+    WORD   dfVersion;
+    DWORD  dfSize;
+    CHAR   dfCopyright[60];
+    WORD   dfType;
+    WORD   dfPoints;
+    WORD   dfVertRes;
+    WORD   dfHorizRes;
+    WORD   dfAscent;
+    WORD   dfInternalLeading;
+    WORD   dfExternalLeading;
+    BYTE   dfItalic;
+    BYTE   dfUnderline;
+    BYTE   dfStrikeOut;
+    WORD   dfWeight;
+    BYTE   dfCharSet;
+    WORD   dfPixWidth;
+    WORD   dfPixHeight;
+    BYTE   dfPitchAndFamily;
+    WORD   dfAvgWidth;
+    WORD   dfMaxWidth;
+    BYTE   dfFirstChar;
+    BYTE   dfLastChar;
+    BYTE   dfDefaultChar;
+    BYTE   dfBreakChar;
+    WORD   dfWidthBytes;
+    DWORD  dfDevice;
+    DWORD  dfFace;
+    DWORD  dfReserved;
+    CHAR   szDeviceName;
+    CHAR   szFaceName[0x85];
+};
+C_ASSERT( sizeof(struct fontdir) == 251 );
+#pragma pack(pop)
+
 
 W32KAPI INT      WINAPI NtGdiAbortDoc( HDC hdc );
 W32KAPI BOOL     WINAPI NtGdiAbortPath( HDC hdc );
@@ -388,6 +427,7 @@ W32KAPI DWORD    WINAPI NtGdiInitSpool(void);
 W32KAPI INT      WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom );
 W32KAPI BOOL     WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn );
 W32KAPI BOOL     WINAPI NtGdiLineTo( HDC hdc, INT x, INT y );
+W32KAPI ULONG    WINAPI NtGdiMakeFontDir( DWORD embed, BYTE *buffer, UINT size, const WCHAR *path, UINT len );
 W32KAPI BOOL     WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                       HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
                                       INT x_mask, INT y_mask, DWORD rop, DWORD bk_color );

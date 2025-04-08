@@ -782,6 +782,11 @@ BOOL SYSCALL_API NtGdiLineTo( HDC hdc, INT x, INT y )
     SYSCALL_FUNC( NtGdiLineTo );
 }
 
+ULONG SYSCALL_API NtGdiMakeFontDir( DWORD embed, BYTE *buffer, UINT size, const WCHAR *path, UINT len )
+{
+    SYSCALL_FUNC( NtGdiMakeFontDir );
+}
+
 BOOL SYSCALL_API NtGdiMaskBlt( HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT nHeight,
                                HDC hdcSrc, INT nXSrc, INT nYSrc, HBITMAP hbmMask,
                                INT xMask, INT yMask, DWORD dwRop, DWORD bk_color )
