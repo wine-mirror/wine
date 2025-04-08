@@ -6302,7 +6302,7 @@ static void test_SetFocus_process(void)
     SetFocus( hwnd );
     ok( GetFocus() == hwnd, "got focus %p\n", GetFocus() );
     ok( GetActiveWindow() == hwnd, "got active %p\n", GetActiveWindow() );
-    todo_wine ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
 
     SetForegroundWindow( hwnd );
     DestroyWindow( hwnd );
