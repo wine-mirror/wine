@@ -20224,6 +20224,104 @@ static void test_yuv_blit(void)
     DestroyWindow(window);
 }
 
+static void test_blit_to_self(void)
+{
+    DDSURFACEDESC2 surface_desc = {sizeof(surface_desc)};
+    const unsigned int width = 64, height = 64;
+    IDirectDrawSurface4 *surface;
+    unsigned int refcount;
+    IDirectDraw4 *ddraw;
+    HWND window;
+    HRESULT hr;
+
+    struct
+    {
+        RECT src, dst;
+    }
+    tests[] =
+    {
+        {{16, 16, 24, 24}, {18, 18, 26, 26}},
+        {{16, 16, 24, 24}, {14, 14, 22, 22}},
+        {{16, 16, 24, 24}, {12, 12, 28, 28}},
+        {{16, 16, 24, 24}, {18, 18, 22, 22}},
+    };
+
+    window = create_window();
+    ddraw = create_ddraw();
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY;
+    surface_desc.dwWidth = width;
+    surface_desc.dwHeight = height;
+    init_format_b8g8r8x8(&surface_desc.ddpfPixelFormat);
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        for (unsigned int y = 0; y < height; ++y)
+        {
+            for (unsigned int x = 0; x < width; ++x)
+                ((unsigned int *)surface_desc.lpSurface)[y * width + x] = (y << 8) | x;
+        }
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirectDrawSurface4_Blt(surface, &tests[i].dst, surface, &tests[i].src, DDBLT_WAIT, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IDirectDrawSurface4_Lock(surface, NULL, &surface_desc, DDLOCK_WAIT | DDLOCK_READONLY, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        for (unsigned int y = 0; y < height; ++y)
+        {
+            for (unsigned int x = 0; x < width; ++x)
+            {
+                unsigned int colour = ((unsigned int *)surface_desc.lpSurface)[y * width + x];
+
+                if (x >= tests[i].dst.left && x < tests[i].dst.right
+                        && y >= tests[i].dst.top && y < tests[i].dst.bottom)
+                {
+                    unsigned int src_x = (x - tests[i].dst.left)
+                            * (tests[i].src.right - tests[i].src.left)
+                            / (tests[i].dst.right - tests[i].dst.left)
+                            + tests[i].src.left;
+                    unsigned int src_y = (y - tests[i].dst.top)
+                            * (tests[i].src.bottom - tests[i].src.top)
+                            / (tests[i].dst.bottom - tests[i].dst.top)
+                            + tests[i].src.top;
+                    if (colour != ((src_y << 8) | src_x))
+                    {
+                        ok(0, "Got colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                                colour, x, y, ((src_y << 8) | src_x));
+                        goto out;
+                    }
+                }
+                else
+                {
+                    if (colour != ((y << 8) | x))
+                    {
+                        ok(0, "Got colour 0x%08x at (%u, %u).\n", colour, x, y);
+                        goto out;
+                    }
+                }
+            }
+        }
+out:
+        hr = IDirectDrawSurface4_Unlock(surface, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
+    IDirectDrawSurface4_Release(surface);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     DDDEVICEIDENTIFIER identifier;
@@ -20370,4 +20468,5 @@ START_TEST(ddraw4)
     test_d3d_state_reset();
     test_sysmem_x_channel();
     test_yuv_blit();
+    test_blit_to_self();
 }
