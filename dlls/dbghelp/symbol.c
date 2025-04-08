@@ -694,7 +694,7 @@ struct symt_custom* symt_new_custom(struct module* module, const char* name,
 }
 
 /* expect sym_info->MaxNameLen to be set before being called */
-static void symt_fill_sym_info(struct module_pair* pair,
+static BOOL symt_fill_sym_info(struct module_pair* pair,
                                const struct symt_function* func,
                                const struct symt* sym, SYMBOL_INFO* sym_info)
 {
@@ -741,6 +741,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
                                                                    MODULE_FORMAT_VTABLE_INDEX(loc_compute))))
                         {
                             iter.modfmt->vtable->loc_compute(iter.modfmt, func, &loc);
+                            if (loc.kind == loc_error && loc.reg == loc_err_out_of_scope) return FALSE;
                             break;
                         }
                     }
@@ -856,6 +857,7 @@ static void symt_fill_sym_info(struct module_pair* pair,
 
     TRACE_(dbghelp_symt)("%p => %s %lu %I64x\n",
                          sym, debugstr_a(sym_info->Name), sym_info->Size, sym_info->Address);
+    return TRUE;
 }
 
 struct sym_enum
@@ -872,7 +874,7 @@ struct sym_enum
 static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
                         const struct symt_function* func, const struct symt* sym)
 {
-    symt_fill_sym_info(pair, func, sym, se->sym_info);
+    if (!symt_fill_sym_info(pair, func, sym, se->sym_info)) return FALSE;
     if (se->index && se->sym_info->Index != se->index) return FALSE;
     if (se->tag && se->sym_info->Tag != se->tag) return FALSE;
     if (se->addr && !(se->addr >= se->sym_info->Address && se->addr < se->sym_info->Address + se->sym_info->Size)) return FALSE;
