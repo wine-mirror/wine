@@ -1579,6 +1579,14 @@ static void test_PropVariantToDouble(void)
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
     ok(value == 15.0, "Unexpected value: %f.\n", value);
 
+    PropVariantInit(&propvar);
+    propvar.vt = VT_R8;
+    propvar.dblVal = 15.1;
+    hr = PropVariantToDouble(&propvar, &value);
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
+    todo_wine
+    ok(value == 15.1, "Unexpected value: %f.\n", value);
+
     PropVariantClear(&propvar);
     propvar.vt = VT_I4;
     propvar.lVal = 123;
@@ -1620,6 +1628,24 @@ static void test_PropVariantToDouble(void)
     hr = PropVariantToDouble(&propvar, &value);
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
     ok(value == 8.0, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_R4;
+    propvar.fltVal = 8.1f;
+    hr = PropVariantToDouble(&propvar, &value);
+    todo_wine
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
+    todo_wine
+    ok(value == 8.1f, "Unexpected value: %f.\n", value);
+
+    PropVariantClear(&propvar);
+    propvar.vt = VT_R4;
+    propvar.fltVal = 8.6f;
+    hr = PropVariantToDouble(&propvar, &value);
+    todo_wine
+    ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
+    todo_wine
+    ok(value == 8.6f, "Unexpected value: %f.\n", value);
 }
 
 static void test_PropVariantToString(void)
