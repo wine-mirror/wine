@@ -458,8 +458,7 @@
     SYSCALL_ENTRY( 0x01c6, NtUserWaitMessage, 0 ) \
     SYSCALL_ENTRY( 0x01c7, NtUserWindowFromDC, 4 ) \
     SYSCALL_ENTRY( 0x01c8, NtUserWindowFromPoint, 8 ) \
-    SYSCALL_ENTRY( 0x01c9, __wine_get_file_outline_text_metric, 16 ) \
-    SYSCALL_ENTRY( 0x01ca, __wine_get_icm_profile, 16 )
+    SYSCALL_ENTRY( 0x01c9, __wine_get_icm_profile, 16 )
 
 #define ALL_SYSCALLS64 \
     SYSCALL_ENTRY( 0x0000, NtGdiAbortDoc, 8 ) \
@@ -919,5 +918,4 @@
     SYSCALL_ENTRY( 0x01c6, NtUserWaitMessage, 0 ) \
     SYSCALL_ENTRY( 0x01c7, NtUserWindowFromDC, 8 ) \
     SYSCALL_ENTRY( 0x01c8, NtUserWindowFromPoint, 16 ) \
-    SYSCALL_ENTRY( 0x01c9, __wine_get_file_outline_text_metric, 32 ) \
-    SYSCALL_ENTRY( 0x01ca, __wine_get_icm_profile, 32 )
+    SYSCALL_ENTRY( 0x01c9, __wine_get_icm_profile, 32 )

@@ -2435,12 +2435,6 @@ HWND SYSCALL_API NtUserWindowFromPoint( LONG x, LONG y )
     SYSCALL_FUNC( NtUserWindowFromPoint );
 }
 
-BOOL SYSCALL_API __wine_get_file_outline_text_metric( const WCHAR *path, TEXTMETRICW *otm,
-                                                      UINT *em_square, WCHAR *face_name )
-{
-    SYSCALL_FUNC( __wine_get_file_outline_text_metric );
-}
-
 BOOL SYSCALL_API __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename )
 {
     SYSCALL_FUNC( __wine_get_icm_profile );
