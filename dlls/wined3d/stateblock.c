@@ -3988,7 +3988,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
             float start = int_to_float(state->rs[WINED3D_RS_FOGSTART]);
             float end = int_to_float(state->rs[WINED3D_RS_FOGEND]);
 
-            if (start == end)
+            if (start == end && state->rs[WINED3D_RS_FOGTABLEMODE] == WINED3D_FOG_NONE)
             {
                 /* With vertex fog, everything is fogged.
                  * With pixel fog, coordinates < start are unfogged,
