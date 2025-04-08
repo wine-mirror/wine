@@ -493,9 +493,34 @@ static DWORD WINAPI cache_across_threads_test(void *arg)
 
 static void test_reader_info(void)
 {
+    static const GUID *classes[] =
+    {
+        &CLSID_WICUnknownMetadataReader,
+        &CLSID_WICLSDMetadataReader,
+        &CLSID_WICIMDMetadataReader,
+        &CLSID_WICAPEMetadataReader,
+        &CLSID_WICGifCommentMetadataReader,
+        &CLSID_WICPngTextMetadataReader,
+        &CLSID_WICPngGamaMetadataReader,
+        &CLSID_WICPngChrmMetadataReader,
+        &CLSID_WICPngHistMetadataReader,
+        &CLSID_WICPngTimeMetadataReader,
+        &CLSID_WICIfdMetadataReader,
+        &CLSID_WICGpsMetadataReader,
+        &CLSID_WICExifMetadataReader,
+        &CLSID_WICApp1MetadataReader,
+
+        &CLSID_WICUnknownMetadataWriter,
+        &CLSID_WICIfdMetadataWriter,
+        &CLSID_WICGpsMetadataWriter,
+        &CLSID_WICExifMetadataWriter,
+        &CLSID_WICApp1MetadataWriter,
+    };
+    IWICMetadataHandlerInfo *handler_info;
     IWICImagingFactory *factory;
     IWICComponentInfo *info, *info2;
     IWICMetadataReaderInfo *reader_info;
+    IWICMetadataReader *reader;
     HRESULT hr;
     CLSID clsid;
     GUID container_formats[10];
@@ -504,14 +529,33 @@ static void test_reader_info(void)
     HANDLE thread;
     WICMetadataPattern *patterns;
 
-    hr = get_component_info(&CLSID_WICUnknownMetadataReader, &info2);
-    ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
-    IWICComponentInfo_Release(info2);
-
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
     ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
-    if (FAILED(hr)) return;
+
+    for (int i = 0; i < ARRAY_SIZE(classes); ++i)
+    {
+        hr = IWICImagingFactory_CreateComponentInfo(factory, classes[i], &info);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IWICComponentInfo_Release(info);
+
+        hr = CoCreateInstance(classes[i], NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICMetadataReader, (void **)&reader);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &handler_info);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IWICMetadataHandlerInfo_GetCLSID(handler_info, &clsid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&clsid, classes[i]), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+        IWICMetadataHandlerInfo_Release(handler_info);
+
+        IWICMetadataReader_Release(reader);
+    }
+
+    hr = get_component_info(&CLSID_WICUnknownMetadataReader, &info2);
+    ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
+    IWICComponentInfo_Release(info2);
 
     hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICUnknownMetadataReader, &info);
     ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
