@@ -301,6 +301,21 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
     return STATUS_SUCCESS;
 }
 
+static PERF_COUNTER_INFO* get_performance_counter_info(PERF_COUNTERSET_INSTANCE *instance, ULONG counter_id)
+{
+    unsigned int i;
+    struct counterset_template *template;
+    struct counterset_instance *inst;
+
+    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
+    template = inst->template;
+
+    for (i = 0; i < template->counterset.NumCounters; ++i)
+        if (template->counter[i].CounterId == counter_id) return  &template->counter[i];
+
+    return NULL;
+}
+
 /***********************************************************************
  *           PerfSetCounterRefValue   (KERNELBASE.@)
  */
@@ -308,23 +323,17 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *i
                                     ULONG counterid, void *address)
 {
     struct perf_provider *prov = perf_provider_from_handle( provider );
-    struct counterset_template *template;
-    struct counterset_instance *inst;
-    unsigned int i;
+    PERF_COUNTER_INFO* counter;
 
     FIXME( "provider %p, instance %p, counterid %lu, address %p semi-stub.\n",
            provider, instance, counterid, address );
 
     if (!prov || !instance || !address) return ERROR_INVALID_PARAMETER;
 
-    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
-    template = inst->template;
+    counter = get_performance_counter_info(instance, counterid);
 
-    for (i = 0; i < template->counterset.NumCounters; ++i)
-        if (template->counter[i].CounterId == counterid) break;
-
-    if (i == template->counterset.NumCounters) return ERROR_NOT_FOUND;
-    *(void **)((BYTE *)&inst->instance + sizeof(PERF_COUNTERSET_INSTANCE) + template->counter[i].Offset) = address;
+    if (counter == NULL) return ERROR_NOT_FOUND;
+    *(void **)((BYTE *)(instance + 1) + counter->Offset) = address;
 
     return STATUS_SUCCESS;
 }
