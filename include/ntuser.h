@@ -645,6 +645,7 @@ struct ime_driver_call_params
     HIMC himc;
     const BYTE *state;
     COMPOSITIONSTRING *compstr;
+    BOOL *key_consumed;
 };
 
 /* NtUserSystemTrayCall calls */
