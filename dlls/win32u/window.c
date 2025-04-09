@@ -2214,11 +2214,7 @@ static BOOL expose_window_surface( HWND hwnd, UINT flags, const RECT *rect, UINT
     rects = win->rects;
     release_win_ptr( win );
 
-    if (rect)
-    {
-        exposed_rect = map_dpi_rect( *rect, dpi, get_dpi_for_window( hwnd ) );
-        InflateRect( &exposed_rect, 1, 1 ); /* compensate rounding errors */
-    }
+    if (rect) exposed_rect = map_dpi_rect( *rect, dpi, get_dpi_for_window( hwnd ) );
 
     if (!surface || surface == &dummy_surface)
     {
