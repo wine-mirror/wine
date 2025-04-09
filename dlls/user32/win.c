@@ -1502,12 +1502,7 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
  */
 BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
 {
-    if (!layout)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-    *layout = NtUserGetProcessDefaultLayout();
+    if (!NtUserGetProcessDefaultLayout( layout )) return FALSE;
     if (*layout == ~0u)
     {
         WCHAR *str, buffer[MAX_PATH];

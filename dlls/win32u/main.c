@@ -1679,6 +1679,11 @@ INT SYSCALL_API NtUserGetPriorityClipboardFormat( UINT *list, INT count )
     SYSCALL_FUNC( NtUserGetPriorityClipboardFormat );
 }
 
+BOOL SYSCALL_API NtUserGetProcessDefaultLayout( ULONG *layout )
+{
+    SYSCALL_FUNC( NtUserGetProcessDefaultLayout );
+}
+
 ULONG SYSCALL_API NtUserGetProcessDpiAwarenessContext( HANDLE process )
 {
     SYSCALL_FUNC( NtUserGetProcessDpiAwarenessContext );

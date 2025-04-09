@@ -2852,6 +2852,13 @@ NTSTATUS WINAPI wow64_NtUserGetPriorityClipboardFormat( UINT *args )
     return NtUserGetPriorityClipboardFormat( list, count );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetProcessDefaultLayout( UINT *args )
+{
+    ULONG *layout = get_ptr( &args );
+
+    return NtUserGetProcessDefaultLayout( layout );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetProcessDpiAwarenessContext( UINT *args )
 {
     HANDLE process = get_handle( &args );

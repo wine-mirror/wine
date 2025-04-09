@@ -6957,6 +6957,20 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
 }
 
 /***********************************************************************
+ *	     NtUserGetProcessDefaultLayout    (win32u.@)
+ */
+BOOL WINAPI NtUserGetProcessDefaultLayout( ULONG *layout )
+{
+    if (!layout)
+    {
+        RtlSetLastWin32Error( ERROR_NOACCESS );
+        return FALSE;
+    }
+    *layout = process_layout;
+    return TRUE;
+}
+
+/***********************************************************************
  *	     NtUserSetProcessDefaultLayout    (win32u.@)
  */
 BOOL WINAPI NtUserSetProcessDefaultLayout( ULONG layout )
@@ -7036,9 +7050,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 
     case NtUserCallNoParam_GetLastInputTime:
         return get_last_input_time();
-
-    case NtUserCallNoParam_GetProcessDefaultLayout:
-        return process_layout;
 
     case NtUserCallNoParam_GetProgmanWindow:
         return HandleToUlong( get_progman_window() );

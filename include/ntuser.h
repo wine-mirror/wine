@@ -850,9 +850,10 @@ W32KAPI HWND    WINAPI NtUserGetOpenClipboardWindow(void);
 W32KAPI BOOL    WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR, UINT_PTR, SIZE_T size,
                                                  UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info );
 W32KAPI INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
+W32KAPI BOOL    WINAPI NtUserGetProcessDefaultLayout( ULONG *layout );
+W32KAPI ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );
 W32KAPI HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 W32KAPI HANDLE  WINAPI NtUserGetProp( HWND hwnd, const WCHAR *str );
-W32KAPI ULONG   WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process );
 W32KAPI DWORD   WINAPI NtUserGetQueueStatus( UINT flags );
 W32KAPI UINT    WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT header_size );
 W32KAPI UINT    WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data, UINT *data_size, UINT header_size );
@@ -1024,7 +1025,6 @@ enum
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetLastInputTime,
-    NtUserCallNoParam_GetProcessDefaultLayout,
     NtUserCallNoParam_GetProgmanWindow,
     NtUserCallNoParam_GetShellWindow,
     NtUserCallNoParam_GetTaskmanWindow,
@@ -1047,11 +1047,6 @@ static inline DWORD NtUserGetDialogBaseUnits(void)
 static inline DWORD NtUserGetLastInputTime(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_GetLastInputTime );
-}
-
-static inline DWORD NtUserGetProcessDefaultLayout(void)
-{
-    return NtUserCallNoParam( NtUserCallNoParam_GetProcessDefaultLayout );
 }
 
 static inline HWND NtUserGetProgmanWindow(void)

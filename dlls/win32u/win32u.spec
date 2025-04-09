@@ -1075,7 +1075,7 @@
 @ stub NtUserGetPointerType
 @ stub NtUserGetPrecisionTouchPadConfiguration
 @ stdcall -syscall NtUserGetPriorityClipboardFormat(ptr long)
-@ stub NtUserGetProcessDefaultLayout
+@ stdcall -syscall NtUserGetProcessDefaultLayout(ptr)
 @ stdcall -syscall NtUserGetProcessDpiAwarenessContext(long)
 @ stub NtUserGetProcessUIContextInformation
 @ stdcall -syscall NtUserGetProcessWindowStation()
