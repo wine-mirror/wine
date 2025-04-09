@@ -739,43 +739,42 @@ static void test_rename(void)
     set_curr_dir_path(from, "test1.txt\0");
     set_curr_dir_path(to, "test4.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI, from, to,
-            DE_FILEDESTISFLD, FALSE, TRUE, FALSE);
+            DE_FILEDESTISFLD, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "The file is renamed\n");
 
     /* Rename a dir to an existing file. */
     set_curr_dir_path(from, "test4.txt\0");
     set_curr_dir_path(to, "test1.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI, from, to,
-            DE_FLDDESTISFILE, FALSE, TRUE, FALSE);
+            DE_FLDDESTISFILE, FALSE, FALSE, FALSE);
     ok(dir_exists("test4.txt"), "The file is renamed\n");
 
     /* Rename file to a different directory. */
     set_curr_dir_path(from, "test3.txt\0");
     set_curr_dir_path(to, "test4.txt\\test1.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI, from, to,
-            DE_DIFFDIR, FALSE, TRUE, FALSE);
-    todo_wine
+            DE_DIFFDIR, FALSE, FALSE, FALSE);
     ok(!file_exists("test4.txt\\test1.txt"), "The file is renamed\n");
 
     /* Multiple sources and targets, no FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI, from, to,
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "The file is renamed - many files are specified\n");
 
     /* Multiple sources and targets, with FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "The file is not renamed - many files are specified\n");
 
     /* Sources outnumber targets, with FOF_MULTIDESTFILES. */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     check_file_operation(FO_RENAME, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "The file is not renamed - many files are specified\n");
 
     /* Rename a file. */
@@ -808,7 +807,7 @@ static void test_rename(void)
     /* Rename multiple files to a single file. */
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0test2.txt\0", "a.txt\0",
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
     ok(!file_exists("a.txt"), "Expected a.txt to not exist\n");
@@ -816,24 +815,22 @@ static void test_rename(void)
     /* Rename a file to multiple files. */
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", "a.txt\0b.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("test1.txt"), "Expected test1.txt to not exist\n");
-    todo_wine
     ok(DeleteFileA("a.txt"), "Expected a.txt to exist\n");
     ok(!DeleteFileA("b.txt"), "Expected b.txt to not exist\n");
 
     /* Rename a nonexistent file. */
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "idontexist\0", "newfile\0",
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     ok(!file_exists("newfile"), "Expected newfile to not exist\n");
 
     /* Target already exists. */
     createTestFile("test1.txt");
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", "test2.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, FALSE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "testdir2\0", "testdir4\0",
             ERROR_SUCCESS, FALSE, TRUE, FALSE);
@@ -853,15 +850,15 @@ static void test_rename(void)
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist\n");
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "testdir2\0", "\0",
-            DE_DIFFDIR, FALSE, TRUE, TRUE);
+            DE_DIFFDIR, FALSE, FALSE, FALSE);
     ok(file_exists("testdir2"), "Expected testdir2 to exist\n");
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", "\0",
-            DE_DIFFDIR, FALSE, TRUE, TRUE);
+            DE_DIFFDIR, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "nonexistence\0", "\0",
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, TRUE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "\0", "\0",
             DE_MANYSRC1DEST, FALSE, TRUE, TRUE);
@@ -880,13 +877,13 @@ static void test_rename(void)
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, TRUE);
+            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "testdir2\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, TRUE);
+            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "nonexistence\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, TRUE);
+            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             NULL, NULL,
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
@@ -896,13 +893,13 @@ static void test_rename(void)
     init_shfo_tests();
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test?.txt\0", "test_target.txt\0",
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist.\n");
     ok(!DeleteFileA("test_target.txt"), "Expected test_target.txt to not exist.\n");
 
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "t?st1.txt\0", "test_target.txt\0",
-            DE_MANYSRC1DEST, FALSE, TRUE, FALSE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist.\n");
     ok(!DeleteFileA("test_target.txt"), "Expected test_target.txt to not exist.\n");
 

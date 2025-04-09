@@ -54,8 +54,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 #define FO_MASK         0xF
 
-#define DE_SAMEFILE      0x71
-#define DE_DESTSAMETREE  0x7D
+#define DE_SAMEFILE        0x71
+#define DE_MANYSRC1DEST    0x72
+#define DE_DIFFDIR         0x73
+#define DE_ROOTDIR         0x74
+#define DE_OPCANCELLED     0x75
+#define DE_DESTSUBTREE     0x76
+#define DE_ACCESSDENIEDSRC 0x78
+#define DE_PATHTOODEEP     0x79
+#define DE_MANYDEST        0x7A
+#define DE_INVALIDFILES    0x7C
+#define DE_DESTSAMETREE    0x7D
+#define DE_FLDDESTISFILE   0x7E
+#define DE_FILEDESTISFLD   0x80
 
 static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
 static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
@@ -1515,30 +1526,33 @@ static int move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const
     return ERROR_SUCCESS;
 }
 
-/* the FO_RENAME files */
-static int rename_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
+/* The FO_RENAME operation of SHFileOperation. */
+static DWORD rename_files(SHFILEOPSTRUCTW *op, const FILE_LIST *from, const FILE_LIST *to)
 {
-    const FILE_ENTRY *feFrom;
-    const FILE_ENTRY *feTo;
+    const FILE_ENTRY *entry_from, *entry_to;
 
-    if (flFrom->dwNumFiles != 1)
-        return ERROR_GEN_FAILURE;
+    if (from->dwNumFiles != 1)
+        return DE_MANYSRC1DEST;
 
-    if (flTo->dwNumFiles != 1)
-        return ERROR_CANCELLED;
+    entry_from = &from->feFiles[0];
+    if (entry_from->bFromWildcard)
+        return DE_MANYSRC1DEST;
+    if (!entry_from->bExists)
+        return ERROR_FILE_NOT_FOUND;
 
-    feFrom = &flFrom->feFiles[0];
-    feTo= &flTo->feFiles[0];
+    if (!to->dwNumFiles)
+        return DE_DIFFDIR;
+    entry_to = &to->feFiles[0];
+    if (entry_to->bFromWildcard)
+        return ERROR_INVALID_NAME;
 
-    /* fail if destination doesn't exist */
-    if (!feFrom->bExists || feFrom->bFromWildcard)
-        return ERROR_SHELL_INTERNAL_FILE_NOT_FOUND;
+    if (wcscmp(entry_from->szDirectory, entry_to->szDirectory) != 0)
+        return DE_DIFFDIR;
 
-    /* fail if destination already exists */
-    if (feTo->bExists)
-        return ERROR_ALREADY_EXISTS;
+    if (entry_to->bExists && IsAttribDir(entry_from->attributes) != IsAttribDir(entry_to->attributes))
+        return IsAttribDir(entry_to->attributes) ? DE_FILEDESTISFLD : DE_FLDDESTISFILE;
 
-    return SHNotifyMoveFileW(feFrom->szFullPath, feTo->szFullPath);
+    return SHNotifyMoveFileW(entry_from->szFullPath, entry_to->szFullPath);
 }
 
 /* alert the user if an unsupported flag is used */
