@@ -805,9 +805,9 @@ struct font_chooser
     BOOL            done;
 };
 
-/* check if the font described in tm is usable as a font for the renderer */
-static BOOL validate_font_metric( struct console *console, const TEXTMETRICW *tm,
-                                  DWORD type, int pass )
+/* check if the font family described in lf and tm is usable as a font for the renderer */
+static BOOL validate_font( struct console *console, const LOGFONTW *lf,
+                           const TEXTMETRICW *tm, DWORD type, int pass )
 {
     switch (pass) /* we get increasingly lenient in later passes */
     {
@@ -815,7 +815,7 @@ static BOOL validate_font_metric( struct console *console, const TEXTMETRICW *tm
         if (type & RASTER_FONTTYPE) return FALSE;
         /* fall through */
     case 1:
-        if (type & RASTER_FONTTYPE)
+        if (tm && (type & RASTER_FONTTYPE))
         {
             if (tm->tmMaxCharWidth * (console->active->win.right - console->active->win.left + 1)
                 >= GetSystemMetrics(SM_CXSCREEN))
@@ -826,29 +826,14 @@ static BOOL validate_font_metric( struct console *console, const TEXTMETRICW *tm
         }
         /* fall through */
     case 2:
-        if (tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != console->window->ui_charset)
-            return FALSE;
-        /* fall through */
-    case 3:
-        if (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut) return FALSE;
-        break;
-    }
-    return TRUE;
-}
-
-/* check if the font family described in lf is usable as a font for the renderer */
-static BOOL validate_font( struct console *console, const LOGFONTW *lf, int pass )
-{
-    switch (pass) /* we get increasingly lenient in later passes */
-    {
-    case 0:
-    case 1:
-    case 2:
         if (lf->lfCharSet != DEFAULT_CHARSET && lf->lfCharSet != console->window->ui_charset)
+            return FALSE;
+        if (tm && tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != console->window->ui_charset)
             return FALSE;
         /* fall through */
     case 3:
         if ((lf->lfPitchAndFamily & 3) != FIXED_PITCH) return FALSE;
+        if (tm && (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut)) return FALSE;
         /* fall through */
     case 4:
         if (lf->lfFaceName[0] == '@') return FALSE;
@@ -864,13 +849,9 @@ static int CALLBACK enum_first_font_proc( const LOGFONTW *lf, const TEXTMETRICW 
     LOGFONTW mlf;
 
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
-
-    if (!validate_font( fc->console, lf, fc->pass ))
-        return 1;
-
     TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
 
-    if (!validate_font_metric( fc->console, tm, font_type, fc->pass ))
+    if (!validate_font( fc->console, lf, tm, font_type, fc->pass ))
         return 1;
 
     /* set default font size */
@@ -1602,7 +1583,7 @@ static int CALLBACK enum_list_font_proc( const LOGFONTW *lf, const TEXTMETRICW *
 
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
 
-    if (validate_font( di->console, lf, 0 ))
+    if (validate_font( di->console, lf, NULL, 0, 0 ))
         SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_ADDSTRING, 0, (LPARAM)lf->lfFaceName );
 
     return 1;
