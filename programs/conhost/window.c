@@ -819,11 +819,11 @@ static BOOL validate_font( struct console *console, const LOGFONTW *lf,
                 < GetSystemMetrics(SM_CYSCREEN))
             w |= 0x4;
     }
-    if ((lf->lfCharSet == DEFAULT_CHARSET || lf->lfCharSet == console->window->ui_charset)
-            && (!tm || tm->tmCharSet == DEFAULT_CHARSET || tm->tmCharSet == console->window->ui_charset))
-        w |= 0x8;
     if ((lf->lfPitchAndFamily & 3) == FIXED_PITCH
             && (!tm || (!tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut)))
+        w |= 0x8;
+    if (lf->lfCharSet == console->window->ui_charset
+            && (!tm || tm->tmCharSet == console->window->ui_charset))
         w |= 0x10;
     if (lf->lfFaceName[0] != '@')
         w |= 0x20;
