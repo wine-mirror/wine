@@ -113,6 +113,57 @@ static void check_persist_classid_(unsigned int line, void *iface_ptr, const CLS
     IWICPersistStream_Release(persist_stream);
 }
 
+static IStream *create_stream(const char *data, int data_size)
+{
+    HRESULT hr;
+    IStream *stream;
+    HGLOBAL hdata;
+    void *locked_data;
+
+    hdata = GlobalAlloc(GMEM_MOVEABLE, data_size);
+    ok(hdata != 0, "GlobalAlloc failed\n");
+    if (!hdata) return NULL;
+
+    locked_data = GlobalLock(hdata);
+    memcpy(locked_data, data, data_size);
+    GlobalUnlock(hdata);
+
+    hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
+    ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%lx\n", hr);
+
+    return stream;
+}
+
+#define check_create_from_container(a, b, c, d) check_create_from_container_(__LINE__, a, b, c, d)
+static void check_create_from_container_(unsigned int line, const GUID *container, const GUID *format,
+        const void *data, size_t size)
+{
+    IWICComponentFactory *factory;
+    IWICMetadataReader *reader;
+    IStream *stream;
+    HRESULT hr;
+    GUID guid;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICComponentFactory, (void **)&factory);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    stream = create_stream(data, size);
+    ok_(__FILE__, line)(!!stream, "Failed to create a stream.\n");
+
+    hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+            container, NULL, WICMetadataCreationFailUnknown, stream, &reader);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICMetadataReader_GetMetadataFormat(reader, &guid);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(IsEqualGUID(&guid, format), "Unexpected format %s.\n", wine_dbgstr_guid(&guid));
+
+    IStream_Release(stream);
+    IWICMetadataReader_Release(reader);
+    IWICComponentFactory_Release(factory);
+}
+
 static HRESULT create_query_reader_from_metadata_reader(IWICComponentFactory *factory, IWICMetadataReader *metadata_reader,
         const GUID *container_format, IWICMetadataQueryReader **query_reader);
 
@@ -449,27 +500,6 @@ static ULONG get_refcount(void *iface)
     IUnknown *unknown = iface;
     IUnknown_AddRef(unknown);
     return IUnknown_Release(unknown);
-}
-
-static IStream *create_stream(const char *data, int data_size)
-{
-    HRESULT hr;
-    IStream *stream;
-    HGLOBAL hdata;
-    void *locked_data;
-
-    hdata = GlobalAlloc(GMEM_MOVEABLE, data_size);
-    ok(hdata != 0, "GlobalAlloc failed\n");
-    if (!hdata) return NULL;
-
-    locked_data = GlobalLock(hdata);
-    memcpy(locked_data, data, data_size);
-    GlobalUnlock(hdata);
-
-    hr = CreateStreamOnHGlobal(hdata, TRUE, &stream);
-    ok(hr == S_OK, "CreateStreamOnHGlobal failed, hr=%lx\n", hr);
-
-    return stream;
 }
 
 static void load_stream(void *iface_ptr, const char *data, int data_size, DWORD persist_options)
@@ -964,7 +994,6 @@ static void test_metadata_unknown(void)
 
 static void test_metadata_tEXt(void)
 {
-    IWICMetadataHandlerInfo *info;
     HRESULT hr;
     IWICMetadataReader *reader;
     IWICEnumMetadataItem *enumerator;
@@ -989,6 +1018,8 @@ static void test_metadata_tEXt(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngTextMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunktEXt,
+            &metadata_tEXt, sizeof(metadata_tEXt));
 
     hr = IWICMetadataReader_GetCount(reader, NULL);
     ok(hr == E_INVALIDARG, "GetCount failed, hr=%lx\n", hr);
@@ -998,12 +1029,6 @@ static void test_metadata_tEXt(void)
     ok(count == 0, "unexpected count %i\n", count);
 
     load_stream(reader, metadata_tEXt, sizeof(metadata_tEXt), WICPersistOptionDefault);
-
-    hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
-    todo_wine
-    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        IWICMetadataHandlerInfo_Release(info);
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "GetCount failed, hr=%lx\n", hr);
@@ -1138,7 +1163,6 @@ static void test_metadata_tEXt(void)
 
 static void test_metadata_gAMA(void)
 {
-    IWICMetadataHandlerInfo *info;
     HRESULT hr;
     IWICMetadataReader *reader;
     PROPVARIANT schema, id, value;
@@ -1161,6 +1185,8 @@ static void test_metadata_gAMA(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngGamaMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunkgAMA,
+            &metadata_gAMA, sizeof(metadata_gAMA));
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1184,12 +1210,6 @@ static void test_metadata_gAMA(void)
     }
 
     load_stream(reader, metadata_gAMA, sizeof(metadata_gAMA), WICPersistOptionDefault);
-
-    hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
-    todo_wine
-    ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        IWICMetadataHandlerInfo_Release(info);
 
     hr = IWICMetadataReader_GetMetadataFormat(reader, &format);
     ok(hr == S_OK, "GetMetadataFormat failed, hr=%lx\n", hr);
@@ -1318,6 +1338,8 @@ static void test_metadata_cHRM(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngChrmMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunkcHRM,
+            &metadata_cHRM, sizeof(metadata_cHRM));
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1475,6 +1497,8 @@ static void test_metadata_hIST(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngHistMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunkhIST,
+            &metadata_hIST, sizeof(metadata_hIST));
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1602,6 +1626,8 @@ static void test_metadata_tIME(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngTimeMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunktIME,
+            &metadata_tIME, sizeof(metadata_tIME));
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1773,6 +1799,8 @@ static void test_metadata_bKGD(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICPngBkgdMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatPng, &GUID_MetadataFormatChunkbKGD,
+            &metadata_bKGD_palette, sizeof(metadata_bKGD_palette));
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -3933,6 +3961,8 @@ static void test_metadata_GIF_comment(void)
     check_interface(reader, &IID_IWICPersistStream, TRUE);
     check_interface(reader, &IID_IWICStreamProvider, TRUE);
     check_persist_classid(reader, &CLSID_WICGifCommentMetadataReader);
+    check_create_from_container(&GUID_ContainerFormatGif, &GUID_MetadataFormatGifComment,
+            GIF_comment_data, sizeof(GIF_comment_data));
 
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
