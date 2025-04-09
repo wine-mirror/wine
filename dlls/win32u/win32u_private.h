@@ -227,7 +227,6 @@ extern BOOL is_virtual_desktop(void);
 
 /* window.c */
 struct tagWND;
-extern HDWP begin_defer_window_pos( INT count );
 extern BOOL client_to_screen( HWND hwnd, POINT *pt );
 extern void destroy_thread_windows(void);
 extern LRESULT destroy_window( HWND hwnd );

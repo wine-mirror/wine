@@ -862,15 +862,6 @@ BOOL WINAPI AnimateWindow( HWND hwnd, DWORD time, DWORD flags )
 
 
 /***********************************************************************
- *           BeginDeferWindowPos (USER32.@)
- */
-HDWP WINAPI BeginDeferWindowPos( INT count )
-{
-    return NtUserBeginDeferWindowPos( count );
-}
-
-
-/***********************************************************************
  *           DeferWindowPos (USER32.@)
  */
 HDWP WINAPI DeferWindowPos( HDWP hdwp, HWND hwnd, HWND after, INT x, INT y,

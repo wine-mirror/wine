@@ -1577,6 +1577,13 @@ NTSTATUS WINAPI wow64_NtUserAttachThreadInput( UINT *args )
     return NtUserAttachThreadInput( from, to, attach );
 }
 
+NTSTATUS WINAPI wow64_NtUserBeginDeferWindowPos( UINT *args )
+{
+    INT count = get_ulong( &args );
+
+    return HandleToUlong( NtUserBeginDeferWindowPos( count ));
+}
+
 NTSTATUS WINAPI wow64_NtUserBeginPaint( UINT *args )
 {
     HWND hwnd = get_handle( &args );

@@ -232,7 +232,7 @@
 @ stdcall AreDpiAwarenessContextsEqual(long long)
 @ stdcall ArrangeIconicWindows(long) NtUserArrangeIconicWindows
 @ stdcall AttachThreadInput(long long long) NtUserAttachThreadInput
-@ stdcall BeginDeferWindowPos(long)
+@ stdcall BeginDeferWindowPos(long) NtUserBeginDeferWindowPos
 @ stdcall BeginPaint(long ptr) NtUserBeginPaint
 @ stdcall BlockInput(long)
 @ stdcall BringWindowToTop(long)

@@ -804,7 +804,7 @@
 @ stdcall -syscall NtUserAttachThreadInput(long long long)
 @ stub NtUserAutoPromoteMouseInPointer
 @ stub NtUserAutoRotateScreen
-@ stub NtUserBeginDeferWindowPos
+@ stdcall -syscall NtUserBeginDeferWindowPos(long)
 @ stub NtUserBeginLayoutUpdate
 @ stdcall -syscall NtUserBeginPaint(long ptr)
 @ stub NtUserBitBltSysBmp

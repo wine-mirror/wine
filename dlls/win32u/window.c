@@ -3920,8 +3920,10 @@ typedef struct
     WINDOWPOS *winpos;
 } DWP;
 
-/* see BeginDeferWindowPos */
-HDWP begin_defer_window_pos( INT count )
+/***********************************************************************
+ *           NtUserBeginDeferWindowPos (win32u.@)
+ */
+HDWP WINAPI NtUserBeginDeferWindowPos( INT count )
 {
     HDWP handle = 0;
     DWP *dwp;

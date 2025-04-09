@@ -721,6 +721,7 @@ W32KAPI BOOL    WINAPI NtUserAddClipboardFormatListener( HWND hwnd );
 W32KAPI UINT    WINAPI NtUserArrangeIconicWindows( HWND parent );
 W32KAPI UINT    WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags );
 W32KAPI BOOL    WINAPI NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach );
+W32KAPI HDWP    WINAPI NtUserBeginDeferWindowPos( INT count );
 W32KAPI HDC     WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps );
 W32KAPI NTSTATUS WINAPI NtUserBuildHimcList( UINT thread_id, UINT count, HIMC *buffer, UINT *size );
 W32KAPI NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, HWND hwnd, BOOL children, BOOL non_immersive,
@@ -1067,7 +1068,6 @@ static inline HWND NtUserGetTaskmanWindow(void)
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
-    NtUserCallOneParam_BeginDeferWindowPos,
     NtUserCallOneParam_CreateCursorIcon,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
@@ -1087,11 +1087,6 @@ enum
     /* temporary exports */
     NtUserGetDeskPattern,
 };
-
-static inline HDWP NtUserBeginDeferWindowPos( INT count )
-{
-    return UlongToHandle( NtUserCallOneParam( count, NtUserCallOneParam_BeginDeferWindowPos ));
-}
 
 static inline HICON NtUserCreateCursorIcon( BOOL is_icon )
 {

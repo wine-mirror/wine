@@ -1127,6 +1127,11 @@ BOOL SYSCALL_API NtUserAttachThreadInput( DWORD from, DWORD to, BOOL attach )
     SYSCALL_FUNC( NtUserAttachThreadInput );
 }
 
+HDWP SYSCALL_API NtUserBeginDeferWindowPos( INT count )
+{
+    SYSCALL_FUNC( NtUserBeginDeferWindowPos );
+}
+
 HDC SYSCALL_API NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
 {
     SYSCALL_FUNC( NtUserBeginPaint );

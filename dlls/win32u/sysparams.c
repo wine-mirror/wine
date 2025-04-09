@@ -7086,9 +7086,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 {
     switch(code)
     {
-    case NtUserCallOneParam_BeginDeferWindowPos:
-        return HandleToUlong( begin_defer_window_pos( arg ));
-
     case NtUserCallOneParam_CreateCursorIcon:
         return HandleToUlong( alloc_cursoricon_handle( arg ));
 
