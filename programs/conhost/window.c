@@ -863,8 +863,6 @@ static int CALLBACK enum_first_font_proc( const LOGFONTW *lf, const TEXTMETRICW 
     struct font_chooser *fc = (struct font_chooser *)lparam;
     LOGFONTW mlf;
 
-    if (font_type != TRUETYPE_FONTTYPE) return 1;
-
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
 
     if (!validate_font( fc->console, lf, fc->pass ))
@@ -1601,8 +1599,6 @@ static int CALLBACK enum_list_font_proc( const LOGFONTW *lf, const TEXTMETRICW *
                                          DWORD font_type, LPARAM lparam )
 {
     struct dialog_info *di = (struct dialog_info *)lparam;
-
-    if (font_type != TRUETYPE_FONTTYPE) return 1;
 
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
 
