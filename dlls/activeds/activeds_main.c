@@ -126,10 +126,38 @@ fail:
 /*****************************************************
  * ADsBuildVarArrayInt     [ACTIVEDS.8]
  */
-HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD lpdwObjectTypes, DWORD dwObjectTypes, VARIANT* pvar)
+HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD values, DWORD count, VARIANT* var)
 {
-    FIXME("(%p, %ld, %p)!stub\n",lpdwObjectTypes, dwObjectTypes, pvar);
-    return E_NOTIMPL;
+    HRESULT hr;
+    SAFEARRAY *sa;
+    LONG idx, end = count;
+
+    TRACE("(%p, %lu, %p)\n", values, count, var);
+
+    if (!var) return E_ADS_BAD_PARAMETER;
+
+    sa = SafeArrayCreateVector(VT_VARIANT, 0, count);
+    if (!sa) return E_OUTOFMEMORY;
+
+    VariantInit(var);
+    for (idx = 0; idx < end; idx++)
+    {
+        VARIANT item;
+
+        V_VT(&item) = VT_UI4;
+        V_UI4(&item) = values[idx];
+
+        hr = SafeArrayPutElement(sa, &idx, &item);
+        if (hr != S_OK)
+        {
+            SafeArrayDestroy(sa);
+            return hr;
+        }
+    }
+
+    V_VT(var) = VT_ARRAY | VT_VARIANT;
+    V_ARRAY(var) = sa;
+    return S_OK;
 }
 
 /*****************************************************

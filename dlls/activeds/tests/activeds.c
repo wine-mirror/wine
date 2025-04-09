@@ -84,6 +84,53 @@ static void test_ADsBuildVarArrayStr(void)
     VariantClear(&var);
 }
 
+static void test_ADsBuildVarArrayInt(void)
+{
+    const DWORD props[] = { 1, 2, 3, 4 };
+    HRESULT hr;
+    VARIANT var, item;
+    LONG start, end, idx;
+
+    hr = ADsBuildVarArrayInt(NULL, 0, NULL);
+    ok(hr == E_ADS_BAD_PARAMETER || hr == E_FAIL /* XP */, "got %#lx\n", hr);
+
+    hr = ADsBuildVarArrayInt(NULL, 0, &var);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(V_VT(&var) == (VT_ARRAY | VT_VARIANT), "got %d\n", V_VT(&var));
+    start = 0xdeadbeef;
+    hr = SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(start == 0, "got %ld\n", start);
+    end = 0xdeadbeef;
+    hr = SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(end == -1, "got %ld\n", end);
+    VariantClear(&var);
+
+    hr = ADsBuildVarArrayInt((LPDWORD)props, ARRAY_SIZE(props), &var);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(V_VT(&var) == (VT_ARRAY | VT_VARIANT), "got %d\n", V_VT(&var));
+    start = 0xdeadbeef;
+    hr = SafeArrayGetLBound(V_ARRAY(&var), 1, &start);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(start == 0, "got %ld\n", start);
+    end = 0xdeadbeef;
+    hr = SafeArrayGetUBound(V_ARRAY(&var), 1, &end);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(end == 3, "got %ld\n", end);
+
+    for (idx = 0; idx < ARRAY_SIZE(props); idx++)
+    {
+        hr = SafeArrayGetElement(V_ARRAY(&var), &idx, &item);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(V_VT(&item) == VT_UI4, "got %d\n", V_VT(&item));
+        ok(V_UI4(&item) == props[idx], "got %lu\n", V_UI4(&item));
+        VariantClear(&item);
+    }
+
+    VariantClear(&var);
+}
+
 static void test_Pathname(void)
 {
     static const WCHAR * const elem[3] = { L"a=b",L"c=d",L"e=f" };
@@ -167,6 +214,7 @@ START_TEST(activeds)
 
     test_Pathname();
     test_ADsBuildVarArrayStr();
+    test_ADsBuildVarArrayInt();
 
     CoUninitialize();
 }
