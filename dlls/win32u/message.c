@@ -4298,8 +4298,10 @@ BOOL WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id )
     return ret;
 }
 
-/* see KillSystemTimer */
-BOOL kill_system_timer( HWND hwnd, UINT_PTR id )
+/***********************************************************************
+ *           NtUserKillSystemTimer (win32u.@)
+ */
+BOOL WINAPI NtUserKillSystemTimer( HWND hwnd, UINT_PTR id )
 {
     BOOL ret;
 

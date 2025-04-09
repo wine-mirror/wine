@@ -810,7 +810,7 @@
 @ stdcall IsWindowVisible(long)
 # @ stub IsWow64Message
 @ stdcall IsZoomed(long)
-@ stdcall KillSystemTimer(long long)
+@ stdcall KillSystemTimer(long long) NtUserKillSystemTimer
 @ stdcall KillTimer(long long) NtUserKillTimer
 @ stdcall LoadAcceleratorsA(long str)
 @ stdcall LoadAcceleratorsW(long wstr)

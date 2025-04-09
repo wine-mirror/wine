@@ -1177,7 +1177,7 @@
 @ stub NtUserIsWindowBroadcastingDpiToChildren
 @ stub NtUserIsWindowDisplayChangeSuppressed
 @ stub NtUserIsWindowGDIScaledDpiMessageEnabled
-@ stub NtUserKillSystemTimer
+@ stdcall -syscall NtUserKillSystemTimer(long long)
 @ stdcall -syscall NtUserKillTimer(long long)
 @ stub NtUserLW_LoadFonts
 @ stub NtUserLayoutCompleted

@@ -5953,9 +5953,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_IsChild:
         return is_child( hwnd, UlongToHandle(param) );
 
-    case NtUserCallHwndParam_KillSystemTimer:
-        return kill_system_timer( hwnd, param );
-
     case NtUserCallHwndParam_MapWindowPoints:
         {
             struct map_window_points_params *params = (void *)param;

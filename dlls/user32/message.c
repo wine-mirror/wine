@@ -1211,15 +1211,6 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, void *unkn
 }
 
 
-/***********************************************************************
- *		KillSystemTimer (USER32.@)
- */
-BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
-{
-    return NtUserKillSystemTimer( hwnd, id );
-}
-
-
 /**********************************************************************
  *		IsGUIThread  (USER32.@)
  */

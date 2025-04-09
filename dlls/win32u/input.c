@@ -1743,7 +1743,7 @@ void update_mouse_tracking_info( HWND hwnd )
     /* stop the timer if the tracking list is empty */
     if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
     {
-        kill_system_timer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
         tracking_info.info.hwndTrack = 0;
         tracking_info.info.dwFlags = 0;
         tracking_info.info.dwHoverTime = 0;
@@ -1804,7 +1804,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
             /* if we aren't tracking on hover or leave remove this entry */
             if (!(tracking_info.info.dwFlags & (TME_HOVER | TME_LEAVE)))
             {
-                kill_system_timer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+                NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
                 tracking_info.info.hwndTrack = 0;
                 tracking_info.info.dwFlags = 0;
                 tracking_info.info.dwHoverTime = 0;
@@ -1830,7 +1830,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
         if ((tracking_info.info.dwFlags & TME_LEAVE) && tracking_info.info.hwndTrack != NULL)
             check_mouse_leave(hwnd, hittest);
 
-        kill_system_timer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        NtUserKillSystemTimer( tracking_info.info.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
         tracking_info.info.hwndTrack = 0;
         tracking_info.info.dwFlags = 0;
         tracking_info.info.dwHoverTime = 0;
@@ -2335,7 +2335,7 @@ BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height 
     if (prev && !hidden)  /* hide the previous one */
     {
         /* FIXME: won't work if prev belongs to a different process */
-        kill_system_timer( prev, SYSTEM_TIMER_CARET );
+        NtUserKillSystemTimer( prev, SYSTEM_TIMER_CARET );
         if (old_state) display_caret( prev, &r );
     }
 
@@ -2374,7 +2374,7 @@ BOOL WINAPI NtUserDestroyCaret(void)
     if (ret && prev && !hidden)
     {
         /* FIXME: won't work if prev belongs to a different process */
-        kill_system_timer( prev, SYSTEM_TIMER_CARET );
+        NtUserKillSystemTimer( prev, SYSTEM_TIMER_CARET );
         if (old_state) display_caret( prev, &r );
     }
     if (caret.bitmap) NtGdiDeleteObjectApp( caret.bitmap );
@@ -2545,7 +2545,7 @@ BOOL WINAPI NtUserHideCaret( HWND hwnd )
     if (ret && !hidden)
     {
         if (old_state) display_caret( hwnd, &r );
-        kill_system_timer( hwnd, SYSTEM_TIMER_CARET );
+        NtUserKillSystemTimer( hwnd, SYSTEM_TIMER_CARET );
     }
     return ret;
 }

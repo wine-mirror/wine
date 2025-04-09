@@ -2285,7 +2285,7 @@ static LRESULT LISTBOX_HandleLButtonDownCombo( LB_DESCR *descr, UINT msg, DWORD 
 static LRESULT LISTBOX_HandleLButtonUp( LB_DESCR *descr )
 {
     if (LISTBOX_Timer != LB_TIMER_NONE)
-        KillSystemTimer( descr->self, LB_TIMER_ID );
+        NtUserKillSystemTimer( descr->self, LB_TIMER_ID );
     LISTBOX_Timer = LB_TIMER_NONE;
     if (descr->captured)
     {
@@ -2342,7 +2342,7 @@ static LRESULT LISTBOX_HandleSystemTimer( LB_DESCR *descr )
 {
     if (!LISTBOX_HandleTimer( descr, descr->focus_item, LISTBOX_Timer ))
     {
-        KillSystemTimer( descr->self, LB_TIMER_ID );
+        NtUserKillSystemTimer( descr->self, LB_TIMER_ID );
         LISTBOX_Timer = LB_TIMER_NONE;
     }
     return 0;
@@ -2394,7 +2394,7 @@ static void LISTBOX_HandleMouseMove( LB_DESCR *descr,
     if (dir != LB_TIMER_NONE)
         NtUserSetSystemTimer( descr->self, LB_TIMER_ID, LB_SCROLL_TIMEOUT );
     else if (LISTBOX_Timer != LB_TIMER_NONE)
-        KillSystemTimer( descr->self, LB_TIMER_ID );
+        NtUserKillSystemTimer( descr->self, LB_TIMER_ID );
     LISTBOX_Timer = dir;
 }
 

@@ -886,6 +886,7 @@ W32KAPI BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 W32KAPI BOOL    WINAPI NtUserIsMouseInPointerEnabled(void);
 W32KAPI BOOL    WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase );
 W32KAPI BOOL    WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase );
+W32KAPI BOOL    WINAPI NtUserKillSystemTimer( HWND hwnd, UINT_PTR id );
 W32KAPI BOOL    WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id );
 W32KAPI BOOL    WINAPI NtUserLockWindowUpdate( HWND hwnd );
 W32KAPI BOOL    WINAPI NtUserLogicalToPerMonitorDPIPhysicalPoint( HWND hwnd, POINT *pt );
@@ -1367,7 +1368,6 @@ enum
     NtUserCallHwndParam_GetWindowThread,
     NtUserCallHwndParam_GetWindowWord,
     NtUserCallHwndParam_IsChild,
-    NtUserCallHwndParam_KillSystemTimer,
     NtUserCallHwndParam_MapWindowPoints,
     NtUserCallHwndParam_MirrorRgn,
     NtUserCallHwndParam_MonitorFromWindow,
@@ -1492,11 +1492,6 @@ static inline WORD NtUserGetWindowWord( HWND hwnd, INT offset )
 static inline BOOL NtUserIsChild( HWND parent, HWND child )
 {
     return NtUserCallHwndParam( parent, HandleToUlong(child), NtUserCallHwndParam_IsChild );
-}
-
-static inline BOOL NtUserKillSystemTimer( HWND hwnd, UINT_PTR id )
-{
-    return NtUserCallHwndParam( hwnd, id, NtUserCallHwndParam_KillSystemTimer );
 }
 
 struct map_window_points_params
