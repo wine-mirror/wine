@@ -4366,6 +4366,13 @@ NTSTATUS WINAPI wow64_NtUserSetFocus( UINT *args )
     return HandleToUlong( NtUserSetFocus( hwnd ));
 }
 
+NTSTATUS WINAPI wow64_NtUserSetForegroundWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserSetForegroundWindow( hwnd );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetInternalWindowPos( UINT *args )
 {
     HWND hwnd = get_handle( &args );

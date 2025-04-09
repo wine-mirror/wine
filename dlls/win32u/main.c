@@ -2136,6 +2136,11 @@ HWND SYSCALL_API NtUserSetFocus( HWND hwnd )
     SYSCALL_FUNC( NtUserSetFocus );
 }
 
+BOOL SYSCALL_API NtUserSetForegroundWindow( HWND hwnd )
+{
+    SYSCALL_FUNC( NtUserSetForegroundWindow );
+}
+
 void SYSCALL_API NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt )
 {
     SYSCALL_FUNC( NtUserSetInternalWindowPos );

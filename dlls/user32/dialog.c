@@ -940,7 +940,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     {
         /* If this dialog was given an owner then set the focus to that owner. */
         if (owner)
-            SetForegroundWindow( owner );
+            NtUserSetForegroundWindow( owner );
         else
             NtUserActivateOtherWindow( hwnd );
     }

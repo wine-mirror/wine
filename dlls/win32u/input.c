@@ -2162,6 +2162,14 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
     return set_focus_window( hwnd );
 }
 
+/*****************************************************************
+ *           NtUserSetForegroundWindow  (win32u.@)
+ */
+BOOL WINAPI NtUserSetForegroundWindow( HWND hwnd )
+{
+    return set_foreground_window( hwnd, FALSE );
+}
+
 /*******************************************************************
  *		set_foreground_window
  */

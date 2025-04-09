@@ -1044,7 +1044,7 @@
 # @ stub SetFeatureReportResponse
 @ stdcall SetFocus(long) NtUserSetFocus
 # @ stub SetForegroundRedirectionForActivationObject
-@ stdcall SetForegroundWindow(long)
+@ stdcall SetForegroundWindow(long) NtUserSetForegroundWindow
 # @ stub SetFullscreenMagnifierOffsetsDWMUpdated
 @ stdcall SetGestureConfig(ptr long long ptr long)
 @ stdcall SetInternalWindowPos(long long ptr ptr) NtUserSetInternalWindowPos

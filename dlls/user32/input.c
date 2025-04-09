@@ -758,15 +758,6 @@ BOOL WINAPI GetPointerTouchInfoHistory( UINT32 id, UINT32 *count, POINTER_TOUCH_
 
 
 /*******************************************************************
- *           SetForegroundWindow  (USER32.@)
- */
-BOOL WINAPI SetForegroundWindow( HWND hwnd )
-{
-    return NtUserSetForegroundWindow( hwnd );
-}
-
-
-/*******************************************************************
  *           GetActiveWindow  (USER32.@)
  */
 HWND WINAPI GetActiveWindow(void)

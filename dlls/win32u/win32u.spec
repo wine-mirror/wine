@@ -1368,7 +1368,7 @@
 @ stub NtUserSetFeatureReportResponse
 @ stdcall -syscall NtUserSetFocus(long)
 @ stub NtUserSetForegroundRedirectionForActivationObject
-@ stub NtUserSetForegroundWindow
+@ stdcall -syscall NtUserSetForegroundWindow(long)
 @ stub NtUserSetForegroundWindowForApplication
 @ stub NtUserSetFullscreenMagnifierOffsetsDWMUpdated
 @ stub NtUserSetGestureConfig

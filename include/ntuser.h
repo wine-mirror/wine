@@ -951,6 +951,7 @@ W32KAPI BOOL    WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *
                                                 struct cursoricon_desc *desc );
 W32KAPI BOOL    WINAPI NtUserSetCursorPos( INT x, INT y );
 W32KAPI HWND    WINAPI NtUserSetFocus( HWND hwnd );
+W32KAPI BOOL    WINAPI NtUserSetForegroundWindow( HWND hwnd );
 W32KAPI void    WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt );
 W32KAPI BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 W32KAPI BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
@@ -1269,7 +1270,6 @@ enum
     NtUserCallHwnd_IsWindowEnabled,
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
-    NtUserCallHwnd_SetForegroundWindow,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrentProcessWindow,
@@ -1344,11 +1344,6 @@ static inline BOOL NtUserIsWindowUnicode( HWND hwnd )
 static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowVisible );
-}
-
-static inline BOOL NtUserSetForegroundWindow( HWND hwnd )
-{
-    return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindow );
 }
 
 /* NtUserCallHwndParam codes, not compatible with Windows */
