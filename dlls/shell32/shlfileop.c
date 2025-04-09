@@ -1010,7 +1010,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
 }
 
 /* takes the null-separated file list and fills out the FILE_LIST */
-static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
+static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wildcard)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
@@ -1050,14 +1050,14 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
         for (p = szCurFile; *p; p++) if (*p == '/') *p = '\\';
 
         /* parse wildcard files if they are in the filename */
-        if (from_wildcard)
+        if (from_wildcard && parse_wildcard)
         {
             parse_wildcard_files(flList, szCurFile, &i, from_relative);
             i--;
         }
         else
         {
-            add_file_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, FALSE);
+            add_file_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
         }
 
         /* advance to the next string */
@@ -1196,7 +1196,7 @@ static int copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *fl
 
         destroy_file_list(flTo);
         ZeroMemory(flTo, sizeof(FILE_LIST));
-        parse_file_list(flTo, curdir);
+        parse_file_list(flTo, curdir, FALSE);
         fileDest = &flTo->feFiles[0];
     }
 
@@ -1571,11 +1571,11 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     ZeroMemory(&flFrom, sizeof(FILE_LIST));
     ZeroMemory(&flTo, sizeof(FILE_LIST));
 
-    if ((ret = parse_file_list(&flFrom, lpFileOp->pFrom)))
+    if ((ret = parse_file_list(&flFrom, lpFileOp->pFrom, lpFileOp->wFunc != FO_RENAME)))
         return ret;
 
     if (lpFileOp->wFunc != FO_DELETE)
-        parse_file_list(&flTo, lpFileOp->pTo);
+        parse_file_list(&flTo, lpFileOp->pTo, FALSE);
 
     ZeroMemory(&op, sizeof(op));
     op.req = lpFileOp;

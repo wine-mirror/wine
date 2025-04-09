@@ -908,7 +908,7 @@ static void test_rename(void)
 
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", "test?.txt\0",
-            ERROR_INVALID_NAME, FALSE, TRUE, TRUE);
+            ERROR_INVALID_NAME, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist.\n");
 }
 
