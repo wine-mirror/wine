@@ -480,7 +480,7 @@ static void test_CM_Get_Device_Interface_List(void)
     ok(count == count2, "got %u, expected %u.\n", count, count2);
 
     ret = CM_Get_Device_Interface_PropertyW(L"qqq", &DEVPKEY_Device_InstanceId, &type, (BYTE *)instance_id, &size, 0);
-    ok(ret == CR_NO_SUCH_DEVICE_INTERFACE, "got %#lx.\n", ret);
+    ok(ret == CR_NO_SUCH_DEVICE_INTERFACE || broken(ret == CR_INVALID_DATA) /* w7 */, "got %#lx.\n", ret);
 }
 
 START_TEST(cfgmgr32)
