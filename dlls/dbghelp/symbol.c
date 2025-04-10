@@ -740,13 +740,17 @@ static BOOL symt_fill_sym_info(struct module_pair* pair,
                                                                    MODULE_FORMAT_VTABLE_INDEX(loc_compute))))
                         {
                             iter.modfmt->vtable->loc_compute(iter.modfmt, func, &loc);
-                            if (loc.kind == loc_error && loc.reg == loc_err_out_of_scope) return FALSE;
                             break;
                         }
                     }
                     switch (loc.kind)
                     {
                     case loc_error:
+                        if (loc.reg == loc_err_out_of_scope)
+                        {
+                            sym_info->Flags |= SYMFLAG_NULL;
+                            break;
+                        }
                         /* for now we report error cases as a negative register number */
                         /* fall through */
                     case loc_register:
