@@ -15245,6 +15245,11 @@ static void test_d3d9on12(void)
     IDXGIFactory4_Release(factory);
 
     hr = pD3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&d3d12device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a D3D12 device, skipping d3d9on12 tests\n");
+        goto out;
+    }
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
