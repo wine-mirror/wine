@@ -1014,8 +1014,8 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
     ok( mbi.AllocationBase == NtCurrentTeb()->DeallocationStack, "unexpected AllocationBase %p, expected %p\n", mbi.AllocationBase, NtCurrentTeb()->DeallocationStack );
     ok( mbi.AllocationProtect == PAGE_READWRITE, "unexpected AllocationProtect %#lx, expected %#x\n", mbi.AllocationProtect, PAGE_READWRITE );
     ok( mbi.BaseAddress == addr, "unexpected BaseAddress %p, expected %p\n", mbi.BaseAddress, addr );
-    todo_wine ok( mbi.State == MEM_RESERVE, "unexpected State %#lx, expected %#x\n", mbi.State, MEM_RESERVE );
-    todo_wine ok( mbi.Protect == 0, "unexpected Protect %#lx, expected %#x\n", mbi.Protect, 0 );
+    ok( mbi.State == MEM_RESERVE, "unexpected State %#lx, expected %#x\n", mbi.State, MEM_RESERVE );
+    ok( mbi.Protect == 0, "unexpected Protect %#lx, expected %#x\n", mbi.Protect, 0 );
     ok( mbi.Type == MEM_PRIVATE, "unexpected Type %#lx, expected %#x\n", mbi.Type, MEM_PRIVATE );
 
 
@@ -1035,8 +1035,8 @@ static DWORD WINAPI test_stack_size_thread(void *ptr)
     ok( mbi.AllocationBase == NtCurrentTeb()->DeallocationStack, "unexpected AllocationBase %p, expected %p\n", mbi.AllocationBase, NtCurrentTeb()->DeallocationStack );
     ok( mbi.AllocationProtect == PAGE_READWRITE, "unexpected AllocationProtect %#lx, expected %#x\n", mbi.AllocationProtect, PAGE_READWRITE );
     ok( mbi.BaseAddress == addr, "unexpected BaseAddress %p, expected %p\n", mbi.BaseAddress, addr );
-    todo_wine ok( mbi.State == MEM_RESERVE, "unexpected State %#lx, expected %#x\n", mbi.State, MEM_RESERVE );
-    todo_wine ok( mbi.Protect == 0, "unexpected Protect %#lx, expected %#x\n", mbi.Protect, 0 );
+    ok( mbi.State == MEM_RESERVE, "unexpected State %#lx, expected %#x\n", mbi.State, MEM_RESERVE );
+    ok( mbi.Protect == 0, "unexpected Protect %#lx, expected %#x\n", mbi.Protect, 0 );
     ok( mbi.Type == MEM_PRIVATE, "unexpected Type %#lx, expected %#x\n", mbi.Type, MEM_PRIVATE );
 
     guard_size = reserved - committed - mbi.RegionSize;
@@ -1249,11 +1249,13 @@ static void test_RtlCreateUserStack(void)
     struct test_stack_size_thread_args args;
     SIZE_T default_commit = nt->OptionalHeader.SizeOfStackCommit;
     SIZE_T default_reserve = nt->OptionalHeader.SizeOfStackReserve;
+    MEMORY_BASIC_INFORMATION mbi;
     INITIAL_TEB stack = {0};
     unsigned int i;
     NTSTATUS ret;
     HANDLE thread;
     CLIENT_ID id;
+    SIZE_T szret;
 
     struct
     {
@@ -1267,6 +1269,7 @@ static void test_RtlCreateUserStack(void)
         {       0, 0x200000,      1,        1, default_commit, 0x200000},
         {  0x4000, 0x200000,      1,        1,         0x4000, 0x200000},
         {0x100000, 0x100000,      1,        1,       0x100000, 0x100000},
+        { 0xff000, 0x100000,      1,        1,        0xff000, 0x100000},
         { 0x20000,  0x20000,      1,        1,        0x20000, 0x100000},
 
         {       0, 0x110000,      1,        1, default_commit, 0x110000},
@@ -1299,6 +1302,24 @@ static void test_RtlCreateUserStack(void)
                 "%u: got reserve %#Ix\n", i, (ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.DeallocationStack);
         todo_wine ok((ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.StackLimit == tests[i].expect_commit,
                 "%u: got commit %#Ix\n", i, (ULONG_PTR)stack.StackBase - (ULONG_PTR)stack.StackLimit);
+        szret = VirtualQuery(stack.DeallocationStack, &mbi, sizeof(mbi));
+        ok(szret == sizeof(mbi), "got %Iu.\n", szret);
+        ok(mbi.AllocationBase == stack.DeallocationStack, "got %p, %p.\n", mbi.AllocationBase, stack.DeallocationStack);
+        if (tests[i].commit + 2 * page_size <= max( tests[i].reserve, 0x100000))
+        {
+            ok(mbi.State == MEM_RESERVE, "%u: got %#lx.\n", i, mbi.State);
+            ok(!mbi.Protect, "%u: got %#lx.\n", i, mbi.Protect);
+        }
+        else if (tests[i].commit + page_size <= max( tests[i].reserve, 0x100000))
+        {
+            todo_wine ok(mbi.State == MEM_COMMIT, "%u: got %#lx.\n", i, mbi.State);
+            todo_wine ok(mbi.Protect == (PAGE_READWRITE | PAGE_GUARD), "%u: got %#lx.\n", i, mbi.Protect);
+        }
+        else
+        {
+            todo_wine ok(mbi.State == MEM_COMMIT, "%u: got %#lx.\n", i, mbi.State);
+            todo_wine ok(mbi.Protect == PAGE_READWRITE, "%u: got %#lx.\n", i, mbi.Protect);
+        }
         pRtlFreeUserStack(stack.DeallocationStack);
     }
 

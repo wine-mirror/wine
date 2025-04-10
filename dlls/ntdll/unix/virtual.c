@@ -4053,7 +4053,7 @@ NTSTATUS virtual_alloc_thread_stack( INITIAL_TEB *stack, ULONG_PTR limit_low, UL
     /* setup no access guard page */
     if (guard_page)
     {
-        set_page_vprot( view->base, host_page_size, VPROT_COMMITTED );
+        set_page_vprot( view->base, host_page_size, 0 );
         set_page_vprot( (char *)view->base + host_page_size, host_page_size,
                         VPROT_READ | VPROT_WRITE | VPROT_COMMITTED | VPROT_GUARD );
         mprotect_range( view->base, 2 * host_page_size , 0, 0 );
@@ -4143,7 +4143,7 @@ static NTSTATUS grow_thread_stack( char *page, struct thread_stack_info *stack_i
 {
     NTSTATUS ret = 0;
 
-    set_page_vprot_bits( page, host_page_size, 0, VPROT_GUARD );
+    set_page_vprot_bits( page, host_page_size, VPROT_COMMITTED, VPROT_GUARD );
     mprotect_range( page, host_page_size, 0, 0 );
     if (page >= stack_info->start + host_page_size + stack_info->guaranteed)
     {

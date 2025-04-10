@@ -333,10 +333,9 @@ NTSTATUS WINAPI RtlCreateUserStack( SIZE_T commit, SIZE_T reserve, ULONG zero_bi
                                       &alloc, sizeof(alloc) );
     if (!status)
     {
-        void *addr = alloc.StackBase;
+        void *addr;
         SIZE_T size = page_size;
 
-        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_NOACCESS );
         addr = (char *)alloc.StackBase + page_size;
         NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
         addr = (char *)alloc.StackBase + 2 * page_size;
