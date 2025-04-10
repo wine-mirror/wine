@@ -530,7 +530,6 @@ static void test_EnumProcessModulesEx(void)
             ret = GetSystemDirectoryA(buffer, sizeof(buffer));
             ok(ret, "GetSystemDirectoryA failed: %lu\n", GetLastError());
             count = snapshot_count_in_dir(snap, pi.hProcess, buffer);
-            todo_wine
             ok(count > 2, "Wrong count %u in %s\n", count, buffer);
 
             /* in fact, this error is only returned when (list & 3 == 0), otherwise the corresponding
