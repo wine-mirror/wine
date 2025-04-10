@@ -144,7 +144,7 @@ HRESULT WINAPI ADsBuildVarArrayInt(LPDWORD values, DWORD count, VARIANT* var)
     {
         VARIANT item;
 
-        V_VT(&item) = VT_UI4;
+        V_VT(&item) = VT_I4;
         V_UI4(&item) = values[idx];
 
         hr = SafeArrayPutElement(sa, &idx, &item);

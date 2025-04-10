@@ -123,7 +123,7 @@ static void test_ADsBuildVarArrayInt(void)
     {
         hr = SafeArrayGetElement(V_ARRAY(&var), &idx, &item);
         ok(hr == S_OK, "got %#lx\n", hr);
-        ok(V_VT(&item) == VT_UI4, "got %d\n", V_VT(&item));
+        ok(V_VT(&item) == VT_I4, "got %d\n", V_VT(&item));
         ok(V_UI4(&item) == props[idx], "got %lu\n", V_UI4(&item));
         VariantClear(&item);
     }
