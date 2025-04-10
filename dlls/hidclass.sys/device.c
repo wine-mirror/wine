@@ -811,3 +811,8 @@ NTSTATUS WINAPI pdo_close( DEVICE_OBJECT *device, IRP *irp )
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_SUCCESS;
 }
+
+NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
+{
+    return STATUS_SUCCESS;
+}

@@ -2,7 +2,10 @@ MODULE    = hidclass.sys
 IMPORTLIB = hidclass
 IMPORTS   = hal ntoskrnl user32 hidparse win32u
 
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
 SOURCES = \
 	device.c \
 	hidclass.rc \
+	hidclass.sys.spec \
 	pnp.c
