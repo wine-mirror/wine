@@ -539,6 +539,30 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
             if (winebluetooth_device_equal( event.device, device->device ))
             {
                 list_remove( &device->entry );
+                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+                {
+                    TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
+                    BLUETOOTH_ADDRESS *addr;
+                    SIZE_T notif_size;
+                    NTSTATUS ret;
+
+                    notif_size = offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof( *addr )] );
+                    if ((notification = ExAllocatePool( PagedPool, notif_size )))
+                    {
+                        notification->Version = 1;
+                        notification->Size = notif_size;
+                        notification->Event = GUID_BLUETOOTH_RADIO_OUT_OF_RANGE;
+                        notification->FileObject = NULL;
+                        notification->NameBufferOffset = -1;
+                        addr = (BLUETOOTH_ADDRESS *)notification->CustomDataBuffer;
+                        addr->ullLong = RtlUlonglongByteSwap( device->props.address.ullLong ) >> 16;
+
+                        ret = IoReportTargetDeviceChange( radio->device_obj, notification );
+                        if (ret)
+                            ERR( "IoReportTargetDeviceChange failed: %#lx\n", ret );
+                        ExFreePool( notification );
+                    }
+                }
                 winebluetooth_device_free( device->device );
                 DeleteCriticalSection( &device->props_cs );
                 free( device );
