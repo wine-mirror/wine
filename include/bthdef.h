@@ -29,6 +29,9 @@ DEFINE_GUID( GUID_BTHPORT_DEVICE_INTERFACE, 0x850302a, 0xb344, 0x4fda, 0x9b, 0xe
 DEFINE_GUID( GUID_BLUETOOTH_RADIO_INTERFACE, 0x92383b0e, 0xf90e, 0x4ac9, 0x8d, 0x44, 0x8c, 0x2d,
              0x0d, 0x0e, 0xbd, 0xa2 );
 
+DEFINE_GUID( GUID_BLUETOOTH_RADIO_IN_RANGE, 0xea3b5b82, 0x26ee, 0x450e, 0xb0, 0xd8, 0xd2, 0x6f,
+             0xe3, 0x0a, 0x38, 0x69 );
+
 typedef ULONG BTH_COD;
 
 #define BTH_MAX_NAME_SIZE  (248)
@@ -51,6 +54,13 @@ typedef struct _BTH_DEVICE_INFO
     BTH_COD classOfDevice;
     CHAR name[BTH_MAX_NAME_SIZE];
 } BTH_DEVICE_INFO, *PBTH_DEVICE_INFO;
+
+/* Buffer for GUID_BLUETOOTH_RADIO_IN_RANGE events. */
+typedef struct _BTH_RADIO_IN_RANGE
+{
+    BTH_DEVICE_INFO deviceInfo;
+    ULONG previousDeviceFlags;
+} BTH_RADIO_IN_RANGE, *PBTH_RADIO_IN_RANGE;
 
 #ifdef __cplusplus
 }

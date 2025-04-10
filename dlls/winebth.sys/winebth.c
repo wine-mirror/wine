@@ -557,7 +557,10 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
 
 static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_event_device_props_changed event )
 {
+    BTH_DEVICE_INFO device_new_info = {0};
+    DEVICE_OBJECT *radio_obj = NULL; /* The radio PDO the remote device exists on. */
     struct bluetooth_radio *radio;
+    ULONG device_old_flags = 0;
 
     EnterCriticalSection( &device_list_cs );
     LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
@@ -569,7 +572,13 @@ static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_ev
         {
             if (winebluetooth_device_equal( event.device, device->device ))
             {
+                BTH_DEVICE_INFO old_info = {0};
+
+                radio_obj = radio->device_obj;
+
                 EnterCriticalSection( &device->props_cs );
+                winebluetooth_device_properties_to_info( device->props_mask, &device->props, &old_info );
+
                 device->props_mask |= event.changed_props_mask;
                 device->props_mask &= ~event.invalid_props_mask;
                 if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_NAME)
@@ -586,16 +595,51 @@ static void bluetooth_radio_update_device_props( struct winebluetooth_watcher_ev
                     device->props.trusted = event.props.trusted;
                 if (event.changed_props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_CLASS)
                     device->props.class = event.props.class;
+                winebluetooth_device_properties_to_info( device->props_mask, &device->props, &device_new_info );
                 LeaveCriticalSection( &device->props_cs );
                 LeaveCriticalSection( &radio->remote_devices_cs );
+
+                device_old_flags = old_info.flags;
                 goto done;
             }
         }
         LeaveCriticalSection( &radio->remote_devices_cs );
     }
 done:
-    LeaveCriticalSection( &device_list_cs );
     winebluetooth_device_free( event.device );
+
+    if (radio_obj)
+    {
+        TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
+        BTH_RADIO_IN_RANGE *device;
+        SIZE_T notif_size;
+        NTSTATUS ret;
+
+        notif_size = offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof( *device )]);
+        notification = ExAllocatePool( PagedPool, notif_size );
+        if (!notification)
+        {
+            LeaveCriticalSection( &device_list_cs );
+            return;
+        }
+
+        notification->Version = 1;
+        notification->Size = notif_size;
+        notification->Event = GUID_BLUETOOTH_RADIO_IN_RANGE;
+        notification->FileObject = NULL;
+        notification->NameBufferOffset = -1;
+        device = (BTH_RADIO_IN_RANGE *)notification->CustomDataBuffer;
+        memset( device, 0, sizeof( *device ) );
+        device->previousDeviceFlags = device_old_flags;
+        device->deviceInfo = device_new_info;
+
+        ret = IoReportTargetDeviceChange( radio_obj, notification );
+        if (ret)
+            ERR("IoReportTargetDeviceChange failed: %#lx\n", ret );
+        ExFreePool( notification );
+    }
+
+    LeaveCriticalSection( &device_list_cs );
 }
 
 static void bluetooth_radio_report_auth_event( struct winebluetooth_auth_event event )
