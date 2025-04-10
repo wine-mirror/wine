@@ -112,7 +112,7 @@ static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
 
     irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return irp->IoStatus.Status;
+    return status;
 }
 
 static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
