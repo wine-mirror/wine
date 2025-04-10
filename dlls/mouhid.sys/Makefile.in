@@ -4,5 +4,4 @@ EXTRADLLFLAGS = -Wl,--subsystem,native
 
 SOURCES = \
 	main.c \
-	mouhid.rc \
-	mouhid.sys.spec
+	mouhid.rc
