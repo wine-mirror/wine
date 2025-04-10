@@ -2022,6 +2022,8 @@ static void test_debugger(const char *argv0)
                "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
             exception_cnt++;
             if (event_order == 1) event_order = 2; /* exception debug event after exit thread event */
+
+            if (ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_ACCESS_VIOLATION) break;
         }
 
         trace("received %u exceptions\n", exception_cnt);
