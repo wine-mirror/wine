@@ -332,6 +332,10 @@ sub update_makefiles(@)
                 die "IMPORTLIB not allowed in programs\n" if $file =~ /^programs\//;
                 die "Invalid IMPORTLIB name in $file" if $make{"IMPORTLIB"} =~ /\./;
             }
+            if ($name =~ /\.sys$/)
+            {
+                die "Subsystem should be set to native in $file" unless $dllflags =~ /-Wl,--subsystem,native/;
+            }
         }
         elsif ($file =~ /^tools.*\/Makefile\.in$/)
         {
