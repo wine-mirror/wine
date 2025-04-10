@@ -245,6 +245,7 @@ struct winebluetooth_watcher_event_device_added
     struct winebluetooth_device_properties props;
     winebluetooth_device_t device;
     winebluetooth_radio_t radio;
+    BOOL init_entry;
 };
 
 struct winebluetooth_watcher_event_device_props_changed

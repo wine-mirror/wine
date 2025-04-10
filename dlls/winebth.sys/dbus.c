@@ -1908,6 +1908,7 @@ static NTSTATUS bluez_build_initial_device_lists( DBusMessage *reply, struct lis
                     goto done;
                 }
                 init_device->object.device.device.handle = (UINT_PTR)device_name;
+                init_device->object.device.init_entry = TRUE;
 
                 while((prop_name = bluez_next_dict_entry( &prop_iter, &variant )))
                 {

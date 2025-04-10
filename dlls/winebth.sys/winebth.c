@@ -491,6 +491,35 @@ static void update_bluetooth_radio_properties( struct winebluetooth_watcher_even
     winebluetooth_radio_free( radio );
 }
 
+static void bluetooth_radio_report_radio_in_range_event( DEVICE_OBJECT *radio_obj, ULONG remote_device_old_flags,
+                                                         const BTH_DEVICE_INFO *new_device_info )
+{
+    TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
+    BTH_RADIO_IN_RANGE *buffer;
+    SIZE_T notif_size;
+    NTSTATUS ret;
+
+    notif_size = offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof( *buffer )]);
+    notification = ExAllocatePool( PagedPool, notif_size );
+    if (!notification)
+        return;
+
+    notification->Version = 1;
+    notification->Size = notif_size;
+    notification->Event = GUID_BLUETOOTH_RADIO_IN_RANGE;
+    notification->FileObject = NULL;
+    notification->NameBufferOffset = -1;
+    buffer = (BTH_RADIO_IN_RANGE *)notification->CustomDataBuffer;
+    memset( buffer, 0, sizeof( *buffer ) );
+    buffer->previousDeviceFlags = remote_device_old_flags;
+    buffer->deviceInfo = *new_device_info;
+
+    ret = IoReportTargetDeviceChange( radio_obj, notification );
+    if (ret)
+        ERR("IoReportTargetDeviceChange failed: %#lx\n", ret );
+    ExFreePool( notification );
+}
+
 static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_event_device_added event )
 {
     struct bluetooth_radio *radio;
@@ -513,6 +542,13 @@ static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_even
             remote_device->device = event.device;
             remote_device->props_mask = event.known_props_mask;
             remote_device->props = event.props;
+
+            if (!event.init_entry)
+            {
+                BTH_DEVICE_INFO device_info = {0};
+                winebluetooth_device_properties_to_info( remote_device->props_mask, &remote_device->props, &device_info );
+                bluetooth_radio_report_radio_in_range_event( radio->device_obj, 0, &device_info );
+            }
 
             EnterCriticalSection( &radio->remote_devices_cs );
             list_add_tail( &radio->remote_devices, &remote_device->entry );
@@ -633,35 +669,7 @@ done:
     winebluetooth_device_free( event.device );
 
     if (radio_obj)
-    {
-        TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
-        BTH_RADIO_IN_RANGE *device;
-        SIZE_T notif_size;
-        NTSTATUS ret;
-
-        notif_size = offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof( *device )]);
-        notification = ExAllocatePool( PagedPool, notif_size );
-        if (!notification)
-        {
-            LeaveCriticalSection( &device_list_cs );
-            return;
-        }
-
-        notification->Version = 1;
-        notification->Size = notif_size;
-        notification->Event = GUID_BLUETOOTH_RADIO_IN_RANGE;
-        notification->FileObject = NULL;
-        notification->NameBufferOffset = -1;
-        device = (BTH_RADIO_IN_RANGE *)notification->CustomDataBuffer;
-        memset( device, 0, sizeof( *device ) );
-        device->previousDeviceFlags = device_old_flags;
-        device->deviceInfo = device_new_info;
-
-        ret = IoReportTargetDeviceChange( radio_obj, notification );
-        if (ret)
-            ERR("IoReportTargetDeviceChange failed: %#lx\n", ret );
-        ExFreePool( notification );
-    }
+        bluetooth_radio_report_radio_in_range_event( radio_obj, device_old_flags, &device_new_info );
 
     LeaveCriticalSection( &device_list_cs );
 }
