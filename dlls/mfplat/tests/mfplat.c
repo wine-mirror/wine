@@ -6947,7 +6947,6 @@ static void test_xvp_playback_mode(void)
     out_sample = create_dxgi_sample(device, 0, D3D11_BIND_RENDER_TARGET);
     got_out_sample = test_xvp_process_sample(xvp, in_sample, out_sample);
 
-    todo_wine
     ok(got_out_sample == out_sample, "Video processor should use caller-provided sample.\n");
 
     if (got_out_sample != out_sample) IMFSample_Release(got_out_sample);
