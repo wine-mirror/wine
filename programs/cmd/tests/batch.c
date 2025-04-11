@@ -207,6 +207,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
 {
     const char *out_ptr = out_line, *exp_ptr = exp_line;
     const char *err = NULL;
+    char ch;
 
     static const char pwd_cmd[] = {'@','p','w','d','@'};
     static const char drive_cmd[] = {'@','d','r','i','v','e','@'};
@@ -216,6 +217,7 @@ static const char *compare_line(const char *out_line, const char *out_end, const
     static const char spaces_cmd[] = {'@','s','p','a','c','e','s','@'};
     static const char tab_cmd[]   = {'@','t','a','b','@'};
     static const char formfeed_cmd[]   = {'@','f','o','r','m', 'f', 'e', 'e', 'd', '@'};
+    static const char hexadecimal_cmd[] = {'@','\\','x','0','0', '@'};
     static const char or_broken_cmd[] = {'@','o','r','_','b','r','o','k','e','n','@'};
 
     while(exp_ptr < exp_end) {
@@ -295,6 +297,15 @@ static const char *compare_line(const char *out_line, const char *out_end, const
                     && !memcmp(exp_ptr, formfeed_cmd, sizeof(formfeed_cmd))) {
                 exp_ptr += sizeof(formfeed_cmd);
                 if(out_ptr < out_end && *out_ptr == '\f') {
+                    out_ptr++;
+                    continue;
+                } else {
+                    err = out_end;
+                }
+            }else if(exp_ptr+sizeof(hexadecimal_cmd) <= exp_end &&
+                     parse_hexadecimal(exp_ptr, &ch)) {
+                exp_ptr += sizeof(hexadecimal_cmd);
+                if(out_ptr < out_end && *out_ptr == ch) {
                     out_ptr++;
                     continue;
                 } else {

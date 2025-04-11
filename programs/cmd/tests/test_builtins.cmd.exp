@@ -88,13 +88,32 @@ word
 @tab@word
 
 @pwd@>echo @tab@ on @space@@space@
---- @ with chains and brackets
+
+@todo_wine@@pwd@>echo a 1>nul@space@
+
+@todo_wine@@pwd@>if 1 == 2 then @echo a@space@
+
+@todo_wine@@pwd@>IF 1 == 2 ThEn @EchO a@space@
+@todo_wine@
+@todo_wine@@pwd@>echo 1@space@
+@todo_wine@1
+@todo_wine@
+@todo_wine@@pwd@>echo 2@space@
+@todo_wine@2
+@todo_wine@---
+@todo_wine@AA@\x08@BB
+@todo_wine@--- @ with chains and brackets
 
 @todo_wine@@pwd@>(echo the @ character chains until  && )  && echo and can hide brackets  || ()  ||@space@
 @todo_wine@the @ character chains until
 @todo_wine@we leave the current depth
 @todo_wine@and can hide brackets
 @todo_wine@---
+foo1
+
+@todo_wine@@pwd@>echo a  1>nul  &&@space@
+foo2
+---
 noecho1
 noecho2
 echo3
@@ -973,6 +992,9 @@ gotitright
 foo
 !WINE_FOO!
 not empty
+--- nested expansion
+foo
+@todo_wine@foo
 --- using /V cmd flag
 foo
 foo@or_broken@!WINE_FOO!
