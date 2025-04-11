@@ -320,6 +320,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
         L"gray", 0};
     static const WCHAR* rgb[] = {L"Color", L"24bit Color[Fast]", L"24bit Color", L"24 bit Color",
         L"Color - 16 Million Colors", L"color", 0};
+    /* TWPT_BW = 0, TWPT_GRAY = 1, TWPT_RGB = 2 */
     static const WCHAR* const* filter[] = {bw, gray, rgb, 0};
 
     TRACE("ICAP_PIXELTYPE\n");
@@ -337,6 +338,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
         return twCC;
     }
 
+    /* Map current mode name to TWPT_BW (0), TWPT_GRAY (1) or TWPT_RGB (2) */
     current_pixeltype = find_value_pos(current_mode, color_modes, buf_len, buf_count);
     if (current_pixeltype == buf_count)
     {
