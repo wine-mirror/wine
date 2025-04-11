@@ -934,12 +934,6 @@ WCHAR *WCMD_skip_leading_spaces(WCHAR *string)
     return string;
 }
 
-static WCHAR *WCMD_strip_for_command_start(WCHAR *string)
-{
-    while (*string == L' ' || *string == L'\t' || *string == L'@') string++;
-    return string;
-}
-
 /***************************************************************************
  * WCMD_keyword_ws_found
  *
@@ -1656,13 +1650,14 @@ void node_dispose_tree(CMD_NODE *node)
     free(node);
 }
 
-static CMD_NODE *node_create_single(WCHAR *c)
+static CMD_NODE *node_create_single(WCHAR *c, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
     new->op = CMD_SINGLE;
     new->command = c;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
@@ -1675,11 +1670,12 @@ static CMD_NODE *node_create_binary(CMD_OPERATOR op, CMD_NODE *l, CMD_NODE *r)
     new->left = l;
     new->right = r;
     new->redirects = NULL;
+    new->do_echo = TRUE; /* always TRUE */
 
     return new;
 }
 
-static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CMD_NODE *else_block)
+static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CMD_NODE *else_block, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
@@ -1688,11 +1684,12 @@ static CMD_NODE *node_create_if(CMD_IF_CONDITION *cond, CMD_NODE *then_block, CM
     new->then_block = then_block;
     new->else_block = else_block;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
 
-static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block)
+static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
@@ -1700,17 +1697,19 @@ static CMD_NODE *node_create_for(CMD_FOR_CONTROL *for_ctrl, CMD_NODE *do_block)
     new->for_ctrl = *for_ctrl;
     new->do_block = do_block;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
 
-static CMD_NODE *node_create_block(CMD_NODE *block)
+static CMD_NODE *node_create_block(CMD_NODE *block, BOOL do_echo)
 {
     CMD_NODE *new = xalloc(sizeof(CMD_NODE));
 
     new->op = CMD_BLOCK;
     new->block = block;
     new->redirects = NULL;
+    new->do_echo = do_echo;
 
     return new;
 }
@@ -2678,7 +2677,7 @@ struct node_builder
     {
         enum builder_token
         {
-            TKN_EOF, TKN_EOL, TKN_REDIRECTION, TKN_FOR, TKN_IN, TKN_DO, TKN_IF, TKN_ELSE,
+            TKN_EOF, TKN_EOL, TKN_REDIRECTION, TKN_NOECHO, TKN_FOR, TKN_IN, TKN_DO, TKN_IF, TKN_ELSE,
             TKN_OPENPAR, TKN_CLOSEPAR, TKN_AMP, TKN_BARBAR, TKN_AMPAMP, TKN_BAR, TKN_COMMAND,
         } token;
         union token_parameter parameter;
@@ -2689,7 +2688,7 @@ struct node_builder
 
 static const char* debugstr_token(enum builder_token tkn, union token_parameter tkn_pmt)
 {
-    static const char *tokens[] = {"EOF", "EOL", "REDIR", "FOR", "IN", "DO", "IF", "ELSE",
+    static const char *tokens[] = {"EOF", "EOL", "REDIR", "NOECHO", "FOR", "IN", "DO", "IF", "ELSE",
                                    "(", ")", "&", "||", "&&", "|", "CMD"};
 
     if (tkn >= ARRAY_SIZE(tokens)) return "<<<>>>";
@@ -2802,23 +2801,26 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
     CMD_FOR_CONTROL *for_ctrl = NULL;
     union token_parameter pmt;
     enum builder_token tkn;
-    BOOL done;
+    BOOL done, do_echo = TRUE;
 
 #define ERROR_IF(x) if (x) {bogus_line = __LINE__; goto error_handling;}
     do
     {
         tkn = node_builder_peek_next_token(builder, &pmt);
-        done = FALSE;
-
         TRACE("\t%u/%u) %s\n", builder->pos, builder->num, debugstr_token(tkn, pmt));
+
         switch (tkn)
         {
-        case TKN_EOF:
-            /* always an error to read past end of tokens */
+        case TKN_EOF:    /* always an error to read past end of tokens */
             ERROR_IF(TRUE);
             break;
         case TKN_EOL:
             done = TRUE;
+            break;
+        case TKN_NOECHO: /* should have already been handled */
+            ERROR_IF(left);
+            node_builder_consume(builder);
+            do_echo = FALSE;
             break;
         case TKN_OPENPAR:
             ERROR_IF(left);
@@ -2837,7 +2839,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                     left = node_create_binary(CMD_CONCAT, left, right);
             }
             node_builder_consume(builder);
-            left = node_create_block(left);
+            left = node_create_block(left, do_echo);
             /* if we had redirection before '(', add them up front */
             if (redir)
             {
@@ -2904,10 +2906,11 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
             break;
         case TKN_COMMAND:
             ERROR_IF(left);
-            left = node_create_single(pmt.command);
+            left = node_create_single(pmt.command, do_echo);
             node_builder_consume(builder);
             left->redirects = redir;
             redir = NULL;
+            do_echo = TRUE;
             break;
         case TKN_IF:
             ERROR_IF(left);
@@ -2925,7 +2928,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 {
                     node_builder_consume(builder);
                     free(pmt.command);
-                    left = node_create_single(command_create(L"help if", 7));
+                    left = node_create_single(command_create(L"help if", 7), do_echo);
                     break;
                 }
                 ERROR_IF(!if_condition_parse(pmt.command, &end, &cond));
@@ -2949,7 +2952,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 }
                 else
                     else_block = NULL;
-                left = node_create_if(&cond, then_block, else_block);
+                left = node_create_if(&cond, then_block, else_block, do_echo);
             }
             break;
         case TKN_FOR:
@@ -2965,7 +2968,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 {
                     node_builder_consume(builder);
                     free(pmt.command);
-                    left = node_create_single(command_create(L"help for", 8));
+                    left = node_create_single(command_create(L"help for", 8), do_echo);
                     break;
                 }
                 node_builder_consume(builder);
@@ -2993,7 +2996,7 @@ static BOOL node_builder_parse(struct node_builder *builder, unsigned precedence
                 } while (tkn != TKN_CLOSEPAR);
                 ERROR_IF(!node_builder_expect_token(builder, TKN_DO));
                 ERROR_IF(!node_builder_parse(builder, 0, &do_block));
-                left = node_create_for(for_ctrl, do_block);
+                left = node_create_for(for_ctrl, do_block, do_echo);
                 for_ctrl = NULL;
             }
             break;
@@ -3521,6 +3524,7 @@ static BOOL rebuild_append_command(struct command_rebuild *rb, const CMD_NODE *n
 {
     BOOL ret;
 
+    if (!node->do_echo && !rebuild_append(rb, L"@")) return FALSE;
     switch (node->op)
     {
     case CMD_SINGLE:
@@ -3567,7 +3571,10 @@ static BOOL lexer_can_accept_do(const struct node_builder *builder)
 
 static BOOL lexer_at_command_start(const struct node_builder *builder)
 {
-    switch (node_builder_top(builder, 0))
+    int idx = 0;
+    if (node_builder_top(builder, 0) == TKN_NOECHO) idx++;
+
+    switch (node_builder_top(builder, idx))
     {
     case TKN_EOF:
     case TKN_EOL:
@@ -3577,10 +3584,23 @@ static BOOL lexer_at_command_start(const struct node_builder *builder)
     case TKN_AMPAMP:
     case TKN_BAR:
     case TKN_BARBAR:   return TRUE;
-    case TKN_OPENPAR:  return node_builder_top(builder, 1) != TKN_IN;
-    case TKN_COMMAND:  return node_builder_top(builder, 1) == TKN_IF;
+    case TKN_OPENPAR:  return node_builder_top(builder, idx + 1) != TKN_IN;
+    case TKN_COMMAND:  return node_builder_top(builder, idx + 1) == TKN_IF;
     default:           return FALSE;
     }
+}
+
+static WCHAR *lexer_strip_for_command_start(struct node_builder *builder, WCHAR *string)
+{
+    BOOL do_echo = TRUE;
+    while (*string == L' ' || *string == L'\t' || *string == L'@')
+    {
+        if (*string == L'@') do_echo = FALSE;
+        string++;
+    }
+    if (!do_echo) node_builder_push_token(builder, TKN_NOECHO);
+
+    return string;
 }
 
 static BOOL lexer_white_space_only(const WCHAR *string, int len)
@@ -3637,7 +3657,7 @@ enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
     curCopyTo    = curString;
     curLen       = &curStringLen;
 
-    curPos = WCMD_strip_for_command_start(curPos);
+    curPos = lexer_strip_for_command_start(&builder, curPos);
     /* Parse every character on the line being processed */
     for (;;) {
       /* Debugging AID:
@@ -3669,7 +3689,8 @@ enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
 
       /* Certain commands need special handling */
       if (curStringLen == 0 && curCopyTo == curString) {
-        if (lexer_at_command_start(&builder) && !*(curPos = WCMD_strip_for_command_start(curPos))) continue;
+        if (lexer_at_command_start(&builder) && !*(curPos = lexer_strip_for_command_start(&builder, curPos)))
+            continue;
         /* If command starts with 'rem ' or identifies a label, use whole line */
         if (WCMD_keyword_ws_found(L"rem", curPos) || *curPos == L':') {
             size_t line_len = wcslen(curPos);
