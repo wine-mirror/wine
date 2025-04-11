@@ -6820,19 +6820,16 @@ NTSTATUS WINAPI NtFlushBuffersFileEx( HANDLE handle, ULONG flags, void *params, 
 }
 
 
-/**************************************************************************
- *           NtCancelIoFile   (NTDLL.@)
- */
-NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
+static NTSTATUS cancel_io( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status,
+                           BOOL only_thread )
 {
     unsigned int status;
-
-    TRACE( "%p %p\n", handle, io_status );
 
     SERVER_START_REQ( cancel_async )
     {
         req->handle      = wine_server_obj_handle( handle );
-        req->only_thread = TRUE;
+        req->iosb        = wine_server_client_ptr( io );
+        req->only_thread = only_thread;
         if (!(status = wine_server_call( req )))
         {
             io_status->Status = status;
@@ -6846,27 +6843,24 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
 
 
 /**************************************************************************
+ *           NtCancelIoFile   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
+{
+    TRACE( "%p %p\n", handle, io_status );
+
+    return cancel_io( handle, NULL, io_status, TRUE );
+}
+
+
+/**************************************************************************
  *           NtCancelIoFileEx   (NTDLL.@)
  */
 NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
 {
-    unsigned int status;
-
     TRACE( "%p %p %p\n", handle, io, io_status );
 
-    SERVER_START_REQ( cancel_async )
-    {
-        req->handle = wine_server_obj_handle( handle );
-        req->iosb   = wine_server_client_ptr( io );
-        if (!(status = wine_server_call( req )))
-        {
-            io_status->Status = status;
-            io_status->Information = 0;
-        }
-    }
-    SERVER_END_REQ;
-
-    return status;
+    return cancel_io( handle, io, io_status, FALSE );
 }
 
 
