@@ -3550,6 +3550,10 @@ static void test_metadata_IMD(void)
 
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
 
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!count, "Unexpected count %u.\n", count);
+
     stream = create_stream(IMD_data, sizeof(IMD_data));
 
     pos.QuadPart = 12;
@@ -3675,6 +3679,13 @@ static void test_metadata_GCE(void)
     check_persist_classid(reader, &CLSID_WICGCEMetadataReader);
 
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 5, "Unexpected count %u.\n", count);
+    if (count == 5)
+        compare_metadata(reader, default_data, count);
 
     stream = create_stream(GCE_data, sizeof(GCE_data));
 
@@ -3808,6 +3819,13 @@ static void test_metadata_APE(void)
     check_persist_classid(reader, &CLSID_WICAPEMetadataReader);
 
     test_reader_container_format(reader, &GUID_ContainerFormatGif);
+
+    hr = IWICMetadataReader_GetCount(reader, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+    ok(count == 2, "Unexpected count %u.\n", count);
+    if (count == 2)
+        compare_metadata(reader, default_data, count);
 
     stream = create_stream(APE_data, sizeof(APE_data));
 
