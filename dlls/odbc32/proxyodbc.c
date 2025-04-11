@@ -2982,7 +2982,7 @@ static SQLRETURN get_info_win32_a( struct connection *con, SQLUSMALLINT type, SQ
         default: break;
         }
 
-        ret = SQLGetInfoW( con->hdr.win32_handle, type, buf, buflen, retlen );
+        ret = con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, buf, buflen, retlen );
         if (SUCCESS( ret ) && strW)
         {
             int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
