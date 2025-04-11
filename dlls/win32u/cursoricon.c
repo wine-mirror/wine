@@ -212,6 +212,7 @@ static BOOL free_icon_handle( HICON handle )
             free( obj->ani.frames );
         }
         if (!IS_INTRESOURCE( obj->resname )) free( obj->resname );
+        if (obj->module.Length) free(obj->module.Buffer);
         free( obj );
         KeUserDispatchCallback( &params.dispatch, sizeof(params), &ret_ptr, &ret_len );
         user_driver->pDestroyCursorIcon( handle );
