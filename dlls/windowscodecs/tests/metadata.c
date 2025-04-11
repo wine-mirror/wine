@@ -3971,7 +3971,6 @@ static void test_metadata_GIF_comment(void)
 
     hr = IWICMetadataReader_GetCount(reader, &count);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(count == 1, "Unexpected count %u.\n", count);
 
     for (i = 0; i < count; ++i)
@@ -3993,14 +3992,10 @@ static void test_metadata_GIF_comment(void)
     id.pwszVal = (WCHAR *)L"TextEntry";
 
     hr = IWICMetadataReader_GetValue(reader, NULL, &id, &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_LPSTR, "Unexpected vt %i.\n", value.vt);
-        ok(!strcmp(value.pszVal, ""), "Unexpected value: %s\n", value.pszVal);
-        PropVariantClear(&value);
-    }
+    ok(value.vt == VT_LPSTR, "Unexpected vt %i.\n", value.vt);
+    ok(!strcmp(value.pszVal, ""), "Unexpected value: %s\n", value.pszVal);
+    PropVariantClear(&value);
 
     stream = create_stream(GIF_comment_data, sizeof(GIF_comment_data));
 

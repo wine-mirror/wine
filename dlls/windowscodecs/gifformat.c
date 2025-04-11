@@ -420,6 +420,26 @@ HRESULT APEReader_CreateInstance(REFIID iid, void **ppv)
     return MetadataReader_Create(&APEReader_Vtbl, iid, ppv);
 }
 
+static HRESULT create_gifcomment_item(char *data, MetadataItem **item)
+{
+    HRESULT hr;
+
+    if (!(*item = calloc(1, sizeof(**item))))
+        return E_OUTOFMEMORY;
+
+    hr = init_propvar_from_string(L"TextEntry", &(*item)->id);
+    if (FAILED(hr))
+    {
+        free(*item);
+        return hr;
+    }
+
+    (*item)->value.vt = VT_LPSTR;
+    (*item)->value.pszVal = data;
+
+    return S_OK;
+}
+
 static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
 #include "pshpack1.h"
@@ -477,21 +497,11 @@ static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *strea
 
     data[data_size] = 0;
 
-    result = calloc(1, sizeof(MetadataItem));
-    if (!result)
+    if (FAILED(hr = create_gifcomment_item(data, &result)))
     {
         CoTaskMemFree(data);
-        return E_OUTOFMEMORY;
+        return hr;
     }
-
-    PropVariantInit(&result->schema);
-    PropVariantInit(&result->id);
-    PropVariantInit(&result->value);
-
-    result->id.vt = VT_LPWSTR;
-    SHStrDupW(L"TextEntry", &result->id.pwszVal);
-    result->value.vt = VT_LPSTR;
-    result->value.pszVal = data;
 
     MetadataHandler_FreeItems(handler);
     handler->items = result;
@@ -500,10 +510,33 @@ static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *strea
     return S_OK;
 }
 
+static HRESULT CreateGifCommentHandler(MetadataHandler *handler)
+{
+    MetadataItem *item;
+    char *data;
+    HRESULT hr;
+
+    if (!(data = CoTaskMemAlloc(1)))
+        return E_OUTOFMEMORY;
+    *data = 0;
+
+    if (FAILED(hr = create_gifcomment_item(data, &item)))
+    {
+        CoTaskMemFree(data);
+        return hr;
+    }
+
+    handler->items = item;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
 static const MetadataHandlerVtbl GifCommentReader_Vtbl = {
     0,
     &CLSID_WICGifCommentMetadataReader,
-    load_GifComment_metadata
+    load_GifComment_metadata,
+    CreateGifCommentHandler,
 };
 
 HRESULT GifCommentReader_CreateInstance(REFIID iid, void **ppv)
