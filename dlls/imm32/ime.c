@@ -561,14 +561,17 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
     if (status) WARN( "WINE_IME_TO_ASCII_EX returned status %#lx\n", status );
     else
     {
-        TRANSMSG status_msg = {.message = ime_set_composition_status( himc, !!compstr->dwCompStrOffset )};
-        if (status_msg.message) msgs->TransMsg[count++] = status_msg;
+        if (compstr->dwCompStrOffset || compstr->dwResultStrLen)
+        {
+            TRANSMSG msg = {.message = ime_set_composition_status( himc, TRUE )};
+            if (msg.message == WM_IME_STARTCOMPOSITION) msgs->TransMsg[count++] = msg;
+        }
 
-        if (compstr->dwResultStrOffset)
+        if (compstr->dwResultStrLen)
         {
             const WCHAR *result = (WCHAR *)((BYTE *)compstr + compstr->dwResultStrOffset);
             TRANSMSG msg = {.message = WM_IME_COMPOSITION, .wParam = result[0], .lParam = GCS_RESULTSTR};
-            if (compstr->dwResultClauseOffset) msg.lParam |= GCS_RESULTCLAUSE;
+            if (compstr->dwResultClauseLen) msg.lParam |= GCS_RESULTCLAUSE;
             msgs->TransMsg[count++] = msg;
         }
 
@@ -580,6 +583,12 @@ UINT WINAPI ImeToAsciiEx( UINT vkey, UINT vsc, BYTE *state, TRANSMSGLIST *msgs, 
             if (compstr->dwCompClauseOffset) msg.lParam |= GCS_COMPCLAUSE;
             else msg.lParam |= CS_INSERTCHAR|CS_NOMOVECARET;
             msgs->TransMsg[count++] = msg;
+        }
+
+        if (!compstr->dwCompStrLen)
+        {
+            TRANSMSG msg = {.message = ime_set_composition_status( himc, FALSE )};
+            if (msg.message == WM_IME_ENDCOMPOSITION) msgs->TransMsg[count++] = msg;
         }
 
         if (!key_consumed)
