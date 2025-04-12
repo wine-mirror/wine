@@ -877,7 +877,7 @@ sub source_scan_project_file($$$)
             require XML::LibXML;
         };
         if ($@) {
-            die "Error: You need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl)";
+            die "Error: You need the libxml package (deb: libxml-libxml-perl, rpm: perl-libxml-perl, FreeBSD: p5-XML-LibXML)";
         }
 
         my $xmlparser = XML::LibXML->new();
