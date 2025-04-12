@@ -91,12 +91,12 @@ LPWSTR WINAPI AllocSplStr(LPCWSTR pwstr)
 /******************************************************************
  *   BuildOtherNamesFromMachineName   [SPOOLSS.@]
  */
-BOOL WINAPI BuildOtherNamesFromMachineName(LPVOID * ptr1, LPVOID * ptr2)
+BOOL WINAPI BuildOtherNamesFromMachineName(WCHAR ***ptr1, DWORD *ptr2)
 {
     FIXME("(%p, %p) stub\n", ptr1, ptr2);
 
     *ptr1 = NULL;
-    *ptr2 = NULL;
+    *ptr2 = 0;
     return FALSE;
 }
 
