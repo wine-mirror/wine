@@ -246,6 +246,13 @@ coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
 coclass WICPngTimeMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Png bKGD Metadata Reader"),
+    threading(both),
+    uuid(0ce7a4a6-03e8-4a60-9d15-282ef32ee7da)
+]
+coclass WICPngBkgdMetadataReader { interface IWICMetadataReader; }
+
+[
     helpstring("WIC LSD Metadata Reader"),
     threading(both),
     uuid(41070793-59e4-479a-a1f7-954adc2ef5fc)

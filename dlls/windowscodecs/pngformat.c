@@ -506,6 +506,117 @@ HRESULT PngTimeReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&TimeReader_Vtbl, iid, ppv);
 }
 
+static HRESULT create_bkgd_item(const PROPVARIANT *value, MetadataItem **ret)
+{
+    MetadataItem *item;
+    HRESULT hr;
+
+    if (!(item = calloc(1, sizeof(*item))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_propvar_from_string(L"BackgroundColor", &item->id)))
+    {
+        free(item);
+        return hr;
+    }
+
+    item->value = *value;
+    *ret = item;
+
+    return S_OK;
+}
+
+static HRESULT LoadBkgdMetadata(MetadataHandler *handler, IStream *stream, const GUID *preferred_vendor,
+        DWORD persist_options)
+{
+    MetadataItem *result;
+    PROPVARIANT value;
+    ULONG data_size;
+    BYTE type[4];
+    HRESULT hr;
+    BYTE *data;
+
+    hr = read_png_chunk(stream, type, &data, &data_size);
+    if (FAILED(hr)) return hr;
+
+    PropVariantInit(&value);
+    if (data_size == 1)
+    {
+        value.vt = VT_UI1;
+        value.bVal = *data;
+    }
+    else if (data_size == 2)
+    {
+        value.vt = VT_UI2;
+        value.uiVal = read_ushort_be(data);
+    }
+    else if (data_size == 6)
+    {
+        value.vt = VT_UI2 | VT_VECTOR;
+        value.caui.cElems = 3;
+        if (!(value.caui.pElems = CoTaskMemAlloc(3 * sizeof(USHORT))))
+        {
+            hr = E_OUTOFMEMORY;
+        }
+        else
+        {
+            BYTE *ptr = data;
+            for (int i = 0; i < value.caui.cElems; ++i, ptr += 2)
+                value.caui.pElems[i] = read_ushort_be(ptr);
+        }
+    }
+    else
+    {
+        hr = WINCODEC_ERR_BADMETADATAHEADER;
+    }
+
+    free(data);
+
+    if (SUCCEEDED(hr))
+        hr = create_bkgd_item(&value, &result);
+
+    if (FAILED(hr))
+    {
+        PropVariantClear(&value);
+        return hr;
+    }
+
+    MetadataHandler_FreeItems(handler);
+    handler->items = result;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
+static HRESULT CreateBkgdHandler(MetadataHandler *handler)
+{
+    MetadataItem *item;
+    PROPVARIANT value;
+    HRESULT hr;
+
+    PropVariantInit(&value);
+    if (FAILED(hr = create_bkgd_item(&value, &item)))
+        return hr;
+
+    handler->items = item;
+    handler->item_count = 1;
+
+    return S_OK;
+}
+
+static const MetadataHandlerVtbl BkgdReader_Vtbl =
+{
+    0,
+    &CLSID_WICPngBkgdMetadataReader,
+    LoadBkgdMetadata,
+    CreateBkgdHandler,
+};
+
+HRESULT PngBkgdReader_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&BkgdReader_Vtbl, iid, ppv);
+}
+
 HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     HRESULT hr;
