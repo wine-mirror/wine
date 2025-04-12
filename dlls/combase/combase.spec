@@ -319,7 +319,7 @@
 @ stub RoUnregisterForApartmentShutdown
 @ stub SetCleanupFlag
 @ stdcall SetErrorInfo(long ptr)
-@ stub SetRestrictedErrorInfo
+@ stdcall SetRestrictedErrorInfo(ptr)
 @ stdcall StringFromCLSID(ptr ptr)
 @ stdcall StringFromGUID2(ptr ptr long)
 @ stdcall StringFromIID(ptr ptr) StringFromCLSID
