@@ -186,6 +186,19 @@ static LRESULT WINAPI listbox_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, L
 
 static HWND create_listbox(DWORD add_style, HWND parent)
 {
+    static const struct message addstring_seq[] =
+    {
+        { LB_ADDSTRING, sent },
+        { WM_GETMINMAXINFO, sent|defwinproc|optional },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 4 },
+        { 0 }
+    };
     INT_PTR ctl_id = 0;
     WNDPROC oldproc;
     HWND handle;
@@ -197,13 +210,15 @@ static HWND create_listbox(DWORD add_style, HWND parent)
         parent, (HMENU)ctl_id, NULL, 0);
     ok(handle != NULL, "Failed to create listbox window.\n");
 
+    oldproc = (WNDPROC)SetWindowLongPtrA(handle, GWLP_WNDPROC, (LONG_PTR)listbox_wnd_proc);
+    SetWindowLongPtrA(handle, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    flush_sequence(sequences, LB_SEQ_INDEX);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[0]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[1]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[2]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[3]);
-
-    oldproc = (WNDPROC)SetWindowLongPtrA(handle, GWLP_WNDPROC, (LONG_PTR)listbox_wnd_proc);
-    SetWindowLongPtrA(handle, GWLP_USERDATA, (LONG_PTR)oldproc);
+    ok_sequence(sequences, LB_SEQ_INDEX, addstring_seq, "addstring_seq", FALSE);
 
     return handle;
 }
@@ -646,6 +661,12 @@ static void test_ownerdraw(void)
 
 static void test_LB_SELITEMRANGE(void)
 {
+    static const struct message selitemrange_seq[] =
+    {
+        { LB_SELITEMRANGE, sent },
+        { EVENT_OBJECT_SELECTIONWITHIN, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+        { 0 }
+    };
     static const struct listbox_stat test_nosel = { 0, LB_ERR, 0, 0 };
     static const struct listbox_stat test_1 = { 0, LB_ERR, 0, 2 };
     static const struct listbox_stat test_2 = { 0, LB_ERR, 0, 3 };
@@ -687,8 +708,11 @@ static void test_LB_SELITEMRANGE(void)
     listbox_query(hLB, &answer);
     listbox_test_query(test_nosel, answer);
 
+    flush_sequence(sequences, LB_SEQ_INDEX);
     ret = SendMessageA(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(2, 10));
     ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    ok_sequence(sequences, LB_SEQ_INDEX, selitemrange_seq, "selitemrange_seq", FALSE);
+
     listbox_query(hLB, &answer);
     listbox_test_query(test_1, answer);
 
