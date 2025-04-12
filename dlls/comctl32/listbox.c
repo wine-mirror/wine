@@ -1526,6 +1526,9 @@ static LRESULT LISTBOX_SelectItemRange( LB_DESCR *descr, INT first,
             LISTBOX_InvalidateItemRect(descr, i);
         }
     }
+
+    NotifyWinEvent( EVENT_OBJECT_SELECTIONWITHIN, descr->self, OBJID_CLIENT, 0 );
+
     return LB_OKAY;
 }
 
@@ -1711,6 +1714,9 @@ static LRESULT LISTBOX_InsertString( LB_DESCR *descr, INT index, LPCWSTR str )
 
     TRACE("[%p]: added item %d %s\n",
           descr->self, index, HAS_STRINGS(descr) ? debugstr_w(new_str) : "" );
+
+    NotifyWinEvent( EVENT_OBJECT_CREATE, descr->self, OBJID_CLIENT, index + 1 );
+
     return index;
 }
 
@@ -1757,6 +1763,7 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
 
     if (descr->nb_items == 1)
     {
+        NotifyWinEvent( EVENT_OBJECT_DESTROY, descr->self, OBJID_CLIENT, 1 );
         SendMessageW(descr->self, LB_RESETCONTENT, 0, 0);
         return LB_OKAY;
     }
@@ -1793,6 +1800,7 @@ static LRESULT LISTBOX_RemoveItem( LB_DESCR *descr, INT index )
           descr->focus_item = descr->nb_items - 1;
           if (descr->focus_item < 0) descr->focus_item = 0;
     }
+    NotifyWinEvent( EVENT_OBJECT_DESTROY, descr->self, OBJID_CLIENT, index + 1 );
     return LB_OKAY;
 }
 
