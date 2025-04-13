@@ -1246,7 +1246,7 @@ unsigned int __thiscall SchedulerPolicy_SetPolicyValue(SchedulerPolicy *this,
         break;
     case ContextPriority:
         if (((int)val < -7 /* THREAD_PRIORITY_REALTIME_LOWEST */
-                    || val > 6 /* THREAD_PRIORITY_REALTIME_HIGHEST */)
+                    || (int)val > 6 /* THREAD_PRIORITY_REALTIME_HIGHEST */)
                 && val != THREAD_PRIORITY_IDLE && val != THREAD_PRIORITY_TIME_CRITICAL
                 && val != INHERIT_THREAD_PRIORITY) {
             invalid_scheduler_policy_value e;
