@@ -1401,7 +1401,14 @@ static void test_WSAAddressToString(void)
 
         len = sizeof(output);
         ret = WSAAddressToStringA( (SOCKADDR *)&addr, sizeof(addr), NULL, output, &len );
-        ok( !ret, "got error %d\n", WSAGetLastError() );
+        ok( !ret ||
+            broken(WSAGetLastError() == WSAEINVAL), /* before Win10 1809 */
+            "got error %d\n", WSAGetLastError() );
+        if (WSAGetLastError() == WSAEINVAL)
+        {
+            winetest_pop_context();
+            continue;
+        }
         ok( !strcmp( output, exp_outputA ), "got string %s\n", debugstr_a( output ) );
         ok( len == strlen( exp_outputA ) + 1, "got len %lu\n", len );
 
