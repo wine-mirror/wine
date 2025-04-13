@@ -133,6 +133,7 @@ struct msg_queue
     struct hook_table     *hooks;           /* hook table */
     timeout_t              last_get_msg;    /* time of last get message call */
     int                    keystate_lock;   /* owns an input keystate lock */
+    int                    waiting;         /* is thread waiting on queue */
     queue_shm_t           *shared;          /* queue in session shared memory */
 };
 
@@ -315,6 +316,7 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->hooks           = NULL;
         queue->last_get_msg    = current_time;
         queue->keystate_lock   = 0;
+        queue->waiting         = 0;
         list_init( &queue->send_result );
         list_init( &queue->callback_result );
         list_init( &queue->pending_timers );
@@ -1260,16 +1262,21 @@ static void cleanup_results( struct msg_queue *queue )
 /* check if the thread owning the queue is hung (not checking for messages) */
 static int is_queue_hung( struct msg_queue *queue )
 {
-    struct wait_queue_entry *entry;
-
     if (current_time - queue->last_get_msg <= 5 * TICKS_PER_SEC)
         return 0;  /* less than 5 seconds since last get message -> not hung */
+    return !queue->waiting;
+}
 
-    LIST_FOR_EACH_ENTRY( entry, &queue->obj.wait_queue, struct wait_queue_entry, entry )
+static int msg_queue_select( struct msg_queue *queue, int events )
+{
+    if (queue->waiting == !!events)
     {
-        if (get_wait_queue_thread(entry)->queue == queue)
-            return 0;  /* thread is waiting on queue -> not hung */
+        set_error( STATUS_ACCESS_DENIED );
+        return 0;
     }
+    queue->waiting = !!events;
+
+    if (queue->fd) set_fd_events( queue->fd, events );
     return 1;
 }
 
@@ -1284,8 +1291,7 @@ static int msg_queue_add_queue( struct object *obj, struct wait_queue_entry *ent
         return 0;
     }
 
-    if (queue->fd && list_empty( &obj->wait_queue ))  /* first on the queue */
-        set_fd_events( queue->fd, POLLIN );
+    if (!msg_queue_select( queue, POLLIN )) return 0;
     add_queue( obj, entry );
     return 1;
 }
@@ -1295,8 +1301,7 @@ static void msg_queue_remove_queue(struct object *obj, struct wait_queue_entry *
     struct msg_queue *queue = (struct msg_queue *)obj;
 
     remove_queue( obj, entry );
-    if (queue->fd && list_empty( &obj->wait_queue ))  /* last on the queue is gone */
-        set_fd_events( queue->fd, 0 );
+    msg_queue_select( queue, 0 );
 }
 
 static void msg_queue_dump( struct object *obj, int verbose )
@@ -1317,7 +1322,7 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
         if ((ret = check_fd_events( queue->fd, POLLIN )))
             /* stop waiting on select() if we are signaled */
             set_fd_events( queue->fd, 0 );
-        else if (!list_empty( &obj->wait_queue ))
+        else if (queue->waiting)
             /* restart waiting on poll() if we are no longer signaled */
             set_fd_events( queue->fd, POLLIN );
     }
