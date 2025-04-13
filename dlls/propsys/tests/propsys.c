@@ -1532,7 +1532,9 @@ static void test_PropVariantChangeType_R8(void)
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
-    ok(dest.dblVal == 10.1f, "Unexpected value %f.\n", dest.dblVal);
+    ok(dest.dblVal == 10.1f ||
+       broken((float)dest.dblVal == 10.1f), /* Win7 */
+       "Unexpected value %f.\n", dest.dblVal);
 
     src.vt = VT_I4;
     src.lVal = 123;
@@ -1596,7 +1598,9 @@ static void test_PropVariantChangeType_R8(void)
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
-    ok(dest.dblVal == 8.1f, "Unexpected value %f.\n", dest.dblVal);
+    ok(dest.dblVal == 8.1f ||
+       broken((float)dest.dblVal == 0.0f), /* Win7 */
+       "Unexpected value %f.\n", dest.dblVal);
 
     src.vt = VT_R4;
     src.fltVal = 8.6f;
@@ -1604,7 +1608,9 @@ static void test_PropVariantChangeType_R8(void)
     hr = PropVariantChangeType(&dest, &src, 0, VT_R8);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(dest.vt == VT_R8, "Unexpected type %d.\n", dest.vt);
-    ok(dest.dblVal == 8.6f, "Unexpected value %f.\n", dest.dblVal);
+    ok(dest.dblVal == 8.6f ||
+       broken((float)dest.dblVal == 0.0f), /* Win7 */
+       "Unexpected value %f.\n", dest.dblVal);
 }
 
 static void test_PropVariantChangeType(void)
@@ -1728,14 +1734,18 @@ static void test_PropVariantToDouble(void)
     propvar.fltVal = 8.1f;
     hr = PropVariantToDouble(&propvar, &value);
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
-    ok(value == 8.1f, "Unexpected value: %f.\n", value);
+    ok(value == 8.1f ||
+       broken((float)value == 0.0f), /* Win7 */
+       "Unexpected value: %f.\n", value);
 
     PropVariantClear(&propvar);
     propvar.vt = VT_R4;
     propvar.fltVal = 8.6f;
     hr = PropVariantToDouble(&propvar, &value);
     ok(hr == S_OK, "PropVariantToDouble failed: 0x%08lx.\n", hr);
-    ok(value == 8.6f, "Unexpected value: %f.\n", value);
+    ok(value == 8.6f ||
+       broken((float)value == 0.0f), /* Win7 */
+       "Unexpected value: %f.\n", value);
 }
 
 static void test_PropVariantToString(void)
