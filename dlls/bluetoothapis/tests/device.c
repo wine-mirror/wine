@@ -363,6 +363,58 @@ static void test_BluetoothSendAuthenticationResponseEx( void )
     test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothSendAuthenticationResponseEx, NULL );
 }
 
+static void test_radio_BluetoothRemoveDevice( HANDLE radio, void *data )
+{
+    BLUETOOTH_DEVICE_SEARCH_PARAMS search_params = {0};
+    BLUETOOTH_DEVICE_INFO device_info = {0};
+    HBLUETOOTH_DEVICE_FIND find;
+    DWORD err;
+
+    device_info.dwSize = sizeof( device_info );
+    search_params.dwSize = sizeof( search_params );
+    search_params.fReturnAuthenticated = TRUE;
+    search_params.fReturnRemembered = TRUE;
+    search_params.fReturnUnknown = TRUE;
+    search_params.fReturnConnected = TRUE;
+    search_params.hRadio = radio;
+
+    find = BluetoothFindFirstDevice( &search_params, &device_info );
+    err = GetLastError();
+    ok( find || err == ERROR_NO_MORE_ITEMS, "BluetoothFindFirstDevice failed: %lu\n", err );
+    if (!find)
+    {
+        skip( "No devices found.\n" );
+        return;
+    }
+
+    do {
+        DWORD exp;
+        winetest_push_context( "%s (%s)", debugstr_w( device_info.szName ),
+                               debugstr_bluetooth_address( device_info.Address.rgBytes ) );
+        err = BluetoothRemoveDevice( &device_info.Address );
+        exp = device_info.fRemembered ? ERROR_SUCCESS : ERROR_NOT_FOUND;
+        ok( err == exp, "%lu != %lu\n", err, exp );
+        err = BluetoothGetDeviceInfo( radio, &device_info );
+        ok( !err || err == ERROR_NOT_FOUND, "BluetoothGetDeviceInfo failed: %lu\n", err );
+        if (!err)
+            ok( !device_info.fRemembered, "%d != %d\n", device_info.fRemembered, 0 );
+        winetest_pop_context();
+    } while (BluetoothFindNextDevice( find, &device_info ));
+
+    BluetoothFindDeviceClose( find );
+}
+
+static void test_BluetoothRemoveDevice( void )
+{
+    DWORD err;
+    BLUETOOTH_ADDRESS addr_zeros = {0};
+
+    err = BluetoothRemoveDevice( &addr_zeros );
+    ok( err == ERROR_NOT_FOUND, "%lu != %d\n", err, ERROR_NOT_FOUND );
+
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothRemoveDevice, NULL );
+}
+
 START_TEST( device )
 {
     test_BluetoothFindFirstDevice();
@@ -372,4 +424,5 @@ START_TEST( device )
     if (winetest_interactive)
         test_BluetoothRegisterForAuthenticationEx();
     test_BluetoothSendAuthenticationResponseEx();
+    test_BluetoothRemoveDevice();
 }

@@ -2178,6 +2178,10 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
 {
     return STATUS_NOT_SUPPORTED;
 }
+NTSTATUS bluez_adapter_remove_device( void *connection, const char *adapter_path, const char *device_path )
+{
+    return STATUS_NOT_SUPPORTED;
+}
 NTSTATUS bluez_auth_agent_start( void *connection, void **ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_auth_agent_stop( void *connection, void *ctx ) { return STATUS_NOT_SUPPORTED; }
 NTSTATUS bluez_auth_agent_request_default( void *connection ) { return STATUS_NOT_SUPPORTED; }
