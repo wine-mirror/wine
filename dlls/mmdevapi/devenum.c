@@ -212,6 +212,34 @@ BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow )
     return FALSE;
 }
 
+static void get_device_guid( EDataFlow flow, const char *dev_name, GUID *guid )
+{
+    WCHAR name[512];
+    DWORD type, size = sizeof(*guid);
+    HKEY key;
+    LSTATUS status;
+    int len;
+
+    len = swprintf( name, ARRAY_SIZE(name), L"Software\\Wine\\Drivers\\%s\\devices\\%u,",
+                    drvs.module_name, flow == eCapture );
+    MultiByteToWideChar( CP_UNIXCP, 0, dev_name, -1, name + len, ARRAY_SIZE(name) - len );
+    status = RegCreateKeyExW( HKEY_CURRENT_USER, name, 0, NULL, 0,
+                              KEY_READ | KEY_WRITE | KEY_WOW64_64KEY, NULL, &key, NULL);
+    if (status)
+    {
+        ERR( "Failed to create key %s: %lu\n", debugstr_w(name), status );
+        return;
+    }
+    status = RegQueryValueExW( key, L"guid", 0, &type, (BYTE *)guid, &size );
+    if (status != ERROR_SUCCESS || type != REG_BINARY || size != sizeof(*guid))
+    {
+        CoCreateGuid( guid );
+        RegSetValueExW( key, L"guid", 0, REG_BINARY, (BYTE *)guid, sizeof(*guid) );
+    }
+    RegCloseKey( key );
+    if (!find_device_in_cache( guid )) add_device_to_cache( guid, dev_name, flow );
+}
+
 static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *propkey)
 {
     WCHAR buffer[39];
@@ -644,8 +672,7 @@ HRESULT load_driver_devices(EDataFlow flow)
         const WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
         const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
 
-        drvs.pget_device_guid(flow, dev_name, &guid);
-        if (!find_device_in_cache( &guid )) add_device_to_cache( &guid, dev_name, flow );
+        get_device_guid( flow, dev_name, &guid );
 
         dev = MMDevice_Create(name, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i);
         set_format(dev);

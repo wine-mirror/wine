@@ -25,7 +25,6 @@
 #include "winternl.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "wine/debug.h"
 #include "wine/list.h"
 #include "wine/unixlib.h"
 
@@ -43,109 +42,15 @@
 
 #include "../mmdevapi/mmdevdrv.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
-
-static WCHAR drv_key_devicesW[256];
-
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-    {
-        WCHAR buf[MAX_PATH];
-        WCHAR *filename;
-
         DisableThreadLibraryCalls(dll);
         if (__wine_init_unix_call())
             return FALSE;
-
-        GetModuleFileNameW(dll, buf, ARRAY_SIZE(buf));
-
-        filename = wcsrchr(buf, '\\');
-        filename = filename ? filename + 1 : buf;
-
-        swprintf(drv_key_devicesW, ARRAY_SIZE(drv_key_devicesW),
-                 L"Software\\Wine\\Drivers\\%s\\devices", filename);
-
-        break;
-    }
-    case DLL_PROCESS_DETACH:
-        if (reserved) break;
         break;
     }
     return TRUE;
-}
-
-static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
-        GUID *guid)
-{
-    HKEY key;
-    BOOL opened = FALSE;
-    LONG lr;
-
-    if(!drv_key){
-        lr = RegCreateKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, NULL, 0, KEY_WRITE,
-                    NULL, &drv_key, NULL);
-        if(lr != ERROR_SUCCESS){
-            ERR("RegCreateKeyEx(drv_key) failed: %lu\n", lr);
-            return;
-        }
-        opened = TRUE;
-    }
-
-    lr = RegCreateKeyExW(drv_key, key_name, 0, NULL, 0, KEY_WRITE,
-                NULL, &key, NULL);
-    if(lr != ERROR_SUCCESS){
-        ERR("RegCreateKeyEx(%s) failed: %lu\n", wine_dbgstr_w(key_name), lr);
-        goto exit;
-    }
-
-    lr = RegSetValueExW(key, L"guid", 0, REG_BINARY, (BYTE*)guid,
-                sizeof(GUID));
-    if(lr != ERROR_SUCCESS)
-        ERR("RegSetValueEx(%s\\guid) failed: %lu\n", wine_dbgstr_w(key_name), lr);
-
-    RegCloseKey(key);
-exit:
-    if(opened)
-        RegCloseKey(drv_key);
-}
-
-void WINAPI get_device_guid(EDataFlow flow, const char *dev, GUID *guid)
-{
-    HKEY key = NULL, dev_key;
-    DWORD type, size = sizeof(*guid);
-    WCHAR key_name[256];
-
-    if(flow == eCapture)
-        key_name[0] = '1';
-    else
-        key_name[0] = '0';
-    key_name[1] = ',';
-
-    MultiByteToWideChar(CP_UTF8, 0, dev, -1, key_name + 2, ARRAY_SIZE(key_name) - 2);
-
-    if(RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_WRITE|KEY_READ, &key) == ERROR_SUCCESS){
-        if(RegOpenKeyExW(key, key_name, 0, KEY_READ, &dev_key) == ERROR_SUCCESS){
-            if(RegQueryValueExW(dev_key, L"guid", 0, &type,
-                        (BYTE*)guid, &size) == ERROR_SUCCESS){
-                if(type == REG_BINARY){
-                    RegCloseKey(dev_key);
-                    RegCloseKey(key);
-                    return;
-                }
-                ERR("Invalid type for device %s GUID: %lu; ignoring and overwriting\n",
-                        wine_dbgstr_w(key_name), type);
-            }
-            RegCloseKey(dev_key);
-        }
-    }
-
-    CoCreateGuid(guid);
-
-    set_device_guid(flow, key, key_name, guid);
-
-    if(key)
-        RegCloseKey(key);
 }

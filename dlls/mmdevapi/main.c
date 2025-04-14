@@ -96,11 +96,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         goto fail;
     }
 
-#define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
-        if(!driver->p##n) { goto fail; } } while(0)
-    LDFC(get_device_guid);
-#undef LDFC
-
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     params.name     = wcsrchr(path, '\\');
     params.name     = params.name ? params.name + 1 : path;

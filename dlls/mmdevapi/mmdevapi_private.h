@@ -41,8 +41,6 @@ typedef struct _DriverFuncs {
      * priority value reflecting the likelihood that they are actually
      * valid. See enum _DriverPriority. */
     int priority;
-
-    void (WINAPI *pget_device_guid)(EDataFlow flow, const char *name, GUID *guid);
 } DriverFuncs;
 
 extern DriverFuncs drvs;
