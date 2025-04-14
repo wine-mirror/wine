@@ -1652,17 +1652,13 @@ static void test_metadata_tIME(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"/tIME"), "Unexpected query %s.\n", wine_dbgstr_w(str));
     CoTaskMemFree(str);
     IEnumString_Release(enum_string);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/tIME", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-if (hr == S_OK)
-{
     ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
     hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1697,16 +1693,13 @@ if (hr == S_OK)
     PropVariantClear(&value);
 
     IWICMetadataQueryReader_Release(query_reader2);
-}
     IWICMetadataQueryReader_Release(query_reader);
 
     IWICMetadataReader_Release(reader);
 
     hr = CoCreateInstance(&CLSID_WICPngTimeMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataWriter, (void **)&writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     check_interface(writer, &IID_IWICMetadataWriter, TRUE);
     check_interface(writer, &IID_IWICMetadataReader, TRUE);

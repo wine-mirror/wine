@@ -506,6 +506,19 @@ HRESULT PngTimeReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&TimeReader_Vtbl, iid, ppv);
 }
 
+static const MetadataHandlerVtbl TimeWriter_Vtbl =
+{
+    METADATAHANDLER_FIXED_ITEMS | METADATAHANDLER_IS_WRITER,
+    &CLSID_WICPngTimeMetadataWriter,
+    LoadTimeMetadata,
+    CreateTimeHandler,
+};
+
+HRESULT PngTimeWriter_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&TimeWriter_Vtbl, iid, ppv);
+}
+
 static HRESULT create_bkgd_item(const PROPVARIANT *value, MetadataItem **ret)
 {
     MetadataItem *item;

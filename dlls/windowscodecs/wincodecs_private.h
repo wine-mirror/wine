@@ -266,6 +266,7 @@ extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngTextReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngTimeReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT PngTimeWriter_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT LSDReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv);
