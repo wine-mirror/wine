@@ -166,6 +166,9 @@ static struct device *find_device_in_cache( const GUID *guid )
 BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow )
 {
     struct device *dev;
+    WCHAR key_name[MAX_PATH];
+    DWORD index = 0;
+    HKEY key;
 
     if ((dev = find_device_in_cache( guid )))
     {
@@ -173,9 +176,40 @@ BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow )
         *flow = dev->flow;
         return TRUE;
     }
-    if (!drvs.pget_device_name_from_guid( guid, name, flow )) return FALSE;
-    add_device_to_cache( guid, *name, *flow );
-    return TRUE;
+
+    swprintf( key_name, ARRAY_SIZE(key_name), L"Software\\Wine\\Drivers\\%s\\devices", drvs.module_name );
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, key_name, 0, KEY_READ | KEY_WOW64_64KEY, &key )) return FALSE;
+
+    for (;;)
+    {
+        DWORD size, type;
+        LSTATUS status;
+        GUID reg_guid;
+        HKEY dev_key;
+
+        size = ARRAY_SIZE(key_name);
+        if (RegEnumKeyExW( key, index++, key_name, &size, NULL, NULL, NULL, NULL )) break;
+        if (RegOpenKeyExW( key, key_name, 0, KEY_READ | KEY_WOW64_64KEY, &dev_key )) continue;
+        size = sizeof(reg_guid);
+        status = RegQueryValueExW( dev_key, L"guid", 0, &type, (BYTE *)&reg_guid, &size );
+        RegCloseKey(dev_key);
+        if (status || type != REG_BINARY || size != sizeof(reg_guid)) continue;
+        if (!IsEqualGUID( &reg_guid, guid )) continue;
+        if (key_name[0] == '0') *flow = eRender;
+        else if (key_name[0] == '1') *flow = eCapture;
+        else continue;
+
+        RegCloseKey( key );
+        TRACE( "Found matching device key %s for %s\n", wine_dbgstr_w(key_name), debugstr_guid(guid) );
+        size = WideCharToMultiByte( CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL );
+        if (!(*name = malloc( size ))) return FALSE;
+        WideCharToMultiByte( CP_UNIXCP, 0, key_name + 2, -1, *name, size, NULL, NULL );
+        add_device_to_cache( guid, *name, *flow );
+        return TRUE;
+    }
+    RegCloseKey( key );
+    WARN( "No matching device in registry for %s\n", debugstr_guid(guid) );
+    return FALSE;
 }
 
 static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *propkey)

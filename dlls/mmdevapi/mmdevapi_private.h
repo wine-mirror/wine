@@ -43,7 +43,6 @@ typedef struct _DriverFuncs {
     int priority;
 
     void (WINAPI *pget_device_guid)(EDataFlow flow, const char *name, GUID *guid);
-    BOOL (WINAPI *pget_device_name_from_guid)(const GUID *guid, char **name, EDataFlow *flow);
 } DriverFuncs;
 
 extern DriverFuncs drvs;

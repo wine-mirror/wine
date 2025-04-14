@@ -149,8 +149,3 @@ exit:
     if(key)
         RegCloseKey(key);
 }
-
-BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
-{
-    return FALSE;
-}
