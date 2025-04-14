@@ -157,7 +157,7 @@ void init_process_tracing( struct process *process )
     }
     /* On Mach thread priorities depend on having the process port available, so
      * reapply all thread priorities here after process tracing is initialized */
-    set_process_priority( process, process->priority );
+    set_process_base_priority( process, process->base_priority );
 }
 
 /* terminate the per-process tracing mechanism */

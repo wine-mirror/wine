@@ -55,6 +55,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
+#include "ddk/wdm.h"
 
 #include "file.h"
 #include "handle.h"
@@ -662,6 +663,7 @@ struct process *create_process( int fd, struct process *parent, unsigned int fla
     process->exit_code       = STILL_ACTIVE;
     process->running_threads = 0;
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
+    process->base_priority   = 8;
     process->suspend         = 0;
     process->is_system       = 0;
     process->debug_children  = 1;
@@ -1512,7 +1514,7 @@ DECL_HANDLER(get_process_info)
         reply->ppid             = process->parent_id;
         reply->exit_code        = process->exit_code;
         reply->priority         = process->priority;
-        reply->base_priority    = priority_from_class_and_level( process->priority, THREAD_PRIORITY_NORMAL );
+        reply->base_priority    = process->base_priority;
         reply->affinity         = process->affinity;
         reply->peb              = process->peb;
         reply->start_time       = process->start_time;
@@ -1634,16 +1636,55 @@ DECL_HANDLER(get_process_vm_counters)
     release_object( process );
 }
 
-void set_process_priority( struct process *process, int priority )
+void set_process_base_priority( struct process *process, int base_priority )
 {
     struct thread *thread;
 
-    process->priority = priority;
+    if (base_priority < LOW_PRIORITY + 1 || base_priority > HIGH_PRIORITY)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    process->base_priority = base_priority;
 
     LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
     {
         set_thread_base_priority( thread, thread->base_priority );
     }
+}
+
+static void set_process_priority( struct process *process, int priority )
+{
+    int base_priority;
+
+    process->priority = priority;
+
+    switch (priority)
+    {
+    case PROCESS_PRIOCLASS_IDLE:
+        base_priority = 4;
+        break;
+    case PROCESS_PRIOCLASS_BELOW_NORMAL:
+        base_priority = 6;
+        break;
+    case PROCESS_PRIOCLASS_NORMAL:
+        base_priority = 8;
+        break;
+    case PROCESS_PRIOCLASS_ABOVE_NORMAL:
+        base_priority = 10;
+        break;
+    case PROCESS_PRIOCLASS_HIGH:
+        base_priority = 13;
+        break;
+    case PROCESS_PRIOCLASS_REALTIME:
+        base_priority = 24;
+        break;
+    default:
+        base_priority = 8;
+    }
+
+    set_process_base_priority( process, base_priority );
 }
 
 static void set_process_affinity( struct process *process, affinity_t affinity )

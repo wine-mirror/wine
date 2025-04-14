@@ -56,6 +56,7 @@ struct process
     timeout_t            end_time;        /* absolute time at process end */
     affinity_t           affinity;        /* process affinity mask */
     int                  priority;        /* priority class */
+    int                  base_priority;   /* base priority to calculate thread priority */
     int                  suspend;         /* global process suspend count */
     unsigned int         is_system:1;     /* is it a system process? */
     unsigned int         debug_children:1;/* also debug all child processes */
@@ -116,8 +117,7 @@ extern void kill_process( struct process *process, int violent_death );
 extern void kill_console_processes( struct thread *renderer, int exit_code );
 extern void detach_debugged_processes( struct debug_obj *debug_obj, int exit_code );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
-extern int priority_from_class_and_level( int priority_class, int priority_level );
-extern void set_process_priority( struct process *process, int priority );
+extern void set_process_base_priority( struct process *process, int base_priority );
 
 /* console functions */
 extern struct thread *console_get_renderer( struct console *console );
