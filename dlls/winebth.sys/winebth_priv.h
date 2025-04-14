@@ -209,6 +209,7 @@ static inline BOOL winebluetooth_device_equal( winebluetooth_device_t d1, winebl
 void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t props_mask,
                                               const struct winebluetooth_device_properties *props,
                                               BTH_DEVICE_INFO *info );
+NTSTATUS winebluetooth_device_disconnect( winebluetooth_device_t device );
 
 NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETOOTH_AUTHENTICATION_METHOD method,
                                            UINT32 numeric_or_passkey, BOOL negative, BOOL *authenticated );

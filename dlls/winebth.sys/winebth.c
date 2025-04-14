@@ -225,6 +225,39 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
             status = STATUS_INVALID_BUFFER_SIZE;
         break;
     }
+    case IOCTL_BTH_DISCONNECT_DEVICE:
+    {
+        const BTH_ADDR *param = irp->AssociatedIrp.SystemBuffer;
+        BTH_ADDR device_addr;
+        struct bluetooth_remote_device *device;
+
+        if (!param || insize < sizeof( *param ))
+        {
+            status = STATUS_INVALID_USER_BUFFER;
+            break;
+        }
+
+        device_addr = RtlUlonglongByteSwap( *param ) >> 16;
+        status = STATUS_DEVICE_NOT_CONNECTED;
+
+        EnterCriticalSection( &ext->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            BOOL matches;
+
+            EnterCriticalSection( &device->props_cs );
+            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                      device_addr == device->props.address.ullLong;
+            LeaveCriticalSection( &device->props_cs );
+            if (matches)
+            {
+                status = winebluetooth_device_disconnect( device->device );
+                break;
+            }
+        }
+        LeaveCriticalSection( &ext->remote_devices_cs );
+        break;
+    }
     case IOCTL_WINEBTH_RADIO_SET_FLAG:
     {
         const struct winebth_radio_set_flag_params *params = irp->AssociatedIrp.SystemBuffer;

@@ -1194,6 +1194,39 @@ done:
     return ret;
 }
 
+NTSTATUS bluez_device_disconnect( void *connection, const char *device_path )
+{
+    DBusMessage *request, *reply = NULL;
+    NTSTATUS status;
+    DBusError error;
+
+    TRACE( "(%p, %s)\n", connection, debugstr_a( device_path ) );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, device_path, BLUEZ_INTERFACE_DEVICE, "Disconnect" );
+    if (!request)
+        return STATUS_NO_MEMORY;
+
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        ERR( "Failed to disconnect device %s: %s: %s\n", debugstr_a( device_path ), debugstr_a( error.name ),
+             debugstr_a( error.message ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_message_unref( reply );
+    p_dbus_error_free( &error );
+
+    return STATUS_SUCCESS;
+}
+
 struct bluez_watcher_event
 {
     struct list entry;
@@ -2112,6 +2145,10 @@ NTSTATUS bluez_auth_agent_request_default( void *connection ) { return STATUS_NO
 NTSTATUS bluez_auth_agent_send_response( void *auth_agent, struct unix_name *device,
                                          BLUETOOTH_AUTHENTICATION_METHOD method, UINT32 numeric_or_passkey,
                                          BOOL negative, BOOL *authenticated )
+{
+    return STATUS_NOT_SUPPORTED;
+}
+NTSTATUS bluez_device_disconnect( void *connection, const char *device_path )
 {
     return STATUS_NOT_SUPPORTED;
 }

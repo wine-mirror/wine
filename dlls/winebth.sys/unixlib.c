@@ -223,6 +223,14 @@ static NTSTATUS bluetooth_auth_send_response( void *args )
                                            params->numeric_or_passkey, params->negative, params->authenticated );
 }
 
+static NTSTATUS bluetooth_device_disconnect( void *args )
+{
+    struct bluetooth_device_disconnect_params *params = args;
+
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+    return bluez_device_disconnect( dbus_connection, params->device->str );
+}
+
 static NTSTATUS bluetooth_get_event( void *args )
 {
     struct bluetooth_get_event_params *params = args;
@@ -243,6 +251,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_adapter_free,
 
     bluetooth_device_free,
+    bluetooth_device_disconnect,
 
     bluetooth_auth_agent_enable_incoming,
     bluetooth_auth_send_response,

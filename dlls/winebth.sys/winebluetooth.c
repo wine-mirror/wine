@@ -110,6 +110,15 @@ void winebluetooth_device_free( winebluetooth_device_t device )
     UNIX_BLUETOOTH_CALL( bluetooth_device_free, &args );
 }
 
+NTSTATUS winebluetooth_device_disconnect( winebluetooth_device_t device )
+{
+    struct bluetooth_device_disconnect_params args = {0};
+    TRACE( "(%p)\n", (void *)device.handle );
+
+    args.device = device.handle;
+    return UNIX_BLUETOOTH_CALL( bluetooth_device_disconnect, &args );
+}
+
 void winebluetooth_device_properties_to_info( winebluetooth_device_props_mask_t props_mask,
                                               const struct winebluetooth_device_properties *props,
                                               BTH_DEVICE_INFO *info )
