@@ -3385,7 +3385,11 @@ static void test_redirect(int port, const WCHAR *path, const WCHAR *target)
     ret = WinHttpQueryOption(req, WINHTTP_OPTION_URL, url, &size);
     ok(ret, "got %lu\n", GetLastError());
     swprintf(expected, ARRAY_SIZE(expected), L"http://localhost:%u/%s", port, target);
-    ok(!wcscmp(url, expected), "expected %s got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(url));
+    ok(!wcscmp(url, expected) ||
+       broken(!!wcsstr(url, L"redirect-perm")), /* < Win10 */
+       "expected %s got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(url));
+    if (wcsstr(url, L"redirect-perm"))
+        goto cleanup;
 
     status = 0xdeadbeef;
     size = sizeof(status);
@@ -3405,6 +3409,7 @@ static void test_redirect(int port, const WCHAR *path, const WCHAR *target)
     ok(ret, "failed to read data %lu\n", GetLastError());
     ok(count == 128, "got %lu\n", count);
 
+cleanup:
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
