@@ -5814,7 +5814,7 @@ SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT StatementHandle, SQLUSMALLINT Column
 
 static const char *debugstr_sqlwstr( const SQLWCHAR *str, SQLSMALLINT len )
 {
-    if (len == SQL_NTS) len = wcslen( str );
+    if (len == SQL_NTS) return wine_dbgstr_w( str );
     return wine_dbgstr_wn( str, len );
 }
 
