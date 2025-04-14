@@ -950,6 +950,32 @@ DWORD WINAPI BluetoothSendAuthenticationResponseEx( HANDLE handle_radio, BLUETOO
 
 DWORD WINAPI BluetoothRemoveDevice( BLUETOOTH_ADDRESS *addr )
 {
-    FIXME( "(%s): stub!\n", debugstr_addr( (BYTE *)addr ) );
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    BLUETOOTH_FIND_RADIO_PARAMS find_params = {0};
+    HBLUETOOTH_RADIO_FIND radio_find;
+    const static BYTE addr_zero[6];
+    BOOL success = FALSE;
+    HANDLE radio;
+    DWORD ret;
+
+    TRACE( "(%s)\n", debugstr_addr( (BYTE *)addr ) );
+
+    if (!memcmp( addr_zero, &addr->rgBytes, sizeof( addr_zero ) ))
+        return ERROR_NOT_FOUND;
+
+    find_params.dwSize = sizeof( find_params );
+    radio_find = BluetoothFindFirstRadio( &find_params, &radio );
+    if (!radio_find)
+    {
+        ret = GetLastError();
+        return ret == ERROR_NO_MORE_ITEMS ? ERROR_NOT_FOUND : ret;
+    }
+
+    do {
+        DWORD bytes;
+        success |= DeviceIoControl( radio, IOCTL_WINEBTH_RADIO_REMOVE_DEVICE, addr, sizeof( *addr ), NULL, 0, &bytes, NULL );
+        CloseHandle( radio );
+    } while (BluetoothFindNextRadio( radio_find, &radio ));
+
+    BluetoothFindRadioClose( radio_find );
+    return success ? ERROR_SUCCESS : ERROR_NOT_FOUND;
 }
