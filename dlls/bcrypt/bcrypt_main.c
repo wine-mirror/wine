@@ -1322,10 +1322,10 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
 }
 
 /* AES Key Wrap Algorithm (RFC3394) */
-static NTSTATUS aes_unwrap( const UCHAR *secret, ULONG secret_len, const UCHAR *cipher, UCHAR *plain )
+static NTSTATUS aes_unwrap( const UCHAR *secret, ULONG secret_len, const UCHAR *cipher, ULONG cipher_len, UCHAR *plain )
 {
     UCHAR a[8], *r, b[16];
-    ULONG len, t, i, n = secret_len / 8;
+    ULONG len, t, i, n = cipher_len / 8;
     int j;
     struct key *key;
 
@@ -1399,19 +1399,14 @@ static NTSTATUS key_import( struct algorithm *alg, struct key *decrypt_key, cons
     }
     else if (!wcscmp( type, BCRYPT_AES_WRAP_KEY_BLOB ))
     {
-        UCHAR output[BLOCK_LENGTH_AES];
+        UCHAR output[32];
 
         if (!decrypt_key || input_len < 8) return STATUS_INVALID_PARAMETER;
 
         len = input_len - 8;
         if (len < BLOCK_LENGTH_AES || len & (BLOCK_LENGTH_AES - 1)) return STATUS_INVALID_PARAMETER;
-        if (len > sizeof(output))
-        {
-            FIXME( "key length %lu not supported yet\n", len );
-            return STATUS_NOT_IMPLEMENTED;
-        }
 
-        if ((status = aes_unwrap( decrypt_key->u.s.secret, decrypt_key->u.s.secret_len, input, output )))
+        if ((status = aes_unwrap( decrypt_key->u.s.secret, decrypt_key->u.s.secret_len, input, len, output )))
             return status;
 
         return key_symmetric_generate( alg, key, output, len );
