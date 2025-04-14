@@ -1281,11 +1281,13 @@ struct set_process_info_request
 {
     struct request_header __header;
     obj_handle_t handle;
+    affinity_t   affinity;
     int          priority;
     int          base_priority;
-    affinity_t   affinity;
+    int          disable_boost;
     obj_handle_t token;
     int          mask;
+    char __pad_44[4];
 };
 struct set_process_info_reply
 {
@@ -1293,8 +1295,9 @@ struct set_process_info_reply
 };
 #define SET_PROCESS_INFO_PRIORITY      0x01
 #define SET_PROCESS_INFO_BASE_PRIORITY 0x02
-#define SET_PROCESS_INFO_AFFINITY      0x04
-#define SET_PROCESS_INFO_TOKEN         0x08
+#define SET_PROCESS_INFO_DISABLE_BOOST 0x04
+#define SET_PROCESS_INFO_AFFINITY      0x08
+#define SET_PROCESS_INFO_TOKEN         0x10
 
 
 
@@ -6856,6 +6859,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 885
+#define SERVER_PROTOCOL_VERSION 886
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

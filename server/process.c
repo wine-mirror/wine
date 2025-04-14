@@ -1713,6 +1713,18 @@ static void set_process_priority( struct process *process, int priority )
     set_process_base_priority( process, base_priority );
 }
 
+static void set_process_disable_boost( struct process *process, int disable_boost )
+{
+    struct thread *thread;
+
+    process->disable_boost = disable_boost;
+
+    LIST_FOR_EACH_ENTRY( thread, &process->thread_list, struct thread, proc_entry )
+    {
+        thread->disable_boost = disable_boost;
+    }
+}
+
 static void set_process_affinity( struct process *process, affinity_t affinity )
 {
     struct thread *thread;
@@ -1740,6 +1752,7 @@ DECL_HANDLER(set_process_info)
     {
         if (req->mask & SET_PROCESS_INFO_PRIORITY) set_process_priority( process, req->priority );
         if (req->mask & SET_PROCESS_INFO_BASE_PRIORITY) set_process_base_priority( process, req->base_priority );
+        if (req->mask & SET_PROCESS_INFO_DISABLE_BOOST) set_process_disable_boost( process, req->disable_boost );
         if (req->mask & SET_PROCESS_INFO_AFFINITY) set_process_affinity( process, req->affinity );
         if (req->mask & SET_PROCESS_INFO_TOKEN)
         {
