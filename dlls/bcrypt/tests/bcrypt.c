@@ -2112,15 +2112,11 @@ static void test_key_import_export(void)
 
     size = 0;
     ret = BCryptExportKey(key2, key, BCRYPT_AES_WRAP_KEY_BLOB, NULL, 0, &size, 0);
-    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    todo_wine
     ok(size == sizeof(buffer3), "got %lu\n", size);
 
     ret = BCryptExportKey(key2, key, BCRYPT_AES_WRAP_KEY_BLOB, buffer3, size, &size, 0);
-    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    todo_wine
     ok(!memcmp(buffer3, encrypted_blob, sizeof(encrypted_blob)), "blobs didn't match\n");
 
     key3 = NULL;

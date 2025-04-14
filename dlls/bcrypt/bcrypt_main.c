@@ -1521,10 +1521,10 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
 }
 
 /* AES Key Wrap Algorithm (RFC3394) */
-static NTSTATUS aes_wrap( const UCHAR *secret, ULONG secret_len, const UCHAR *plain, UCHAR *cipher )
+static NTSTATUS aes_wrap( const UCHAR *secret, ULONG secret_len, const UCHAR *plain, ULONG plain_len, UCHAR *cipher )
 {
     UCHAR *a, *r, b[16];
-    ULONG len, t, i, j, n = secret_len / 8;
+    ULONG len, t, i, j, n = plain_len / 8;
     struct key *key;
 
     a = cipher;
@@ -1634,17 +1634,12 @@ static NTSTATUS key_export( struct key *key, struct key *encrypt_key, const WCHA
         ULONG req_size = key->u.s.secret_len + 8;
 
         if (!encrypt_key) return STATUS_INVALID_PARAMETER;
-        if (key->u.s.secret_len > BLOCK_LENGTH_AES)
-        {
-            FIXME( "key length %u not supported yet\n", key->u.s.secret_len );
-            return STATUS_NOT_IMPLEMENTED;
-        }
 
         *size = req_size;
         if (output)
         {
             if (output_len < req_size) return STATUS_BUFFER_TOO_SMALL;
-            if ((status = aes_wrap( encrypt_key->u.s.secret, encrypt_key->u.s.secret_len, key->u.s.secret, output )))
+            if ((status = aes_wrap( encrypt_key->u.s.secret, encrypt_key->u.s.secret_len, key->u.s.secret, key->u.s.secret_len, output )))
                 return status;
         }
         return STATUS_SUCCESS;
