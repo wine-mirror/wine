@@ -896,6 +896,8 @@ static void set_thread_info( struct thread *thread,
         thread->entry_point = req->entry_point;
     if (req->mask & SET_THREAD_INFO_DBG_HIDDEN)
         thread->dbg_hidden = 1;
+    if (req->mask & SET_THREAD_INFO_DISABLE_BOOST)
+        thread->disable_boost = req->disable_boost;
     if (req->mask & SET_THREAD_INFO_DESCRIPTION)
     {
         WCHAR *desc;

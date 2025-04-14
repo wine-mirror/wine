@@ -302,6 +302,7 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     dump_uint64( ", affinity=", &req->affinity );
     dump_uint64( ", entry_point=", &req->entry_point );
     fprintf( stderr, ", token=%04x", req->token );
+    fprintf( stderr, ", disable_boost=%d", req->disable_boost );
     fprintf( stderr, ", mask=%08x", req->mask );
     dump_varargs_unicode_str( ", desc=", cur_size );
 }

@@ -769,25 +769,23 @@ static VOID test_thread_priority(void)
                        0,curthreadId);
      ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
      if (access_thread!=NULL) {
-       todo_wine obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
+       obey_ar(pSetThreadPriorityBoost(access_thread, 1) == 0);
        obey_ar(pGetThreadPriorityBoost(access_thread, &disabled) == 0);
        ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
    }
 
-   rc = pSetThreadPriorityBoost(curthread,1);
-   ok( rc != 0, "error=%ld\n",GetLastError());
-   todo_wine {
-     rc=pGetThreadPriorityBoost(curthread,&disabled);
-     ok(rc!=0 && disabled==1,
-        "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
-   }
+   rc = pSetThreadPriorityBoost(curthread, 1);
+   ok(rc != 0, "error=%ld\n", GetLastError());
+   rc = pGetThreadPriorityBoost(curthread, &disabled);
+   ok(rc != 0 && disabled == 1,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
 
-   rc = pSetThreadPriorityBoost(curthread,0);
-   ok( rc != 0, "error=%ld\n",GetLastError());
-   rc=pGetThreadPriorityBoost(curthread,&disabled);
-   ok(rc!=0 && disabled==0,
-      "rc=%d error=%ld disabled=%d\n",rc,GetLastError(),disabled);
+   rc = pSetThreadPriorityBoost(curthread, 0);
+   ok(rc != 0, "error=%ld\n", GetLastError());
+   rc = pGetThreadPriorityBoost(curthread, &disabled);
+   ok(rc != 0 && disabled == 0,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
 }
 
 /* check the GetThreadTimes function */
