@@ -3337,7 +3337,7 @@ static void test_priority(void)
     NTSTATUS status;
     DWORD proc_priority;
     int thread_base_priority, expected_nt_priority;
-    ULONG nt_thread_priority;
+    ULONG nt_thread_priority, process_base_priority;
     THREAD_BASIC_INFORMATION tbi;
     DECLSPEC_ALIGN(8) PROCESS_PRIORITY_CLASS ppc; /* needs align, or STATUS_DATATYPE_MISALIGNMENT is returned */
     PROCESS_BASIC_INFORMATION pbi;
@@ -3446,6 +3446,28 @@ static void test_priority(void)
     }
     expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_LOWEST;
     ok( expected_nt_priority == tbi.Priority, "After setting, effective NT priority (%ld) does not match expected priority %d.\n",
+        tbi.Priority, expected_nt_priority );
+    /* Test setting a custom process base priority that does not correspond to
+     * any process priority class. */
+    process_base_priority = 5;
+    status = pNtSetInformationProcess( GetCurrentProcess(), ProcessBasePriority, &process_base_priority, sizeof(ULONG) );
+    ok( status == STATUS_SUCCESS, "NtSetInformationProcess failed after setting base priority: %08lx\n", status );
+    memset( &pbi, 0xcd, sizeof(pbi) );
+    status = pNtQueryInformationProcess( GetCurrentProcess(), ProcessBasicInformation, &pbi, sizeof(pbi), NULL );
+    ok( status == STATUS_SUCCESS, "NtQueryInformationProcess failed after setting base priority: %08lx\n", status );
+    if (is_wow64)
+    {
+        todo_wine ok( pbi.BasePriority == 0xcdcdcdcd, "got %#lx\n", pbi.BasePriority );
+        pbi.BasePriority = process_base_priority;
+    }
+    ok( process_base_priority == pbi.BasePriority, "After setting, effective base priority (%ld) does not match expected base priority %ld.\n",
+        pbi.BasePriority, process_base_priority );
+    /* Effective thread priority should be now base priority 5 (and not 6 as before)
+     * + THREAD_PRIORITY_LOWEST (-2) = 3. */
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadBasicInformation, &tbi, sizeof(tbi), NULL );
+    ok( status == STATUS_SUCCESS, "NtQueryInformationThread failed after setting process base priority: %08lx\n", status );
+    expected_nt_priority = pbi.BasePriority + THREAD_PRIORITY_LOWEST;
+    ok( expected_nt_priority == tbi.Priority, "After setting process base priority, effective NT priority (%ld) does not match expected priority %d.\n",
         tbi.Priority, expected_nt_priority );
     /* Setting an out of range priority above HIGH_PRIORITY (31) or LOW_PRIORITY (0)
      * and lower fails. */
