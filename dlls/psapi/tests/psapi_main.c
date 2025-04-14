@@ -1060,7 +1060,11 @@ static void test_GetModuleFileNameEx(void)
     ok(ret, "CreateProcessW failed: %lu\n", GetLastError());
 
     size = GetModuleFileNameExW(pi.hProcess, NULL, buffer, ARRAYSIZE(buffer));
-    ok(size, "GetModuleFileNameExW failed: %lu\n", GetLastError());
+    ok(size ||
+       broken(GetLastError() == ERROR_INVALID_HANDLE), /* < Win10 */
+       "GetModuleFileNameExW failed: %lu\n", GetLastError());
+    if (GetLastError() == ERROR_INVALID_HANDLE)
+        goto cleanup;
     ok(size == wcslen(buffer), "unexpected size %lu\n", size);
 
     size2 = ARRAYSIZE(buffer2);
@@ -1068,6 +1072,7 @@ static void test_GetModuleFileNameEx(void)
     ok(size == size2, "got size %lu, expected %lu\n", size, size2);
     ok(!wcscmp(buffer, buffer2), "unexpected image name %s, expected %s\n", debugstr_w(buffer), debugstr_w(buffer2));
 
+cleanup:
     TerminateProcess(pi.hProcess, 0);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);
