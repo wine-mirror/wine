@@ -12817,7 +12817,7 @@ static void test_bind_bluetooth(void)
     err = WSAGetLastError();
     if (sock == INVALID_SOCKET)
     {
-        ok(err == WSAEAFNOSUPPORT, "got error %d\n", err);
+        ok(err == WSAEAFNOSUPPORT || err == WSAEPROTONOSUPPORT, "got error %d\n", err);
         skip("Bluetooth is not supported\n");
         return;
     }
