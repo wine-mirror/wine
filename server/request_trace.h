@@ -252,10 +252,11 @@ static void dump_get_process_vm_counters_reply( const struct get_process_vm_coun
 static void dump_set_process_info_request( const struct set_process_info_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", mask=%d", req->mask );
     fprintf( stderr, ", priority=%d", req->priority );
+    fprintf( stderr, ", base_priority=%d", req->base_priority );
     dump_uint64( ", affinity=", &req->affinity );
     fprintf( stderr, ", token=%04x", req->token );
+    fprintf( stderr, ", mask=%d", req->mask );
 }
 
 static void dump_get_thread_info_request( const struct get_thread_info_request *req )

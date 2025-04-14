@@ -1755,6 +1755,23 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         }
         break;
 
+    case ProcessBasePriority:
+        if (size != sizeof(KPRIORITY)) return STATUS_INVALID_PARAMETER;
+        else
+        {
+            KPRIORITY* base_priority = info;
+
+            SERVER_START_REQ( set_process_info )
+            {
+                req->handle        = wine_server_obj_handle( handle );
+                req->base_priority = *base_priority;
+                req->mask          = SET_PROCESS_INFO_BASE_PRIORITY;
+                ret = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        break;
+
     case ProcessExecuteFlags:
         if ((is_win64 && !is_wow64()) || size != sizeof(ULONG)) return STATUS_INVALID_PARAMETER;
         if (execute_flags & MEM_EXECUTE_OPTION_PERMANENT) return STATUS_ACCESS_DENIED;

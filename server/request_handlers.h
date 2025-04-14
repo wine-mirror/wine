@@ -754,10 +754,11 @@ C_ASSERT( offsetof(struct get_process_vm_counters_reply, pagefile_usage) == 40 )
 C_ASSERT( offsetof(struct get_process_vm_counters_reply, peak_pagefile_usage) == 48 );
 C_ASSERT( sizeof(struct get_process_vm_counters_reply) == 56 );
 C_ASSERT( offsetof(struct set_process_info_request, handle) == 12 );
-C_ASSERT( offsetof(struct set_process_info_request, mask) == 16 );
-C_ASSERT( offsetof(struct set_process_info_request, priority) == 20 );
+C_ASSERT( offsetof(struct set_process_info_request, priority) == 16 );
+C_ASSERT( offsetof(struct set_process_info_request, base_priority) == 20 );
 C_ASSERT( offsetof(struct set_process_info_request, affinity) == 24 );
 C_ASSERT( offsetof(struct set_process_info_request, token) == 32 );
+C_ASSERT( offsetof(struct set_process_info_request, mask) == 36 );
 C_ASSERT( sizeof(struct set_process_info_request) == 40 );
 C_ASSERT( offsetof(struct get_thread_info_request, handle) == 12 );
 C_ASSERT( offsetof(struct get_thread_info_request, access) == 16 );
