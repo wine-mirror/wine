@@ -1343,7 +1343,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
     {
         /* check to make sure this account is on this computer */
         if (GetComputerNameW( userName, &nameLen ) &&
-            (domain.Length / sizeof(WCHAR) != nameLen || wcsncmp( domain.Buffer, userName, nameLen )))
+            (domain.Length / sizeof(WCHAR) != nameLen || wcsnicmp( domain.Buffer, userName, nameLen )))
         {
             SetLastError(ERROR_NONE_MAPPED);
             ret = FALSE;
@@ -1352,7 +1352,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
     }
 
     if (GetUserNameW( userName, &nameLen ) &&
-        account.Length / sizeof(WCHAR) == nameLen - 1 && !wcsncmp( account.Buffer, userName, nameLen - 1 ))
+        account.Length / sizeof(WCHAR) == nameLen - 1 && !wcsnicmp( account.Buffer, userName, nameLen - 1 ))
     {
             ret = lookup_user_account_name( Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse );
             *handled = TRUE;
@@ -1361,7 +1361,7 @@ BOOL lookup_local_user_name( const LSA_UNICODE_STRING *account_and_domain,
     {
         nameLen = UNLEN + 1;
         if (GetComputerNameW( userName, &nameLen ) &&
-            account.Length / sizeof(WCHAR) == nameLen && !wcsncmp( account.Buffer, userName , nameLen ))
+            account.Length / sizeof(WCHAR) == nameLen && !wcsnicmp( account.Buffer, userName , nameLen ))
         {
             ret = lookup_computer_account_name( Sid, cbSid, ReferencedDomainName, cchReferencedDomainName, peUse );
             *handled = TRUE;

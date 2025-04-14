@@ -213,8 +213,10 @@ static void test_LsaLookupNames2(void)
     LSA_OBJECT_ATTRIBUTES attrs;
     PLSA_REFERENCED_DOMAIN_LIST domains;
     PLSA_TRANSLATED_SID2 sids;
-    LSA_UNICODE_STRING name[3];
+    LSA_UNICODE_STRING name[4];
     LPSTR account, sid_dom;
+    DWORD len;
+    BOOL ret;
 
     if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
         (PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale())) != LANG_ENGLISH))
@@ -254,6 +256,14 @@ static void test_LsaLookupNames2(void)
     name[2].Buffer = malloc(sizeof(n2));
     name[2].Length = name[2].MaximumLength = sizeof(n2);
     memcpy(name[2].Buffer, n2, sizeof(n2));
+
+    ret = GetUserNameW(NULL, &len);
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+            "GetUserNameW returned %x (%lu)\n", ret, GetLastError());
+    name[3].Buffer = malloc(len * sizeof(WCHAR));
+    name[3].Length = name[3].MaximumLength = (len - 1) * sizeof(WCHAR);
+    ret = GetUserNameW(name[3].Buffer, &len);
+    ok(ret, "GetUserNameW returned %x (%lu)\n", ret, GetLastError());
 
     /* account name only */
     sids = NULL;
@@ -307,9 +317,23 @@ static void test_LsaLookupNames2(void)
     LsaFreeMemory(sids);
     LsaFreeMemory(domains);
 
+    /* case mismatch */
+    name[3].Buffer[0] = iswlower(name[3].Buffer[0]) ?
+        towupper(name[3].Buffer[0]) : tolower(name[3].Buffer[0]);
+    sids = NULL;
+    domains = NULL;
+    status = LsaLookupNames2(handle, 0, 1, &name[3], &domains, &sids);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %lx)\n", status);
+    ok(sids[0].Use == SidTypeUser, "expected SidTypeUser, got %u\n", sids[0].Use);
+    ok(sids[0].Flags == 0, "expected 0, got 0x%08lx\n", sids[0].Flags);
+    ok(domains->Entries == 1, "expected 1, got %lu\n", domains->Entries);
+    LsaFreeMemory(sids);
+    LsaFreeMemory(domains);
+
     free(name[0].Buffer);
     free(name[1].Buffer);
     free(name[2].Buffer);
+    free(name[3].Buffer);
 
     status = LsaClose(handle);
     ok(status == STATUS_SUCCESS, "LsaClose() failed, returned 0x%08lx\n", status);
