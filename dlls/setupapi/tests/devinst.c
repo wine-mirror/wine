@@ -3981,7 +3981,9 @@ static void test_SetupDiOpenDeviceInterface(void)
     todo_wine_if(!ret && GetLastError() == ERROR_NO_SUCH_DEVINST)
     ok(!ret && GetLastError() == ERROR_INVALID_DEVINST_NAME, "got ret %d, error %#lx.\n", ret, GetLastError());
     ret = SetupDiOpenDeviceInterfaceW(set, L"\\\\?\\", 0, &iface);
-    ok(!ret && GetLastError() == ERROR_NO_SUCH_DEVICE_INTERFACE, "got ret %d, error %#lx.\n", ret, GetLastError());
+    ok((!ret && GetLastError() == ERROR_NO_SUCH_DEVICE_INTERFACE) ||
+       broken(!ret && GetLastError() == ERROR_BAD_PATHNAME), /* Win7 */
+       "got ret %d, error %#lx.\n", ret, GetLastError());
     ret = SetupDiOpenDeviceInterfaceW(set, device_path, 0, NULL);
     ok(ret, "got error %#lx.\n", GetLastError());
     SetupDiDestroyDeviceInfoList(set);
