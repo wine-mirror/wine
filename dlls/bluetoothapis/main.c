@@ -947,3 +947,9 @@ DWORD WINAPI BluetoothSendAuthenticationResponseEx( HANDLE handle_radio, BLUETOO
     ReleaseSRWLockShared( &bluetooth_auth_lock );
     return ret;
 }
+
+DWORD WINAPI BluetoothRemoveDevice( BLUETOOTH_ADDRESS *addr )
+{
+    FIXME( "(%s): stub!\n", debugstr_addr( (BYTE *)addr ) );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}

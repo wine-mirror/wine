@@ -52,7 +52,7 @@
 @ stub BluetoothIsVersionAvailable
 @ stub BluetoothRegisterForAuthentication
 @ stdcall BluetoothRegisterForAuthenticationEx(ptr ptr ptr ptr)
-@ stub BluetoothRemoveDevice
+@ stdcall BluetoothRemoveDevice(ptr)
 @ stdcall BluetoothSdpEnumAttributes(ptr long ptr ptr)
 @ stdcall BluetoothSdpGetAttributeValue(ptr long long ptr)
 @ stdcall BluetoothSdpGetContainerElementData(ptr long ptr ptr)
