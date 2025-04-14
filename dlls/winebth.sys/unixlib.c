@@ -208,6 +208,15 @@ static NTSTATUS bluetooth_adapter_stop_discovery( void *args )
     return bluez_adapter_stop_discovery( dbus_connection, params->adapter->str );
 }
 
+
+static NTSTATUS bluetooth_adapter_remove_device( void *args )
+{
+    struct bluetooth_adapter_remove_device_params *params = args;
+
+    if (!dbus_connection) return STATUS_NOT_SUPPORTED;
+    return bluez_adapter_remove_device( dbus_connection, params->adapter->str, params->device->str );
+}
+
 static NTSTATUS bluetooth_auth_agent_enable_incoming( void *args )
 {
     if (!dbus_connection) return STATUS_NOT_SUPPORTED;
@@ -248,6 +257,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_adapter_get_unique_name,
     bluetooth_adapter_start_discovery,
     bluetooth_adapter_stop_discovery,
+    bluetooth_adapter_remove_device,
     bluetooth_adapter_free,
 
     bluetooth_device_free,

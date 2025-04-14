@@ -54,6 +54,7 @@ extern NTSTATUS bluez_adapter_set_prop( void *connection,
                                         struct bluetooth_adapter_set_prop_params *params );
 extern NTSTATUS bluez_adapter_start_discovery( void *connection, const char *adapter_path );
 extern NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_path );
+extern NTSTATUS bluez_adapter_remove_device( void *connection, const char *adapter_path, const char *device_path);
 extern NTSTATUS bluez_auth_agent_request_default( void *connection );
 extern NTSTATUS bluez_auth_agent_start( void *connection, void **ctx );
 extern NTSTATUS bluez_auth_agent_stop( void *connection, void *ctx );

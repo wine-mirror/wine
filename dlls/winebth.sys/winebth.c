@@ -329,6 +329,41 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
         LeaveCriticalSection( &ext->remote_devices_cs );
         break;
     }
+    case IOCTL_WINEBTH_RADIO_REMOVE_DEVICE:
+    {
+        const BTH_ADDR *param = irp->AssociatedIrp.SystemBuffer;
+        struct bluetooth_remote_device *device;
+
+        if (!param)
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        if (insize < sizeof( *param ))
+        {
+            status = STATUS_INVALID_BUFFER_SIZE;
+            break;
+        }
+
+        status = STATUS_NOT_FOUND;
+        EnterCriticalSection( &ext->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &ext->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            BOOL matches;
+            EnterCriticalSection( &device->props_cs );
+            matches = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS &&
+                      device->props.address.ullLong == *param && device->props.paired;
+            LeaveCriticalSection( &device->props_cs );
+
+            if (matches)
+            {
+                status = winebluetooth_radio_remove_device( ext->radio, device->device );
+                break;
+            }
+        }
+        LeaveCriticalSection( &ext->remote_devices_cs );
+        break;
+    }
     default:
         FIXME( "Unimplemented IOCTL code: %#lx\n", code );
         break;

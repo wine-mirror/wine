@@ -87,6 +87,16 @@ NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio )
     return UNIX_BLUETOOTH_CALL(bluetooth_adapter_stop_discovery, &params);
 }
 
+NTSTATUS winebluetooth_radio_remove_device( winebluetooth_radio_t radio, winebluetooth_device_t device )
+{
+    struct bluetooth_adapter_remove_device_params params = {0};
+
+    TRACE( "(%p, %p)\n", (void *)radio.handle, (void *)device.handle );
+    params.adapter = radio.handle;
+    params.device = device.handle;
+    return UNIX_BLUETOOTH_CALL( bluetooth_adapter_remove_device, &params );
+}
+
 NTSTATUS winebluetooth_auth_agent_enable_incoming( void )
 {
     return UNIX_BLUETOOTH_CALL( bluetooth_auth_agent_enable_incoming, NULL );

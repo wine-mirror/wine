@@ -491,6 +491,45 @@ NTSTATUS bluez_adapter_stop_discovery( void *connection, const char *adapter_pat
     return STATUS_SUCCESS;
 }
 
+NTSTATUS bluez_adapter_remove_device( void *connection, const char *adapter_path, const char *device_path )
+{
+    DBusMessage *request, *reply = NULL;
+    DBusError error;
+    NTSTATUS status;
+
+    TRACE( "(%p, %s, %s)\n", connection, debugstr_a( adapter_path ), debugstr_a( device_path ) );
+
+    request = p_dbus_message_new_method_call( BLUEZ_DEST, adapter_path, BLUEZ_INTERFACE_ADAPTER, "RemoveDevice" );
+    if (!request)
+        return STATUS_NO_MEMORY;
+
+    if (!p_dbus_message_append_args( request, DBUS_TYPE_OBJECT_PATH, &device_path, DBUS_TYPE_INVALID ))
+    {
+        p_dbus_message_unref( request );
+        return STATUS_NO_MEMORY;
+    }
+
+    p_dbus_error_init( &error );
+    status = bluez_dbus_send_and_wait_for_reply( connection, request, &reply, &error );
+    if (status)
+    {
+        p_dbus_error_free( &error );
+        return status;
+    }
+    if (!reply)
+    {
+        ERR( "Failed to remove device %s on adapter %s: %s: %s\n", debugstr_a( device_path ),
+             debugstr_a( adapter_path ), debugstr_a( error.name ), debugstr_a( error.message ) );
+        status = bluez_dbus_error_to_ntstatus( &error );
+        p_dbus_error_free( &error );
+        return status;
+    }
+    p_dbus_message_unref( reply );
+    p_dbus_error_free( &error );
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS bluez_adapter_set_prop( void *connection, struct bluetooth_adapter_set_prop_params *params )
 {
     DBusMessage *request, *reply;

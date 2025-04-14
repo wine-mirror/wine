@@ -199,6 +199,7 @@ NTSTATUS winebluetooth_radio_set_property( winebluetooth_radio_t radio,
                                            union winebluetooth_property *property );
 NTSTATUS winebluetooth_radio_start_discovery( winebluetooth_radio_t radio );
 NTSTATUS winebluetooth_radio_stop_discovery( winebluetooth_radio_t radio );
+NTSTATUS winebluetooth_radio_remove_device( winebluetooth_radio_t radio, winebluetooth_device_t device );
 NTSTATUS winebluetooth_auth_agent_enable_incoming( void );
 
 void winebluetooth_device_free( winebluetooth_device_t device );
