@@ -77,9 +77,11 @@
 
 static void (WINAPI *pGetCurrentThreadStackLimits)(PULONG_PTR,PULONG_PTR);
 static BOOL (WINAPI *pGetThreadPriorityBoost)(HANDLE,PBOOL);
+static BOOL (WINAPI *pGetProcessPriorityBoost)(HANDLE,PBOOL);
 static HANDLE (WINAPI *pOpenThread)(DWORD,BOOL,DWORD);
 static BOOL (WINAPI *pQueueUserWorkItem)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
 static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
+static BOOL (WINAPI *pSetProcessPriorityBoost)(HANDLE,BOOL);
 static BOOL (WINAPI *pSetThreadStackGuarantee)(ULONG*);
 static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
 static BOOL (WINAPI *pUnregisterWait)(HANDLE);
@@ -786,6 +788,27 @@ static VOID test_thread_priority(void)
    rc = pGetThreadPriorityBoost(curthread, &disabled);
    ok(rc != 0 && disabled == 0,
       "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
+
+   rc = pSetProcessPriorityBoost(GetCurrentProcess(), 1);
+   ok(rc != 0, "error=%ld\n", GetLastError());
+   rc = pGetThreadPriorityBoost(curthread, &disabled);
+   ok(rc != 0 && disabled == 1,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
+   rc = pGetProcessPriorityBoost(GetCurrentProcess(), &disabled);
+   ok(rc != 0 && disabled == 1,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
+
+   rc = pSetThreadPriorityBoost(curthread, 0);
+   ok(rc != 0, "error=%ld\n", GetLastError());
+   rc = pGetThreadPriorityBoost(curthread, &disabled);
+   ok(rc != 0 && disabled == 0,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
+   rc = pGetProcessPriorityBoost(GetCurrentProcess(), &disabled);
+   ok(rc != 0 && disabled == 1,
+      "rc=%d error=%ld disabled=%d\n", rc, GetLastError(), disabled);
+
+   rc = pSetProcessPriorityBoost(GetCurrentProcess(), 0);
+   ok(rc != 0, "error=%ld\n", GetLastError());
 }
 
 /* check the GetThreadTimes function */
@@ -2581,9 +2604,11 @@ static void init_funcs(void)
 #define X(f) p##f = (void*)GetProcAddress(hKernel32, #f)
     X(GetCurrentThreadStackLimits);
     X(GetThreadPriorityBoost);
+    X(GetProcessPriorityBoost);
     X(OpenThread);
     X(QueueUserWorkItem);
     X(SetThreadPriorityBoost);
+    X(SetProcessPriorityBoost);
     X(SetThreadStackGuarantee);
     X(RegisterWaitForSingleObject);
     X(UnregisterWait);
