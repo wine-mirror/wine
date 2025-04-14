@@ -2456,9 +2456,9 @@ static SQLRETURN get_data_unix( struct statement *stmt, SQLUSMALLINT column, SQL
 {
     INT64 len;
     SQLRETURN ret;
-    struct SQLGetData_params params = { stmt->hdr.unix_handle, column, type, value, buflen, &len };
+    struct SQLGetData_params params = { stmt->hdr.unix_handle, column, type, value, buflen, retlen ? &len : NULL};
 
-    if (SUCCESS((ret = ODBC_CALL( SQLGetData, &params )))) *retlen = len;
+    if (SUCCESS((ret = ODBC_CALL( SQLGetData, &params ))) && retlen) *retlen = len;
     return ret;
 }
 
