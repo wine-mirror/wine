@@ -789,48 +789,40 @@ unsigned int set_thread_priority( struct thread *thread, int priority )
     return STATUS_SUCCESS;
 }
 
-int priority_from_class_and_level( int priority_class, int priority_level )
-{
-    /* offsets taken from https://learn.microsoft.com/en-us/windows/win32/procthread/scheduling-priorities */
-    static const int class_offsets[] = { 4, 8, 13, 24, 6, 10 };
-
-    if (priority_class == PROCESS_PRIOCLASS_REALTIME)
-    {
-        if (priority_level == THREAD_PRIORITY_IDLE) return LOW_REALTIME_PRIORITY;
-        if (priority_level == THREAD_PRIORITY_TIME_CRITICAL) return HIGH_PRIORITY;
-    }
-    else
-    {
-        if (priority_level == THREAD_PRIORITY_IDLE) return LOW_PRIORITY + 1;
-        if (priority_level == THREAD_PRIORITY_TIME_CRITICAL) return LOW_REALTIME_PRIORITY - 1;
-    }
-
-    if (priority_class >= ARRAY_SIZE(class_offsets)) return LOW_REALTIME_PRIORITY / 2;
-    return class_offsets[priority_class - 1] + priority_level;
-}
-
 #define THREAD_PRIORITY_REALTIME_HIGHEST 6
 #define THREAD_PRIORITY_REALTIME_LOWEST -7
 
-/* sets the thread base priority level, relative to its process base priority class */
+/* sets the thread base priority level, relative to its process base priority */
 unsigned int set_thread_base_priority( struct thread *thread, int base_priority )
 {
-    int priority_class = thread->process->priority;
-    int max = THREAD_PRIORITY_HIGHEST;
-    int min = THREAD_PRIORITY_LOWEST;
+    int priority;
+    int is_realtime = thread->process->priority == PROCESS_PRIOCLASS_REALTIME;
 
-    if (priority_class == PROCESS_PRIOCLASS_REALTIME)
+    if (base_priority != THREAD_PRIORITY_IDLE && base_priority != THREAD_PRIORITY_TIME_CRITICAL)
     {
-        max = THREAD_PRIORITY_REALTIME_HIGHEST;
-        min = THREAD_PRIORITY_REALTIME_LOWEST;
+        int min = is_realtime ? THREAD_PRIORITY_REALTIME_LOWEST : THREAD_PRIORITY_LOWEST;
+        int max = is_realtime ? THREAD_PRIORITY_REALTIME_HIGHEST : THREAD_PRIORITY_HIGHEST;
+
+        if (base_priority < min || base_priority > max)
+            return STATUS_INVALID_PARAMETER;
     }
-    if ((base_priority < min || base_priority > max) &&
-        base_priority != THREAD_PRIORITY_IDLE &&
-        base_priority != THREAD_PRIORITY_TIME_CRITICAL)
-        return STATUS_INVALID_PARAMETER;
 
     thread->base_priority = base_priority;
-    return set_thread_priority( thread, priority_from_class_and_level( priority_class, base_priority ) );
+
+    switch (base_priority)
+    {
+    case THREAD_PRIORITY_IDLE:
+        priority = is_realtime ? LOW_REALTIME_PRIORITY : LOW_PRIORITY + 1;
+        break;
+    case THREAD_PRIORITY_TIME_CRITICAL:
+        priority = is_realtime ? HIGH_PRIORITY : LOW_REALTIME_PRIORITY - 1;
+        break;
+    default:
+        priority = thread->process->base_priority + base_priority;
+        break;
+    }
+
+    return set_thread_priority( thread, priority );
 }
 
 /* set all information about a thread */
