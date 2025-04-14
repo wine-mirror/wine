@@ -1171,8 +1171,9 @@ struct obj_locator
     timeout_t    end_time;         /* process end time */
     unsigned int session_id;       /* process session id */
     int          exit_code;        /* process exit code */
-    int          priority;         /* priority class */
+    unsigned short priority;       /* priority class */
     unsigned short base_priority;  /* process base priority */
+    unsigned short disable_boost;  /* disable process priority boost */
     unsigned short machine;        /* process architecture */
     VARARG(image,pe_image_info);   /* image info for main exe */
 @END

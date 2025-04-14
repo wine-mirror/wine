@@ -1218,8 +1218,9 @@ struct get_process_info_reply
     timeout_t    end_time;
     unsigned int session_id;
     int          exit_code;
-    int          priority;
+    unsigned short priority;
     unsigned short base_priority;
+    unsigned short disable_boost;
     unsigned short machine;
     /* VARARG(image,pe_image_info); */
 };
@@ -6855,6 +6856,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 884
+#define SERVER_PROTOCOL_VERSION 885
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

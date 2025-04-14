@@ -58,6 +58,7 @@ struct process
     affinity_t           affinity;        /* process affinity mask */
     int                  priority;        /* priority class */
     int                  base_priority;   /* base priority to calculate thread priority */
+    int                  disable_boost;   /* disable priority boost */
     int                  suspend;         /* global process suspend count */
     unsigned int         is_system:1;     /* is it a system process? */
     unsigned int         debug_children:1;/* also debug all child processes */

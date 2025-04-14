@@ -538,6 +538,7 @@ struct thread *create_thread( int fd, struct process *process, const struct secu
     thread->process = (struct process *)grab_object( process );
     thread->desktop = 0;
     thread->affinity = process->affinity;
+    thread->disable_boost = process->disable_boost;
     if (!current) current = thread;
 
     list_add_tail( &thread_list, &thread->entry );

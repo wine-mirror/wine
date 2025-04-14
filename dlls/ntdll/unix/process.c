@@ -1094,7 +1094,6 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     UNIMPLEMENTED_INFO_CLASS(ProcessUserModeIOPL);
     UNIMPLEMENTED_INFO_CLASS(ProcessEnableAlignmentFaultFixup);
     UNIMPLEMENTED_INFO_CLASS(ProcessWx86Information);
-    UNIMPLEMENTED_INFO_CLASS(ProcessPriorityBoost);
     UNIMPLEMENTED_INFO_CLASS(ProcessDeviceMap);
     UNIMPLEMENTED_INFO_CLASS(ProcessForegroundInformation);
     UNIMPLEMENTED_INFO_CLASS(ProcessLUIDDeviceMapsEnabled);
@@ -1288,6 +1287,23 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
                 ret = STATUS_SUCCESS;
             }
             else return ret;
+        }
+        break;
+
+    case ProcessPriorityBoost:
+        len = sizeof(ULONG);
+        if (size != len) return STATUS_INFO_LENGTH_MISMATCH;
+        if (!info) ret = STATUS_ACCESS_VIOLATION;
+        else
+        {
+            ULONG *disable_boost = info;
+            SERVER_START_REQ(get_process_info)
+            {
+                req->handle = wine_server_obj_handle( handle );
+                ret = wine_server_call( req );
+                *disable_boost = reply->disable_boost;
+            }
+            SERVER_END_REQ;
         }
         break;
 
