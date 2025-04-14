@@ -112,6 +112,8 @@ struct wayland_pointer
     uint32_t enter_serial;
     uint32_t button_serial;
     struct wayland_cursor cursor;
+    double accum_x;
+    double accum_y;
     pthread_mutex_t mutex;
 };
 
