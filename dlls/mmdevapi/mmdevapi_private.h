@@ -43,7 +43,7 @@ typedef struct _DriverFuncs {
     int priority;
 
     void (WINAPI *pget_device_guid)(EDataFlow flow, const char *name, GUID *guid);
-    BOOL (WINAPI *pget_device_name_from_guid)(GUID *guid, char **name, EDataFlow *flow);
+    BOOL (WINAPI *pget_device_name_from_guid)(const GUID *guid, char **name, EDataFlow *flow);
 } DriverFuncs;
 
 extern DriverFuncs drvs;
@@ -72,6 +72,7 @@ extern HRESULT AudioEndpointVolume_Create(MMDevice *parent, IAudioEndpointVolume
 extern HRESULT AudioSessionManager_Create(IMMDevice *device, IAudioSessionManager2 **ppv);
 extern HRESULT SpatialAudioClient_Create(IMMDevice *device, ISpatialAudioClient **out);
 
+extern BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow );
 extern HRESULT load_devices_from_reg(void);
 extern HRESULT load_driver_devices(EDataFlow flow);
 

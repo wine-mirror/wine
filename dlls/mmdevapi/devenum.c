@@ -133,6 +133,51 @@ static inline IDeviceTopologyImpl *impl_from_IDeviceTopology(IDeviceTopology *if
 
 static const WCHAR propkey_formatW[] = L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X},%d";
 
+struct device
+{
+    struct list entry;
+    GUID        guid;
+    EDataFlow   flow;
+    char        name[];
+};
+
+static struct list devices_cache = LIST_INIT( devices_cache );
+
+static void add_device_to_cache( const GUID *guid, const char *name, EDataFlow flow )
+{
+    struct device *dev;
+
+    if (!(dev = malloc( offsetof( struct device, name[strlen(name) + 1] )))) return;
+    dev->guid = *guid;
+    dev->flow = flow;
+    strcpy( dev->name, name );
+    list_add_tail( &devices_cache, &dev->entry );
+}
+
+static struct device *find_device_in_cache( const GUID *guid )
+{
+    struct device *dev;
+
+    LIST_FOR_EACH_ENTRY( dev, &devices_cache, struct device, entry )
+        if (IsEqualGUID( guid, &dev->guid )) return dev;
+    return NULL;
+}
+
+BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow )
+{
+    struct device *dev;
+
+    if ((dev = find_device_in_cache( guid )))
+    {
+        *name = strdup(dev->name);
+        *flow = dev->flow;
+        return TRUE;
+    }
+    if (!drvs.pget_device_name_from_guid( guid, name, flow )) return FALSE;
+    add_device_to_cache( guid, *name, *flow );
+    return TRUE;
+}
+
 static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *propkey)
 {
     WCHAR buffer[39];
@@ -269,7 +314,7 @@ static HRESULT set_driver_prop_value(GUID *id, const EDataFlow flow, const PROPE
 
     TRACE("%s, (%s,%lu)\n", wine_dbgstr_guid(id), wine_dbgstr_guid(&prop->fmtid), prop->pid);
 
-    if (!drvs.pget_device_name_from_guid(id, &dev_name, &params.flow))
+    if (!get_device_name_from_guid(id, &dev_name, &params.flow))
         return E_FAIL;
 
     params.device      = dev_name;
@@ -566,6 +611,7 @@ HRESULT load_driver_devices(EDataFlow flow)
         const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
 
         drvs.pget_device_guid(flow, dev_name, &guid);
+        if (!find_device_in_cache( &guid )) add_device_to_cache( &guid, dev_name, flow );
 
         dev = MMDevice_Create(name, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i);
         set_format(dev);
@@ -956,11 +1002,14 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 void MMDevEnum_Free(void)
 {
     MMDevice *device, *next;
+    struct device *dev, *dev_next;
+
     LIST_FOR_EACH_ENTRY_SAFE(device, next, &device_list, MMDevice, entry)
         MMDevice_Destroy(device);
     RegCloseKey(key_render);
     RegCloseKey(key_capture);
-    key_render = key_capture = NULL;
+    LIST_FOR_EACH_ENTRY_SAFE(dev, dev_next, &devices_cache, struct device, entry)
+        free( dev );
 }
 
 static HRESULT WINAPI MMDevEnum_QueryInterface(IMMDeviceEnumerator *iface, REFIID riid, void **ppv)

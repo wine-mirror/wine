@@ -48,15 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
-typedef struct _OSSDevice {
-    struct list entry;
-    EDataFlow flow;
-    GUID guid;
-    char devnode[0];
-} OSSDevice;
-
-static struct list g_devices = LIST_INIT(g_devices);
-
 static WCHAR drv_key_devicesW[256];
 static const WCHAR guidW[] = {'g','u','i','d',0};
 
@@ -82,29 +73,9 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         break;
     }
     case DLL_PROCESS_DETACH:
-        if (!reserved)
-        {
-            OSSDevice *iter, *iter2;
-
-            LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &g_devices, OSSDevice, entry){
-                HeapFree(GetProcessHeap(), 0, iter);
-            }
-        }
         break;
     }
     return TRUE;
-}
-
-static void device_add(OSSDevice *oss_dev)
-{
-    OSSDevice *dev_item;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
-        if(IsEqualGUID(&oss_dev->guid, &dev_item->guid)){ /* already in list */
-            HeapFree(GetProcessHeap(), 0, oss_dev);
-            return;
-        }
-
-    list_add_tail(&g_devices, &oss_dev->entry);
 }
 
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
@@ -144,11 +115,9 @@ exit:
 
 void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 {
-    OSSDevice *oss_dev;
     HKEY key = NULL, dev_key;
     DWORD type, size = sizeof(*guid);
     WCHAR key_name[256];
-    const unsigned int dev_size = strlen(device) + 1;
 
     if(flow == eCapture)
         key_name[0] = '1';
@@ -179,30 +148,9 @@ void WINAPI get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 exit:
     if(key)
         RegCloseKey(key);
-
-    oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
-    if(oss_dev){
-        oss_dev->flow = flow;
-        oss_dev->guid = *guid;
-        memcpy(oss_dev->devnode, device, dev_size);
-        device_add(oss_dev);
-    }
 }
 
 BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
-    OSSDevice *dev_item;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
-        if(!IsEqualGUID(guid, &dev_item->guid))
-            continue;
-
-        if(!(*name = strdup(dev_item->devnode)))
-            return FALSE;
-
-        *flow = dev_item->flow;
-
-        return TRUE;
-    }
-
     return FALSE;
 }

@@ -54,15 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 #define MAX_PULSE_NAME_LEN 256
 
-static struct list g_devices_cache = LIST_INIT(g_devices_cache);
-
-struct device_cache {
-    struct list entry;
-    GUID guid;
-    EDataFlow dataflow;
-    char pulse_name[0];
-};
-
 static GUID pulse_render_guid =
 { 0xfd47d9cc, 0x4218, 0x4135, { 0x9c, 0xe2, 0x0c, 0x19, 0x5c, 0x87, 0x40, 0x5b } };
 static GUID pulse_capture_guid =
@@ -91,13 +82,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
                  L"Software\\Wine\\Drivers\\%s\\devices", filename);
         break;
     case DLL_PROCESS_DETACH:
-        if (!reserved)
-        {
-            struct device_cache *device, *device_next;
-
-            LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
-                free(device);
-        }
         break;
     }
     return TRUE;
@@ -149,7 +133,6 @@ void WINAPI get_device_guid(EDataFlow flow, const char *pulse_name, GUID *guid)
 
 BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
 {
-    struct device_cache *device;
     WCHAR key_name[MAX_PULSE_NAME_LEN + 2];
     DWORD key_name_size;
     DWORD index = 0;
@@ -171,17 +154,6 @@ BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
     if (*name) {
         *name[0] = '\0';
         return TRUE;
-    }
-
-    /* Check the cache first */
-    LIST_FOR_EACH_ENTRY(device, &g_devices_cache, struct device_cache, entry) {
-        if (!IsEqualGUID(guid, &device->guid))
-            continue;
-        *flow = device->dataflow;
-        if ((*name = strdup(device->pulse_name)))
-            return TRUE;
-
-        return FALSE;
     }
 
     if (RegOpenKeyExW(HKEY_CURRENT_USER, drv_key_devicesW, 0, KEY_READ | KEY_WOW64_64KEY, &key) != ERROR_SUCCESS) {
@@ -234,12 +206,6 @@ BOOL WINAPI get_device_name_from_guid(GUID *guid, char **name, EDataFlow *flow)
                 return FALSE;
             }
 
-            if ((device = malloc(FIELD_OFFSET(struct device_cache, pulse_name[len])))) {
-                device->guid = reg_guid;
-                device->dataflow = *flow;
-                memcpy(device->pulse_name, *name, len);
-                list_add_tail(&g_devices_cache, &device->entry);
-            }
             return TRUE;
         }
     }

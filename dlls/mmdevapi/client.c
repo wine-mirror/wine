@@ -1594,7 +1594,7 @@ HRESULT AudioClient_Create(GUID *guid, IMMDevice *device, IAudioClient **out)
 
     *out = NULL;
 
-    if (!drvs.pget_device_name_from_guid(guid, &name, &dataflow))
+    if (!get_device_name_from_guid(guid, &name, &dataflow))
         return AUDCLNT_E_DEVICE_INVALIDATED;
 
     if (dataflow != eRender && dataflow != eCapture) {
