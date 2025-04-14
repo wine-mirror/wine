@@ -770,7 +770,7 @@ static VOID test_thread_priority(void)
      ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
      if (access_thread!=NULL) {
        todo_wine obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
-       todo_wine obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
+       obey_ar(pGetThreadPriorityBoost(access_thread, &disabled) == 0);
        ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
    }

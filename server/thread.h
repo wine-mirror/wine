@@ -84,6 +84,7 @@ struct thread
     affinity_t             affinity;      /* affinity mask */
     int                    priority;      /* current thread priority */
     int                    base_priority; /* base priority level (relative to process base priority class) */
+    int                    disable_boost; /* disable thread priority boost */
     int                    suspend;       /* suspend count */
     int                    dbg_hidden;    /* hidden from debugger */
     int                    bypass_proc_suspend; /* will still run if the process is suspended */

@@ -2308,12 +2308,20 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 
     case ThreadPriorityBoost:
     {
-        DWORD *value = data;
-
         if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
-        if (ret_len) *ret_len = sizeof(ULONG);
-        *value = 0;
-        return STATUS_SUCCESS;
+        SERVER_START_REQ( get_thread_info )
+        {
+            req->handle = wine_server_obj_handle( handle );
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+            {
+                ULONG disable_boost = !!(reply->flags & GET_THREAD_INFO_FLAG_DISABLE_BOOST);
+                if (data) memcpy( data, &disable_boost, sizeof(disable_boost) );
+                if (ret_len) *ret_len = sizeof(disable_boost);
+            }
+        }
+        SERVER_END_REQ;
+        return status;
     }
 
     case ThreadIdealProcessorEx:
