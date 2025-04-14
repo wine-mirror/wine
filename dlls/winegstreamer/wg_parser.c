@@ -598,6 +598,13 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
             break;
         }
 
+        /* decodebin collects EOS and sends them only when all streams are EOS.
+         * In place it sends stream-group-done notifications for individual
+         * streams. This is mainly meant to accommodate chained OGGs. However,
+         * Windows is generally capable of reading from arbitrary streams while
+         * ignoring others, and should still send EOS in that case.
+         * Therefore translate stream-group-done back to EOS. */
+        case GST_EVENT_STREAM_GROUP_DONE:
         case GST_EVENT_EOS:
             pthread_mutex_lock(&parser->mutex);
             stream->eos = true;
