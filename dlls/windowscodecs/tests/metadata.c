@@ -1821,44 +1821,40 @@ static void test_metadata_bKGD(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     hr = IEnumString_Next(enum_string, 1, &str, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(str, L"/bKGD"), "Unexpected query %s.\n", wine_dbgstr_w(str));
     CoTaskMemFree(str);
     IEnumString_Release(enum_string);
 
     PropVariantInit(&value);
     hr = IWICMetadataQueryReader_GetMetadataByName(query_reader, L"/bKGD", &value);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
-        hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        PropVariantClear(&value);
 
-        hr = IWICMetadataQueryReader_GetEnumerator(query_reader2, &enum_string);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UNKNOWN, "Unexpected value type %d.\n", value.vt);
+    hr = IUnknown_QueryInterface(value.punkVal, &IID_IWICMetadataQueryReader, (void **)&query_reader2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    PropVariantClear(&value);
 
-        str = NULL;
-        hr = IEnumString_Next(enum_string, 1, &str, &fetched);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(fetched == 1, "Unexpected count %lu.\n", fetched);
+    hr = IWICMetadataQueryReader_GetEnumerator(query_reader2, &enum_string);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-        ok(!wcscmp(str, L"/BackgroundColor"), "Unexpected query %s.\n", wine_dbgstr_w(str));
-        CoTaskMemFree(str);
+    str = NULL;
+    hr = IEnumString_Next(enum_string, 1, &str, &fetched);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(fetched == 1, "Unexpected count %lu.\n", fetched);
 
-        IEnumString_Release(enum_string);
+    ok(!wcscmp(str, L"/BackgroundColor"), "Unexpected query %s.\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
 
-        PropVariantInit(&value);
-        hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/backgroundcolor", &value);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(value.vt == VT_UI1, "Unexpected type %d.\n", value.vt);
-        ok(value.bVal == 0x12, "Unexpected value %u.\n", value.bVal);
-        PropVariantClear(&value);
+    IEnumString_Release(enum_string);
 
-        IWICMetadataQueryReader_Release(query_reader2);
-    }
+    PropVariantInit(&value);
+    hr = IWICMetadataQueryReader_GetMetadataByName(query_reader2, L"/backgroundcolor", &value);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value.vt == VT_UI1, "Unexpected type %d.\n", value.vt);
+    ok(value.bVal == 0x12, "Unexpected value %u.\n", value.bVal);
+    PropVariantClear(&value);
+
+    IWICMetadataQueryReader_Release(query_reader2);
 
     IWICMetadataQueryReader_Release(query_reader);
 
@@ -1882,9 +1878,7 @@ static void test_metadata_bKGD(void)
 
     hr = CoCreateInstance(&CLSID_WICPngBkgdMetadataWriter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IWICMetadataWriter, (void **)&writer);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (FAILED(hr)) return;
 
     check_interface(writer, &IID_IWICMetadataWriter, TRUE);
     check_interface(writer, &IID_IWICMetadataReader, TRUE);
@@ -1919,6 +1913,7 @@ static void test_metadata_bKGD(void)
 
     value.vt = VT_UI4;
     hr = IWICMetadataWriter_SetValue(writer, NULL, &id, &value);
+    todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     IWICMetadataWriter_Release(writer);

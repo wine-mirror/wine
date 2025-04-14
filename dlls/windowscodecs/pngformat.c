@@ -617,6 +617,19 @@ HRESULT PngBkgdReader_CreateInstance(REFIID iid, void** ppv)
     return MetadataReader_Create(&BkgdReader_Vtbl, iid, ppv);
 }
 
+static const MetadataHandlerVtbl BkgdWriter_Vtbl =
+{
+    METADATAHANDLER_FIXED_ITEMS | METADATAHANDLER_IS_WRITER,
+    &CLSID_WICPngBkgdMetadataWriter,
+    LoadBkgdMetadata,
+    CreateBkgdHandler,
+};
+
+HRESULT PngBkgdWriter_CreateInstance(REFIID iid, void** ppv)
+{
+    return MetadataReader_Create(&BkgdWriter_Vtbl, iid, ppv);
+}
+
 HRESULT PngDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     HRESULT hr;

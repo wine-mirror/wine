@@ -260,6 +260,7 @@ extern HRESULT ExifMetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT App1MetadataReader_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT App1MetadataWriter_CreateInstance(REFIID iid, void **ppv);
 extern HRESULT PngBkgdReader_CreateInstance(REFIID iid, void** ppv);
+extern HRESULT PngBkgdWriter_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngChrmReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngGamaReader_CreateInstance(REFIID iid, void** ppv);
 extern HRESULT PngHistReader_CreateInstance(REFIID iid, void** ppv);

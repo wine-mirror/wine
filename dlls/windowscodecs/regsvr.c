@@ -2113,6 +2113,15 @@ static struct regsvr_metadatawriter const metadatawriters_list[] =
         &GUID_VendorMicrosoft,
         &GUID_MetadataFormatApp1,
     },
+    {
+        &CLSID_WICPngBkgdMetadataWriter,
+        "The Wine Project",
+        "Png bKGD Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunkbKGD,
+    },
     { NULL } /* list terminator */
 };
 
