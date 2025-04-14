@@ -2074,12 +2074,13 @@ static void test_BCryptDecrypt(void)
 
 static void test_key_import_export(void)
 {
-    static const UCHAR encrypted_blob[24] = {0xa9,0x4b,
-        0x2a,0x67,0x52,0x56,0x29,0xed,0xe2,0x87,0x48,0x34,0x50,
-        0xa8,0x8f,0xdf,0x98,0xa1,0x3e,0xb1,0x16,0x7f,0x1c,0xf1 };
+    static const UCHAR encrypted_blob[40] = {0x33,0x6e,0x51,0x10,
+        0x25,0xba,0xdb,0xce,0xcb,0x25,0x00,0x85,0x51,0xc0,0xfa,0x21,
+        0x66,0xdd,0x6d,0x67,0x46,0x76,0x0f,0x8a,0x44,0xe5,0x65,0x31,
+        0xcb,0x02,0x52,0x9c,0x69,0x59,0x1a,0xec,0x67,0x27,0x11,0xaa};
     UCHAR buffer1[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16];
-    UCHAR buffer2[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 16], *buf;
-    UCHAR buffer3[16 + 8];
+    UCHAR buffer2[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 32], *buf;
+    UCHAR buffer3[32 + 8], buffer4[sizeof(BCRYPT_KEY_DATA_BLOB_HEADER) + 32];
     BCRYPT_KEY_DATA_BLOB_HEADER *key_data1 = (void*)buffer1;
     BCRYPT_KEY_DATA_BLOB_HEADER *key_data2 = (void*)buffer2;
     BCRYPT_ALG_HANDLE aes;
@@ -2102,47 +2103,56 @@ static void test_key_import_export(void)
 
     key_data2->dwMagic = BCRYPT_KEY_DATA_BLOB_MAGIC;
     key_data2->dwVersion = BCRYPT_KEY_DATA_BLOB_VERSION1;
-    key_data2->cbKeyData = 16;
-    memset(&key_data2[1], 0x22, 16);
+    key_data2->cbKeyData = 32;
+    memset(&key_data2[1], 0x22, 32);
     key2 = NULL;
     ret = BCryptImportKey(aes, NULL, BCRYPT_KEY_DATA_BLOB, &key2, NULL, 0, buffer2, sizeof(buffer2), 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(key2 != NULL, "key not set\n");
 
     size = 0;
-    ret = BCryptExportKey(key, key2, BCRYPT_AES_WRAP_KEY_BLOB, NULL, 0, &size, 0);
+    ret = BCryptExportKey(key2, key, BCRYPT_AES_WRAP_KEY_BLOB, NULL, 0, &size, 0);
+    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
     ok(size == sizeof(buffer3), "got %lu\n", size);
 
-    ret = BCryptExportKey(key, key2, BCRYPT_AES_WRAP_KEY_BLOB, buffer3, size, &size, 0);
+    ret = BCryptExportKey(key2, key, BCRYPT_AES_WRAP_KEY_BLOB, buffer3, size, &size, 0);
+    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
     ok(!memcmp(buffer3, encrypted_blob, sizeof(encrypted_blob)), "blobs didn't match\n");
 
     key3 = NULL;
-    ret = BCryptImportKey(aes, key2, BCRYPT_AES_WRAP_KEY_BLOB, &key3, NULL, 0, buffer3, sizeof(buffer3), 0);
+    ret = BCryptImportKey(aes, key, BCRYPT_AES_WRAP_KEY_BLOB, &key3, NULL, 0, buffer3, sizeof(buffer3), 0);
+    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
     ok(key3 != NULL, "key not set\n");
 
     size = 0;
-    memset(buffer2, 0xff, sizeof(buffer2));
-    ret = BCryptExportKey(key3, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, sizeof(buffer2), &size, 0);
+    memset(buffer4, 0xff, sizeof(buffer4));
+    ret = BCryptExportKey(key3, NULL, BCRYPT_KEY_DATA_BLOB, buffer4, sizeof(buffer4), &size, 0);
+    todo_wine
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+    todo_wine
     ok(size == sizeof(buffer2), "Got %lu\n", size);
-    ok(!memcmp(buffer1, buffer2, sizeof(buffer1)), "Expected exported key to match imported key\n");
+    todo_wine
+    ok(!memcmp(buffer4, buffer2, sizeof(buffer2)), "Expected exported key to match imported key\n");
 
     BCryptDestroyKey(key3);
     BCryptDestroyKey(key2);
 
     size = 0;
-    ret = BCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, 0, &size, 0);
+    ret = BCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer1, 0, &size, 0);
     ok(ret == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", ret);
-    ok(size == sizeof(buffer2), "got %lu\n", size);
+    ok(size == sizeof(buffer1), "got %lu\n", size);
 
     size = 0;
     memset(buffer2, 0xff, sizeof(buffer2));
     ret = BCryptExportKey(key, NULL, BCRYPT_KEY_DATA_BLOB, buffer2, sizeof(buffer2), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
-    ok(size == sizeof(buffer2), "Got %lu\n", size);
+    ok(size == sizeof(buffer1), "Got %lu\n", size);
     ok(!memcmp(buffer1, buffer2, sizeof(buffer1)), "Expected exported key to match imported key\n");
 
     /* opaque blob */
