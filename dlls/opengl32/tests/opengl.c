@@ -60,6 +60,11 @@ static HDC (WINAPI *pwglGetPbufferDCARB)(HPBUFFERARB);
 static int (WINAPI *pwglReleasePbufferDCARB)(HPBUFFERARB, HDC);
 static BOOL (WINAPI *pwglQueryPbufferARB)(HPBUFFERARB,int,int*);
 
+/* WGL_ARB_render_texture */
+static BOOL (WINAPI *pwglBindTexImageARB)(HPBUFFERARB,int);
+static BOOL (WINAPI *pwglReleaseTexImageARB)(HPBUFFERARB,int);
+static BOOL (WINAPI *pwglSetPbufferAttribARB)(HPBUFFERARB,const int*);
+
 /* WGL_EXT_swap_control */
 static BOOL (WINAPI *pwglSwapIntervalEXT)(int interval);
 static int (WINAPI *pwglGetSwapIntervalEXT)(void);
@@ -120,6 +125,11 @@ static void init_functions(void)
     GET_PROC(wglReleasePbufferDCARB)
     GET_PROC(wglQueryPbufferARB)
 
+    /* WGL_ARB_render_texture */
+    GET_PROC(wglBindTexImageARB)
+    GET_PROC(wglReleaseTexImageARB)
+    GET_PROC(wglSetPbufferAttribARB)
+
     /* WGL_EXT_swap_control */
     GET_PROC(wglSwapIntervalEXT)
     GET_PROC(wglGetSwapIntervalEXT)
@@ -168,10 +178,12 @@ static void test_pbuffers( HDC old_hdc )
     int attribs[32] = { WGL_DRAW_TO_PBUFFER_ARB, 1, 0 };
     int formats[MAX_FORMATS], pbuffer_attribs[15] = {0};
     unsigned int i, count, onscreen;
+    unsigned int pixels[16 * 16];
     HDC hdc, pbuffer_dc, tmp_dc;
     HPBUFFERARB pbuffer;
+    HGLRC rc, old_rc;
     int res, value;
-    HGLRC old_rc;
+    GLuint texture;
     HWND hwnd;
     BOOL ret;
 
@@ -330,6 +342,53 @@ static void test_pbuffers( HDC old_hdc )
     ok( ret == 1, "got %u\n", ret );
     todo_wine ok( value == WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB || broken(value == 0xdeadbeef), "got %#x\n", value );
 
+    pbuffer_attribs[0] = WGL_PBUFFER_WIDTH_ARB;
+    pbuffer_attribs[1] = 50;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_PBUFFER_HEIGHT_ARB;
+    pbuffer_attribs[1] = 50;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_PBUFFER_LOST_ARB;
+    pbuffer_attribs[1] = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_TEXTURE_FORMAT_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_RGBA_ARB;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_TEXTURE_TARGET_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_2D_ARB;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_MIPMAP_TEXTURE_ARB;
+    pbuffer_attribs[1] = 1;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_MIPMAP_LEVEL_ARB;
+    pbuffer_attribs[1] = 1;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    ok( ret == 0 || broken(ret == 1) /* AMD */, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_CUBE_MAP_FACE_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 1, "got %u\n", ret );
+
     SetLastError( 0xdeadbeef );
     ret = pwglDestroyPbufferARB( pbuffer );
     ok( ret == 1, "got %u\n", ret );
@@ -406,6 +465,265 @@ static void test_pbuffers( HDC old_hdc )
     ret = pwglQueryPbufferARB( pbuffer, WGL_CUBE_MAP_FACE_ARB, &value );
     ok( ret == 1, "got %u\n", ret );
     todo_wine ok( value == WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB || broken(value == 0xdeadbeef) /* AMD */, "got %#x\n", value );
+
+    pbuffer_attribs[0] = WGL_PBUFFER_WIDTH_ARB;
+    pbuffer_attribs[1] = 50;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_PBUFFER_HEIGHT_ARB;
+    pbuffer_attribs[1] = 50;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_PBUFFER_LOST_ARB;
+    pbuffer_attribs[1] = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_TEXTURE_FORMAT_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_RGBA_ARB;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_TEXTURE_TARGET_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_2D_ARB;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_MIPMAP_TEXTURE_ARB;
+    pbuffer_attribs[1] = 2;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_MIPMAP_LEVEL_ARB;
+    pbuffer_attribs[1] = 2;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0 || broken(ret == 1) /* AMD */, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    pbuffer_attribs[0] = WGL_CUBE_MAP_FACE_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB;
+    SetLastError( 0xdeadbeef );
+    ret = pwglSetPbufferAttribARB( pbuffer, pbuffer_attribs );
+    todo_wine ok( ret == 0 || broken(ret == 1) /* AMD */, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_PBUFFER_WIDTH_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    ok( value == 512 || broken(value == 0) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_PBUFFER_HEIGHT_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    ok( value == 512 || broken(value == 0) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_PBUFFER_LOST_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    ok( value == 0, "got %u\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_TEXTURE_FORMAT_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    ok( value == WGL_TEXTURE_RGB_ARB || broken(value == 0xdeadbeef) /* AMD */, "got %#x\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_TEXTURE_TARGET_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    ok( value == WGL_TEXTURE_CUBE_MAP_ARB || broken(value == 0xdeadbeef) /* AMD */, "got %#x\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_MIPMAP_TEXTURE_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    todo_wine ok( value == 1 || broken(value > 0) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_MIPMAP_LEVEL_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    todo_wine ok( value == 0 || broken(value > 0) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    ret = pwglQueryPbufferARB( pbuffer, WGL_CUBE_MAP_FACE_ARB, &value );
+    ok( ret == 1, "got %u\n", ret );
+    todo_wine ok( value == WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB || broken(value == 0xdeadbeef) /* AMD */, "got %#x\n", value );
+
+    pwglDestroyPbufferARB( pbuffer );
+
+
+    pbuffer_attribs[0] = WGL_TEXTURE_FORMAT_ARB;
+    pbuffer_attribs[1] = WGL_TEXTURE_RGB_ARB;
+    pbuffer_attribs[2] = WGL_TEXTURE_TARGET_ARB;
+    pbuffer_attribs[3] = WGL_TEXTURE_2D_ARB;
+    pbuffer_attribs[4] = 0;
+    pbuffer = pwglCreatePbufferARB( hdc, formats[0], 16, 16, pbuffer_attribs );
+    ok( !!pbuffer, "wglCreatePbufferARB returned %p\n", pbuffer );
+
+    pbuffer_dc = pwglGetPbufferDCARB( pbuffer );
+    ok( !!pbuffer_dc, "got %p\n", pbuffer_dc );
+    rc = wglCreateContext( pbuffer_dc );
+    ok( !!rc, "got %p\n", rc );
+    ret = wglMakeCurrent( pbuffer_dc, rc );
+    ok( ret == 1, "got %u\n", ret );
+
+    if (!winetest_platform_is_wine) /* triggers a BadMatch */
+    {
+    glClearColor( (float)0x22 / 0xff, (float)0x33 / 0xff, (float)0x44 / 0xff, (float)0x11 / 0xff );
+    glClear( GL_COLOR_BUFFER_BIT );
+    }
+
+    ret = wglMakeCurrent( 0, 0 );
+    ok( ret == 1, "got %u\n", ret );
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
+    ret = pwglReleasePbufferDCARB( pbuffer, pbuffer_dc );
+    ok( ret == 1, "got %u\n", ret );
+
+
+    rc = wglCreateContext( hdc );
+    ok( !!rc, "got %p\n", rc );
+    ret = wglMakeCurrent( hdc, rc );
+    ok( ret == 1, "got %u\n", ret );
+
+    /* test some invalid params */
+    SetLastError( 0xdeadbeef );
+    ret = pwglReleaseTexImageARB( pbuffer, GL_FRONT );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(GetLastError() == 0xdeadbeef) /* AMD */, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pwglBindTexImageARB( pbuffer, GL_BACK );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(GetLastError() == 0xdeadbeef) /* AMD */, "got %#lx\n", GetLastError() );
+
+    /* test invalid calls */
+    SetLastError( 0xdeadbeef );
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_BACK_LEFT_ARB );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == 0, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    todo_wine ok( value == 0, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    todo_wine ok( value == 0, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    todo_wine ok( pixels[0] == 0xcdcdcdcd, "got %#x\n", pixels[0] );
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    ret = pwglBindTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == 0, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    ok( value == 16 || broken(value == 0) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    ok( value == 16 || broken(value == 0) /* AMD */, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    todo_wine ok( (pixels[0] & 0xffffff) == 0x443322 || broken(pixels[0] == 0xcdcdcdcd) /* AMD */, "got %#x\n", pixels[0] );
+
+    SetLastError( 0xdeadbeef );
+    ret = pwglBindTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pwglBindTexImageARB( pbuffer, WGL_FRONT_RIGHT_ARB );
+    todo_wine ok( ret == 0, "got %u\n", ret );
+    todo_wine ok( (GetLastError() & 0xffff) == ERROR_INVALID_DATA || broken(!GetLastError()) /* AMD */, "got %#lx\n", GetLastError() );
+
+    pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    glGenTextures( 1, &texture );
+    glEnable( GL_TEXTURE_2D );
+    glBindTexture( GL_TEXTURE_2D, texture );
+    memset( pixels, 0xa5, sizeof(pixels) );
+    glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, 8, 8, 0,  GL_RGBA, GL_UNSIGNED_BYTE, pixels );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == texture, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    ok( value == 8, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    ok( value == 8, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    ok( (pixels[0] & 0xffffff) == 0xa5a5a5, "got %#x\n", pixels[0] );
+
+    ret = pwglBindTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == texture, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    ok( value == 16 || broken(value == 8) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    ok( value == 16 || broken(value == 8) /* AMD */, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    todo_wine ok( (pixels[0] & 0xffffff) == 0x443322 || broken(pixels[0] == 0xa5a5a5a5) /* AMD */, "got %#x\n", pixels[0] );
+
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == texture, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    todo_wine ok( value == 0 || broken(value == 8) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    todo_wine ok( value == 0 || broken(value == 8) /* AMD */, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    todo_wine ok( pixels[0] == 0xcdcdcdcd || broken(pixels[0] == 0xa5a5a5a5) /* AMD */, "got %#x\n", pixels[0] );
+
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_LEFT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    ret = pwglBindTexImageARB( pbuffer, WGL_FRONT_RIGHT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    value = 0xdeadbeef;
+    glGetIntegerv( GL_TEXTURE_BINDING_2D, &value );
+    ok( value == texture, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &value );
+    todo_wine ok( value == 0 || broken(value == 8) /* AMD */, "got %u\n", value );
+    value = 0xdeadbeef;
+    glGetTexLevelParameteriv( GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &value );
+    todo_wine ok( value == 0 || broken(value == 8) /* AMD */, "got %u\n", value );
+    memset( pixels, 0xcd, sizeof(pixels) );
+    glGetTexImage( GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels );
+    todo_wine ok( pixels[0] == 0xcdcdcdcd || broken(pixels[0] == 0xa5a5a5a5) /* AMD */, "got %#x\n", pixels[0] );
+
+    ret = pwglReleaseTexImageARB( pbuffer, WGL_FRONT_RIGHT_ARB );
+    ok( ret == 1 || broken(ret == 0) /* AMD */, "got %u\n", ret );
+
+    glDeleteTextures( 1, &texture );
+
+    ret = wglDeleteContext( rc );
+    ok( ret == 1, "got %u\n", ret );
 
     pwglDestroyPbufferARB( pbuffer );
 
