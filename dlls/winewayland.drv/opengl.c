@@ -663,11 +663,13 @@ static BOOL wayland_wglSwapIntervalEXT(int interval)
     return ret;
 }
 
-static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, int *width, int *height, void **private)
+static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                   GLint max_level, GLsizei *width, GLsizei *height, void **private)
 {
     struct wayland_gl_drawable *drawable;
 
-    TRACE("hdc %p, format %d, largest %u, width %d, height %d, private %p\n", hdc, format, largest, *width, *height, private);
+    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
+          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private);
 
     /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
     if (!(drawable = wayland_gl_drawable_create(0, hdc, format, *width, *height))) return FALSE;
@@ -693,6 +695,18 @@ static BOOL wayland_pbuffer_destroy(HDC hdc, void *private)
     wayland_gl_drawable_release(drawable);
 
     return GL_TRUE;
+}
+
+static BOOL wayland_pbuffer_updated(HDC hdc, void *private, GLenum cube_face, GLint mipmap_level)
+{
+    TRACE("hdc %p, private %p, cube_face %#x, mipmap_level %d\n", hdc, private, cube_face, mipmap_level);
+    return GL_TRUE;
+}
+
+static UINT wayland_pbuffer_bind(HDC hdc, void *private, GLenum buffer)
+{
+    TRACE("hdc %p, private %p, buffer %#x\n", hdc, private, buffer);
+    return -1; /* use default implementation */
 }
 
 static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
@@ -960,6 +974,8 @@ static const struct opengl_driver_funcs wayland_driver_funcs =
     .p_set_pixel_format = wayland_set_pixel_format,
     .p_pbuffer_create = wayland_pbuffer_create,
     .p_pbuffer_destroy = wayland_pbuffer_destroy,
+    .p_pbuffer_updated = wayland_pbuffer_updated,
+    .p_pbuffer_bind = wayland_pbuffer_bind,
 };
 
 /**********************************************************************

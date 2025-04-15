@@ -50,6 +50,8 @@ struct wgl_pbuffer
     GLsizei height;
     GLenum texture_format;
     GLenum texture_target;
+    GLint mipmap_level;
+    GLenum cube_face;
 
     struct wgl_context *tmp_context;
     struct wgl_context *prev_context;
@@ -521,9 +523,9 @@ static void win32u_get_pixel_formats( struct wgl_pixel_format *formats, UINT max
 static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int width, int height,
                                                        const int *attribs )
 {
+    UINT total, onscreen, size, max_level = 0;
     struct wgl_pbuffer *pbuffer;
     struct opengl_funcs *funcs;
-    UINT total, onscreen;
     BOOL largest = FALSE;
 
     TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
@@ -552,6 +554,7 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
     pbuffer->funcs = funcs;
     pbuffer->width = width;
     pbuffer->height = height;
+    pbuffer->mipmap_level = -1;
 
     for (; attribs && attribs[0]; attribs += 2)
     {
@@ -623,6 +626,11 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
 
         case WGL_MIPMAP_TEXTURE_ARB:
             TRACE( "WGL_MIPMAP_TEXTURE_ARB %#x\n", attribs[1] );
+            if (attribs[1])
+            {
+                pbuffer->mipmap_level = max_level = 0;
+                for (size = min( width, height ) / 2; size; size /= 2) max_level++;
+            }
             break;
 
         default:
@@ -631,7 +639,8 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
         }
     }
 
-    if (pbuffer->driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, &pbuffer->width,
+    if (pbuffer->driver_funcs->p_pbuffer_create( pbuffer->hdc, format, largest, pbuffer->texture_format,
+                                                 pbuffer->texture_target, max_level, &pbuffer->width,
                                                  &pbuffer->height, &pbuffer->driver_private ))
         return pbuffer;
 
@@ -716,8 +725,34 @@ static BOOL win32u_wglQueryPbufferARB( struct wgl_pbuffer *pbuffer, int attrib, 
         break;
 
     case WGL_MIPMAP_TEXTURE_ARB:
-        *value = GL_FALSE;
-        FIXME( "WGL_MIPMAP_TEXTURE_ARB not supported\n" );
+        *value = pbuffer->mipmap_level >= 0;
+        break;
+    case WGL_MIPMAP_LEVEL_ARB:
+        *value = max( pbuffer->mipmap_level, 0 );
+        break;
+    case WGL_CUBE_MAP_FACE_ARB:
+        switch (pbuffer->cube_face)
+        {
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+        default:
+            *value = WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB;
+            break;
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+            *value = WGL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB;
+            break;
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+            *value = WGL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB;
+            break;
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+            *value = WGL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB;
+            break;
+        case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+            *value = WGL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB;
+            break;
+        case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+            *value = WGL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB;
+            break;
+        }
         break;
 
     default:
@@ -744,8 +779,11 @@ static GLenum binding_from_target( GLenum target )
 static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
 {
     HDC prev_draw = NtCurrentTeb()->glReserved1[0], prev_read = NtCurrentTeb()->glReserved1[1];
+    int prev_texture = 0, format = win32u_wglGetPixelFormat( pbuffer->hdc );
     struct wgl_context *prev_context = NtCurrentTeb()->glContext;
-    int prev_texture = 0;
+    struct wgl_pixel_format desc;
+    GLenum source;
+    UINT ret;
 
     TRACE( "pbuffer %p, buffer %d\n", pbuffer, buffer );
 
@@ -754,6 +792,52 @@ static BOOL win32u_wglBindTexImageARB( struct wgl_pbuffer *pbuffer, int buffer )
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return GL_FALSE;
     }
+
+    if (!pbuffer->driver_funcs->p_describe_pixel_format( format, &desc ))
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        return FALSE;
+    }
+
+    switch (buffer)
+    {
+    case WGL_FRONT_LEFT_ARB:
+        if (desc.pfd.dwFlags & PFD_STEREO) source = GL_FRONT_LEFT;
+        else source = GL_FRONT;
+        break;
+    case WGL_FRONT_RIGHT_ARB:
+        source = GL_FRONT_RIGHT;
+        break;
+    case WGL_BACK_LEFT_ARB:
+        if (desc.pfd.dwFlags & PFD_STEREO) source = GL_BACK_LEFT;
+        else source = GL_BACK;
+        break;
+    case WGL_BACK_RIGHT_ARB:
+        source = GL_BACK_RIGHT;
+        break;
+    case WGL_AUX0_ARB: source = GL_AUX0; break;
+    case WGL_AUX1_ARB: source = GL_AUX1; break;
+    case WGL_AUX2_ARB: source = GL_AUX2; break;
+    case WGL_AUX3_ARB: source = GL_AUX3; break;
+
+    case WGL_AUX4_ARB:
+    case WGL_AUX5_ARB:
+    case WGL_AUX6_ARB:
+    case WGL_AUX7_ARB:
+    case WGL_AUX8_ARB:
+    case WGL_AUX9_ARB:
+        FIXME( "Unsupported source buffer %#x\n", buffer );
+        RtlSetLastWin32Error( ERROR_INVALID_DATA );
+        return GL_FALSE;
+
+    default:
+        WARN( "Unknown source buffer %#x\n", buffer );
+        RtlSetLastWin32Error( ERROR_INVALID_DATA );
+        return GL_FALSE;
+    }
+
+    if ((ret = pbuffer->driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, source )) != -1)
+        return ret;
 
     if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
     {
@@ -787,7 +871,8 @@ static BOOL win32u_wglReleaseTexImageARB( struct wgl_pbuffer *pbuffer, int buffe
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return GL_FALSE;
     }
-    return GL_TRUE;
+
+    return !!pbuffer->driver_funcs->p_pbuffer_bind( pbuffer->hdc, pbuffer->driver_private, GL_NONE );
 }
 
 static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const int *attribs )
@@ -799,7 +884,54 @@ static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const in
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
         return GL_FALSE;
     }
-    return GL_TRUE;
+
+    for (; attribs && attribs[0]; attribs += 2)
+    {
+        switch (attribs[0])
+        {
+        case WGL_MIPMAP_LEVEL_ARB:
+            TRACE( "WGL_MIPMAP_LEVEL_ARB %#x\n", attribs[1] );
+            pbuffer->mipmap_level = attribs[1];
+            break;
+
+        case WGL_CUBE_MAP_FACE_ARB:
+            TRACE( "WGL_CUBE_MAP_FACE_ARB %#x\n", attribs[1] );
+            switch (attribs[1])
+            {
+            case WGL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_POSITIVE_X;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_NEGATIVE_X;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_POSITIVE_Y;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_NEGATIVE_Y;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_POSITIVE_Z;
+                break;
+            case WGL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+                pbuffer->cube_face = GL_TEXTURE_CUBE_MAP_NEGATIVE_Z;
+                break;
+            default:
+                FIXME( "Unknown texture face: %x\n", attribs[1] );
+                RtlSetLastWin32Error( ERROR_INVALID_DATA );
+                return GL_FALSE;
+            }
+            break;
+
+        default:
+            FIXME( "Invalid attribute 0x%x\n", attribs[0] );
+            RtlSetLastWin32Error( ERROR_INVALID_DATA );
+            return GL_FALSE;
+        }
+    }
+
+    return pbuffer->driver_funcs->p_pbuffer_updated( pbuffer->hdc, pbuffer->driver_private,
+                                                     pbuffer->cube_face, max( pbuffer->mipmap_level, 0 ) );
 }
 
 static void memory_funcs_init(void)
