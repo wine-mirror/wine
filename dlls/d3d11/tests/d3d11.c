@@ -36376,7 +36376,7 @@ static void test_nv12(void)
     device_context = test_context.immediate_context;
 
     hr = ID3D11Device_CheckFormatSupport(device, DXGI_FORMAT_NV12, &support);
-    todo_wine_if (!damavand) ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine_if (!damavand) ok(hr == S_OK || broken(hr == E_FAIL) /* Win7 */, "Got hr %#lx.\n", hr);
 
     if (!(support & D3D11_FORMAT_SUPPORT_TEXTURE2D))
     {
