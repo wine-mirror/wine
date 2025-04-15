@@ -2547,7 +2547,7 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
     ULONG expected_type;
 
     trace("Value name: %s\n", debugstr_w(value_name));
-    trace("Value data: %s\n", debugstr_w(value_data));
+    if (value_data_size) trace("Value data: %s\n", debugstr_w(value_data));
 
     if (!(test->flags & SKIP_NAME_CHECK))
     {
