@@ -627,6 +627,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationProcess( UINT *args )
     case ProcessAffinityMask:  /* ULONG_PTR */
     case ProcessWow64Information:  /* ULONG_PTR */
     case ProcessDebugObjectHandle:  /* HANDLE */
+        if (retlen) *(volatile ULONG *)retlen |= 0;
         if (len == sizeof(ULONG))
         {
             ULONG_PTR data;
@@ -638,7 +639,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationProcess( UINT *args )
             }
             else if (status == STATUS_PORT_NOT_SET)
             {
-                *(ULONG *)ptr = 0;
+                if (!ptr) return STATUS_ACCESS_VIOLATION;
                 if (retlen) *retlen = sizeof(ULONG);
             }
             return status;

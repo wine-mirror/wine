@@ -2443,6 +2443,7 @@ static void test_query_process_image_info(void)
 
 static void test_query_process_debug_object_handle(int argc, char **argv)
 {
+    char buffer[sizeof(HANDLE) * 2];
     char cmdline[MAX_PATH];
     STARTUPINFOA si = {0};
     PROCESS_INFORMATION pi;
@@ -2482,6 +2483,22 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
     ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
        "len set to %lx\n", len );
 
+    status = NtQueryInformationProcess(GetCurrentProcess(),
+            ProcessDebugObjectHandle, (void *)0xdeadbea0, sizeof(debug_object), &len);
+    if (is_wow64)
+    {
+        todo_wine_if(old_wow64)
+        {
+            ok(status == STATUS_PORT_NOT_SET, "got %#lx\n", status);
+            ok(len == sizeof(HANDLE), "got %lu\n", len);
+        }
+    }
+    else
+    {
+        ok(status == STATUS_ACCESS_VIOLATION, "got %#lx\n", status);
+        ok(len == 0xdeadbeef, "got %lu\n", len );
+    }
+
     status = NtQueryInformationProcess(NULL, ProcessDebugObjectHandle,
             &debug_object, sizeof(debug_object), NULL);
     ok(status == STATUS_INVALID_HANDLE,
@@ -2492,7 +2509,7 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
             ProcessDebugObjectHandle, &debug_object, sizeof(debug_object) - 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08lx\n", status);
-    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc || len == 4), /* wow64 */
        "len set to %lx\n", len );
 
     len = 0xdeadbeef;
@@ -2500,7 +2517,7 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
             ProcessDebugObjectHandle, &debug_object, sizeof(debug_object) + 1, &len);
     ok(status == STATUS_INFO_LENGTH_MISMATCH,
        "Expected NtQueryInformationProcess to return STATUS_INFO_LENGTH_MISMATCH, got 0x%08lx\n", status);
-    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc), /* wow64 */
+    ok(len == 0xdeadbeef || broken(len == 0xfffffffc || len == 0xffc || len == 4), /* wow64 */
        "len set to %lx\n", len );
 
     len = 0xdeadbeef;
@@ -2510,10 +2527,70 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
             sizeof(debug_object), &len);
     ok(status == STATUS_PORT_NOT_SET,
        "Expected NtQueryInformationProcess to return STATUS_PORT_NOT_SET, got 0x%08lx\n", status);
-    ok(debug_object == NULL ||
-       broken(debug_object == (HANDLE)0xdeadbeef), /* Wow64 */
-       "Expected debug object handle to be NULL, got %p\n", debug_object);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && !debug_object) || (is_wow64 && debug_object == (HANDLE)0xdeadbeef), "got %p\n", debug_object);
     ok(len == sizeof(debug_object), "len set to %lx\n", len );
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object), NULL);
+    ok(status == STATUS_PORT_NOT_SET, "got %#lx.\n", status);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && !debug_object) || (is_wow64 && debug_object == (HANDLE)0xdeadbeef), "got %p\n", debug_object);
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object), (void *)0xdeadbea0);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status);
+    ok(debug_object == (HANDLE)0xdeadbeef, "got %p\n", debug_object);
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, &debug_object,
+            sizeof(debug_object), (void *)0xdeadbea1);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status);
+    ok(debug_object == (HANDLE)0xdeadbeef, "got %p\n", debug_object);
+
+    debug_object = (HANDLE)0xdeadbeef;
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, &debug_object,
+            0, (void *)0xdeadbea0);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status);
+    ok(debug_object == (HANDLE)0xdeadbeef, "got %p\n", debug_object);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, buffer + 1, sizeof(HANDLE), NULL);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && status == STATUS_DATATYPE_MISALIGNMENT) || (is_wow64 && status == STATUS_PORT_NOT_SET),
+            "got %#lx.\n", status);
+    ok(*(HANDLE *)(buffer + 1) == (HANDLE)(ULONG_PTR)0xcccccccccccccccc, "got %p\n", *(HANDLE *)(buffer + 1));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, buffer + 4, sizeof(HANDLE), NULL);
+    ok(status == STATUS_PORT_NOT_SET, "got %#lx.\n", status);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && !*(HANDLE *)(buffer + 4)) || (is_wow64 && *(HANDLE *)(buffer + 4) == (HANDLE)0xcccccccc),
+            "got %p\n", *(HANDLE *)(buffer + 4));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, buffer + 1, sizeof(HANDLE),
+            (void *)0xdeadbea0);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && status == STATUS_DATATYPE_MISALIGNMENT) || (is_wow64 && status == STATUS_ACCESS_VIOLATION),
+            "got %#lx.\n", status);
+    ok(*(HANDLE *)(buffer + 1) == (HANDLE)(ULONG_PTR)0xcccccccccccccccc, "got %p\n", *(HANDLE *)(buffer + 1));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, buffer + 1, 1,
+            (void *)0xdeadbea0);
+    todo_wine_if(is_wow64 && old_wow64)
+    ok((!is_wow64 && status == STATUS_DATATYPE_MISALIGNMENT) || (is_wow64 && status == STATUS_ACCESS_VIOLATION),
+            "got %#lx.\n", status);
+    ok(*(HANDLE *)(buffer + 1) == (HANDLE)(ULONG_PTR)0xcccccccccccccccc, "got %p\n", *(HANDLE *)(buffer + 1));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = NtQueryInformationProcess(GetCurrentProcess(), ProcessDebugObjectHandle, buffer + 1, 0,
+            (void *)0xdeadbea0);
+    ok(status == STATUS_ACCESS_VIOLATION, "got %#lx.\n", status);
+    ok(*(HANDLE *)(buffer + 1) == (HANDLE)(ULONG_PTR)0xcccccccccccccccc, "got %p\n", *(HANDLE *)(buffer + 1));
 
     len = 0xdeadbeef;
     debug_object = (HANDLE)0xdeadbeef;

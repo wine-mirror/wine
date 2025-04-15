@@ -1363,6 +1363,10 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
 
     case ProcessDebugObjectHandle:
         len = sizeof(HANDLE);
+        if (size && ((ULONG_PTR)info & 3)) return STATUS_DATATYPE_MISALIGNMENT;
+        /* STATUS_ACCESS_VIOLATION is returned on Windows for unaccessible ret_len even if ret_len is
+         * not going to be written. */
+        if (ret_len) *(volatile ULONG *)ret_len |= 0;
         if (size != len) return STATUS_INFO_LENGTH_MISMATCH;
         SERVER_START_REQ(get_process_debug_info)
         {
