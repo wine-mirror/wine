@@ -1543,8 +1543,6 @@ static DWORD rename_files(SHFILEOPSTRUCTW *op, const FILE_LIST *from, const FILE
     if (!to->dwNumFiles)
         return DE_DIFFDIR;
     entry_to = &to->feFiles[0];
-    if (entry_to->bFromWildcard)
-        return ERROR_INVALID_NAME;
 
     if (wcscmp(entry_from->szDirectory, entry_to->szDirectory) != 0)
         return DE_DIFFDIR;
@@ -1595,6 +1593,9 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     op.req = lpFileOp;
     op.bManyItems = (flFrom.dwNumFiles > 1);
     lpFileOp->fAnyOperationsAborted = FALSE;
+
+    if (flTo.bAnyFromWildcard)
+        return ERROR_INVALID_NAME;
 
     switch (lpFileOp->wFunc)
     {

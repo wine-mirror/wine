@@ -1486,6 +1486,11 @@ static void test_copy(void)
     ok(DeleteFileA("two\\bb.txt"), "Expected file to exist\n");
     }
 
+    /* Wildcard target. */
+    check_file_operation(FO_COPY, FOF_NO_UI, "aa.txt\0", "tw?\0",
+            ERROR_INVALID_NAME, FALSE, FALSE, FALSE);
+    ok(!file_exists("two\\aa.txt"), "Expected file to not exist\n");
+
     ok(DeleteFileA("aa.txt"), "Expected file to exist\n");
     ok(DeleteFileA("ab.txt"), "Expected file to exist\n");
     ok(DeleteFileA("bb.txt"), "Expected file to exist\n");
@@ -1586,7 +1591,7 @@ static void test_move(void)
     set_curr_dir_path(from, "testdir2\\*.*\0");
     set_curr_dir_path(to, "test4.txt\\*.*\0");
     check_file_operation(FO_MOVE, FOF_NO_UI, from, to,
-            ERROR_INVALID_NAME, FALSE, TRUE, FALSE);
+            ERROR_INVALID_NAME, FALSE, FALSE, FALSE);
 
     ok(file_exists("testdir2"), "dir should not be moved\n");
     ok(file_exists("testdir2\\one.txt"), "file should not be moved\n");
