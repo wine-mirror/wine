@@ -45,7 +45,6 @@ typedef struct _DriverFuncs {
     LRESULT (WINAPI *pDriverProc)(DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1, LPARAM param2);
     DWORD (WINAPI *pmidMessage)(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2);
     DWORD (WINAPI *pmodMessage)(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2);
-    DWORD (WINAPI *pauxMessage)(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2);
 } DriverFuncs;
 
 extern DriverFuncs drvs;

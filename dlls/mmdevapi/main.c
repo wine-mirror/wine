@@ -98,7 +98,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 #define LDFC(n) driver->p##n = (void*)GetProcAddress(driver->module, #n)
     LDFC(DriverProc);
-    LDFC(auxMessage);
     LDFC(midMessage);
     LDFC(modMessage);
 #undef LDFC
@@ -352,8 +351,19 @@ DWORD WINAPI modMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DW
 
 DWORD WINAPI auxMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
 {
-    if (!drvs.pauxMessage) return 0;
-    return drvs.pauxMessage( id, msg, user, param1, param2 );
+    struct aux_message_params params;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    wine_unix_call( aux_message, &params );
+    return err;
 }
 
 struct activate_async_op {
