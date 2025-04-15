@@ -1453,9 +1453,10 @@ static void test_make_current_read(HDC hdc)
 {
     int res;
     HDC hread;
-    HGLRC hglrc = wglCreateContext(hdc);
+    HGLRC oldctx, hglrc;
 
-    if(!hglrc)
+    oldctx = wglGetCurrentContext();
+    if(!(hglrc = wglCreateContext(hdc)))
     {
         skip("wglCreateContext failed!\n");
         return;
@@ -1465,6 +1466,7 @@ static void test_make_current_read(HDC hdc)
     if(!res)
     {
         skip("wglMakeCurrent failed!\n");
+        wglDeleteContext(hglrc);
         return;
     }
 
@@ -1476,6 +1478,9 @@ static void test_make_current_read(HDC hdc)
     pwglMakeContextCurrentARB(hdc, hdc, hglrc);
     hread = pwglGetCurrentReadDCARB();
     ok(hread == hdc, "wglGetCurrentReadDCARB failed for wglMakeContextCurrent\n");
+
+    wglMakeCurrent(hdc, oldctx);
+    wglDeleteContext(hglrc);
 }
 
 static void test_dc(HWND hwnd, HDC hdc)
@@ -2045,8 +2050,6 @@ static void test_destroy_read(HDC oldhdc)
     DWORD err;
     HGLRC oldctx = wglGetCurrentContext();
 
-    ok(!!oldctx, "Expected to find a valid current context\n");
-
     draw_window = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
     ok(!!draw_window, "Failed to create window, last error %#lx.\n", GetLastError());
@@ -2203,7 +2206,6 @@ static void test_swap_control(HDC oldhdc)
     int interval;
 
     oldctx = wglGetCurrentContext();
-    ok(!!oldctx, "Expected to find a valid current context.\n");
 
     window1 = CreateWindowA("static", "opengl32_test",
             WS_POPUP, 0, 0, 640, 480, 0, 0, 0, 0);
