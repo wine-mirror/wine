@@ -96,6 +96,13 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         goto fail;
     }
 
+#define LDFC(n) driver->p##n = (void*)GetProcAddress(driver->module, #n)
+    LDFC(DriverProc);
+    LDFC(auxMessage);
+    LDFC(midMessage);
+    LDFC(modMessage);
+#undef LDFC
+
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     params.name     = wcsrchr(path, '\\');
     params.name     = params.name ? params.name + 1 : path;
@@ -288,9 +295,10 @@ static IClassFactoryImpl MMDEVAPI_CF[] = {
     { { &MMCF_Vtbl }, &CLSID_MMDeviceEnumerator, (FnCreateInstance)MMDevEnum_Create }
 };
 
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     unsigned int i = 0;
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
@@ -321,6 +329,31 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
          debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1, LPARAM param2 )
+{
+    InitOnceExecuteOnce( &init_once, init_driver, NULL, NULL );
+    if (!drvs.pDriverProc) return 0;
+    return drvs.pDriverProc( id, driver, msg, param1, param2 );
+}
+
+DWORD WINAPI midMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    if (!drvs.pmidMessage) return 0;
+    return drvs.pmidMessage( id, msg, user, param1, param2 );
+}
+
+DWORD WINAPI modMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    if (!drvs.pmodMessage) return 0;
+    return drvs.pmodMessage( id, msg, user, param1, param2 );
+}
+
+DWORD WINAPI auxMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    if (!drvs.pauxMessage) return 0;
+    return drvs.pauxMessage( id, msg, user, param1, param2 );
 }
 
 struct activate_async_op {
