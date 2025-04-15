@@ -1689,19 +1689,19 @@ static void test__snwprintf(void)
     memset(buffer, 0xcc, sizeof(buffer));
     res = p_snwprintf(buffer, 3, L"test");
     ok(res == -1, "res = %d\n", res);
-    ok(!memcmp(buffer, L"tes", 3 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buffer));
+    ok(!memcmp(buffer, L"tes", 3 * sizeof(WCHAR)), "buf = %s\n", debugstr_wn(buffer, 3));
     ok(buffer[3] == 0xcccc, "buffer[3] = %x\n", buffer[3]);
 
     memset(buffer, 0xcc, sizeof(buffer));
     res = p_snwprintf(buffer, 4, L"%s", L"test");
     ok(res == 4, "res = %d\n", res);
-    ok(!memcmp(buffer, L"test", 4 * sizeof(WCHAR)), "buf = %s\n", debugstr_w(buffer));
+    ok(!memcmp(buffer, L"test", 4 * sizeof(WCHAR)), "buf = %s\n", debugstr_wn(buffer, 4));
     ok(buffer[4] == 0xcccc, "buffer[4] = %x\n", buffer[4]);
 
     memset(buffer, 0xcc, sizeof(buffer));
     res = p_snwprintf(buffer, 3, L"%s", L"test");
     ok(res == -1, "res = %d\n", res);
-    ok(!memcmp(buffer, L"tes", 3), "buf = %s\n", debugstr_w(buffer));
+    ok(!memcmp(buffer, L"tes", 3), "buf = %s\n", debugstr_wn(buffer, 3));
     ok(buffer[3] == 0xcccc, "buffer[3] = %x\n", buffer[3]);
 
     res = p_snwprintf(buffer, ARRAY_SIZE(buffer), L"%I64x %d", (ULONGLONG)0x1234567890, 1);
