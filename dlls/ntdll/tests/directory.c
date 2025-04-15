@@ -1182,6 +1182,7 @@ static void test_NtQueryDirectoryFile_change_mask(void)
 
 done:
     tear_down_mask_test(testdir);
+    pRtlFreeUnicodeString(&ntdirname);
     pNtClose(&dirh);
 }
 

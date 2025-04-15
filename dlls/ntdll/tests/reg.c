@@ -440,6 +440,7 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
@@ -451,6 +452,7 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\test\\\\" );
     status = pNtCreateKey( &subkey2, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
@@ -1344,7 +1346,11 @@ static DWORD get_key_value( HANDLE root, const char *name, DWORD flags )
     pRtlCreateUnicodeStringFromAsciiz( &str, name );
 
     status = pNtOpenKey( &key, flags | KEY_ALL_ACCESS, &attr );
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0;
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        pRtlFreeUnicodeString( &str );
+        return 0;
+    }
     ok( status == STATUS_SUCCESS, "%08lx: NtCreateKey failed: 0x%08lx\n", flags, status );
 
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
