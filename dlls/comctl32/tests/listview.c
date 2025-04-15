@@ -468,6 +468,19 @@ static const struct message scroll_parent_seq[] = {
     { 0 }
 };
 
+static const struct message listview_setview_seq[] = {
+    { LVM_SETVIEW, sent|wparam|lparam, 1, 0 },
+    { WM_NOTIFYFORMAT, sent|defwinproc|lparam|optional, 0, NF_QUERY },
+    { WM_NOTIFYFORMAT, sent|defwinproc|lparam|optional, 0, NF_QUERY },
+    { WM_QUERYUISTATE, sent|defwinproc|wparam|lparam|optional, 0, 0 },
+    { WM_PARENTNOTIFY, sent|defwinproc|optional },
+    { WM_PARENTNOTIFY, sent|defwinproc|optional },
+    { WM_PARENTNOTIFY, sent|defwinproc|optional },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
+    { 0 }
+};
+
 static const struct message setredraw_seq[] = {
     { WM_SETREDRAW, sent|id|wparam, FALSE, 0, LISTVIEW_ID },
     { 0 }
@@ -5034,8 +5047,11 @@ static void test_get_set_view(void)
     expect(LV_VIEW_LIST, ret);
 
     /* switching view doesn't touch window style */
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     ret = SendMessageA(hwnd, LVM_SETVIEW, LV_VIEW_DETAILS, 0);
     expect(1, ret);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, listview_setview_seq, "test setview seq", FALSE);
+
     style = GetWindowLongPtrA(hwnd, GWL_STYLE);
     ok(style & LVS_LIST, "Expected style to be preserved\n");
     ret = SendMessageA(hwnd, LVM_SETVIEW, LV_VIEW_ICON, 0);
