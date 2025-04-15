@@ -101,6 +101,48 @@ static void init_functions(void)
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a listview control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_LISTVIEWA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+    add_message(sequences, COMBINED_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 static const struct message create_ownerdrawfixed_parent_seq[] = {
     { WM_NOTIFYFORMAT, sent },
     { WM_QUERYUISTATE, sent|optional }, /* Win2K and higher */
@@ -160,27 +202,40 @@ static const struct message listview_color_seq[] = {
 static const struct message listview_item_count_seq[] = {
     { LVM_GETITEMCOUNT,   sent },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { LVM_GETITEMCOUNT,   sent },
     { LVM_DELETEITEM,     sent|wparam, 2 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { WM_NCPAINT,         sent|optional },
     { WM_ERASEBKGND,      sent|optional },
     { LVM_GETITEMCOUNT,   sent },
     { LVM_DELETEALLITEMS, sent },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { LVM_GETITEMCOUNT,   sent },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { LVM_GETITEMCOUNT,   sent },
     { LVM_INSERTITEMA,    sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { LVM_GETITEMCOUNT,   sent },
     { 0 }
 };
 
 static const struct message listview_itempos_seq[] = {
     { LVM_INSERTITEMA,     sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
     { LVM_INSERTITEMA,     sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
     { LVM_INSERTITEMA,     sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
     { LVM_SETITEMPOSITION, sent|wparam|lparam, 1, MAKELPARAM(10,5) },
     { WM_NCPAINT,          sent|optional },
     { WM_ERASEBKGND,       sent|optional },
@@ -462,6 +517,9 @@ static const struct message listview_ownerdata_destroy[] = {
 static const struct message listview_ownerdata_deleteall[] = {
     { LVM_DELETEALLITEMS, sent },
     { WM_NOTIFY, sent|id, 0, 0, LVN_DELETEALLITEMS },
+    { EVENT_OBJECT_REORDER, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { 0 }
 };
 
@@ -7401,6 +7459,8 @@ START_TEST(listview)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     hwndparent = create_parent_window(FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
@@ -7512,6 +7572,8 @@ START_TEST(listview)
     test_LVM_SETBKIMAGE(TRUE);
     test_LVM_GETHOTCURSOR();
     test_LVM_GETORIGIN(TRUE);
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 
