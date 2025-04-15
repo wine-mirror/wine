@@ -215,7 +215,7 @@ static void test_LsaLookupNames2(void)
     PLSA_TRANSLATED_SID2 sids;
     LSA_UNICODE_STRING name[4];
     LPSTR account, sid_dom;
-    DWORD len;
+    DWORD len = 0;
     BOOL ret;
 
     if ((PRIMARYLANGID(LANGIDFROMLCID(GetSystemDefaultLCID())) != LANG_ENGLISH) ||
