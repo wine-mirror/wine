@@ -70,7 +70,6 @@ static const IMMEndpointVtbl MMEndpointVtbl;
 
 static MMDevEnumImpl enumerator;
 static struct list device_list = LIST_INIT(device_list);
-static IMMDevice info_device;
 
 typedef struct MMDevColImpl
 {
@@ -1215,11 +1214,6 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
     if(!name || !device)
         return E_POINTER;
 
-    if(!lstrcmpW(name, L"Wine info device")){
-        *device = &info_device;
-        return S_OK;
-    }
-
     LIST_FOR_EACH_ENTRY(impl, &device_list, MMDevice, entry)
     {
         HRESULT hr;
@@ -1723,87 +1717,6 @@ static const IPropertyBagVtbl PB_Vtbl =
     PB_Release,
     PB_Read,
     PB_Write
-};
-
-static ULONG WINAPI info_device_ps_AddRef(IPropertyStore *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI info_device_ps_Release(IPropertyStore *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
-        REFPROPERTYKEY key, PROPVARIANT *pv)
-{
-    TRACE("(static)->(\"%s,%lu\", %p)\n", debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
-
-    if (!key || !pv)
-        return E_POINTER;
-
-    if (IsEqualPropertyKey(*key, DEVPKEY_Device_Driver))
-    {
-        INT size = (lstrlenW(drvs.module_name) + 1) * sizeof(WCHAR);
-        pv->vt = VT_LPWSTR;
-        pv->pwszVal = CoTaskMemAlloc(size);
-        if (!pv->pwszVal)
-            return E_OUTOFMEMORY;
-        memcpy(pv->pwszVal, drvs.module_name, size);
-        return S_OK;
-    }
-
-    return E_INVALIDARG;
-}
-
-static const IPropertyStoreVtbl info_device_ps_Vtbl =
-{
-    NULL,
-    info_device_ps_AddRef,
-    info_device_ps_Release,
-    NULL,
-    NULL,
-    info_device_ps_GetValue,
-    NULL,
-    NULL
-};
-
-static IPropertyStore info_device_ps = {
-    &info_device_ps_Vtbl
-};
-
-static ULONG WINAPI info_device_AddRef(IMMDevice *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI info_device_Release(IMMDevice *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI info_device_OpenPropertyStore(IMMDevice *iface,
-        DWORD access, IPropertyStore **ppv)
-{
-    TRACE("(static)->(%lx, %p)\n", access, ppv);
-    *ppv = &info_device_ps;
-    return S_OK;
-}
-
-static const IMMDeviceVtbl info_device_Vtbl =
-{
-    NULL,
-    info_device_AddRef,
-    info_device_Release,
-    NULL,
-    info_device_OpenPropertyStore,
-    NULL,
-    NULL
-};
-
-static IMMDevice info_device = {
-    &info_device_Vtbl
 };
 
 static HRESULT WINAPI Connector_QueryInterface(IConnector *iface, REFIID riid, void **ppv)
