@@ -197,12 +197,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
-            if (drvs.module_unixlib) {
-                const NTSTATUS status = __wine_unix_call(drvs.module_unixlib, process_detach, NULL);
-                if (status)
-                    WARN("Unable to deinitialize library: %lx\n", status);
+            if (drvs.module_unixlib)
+            {
+                wine_unix_call( process_detach, NULL );
+                FreeLibrary( drvs.module );
             }
-
             main_loop_stop();
 
             if (!lpvReserved)
