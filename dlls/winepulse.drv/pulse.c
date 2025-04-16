@@ -2632,6 +2632,14 @@ fail:
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS pulse_midi_get_driver(void *args)
+{
+    static const WCHAR driver[] = {'a','l','s','a',0};
+
+    memcpy( args, driver, sizeof(driver) );
+    return STATUS_SUCCESS;
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     pulse_process_attach,
@@ -2664,6 +2672,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_test_connect,
     pulse_is_started,
     pulse_get_prop_value,
+    pulse_midi_get_driver,
     pulse_not_implemented,
     pulse_not_implemented,
     pulse_not_implemented,
@@ -3162,6 +3171,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     pulse_wow64_test_connect,
     pulse_is_started,
     pulse_wow64_get_prop_value,
+    pulse_midi_get_driver,
     pulse_not_implemented,
     pulse_not_implemented,
     pulse_not_implemented,

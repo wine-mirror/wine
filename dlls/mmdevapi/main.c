@@ -48,6 +48,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
 DriverFuncs drvs;
+static DriverFuncs midi_driver;
+
+#define MIDI_CALL(code,args)  __wine_unix_call( midi_driver.module_unixlib, code, args )
 
 const WCHAR drv_keyW[] = L"Software\\Wine\\Drivers";
 
@@ -173,7 +176,17 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
             *next = ',';
     }
 
-    if (drvs.module != 0){
+    if (drvs.module != 0)
+    {
+        WCHAR midi_drvname[64];
+
+        midi_drvname[0] = 0;
+        wine_unix_call( midi_get_driver, midi_drvname );
+        if (midi_drvname[0] && load_driver( midi_drvname, &midi_driver ))
+            TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
+        else
+            midi_driver = drvs;
+
         load_devices_from_reg();
         load_driver_devices(eRender);
         load_driver_devices(eCapture);
@@ -201,6 +214,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             {
                 wine_unix_call( process_detach, NULL );
                 FreeLibrary( drvs.module );
+                if (midi_driver.module != drvs.module)
+                {
+                    MIDI_CALL( process_detach, NULL );
+                    FreeLibrary( midi_driver.module );
+                }
             }
             main_loop_stop();
 
@@ -332,20 +350,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1, LPARAM param2 )
 {
     InitOnceExecuteOnce( &init_once, init_driver, NULL, NULL );
-    if (!drvs.pDriverProc) return 0;
-    return drvs.pDriverProc( id, driver, msg, param1, param2 );
+    if (!midi_driver.pDriverProc) return 0;
+    return midi_driver.pDriverProc( id, driver, msg, param1, param2 );
 }
 
 DWORD WINAPI midMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
 {
-    if (!drvs.pmidMessage) return 0;
-    return drvs.pmidMessage( id, msg, user, param1, param2 );
+    if (!midi_driver.pmidMessage) return 0;
+    return midi_driver.pmidMessage( id, msg, user, param1, param2 );
 }
 
 DWORD WINAPI modMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
 {
-    if (!drvs.pmodMessage) return 0;
-    return drvs.pmodMessage( id, msg, user, param1, param2 );
+    if (!midi_driver.pmodMessage) return 0;
+    return midi_driver.pmodMessage( id, msg, user, param1, param2 );
 }
 
 DWORD WINAPI auxMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
