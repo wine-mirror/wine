@@ -35,6 +35,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
 static void post_ime_update(HWND hwnd, UINT cursor_pos, WCHAR *comp_str, WCHAR *result_str)
 {
+    /* Windows uses an empty string to clear the composition string. */
+    if (!comp_str && !result_str) comp_str = (WCHAR *)L"";
+
     NtUserMessageCall(hwnd, WINE_IME_POST_UPDATE, cursor_pos, (LPARAM)comp_str, result_str,
             NtUserImeDriverCall, FALSE);
 }
