@@ -730,6 +730,13 @@ static void test_delete(void)
     ok(!dir_exists("testdir2\\nested"), "Expected testdir2\\nested to not exist\n");
 }
 
+static BOOL is_below_windows8(void)
+{
+    INT_PTR rc;
+    rc = (INT_PTR)ShellExecuteA(NULL, "averb", "shlproto://foo/bar", NULL, NULL, SW_HIDE);
+    return rc == SE_ERR_ACCESSDENIED;
+}
+
 /* tests the FO_RENAME action */
 static void test_rename(void)
 {
@@ -831,9 +838,14 @@ static void test_rename(void)
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", "test2.txt\0",
             ERROR_SUCCESS, FALSE, FALSE, FALSE);
-    check_file_operation(FO_RENAME, FOF_NO_UI,
-            "testdir2\0", "testdir4\0",
-            ERROR_SUCCESS, FALSE, TRUE, FALSE);
+    if (!is_below_windows8()) /* Hangs with Windows 7 */
+    {
+        check_file_operation(FO_RENAME, FOF_NO_UI,
+                "testdir2\0", "testdir4\0",
+                ERROR_SUCCESS, FALSE, TRUE, FALSE);
+    }
+    else
+        win_skip("Skip FO_RENAME with already existing target directory.\n");
 
     /* Empty source or target. */
     clean_after_shfo_tests();
