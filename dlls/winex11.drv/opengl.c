@@ -230,7 +230,6 @@ struct gl_drawable
     Pixmap                         pixmap;       /* base pixmap if drawable is a GLXPixmap */
     const struct glx_pixel_format *format;       /* pixel format for the drawable */
     int                            swap_interval;
-    BOOL                           mutable_pf;
     HDC                            hdc_src;
     HDC                            hdc_dst;
 };
@@ -1058,8 +1057,7 @@ static GLXContext create_glxcontext(Display *display, struct x11drv_context *con
 /***********************************************************************
  *              create_gl_drawable
  */
-static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel_format *format, BOOL known_child,
-                                               BOOL mutable_pf )
+static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel_format *format, BOOL known_child )
 {
     static const WCHAR displayW[] = {'D','I','S','P','L','A','Y'};
     UNICODE_STRING device_str = RTL_CONSTANT_STRING(displayW);
@@ -1080,7 +1078,6 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct glx_pixel
     gl->ref = 1;
     gl->hwnd = hwnd;
     gl->rect = rect;
-    gl->mutable_pf = mutable_pf;
 
     if (!needs_offscreen_rendering( hwnd, known_child ))
     {
@@ -1176,7 +1173,7 @@ static BOOL x11drv_set_pixel_format( HWND hwnd, int old_format, int new_format, 
 
     if (!(old = get_gl_drawable( hwnd, 0 )) || old->format != fmt)
     {
-        if (!(gl = create_gl_drawable( hwnd, fmt, FALSE, internal )))
+        if (!(gl = create_gl_drawable( hwnd, fmt, FALSE )))
         {
             release_gl_drawable( old );
             return FALSE;
@@ -1217,7 +1214,7 @@ static void update_gl_drawable_size( struct gl_drawable *gl )
         set_dc_drawable( gl->hdc_src, gl->window, &gl->rect, IncludeInferiors );
         break;
     case DC_GL_PIXMAP_WIN:
-        new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE, gl->mutable_pf );
+        new_gl = create_gl_drawable( gl->hwnd, gl->format, TRUE );
         mark_drawable_dirty( gl, new_gl );
         release_gl_drawable( new_gl );
     default:
@@ -1247,7 +1244,7 @@ void sync_gl_drawable( HWND hwnd, BOOL known_child )
         }
         /* fall through */
     case DC_GL_PIXMAP_WIN:
-        if (!(new = create_gl_drawable( hwnd, old->format, known_child, old->mutable_pf ))) break;
+        if (!(new = create_gl_drawable( hwnd, old->format, known_child ))) break;
         mark_drawable_dirty( old, new );
         XFlush( gdi_display );
         TRACE( "Recreated GL drawable %lx to replace %lx\n", new->drawable, old->drawable );
@@ -1284,7 +1281,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         return;
     }
 
-    if ((new = create_gl_drawable( hwnd, old->format, FALSE, old->mutable_pf )))
+    if ((new = create_gl_drawable( hwnd, old->format, FALSE )))
     {
         mark_drawable_dirty( old, new );
         release_gl_drawable( new );
