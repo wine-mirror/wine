@@ -44,6 +44,7 @@ struct wgl_context
     const struct opengl_driver_funcs *driver_funcs;
     struct opengl_funcs *funcs;
     void *driver_private;
+    int pixel_format;
 };
 
 struct wgl_pbuffer
@@ -489,14 +490,14 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
 static struct opengl_funcs *display_funcs;
 static struct opengl_funcs *memory_funcs;
 
-static int win32u_wglGetPixelFormat( HDC hdc )
+static int get_dc_pixel_format( HDC hdc, BOOL internal )
 {
     int ret = 0;
     HWND hwnd;
     DC *dc;
 
     if ((hwnd = NtUserWindowFromDC( hdc )))
-        ret = get_window_pixel_format( hwnd );
+        ret = get_window_pixel_format( hwnd, internal );
     else if ((dc = get_dc_ptr( hdc )))
     {
         BOOL is_display = dc->is_display;
@@ -508,9 +509,21 @@ static int win32u_wglGetPixelFormat( HDC hdc )
          */
         if (is_display && ret >= 0 && ret > onscreen_count) ret = 1;
     }
+    else
+    {
+        WARN( "Invalid DC handle %p\n", hdc );
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return -1;
+    }
 
     TRACE( "%p/%p -> %d\n", hdc, hwnd, ret );
     return ret;
+}
+
+static int win32u_wglGetPixelFormat( HDC hdc )
+{
+    int format = get_dc_pixel_format( hdc, FALSE );
+    return format > 0 ? format : 0;
 }
 
 static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
@@ -535,7 +548,7 @@ static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
 
         TRACE( "%p/%p format %d, internal %u\n", hdc, hwnd, new_format, internal );
 
-        if ((old_format = get_window_pixel_format( hwnd )) && !internal) return old_format == new_format;
+        if ((old_format = get_window_pixel_format( hwnd, FALSE )) && !internal) return old_format == new_format;
         if (!display_driver_funcs->p_set_pixel_format( hwnd, old_format, new_format, internal )) return FALSE;
         return set_window_pixel_format( hwnd, new_format, internal );
     }
@@ -574,9 +587,9 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
 
     TRACE( "hdc %p, shared %p, attribs %p\n", hdc, shared, attribs );
 
-    if (!(format = win32u_wglGetPixelFormat( hdc )))
+    if ((format = get_dc_pixel_format( hdc, TRUE )) <= 0)
     {
-        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
     }
 
@@ -586,6 +599,7 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
     if (!(context = calloc( 1, sizeof(*context) ))) return NULL;
     context->driver_funcs = driver_funcs;
     context->funcs = funcs;
+    context->pixel_format = format;
 
     if (!driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
     {
@@ -593,7 +607,7 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
         return NULL;
     }
 
-    TRACE( "created context %p for driver context %p\n", context, context->driver_private );
+    TRACE( "created context %p, format %u for driver context %p\n", context, format, context->driver_private );
     return context;
 }
 
@@ -649,6 +663,7 @@ static BOOL win32u_wglShareLists( struct wgl_context *src, struct wgl_context *d
 static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct wgl_context *context )
 {
     const struct opengl_driver_funcs *funcs;
+    int format;
 
     TRACE( "draw_hdc %p, read_hdc %p, context %p\n", draw_hdc, read_hdc, context );
 
@@ -659,6 +674,19 @@ static BOOL win32u_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
         if (!funcs->p_context_make_current( NULL, NULL, NULL )) return FALSE;
         NtCurrentTeb()->glContext = NULL;
         return TRUE;
+    }
+
+    if ((format = get_dc_pixel_format( draw_hdc, TRUE )) <= 0)
+    {
+        WARN( "Invalid draw_hdc %p format %u\n", draw_hdc, format );
+        if (!format) RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        return FALSE;
+    }
+    if (context->pixel_format != format)
+    {
+        WARN( "Mismatched draw_hdc %p format %u, context %p format %u\n", draw_hdc, format, context, context->pixel_format );
+        RtlSetLastWin32Error( ERROR_INVALID_PIXEL_FORMAT );
+        return FALSE;
     }
 
     funcs = context->driver_funcs;
