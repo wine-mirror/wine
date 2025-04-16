@@ -921,10 +921,8 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
     check_file_operation(FO_COPY, FOF_NO_UI, from, to,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt\\test1.txt"), "test6.txt\\test1.txt is not copied.\n");
-    todo_wine
     ok(DeleteFileA("test6.txt\\test2.txt"), "test6.txt\\test2.txt is not copied.\n");
     RemoveDirectoryA("test6.txt\\test4.txt");
     RemoveDirectoryA("test6.txt");
@@ -944,11 +942,9 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES, from, to,
-            DE_DESTSAMETREE, FALSE, TRUE, TRUE);
-    todo_wine
+            DE_DESTSAMETREE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied.\n");
     RemoveDirectoryA("test6.txt");
-    todo_wine
     ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not copied.\n");
     RemoveDirectoryA("test7.txt");
 
@@ -988,7 +984,7 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test10.txt\0test2.txt\0");
     set_curr_dir_path(to, "testdir2\0");
     check_file_operation(FO_COPY, FOF_NO_UI, from, to,
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     ok(!file_exists("testdir2\\test1.txt"), "The file is copied\n");
     ok(!file_exists("testdir2\\test2.txt"), "The file is copied\n");
     clean_after_shfo_tests();
@@ -1030,7 +1026,7 @@ static void test_copy(void)
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
     set_curr_dir_path(to, "test3.txt\0");
     check_file_operation(FO_COPY, FOF_NO_UI, from, to,
-            DE_INVALIDFILES, FALSE, TRUE, TRUE);
+            DE_INVALIDFILES, FALSE, TRUE, FALSE);
     ok(!file_exists("test3.txt\\test2.txt"), "Expected test3.txt\\test2.txt to not exist\n");
 
     /* Copy many files to a nonexistent directory. */
@@ -1048,15 +1044,12 @@ static void test_copy(void)
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test1.txt\0test2.txt\0test3.txt\0",
             "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0testdir2\\d.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
     RemoveDirectoryA("testdir2\\a.txt");
     ok(DeleteFileA("testdir2\\b.txt\\test2.txt"), "Expected testdir2\\b.txt\\test2.txt to exist\n");
     RemoveDirectoryA("testdir2\\b.txt");
     ok(DeleteFileA("testdir2\\c.txt\\test3.txt"), "Expected testdir2\\c.txt\\test3.txt to exist\n");
-    }
     RemoveDirectoryA("testdir2\\c.txt");
     ok(!file_exists("testdir2\\d.txt"), "Expected testdir2\\d.txt to not exist\n");
 
@@ -1064,14 +1057,11 @@ static void test_copy(void)
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test1.txt\0test2.txt\0test3.txt\0",
             "e.txt\0f.txt\0",
-            DE_SAMEFILE, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            DE_SAMEFILE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("e.txt\\test1.txt"), "Expected e.txt\\test1.txt to exist\n");
     RemoveDirectoryA("e.txt");
     ok(DeleteFileA("f.txt\\test2.txt"), "Expected f.txt\\test2.txt to exist\n");
     RemoveDirectoryA("f.txt");
-    }
 
     /* Sources and targets have the same number, with FOF_MULTIDESTFILES. */
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
@@ -1086,13 +1076,10 @@ static void test_copy(void)
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test1.txt\0test2.txt\0test3.txt\0",
             "a.txt\0b.txt\0c.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("a.txt\\test1.txt"), "Expected a.txt\\test1.txt to exist\n");
     ok(DeleteFileA("a.txt\\test2.txt"), "Expected a.txt\\test2.txt to exist\n");
     ok(DeleteFileA("a.txt\\test3.txt"), "Expected a.txt\\test3.txt to exist\n");
-    }
     ok(!dir_exists("b.txt"), "Expected b.txt directory to not exist.\n");
     ok(!dir_exists("c.txt"), "Expected c.txt directory to not exist.\n");
     RemoveDirectoryA("a.txt");
@@ -1101,13 +1088,10 @@ static void test_copy(void)
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test1.txt\0test2.txt\0test3.txt\0",
             "a.txt\0b.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("a.txt\\test1.txt"), "Expected a.txt\\test1.txt to exist\n");
     ok(DeleteFileA("a.txt\\test2.txt"), "Expected a.txt\\test2.txt to exist\n");
     ok(DeleteFileA("a.txt\\test3.txt"), "Expected a.txt\\test3.txt to exist\n");
-    }
     ok(!dir_exists("b.txt"), "Expected b.txt directory to not exist.\n");
     RemoveDirectoryA("a.txt");
 
@@ -1130,14 +1114,11 @@ static void test_copy(void)
     init_shfo_tests();
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test?.txt\0", "testdir2\\a.txt\0testdir2\\b.txt\0testdir2\\c.txt\0testdir2\\d.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("testdir2\\a.txt\\test1.txt"), "Expected testdir2\\a.txt\\test1.txt to exist\n");
     ok(DeleteFileA("testdir2\\a.txt\\test2.txt"), "Expected testdir2\\a.txt\\test2.txt to exist\n");
     ok(DeleteFileA("testdir2\\a.txt\\test3.txt"), "Expected testdir2\\a.txt\\test3.txt to exist\n");
     ok(RemoveDirectoryA("testdir2\\a.txt\\test4.txt"), "Expected testdir2\\a.txt\\test4.txt to exist\n");
-    }
     RemoveDirectoryA("testdir2\\a.txt");
     ok(!RemoveDirectoryA("b.txt"), "b.txt should not exist\n");
 
@@ -1153,26 +1134,20 @@ static void test_copy(void)
     /* Copy two file to three others. */
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test1.txt\0test2.txt\0", "b.txt\0c.txt\0d.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
     RemoveDirectoryA("b.txt");
     ok(DeleteFileA("c.txt\\test2.txt"), "Expected c.txt\\test2.txt to exist\n");
-    }
     RemoveDirectoryA("c.txt");
 
     /* Copy one file and one directory to three others. */
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test1.txt\0test4.txt\0", "b.txt\0c.txt\0d.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("b.txt\\test1.txt"), "Expected b.txt\\test1.txt to exist\n");
     RemoveDirectoryA("b.txt");
     ok(RemoveDirectoryA("c.txt\\test4.txt"), "Expected c.txt\\test4.txt to exist\n");
     RemoveDirectoryA("c.txt");
-    }
 
     /* Copy a file and a dir containing file to another dir. */
     createTestFile("test4.txt\\a.txt");
@@ -1192,11 +1167,9 @@ static void test_copy(void)
 
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test4.txt\\a.txt\0test4.txt\0", "nonexistent\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("nonexistent\\test4.txt\\a.txt"), "Expected nonexistent\\test4.txt\\a.txt to exist\n");
     RemoveDirectoryA("nonexistent\\test4.txt");
-    todo_wine
     ok(DeleteFileA("nonexistent\\a.txt"), "Expected nonexistent\\a.txt to exist\n");
     RemoveDirectoryA("nonexistent");
     DeleteFileA("test4.txt\\a.txt");
@@ -1211,37 +1184,36 @@ static void test_copy(void)
     /* Target dir is same as source dir. */
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "test1.txt\0test4.txt\0test3.txt\0", "b.txt\0test4.txt\0c.txt\0",
-            DE_DESTSAMETREE, FALSE, TRUE, FALSE);
+            DE_DESTSAMETREE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("b.txt"), "Expected b.txt to exist\n");
     ok(!file_exists("c.txt"), "Expected c.txt to not exist\n");
 
     /* Copy a dir into it's subdir. */
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test4.txt\0", "test4.txt\\newdir\0",
-            DE_DESTSUBTREE, FALSE, TRUE, FALSE);
+            DE_DESTSUBTREE, FALSE, FALSE, FALSE);
     ok(!RemoveDirectoryA("test4.txt\\newdir"), "Expected test4.txt\\newdir to not exist\n");
 
     /* Copy a dir into itself. */
     check_file_operation(FO_COPY, FOF_NO_UI, "test4.txt\0", "test4.txt\0",
-            DE_DESTSUBTREE, FALSE, TRUE, FALSE);
+            DE_DESTSUBTREE, FALSE, FALSE, FALSE);
 
     /* Copy a file into a dir, and the dir into itself. */
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test1.txt\0test4.txt\0", "test4.txt\0",
-            DE_DESTSUBTREE, FALSE, TRUE, FALSE);
+            DE_DESTSUBTREE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test4.txt\\test1.txt"), "Expected test4.txt\\test1.txt to exist\n");
 
     /* Copy a file to a file, and the dir into it's subdir. */
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test1.txt\0test4.txt\0", "test4.txt\\a.txt\0",
-            DE_DESTSUBTREE, FALSE, TRUE, TRUE);
-    todo_wine
+            DE_DESTSUBTREE, FALSE, FALSE, FALSE);
     ok(DeleteFileA("test4.txt\\a.txt\\test1.txt"), "Expected test4.txt\\a.txt\\test1.txt to exist\n");
     RemoveDirectoryA("test4.txt\\a.txt");
 
     /* Copy a nonexistent file to a nonexistent dir. */
     check_file_operation(FO_COPY, FOF_NO_UI, "e.txt\0", "nonexistent\0",
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
     ok(!file_exists("nonexistent"), "Expected nonexistent to not exist\n");
 
@@ -1338,13 +1310,10 @@ static void test_copy(void)
     lstrcpyA(to, "threedir");
     check_file_operation(FO_COPY, FOF_NO_UI,
             "one.txt\0two.txt\0", to,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("threedir\\one.txt"), "Expected threedir\\one.txt to exist.\n");
     ok(DeleteFileA("threedir\\two.txt"), "Expected threedir\\one.txt to exist.\n");
     ok(RemoveDirectoryA("threedir"), "Expected threedir to exist.\n");
-    }
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
 
@@ -1374,7 +1343,7 @@ static void test_copy(void)
     lstrcpyA(to, "threedir");
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "one.txt\0two.txt\0", to,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, TRUE);
+            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
     ok(!DeleteFileA("threedir\\one.txt"), "Expected file to not exist\n");
     ok(!DeleteFileA("threedir\\two.txt"), "Expected file to not exist\n");
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
@@ -1393,7 +1362,7 @@ static void test_copy(void)
     lstrcpyA(ptr, "fourdir");
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "one.txt\0two.txt\0", to,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, TRUE, FALSE);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     todo_wine
@@ -1428,7 +1397,7 @@ static void test_copy(void)
     CreateDirectoryA("threedir", NULL);
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "one.txt\0two.txt\0", "threedir\0fourdir\0five\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, TRUE, FALSE);
     ok(DeleteFileA("one.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two.txt"), "Expected file to exist\n");
     todo_wine
@@ -1477,14 +1446,11 @@ static void test_copy(void)
     /* pFrom has more than one glob, pTo has more than one dest, with FOF_MULTIDESTFILES. */
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "a*.txt\0*b.txt\0", "one\0two\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
-    todo_wine
-    {
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
     ok(DeleteFileA("one\\ab.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two\\ab.txt"), "Expected file to exist\n");
     ok(DeleteFileA("two\\bb.txt"), "Expected file to exist\n");
-    }
 
     /* Wildcard target. */
     check_file_operation(FO_COPY, FOF_NO_UI, "aa.txt\0", "tw?\0",
@@ -1511,7 +1477,7 @@ static void test_copy(void)
     ok(RemoveDirectoryA("nested"), "Expected dir to exist\n");
     check_file_operation(FO_COPY, FOF_NO_UI,
             "nonexistence\0", "\0",
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "testdir2\0",
             ERROR_SUCCESS, FALSE, TRUE, TRUE);
@@ -1563,7 +1529,7 @@ static void test_copy(void)
     init_shfo_tests();
     SetLastError(0xdeadbeef);
     check_file_operation(FO_COPY, FOF_NO_UI, "nonexistence\0", "testdir2\0",
-            ERROR_FILE_NOT_FOUND, FALSE, TRUE, FALSE);
+            ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     ok(GetLastError() == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %ld\n", GetLastError());
 
     /* test with / */
