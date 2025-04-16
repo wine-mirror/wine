@@ -42,7 +42,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 struct wgl_context
 {
     const struct opengl_driver_funcs *driver_funcs;
-    struct opengl_funcs *funcs;
+    const struct opengl_funcs *funcs;
     void *driver_private;
     int pixel_format;
 };
@@ -50,7 +50,7 @@ struct wgl_context
 struct wgl_pbuffer
 {
     const struct opengl_driver_funcs *driver_funcs;
-    struct opengl_funcs *funcs;
+    const struct opengl_funcs *funcs;
     void *driver_private;
 
     HDC hdc;
@@ -65,7 +65,7 @@ struct wgl_pbuffer
     struct wgl_context *prev_context;
 };
 
-static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs );
+static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs );
 
 static const struct
 {
@@ -522,6 +522,7 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
     return wgl_extensions;
 }
 
+static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
 static struct opengl_funcs *display_funcs;
 static struct opengl_funcs *memory_funcs;
 
@@ -563,7 +564,7 @@ static int win32u_wglGetPixelFormat( HDC hdc )
 
 static BOOL set_dc_pixel_format( HDC hdc, int new_format, BOOL internal )
 {
-    struct opengl_funcs *funcs;
+    const struct opengl_funcs *funcs;
     UINT total, onscreen;
     HWND hwnd;
 
@@ -644,8 +645,8 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
 {
     void *shared_private = shared ? shared->driver_private : NULL;
     const struct opengl_driver_funcs *driver_funcs;
+    const struct opengl_funcs *funcs;
     struct wgl_context *context;
-    struct opengl_funcs *funcs;
     int format;
 
     TRACE( "hdc %p, shared %p, attribs %p\n", hdc, shared, attribs );
@@ -767,8 +768,8 @@ static struct wgl_pbuffer *win32u_wglCreatePbufferARB( HDC hdc, int format, int 
                                                        const int *attribs )
 {
     UINT total, onscreen, size, max_level = 0;
+    const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
-    struct opengl_funcs *funcs;
     BOOL largest = FALSE;
 
     TRACE( "(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs );
@@ -1261,7 +1262,7 @@ static void display_funcs_init(void)
     display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
 }
 
-static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
+static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs )
 {
     DWORD is_disabled, is_display, is_memdc;
     DC *dc;
@@ -1291,7 +1292,7 @@ static struct opengl_funcs *get_dc_funcs( HDC hdc, void *null_funcs )
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
  */
-const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
+const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version, const struct opengl_funcs *null_funcs )
 {
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
@@ -1300,5 +1301,6 @@ const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
         return NULL;
     }
 
-    return get_dc_funcs( hdc, (void *)-1 );
+    InterlockedExchangePointer( (void *)&default_funcs, (void *)null_funcs );
+    return get_dc_funcs( hdc, null_funcs );
 }
