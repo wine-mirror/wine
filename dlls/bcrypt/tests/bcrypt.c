@@ -4370,6 +4370,23 @@ static void test_RC4(void)
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }
 
+static void test_PBKDF2(void)
+{
+    BCRYPT_ALG_HANDLE alg;
+    NTSTATUS status;
+
+    status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_PBKDF2_ALGORITHM, NULL, 0);
+    if (status == STATUS_NOT_FOUND)
+    {
+        win_skip("PBKDF2 not available\n");
+        return;
+    }
+    ok(!status, "got %#lx\n", status);
+
+    status = BCryptCloseAlgorithmProvider(alg, 0);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+}
+
 START_TEST(bcrypt)
 {
     HMODULE module;
@@ -4408,6 +4425,7 @@ START_TEST(bcrypt)
     test_SecretAgreement();
     test_rsa_encrypt();
     test_RC4();
+    test_PBKDF2();
 
     FreeLibrary(module);
 }

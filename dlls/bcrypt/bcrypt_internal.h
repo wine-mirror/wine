@@ -73,6 +73,9 @@ enum alg_id
 
     /* rng */
     ALG_ID_RNG,
+
+    /* key derivation */
+    ALG_ID_PBKDF2,
 };
 
 enum chain_mode

@@ -123,6 +123,7 @@ builtin_algorithms[] =
     {  BCRYPT_ECDSA_P384_ALGORITHM, BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_DSA_ALGORITHM,        BCRYPT_SIGNATURE_INTERFACE,             0,      0,    0 },
     {  BCRYPT_RNG_ALGORITHM,        BCRYPT_RNG_INTERFACE,                   0,      0,    0 },
+    {  BCRYPT_PBKDF2_ALGORITHM,     BCRYPT_KEY_DERIVATION_INTERFACE,      618,      0,    0 },
 };
 
 static inline BOOL is_symmetric_key( const struct key *key )
@@ -156,6 +157,7 @@ static BOOL match_operation_type( ULONG type, ULONG class )
     case BCRYPT_SECRET_AGREEMENT_INTERFACE:      return type & BCRYPT_SECRET_AGREEMENT_OPERATION;
     case BCRYPT_SIGNATURE_INTERFACE:             return type & BCRYPT_SIGNATURE_OPERATION;
     case BCRYPT_RNG_INTERFACE:                   return type & BCRYPT_RNG_OPERATION;
+    case BCRYPT_KEY_DERIVATION_INTERFACE:        return type & BCRYPT_KEY_DERIVATION_OPERATION;
     default: break;
     }
     return FALSE;
@@ -168,7 +170,8 @@ NTSTATUS WINAPI BCryptEnumAlgorithms( ULONG type, ULONG *ret_count, BCRYPT_ALGOR
                                    BCRYPT_ASYMMETRIC_ENCRYPTION_OPERATION |\
                                    BCRYPT_SECRET_AGREEMENT_OPERATION |\
                                    BCRYPT_SIGNATURE_OPERATION |\
-                                   BCRYPT_RNG_OPERATION;
+                                   BCRYPT_RNG_OPERATION |\
+                                   BCRYPT_KEY_DERIVATION_OPERATION;
     BCRYPT_ALGORITHM_IDENTIFIER *list;
     ULONG i, j, count = 0;
 
