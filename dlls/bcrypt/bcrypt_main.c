@@ -638,6 +638,26 @@ static NTSTATUS get_dsa_property( enum chain_mode mode, const WCHAR *prop, UCHAR
     return STATUS_NOT_IMPLEMENTED;
 }
 
+static NTSTATUS get_pbkdf2_property( enum chain_mode mode, const WCHAR *prop, UCHAR *buf, ULONG size, ULONG *ret_size )
+{
+    if (!wcscmp( prop, BCRYPT_BLOCK_LENGTH )) return STATUS_NOT_SUPPORTED;
+    if (!wcscmp( prop, BCRYPT_KEY_LENGTHS ))
+    {
+        BCRYPT_KEY_LENGTHS_STRUCT *key_lengths = (void *)buf;
+        *ret_size = sizeof(*key_lengths);
+        if (key_lengths && size < *ret_size) return STATUS_BUFFER_TOO_SMALL;
+        if (key_lengths)
+        {
+            key_lengths->dwMinLength = 0;
+            key_lengths->dwMaxLength = 16384;
+            key_lengths->dwIncrement = 8;
+        }
+        return STATUS_SUCCESS;
+    }
+    FIXME( "unsupported property %s\n", debugstr_w(prop) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop, UCHAR *buf, ULONG size,
                                   ULONG *ret_size )
 {
@@ -663,6 +683,9 @@ static NTSTATUS get_alg_property( const struct algorithm *alg, const WCHAR *prop
 
     case ALG_ID_DSA:
         return get_dsa_property( alg->mode, prop, buf, size, ret_size );
+
+    case ALG_ID_PBKDF2:
+	return get_pbkdf2_property( alg->mode, prop, buf, size, ret_size );
 
     default:
         break;

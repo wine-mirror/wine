@@ -4372,8 +4372,10 @@ static void test_RC4(void)
 
 static void test_PBKDF2(void)
 {
+    BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     BCRYPT_ALG_HANDLE alg;
     NTSTATUS status;
+    ULONG val, size;
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_PBKDF2_ALGORITHM, NULL, 0);
     if (status == STATUS_NOT_FOUND)
@@ -4382,6 +4384,25 @@ static void test_PBKDF2(void)
         return;
     }
     ok(!status, "got %#lx\n", status);
+
+    val = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&val, sizeof(val), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(val, "got %lu\n", val);
+    ok(size == sizeof(val), "got %lu\n", size);
+
+    val = size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_BLOCK_LENGTH, (UCHAR *)&val, sizeof(val), &size, 0);
+    ok(status == STATUS_NOT_SUPPORTED, "got %#lx\n", status);
+
+    memset(&key_lengths, 0xfe, sizeof(key_lengths));
+    size = 0;
+    status = BCryptGetProperty(alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(key_lengths), "got %lu\n", size);
+    ok(key_lengths.dwMinLength == 0, "got %lu\n", key_lengths.dwMinLength);
+    ok(key_lengths.dwMaxLength == 16384, "got %lu\n", key_lengths.dwMaxLength);
+    ok(key_lengths.dwIncrement == 8, "got %lu\n", key_lengths.dwIncrement);
 
     status = BCryptCloseAlgorithmProvider(alg, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
