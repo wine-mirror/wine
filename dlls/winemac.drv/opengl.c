@@ -98,6 +98,7 @@ static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GL
 static void (*pglFlush)(void);
 static void (*pglFlushRenderAPPLE)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
+static PFN_glGetIntegerv pglGetIntegerv;
 static void (*pglReadPixels)(GLint x, GLint y, GLsizei width, GLsizei height,
                              GLenum format, GLenum type, void *pixels);
 static void (*pglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
@@ -1262,7 +1263,7 @@ static BOOL init_gl_info(void)
         return FALSE;
     }
 
-    str = (const char*)opengl_funcs.p_glGetString(GL_EXTENSIONS);
+    str = (const char*)pglGetString(GL_EXTENSIONS);
     length = strlen(str) + sizeof(legacy_extensions);
     if (allow_vsync)
         length += strlen(legacy_ext_swap_control);
@@ -1272,12 +1273,12 @@ static BOOL init_gl_info(void)
     if (allow_vsync)
         strcat(gl_info.glExtensions, legacy_ext_swap_control);
 
-    opengl_funcs.p_glGetIntegerv(GL_MAX_VIEWPORT_DIMS, gl_info.max_viewport_dims);
+    pglGetIntegerv(GL_MAX_VIEWPORT_DIMS, gl_info.max_viewport_dims);
 
-    str = (const char*)opengl_funcs.p_glGetString(GL_VERSION);
+    str = (const char*)pglGetString(GL_VERSION);
     sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
     TRACE("GL version   : %s\n", str);
-    TRACE("GL renderer  : %s\n", opengl_funcs.p_glGetString(GL_RENDERER));
+    TRACE("GL renderer  : %s\n", pglGetString(GL_RENDERER));
 
     CGLSetCurrentContext(old_context);
     CGLReleaseContext(context);
@@ -1308,7 +1309,7 @@ static BOOL init_gl_info(void)
         return TRUE;
     }
 
-    str = (const char*)opengl_funcs.p_glGetString(GL_VERSION);
+    str = (const char*)pglGetString(GL_VERSION);
     TRACE("Core context GL version: %s\n", str);
     sscanf(str, "%u.%u", &gl_info.max_major, &gl_info.max_minor);
     CGLSetCurrentContext(old_context);
@@ -1771,7 +1772,7 @@ static const char* get_gl_string(CGLPixelFormatObj pixel_format, GLenum name)
         err = CGLSetCurrentContext(context);
         if (err == kCGLNoError)
         {
-            ret = (const char*)opengl_funcs.p_glGetString(name);
+            ret = (const char*)pglGetString(name);
             CGLSetCurrentContext(old_context);
         }
         else
@@ -2514,7 +2515,7 @@ static BOOL macdrv_wglQueryCurrentRendererIntegerWINE(GLenum attribute, GLuint *
 
     if (attribute == WGL_RENDERER_VERSION_WINE)
     {
-        if (!parse_renderer_version((const char*)opengl_funcs.p_glGetString(GL_VERSION), value))
+        if (!parse_renderer_version((const char*)pglGetString(GL_VERSION), value))
             get_fallback_renderer_version(value);
         TRACE("WGL_RENDERER_VERSION_WINE -> %u.%u.%u\n", value[0], value[1], value[2]);
         return TRUE;
@@ -2588,14 +2589,14 @@ static const char *macdrv_wglQueryCurrentRendererStringWINE(GLenum attribute)
     {
         case WGL_RENDERER_DEVICE_ID_WINE:
         {
-            ret = (const char*)opengl_funcs.p_glGetString(GL_RENDERER);
+            ret = (const char*)pglGetString(GL_RENDERER);
             TRACE("WGL_RENDERER_DEVICE_ID_WINE -> %s\n", debugstr_a(ret));
             break;
         }
 
         case WGL_RENDERER_VENDOR_ID_WINE:
         {
-            ret = (const char*)opengl_funcs.p_glGetString(GL_VENDOR);
+            ret = (const char*)pglGetString(GL_VENDOR);
             TRACE("WGL_RENDERER_VENDOR_ID_WINE -> %s\n", debugstr_a(ret));
             break;
         }
@@ -2802,39 +2803,21 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
         return STATUS_NOT_SUPPORTED;
     }
 
-#define USE_GL_FUNC(func) \
-        if (!(opengl_funcs.p_##func = dlsym(opengl_handle, #func))) \
-        { \
-            ERR( "%s not found in OpenGL, disabling.\n", #func ); \
-            goto failed; \
-        }
-    ALL_GL_FUNCS
-#undef USE_GL_FUNC
-
     if (!init_gl_info())
         goto failed;
-
-    /* redirect some standard OpenGL functions */
-#define REDIRECT(func) \
-    do { p##func = opengl_funcs.p_##func; opengl_funcs.p_##func = macdrv_##func; } while(0)
-    REDIRECT(glCopyPixels);
-    REDIRECT(glGetString);
-    REDIRECT(glReadPixels);
-    REDIRECT(glViewport);
-#undef REDIRECT
-
-    /* redirect some OpenGL extension functions */
-#define REDIRECT(func) \
-    do { if ((p##func = dlsym(opengl_handle, #func))) { opengl_funcs.p_##func = macdrv_##func; } } while(0)
-    REDIRECT(glCopyColorTable);
-#undef REDIRECT
 
 #define LOAD_FUNCPTR(func) \
         if (!(p##func = dlsym(opengl_handle, #func))) \
         { \
-            ERR( "%s not found in OpenGL, disabling.\n", #func ); \
+            ERR( "%s not found in libGL, disabling OpenGL.\n", #func ); \
             goto failed; \
         }
+    LOAD_FUNCPTR(glCopyPixels);
+    LOAD_FUNCPTR(glGetIntegerv);
+    LOAD_FUNCPTR(glGetString);
+    LOAD_FUNCPTR(glReadPixels);
+    LOAD_FUNCPTR(glViewport);
+    LOAD_FUNCPTR(glCopyColorTable);
     LOAD_FUNCPTR(glFlush);
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
         LOAD_FUNCPTR(glFlushRenderAPPLE);
@@ -3045,6 +3028,14 @@ static BOOL macdrv_context_share(void *src_private, void *dst_private)
 
 static void *macdrv_get_proc_address(const char *name)
 {
+    /* redirect some standard OpenGL functions */
+    if (!strcmp(name, "glCopyPixels")) return macdrv_glCopyPixels;
+    if (!strcmp(name, "glGetString")) return macdrv_glGetString;
+    if (!strcmp(name, "glReadPixels")) return macdrv_glReadPixels;
+    if (!strcmp(name, "glViewport")) return macdrv_glViewport;
+
+    /* redirect some OpenGL extension functions */
+    if (!strcmp(name, "glCopyColorTable")) return macdrv_glCopyColorTable;
     return dlsym(opengl_handle, name);
 }
 
