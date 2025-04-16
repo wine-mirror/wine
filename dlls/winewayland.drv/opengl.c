@@ -517,6 +517,8 @@ static BOOL wayland_context_destroy(void *private)
 
 static void *wayland_get_proc_address(const char *name)
 {
+    if (!strcmp(name, "glClear")) return wayland_glClear;
+
     return p_eglGetProcAddress(name);
 }
 
@@ -805,18 +807,7 @@ static void register_extension(const char *ext)
 
 static BOOL init_opengl_funcs(void)
 {
-#define USE_GL_FUNC(func) \
-        if (!(opengl_funcs.p_##func = (void *)p_eglGetProcAddress(#func))) \
-        { \
-            ERR("%s not found, disabling OpenGL.\n", #func); \
-            return FALSE; \
-        }
-    ALL_GL_FUNCS
-#undef USE_GL_FUNC
-
-    p_glClear = opengl_funcs.p_glClear;
-    opengl_funcs.p_glClear = wayland_glClear;
-
+    p_glClear = (void *)p_eglGetProcAddress("glClear");
     return TRUE;
 }
 
