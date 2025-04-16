@@ -419,7 +419,7 @@ static void test_single_step_address(void)
 
     test_single_step_address_run(handler, 0);
 
-    if (is_wow64)
+    if (sizeof(void*) == 4)
         ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
                 test_single_step_exc_address, (char *)code_mem + 1);
     else
@@ -437,7 +437,7 @@ static void test_single_step_address(void)
 
     test_single_step_address_run(handler, 3);
 
-    if (is_wow64)
+    if (sizeof(void*) == 4)
         ok(test_single_step_exc_address == (char *)code_mem + 1, "got %p, expected %p.\n",
                 test_single_step_exc_address, (char *)code_mem + 1);
     else
