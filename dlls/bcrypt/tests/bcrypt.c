@@ -486,6 +486,7 @@ static UCHAR dk3[] = "4b007901b765489abead49d926f721d065a429c1";
 static UCHAR dk4[] = "364dd6bc200ec7d197f1b85f4a61769010717124";
 static UCHAR dk5[] = "3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038";
 static UCHAR dk6[] = "56fa6aa75548099dcc37d7f03425e0c3";
+static UCHAR dk7[] = "8754c32c64b0f524fc50c00f788135de";
 
 static const struct
 {
@@ -503,7 +504,8 @@ static const struct
     {  8,  4,     4096, 20, password,      salt,      dk3 },
     {  8,  4,  1000000, 20, password,      salt,      dk4 },
     { 24, 36,     4096, 25, long_password, long_salt, dk5 },
-    {  9,  5,     4096, 16, password_NUL,  salt_NUL,  dk6 }
+    {  9,  5,     4096, 16, password_NUL,  salt_NUL,  dk6 },
+    {  8,  0,        1, 16, password,      NULL,      dk7 }
 };
 
 static void test_BcryptDeriveKeyPBKDF2(void)

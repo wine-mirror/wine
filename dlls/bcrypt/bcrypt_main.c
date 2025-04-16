@@ -2420,7 +2420,7 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
         if (j == 0)
         {
             /* use salt || INT(i) */
-            if (hash->desc->process( &hash->inner, salt, salt_len ))
+            if (salt_len && hash->desc->process( &hash->inner, salt, salt_len ))
             {
                 free( buf );
                 return STATUS_INVALID_PARAMETER;
