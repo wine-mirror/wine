@@ -26,7 +26,63 @@
 #include <wine/unixlib.h>
 
 #include "unixlib.h"
-#include "mmdevdrv.h"
+
+typedef struct audio_session {
+    GUID guid;
+    struct list clients;
+
+    IMMDevice *device;
+
+    float master_vol;
+    UINT32 channel_count;
+    float *channel_vols;
+    BOOL mute;
+
+    WCHAR *display_name;
+    WCHAR *icon_path;
+    GUID grouping_param;
+
+    struct list entry;
+} AudioSession;
+
+typedef struct audio_session_wrapper {
+    IAudioSessionControl2 IAudioSessionControl2_iface;
+    IChannelAudioVolume IChannelAudioVolume_iface;
+    ISimpleAudioVolume ISimpleAudioVolume_iface;
+
+    LONG ref;
+
+    struct audio_client *client;
+    struct audio_session *session;
+} AudioSessionWrapper;
+
+struct audio_client {
+    IAudioClient3 IAudioClient3_iface;
+    IAudioRenderClient IAudioRenderClient_iface;
+    IAudioCaptureClient IAudioCaptureClient_iface;
+    IAudioClock IAudioClock_iface;
+    IAudioClock2 IAudioClock2_iface;
+    IAudioClockAdjustment IAudioClockAdjustment_iface;
+    IAudioStreamVolume IAudioStreamVolume_iface;
+
+    LONG ref;
+
+    IMMDevice *parent;
+    IUnknown *marshal;
+
+    EDataFlow dataflow;
+    float *vols;
+    UINT32 channel_count;
+    stream_handle stream;
+
+    HANDLE timer_thread;
+
+    struct audio_session *session;
+    struct audio_session_wrapper *session_wrapper;
+
+    struct list entry;
+    char *device_name;
+};
 
 extern HRESULT MMDevEnum_Create(REFIID riid, void **ppv);
 extern void MMDevEnum_Free(void);

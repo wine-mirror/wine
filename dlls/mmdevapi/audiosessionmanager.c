@@ -175,6 +175,13 @@ static HRESULT create_session_enumerator(IMMDevice *device, IAudioSessionEnumera
     return S_OK;
 }
 
+struct session_mgr
+{
+    IAudioSessionManager2 IAudioSessionManager2_iface;
+    IMMDevice *device;
+    LONG ref;
+};
+
 static inline struct session_mgr *impl_from_IAudioSessionManager2(IAudioSessionManager2 *iface)
 {
     return CONTAINING_RECORD(iface, struct session_mgr, IAudioSessionManager2_iface);

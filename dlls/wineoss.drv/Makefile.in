@@ -7,6 +7,5 @@ UNIX_CFLAGS  = $(OSS4_CFLAGS)
 
 SOURCES = \
 	midipatch.c \
-	mmdevdrv.c \
 	oss.c \
 	ossmidi.c
