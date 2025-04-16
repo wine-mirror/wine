@@ -1,5 +1,6 @@
 MODULE    = mmdevapi.dll
 IMPORTS   = ole32 oleaut32 user32 advapi32 version
+DELAYIMPORTS = winmm
 
 SOURCES = \
 	audiosessionmanager.c \

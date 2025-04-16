@@ -41,6 +41,7 @@
 #include "devpkey.h"
 #include "winreg.h"
 #include "spatialaudioclient.h"
+#include "mmddk.h"
 
 #include "mmdevapi_private.h"
 #include "wine/debug.h"
@@ -100,7 +101,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
     }
 
 #define LDFC(n) driver->p##n = (void*)GetProcAddress(driver->module, #n)
-    LDFC(DriverProc);
     LDFC(midMessage);
     LDFC(modMessage);
 #undef LDFC
@@ -347,11 +347,61 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
+static void notify_client(struct notify_context *notify)
+{
+    TRACE( "dev %u msg %x param1 %Ix param2 %0Ix\n",
+           notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+
+    DriverCallback( notify->callback, notify->flags, notify->device, notify->msg,
+                    notify->instance, notify->param_1, notify->param_2 );
+}
+
+static DWORD WINAPI notify_thread( void *p )
+{
+    struct midi_notify_wait_params params;
+    struct notify_context notify;
+    BOOL quit;
+
+    SetThreadDescription( GetCurrentThread(), L"mmdevapi_midi_notify" );
+    params.notify = &notify;
+    params.quit = &quit;
+
+    while (1)
+    {
+        MIDI_CALL( midi_notify_wait, &params );
+        if (quit) break;
+        if (notify.send_notify) notify_client(&notify);
+    }
+    return 0;
+}
+
 LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1, LPARAM param2 )
 {
     InitOnceExecuteOnce( &init_once, init_driver, NULL, NULL );
-    if (!midi_driver.pDriverProc) return 0;
-    return midi_driver.pDriverProc( id, driver, msg, param1, param2 );
+    if (!midi_driver.module_unixlib) return 0;
+
+    switch(msg)
+    {
+    case DRV_LOAD:
+    {
+        struct midi_init_params params;
+        UINT err = DRV_SUCCESS;
+
+        params.err = &err;
+        MIDI_CALL( midi_init, &params );
+        if (err == DRV_SUCCESS) CloseHandle( CreateThread( NULL, 0, notify_thread, NULL, 0, NULL ));
+        return err;
+    }
+    case DRV_FREE:
+        MIDI_CALL( midi_release, NULL );
+        return 1;
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_CONFIGURE:
+        return 1;
+    }
+    return DefDriverProc( id, driver, msg, param1, param2 );
 }
 
 DWORD WINAPI midMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
