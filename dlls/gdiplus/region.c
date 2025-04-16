@@ -1038,7 +1038,7 @@ static inline INT rgn_round(REAL x)
     return (INT) ceilf(x - RGN_ROUND_OFS);
 }
 
-static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, struct edge_list *edges)
+static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, const RECT *bounds, struct edge_list *edges)
 {
     GpStatus stat = Ok;
     int y, top_y, bottom_y;
@@ -1052,7 +1052,13 @@ static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, struct edge_list *ed
     top_y = rgn_round(top_pt.Y);
     bottom_y = rgn_round(bottom_pt.Y);
 
-    if (bottom_y == top_y)
+    if (top_y < bounds->top)
+        top_y = bounds->top;
+
+    if (bottom_y > bounds->bottom)
+        bottom_y = bounds->bottom;
+
+    if (bottom_y <= top_y)
         /* No scanlines intersect this segment */
         return Ok;
 
@@ -1069,6 +1075,11 @@ static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, struct edge_list *ed
 
         int rounded_x = rgn_round(x);
 
+        if (rounded_x < bounds->left)
+            rounded_x = bounds->left;
+        else if (rounded_x > bounds->right)
+            rounded_x = bounds->right;
+
         edges->edges[edges->length].x = rounded_x;
         edges->edges[edges->length].y = y;
         edges->edges[edges->length].rising = rising;
@@ -1078,7 +1089,7 @@ static GpStatus line_to_edge_list(GpPointF p1, GpPointF p2, struct edge_list *ed
     return stat;
 }
 
-static GpStatus flat_path_to_edge_list(GpPath *path, struct edge_list *edges)
+static GpStatus flat_path_to_edge_list(GpPath *path, const RECT *bounds, struct edge_list *edges)
 {
     GpStatus stat=Ok;
     int i, subpath_start=0;
@@ -1092,10 +1103,10 @@ static GpStatus flat_path_to_edge_list(GpPath *path, struct edge_list *edges)
 
         if ((type&PathPointTypePathTypeMask) == PathPointTypeLine)
         {
-            stat = line_to_edge_list(path->pathdata.Points[i-1], path->pathdata.Points[i], edges);
+            stat = line_to_edge_list(path->pathdata.Points[i-1], path->pathdata.Points[i], bounds, edges);
 
             if (stat == Ok && ((type & PathPointTypeCloseSubpath) || i == path->pathdata.Count - 1))
-                stat = line_to_edge_list(path->pathdata.Points[i], path->pathdata.Points[subpath_start], edges);
+                stat = line_to_edge_list(path->pathdata.Points[i], path->pathdata.Points[subpath_start], bounds, edges);
         }
     }
 
@@ -1175,10 +1186,9 @@ static GpStatus edge_list_to_rgndata(struct edge_list *edges, FillMode fill_mode
     return Ok;
 }
 
-static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
+static GpStatus get_path_hrgn(GpPath *path, const RECT *bounds, HRGN *hrgn)
 {
     GpStatus stat = Ok;
-    GpMatrix *graphics_transform = NULL, matrix;
     GpPath *transformed_path = NULL;
     struct edge_list edge_list = { 0 };
     RGNDATA *rgndata = NULL;
@@ -1189,22 +1199,15 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
         return *hrgn ? Ok : OutOfMemory;
     }
 
-    /* transform path by graphics transform if necessary */
-    if (graphics)
-    {
-        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &matrix);
-        graphics_transform = &matrix;
-    }
-
     if (stat == Ok)
         stat = GdipClonePath(path, &transformed_path);
 
     if (stat == Ok)
-        stat = GdipFlattenPath(transformed_path, graphics_transform, FlatnessDefault);
+        stat = GdipFlattenPath(transformed_path, NULL, FlatnessDefault);
 
     /* build edge list */
     if (stat == Ok)
-        stat = flat_path_to_edge_list(transformed_path, &edge_list);
+        stat = flat_path_to_edge_list(transformed_path, bounds, &edge_list);
 
     /* transform edge list into scans list */
     if (stat == Ok)
@@ -1226,7 +1229,7 @@ static GpStatus get_path_hrgn(GpPath *path, GpGraphics *graphics, HRGN *hrgn)
     return stat;
 }
 
-static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *graphics, HRGN *hrgn)
+static GpStatus get_region_hrgn(struct region_element *element, const RECT *bounds, HRGN *hrgn)
 {
     switch (element->type)
     {
@@ -1237,7 +1240,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             *hrgn = CreateRectRgn(0, 0, 0, 0);
             return *hrgn ? Ok : OutOfMemory;
         case RegionDataPath:
-            return get_path_hrgn(element->elementdata.path, graphics, hrgn);
+            return get_path_hrgn(element->elementdata.path, bounds, hrgn);
         case RegionDataRect:
         {
             GpPath* path;
@@ -1250,7 +1253,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             stat = GdipAddPathRectangle(path, rc->X, rc->Y, rc->Width, rc->Height);
 
             if (stat == Ok)
-                stat = get_path_hrgn(path, graphics, hrgn);
+                stat = get_path_hrgn(path, bounds, hrgn);
 
             GdipDeletePath(path);
 
@@ -1266,7 +1269,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             GpStatus stat;
             int ret;
 
-            stat = get_region_hrgn(element->elementdata.combine.left, graphics, &left);
+            stat = get_region_hrgn(element->elementdata.combine.left, bounds, &left);
             if (stat != Ok)
             {
                 *hrgn = NULL;
@@ -1279,7 +1282,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                 switch (element->type)
                 {
                     case CombineModeIntersect:
-                        return get_region_hrgn(element->elementdata.combine.right, graphics, hrgn);
+                        return get_region_hrgn(element->elementdata.combine.right, bounds, hrgn);
                     case CombineModeXor: case CombineModeExclude:
                         left = CreateRectRgn(-(1 << 22), -(1 << 22), 1 << 22, 1 << 22);
                         break;
@@ -1292,7 +1295,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
                 }
             }
 
-            stat = get_region_hrgn(element->elementdata.combine.right, graphics, &right);
+            stat = get_region_hrgn(element->elementdata.combine.right, bounds, &right);
             if (stat != Ok)
             {
                 DeleteObject(left);
@@ -1367,12 +1370,53 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
  */
 GpStatus WINGDIPAPI GdipGetRegionHRgn(GpRegion *region, GpGraphics *graphics, HRGN *hrgn)
 {
+    GpStatus stat=Ok;
+    REAL min_x, min_y, max_x, max_y;
+    BOOL empty, infinite;
+    RECT bounds;
+    GpRegion *tmp_region = NULL;
+    GpMatrix transform;
+
     TRACE("(%p, %p, %p)\n", region, graphics, hrgn);
 
     if (!region || !hrgn)
         return InvalidParameter;
 
-    return get_region_hrgn(&region->node, graphics, hrgn);
+    if (graphics) {
+        stat = GdipCloneRegion(region, &tmp_region);
+        region = tmp_region;
+
+        if (stat == Ok)
+            stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &transform);
+
+        if (stat == Ok)
+            stat = GdipTransformRegion(region, &transform);
+    }
+
+    if (stat == Ok)
+    {
+        get_region_bounding_box(&region->node, &min_x, &min_y, &max_x, &max_y, &empty, &infinite);
+
+        if (empty)
+        {
+            if (infinite)
+                *hrgn = NULL;
+            else
+                *hrgn = CreateRectRgn(0, 0, 0, 0);
+        }
+        else
+        {
+            bounds.left = floorf(min_x);
+            bounds.top = floorf(min_y);
+            bounds.right = ceilf(max_x) + 1;
+            bounds.bottom = ceilf(max_y) + 1;
+            stat = get_region_hrgn(&region->node, &bounds, hrgn);
+        }
+    }
+
+    GdipDeleteRegion(tmp_region);
+
+    return stat;
 }
 
 GpStatus WINGDIPAPI GdipIsEmptyRegion(GpRegion *region, GpGraphics *graphics, BOOL *res)
