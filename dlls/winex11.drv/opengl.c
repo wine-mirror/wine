@@ -436,9 +436,9 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
                         "installed correctly\n", is_win64 ? "64-bit" : "32-bit" );
         goto done;
     }
-    gl_renderer = (const char *)opengl_funcs.p_glGetString(GL_RENDERER);
-    gl_version  = (const char *)opengl_funcs.p_glGetString(GL_VERSION);
-    str = (const char *) opengl_funcs.p_glGetString(GL_EXTENSIONS);
+    gl_renderer = (const char *)pglGetString(GL_RENDERER);
+    gl_version  = (const char *)pglGetString(GL_VERSION);
+    str = (const char *) pglGetString(GL_EXTENSIONS);
     glExtensions = malloc( strlen(str) + sizeof(legacy_extensions) );
     strcpy(glExtensions, str);
     strcat(glExtensions, legacy_extensions);
@@ -530,30 +530,17 @@ UINT X11DRV_OpenGLInit( UINT version, struct opengl_funcs **funcs, const struct 
         return STATUS_NOT_SUPPORTED;
     }
 
-#define USE_GL_FUNC(func) \
-        if (!(opengl_funcs.p_##func = dlsym( opengl_handle, #func ))) \
+    /* redirect some standard OpenGL functions */
+#define LOAD_FUNCPTR(func) \
+        if (!(p##func = dlsym( opengl_handle, #func ))) \
         { \
             ERR( "%s not found in libGL, disabling OpenGL.\n", #func ); \
             goto failed; \
         }
-    ALL_GL_FUNCS
-#undef USE_GL_FUNC
-
-#define LOAD_FUNCPTR( func )                                                                       \
-    if (!(p##func = dlsym( opengl_handle, #func )))                                                \
-    {                                                                                              \
-        ERR( "%s not found in libGL, disabling OpenGL.\n", #func );                                \
-        goto failed;                                                                               \
-    }
     LOAD_FUNCPTR( glFinish );
     LOAD_FUNCPTR( glFlush );
+    LOAD_FUNCPTR( glGetString );
 #undef LOAD_FUNCPTR
-
-    /* redirect some standard OpenGL functions */
-#define REDIRECT(func) \
-    do { p##func = opengl_funcs.p_##func; opengl_funcs.p_##func = w##func; } while(0)
-    REDIRECT( glGetString );
-#undef REDIRECT
 
     pglXGetProcAddressARB = dlsym(opengl_handle, "glXGetProcAddressARB");
     if (pglXGetProcAddressARB == NULL) {
@@ -1571,6 +1558,10 @@ static BOOL x11drv_context_destroy(void *private)
 static void *x11drv_get_proc_address( const char *name )
 {
     void *ptr;
+
+    /* redirect some standard OpenGL functions */
+    if (!strcmp( name, "glGetString" )) return wglGetString;
+
     if ((ptr = dlsym( opengl_handle, name ))) return ptr;
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
