@@ -7,5 +7,4 @@ UNIX_LIBS    = $(COREAUDIO_LIBS)
 SOURCES = \
 	coreaudio.c \
 	coremidi.c \
-	midi.c \
 	mmdevdrv.c

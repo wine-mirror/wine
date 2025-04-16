@@ -41,9 +41,6 @@ typedef struct _DriverFuncs {
      * priority value reflecting the likelihood that they are actually
      * valid. See enum _DriverPriority. */
     int priority;
-
-    DWORD (WINAPI *pmidMessage)(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2);
-    DWORD (WINAPI *pmodMessage)(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2);
 } DriverFuncs;
 
 extern DriverFuncs drvs;

@@ -7,5 +7,4 @@ UNIX_LIBS    = $(ALSA_LIBS) $(PTHREAD_LIBS)
 SOURCES = \
 	alsa.c \
 	alsamidi.c \
-	midi.c \
 	mmdevdrv.c

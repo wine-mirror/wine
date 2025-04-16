@@ -100,11 +100,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         goto fail;
     }
 
-#define LDFC(n) driver->p##n = (void*)GetProcAddress(driver->module, #n)
-    LDFC(midMessage);
-    LDFC(modMessage);
-#undef LDFC
-
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     params.name     = wcsrchr(path, '\\');
     params.name     = params.name ? params.name + 1 : path;
@@ -406,14 +401,48 @@ LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1,
 
 DWORD WINAPI midMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
 {
-    if (!midi_driver.pmidMessage) return 0;
-    return midi_driver.pmidMessage( id, msg, user, param1, param2 );
+    struct midi_in_message_params params;
+    struct notify_context notify;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    params.notify  = &notify;
+
+    do
+    {
+        MIDI_CALL( midi_in_message, &params );
+        if ((!err || err == ERROR_RETRY) && notify.send_notify) notify_client( &notify );
+    } while (err == ERROR_RETRY);
+
+    return err;
 }
 
 DWORD WINAPI modMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
 {
-    if (!midi_driver.pmodMessage) return 0;
-    return midi_driver.pmodMessage( id, msg, user, param1, param2 );
+    struct midi_out_message_params params;
+    struct notify_context notify;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    params.notify  = &notify;
+
+    MIDI_CALL( midi_out_message, &params );
+    if (!err && notify.send_notify) notify_client( &notify );
+    return err;
 }
 
 DWORD WINAPI auxMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
