@@ -2605,42 +2605,47 @@ static NTSTATUS derive_key_raw( struct secret *secret, UCHAR *output, ULONG outp
     return status;
 }
 
-static BCRYPT_ALG_HANDLE hash_handle_from_desc( BCryptBufferDesc *desc )
+static struct algorithm *get_hash_alg( BCryptBuffer *buf )
 {
-    ULONG i;
-    if (!desc) return BCRYPT_SHA1_ALG_HANDLE;
-    for (i = 0; i < desc->cBuffers; i++)
-    {
-        if (desc->pBuffers[i].BufferType == KDF_HASH_ALGORITHM)
-        {
-            const WCHAR *str = desc->pBuffers[i].pvBuffer;
-            if (!wcscmp( str, BCRYPT_SHA1_ALGORITHM )) return BCRYPT_SHA1_ALG_HANDLE;
-            else if (!wcscmp( str, BCRYPT_SHA256_ALGORITHM )) return BCRYPT_SHA256_ALG_HANDLE;
-            else if (!wcscmp( str, BCRYPT_SHA384_ALGORITHM )) return BCRYPT_SHA384_ALG_HANDLE;
-            else if (!wcscmp( str, BCRYPT_SHA512_ALGORITHM )) return BCRYPT_SHA512_ALG_HANDLE;
-            else
-            {
-                FIXME( "hash algorithm %s not supported\n", debugstr_w(str) );
-                return NULL;
-            }
-        }
-        else FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
-    }
+    const WCHAR *str = buf->pvBuffer;
+    BCRYPT_ALG_HANDLE handle = NULL;
 
-    return BCRYPT_SHA1_ALG_HANDLE;
+    if (!wcscmp( str, BCRYPT_SHA1_ALGORITHM ))
+        handle = BCRYPT_SHA1_ALG_HANDLE;
+    else if (!wcscmp( str, BCRYPT_SHA256_ALGORITHM ))
+        handle = BCRYPT_SHA256_ALG_HANDLE;
+    else if (!wcscmp( str, BCRYPT_SHA384_ALGORITHM ))
+        handle = BCRYPT_SHA384_ALG_HANDLE;
+    else if (!wcscmp( str, BCRYPT_SHA512_ALGORITHM ))
+        handle = BCRYPT_SHA512_ALG_HANDLE;
+
+    if (handle) return get_alg_object( handle );
+    FIXME( "hash algorithm %s not supported\n", debugstr_w(str) );
+    return NULL;
 }
 
 static NTSTATUS derive_key_hash( struct secret *secret, BCryptBufferDesc *desc, UCHAR *output, ULONG output_len,
                                  ULONG *ret_len )
 {
     struct key_asymmetric_derive_key_params params;
-    struct algorithm *alg = get_alg_object( hash_handle_from_desc(desc) );
     ULONG hash_len, derived_key_len = secret->privkey->u.a.bitlen / 8;
     UCHAR hash_buf[MAX_HASH_OUTPUT_BYTES];
+    struct algorithm *alg = NULL;
     UCHAR *derived_key;
     NTSTATUS status;
+    ULONG i;
 
-    if (!alg) return STATUS_NOT_SUPPORTED;
+    for (i = 0; i < (desc ? desc->cBuffers : 0); i++)
+    {
+        if (desc->pBuffers[i].BufferType == KDF_HASH_ALGORITHM)
+        {
+            alg = get_hash_alg( desc->pBuffers + i );
+            if (!alg) return STATUS_NOT_SUPPORTED;
+        }
+        else FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
+    }
+    if (!alg) alg = get_alg_object( BCRYPT_SHA1_ALG_HANDLE );
+
     if (!(derived_key = malloc( derived_key_len ))) return STATUS_NO_MEMORY;
 
     params.privkey    = secret->privkey;
