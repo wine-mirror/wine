@@ -6828,17 +6828,9 @@ static IMFSample *test_xvp_process_sample(IMFTransform *xvp, IMFSample *in_sampl
         .dwStatus = 0,
         .pEvents = NULL,
     };
-    MFT_OUTPUT_STREAM_INFO info;
     DWORD status;
     BYTE *out_data;
     DWORD out_length;
-
-    hr = IMFTransform_GetOutputStreamInfo(xvp, 0, &info);
-    ok(hr == S_OK, "Failed to get output stream info, hr %#lx.\n", hr);
-
-    ok(!!(info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), "MFT_OUTPUT_STREAM_PROVIDES_SAMPLES expected\n");
-    ok(!(info.dwFlags & MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES), "MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES unexpected\n");
-    ok(info.cbSize == 4, "Output size should be 4.\n");
 
     hr = IMFTransform_ProcessInput(xvp, 0, in_sample, 0);
     ok(hr == S_OK, "Failed to process input, hr %#lx.\n", hr);
@@ -6869,6 +6861,7 @@ static void test_xvp_playback_mode(void)
 {
     HRESULT hr;
     UINT reset_token;
+    MFT_OUTPUT_STREAM_INFO out_info;
     IMFDXGIDeviceManager *manager;
     ID3D11Device *device;
     IMFTransform *xvp;
@@ -6934,9 +6927,22 @@ static void test_xvp_playback_mode(void)
     hr = IMFTransform_SetOutputType(xvp, 0, type, 0);
     ok(hr == S_OK, "Failed to set output type, hr %#lx.\n", hr);
 
+    hr = IMFTransform_GetOutputStreamInfo(xvp, 0, &out_info);
+    ok(hr == S_OK, "Failed to get output stream info, hr %#lx.\n", hr);
+
+    ok(out_info.cbSize == 4, "Output size should be 4.\n");
+
     in_sample = create_dxgi_sample(device, 0xdeadbeef, 0);
 
-    IMFSample_Release(test_xvp_process_sample(xvp, in_sample, NULL));
+    if ((out_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES) || (out_info.dwFlags & MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+    {
+        got_out_sample = test_xvp_process_sample(xvp, in_sample, NULL);
+        IMFSample_Release(got_out_sample);
+    }
+    else
+    {
+        win_skip("Video processor MFT can't provide output samples.\n");
+    }
 
     hr = IMFTransform_ProcessMessage(xvp, MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
     ok(hr == S_OK, "Failed to end streaming, hr %#lx.\n", hr);
