@@ -4374,6 +4374,7 @@ static void test_PBKDF2(void)
 {
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     BCRYPT_ALG_HANDLE alg;
+    BCRYPT_KEY_HANDLE key;
     NTSTATUS status;
     ULONG val, size;
 
@@ -4404,6 +4405,16 @@ static void test_PBKDF2(void)
     ok(key_lengths.dwMaxLength == 16384, "got %lu\n", key_lengths.dwMaxLength);
     ok(key_lengths.dwIncrement == 8, "got %lu\n", key_lengths.dwIncrement);
 
+    key = 0;
+    status = BCryptGenerateSymmetricKey(alg, &key, NULL, 0, (UCHAR *)"test", 4, 0);
+    ok(!status, "got %#lx\n", status);
+    val = size = 0;
+    status = BCryptGetProperty(key, BCRYPT_KEY_STRENGTH, (UCHAR *)&val, sizeof(val), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(val == strlen("test") * 8, "got %lu\n", val);
+
+    status = BCryptDestroyKey(key);
+    ok(!status, "got %#lx\n", status);
     status = BCryptCloseAlgorithmProvider(alg, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }

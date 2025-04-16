@@ -128,7 +128,8 @@ builtin_algorithms[] =
 
 static inline BOOL is_symmetric_key( const struct key *key )
 {
-    return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE;
+    return builtin_algorithms[key->alg_id].class == BCRYPT_CIPHER_INTERFACE
+        || builtin_algorithms[key->alg_id].class == BCRYPT_KEY_DERIVATION_INTERFACE;
 }
 
 static inline BOOL is_asymmetric_encryption_key( struct key *key )
@@ -1209,8 +1210,15 @@ static NTSTATUS key_symmetric_generate( struct algorithm *alg, BCRYPT_KEY_HANDLE
     struct key *key;
     NTSTATUS status;
 
-    if (!(block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
-    if (!get_alg_property( alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size ))
+    if (alg->id == ALG_ID_PBKDF2 &&
+            !get_alg_property( alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size ))
+    {
+        if (secret_len > key_lengths.dwMaxLength / 8 || secret_len < key_lengths.dwMinLength / 8)
+            return STATUS_INVALID_PARAMETER;
+        block_size = secret_len;
+    }
+    else if (!(block_size = get_block_size( alg ))) return STATUS_INVALID_PARAMETER;
+    else if (!get_alg_property( alg, BCRYPT_KEY_LENGTHS, (UCHAR *)&key_lengths, sizeof(key_lengths), &size ))
     {
         if (secret_len > (size = key_lengths.dwMaxLength / 8))
         {
