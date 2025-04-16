@@ -680,7 +680,7 @@ static void test_device_properties( DEVICE_OBJECT *device )
                 ok( stored_type == type, "Expected DEVPROPTYPE value %#lx, got %#lx.\n", type,
                     stored_type );
                 if (status == STATUS_SUCCESS)
-                    ok( memcmp( buf, value, size ) == 0,
+                    ok( kmemcmp( buf, value, size ) == 0,
                         "Got unexpected device property value.\n" );
                 ExFreePool( buf );
             }
