@@ -3,6 +3,7 @@
  *
  * Copyright (C) 1999 - 2001 D A Pickles
  * Copyright (C) 2007 J Edmeades
+ * Copyright (C) 2025 Joe Souza (tab-completion support)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,6 +33,19 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
+typedef struct _SEARCH_CONTEXT
+{
+    WIN32_FIND_DATAW *fd;
+    BOOL have_quotes;
+    BOOL user_specified_quotes;
+    BOOL is_dir_search;
+    int search_pos;
+    int insert_pos;
+    int entry_count;
+    int current_entry;
+    WCHAR searchstr[MAXSTRING];
+} SEARCH_CONTEXT;
+
 extern const WCHAR inbuilt[][10];
 extern struct env_stack *pushd_directories;
 
@@ -60,6 +74,382 @@ static int numChars;
 static HANDLE control_c_event;
 
 #define MAX_WRITECONSOLE_SIZE 65535
+
+
+static BOOL is_directory_operation(WCHAR *inputBuffer)
+{
+    WCHAR *param = NULL, *first_param;
+    BOOL ret = FALSE;
+
+    first_param = WCMD_parameter(inputBuffer, 0, &param, TRUE, FALSE);
+
+    if (!wcsicmp(first_param, L"cd") ||
+        !wcsicmp(first_param, L"rd") ||
+        !wcsicmp(first_param, L"md") ||
+        !wcsicmp(first_param, L"chdir") ||
+        !wcsicmp(first_param, L"rmdir") ||
+        !wcsicmp(first_param, L"mkdir")) {
+
+        ret = TRUE;
+    }
+
+    return ret;
+}
+
+static void clear_console_characters(const HANDLE hOutput, SHORT cCount, const SHORT width)
+{
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    DWORD written;
+    SHORT chars;
+
+    GetConsoleScreenBufferInfo(hOutput, &csbi);
+
+    /* Need to handle clearing multiple lines, in case user resized console window. */
+    while (cCount) {
+        chars = min(width - csbi.dwCursorPosition.X, cCount);
+        FillConsoleOutputCharacterW(hOutput, L' ', chars, csbi.dwCursorPosition, &written);
+        csbi.dwCursorPosition.Y++;      /* Bump to next row. */
+        csbi.dwCursorPosition.X = 0;    /* First column in the row. */
+        cCount -= chars;
+    }
+}
+
+static void set_cursor_visible(const HANDLE hOutput, const BOOL visible)
+{
+    CONSOLE_CURSOR_INFO cursorInfo;
+
+    if (GetConsoleCursorInfo(hOutput, &cursorInfo)) {
+        cursorInfo.bVisible = visible;
+        SetConsoleCursorInfo(hOutput, &cursorInfo);
+    }
+}
+
+static void build_search_string(WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
+{
+    int cc = 0, nn = 0;
+    WCHAR *param = NULL, *last_param, *stripped_copy = NULL;
+    WCHAR last_stripped_copy[MAXSTRING] = L"\0";
+    BOOL need_wildcard = TRUE;
+
+    sc->searchstr[0] = L'\0';
+
+    /* If inputBuffer ends in a space then the user hit tab beyond the last
+     * parameter, so use that as the search pos (i.e. a wildcard search).
+     * Otherwise, parse the buffer to find the last parameter in the buffer,
+     * where tab was pressed.
+     */
+    if (len && inputBuffer[len-1] == L' ') {
+        cc = len;
+    } else {
+        /* Handle spaces in directory names.  Need to quote paths if they contain spaces.
+         * Also, there can be multiple quoted paths on a command line, so find the current
+         * one.
+         */
+        do {
+            last_param = param;
+            if (stripped_copy) {
+                wcsncpy_s(last_stripped_copy, ARRAY_SIZE(last_stripped_copy), stripped_copy, _TRUNCATE);
+            }
+            stripped_copy = WCMD_parameter(inputBuffer, nn++, &param, FALSE, FALSE);
+        } while (param);
+
+        if (last_param) {
+            cc = last_param - inputBuffer;
+        }
+
+        if (inputBuffer[cc] == L'\"') {
+            sc->user_specified_quotes = TRUE;
+            sc->have_quotes = TRUE;
+            cc++;
+        }
+
+        if (last_stripped_copy[0]) {
+            /* We used the stripped version of the path for the search string, and also use
+             * it to replace the user's text in case and only if we find a match.
+             * It's legal to have quotes in strange places in the path, and WCMD_parameter
+             * removes them for us.
+             */
+            wcsncpy_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), last_stripped_copy, _TRUNCATE);
+            if (wcschr(sc->searchstr, L'?') || wcschr(sc->searchstr, L'*')) {
+                need_wildcard = FALSE;
+            }
+        }
+    }
+
+    sc->search_pos = cc;
+    if (need_wildcard) {
+        wcsncat_s(sc->searchstr, ARRAY_SIZE(sc->searchstr), L"*", _TRUNCATE);
+    }
+}
+
+static void find_insert_pos(const WCHAR *inputBuffer, int len, SEARCH_CONTEXT *sc)
+{
+    int cc = len;
+
+    /* Handle paths here.  Find last '\\'.
+     * If '\\' isn't found then insert pos is the same as search pos.
+     */
+    while (cc > sc->search_pos && inputBuffer[cc] != L'\\') {
+        cc--;
+    }
+
+    if (inputBuffer[cc] == L'\"' || inputBuffer[cc] == L'\\') {
+        cc++;
+    }
+
+    sc->insert_pos = cc;
+}
+
+/* Based on code in WCMD_list_directory.
+ * Could have used a linked-list, but array is more efficient for
+ * build once / read mostly.
+ */
+static void build_directory_entry_list(SEARCH_CONTEXT *sc)
+{
+    HANDLE hff;
+
+    sc->entry_count = 0;
+    sc->current_entry = -1;
+
+    sc->fd = xalloc(sizeof(WIN32_FIND_DATAW));
+
+    WINE_TRACE("Looking for matches to '%s'\n", wine_dbgstr_w(sc->searchstr));
+    hff = FindFirstFileW(sc->searchstr, &sc->fd[sc->entry_count]);
+    if (hff != INVALID_HANDLE_VALUE) {
+        do {
+            /* Always skip "." and ".." entries. */
+            if (wcscmp(sc->fd[sc->entry_count].cFileName, L".") && wcscmp(sc->fd[sc->entry_count].cFileName, L"..")) {
+                if (!sc->is_dir_search || sc->fd[sc->entry_count].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    sc->entry_count++;
+                    sc->fd = xrealloc(sc->fd, (sc->entry_count + 1) * sizeof(WIN32_FIND_DATAW));
+                }
+            }
+        } while (FindNextFileW(hff, &sc->fd[sc->entry_count]));
+
+        FindClose(hff);
+    }
+}
+
+static void free_directory_entry_list(SEARCH_CONTEXT *sc)
+{
+    free(sc->fd);
+    sc->fd = NULL;
+    sc->entry_count = 0;
+    sc->current_entry = 0;
+}
+
+static void get_next_matching_directory_entry(SEARCH_CONTEXT *sc, BOOL reverse)
+{
+    if (reverse) {
+        sc->current_entry--;
+        if (sc->current_entry < 0) {
+            sc->current_entry = sc->entry_count - 1;
+        }
+    } else {
+        sc->current_entry++;
+        if (sc->current_entry >= sc->entry_count) {
+            sc->current_entry = 0;
+        }
+    }
+}
+
+static void update_input_buffer(WCHAR *inputBuffer, const DWORD inputBufferLength, SEARCH_CONTEXT *sc)
+{
+    BOOL needQuotes = FALSE;
+    BOOL removeQuotes = FALSE;
+    int len;
+
+    /* We have found the insert position for the results.  Terminate the string here. */
+    inputBuffer[sc->insert_pos] = L'\0';
+
+    /* If there are no spaces in the path then we can remove quotes when appending
+     * the search result, unless the search result itself requires them.
+     */
+    if (sc->have_quotes && !sc->user_specified_quotes && !wcschr(&inputBuffer[sc->search_pos], L' ')) {
+        TRACE("removeQuotes = TRUE\n");
+        removeQuotes = TRUE;
+    }
+
+    /* Online documentation states that paths or filenames should be quoted if they are long
+     * file names or contain spaces.  In practice, modern Windows seems to quote paths/files
+     * only if they contain spaces.
+     */
+    needQuotes = wcschr(sc->fd[sc->current_entry].cFileName, L' ') ? TRUE : FALSE;
+    len = lstrlenW(inputBuffer);
+    /* Remove starting quotes, if able. */
+    if (removeQuotes && !needQuotes) {
+        /* Quotes are at search_pos-1 if they were already present at the start of this search.
+         * Otherwise quotes are at search_pos if we added them.
+         */
+        if (inputBuffer[sc->search_pos] == L'"') {
+            memmove(&inputBuffer[sc->search_pos], &inputBuffer[sc->search_pos+1], (len - sc->search_pos) * sizeof(WCHAR));
+            sc->have_quotes = FALSE;
+            sc->insert_pos--;
+        }
+    } else
+    /* Add starting quotes if needed. */
+    if (needQuotes && !sc->have_quotes) {
+        if (len < inputBufferLength - 1) {
+            if (sc->search_pos <= len) {
+                memmove(&inputBuffer[sc->search_pos+1], &inputBuffer[sc->search_pos], (len - sc->search_pos + 1) * sizeof(WCHAR));
+                inputBuffer[sc->search_pos] = L'\"';
+                sc->have_quotes = TRUE;
+                sc->insert_pos++;
+            }
+        }
+    }
+    wcsncat_s(inputBuffer, inputBufferLength, sc->fd[sc->current_entry].cFileName, _TRUNCATE);
+    /* Add closing quotes if needed. */
+    if (needQuotes || (sc->have_quotes && !removeQuotes)) {
+        len = lstrlenW(inputBuffer);
+        if (len < inputBufferLength - 1) {
+            inputBuffer[len] = L'\"';
+            inputBuffer[len+1] = L'\0';
+        }
+    }
+}
+
+/* Intended as a mostly drop-in replacement for ReadConsole, but with tab-completion support.
+ */
+BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead)
+{
+    HANDLE hOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    SEARCH_CONTEXT sc = {0};
+    WCHAR *lastResult = NULL;
+    CONSOLE_SCREEN_BUFFER_INFO startConsoleInfo, lastConsoleInfo;
+    DWORD numWritten;
+    UINT oldCurPos, curPos;
+    BOOL done = FALSE;
+    BOOL ret = FALSE;
+    int maxLen = 0;  /* Track maximum length in case user fetches a long string from a previous iteration in history. */
+
+    if (!VerifyConsoleIoHandle(hInput) || !inputBuffer || !inputBufferLength) {
+        return FALSE;
+    }
+
+    /* Get starting cursor position and size */
+    if (!GetConsoleScreenBufferInfo(hOutput, &startConsoleInfo)) {
+        return FALSE;
+    }
+    lastConsoleInfo = startConsoleInfo;
+
+    *inputBuffer = L'\0';
+    curPos = 0;
+
+    while (!done) {
+        CONSOLE_READCONSOLE_CONTROL inputControl;
+        int len;
+
+        len = lstrlenW(inputBuffer);
+
+        /* Update current input display in console */
+        set_cursor_visible(hOutput, FALSE);
+        SetConsoleCursorPosition(hOutput, startConsoleInfo.dwCursorPosition);
+
+        WriteConsoleW(hOutput, inputBuffer, len, &numWritten, NULL);
+        if (maxLen > len) {
+            clear_console_characters(hOutput, maxLen - len, lastConsoleInfo.dwSize.X); /* width at time of last console update */
+        }
+        maxLen = len;
+        set_cursor_visible(hOutput, TRUE);
+
+        /* Remember current dimensions in case user resizes console window. */
+        GetConsoleScreenBufferInfo(hOutput, &lastConsoleInfo);
+
+        inputControl.nLength = sizeof(inputControl);
+        inputControl.nInitialChars = len;
+        inputControl.dwCtrlWakeupMask = (1 << '\t');
+        inputControl.dwControlKeyState = 0;
+
+        /* Allow room for NULL terminator. inputBufferLength is at least 1 due to check above. */
+        ret = ReadConsoleW(hInput, inputBuffer, inputBufferLength - 1, numRead, &inputControl);
+        if (!ret) {
+            break;
+        }
+
+        inputBuffer[*numRead] = L'\0';
+        TRACE("ReadConsole: [%lu][%s]\n", *numRead, wine_dbgstr_w(inputBuffer));
+        len = *numRead;
+        if (len > maxLen) {
+            maxLen = len;
+        }
+        oldCurPos = curPos;
+        curPos = 0;
+        while (curPos < len && inputBuffer[curPos] != L'\t') {
+            curPos++;
+        }
+        /* curPos is often numRead - 1, but not always, as in the case where history is retrieved
+         * and then user backspaces to somewhere mid-string and then hits Tab.
+         */
+        TRACE("numRead: %lu, curPos: %u\n", *numRead, curPos);
+
+        switch (inputBuffer[curPos]) {
+        case L'\t':
+            TRACE("TAB: [%s]\n", wine_dbgstr_w(inputBuffer));
+            inputBuffer[curPos] = L'\0';
+
+            /* See if we need to conduct a new search. */
+            if (curPos != oldCurPos || (!lastResult || wcscmp(inputBuffer, lastResult))) {
+                /* New search */
+
+                sc.have_quotes = FALSE;
+                sc.user_specified_quotes = FALSE;
+                sc.search_pos = 0;
+                sc.insert_pos = 0;
+
+                build_search_string(inputBuffer, curPos, &sc);
+                TRACE("***** New search: [%s]\n", wine_dbgstr_w(sc.searchstr));
+
+                sc.is_dir_search = is_directory_operation(inputBuffer);
+
+                free_directory_entry_list(&sc);
+                build_directory_entry_list(&sc);
+            }
+
+            if (sc.entry_count) {
+                get_next_matching_directory_entry(&sc, (inputControl.dwControlKeyState & SHIFT_PRESSED) ? TRUE : FALSE);
+
+                /* If this is our first time through here for this search, we need to find the insert position
+                 * for the results.  Note that this is very likely not the same location as the search position.
+                 */
+                if (!sc.insert_pos) {
+                    /* Replace the user's path with the stripped version (i.e. the search string), in case the user
+                     * had quotes in unexpected places.
+                     */
+                    wcsncpy_s(&inputBuffer[sc.search_pos], inputBufferLength - sc.search_pos, sc.searchstr, _TRUNCATE);
+                    curPos = lstrlenW(inputBuffer);
+
+                    find_insert_pos(inputBuffer, curPos, &sc);
+                }
+
+                /* Copy search results to input buffer. */
+                update_input_buffer(inputBuffer, inputBufferLength, &sc);
+
+                /* Save last result in case user edits existing portion of the string before hitting tab again. */
+                free(lastResult);
+                lastResult = xstrdupW(inputBuffer);
+
+                /* Update cursor position to end of buffer. */
+                curPos = lstrlenW(inputBuffer);
+                if (curPos > maxLen) {
+                    maxLen = curPos;
+                }
+            }
+            break;
+
+        default:
+            TRACE("RETURN: [%s]\n", wine_dbgstr_w(inputBuffer));
+            done = TRUE;
+            break;
+        }
+    }
+
+    /* Cleanup any existing search results and related data before exiting. */
+    free_directory_entry_list(&sc);
+    free(lastResult);
+
+    return ret;
+}
 
 /*
  * Returns a buffer for reading from/writing to file

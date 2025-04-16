@@ -227,9 +227,7 @@ static WCHAR *WCMD_fgets_helper(WCHAR *buf, DWORD noChars, HANDLE h, UINT code_p
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
-  if (VerifyConsoleIoHandle(h) && ReadConsoleW(h, buf, noChars, &charsRead, NULL) && charsRead) {
-      if (!charsRead) return NULL;
-
+  if (WCMD_read_console(h, buf, noChars, &charsRead) && charsRead) {
       /* Find first EOL */
       for (i = 0; i < charsRead; i++) {
           if (buf[i] == '\n' || buf[i] == '\r')

@@ -212,6 +212,7 @@ WCHAR *WCMD_LoadMessage(UINT id);
 WCHAR *WCMD_strsubstW(WCHAR *start, const WCHAR* next, const WCHAR* insert, int len);
 RETURN_CODE WCMD_wait_for_input(HANDLE hIn);
 BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWORD charsRead);
+BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead);
 
 enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
 enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output);
