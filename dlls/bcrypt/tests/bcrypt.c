@@ -29,6 +29,8 @@
 #include "wine/test.h"
 
 static NTSTATUS (WINAPI *pBCryptHash)(BCRYPT_ALG_HANDLE, UCHAR *, ULONG, UCHAR *, ULONG, UCHAR *, ULONG);
+static NTSTATUS (WINAPI *pBCryptKeyDerivation)(BCRYPT_KEY_HANDLE,
+        BCryptBufferDesc *, UCHAR *, ULONG, ULONG *, ULONG);
 
 static void test_BCryptGenRandom(void)
 {
@@ -4372,11 +4374,46 @@ static void test_RC4(void)
 
 static void test_PBKDF2(void)
 {
+    static char salt[] = "cCxuHMEHLibcglJOG88dIw==";
+    static ULONGLONG iter_count = 25;
+    static BCryptBuffer pbkdf2_param_buffers[] =
+    {
+        {
+            sizeof(BCRYPT_SHA1_ALGORITHM),
+            KDF_HASH_ALGORITHM,
+            (void *)BCRYPT_SHA1_ALGORITHM,
+        },
+        {
+            sizeof(salt) - 1,
+            KDF_SALT,
+            salt,
+        },
+        {
+            sizeof(iter_count),
+            KDF_ITERATION_COUNT,
+            (void *)&iter_count,
+        }
+    };
+    static BCryptBufferDesc pbkdf2_params =
+    {
+        BCRYPTBUFFER_VERSION,
+        ARRAY_SIZE(pbkdf2_param_buffers),
+        pbkdf2_param_buffers,
+    };
+    static UCHAR pbkdf2_hash[] =
+    {
+        0x18, 0xf2, 0x58, 0x0b, 0x92, 0x6e, 0x6d, 0xfe,
+        0x55, 0xbb, 0x62, 0x87, 0x5b, 0x1f, 0x61, 0x83,
+        0x4d, 0x16, 0xe4, 0x04, 0xcd, 0xab, 0x43, 0x77,
+        0x25, 0x3e, 0x1d, 0xb4, 0x95, 0x5f, 0xf7, 0x01,
+    };
+
     BCRYPT_KEY_LENGTHS_STRUCT key_lengths;
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_KEY_HANDLE key;
     NTSTATUS status;
     ULONG val, size;
+    static BYTE buf[32];
 
     status = BCryptOpenAlgorithmProvider(&alg, BCRYPT_PBKDF2_ALGORITHM, NULL, 0);
     if (status == STATUS_NOT_FOUND)
@@ -4385,6 +4422,7 @@ static void test_PBKDF2(void)
         return;
     }
     ok(!status, "got %#lx\n", status);
+    ok(pBCryptKeyDerivation != NULL, "BCryptKeyDerivation not available\n");
 
     val = size = 0;
     status = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&val, sizeof(val), &size, 0);
@@ -4413,6 +4451,23 @@ static void test_PBKDF2(void)
     ok(!status, "got %#lx\n", status);
     ok(val == strlen("test") * 8, "got %lu\n", val);
 
+    status = pBCryptKeyDerivation(key, &pbkdf2_params, NULL, 0, &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "got %#lx\n", status);
+
+    buf[0] = buf[1] = 'x';
+    status = pBCryptKeyDerivation(key, &pbkdf2_params, buf, 1, &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == 1, "size = %lu\n", size);
+    ok(buf[0] == pbkdf2_hash[0], "buf[0] = %x\n", buf[0]);
+    ok(buf[1] == 'x', "buf[1] = %x\n", buf[1]);
+
+    memset(buf, 'x', sizeof(buf));
+    status = pBCryptKeyDerivation(key, &pbkdf2_params, buf, sizeof(buf), &size, 0);
+    ok(!status, "got %#lx\n", status);
+    ok(size == sizeof(buf), "size = %lu\n", size);
+    ok(!memcmp(buf, pbkdf2_hash, sizeof(pbkdf2_hash)),
+            "wrong data (%s)\n", wine_dbgstr_an((char *)buf, size));
+
     status = BCryptDestroyKey(key);
     ok(!status, "got %#lx\n", status);
     status = BCryptCloseAlgorithmProvider(alg, 0);
@@ -4430,6 +4485,7 @@ START_TEST(bcrypt)
         return;
     }
     pBCryptHash = (void *)GetProcAddress(module, "BCryptHash");
+    pBCryptKeyDerivation = (void *)GetProcAddress(module, "BCryptKeyDerivation");
 
     test_BCryptGenRandom();
     test_BCryptGetFipsAlgorithmMode();

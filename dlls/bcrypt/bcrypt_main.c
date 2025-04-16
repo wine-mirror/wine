@@ -2605,19 +2605,19 @@ static NTSTATUS derive_key_raw( struct secret *secret, UCHAR *output, ULONG outp
     return status;
 }
 
-static struct algorithm *get_hash_alg( BCryptBuffer *buf )
+static struct algorithm *get_hash_alg( BCryptBuffer *buf, BOOL hmac )
 {
     const WCHAR *str = buf->pvBuffer;
     BCRYPT_ALG_HANDLE handle = NULL;
 
     if (!wcscmp( str, BCRYPT_SHA1_ALGORITHM ))
-        handle = BCRYPT_SHA1_ALG_HANDLE;
+        handle = hmac ? BCRYPT_HMAC_SHA1_ALG_HANDLE : BCRYPT_SHA1_ALG_HANDLE;
     else if (!wcscmp( str, BCRYPT_SHA256_ALGORITHM ))
-        handle = BCRYPT_SHA256_ALG_HANDLE;
+        handle = hmac ? BCRYPT_HMAC_SHA256_ALG_HANDLE : BCRYPT_SHA256_ALG_HANDLE;
     else if (!wcscmp( str, BCRYPT_SHA384_ALGORITHM ))
-        handle = BCRYPT_SHA384_ALG_HANDLE;
+        handle = hmac ? BCRYPT_HMAC_SHA384_ALG_HANDLE : BCRYPT_SHA384_ALG_HANDLE;
     else if (!wcscmp( str, BCRYPT_SHA512_ALGORITHM ))
-        handle = BCRYPT_SHA512_ALG_HANDLE;
+        handle = hmac ? BCRYPT_HMAC_SHA512_ALG_HANDLE : BCRYPT_SHA512_ALG_HANDLE;
 
     if (handle) return get_alg_object( handle );
     FIXME( "hash algorithm %s not supported\n", debugstr_w(str) );
@@ -2639,7 +2639,7 @@ static NTSTATUS derive_key_hash( struct secret *secret, BCryptBufferDesc *desc, 
     {
         if (desc->pBuffers[i].BufferType == KDF_HASH_ALGORITHM)
         {
-            alg = get_hash_alg( desc->pBuffers + i );
+            alg = get_hash_alg( desc->pBuffers + i, FALSE );
             if (!alg) return STATUS_NOT_SUPPORTED;
         }
         else FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
@@ -2697,6 +2697,53 @@ NTSTATUS WINAPI BCryptDeriveKey( BCRYPT_SECRET_HANDLE handle, const WCHAR *kdf, 
 
     FIXME( "kdf %s not supportedi\n", debugstr_w(kdf) );
     return STATUS_NOT_SUPPORTED;
+}
+
+NTSTATUS WINAPI BCryptKeyDerivation( BCRYPT_KEY_HANDLE handle, BCryptBufferDesc *desc,
+                                     UCHAR *output, ULONG output_size, ULONG *ret_len, ULONG flags )
+{
+    struct key *key = get_key_object( handle );
+    struct algorithm *alg = NULL;
+    ULONGLONG iter_count = 10000;
+    ULONG salt_size = 0;
+    UCHAR *salt = NULL;
+    NTSTATUS status;
+    ULONG i;
+
+    TRACE( "%p, %p, %p, %lu, %p, %#lx\n", key, desc, output, output_size, ret_len, flags );
+
+    if (!key || !desc || !ret_len) return STATUS_INVALID_PARAMETER;
+    if (key->alg_id != ALG_ID_PBKDF2)
+    {
+        FIXME( "unsupported key %d\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    for (i = 0; i < desc->cBuffers; i++)
+    {
+        switch (desc->pBuffers[i].BufferType)
+        {
+        case KDF_HASH_ALGORITHM:
+            alg = get_hash_alg( desc->pBuffers + i, TRUE );
+            break;
+        case KDF_SALT:
+            salt = desc->pBuffers[i].pvBuffer;
+            salt_size = desc->pBuffers[i].cbBuffer;
+            break;
+        case KDF_ITERATION_COUNT:
+            if (desc->pBuffers[i].cbBuffer != sizeof(ULONGLONG)) return STATUS_INVALID_PARAMETER;
+            iter_count = *(ULONGLONG *)desc->pBuffers[i].pvBuffer;
+            break;
+        default:
+            FIXME( "buffer type %lu not supported\n", desc->pBuffers[i].BufferType );
+            break;
+        }
+    }
+
+    status = derive_key_pbkdf2( alg, key->u.s.secret, key->u.s.secret_len,
+            salt, salt_size, iter_count, output, output_size );
+    if (!status) *ret_len = output_size;
+    return status;
 }
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
