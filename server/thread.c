@@ -129,9 +129,10 @@ static const struct object_ops thread_apc_ops =
 
 struct context
 {
-    struct object   obj;        /* object header */
-    unsigned int    status;     /* status of the context */
-    struct context_data regs[2];/* context data */
+    struct object           obj;        /* object header */
+    struct event_sync      *sync;       /* sync object for wait/signal */
+    unsigned int            status;     /* status of the context */
+    struct context_data     regs[2];    /* context data */
 };
 #define CTX_NATIVE  0  /* context for native machine */
 #define CTX_WOW     1  /* context if thread is inside WoW */
@@ -140,20 +141,21 @@ struct context
 static const unsigned int system_flags = SERVER_CTX_DEBUG_REGISTERS;
 
 static void dump_context( struct object *obj, int verbose );
-static int context_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *context_get_sync( struct object *obj );
+static void context_destroy( struct object *obj );
 
 static const struct object_ops context_ops =
 {
     sizeof(struct context),     /* size */
     &no_type,                   /* type */
     dump_context,               /* dump */
-    add_queue,                  /* add_queue */
-    remove_queue,               /* remove_queue */
-    context_signaled,           /* signaled */
-    no_satisfied,               /* satisfied */
+    NULL,                       /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    NULL,                       /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    default_get_sync,           /* get_sync */
+    context_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -164,7 +166,7 @@ static const struct object_ops context_ops =
     no_open_file,               /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
-    no_destroy                  /* destroy */
+    context_destroy,            /* destroy */
 };
 
 
@@ -451,20 +453,35 @@ static void dump_context( struct object *obj, int verbose )
 }
 
 
-static int context_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *context_get_sync( struct object *obj )
 {
     struct context *context = (struct context *)obj;
-    return context->status != STATUS_PENDING;
+    assert( obj->ops == &context_ops );
+    return grab_object( context->sync );
 }
 
+static void context_destroy( struct object *obj )
+{
+    struct context *context = (struct context *)obj;
+    assert( obj->ops == &context_ops );
+    if (context->sync) release_object( context->sync );
+}
 
 static struct context *create_thread_context( struct thread *thread )
 {
     struct context *context;
     if (!(context = alloc_object( &context_ops ))) return NULL;
+    context->sync   = NULL;
     context->status = STATUS_PENDING;
     memset( &context->regs, 0, sizeof(context->regs) );
     context->regs[CTX_NATIVE].machine = native_machine;
+
+    if (!(context->sync = create_event_sync( 1, 0 )))
+    {
+        release_object( context );
+        return NULL;
+    }
+
     return context;
 }
 
@@ -580,7 +597,7 @@ static void cleanup_thread( struct thread *thread )
     if (thread->context)
     {
         thread->context->status = STATUS_ACCESS_DENIED;
-        wake_up( &thread->context->obj, 0 );
+        signal_sync( thread->context->sync );
         release_object( thread->context );
         thread->context = NULL;
     }
@@ -1901,7 +1918,7 @@ DECL_HANDLER(select)
         }
         ctx->status = STATUS_SUCCESS;
         current->suspend_cookie = req->cookie;
-        wake_up( &ctx->obj, 0 );
+        signal_sync( ctx->sync );
     }
 
     if (!req->cookie) goto invalid_param;
