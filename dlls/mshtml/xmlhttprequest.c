@@ -1489,20 +1489,6 @@ static const event_target_vtbl_t HTMLXMLHttpRequest_event_target_vtbl = {
     .bind_event              = HTMLXMLHttpRequest_bind_event
 };
 
-static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
-    IHTMLXMLHttpRequest2_tid,
-    0
-};
-dispex_static_data_t XMLHttpRequest_dispex = {
-    .id               = OBJID_XMLHttpRequest,
-    .init_constructor = HTMLXMLHttpRequestFactory_Create,
-    .vtbl             = &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,
-    .disp_tid         = DispHTMLXMLHttpRequest_tid,
-    .iface_tids       = HTMLXMLHttpRequest_iface_tids,
-    .init_info        = HTMLXMLHttpRequest_init_dispex_info,
-};
-
-
 /* IHTMLXMLHttpRequestFactory */
 static inline HTMLXMLHttpRequestFactory *impl_from_IHTMLXMLHttpRequestFactory(IHTMLXMLHttpRequestFactory *iface)
 {
@@ -1674,7 +1660,7 @@ static dispex_static_data_t HTMLXMLHttpRequestFactory_dispex = {
     .iface_tids     = HTMLXMLHttpRequestFactory_iface_tids,
 };
 
-HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, DispatchEx **ret_ptr)
+static HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow *window, DispatchEx **ret_ptr)
 {
     HTMLXMLHttpRequestFactory *ret;
 
@@ -1692,3 +1678,16 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, DispatchEx **r
     *ret_ptr = &ret->dispex;
     return S_OK;
 }
+
+static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
+    IHTMLXMLHttpRequest2_tid,
+    0
+};
+dispex_static_data_t XMLHttpRequest_dispex = {
+    .id               = OBJID_XMLHttpRequest,
+    .init_constructor = HTMLXMLHttpRequestFactory_Create,
+    .vtbl             = &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,
+    .disp_tid         = DispHTMLXMLHttpRequest_tid,
+    .iface_tids       = HTMLXMLHttpRequest_iface_tids,
+    .init_info        = HTMLXMLHttpRequest_init_dispex_info,
+};

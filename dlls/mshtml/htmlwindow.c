@@ -1902,6 +1902,8 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
 {
     HTMLWindow *This = impl_from_IHTMLWindow5(iface);
     HTMLInnerWindow *window = This->inner_window;
+    DispatchEx *constr;
+    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -1910,16 +1912,12 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
         return S_OK;
     }
 
-    if(!window->constructors[OBJID_XMLHttpRequest]) {
-        HRESULT hres;
-
-        hres = HTMLXMLHttpRequestFactory_Create(window, &window->constructors[OBJID_XMLHttpRequest]);
-        if(FAILED(hres))
-            return hres;
-    }
+    hres = get_constructor(window, OBJID_XMLHttpRequest, &constr);
+    if(FAILED(hres))
+        return hres;
 
     V_VT(p) = VT_DISPATCH;
-    V_DISPATCH(p) = (IDispatch*)&window->constructors[OBJID_XMLHttpRequest]->IWineJSDispatchHost_iface;
+    V_DISPATCH(p) = (IDispatch*)&constr->IWineJSDispatchHost_iface;
     IDispatch_AddRef(V_DISPATCH(p));
 
     return S_OK;

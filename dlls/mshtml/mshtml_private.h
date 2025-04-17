@@ -1169,7 +1169,6 @@ HRESULT create_outer_window(GeckoBrowser*,mozIDOMWindowProxy*,HTMLOuterWindow*,H
 HRESULT update_window_doc(HTMLInnerWindow*);
 HTMLOuterWindow *mozwindow_to_window(const mozIDOMWindowProxy*);
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**);
-HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,DispatchEx**);
 HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
 HRESULT create_navigator(HTMLInnerWindow*,IOmNavigator**);
 HRESULT create_html_screen(HTMLInnerWindow*,IHTMLScreen**);
