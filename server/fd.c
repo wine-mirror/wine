@@ -273,6 +273,7 @@ static const struct object_ops inode_ops =
 struct file_lock
 {
     struct object       obj;         /* object header */
+    struct event_sync  *sync;        /* sync object for wait/signal */
     struct fd          *fd;          /* fd owning this lock */
     struct list         fd_entry;    /* entry in list of locks on a given fd */
     struct list         inode_entry; /* entry in inode list of locks */
@@ -284,20 +285,21 @@ struct file_lock
 };
 
 static void file_lock_dump( struct object *obj, int verbose );
-static int file_lock_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *file_lock_get_sync( struct object *obj );
+static void file_lock_destroy( struct object *obj );
 
 static const struct object_ops file_lock_ops =
 {
     sizeof(struct file_lock),   /* size */
     &no_type,                   /* type */
     file_lock_dump,             /* dump */
-    add_queue,                  /* add_queue */
-    remove_queue,               /* remove_queue */
-    file_lock_signaled,         /* signaled */
-    no_satisfied,               /* satisfied */
+    NULL,                       /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    NULL,                       /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    default_get_sync,           /* get_sync */
+    file_lock_get_sync,         /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -308,7 +310,7 @@ static const struct object_ops file_lock_ops =
     no_open_file,               /* open_file */
     no_kernel_obj_list,         /* get_kernel_obj_list */
     no_close_handle,            /* close_handle */
-    no_destroy                  /* destroy */
+    file_lock_destroy,          /* destroy */
 };
 
 
@@ -1241,11 +1243,18 @@ static void file_lock_dump( struct object *obj, int verbose )
     fprintf( stderr, "\n" );
 }
 
-static int file_lock_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *file_lock_get_sync( struct object *obj )
 {
     struct file_lock *lock = (struct file_lock *)obj;
-    /* lock is signaled if it has lost its owner */
-    return !lock->process;
+    assert( obj->ops == &file_lock_ops );
+    return grab_object( lock->sync );
+}
+
+static void file_lock_destroy( struct object *obj )
+{
+    struct file_lock *lock = (struct file_lock *)obj;
+    assert( obj->ops == &file_lock_ops );
+    if (lock->sync) release_object( lock->sync );
 }
 
 /* set (or remove) a Unix lock if possible for the given range */
@@ -1427,22 +1436,24 @@ static struct file_lock *add_lock( struct fd *fd, int shared, file_pos_t start, 
     struct file_lock *lock;
 
     if (!(lock = alloc_object( &file_lock_ops ))) return NULL;
+    lock->sync    = NULL;
     lock->shared  = shared;
     lock->start   = start;
     lock->end     = end;
     lock->fd      = fd;
     lock->process = current->process;
 
+    if (!(lock->sync = create_event_sync( 1, 0 ))) goto error;
     /* now try to set a Unix lock */
-    if (!set_unix_lock( lock->fd, lock->start, lock->end, lock->shared ? F_RDLCK : F_WRLCK ))
-    {
-        release_object( lock );
-        return NULL;
-    }
+    if (!set_unix_lock( lock->fd, lock->start, lock->end, lock->shared ? F_RDLCK : F_WRLCK )) goto error;
     list_add_tail( &fd->locks, &lock->fd_entry );
     list_add_tail( &fd->inode->locks, &lock->inode_entry );
     list_add_tail( &lock->process->locks, &lock->proc_entry );
     return lock;
+
+error:
+    release_object( lock );
+    return NULL;
 }
 
 /* remove an existing lock */
@@ -1456,7 +1467,7 @@ static void remove_lock( struct file_lock *lock, int remove_unix )
     if (remove_unix) remove_unix_locks( lock->fd, lock->start, lock->end );
     if (list_empty( &inode->locks )) inode_close_pending( inode, 1 );
     lock->process = NULL;
-    wake_up( &lock->obj, 0 );
+    signal_sync( lock->sync );
     release_object( lock );
 }
 
