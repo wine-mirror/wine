@@ -510,10 +510,11 @@ static HRESULT HTMLOptionElementFactory_value(DispatchEx *dispex, LCID lcid,
     return S_OK;
 }
 
-static const tid_t HTMLOptionElementFactory_iface_tids[] = {
-    IHTMLOptionElementFactory_tid,
-    0
-};
+static void HTMLOptionElementFactory_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode < COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLOptionElementFactory_tid, NULL);
+}
 
 static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
     .query_interface  = HTMLOptionElementFactory_query_interface,
@@ -528,7 +529,7 @@ static dispex_static_data_t HTMLOptionElementFactory_dispex = {
     .constructor_id = PROT_HTMLOptionElement,
     .vtbl           = &HTMLOptionElementFactory_dispex_vtbl,
     .disp_tid       = IHTMLOptionElementFactory_tid,
-    .iface_tids     = HTMLOptionElementFactory_iface_tids,
+    .init_info      = HTMLOptionElementFactory_init_dispex_info,
 };
 
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionElementFactory **ret_ptr)

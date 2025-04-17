@@ -916,6 +916,7 @@ sync_test("constructor props", function() {
     var v = document.documentMode;
 
     test_exposed(Image, "create", v < 9);
+    test_exposed(Option, "create", v < 9);
     test_exposed(XMLHttpRequest, "create", true);
     if(v >= 11) test_exposed(MutationObserver, "create", false);
 });
