@@ -524,15 +524,7 @@ static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
     .value            = HTMLOptionElementFactory_value,
 };
 
-static dispex_static_data_t HTMLOptionElementFactory_dispex = {
-    .name           = "Function",
-    .constructor_id = OBJID_HTMLOptionElement,
-    .vtbl           = &HTMLOptionElementFactory_dispex_vtbl,
-    .disp_tid       = IHTMLOptionElementFactory_tid,
-    .init_info      = HTMLOptionElementFactory_init_dispex_info,
-};
-
-HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionElementFactory **ret_ptr)
+static HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, DispatchEx **ret_ptr)
 {
     HTMLOptionElementFactory *ret;
 
@@ -544,12 +536,21 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionEleme
     ret->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&ret->dispex, &HTMLOptionElementFactory_dispex, window,
+    init_dispatch(&ret->dispex, &Option_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
-    *ret_ptr = ret;
+    *ret_ptr = &ret->dispex;
     return S_OK;
 }
+
+dispex_static_data_t Option_dispex = {
+    .name             = "Function",
+    .constructor_id   = OBJID_HTMLOptionElement,
+    .init_constructor = HTMLOptionElementFactory_Create,
+    .vtbl             = &HTMLOptionElementFactory_dispex_vtbl,
+    .disp_tid         = IHTMLOptionElementFactory_tid,
+    .init_info        = HTMLOptionElementFactory_init_dispex_info,
+};
 
 struct HTMLSelectElement {
     HTMLElement element;

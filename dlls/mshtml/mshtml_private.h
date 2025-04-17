@@ -481,6 +481,7 @@ typedef struct {
     X(Navigator)                           \
     X(Node)                                \
     X(NodeList)                            \
+    X(Option)                              \
     X(PageTransitionEvent)                 \
     X(Performance)                         \
     X(PerformanceNavigation)               \
@@ -772,7 +773,6 @@ struct HTMLInnerWindow {
 
     IHTMLEventObj *event;
 
-    HTMLOptionElementFactory *option_factory;
     IHTMLScreen *screen;
     OmHistory *history;
     IOmNavigator *navigator;
@@ -1169,7 +1169,6 @@ HRESULT create_outer_window(GeckoBrowser*,mozIDOMWindowProxy*,HTMLOuterWindow*,H
 HRESULT update_window_doc(HTMLInnerWindow*);
 HTMLOuterWindow *mozwindow_to_window(const mozIDOMWindowProxy*);
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**);
-HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**);
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,DispatchEx**);
 HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
 HRESULT create_navigator(HTMLInnerWindow*,IOmNavigator**);
