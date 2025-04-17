@@ -192,6 +192,7 @@
 # @ stub NtCreateProcessEx
 # @ stub NtCreateProfile
 @ stdcall -syscall NtCreateSection(ptr long ptr ptr long long long)
+@ stdcall -syscall NtCreateSectionEx(ptr long ptr ptr long long long ptr long)
 @ stdcall -syscall NtCreateSemaphore(ptr long ptr long long)
 @ stdcall -syscall NtCreateSymbolicLinkObject(ptr long ptr ptr)
 @ stdcall -syscall NtCreateThread(ptr long ptr long ptr ptr ptr long)
@@ -1266,6 +1267,7 @@
 # @ stub ZwCreateProcessEx
 # @ stub ZwCreateProfile
 @ stdcall -private -syscall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
+@ stdcall -private -syscall ZwCreateSectionEx(ptr long ptr ptr long long long ptr long) NtCreateSectionEx
 @ stdcall -private -syscall ZwCreateSemaphore(ptr long ptr long long) NtCreateSemaphore
 @ stdcall -private -syscall ZwCreateSymbolicLinkObject(ptr long ptr ptr) NtCreateSymbolicLinkObject
 @ stdcall -private -syscall ZwCreateThread(ptr long ptr long ptr ptr ptr long) NtCreateThread
