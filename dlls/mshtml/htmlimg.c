@@ -864,10 +864,11 @@ static HRESULT HTMLImageElementFactory_value(DispatchEx *dispex, LCID lcid,
     return S_OK;
 }
 
-static const tid_t HTMLImageElementFactory_iface_tids[] = {
-    IHTMLImageElementFactory_tid,
-    0
-};
+static void HTMLImageElementFactory_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode < COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLImageElementFactory_tid, NULL);
+}
 
 static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
     .query_interface  = HTMLImageElementFactory_query_interface,
@@ -882,7 +883,7 @@ static dispex_static_data_t HTMLImageElementFactory_dispex = {
     .constructor_id = PROT_HTMLImageElement,
     .vtbl           = &HTMLImageElementFactory_dispex_vtbl,
     .disp_tid       = IHTMLImageElementFactory_tid,
-    .iface_tids     = HTMLImageElementFactory_iface_tids,
+    .init_info      = HTMLImageElementFactory_init_dispex_info,
 };
 
 HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElementFactory **ret_val)

@@ -906,6 +906,20 @@ sync_test("style_props", function() {
     }
 });
 
+sync_test("constructor props", function() {
+    function test_exposed(constructor, prop, expect) {
+        if(expect)
+            ok(prop in constructor, prop + " not found in " + constructor);
+        else
+            ok(!(prop in constructor), prop + " found in " + constructor);
+    }
+    var v = document.documentMode;
+
+    test_exposed(Image, "create", v < 9);
+    test_exposed(XMLHttpRequest, "create", true);
+    if(v >= 11) test_exposed(MutationObserver, "create", false);
+});
+
 sync_test("createElement_inline_attr", function() {
     var v = document.documentMode, e, s;
 
