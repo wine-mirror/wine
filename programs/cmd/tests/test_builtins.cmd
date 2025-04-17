@@ -120,13 +120,13 @@ rem test in interactive mode... echo is always preserved after a call
 @echo echo on>foo.txt
 @echo call callme.cmd @echo off>>foo.txt
 @echo echo^>foo.tmp>>foo.txt
-type foo.txt | cmd.exe > NULL
+type foo.txt | cmd.exe > NUL
 @call :showEchoMode foo.tmp
 
 @echo echo off>foo.txt
 @echo call callme.cmd @echo on>>foo.txt
 @echo echo^>foo.tmp>>foo.txt
-type foo.txt | cmd.exe > NULL
+type foo.txt | cmd.exe > NUL
 @call :showEchoMode foo.tmp
 
 rem cleanup
