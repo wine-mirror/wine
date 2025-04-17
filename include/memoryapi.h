@@ -41,6 +41,6 @@ typedef struct WIN32_MEMORY_REGION_INFORMATION
     SIZE_T CommitSize;
 } WIN32_MEMORY_REGION_INFORMATION;
 
-DWORD WINAPI DiscardVirtualMemory(void *addr, SIZE_T size);
-BOOL WINAPI QueryVirtualMemoryInformation(HANDLE process,const void *addr,
-        WIN32_MEMORY_INFORMATION_CLASS info_class, void *info, SIZE_T size, SIZE_T *ret_size);
+WINBASEAPI HANDLE WINAPI CreateFileMapping2(HANDLE,LPSECURITY_ATTRIBUTES,ULONG,ULONG,ULONG,ULONG64,const WCHAR*,MEM_EXTENDED_PARAMETER*,ULONG);
+WINBASEAPI DWORD  WINAPI DiscardVirtualMemory(void *addr, SIZE_T size);
+WINBASEAPI BOOL   WINAPI QueryVirtualMemoryInformation(HANDLE process,const void *addr, WIN32_MEMORY_INFORMATION_CLASS info_class, void *info, SIZE_T size, SIZE_T *ret_size);

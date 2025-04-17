@@ -1084,6 +1084,35 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingW( HANDLE file, LPSECURITY_ATTR
 
 
 /***********************************************************************
+ *             CreateFileMapping2   (kernelbase.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMapping2( HANDLE file, SECURITY_ATTRIBUTES *sa, ULONG access,
+                                                    ULONG protect, ULONG sec_type, ULONG64 max_size,
+                                                    const WCHAR *name, MEM_EXTENDED_PARAMETER *params,
+                                                    ULONG count )
+{
+    HANDLE ret;
+    NTSTATUS status;
+    LARGE_INTEGER size;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+
+    if (!sec_type) sec_type = SEC_COMMIT;
+    size.QuadPart = max_size;
+    if (file == INVALID_HANDLE_VALUE) file = 0;
+
+    get_create_object_attributes( &attr, &nameW, sa, name );
+
+    status = NtCreateSectionEx( &ret, access, &attr, &size, protect, sec_type, file, params, count );
+    if (status == STATUS_OBJECT_NAME_EXISTS)
+        SetLastError( ERROR_ALREADY_EXISTS );
+    else
+        SetLastError( RtlNtStatusToDosError(status) );
+    return ret;
+}
+
+
+/***********************************************************************
  *             CreateFileMappingFromApp   (kernelbase.@)
  */
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileMappingFromApp( HANDLE file, LPSECURITY_ATTRIBUTES sa, ULONG protect,
