@@ -2184,13 +2184,15 @@ static enum pdb_result pdb_reader_index_from_cv_typeid(struct pdb_reader *pdb, c
     return R_PDB_SUCCESS;
 }
 
-/* FIXME: suboptimal implementation until we have moved all types */
+static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, symref_t symref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
+
 static BOOL pdb_reader_request_cv_typeid(struct pdb_reader *pdb, cv_typ_t cv_typeid, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
-    DWORD index;
+    struct symref_code code;
+    symref_t target_symref;
 
-    if (pdb_reader_index_from_cv_typeid(pdb, cv_typeid, &index)) return FALSE;
-    return symt_get_info_from_index(pdb->module, index, req, data);
+    if ((pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &target_symref))) return MR_FAILURE;
+    return pdb_reader_request_symref_t(pdb, target_symref, req, data) == MR_SUCCESS;
 }
 
 static enum method_result pdb_reader_TPI_pointer_request(struct pdb_reader *pdb, const union codeview_type *cv_type, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
@@ -2677,8 +2679,6 @@ static enum method_result pdb_reader_TPI_UDT_request(struct pdb_reader *pdb, sym
         return MR_FAILURE;
     }
 }
-
-static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, symref_t symref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
 
 static enum method_result pdb_reader_TPI_modifier_request(struct pdb_reader *pdb, symref_t symref, const union codeview_type *cv_type,
                                                           IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
