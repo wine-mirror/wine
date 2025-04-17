@@ -22,6 +22,7 @@ SOURCES = \
 	version.rc \
 	vulkan.c \
 	window.c \
+	winex11.drv.spec \
 	wintab.c \
 	x11drv_main.c \
 	xim.c \

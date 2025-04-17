@@ -258,6 +258,7 @@ sub assign_sources_to_makefiles(@)
         {
             my $dllflags = ${$make}{"EXTRADLLFLAGS"} || "";
             next unless defined ${$make}{"TESTDLL"} ||
+                ${$make}{"MODULE"} =~ /\.drv$/ ||
                 ($dllflags =~ /-Wb,--data-only/) ||
                 ($dllflags =~ /-Wl,--subsystem,native/);
         }

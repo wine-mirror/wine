@@ -32,4 +32,5 @@ SOURCES = \
 	type42.c \
 	unixlib.c \
 	vertical.c \
+	wineps.drv.spec \
 	wineps.rc
