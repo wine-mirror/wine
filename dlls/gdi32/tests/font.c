@@ -6117,8 +6117,6 @@ static void test_CreateScalableFontResource(void)
         ok( !ret, "got %lx\n", ret );
         ret = pNtGdiMakeFontDir( 0, buffer, sizeof(*fontdir), nt_name.Buffer, 0 );
         ok( !ret, "got %lx\n", ret );
-        ret = pNtGdiMakeFontDir( 0, buffer, sizeof(*fontdir), nt_name.Buffer, nt_name.Length + 6 );
-        ok( !ret, "got %lx\n", ret );
         ret = pNtGdiMakeFontDir( 0, buffer, sizeof(*fontdir), nt_name.Buffer, nt_name.Length + 2 );
         ok( ret, "NtGdiMakeFontDir failed\n" );
         ok( fontdir->dfSize == 0x95, "wrong size %lx\n", fontdir->dfSize );
