@@ -3116,8 +3116,6 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, Dispatch
 {
     dispex_static_data_t *info;
 
-    assert(script_global->doc->document_mode >= COMPAT_MODE_IE9);
-
     if(script_global->constructors[id]) {
         *ret = script_global->constructors[id];
         return S_OK;
@@ -3130,6 +3128,9 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, Dispatch
             return hres;
     }else {
         struct constructor *constr;
+
+        assert(script_global->doc->document_mode >= COMPAT_MODE_IE9);
+
         if(!(constr = calloc(sizeof(*constr), 1)))
             return E_OUTOFMEMORY;
 

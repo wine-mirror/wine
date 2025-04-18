@@ -3996,3 +3996,19 @@ sync_test("prototype props", function() {
     check(Text, [ "removeNode", "replaceNode", "replaceWholeText", "splitText", "swapNode", "wholeText" ], [ "replaceWholeText", "wholeText" ]);
     check(UIEvent, [ "detail", "initUIEvent", "view" ], null, [ "deviceSessionId" ]);
 });
+
+sync_test("constructors", function() {
+    var v = document.documentMode, i, r;
+    if(v < 9)
+        return;
+
+    var ctors = [ "Image", "XMLHttpRequest" ];
+    if (v >= 11)
+        ctors.push("MutationObserver");
+    for(i = 0; i < ctors.length; i++) {
+        r = ctors[i];
+        ok(window.hasOwnProperty(r), r + " not prop of window");
+        ok(!(r in Window.prototype), r + " is a prop of window's prototype");
+    }
+    ok(window.Image.prototype === window.HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
+});

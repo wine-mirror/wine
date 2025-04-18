@@ -463,6 +463,7 @@ typedef struct {
     X(HTMLTitleElement)                    \
     X(HTMLUnknownElement)                  \
     X(History)                             \
+    X(Image)                               \
     X(KeyboardEvent)                       \
     X(MSCSSProperties)                     \
     X(MSCSSRuleList)                       \
@@ -771,7 +772,6 @@ struct HTMLInnerWindow {
 
     IHTMLEventObj *event;
 
-    HTMLImageElementFactory *image_factory;
     HTMLOptionElementFactory *option_factory;
     IHTMLScreen *screen;
     OmHistory *history;
@@ -1170,7 +1170,6 @@ HRESULT update_window_doc(HTMLInnerWindow*);
 HTMLOuterWindow *mozwindow_to_window(const mozIDOMWindowProxy*);
 void get_top_window(HTMLOuterWindow*,HTMLOuterWindow**);
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow*,HTMLOptionElementFactory**);
-HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow*,HTMLImageElementFactory**);
 HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,DispatchEx**);
 HRESULT create_location(HTMLOuterWindow*,HTMLLocation**);
 HRESULT create_navigator(HTMLInnerWindow*,IOmNavigator**);
