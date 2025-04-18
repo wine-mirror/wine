@@ -14481,20 +14481,20 @@ static void test_valid_handle(void)
     invalid = CreateEventA(NULL, TRUE, TRUE, NULL);
 
     ret = send((SOCKET)duplicated, buffer, 1, 0);
-    todo_wine ok(ret == 1, "got %d\n", ret);
+    ok(ret == 1, "got %d\n", ret);
 
     ret = sendto((SOCKET)duplicated, buffer, 1, 0, NULL, 0);
-    todo_wine ok(ret == 1, "got %d\n", ret);
+    ok(ret == 1, "got %d\n", ret);
 
     wsabuf.buf = buffer;
     wsabuf.len = 1;
 
     ret = WSASend((SOCKET)duplicated, &wsabuf, 1, NULL, 0, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
 
     ret = WSASend((SOCKET)duplicated, &wsabuf, 1, &size, 0, NULL, NULL);
-    todo_wine ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     ret = WSASend((SOCKET)invalid, &wsabuf, 1, NULL, 0, NULL, NULL);
     ok(ret == -1, "got %d\n", ret);

@@ -462,6 +462,25 @@ static BOOL socket_list_remove( SOCKET socket )
     return FALSE;
 }
 
+
+static BOOL is_valid_socket( SOCKET socket )
+{
+    NTSTATUS status = STATUS_SUCCESS;
+    IO_STATUS_BLOCK io;
+
+    if (socket_list_find( socket ))
+        return TRUE;
+
+    /* Some functions allow socket handles output with DuplicateHandle(), which
+     * will not be in the socket list. We can't necessarily just delegate to
+     * ntdll to check the handle type, because sometimes we need to check the
+     * handle validity *before* checking e.g. pointer validity.
+     * Instead try to perform an ioctl to see if it's truly a socket. */
+    return NtDeviceIoControlFile( (HANDLE)socket, NULL, NULL, NULL, &io, IOCTL_AFD_WINE_COMPLETE_ASYNC,
+                                  &status, sizeof(status), NULL, 0 ) == STATUS_SUCCESS;
+}
+
+
 static INT WINAPI WSA_DefaultBlockingHook( FARPROC x );
 
 int num_startup;
@@ -1026,7 +1045,7 @@ static int WS2_sendto( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *ret
            "addr_len %d, overlapped %p, completion %p\n",
            s, buffers, buffer_count, flags, addr, addr_len, overlapped, completion );
 
-    if (!socket_list_find( s ))
+    if (!is_valid_socket( s ))
     {
         SetLastError( WSAENOTSOCK );
         return -1;
