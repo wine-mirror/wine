@@ -511,7 +511,6 @@ static enum attrib_match wgl_attrib_match_criteria( int attrib )
     case WGL_NEED_PALETTE_ARB:
     case WGL_NEED_SYSTEM_PALETTE_ARB:
     case WGL_SWAP_LAYER_BUFFERS_ARB:
-    case WGL_SWAP_METHOD_ARB:
     case WGL_SHARE_DEPTH_ARB:
     case WGL_SHARE_STENCIL_ARB:
     case WGL_SHARE_ACCUM_ARB:
@@ -557,6 +556,7 @@ static enum attrib_match wgl_attrib_match_criteria( int attrib )
     case WGL_TRANSPARENT_BLUE_VALUE_ARB:
     case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
     case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+    case WGL_SWAP_METHOD_ARB:
         return ATTRIB_MATCH_IGNORE;
     default:
         return ATTRIB_MATCH_INVALID;
@@ -572,14 +572,15 @@ static void filter_format_array( const struct wgl_pixel_format **array,
 
     assert(match != ATTRIB_MATCH_INVALID);
 
-    if (match == ATTRIB_MATCH_IGNORE) return;
+    if (match == ATTRIB_MATCH_IGNORE && attrib != WGL_SWAP_METHOD_ARB) return;
 
     for (i = 0; i < num_formats; ++i)
     {
         if (!array[i]) continue;
         if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ) ||
             (match == ATTRIB_MATCH_EXACT && fmt_value != value) ||
-            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value))
+            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value) ||
+            (attrib == WGL_SWAP_METHOD_ARB && ((fmt_value == WGL_SWAP_COPY_ARB) ^ (value == WGL_SWAP_COPY_ARB))))
         {
             array[i] = NULL;
         }

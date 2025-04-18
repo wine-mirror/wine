@@ -2780,12 +2780,26 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
         0
     };
 
+    static int attrib_list_swap[] =
+    {
+        WGL_SWAP_METHOD_ARB, 0,
+        WGL_SUPPORT_OPENGL_ARB, 1,
+        WGL_DRAW_TO_WINDOW_ARB, 1,
+        0
+    };
+    static int swap_methods[] =
+    {
+        WGL_SWAP_COPY_ARB,
+        WGL_SWAP_EXCHANGE_ARB,
+        WGL_SWAP_UNDEFINED_ARB,
+    };
+
     PIXELFORMATDESCRIPTOR fmt, last_fmt;
     BYTE depth, last_depth;
     UINT format_count;
     int formats[1024];
-    unsigned int i;
-    int res;
+    unsigned int test, i;
+    int res, swap_method;
 
     if (!pwglChoosePixelFormatARB)
     {
@@ -2844,6 +2858,34 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
         ok(format.dwFlags & PFD_SUPPORT_OPENGL, "got dwFlags %#lx\n", format.dwFlags);
         ok(format.dwFlags & PFD_SUPPORT_GDI, "got dwFlags %#lx\n", format.dwFlags);
 
+        winetest_pop_context();
+    }
+
+    for (test = 0; test < ARRAY_SIZE(swap_methods); ++test)
+    {
+        PIXELFORMATDESCRIPTOR format = {0};
+
+        winetest_push_context("swap method %#x", swap_methods[test]);
+        format_count = 0;
+        attrib_list_swap[1] = swap_methods[test];
+        res = pwglChoosePixelFormatARB(hdc, attrib_list_swap, NULL, ARRAY_SIZE(formats), formats, &format_count);
+        ok(res, "got %d.\n", res);
+        if (swap_methods[test] != WGL_SWAP_COPY_ARB)
+            ok(format_count, "got no formats.\n");
+        trace("count %d.\n", format_count);
+        for (i = 0; i < format_count; ++i)
+        {
+            res = pwglGetPixelFormatAttribivARB(hdc, formats[i], 0, 1, attrib_list_swap, &swap_method);
+            ok(res, "got %d.\n", res);
+            ok(swap_method == swap_methods[test]
+               /* AMD */
+               || (swap_methods[test] == WGL_SWAP_EXCHANGE_ARB && swap_method == WGL_SWAP_UNDEFINED_ARB)
+               || (swap_methods[test] == WGL_SWAP_UNDEFINED_ARB && swap_method == WGL_SWAP_EXCHANGE_ARB),
+               "got %#x.\n", swap_method);
+
+            res = DescribePixelFormat(hdc, formats[i], sizeof(format), &format);
+            ok(res, "DescribePixelFormat failed, error %lu\n", GetLastError());
+        }
         winetest_pop_context();
     }
 }
@@ -3015,6 +3057,7 @@ START_TEST(opengl)
          * any WGL call :( On Wine this would work but not on real Windows because there can be different implementations (software, ICD, MCD).
          */
         init_functions();
+
         test_getprocaddress(hdc);
         test_deletecontext(hwnd, hdc);
         test_makecurrent(hdc);
