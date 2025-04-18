@@ -914,8 +914,6 @@ int resume_thread( struct thread *thread )
 /* add a thread to an object wait queue; return 1 if OK, 0 on error */
 int add_queue( struct object *obj, struct wait_queue_entry *entry )
 {
-    grab_object( obj );
-    entry->obj = obj;
     list_add_tail( &obj->wait_queue, &entry->entry );
     return 1;
 }
@@ -924,7 +922,6 @@ int add_queue( struct object *obj, struct wait_queue_entry *entry )
 void remove_queue( struct object *obj, struct wait_queue_entry *entry )
 {
     list_remove( &entry->entry );
-    release_object( obj );
 }
 
 struct thread *get_wait_queue_thread( struct wait_queue_entry *entry )
@@ -979,7 +976,11 @@ static unsigned int end_wait( struct thread *thread, unsigned int status )
         if (wait->abandoned) status += STATUS_ABANDONED_WAIT_0;
     }
     for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
+    {
         entry->obj->ops->remove_queue( entry->obj, entry );
+        release_object( entry->obj );
+        entry->obj = NULL;
+    }
     if (wait->user) remove_timeout_user( wait->user );
     free( wait );
     return status;
@@ -1016,6 +1017,7 @@ static int wait_on( const union select_op *select_op, unsigned int count, struct
             return 0;
         }
 
+        entry->obj = grab_object( obj );
         if (obj == (struct object *)current->queue) idle = 1;
     }
 
