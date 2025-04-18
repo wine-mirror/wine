@@ -12900,10 +12900,16 @@ static const struct message ScrollWindowPaint2[] = {
     { 0 }
 };
 
+static const struct message ScrollWindowExSeq[] = {
+    { WM_MOVE, sent },
+    { 0 }
+};
+
 static void test_scrollwindowex(void)
 {
     HWND hwnd, hchild;
     RECT rect={0,0,130,130};
+    int ret;
 
     hwnd = CreateWindowExA(0, "TestWindowClass", "Test Scroll",
             WS_VISIBLE|WS_OVERLAPPEDWINDOW,
@@ -12919,8 +12925,10 @@ static void test_scrollwindowex(void)
 
     /* scroll without the child window */
     if (winetest_debug > 1) trace("start scroll\n");
-    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
+    ret = ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_ERASE|SW_INVALIDATE);
+    todo_wine
+    ok(ret == COMPLEXREGION, "got %d\n", ret);
     ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
     if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
@@ -12931,7 +12939,9 @@ static void test_scrollwindowex(void)
 
     /* Now without the SW_ERASE flag */
     if (winetest_debug > 1) trace("start scroll\n");
-    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
+    ret = ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
+    todo_wine
+    ok(ret == COMPLEXREGION, "got %d\n", ret);
     ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
     if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
@@ -12942,8 +12952,10 @@ static void test_scrollwindowex(void)
 
     /* now scroll the child window as well */
     if (winetest_debug > 1) trace("start scroll\n");
-    ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
+    ret = ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
+    todo_wine
+    ok(ret == COMPLEXREGION, "got %d\n", ret);
     /* wine sends WM_POSCHANGING, WM_POSCHANGED messages */
     /* windows sometimes a WM_MOVE */
     ok_sequence(WmEmptySeq, "ScrollWindowEx", TRUE);
@@ -12954,13 +12966,45 @@ static void test_scrollwindowex(void)
     flush_events();
     flush_sequence();
 
+    ret = ScrollWindowEx(hwnd, 10, 10, NULL, NULL, NULL, NULL,
+            SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
+    todo_wine
+    ok(ret == COMPLEXREGION, "got %d\n", ret);
+    ok_sequence(ScrollWindowExSeq, "ScrollWindowEx", TRUE);
+    flush_events();
+    flush_sequence();
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
+    flush_events();
+    flush_sequence();
+
     /* now scroll with ScrollWindow() */
     if (winetest_debug > 1) trace("start scroll with ScrollWindow\n");
-    ScrollWindow( hwnd, 5, 5, NULL, NULL);
+    ret = ScrollWindow( hwnd, 5, 5, NULL, NULL);
+    ok(ret, "got %d\n", ret);
     if (winetest_debug > 1) trace("end scroll\n");
     flush_sequence();
     flush_events();
     ok_sequence(ScrollWindowPaint1, "ScrollWindow", FALSE);
+
+    ShowWindow(hwnd, SW_HIDE);
+    flush_sequence();
+    flush_events();
+
+    ret = ScrollWindowEx(hwnd, 10, 10, &rect, NULL, NULL, NULL,
+            SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
+    todo_wine
+    ok(ret == NULLREGION, "got %d\n", ret);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
+    flush_events();
+    flush_sequence();
+
+    ret = ScrollWindowEx(hwnd, 10, 10, NULL, NULL, NULL, NULL,
+            SW_SCROLLCHILDREN|SW_ERASE|SW_INVALIDATE);
+    todo_wine
+    ok(ret == NULLREGION, "got %d\n", ret);
+    ok_sequence(ScrollWindowExSeq, "ScrollWindowEx", TRUE);
+    flush_events();
+    flush_sequence();
 
     ok(DestroyWindow(hchild), "failed to destroy window\n");
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
