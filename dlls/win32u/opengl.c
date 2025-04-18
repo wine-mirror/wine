@@ -45,6 +45,10 @@ struct wgl_context
     const struct opengl_funcs *funcs;
     void *driver_private;
     int pixel_format;
+
+    /* hooked host function pointers */
+    PFN_glFinish p_glFinish;
+    PFN_glFlush p_glFlush;
 };
 
 struct wgl_pbuffer
@@ -308,7 +312,7 @@ static void *osmesa_get_proc_address( const char *proc )
     return (PROC)pOSMesaGetProcAddress( proc );
 }
 
-static BOOL osmesa_wglSwapBuffers( HDC hdc )
+static BOOL osmesa_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
 {
     return TRUE;
 }
@@ -374,10 +378,10 @@ static BOOL osmesa_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
     return ret;
 }
 
-static struct opengl_funcs osmesa_opengl_funcs =
+static BOOL osmesa_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
 {
-    .p_wglSwapBuffers = osmesa_wglSwapBuffers,
-};
+    return FALSE;
+}
 
 static const struct opengl_driver_funcs osmesa_driver_funcs =
 {
@@ -386,10 +390,12 @@ static const struct opengl_driver_funcs osmesa_driver_funcs =
     .p_describe_pixel_format = osmesa_describe_pixel_format,
     .p_init_wgl_extensions = osmesa_init_wgl_extensions,
     .p_set_pixel_format = osmesa_set_pixel_format,
+    .p_swap_buffers = osmesa_swap_buffers,
     .p_context_create = osmesa_context_create,
     .p_context_destroy = osmesa_context_destroy,
     .p_context_copy = osmesa_context_copy,
     .p_context_share = osmesa_context_share,
+    .p_context_flush = osmesa_context_flush,
     .p_context_make_current = osmesa_context_make_current,
 };
 
@@ -516,6 +522,9 @@ static const char *win32u_wglGetExtensionsStringEXT(void)
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
 static struct opengl_funcs *display_funcs;
 static struct opengl_funcs *memory_funcs;
+
+static PFN_glFinish p_memory_glFinish, p_display_glFinish;
+static PFN_glFlush p_memory_glFlush, p_display_glFlush;
 
 static int get_dc_pixel_format( HDC hdc, BOOL internal )
 {
@@ -655,6 +664,8 @@ static struct wgl_context *context_create( HDC hdc, struct wgl_context *shared, 
     context->driver_funcs = driver_funcs;
     context->funcs = funcs;
     context->pixel_format = format;
+    context->p_glFinish = funcs == display_funcs ? p_display_glFinish : p_memory_glFinish;
+    context->p_glFlush = funcs == display_funcs ? p_display_glFlush : p_memory_glFlush;
 
     if (!driver_funcs->p_context_create( hdc, format, shared_private, attribs, &context->driver_private ))
     {
@@ -1169,6 +1180,123 @@ static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const in
                                                      pbuffer->cube_face, max( pbuffer->mipmap_level, 0 ) );
 }
 
+static int get_window_swap_interval( HWND hwnd )
+{
+    int interval;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_DESKTOP || win == WND_OTHER_PROCESS) return 0;
+    interval = win->swap_interval;
+    release_win_ptr( win );
+
+    return interval;
+}
+
+static void wgl_context_flush( struct wgl_context *context, BOOL finish )
+{
+    HDC hdc = NtCurrentTeb()->glReserved1[0];
+    int interval;
+    HWND hwnd;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc ))) interval = 0;
+    else interval = get_window_swap_interval( hwnd );
+
+    TRACE( "context %p, hwnd %p, hdc %p, interval %d, finish %u\n", context, hwnd, hdc, interval, finish );
+
+    if (!context->driver_funcs->p_context_flush( context->driver_private, hwnd, hdc, interval, finish ))
+    {
+        /* default implementation: call the hooked functions */
+        if (finish) context->p_glFinish();
+        else context->p_glFlush();
+    }
+}
+
+static BOOL win32u_wglSwapBuffers( HDC hdc )
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    const struct opengl_driver_funcs *driver_funcs;
+    const struct opengl_funcs *funcs;
+    int interval;
+    HWND hwnd;
+
+    if (!(funcs = get_dc_funcs( hdc, NULL )))
+    {
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
+        return FALSE;
+    }
+    driver_funcs = funcs == display_funcs ? display_driver_funcs : memory_driver_funcs;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc ))) interval = 0;
+    else interval = get_window_swap_interval( hwnd );
+
+    if (!driver_funcs->p_swap_buffers( context ? context->driver_private : NULL, hwnd, hdc, interval ))
+    {
+        /* default implementation: implicitly flush the context */
+        if (context) wgl_context_flush( context, FALSE );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL win32u_wglSwapIntervalEXT( int interval )
+{
+    HDC hdc = NtCurrentTeb()->glReserved1[0];
+    HWND hwnd;
+    WND *win;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc )) || !(win = get_win_ptr( hwnd )))
+    {
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
+        return FALSE;
+    }
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        WARN( "setting swap interval on win %p not supported\n", hwnd );
+        return TRUE;
+    }
+
+    TRACE( "setting window %p swap interval %d\n", hwnd, interval );
+    win->swap_interval = interval;
+    release_win_ptr( win );
+    return TRUE;
+}
+
+static int win32u_wglGetSwapIntervalEXT(void)
+{
+    HDC hdc = NtCurrentTeb()->glReserved1[0];
+    int interval;
+    HWND hwnd;
+    WND *win;
+
+    if (!(hwnd = NtUserWindowFromDC( hdc )) || !(win = get_win_ptr( hwnd )))
+    {
+        RtlSetLastWin32Error( ERROR_DC_NOT_FOUND );
+        return 0;
+    }
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        WARN( "setting swap interval on win %p not supported\n", hwnd );
+        return TRUE;
+    }
+    interval = win->swap_interval;
+    release_win_ptr( win );
+
+    return interval;
+}
+
+static void win32u_glFlush(void)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    if (context) wgl_context_flush( context, FALSE );
+}
+
+static void win32u_glFinish(void)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+    if (context) wgl_context_flush( context, TRUE );
+}
+
 static void init_opengl_funcs( struct opengl_funcs *funcs, const struct opengl_driver_funcs *driver_funcs )
 {
 #define USE_GL_FUNC(func) \
@@ -1200,6 +1328,12 @@ static void memory_funcs_init(void)
     memory_funcs->p_wglCopyContext = win32u_wglCopyContext;
     memory_funcs->p_wglShareLists = win32u_wglShareLists;
     memory_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
+
+    memory_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
+    p_memory_glFinish = memory_funcs->p_glFinish;
+    memory_funcs->p_glFinish = win32u_glFinish;
+    p_memory_glFlush = memory_funcs->p_glFlush;
+    memory_funcs->p_glFlush = win32u_glFlush;
 }
 
 static void display_funcs_init(void)
@@ -1267,6 +1401,20 @@ static void display_funcs_init(void)
     display_funcs->p_wglBindTexImageARB     = win32u_wglBindTexImageARB;
     display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
     display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
+
+    if (display_driver_funcs->p_swap_buffers)
+    {
+        display_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
+        p_display_glFinish = display_funcs->p_glFinish;
+        display_funcs->p_glFinish = win32u_glFinish;
+        p_display_glFlush = display_funcs->p_glFlush;
+        display_funcs->p_glFlush = win32u_glFlush;
+
+        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control" );
+        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
+        display_funcs->p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
+        display_funcs->p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
+    }
 }
 
 static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs )

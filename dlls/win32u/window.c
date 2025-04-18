@@ -5560,6 +5560,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     win->hIconSmall  = 0;
     win->hIconSmall2 = 0;
     win->hSysMenu    = 0;
+    win->swap_interval = 1;
 
     win->min_pos.x = win->min_pos.y = -1;
     win->max_pos.x = win->max_pos.y = -1;
