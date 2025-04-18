@@ -17,6 +17,7 @@
  */
 
 #include <errno.h>
+#include <malloc.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <wchar.h>
@@ -54,8 +55,6 @@
 
 DEFINE_EXPECT(invalid_parameter_handler);
 DEFINE_EXPECT(yield_func);
-
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 
 static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
         const wchar_t *function, const wchar_t *file,
@@ -174,19 +173,6 @@ struct SchedulerVtbl {
     /* ScheduleTask */
 };
 
-static int* (__cdecl *p_errno)(void);
-static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
-static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
-static FILE* (__cdecl *p_fopen)(const char*,const char*);
-static int (__cdecl *p_fclose)(FILE*);
-static size_t (__cdecl *p_fread_s)(void*,size_t,size_t,size_t,FILE*);
-static void (__cdecl *p_lock_file)(FILE*);
-static void (__cdecl *p_unlock_file)(FILE*);
-static void* (__cdecl *p__aligned_offset_malloc)(size_t, size_t, size_t);
-static void (__cdecl *p__aligned_free)(void*);
-static size_t (__cdecl *p__aligned_msize)(void*, size_t, size_t);
-static int (__cdecl *p_atoi)(const char*);
-
 static SpinWait* (__thiscall *pSpinWait_ctor_yield)(SpinWait*, yield_func);
 static void (__thiscall *pSpinWait_dtor)(SpinWait*);
 static void (__thiscall *pSpinWait__DoYield)(SpinWait*);
@@ -231,59 +217,16 @@ static Scheduler* (__cdecl *p_CurrentScheduler_Get)(void);
 static void (__cdecl *p_CurrentScheduler_Detach)(void);
 static unsigned int (__cdecl *p_CurrentScheduler_Id)(void);
 
-static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
-static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t,_locale_t);
-
-static char* (__cdecl *p_setlocale)(int, const char*);
-static size_t (__cdecl *p___strncnt)(const char*, size_t);
-
-static int (__cdecl *p_strcmp)(const char *, const char *);
-static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
-static intptr_t (__cdecl *p__get_heap_handle)(void);
-
-/* make sure we use the correct errno */
-#undef errno
-#define errno (*p_errno())
-
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hcrt,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
 static BOOL init(void)
 {
-    HMODULE hcrt;
-
-    SetLastError(0xdeadbeef);
-    hcrt = LoadLibraryA("msvcr100.dll");
-    if (!hcrt) {
-        win_skip("msvcr100.dll not installed (got %ld)\n", GetLastError());
-        return FALSE;
-    }
-
-    SET(p_errno, "_errno");
-    SET(p_set_invalid_parameter_handler, "_set_invalid_parameter_handler");
-    SET(p_wmemcpy_s, "wmemcpy_s");
-    SET(p_wmemmove_s, "wmemmove_s");
-    SET(p_fopen, "fopen");
-    SET(p_fclose, "fclose");
-    SET(p_fread_s, "fread_s");
-    SET(p_lock_file, "_lock_file");
-    SET(p_unlock_file, "_unlock_file");
-    SET(p__aligned_offset_malloc, "_aligned_offset_malloc");
-    SET(p__aligned_free, "_aligned_free");
-    SET(p__aligned_msize, "_aligned_msize");
-    SET(p_atoi, "atoi");
-    SET(p__memicmp, "_memicmp");
-    SET(p__memicmp_l, "_memicmp_l");
-    SET(p_setlocale, "setlocale");
-    SET(p___strncnt, "__strncnt");
+    HMODULE hcrt = GetModuleHandleA("msvcr100.dll");
 
     SET(p_Context_Id, "?Id@Context@Concurrency@@SAIXZ");
     SET(p_CurrentScheduler_Detach, "?Detach@CurrentScheduler@Concurrency@@SAXXZ");
     SET(p_CurrentScheduler_Id, "?Id@CurrentScheduler@Concurrency@@SAIXZ");
-
-    SET(p_strcmp, "strcmp");
-    SET(p_strncmp, "strncmp");
-    SET(p__get_heap_handle, "_get_heap_handle");
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
@@ -387,12 +330,12 @@ static void test_wmemcpy_s(void)
     const wchar_t XX = 0x5858;     /* two 'X' bytes */
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
     /* Normal */
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemcpy_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
+    ret = wmemcpy_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == 0, "Copying a buffer into a big enough destination returned %d, expected 0\n", ret);
     okwchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], XX, XX);
 
@@ -400,7 +343,7 @@ static void test_wmemcpy_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemcpy_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
+    ret = wmemcpy_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
     ok(errno == ERANGE, "Copying a big buffer to a small destination errno %d, expected ERANGE\n", errno);
     ok(ret == ERANGE, "Copying a big buffer to a small destination returned %d, expected ERANGE\n", ret);
     okwchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -410,7 +353,7 @@ static void test_wmemcpy_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemcpy_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
+    ret = wmemcpy_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Copying a NULL source buffer errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Copying a NULL source buffer returned %d, expected EINVAL\n", ret);
     okwchars(dest, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -420,7 +363,7 @@ static void test_wmemcpy_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemcpy_s(dest, 0, tiny, ARRAY_SIZE(tiny));
+    ret = wmemcpy_s(dest, 0, tiny, ARRAY_SIZE(tiny));
     ok(errno == ERANGE, "Copying into a destination of size 0 errno %d, expected ERANGE\n", errno);
     ok(ret == ERANGE, "Copying into a destination of size 0 returned %d, expected ERANGE\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
@@ -429,7 +372,7 @@ static void test_wmemcpy_s(void)
     /* Replace dest with NULL */
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wmemcpy_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
+    ret = wmemcpy_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Copying a tiny buffer to a big NULL destination errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Copying a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
     CHECK_CALLED(invalid_parameter_handler);
@@ -438,25 +381,25 @@ static void test_wmemcpy_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemcpy_s(dest, 0, NULL, ARRAY_SIZE(tiny));
+    ret = wmemcpy_s(dest, 0, NULL, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Copying a NULL buffer into a destination of size 0 errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ret = p_wmemcpy_s(buf, ARRAY_SIZE(buf), big, ARRAY_SIZE(big));
+    ret = wmemcpy_s(buf, ARRAY_SIZE(buf), big, ARRAY_SIZE(big));
     ok(!ret, "wmemcpy_s returned %d\n", ret);
     ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
 
-    ret = p_wmemcpy_s(buf + 1, ARRAY_SIZE(buf) - 1, buf, ARRAY_SIZE(big));
+    ret = wmemcpy_s(buf + 1, ARRAY_SIZE(buf) - 1, buf, ARRAY_SIZE(big));
     ok(!ret, "wmemcpy_s returned %d\n", ret);
     ok(!memcmp(buf + 1, big, sizeof(big)), "unexpected buf\n");
 
-    ret = p_wmemcpy_s(buf, ARRAY_SIZE(buf), buf + 1, ARRAY_SIZE(big));
+    ret = wmemcpy_s(buf, ARRAY_SIZE(buf), buf + 1, ARRAY_SIZE(big));
     ok(!ret, "wmemcpy_s returned %d\n", ret);
     ok(!memcmp(buf, big, sizeof(big)), "unexpected buf\n");
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -468,18 +411,18 @@ static void test_wmemmove_s(void)
     const wchar_t XX = 0x5858;     /* two 'X' bytes */
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
     /* Normal */
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemmove_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
+    ret = wmemmove_s(dest, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(ret == 0, "Moving a buffer into a big enough destination returned %d, expected 0\n", ret);
     okwchars(dest, tiny[0], tiny[1], tiny[2], tiny[3], tiny[4], tiny[5], XX, XX);
 
     /* Overlapping */
     memcpy(dest, big, sizeof(dest));
-    ret = p_wmemmove_s(dest+1, ARRAY_SIZE(dest)-1, dest, ARRAY_SIZE(dest)-1);
+    ret = wmemmove_s(dest+1, ARRAY_SIZE(dest)-1, dest, ARRAY_SIZE(dest)-1);
     ok(ret == 0, "Moving a buffer up one char returned %d, expected 0\n", ret);
     okwchars(dest, big[0], big[0], big[1], big[2], big[3], big[4], big[5], big[6]);
 
@@ -487,7 +430,7 @@ static void test_wmemmove_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemmove_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
+    ret = wmemmove_s(dest, ARRAY_SIZE(dest), big, ARRAY_SIZE(big));
     ok(errno == ERANGE, "Moving a big buffer to a small destination errno %d, expected ERANGE\n", errno);
     ok(ret == ERANGE, "Moving a big buffer to a small destination returned %d, expected ERANGE\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
@@ -497,7 +440,7 @@ static void test_wmemmove_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemmove_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
+    ret = wmemmove_s(dest, ARRAY_SIZE(dest), NULL, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Moving a NULL source buffer errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Moving a NULL source buffer returned %d, expected EINVAL\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
@@ -507,7 +450,7 @@ static void test_wmemmove_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemmove_s(dest, 0, tiny, ARRAY_SIZE(tiny));
+    ret = wmemmove_s(dest, 0, tiny, ARRAY_SIZE(tiny));
     ok(errno == ERANGE, "Moving into a destination of size 0 errno %d, expected ERANGE\n", errno);
     ok(ret == ERANGE, "Moving into a destination of size 0 returned %d, expected ERANGE\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
@@ -516,7 +459,7 @@ static void test_wmemmove_s(void)
     /* Replace dest with NULL */
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wmemmove_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
+    ret = wmemmove_s(NULL, ARRAY_SIZE(dest), tiny, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Moving a tiny buffer to a big NULL destination errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Moving a tiny buffer to a big NULL destination returned %d, expected EINVAL\n", ret);
     CHECK_CALLED(invalid_parameter_handler);
@@ -525,13 +468,13 @@ static void test_wmemmove_s(void)
     errno = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
     memset(dest, 'X', sizeof(dest));
-    ret = p_wmemmove_s(dest, 0, NULL, ARRAY_SIZE(tiny));
+    ret = wmemmove_s(dest, 0, NULL, ARRAY_SIZE(tiny));
     ok(errno == EINVAL, "Moving a NULL buffer into a destination of size 0 errno %d, expected EINVAL\n", errno);
     ok(ret == EINVAL, "Moving a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     okwchars(dest, XX, XX, XX, XX, XX, XX, XX, XX);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -545,10 +488,10 @@ struct block_file_arg
 static DWORD WINAPI block_file(void *arg)
 {
     struct block_file_arg *files = arg;
-    p_lock_file(files->test_file);
+    _lock_file(files->test_file);
     SetEvent(files->init);
     WaitForSingleObject(files->finish, INFINITE);
-    p_unlock_file(files->test_file);
+    _unlock_file(files->test_file);
     return 0;
 }
 
@@ -568,17 +511,17 @@ static void test_fread_s(void)
     fwrite("test", 1, 4, f);
     fclose(f);
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p_fread_s(buf, sizeof(buf), 1, 1, NULL);
+    ret = fread_s(buf, sizeof(buf), 1, 1, NULL);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
-    f = p_fopen(test_file, "r");
+    f = fopen(test_file, "r");
     arg.test_file = f;
     arg.init = CreateEventW(NULL, FALSE, FALSE, NULL);
     arg.finish = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -586,10 +529,10 @@ static void test_fread_s(void)
     WaitForSingleObject(arg.init, INFINITE);
 
     errno = 0xdeadbeef;
-    ret = p_fread_s(NULL, sizeof(buf), 0, 1, f);
+    ret = fread_s(NULL, sizeof(buf), 0, 1, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(errno == 0xdeadbeef, "errno = %d, expected 0xdeadbeef\n", errno);
-    ret = p_fread_s(NULL, sizeof(buf), 1, 0, f);
+    ret = fread_s(NULL, sizeof(buf), 1, 0, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(errno == 0xdeadbeef, "errno = %d, expected 0xdeadbeef\n", errno);
 
@@ -598,7 +541,7 @@ static void test_fread_s(void)
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p_fread_s(NULL, sizeof(buf), 1, 1, f);
+    ret = fread_s(NULL, sizeof(buf), 1, 1, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
@@ -606,7 +549,7 @@ static void test_fread_s(void)
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     buf[1] = 'a';
-    ret = p_fread_s(buf, 3, 1, 10, f);
+    ret = fread_s(buf, 3, 1, 10, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(buf[0] == 0, "buf[0] = '%c', expected 0\n", buf[0]);
     ok(buf[1] == 0, "buf[1] = '%c', expected 0\n", buf[1]);
@@ -615,22 +558,22 @@ static void test_fread_s(void)
 
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
-    ret = p_fread_s(buf, 2, 1, 10, f);
+    ret = fread_s(buf, 2, 1, 10, f);
     ok(ret == 0, "fread_s returned %d, expected 0\n", ret);
     ok(buf[0] == 0, "buf[0] = '%c', expected 0\n", buf[0]);
     ok(errno == ERANGE, "errno = %d, expected ERANGE\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     memset(buf, 'a', sizeof(buf));
-    ret = p_fread_s(buf, sizeof(buf), 3, 10, f);
+    ret = fread_s(buf, sizeof(buf), 3, 10, f);
     ok(ret==1, "fread_s returned %d, expected 1\n", ret);
     ok(buf[0] == 'e', "buf[0] = '%c', expected 'e'\n", buf[0]);
     ok(buf[1] == 's', "buf[1] = '%c', expected 's'\n", buf[1]);
     ok(buf[2] == 't', "buf[2] = '%c', expected 't'\n", buf[2]);
     ok(buf[3] == 'a', "buf[3] = '%c', expected 'a'\n", buf[3]);
-    p_fclose(f);
+    fclose(f);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
     CloseHandle(arg.init);
     CloseHandle(arg.finish);
@@ -643,41 +586,41 @@ static void test__aligned_msize(void)
     void *mem;
     int ret;
 
-    mem = p__aligned_offset_malloc(23, 16, 7);
-    ret = p__aligned_msize(mem, 16, 7);
+    mem = _aligned_offset_malloc(23, 16, 7);
+    ret = _aligned_msize(mem, 16, 7);
     ok(ret == 23, "_aligned_msize returned %d\n", ret);
-    ret = p__aligned_msize(mem, 15, 7);
+    ret = _aligned_msize(mem, 15, 7);
     ok(ret == 24, "_aligned_msize returned %d\n", ret);
-    ret = p__aligned_msize(mem, 11, 7);
+    ret = _aligned_msize(mem, 11, 7);
     ok(ret == 28, "_aligned_msize returned %d\n", ret);
-    ret = p__aligned_msize(mem, 1, 7);
+    ret = _aligned_msize(mem, 1, 7);
     ok(ret == 39-sizeof(void*), "_aligned_msize returned %d\n", ret);
-    ret = p__aligned_msize(mem, 8, 0);
+    ret = _aligned_msize(mem, 8, 0);
     todo_wine ok(ret == 32, "_aligned_msize returned %d\n", ret);
-    p__aligned_free(mem);
+    _aligned_free(mem);
 
-    mem = p__aligned_offset_malloc(3, 16, 0);
-    ret = p__aligned_msize(mem, 16, 0);
+    mem = _aligned_offset_malloc(3, 16, 0);
+    ret = _aligned_msize(mem, 16, 0);
     ok(ret == 3, "_aligned_msize returned %d\n", ret);
-    ret = p__aligned_msize(mem, 11, 0);
+    ret = _aligned_msize(mem, 11, 0);
     ok(ret == 8, "_aligned_msize returned %d\n", ret);
-    p__aligned_free(mem);
+    _aligned_free(mem);
 }
 
 static void test_atoi(void)
 {
     int r;
 
-    r = p_atoi("0");
+    r = atoi("0");
     ok(r == 0, "atoi(0) = %d\n", r);
 
-    r = p_atoi("-1");
+    r = atoi("-1");
     ok(r == -1, "atoi(-1) = %d\n", r);
 
-    r = p_atoi("1");
+    r = atoi("1");
     ok(r == 1, "atoi(1) = %d\n", r);
 
-    r = p_atoi("4294967296");
+    r = atoi("4294967296");
     ok(r == 2147483647, "atoi(4294967296) = %d\n", r);
 }
 
@@ -1003,37 +946,37 @@ static void test__memicmp(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
-    ret = p__memicmp(NULL, NULL, 0);
+    ret = _memicmp(NULL, NULL, 0);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(NULL, NULL, 1);
+    ret = _memicmp(NULL, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(s1, NULL, 1);
+    ret = _memicmp(s1, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(NULL, s2, 1);
+    ret = _memicmp(NULL, s2, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ret = p__memicmp(s1, s2, 2);
+    ret = _memicmp(s1, s2, 2);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp(s1, s2, 3);
+    ret = _memicmp(s1, s2, 3);
     ok(ret == -1, "got %d\n", ret);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -1043,37 +986,37 @@ static void test__memicmp_l(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
             "Invalid parameter handler was already set\n");
 
-    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ret = _memicmp_l(NULL, NULL, 0, NULL);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ret = _memicmp_l(NULL, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ret = _memicmp_l(s1, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ret = _memicmp_l(NULL, s2, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     ok(errno == EINVAL, "errno = %d, expected EINVAL\n", errno);
     CHECK_CALLED(invalid_parameter_handler);
 
-    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ret = _memicmp_l(s1, s2, 2, NULL);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ret = _memicmp_l(s1, s2, 3, NULL);
     ok(ret == -1, "got %d\n", ret);
 
-    ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
+    ok(_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
             "Cannot reset invalid parameter handler\n");
 }
 
@@ -1081,7 +1024,7 @@ static void test_setlocale(void)
 {
     char *ret;
 
-    ret = p_setlocale(LC_ALL, "en-US");
+    ret = setlocale(LC_ALL, "en-US");
     ok(!ret, "got %p\n", ret);
 }
 
@@ -1105,58 +1048,58 @@ static void test___strncnt(void)
     size_t ret;
 
     if (0) /* crashes */
-        ret = p___strncnt(NULL, 1);
+        ret = __strncnt(NULL, 1);
 
     for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
     {
-        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ret = __strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
         ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
     }
 }
 
 static void test_strcmp(void)
 {
-    int ret = p_strcmp( "abc", "abcd" );
+    int ret = strcmp( "abc", "abcd" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "", "abc" );
+    ret = strcmp( "", "abc" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "abc", "ab\xa0" );
+    ret = strcmp( "abc", "ab\xa0" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ret = strcmp( "ab\xb0", "ab\xa0" );
     ok( ret == 1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ret = strcmp( "ab\xc2", "ab\xc2" );
     ok( ret == 0, "wrong ret %d\n", ret );
 
-    ret = p_strncmp( "abc", "abcd", 3 );
+    ret = strncmp( "abc", "abcd", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
 #ifdef _WIN64
-    ret = p_strncmp( "", "abc", 3 );
+    ret = strncmp( "", "abc", 3 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ret = strncmp( "abc", "ab\xa0", 4 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 3 );
     ok( ret == 1, "wrong ret %d\n", ret );
 #else
-    ret = p_strncmp( "", "abc", 3 );
+    ret = strncmp( "", "abc", 3 );
     ok( ret == 0 - 'a', "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ret = strncmp( "abc", "ab\xa0", 4 );
     ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 3 );
     ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
 #endif
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 2 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ret = strncmp( "ab\xc2", "ab\xc2", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abd", 0 );
+    ret = strncmp( "abc", "abd", 0 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abc", 12 );
+    ret = strncmp( "abc", "abc", 12 );
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
 static void test__get_heap_handle(void)
 {
-    ok((HANDLE)p__get_heap_handle() != GetProcessHeap(), "Expected _get_heap_handle() not to return GetProcessHeap()\n");
+    ok((HANDLE)_get_heap_handle() != GetProcessHeap(), "Expected _get_heap_handle() not to return GetProcessHeap()\n");
 }
 
 START_TEST(msvcr100)
