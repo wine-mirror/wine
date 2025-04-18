@@ -114,8 +114,8 @@ static const tid_t HTMLUnknownElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLUnknownElement_dispex = {
-    .id           = PROT_HTMLUnknownElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLUnknownElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLGenericElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLGenericElement_tid,
     .iface_tids   = HTMLUnknownElement_iface_tids,

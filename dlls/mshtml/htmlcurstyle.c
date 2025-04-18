@@ -1195,8 +1195,8 @@ static const tid_t MSCurrentStyleCSSProperties_iface_tids[] = {
     0
 };
 dispex_static_data_t MSCurrentStyleCSSProperties_dispex = {
-    .id           = PROT_MSCurrentStyleCSSProperties,
-    .prototype_id = PROT_MSCSSProperties,
+    .id           = OBJID_MSCurrentStyleCSSProperties,
+    .prototype_id = OBJID_MSCSSProperties,
     .vtbl         = &MSCurrentStyleCSSProperties_dispex_vtbl,
     .disp_tid     = DispHTMLCurrentStyle_tid,
     .iface_tids   = MSCurrentStyleCSSProperties_iface_tids,

@@ -1920,16 +1920,16 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
         return S_OK;
     }
 
-    if(!window->constructors[PROT_XMLHttpRequest]) {
+    if(!window->constructors[OBJID_XMLHttpRequest]) {
         HRESULT hres;
 
-        hres = HTMLXMLHttpRequestFactory_Create(window, &window->constructors[PROT_XMLHttpRequest]);
+        hres = HTMLXMLHttpRequestFactory_Create(window, &window->constructors[OBJID_XMLHttpRequest]);
         if(FAILED(hres))
             return hres;
     }
 
     V_VT(p) = VT_DISPATCH;
-    V_DISPATCH(p) = (IDispatch*)&window->constructors[PROT_XMLHttpRequest]->IWineJSDispatchHost_iface;
+    V_DISPATCH(p) = (IDispatch*)&window->constructors[OBJID_XMLHttpRequest]->IWineJSDispatchHost_iface;
     IDispatch_AddRef(V_DISPATCH(p));
 
     return S_OK;
@@ -3807,7 +3807,7 @@ static HRESULT HTMLWindow_lookup_dispid(DispatchEx *dispex, const WCHAR *name, D
 
 static const WCHAR *constructor_names[] = {
 #define X(name) L ## #name,
-    ALL_PROTOTYPES
+    ALL_OBJECTS
 #undef X
 };
 
@@ -3828,7 +3828,7 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
         const WCHAR **constr_name = bsearch(&name, constructor_names, ARRAYSIZE(constructor_names) ,
                                             sizeof(constructor_names[0]), cmp_name);
         if(constr_name) {
-            prototype_id_t id = constr_name - constructor_names + 1;
+            object_id_t id = constr_name - constructor_names + 1;
             compat_mode_t compat_mode = dispex_compat_mode(dispex);
             DispatchEx *constr;
             VARIANT v;
@@ -4260,7 +4260,7 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
 };
 
 dispex_static_data_t Window_dispex = {
-    .id         = PROT_Window,
+    .id         = OBJID_Window,
     .vtbl       = &HTMLWindow_event_target_vtbl.dispex_vtbl,
     .disp_tid   = DispHTMLWindow2_tid,
     .init_info  = HTMLWindow_init_dispex_info,

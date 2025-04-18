@@ -345,8 +345,8 @@ static const tid_t HTMLOptionElement_iface_tids[] = {
     0
 };
 dispex_static_data_t HTMLOptionElement_dispex = {
-    .id           = PROT_HTMLOptionElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLOptionElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLOptionElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLOptionElement_tid,
     .iface_tids   = HTMLOptionElement_iface_tids,
@@ -526,7 +526,7 @@ static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
 
 static dispex_static_data_t HTMLOptionElementFactory_dispex = {
     .name           = "Function",
-    .constructor_id = PROT_HTMLOptionElement,
+    .constructor_id = OBJID_HTMLOptionElement,
     .vtbl           = &HTMLOptionElementFactory_dispex_vtbl,
     .disp_tid       = IHTMLOptionElementFactory_tid,
     .init_info      = HTMLOptionElementFactory_init_dispex_info,
@@ -1299,8 +1299,8 @@ static const tid_t HTMLSelectElement_tids[] = {
 };
 
 dispex_static_data_t HTMLSelectElement_dispex = {
-    .id           = PROT_HTMLSelectElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLSelectElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLSelectElement_tid,
     .iface_tids   = HTMLSelectElement_tids,

@@ -762,7 +762,7 @@ static const tid_t ClientRect_iface_tids[] = {
     0
 };
 dispex_static_data_t ClientRect_dispex = {
-    .id         = PROT_ClientRect,
+    .id         = OBJID_ClientRect,
     .vtbl       = &ClientRect_dispex_vtbl,
     .disp_tid   = IHTMLRect_tid,
     .iface_tids = ClientRect_iface_tids,
@@ -1125,7 +1125,7 @@ static const tid_t ClientRectList_iface_tids[] = {
     0
 };
 dispex_static_data_t ClientRectList_dispex = {
-    .id         = PROT_ClientRectList,
+    .id         = OBJID_ClientRectList,
     .vtbl       = &HTMLRectCollection_dispex_vtbl,
     .disp_tid   = IHTMLRectCollection_tid,
     .iface_tids = ClientRectList_iface_tids,
@@ -7207,7 +7207,7 @@ static const tid_t DOMTokenList_tids[] = {
     0
 };
 dispex_static_data_t DOMTokenList_dispex = {
-    .id              = PROT_DOMTokenList,
+    .id              = OBJID_DOMTokenList,
     .vtbl            = &token_list_dispex_vtbl,
     .disp_tid        = IWineDOMTokenList_tid,
     .iface_tids      = DOMTokenList_tids,
@@ -7410,14 +7410,14 @@ static void Element_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 dispex_static_data_t Element_dispex = {
-    .id           = PROT_Element,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_Element,
+    .prototype_id = OBJID_Node,
     .init_info    = Element_init_dispex_info,
 };
 
 dispex_static_data_t HTMLElement_dispex = {
-    .id           = PROT_HTMLElement,
-    .prototype_id = PROT_Element,
+    .id           = OBJID_HTMLElement,
+    .prototype_id = OBJID_Element,
     .vtbl         = &HTMLElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLUnknownElement_tid,
     .init_info    = HTMLElement_init_dispex_info,
@@ -8264,7 +8264,7 @@ const tid_t NamedNodeMap_iface_tids[] = {
 };
 
 dispex_static_data_t NamedNodeMap_dispex = {
-    .id         = PROT_NamedNodeMap,
+    .id         = OBJID_NamedNodeMap,
     .vtbl       = &HTMLAttributeCollection_dispex_vtbl,
     .disp_tid   = DispHTMLAttributeCollection_tid,
     .iface_tids = NamedNodeMap_iface_tids,

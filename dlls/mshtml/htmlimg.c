@@ -679,8 +679,8 @@ static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 dispex_static_data_t HTMLImageElement_dispex = {
-    .id           = PROT_HTMLImageElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLImageElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLImgElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLImg_tid,
     .init_info    = HTMLImgElement_init_dispex_info,
@@ -880,7 +880,7 @@ static const dispex_static_data_vtbl_t HTMLImageElementFactory_dispex_vtbl = {
 
 static dispex_static_data_t HTMLImageElementFactory_dispex = {
     .name           = "Function",
-    .constructor_id = PROT_HTMLImageElement,
+    .constructor_id = OBJID_HTMLImageElement,
     .vtbl           = &HTMLImageElementFactory_dispex_vtbl,
     .disp_tid       = IHTMLImageElementFactory_tid,
     .init_info      = HTMLImageElementFactory_init_dispex_info,

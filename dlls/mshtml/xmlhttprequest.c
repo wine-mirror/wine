@@ -1494,7 +1494,7 @@ static const tid_t HTMLXMLHttpRequest_iface_tids[] = {
     0
 };
 dispex_static_data_t XMLHttpRequest_dispex = {
-    .id               = PROT_XMLHttpRequest,
+    .id               = OBJID_XMLHttpRequest,
     .init_constructor = HTMLXMLHttpRequestFactory_Create,
     .vtbl             = &HTMLXMLHttpRequest_event_target_vtbl.dispex_vtbl,
     .disp_tid         = DispHTMLXMLHttpRequest_tid,
@@ -1668,7 +1668,7 @@ static const tid_t HTMLXMLHttpRequestFactory_iface_tids[] = {
 };
 static dispex_static_data_t HTMLXMLHttpRequestFactory_dispex = {
     .name           = "Function",
-    .constructor_id = PROT_XMLHttpRequest,
+    .constructor_id = OBJID_XMLHttpRequest,
     .vtbl           = &HTMLXMLHttpRequestFactory_dispex_vtbl,
     .disp_tid       = IHTMLXMLHttpRequestFactory_tid,
     .iface_tids     = HTMLXMLHttpRequestFactory_iface_tids,

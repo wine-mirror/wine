@@ -332,8 +332,8 @@ static const event_target_vtbl_t HTMLStyleElement_event_target_vtbl = {
 };
 
 dispex_static_data_t HTMLStyleElement_dispex = {
-    .id           = PROT_HTMLStyleElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLStyleElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLStyleElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLStyleElement_tid,
     .init_info    = HTMLStyleElement_init_dispex_info,

@@ -413,7 +413,7 @@ typedef struct {
     const char *(*get_name)(DispatchEx*);
 } dispex_static_data_vtbl_t;
 
-#define ALL_PROTOTYPES                     \
+#define ALL_OBJECTS                     \
     X(Attr)                                \
     X(CSSRule)                             \
     X(CSSStyleDeclaration)                 \
@@ -505,12 +505,12 @@ typedef struct {
     X(XMLHttpRequest)
 
 typedef enum {
-    PROT_NONE,
-#define X(name) PROT_##name,
-    ALL_PROTOTYPES
+    OBJID_NONE,
+#define X(name) OBJID_##name,
+    ALL_OBJECTS
 #undef X
-    PROT_LAST,
-} prototype_id_t;
+    OBJID_LAST,
+} object_id_t;
 
 struct dispex_static_data_t {
     const char *name;
@@ -522,9 +522,9 @@ struct dispex_static_data_t {
     dispex_data_t *info_cache[COMPAT_MODE_CNT];
     dispex_data_t *prototype_info[COMPAT_MODE_CNT - COMPAT_MODE_IE9];
     dispex_data_t *delayed_init_info;
-    prototype_id_t id;
-    prototype_id_t prototype_id;
-    prototype_id_t constructor_id;
+    object_id_t id;
+    object_id_t prototype_id;
+    object_id_t constructor_id;
     UINT32 js_flags;
     compat_mode_t min_compat_mode;
     compat_mode_t max_compat_mode;
@@ -532,10 +532,10 @@ struct dispex_static_data_t {
 };
 
 #define X(name) extern dispex_static_data_t name ## _dispex;
-ALL_PROTOTYPES
+ALL_OBJECTS
 #undef X
 
-extern dispex_static_data_t *object_descriptors[PROT_LAST];
+extern dispex_static_data_t *object_descriptors[OBJID_LAST];
 
 typedef HRESULT (*dispex_hook_invoke_t)(DispatchEx*,WORD,DISPPARAMS*,VARIANT*,
                                         EXCEPINFO*,IServiceProvider*);
@@ -644,8 +644,8 @@ HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret);
 HRESULT dispex_define_property(DispatchEx *dispex, const WCHAR *name, DWORD flags, VARIANT *v, DISPID *id);
 HRESULT dispex_index_prop_desc(DispatchEx*,DISPID,struct property_info*);
 IWineJSDispatchHost *dispex_outer_iface(DispatchEx *dispex);
-HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
-HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret);
+HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret);
+HRESULT get_prototype(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret);
 
 typedef enum {
     DISPEXPROP_CUSTOM,
@@ -800,8 +800,8 @@ struct HTMLInnerWindow {
     ULONG navigation_type;
     ULONG redirect_count;
 
-    DispatchEx *prototypes[PROT_LAST];
-    DispatchEx *constructors[PROT_LAST];
+    DispatchEx *prototypes[OBJID_LAST];
+    DispatchEx *constructors[OBJID_LAST];
 
     ULONGLONG navigation_start_time;
     ULONGLONG unload_event_start_time;

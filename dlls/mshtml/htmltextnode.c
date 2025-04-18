@@ -221,8 +221,8 @@ static void CharacterData_init_dispex_info(dispex_data_t *info, compat_mode_t mo
 }
 
 dispex_static_data_t CharacterData_dispex = {
-    .id           = PROT_CharacterData,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_CharacterData,
+    .prototype_id = OBJID_Node,
     .init_info    = CharacterData_init_dispex_info,
 };
 
@@ -434,8 +434,8 @@ static const tid_t Text_iface_tids[] = {
     0
 };
 dispex_static_data_t Text_dispex = {
-    .id           = PROT_Text,
-    .prototype_id = PROT_CharacterData,
+    .id           = OBJID_Text,
+    .prototype_id = OBJID_CharacterData,
     .vtbl         = &Text_dispex_vtbl,
     .disp_tid     = DispHTMLDOMTextNode_tid,
     .iface_tids   = Text_iface_tids,
@@ -669,8 +669,8 @@ static void Comment_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 }
 
 dispex_static_data_t Comment_dispex = {
-    .id           = PROT_Comment,
-    .prototype_id = PROT_CharacterData,
+    .id           = OBJID_Comment,
+    .prototype_id = OBJID_CharacterData,
     .vtbl         = &HTMLCommentElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLCommentElement_tid,
     .init_info    = Comment_init_dispex_info,

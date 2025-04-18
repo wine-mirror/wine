@@ -1809,7 +1809,7 @@ static const tid_t MSEventObj_iface_tids[] = {
 };
 
 dispex_static_data_t MSEventObj_dispex = {
-    .id         = PROT_MSEventObj,
+    .id         = OBJID_MSEventObj,
     .vtbl       = &HTMLEventObj_dispex_vtbl,
     .disp_tid   = DispCEventObj_tid,
     .iface_tids = MSEventObj_iface_tids,
@@ -3582,7 +3582,7 @@ static const tid_t Event_iface_tids[] = {
 };
 
 dispex_static_data_t Event_dispex = {
-    .id         = PROT_Event,
+    .id         = OBJID_Event,
     .vtbl       = &DOMEvent_dispex_vtbl,
     .disp_tid   = DispDOMEvent_tid,
     .iface_tids = Event_iface_tids,
@@ -3602,8 +3602,8 @@ static const tid_t UIEvent_iface_tids[] = {
 };
 
 dispex_static_data_t UIEvent_dispex = {
-    .id           = PROT_UIEvent,
-    .prototype_id = PROT_Event,
+    .id           = OBJID_UIEvent,
+    .prototype_id = OBJID_Event,
     .vtbl         = &DOMUIEvent_dispex_vtbl,
     .disp_tid     = DispDOMUIEvent_tid,
     .iface_tids   = UIEvent_iface_tids,
@@ -3624,8 +3624,8 @@ static const tid_t MouseEvent_iface_tids[] = {
 };
 
 dispex_static_data_t MouseEvent_dispex = {
-    .id           = PROT_MouseEvent,
-    .prototype_id = PROT_UIEvent,
+    .id           = OBJID_MouseEvent,
+    .prototype_id = OBJID_UIEvent,
     .vtbl         = &DOMMouseEvent_dispex_vtbl,
     .disp_tid     = DispDOMMouseEvent_tid,
     .iface_tids   = MouseEvent_iface_tids,
@@ -3654,8 +3654,8 @@ static const tid_t KeyboardEvent_iface_tids[] = {
 };
 
 dispex_static_data_t KeyboardEvent_dispex = {
-    .id           = PROT_KeyboardEvent,
-    .prototype_id = PROT_UIEvent,
+    .id           = OBJID_KeyboardEvent,
+    .prototype_id = OBJID_UIEvent,
     .vtbl         = &DOMKeyboardEvent_dispex_vtbl,
     .disp_tid     = DispDOMKeyboardEvent_tid,
     .iface_tids   = KeyboardEvent_iface_tids,
@@ -3675,8 +3675,8 @@ static const dispex_static_data_vtbl_t DOMPageTransitionEvent_dispex_vtbl = {
 };
 
 dispex_static_data_t PageTransitionEvent_dispex = {
-    .id              = PROT_PageTransitionEvent,
-    .prototype_id    = PROT_Event,
+    .id              = OBJID_PageTransitionEvent,
+    .prototype_id    = OBJID_Event,
     .vtbl            = &DOMPageTransitionEvent_dispex_vtbl,
     .disp_tid        = DispDOMEvent_tid,
     .iface_tids      = Event_iface_tids,
@@ -3698,8 +3698,8 @@ static const tid_t CustomEvent_iface_tids[] = {
 };
 
 dispex_static_data_t CustomEvent_dispex = {
-    .id           = PROT_CustomEvent,
-    .prototype_id = PROT_Event,
+    .id           = OBJID_CustomEvent,
+    .prototype_id = OBJID_Event,
     .vtbl         = &DOMCustomEvent_dispex_vtbl,
     .disp_tid     = DispDOMCustomEvent_tid,
     .iface_tids   = CustomEvent_iface_tids,
@@ -3713,8 +3713,8 @@ static const dispex_static_data_vtbl_t DOMMessageEvent_dispex_vtbl = {
 };
 
 dispex_static_data_t MessageEvent_dispex = {
-    .id           = PROT_MessageEvent,
-    .prototype_id = PROT_Event,
+    .id           = OBJID_MessageEvent,
+    .prototype_id = OBJID_Event,
     .vtbl         = &DOMMessageEvent_dispex_vtbl,
     .disp_tid     = DispDOMMessageEvent_tid,
     .iface_tids   = Event_iface_tids,
@@ -3735,8 +3735,8 @@ static const tid_t ProgressEvent_iface_tids[] = {
 };
 
 dispex_static_data_t ProgressEvent_dispex = {
-    .id              = PROT_ProgressEvent,
-    .prototype_id    = PROT_Event,
+    .id              = OBJID_ProgressEvent,
+    .prototype_id    = OBJID_Event,
     .vtbl            = &DOMProgressEvent_dispex_vtbl,
     .disp_tid        = DispDOMProgressEvent_tid,
     .iface_tids      = ProgressEvent_iface_tids,
@@ -3757,8 +3757,8 @@ static const tid_t StorageEvent_iface_tids[] = {
 };
 
 dispex_static_data_t StorageEvent_dispex = {
-    .id           = PROT_StorageEvent,
-    .prototype_id = PROT_Event,
+    .id           = OBJID_StorageEvent,
+    .prototype_id = OBJID_Event,
     .vtbl         = &DOMStorageEvent_dispex_vtbl,
     .disp_tid     = DispDOMStorageEvent_tid,
     .iface_tids   = StorageEvent_iface_tids,

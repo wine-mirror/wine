@@ -239,7 +239,7 @@ static const tid_t MSSelection_iface_tids[] = {
     0
 };
 dispex_static_data_t MSSelection_dispex = {
-    .id              = PROT_MSSelection,
+    .id              = OBJID_MSSelection,
     .vtbl            = &HTMLSelectionObject_dispex_vtbl,
     .disp_tid        = IHTMLSelectionObject_tid,
     .iface_tids      = MSSelection_iface_tids,

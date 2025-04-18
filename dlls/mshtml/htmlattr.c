@@ -406,8 +406,8 @@ static const tid_t HTMLDOMAttribute_iface_tids[] = {
     0
 };
 dispex_static_data_t Attr_dispex = {
-    .id           = PROT_Attr,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_Attr,
+    .prototype_id = OBJID_Node,
     .vtbl         = &HTMLDOMAttribute_dispex_vtbl,
     .disp_tid     = DispHTMLDOMAttribute_tid,
     .iface_tids   = HTMLDOMAttribute_iface_tids,

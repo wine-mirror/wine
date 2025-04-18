@@ -546,7 +546,7 @@ static BOOL find_prototype_member(const dispex_data_t *info, DISPID id)
 
 static const char *object_names[] = {
 #define X(name) #name,
-    ALL_PROTOTYPES
+    ALL_OBJECTS
 #undef X
 };
 
@@ -2969,7 +2969,7 @@ void init_dispatch_with_owner(DispatchEx *dispex, dispex_static_data_t *desc, Di
 dispex_static_data_t *object_descriptors[] = {
     NULL,
 #define X(name) &name ## _dispex,
-    ALL_PROTOTYPES
+    ALL_OBJECTS
 #undef X
 };
 
@@ -3007,7 +3007,7 @@ static const dispex_static_data_vtbl_t prototype_dispex_vtbl = {
     .find_dispid = prototype_find_dispid,
 };
 
-HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
+HRESULT get_prototype(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret)
 {
     compat_mode_t compat_mode = script_global->doc->document_mode;
     DispatchEx *prototype, *prot_prototype = NULL;
@@ -3055,7 +3055,7 @@ HRESULT get_prototype(HTMLInnerWindow *script_global, prototype_id_t id, Dispatc
 struct constructor
 {
     DispatchEx dispex;
-    prototype_id_t id;
+    object_id_t id;
 };
 
 static inline struct constructor *constr_from_DispatchEx(DispatchEx *iface)
@@ -3112,7 +3112,7 @@ static dispex_static_data_t constructor_dispex = {
     .js_flags = HOSTOBJ_CONSTRUCTOR,
 };
 
-HRESULT get_constructor(HTMLInnerWindow *script_global, prototype_id_t id, DispatchEx **ret)
+HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret)
 {
     dispex_static_data_t *info;
 

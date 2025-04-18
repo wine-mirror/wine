@@ -320,8 +320,8 @@ static const tid_t DocumentType_iface_tids[] = {
 };
 
 dispex_static_data_t DocumentType_dispex = {
-    .id           = PROT_DocumentType,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_DocumentType,
+    .prototype_id = OBJID_Node,
     .vtbl         = &DocumentType_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispDOMDocumentType_tid,
     .iface_tids   = DocumentType_iface_tids,
@@ -5758,8 +5758,8 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
 }
 
 dispex_static_data_t Document_dispex = {
-    .id           = PROT_Document,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_Document,
+    .prototype_id = OBJID_Node,
     .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
@@ -5767,8 +5767,8 @@ dispex_static_data_t Document_dispex = {
 };
 
 dispex_static_data_t HTMLDocument_dispex = {
-    .id           = PROT_HTMLDocument,
-    .prototype_id = PROT_Document,
+    .id           = OBJID_HTMLDocument,
+    .prototype_id = OBJID_Document,
     .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
@@ -5900,8 +5900,8 @@ static const tid_t DocumentFragment_iface_tids[] = {
     0
 };
 dispex_static_data_t DocumentFragment_dispex = {
-    .id           = PROT_DocumentFragment,
-    .prototype_id = PROT_Node,
+    .id           = OBJID_DocumentFragment,
+    .prototype_id = OBJID_Node,
     .vtbl         = &HTMLDocument_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = DocumentFragment_iface_tids,

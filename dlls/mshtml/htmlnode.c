@@ -385,7 +385,7 @@ static const tid_t NodeList_iface_tids[] = {
 };
 
 dispex_static_data_t NodeList_dispex = {
-    .id         = PROT_NodeList,
+    .id         = OBJID_NodeList,
     .vtbl       = &HTMLDOMChildrenCollection_dispex_vtbl,
     .disp_tid   = DispDOMChildrenCollection_tid,
     .iface_tids = NodeList_iface_tids,
@@ -1347,7 +1347,7 @@ static const dispex_static_data_vtbl_t Node_dispex_vtbl = {
 };
 
 dispex_static_data_t Node_dispex = {
-    .id         = PROT_Node,
+    .id         = OBJID_Node,
     .vtbl       = &Node_dispex_vtbl,
     .disp_tid   = IHTMLDOMNode_tid,
     .init_info  = HTMLDOMNode_init_dispex_info,

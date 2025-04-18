@@ -436,8 +436,8 @@ static const tid_t HTMLTableDataCellElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLTableCellElement_dispex = {
-    .id           = PROT_HTMLTableCellElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLTableCellElement,
+    .prototype_id = OBJID_HTMLElement,
     .disp_tid     = DispHTMLTableCell_tid,
     .iface_tids   = HTMLTableDataCellElement_iface_tids,
     .init_info    = HTMLElement_init_dispex_info,
@@ -456,8 +456,8 @@ static const event_target_vtbl_t HTMLTableDataCellElement_event_target_vtbl = {
 };
 
 dispex_static_data_t HTMLTableDataCellElement_dispex = {
-    .id           = PROT_HTMLTableDataCellElement,
-    .prototype_id = PROT_HTMLTableCellElement,
+    .id           = OBJID_HTMLTableDataCellElement,
+    .prototype_id = OBJID_HTMLTableCellElement,
     .vtbl         = &HTMLTableDataCellElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLTableCell_tid,
     .iface_tids   = HTMLTableDataCellElement_iface_tids,
@@ -830,8 +830,8 @@ static const tid_t HTMLTableRowElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLTableRowElement_dispex = {
-    .id           = PROT_HTMLTableRowElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLTableRowElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLTableRowElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     =  DispHTMLTableRow_tid,
     .iface_tids   = HTMLTableRowElement_iface_tids,
@@ -1683,8 +1683,8 @@ static const tid_t HTMLTableElement_iface_tids[] = {
 };
 
 dispex_static_data_t HTMLTableElement_dispex = {
-    .id           = PROT_HTMLTableElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLTableElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLTableElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLTable_tid,
     .iface_tids   = HTMLTableElement_iface_tids,

@@ -227,7 +227,7 @@ static const tid_t HTMLDOMImplementation_iface_tids[] = {
     0
 };
 dispex_static_data_t DOMImplementation_dispex = {
-    .id         = PROT_DOMImplementation,
+    .id         = OBJID_DOMImplementation,
     .vtbl       = &DOMImplementation_dispex_vtbl,
     .disp_tid   = DispHTMLDOMImplementation_tid,
     .iface_tids = HTMLDOMImplementation_iface_tids,
@@ -427,7 +427,7 @@ static const tid_t Screen_iface_tids[] = {
     0
 };
 dispex_static_data_t Screen_dispex = {
-    .id         = PROT_Screen,
+    .id         = OBJID_Screen,
     .vtbl       = &HTMLScreen_dispex_vtbl,
     .disp_tid   = DispHTMLScreen_tid,
     .iface_tids = Screen_iface_tids,
@@ -560,7 +560,7 @@ static const tid_t History_iface_tids[] = {
     0
 };
 dispex_static_data_t History_dispex = {
-    .id         = PROT_History,
+    .id         = OBJID_History,
     .vtbl       = &OmHistory_dispex_vtbl,
     .disp_tid   = DispHTMLHistory_tid,
     .iface_tids = History_iface_tids,
@@ -675,7 +675,7 @@ static const tid_t PluginArray_iface_tids[] = {
     0
 };
 dispex_static_data_t PluginArray_dispex = {
-    .id         = PROT_PluginArray,
+    .id         = OBJID_PluginArray,
     .vtbl       = &HTMLPluginsCollection_dispex_vtbl,
     .disp_tid   = DispCPlugins_tid,
     .iface_tids = PluginArray_iface_tids,
@@ -776,7 +776,7 @@ static const tid_t MimeTypeArray_iface_tids[] = {
     0
 };
 dispex_static_data_t MimeTypeArray_dispex = {
-    .id         = PROT_MimeTypeArray,
+    .id         = OBJID_MimeTypeArray,
     .vtbl       = &HTMLMimeTypesCollection_dispex_vtbl,
     .disp_tid   = IHTMLMimeTypesCollection_tid,
     .iface_tids = MimeTypeArray_iface_tids,
@@ -1158,7 +1158,7 @@ static const tid_t Navigator_iface_tids[] = {
     0
 };
 dispex_static_data_t Navigator_dispex = {
-    .id         = PROT_Navigator,
+    .id         = OBJID_Navigator,
     .vtbl       = &Navigator_dispex_vtbl,
     .disp_tid   = DispHTMLNavigator_tid,
     .iface_tids = Navigator_iface_tids,
@@ -1532,7 +1532,7 @@ static const tid_t PerformanceTiming_iface_tids[] = {
     0
 };
 dispex_static_data_t PerformanceTiming_dispex = {
-    .id         = PROT_PerformanceTiming,
+    .id         = OBJID_PerformanceTiming,
     .vtbl       = &HTMLPerformanceTiming_dispex_vtbl,
     .disp_tid   = IHTMLPerformanceTiming_tid,
     .iface_tids = PerformanceTiming_iface_tids,
@@ -1653,7 +1653,7 @@ static const tid_t PerformanceNavigation_iface_tids[] = {
     0
 };
 dispex_static_data_t PerformanceNavigation_dispex = {
-    .id         = PROT_PerformanceNavigation,
+    .id         = OBJID_PerformanceNavigation,
     .vtbl       = &HTMLPerformanceNavigation_dispex_vtbl,
     .disp_tid   = IHTMLPerformanceNavigation_tid,
     .iface_tids = PerformanceNavigation_iface_tids,
@@ -1816,7 +1816,7 @@ static const tid_t Performance_iface_tids[] = {
     0
 };
 dispex_static_data_t Performance_dispex = {
-    .id         = PROT_Performance,
+    .id         = OBJID_Performance,
     .vtbl       = &HTMLPerformance_dispex_vtbl,
     .disp_tid   = IHTMLPerformance_tid,
     .iface_tids = Performance_iface_tids,
@@ -1921,7 +1921,7 @@ static const tid_t MSNamespaceInfoCollection_iface_tids[] = {
     0
 };
 dispex_static_data_t MSNamespaceInfoCollection_dispex = {
-    .id              = PROT_MSNamespaceInfoCollection,
+    .id              = OBJID_MSNamespaceInfoCollection,
     .vtbl            = &HTMLNamespaceCollection_dispex_vtbl,
     .disp_tid        = DispHTMLNamespaceCollection_tid,
     .iface_tids      = MSNamespaceInfoCollection_iface_tids,
@@ -2123,7 +2123,7 @@ static const tid_t Console_iface_tids[] = {
     0
 };
 dispex_static_data_t Console_dispex = {
-    .id              = PROT_Console,
+    .id              = OBJID_Console,
     .vtbl            = &Console_dispex_vtbl,
     .disp_tid        = IWineMSHTMLConsole_tid,
     .iface_tids      = Console_iface_tids,
@@ -2414,7 +2414,7 @@ static const tid_t MediaQueryList_iface_tids[] = {
     0
 };
 dispex_static_data_t MediaQueryList_dispex = {
-    .id              = PROT_MediaQueryList,
+    .id              = OBJID_MediaQueryList,
     .vtbl            = &MediaQueryList_dispex_vtbl,
     .disp_tid        = IWineMSHTMLMediaQueryList_tid,
     .iface_tids      = MediaQueryList_iface_tids,
