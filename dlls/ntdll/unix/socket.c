@@ -1755,12 +1755,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_COMPLETE_ASYNC:
         {
+            enum server_fd_type type;
+
             if (in_size != sizeof(NTSTATUS))
                 return STATUS_BUFFER_TOO_SMALL;
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, &type, &options )))
                 return status;
             if (needs_close) close( fd );
+            if (type != FD_TYPE_SOCKET)
+                return STATUS_INVALID_DEVICE_REQUEST;
 
             status = *(NTSTATUS *)in_buffer;
             file_complete_async( handle, options, event, apc, apc_user, io, status, 0 );
