@@ -417,7 +417,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
                     copy = len;
                     if (count <= copy) /* Either copy the entire value, or nothing at all */
                         copy = 0;
-                    if (dst && count)  /* When the variable is the last thing that fits into dst, the string is null terminated */
+                    if (count && dst)  /* When the variable is the last thing that fits into dst, the string is null terminated */
                        dst[copy] = 0;  /* Either right after, or if it doesn't fit, where it would start */
                 }
                 else
@@ -438,10 +438,10 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
             }
         }
         total_size += len;
-        if (dst)
+        if (count && dst)
         {
             if (count < len) len = count;
-            if (count <= copy) copy = count ? count - 1 : 0; /* If the buffer is too small, we copy one character less */
+            if (count <= copy) copy = count - 1; /* If the buffer is too small, we copy one character less */
             memcpy(dst, var, copy * sizeof(WCHAR));
             count -= len;
             dst += copy;
@@ -450,7 +450,7 @@ NTSTATUS WINAPI RtlExpandEnvironmentStrings( const WCHAR *renv, WCHAR *src, SIZE
 
     if (!renv) RtlReleasePebLock();
 
-    if (dst && count) *dst = '\0';
+    if (count && dst) *dst = '\0';
     if (plen) *plen = total_size;
 
     return (count) ? STATUS_SUCCESS : STATUS_BUFFER_TOO_SMALL;
