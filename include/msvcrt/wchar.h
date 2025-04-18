@@ -44,6 +44,7 @@ size_t  __cdecl wcsrtombs(char*,const wchar_t**,size_t,mbstate_t*);
 int     __cdecl wctob(wint_t);
 
 _ACRTIMP errno_t __cdecl wmemcpy_s(wchar_t *, size_t, const wchar_t *, size_t);
+_ACRTIMP errno_t __cdecl wmemmove_s(wchar_t *, size_t, const wchar_t *, size_t);
 
 static inline _CONST_RETURN wchar_t *wmemchr(const wchar_t *s, wchar_t c, size_t n)
 {
