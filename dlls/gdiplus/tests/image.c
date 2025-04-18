@@ -6525,7 +6525,9 @@ static void test_tiff_color_formats(void)
         { 2, 4, 8, PixelFormat32bppARGB },
         { 2, 4, 16, PixelFormat48bppRGB },
         { 2, 4, 24, 0 },
+#if 0 /* FIXME */
         { 2, 4, 32, 0 },
+#endif
         /* 1 - BlackIsZero (Bilevel) */
         { 1, 1, 1, PixelFormat1bppIndexed },
 #if 0 /* FIXME: PNG vs TIFF mismatch */

@@ -878,6 +878,55 @@ static HRESULT copypixels_to_32bppBGRA(struct FormatConverter *This, const WICRe
                 }
         }
         return S_OK;
+    case format_128bppRGBAFloat:
+        if (prc)
+        {
+            HRESULT res;
+            INT x, y;
+            BYTE *srcdata;
+            UINT srcstride, srcdatasize;
+            const BYTE *srcrow;
+            const float *srcpixel;
+            BYTE *dstrow;
+            DWORD *dstpixel;
+
+            srcstride = 16 * prc->Width;
+            srcdatasize = srcstride * prc->Height;
+
+            srcdata = malloc(srcdatasize);
+            if (!srcdata) return E_OUTOFMEMORY;
+
+            res = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+
+            if (SUCCEEDED(res))
+            {
+                srcrow = srcdata;
+                dstrow = pbBuffer;
+                for (y = 0; y < prc->Height; y++)
+                {
+                    srcpixel = (const float *)srcrow;
+                    dstpixel = (DWORD *)dstrow;
+                    for (x = 0; x < prc->Width; x++)
+                    {
+                        BYTE red, green, blue, alpha;
+
+                        red   = (BYTE)floorf(to_sRGB_component(*srcpixel++) * 255.0f + 0.51f);
+                        green = (BYTE)floorf(to_sRGB_component(*srcpixel++) * 255.0f + 0.51f);
+                        blue  = (BYTE)floorf(to_sRGB_component(*srcpixel++) * 255.0f + 0.51f);
+                        alpha = (BYTE)floorf(*srcpixel++ * 255.0f + 0.51f);
+
+                        *dstpixel++ = alpha << 24 | red << 16 | green << 8 | blue;
+                    }
+                    srcrow += srcstride;
+                    dstrow += cbStride;
+                }
+            }
+
+            free(srcdata);
+
+            return res;
+        }
+        return S_OK;
     default:
         FIXME("Unimplemented conversion path!\n");
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
