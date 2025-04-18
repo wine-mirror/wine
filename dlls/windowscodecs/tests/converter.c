@@ -249,7 +249,8 @@ static BOOL compare_bits(const struct bitmap_data *expect, UINT buffersize, cons
             }
     }
     else if (IsEqualGUID(expect->format, &GUID_WICPixelFormat32bppGrayFloat)
-            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBFloat))
+            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBFloat)
+            || IsEqualGUID(expect->format, &GUID_WICPixelFormat128bppRGBAFloat))
     {
         UINT i;
         const float *a=(const float*)expect->bits, *b=(const float*)converted_bits;
@@ -671,6 +672,18 @@ static const float bits_128bppRGBFloat[] = {
 static const struct bitmap_data testdata_128bppRGBFloat = {
     &GUID_WICPixelFormat128bppRGBFloat, 128, (const BYTE *)bits_128bppRGBFloat, 3, 2, 96.0, 96.0};
 
+static const BYTE bits_24bppBGR_2[] = {
+    0,0,0, 0,255,0, 0,0,255,
+    255,0,0, 0,125,0, 0,0,125};
+static const struct bitmap_data testdata_24bppBGR_2 = {
+    &GUID_WICPixelFormat24bppBGR, 24, bits_24bppBGR_2, 3, 2, 96.0, 96.0};
+
+static const float bits_128bppRGBAFloat[] = {
+    0.0f,0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f,1.0f, 1.0f,0.0f,0.0f,1.0f,
+    0.0f,0.0f,1.0f,1.0f, 0.0f,0.205079f,0.0f,1.0f, 0.205079f,0.0f,0.0f,1.0f};
+static const struct bitmap_data testdata_128bppRGBAFloat = {
+    &GUID_WICPixelFormat128bppRGBAFloat, 128, (const BYTE *)bits_128bppRGBAFloat, 3, 2, 96.0, 96.0};
+
 static void test_conversion(const struct bitmap_data *src, const struct bitmap_data *dst, const char *name, BOOL todo)
 {
     BitmapTestSrc *src_obj;
@@ -796,7 +809,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(48bppBGRFixedPoint)},
         {WIC_PIXEL_FORMAT(96bppRGBFixedPoint)},
         {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
-        {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 35},
+        {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 34},
         {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 34},
 
@@ -2306,6 +2319,7 @@ START_TEST(converter)
     test_conversion(&testdata_48bppRGB, &testdata_64bppRGBA_2, "48bppRGB -> 64bppRGBA", FALSE);
 
     test_conversion(&testdata_48bppRGB, &testdata_128bppRGBFloat, "48bppRGB -> 128bppRGBFloat", FALSE);
+    test_conversion(&testdata_24bppBGR_2, &testdata_128bppRGBAFloat, "24bppBGR -> 128bppRGBAFloat", FALSE);
 
     test_invalid_conversion();
     test_default_converter();
