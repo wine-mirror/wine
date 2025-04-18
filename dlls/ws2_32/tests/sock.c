@@ -14463,6 +14463,53 @@ static void test_send_buffering(void)
     closesocket(client);
 }
 
+static void test_valid_handle(void)
+{
+    HANDLE duplicated, invalid;
+    SOCKET client, server;
+    char buffer[1];
+    WSABUF wsabuf;
+    DWORD size;
+    int ret;
+
+    /* Unlike WSAGetOverlappedResult(), duplicated handles are allowed. */
+
+    tcp_socketpair(&client, &server);
+    ret = DuplicateHandle(GetCurrentProcess(), (HANDLE)client,
+            GetCurrentProcess(), &duplicated, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "got error %lu\n", GetLastError());
+    invalid = CreateEventA(NULL, TRUE, TRUE, NULL);
+
+    ret = send((SOCKET)duplicated, buffer, 1, 0);
+    todo_wine ok(ret == 1, "got %d\n", ret);
+
+    ret = sendto((SOCKET)duplicated, buffer, 1, 0, NULL, 0);
+    todo_wine ok(ret == 1, "got %d\n", ret);
+
+    wsabuf.buf = buffer;
+    wsabuf.len = 1;
+
+    ret = WSASend((SOCKET)duplicated, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSASend((SOCKET)duplicated, &wsabuf, 1, &size, 0, NULL, NULL);
+    todo_wine ok(!ret, "got %d\n", ret);
+
+    ret = WSASend((SOCKET)invalid, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got error %u\n", WSAGetLastError());
+
+    ret = WSASend(INVALID_SOCKET, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got error %u\n", WSAGetLastError());
+
+    CloseHandle(invalid);
+    CloseHandle(duplicated);
+    closesocket(client);
+    closesocket(server);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -14548,6 +14595,7 @@ START_TEST( sock )
     test_tcp_sendto_recvfrom();
     test_broadcast();
     test_send_buffering();
+    test_valid_handle();
 
     /* There is apparently an obscure interaction between this test and
      * test_WSAGetOverlappedResult().
