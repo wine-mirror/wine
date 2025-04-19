@@ -1243,21 +1243,14 @@ static GpStatus get_region_hrgn(struct region_element *element, const RECT *boun
             return get_path_hrgn(element->elementdata.path, bounds, hrgn);
         case RegionDataRect:
         {
-            GpPath* path;
-            GpStatus stat;
             GpRectF* rc = &element->elementdata.rect;
 
-            stat = GdipCreatePath(FillModeAlternate, &path);
-            if (stat != Ok)
-                return stat;
-            stat = GdipAddPathRectangle(path, rc->X, rc->Y, rc->Width, rc->Height);
-
-            if (stat == Ok)
-                stat = get_path_hrgn(path, bounds, hrgn);
-
-            GdipDeletePath(path);
-
-            return stat;
+            if (rc->Width <= 0.0 || rc->Height <= 0.0)
+                *hrgn = CreateRectRgn(0, 0, 0, 0);
+            else
+                *hrgn = CreateRectRgn(rgn_round(rc->X), rgn_round(rc->Y),
+                    rgn_round(rc->X + rc->Width), rgn_round(rc->Y + rc->Height));
+            return *hrgn ? Ok : OutOfMemory;
         }
         case CombineModeIntersect:
         case CombineModeUnion:
