@@ -7047,7 +7047,9 @@ static void test_state_image(void)
 
 static void test_LVSCW_AUTOSIZE(void)
 {
-    int width, width2;
+    int r, width, width2;
+    HIMAGELIST himl;
+    HBITMAP hbmp;
     HWND hwnd;
     BOOL ret;
 
@@ -7083,8 +7085,30 @@ static void test_LVSCW_AUTOSIZE(void)
     ok(ret, "Failed to set column width.\n");
 
     width = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
-    ok(width > 0, "Unexpected column width %d.\n", width2);
+    ok(width > 0, "Unexpected column width %d.\n", width);
     ok(width2 > width, "Expected reduced column width.\n");
+
+    /* With a state imagelist */
+    himl = pImageList_Create(48, 48, 0, 4, 4);
+    ok(!!himl, "Failed to create an imagelist.\n");
+    hbmp = CreateBitmap(48, 48, 1, 1, NULL);
+    ok(!!hbmp, "Failed to create a bitmap.\n");
+    r = pImageList_Add(himl, hbmp, 0);
+    ok(!r, "Unexpected return value %d.\n", r);
+    r = pImageList_Add(himl, hbmp, 0);
+    ok(r == 1, "Unexpected return value %d.\n", r);
+    DeleteObject(hbmp);
+
+    r = SendMessageA(hwnd, LVM_SETIMAGELIST, LVSIL_STATE, (LPARAM)himl);
+    ok(!r, "Unexpected return value %d.\n", r);
+
+    ret = SendMessageA(hwnd, LVM_SETCOLUMNWIDTH, 0, LVSCW_AUTOSIZE);
+    ok(ret, "Failed to set column width.\n");
+
+    width2 = SendMessageA(hwnd, LVM_GETCOLUMNWIDTH, 0, 0);
+    ok(width2 > 0, "Unexpected column width %d.\n", width2);
+    todo_wine
+    ok(width2 > width, "Expected increased column width.\n");
 
     DestroyWindow(hwnd);
 }
