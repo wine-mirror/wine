@@ -1189,7 +1189,7 @@ static GpStatus edge_list_to_rgndata(struct edge_list *edges, FillMode fill_mode
 static GpStatus get_path_hrgn(GpPath *path, const RECT *bounds, HRGN *hrgn)
 {
     GpStatus stat = Ok;
-    GpPath *transformed_path = NULL;
+    GpPath *flat_path = NULL;
     struct edge_list edge_list = { 0 };
     RGNDATA *rgndata = NULL;
 
@@ -1200,14 +1200,14 @@ static GpStatus get_path_hrgn(GpPath *path, const RECT *bounds, HRGN *hrgn)
     }
 
     if (stat == Ok)
-        stat = GdipClonePath(path, &transformed_path);
+        stat = GdipClonePath(path, &flat_path);
 
     if (stat == Ok)
-        stat = GdipFlattenPath(transformed_path, NULL, FlatnessDefault);
+        stat = GdipFlattenPath(flat_path, NULL, FlatnessDefault);
 
     /* build edge list */
     if (stat == Ok)
-        stat = flat_path_to_edge_list(transformed_path, bounds, &edge_list);
+        stat = flat_path_to_edge_list(flat_path, bounds, &edge_list);
 
     /* transform edge list into scans list */
     if (stat == Ok)
@@ -1223,8 +1223,8 @@ static GpStatus get_path_hrgn(GpPath *path, const RECT *bounds, HRGN *hrgn)
     free(edge_list.edges);
     free(rgndata);
 
-    if (transformed_path != NULL)
-        GdipDeletePath(transformed_path);
+    if (flat_path != NULL)
+        GdipDeletePath(flat_path);
 
     return stat;
 }
