@@ -710,9 +710,10 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
     }
 
     needs_lock = wl_surface && (((confine_rect || covers_vscreen) &&
-                 !pointer->cursor.wl_surface) || force_lock);
+                 !pointer->cursor.wl_surface) || force_lock) &&
+                 pointer->wl_pointer;
     needs_confine = wl_surface && confine_rect && pointer->cursor.wl_surface &&
-                 !force_lock;
+                 !force_lock && pointer->wl_pointer;
 
     if (!needs_confine && pointer->zwp_confined_pointer_v1)
     {
