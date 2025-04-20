@@ -218,7 +218,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
  *       NULL on error or EOF
  */
 
-WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
+static WCHAR *WCMD_fgets_helper(WCHAR *buf, DWORD noChars, HANDLE h, UINT code_page)
 {
   DWORD charsRead;
   BOOL status;
@@ -239,10 +239,8 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
   else {
       LARGE_INTEGER filepos;
       char *bufA;
-      UINT cp;
       const char *p;
 
-      cp = GetOEMCP();
       bufA = xalloc(noChars);
 
       /* Save current file position */
@@ -256,7 +254,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       }
 
       /* Find first EOL */
-      for (p = bufA; p < (bufA + charsRead); p = CharNextExA(cp, p, 0)) {
+      for (p = bufA; p < (bufA + charsRead); p = CharNextExA(code_page, p, 0)) {
           if (*p == '\n' || *p == '\r')
               break;
       }
@@ -265,7 +263,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       filepos.QuadPart += p - bufA + 1 + (*p == '\r' ? 1 : 0);
       SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
 
-      i = MultiByteToWideChar(cp, 0, bufA, p - bufA, buf, noChars);
+      i = MultiByteToWideChar(code_page, 0, bufA, p - bufA, buf, noChars);
       free(bufA);
   }
 
@@ -276,6 +274,16 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
   buf[i] = '\0';
 
   return buf;
+}
+
+static UINT get_current_code_page(void)
+{
+    return GetOEMCP();
+}
+
+WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
+{
+    return WCMD_fgets_helper(buf, noChars, h, get_current_code_page());
 }
 
 /****************************************************************************
@@ -672,9 +680,9 @@ void WCMD_set_label_end(WCHAR *string)
     if ((p = wcspbrk(string, labelEndsW))) *p = L'\0';
 }
 
-static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING])
+static BOOL find_next_label(HANDLE h, ULONGLONG end, WCHAR candidate[MAXSTRING], UINT code_page)
 {
-    while (WCMD_fgets(candidate, MAXSTRING, h))
+    while (WCMD_fgets_helper(candidate, MAXSTRING, h, code_page))
     {
         WCHAR *str = candidate;
 
@@ -705,11 +713,12 @@ BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
 {
     LARGE_INTEGER where = *pos, zeroli = {.QuadPart = 0};
     WCHAR candidate[MAXSTRING];
+    UINT code_page = get_current_code_page();
 
     if (!*label) return FALSE;
 
     if (!SetFilePointerEx(h, *pos, NULL, FILE_BEGIN)) return FALSE;
-    while (find_next_label(h, ~(ULONGLONG)0, candidate))
+    while (find_next_label(h, ~(ULONGLONG)0, candidate, code_page))
     {
         TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
         if (!lstrcmpiW(candidate, label))
@@ -717,7 +726,7 @@ BOOL WCMD_find_label(HANDLE h, const WCHAR *label, LARGE_INTEGER *pos)
     }
     TRACE("Label not found, trying from beginning of file\n");
     if (!SetFilePointerEx(h, zeroli, NULL, FILE_BEGIN)) return FALSE;
-    while (find_next_label(h, where.QuadPart, candidate))
+    while (find_next_label(h, where.QuadPart, candidate, code_page))
     {
         TRACE("comparing found label %s\n", wine_dbgstr_w(candidate));
         if (!lstrcmpiW(candidate, label))
