@@ -4130,6 +4130,15 @@ echo echo shouldnot >> foobar.bat
 call foobar.bat
 if exist foobar.bat (echo stillthere & erase /q foobar.bat >NUL)
 
+echo ------------ Testing updated code page execution ------------
+echo @echo off>utf8.cmd
+echo chcp 65001>>utf8.cmd
+echo set utf8=@\xE3@@\xA1@@\xA1@@\xE3@@\xA1@@\xA1@>>utf8.cmd
+echo if not %%utf8:~0,2%%==%%utf8%% exit 1 >>utf8.cmd
+start /wait cmd /cutf8.cmd
+if errorlevel 1 (echo Failure) else echo Success
+del utf8.cmd
+
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd

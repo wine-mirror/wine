@@ -31,11 +31,38 @@ static DWORD path_len;
 static char shortpath[MAX_PATH];
 static DWORD shortpath_len;
 
+static BOOL parse_hexadecimal(const char *p, char *dest)
+{
+    unsigned char c;
+    if (*p++ != '@')  return FALSE;
+    if (*p++ != '\\') return FALSE;
+    if (*p++ != 'x')  return FALSE;
+
+    if (*p >= '0' && *p <= '9') c = *p - '0';
+    else if (*p >= 'a' && *p <= 'f') c = *p - 'a' + 10;
+    else if (*p >= 'A' && *p <= 'F') c = *p - 'A' + 10;
+    else return FALSE;
+    p++;
+
+    c <<= 4;
+
+    if (*p >= '0' && *p <= '9') c += *p - '0';
+    else if (*p >= 'a' && *p <= 'f') c += *p - 'a' + 10;
+    else if (*p >= 'A' && *p <= 'F') c += *p - 'A' + 10;
+    else return FALSE;
+    p++;
+
+    if (*p != '@') return FALSE;
+    *dest = (char)c;
+    return TRUE;
+}
+
 /* Convert to DOS line endings, and substitute escaped whitespace chars with real ones */
 static const char* convert_input_data(const char *data, DWORD size, DWORD *new_size)
 {
     static const char escaped_space[] = {'@','s','p','a','c','e','@'};
     static const char escaped_tab[]   = {'@','t','a','b','@'};
+    static const char escaped_hexadecimal[] = {'@','\\','x','.','.','@'};
     DWORD i, eol_count = 0;
     char *ptr, *new_data;
 
@@ -60,6 +87,10 @@ static const char* convert_input_data(const char *data, DWORD size, DWORD *new_s
                         && !memcmp(data + i, escaped_tab, sizeof(escaped_tab))) {
                     *ptr++ = '\t';
                     i += sizeof(escaped_tab) - 1;
+                } else if (data + i + sizeof(escaped_hexadecimal) - 1 < data + size
+                        && parse_hexadecimal(data + i, ptr)) {
+                    ptr++;
+                    i += sizeof(escaped_hexadecimal) - 1;
                 } else {
                     *ptr++ = data[i];
                 }
