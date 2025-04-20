@@ -2123,7 +2123,7 @@ Success
 @todo_wine@Success
 ---- Testing nasty bits ----
 ------------ Testing updated code page execution ------------
-@todo_wine@Success
+Success
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball

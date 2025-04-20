@@ -206,7 +206,7 @@ WCHAR *WCMD_parameter (WCHAR *s, int n, WCHAR **start, BOOL raw,
 }
 
 /****************************************************************************
- * WCMD_fgets
+ * WCMD_fgets_helper
  *
  * Gets one line from a file/console and puts it into buffer buf
  * Pre:  buf has size noChars
@@ -278,7 +278,8 @@ static WCHAR *WCMD_fgets_helper(WCHAR *buf, DWORD noChars, HANDLE h, UINT code_p
 
 static UINT get_current_code_page(void)
 {
-    return GetOEMCP();
+    UINT code_page = GetConsoleOutputCP();
+    return code_page ? code_page : GetOEMCP();
 }
 
 WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
