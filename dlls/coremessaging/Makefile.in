@@ -1,4 +1,6 @@
-MODULE = coremessaging.dll
+MODULE  = coremessaging.dll
+IMPORTS = combase
 
 SOURCES = \
+	classes.idl \
 	main.c

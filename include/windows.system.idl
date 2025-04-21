@@ -462,6 +462,7 @@ namespace Windows.System
         [default] interface Windows.System.IDispatcherQueueTimer;
     }
 
+#ifndef _CORE_MESSAGING
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
@@ -472,6 +473,7 @@ namespace Windows.System
     {
         [default] interface Windows.System.IUser;
     }
+#endif
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
