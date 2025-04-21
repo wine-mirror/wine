@@ -1736,7 +1736,7 @@ static void test_write_watch(void)
     MEMORY_BASIC_INFORMATION info;
     HANDLE readpipe, writepipe, file;
     OVERLAPPED overlapped, *overlapped2;
-    void *results[64];
+    void *results[2048];
     ULONG_PTR count;
     ULONG i, pagesize;
     BOOL success;
@@ -1799,6 +1799,7 @@ static void test_write_watch(void)
     ok( results[0] == base + pagesize, "wrong result %p\n", results[0] );
 
     count = 64;
+    results[0] = (void *)0xdeadbeef;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
     ok( count == 1, "wrong count %Iu\n", count );
@@ -2208,6 +2209,15 @@ static void test_write_watch(void)
 
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_WRITE_WATCH, PAGE_NOACCESS );
     ok( base != NULL, "VirtualAlloc failed %lu\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
+
+    ret = pResetWriteWatch( base, size );
+    ok( !ret, "pResetWriteWatch failed %lu\n", GetLastError() );
+
     base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_NOACCESS );
     ok( base != NULL, "VirtualAlloc failed %lu\n", GetLastError() );
 
@@ -2232,15 +2242,156 @@ static void test_write_watch(void)
     ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
 
+    ret = pResetWriteWatch( base, size );
+    ok( !ret, "pResetWriteWatch failed %lu\n", GetLastError() );
+    ret = pResetWriteWatch( base + 6*pagesize, size - 6 * pagesize );
+    ok( !ret, "pResetWriteWatch failed %lu\n", GetLastError() );
+
+    count = 64;
+    results[0] = (void *)0xdeadbeef;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
+    ok( results[0] == (void *)0xdeadbeef, "wrong result %p\n", results[0] );
+
+    ret = VirtualFree( base + pagesize, pagesize, MEM_DECOMMIT );
+    ok( ret, "VirtualFree failed %lu\n", GetLastError() );
+
+    ret = VirtualProtect( base + 2*pagesize, pagesize, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %lu\n", GetLastError() );
+    ok( old_prot == PAGE_NOACCESS, "wrong old prot %lx\n", old_prot );
+
+    count = 64;
+    results[0] = (void *)0xdeadbeef;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
+    ok( results[0] == (void *)0xdeadbeef, "wrong result %p\n", results[0] );
+
+    base[2*pagesize + 200] = 3;
+    count = 64;
+    results[0] = (void *)0xdeadbeef;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 1, "wrong count %Iu\n", count );
+    ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
+
+    base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_NOACCESS );
+    ok( !!base, "VirtualFree failed %lu\n", GetLastError() );
+
+    ret = VirtualProtect( base, 6*pagesize, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %lu\n", GetLastError() );
+    ok( old_prot == PAGE_NOACCESS, "wrong old prot %lx\n", old_prot );
+
+    base[3*pagesize + 200] = 3;
+    base[5*pagesize + 200] = 3;
+
     ret = VirtualFree( base, size, MEM_DECOMMIT );
     ok( ret, "VirtualFree failed %lu\n", GetLastError() );
 
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1 || broken(count == 0), /* win98 */
-        "wrong count %Iu\n", count );
-    if (count) ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
+    todo_wine ok( !count, "wrong count %Iu\n", count );
+
+    base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_READWRITE );
+    ok(!!base, "VirtualAlloc failed.\n");
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    todo_wine ok( !count, "wrong count %Iu\n", count );
+
+    /* Looks like VirtualProtect latches write watch state somewhere, so if pages are decommitted after,
+     * (which normally clears write watch state), a page from range which previously had protection change
+     * is still reported as dirty. */
+    base[3*pagesize + 200] = 3;
+    ret = VirtualProtect( base, 6*pagesize, PAGE_READWRITE, &old_prot );
+    ok( ret, "VirtualProtect failed error %lu\n", GetLastError() );
+    ok( old_prot == PAGE_READWRITE, "wrong old prot %lx\n", old_prot );
+
+    base[5*pagesize + 200] = 3;
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 2, "wrong count %Iu\n", count );
+    ok( results[0] == base + 3*pagesize && results[1] == base + 5*pagesize, "wrong result %p\n", results[0] );
+
+    ret = VirtualFree( base, size, MEM_DECOMMIT );
+    ok( ret, "VirtualFree failed %lu\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    todo_wine ok( count == 1, "wrong count %Iu\n", count );
+    ok( results[0] == base + 3*pagesize, "wrong result %p\n", results[0] );
+
+    base = VirtualAlloc( base, size, MEM_COMMIT, PAGE_READWRITE );
+    ok(!!base, "VirtualAlloc failed.\n");
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    todo_wine ok( count == 1, "wrong count %Iu\n", count );
+    ok( results[0] == base + 3*pagesize, "wrong result %p\n", results[0] );
+
+    base[4*pagesize + 200] = 4;
+    base[2*pagesize + 200] = 4;
+    base[6*pagesize + 200] = 4;
+
+    count = 64;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    todo_wine ok( count == 4, "wrong count %Iu\n", count );
+    ok( results[0] == base + 2*pagesize, "wrong result %p\n", results[0] );
+    ok( results[1] == base + 3*pagesize, "wrong result %p\n", results[1] );
+    ok( results[2] == base + 4*pagesize, "wrong result %p\n", results[2] );
+    todo_wine ok( results[3] == base + 6*pagesize, "wrong result %p\n", results[3] );
+
+    VirtualFree( base, 0, MEM_RELEASE );
+
+    /* Test longer range */
+    size = 2048 * pagesize;
+    base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_COMMIT | MEM_WRITE_WATCH, PAGE_READWRITE );
+    ok( base != NULL, "VirtualAlloc failed %lu\n", GetLastError() );
+
+    count = 2048;
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
+
+    count = 2048;
+    for (i = 0; i < count; i += 2)
+        ++base[i * pagesize];
+
+    ret = VirtualProtect( base, size / 2, PAGE_READONLY, &old_prot );
+    ok( ret, "VirtualProtect failed error %lu\n", GetLastError() );
+
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 1024, "wrong count %Iu\n", count );
+
+    for (i = 0; i < count; ++i)
+    {
+        ok( results[i] == base + i * 2 * pagesize, "wrong result %p\n", results[i] );
+        if (results[i] != base + i * 2 * pagesize)
+            break;
+    }
+
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 1024, "wrong count %Iu\n", count );
+
+    for (i = 0; i < count; ++i)
+    {
+        ok( results[i] == base + i * 2 * pagesize, "wrong result %p\n", results[i] );
+        if (results[i] != base + i * 2 * pagesize)
+            break;
+    }
+
+    ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     VirtualFree( base, 0, MEM_RELEASE );
 }
