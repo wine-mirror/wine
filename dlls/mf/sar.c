@@ -1458,6 +1458,8 @@ static HRESULT WINAPI audio_renderer_stream_Flush(IMFStreamSink *iface)
         }
     }
     renderer->queued_frames = 0;
+    if (FAILED(hr = IAudioClient_Reset(renderer->audio_client)))
+        WARN("Failed to reset audio client, hr %#lx.\n", hr);
     LeaveCriticalSection(&renderer->cs);
 
     return hr;
