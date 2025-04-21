@@ -862,6 +862,16 @@ typedef struct _WINHTTP_WEB_SOCKET_STATUS
 #define WINHTTP_WEB_SOCKET_MAX_CLOSE_REASON_LENGTH   123
 #define WINHTTP_WEB_SOCKET_MIN_KEEPALIVE_VALUE     15000
 
+#ifdef __SCHANNEL_H__
+
+typedef struct _WINHTTP_SECURITY_INFO
+{
+    SecPkgContext_ConnectionInfo ConnectionInfo;
+    SecPkgContext_CipherInfo CipherInfo;
+} WINHTTP_SECURITY_INFO, *PWINHTTP_SECURITY_INFO;
+
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
