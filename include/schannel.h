@@ -15,8 +15,8 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#ifndef __WINE_SCHANNEL_H__
-#define __WINE_SCHANNEL_H__
+#ifndef __SCHANNEL_H__
+#define __SCHANNEL_H__
 
 #include <minschannel.h>
 #include <wincrypt.h>
@@ -343,4 +343,4 @@ typedef struct _SecPkgContext_CipherInfo
     DWORD dwKeyType;
 } SecPkgContext_CipherInfo, *PSecPkgContext_CipherInfo;
 
-#endif /* __WINE_SCHANNEL_H__ */
+#endif /* __SCHANNEL_H__ */
