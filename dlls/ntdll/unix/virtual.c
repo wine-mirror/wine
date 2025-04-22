@@ -3418,7 +3418,7 @@ static void *alloc_virtual_heap( SIZE_T size )
     struct reserved_area *area;
     void *ret;
 
-    assert( !(size & host_page_mask) );
+    size = ROUND_SIZE( 0, size, host_page_mask );
 
     LIST_FOR_EACH_ENTRY_REV( area, &reserved_areas, struct reserved_area, entry )
     {
