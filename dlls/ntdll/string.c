@@ -1479,7 +1479,7 @@ static int char2digit( char c, int base )
 }
 
 
-static int vsscanf( const char *str, const char *format, va_list ap)
+static int _vsscanf( const char *str, const char *format, va_list ap)
 {
     int rd = 0, consumed = 0;
     int nch;
@@ -1919,7 +1919,7 @@ int WINAPIV sscanf( const char *str, const char *format, ... )
     int ret;
     va_list valist;
     va_start( valist, format );
-    ret = vsscanf( str, format, valist );
+    ret = _vsscanf( str, format, valist );
     va_end( valist );
     return ret;
 }

@@ -467,6 +467,7 @@ _ACRTIMP int __cdecl scanf(const char*,...) __WINE_CRT_SCANF_ATTR(1, 2);
 _ACRTIMP int __cdecl scanf_s(const char*,...) __WINE_CRT_SCANF_ATTR(1, 2);
 _ACRTIMP int __cdecl sscanf(const char*,const char*,...) __WINE_CRT_SCANF_ATTR(2, 3);
 _ACRTIMP int __cdecl sscanf_s(const char*,const char*,...) __WINE_CRT_SCANF_ATTR(2, 3);
+_ACRTIMP int __cdecl vsscanf(const char*, const char*, va_list) __WINE_CRT_SCANF_ATTR(2, 0);
 
 #endif /* _UCRT && !_NO_CRT_STDIO_INLINE */
 
