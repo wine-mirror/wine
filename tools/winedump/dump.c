@@ -285,6 +285,7 @@ BOOL dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 
         for (dpr = dumpers; dpr->kind != SIG_UNKNOWN; dpr++)
         {
+            if (!dpr->get_kind) continue;
             if (dpr->get_kind() == dpr->kind &&
                 (wanted_sig == SIG_UNKNOWN || wanted_sig == dpr->kind))
             {
