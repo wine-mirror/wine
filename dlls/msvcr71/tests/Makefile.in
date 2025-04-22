@@ -1,4 +1,6 @@
 TESTDLL   = msvcr71.dll
+IMPORTS   = msvcr71
+EXTRADEFS = -fno-builtin
 
 SOURCES = \
 	msvcr71.c
