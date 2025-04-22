@@ -21,12 +21,18 @@
 #include <stdio.h>
 #include <math.h>
 #include <fcntl.h>
+#include <float.h>
+#include <mbctype.h>
+#include <mbstring.h>
 #include <share.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <locale.h>
 #include <fpieee.h>
 #include <excpt.h>
+#include <process.h>
+#include <search.h>
+#include <signal.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -59,6 +65,10 @@ typedef struct {
     BOOL dbcsBufferUsed;
 } ioinfo;
 static ioinfo **__pioinfo;
+#undef _sys_nerr
+static int *_sys_nerr;
+#undef _sys_errlist
+static char **_sys_errlist;
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -90,89 +100,16 @@ static ioinfo **__pioinfo;
 
 DEFINE_EXPECT(invalid_parameter_handler);
 
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
-typedef int (__cdecl *_INITTERM_E_FN)(void);
-static int (__cdecl *p_initterm_e)(_INITTERM_E_FN *table, _INITTERM_E_FN *end);
-static void* (__cdecl *p_encode_pointer)(void *);
-static void* (__cdecl *p_decode_pointer)(void *);
-static void* (__cdecl *p_encoded_null)(void);
-static int *p_sys_nerr;
-static int* (__cdecl *p__sys_nerr)(void);
-static char **p_sys_errlist;
-static char** (__cdecl *p__sys_errlist)(void);
-static __int64 (__cdecl *p_strtoi64)(const char *, char **, int);
-static unsigned __int64 (__cdecl *p_strtoui64)(const char *, char **, int);
-static errno_t (__cdecl *p_itoa_s)(int,char*,size_t,int);
-static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
-static void (__cdecl *p_qsort_s)(void *, size_t, size_t, int (__cdecl *)(void *, const void *, const void *), void *);
-static void* (__cdecl *p_bsearch_s)(const void *, const void *, size_t, size_t,
-                                    int (__cdecl *compare)(void *, const void *, const void *), void *);
-static int (__cdecl *p_controlfp_s)(unsigned int *, unsigned int, unsigned int);
-static int (__cdecl *p_tmpfile_s)(FILE**);
-static int (__cdecl *p_atoflt)(_CRT_FLOAT *, char *);
-static unsigned int (__cdecl *p_set_abort_behavior)(unsigned int, unsigned int);
-static int (WINAPIV *p__open)(const char *, int, ...);
-static int (__cdecl *p__close)(int);
-static intptr_t (__cdecl *p__get_osfhandle)(int);
-static int (__cdecl *p_sopen_s)(int*, const char*, int, int, int);
-static int (__cdecl *p_wsopen_s)(int*, const wchar_t*, int, int, int);
-static void* (__cdecl *p_realloc_crt)(void*, size_t);
-static void* (__cdecl *p_malloc)(size_t);
-static void (__cdecl *p_free)(void*);
-static void* (__cdecl *p_getptd)(void);
-static int* (__cdecl *p_errno)(void);
-static __msvcrt_ulong* (__cdecl *p_doserrno)(void);
-static void (__cdecl *p_srand)(unsigned int);
-static char* (__cdecl *p_strtok)(char*, const char*);
-static char* (__cdecl *p_strtok_s)(char*, const char*, char**);
-static wchar_t* (__cdecl *p_wcstok)(wchar_t*, const wchar_t*);
-static unsigned char* (__cdecl *p__mbstok)(unsigned char*, const unsigned char*);
-static unsigned char* (__cdecl *p__mbstok_s)(unsigned char*, const unsigned char*, unsigned char**);
-static char* (__cdecl *p_strerror)(int);
-static wchar_t* (__cdecl *p_wcserror)(int);
-static char* (__cdecl *p_tmpnam)(char*);
-static wchar_t* (__cdecl *p_wtmpnam)(wchar_t*);
-static char* (__cdecl *p_asctime)(struct tm*);
-static wchar_t* (__cdecl *p_wasctime)(struct tm*);
-static struct tm* (__cdecl *p_localtime64)(__time64_t*);
-static char* (__cdecl *p_ecvt)(double, int, int*, int*);
-static int* (__cdecl *p_fpecode)(void);
-static int (__cdecl *p_configthreadlocale)(int);
-static void* (__cdecl *p_get_terminate)(void);
-static void* (__cdecl *p_get_unexpected)(void);
-static int (__cdecl *p__vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, va_list);
-static int (__cdecl *p_vswprintf_l)(wchar_t*, const wchar_t*, _locale_t, va_list);
-static FILE* (__cdecl *p_fopen)(const char*, const char*);
-static int (__cdecl *p_fclose)(FILE*);
-static int (__cdecl *p_unlink)(const char*);
-static int (__cdecl *p_access_s)(const char*, int);
-static void (__cdecl *p_lock_file)(FILE*);
-static void (__cdecl *p_unlock_file)(FILE*);
-static int (__cdecl *p_fileno)(FILE*);
-static int (__cdecl *p_feof)(FILE*);
-static int (__cdecl *p_ferror)(FILE*);
-static int (__cdecl *p_flsbuf)(int, FILE*);
-static int (__cdecl *p_filbuf)(FILE*);
-static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
-static void** (__cdecl *p__pxcptinfoptrs)(void);
-static void* (__cdecl *p__AdjustPointer)(void*, const void*);
-static int (__cdecl *p_fflush_nolock)(FILE*);
-static size_t (__cdecl *p_mbstowcs)(wchar_t*, const char*, size_t);
-static size_t (__cdecl *p_wcstombs)(char*, const wchar_t*, size_t);
-static char* (__cdecl *p_setlocale)(int, const char*);
-static int (__cdecl *p__setmbcp)(int);
-static int (__cdecl *p__fpieee_flt)(ULONG, EXCEPTION_POINTERS*, int (__cdecl *handler)(_FPIEEE_RECORD*));
-static int (__cdecl *p__memicmp)(const char*, const char*, size_t);
-static int (__cdecl *p__memicmp_l)(const char*, const char*, size_t, _locale_t);
-static int (__cdecl *p__vsnwprintf)(wchar_t *buffer,size_t count, const wchar_t *format, va_list valist);
-static size_t (__cdecl *p___strncnt)(const char *str, size_t count);
-static int (WINAPIV *p_swscanf)(const wchar_t *str, const wchar_t* format, ...);
-static int (__cdecl *p____mb_cur_max_l_func)(_locale_t locale);
-static _locale_t (__cdecl *p__create_locale)(int, const char*);
-static void (__cdecl *p__free_locale)(_locale_t);
-static _locale_t (__cdecl *p__get_current_locale)(void);
-static int (__cdecl *p_strcmp)(const char *, const char *);
-static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
+void* __cdecl _encode_pointer(void *);
+void* __cdecl _decode_pointer(void *);
+void* __cdecl _encoded_null(void);
+void* __cdecl _realloc_crt(void*, size_t);
+void* __cdecl _getptd(void);
+void* __cdecl _get_terminate(void);
+void* __cdecl _get_unexpected(void);
+int __cdecl __vswprintf_l(wchar_t*, const wchar_t*, _locale_t, va_list);
+int __cdecl _vswprintf_l(wchar_t*, const wchar_t*, _locale_t, va_list);
+void* __cdecl __AdjustPointer(void*, const void*);
 
 struct __lc_time_data {
     const char *short_wday[7];
@@ -188,10 +125,6 @@ struct __lc_time_data {
     int  unk;
     int  refcount;
 };
-
-/* make sure we use the correct errno */
-#undef errno
-#define errno (*p_errno())
 
 typedef struct threadmbcinfostruct {
     int refcount;
@@ -379,102 +312,14 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
-    HMODULE hcrt;
-    HMODULE hkernel32;
+    HMODULE hcrt = GetModuleHandleA("msvcr90.dll");
 
-    SetLastError(0xdeadbeef);
-    hcrt = LoadLibraryA("msvcr90.dll");
-    if (!hcrt) {
-        win_skip("msvcr90.dll not installed (got %ld)\n", GetLastError());
-        return FALSE;
-    }
-
-    SET(p_set_invalid_parameter_handler, "_set_invalid_parameter_handler");
-    if(p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-                "Invalid parameter handler was already set\n");
+    ok(_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
+            "Invalid parameter handler was already set\n");
 
     SET(__pioinfo, "__pioinfo");
-    SET(p_initterm_e, "_initterm_e");
-    SET(p_encode_pointer, "_encode_pointer");
-    SET(p_decode_pointer, "_decode_pointer");
-    SET(p_encoded_null, "_encoded_null");
-    SET(p_sys_nerr, "_sys_nerr");
-    SET(p__sys_nerr, "__sys_nerr");
-    SET(p_sys_errlist, "_sys_errlist");
-    SET(p__sys_errlist, "__sys_errlist");
-    SET(p_strtoi64, "_strtoi64");
-    SET(p_strtoui64, "_strtoui64");
-    SET(p_itoa_s, "_itoa_s");
-    SET(p_wcsncat_s,"wcsncat_s" );
-    SET(p_qsort_s, "qsort_s");
-    SET(p_bsearch_s, "bsearch_s");
-    SET(p_controlfp_s, "_controlfp_s");
-    SET(p_tmpfile_s, "tmpfile_s");
-    SET(p_atoflt, "_atoflt");
-    SET(p_set_abort_behavior, "_set_abort_behavior");
-    SET(p_sopen_s, "_sopen_s");
-    SET(p_wsopen_s, "_wsopen_s");
-    SET(p__open,"_open");
-    SET(p__close,"_close");
-    SET(p__get_osfhandle, "_get_osfhandle");
-    SET(p_realloc_crt, "_realloc_crt");
-    SET(p_malloc, "malloc");
-    SET(p_free, "free");
-    SET(p_getptd, "_getptd");
-    SET(p_errno, "_errno");
-    SET(p_doserrno, "__doserrno");
-    SET(p_srand, "srand");
-    SET(p_strtok, "strtok");
-    SET(p_strtok_s, "strtok_s");
-    SET(p_wcstok, "wcstok");
-    SET(p__mbstok, "_mbstok");
-    SET(p__mbstok_s, "_mbstok_s");
-    SET(p_strerror, "strerror");
-    SET(p_wcserror, "_wcserror");
-    SET(p_tmpnam, "tmpnam");
-    SET(p_wtmpnam, "_wtmpnam");
-    SET(p_asctime, "asctime");
-    SET(p_wasctime, "_wasctime");
-    SET(p_localtime64, "_localtime64");
-    SET(p_ecvt, "_ecvt");
-    SET(p_fpecode, "__fpecode");
-    SET(p_configthreadlocale, "_configthreadlocale");
-    SET(p_get_terminate, "_get_terminate");
-    SET(p_get_unexpected, "_get_unexpected");
-    SET(p__vswprintf_l, "__vswprintf_l");
-    SET(p_vswprintf_l, "_vswprintf_l");
-    SET(p_fopen, "fopen");
-    SET(p_fclose, "fclose");
-    SET(p_unlink, "_unlink");
-    SET(p_access_s, "_access_s");
-    SET(p_lock_file, "_lock_file");
-    SET(p_unlock_file, "_unlock_file");
-    SET(p_fileno, "_fileno");
-    SET(p_feof, "feof");
-    SET(p_ferror, "ferror");
-    SET(p_flsbuf, "_flsbuf");
-    SET(p_filbuf, "_filbuf");
-    SET(p_byteswap_ulong, "_byteswap_ulong");
-    SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
-    SET(p__AdjustPointer, "__AdjustPointer");
-    SET(p_fflush_nolock, "_fflush_nolock");
-    SET(p_mbstowcs, "mbstowcs");
-    SET(p_wcstombs, "wcstombs");
-    SET(p_setlocale, "setlocale");
-    SET(p__setmbcp, "_setmbcp");
-    SET(p__fpieee_flt, "_fpieee_flt");
-    SET(p__memicmp, "_memicmp");
-    SET(p__memicmp_l, "_memicmp_l");
-    SET(p__vsnwprintf, "_vsnwprintf");
-    SET(p___strncnt, "__strncnt");
-    SET(p_swscanf, "swscanf");
-    SET(p____mb_cur_max_l_func, "___mb_cur_max_l_func");
-    SET(p__create_locale, "_create_locale");
-    SET(p__free_locale, "_free_locale");
-    SET(p__get_current_locale, "_get_current_locale");
-    SET(p_strcmp, "strcmp");
-    SET(p_strncmp, "strncmp");
+    SET(_sys_nerr, "_sys_nerr");
+    SET(_sys_errlist, "_sys_errlist");
 
     if (sizeof(void *) == 8)
     {
@@ -494,8 +339,7 @@ static BOOL init(void)
         SET(p_is_exception_typeof, "?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z");
     }
 
-    hkernel32 = GetModuleHandleA("kernel32.dll");
-    pEncodePointer = (void *) GetProcAddress(hkernel32, "EncodePointer");
+    pEncodePointer = (void *) GetProcAddress(GetModuleHandleA("kernel32.dll"), "EncodePointer");
     return TRUE;
 }
 
@@ -520,21 +364,21 @@ static int __cdecl initterm_cb2(void)
 
 static void test__initterm_e(void)
 {
-    _INITTERM_E_FN table[4];
+    _PIFV table[4];
     int res;
 
     memset(table, 0, sizeof(table));
 
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, table);
+    res = _initterm_e(table, table);
     ok( !res && !cb_called[0] && !cb_called[1] && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
 
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, NULL);
+    res = _initterm_e(table, NULL);
     ok( !res && !cb_called[0] && !cb_called[1] && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -542,14 +386,14 @@ static void test__initterm_e(void)
     if (0) {
         /* this crash on Windows */
         errno = 0xdeadbeef;
-        res = p_initterm_e(NULL, table);
+        res = _initterm_e(NULL, table);
         trace("got %d with 0x%x\n", res, errno);
     }
 
     table[0] = initterm_cb0;
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, &table[1]);
+    res = _initterm_e(table, &table[1]);
     ok( !res && (cb_called[0] == 1) && !cb_called[1] && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -559,7 +403,7 @@ static void test__initterm_e(void)
     table[1] = initterm_cb1;
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, &table[3]);
+    res = _initterm_e(table, &table[3]);
     ok( (res == 1) && (cb_called[0] == 1) && (cb_called[1] == 1) && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -567,7 +411,7 @@ static void test__initterm_e(void)
     /* init-function not called, when end < start */
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(&table[3], table);
+    res = _initterm_e(&table[3], table);
     ok( !res && !cb_called[0] && !cb_called[1] && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -576,7 +420,7 @@ static void test__initterm_e(void)
     table[2] = initterm_cb0;
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, &table[3]);
+    res = _initterm_e(table, &table[3]);
     ok( (res == 1) && (cb_called[0] == 1) && (cb_called[1] == 1) && !cb_called[2],
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -586,7 +430,7 @@ static void test__initterm_e(void)
     table[2] = initterm_cb2;
     memset(cb_called, 0, sizeof(cb_called));
     errno = 0xdeadbeef;
-    res = p_initterm_e(table, &table[3]);
+    res = _initterm_e(table, &table[3]);
     ok( (res == 2) && (cb_called[0] == 1) && !cb_called[1] && (cb_called[2] == 1),
         "got %d with 0x%x {%d, %d, %d}\n",
         res, errno, cb_called[0], cb_called[1], cb_called[2]);
@@ -600,14 +444,14 @@ static void test__encode_pointer(void)
     void *ptr, *res;
 
     ptr = (void*)0xdeadbeef;
-    res = p_encode_pointer(ptr);
-    res = p_decode_pointer(res);
+    res = _encode_pointer(ptr);
+    res = _decode_pointer(res);
     ok(res == ptr, "Pointers are different after encoding and decoding\n");
 
-    ok(p_encoded_null() == p_encode_pointer(NULL), "Error encoding null\n");
+    ok(_encoded_null() == _encode_pointer(NULL), "Error encoding null\n");
 
-    ptr = p_encode_pointer(p_encode_pointer);
-    ok(p_decode_pointer(ptr) == p_encode_pointer, "Error decoding pointer\n");
+    ptr = _encode_pointer(_encode_pointer);
+    ok(_decode_pointer(ptr) == _encode_pointer, "Error decoding pointer\n");
 
     /* Not present before XP */
     if (!pEncodePointer) {
@@ -615,7 +459,7 @@ static void test__encode_pointer(void)
         return;
     }
 
-    res = pEncodePointer(p_encode_pointer);
+    res = pEncodePointer(_encode_pointer);
     ok(ptr == res, "_encode_pointer produced different result than EncodePointer\n");
 
 }
@@ -624,16 +468,16 @@ static void test_error_messages(void)
 {
     int *size, size_copy;
 
-    size = p__sys_nerr();
+    size = __sys_nerr();
     size_copy = *size;
-    ok(*p_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *p_sys_nerr, *size);
+    ok(*_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *_sys_nerr, *size);
 
     *size = 20;
-    ok(*p_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *p_sys_nerr, *size);
+    ok(*_sys_nerr == *size, "_sys_nerr = %u, size = %u\n", *_sys_nerr, *size);
 
     *size = size_copy;
 
-    ok(*p_sys_errlist == *(p__sys_errlist()), "p_sys_errlist != p__sys_errlist()\n");
+    ok(*_sys_errlist == *(__sys_errlist()), "_sys_errlist != __sys_errlist()\n");
 }
 
 static void test__strtoi64(void)
@@ -642,32 +486,32 @@ static void test__strtoi64(void)
     unsigned __int64 ures;
 
     SET_EXPECT(invalid_parameter_handler);
-    res = p_strtoi64(NULL, NULL, 10);
+    res = _strtoi64(NULL, NULL, 10);
     ok(res == 0, "res != 0\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    res = p_strtoi64("123", NULL, 1);
+    res = _strtoi64("123", NULL, 1);
     ok(res == 0, "res != 0\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    res = p_strtoi64("123", NULL, 37);
+    res = _strtoi64("123", NULL, 37);
     ok(res == 0, "res != 0\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ures = p_strtoui64(NULL, NULL, 10);
+    ures = _strtoui64(NULL, NULL, 10);
     ok(ures == 0, "res = %d\n", (int)ures);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ures = p_strtoui64("123", NULL, 1);
+    ures = _strtoui64("123", NULL, 1);
     ok(ures == 0, "res = %d\n", (int)ures);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ures = p_strtoui64("123", NULL, 37);
+    ures = _strtoui64("123", NULL, 37);
     ok(ures == 0, "res = %d\n", (int)ures);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
@@ -678,34 +522,34 @@ static void test__itoa_s(void)
     char buffer[33];
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(0, NULL, 0, 0);
+    ret = _itoa_s(0, NULL, 0, 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(0, buffer, 0, 0);
+    ret = _itoa_s(0, buffer, 0, 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == 'X', "Expected the output buffer to be untouched\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(0, buffer, sizeof(buffer), 0);
+    ret = _itoa_s(0, buffer, sizeof(buffer), 0);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(0, buffer, sizeof(buffer), 64);
+    ret = _itoa_s(0, buffer, sizeof(buffer), 64);
     ok(ret == EINVAL, "Expected _itoa_s to return EINVAL, got %d\n", ret);
     ok(buffer[0] == '\0', "Expected the output buffer to be null terminated\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(12345678, buffer, 4, 10);
+    ret = _itoa_s(12345678, buffer, 4, 10);
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\000765", 4),
        "Expected the output buffer to be null terminated with truncated output\n");
@@ -713,7 +557,7 @@ static void test__itoa_s(void)
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(12345678, buffer, 8, 10);
+    ret = _itoa_s(12345678, buffer, 8, 10);
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\0007654321", 8),
        "Expected the output buffer to be null terminated with truncated output\n");
@@ -721,37 +565,37 @@ static void test__itoa_s(void)
 
     memset(buffer, 'X', sizeof(buffer));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_itoa_s(-12345678, buffer, 9, 10);
+    ret = _itoa_s(-12345678, buffer, 9, 10);
     ok(ret == ERANGE, "Expected _itoa_s to return ERANGE, got %d\n", ret);
     ok(!memcmp(buffer, "\00087654321", 9),
        "Expected the output buffer to be null terminated with truncated output\n");
     CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
-    ret = p_itoa_s(12345678, buffer, 9, 10);
+    ret = _itoa_s(12345678, buffer, 9, 10);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
     ok(!strcmp(buffer, "12345678"),
        "Expected output buffer string to be \"12345678\", got \"%s\"\n",
        buffer);
 
-    ret = p_itoa_s(43690, buffer, sizeof(buffer), 2);
+    ret = _itoa_s(43690, buffer, sizeof(buffer), 2);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
     ok(!strcmp(buffer, "1010101010101010"),
        "Expected output buffer string to be \"1010101010101010\", got \"%s\"\n",
        buffer);
 
-    ret = p_itoa_s(1092009, buffer, sizeof(buffer), 36);
+    ret = _itoa_s(1092009, buffer, sizeof(buffer), 36);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
     ok(!strcmp(buffer, "nell"),
        "Expected output buffer string to be \"nell\", got \"%s\"\n",
        buffer);
 
-    ret = p_itoa_s(5704, buffer, sizeof(buffer), 18);
+    ret = _itoa_s(5704, buffer, sizeof(buffer), 18);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
     ok(!strcmp(buffer, "hag"),
        "Expected output buffer string to be \"hag\", got \"%s\"\n",
        buffer);
 
-    ret = p_itoa_s(-12345678, buffer, sizeof(buffer), 10);
+    ret = _itoa_s(-12345678, buffer, sizeof(buffer), 10);
     ok(ret == 0, "Expected _itoa_s to return 0, got %d\n", ret);
     ok(!strcmp(buffer, "-12345678"),
        "Expected output buffer string to be \"-12345678\", got \"%s\"\n",
@@ -767,37 +611,37 @@ static void test_wcsncat_s(void)
     wcscpy(src, L"abc");
     dst[0] = 0;
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wcsncat_s(NULL, 4, src, 4);
+    ret = wcsncat_s(NULL, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wcsncat_s(dst, 0, src, 4);
+    ret = wcsncat_s(dst, 0, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wcsncat_s(dst, 0, src, _TRUNCATE);
+    ret = wcsncat_s(dst, 0, src, _TRUNCATE);
     ok(ret == EINVAL, "err = %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
-    ret = p_wcsncat_s(dst, 4, NULL, 0);
+    ret = wcsncat_s(dst, 4, NULL, 0);
     ok(ret == 0, "err = %d\n", ret);
 
     dst[0] = 0;
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wcsncat_s(dst, 2, src, 4);
+    ret = wcsncat_s(dst, 2, src, 4);
     ok(ret == ERANGE, "err = %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, ERANGE);
 
     dst[0] = 0;
-    ret = p_wcsncat_s(dst, 2, src, _TRUNCATE);
+    ret = wcsncat_s(dst, 2, src, _TRUNCATE);
     ok(ret == STRUNCATE, "err = %d\n", ret);
     ok(dst[0] == 'a' && dst[1] == 0, "dst is %s\n", wine_dbgstr_w(dst));
 
     memcpy(dst, L"abcd", 4 * sizeof(wchar_t));
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wcsncat_s(dst, 4, src, 4);
+    ret = wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
@@ -850,31 +694,31 @@ static void test_qsort_s(void)
     };
 
     SET_EXPECT(invalid_parameter_handler);
-    p_qsort_s(NULL, 0, 0, NULL, NULL);
+    qsort_s(NULL, 0, 0, NULL, NULL);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    p_qsort_s(NULL, 0, 0, intcomparefunc, NULL);
+    qsort_s(NULL, 0, 0, intcomparefunc, NULL);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    p_qsort_s(NULL, 0, sizeof(int), NULL, NULL);
+    qsort_s(NULL, 0, sizeof(int), NULL, NULL);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    p_qsort_s(NULL, 1, sizeof(int), intcomparefunc, NULL);
+    qsort_s(NULL, 1, sizeof(int), intcomparefunc, NULL);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
-    p_qsort_s(NULL, 0, sizeof(int), intcomparefunc, NULL);
+    qsort_s(NULL, 0, sizeof(int), intcomparefunc, NULL);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
 
     /* overflow without side effects, other overflow values crash */
     errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr2, (((size_t)1) << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)arr2, (((size_t)1) << (8*sizeof(size_t) - 1)) + 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr2[0] == 23, "should remain unsorted, arr2[0] is %d\n", arr2[0]);
@@ -884,7 +728,7 @@ static void test_qsort_s(void)
 
     errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr, 0, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)arr, 0, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr[0] == 23, "badly sorted, nmemb=0, arr[0] is %d\n", arr[0]);
@@ -895,7 +739,7 @@ static void test_qsort_s(void)
 
     errno = 0xdeadbeef;
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr, 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)arr, 1, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok( errno == 0xdeadbeef, "wrong errno %u\n", errno );
     ok(arr[0] == 23, "badly sorted, nmemb=1, arr[0] is %d\n", arr[0]);
@@ -906,7 +750,7 @@ static void test_qsort_s(void)
 
     SET_EXPECT(invalid_parameter_handler);
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr, 5, 0, intcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)arr, 5, 0, intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter == 0, "callback shouldn't have been called\n");
     ok(arr[0] == 23, "badly sorted, size=0, arr[0] is %d\n", arr[0]);
     ok(arr[1] == 42, "badly sorted, size=0, arr[1] is %d\n", arr[1]);
@@ -916,7 +760,7 @@ static void test_qsort_s(void)
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)arr, 5, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)arr, 5, sizeof(int), intcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
     ok(arr[0] == 4,  "badly sorted, arr[0] is %d\n", arr[0]);
     ok(arr[1] == 8,  "badly sorted, arr[1] is %d\n", arr[1]);
@@ -925,7 +769,7 @@ static void test_qsort_s(void)
     ok(arr[4] == 42, "badly sorted, arr[4] is %d\n", arr[4]);
 
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)carr, 5, sizeof(char), charcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)carr, 5, sizeof(char), charcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
     ok(carr[0] == 4,  "badly sorted, carr[0] is %d\n", carr[0]);
     ok(carr[1] == 8,  "badly sorted, carr[1] is %d\n", carr[1]);
@@ -934,7 +778,7 @@ static void test_qsort_s(void)
     ok(carr[4] == 42, "badly sorted, carr[4] is %d\n", carr[4]);
 
     g_qsort_s_context_counter = 0;
-    p_qsort_s((void*)strarr, 7, sizeof(char*), strcomparefunc, &g_qsort_s_context_counter);
+    qsort_s((void*)strarr, 7, sizeof(char*), strcomparefunc, &g_qsort_s_context_counter);
     ok(g_qsort_s_context_counter > 0, "callback wasn't called\n");
     ok(!strcmp(strarr[0],"!"),  "badly sorted, strarr[0] is %s\n", strarr[0]);
     ok(!strcmp(strarr[1],"."),  "badly sorted, strarr[1] is %s\n", strarr[1]);
@@ -951,20 +795,20 @@ static void test_bsearch_s(void)
     int *x, l, i, j = 1;
 
     SET_EXPECT(invalid_parameter_handler);
-    x = p_bsearch_s(NULL, NULL, 0, 0, NULL, NULL);
+    x = bsearch_s(NULL, NULL, 0, 0, NULL, NULL);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_bsearch_s_context_counter = 0;
     SET_EXPECT(invalid_parameter_handler);
-    x = p_bsearch_s(&l, arr, j, 0, intcomparefunc, &g_bsearch_s_context_counter);
+    x = bsearch_s(&l, arr, j, 0, intcomparefunc, &g_bsearch_s_context_counter);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
     ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     g_bsearch_s_context_counter = 0;
     SET_EXPECT(invalid_parameter_handler);
-    x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), NULL, &g_bsearch_s_context_counter);
+    x = bsearch_s(&l, arr, j, sizeof(arr[0]), NULL, &g_bsearch_s_context_counter);
     ok(x == NULL, "Expected bsearch_s to return NULL, got %p\n", x);
     ok(g_bsearch_s_context_counter == 0, "callback shouldn't have been called\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
@@ -974,13 +818,13 @@ static void test_bsearch_s(void)
         for (i=0;i<j;i++) {
             l = arr[i];
             g_bsearch_s_context_counter = 0;
-            x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
+            x = bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
             ok (x == &arr[i], "bsearch_s did not find %d entry in loopsize %d.\n", i, j);
             ok(g_bsearch_s_context_counter > 0, "callback wasn't called\n");
         }
         l = 4242;
         g_bsearch_s_context_counter = 0;
-        x = p_bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
+        x = bsearch_s(&l, arr, j, sizeof(arr[0]), intcomparefunc, &g_bsearch_s_context_counter);
         ok (x == NULL, "bsearch_s did find 4242 entry in loopsize %d.\n", j);
         ok(g_bsearch_s_context_counter > 0, "callback wasn't called\n");
     }
@@ -992,32 +836,32 @@ static void test_controlfp_s(void)
     int ret;
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_controlfp_s( NULL, ~0, ~0 );
+    ret = _controlfp_s( NULL, ~0, ~0 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_controlfp_s( &cur, ~0, ~0 );
+    ret = _controlfp_s( &cur, ~0, ~0 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
-    ret = p_controlfp_s( &cur, 0, 0 );
+    ret = _controlfp_s( &cur, 0, 0 );
     ok( !ret, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
 
     SET_EXPECT(invalid_parameter_handler);
     cur = 0xdeadbeef;
-    ret = p_controlfp_s( &cur, 0x80000000, 0x80000000 );
+    ret = _controlfp_s( &cur, 0x80000000, 0x80000000 );
     ok( ret == EINVAL, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     cur = 0xdeadbeef;
     /* mask is only checked when setting invalid bits */
-    ret = p_controlfp_s( &cur, 0, 0x80000000 );
+    ret = _controlfp_s( &cur, 0, 0x80000000 );
     ok( !ret, "wrong result %d\n", ret );
     ok( cur != 0xdeadbeef, "value not set\n" );
 }
@@ -1027,7 +871,7 @@ static void test_tmpfile_s( void )
     int ret;
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_tmpfile_s(NULL);
+    ret = tmpfile_s(NULL);
     ok(ret == EINVAL, "Expected tmpfile_s to return EINVAL, got %i\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 }
@@ -1063,14 +907,14 @@ static void test__atoflt(void)
 if (0)
 {
     /* crashes on native */
-    p_atoflt(NULL, NULL);
-    p_atoflt(NULL, (char*)_atoflt_testdata[0].str);
-    p_atoflt(&flt, NULL);
+    _atoflt(NULL, NULL);
+    _atoflt(NULL, (char*)_atoflt_testdata[0].str);
+    _atoflt(&flt, NULL);
 }
 
     while (_atoflt_testdata[i].str)
     {
-        ret = p_atoflt(&flt, (char*)_atoflt_testdata[i].str);
+        ret = _atoflt(&flt, (char*)_atoflt_testdata[i].str);
         ok(ret == _atoflt_testdata[i].ret, "got ret %d, expected ret %d, for %s\n", ret,
             _atoflt_testdata[i].ret, _atoflt_testdata[i].str);
 
@@ -1087,17 +931,17 @@ static void test__set_abort_behavior(void)
     unsigned int res;
 
     /* default is _WRITE_ABORT_MSG | _CALL_REPORTFAULT */
-    res = p_set_abort_behavior(0, 0);
+    res = _set_abort_behavior(0, 0);
     ok (res == (_WRITE_ABORT_MSG | _CALL_REPORTFAULT),
         "got 0x%x (expected 0x%x)\n", res, _WRITE_ABORT_MSG | _CALL_REPORTFAULT);
 
     /* no internal mask */
-    p_set_abort_behavior(0xffffffff, 0xffffffff);
-    res = p_set_abort_behavior(0, 0);
+    _set_abort_behavior(0xffffffff, 0xffffffff);
+    res = _set_abort_behavior(0, 0);
     ok (res == 0xffffffff, "got 0x%x (expected 0x%x)\n", res, 0xffffffff);
 
     /* set to default value */
-    p_set_abort_behavior(_WRITE_ABORT_MSG | _CALL_REPORTFAULT, 0xffffffff);
+    _set_abort_behavior(_WRITE_ABORT_MSG | _CALL_REPORTFAULT, 0xffffffff);
 }
 
 static void test__sopen_s(void)
@@ -1105,12 +949,12 @@ static void test__sopen_s(void)
     int ret, fd;
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_sopen_s(NULL, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = _sopen_s(NULL, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     fd = 0xdead;
-    ret = p_sopen_s(&fd, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = _sopen_s(&fd, "test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
     ok(fd == -1, "got %d\n", fd);
 }
@@ -1120,12 +964,12 @@ static void test__wsopen_s(void)
     int ret, fd;
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p_wsopen_s(NULL, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = _wsopen_s(NULL, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == EINVAL, "got %d, expected EINVAL\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     fd = 0xdead;
-    ret = p_wsopen_s(&fd, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
+    ret = _wsopen_s(&fd, L"test", _O_RDONLY, _SH_DENYNO, _S_IREAD);
     ok(ret == ENOENT, "got %d, expected ENOENT\n", ret);
     ok(fd == -1, "got %d\n", fd);
 }
@@ -1137,21 +981,21 @@ static void test__realloc_crt(void)
 if (0)
 {
     /* crashes on some systems starting Vista */
-    p_realloc_crt(NULL, 10);
+    _realloc_crt(NULL, 10);
 }
 
-    mem = p_malloc(10);
+    mem = malloc(10);
     ok(mem != NULL, "memory not allocated\n");
 
-    mem = p_realloc_crt(mem, 20);
+    mem = _realloc_crt(mem, 20);
     ok(mem != NULL, "memory not reallocated\n");
 
-    mem = p_realloc_crt(mem, 0);
+    mem = _realloc_crt(mem, 0);
     ok(mem == NULL, "memory not freed\n");
 
-    mem = p_realloc_crt(NULL, 0);
+    mem = _realloc_crt(NULL, 0);
     ok(mem != NULL, "memory not (re)allocated for size 0\n");
-    p_free(mem);
+    free(mem);
 }
 
 static void test_typeinfo(void)
@@ -1209,7 +1053,7 @@ struct __thread_data {
 
 static void test_getptd(void)
 {
-    struct __thread_data *ptd = p_getptd();
+    struct __thread_data *ptd = _getptd();
     DWORD tid = GetCurrentThreadId();
     wchar_t testW[] = L"test", *wp;
     char test[] = "test", *p;
@@ -1221,38 +1065,38 @@ static void test_getptd(void)
 
     ok(ptd->tid == tid, "ptd->tid = %lx, expected %lx\n", ptd->tid, tid);
     ok(ptd->handle == INVALID_HANDLE_VALUE, "ptd->handle = %p\n", ptd->handle);
-    ok(p_errno() == &ptd->thread_errno, "ptd->thread_errno is different then _errno()\n");
-    ok(p_doserrno() == &ptd->thread_doserrno, "ptd->thread_doserrno is different then __doserrno()\n");
-    p_srand(1234);
+    ok(_errno() == &ptd->thread_errno, "ptd->thread_errno is different then _errno()\n");
+    ok(__doserrno() == &ptd->thread_doserrno, "ptd->thread_doserrno is different then __doserrno()\n");
+    srand(1234);
     ok(ptd->random_seed == 1234, "ptd->random_seed = %d\n", ptd->random_seed);
-    p = p_strtok(test, "t");
+    p = strtok(test, "t");
     ok(ptd->strtok_next == p+3, "ptd->strtok_next is incorrect\n");
-    wp = p_wcstok(testW, L"t");
+    wp = wcstok(testW, L"t");
     ok(ptd->wcstok_next == wp+3, "ptd->wcstok_next is incorrect\n");
-    up = p__mbstok(mbstok_test, (unsigned char*)"t");
+    up = _mbstok(mbstok_test, (unsigned char*)"t");
     ok(ptd->mbstok_next == up+3, "ptd->mbstok_next is incorrect\n");
-    ok(p_strerror(0) == ptd->strerror_buffer, "ptd->strerror_buffer is incorrect\n");
-    ok(p_wcserror(0) == ptd->wcserror_buffer, "ptd->wcserror_buffer is incorrect\n");
-    ok(p_tmpnam(NULL) == ptd->tmpnam_buffer, "ptd->tmpnam_buffer is incorrect\n");
-    ok(p_wtmpnam(NULL) == ptd->wtmpnam_buffer, "ptd->wtmpnam_buffer is incorrect\n");
+    ok(strerror(0) == ptd->strerror_buffer, "ptd->strerror_buffer is incorrect\n");
+    ok(_wcserror(0) == ptd->wcserror_buffer, "ptd->wcserror_buffer is incorrect\n");
+    ok(tmpnam(NULL) == ptd->tmpnam_buffer, "ptd->tmpnam_buffer is incorrect\n");
+    ok(_wtmpnam(NULL) == ptd->wtmpnam_buffer, "ptd->wtmpnam_buffer is incorrect\n");
     memset(&time, 0, sizeof(time));
     time.tm_mday = 1;
-    ok(p_asctime(&time) == ptd->asctime_buffer, "ptd->asctime_buffer is incorrect\n");
-    ok(p_wasctime(&time) == ptd->wasctime_buffer, "ptd->wasctime_buffer is incorrect\n");
-    ok(p_localtime64(&secs) == ptd->time_buffer, "ptd->time_buffer is incorrect\n");
-    ok(p_ecvt(3.12, 1, &dec, &sign) == ptd->efcvt_buffer, "ptd->efcvt_buffer is incorrect\n");
-    ok(p__pxcptinfoptrs() == (void**)&ptd->xcptinfo, "ptd->xcptinfo is incorrect\n");
-    ok(p_fpecode() == &ptd->fpecode, "ptd->fpecode is incorrect\n");
+    ok(asctime(&time) == ptd->asctime_buffer, "ptd->asctime_buffer is incorrect\n");
+    ok(_wasctime(&time) == ptd->wasctime_buffer, "ptd->wasctime_buffer is incorrect\n");
+    ok(_localtime64(&secs) == ptd->time_buffer, "ptd->time_buffer is incorrect\n");
+    ok(_ecvt(3.12, 1, &dec, &sign) == ptd->efcvt_buffer, "ptd->efcvt_buffer is incorrect\n");
+    ok(__pxcptinfoptrs() == (void**)&ptd->xcptinfo, "ptd->xcptinfo is incorrect\n");
+    ok(__fpecode() == &ptd->fpecode, "ptd->fpecode is incorrect\n");
     mbcinfo = ptd->mbcinfo;
     locinfo = ptd->locinfo;
     ok(ptd->have_locale == 1, "ptd->have_locale = %x\n", ptd->have_locale);
-    p_configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
+    _configthreadlocale(_ENABLE_PER_THREAD_LOCALE);
     ok(mbcinfo == ptd->mbcinfo, "ptd->mbcinfo != mbcinfo\n");
     ok(locinfo == ptd->locinfo, "ptd->locinfo != locinfo\n");
     ok(ptd->have_locale == 3, "ptd->have_locale = %x\n", ptd->have_locale);
-    ok(p_get_terminate() == ptd->terminate_handler, "ptd->terminate_handler != _get_terminate()\n");
-    ok(p_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
-    p_configthreadlocale(_DISABLE_PER_THREAD_LOCALE);
+    ok(_get_terminate() == ptd->terminate_handler, "ptd->terminate_handler != _get_terminate()\n");
+    ok(_get_unexpected() == ptd->unexpected_handler, "ptd->unexpected_handler != _get_unexpected()\n");
+    _configthreadlocale(_DISABLE_PER_THREAD_LOCALE);
 }
 
 static int WINAPIV __vswprintf_l_wrapper(wchar_t *buf,
@@ -1261,7 +1105,7 @@ static int WINAPIV __vswprintf_l_wrapper(wchar_t *buf,
     int ret;
     va_list valist;
     va_start(valist, locale);
-    ret = p__vswprintf_l(buf, format, locale, valist);
+    ret = __vswprintf_l(buf, format, locale, valist);
     va_end(valist);
     return ret;
 }
@@ -1272,7 +1116,7 @@ static int WINAPIV _vswprintf_l_wrapper(wchar_t *buf,
     int ret;
     va_list valist;
     va_start(valist, locale);
-    ret = p_vswprintf_l(buf, format, locale, valist);
+    ret = _vswprintf_l(buf, format, locale, valist);
     va_end(valist);
     return ret;
 }
@@ -1305,16 +1149,16 @@ static DWORD WINAPI block_file(void *arg)
     struct block_file_arg *files = arg;
     int deadlock_test;
 
-    p_lock_file(files->read);
-    p_lock_file(files->write);
+    _lock_file(files->read);
+    _lock_file(files->write);
     SetEvent(files->init);
 
     WaitForSingleObject(files->finish, INFINITE);
     Sleep(200);
     deadlock_test = InterlockedIncrement(&files->deadlock_test);
     ok(deadlock_test == 1, "deadlock_test = %d\n", deadlock_test);
-    p_unlock_file(files->read);
-    p_unlock_file(files->write);
+    _unlock_file(files->read);
+    _unlock_file(files->write);
     return 0;
 }
 
@@ -1325,20 +1169,15 @@ static void test_nonblocking_file_access(void)
     FILE *filer, *filew;
     int ret;
 
-    if(!p_lock_file || !p_unlock_file) {
-        win_skip("_lock_file not available\n");
-        return;
-    }
-
-    filew = p_fopen("test_file", "w");
+    filew = fopen("test_file", "w");
     ok(filew != NULL, "unable to create test file\n");
     if(!filew)
         return;
-    filer = p_fopen("test_file", "r");
+    filer = fopen("test_file", "r");
     ok(filer != NULL, "unable to open test file\n");
     if(!filer) {
-        p_fclose(filew);
-        p_unlink("test_file");
+        fclose(filew);
+        unlink("test_file");
         return;
     }
 
@@ -1353,39 +1192,39 @@ static void test_nonblocking_file_access(void)
     ok(thread != NULL, "CreateThread failed\n");
     WaitForSingleObject(arg.init, INFINITE);
 
-    ret = p_fileno(filer);
+    ret = _fileno(filer);
     ok(ret, "_fileno(filer) returned %d\n", ret);
-    ret = p_fileno(filew);
+    ret = _fileno(filew);
     ok(ret, "_fileno(filew) returned %d\n", ret);
 
-    ret = p_feof(filer);
+    ret = feof(filer);
     ok(ret==0, "feof(filer) returned %d\n", ret);
-    ret = p_feof(filew);
+    ret = feof(filew);
     ok(ret==0, "feof(filew) returned %d\n", ret);
 
-    ret = p_ferror(filer);
+    ret = ferror(filer);
     ok(ret==0, "ferror(filer) returned %d\n", ret);
-    ret = p_ferror(filew);
+    ret = ferror(filew);
     ok(ret==0, "ferror(filew) returned %d\n", ret);
 
-    ret = p_flsbuf('a', filer);
+    ret = _flsbuf('a', filer);
     ok(ret==-1, "_flsbuf(filer) returned %d\n", ret);
-    ret = p_flsbuf('a', filew);
+    ret = _flsbuf('a', filew);
     ok(ret=='a', "_flsbuf(filew) returned %d\n", ret);
 
-    ret = p_filbuf(filer);
+    ret = _filbuf(filer);
     ok(ret==-1, "_filbuf(filer) returned %d\n", ret);
-    ret = p_filbuf(filew);
+    ret = _filbuf(filew);
     ok(ret==-1, "_filbuf(filew) returned %d\n", ret);
 
-    ret = p_fflush_nolock(filer);
+    ret = _fflush_nolock(filer);
     ok(ret==0, "_fflush_nolock(filer) returned %d\n", ret);
-    ret = p_fflush_nolock(filew);
+    ret = _fflush_nolock(filew);
     ok(ret==0, "_fflush_nolock(filew) returned %d\n", ret);
 
     SetEvent(arg.finish);
 
-    ret = p_fflush_nolock(NULL);
+    ret = _fflush_nolock(NULL);
     ok(ret==0, "_fflush_nolock(NULL) returned %d\n", ret);
     ret = InterlockedIncrement(&arg.deadlock_test);
     ok(ret==2, "InterlockedIncrement returned %d\n", ret);
@@ -1394,19 +1233,19 @@ static void test_nonblocking_file_access(void)
     CloseHandle(arg.init);
     CloseHandle(arg.finish);
     CloseHandle(thread);
-    p_fclose(filer);
-    p_fclose(filew);
-    p_unlink("test_file");
+    fclose(filer);
+    fclose(filew);
+    unlink("test_file");
 }
 
 static void test_byteswap(void)
 {
     unsigned long ret;
 
-    ret = p_byteswap_ulong(0x12345678);
+    ret = _byteswap_ulong(0x12345678);
     ok(ret == 0x78563412, "ret = %lx\n", ret);
 
-    ret = p_byteswap_ulong(0);
+    ret = _byteswap_ulong(0);
     ok(ret == 0, "ret = %lx\n", ret);
 }
 
@@ -1415,76 +1254,76 @@ static void test_access_s(void)
     FILE *f;
     int res;
 
-    f = p_fopen("test_file", "w");
+    f = fopen("test_file", "w");
     ok(f != NULL, "unable to create test file\n");
     if(!f)
         return;
 
-    p_fclose(f);
+    fclose(f);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 0);
+    res = _access_s("test_file", 0);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 2);
+    res = _access_s("test_file", 2);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 4);
+    res = _access_s("test_file", 4);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 6);
+    res = _access_s("test_file", 6);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     SetFileAttributesA("test_file", FILE_ATTRIBUTE_READONLY);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 0);
+    res = _access_s("test_file", 0);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 2);
+    res = _access_s("test_file", 2);
     ok(res == EACCES, "got %x\n", res);
     ok(errno == EACCES, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 4);
+    res = _access_s("test_file", 4);
     ok(res == 0, "got %x\n", res);
     ok(errno == 0xdeadbeef, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 6);
+    res = _access_s("test_file", 6);
     ok(res == EACCES, "got %x\n", res);
     ok(errno == EACCES, "got %x\n", res);
 
     SetFileAttributesA("test_file", FILE_ATTRIBUTE_NORMAL);
 
-    p_unlink("test_file");
+    unlink("test_file");
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 0);
+    res = _access_s("test_file", 0);
     ok(res == ENOENT, "got %x\n", res);
     ok(errno == ENOENT, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 2);
+    res = _access_s("test_file", 2);
     ok(res == ENOENT, "got %x\n", res);
     ok(errno == ENOENT, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 4);
+    res = _access_s("test_file", 4);
     ok(res == ENOENT, "got %x\n", res);
     ok(errno == ENOENT, "got %x\n", res);
 
     errno = 0xdeadbeef;
-    res = p_access_s("test_file", 6);
+    res = _access_s("test_file", 6);
     ok(res == ENOENT, "got %x\n", res);
     ok(errno == ENOENT, "got %x\n", res);
 }
@@ -1563,7 +1402,7 @@ static void test__AdjustPointer(void)
     int i;
 
     for(i=0; i<ARRAY_SIZE(data); i++) {
-        ret = p__AdjustPointer((void*)data[i].ptr, &data[i].this_ptr_offsets);
+        ret = __AdjustPointer((void*)data[i].ptr, &data[i].this_ptr_offsets);
         ok(ret == (void*)data[i].ret, "%d) __AdjustPointer returned %p, expected %p\n", i, ret, (void*)data[i].ret);
     }
 }
@@ -1577,30 +1416,30 @@ static void test_mbstowcs(void)
     buf[0] = 'a';
     buf[1] = 0;
     memset(bufw, 'x', sizeof(bufw));
-    ret = p_mbstowcs(bufw, buf, -1);
+    ret = mbstowcs(bufw, buf, -1);
     ok(ret == 1, "ret = %d\n", (int)ret);
     ok(bufw[0] == 'a', "bufw[0] = '%c'\n", bufw[0]);
     ok(bufw[1] == 0, "bufw[1] = '%c'\n", bufw[1]);
 
     memset(bufw, 'x', sizeof(bufw));
-    ret = p_mbstowcs(bufw, buf, -1000);
+    ret = mbstowcs(bufw, buf, -1000);
     ok(ret == 1, "ret = %d\n", (int)ret);
     ok(bufw[0] == 'a', "bufw[0] = '%c'\n", bufw[0]);
     ok(bufw[1] == 0, "bufw[1] = '%c'\n", bufw[1]);
 
     memset(buf, 'x', sizeof(buf));
-    ret = p_wcstombs(buf, bufw, -1);
+    ret = wcstombs(buf, bufw, -1);
     ok(ret == 1, "ret = %d\n", (int)ret);
     ok(buf[0] == 'a', "buf[0] = '%c'\n", buf[0]);
     ok(buf[1] == 0, "buf[1] = '%c'\n", buf[1]);
 
     memset(buf, 'x', sizeof(buf));
-    ret = p_wcstombs(buf, bufw, -1000);
+    ret = wcstombs(buf, bufw, -1000);
     ok(ret == 1, "ret = %d\n", (int)ret);
     ok(buf[0] == 'a', "buf[0] = '%c'\n", buf[0]);
     ok(buf[1] == 0, "buf[1] = '%c'\n", buf[1]);
 
-    if(!p_setlocale(LC_ALL, "English")) {
+    if(!setlocale(LC_ALL, "English")) {
         win_skip("English locale not available\n");
         return;
     }
@@ -1608,26 +1447,26 @@ static void test_mbstowcs(void)
     buf[0] = 'a';
     buf[1] = 0;
     memset(bufw, 'x', sizeof(bufw));
-    ret = p_mbstowcs(bufw, buf, -1);
+    ret = mbstowcs(bufw, buf, -1);
     ok(ret == -1, "ret = %d\n", (int)ret);
     ok(bufw[0] == 0, "bufw[0] = '%c'\n", bufw[0]);
 
     memset(bufw, 'x', sizeof(bufw));
-    ret = p_mbstowcs(bufw, buf, -1000);
+    ret = mbstowcs(bufw, buf, -1000);
     ok(ret == -1, "ret = %d\n", (int)ret);
     ok(bufw[0] == 0, "bufw[0] = '%c'\n", bufw[0]);
 
     memset(buf, 'x', sizeof(buf));
-    ret = p_wcstombs(buf, bufw, -1);
+    ret = wcstombs(buf, bufw, -1);
     ok(ret == 0, "ret = %d\n", (int)ret);
     ok(buf[0] == 0, "buf[0] = '%c'\n", buf[0]);
 
     memset(buf, 'x', sizeof(buf));
-    ret = p_wcstombs(buf, bufw, -1000);
+    ret = wcstombs(buf, bufw, -1000);
     ok(ret == 0, "ret = %d\n", (int)ret);
     ok(buf[0] == 0, "buf[0] = '%c'\n", buf[0]);
 
-    p_setlocale(LC_ALL, "C");
+    setlocale(LC_ALL, "C");
 }
 
 static void test_strtok_s(void)
@@ -1640,33 +1479,33 @@ static void test_strtok_s(void)
     char *context;
 
     context = (char*)0xdeadbeef;
-    strret = p_strtok_s( test, delim, &context);
+    strret = strtok_s( test, delim, &context);
     ok(strret == test, "Expected test, got %p.\n", strret);
     ok(context == test+2, "Expected test+2, got %p.\n", context);
 
-    strret = p_strtok_s( NULL, delim, &context);
+    strret = strtok_s( NULL, delim, &context);
     ok(strret == test+2, "Expected test+2, got %p.\n", strret);
     ok(context == test+3, "Expected test+3, got %p.\n", context);
 
-    strret = p_strtok_s( NULL, delim, &context);
+    strret = strtok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == test+3, "Expected test+3, got %p.\n", context);
 
     context = NULL;
-    strret = p_strtok_s( empty, delim, &context);
+    strret = strtok_s( empty, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == empty, "Expected empty, got %p.\n", context);
 
-    strret = p_strtok_s( NULL, delim, &context);
+    strret = strtok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == empty, "Expected empty, got %p.\n", context);
 
     context = NULL;
-    strret = p_strtok_s( space, delim, &context);
+    strret = strtok_s( space, delim, &context);
     ok(strret == space, "Expected space, got %p.\n", strret);
     ok(context == space+1, "Expected space+1, got %p.\n", context);
 
-    strret = p_strtok_s( NULL, delim, &context);
+    strret = strtok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == space+1, "Expected space+1, got %p.\n", context);
 }
@@ -1681,33 +1520,33 @@ static void test__mbstok_s(void)
     unsigned char *context;
 
     context = (unsigned char*)0xdeadbeef;
-    strret = p__mbstok_s( test, delim, &context);
+    strret = _mbstok_s( test, delim, &context);
     ok(strret == test, "Expected test, got %p.\n", strret);
     ok(context == test+2, "Expected test+2, got %p.\n", context);
 
-    strret = p__mbstok_s( NULL, delim, &context);
+    strret = _mbstok_s( NULL, delim, &context);
     ok(strret == test+2, "Expected test+2, got %p.\n", strret);
     ok(context == test+3, "Expected test+3, got %p.\n", context);
 
-    strret = p__mbstok_s( NULL, delim, &context);
+    strret = _mbstok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == test+3, "Expected test+3, got %p.\n", context);
 
     context = NULL;
-    strret = p__mbstok_s( empty, delim, &context);
+    strret = _mbstok_s( empty, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == empty, "Expected empty, got %p.\n", context);
 
-    strret = p__mbstok_s( NULL, delim, &context);
+    strret = _mbstok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == empty, "Expected empty, got %p.\n", context);
 
     context = NULL;
-    strret = p__mbstok_s( space, delim, &context);
+    strret = _mbstok_s( space, delim, &context);
     ok(strret == space, "Expected space, got %p.\n", strret);
     ok(context == space+1, "Expected space+1, got %p.\n", context);
 
-    strret = p__mbstok_s( NULL, delim, &context);
+    strret = _mbstok_s( NULL, delim, &context);
     ok(strret == NULL, "Expected NULL, got %p.\n", strret);
     ok(context == space+1, "Expected space+1, got %p.\n", context);
 }
@@ -1789,16 +1628,11 @@ static void test__fpieee_flt(void)
     CONTEXT ctx;
     int i, ret;
 
-    if(!p__fpieee_flt) {
-        win_skip("_fpieee_flt not available\n");
-        return;
-    }
-
     ep.ExceptionRecord = &rec;
     ep.ContextRecord = &ctx;
     memset(&rec, 0, sizeof(rec));
     memset(&ctx, 0, sizeof(ctx));
-    ret = p__fpieee_flt(1, &ep, fpieee_handler);
+    ret = _fpieee_flt(1, &ep, fpieee_handler);
     ok(ret == EXCEPTION_CONTINUE_SEARCH, "_fpieee_flt returned %d\n", ret);
     ok(handler_called == 0, "handler_called = %d\n", handler_called);
 
@@ -1814,7 +1648,7 @@ static void test__fpieee_flt(void)
         ctx.FloatSave.StatusWord = test_data[i].status_word;
 
         handler_called = 0;
-        ret = p__fpieee_flt(test_data[i].exception_code, &ep, fpieee_handler);
+        ret = _fpieee_flt(test_data[i].exception_code, &ep, fpieee_handler);
         ok(ret == test_data[i].ret, "%d) _fpieee_flt returned %d\n", i, ret);
         ok(handler_called == 1, "%d) handler_called = %d\n", i, handler_called);
 
@@ -1878,28 +1712,28 @@ static void test__memicmp(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ret = p__memicmp(NULL, NULL, 0);
+    ret = _memicmp(NULL, NULL, 0);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(NULL, NULL, 1);
+    ret = _memicmp(NULL, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(s1, NULL, 1);
+    ret = _memicmp(s1, NULL, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp(NULL, s2, 1);
+    ret = _memicmp(NULL, s2, 1);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
-    ret = p__memicmp(s1, s2, 2);
+    ret = _memicmp(s1, s2, 2);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp(s1, s2, 3);
+    ret = _memicmp(s1, s2, 3);
     ok(ret == -1, "got %d\n", ret);
 }
 
@@ -1909,28 +1743,28 @@ static void test__memicmp_l(void)
     static const char *s2 = "aBd";
     int ret;
 
-    ret = p__memicmp_l(NULL, NULL, 0, NULL);
+    ret = _memicmp_l(NULL, NULL, 0, NULL);
     ok(!ret, "got %d\n", ret);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(NULL, NULL, 1, NULL);
+    ret = _memicmp_l(NULL, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(s1, NULL, 1, NULL);
+    ret = _memicmp_l(s1, NULL, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
     SET_EXPECT(invalid_parameter_handler);
-    ret = p__memicmp_l(NULL, s2, 1, NULL);
+    ret = _memicmp_l(NULL, s2, 1, NULL);
     ok(ret == _NLSCMPERROR, "got %d\n", ret);
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
 
-    ret = p__memicmp_l(s1, s2, 2, NULL);
+    ret = _memicmp_l(s1, s2, 2, NULL);
     ok(!ret, "got %d\n", ret);
 
-    ret = p__memicmp_l(s1, s2, 3, NULL);
+    ret = _memicmp_l(s1, s2, 3, NULL);
     ok(ret == -1, "got %d\n", ret);
 }
 
@@ -1939,7 +1773,7 @@ static int WINAPIV _vsnwprintf_wrapper(wchar_t *str, size_t len, const wchar_t *
     int ret;
     va_list valist;
     va_start(valist, format);
-    ret = p__vsnwprintf(str, len, format, valist);
+    ret = _vsnwprintf(str, len, format, valist);
     va_end(valist);
     return ret;
 }
@@ -1949,8 +1783,6 @@ static void test__vsnwprintf(void)
     int ret;
     WCHAR str[2] = {0};
 
-    _invalid_parameter_handler old_handler = p_set_invalid_parameter_handler(test_invalid_parameter_handler);
-
     SET_EXPECT(invalid_parameter_handler);
     errno = 0xdeadbeef;
     str[0] = 'x';
@@ -1958,8 +1790,6 @@ static void test__vsnwprintf(void)
     ok(ret == -1, "got %d, expected -1\n", ret);
     ok(str[0] == 'x', "Expected string to be unchanged.\n");
     CHECK_CALLED(invalid_parameter_handler, EINVAL);
-
-    ok(p_set_invalid_parameter_handler(old_handler) == test_invalid_parameter_handler, "Cannot reset invalid parameter handler\n");
 }
 
 static void test___strncnt(void)
@@ -1982,11 +1812,11 @@ static void test___strncnt(void)
     size_t ret;
 
     if (0)
-        ret = p___strncnt(NULL, 1);
+        ret = __strncnt(NULL, 1);
 
     for (i = 0; i < ARRAY_SIZE(strncnt_tests); ++i)
     {
-        ret = p___strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
+        ret = __strncnt(strncnt_tests[i].str, strncnt_tests[i].size);
         ok(ret == strncnt_tests[i].ret, "%u: unexpected return value %u.\n", i, (int)ret);
     }
 }
@@ -1998,7 +1828,7 @@ static void test_swscanf(void)
     int ret;
 
     /* check WEOF */
-    ret = p_swscanf(L" \t\n\n", L"%s", buffer);
+    ret = swscanf(L" \t\n\n", L"%s", buffer);
     ok( ret == (short)WEOF, "ret = %d\n", ret );
 }
 
@@ -2007,18 +1837,18 @@ static void test____mb_cur_max_l_func(void)
     int ret;
     _locale_t l;
 
-    ret = p____mb_cur_max_l_func(NULL);
+    ret = ___mb_cur_max_l_func(NULL);
     ok( ret == 1, "MB_CUR_MAX_L(NULL) = %d\n", ret );
 
-    l = p__create_locale(LC_ALL, "chinese-traditional");
+    l = _create_locale(LC_ALL, "chinese-traditional");
     if (!l)
     {
         skip("DBCS locale not available\n");
         return;
     }
-    ret = p____mb_cur_max_l_func(l);
+    ret = ___mb_cur_max_l_func(l);
     ok( ret == 2, "MB_CUR_MAX_L(cht) = %d\n", ret );
-    p__free_locale(l);
+    _free_locale(l);
 }
 
 static void test__get_current_locale(void)
@@ -2026,9 +1856,9 @@ static void test__get_current_locale(void)
     _locale_t l, l2;
     int i;
 
-    ok(!p__setmbcp(1252), "_setmbcp failed\n");
-    l = p__get_current_locale();
-    l2 = p__get_current_locale();
+    ok(!_setmbcp(1252), "_setmbcp failed\n");
+    l = _get_current_locale();
+    l2 = _get_current_locale();
 
     ok(!strcmp(l->locinfo->lc_category[LC_COLLATE].locale, "C"),
             "LC_COLLATE = \"%s\"\n", l->locinfo->lc_category[LC_COLLATE].locale);
@@ -2044,13 +1874,13 @@ static void test__get_current_locale(void)
 
     ok(l->locinfo->refcount == 4, "refcount = %d\n", l->locinfo->refcount);
 
-    if(!p_setlocale(LC_ALL, "english")) {
+    if(!setlocale(LC_ALL, "english")) {
         win_skip("English locale not available\n");
-        p__free_locale(l);
-        p__free_locale(l2);
+        _free_locale(l);
+        _free_locale(l2);
         return;
     }
-    ok(!p__setmbcp(932), "_setmbcp failed\n");
+    ok(!_setmbcp(932), "_setmbcp failed\n");
 
     ok(!strcmp(l->locinfo->lc_category[LC_COLLATE].locale, "C"),
             "LC_COLLATE = \"%s\"\n", l->locinfo->lc_category[LC_COLLATE].locale);
@@ -2068,12 +1898,12 @@ static void test__get_current_locale(void)
     ok(l->locinfo == l2->locinfo, "different locinfo pointers\n");
     ok(l->mbcinfo == l2->mbcinfo, "different mbcinfo pointers\n");
 
-    p__free_locale(l);
-    p__free_locale(l2);
+    _free_locale(l);
+    _free_locale(l2);
 
-    l = p__get_current_locale();
-    p_setlocale(LC_COLLATE, "C");
-    l2 = p__get_current_locale();
+    l = _get_current_locale();
+    setlocale(LC_COLLATE, "C");
+    l2 = _get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
     ok(l2->locinfo->refcount == 3, "refcount = %d\n", l2->locinfo->refcount);
@@ -2129,10 +1959,10 @@ static void test__get_current_locale(void)
     ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     ok(l->locinfo->lc_time_curr->refcount == 4, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
-    p__free_locale(l2);
+    _free_locale(l2);
 
-    p_setlocale(LC_CTYPE, "C");
-    l2 = p__get_current_locale();
+    setlocale(LC_CTYPE, "C");
+    l2 = _get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
     ok(l2->locinfo->refcount == 3, "refcount = %d\n", l2->locinfo->refcount);
@@ -2192,10 +2022,10 @@ static void test__get_current_locale(void)
     ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     ok(l->locinfo->lc_time_curr->refcount == 4, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
-    p__free_locale(l2);
+    _free_locale(l2);
 
-    p_setlocale(LC_MONETARY, "C");
-    l2 = p__get_current_locale();
+    setlocale(LC_MONETARY, "C");
+    l2 = _get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
     ok(l2->locinfo->refcount == 3, "refcount = %d\n", l2->locinfo->refcount);
@@ -2258,10 +2088,10 @@ static void test__get_current_locale(void)
     ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     ok(l->locinfo->lc_time_curr->refcount == 4, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
-    p__free_locale(l2);
+    _free_locale(l2);
 
-    p_setlocale(LC_NUMERIC, "C");
-    l2 = p__get_current_locale();
+    setlocale(LC_NUMERIC, "C");
+    l2 = _get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
     ok(l2->locinfo->refcount == 3, "refcount = %d\n", l2->locinfo->refcount);
@@ -2322,10 +2152,10 @@ static void test__get_current_locale(void)
     ok(l->locinfo->lc_time_curr->unk == 1, "unk = %d\n", l->locinfo->lc_time_curr->unk);
     ok(l->locinfo->lc_time_curr->refcount == 4, "refcount = %d\n", l->locinfo->lc_time_curr->refcount);
 
-    p__free_locale(l2);
+    _free_locale(l2);
 
-    p_setlocale(LC_TIME, "C");
-    l2 = p__get_current_locale();
+    setlocale(LC_TIME, "C");
+    l2 = _get_current_locale();
 
     ok(l->locinfo->refcount == 1, "refcount = %d\n", l->locinfo->refcount);
     ok(l2->locinfo->refcount == 3, "refcount = %d\n", l2->locinfo->refcount);
@@ -2383,10 +2213,10 @@ static void test__get_current_locale(void)
     ok(l2->locinfo->lc_time_curr->refcount == 2,
             "refcount = %d\n", l2->locinfo->lc_time_curr->refcount);
 
-    p__free_locale(l2);
+    _free_locale(l2);
 
-    p__free_locale(l);
-    p_setlocale(LC_ALL, "C");
+    _free_locale(l);
+    setlocale(LC_ALL, "C");
 }
 
 static void test_ioinfo_flags(void)
@@ -2398,9 +2228,9 @@ static void test_ioinfo_flags(void)
 
     tempf = _tempnam(".","wne");
 
-    tempfd = p__open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_WTEXT, _S_IWRITE);
+    tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_WTEXT, _S_IWRITE);
     ok(tempfd != -1, "_open failed with error: %d\n", errno);
-    handle = (HANDLE)p__get_osfhandle(tempfd);
+    handle = (HANDLE)_get_osfhandle(tempfd);
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
     ok(info->handle == handle, "Unexpected handle %p, expected %p.\n", info->handle, handle);
@@ -2408,7 +2238,7 @@ static void test_ioinfo_flags(void)
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
     ok(info->unicode, "Unicode is not set.\n");
     ok(info->textmode == 2, "Unexpected textmode %d.\n", info->textmode);
-    p__close(tempfd);
+    _close(tempfd);
 
     ok(info->handle == INVALID_HANDLE_VALUE, "Unexpected handle %p.\n", info->handle);
     ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
@@ -2422,7 +2252,7 @@ static void test_ioinfo_flags(void)
     ok(!info->exflag, "Unexpected exflag %#x.\n", info->exflag);
     ok(!info->textmode, "Unexpected textmode %d.\n", info->textmode);
 
-    tempfd = p__open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_TEXT, _S_IWRITE);
+    tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_TEXT, _S_IWRITE);
     ok(tempfd != -1, "_open failed with error: %d\n", errno);
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
@@ -2430,9 +2260,9 @@ static void test_ioinfo_flags(void)
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
     ok(!info->unicode, "Unicode is not set.\n");
     ok(!info->textmode, "Unexpected textmode %d.\n", info->textmode);
-    p__close(tempfd);
+    _close(tempfd);
 
-    tempfd = p__open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_U8TEXT, _S_IWRITE);
+    tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_U8TEXT, _S_IWRITE);
     ok(tempfd != -1, "_open failed with error: %d\n", errno);
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
@@ -2440,7 +2270,7 @@ static void test_ioinfo_flags(void)
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
     ok(!info->unicode, "Unicode is not set.\n");
     ok(info->textmode == 1, "Unexpected textmode %d.\n", info->textmode);
-    p__close(tempfd);
+    _close(tempfd);
 
     unlink(tempf);
     free(tempf);
@@ -2448,41 +2278,41 @@ static void test_ioinfo_flags(void)
 
 static void test_strcmp(void)
 {
-    int ret = p_strcmp( "abc", "abcd" );
+    int ret = strcmp( "abc", "abcd" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "", "abc" );
+    ret = strcmp( "", "abc" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "abc", "ab\xa0" );
+    ret = strcmp( "abc", "ab\xa0" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ret = strcmp( "ab\xb0", "ab\xa0" );
     ok( ret == 1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ret = strcmp( "ab\xc2", "ab\xc2" );
     ok( ret == 0, "wrong ret %d\n", ret );
 
-    ret = p_strncmp( "abc", "abcd", 3 );
+    ret = strncmp( "abc", "abcd", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
 #ifdef _WIN64
-    ret = p_strncmp( "", "abc", 3 );
+    ret = strncmp( "", "abc", 3 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ret = strncmp( "abc", "ab\xa0", 4 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 3 );
     ok( ret == 1, "wrong ret %d\n", ret );
 #else
-    ret = p_strncmp( "", "abc", 3 );
+    ret = strncmp( "", "abc", 3 );
     ok( ret == 0 - 'a', "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ret = strncmp( "abc", "ab\xa0", 4 );
     ok( ret == 'c' - 0xa0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 3 );
     ok( ret == 0xb0 - 0xa0, "wrong ret %d\n", ret );
 #endif
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 2 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ret = strncmp( "ab\xc2", "ab\xc2", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abd", 0 );
+    ret = strncmp( "abc", "abd", 0 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abc", 12 );
+    ret = strncmp( "abc", "abc", 12 );
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
