@@ -1,6 +1,5 @@
 TESTDLL   = msvcr100.dll
 IMPORTS   = msvcr100
-EXTRADEFS = -fno-builtin
 
 SOURCES = \
 	msvcr100.c
