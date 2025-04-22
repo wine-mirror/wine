@@ -42,6 +42,8 @@ _ACRTIMP int __cdecl fesetexceptflag(const fexcept_t*, int);
 _ACRTIMP int __cdecl feclearexcept(int);
 _ACRTIMP int __cdecl fetestexcept(int);
 
+_ACRTIMP int __cdecl feupdateenv(const fenv_t*);
+
 #ifdef __cplusplus
 }
 #endif

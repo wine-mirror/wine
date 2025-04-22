@@ -318,6 +318,13 @@ _ACRTIMP short __cdecl _fdclass(float);
 #define isnormal(x)   (fpclassify(x) == FP_NORMAL)
 #define isfinite(x)   (fpclassify(x) <= 0)
 
+ _ACRTIMP int __cdecl _dpcomp(double, double);
+ _ACRTIMP int __cdecl _fdpcomp(float, float);
+
+#define _FP_LT  1
+#define _FP_EQ  2
+#define _FP_GT  4
+
 #else
 
 static inline int __isnanf(float x)
@@ -370,13 +377,6 @@ static inline int __signbit(double x)
 #endif
 
 #ifdef _UCRT
-
- _ACRTIMP int __cdecl _dpcomp(double, double);
- _ACRTIMP int __cdecl _fdpcomp(float, float);
-
-#define _FP_LT  1
-#define _FP_EQ  2
-#define _FP_GT  4
 
 #if defined(__GNUC__) || defined(__clang__)
 # define isgreater(x, y)      __builtin_isgreater(x, y)

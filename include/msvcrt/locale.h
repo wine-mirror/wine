@@ -90,9 +90,14 @@ _ACRTIMP size_t        __cdecl _Strftime(char*,size_t,const char*,const struct t
 _ACRTIMP int           __cdecl _configthreadlocale(int);
 _ACRTIMP _locale_t     __cdecl _get_current_locale(void);
 _ACRTIMP _locale_t     __cdecl _create_locale(int, const char*);
+_ACRTIMP _locale_t     __cdecl _wcreate_locale(int, const wchar_t*);
 _ACRTIMP void          __cdecl _free_locale(_locale_t);
 
 _ACRTIMP unsigned int __cdecl ___lc_codepage_func(void);
+_ACRTIMP wchar_t** __cdecl ___lc_locale_name_func(void);
+
+_ACRTIMP void* __cdecl _Gettnames(void);
+_ACRTIMP void* __cdecl _W_Gettnames(void);
 
 #ifndef _WLOCALE_DEFINED
 #define _WLOCALE_DEFINED
