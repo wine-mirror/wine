@@ -1,6 +1,6 @@
 MODULE    = bluetoothapis.dll
 IMPORTLIB = bluetoothapis
-IMPORTS = setupapi cfgmgr32
+IMPORTS = setupapi cfgmgr32 user32
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 

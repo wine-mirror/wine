@@ -1,6 +1,6 @@
 @ stub BluetoothAddressToString
 @ stub BluetoothAuthenticateDevice
-@ stub BluetoothAuthenticateDeviceEx
+@ stdcall -import BluetoothAuthenticateDeviceEx(ptr ptr ptr ptr long)
 @ stub BluetoothAuthenticateMultipleDevices
 @ stub BluetoothAuthenticationAgent
 @ stub BluetoothDisconnectDevice

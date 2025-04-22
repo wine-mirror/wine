@@ -1,4 +1,5 @@
 @ stub BluetoothAddressToString
+@ stdcall BluetoothAuthenticateDeviceEx(ptr ptr ptr ptr long)
 @ stub BluetoothDisconnectDevice
 @ stdcall BluetoothEnableDiscovery(ptr long)
 @ stdcall BluetoothEnableIncomingConnections(ptr long)

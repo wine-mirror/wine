@@ -29,12 +29,12 @@
 #include <winnls.h>
 
 #include "bthsdpdef.h"
-#include "bluetoothapis.h"
 #include "cfgmgr32.h"
 #include "setupapi.h"
 #include "winioctl.h"
 
 #include "initguid.h"
+#include "bluetoothapis.h"
 #include "bthdef.h"
 #include "bthioctl.h"
 #include "wine/winebth.h"
@@ -945,6 +945,59 @@ DWORD WINAPI BluetoothSendAuthenticationResponseEx( HANDLE handle_radio, BLUETOO
 
  done:
     ReleaseSRWLockShared( &bluetooth_auth_lock );
+    return ret;
+ }
+
+DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BLUETOOTH_DEVICE_INFO *device_info,
+                                            BLUETOOTH_OOB_DATA_INFO *oob_info,
+                                            AUTHENTICATION_REQUIREMENTS auth_req )
+{
+    OVERLAPPED ovl = {0};
+    BTH_ADDR device_addr;
+    BOOL success;
+    DWORD ret, bytes;
+
+    FIXME( "(%p, %p, %p, %p, %d): semi-stub!\n", parent, handle_radio, device_info, oob_info, auth_req );
+
+    if (!device_info || auth_req < MITMProtectionNotRequired || auth_req > MITMProtectionNotDefined)
+        return ERROR_INVALID_PARAMETER;
+    if (device_info->dwSize != sizeof( *device_info ))
+        return ERROR_REVISION_MISMATCH;
+
+    TRACE( "Initiating pairing with %s\n", debugstr_addr( device_info->Address.rgBytes ) );
+    if (!handle_radio)
+    {
+        BLUETOOTH_FIND_RADIO_PARAMS find_params = {.dwSize = sizeof( find_params )};
+        HBLUETOOTH_RADIO_FIND radio_find;
+
+        radio_find = BluetoothFindFirstRadio( &find_params, &handle_radio );
+        ret = GetLastError();
+        if (!radio_find)
+            return ret == ERROR_NO_MORE_ITEMS ? ERROR_NOT_FOUND : ret;
+        do {
+            ret = BluetoothAuthenticateDeviceEx( parent, handle_radio, device_info, oob_info, auth_req );
+            CloseHandle( handle_radio );
+            if (!ret || ret == ERROR_NO_MORE_ITEMS)
+                break;
+        } while (BluetoothFindNextRadio( radio_find, &handle_radio ));
+
+        BluetoothFindRadioClose( radio_find );
+        return ret;
+    }
+
+    ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
+    device_addr = RtlUlonglongByteSwap( device_info->Address.ullLong ) >> 16;
+    success = DeviceIoControl( handle_radio, IOCTL_WINEBTH_RADIO_START_AUTH, &device_addr, sizeof( device_addr ),
+                               NULL, 0, &bytes, &ovl );
+    ret = ERROR_SUCCESS;
+    if (!success)
+    {
+        ret = GetLastError();
+        if (ret == ERROR_IO_PENDING)
+            ret = GetOverlappedResult( handle_radio, &ovl, &bytes, TRUE );
+        CloseHandle( ovl.hEvent );
+    }
+
     return ret;
 }
 
