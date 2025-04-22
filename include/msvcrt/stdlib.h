@@ -134,11 +134,8 @@ _ACRTIMP int*            __cdecl _errno(void);
 #define errno                  (*_errno())
 _ACRTIMP int*            __cdecl __sys_nerr(void);
 #define _sys_nerr              (*__sys_nerr())
-
-/* FIXME: We need functions to access these:
- * int _sys_nerr;
- * char** _sys_errlist;
- */
+_ACRTIMP char**          __cdecl __sys_errlist(void);
+#define _sys_errlist           (__sys_errlist())
 
 _ACRTIMP errno_t       __cdecl _get_doserrno(int*);
 _ACRTIMP errno_t       __cdecl _get_errno(int*);

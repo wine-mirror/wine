@@ -143,6 +143,7 @@ _ACRTIMP void   __cdecl rewind(FILE*);
 _ACRTIMP void   __cdecl setbuf(FILE*,char*);
 _ACRTIMP int    __cdecl setvbuf(FILE*,char*,int,size_t);
 _ACRTIMP FILE*  __cdecl tmpfile(void);
+_ACRTIMP errno_t __cdecl tmpfile_s(FILE**);
 _ACRTIMP char*  __cdecl tmpnam(char*);
 _ACRTIMP int    __cdecl ungetc(int,FILE*);
 _ACRTIMP unsigned int __cdecl _get_output_format(void);

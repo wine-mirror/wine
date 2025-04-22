@@ -26,6 +26,8 @@ typedef void (__cdecl *_PVFV)(void);
 typedef int (__cdecl *_PIFV)(void);
 typedef void (__cdecl *_PVFI)(int);
 
+_ACRTIMP int __cdecl _initterm_e(_PIFV *, _PIFV *);
+
 typedef struct _onexit_table_t {
     _PVFV *_first;
     _PVFV *_last;

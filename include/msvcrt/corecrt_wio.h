@@ -101,6 +101,7 @@ _ACRTIMP wchar_t* __cdecl _wmktemp(wchar_t*);
 _ACRTIMP int      __cdecl _wopen(const wchar_t*,int,...);
 _ACRTIMP int      __cdecl _wrename(const wchar_t*,const wchar_t*);
 _ACRTIMP int      __cdecl _wsopen(const wchar_t*,int,int,...);
+_ACRTIMP errno_t  __cdecl _wsopen_s(int*,const wchar_t*,int,int,int);
 _ACRTIMP int      __cdecl _wunlink(const wchar_t*);
 
 #ifdef __cplusplus

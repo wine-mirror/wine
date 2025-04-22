@@ -94,6 +94,7 @@ extern "C" {
 #endif
 
 _ACRTIMP int      __cdecl _access(const char*,int);
+_ACRTIMP errno_t  __cdecl _access_s(const char*,int);
 _ACRTIMP int      __cdecl _chmod(const char*,int);
 _ACRTIMP int      __cdecl _chsize(int,__msvcrt_long);
 _ACRTIMP int      __cdecl _chsize_s(int,__int64);
