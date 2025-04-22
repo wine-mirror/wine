@@ -999,6 +999,8 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
   return E_NOTIMPL;
 }
 
+HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
+
 static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSource *src)
 {
     HRESULT hr;
@@ -1141,24 +1143,19 @@ end:
     return hr;
 }
 
-static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFCLSID decoder_clsid, BYTE *xbuf, ULONG xread)
+static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFGUID format_guid, BYTE *xbuf, ULONG xread)
 {
     HRESULT hr;
     IWICImagingFactory *factory;
     IWICBitmapDecoder *decoder;
     IWICBitmapFrameDecode *framedecode;
-    HRESULT initresult;
     IWICStream *stream;
 
-    initresult = CoInitialize(NULL);
+    hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
+    if (FAILED(hr))
+        return hr;
 
-    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
-        &IID_IWICImagingFactory, (void**)&factory);
-    if (SUCCEEDED(hr)) /* created factory */
-    {
-        hr = IWICImagingFactory_CreateStream(factory, &stream);
-        IWICImagingFactory_Release(factory);
-    }
+    hr = IWICImagingFactory_CreateStream(factory, &stream);
 
     if (SUCCEEDED(hr)) /* created stream */
     {
@@ -1166,8 +1163,7 @@ static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFCLSID deco
 
         if (SUCCEEDED(hr)) /* initialized stream */
         {
-            hr = CoCreateInstance(decoder_clsid, NULL, CLSCTX_INPROC_SERVER,
-                &IID_IWICBitmapDecoder, (void**)&decoder);
+            hr = IWICImagingFactory_CreateDecoder(factory, format_guid, &GUID_VendorMicrosoftBuiltIn, &decoder);
             if (SUCCEEDED(hr)) /* created decoder */
             {
                 hr = IWICBitmapDecoder_Initialize(decoder, (IStream*)stream, WICDecodeMetadataCacheOnLoad);
@@ -1188,7 +1184,8 @@ static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFCLSID deco
         IWICBitmapFrameDecode_Release(framedecode);
     }
 
-    if (SUCCEEDED(initresult)) CoUninitialize();
+    IWICImagingFactory_Release(factory);
+
     return hr;
 }
 
@@ -1495,16 +1492,16 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
 
   switch (magic) {
   case BITMAP_FORMAT_GIF: /* GIF */
-    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICGifDecoder, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &GUID_ContainerFormatGif, xbuf, xread);
     break;
   case BITMAP_FORMAT_JPEG: /* JPEG */
-    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICJpegDecoder, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &GUID_ContainerFormatJpeg, xbuf, xread);
     break;
   case BITMAP_FORMAT_BMP: /* Bitmap */
-    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICBmpDecoder, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &GUID_ContainerFormatBmp, xbuf, xread);
     break;
   case BITMAP_FORMAT_PNG: /* PNG */
-    hr = OLEPictureImpl_LoadWICDecoder(This, &CLSID_WICPngDecoder, xbuf, xread);
+    hr = OLEPictureImpl_LoadWICDecoder(This, &GUID_ContainerFormatPng, xbuf, xread);
     break;
   case BITMAP_FORMAT_APM: /* APM */
     hr = OLEPictureImpl_LoadAPM(This, xbuf, xread);
