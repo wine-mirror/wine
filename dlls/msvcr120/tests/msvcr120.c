@@ -27,6 +27,8 @@
 #include <limits.h>
 #include <wctype.h>
 #include <share.h>
+#include <time.h>
+#include <complex.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -35,6 +37,10 @@
 #include <process.h>
 
 #include <locale.h>
+
+_ACRTIMP float __cdecl nexttowardf(float, double);
+_ACRTIMP double __cdecl nexttoward(double, double);
+_ACRTIMP double __cdecl nexttowardl(double, double);
 
 #define _MAX__TIME64_T     (((__time64_t)0x00000007 << 32) | 0x93406FFF)
 
@@ -119,48 +125,6 @@ typedef struct {
     critical_section lock;
 } _Condition_variable;
 
-struct MSVCRT_lconv
-{
-    char* decimal_point;
-    char* thousands_sep;
-    char* grouping;
-    char* int_curr_symbol;
-    char* currency_symbol;
-    char* mon_decimal_point;
-    char* mon_thousands_sep;
-    char* mon_grouping;
-    char* positive_sign;
-    char* negative_sign;
-    char int_frac_digits;
-    char frac_digits;
-    char p_cs_precedes;
-    char p_sep_by_space;
-    char n_cs_precedes;
-    char n_sep_by_space;
-    char p_sign_posn;
-    char n_sign_posn;
-    wchar_t* _W_decimal_point;
-    wchar_t* _W_thousands_sep;
-    wchar_t* _W_int_curr_symbol;
-    wchar_t* _W_currency_symbol;
-    wchar_t* _W_mon_decimal_point;
-    wchar_t* _W_mon_thousands_sep;
-    wchar_t* _W_positive_sign;
-    wchar_t* _W_negative_sign;
-};
-
-typedef struct
-{
-    double r;
-    double i;
-} _Dcomplex;
-
-typedef struct
-{
-    float r;
-    float i;
-} _Fcomplex;
-
 typedef void (*vtable_ptr)(void);
 
 typedef struct {
@@ -196,62 +160,7 @@ typedef struct {
     long *cancelling;
 } _Cancellation_beacon;
 
-static char* (CDECL *p_setlocale)(int category, const char* locale);
-static struct MSVCRT_lconv* (CDECL *p_localeconv)(void);
-static size_t (CDECL *p_wcstombs_s)(size_t *ret, char* dest, size_t sz, const wchar_t* src, size_t max);
-static int (CDECL *p__dsign)(double);
-static int (CDECL *p__fdsign)(float);
-static int (__cdecl *p__dpcomp)(double x, double y);
-static wchar_t** (CDECL *p____lc_locale_name_func)(void);
 static unsigned int (CDECL *p__GetConcurrency)(void);
-static void* (CDECL *p__W_Gettnames)(void);
-static void* (CDECL *p__Gettnames)(void);
-static void (CDECL *p_free)(void*);
-static float (CDECL *p_strtof)(const char *, char **);
-static int (CDECL *p__finite)(double);
-static float (CDECL *p_wcstof)(const wchar_t*, wchar_t**);
-static double (CDECL *p_remainder)(double, double);
-static int* (CDECL *p_errno)(void);
-static int (CDECL *p_fegetenv)(fenv_t*);
-static int (CDECL *p_fesetenv)(const fenv_t*);
-static int (CDECL *p_fegetround)(void);
-static int (CDECL *p_fesetround)(int);
-static int (CDECL *p_fegetexceptflag)(fexcept_t*,int);
-static int (CDECL *p_fesetexceptflag)(const fexcept_t*,int);
-static int (CDECL *p_fetestexcept)(int);
-static int (CDECL *p_feclearexcept)(int);
-static int (CDECL *p_feholdexcept)(fenv_t*);
-static int (CDECL *p_feupdateenv)(fenv_t*);
-static int (CDECL *p__clearfp)(void);
-static _locale_t (__cdecl *p_wcreate_locale)(int, const wchar_t *);
-static void (__cdecl *p_free_locale)(_locale_t);
-static unsigned short (__cdecl *p_wctype)(const char*);
-static int (__cdecl *p_vsscanf)(const char*, const char *, va_list valist);
-static _Dcomplex (__cdecl *p__Cbuild)(double, double);
-static _Fcomplex (__cdecl *p__FCbuild)(float, float);
-static double (__cdecl *p_creal)(_Dcomplex);
-static float (__cdecl *p_crealf)(_Fcomplex);
-static double (__cdecl *p_cimag)(_Dcomplex);
-static float (__cdecl *p_cimagf)(_Fcomplex);
-static double (__cdecl *p_nexttoward)(double, double);
-static float (__cdecl *p_nexttowardf)(float, double);
-static double (__cdecl *p_nexttowardl)(double, double);
-static wctrans_t (__cdecl *p_wctrans)(const char*);
-static wint_t (__cdecl *p_towctrans)(wint_t, wctrans_t);
-static int (__cdecl *p_strcmp)(const char *, const char *);
-static int (__cdecl *p_strncmp)(const char *, const char *, size_t);
-static struct tm* (__cdecl *p_gmtime32)(__time32_t*);
-static errno_t    (__cdecl *p_gmtime32_s)(struct tm*, __time32_t*);
-static struct tm* (__cdecl *p_gmtime64)(__time64_t*);
-static errno_t    (__cdecl *p_gmtime64_s)(struct tm*, __time64_t*);
-static FILE * (__cdecl *p__fsopen)(const char *, const char *, int);
-static FILE * (__cdecl *p__wfsopen)(const wchar_t *, const wchar_t *, int);
-static int (__cdecl *p_fclose)(FILE *);
-static int (__cdecl *p__unlink)(const char *);
-
-/* make sure we use the correct errno */
-#undef errno
-#define errno (*p_errno())
 
 static critical_section* (__thiscall *p_critical_section_ctor)(critical_section*);
 static void (__thiscall *p_critical_section_dtor)(critical_section*);
@@ -286,88 +195,15 @@ static _Cancellation_beacon* (__thiscall *p__Cancellation_beacon_ctor)(_Cancella
 static void (__thiscall *p__Cancellation_beacon_dtor)(_Cancellation_beacon*);
 static MSVCRT_bool (__thiscall *p__Cancellation_beacon__Confirm_cancel)(_Cancellation_beacon*);
 
-#ifdef __i386__
-static ULONGLONG (__cdecl *p_i386_FCbuild)(float, float);
-static _Fcomplex __cdecl i386_FCbuild(float r, float i)
-{
-    union {
-        _Fcomplex c;
-        ULONGLONG ull;
-    } ret;
-    ret.ull = p_i386_FCbuild(r, i);
-    return ret.c;
-}
-#endif
-
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(module,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 
 static BOOL init(void)
 {
-    HMODULE module;
+    HMODULE module = GetModuleHandleA("msvcr120.dll");
 
-    module = LoadLibraryA("msvcr120.dll");
-    if (!module)
-    {
-        win_skip("msvcr120.dll not installed\n");
-        return FALSE;
-    }
-
-    p_setlocale = (void*)GetProcAddress(module, "setlocale");
-    p_localeconv = (void*)GetProcAddress(module, "localeconv");
-    p_wcstombs_s = (void*)GetProcAddress(module, "wcstombs_s");
-    p__dsign = (void*)GetProcAddress(module, "_dsign");
-    p__fdsign = (void*)GetProcAddress(module, "_fdsign");
-    p__dpcomp = (void*)GetProcAddress(module, "_dpcomp");
-    p____lc_locale_name_func = (void*)GetProcAddress(module, "___lc_locale_name_func");
-    p__GetConcurrency = (void*)GetProcAddress(module,"?_GetConcurrency@details@Concurrency@@YAIXZ");
-    p__W_Gettnames = (void*)GetProcAddress(module, "_W_Gettnames");
-    p__Gettnames = (void*)GetProcAddress(module, "_Gettnames");
-    p_free = (void*)GetProcAddress(module, "free");
-    p_strtof = (void*)GetProcAddress(module, "strtof");
-    p__finite = (void*)GetProcAddress(module, "_finite");
-    p_wcstof = (void*)GetProcAddress(module, "wcstof");
-    p_remainder = (void*)GetProcAddress(module, "remainder");
-    p_errno = (void*)GetProcAddress(module, "_errno");
-    p_wcreate_locale = (void*)GetProcAddress(module, "_wcreate_locale");
-    p_free_locale = (void*)GetProcAddress(module, "_free_locale");
-    p_gmtime64 = (void*)GetProcAddress(module, "_gmtime64");
-    p_gmtime64_s = (void*)GetProcAddress(module, "_gmtime64_s");
-    p_gmtime32 = (void*)GetProcAddress(module, "_gmtime32");
-    p_gmtime32_s = (void*)GetProcAddress(module, "_gmtime32_s");
-    SET(p_wctype, "wctype");
-    SET(p_fegetenv, "fegetenv");
-    SET(p_fesetenv, "fesetenv");
-    SET(p_fegetround, "fegetround");
-    SET(p_fesetround, "fesetround");
-    SET(p_fegetexceptflag, "fegetexceptflag");
-    SET(p_fesetexceptflag, "fesetexceptflag");
-    SET(p_fetestexcept, "fetestexcept");
-    SET(p_feclearexcept, "feclearexcept");
-    SET(p_feholdexcept, "feholdexcept");
-    SET(p_feupdateenv, "feupdateenv");
-
-    SET(p__fsopen, "_fsopen");
-    SET(p__wfsopen, "_wfsopen");
-    SET(p_fclose, "fclose");
-    SET(p__unlink, "_unlink");
-
-    SET(p__clearfp, "_clearfp");
-    SET(p_vsscanf, "vsscanf");
-    SET(p__Cbuild, "_Cbuild");
-    SET(p_creal, "creal");
-    SET(p_cimag, "cimag");
-    SET(p__FCbuild, "_FCbuild");
-    SET(p_crealf, "crealf");
-    SET(p_cimagf, "cimagf");
-    SET(p_nexttoward, "nexttoward");
-    SET(p_nexttowardf, "nexttowardf");
-    SET(p_nexttowardl, "nexttowardl");
-    SET(p_wctrans, "wctrans");
-    SET(p_towctrans, "towctrans");
+    SET(p__GetConcurrency, "?_GetConcurrency@details@Concurrency@@YAIXZ");
     SET(p__Context__CurrentContext, "?_CurrentContext@_Context@details@Concurrency@@SA?AV123@XZ");
-    SET(p_strcmp, "strcmp");
-    SET(p_strncmp, "strncmp");
     SET(p_Context_IsCurrentTaskCollectionCanceling, "?IsCurrentTaskCollectionCanceling@Context@Concurrency@@SA_NXZ");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p__StructuredTaskCollection_ctor,
@@ -524,29 +360,23 @@ static BOOL init(void)
                 "?CurrentContext@Context@Concurrency@@SAPAV12@XZ");
     }
 
-#ifdef __i386__
-    SET(p_i386_FCbuild,
-                "_FCbuild");
-    p__FCbuild = i386_FCbuild;
-#endif
-
     init_thiscall_thunk();
     return TRUE;
 }
 
 static void test_lconv_helper(const char *locstr)
 {
-    struct MSVCRT_lconv *lconv;
+    struct lconv *lconv;
     char mbs[256];
     size_t i;
 
-    if(!p_setlocale(LC_ALL, locstr))
+    if(!setlocale(LC_ALL, locstr))
     {
         win_skip("locale %s not available\n", locstr);
         return;
     }
 
-    lconv = p_localeconv();
+    lconv = localeconv();
 
     /* If multi-byte version available, asserts that wide char version also available.
      * If wide char version can be converted to a multi-byte string , asserts that the
@@ -554,37 +384,37 @@ static void test_lconv_helper(const char *locstr)
      */
     if(strlen(lconv->decimal_point) > 0)
         ok(wcslen(lconv->_W_decimal_point) > 0, "%s: decimal_point\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_decimal_point, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_decimal_point, 256) == 0)
         ok(strcmp(mbs, lconv->decimal_point) == 0, "%s: decimal_point\n", locstr);
 
     if(strlen(lconv->thousands_sep) > 0)
         ok(wcslen(lconv->_W_thousands_sep) > 0, "%s: thousands_sep\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_thousands_sep, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_thousands_sep, 256) == 0)
         ok(strcmp(mbs, lconv->thousands_sep) == 0, "%s: thousands_sep\n", locstr);
 
     if(strlen(lconv->int_curr_symbol) > 0)
         ok(wcslen(lconv->_W_int_curr_symbol) > 0, "%s: int_curr_symbol\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_int_curr_symbol, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_int_curr_symbol, 256) == 0)
         ok(strcmp(mbs, lconv->int_curr_symbol) == 0, "%s: int_curr_symbol\n", locstr);
 
     if(strlen(lconv->currency_symbol) > 0)
         ok(wcslen(lconv->_W_currency_symbol) > 0, "%s: currency_symbol\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_currency_symbol, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_currency_symbol, 256) == 0)
         ok(strcmp(mbs, lconv->currency_symbol) == 0, "%s: currency_symbol\n", locstr);
 
     if(strlen(lconv->mon_decimal_point) > 0)
         ok(wcslen(lconv->_W_mon_decimal_point) > 0, "%s: decimal_point\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_mon_decimal_point, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_mon_decimal_point, 256) == 0)
         ok(strcmp(mbs, lconv->mon_decimal_point) == 0, "%s: decimal_point\n", locstr);
 
     if(strlen(lconv->positive_sign) > 0)
         ok(wcslen(lconv->_W_positive_sign) > 0, "%s: positive_sign\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_positive_sign, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_positive_sign, 256) == 0)
         ok(strcmp(mbs, lconv->positive_sign) == 0, "%s: positive_sign\n", locstr);
 
     if(strlen(lconv->negative_sign) > 0)
         ok(wcslen(lconv->_W_negative_sign) > 0, "%s: negative_sign\n", locstr);
-    if(p_wcstombs_s(&i, mbs, 256, lconv->_W_negative_sign, 256) == 0)
+    if(wcstombs_s(&i, mbs, 256, lconv->_W_negative_sign, 256) == 0)
         ok(strcmp(mbs, lconv->negative_sign) == 0, "%s: negative_sign\n", locstr);
 }
 
@@ -607,18 +437,18 @@ static void test__dsign(void)
 {
     int ret;
 
-    ret = p__dsign(1);
+    ret = _dsign(1);
     ok(ret == 0, "p_dsign(1) = %x\n", ret);
-    ret = p__dsign(0);
+    ret = _dsign(0);
     ok(ret == 0, "p_dsign(0) = %x\n", ret);
-    ret = p__dsign(-1);
+    ret = _dsign(-1);
     ok(ret == 0x8000, "p_dsign(-1) = %x\n", ret);
 
-    ret = p__fdsign(1);
+    ret = _fdsign(1);
     ok(ret == 0, "p_fdsign(1) = %x\n", ret);
-    ret = p__fdsign(0);
+    ret = _fdsign(0);
     ok(ret == 0, "p_fdsign(0) = %x\n", ret);
-    ret = p__fdsign(-1);
+    ret = _fdsign(-1);
     ok(ret == 0x8000, "p_fdsign(-1) = %x\n", ret);
 }
 
@@ -637,7 +467,7 @@ static void test__dpcomp(void)
     int i, ret;
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
-        ret = p__dpcomp(tests[i].x, tests[i].y);
+        ret = _dpcomp(tests[i].x, tests[i].y);
         ok(ret == tests[i].ret, "%d) dpcomp(%f, %f) = %x\n", i, tests[i].x, tests[i].y, ret);
     }
 }
@@ -665,10 +495,10 @@ static void test____lc_locale_name_func(void)
     wchar_t **lc_names;
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
-        if(!p_setlocale(LC_ALL, tests[i].locale))
+        if(!setlocale(LC_ALL, tests[i].locale))
             continue;
 
-        lc_names = p____lc_locale_name_func();
+        lc_names = ___lc_locale_name_func();
         ok(lc_names[0] == NULL, "%d - lc_names[0] = %s\n", i, wine_dbgstr_w(lc_names[0]));
         ok(!lstrcmpW(lc_names[1], tests[i].name) || broken(!lstrcmpW(lc_names[1], tests[i].broken_name)),
            "%d - lc_names[1] = %s\n", i, wine_dbgstr_w(lc_names[1]));
@@ -679,16 +509,16 @@ static void test____lc_locale_name_func(void)
         }
     }
 
-    p_setlocale(LC_ALL, "zh-Hans");
-    lc_names = p____lc_locale_name_func();
+    setlocale(LC_ALL, "zh-Hans");
+    lc_names = ___lc_locale_name_func();
     ok(!lstrcmpW(lc_names[1], L"zh-Hans"), "lc_names[1] expected zh-Hans got %s\n", wine_dbgstr_w(lc_names[1]));
 
-    p_setlocale(LC_ALL, "zh-Hant");
-    lc_names = p____lc_locale_name_func();
+    setlocale(LC_ALL, "zh-Hant");
+    lc_names = ___lc_locale_name_func();
     ok(!lstrcmpW(lc_names[1], L"zh-Hant"), "lc_names[1] expected zh-Hant got %s\n", wine_dbgstr_w(lc_names[1]));
 
-    p_setlocale(LC_ALL, "C");
-    lc_names = p____lc_locale_name_func();
+    setlocale(LC_ALL, "C");
+    lc_names = ___lc_locale_name_func();
     ok(!lc_names[1], "___lc_locale_name_func()[1] = %s\n", wine_dbgstr_w(lc_names[1]));
 }
 
@@ -725,7 +555,7 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
     int i, size;
     WCHAR buf[64];
 
-    if(!p_setlocale(LC_ALL, "english"))
+    if(!setlocale(LC_ALL, "english"))
         return;
 
     ret = p_gettnames();
@@ -748,9 +578,9 @@ static void test_gettnames(void* (CDECL *p_gettnames)(void))
             ret->str[42] + strlen(ret->str[42]) + 2 == (char*)ret->wstr[0],
             "ret->str[42] = %p len = %Id, ret->wstr[0] = %p\n",
             ret->str[42], strlen(ret->str[42]), ret->wstr[0]);
-    p_free(ret);
+    free(ret);
 
-    p_setlocale(LC_ALL, "C");
+    setlocale(LC_ALL, "C");
 }
 
 static void test__strtof(void)
@@ -764,59 +594,59 @@ static void test__strtof(void)
     char *end;
     float f;
 
-    f = p_strtof(float1, &end);
+    f = strtof(float1, &end);
     ok(f == 12.0, "f = %lf\n", f);
     ok(end == float1+4, "incorrect end (%d)\n", (int)(end-float1));
 
-    f = p_strtof(float2, &end);
+    f = strtof(float2, &end);
     ok(f == FLT_MAX, "f = %lf\n", f);
     ok(end == float2+15, "incorrect end (%d)\n", (int)(end-float2));
 
-    f = p_strtof(float3, &end);
+    f = strtof(float3, &end);
     ok(f == -FLT_MAX, "f = %lf\n", f);
     ok(end == float3+16, "incorrect end (%d)\n", (int)(end-float3));
 
-    f = p_strtof(float4, &end);
-    ok(!p__finite(f), "f = %lf\n", f);
+    f = strtof(float4, &end);
+    ok(!_finite(f), "f = %lf\n", f);
     ok(end == float4+23, "incorrect end (%d)\n", (int)(end-float4));
 
-    f = p_strtof("inf", NULL);
+    f = strtof("inf", NULL);
     ok(f == 0, "f = %lf\n", f);
 
-    f = p_strtof("INF", NULL);
+    f = strtof("INF", NULL);
     ok(f == 0, "f = %lf\n", f);
 
-    f = p_strtof("1.#inf", NULL);
+    f = strtof("1.#inf", NULL);
     ok(f == 1, "f = %lf\n", f);
 
-    f = p_strtof("INFINITY", NULL);
+    f = strtof("INFINITY", NULL);
     ok(f == 0, "f = %lf\n", f);
 
-    f = p_strtof("0x12", NULL);
+    f = strtof("0x12", NULL);
     ok(f == 0, "f = %lf\n", f);
 
-    f = p_wcstof(L"12.0", NULL);
+    f = wcstof(L"12.0", NULL);
     ok(f == 12.0, "f = %lf\n", f);
 
-    f = p_wcstof(L"\x0662\x0663", NULL); /* 23 in Arabic numerals */
+    f = wcstof(L"\x0662\x0663", NULL); /* 23 in Arabic numerals */
     is_arabic = (PRIMARYLANGID(GetSystemDefaultLangID()) == LANG_ARABIC);
     todo_wine_if(is_arabic) ok(f == (is_arabic ? 23.0 : 0.0), "f = %lf\n", f);
 
-    f = p_wcstof(L"\x0662\x34\x0663", NULL); /* Arabic + Roman numerals mix */
+    f = wcstof(L"\x0662\x34\x0663", NULL); /* Arabic + Roman numerals mix */
     todo_wine_if(is_arabic) ok(f == (is_arabic ? 243.0 : 0.0), "f = %lf\n", f);
 
-    if(!p_setlocale(LC_ALL, "Arabic")) {
+    if(!setlocale(LC_ALL, "Arabic")) {
         win_skip("Arabic locale not available\n");
         return;
     }
 
-    f = p_wcstof(L"12.0", NULL);
+    f = wcstof(L"12.0", NULL);
     ok(f == 12.0, "f = %lf\n", f);
 
-    f = p_wcstof(L"\x0662\x0663", NULL); /* 23 in Arabic numerals */
+    f = wcstof(L"\x0662\x0663", NULL); /* 23 in Arabic numerals */
     todo_wine_if(is_arabic) ok(f == (is_arabic ? 23.0 : 0.0), "f = %lf\n", f);
 
-    p_setlocale(LC_ALL, "C");
+    setlocale(LC_ALL, "C");
 }
 
 static void test_remainder(void)
@@ -847,7 +677,7 @@ static void test_remainder(void)
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         errno = -1;
-        r = p_remainder(tests[i].x, tests[i].y);
+        r = remainder(tests[i].x, tests[i].y);
         e = errno;
 
         ok(tests[i].e == e, "expected errno %i, but got %i\n", tests[i].e, e);
@@ -998,167 +828,167 @@ static void test_feenv(void)
     fexcept_t except;
     int i, ret, flags;
 
-    p__clearfp();
+    _clearfp();
 
-    ret = p_fegetenv(&env);
+    ret = fegetenv(&env);
     ok(!ret, "fegetenv returned %x\n", ret);
-    p_fesetround(FE_UPWARD);
+    fesetround(FE_UPWARD);
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
-    ret = p_fegetenv(&env2);
+    ret = fegetenv(&env2);
     ok(!ret, "fegetenv returned %x\n", ret);
     ok(env2._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID | FE_UPWARD),
             "env2._Fe_ctl = %lx\n", env2._Fe_ctl);
-    ret = p_fesetenv(&env);
+    ret = fesetenv(&env);
     ok(!ret, "fesetenv returned %x\n", ret);
-    ret = p_fegetround();
+    ret = fegetround();
     ok(ret == FE_TONEAREST, "Got unexpected round mode %#x.\n", ret);
 
     if(0) { /* crash on windows */
-        p_fesetexceptflag(NULL, FE_ALL_EXCEPT);
-        p_fegetexceptflag(NULL, 0);
+        fesetexceptflag(NULL, FE_ALL_EXCEPT);
+        fegetexceptflag(NULL, 0);
     }
     except = FE_ALL_EXCEPT;
-    ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
+    ret = fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
 
-    ret = p_feclearexcept(~FE_ALL_EXCEPT);
+    ret = feclearexcept(~FE_ALL_EXCEPT);
     ok(!ret, "feclearexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
 
     /* no crash, but no-op */
-    ret = p_fesetexceptflag(NULL, 0);
+    ret = fesetexceptflag(NULL, 0);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
 
     /* zero clears all */
     except = 0;
-    ret = p_fesetexceptflag(&except, FE_ALL_EXCEPT);
+    ret = fesetexceptflag(&except, FE_ALL_EXCEPT);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(!except, "expected 0, got %lx\n", except);
 
-    ret = p_fetestexcept(FE_ALL_EXCEPT);
+    ret = fetestexcept(FE_ALL_EXCEPT);
     ok(!ret, "fetestexcept returned %x\n", ret);
 
     flags = 0;
     /* adding bits with flags */
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         except = FE_ALL_EXCEPT;
-        ret = p_fesetexceptflag(&except, tests[i]);
+        ret = fesetexceptflag(&except, tests[i]);
         ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
 
-        ret = p_fetestexcept(tests[i]);
+        ret = fetestexcept(tests[i]);
         ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
 
         flags |= tests[i];
-        ret = p_fetestexcept(FE_ALL_EXCEPT);
+        ret = fetestexcept(FE_ALL_EXCEPT);
         ok(ret == flags, "Test %d: expected %x, got %x\n", i, flags, ret);
 
         except = ~0;
-        ret = p_fegetexceptflag(&except, ~0);
+        ret = fegetexceptflag(&except, ~0);
         ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
         ok(except == flags, "Test %d: expected %x, got %lx\n", i, flags, except);
 
         except = ~0;
-        ret = p_fegetexceptflag(&except, tests[i]);
+        ret = fegetexceptflag(&except, tests[i]);
         ok(!ret, "Test %d: fegetexceptflag returned %x.\n", i, ret);
         ok(except == tests[i], "Test %d: expected %x, got %lx\n", i, tests[i], except);
     }
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
-        ret = p_feclearexcept(tests[i]);
+        ret = feclearexcept(tests[i]);
         ok(!ret, "Test %d: feclearexceptflag returned %x\n", i, ret);
 
         flags &= ~tests[i];
-        except = p_fetestexcept(tests[i]);
+        except = fetestexcept(tests[i]);
         ok(!except, "Test %d: expected %x, got %lx\n", i, flags, except);
     }
 
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(!except, "expected 0, got %lx\n", except);
 
     /* setting bits with except */
     for(i=0; i<ARRAY_SIZE(tests); i++) {
         except = tests[i];
-        ret = p_fesetexceptflag(&except, FE_ALL_EXCEPT);
+        ret = fesetexceptflag(&except, FE_ALL_EXCEPT);
         ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
 
-        ret = p_fetestexcept(tests[i]);
+        ret = fetestexcept(tests[i]);
         ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
 
-        ret = p_fetestexcept(FE_ALL_EXCEPT);
+        ret = fetestexcept(FE_ALL_EXCEPT);
         ok(ret == tests[i], "Test %d: expected %x, got %x\n", i, tests[i], ret);
     }
 
     for(i=0; i<ARRAY_SIZE(tests2); i++) {
-        p__clearfp();
+        _clearfp();
 
         except = tests2[i].except;
-        ret = p_fesetexceptflag(&except, tests2[i].flag);
+        ret = fesetexceptflag(&except, tests2[i].flag);
         ok(!ret, "Test %d: fesetexceptflag returned %x\n", i, ret);
 
-        ret = p_fetestexcept(tests2[i].get);
+        ret = fetestexcept(tests2[i].get);
         ok(ret == tests2[i].expect, "Test %d: expected %lx, got %x\n", i, tests2[i].expect, ret);
     }
 
-    ret = p_feclearexcept(FE_ALL_EXCEPT);
+    ret = feclearexcept(FE_ALL_EXCEPT);
     ok(!ret, "feclearexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(!except, "expected 0, got %lx\n", except);
 
-    p__clearfp();
+    _clearfp();
     except = FE_DIVBYZERO;
-    ret = p_fesetexceptflag(&except, FE_DIVBYZERO);
+    ret = fesetexceptflag(&except, FE_DIVBYZERO);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    ret = p_fegetenv(&env);
+    ret = fegetenv(&env);
     ok(!ret, "fegetenv returned %x\n", ret);
-    p__clearfp();
+    _clearfp();
     except = FE_INVALID;
-    ret = p_fesetexceptflag(&except, FE_INVALID);
+    ret = fesetexceptflag(&except, FE_INVALID);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    ret = p_feupdateenv(&env);
+    ret = feupdateenv(&env);
     ok(!ret, "feupdateenv returned %x\n", ret);
     ret = _statusfp();
     ok(ret == (_EM_ZERODIVIDE | _EM_INVALID), "_statusfp returned %x\n", ret);
-    p__clearfp();
+    _clearfp();
 
     /* feholdexcept */
     memset(&env, 0xfe, sizeof(env));
-    ret = p_feholdexcept(&env);
+    ret = feholdexcept(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
     except = FE_ALL_EXCEPT;
-    ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
+    ret = fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
-    except = p_fetestexcept(FE_ALL_EXCEPT);
+    except = fetestexcept(FE_ALL_EXCEPT);
     ok(except == (FE_INEXACT|FE_UNDERFLOW), "expected %x, got %lx\n", FE_INEXACT|FE_UNDERFLOW, except);
-    ret = p_fesetenv(&env);
+    ret = fesetenv(&env);
     ok(!ret, "fesetenv returned %x\n", ret);
     memset(&env, 0xfe, sizeof(env));
-    ret = p_fegetenv(&env);
+    ret = fegetenv(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(!env._Fe_stat, "env._Fe_stat = %lx\n", env._Fe_stat);
 
     except = FE_ALL_EXCEPT;
-    ret = p_fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
+    ret = fesetexceptflag(&except, FE_INEXACT|FE_UNDERFLOW);
     ok(!ret, "fesetexceptflag returned %x\n", ret);
     memset(&env, 0xfe, sizeof(env));
-    ret = p_feholdexcept(&env);
+    ret = feholdexcept(&env);
     ok(!ret, "feholdexcept returned %x\n", ret);
     ok(env._Fe_ctl == (_EM_INEXACT|_EM_UNDERFLOW|_EM_OVERFLOW|_EM_ZERODIVIDE|_EM_INVALID),
             "env._Fe_ctl = %lx\n", env._Fe_ctl);
     ok(env._Fe_stat == (FE_INEXACT|FE_UNDERFLOW), "env._Fe_stat = %lx\n", env._Fe_stat);
-    p__clearfp();
+    _clearfp();
 }
 
 static void test__wcreate_locale(void)
@@ -1168,35 +998,35 @@ static void test__wcreate_locale(void)
 
     /* simple success */
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, L"C");
+    lcl = _wcreate_locale(LC_ALL, L"C");
     e = errno;
     ok(!!lcl, "expected success, but got NULL\n");
     ok(errno == -1, "expected errno -1, but got %i\n", e);
-    p_free_locale(lcl);
+    _free_locale(lcl);
 
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, L"");
+    lcl = _wcreate_locale(LC_ALL, L"");
     e = errno;
     ok(!!lcl, "expected success, but got NULL\n");
     ok(errno == -1, "expected errno -1, but got %i\n", e);
-    p_free_locale(lcl);
+    _free_locale(lcl);
 
     /* bogus category */
     errno = -1;
-    lcl = p_wcreate_locale(-1, L"C");
+    lcl = _wcreate_locale(-1, L"C");
     e = errno;
     ok(!lcl, "expected failure, but got %p\n", lcl);
     ok(errno == -1, "expected errno -1, but got %i\n", e);
 
     /* bogus names */
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, L"bogus");
+    lcl = _wcreate_locale(LC_ALL, L"bogus");
     e = errno;
     ok(!lcl, "expected failure, but got %p\n", lcl);
     ok(errno == -1, "expected errno -1, but got %i\n", e);
 
     errno = -1;
-    lcl = p_wcreate_locale(LC_ALL, NULL);
+    lcl = _wcreate_locale(LC_ALL, NULL);
     e = errno;
     ok(!lcl, "expected failure, but got %p\n", lcl);
     ok(errno == -1, "expected errno -1, but got %i\n", e);
@@ -1297,7 +1127,7 @@ static void test_wctype(void)
     int i, ret;
 
     for(i=0; i<ARRAY_SIZE(properties); i++) {
-        ret = p_wctype(properties[i].name);
+        ret = wctype(properties[i].name);
         ok(properties[i].mask == ret, "%d - Expected %x, got %x\n", i, properties[i].mask, ret);
     }
 }
@@ -1307,7 +1137,7 @@ static int WINAPIV _vsscanf_wrapper(const char *buffer, const char *format, ...)
     int ret;
     va_list valist;
     va_start(valist, format);
-    ret = p_vsscanf(buffer, format, valist);
+    ret = vsscanf(buffer, format, valist);
     va_end(valist);
     return ret;
 }
@@ -1330,24 +1160,24 @@ static void test__Cbuild(void)
     _Dcomplex c;
     double d;
 
-    c = p__Cbuild(1.0, 2.0);
-    ok(c.r == 1.0, "c.r = %lf\n", c.r);
-    ok(c.i == 2.0, "c.i = %lf\n", c.i);
-    d = p_creal(c);
+    c = _Cbuild(1.0, 2.0);
+    ok(c._Val[0] == 1.0, "c._Val[0] = %lf\n", c._Val[0]);
+    ok(c._Val[1] == 2.0, "c._Val[1] = %lf\n", c._Val[1]);
+    d = creal(c);
     ok(d == 1.0, "creal returned %lf\n", d);
-    d = p_cimag(c);
+    d = cimag(c);
     ok(d == 2.0, "cimag returned %lf\n", d);
 
-    c = p__Cbuild(3.0, NAN);
-    ok(c.r == 3.0, "c.r = %lf\n", c.r);
-    ok(_isnan(c.i), "c.i = %lf\n", c.i);
-    d = p_creal(c);
+    c = _Cbuild(3.0, NAN);
+    ok(c._Val[0] == 3.0, "c._Val[0] = %lf\n", c._Val[0]);
+    ok(_isnan(c._Val[1]), "c._Val[1] = %lf\n", c._Val[1]);
+    d = creal(c);
     ok(d == 3.0, "creal returned %lf\n", d);
 
-    c = p__Cbuild(NAN, 4.0);
-    ok(_isnan(c.r), "c.r = %lf\n", c.r);
-    ok(c.i == 4.0, "c.i = %lf\n", c.i);
-    d = p_cimag(c);
+    c = _Cbuild(NAN, 4.0);
+    ok(_isnan(c._Val[0]), "c._Val[0] = %lf\n", c._Val[0]);
+    ok(c._Val[1] == 4.0, "c._Val[1] = %lf\n", c._Val[1]);
+    d = cimag(c);
     ok(d == 4.0, "cimag returned %lf\n", d);
 }
 
@@ -1356,28 +1186,28 @@ static void test__FCbuild(void)
     _Fcomplex c;
     float d;
 
-    c = p__FCbuild(1.0f, 2.0f);
-    ok(c.r == 1.0f, "c.r = %lf\n", c.r);
-    ok(c.i == 2.0f, "c.i = %lf\n", c.i);
-    d = p_crealf(c);
+    c = _FCbuild(1.0f, 2.0f);
+    ok(c._Val[0] == 1.0f, "c._Val[0] = %lf\n", c._Val[0]);
+    ok(c._Val[1] == 2.0f, "c._Val[1] = %lf\n", c._Val[1]);
+    d = crealf(c);
     ok(d == 1.0f, "crealf returned %lf\n", d);
-    d = p_cimagf(c);
+    d = cimagf(c);
     ok(d == 2.0f, "cimagf returned %lf\n", d);
 
-    c = p__FCbuild(3.0f, NAN);
-    ok(c.r == 3.0f, "c.r = %lf\n", c.r);
-    ok(_isnan(c.i), "c.i = %lf\n", c.i);
-    d = p_crealf(c);
+    c = _FCbuild(3.0f, NAN);
+    ok(c._Val[0] == 3.0f, "c._Val[0] = %lf\n", c._Val[0]);
+    ok(_isnan(c._Val[1]), "c._Val[1] = %lf\n", c._Val[1]);
+    d = crealf(c);
     ok(d == 3.0f, "crealf returned %lf\n", d);
-    d = p_cimagf(c);
+    d = cimagf(c);
     ok(_isnan(d), "cimagf returned %lf\n", d);
 
-    c = p__FCbuild(NAN, 4.0f);
-    ok(_isnan(c.r), "c.r = %lf\n", c.r);
-    ok(c.i == 4.0f, "c.i = %lf\n", c.i);
-    d = p_crealf(c);
+    c = _FCbuild(NAN, 4.0f);
+    ok(_isnan(c._Val[0]), "c._Val[0] = %lf\n", c._Val[0]);
+    ok(c._Val[1] == 4.0f, "c._Val[1] = %lf\n", c._Val[1]);
+    d = crealf(c);
     ok(_isnan(d), "crealf returned %lf\n", d);
-    d = p_cimagf(c);
+    d = cimagf(c);
     ok(d == 4.0f, "cimagf returned %lf\n", d);
 }
 
@@ -1418,11 +1248,11 @@ static void test_nexttoward(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
-        f = p_nexttowardf(tests[i].source, tests[i].dir);
+        f = nexttowardf(tests[i].source, tests[i].dir);
         ok(f == tests[i].f, "Test %d: expected %0.8ef, got %0.8ef.\n", i, tests[i].f, f);
 
         errno = -1;
-        d = p_nexttoward(tests[i].source, tests[i].dir);
+        d = nexttoward(tests[i].source, tests[i].dir);
         e = errno;
         ok(d == tests[i].d, "Test %d: expected %0.16e, got %0.16e.\n", i, tests[i].d, d);
         if (!isnormal(d) && !isinf(tests[i].source))
@@ -1430,24 +1260,24 @@ static void test_nexttoward(void)
         else
             ok(e == -1, "Test %d: expected no error, got %d.\n", i, e);
 
-        d = p_nexttowardl(tests[i].source, tests[i].dir);
+        d = nexttowardl(tests[i].source, tests[i].dir);
         ok(d == tests[i].d, "Test %d: expected %0.16e, got %0.16e.\n", i, tests[i].d, d);
     }
 
     errno = -1;
-    d = p_nexttoward(NAN, 0);
+    d = nexttoward(NAN, 0);
     e = errno;
     ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
     ok(e == -1, "Expected no error, got %d.\n", e);
 
     errno = -1;
-    d = p_nexttoward(NAN, NAN);
+    d = nexttoward(NAN, NAN);
     e = errno;
     ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
     ok(e == -1, "Expected no error, got %d.\n", e);
 
     errno = -1;
-    d = p_nexttoward(0, NAN);
+    d = nexttoward(0, NAN);
     e = errno;
     ok(_isnan(d), "Expected NAN, got %0.16e.\n", d);
     ok(e == -1, "Expected no error, got %d.\n", e);
@@ -1457,30 +1287,30 @@ static void test_towctrans(void)
 {
     wchar_t ret;
 
-    ret = p_wctrans("tolower");
+    ret = wctrans("tolower");
     ok(ret == 2, "wctrans returned %d, expected 2\n", ret);
-    ret = p_wctrans("toupper");
+    ret = wctrans("toupper");
     ok(ret == 1, "wctrans returned %d, expected 1\n", ret);
-    ret = p_wctrans("toLower");
+    ret = wctrans("toLower");
     ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
-    ret = p_wctrans("");
+    ret = wctrans("");
     ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
     if(0) { /* crashes on windows */
-        ret = p_wctrans(NULL);
+        ret = wctrans(NULL);
         ok(ret == 0, "wctrans returned %d, expected 0\n", ret);
     }
 
-    ret = p_towctrans('t', 2);
+    ret = towctrans('t', 2);
     ok(ret == 't', "towctrans('t', 2) returned %c, expected t\n", ret);
-    ret = p_towctrans('T', 2);
+    ret = towctrans('T', 2);
     ok(ret == 't', "towctrans('T', 2) returned %c, expected t\n", ret);
-    ret = p_towctrans('T', 0);
+    ret = towctrans('T', 0);
     ok(ret == 't', "towctrans('T', 0) returned %c, expected t\n", ret);
-    ret = p_towctrans('T', 3);
+    ret = towctrans('T', 3);
     ok(ret == 't', "towctrans('T', 3) returned %c, expected t\n", ret);
-    ret = p_towctrans('t', 1);
+    ret = towctrans('t', 1);
     ok(ret == 'T', "towctrans('t', 1) returned %c, expected T\n", ret);
-    ret = p_towctrans('T', 1);
+    ret = towctrans('T', 1);
     ok(ret == 'T', "towctrans('T', 1) returned %c, expected T\n", ret);
 }
 
@@ -1809,32 +1639,32 @@ static void test_StructuredTaskCollection(void)
 
 static void test_strcmp(void)
 {
-    int ret = p_strcmp( "abc", "abcd" );
+    int ret = strcmp( "abc", "abcd" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "", "abc" );
+    ret = strcmp( "", "abc" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "abc", "ab\xa0" );
+    ret = strcmp( "abc", "ab\xa0" );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xb0", "ab\xa0" );
+    ret = strcmp( "ab\xb0", "ab\xa0" );
     ok( ret == 1, "wrong ret %d\n", ret );
-    ret = p_strcmp( "ab\xc2", "ab\xc2" );
+    ret = strcmp( "ab\xc2", "ab\xc2" );
     ok( ret == 0, "wrong ret %d\n", ret );
 
-    ret = p_strncmp( "abc", "abcd", 3 );
+    ret = strncmp( "abc", "abcd", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "", "abc", 3 );
+    ret = strncmp( "", "abc", 3 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "ab\xa0", 4 );
+    ret = strncmp( "abc", "ab\xa0", 4 );
     ok( ret == -1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 3 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 3 );
     ok( ret == 1, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xb0", "ab\xa0", 2 );
+    ret = strncmp( "ab\xb0", "ab\xa0", 2 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "ab\xc2", "ab\xc2", 3 );
+    ret = strncmp( "ab\xc2", "ab\xc2", 3 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abd", 0 );
+    ret = strncmp( "abc", "abd", 0 );
     ok( ret == 0, "wrong ret %d\n", ret );
-    ret = p_strncmp( "abc", "abc", 12 );
+    ret = strncmp( "abc", "abc", 12 );
     ok( ret == 0, "wrong ret %d\n", ret );
 }
 
@@ -1846,60 +1676,60 @@ static void test_gmtime64(void)
 
     t = -1;
     memset(&tm, 0xcc, sizeof(tm));
-    ptm = p_gmtime64(&t);
+    ptm = _gmtime64(&t);
     ok(!!ptm, "got NULL.\n");
-    ret = p_gmtime64_s(&tm, &t);
+    ret = _gmtime64_s(&tm, &t);
     ok(!ret, "got %d.\n", ret);
     ok(tm.tm_year == 69 && tm.tm_hour == 23 && tm.tm_min == 59 && tm.tm_sec == 59, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     t = -43200;
     memset(&tm, 0xcc, sizeof(tm));
-    ptm = p_gmtime64(&t);
+    ptm = _gmtime64(&t);
     ok(!!ptm, "got NULL.\n");
-    ret = p_gmtime64_s(&tm, &t);
+    ret = _gmtime64_s(&tm, &t);
     ok(!ret, "got %d.\n", ret);
     ok(tm.tm_year == 69 && tm.tm_hour == 12 && tm.tm_min == 0 && tm.tm_sec == 0, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
-    ptm = p_gmtime32((__time32_t *)&t);
+    ptm = _gmtime32((__time32_t *)&t);
     ok(!!ptm, "got NULL.\n");
     memset(&tm, 0xcc, sizeof(tm));
-    ret = p_gmtime32_s(&tm, (__time32_t *)&t);
+    ret = _gmtime32_s(&tm, (__time32_t *)&t);
     ok(!ret, "got %d.\n", ret);
     todo_wine_if(tm.tm_year == 69 && tm.tm_hour == 12)
     ok(tm.tm_year == 70 && tm.tm_hour == -12 && tm.tm_min == 0 && tm.tm_sec == 0, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     t = -43201;
-    ptm = p_gmtime64(&t);
+    ptm = _gmtime64(&t);
     ok(!ptm, "got non-NULL.\n");
     memset(&tm, 0xcc, sizeof(tm));
-    ret = p_gmtime64_s(&tm, &t);
+    ret = _gmtime64_s(&tm, &t);
     ok(ret == EINVAL, "got %d.\n", ret);
     ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
-    ptm = p_gmtime32((__time32_t *)&t);
+    ptm = _gmtime32((__time32_t *)&t);
     ok(!ptm, "got NULL.\n");
     memset(&tm, 0xcc, sizeof(tm));
-    ret = p_gmtime32_s(&tm, (__time32_t *)&t);
+    ret = _gmtime32_s(&tm, (__time32_t *)&t);
     ok(ret == EINVAL, "got %d.\n", ret);
     ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     t = _MAX__TIME64_T + 46800;
     memset(&tm, 0xcc, sizeof(tm));
-    ptm = p_gmtime64(&t);
+    ptm = _gmtime64(&t);
     ok(!!ptm, "got NULL.\n");
-    ret = p_gmtime64_s(&tm, &t);
+    ret = _gmtime64_s(&tm, &t);
     ok(!ret, "got %d.\n", ret);
     ok(tm.tm_year == 1101 && tm.tm_hour == 20 && tm.tm_min == 59 && tm.tm_sec == 59, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
 
     t = _MAX__TIME64_T + 46801;
-    ptm = p_gmtime64(&t);
+    ptm = _gmtime64(&t);
     ok(!ptm, "got non-NULL.\n");
     memset(&tm, 0xcc, sizeof(tm));
-    ret = p_gmtime64_s(&tm, &t);
+    ret = _gmtime64_s(&tm, &t);
     ok(ret == EINVAL, "got %d.\n", ret);
     ok(tm.tm_year == -1 && tm.tm_hour == -1 && tm.tm_min == -1 && tm.tm_sec == -1, "got %d, %d, %d, %d.\n",
             tm.tm_year, tm.tm_hour, tm.tm_min, tm.tm_sec);
@@ -1923,7 +1753,7 @@ static void test__fsopen(void)
     };
 
     for(i=0; i<ARRAY_SIZE(tests); i++) {
-        if(!p_setlocale(LC_ALL, tests[i].loc)) {
+        if(!setlocale(LC_ALL, tests[i].loc)) {
             win_skip("skipping locale %s\n", tests[i].loc);
             continue;
         }
@@ -1942,18 +1772,18 @@ static void test__fsopen(void)
         }
         CloseHandle(h);
 
-        f = p__fsopen(tests[i].path, "r", SH_DENYNO);
+        f = _fsopen(tests[i].path, "r", SH_DENYNO);
         ok(!!f, "failed to create %s with locale %s\n", wine_dbgstr_a(tests[i].path), tests[i].loc);
-        p_fclose(f);
+        fclose(f);
 
-        f = p__wfsopen(wpath, L"r", SH_DENYNO);
+        f = _wfsopen(wpath, L"r", SH_DENYNO);
         ok(!!f, "failed to open %s with locale %s\n", wine_dbgstr_w(wpath), tests[i].loc);
-        p_fclose(f);
+        fclose(f);
 
-        ok(!p__unlink(tests[i].path), "failed to unlink %s with locale %s\n",
+        ok(!_unlink(tests[i].path), "failed to unlink %s with locale %s\n",
             tests[i].path, tests[i].loc);
     }
-    p_setlocale(LC_ALL, "C");
+    setlocale(LC_ALL, "C");
 }
 
 START_TEST(msvcr120)
@@ -1964,8 +1794,8 @@ START_TEST(msvcr120)
     test__dpcomp();
     test____lc_locale_name_func();
     test__GetConcurrency();
-    test_gettnames(p__W_Gettnames);
-    test_gettnames(p__Gettnames);
+    test_gettnames(_W_Gettnames);
+    test_gettnames(_Gettnames);
     test__strtof();
     test_remainder();
     test_critical_section();
