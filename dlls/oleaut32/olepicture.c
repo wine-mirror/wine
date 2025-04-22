@@ -104,13 +104,14 @@ typedef struct
 {
     const WICPixelFormatGUID *guid;
     UINT bpp;
+    BOOL indexed;
 } WICFORMAT;
 
 const WICFORMAT wicformats[] =
 {
-    {&GUID_WICPixelFormat1bppIndexed, 1},
-    {&GUID_WICPixelFormat4bppIndexed, 4},
-    {&GUID_WICPixelFormat8bppIndexed, 8},
+    {&GUID_WICPixelFormat1bppIndexed, 1, TRUE},
+    {&GUID_WICPixelFormat4bppIndexed, 4, TRUE},
+    {&GUID_WICPixelFormat8bppIndexed, 8, TRUE},
     {&GUID_WICPixelFormat24bppBGR,    24},
     {&GUID_WICPixelFormat32bppBGR,    32},
 };
@@ -1001,19 +1002,21 @@ static HRESULT WINAPI OLEPictureImpl_IsDirty(
 
 HRESULT WINAPI WICCreateImagingFactory_Proxy(UINT, IWICImagingFactory**);
 
-static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSource *src)
+static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICImagingFactory *factory, IWICBitmapSource *src)
 {
     HRESULT hr;
     BITMAPINFOHEADER bih;
+    BITMAPINFO *info, *dyn_info = NULL;
     UINT width, height;
     UINT stride, buffersize;
     BYTE *bits, *mask = NULL;
     WICRect rc;
     WICPixelFormatGUID guid;
     IWICBitmapSource *real_source;
+    IWICPalette *palette;
     UINT x, y, i;
     COLORREF white = RGB(255, 255, 255), black = RGB(0, 0, 0);
-    BOOL has_alpha=FALSE;
+    BOOL has_alpha=FALSE, indexed=FALSE;
 
     hr = IWICBitmapSource_GetPixelFormat(src, &guid);
     if (FAILED(hr)) return hr;
@@ -1023,6 +1026,7 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
         if (IsEqualGUID(&guid, wicformats[i].guid))
         {
             bih.biBitCount = wicformats[i].bpp;
+            indexed = wicformats[i].indexed;
             break;
         }
     }
@@ -1060,7 +1064,41 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
         goto end;
     }
 
-    This->desc.bmp.hbitmap = CreateDIBSection(0, (BITMAPINFO*)&bih, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
+    if (indexed)
+    {
+        UINT palette_size = 1 << bih.biBitCount, source_colors;
+
+        info = dyn_info = malloc(FIELD_OFFSET(BITMAPINFO, bmiColors[palette_size]));
+        if (!info)
+        {
+            hr = E_OUTOFMEMORY;
+            goto end;
+        }
+
+        info->bmiHeader = bih;
+
+        hr = IWICImagingFactory_CreatePalette(factory, &palette);
+
+        if (SUCCEEDED(hr))
+        {
+            hr = IWICBitmapSource_CopyPalette(real_source, palette);
+
+            if (SUCCEEDED(hr))
+                hr = IWICPalette_GetColors(palette, palette_size, (WICColor*)&info->bmiColors[0], &source_colors);
+
+            IWICPalette_Release(palette);
+        }
+
+        if (FAILED(hr))
+            goto end;
+
+        if (source_colors < palette_size)
+            memset(&info->bmiColors[source_colors], 0, sizeof(RGBQUAD) * (palette_size - source_colors));
+    }
+    else
+        info = (BITMAPINFO*)&bih;
+
+    This->desc.bmp.hbitmap = CreateDIBSection(0, info, DIB_RGB_COLORS, (void **)&bits, NULL, 0);
     if (This->desc.bmp.hbitmap == 0)
     {
         hr = E_FAIL;
@@ -1139,6 +1177,7 @@ static HRESULT OLEPictureImpl_LoadWICSource(OLEPictureImpl *This, IWICBitmapSour
 
 end:
     free(mask);
+    free(dyn_info);
     IWICBitmapSource_Release(real_source);
     return hr;
 }
@@ -1180,7 +1219,7 @@ static HRESULT OLEPictureImpl_LoadWICDecoder(OLEPictureImpl *This, REFGUID forma
 
     if (SUCCEEDED(hr)) /* got framedecode */
     {
-        hr = OLEPictureImpl_LoadWICSource(This, (IWICBitmapSource*)framedecode);
+        hr = OLEPictureImpl_LoadWICSource(This, factory, (IWICBitmapSource*)framedecode);
         IWICBitmapFrameDecode_Release(framedecode);
     }
 
