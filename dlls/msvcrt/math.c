@@ -2988,7 +2988,7 @@ double CDECL cimag(_Dcomplex z)
     return z._Val[1];
 }
 
-#ifndef __i386__
+#if !defined(__i386__) || defined(__MINGW32__) || defined(_MSC_VER)
 _Fcomplex CDECL _FCbuild(float r, float i)
 {
     _Fcomplex ret;
@@ -2997,6 +2997,7 @@ _Fcomplex CDECL _FCbuild(float r, float i)
     return ret;
 }
 #else
+#undef _FCbuild
 ULONGLONG CDECL _FCbuild(float r, float i)
 {
     union

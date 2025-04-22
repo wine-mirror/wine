@@ -24,4 +24,24 @@ typedef struct _C_float_complex
 typedef _C_double_complex _Dcomplex;
 typedef _C_float_complex _Fcomplex;
 
+#if defined(__i386__) && !defined(__MINGW32__) && !defined(_MSC_VER)
+/* Note: this should return a _Fcomplex, but calling convention for returning
+ * structures is different between Windows and gcc on i386. */
+_ACRTIMP unsigned __int64 __cdecl _FCbuild(float, float);
+
+static inline _Fcomplex __cdecl __wine__FCbuild(float r, float i)
+{
+    union {
+        _Fcomplex c;
+        unsigned __int64 ull;
+    } u;
+    u.ull = _FCbuild(r, i);
+    return u.c;
+}
+#define _FCbuild(r, i) __wine__FCbuild(r, i)
+
+#else
+_ACRTIMP _Fcomplex __cdecl _FCbuild(float, float);
+#endif
+
 #endif /* _COMPLEX_H_DEFINED */
