@@ -1327,6 +1327,7 @@ static pthreadlocinfo create_locinfo(int category,
 
             p = strchr(locale, ';');
             if(locale[0]=='C' && (locale[1]==';' || locale[1]=='\0')) {
+                free(locale_sname[i]);
                 locale_sname[i] = NULL;
                 cp[i] = CP_ACP;
             } else {
@@ -1340,6 +1341,7 @@ static pthreadlocinfo create_locinfo(int category,
                     locale_found = locale_to_sname(locale, &cp[i], &sname_match, wbuf);
                 }
 
+                free(locale_sname[i]);
                 if(!locale_found || !(locale_sname[i] = wcsdup(wbuf)))
                     goto fail;
                 if(sname_match) {
@@ -1384,12 +1386,14 @@ static pthreadlocinfo create_locinfo(int category,
         if(i==LC_CTYPE && cp[i]==CP_UTF8) {
 #if _MSVCR_VER >= 110
             if(old_locinfo) {
+                free(locale_sname[i]);
                 locale_sname[i] = wcsdup(old_locinfo->lc_name[i]);
                 if (old_locinfo->lc_name[i] && !locale_sname[i])
                     goto fail;
             }
 #else
             int sname_size;
+            free(locale_sname[i]);
             if(old_locinfo && old_locinfo->lc_handle[i]) {
                 sname_size = LCIDToLocaleName(old_locinfo->lc_handle[i], NULL, 0, 0);
                 locale_sname[i] = malloc(sname_size * sizeof(WCHAR));
@@ -1407,6 +1411,7 @@ static pthreadlocinfo create_locinfo(int category,
         }
 #endif
         if(category!=LC_ALL && category!=i) {
+            free(locale_sname[i]);
             if(old_locinfo) {
 #if _MSVCR_VER >= 110
                 locale_sname[i] = wcsdup(old_locinfo->lc_name[i]);
@@ -1961,7 +1966,7 @@ static pthreadlocinfo create_locinfo(int category,
         InterlockedIncrement(&locinfo->lc_time_curr->refcount);
     }
 
-    for (i = 0; i < LC_MAX; i++)
+    for (i = 0; i <= LC_MAX; i++)
         free(locale_sname[i]);
 
     return locinfo;
@@ -1969,7 +1974,7 @@ static pthreadlocinfo create_locinfo(int category,
 fail:
     free_locinfo(locinfo);
 
-    for (i = 0; i < LC_MAX; i++)
+    for (i = 0; i <= LC_MAX; i++)
         free(locale_sname[i]);
 
     return NULL;
