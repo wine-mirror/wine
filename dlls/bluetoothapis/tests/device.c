@@ -31,12 +31,17 @@
 #include <wine/debug.h>
 #include <wine/test.h>
 
+#include "resource.h"
+
 extern void test_for_all_radios( const char *file, int line, void (*test)( HANDLE radio, void *data ), void *data );
 
 static const char *debugstr_bluetooth_address( const BYTE *addr )
 {
     return wine_dbg_sprintf( "%02x:%02x:%02x:%02x:%02x:%02x", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
 }
+
+static DWORD(WINAPI *pBluetoothAuthenticateDeviceEx)( HWND, HANDLE, BLUETOOTH_DEVICE_INFO *,
+                                                      BLUETOOTH_OOB_DATA_INFO *, AUTHENTICATION_REQUIREMENTS );
 
 static const char *debugstr_BLUETOOTH_DEVICE_INFO( const BLUETOOTH_DEVICE_INFO *info )
 {
@@ -309,9 +314,6 @@ static void test_BluetoothRegisterForAuthenticationEx( void )
     err = BluetoothRegisterForAuthenticationEx( &info, &hreg, NULL, NULL );
     ok( err == ERROR_INVALID_PARAMETER, "%lu != %d\n", err, ERROR_INVALID_PARAMETER );
 
-    auth_events[0] = CreateEventA( NULL, FALSE, FALSE, NULL );
-    auth_events[1] = CreateEventA( NULL, FALSE, FALSE, NULL );
-
     BluetoothEnableIncomingConnections( NULL, TRUE );
     BluetoothEnableDiscovery( NULL, TRUE );
 
@@ -415,8 +417,207 @@ static void test_BluetoothRemoveDevice( void )
     test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothRemoveDevice, NULL );
 }
 
+static BLUETOOTH_DEVICE_INFO *devices;
+
+static SIZE_T find_devices( int line, HANDLE radio )
+{
+    BLUETOOTH_DEVICE_SEARCH_PARAMS params = {0};
+    HBLUETOOTH_DEVICE_FIND find;
+    SIZE_T devices_len;
+    DWORD ret;
+
+    devices_len = 1;
+    params.dwSize = sizeof( params );
+    params.cTimeoutMultiplier = 5;
+    params.fIssueInquiry = TRUE;
+    params.fReturnAuthenticated = FALSE;
+    params.fReturnRemembered = FALSE;
+    params.fReturnUnknown = TRUE;
+    params.fReturnConnected = TRUE;
+    params.hRadio = radio;
+
+    devices = calloc( 1, sizeof( *devices ) );
+    devices->dwSize = sizeof( *devices );
+    find = BluetoothFindFirstDevice( &params, devices );
+    ret = GetLastError();
+    ok_( __FILE__, line )( !!find || ret == ERROR_NO_MORE_ITEMS, "BluetoothFindFirstDevice failed: %lu\n", ret );
+
+    if (!find)
+    {
+        devices_len = 0;
+        free( devices );
+        return devices_len;
+    }
+
+    for (;;)
+    {
+        BOOL success;
+        BLUETOOTH_DEVICE_INFO info = {.dwSize = sizeof( info )};
+
+        success = BluetoothFindNextDevice( find, &info );
+        ret = GetLastError();
+        ok_( __FILE__, line )( success || ret == ERROR_NO_MORE_ITEMS, "BluetoothFindNextDevice failed: %lu\n", ret );
+        if (!success)
+            break;
+        if (info.fAuthenticated)
+            continue;
+        devices = realloc( devices, (devices_len + 1) * sizeof( *devices ) );
+        devices[devices_len++] = info;
+    }
+
+    BluetoothFindDeviceClose( find );
+    return devices_len;
+}
+
+static BLUETOOTH_ADDRESS selected_device;
+static SIZE_T devices_len;
+static HANDLE device_selected_event;
+
+static CALLBACK INT_PTR dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+    {
+        HWND devices_list = GetDlgItem( dialog, IDC_CBO_DEVICES );
+        WCHAR device_desc[300];
+        SIZE_T i;
+
+        for (i = 0; i < devices_len; i++)
+        {
+            BYTE *addr = devices[i].Address.rgBytes;
+            swprintf( device_desc, ARRAY_SIZE( device_desc ), L"%s (%02x:%02x:%02x:%02x:%02x:%02x)", devices[i].szName,
+                      addr[0], addr[1], addr[2], addr[3], addr[4], addr[5] );
+            SendMessageW( devices_list, CB_ADDSTRING, 0, (LPARAM)device_desc );
+        }
+        return TRUE;
+    }
+    case WM_COMMAND:
+        switch (LOWORD( wparam ))
+        {
+        case IDC_CBO_DEVICES:
+        {
+            if (HIWORD( wparam ) == CBN_SELCHANGE)
+            {
+                int idx = SendMessageA( (HWND)lparam, CB_GETCURSEL, 0, 0 );
+                if (idx != CB_ERR)
+                    selected_device = devices[idx].Address;
+                SetEvent(device_selected_event);
+                EndDialog( dialog, 0 );
+                return TRUE;
+            }
+            break;
+        }
+        case IDCANCEL:
+            SetEvent(device_selected_event);
+            EndDialog( dialog, 0 );
+            return TRUE;
+        default:
+            break;
+        }
+    default:
+        break;
+    }
+
+    return FALSE;
+}
+
+static BOOL get_remote_device_interactive( int line, HANDLE radio, BLUETOOTH_ADDRESS *device_addr )
+{
+    devices_len = find_devices( line, radio );
+    if (!devices_len)
+        return FALSE;
+
+    selected_device.ullLong = 0;
+
+    DialogBoxA( NULL, MAKEINTRESOURCEA( IDD_DEVICESDLG ), NULL, dialog_proc );
+    WaitForSingleObject( device_selected_event, INFINITE );
+    *device_addr = selected_device;
+    free( devices );
+    return !!selected_device.ullLong;
+}
+
+static void test_radio_BluetoothAuthenticateDeviceEx( HANDLE radio, void *data )
+{
+    HBLUETOOTH_AUTHENTICATION_REGISTRATION auth_reg;
+    BLUETOOTH_DEVICE_INFO device_info = {0};
+    DWORD ret;
+
+    device_info.dwSize = sizeof( device_info );
+    if (!get_remote_device_interactive( __LINE__, radio, &device_info.Address ))
+    {
+        skip( "Could not select device.\n" );
+        return;
+    }
+
+    ret = pBluetoothAuthenticateDeviceEx( NULL, radio, &device_info, NULL, 0xdeadbeef );
+    ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+    /* Test authenticating without a registered auth callback, which triggers a wizard UI. */
+    ret = pBluetoothAuthenticateDeviceEx( NULL, radio, &device_info, NULL, MITMProtectionRequiredGeneralBonding );
+    ok( !ret, "BluetoothAuthenticateDeviceEx failed: %lu\n", ret );
+
+    memset( &device_info, 0, sizeof( device_info ) );
+    device_info.dwSize = sizeof( device_info );
+    if (!get_remote_device_interactive( __LINE__, radio, &device_info.Address ))
+    {
+        skip( "Could not select device.\n" );
+        return;
+    }
+    ret = BluetoothRegisterForAuthenticationEx( &device_info, &auth_reg, auth_ex_callback, NULL );
+    ok( !ret, "BluetoothRegisterForAuthenticationEx failed: %lu\n", ret );
+    if (ret)
+    {
+        skip( "BluetoothRegisterForAuthenticationEx failed.\n" );
+        return;
+    }
+    /* Test authentication with a registered callback. */
+    ret = pBluetoothAuthenticateDeviceEx( NULL, radio, &device_info, NULL, MITMProtectionRequiredGeneralBonding );
+    ok( !ret, "BluetoothAuthenticateDeviceEx failed: %lu\n", ret );
+    if (ret)
+    {
+         BluetoothUnregisterAuthentication( auth_reg );
+         skip( "BluetoothAuthenticateDeviceEx failed.\n" );
+         return;
+    }
+    ret = WaitForSingleObject( auth_events[0], 60000 );
+    ok ( !ret, "WaitForSginleObject value: %lu\n", ret );
+
+    BluetoothUnregisterAuthentication( auth_reg );
+}
+
+static void test_BluetoothAuthenticateDeviceEx( void )
+{
+    DWORD ret;
+
+    if (!pBluetoothAuthenticateDeviceEx)
+    {
+        skip( "BluetoothAuthenticateDeviceEx is not available.\n" );
+        return;
+    }
+
+    ret = pBluetoothAuthenticateDeviceEx( NULL, NULL, NULL, NULL, 0xdeadbeef );
+    ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+    ret = pBluetoothAuthenticateDeviceEx( NULL, NULL, NULL, NULL, MITMProtectionRequiredGeneralBonding );
+    ok( ret == ERROR_INVALID_PARAMETER, "%lu != %d\n", ret, ERROR_INVALID_PARAMETER );
+
+    if (!winetest_interactive)
+        return;
+
+    device_selected_event = CreateEventA( NULL, FALSE, FALSE, NULL );
+    test_for_all_radios( __FILE__, __LINE__, test_radio_BluetoothAuthenticateDeviceEx, NULL );
+
+    CloseHandle( device_selected_event );
+}
+
 START_TEST( device )
 {
+    auth_events[0] = CreateEventA( NULL, FALSE, FALSE, NULL );
+    auth_events[1] = CreateEventA( NULL, FALSE, FALSE, NULL );
+
+    pBluetoothAuthenticateDeviceEx =
+        (void *)GetProcAddress( LoadLibraryA( "bthprops.cpl" ), "BluetoothAuthenticateDeviceEx" );
+
     test_BluetoothFindFirstDevice();
     test_BluetoothFindDeviceClose();
     test_BluetoothFindNextDevice();
@@ -424,5 +625,9 @@ START_TEST( device )
     if (winetest_interactive)
         test_BluetoothRegisterForAuthenticationEx();
     test_BluetoothSendAuthenticationResponseEx();
+    test_BluetoothAuthenticateDeviceEx();
     test_BluetoothRemoveDevice();
+
+    CloseHandle( auth_events[0] );
+    CloseHandle( auth_events[1] );
 }
