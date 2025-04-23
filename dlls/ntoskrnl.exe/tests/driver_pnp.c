@@ -741,9 +741,9 @@ static void test_enumerator_name(void)
     memset(buffer, 0, sizeof(buffer));
     status = IoGetDeviceProperty(bus_pdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
     ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
-    todo_wine ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
+    ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
-        todo_wine ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
+        ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
 }
 
 static void test_child_enumerator_name(DEVICE_OBJECT *device)
@@ -757,9 +757,9 @@ static void test_child_enumerator_name(DEVICE_OBJECT *device)
     status = IoGetDeviceProperty(device, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
     todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
     ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
-    todo_wine ok(req_size == sizeof(wine), "unexpected size %lu\n", req_size);
+    ok(req_size == sizeof(wine), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
-        todo_wine ok(!wcscmp(wine, buffer), "unexpected property value '%ls'\n", buffer);
+        ok(!wcscmp(wine, buffer), "unexpected property value '%ls'\n", buffer);
 }
 
 static void test_device_registry_key(void)

@@ -573,14 +573,13 @@ NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROP
         {
             WCHAR *id, *ptr;
 
-            status = get_device_id( device, BusQueryInstanceID, &id );
+            status = get_device_id( device, BusQueryDeviceID, &id );
             if (status != STATUS_SUCCESS)
             {
                 ERR("Failed to get instance ID, status %#lx.\n", status);
                 break;
             }
 
-            wcsupr( id );
             ptr = wcschr( id, '\\' );
             if (ptr) *ptr = 0;
 
