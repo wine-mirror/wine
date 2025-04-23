@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2024-11-13 23:36+0200\n"
+"PO-Revision-Date: 2025-04-23 21:39+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -1347,41 +1347,32 @@ msgid "Default"
 msgstr "Numatytoji"
 
 #: dlls/compstui/compstui.rc:35
-#, fuzzy
-#| msgid "&Copy Background"
 msgid "&Copy count"
-msgstr "Kopijuoti &foną"
+msgstr "&Kopijų skaičius"
 
 #: dlls/compstui/compstui.rc:36
-#, fuzzy
-#| msgid "Print to File"
 msgid "Print on Both Sides"
-msgstr "Spausdinti į failą"
+msgstr "Dvipusis spausdinimas"
 
 #: dlls/compstui/compstui.rc:32
-#, fuzzy
-#| msgid "C&olor:"
 msgid "C&olor"
-msgstr "S&palva:"
+msgstr "Spalv&otas"
 
 #: dlls/compstui/compstui.rc:34
 msgid "Bla&ck && White"
-msgstr ""
+msgstr "&Nespalvinis"
 
 #: dlls/compstui/compstui.rc:37
-#, fuzzy
-#| msgctxt "hotkey"
-#| msgid "None"
 msgid "&None"
-msgstr "Joks"
+msgstr "&Joks"
 
 #: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
 msgid "Flip on Shor&t Edge"
-msgstr ""
+msgstr "Paversti ant &trumpojo krašto"
 
 #: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
 msgid "Flip on Long E&dge"
-msgstr ""
+msgstr "Paversti ant &ilgojo krašto"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3468,10 +3459,8 @@ msgid "Show &Tabs"
 msgstr "Rodyti &korteles"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:39
-#, fuzzy
-#| msgid "Select Source"
 msgid "Select Topic"
-msgstr "Parinkite šaltinį"
+msgstr "Parinkite temą"
 
 #: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
@@ -6582,7 +6571,7 @@ msgstr "Nerastas galutinis taškas.\n"
 
 #: dlls/kernelbase/winerror.mc:2978
 msgid "Invalid timeout value.\n"
-msgstr "Neteisinga laiko baigimosi reikšmė.\n"
+msgstr "Neteisinga laukimo laiko reikšmė.\n"
 
 #: dlls/kernelbase/winerror.mc:2983
 msgid "Object UUID not found.\n"
@@ -12506,53 +12495,49 @@ msgid "Install"
 msgstr "Įdiegti"
 
 #: dlls/urlmon/urlmon.rc:58
-#, fuzzy
-#| msgid "Local Port"
 msgid "Local intranet"
-msgstr "Vietinis prievadas"
+msgstr "Vietinis intranetas"
 
 #: dlls/urlmon/urlmon.rc:60
-#, fuzzy
-#| msgid "Trusted Publishers"
 msgid "Trusted sites"
-msgstr "Patikimi publikuotojai"
+msgstr "Patikimi puslapiai"
 
 #: dlls/urlmon/urlmon.rc:62
-#, fuzzy
-#| msgid "Ethernet"
 msgid "Internet"
-msgstr "Eterneto"
+msgstr "Internetas"
 
 #: dlls/urlmon/urlmon.rc:64
 msgid "Restricted sites"
-msgstr ""
+msgstr "Apriboti puslapiai"
 
 #: dlls/urlmon/urlmon.rc:57
-#, fuzzy
-#| msgid "My Computer"
 msgid "Your computer"
 msgstr "Kompiuteris"
 
 #: dlls/urlmon/urlmon.rc:59
 msgid ""
 "This zone contains all Web sites that are on your organization's intranet."
-msgstr ""
+msgstr "Šioje zonoje yra visos svetainės organizacijos intranete."
 
 #: dlls/urlmon/urlmon.rc:61
 msgid ""
 "This zone contains Web sites that you trust not to damage your computer or "
 "data."
 msgstr ""
+"Šioje zonoje yra svetainės, kuriomis pasitikite, kad nepažeis kompiuterio ar "
+"duomenų."
 
 #: dlls/urlmon/urlmon.rc:63
 msgid "This zone contains all Web sites you haven't placed in other zones"
-msgstr ""
+msgstr "Šioje zonoje yra visos svetainės, kurių nėra kitose zonose"
 
 #: dlls/urlmon/urlmon.rc:65
 msgid ""
 "This zone contains Web sites that could potentially damage your computer or "
 "data."
 msgstr ""
+"Šioje zonoje yra svetainės, kurios potencialiai gali pažeisti kompiuterį ar "
+"duomenis."
 
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
@@ -18363,37 +18348,35 @@ msgstr "Užduotis"
 
 #: programs/timeout/timeout.rc:28
 msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
-msgstr ""
+msgstr "Naudojimas: timeout /T <laukimo_laikas> [/NOBREAK]\n"
 
 #: programs/timeout/timeout.rc:29
-#, fuzzy
-#| msgid "FINDSTR: Bad command line\n"
 msgid "TIMEOUT: Bad command line\n"
-msgstr "FINDSTR: Neteisinga komandos eilutė\n"
+msgstr "TIMEOUT: Neteisinga komandos eilutė\n"
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr ""
+msgstr "laukiama %d sek. "
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
-msgstr ""
+msgstr "spauskite Vald+C..."
 
 #: programs/timeout/timeout.rc:32
-#, fuzzy
-#| msgid "Press any key to continue... "
 msgid "press a key to continue..."
-msgstr "Norėdami tęsti spauskite bet kurį klavišą... "
+msgstr "norėdami tęsti spauskite klavišą..."
 
 #: programs/timeout/timeout.rc:33
 msgid "ERROR: not possible to redirect input\n"
-msgstr ""
+msgstr "KLAIDA: nepavyko nukreipti įvesties\n"
 
 #: programs/timeout/timeout.rc:34
 msgid ""
 "ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
 "99999.\n"
 msgstr ""
+"KLAIDA: Laukimo laiko reikšmė nepatenka į rėžius arba neteisingas skaičius. "
+"Teisingi rėžiai nuo -1 iki 99999.\n"
 
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
