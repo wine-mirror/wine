@@ -60,7 +60,11 @@ static UNICODE_STRING control_symlink, bus_symlink;
 static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
-static unsigned int remove_device_count, surprise_removal_count, query_remove_device_count, cancel_remove_device_count;
+static unsigned int remove_device_count;
+static unsigned int surprise_removal_count;
+static unsigned int query_remove_device_count;
+static unsigned int cancel_remove_device_count;
+static unsigned int query_id_count;
 
 struct irp_queue
 {
@@ -270,6 +274,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
     switch (stack->MinorFunction)
     {
         case IRP_MN_QUERY_ID:
+            query_id_count++;
             ret = query_id(device, irp, stack->Parameters.QueryId.IdType);
             break;
 
@@ -285,7 +290,9 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             ok(!stack->Parameters.StartDevice.AllocatedResources, "expected no resources\n");
             ok(!stack->Parameters.StartDevice.AllocatedResourcesTranslated, "expected no translated resources\n");
 
+            query_id_count = 0;
             status = IoRegisterDeviceInterface(device_obj, &child_class, NULL, &device->child_symlink);
+            todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
             ok(!status, "Failed to register interface, status %#lx.\n", status);
             ok(device->child_symlink.Length == sizeof(expect_symlink) - sizeof(WCHAR),
                     "Got length %u.\n", device->child_symlink.Length);
@@ -690,6 +697,36 @@ static void test_device_properties( DEVICE_OBJECT *device )
     }
 }
 
+static void test_child_device_properties(DEVICE_OBJECT *device)
+{
+    NTSTATUS status;
+    const DEVPROPKEY *key = &DEVPKEY_Winetest_1;
+    DEVPROPTYPE type = DEVPROP_TYPE_BYTE;
+    DEVPROPTYPE stored_type = DEVPROP_TYPE_EMPTY;
+    ULONG size = sizeof(BYTE);
+    ULONG req_size = 0;
+    BYTE value = 0xe2;
+    BYTE stored_value = 0;
+
+    query_id_count = 0;
+    status = IoSetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, type, size, &value);
+    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(status == STATUS_SUCCESS, "failed to set device property, status %#lx\n", status);
+
+    query_id_count = 0;
+    status = IoGetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, size, &stored_value, &req_size, &stored_type);
+    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(status == STATUS_SUCCESS, "failed to get device property, status %#lx\n", status);
+    ok(req_size == size, "expected required size %lu, got %lu\n", req_size, size);
+    ok(stored_type == type, "expected DEVPROPTYPE value %#lx, got %#lx\n", type, stored_type);
+    ok(stored_value == value, "got unexpected device property value: %#x\n", stored_value);
+
+    query_id_count = 0;
+    status = IoSetDevicePropertyData(device, key, LOCALE_NEUTRAL, 0, type, 0, NULL);
+    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(status == STATUS_SUCCESS, "failed to delete device property, status %#lx\n", status);
+}
+
 static void test_enumerator_name(void)
 {
     static const WCHAR root[] = L"ROOT";
@@ -707,6 +744,22 @@ static void test_enumerator_name(void)
     todo_wine ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
     if (status == STATUS_SUCCESS)
         todo_wine ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
+}
+
+static void test_child_enumerator_name(DEVICE_OBJECT *device)
+{
+    static const WCHAR wine[] = L"Wine";
+    WCHAR buffer[10] = {0};
+    ULONG req_size = 0;
+    NTSTATUS status;
+
+    query_id_count = 0;
+    status = IoGetDeviceProperty(device, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
+    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
+    todo_wine ok(req_size == sizeof(wine), "unexpected size %lu\n", req_size);
+    if (status == STATUS_SUCCESS)
+        todo_wine ok(!wcscmp(wine, buffer), "unexpected property value '%ls'\n", buffer);
 }
 
 static void test_device_registry_key(void)
@@ -741,6 +794,45 @@ static void test_device_registry_key(void)
             ok(info->Type == REG_SZ, "expected type REG_SZ, got %lu\n", info->Type);
             ok(info->DataLength == sizeof(foo), "unexpected DataLength %lu\n", info->DataLength);
             ok(!wcscmp((WCHAR *)info->Data, foo), "got unexpected key value\n");
+            ExFreePool(info);
+        }
+
+        status = ZwClose(hkey);
+        ok(status == STATUS_SUCCESS, "ZwClose failed: %#lx\n", status);
+    }
+}
+
+static void test_child_device_registry_key(DEVICE_OBJECT *device)
+{
+    static const WCHAR foobar[] = L"foobar";
+    static const WCHAR bar[] = L"bar";
+
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+    UNICODE_STRING name_str;
+    NTSTATUS status;
+    HANDLE hkey;
+    DWORD size;
+
+    query_id_count = 0;
+    status = IoOpenDeviceRegistryKey(device, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
+    todo_wine ok(query_id_count == 0, "expected no IRP_MN_QUERY_ID\n");
+    ok(status == STATUS_SUCCESS, "IoOpenDeviceRegistryKey failed: %#lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        RtlInitUnicodeString(&name_str, foobar);
+        status = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, NULL, 0, &size);
+        ok(status == STATUS_BUFFER_TOO_SMALL, "got unexpected status %#lx\n", status);
+
+        info = ExAllocatePool(PagedPool, size);
+        ok(!!info, "failed to allocate memory\n");
+        if (info)
+        {
+            memset(info, 0, size);
+            status = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, info, size, &size);
+            ok(status == STATUS_SUCCESS, "ZwQueryValueKey failed: %#lx\n", status);
+            ok(info->Type == REG_SZ, "expected type REG_SZ, got %lu\n", info->Type);
+            ok(info->DataLength == sizeof(bar), "unexpected DataLength %lu\n", info->DataLength);
+            ok(!wcscmp((WCHAR *)info->Data, bar), "got unexpected key value\n");
             ExFreePool(info);
         }
 
@@ -908,6 +1000,12 @@ static NTSTATUS pdo_ioctl(DEVICE_OBJECT *device_obj, IRP *irp, IO_STACK_LOCATION
             surprise_removal_count = 0;
             query_remove_device_count = 0;
             cancel_remove_device_count = 0;
+            return STATUS_SUCCESS;
+
+        case IOCTL_WINETEST_CHILD_MAIN:
+            test_child_device_properties(device_obj);
+            test_child_enumerator_name(device_obj);
+            test_child_device_registry_key(device_obj);
             return STATUS_SUCCESS;
 
         default:
