@@ -34,6 +34,7 @@ typedef enum
 
 HRESULT WINAPI GetRestrictedErrorInfo(IRestrictedErrorInfo **info);
 BOOL    WINAPI RoOriginateError(HRESULT error, HSTRING message);
+BOOL    WINAPI RoOriginateErrorW(HRESULT error, UINT max_len, const WCHAR *message);
 BOOL    WINAPI RoOriginateLanguageException(HRESULT error, HSTRING message, IUnknown *language_exception);
 HRESULT WINAPI RoSetErrorReportingFlags(UINT32 flags);
 HRESULT WINAPI SetRestrictedErrorInfo(IRestrictedErrorInfo *info);

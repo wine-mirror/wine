@@ -302,7 +302,7 @@
 @ stub RoInspectCapturedStackBackTrace
 @ stub RoInspectThreadErrorInfo
 @ stdcall RoOriginateError(long ptr)
-@ stub RoOriginateErrorW
+@ stdcall RoOriginateErrorW(long long ptr)
 @ stdcall RoOriginateLanguageException(long ptr ptr)
 @ stub RoParameterizedTypeExtraGetTypeSignature
 @ stdcall RoRegisterActivationFactories(ptr ptr long ptr)
