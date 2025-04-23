@@ -6249,7 +6249,8 @@ ULONG WINAPI NtGdiMakeFontDir( DWORD embed, BYTE *buffer, UINT size, const WCHAR
     if (path[len / sizeof(WCHAR) - 1]) return 0;
     if (wcslen( path ) != len / sizeof(WCHAR) - 1) return 0;
 
-    if (!(font = alloc_gdi_font( path, NULL, 0 ))) return 0;
+    pthread_mutex_lock( &font_lock );
+    if (!(font = alloc_gdi_font( path, NULL, 0 ))) goto done;
     font->lf.lfHeight = 100;
     if (!font_funcs->load_font( font )) goto done;
     if (!font_funcs->set_outline_text_metrics( font )) goto done;
@@ -6282,10 +6283,12 @@ ULONG WINAPI NtGdiMakeFontDir( DWORD embed, BYTE *buffer, UINT size, const WCHAR
 
     memcpy( buffer, &fontdir, sizeof(fontdir) );
     free_gdi_font( font );
+    pthread_mutex_unlock( &font_lock );
     return fontdir.dfFace + pos;
 
 done:
-    free_gdi_font( font );
+    if (font) free_gdi_font( font );
+    pthread_mutex_unlock( &font_lock );
     return 0;
 }
 
