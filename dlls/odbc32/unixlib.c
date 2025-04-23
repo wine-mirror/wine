@@ -551,8 +551,8 @@ done:
     NtClose( key );
 }
 
-/* unixODBC returns the driver filename in the description, use it to look up the driver name */
-static WCHAR *get_driver_name( const WCHAR *filename )
+/* use the driver name to look up the driver filename */
+static WCHAR *get_driver_filename( const WCHAR *name )
 {
     struct drivers drivers;
     HANDLE key_odbcinst, key_driver;
@@ -569,13 +569,14 @@ static WCHAR *get_driver_name( const WCHAR *filename )
         WCHAR buffer[1024];
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
+        if (wcscmp( name, drivers.names[i] )) continue;
         if ((key_driver = open_key( key_odbcinst, drivers.names[i], wcslen(drivers.names[i]) * sizeof(WCHAR) )))
         {
             if (query_value( key_driver, driverW, sizeof(driverW), info, sizeof(buffer) ) && info->Type == REG_SZ &&
-                !wcsnicmp( (const WCHAR *)info->Data, filename, info->DataLength / sizeof(WCHAR) ) &&
-                (ret = malloc( (wcslen(drivers.names[i]) + 1) * sizeof(WCHAR) )))
+                (ret = malloc( info->DataLength + sizeof(WCHAR) )))
             {
-                wcscpy( ret, drivers.names[i] );
+                memcpy( ret, info->Data, info->DataLength );
+                ret[info->DataLength / sizeof(WCHAR)] = 0;
                 break;
             }
             NtClose( key_driver );
@@ -632,27 +633,27 @@ static void replicate_odbc_to_registry( BOOL is_user, SQLHENV env )
     while (SUCCESS((ret = pSQLDataSourcesW( env, dir, dsn, sizeof(dsn), &len_dsn, desc, sizeof(desc), &len_desc ))))
     {
         HANDLE key_source;
-        WCHAR buffer[1024], *name = get_driver_name( desc );
+        WCHAR buffer[1024], *filename = get_driver_filename( desc );
         KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
 
         dir = SQL_FETCH_NEXT;
-        if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && name)
+        if (!query_value( key_sources, dsn, len_dsn * sizeof(WCHAR), info, sizeof(buffer) ) && desc[0])
         {
-            set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)name,
-                       (wcslen(name) + 1) * sizeof(WCHAR) );
+            set_value( key_sources, dsn, len_dsn * sizeof(WCHAR), REG_SZ, (const BYTE *)desc,
+                       (wcslen(desc) + 1) * sizeof(WCHAR) );
         }
-        free( name );
 
         if ((key_source = create_key( key_odbcini, dsn, len_dsn * sizeof(WCHAR) )))
         {
             static const WCHAR driverW[] = {'D','r','i','v','e','r'};
             if (!query_value( key_source, driverW, sizeof(driverW), info, sizeof(buffer) ))
             {
-                set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)desc,
-                           (len_desc + 1) * sizeof(WCHAR) );
+                set_value( key_source, driverW, sizeof(driverW), REG_SZ, (const BYTE *)filename,
+                           (wcslen(filename) + 1) * sizeof(WCHAR) );
             }
             NtClose( key_source );
         }
+        free( filename );
     }
 
     NtClose( key_sources );
