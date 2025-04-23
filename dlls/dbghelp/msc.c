@@ -2977,11 +2977,13 @@ static BOOL codeview_snarf_sym_hashtable(const struct msc_debug_info* msc_dbg, c
     if (hashsize < sizeof(DBI_HASH_HEADER) ||
         hash_hdr->signature != 0xFFFFFFFF ||
         hash_hdr->version != 0xeffe0000 + 19990810 ||
+        !hash_hdr->hash_records_size ||
         (hash_hdr->hash_records_size % sizeof(DBI_HASH_RECORD)) != 0 ||
         sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE > hashsize ||
         (hashsize - (sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
     {
-        FIXME("Incorrect hash structure\n");
+        if (hash_hdr->hash_records_size)
+            FIXME("Incorrect hash structure\n");
         return FALSE;
     }
 
