@@ -42,7 +42,11 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
+#include "resource.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(bluetoothapis);
+
+static HINSTANCE instance;
 
 struct bluetooth_find_radio_handle
 {
@@ -670,6 +674,14 @@ struct bluetooth_auth_listener
     void *user_data;
 };
 
+struct bluetooth_auth_wizard_listener
+{
+    struct list entry;
+    ULONG refcount;
+
+    BLUETOOTH_ADDRESS addr;
+};
+
 static const char *debugstr_bluetooth_auth_listener( const struct bluetooth_auth_listener *listener )
 {
     if (!listener)
@@ -681,7 +693,13 @@ static const char *debugstr_bluetooth_auth_listener( const struct bluetooth_auth
 }
 
 static SRWLOCK bluetooth_auth_lock = SRWLOCK_INIT;
-static struct list bluetooth_auth_listeners = LIST_INIT( bluetooth_auth_listeners ); /* Guarded by bluetooth_auth_lock */
+/* A list of bluetooth_auth_listener objects added by BluetoothRegisterForAuthenticationEx.
+ * Guarded by bluetooth_auth_lock. */
+static struct list bluetooth_auth_listeners = LIST_INIT( bluetooth_auth_listeners );
+/* A list of fallback "listeners" created by BluetoothAuthenticateDeviceEx, used if no matching listener object
+ * could be found in bluetooth_auth_listeners. We use this to decide which pairing requests can be forwarded to a user
+ * wizard. Guarded by bluetooth_auth_lock. */
+static struct list bluetooth_auth_wizard_listeners = LIST_INIT( bluetooth_auth_wizard_listeners );
 static HCMNOTIFICATION bluetooth_auth_event_notify; /* Guarded by bluetooth_auth_lock */
 
 struct auth_callback_data
@@ -708,11 +726,97 @@ static CALLBACK void tp_auth_callback_proc( TP_CALLBACK_INSTANCE *instance, void
     free( data );
 }
 
+static void bluetooth_auth_wizard_ask_response( struct bluetooth_auth_wizard_listener *listener,
+                                                const struct winebth_authentication_request *request )
+{
+    WCHAR *msg = NULL, title[1024], format[1024], name_or_addr[BLUETOOTH_MAX_NAME_SIZE];
+    BLUETOOTH_FIND_RADIO_PARAMS find_params = {.dwSize = sizeof( find_params )};
+    struct winebth_radio_send_auth_response_params params = {0};
+    HBLUETOOTH_RADIO_FIND radio_find;
+    DWORD_PTR format_args[2];
+    BLUETOOTH_ADDRESS addr;
+    DWORD ret, bytes;
+    UINT resource_id;
+    HANDLE radio;
+
+    switch (request->auth_method)
+    {
+    case BLUETOOTH_AUTHENTICATION_METHOD_NUMERIC_COMPARISON:
+    case BLUETOOTH_AUTHENTICATION_METHOD_PASSKEY_NOTIFICATION:
+        break;
+    default:
+        FIXME( "Unsupported authentication method: %d\n", request->auth_method );
+        goto done;
+    }
+
+    addr.ullLong = request->device_info.address;
+    title[0] = format[0] = name_or_addr[0] = '\0';
+    if (request->device_info.flags & BDIF_NAME)
+    {
+        resource_id = IDS_AUTH_WIZARD_NAMED_PAIR_REQUEST;
+        MultiByteToWideChar( CP_ACP, 0, request->device_info.name, -1, name_or_addr, ARRAY_SIZE( name_or_addr ) );
+    }
+    else
+    {
+        resource_id = IDS_AUTH_WIZARD_UNNAMED_PAIR_REQUEST;
+        swprintf( name_or_addr, ARRAY_SIZE( name_or_addr ), L"%02X:02X:%02X:%02X:%02X:%02X", addr.rgBytes[0],
+                  addr.rgBytes[1], addr.rgBytes[2], addr.rgBytes[3], addr.rgBytes[4], addr.rgBytes[5] );
+    }
+    format_args[0] = (DWORD_PTR)name_or_addr;
+    format_args[1] = request->numeric_value_or_passkey;
+    if (LoadStringW( instance, resource_id, format, ARRAY_SIZE( format )))
+        FormatMessageW( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_STRING | FORMAT_MESSAGE_ARGUMENT_ARRAY,
+                        format, 0, 0, (WCHAR *)&msg, 0, (va_list *)format_args );
+    LoadStringW( instance, IDS_AUTH_WIZARD_PAIR_REQUEST_TITLE, title, ARRAY_SIZE( title ) );
+    ret = MessageBoxW( NULL, msg, title, MB_YESNO );
+    if (msg)
+        LocalFree( msg );
+    if (!ret)
+    {
+        ERR("MessageBoxW failed: %lu\n", ret );
+        goto done;
+    }
+
+    params.address = RtlUlonglongByteSwap( addr.ullLong ) >> 16;
+    params.method = request->auth_method;
+    params.numeric_value_or_passkey = request->numeric_value_or_passkey;
+    params.negative = ret != IDYES;
+
+    radio_find = BluetoothFindFirstRadio( &find_params, &radio );
+    if (!radio_find)
+    {
+        ERR( "BluetoothFindFirstRadio failed: %lu\n", GetLastError() );
+        goto done;
+    }
+
+    do {
+        if (DeviceIoControl( radio, IOCTL_WINEBTH_RADIO_SEND_AUTH_RESPONSE, &params, sizeof( params ),
+                             &params, sizeof( params ), &bytes, NULL ))
+        {
+            ret = ERROR_SUCCESS;
+            goto done;
+        }
+        ret = GetLastError();
+        CloseHandle( radio );
+    } while (BluetoothFindNextRadio( radio_find, &radio ));
+
+    BluetoothFindRadioClose( radio_find );
+    if (ret)
+        ERR( "Failed to send pairing response: %lu\n", ret );
+done:
+    if (!--listener->refcount)
+    {
+        list_remove( &listener->entry );
+        free( listener );
+    }
+}
+
 static CALLBACK DWORD bluetooth_auth_event_callback( HCMNOTIFICATION notify, void *ctx, CM_NOTIFY_ACTION action,
                                                      CM_NOTIFY_EVENT_DATA *event_data, DWORD size )
 {
     struct winebth_authentication_request *request = (struct winebth_authentication_request *)event_data->u.DeviceHandle.Data;
     struct bluetooth_auth_listener *listener;
+    BOOL try_wizard = TRUE;
 
     TRACE( "(%p, %p, %d, %p, %lu)\n", notify, ctx, action, event_data, size );
 
@@ -725,13 +829,14 @@ static CALLBACK DWORD bluetooth_auth_event_callback( HCMNOTIFICATION notify, voi
             break;
         }
 
-        AcquireSRWLockShared( &bluetooth_auth_lock );
+        AcquireSRWLockExclusive( &bluetooth_auth_lock );
         LIST_FOR_EACH_ENTRY( listener, &bluetooth_auth_listeners, struct bluetooth_auth_listener, entry )
         {
             struct auth_callback_data *data;
 
             if (!(listener->all_devices || listener->addr.ullLong == request->device_info.address))
                 continue;
+            try_wizard = FALSE;
             data = calloc( 1, sizeof( *data ) );
             if (!data)
                 continue;
@@ -746,7 +851,22 @@ static CALLBACK DWORD bluetooth_auth_event_callback( HCMNOTIFICATION notify, voi
                 continue;
             }
         }
-        ReleaseSRWLockShared( &bluetooth_auth_lock );
+
+        /* No appropriate registered callback could be found for this request. Lets ask the user what to do instead. */
+        if (try_wizard)
+        {
+            struct bluetooth_auth_wizard_listener *listener, *next;
+            LIST_FOR_EACH_ENTRY_SAFE( listener, next, &bluetooth_auth_wizard_listeners,
+                                      struct bluetooth_auth_wizard_listener, entry )
+            {
+                if (listener->addr.ullLong == request->device_info.address)
+                {
+                    bluetooth_auth_wizard_ask_response( listener, request );
+                    break;
+                }
+            }
+        }
+        ReleaseSRWLockExclusive( &bluetooth_auth_lock );
         break;
     default:
         FIXME( "Unexpected CM_NOTIFY_ACTION: %d\n", action );
@@ -953,6 +1073,8 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
                                             AUTHENTICATION_REQUIREMENTS auth_req )
 {
     OVERLAPPED ovl = {0};
+    struct bluetooth_auth_wizard_listener *listener;
+    BOOL wizard_listener_exists;
     BTH_ADDR device_addr;
     BOOL success;
     DWORD ret, bytes;
@@ -986,6 +1108,40 @@ DWORD WINAPI BluetoothAuthenticateDeviceEx( HWND parent, HANDLE handle_radio, BL
     }
 
     ovl.hEvent = CreateEventW( NULL, TRUE, FALSE, NULL );
+    AcquireSRWLockExclusive( &bluetooth_auth_lock );
+    if (list_empty( &bluetooth_auth_listeners ) && list_empty( &bluetooth_auth_wizard_listeners ))
+    {
+        ret = bluetooth_auth_register();
+        if (ret)
+        {
+            ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+            return ret;
+        }
+    }
+
+    wizard_listener_exists = FALSE;
+    LIST_FOR_EACH_ENTRY( listener, &bluetooth_auth_wizard_listeners, struct bluetooth_auth_wizard_listener, entry )
+    {
+        if (listener->addr.ullLong == device_info->Address.ullLong)
+        {
+            listener->refcount++;
+            wizard_listener_exists = TRUE;
+            break;
+        }
+    }
+    if (!wizard_listener_exists)
+    {
+        listener = calloc( 1, sizeof( *listener ) );
+        if (!listener)
+        {
+            ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+            return ERROR_OUTOFMEMORY;
+        }
+        listener->addr = device_info->Address;
+        list_add_tail( &bluetooth_auth_wizard_listeners, &listener->entry );
+    }
+    ReleaseSRWLockExclusive( &bluetooth_auth_lock );
+
     device_addr = RtlUlonglongByteSwap( device_info->Address.ullLong ) >> 16;
     success = DeviceIoControl( handle_radio, IOCTL_WINEBTH_RADIO_START_AUTH, &device_addr, sizeof( device_addr ),
                                NULL, 0, &bytes, &ovl );
@@ -1031,4 +1187,14 @@ DWORD WINAPI BluetoothRemoveDevice( BLUETOOTH_ADDRESS *addr )
 
     BluetoothFindRadioClose( radio_find );
     return success ? ERROR_SUCCESS : ERROR_NOT_FOUND;
+}
+
+BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
+{
+    TRACE( "(%p, %lu, %p)\n", inst, reason, reserved );
+
+    if (reason == DLL_PROCESS_ATTACH)
+        instance = inst;
+
+    return TRUE;
 }
