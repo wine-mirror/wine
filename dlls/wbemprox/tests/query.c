@@ -1873,6 +1873,39 @@ static void test_Win32_Processor( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_CacheMemory( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_CacheMemory" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    DWORD count;
+    HRESULT hr;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"BlockSize", VT_BSTR, CIM_UINT64 );
+        check_property( obj, L"CacheSpeed", VT_I4, CIM_UINT32 );
+        check_property( obj, L"CacheType", VT_I4, CIM_UINT16 );
+        check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
+        check_property( obj, L"InstalledSize", VT_I4, CIM_UINT32 );
+        check_property( obj, L"Level", VT_I4, CIM_UINT16 );
+        check_property( obj, L"MaxCacheSize", VT_I4, CIM_UINT32 );
+        check_property( obj, L"NumberOfBlocks", VT_BSTR, CIM_UINT64 );
+        check_property( obj, L"Status", VT_BSTR, CIM_STRING );
+        IWbemClassObject_Release( obj );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 static void test_Win32_VideoController( IWbemServices *services )
 {
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_VideoController" );
@@ -2552,6 +2585,7 @@ START_TEST(query)
     test_StdRegProv( services );
     test_SystemSecurity( services );
     test_Win32_Baseboard( services );
+    test_Win32_CacheMemory( services );
     test_Win32_ComputerSystem( services );
     test_Win32_ComputerSystemProduct( services );
     test_Win32_Bios( services );
