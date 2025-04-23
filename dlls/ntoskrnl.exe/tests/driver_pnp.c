@@ -690,6 +690,65 @@ static void test_device_properties( DEVICE_OBJECT *device )
     }
 }
 
+static void test_enumerator_name(void)
+{
+    static const WCHAR root[] = L"ROOT";
+    WCHAR buffer[10];
+    ULONG req_size;
+    NTSTATUS status;
+
+    status = IoGetDeviceProperty(bus_fdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
+    todo_wine ok(status == STATUS_INVALID_DEVICE_REQUEST, "got unexpected status %#lx\n", status);
+
+    req_size = 0;
+    memset(buffer, 0, sizeof(buffer));
+    status = IoGetDeviceProperty(bus_pdo, DevicePropertyEnumeratorName, sizeof(buffer), buffer, &req_size);
+    ok(status == STATUS_SUCCESS, "IoGetDeviceProperty failed: %#lx\n", status);
+    todo_wine ok(req_size == sizeof(root), "unexpected size %lu\n", req_size);
+    if (status == STATUS_SUCCESS)
+        todo_wine ok(!wcscmp(root, buffer), "unexpected property value '%ls'\n", buffer);
+}
+
+static void test_device_registry_key(void)
+{
+    static const WCHAR foobar[] = L"foobar";
+    static const WCHAR foo[] = L"foo";
+
+    KEY_VALUE_PARTIAL_INFORMATION *info;
+    UNICODE_STRING name_str;
+    NTSTATUS status;
+    HANDLE hkey;
+    DWORD size;
+
+    status = IoOpenDeviceRegistryKey(bus_fdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
+    todo_wine ok(status == STATUS_INVALID_PARAMETER, "got unexpected status %#lx\n", status);
+
+    status = IoOpenDeviceRegistryKey(bus_pdo, PLUGPLAY_REGKEY_DEVICE, KEY_ALL_ACCESS, &hkey);
+    ok(status == STATUS_SUCCESS, "IoOpenDeviceRegistryKey failed: %#lx\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        RtlInitUnicodeString(&name_str, foobar);
+        status = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, NULL, 0, &size);
+        ok(status == STATUS_BUFFER_TOO_SMALL, "got unexpected status %#lx\n", status);
+
+        info = ExAllocatePool(PagedPool, size);
+        ok(!!info, "failed to allocate memory\n");
+        if (info)
+        {
+            memset(info, 0, size);
+            status = ZwQueryValueKey(hkey, &name_str, KeyValuePartialInformation, info, size, &size);
+            ok(status == STATUS_SUCCESS, "ZwQueryValueKey failed: %#lx\n", status);
+            ok(info->Type == REG_SZ, "expected type REG_SZ, got %lu\n", info->Type);
+            ok(info->DataLength == sizeof(foo), "unexpected DataLength %lu\n", info->DataLength);
+            ok(!wcscmp((WCHAR *)info->Data, foo), "got unexpected key value\n");
+            ExFreePool(info);
+        }
+
+        status = ZwClose(hkey);
+        ok(status == STATUS_SUCCESS, "ZwClose failed: %#lx\n", status);
+    }
+}
+
 static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
 {
     switch (code)
@@ -697,6 +756,8 @@ static NTSTATUS fdo_ioctl(IRP *irp, IO_STACK_LOCATION *stack, ULONG code)
         case IOCTL_WINETEST_BUS_MAIN:
             test_bus_query();
             test_device_properties( bus_pdo );
+            test_enumerator_name();
+            test_device_registry_key();
             return STATUS_SUCCESS;
 
         case IOCTL_WINETEST_BUS_REGISTER_IFACE:

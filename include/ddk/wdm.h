@@ -1749,6 +1749,10 @@ void      WINAPI ExReleaseResourceForThreadLite(ERESOURCE*,ERESOURCE_THREAD);
 ULONG     WINAPI ExSetTimerResolution(ULONG,BOOLEAN);
 void      WINAPI ExUnregisterCallback(void*);
 
+#define PLUGPLAY_REGKEY_DEVICE            1
+#define PLUGPLAY_REGKEY_DRIVER            2
+#define PLUGPLAY_REGKEY_CURRENT_HWPROFILE 4
+
 #define PLUGPLAY_PROPERTY_PERSISTENT 0x0001
 
 void      WINAPI IoFreeErrorLogEntry(void*);
