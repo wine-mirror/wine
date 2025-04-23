@@ -71,10 +71,10 @@ F:	dlls/d2d*/
 
 Direct3D
 M:	Elizabeth Figura <zfigura@codeweavers.com>
-M:	Jan Sikorski <jsikorski@codeweavers.com>
 P:	Henri Verbeet <hverbeet@codeweavers.com>
 P:	Stefan Dösinger <stefan@codeweavers.com>
 P:	Matteo Bruni <mbruni@codeweavers.com>
+P:	Jan Sikorski <jsikorski@codeweavers.com>
 F:	dlls/d3d10core/
 F:	dlls/d3d11/
 F:	dlls/d3d12/
