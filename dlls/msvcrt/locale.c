@@ -1285,10 +1285,10 @@ static pthreadlocinfo create_locinfo(int category,
     static const char time[] = "TIME=";
 
     pthreadlocinfo locinfo = NULL;
-    unsigned short cp[6] = { 0 };
-    const char *locale_name[6] = { 0 };
-    WCHAR locale_sname[6][LOCALE_NAME_MAX_LENGTH] = { { 0 } };
-    int val, locale_len[6] = { 0 };
+    unsigned short cp[LC_MAX + 1] = { 0 };
+    const char *locale_name[LC_MAX + 1] = { 0 };
+    WCHAR locale_sname[LC_MAX + 1][LOCALE_NAME_MAX_LENGTH] = { { 0 } };
+    int val, locale_len[LC_MAX + 1] = { 0 };
     char buf[256];
     BOOL sname_match;
     wchar_t wbuf[256], map_buf[256];
@@ -1364,7 +1364,7 @@ static pthreadlocinfo create_locinfo(int category,
             locale_len[0] = strlen(locale);
         }
 
-        for(i=1; i<6; i++) {
+        for(i=1; i<=LC_MAX; i++) {
             wcscpy(locale_sname[i], locale_sname[0]);
             cp[i] = cp[0];
             locale_name[i] = locale_name[0];
@@ -1372,7 +1372,7 @@ static pthreadlocinfo create_locinfo(int category,
         }
     }
 
-    for(i=1; i<6; i++) {
+    for(i=1; i<=LC_MAX; i++) {
 #if _MSVCR_VER < 140
         if(i==LC_CTYPE && cp[i]==CP_UTF8) {
 #if _MSVCR_VER >= 110
