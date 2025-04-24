@@ -84,5 +84,5 @@ interface IWineJSDispatchHost : IDispatchEx
 interface IWineJScript : IUnknown
 {
     HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, UINT32 flags, IWineJSDispatch **ret);
-    HRESULT InitHostConstructor(IWineJSDispatchHost *constr, IWineJSDispatch **ret);
+    HRESULT InitHostConstructor(IWineJSDispatchHost *constr, const WCHAR *method_name, IWineJSDispatch **ret);
 }

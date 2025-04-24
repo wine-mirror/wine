@@ -1891,7 +1891,7 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global,
             if(FAILED(hres = get_prototype(script_global, dispex->info->desc->constructor_id, &prototype)))
                 return;
             hres = IWineJScript_InitHostConstructor(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                                    &dispex->jsdisp);
+                                                    NULL, &dispex->jsdisp);
             if(SUCCEEDED(hres)) {
                 VARIANT v;
                 V_VT(&v) = VT_DISPATCH;
@@ -2919,7 +2919,7 @@ const void *dispex_get_vtbl(DispatchEx *dispex)
     return dispex->info->vtbl;
 }
 
-static void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTMLInnerWindow *script_global, DispatchEx *prototype)
+void init_dispatch_from_desc(DispatchEx *dispex, dispex_data_t *info, HTMLInnerWindow *script_global, DispatchEx *prototype)
 {
     dispex->IWineJSDispatchHost_iface.lpVtbl = &JSDispatchHostVtbl;
     dispex->dynamic_data = NULL;

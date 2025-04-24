@@ -1459,10 +1459,10 @@ static HRESULT WINAPI WineJScript_InitHostObject(IWineJScript *iface, IWineJSDis
 }
 
 static HRESULT WINAPI WineJScript_InitHostConstructor(IWineJScript *iface, IWineJSDispatchHost *constr,
-                                                      IWineJSDispatch **ret)
+                                                      const WCHAR *method_name, IWineJSDispatch **ret)
 {
     JScript *This = impl_from_IWineJScript(iface);
-    return init_host_constructor(This->ctx, constr, ret);
+    return init_host_constructor(This->ctx, constr, method_name, ret);
 }
 
 static const IWineJScriptVtbl WineJScriptVtbl = {

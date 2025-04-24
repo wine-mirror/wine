@@ -4009,7 +4009,20 @@ sync_test("constructors", function() {
         r = ctors[i];
         ok(window.hasOwnProperty(r), r + " not prop of window");
         ok(!(r in Window.prototype), r + " is a prop of window's prototype");
+        todo_wine.
+        ok(window[r].toString() === "\nfunction " + r + "() {\n    [native code]\n}\n", r + ".toString() = " + window[r].toString());
     }
     ok(window.Image.prototype === window.HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
     ok(window.Option.prototype === window.HTMLOptionElement.prototype, "Option.prototype != HTMLOptionElement.prototype");
+
+    ok(typeof(XMLHttpRequest.create) === "function", "XMLHttpRequest.create not a function");
+    ok(XMLHttpRequest.create.toString() === "\nfunction create() {\n    [native code]\n}\n", "XMLHttpRequest.create.toString() = " + XMLHttpRequest.create.toString());
+    ok(XMLHttpRequest.create() instanceof XMLHttpRequest, "XMLHttpRequest.create did not return XMLHttpRequest instance");
+    ok(XMLHttpRequest.create.call(Object) instanceof XMLHttpRequest, "XMLHttpRequest.create with Object 'this' did not return XMLHttpRequest instance");
+    try {
+        new XMLHttpRequest.create();
+        ok(false, "new XMLHttpRequest.create() did not throw");
+    }catch(e) {
+        ok(e.number === 0x0ffff - 0x80000000, "new XMLHttpRequest.create() threw " + e.number);
+    }
 });

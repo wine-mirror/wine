@@ -1625,10 +1625,35 @@ static dispex_static_data_t HTMLXMLHttpRequestFactory_dispex = {
 
 static HRESULT HTMLXMLHttpRequestFactory_init(struct constructor *constr)
 {
+    struct constructor *create;
+    HRESULT hres;
+
     constr->iface.lpVtbl = (const IUnknownVtbl*)&HTMLXMLHttpRequestFactoryVtbl;
     init_dispatch(&constr->dispex, &HTMLXMLHttpRequestFactory_dispex, constr->window,
                   dispex_compat_mode(&constr->window->event_target.dispex));
-    return S_OK;
+
+    if(!constr->window->jscript)
+        return S_OK;
+
+    if(!(create = malloc(sizeof(*create))))
+        return E_OUTOFMEMORY;
+    create->iface = constr->iface;
+    create->window = constr->window;
+    IHTMLWindow2_AddRef(&constr->window->base.IHTMLWindow2_iface);
+
+    init_dispatch_from_desc(&create->dispex, constr->dispex.info, NULL, NULL);
+
+    hres = IWineJScript_InitHostConstructor(create->window->jscript, &create->dispex.IWineJSDispatchHost_iface,
+                                            L"create", &create->dispex.jsdisp);
+    if(SUCCEEDED(hres)) {
+        VARIANT v;
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = (IDispatch*)&create->dispex.IWineJSDispatchHost_iface;
+        hres = IWineJSDispatch_DefineProperty(constr->dispex.jsdisp, L"create", PROPF_WRITABLE | PROPF_CONFIGURABLE, &v);
+    }
+
+    IWineJSDispatchHost_Release(&create->dispex.IWineJSDispatchHost_iface);
+    return hres;
 }
 
 static const tid_t HTMLXMLHttpRequest_iface_tids[] = {

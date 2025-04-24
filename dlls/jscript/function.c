@@ -74,6 +74,7 @@ typedef struct {
 typedef struct {
     FunctionInstance function;
     IWineJSDispatchHost *host_iface;
+    const WCHAR *method_name;
 } HostConstructor;
 
 typedef struct {
@@ -1130,6 +1131,9 @@ static HRESULT HostConstructor_call(script_ctx_t *ctx, FunctionInstance *func, j
     HRESULT hres = S_OK;
     unsigned i;
 
+    if(function->method_name && !(flags & DISPATCH_METHOD))
+        return E_UNEXPECTED;
+
     flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
     if(argc > ARRAYSIZE(buf) && !(dp.rgvarg = malloc(argc * sizeof(*dp.rgvarg))))
         return E_OUTOFMEMORY;
@@ -1159,10 +1163,11 @@ static HRESULT HostConstructor_call(script_ctx_t *ctx, FunctionInstance *func, j
     return hres;
 }
 
-static HRESULT HostConstructor_toString(FunctionInstance *function, jsstr_t **ret)
+static HRESULT HostConstructor_toString(FunctionInstance *func, jsstr_t **ret)
 {
-    *ret = jsstr_alloc(L"\nfunction() {\n    [native code]\n}\n");
-    return *ret ? S_OK : E_OUTOFMEMORY;
+    HostConstructor *function = (HostConstructor*)func;
+
+    return native_function_string(function->method_name, ret);
 }
 
 static function_code_t *HostConstructor_get_code(FunctionInstance *function)
@@ -1187,7 +1192,7 @@ static const function_vtbl_t HostConstructorVtbl = {
     HostConstructor_gc_traverse
 };
 
-HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_constr, IWineJSDispatch **ret)
+HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_constr, const WCHAR *method_name, IWineJSDispatch **ret)
 {
     HostConstructor *function;
     HRESULT hres;
@@ -1197,6 +1202,7 @@ HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_const
     if(FAILED(hres))
         return hres;
     function->host_iface = host_constr;
+    function->method_name = method_name;
 
     *ret = &function->function.dispex.IWineJSDispatch_iface;
     return S_OK;
