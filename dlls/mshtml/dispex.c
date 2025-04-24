@@ -3052,26 +3052,26 @@ HRESULT get_prototype(HTMLInnerWindow *script_global, object_id_t id, DispatchEx
     return S_OK;
 }
 
-struct constructor
+struct stub_constructor
 {
     DispatchEx dispex;
     object_id_t id;
 };
 
-static inline struct constructor *constr_from_DispatchEx(DispatchEx *iface)
+static inline struct stub_constructor *stub_constructor_from_DispatchEx(DispatchEx *iface)
 {
-    return CONTAINING_RECORD(iface, struct constructor, dispex);
+    return CONTAINING_RECORD(iface, struct stub_constructor, dispex);
 }
 
-static void constructor_destructor(DispatchEx *dispex)
+static void stub_constructor_destructor(DispatchEx *dispex)
 {
-    struct constructor *constr = constr_from_DispatchEx(dispex);
+    struct stub_constructor *constr = stub_constructor_from_DispatchEx(dispex);
     free(constr);
 }
 
-static HRESULT constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
+static HRESULT stub_constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DWORD flags, DISPID *dispid)
 {
-    struct constructor *constr = constr_from_DispatchEx(dispex);
+    struct stub_constructor *constr = stub_constructor_from_DispatchEx(dispex);
     HTMLInnerWindow *script_global;
     DispatchEx *prototype;
     HRESULT hres;
@@ -3094,21 +3094,21 @@ static HRESULT constructor_find_dispid(DispatchEx *dispex, const WCHAR *name, DW
     return hres;
 }
 
-static const char *constructor_get_name(DispatchEx *dispex)
+static const char *stub_constructor_get_name(DispatchEx *dispex)
 {
-    struct constructor *constr = constr_from_DispatchEx(dispex);
+    struct stub_constructor *constr = stub_constructor_from_DispatchEx(dispex);
     return object_names[constr->id - 1];
 }
 
-static const dispex_static_data_vtbl_t constructor_dispex_vtbl = {
-    .destructor  = constructor_destructor,
-    .find_dispid = constructor_find_dispid,
-    .get_name    = constructor_get_name,
+static const dispex_static_data_vtbl_t stub_constructor_dispex_vtbl = {
+    .destructor  = stub_constructor_destructor,
+    .find_dispid = stub_constructor_find_dispid,
+    .get_name    = stub_constructor_get_name,
 };
 
-static dispex_static_data_t constructor_dispex = {
+static dispex_static_data_t stub_constructor_dispex = {
     .name     = "Constructor",
-    .vtbl     = &constructor_dispex_vtbl,
+    .vtbl     = &stub_constructor_dispex_vtbl,
     .js_flags = HOSTOBJ_CONSTRUCTOR,
 };
 
@@ -3127,14 +3127,14 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, Dispatch
         if(FAILED(hres))
             return hres;
     }else {
-        struct constructor *constr;
+        struct stub_constructor *constr;
 
         assert(script_global->doc->document_mode >= COMPAT_MODE_IE9);
 
         if(!(constr = calloc(sizeof(*constr), 1)))
             return E_OUTOFMEMORY;
 
-        init_dispatch(&constr->dispex, &constructor_dispex, script_global,
+        init_dispatch(&constr->dispex, &stub_constructor_dispex, script_global,
                       dispex_compat_mode(&script_global->event_target.dispex));
         constr->id = id;
         script_global->constructors[id] = &constr->dispex;
