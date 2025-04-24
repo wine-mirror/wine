@@ -99,12 +99,19 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
       char *buffer;
 
       if (!unicodeOutput) {
+        UINT code_page;
 
         if (!(buffer = get_file_buffer()))
             return;
 
+        /* On Wine, GetConsoleOutputCP function fails
+           if Shell-no-window console is used */
+        code_page = GetConsoleOutputCP();
+        if (!code_page)
+            code_page = GetOEMCP();
+
         /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, message,
+        convertedChars = WideCharToMultiByte(code_page, 0, message,
                             len, buffer, MAX_WRITECONSOLE_SIZE,
                             "?", &usedDefaultChar);
         WriteFile(device, buffer, convertedChars,
