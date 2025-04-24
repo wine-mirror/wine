@@ -10134,8 +10134,14 @@ done
 
 for wine_arch in $cross_archs $extra_arch
 do
+    case $wine_arch in
+      i386) mingw_cpu=i686 ;;
+      arm)  mingw_cpu=armv7 ;;
+      *)    mingw_cpu=$wine_arch ;;
+    esac
     case "x$with_mingw" in
       xclang|x*/clang) eval "${wine_arch}_CC=\$with_mingw" ;;
+      xllvm-mingw)     eval "${wine_arch}_CC=\${mingw_cpu}-w64-mingw32-clang" ;;
     esac
     if eval \${${wine_arch}_CC:+false} :
 then :
@@ -10293,7 +10299,7 @@ done
 test -n "$arm_CC" || arm_CC="false"
 
             ;;
-         i386)
+          i386)
             ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang "
             for ac_prog in $ac_prefix_list clang
 do
@@ -10345,7 +10351,7 @@ done
 test -n "$i386_CC" || i386_CC="false"
 
             ;;
-         x86_64)
+          x86_64)
             ac_prefix_list="x86_64-w64-mingw32-gcc amd64-w64-mingw32-gcc x86_64-w64-mingw32-clang amd64-w64-mingw32-clang "
             for ac_prog in $ac_prefix_list clang
 do
@@ -10397,7 +10403,11 @@ done
 test -n "$x86_64_CC" || x86_64_CC="false"
 
             ;;
-        esac
+         esac
+         wine_try_msvc=yes
+else case e in #(
+  e) wine_try_msvc=no ;;
+esac
 fi
 
     CPPFLAGS=""
@@ -10434,22 +10444,17 @@ fi
         shift
     done
 
-        llvm_target=$target
-    target_strip=${target:-llvm}-strip
-    if test -z "$llvm_target"
+        target_strip=${target:-llvm}-strip
+    if test "$wine_try_msvc" = yes -o -z "$target"
     then
-        case $wine_arch in
-        i386) llvm_target=i686-windows ;;
-        arm)  llvm_target=armv7-windows ;;
-        *)    llvm_target=$wine_arch-windows ;;
-        esac
+        llvm_target="$mingw_cpu-windows"
+        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
+        llvm_cflags="-Wl,-subsystem:console -Wl,-WX"
+    else
+        llvm_target=$target
+        llvm_extra_cflags="-fuse-ld=lld"
+        llvm_cflags="-target $target"
     fi
-    llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
-    llvm_extra_ldflags=""
-    llvm_cflags=""
-    case $llvm_target in
-      *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
-    esac
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags --no-default-config" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config" >&5
 printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config... " >&6; }

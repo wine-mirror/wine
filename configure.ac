@@ -818,8 +818,14 @@ done
 
 for wine_arch in $cross_archs $extra_arch
 do
+    case $wine_arch in
+      i386) mingw_cpu=i686 ;;
+      arm)  mingw_cpu=armv7 ;;
+      *)    mingw_cpu=$wine_arch ;;
+    esac
     case "x$with_mingw" in
       xclang|x*/clang) AS_VAR_SET(${wine_arch}_CC,$with_mingw) ;;
+      xllvm-mingw)     AS_VAR_SET(${wine_arch}_CC,${mingw_cpu}-w64-mingw32-clang) ;;
     esac
     AS_VAR_IF([${wine_arch}_CC],[],
         [case $wine_arch in
@@ -832,15 +838,17 @@ do
           arm)
             AC_CHECK_PROGS(arm_CC,[armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang],[false])
             ;;
-         i386)
+          i386)
             ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[i686,i586,i486,i386],[cpu-w64-mingw32-cc ]))"
             AC_CHECK_PROGS(i386_CC,[$ac_prefix_list clang],[false])
             ;;
-         x86_64)
+          x86_64)
             ac_prefix_list="m4_foreach([cc],[gcc,clang],m4_foreach([cpu],[x86_64,amd64],[cpu-w64-mingw32-cc ]))"
             AC_CHECK_PROGS(x86_64_CC,[$ac_prefix_list clang],[false])
             ;;
-        esac])
+         esac
+         wine_try_msvc=yes],
+        [wine_try_msvc=no])
 
     CPPFLAGS=""
     AS_VAR_SET_IF([${wine_arch}_CFLAGS],[],[AS_VAR_SET([${wine_arch}_CFLAGS],[${CROSSCFLAGS:-"-g -O2"}])])
@@ -865,22 +873,17 @@ do
     done
 
     dnl Check if cross compiler supports -target argument
-    llvm_target=$target
     target_strip=${target:-llvm}-strip
-    if test -z "$llvm_target"
+    if test "$wine_try_msvc" = yes -o -z "$target"
     then
-        case $wine_arch in
-        i386) llvm_target=i686-windows ;;
-        arm)  llvm_target=armv7-windows ;;
-        *)    llvm_target=$wine_arch-windows ;;
-        esac
+        llvm_target="$mingw_cpu-windows"
+        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
+        llvm_cflags="-Wl,-subsystem:console -Wl,-WX"
+    else
+        llvm_target=$target
+        llvm_extra_cflags="-fuse-ld=lld"
+        llvm_cflags="-target $target"
     fi
-    llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
-    llvm_extra_ldflags=""
-    llvm_cflags=""
-    case $llvm_target in
-      *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
-    esac
     WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags --no-default-config],
                        [llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
                         llvm_extra_ldflags="--no-default-config"],
