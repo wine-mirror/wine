@@ -1166,8 +1166,19 @@ static HRESULT HostConstructor_call(script_ctx_t *ctx, FunctionInstance *func, j
 static HRESULT HostConstructor_toString(FunctionInstance *func, jsstr_t **ret)
 {
     HostConstructor *function = (HostConstructor*)func;
+    HRESULT hres;
+    BSTR str;
 
-    return native_function_string(function->method_name, ret);
+    if(function->method_name)
+        return native_function_string(function->method_name, ret);
+
+    hres = IWineJSDispatchHost_ToString(function->host_iface, &str);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = jsstr_alloc(str);
+    SysFreeString(str);
+    return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
 static function_code_t *HostConstructor_get_code(FunctionInstance *function)

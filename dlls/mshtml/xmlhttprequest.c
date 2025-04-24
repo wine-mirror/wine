@@ -1616,7 +1616,7 @@ static const tid_t HTMLXMLHttpRequestFactory_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLXMLHttpRequestFactory_dispex = {
-    .name           = "Function",
+    .name           = "XMLHttpRequest",
     .constructor_id = OBJID_XMLHttpRequest,
     .vtbl           = &HTMLXMLHttpRequestFactory_dispex_vtbl,
     .disp_tid       = IHTMLXMLHttpRequestFactory_tid,

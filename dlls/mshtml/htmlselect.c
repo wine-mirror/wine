@@ -503,7 +503,7 @@ static HRESULT HTMLOptionElementFactory_init(struct constructor *constr)
 }
 
 dispex_static_data_t Option_dispex = {
-    .name             = "Function",
+    .name             = "Option",
     .constructor_id   = OBJID_HTMLOptionElement,
     .init_constructor = HTMLOptionElementFactory_init,
     .vtbl             = &HTMLOptionElementFactory_dispex_vtbl,

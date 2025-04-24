@@ -1301,7 +1301,7 @@ static const dispex_static_data_vtbl_t mutation_observer_ctor_dispex_vtbl = {
 };
 
 static dispex_static_data_t mutation_observer_ctor_dispex = {
-    .name           = "Function",
+    .name           = "MutationObserver",
     .constructor_id = OBJID_MutationObserver,
     .vtbl           = &mutation_observer_ctor_dispex_vtbl,
 };

@@ -857,7 +857,7 @@ static HRESULT HTMLImageElementFactory_init(struct constructor *constr)
 }
 
 dispex_static_data_t Image_dispex = {
-    .name             = "Function",
+    .name             = "Image",
     .constructor_id   = OBJID_HTMLImageElement,
     .init_constructor = HTMLImageElementFactory_init,
     .vtbl             = &HTMLImageElementFactory_dispex_vtbl,

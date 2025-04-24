@@ -4009,7 +4009,6 @@ sync_test("constructors", function() {
         r = ctors[i];
         ok(window.hasOwnProperty(r), r + " not prop of window");
         ok(!(r in Window.prototype), r + " is a prop of window's prototype");
-        todo_wine.
         ok(window[r].toString() === "\nfunction " + r + "() {\n    [native code]\n}\n", r + ".toString() = " + window[r].toString());
     }
     ok(window.Image.prototype === window.HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");

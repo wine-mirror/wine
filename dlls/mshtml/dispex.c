@@ -1943,20 +1943,30 @@ compat_mode_t dispex_compat_mode(DispatchEx *dispex)
 
 HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
 {
+    static const WCHAR func_prefix[10] = L"\nfunction ";
+    static const WCHAR func_suffix[] = L"() {\n    [native code]\n}\n";
     static const WCHAR prefix[8] = L"[object ";
     static const WCHAR suffix[] = L"]";
-    WCHAR buf[ARRAY_SIZE(prefix) + ARRAY_SIZE(dispex->info->desc->prototype_name) + ARRAY_SIZE(suffix)], *p = buf;
+    WCHAR buf[ARRAY_SIZE(func_prefix) + ARRAY_SIZE(dispex->info->desc->prototype_name) + ARRAY_SIZE(func_suffix)], *p = buf;
     compat_mode_t compat_mode = dispex_compat_mode(dispex);
     const char *name;
 
     if(!ret)
         return E_INVALIDARG;
 
-    memcpy(p, prefix, sizeof(prefix));
-    p += ARRAY_SIZE(prefix);
     if(compat_mode < COMPAT_MODE_IE9)
-        p--;
+        wcscpy(buf, L"[object]");
     else {
+        BOOL is_func = dispex->info->desc->constructor_id;
+
+        if(is_func) {
+            memcpy(p, func_prefix, sizeof(func_prefix));
+            p += ARRAY_SIZE(func_prefix);
+        }else {
+            memcpy(p, prefix, sizeof(prefix));
+            p += ARRAY_SIZE(prefix);
+        }
+
         if(!ensure_real_info(dispex))
             return E_OUTOFMEMORY;
         name = dispex->info->name;
@@ -1964,9 +1974,12 @@ HRESULT dispex_to_string(DispatchEx *dispex, BSTR *ret)
             name = dispex->info->vtbl->get_name(dispex);
         while(*name)
             *p++ = *name++;
-        assert(p + ARRAY_SIZE(suffix) - buf <= ARRAY_SIZE(buf));
+
+        if(is_func)
+            memcpy(p, func_suffix, sizeof(func_suffix));
+        else
+            memcpy(p, suffix, sizeof(suffix));
     }
-    memcpy(p, suffix, sizeof(suffix));
 
     *ret = SysAllocString(buf);
     return *ret ? S_OK : E_OUTOFMEMORY;
