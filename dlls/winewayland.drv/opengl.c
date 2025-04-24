@@ -44,6 +44,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 #include "wine/opengl_driver.h"
 
+/* Support building on systems with older EGL headers, which may not include
+ * the EGL_EXT_present_opaque extension. */
+#ifndef EGL_PRESENT_OPAQUE_EXT
+#define EGL_PRESENT_OPAQUE_EXT 0x31DF
+#endif
+
 static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
 static EGLDisplay egl_display;
