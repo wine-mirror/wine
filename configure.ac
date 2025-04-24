@@ -627,8 +627,8 @@ case $HOST_ARCH in
     test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT="" ;;
   *)
-    WINE_NOTICE_WITH(mingw,[test "x$PE_ARCHS" = "x"],
-                     [Suitable PE cross-compiler not found, PE files won't be built.]) ;;
+    WINE_WARNING_WITH(mingw,[test "x$PE_ARCHS" = "x"],
+                      [Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw.]) ;;
 esac
 
 dnl **** Check for some libraries ****

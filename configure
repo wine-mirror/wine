@@ -9450,9 +9450,9 @@ case $HOST_ARCH in
     if test "x$PE_ARCHS" = "x"
 then :
   case "x$with_mingw" in
-  x)   as_fn_append wine_notices "|Suitable PE cross-compiler not found, PE files won't be built." ;;
+  x)   as_fn_append wine_warnings "|Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw." ;;
   xno) ;;
-  *)   as_fn_error $? "Suitable PE cross-compiler not found, PE files won't be built.
+  *)   as_fn_error $? "Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw.
 This is an error since --with-mingw was requested." "$LINENO" 5 ;;
 esac
 
