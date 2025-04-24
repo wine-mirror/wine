@@ -330,6 +330,11 @@ void wayland_surface_ensure_contents(struct wayland_surface *surface);
 void wayland_surface_set_title(struct wayland_surface *surface, LPCWSTR title);
 void wayland_surface_set_icon(struct wayland_surface *surface, UINT type, ICONINFO *ii);
 
+static inline BOOL wayland_surface_is_toplevel(struct wayland_surface *surface)
+{
+    return surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL && surface->xdg_toplevel;
+}
+
 /**********************************************************************
  *          Wayland SHM buffer
  */

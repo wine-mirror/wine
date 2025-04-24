@@ -494,8 +494,7 @@ void WAYLAND_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UIN
     }
 
     needs_icon = data->wayland_surface && !data->wayland_surface->big_icon_buffer &&
-                 data->wayland_surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL &&
-                 data->wayland_surface->xdg_toplevel &&
+                 wayland_surface_is_toplevel(data->wayland_surface) &&
                  process_wayland.xdg_toplevel_icon_manager_v1;
 
     wayland_win_data_release(data);
@@ -537,7 +536,7 @@ static void wayland_configure_window(HWND hwnd)
         return;
     }
 
-    if (surface->role != WAYLAND_SURFACE_ROLE_TOPLEVEL || !surface->xdg_toplevel)
+    if (!wayland_surface_is_toplevel(surface))
     {
         TRACE("missing xdg_toplevel, returning\n");
         wayland_win_data_release(data);
@@ -700,9 +699,7 @@ void WAYLAND_SetWindowIcon(HWND hwnd, UINT type, HICON icon)
         icon = get_window_icon(hwnd, type, icon, &ii);
         if (icon && (data = wayland_win_data_get(hwnd)))
         {
-            if (data->wayland_surface &&
-                data->wayland_surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL &&
-                data->wayland_surface->xdg_toplevel)
+            if (data->wayland_surface && wayland_surface_is_toplevel(data->wayland_surface))
                 wayland_surface_set_icon(data->wayland_surface, type, &ii);
             wayland_win_data_release(data);
         }
@@ -721,9 +718,7 @@ void WAYLAND_SetWindowText(HWND hwnd, LPCWSTR text)
 
     if ((data = wayland_win_data_get(hwnd)))
     {
-        if ((surface = data->wayland_surface) &&
-            surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL &&
-            surface->xdg_toplevel)
+        if ((surface = data->wayland_surface) && wayland_surface_is_toplevel(surface))
             wayland_surface_set_title(surface, text);
         wayland_win_data_release(data);
     }
@@ -758,8 +753,7 @@ LRESULT WAYLAND_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT 
             pthread_mutex_lock(&process_wayland.seat.mutex);
             wl_seat = process_wayland.seat.wl_seat;
             if (wl_seat && (surface = data->wayland_surface) &&
-                surface->role == WAYLAND_SURFACE_ROLE_TOPLEVEL &&
-                surface->xdg_toplevel && button_serial)
+                wayland_surface_is_toplevel(surface) && button_serial)
             {
                 if (command == SC_MOVE)
                 {
