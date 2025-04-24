@@ -92,6 +92,7 @@ typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 typedef struct EventTarget EventTarget;
 typedef struct ScriptHost ScriptHost;
+struct constructor;
 
 #define TID_LIST \
     XIID(NULL) \
@@ -520,7 +521,7 @@ struct dispex_static_data_t {
     const tid_t disp_tid;
     const tid_t* const iface_tids;
     void (*init_info)(dispex_data_t*,compat_mode_t);
-    HRESULT (*init_constructor)(HTMLInnerWindow*,DispatchEx**);
+    HRESULT (*init_constructor)(struct constructor*);
     dispex_data_t *info_cache[COMPAT_MODE_CNT];
     dispex_data_t *prototype_info[COMPAT_MODE_CNT - COMPAT_MODE_IE9];
     dispex_data_t *delayed_init_info;
@@ -657,6 +658,20 @@ typedef enum {
 
 dispex_prop_type_t get_dispid_type(DISPID);
 
+struct constructor {
+    DispatchEx dispex;
+    IUnknown iface;
+    HTMLInnerWindow *window;
+};
+
+static inline struct constructor *constructor_from_DispatchEx(DispatchEx *iface)
+{
+    return CONTAINING_RECORD(iface, struct constructor, dispex);
+}
+void constructor_traverse(DispatchEx*,nsCycleCollectionTraversalCallback*);
+void constructor_unlink(DispatchEx*);
+void constructor_destructor(DispatchEx*);
+
 typedef enum {
     GLOBAL_SCRIPTVAR,
     GLOBAL_ELEMENTVAR,
@@ -676,20 +691,6 @@ struct EventTarget {
     IEventTarget IEventTarget_iface;
     struct wine_rb_tree handler_map;
 };
-
-typedef struct {
-    DispatchEx dispex;
-    IHTMLOptionElementFactory IHTMLOptionElementFactory_iface;
-
-    HTMLInnerWindow *window;
-} HTMLOptionElementFactory;
-
-typedef struct {
-    DispatchEx dispex;
-    IHTMLImageElementFactory IHTMLImageElementFactory_iface;
-
-    HTMLInnerWindow *window;
-} HTMLImageElementFactory;
 
 struct HTMLLocation {
     DispatchEx dispex;

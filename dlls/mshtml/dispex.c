@@ -3052,6 +3052,31 @@ HRESULT get_prototype(HTMLInnerWindow *script_global, object_id_t id, DispatchEx
     return S_OK;
 }
 
+void constructor_traverse(DispatchEx *dispex, nsCycleCollectionTraversalCallback *cb)
+{
+    struct constructor *This = constructor_from_DispatchEx(dispex);
+
+    if(This->window)
+        note_cc_edge((nsISupports*)&This->window->base.IHTMLWindow2_iface, "window", cb);
+}
+
+void constructor_unlink(DispatchEx *dispex)
+{
+    struct constructor *This = constructor_from_DispatchEx(dispex);
+
+    if(This->window) {
+        HTMLInnerWindow *window = This->window;
+        This->window = NULL;
+        IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
+}
+
+void constructor_destructor(DispatchEx *dispex)
+{
+    struct constructor *This = constructor_from_DispatchEx(dispex);
+    free(This);
+}
+
 struct stub_constructor
 {
     DispatchEx dispex;
@@ -3115,6 +3140,7 @@ static dispex_static_data_t stub_constructor_dispex = {
 HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret)
 {
     dispex_static_data_t *info;
+    HRESULT hres;
 
     if(script_global->constructors[id]) {
         *ret = script_global->constructors[id];
@@ -3123,9 +3149,22 @@ HRESULT get_constructor(HTMLInnerWindow *script_global, object_id_t id, Dispatch
 
     info = object_descriptors[id];
     if(info->init_constructor) {
-        HRESULT hres = info->init_constructor(script_global, &script_global->constructors[id]);
-        if(FAILED(hres))
+        struct constructor *constr = malloc(sizeof(*constr));
+
+        if(!constr)
+            return E_OUTOFMEMORY;
+
+        constr->window = script_global;
+        IHTMLWindow2_AddRef(&script_global->base.IHTMLWindow2_iface);
+
+        hres = info->init_constructor(constr);
+        if(FAILED(hres)) {
+            IHTMLWindow2_Release(&script_global->base.IHTMLWindow2_iface);
+            free(constr);
             return hres;
+        }
+
+        script_global->constructors[id] = &constr->dispex;
     }else {
         struct stub_constructor *constr;
 
