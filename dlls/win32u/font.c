@@ -2302,7 +2302,7 @@ static struct gdi_font_face *find_matching_face( const LOGFONTW *lf, CHARSETINFO
 /* realized font objects */
 
 #define FIRST_FONT_HANDLE 1
-#define MAX_FONT_HANDLES  256
+#define MAX_FONT_HANDLES  5000
 
 struct font_handle_entry
 {
