@@ -4469,13 +4469,16 @@ static DWORD CALLBACK sbtest_thread_proc( void *arg )
 
 #ifdef _MSC_VER
 
-#pragma intrinsic(_ReadWriteBarrier)
-void _ReadWriteBarrier(void);
-
 static void WINAPI compiler_barrier(void)
 {
+#if defined(__i386__) || defined(__x86_64__)
 #pragma warning(suppress:4996)
     _ReadWriteBarrier();
+#elif defined(__arm__)
+    __dmb(_ARM_BARRIER_ISH);
+#elif defined(__aarch64__)
+    __dmb(_ARM64_BARRIER_ISH);
+#endif
 }
 
 #else  /* _MSC_VER */
