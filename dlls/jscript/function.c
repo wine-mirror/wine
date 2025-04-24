@@ -1187,8 +1187,7 @@ static const function_vtbl_t HostConstructorVtbl = {
     HostConstructor_gc_traverse
 };
 
-HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_constr, IWineJSDispatch *prototype,
-                              IWineJSDispatch **ret)
+HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_constr, IWineJSDispatch **ret)
 {
     HostConstructor *function;
     HRESULT hres;
@@ -1198,13 +1197,6 @@ HRESULT init_host_constructor(script_ctx_t *ctx, IWineJSDispatchHost *host_const
     if(FAILED(hres))
         return hres;
     function->host_iface = host_constr;
-
-    hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", PROPF_WRITABLE | PROPF_CONFIGURABLE,
-                                       jsval_disp((IDispatch *)prototype));
-    if(FAILED(hres)) {
-        IWineJSDispatch_Free(&function->function.dispex.IWineJSDispatch_iface);
-        return hres;
-    }
 
     *ret = &function->function.dispex.IWineJSDispatch_iface;
     return S_OK;

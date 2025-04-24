@@ -52,6 +52,7 @@ interface IWineJSDispatch : IDispatchEx
 {
     void Free();
     HRESULT GetPropertyFlags(DISPID id, UINT32 *ret);
+    HRESULT DefineProperty(const WCHAR *name, unsigned int flags, VARIANT *v);
     HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
 }
 
@@ -83,5 +84,5 @@ interface IWineJSDispatchHost : IDispatchEx
 interface IWineJScript : IUnknown
 {
     HRESULT InitHostObject(IWineJSDispatchHost *host_obj, IWineJSDispatch *prototype, UINT32 flags, IWineJSDispatch **ret);
-    HRESULT InitHostConstructor(IWineJSDispatchHost *constr, IWineJSDispatch *prototype, IWineJSDispatch **ret);
+    HRESULT InitHostConstructor(IWineJSDispatchHost *constr, IWineJSDispatch **ret);
 }

@@ -1887,10 +1887,17 @@ static void init_host_object(DispatchEx *dispex, HTMLInnerWindow *script_global,
     if(script_global->jscript && !dispex->jsdisp) {
         if(dispex->info->desc->constructor_id) {
             DispatchEx *prototype;
+
             if(FAILED(hres = get_prototype(script_global, dispex->info->desc->constructor_id, &prototype)))
                 return;
             hres = IWineJScript_InitHostConstructor(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
-                                                    prototype->jsdisp, &dispex->jsdisp);
+                                                    &dispex->jsdisp);
+            if(SUCCEEDED(hres)) {
+                VARIANT v;
+                V_VT(&v) = VT_DISPATCH;
+                V_DISPATCH(&v) = (IDispatch*)&prototype->IWineJSDispatchHost_iface;
+                hres = IWineJSDispatch_DefineProperty(dispex->jsdisp, L"prototype", PROPF_WRITABLE | PROPF_CONFIGURABLE, &v);
+            }
         }else
             hres = IWineJScript_InitHostObject(script_global->jscript, &dispex->IWineJSDispatchHost_iface,
                                                prototype ? prototype->jsdisp : NULL,

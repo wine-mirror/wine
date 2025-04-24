@@ -2402,6 +2402,21 @@ static HRESULT WINAPI WineJSDispatch_GetPropertyFlags(IWineJSDispatch *iface, DI
     return S_OK;
 }
 
+static HRESULT WINAPI WineJSDispatch_DefineProperty(IWineJSDispatch *iface, const WCHAR *name, unsigned flags, VARIANT *v)
+{
+    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
+    HRESULT hres;
+    jsval_t val;
+
+    hres = variant_to_jsval(This->ctx, v, &val);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_define_data_property(This, name, flags, val);
+    jsval_release(val);
+    return hres;
+}
+
 static HRESULT WINAPI WineJSDispatch_GetScriptGlobal(IWineJSDispatch *iface, IWineJSDispatchHost **ret)
 {
    jsdisp_t *This = impl_from_IWineJSDispatch(iface);
@@ -2435,6 +2450,7 @@ static IWineJSDispatchVtbl DispatchExVtbl = {
     DispatchEx_GetNameSpaceParent,
     WineJSDispatch_Free,
     WineJSDispatch_GetPropertyFlags,
+    WineJSDispatch_DefineProperty,
     WineJSDispatch_GetScriptGlobal,
 };
 
