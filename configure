@@ -750,7 +750,6 @@ COMPILER_RT_PE_CFLAGS
 CAPSTONE_PE_LIBS
 CAPSTONE_PE_CFLAGS
 MINGW_PKG_CONFIG
-PE_ARCHS
 WINELOADER_DEPENDS
 ac_ct_OBJC
 OBJCFLAGS
@@ -786,6 +785,7 @@ LDDLLFLAGS
 DLLFLAGS
 OPENGL_LIBS
 I386_LIBS
+PE_ARCHS
 MSGFMT
 ICOTOOL
 CONVERT
@@ -7370,6 +7370,2096 @@ enable_po=${enable_po:-no}
 fi
 
 
+PE_ARCHS=""
+
+cross_archs=
+if test ${enable_archs+y}
+then :
+  test "x$with_system_dllpath" = "x" || as_fn_error $? "\"The --with-system-dllpath option is not compatible with --enable-archs\"" "$LINENO" 5
+     ac_save_IFS=$IFS
+     IFS=' ,'
+     set x $enable_archs
+     IFS=$ac_save_IFS
+     shift
+     for arch
+     do
+         case $arch in
+           i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
+           *) as_fn_error $? "Unknown cross-compilation architecture '$arch'" "$LINENO" 5 ;;
+         esac
+     done
+else case e in #(
+  e) if test "x$with_mingw" != xno
+     then
+         test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
+     fi ;;
+esac
+fi
+
+saved_CC=$CC
+saved_CFLAGS=$CFLAGS
+saved_CPPFLAGS=$CPPFLAGS
+saved_LDFLAGS=$LDFLAGS
+
+{ extra_arch=; unset extra_arch;}
+for arch in $cross_archs
+do
+  case $arch in
+    arm64ec) test ${extra_arch+y} || extra_arch=x86_64 ;;
+    x86_64) extra_arch="" ;;
+  esac
+done
+
+for wine_arch in $cross_archs $extra_arch
+do
+    case $wine_arch in
+      i386) mingw_cpu=i686 ;;
+      arm)  mingw_cpu=armv7 ;;
+      *)    mingw_cpu=$wine_arch ;;
+    esac
+    case "x$with_mingw" in
+      xclang|x*/clang) eval "${wine_arch}_CC=\$with_mingw" ;;
+      xllvm-mingw)     eval "${wine_arch}_CC=\${mingw_cpu}-w64-mingw32-clang" ;;
+    esac
+    if eval \${${wine_arch}_CC:+false} :
+then :
+  case $wine_arch in
+          aarch64)
+            for ac_prog in aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_aarch64_CC+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$aarch64_CC"; then
+  ac_cv_prog_aarch64_CC="$aarch64_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_aarch64_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+aarch64_CC=$ac_cv_prog_aarch64_CC
+if test -n "$aarch64_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $aarch64_CC" >&5
+printf "%s\n" "$aarch64_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$aarch64_CC" && break
+done
+test -n "$aarch64_CC" || aarch64_CC="false"
+
+            ;;
+          arm64ec)
+            for ac_prog in arm64ec-w64-mingw32-clang arm64ec-w64-mingw32-gcc clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_arm64ec_CC+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$arm64ec_CC"; then
+  ac_cv_prog_arm64ec_CC="$arm64ec_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_arm64ec_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+arm64ec_CC=$ac_cv_prog_arm64ec_CC
+if test -n "$arm64ec_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm64ec_CC" >&5
+printf "%s\n" "$arm64ec_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$arm64ec_CC" && break
+done
+test -n "$arm64ec_CC" || arm64ec_CC="false"
+
+            ;;
+          arm)
+            for ac_prog in armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_arm_CC+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$arm_CC"; then
+  ac_cv_prog_arm_CC="$arm_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_arm_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+arm_CC=$ac_cv_prog_arm_CC
+if test -n "$arm_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm_CC" >&5
+printf "%s\n" "$arm_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$arm_CC" && break
+done
+test -n "$arm_CC" || arm_CC="false"
+
+            ;;
+          i386)
+            ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang "
+            for ac_prog in $ac_prefix_list clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_i386_CC+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$i386_CC"; then
+  ac_cv_prog_i386_CC="$i386_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_i386_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+i386_CC=$ac_cv_prog_i386_CC
+if test -n "$i386_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $i386_CC" >&5
+printf "%s\n" "$i386_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$i386_CC" && break
+done
+test -n "$i386_CC" || i386_CC="false"
+
+            ;;
+          x86_64)
+            ac_prefix_list="x86_64-w64-mingw32-gcc amd64-w64-mingw32-gcc x86_64-w64-mingw32-clang amd64-w64-mingw32-clang "
+            for ac_prog in $ac_prefix_list clang
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+printf %s "checking for $ac_word... " >&6; }
+if test ${ac_cv_prog_x86_64_CC+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) if test -n "$x86_64_CC"; then
+  ac_cv_prog_x86_64_CC="$x86_64_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  case $as_dir in #(((
+    '') as_dir=./ ;;
+    */) ;;
+    *) as_dir=$as_dir/ ;;
+  esac
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
+    ac_cv_prog_x86_64_CC="$ac_prog"
+    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi ;;
+esac
+fi
+x86_64_CC=$ac_cv_prog_x86_64_CC
+if test -n "$x86_64_CC"; then
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $x86_64_CC" >&5
+printf "%s\n" "$x86_64_CC" >&6; }
+else
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+fi
+
+
+  test -n "$x86_64_CC" && break
+done
+test -n "$x86_64_CC" || x86_64_CC="false"
+
+            ;;
+         esac
+         wine_try_msvc=yes
+else case e in #(
+  e) wine_try_msvc=no ;;
+esac
+fi
+
+    CPPFLAGS=""
+    if eval test \${${wine_arch}_CFLAGS+y}
+then :
+
+else case e in #(
+  e) eval "${wine_arch}_CFLAGS=\${CROSSCFLAGS:-\"-g -O2\"}" ;;
+esac
+fi
+    if eval test \${${wine_arch}_LDFLAGS+y}
+then :
+
+else case e in #(
+  e) eval "${wine_arch}_LDFLAGS=\$CROSSLDFLAGS" ;;
+esac
+fi
+    eval CC=\$${wine_arch}_CC
+    eval CFLAGS=\$${wine_arch}_CFLAGS
+    eval LDFLAGS=\$${wine_arch}_LDFLAGS
+    eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
+
+    target=""
+    set x $CC
+    shift
+    while test $# -ge 1
+    do
+        case "$1" in
+            */*-gcc) target=`expr "$1" : '.*/\(.*\)-gcc'` ;;
+            */*-clang) target=`expr "$1" : '.*/\(.*\)-clang'` ;;
+            *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
+            *-clang) target=`expr "$1" : '\(.*\)-clang'` ;;
+        esac
+        shift
+    done
+
+        target_strip=${target:-llvm}-strip
+    if test "$wine_try_msvc" = yes -o -z "$target"
+    then
+        llvm_target="$mingw_cpu-windows"
+        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
+        llvm_cflags="-Wl,-subsystem:console -Wl,-WX"
+    else
+        llvm_target=$target
+        llvm_extra_cflags="-fuse-ld=lld"
+        llvm_cflags="-target $target"
+    fi
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags --no-default-config" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config" >&5
+printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags --no-default-config"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
+                        llvm_extra_ldflags="--no-default-config"
+else case e in #(
+  e) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags" >&5
+printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  :
+else case e in #(
+  e) llvm_extra_cflags="" ;;
+esac
+fi } ;;
+esac
+fi }
+    if test -n "$llvm_extra_cflags"
+    then
+        target=$llvm_target
+        eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
+        as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
+        as_fn_append ${wine_arch}_LDFLAGS " $llvm_extra_ldflags"
+        CFLAGS="$CFLAGS $llvm_extra_cflags $llvm_cflags"
+    else
+        as_wine_cv_crosscc=`printf "%s\n" "wine_cv_${wine_arch}_crosscc" | sed "$as_sed_sh"`
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
+printf %s "checking whether $CC works... " >&6; }
+if eval test \${$as_wine_cv_crosscc+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$as_wine_cv_crosscc=yes"
+else case e in #(
+  e) eval "$as_wine_cv_crosscc=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+eval ac_res=\$$as_wine_cv_crosscc
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+        if eval test \"x\$"$as_wine_cv_crosscc"\" = x"no"
+then :
+  target=
+fi
+
+    fi
+
+    if test -z "$target"
+    then
+        if test ${enable_archs+y}
+then :
+  as_fn_error $? "$wine_arch PE cross-compiler not found.
+This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+fi
+        continue
+    fi
+
+    eval "${wine_arch}_TARGET=\$target"
+    eval "${wine_arch}_STRIP=\$target_strip"
+    as_wine_cv_crosscc_c99=`printf "%s\n" "ac_cv_${wine_arch}_crosscc_c99" | sed "$as_sed_sh"`
+
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CC option to enable C99 features" >&5
+printf %s "checking for $CC option to enable C99 features... " >&6; }
+    if eval test \${$as_wine_cv_crosscc_c99+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) eval "$as_wine_cv_crosscc_c99=no"
+         for arg in '' '-std=gnu99' '-D__STDC__'
+         do
+             test -z "$arg" || CC="$CC $arg"
+             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_c_conftest_c99_program
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$as_wine_cv_crosscc_c99=\$arg"
+else case e in #(
+  e) eval "$as_wine_cv_crosscc_c99=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+             eval CC=\$${wine_arch}_CC
+             if eval test \"x\$"$as_wine_cv_crosscc_c99"\" = x"no"
+then :
+
+else case e in #(
+  e) break ;;
+esac
+fi
+         done ;;
+esac
+fi
+
+    eval res=\$$as_wine_cv_crosscc_c99
+
+    case "x$res" in
+      x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
+printf "%s\n" "none needed" >&6; } ;;
+      xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
+printf "%s\n" "unsupported" >&6; }
+           if test ${enable_archs+y}
+then :
+  as_fn_error $? "$wine_arch PE cross-compiler supporting C99 not found.
+This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+fi
+           continue
+           ;;
+      x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $res" >&5
+printf "%s\n" "$res" >&6; }
+          as_fn_append ${wine_arch}_CC " $res" ;;
+    esac
+
+    if test "x$wine_arch" = xi386
+then :
+
+else case e in #(
+  e) as_wine_cv_seh_support=`printf "%s\n" "ac_cv_${wine_arch}_seh_support" | sed "$as_sed_sh"`
+
+               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports SEH directives" >&5
+printf %s "checking whether $CC supports SEH directives... " >&6; }
+if eval test \${$as_wine_cv_seh_support+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");
+int
+main (void)
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  eval "$as_wine_cv_seh_support=yes"
+else case e in #(
+  e) eval "$as_wine_cv_seh_support=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
+esac
+fi
+eval ac_res=\$$as_wine_cv_seh_support
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+               eval res=\$$as_wine_cv_seh_support
+
+               if test "x$res" = xyes
+then :
+
+else case e in #(
+  e) if test ${enable_archs+y}
+then :
+  as_fn_error $? "The $wine_arch PE cross-compiler doesn't support SEH directives.
+This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
+fi
+                          continue ;;
+esac
+fi ;;
+esac
+fi
+
+    if test "x$wine_arch" = x$extra_arch
+then :
+
+else case e in #(
+  e) as_fn_append PE_ARCHS " $wine_arch" ;;
+esac
+fi
+
+    case "$target" in
+      *-windows) wine_compiler_rt_libs="compiler-rt" ;;
+    esac
+
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
+printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-strict-aliasing"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-strict-aliasing"
+fi }
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=unknown-warning-option" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=unknown-warning-option" >&5
+printf %s "checking whether $CC supports -Werror=unknown-warning-option... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=unknown-warning-option"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=ignored-optimization-argument" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=ignored-optimization-argument" >&5
+printf %s "checking whether $CC supports -Werror=ignored-optimization-argument... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=ignored-optimization-argument"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wdeclaration-after-statement" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wdeclaration-after-statement" >&5
+printf %s "checking whether $CC supports -Wdeclaration-after-statement... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wdeclaration-after-statement"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wdeclaration-after-statement"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wempty-body" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wempty-body" >&5
+printf %s "checking whether $CC supports -Wempty-body... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wempty-body"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wempty-body"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wignored-qualifiers" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wignored-qualifiers" >&5
+printf %s "checking whether $CC supports -Wignored-qualifiers... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wignored-qualifiers"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wignored-qualifiers"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Winit-self" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Winit-self" >&5
+printf %s "checking whether $CC supports -Winit-self... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Winit-self"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Winit-self"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpacked-not-aligned" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpacked-not-aligned" >&5
+printf %s "checking whether $CC supports -Wpacked-not-aligned... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpacked-not-aligned"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-packed-not-aligned"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpragma-pack" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpragma-pack" >&5
+printf %s "checking whether $CC supports -Wpragma-pack... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpragma-pack"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-pragma-pack"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wmicrosoft-enum-forward-reference" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wmicrosoft-enum-forward-reference" >&5
+printf %s "checking whether $CC supports -Wmicrosoft-enum-forward-reference... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wmicrosoft-enum-forward-reference"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-microsoft-enum-forward-reference"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wshift-overflow=2" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wshift-overflow=2" >&5
+printf %s "checking whether $CC supports -Wshift-overflow=2... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wshift-overflow=2"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wshift-overflow=2"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wstrict-prototypes" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wstrict-prototypes" >&5
+printf %s "checking whether $CC supports -Wstrict-prototypes... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wstrict-prototypes"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wstrict-prototypes"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wtype-limits" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wtype-limits" >&5
+printf %s "checking whether $CC supports -Wtype-limits... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wtype-limits"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wtype-limits"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wunused-but-set-parameter" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wunused-but-set-parameter" >&5
+printf %s "checking whether $CC supports -Wunused-but-set-parameter... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wunused-but-set-parameter"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wunused-but-set-parameter"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wvla" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wvla" >&5
+printf %s "checking whether $CC supports -Wvla... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wvla"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wvla"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wwrite-strings" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wwrite-strings" >&5
+printf %s "checking whether $CC supports -Wwrite-strings... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wwrite-strings"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wwrite-strings"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpointer-arith" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpointer-arith" >&5
+printf %s "checking whether $CC supports -Wpointer-arith... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpointer-arith"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wpointer-arith"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wlogical-op" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wlogical-op" >&5
+printf %s "checking whether $CC supports -Wlogical-op... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wlogical-op"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wlogical-op"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wabsolute-value" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wabsolute-value" >&5
+printf %s "checking whether $CC supports -Wabsolute-value... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wabsolute-value"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wabsolute-value"
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wenum-enum-conversion" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wenum-enum-conversion" >&5
+printf %s "checking whether $CC supports -Wenum-enum-conversion... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wenum-enum-conversion"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  :
+else case e in #(
+  e) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wenum-conversion" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wenum-conversion" >&5
+printf %s "checking whether $CC supports -Wenum-conversion... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wenum-conversion"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used0x50 = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wenum-conversion"
+fi } ;;
+esac
+fi }
+    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-ffunction-sections" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -ffunction-sections" >&5
+printf %s "checking whether $CC supports -ffunction-sections... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -ffunction-sections"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -ffunction-sections"
+fi }
+
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fms-hotpatch -DMIN_CLANG_VERSION=18" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18" >&5
+printf %s "checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fms-hotpatch -DMIN_CLANG_VERSION=18"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fms-hotpatch"
+                        as_fn_append ${wine_arch}_LDFLAGS " -fms-hotpatch"
+fi }
+
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-flarge-source-files -Wmisleading-indentation" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -flarge-source-files -Wmisleading-indentation" >&5
+printf %s "checking whether $CC supports -flarge-source-files -Wmisleading-indentation... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -flarge-source-files -Wmisleading-indentation"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-misleading-indentation"
+fi }
+
+    case $wine_arch in
+      i386) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-omit-frame-pointer" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-omit-frame-pointer" >&5
+printf %s "checking whether $CC supports -fno-omit-frame-pointer... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-omit-frame-pointer"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-omit-frame-pointer"
+fi }
+            { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mpreferred-stack-boundary=2" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mpreferred-stack-boundary=2" >&5
+printf %s "checking whether $CC supports -mpreferred-stack-boundary=2... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mpreferred-stack-boundary=2"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -mpreferred-stack-boundary=2"
+fi }
+            { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,--disable-stdcall-fixup" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,--disable-stdcall-fixup" >&5
+printf %s "checking whether $CC supports -Wl,--disable-stdcall-fixup... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--disable-stdcall-fixup"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_LDFLAGS " -Wl,--disable-stdcall-fixup"
+fi } ;;
+      x86_64) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wformat-overflow" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wformat-overflow" >&5
+printf %s "checking whether $CC supports -Wformat-overflow... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wformat-overflow"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wformat-overflow"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wnonnull" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wnonnull" >&5
+printf %s "checking whether $CC supports -Wnonnull... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wnonnull"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wnonnull"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcx16" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcx16" >&5
+printf %s "checking whether $CC supports -mcx16... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcx16"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcx16"
+fi }
+              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcmodel=small" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcmodel=small" >&5
+printf %s "checking whether $CC supports -mcmodel=small... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcmodel=small"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcmodel=small"
+fi } ;;
+    esac
+
+        wine_crossdebug=$CROSSDEBUG
+    if test -z "$wine_crossdebug"
+    then
+      for ac_flag in $CFLAGS; do
+        case $ac_flag in
+         -gdwarf*)    wine_crossdebug=dwarf ;;
+         -gcodeview)  wine_crossdebug=pdb ;;
+         -g)          wine_crossdebug=${wine_crossdebug:-dwarf} ;;
+        esac
+      done
+    fi
+
+    ac_debug_format_seen=""
+    for ac_flag in $CFLAGS; do
+      case $ac_flag in
+       -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
+      esac
+    done
+    if test "x$ac_debug_format_seen" = x
+    then
+      case $wine_crossdebug in
+        *dwarf)                   { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,-debug:dwarf" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,-debug:dwarf" >&5
+printf %s "checking whether $CC supports -Wl,-debug:dwarf... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,-debug:dwarf"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_LDFLAGS " -Wl,-debug:dwarf"
+                                                        CFLAGS="$CFLAGS -Wl,-debug:dwarf"
+fi }
+                 { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gdwarf-4" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gdwarf-4" >&5
+printf %s "checking whether $CC supports -gdwarf-4... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gdwarf-4"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -gdwarf-4"
+fi } ;;
+        pdb)     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gcodeview" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gcodeview" >&5
+printf %s "checking whether $CC supports -gcodeview... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gcodeview"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -gcodeview"
+fi } ;;
+      esac
+    fi
+    eval "${wine_arch}_DEBUG=\$wine_crossdebug"
+
+    test "x$enable_werror" != xyes || { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror" | sed "$as_sed_sh"`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror" >&5
+printf %s "checking whether $CC supports -Werror... " >&6; }
+if eval test \${$as_ac_var+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_wine_try_cflags_saved=$CFLAGS
+ac_wine_try_cflags_saved_exeext=$ac_exeext
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror"
+ac_exeext=".exe"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
+int __cdecl mainCRTStartup(void) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  eval "$as_ac_var=yes"
+else case e in #(
+  e) eval "$as_ac_var=no" ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
+esac
+fi
+eval ac_res=\$$as_ac_var
+	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+printf "%s\n" "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_var"\" = x"yes"
+then :
+  as_fn_append ${wine_arch}_EXTRACFLAGS " -Werror"
+fi }
+            test "x$enable_build_id" != xyes || as_fn_append ${wine_arch}_LDFLAGS " -Wl,--build-id"
+
+done
+
+CC=$saved_CC
+CFLAGS=$saved_CFLAGS
+CPPFLAGS=$saved_CPPFLAGS
+LDFLAGS=$saved_LDFLAGS
+
+case $HOST_ARCH in
+  arm|aarch64)
+    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
+    DLLEXT="" ;;
+  *)
+    if test "x$PE_ARCHS" = "x"
+then :
+  case "x$with_mingw" in
+  x)   as_fn_append wine_notices "|Suitable PE cross-compiler not found, PE files won't be built." ;;
+  xno) ;;
+  *)   as_fn_error $? "Suitable PE cross-compiler not found, PE files won't be built.
+This is an error since --with-mingw was requested." "$LINENO" 5 ;;
+esac
+
+fi ;;
+esac
+
+
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for i386_set_ldt in -li386" >&5
 printf %s "checking for i386_set_ldt in -li386... " >&6; }
 if test ${ac_cv_lib_i386_i386_set_ldt+y}
@@ -10091,2095 +12181,6 @@ esac
 enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineandroid_drv=${enable_wineandroid_drv:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
-
-PE_ARCHS=""
-
-cross_archs=
-if test ${enable_archs+y}
-then :
-  test "x$with_system_dllpath" = "x" || as_fn_error $? "\"The --with-system-dllpath option is not compatible with --enable-archs\"" "$LINENO" 5
-     ac_save_IFS=$IFS
-     IFS=' ,'
-     set x $enable_archs
-     IFS=$ac_save_IFS
-     shift
-     for arch
-     do
-         case $arch in
-           i386|x86_64|arm|aarch64|arm64ec) cross_archs="$cross_archs $arch" ;;
-           *) as_fn_error $? "Unknown cross-compilation architecture '$arch'" "$LINENO" 5 ;;
-         esac
-     done
-else case e in #(
-  e) if test "x$with_mingw" != xno
-     then
-         test $HOST_ARCH = unknown || cross_archs=$HOST_ARCH
-     fi ;;
-esac
-fi
-
-saved_CC=$CC
-saved_CFLAGS=$CFLAGS
-saved_CPPFLAGS=$CPPFLAGS
-saved_LDFLAGS=$LDFLAGS
-
-{ extra_arch=; unset extra_arch;}
-for arch in $cross_archs
-do
-  case $arch in
-    arm64ec) test ${extra_arch+y} || extra_arch=x86_64 ;;
-    x86_64) extra_arch="" ;;
-  esac
-done
-
-for wine_arch in $cross_archs $extra_arch
-do
-    case $wine_arch in
-      i386) mingw_cpu=i686 ;;
-      arm)  mingw_cpu=armv7 ;;
-      *)    mingw_cpu=$wine_arch ;;
-    esac
-    case "x$with_mingw" in
-      xclang|x*/clang) eval "${wine_arch}_CC=\$with_mingw" ;;
-      xllvm-mingw)     eval "${wine_arch}_CC=\${mingw_cpu}-w64-mingw32-clang" ;;
-    esac
-    if eval \${${wine_arch}_CC:+false} :
-then :
-  case $wine_arch in
-          aarch64)
-            for ac_prog in aarch64-w64-mingw32-clang aarch64-w64-mingw32-gcc clang
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_aarch64_CC+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -n "$aarch64_CC"; then
-  ac_cv_prog_aarch64_CC="$aarch64_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_aarch64_CC="$ac_prog"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi ;;
-esac
-fi
-aarch64_CC=$ac_cv_prog_aarch64_CC
-if test -n "$aarch64_CC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $aarch64_CC" >&5
-printf "%s\n" "$aarch64_CC" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-  test -n "$aarch64_CC" && break
-done
-test -n "$aarch64_CC" || aarch64_CC="false"
-
-            ;;
-          arm64ec)
-            for ac_prog in arm64ec-w64-mingw32-clang arm64ec-w64-mingw32-gcc clang
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_arm64ec_CC+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -n "$arm64ec_CC"; then
-  ac_cv_prog_arm64ec_CC="$arm64ec_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_arm64ec_CC="$ac_prog"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi ;;
-esac
-fi
-arm64ec_CC=$ac_cv_prog_arm64ec_CC
-if test -n "$arm64ec_CC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm64ec_CC" >&5
-printf "%s\n" "$arm64ec_CC" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-  test -n "$arm64ec_CC" && break
-done
-test -n "$arm64ec_CC" || arm64ec_CC="false"
-
-            ;;
-          arm)
-            for ac_prog in armv7-w64-mingw32-clang armv7-w64-mingw32-gcc clang
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_arm_CC+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -n "$arm_CC"; then
-  ac_cv_prog_arm_CC="$arm_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_arm_CC="$ac_prog"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi ;;
-esac
-fi
-arm_CC=$ac_cv_prog_arm_CC
-if test -n "$arm_CC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $arm_CC" >&5
-printf "%s\n" "$arm_CC" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-  test -n "$arm_CC" && break
-done
-test -n "$arm_CC" || arm_CC="false"
-
-            ;;
-          i386)
-            ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang "
-            for ac_prog in $ac_prefix_list clang
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_i386_CC+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -n "$i386_CC"; then
-  ac_cv_prog_i386_CC="$i386_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_i386_CC="$ac_prog"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi ;;
-esac
-fi
-i386_CC=$ac_cv_prog_i386_CC
-if test -n "$i386_CC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $i386_CC" >&5
-printf "%s\n" "$i386_CC" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-  test -n "$i386_CC" && break
-done
-test -n "$i386_CC" || i386_CC="false"
-
-            ;;
-          x86_64)
-            ac_prefix_list="x86_64-w64-mingw32-gcc amd64-w64-mingw32-gcc x86_64-w64-mingw32-clang amd64-w64-mingw32-clang "
-            for ac_prog in $ac_prefix_list clang
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-printf %s "checking for $ac_word... " >&6; }
-if test ${ac_cv_prog_x86_64_CC+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) if test -n "$x86_64_CC"; then
-  ac_cv_prog_x86_64_CC="$x86_64_CC" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  case $as_dir in #(((
-    '') as_dir=./ ;;
-    */) ;;
-    *) as_dir=$as_dir/ ;;
-  esac
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir$ac_word$ac_exec_ext"; then
-    ac_cv_prog_x86_64_CC="$ac_prog"
-    printf "%s\n" "$as_me:${as_lineno-$LINENO}: found $as_dir$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-fi ;;
-esac
-fi
-x86_64_CC=$ac_cv_prog_x86_64_CC
-if test -n "$x86_64_CC"; then
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $x86_64_CC" >&5
-printf "%s\n" "$x86_64_CC" >&6; }
-else
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
-printf "%s\n" "no" >&6; }
-fi
-
-
-  test -n "$x86_64_CC" && break
-done
-test -n "$x86_64_CC" || x86_64_CC="false"
-
-            ;;
-         esac
-         wine_try_msvc=yes
-else case e in #(
-  e) wine_try_msvc=no ;;
-esac
-fi
-
-    CPPFLAGS=""
-    if eval test \${${wine_arch}_CFLAGS+y}
-then :
-
-else case e in #(
-  e) eval "${wine_arch}_CFLAGS=\${CROSSCFLAGS:-\"-g -O2\"}" ;;
-esac
-fi
-    if eval test \${${wine_arch}_LDFLAGS+y}
-then :
-
-else case e in #(
-  e) eval "${wine_arch}_LDFLAGS=\$CROSSLDFLAGS" ;;
-esac
-fi
-    eval CC=\$${wine_arch}_CC
-    eval CFLAGS=\$${wine_arch}_CFLAGS
-    eval LDFLAGS=\$${wine_arch}_LDFLAGS
-    eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
-
-    target=""
-    set x $CC
-    shift
-    while test $# -ge 1
-    do
-        case "$1" in
-            */*-gcc) target=`expr "$1" : '.*/\(.*\)-gcc'` ;;
-            */*-clang) target=`expr "$1" : '.*/\(.*\)-clang'` ;;
-            *-gcc) target=`expr "$1" : '\(.*\)-gcc'` ;;
-            *-clang) target=`expr "$1" : '\(.*\)-clang'` ;;
-        esac
-        shift
-    done
-
-        target_strip=${target:-llvm}-strip
-    if test "$wine_try_msvc" = yes -o -z "$target"
-    then
-        llvm_target="$mingw_cpu-windows"
-        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
-        llvm_cflags="-Wl,-subsystem:console -Wl,-WX"
-    else
-        llvm_target=$target
-        llvm_extra_cflags="-fuse-ld=lld"
-        llvm_cflags="-target $target"
-    fi
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags --no-default-config" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config" >&5
-printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags --no-default-config... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags --no-default-config"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  llvm_extra_cflags="$llvm_extra_cflags --no-default-config"
-                        llvm_extra_ldflags="--no-default-config"
-else case e in #(
-  e) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags" >&5
-printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  :
-else case e in #(
-  e) llvm_extra_cflags="" ;;
-esac
-fi } ;;
-esac
-fi }
-    if test -n "$llvm_extra_cflags"
-    then
-        target=$llvm_target
-        eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
-        as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
-        as_fn_append ${wine_arch}_LDFLAGS " $llvm_extra_ldflags"
-        CFLAGS="$CFLAGS $llvm_extra_cflags $llvm_cflags"
-    else
-        as_wine_cv_crosscc=`printf "%s\n" "wine_cv_${wine_arch}_crosscc" | sed "$as_sed_sh"`
-
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC works" >&5
-printf %s "checking whether $CC works... " >&6; }
-if eval test \${$as_wine_cv_crosscc+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main (void)
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  eval "$as_wine_cv_crosscc=yes"
-else case e in #(
-  e) eval "$as_wine_cv_crosscc=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-eval ac_res=\$$as_wine_cv_crosscc
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-        if eval test \"x\$"$as_wine_cv_crosscc"\" = x"no"
-then :
-  target=
-fi
-
-    fi
-
-    if test -z "$target"
-    then
-        if test ${enable_archs+y}
-then :
-  as_fn_error $? "$wine_arch PE cross-compiler not found.
-This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
-fi
-        continue
-    fi
-
-    eval "${wine_arch}_TARGET=\$target"
-    eval "${wine_arch}_STRIP=\$target_strip"
-    as_wine_cv_crosscc_c99=`printf "%s\n" "ac_cv_${wine_arch}_crosscc_c99" | sed "$as_sed_sh"`
-
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CC option to enable C99 features" >&5
-printf %s "checking for $CC option to enable C99 features... " >&6; }
-    if eval test \${$as_wine_cv_crosscc_c99+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) eval "$as_wine_cv_crosscc_c99=no"
-         for arg in '' '-std=gnu99' '-D__STDC__'
-         do
-             test -z "$arg" || CC="$CC $arg"
-             cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$ac_c_conftest_c99_program
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  eval "$as_wine_cv_crosscc_c99=\$arg"
-else case e in #(
-  e) eval "$as_wine_cv_crosscc_c99=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-             eval CC=\$${wine_arch}_CC
-             if eval test \"x\$"$as_wine_cv_crosscc_c99"\" = x"no"
-then :
-
-else case e in #(
-  e) break ;;
-esac
-fi
-         done ;;
-esac
-fi
-
-    eval res=\$$as_wine_cv_crosscc_c99
-
-    case "x$res" in
-      x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
-printf "%s\n" "none needed" >&6; } ;;
-      xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
-printf "%s\n" "unsupported" >&6; }
-           if test ${enable_archs+y}
-then :
-  as_fn_error $? "$wine_arch PE cross-compiler supporting C99 not found.
-This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
-fi
-           continue
-           ;;
-      x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $res" >&5
-printf "%s\n" "$res" >&6; }
-          as_fn_append ${wine_arch}_CC " $res" ;;
-    esac
-
-    if test "x$wine_arch" = xi386
-then :
-
-else case e in #(
-  e) as_wine_cv_seh_support=`printf "%s\n" "ac_cv_${wine_arch}_seh_support" | sed "$as_sed_sh"`
-
-               { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports SEH directives" >&5
-printf %s "checking whether $CC supports SEH directives... " >&6; }
-if eval test \${$as_wine_cv_seh_support+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-asm(".text\nac_test:\t.seh_proc ac_test\n\tnop\n\t.seh_stackalloc 16\n\t.seh_endprologue\n\t.seh_endproc");
-int
-main (void)
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"
-then :
-  eval "$as_wine_cv_seh_support=yes"
-else case e in #(
-  e) eval "$as_wine_cv_seh_support=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext ;;
-esac
-fi
-eval ac_res=\$$as_wine_cv_seh_support
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-               eval res=\$$as_wine_cv_seh_support
-
-               if test "x$res" = xyes
-then :
-
-else case e in #(
-  e) if test ${enable_archs+y}
-then :
-  as_fn_error $? "The $wine_arch PE cross-compiler doesn't support SEH directives.
-This is an error since --enable-archs=$wine_arch was requested." "$LINENO" 5
-fi
-                          continue ;;
-esac
-fi ;;
-esac
-fi
-
-    if test "x$wine_arch" = x$extra_arch
-then :
-
-else case e in #(
-  e) as_fn_append PE_ARCHS " $wine_arch" ;;
-esac
-fi
-
-    case "$target" in
-      *-windows) wine_compiler_rt_libs="compiler-rt" ;;
-    esac
-
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-strict-aliasing" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-strict-aliasing" >&5
-printf %s "checking whether $CC supports -fno-strict-aliasing... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-strict-aliasing"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-strict-aliasing"
-fi }
-        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=unknown-warning-option" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=unknown-warning-option" >&5
-printf %s "checking whether $CC supports -Werror=unknown-warning-option... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=unknown-warning-option"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  CFLAGS="$CFLAGS -Werror=unknown-warning-option"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror=ignored-optimization-argument" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror=ignored-optimization-argument" >&5
-printf %s "checking whether $CC supports -Werror=ignored-optimization-argument... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=ignored-optimization-argument"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  CFLAGS="$CFLAGS -Werror=ignored-optimization-argument"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wdeclaration-after-statement" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wdeclaration-after-statement" >&5
-printf %s "checking whether $CC supports -Wdeclaration-after-statement... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wdeclaration-after-statement"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wdeclaration-after-statement"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wempty-body" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wempty-body" >&5
-printf %s "checking whether $CC supports -Wempty-body... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wempty-body"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wempty-body"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wignored-qualifiers" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wignored-qualifiers" >&5
-printf %s "checking whether $CC supports -Wignored-qualifiers... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wignored-qualifiers"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wignored-qualifiers"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Winit-self" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Winit-self" >&5
-printf %s "checking whether $CC supports -Winit-self... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Winit-self"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Winit-self"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpacked-not-aligned" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpacked-not-aligned" >&5
-printf %s "checking whether $CC supports -Wpacked-not-aligned... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpacked-not-aligned"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-packed-not-aligned"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpragma-pack" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpragma-pack" >&5
-printf %s "checking whether $CC supports -Wpragma-pack... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpragma-pack"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-pragma-pack"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wmicrosoft-enum-forward-reference" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wmicrosoft-enum-forward-reference" >&5
-printf %s "checking whether $CC supports -Wmicrosoft-enum-forward-reference... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wmicrosoft-enum-forward-reference"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-microsoft-enum-forward-reference"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wshift-overflow=2" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wshift-overflow=2" >&5
-printf %s "checking whether $CC supports -Wshift-overflow=2... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wshift-overflow=2"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wshift-overflow=2"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wstrict-prototypes" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wstrict-prototypes" >&5
-printf %s "checking whether $CC supports -Wstrict-prototypes... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wstrict-prototypes"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wstrict-prototypes"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wtype-limits" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wtype-limits" >&5
-printf %s "checking whether $CC supports -Wtype-limits... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wtype-limits"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wtype-limits"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wunused-but-set-parameter" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wunused-but-set-parameter" >&5
-printf %s "checking whether $CC supports -Wunused-but-set-parameter... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wunused-but-set-parameter"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wunused-but-set-parameter"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wvla" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wvla" >&5
-printf %s "checking whether $CC supports -Wvla... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wvla"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wvla"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wwrite-strings" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wwrite-strings" >&5
-printf %s "checking whether $CC supports -Wwrite-strings... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wwrite-strings"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wwrite-strings"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpointer-arith" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpointer-arith" >&5
-printf %s "checking whether $CC supports -Wpointer-arith... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpointer-arith"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wpointer-arith"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wlogical-op" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wlogical-op" >&5
-printf %s "checking whether $CC supports -Wlogical-op... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wlogical-op"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wlogical-op"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wabsolute-value" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wabsolute-value" >&5
-printf %s "checking whether $CC supports -Wabsolute-value... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wabsolute-value"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wabsolute-value"
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wenum-enum-conversion" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wenum-enum-conversion" >&5
-printf %s "checking whether $CC supports -Wenum-enum-conversion... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wenum-enum-conversion"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  :
-else case e in #(
-  e) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wenum-conversion" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wenum-conversion" >&5
-printf %s "checking whether $CC supports -Wenum-conversion... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wenum-conversion"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used0x50 = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wenum-conversion"
-fi } ;;
-esac
-fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-ffunction-sections" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -ffunction-sections" >&5
-printf %s "checking whether $CC supports -ffunction-sections... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -ffunction-sections"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -ffunction-sections"
-fi }
-
-        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fms-hotpatch -DMIN_CLANG_VERSION=18" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18" >&5
-printf %s "checking whether $CC supports -fms-hotpatch -DMIN_CLANG_VERSION=18... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fms-hotpatch -DMIN_CLANG_VERSION=18"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -fms-hotpatch"
-                        as_fn_append ${wine_arch}_LDFLAGS " -fms-hotpatch"
-fi }
-
-        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-flarge-source-files -Wmisleading-indentation" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -flarge-source-files -Wmisleading-indentation" >&5
-printf %s "checking whether $CC supports -flarge-source-files -Wmisleading-indentation... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -flarge-source-files -Wmisleading-indentation"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-misleading-indentation"
-fi }
-
-    case $wine_arch in
-      i386) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-fno-omit-frame-pointer" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -fno-omit-frame-pointer" >&5
-printf %s "checking whether $CC supports -fno-omit-frame-pointer... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-omit-frame-pointer"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -fno-omit-frame-pointer"
-fi }
-            { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mpreferred-stack-boundary=2" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mpreferred-stack-boundary=2" >&5
-printf %s "checking whether $CC supports -mpreferred-stack-boundary=2... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mpreferred-stack-boundary=2"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -mpreferred-stack-boundary=2"
-fi }
-            { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,--disable-stdcall-fixup" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,--disable-stdcall-fixup" >&5
-printf %s "checking whether $CC supports -Wl,--disable-stdcall-fixup... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--disable-stdcall-fixup"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_LDFLAGS " -Wl,--disable-stdcall-fixup"
-fi } ;;
-      x86_64) { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wformat-overflow" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wformat-overflow" >&5
-printf %s "checking whether $CC supports -Wformat-overflow... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wformat-overflow"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wformat-overflow"
-fi }
-              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wnonnull" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wnonnull" >&5
-printf %s "checking whether $CC supports -Wnonnull... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wnonnull"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wnonnull"
-fi }
-              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcx16" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcx16" >&5
-printf %s "checking whether $CC supports -mcx16... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcx16"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcx16"
-fi }
-              { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-mcmodel=small" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -mcmodel=small" >&5
-printf %s "checking whether $CC supports -mcmodel=small... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcmodel=small"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -mcmodel=small"
-fi } ;;
-    esac
-
-        wine_crossdebug=$CROSSDEBUG
-    if test -z "$wine_crossdebug"
-    then
-      for ac_flag in $CFLAGS; do
-        case $ac_flag in
-         -gdwarf*)    wine_crossdebug=dwarf ;;
-         -gcodeview)  wine_crossdebug=pdb ;;
-         -g)          wine_crossdebug=${wine_crossdebug:-dwarf} ;;
-        esac
-      done
-    fi
-
-    ac_debug_format_seen=""
-    for ac_flag in $CFLAGS; do
-      case $ac_flag in
-       -gdwarf*|-gcodeview)  ac_debug_format_seen=$ac_flag ;;
-      esac
-    done
-    if test "x$ac_debug_format_seen" = x
-    then
-      case $wine_crossdebug in
-        *dwarf)                   { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wl,-debug:dwarf" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wl,-debug:dwarf" >&5
-printf %s "checking whether $CC supports -Wl,-debug:dwarf... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,-debug:dwarf"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_LDFLAGS " -Wl,-debug:dwarf"
-                                                        CFLAGS="$CFLAGS -Wl,-debug:dwarf"
-fi }
-                 { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gdwarf-4" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gdwarf-4" >&5
-printf %s "checking whether $CC supports -gdwarf-4... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gdwarf-4"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -gdwarf-4"
-fi } ;;
-        pdb)     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-gcodeview" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -gcodeview" >&5
-printf %s "checking whether $CC supports -gcodeview... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gcodeview"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -gcodeview"
-fi } ;;
-      esac
-    fi
-    eval "${wine_arch}_DEBUG=\$wine_crossdebug"
-
-    test "x$enable_werror" != xyes || { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Werror" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Werror" >&5
-printf %s "checking whether $CC supports -Werror... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Werror"
-fi }
-            test "x$enable_build_id" != xyes || as_fn_append ${wine_arch}_LDFLAGS " -Wl,--build-id"
-
-done
-
-CC=$saved_CC
-CFLAGS=$saved_CFLAGS
-CPPFLAGS=$saved_CPPFLAGS
-LDFLAGS=$saved_LDFLAGS
-
-case $HOST_ARCH in
-  arm|aarch64)
-    test "x$PE_ARCHS" != x || as_fn_error $? "PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw." "$LINENO" 5
-    DLLEXT="" ;;
-  *)
-    if test "x$PE_ARCHS" = "x"
-then :
-  case "x$with_mingw" in
-  x)   as_fn_append wine_notices "|Suitable PE cross-compiler not found, PE files won't be built." ;;
-  xno) ;;
-  *)   as_fn_error $? "Suitable PE cross-compiler not found, PE files won't be built.
-This is an error since --with-mingw was requested." "$LINENO" 5 ;;
-esac
-
-fi ;;
-esac
 
 
 if test "x$with_system_dllpath" != "x" -a -n "$PE_ARCHS"
@@ -24243,6 +24244,7 @@ RSVG = $RSVG
 CONVERT = $CONVERT
 ICOTOOL = $ICOTOOL
 MSGFMT = $MSGFMT
+PE_ARCHS = $PE_ARCHS
 I386_LIBS = $I386_LIBS
 OPENGL_LIBS = $OPENGL_LIBS
 DLLFLAGS = $DLLFLAGS
@@ -24278,7 +24280,6 @@ OBJC = $OBJC
 OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS
-PE_ARCHS = $PE_ARCHS
 MINGW_PKG_CONFIG = $MINGW_PKG_CONFIG
 CAPSTONE_PE_CFLAGS = $CAPSTONE_PE_CFLAGS
 CAPSTONE_PE_LIBS = $CAPSTONE_PE_LIBS
