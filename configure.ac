@@ -1697,11 +1697,12 @@ dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSA_LIBS,"")
 if test "x$with_alsa" != "xno"
 then
-    AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,
-        [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <alsa/asoundlib.h>]], [[snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
-                        [ALSA_LIBS="-lasound"])])
+    WINE_PACKAGE_FLAGS(ALSA,[alsa],[-lasound],,,
+        [AC_CHECK_LIB(asound,snd_pcm_hw_params_get_access_mask,[:],[ALSA_LIBS=""])])
 fi
-test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
+WINE_NOTICE_WITH(alsa,[test -z "$ALSA_LIBS"],
+                 [libasound ${notice_platform}development files not found, Alsa won't be supported.],
+                 [enable_winealsa_drv])
 
 dnl **** Check for OSSv4 ****
 if test "x$with_oss" != xno
