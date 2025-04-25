@@ -2860,7 +2860,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
         url_a = (flags & BINDTEST_INVALID_CN) ? "https://" WINEHQ_IP "/robots.txt" : "https://test.winehq.org/tests/hello.html";
         break;
     case FTP_TEST:
-        url_a = "ftp://ftp.winehq.org/welcome%2emsg";
+        url_a = "ftp://test.winehq.org/welcome%2emsg";
         break;
     default:
         url_a = "winetest:test";

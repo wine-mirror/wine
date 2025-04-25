@@ -3615,7 +3615,7 @@ static void test_ftp_protocol(void)
     DWORD cb, ret;
     HRESULT hres;
 
-    static const WCHAR ftp_urlW[] = L"ftp://ftp.winehq.org/pub/other/winelogo.xcf.tar.bz2";
+    static const WCHAR ftp_urlW[] = L"ftp://test.winehq.org/pub/wine/README";
 
     trace("Testing ftp protocol...\n");
 
