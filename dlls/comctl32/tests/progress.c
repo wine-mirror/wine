@@ -43,6 +43,47 @@ enum seq_index
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a progress bar control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, PROGRESS_CLASSA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, CHILD_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 static HWND create_progress(DWORD style)
 {
     return CreateWindowExA(0, PROGRESS_CLASSA, "", WS_VISIBLE | style,
@@ -323,6 +364,7 @@ static WNDPROC old_proc;
 static const struct message paint_pbm_setstate_seq[] =
 {
     {PBM_SETSTATE, sent},
+    {EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0},
     {WM_PAINT, sent},
     {WM_ERASEBKGND, sent | defwinproc},
     {0}
@@ -432,9 +474,13 @@ START_TEST(progress)
         return;
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
+    init_winevent_hook();
+
     test_setcolors();
     test_PBM_STEPIT();
     test_bar_states();
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 

@@ -535,7 +535,11 @@ static UINT PROGRESS_SetState (HWND hwnd, PROGRESS_INFO *infoPtr, UINT state)
         return 0;
 
     if (state != prev_state)
+    {
+        NotifyWinEvent(EVENT_OBJECT_STATECHANGE, hwnd, OBJID_CLIENT, 0);
+
         InvalidateRect(hwnd, NULL, TRUE);
+    }
     return prev_state;
 }
 
