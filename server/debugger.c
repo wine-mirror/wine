@@ -48,7 +48,7 @@ struct debug_event
     struct file           *file;      /* file object for events that need one */
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
-    debug_event_t          data;      /* event data */
+    union debug_event_data data;      /* event data */
 };
 
 static const WCHAR debug_obj_name[] = {'D','e','b','u','g','O','b','j','e','c','t'};
@@ -142,7 +142,7 @@ static client_ptr_t get_teb_user_ptr( struct thread *thread )
 
 static void fill_exception_event( struct debug_event *event, const void *arg )
 {
-    const debug_event_t *data = arg;
+    const union debug_event_data *data = arg;
     event->data.exception = data->exception;
     event->data.exception.nb_params = min( event->data.exception.nb_params, EXCEPTION_MAXIMUM_PARAMETERS );
 }
@@ -157,7 +157,7 @@ static void fill_create_thread_event( struct debug_event *event, const void *arg
 static void fill_create_process_event( struct debug_event *event, const void *arg )
 {
     const struct memory_view *view = arg;
-    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.create_process.base );
+    const struct pe_image_info *image_info = get_view_image_info( view, &event->data.create_process.base );
 
     event->data.create_process.start      = event->sender->entry_point;
     event->data.create_process.dbg_offset = image_info->dbg_offset;
@@ -181,7 +181,7 @@ static void fill_exit_process_event( struct debug_event *event, const void *arg 
 static void fill_load_dll_event( struct debug_event *event, const void *arg )
 {
     const struct memory_view *view = arg;
-    const pe_image_info_t *image_info = get_view_image_info( view, &event->data.load_dll.base );
+    const struct pe_image_info *image_info = get_view_image_info( view, &event->data.load_dll.base );
 
     event->data.load_dll.dbg_offset = image_info->dbg_offset;
     event->data.load_dll.dbg_size   = image_info->dbg_size;
@@ -641,7 +641,7 @@ DECL_HANDLER(queue_exception_event)
     reply->handle = 0;
     if (debug_obj)
     {
-        debug_event_t data;
+        union debug_event_data data;
         struct debug_event *event;
         struct thread *thread = current;
 

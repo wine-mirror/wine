@@ -128,12 +128,15 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 struct exc_stack_layout
 {
     CONTEXT              context;        /* 000 */
-    EXCEPTION_RECORD     rec;            /* 390 */
-    ULONG64              align;          /* 428 */
-    ULONG64              redzone[2];     /* 430 */
+    CONTEXT_EX           context_ex;     /* 390 */
+    EXCEPTION_RECORD     rec;            /* 3b0 */
+    ULONG64              align;          /* 448 */
+    ULONG64              sp;             /* 450 */
+    ULONG64              pc;             /* 458 */
+    ULONG64              redzone[2];     /* 460 */
 };
-C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x390 );
-C_ASSERT( sizeof(struct exc_stack_layout) == 0x440 );
+C_ASSERT( offsetof(struct exc_stack_layout, rec) == 0x3b0 );
+C_ASSERT( sizeof(struct exc_stack_layout) == 0x470 );
 
 /* stack layout when calling KiUserApcDispatcher */
 struct apc_stack_layout
@@ -203,15 +206,27 @@ static BOOL is_inside_syscall( ucontext_t *sigcontext )
             (char *)SP_sig(sigcontext) <= (char *)arm64_thread_data()->syscall_frame);
 }
 
-
 /***********************************************************************
- *           unwind_builtin_dll
+ *           context_init_empty_xstate
  *
- * Equivalent of RtlVirtualUnwind for builtin modules.
+ * Initializes a context's CONTEXT_EX structure to point to an empty xstate buffer
  */
-NTSTATUS unwind_builtin_dll( void *args )
+static inline void context_init_empty_xstate( CONTEXT *context, void *xstate_buffer )
 {
-    return STATUS_UNSUCCESSFUL;
+    CONTEXT_EX *xctx;
+
+    xctx = (CONTEXT_EX *)(context + 1);
+    xctx->Legacy.Length = sizeof(CONTEXT);
+    xctx->Legacy.Offset = -(LONG)sizeof(CONTEXT);
+    xctx->XState.Length = 0;
+    xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
+    xctx->All.Length = sizeof(CONTEXT) + xctx->XState.Offset + xctx->XState.Length;
+    xctx->All.Offset = -(LONG)sizeof(CONTEXT);
+}
+
+void set_process_instrumentation_callback( void *callback )
+{
+    if (callback) FIXME( "Not supported.\n" );
 }
 
 
@@ -723,6 +738,9 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     stack = virtual_setup_exception( stack_ptr, sizeof(*stack), rec );
     stack->rec = *rec;
     stack->context = *context;
+    context_init_empty_xstate( &stack->context, stack->redzone );
+    stack->sp = stack->context.Sp;
+    stack->pc = stack->context.Pc;
 
     SP_sig(sigcontext) = (ULONG_PTR)stack;
     PC_sig(sigcontext) = (ULONG_PTR)pKiUserExceptionDispatcher;
@@ -804,6 +822,10 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     stack = (struct exc_stack_layout *)(context->Sp & ~15) - 1;
     memmove( &stack->context, context, sizeof(*context) );
     memmove( &stack->rec, rec, sizeof(*rec) );
+    context_init_empty_xstate( &stack->context, stack->redzone );
+    stack->sp = stack->context.Sp;
+    stack->pc = stack->context.Pc;
+
     frame->pc = (ULONG64)pKiUserExceptionDispatcher;
     frame->sp = (ULONG64)stack;
     frame->restore_flags |= CONTEXT_CONTROL;
@@ -922,7 +944,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
  */
 extern void DECLSPEC_NORETURN user_mode_abort_thread( NTSTATUS status, struct syscall_frame *frame );
 __ASM_GLOBAL_FUNC( user_mode_abort_thread,
-                   "ldr x1, [x1, #0x110]\n\t"    /* frame->syscall_cfa */
+                   "ldr x1, [x1, #0x118]\n\t"    /* frame->syscall_cfa */
                    "sub x29, x1, #0xc0\n\t"
                    /* switch to kernel stack */
                    "mov sp, x29\n\t"
@@ -1064,6 +1086,21 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 static void ill_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     EXCEPTION_RECORD rec = { EXCEPTION_ILLEGAL_INSTRUCTION };
+    ucontext_t *context = sigcontext;
+
+    if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
+        !(PC_sig( context ) & 3))
+    {
+        ULONG instr = *(ULONG *)PC_sig( context );
+        /* emulate mrs xN, CurrentEL */
+        if ((instr & ~0x1f) == 0xd5384240) {
+            ULONG reg = instr & 0x1f;
+            /* ignore writes to xzr */
+            if (reg != 31) REGn_sig(reg, context) = 0;
+            PC_sig(context) += 4;
+            return;
+        }
+    }
 
     setup_exception( sigcontext, &rec );
 }
@@ -1102,28 +1139,44 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         rec.ExceptionCode = EXCEPTION_SINGLE_STEP;
         break;
     case TRAP_BRKPT:
-    default:
         /* debug exceptions do not update ESR on Linux, so we fetch the instruction directly. */
         if (!(PSTATE_sig( context ) & 0x10) && /* AArch64 (not WoW) */
-            !(PC_sig( context ) & 3) &&
-            *(ULONG *)PC_sig( context ) == 0xd43e0060UL) /* brk #0xf003 -> __fastfail */
+            !(PC_sig( context ) & 3))
         {
-            rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
-            rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
-            rec.NumberParameters = 1;
-            rec.ExceptionInformation[0] = ctx.X[0];
-            NtRaiseException( &rec, &ctx, FALSE );
-            return;
+            ULONG imm = (*(ULONG *)PC_sig( context ) >> 5) & 0xffff;
+            switch (imm)
+            {
+            case 0xf000:
+                ctx.Pc += 4;  /* skip the brk instruction */
+                rec.ExceptionCode = EXCEPTION_BREAKPOINT;
+                rec.NumberParameters = 1;
+                break;
+            case 0xf001:
+                rec.ExceptionCode = STATUS_ASSERTION_FAILURE;
+                break;
+            case 0xf003:
+                rec.ExceptionCode = STATUS_STACK_BUFFER_OVERRUN;
+                rec.ExceptionFlags = EXCEPTION_NONCONTINUABLE;
+                rec.NumberParameters = 1;
+                rec.ExceptionInformation[0] = ctx.X[0];
+                NtRaiseException( &rec, &ctx, FALSE );
+                break;
+            case 0xf004:
+                rec.ExceptionCode = EXCEPTION_INT_DIVIDE_BY_ZERO;
+                break;
+            default:
+                rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
+                break;
+            }
         }
-        ctx.Pc += 4;  /* skip the brk instruction */
-        rec.ExceptionCode = EXCEPTION_BREAKPOINT;
-        rec.NumberParameters = 1;
+        break;
+    default:
+        rec.ExceptionCode = EXCEPTION_ILLEGAL_INSTRUCTION;
         break;
     }
 
     setup_raise_exception( sigcontext, &rec, &ctx );
 }
-
 
 /**********************************************************************
  *		fpe_handler

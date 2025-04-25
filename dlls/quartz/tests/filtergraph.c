@@ -529,6 +529,25 @@ static void test_media_event(IFilterGraph2 *graph)
     flaky_wine
     ok(current == stop, "expected %s, got %s\n", wine_dbgstr_longlong(stop), wine_dbgstr_longlong(current));
 
+    hr = IMediaControl_Pause(control);
+    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+    hr = IMediaControl_GetState(control, 1000, &state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(state == State_Paused, "Got state %ld.\n", state);
+
+    /*
+     * Reset position back to start without a stop. This can also be done
+     * while the stream is still running, but it's more prone to test failures
+     * if done that way.
+     */
+    current = 0;
+    hr = IMediaSeeking_SetPositions(seeking, &current, AM_SEEKING_AbsolutePositioning, NULL, AM_SEEKING_NoPositioning);
+    ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &current);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(current != stop, "Got current position %s.\n", wine_dbgstr_longlong(current));
+
     hr = IMediaControl_Stop(control);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);

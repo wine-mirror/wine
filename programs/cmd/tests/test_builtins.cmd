@@ -84,6 +84,56 @@ type mixedEchoModes.cmd
 cmd /c mixedEchoModes.cmd
 del mixedEchoModes.cmd
 
+echo ------------ Testing call and echo modes ------------
+rem echo on/off is propagated back to caller (except in interactive mode)
+@echo off
+@FOR /F "tokens=* usebackq" %%F IN (`echo`) DO SET "wine_echo_on=%%F"
+goto :hopCallEchoModes
+
+rem ensure comparison isn't locale dependant
+:showEchoMode
+@FOR /F "tokens=*" %%F IN (%1) DO @IF "%%F"=="%wine_echo_on%" (@echo ECHO_IS_ON) else (@echo ECHO_IS_OFF)
+@del %1
+@exit /b 0
+:hopCallEchoModes
+
+echo %%*> callme.cmd
+rem ensure that :showEchoMode works as expected
+@echo on
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo off
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+rem test inside a batch file, that caller keeps callee echo on/off status
+@echo off
+@call callme.cmd @echo on
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo on
+@call callme.cmd @echo off
+@echo>foo.tmp
+@call :showEchoMode foo.tmp
+@echo off
+
+rem test in interactive mode... echo is always preserved after a call
+@echo echo on>foo.txt
+@echo call callme.cmd @echo off>>foo.txt
+@echo echo^>foo.tmp>>foo.txt
+type foo.txt | cmd.exe > NUL
+@call :showEchoMode foo.tmp
+
+@echo echo off>foo.txt
+@echo call callme.cmd @echo on>>foo.txt
+@echo echo^>foo.tmp>>foo.txt
+type foo.txt | cmd.exe > NUL
+@call :showEchoMode foo.tmp
+
+rem cleanup
+del foo.txt
+del callme.cmd
+set wine_echo_on=
+@echo off
 echo ------------ Testing parameterization ------------
 call :TestParm a b c
 call :TestParm "a b c"
@@ -176,6 +226,11 @@ del foo
 echo foo> foo
 echo foo7 7>> foo || (echo not supported & del foo)
 if exist foo (type foo) else echo not supported
+echo --- right-to-left redirection
+1>foo-out 2>foo-err 1<&2 echo foo
+type foo-out 2>NUL || echo good
+type foo-err 2>NUL || echo bad
+erase /q foo-out foo-err
 echo --- redirect at beginning of line
 >foo (echo foo)
 type foo
@@ -467,6 +522,8 @@ if 1==0 (echo q1) else echo q2&echo q3
 echo ------------- Testing internal commands return codes
 setlocal EnableDelayedExpansion
 
+rem All the success/failure tests are meant to be duplicated in test_builtins.bat
+rem So be sure to update both files at once
 echo --- success/failure for basics
 call :setError 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
 call :setError 33 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!
@@ -491,27 +548,45 @@ call :setError 666 & Idontexist.exe & echo ERRORLEVEL !errorlevel!
 call :setError 666 & (cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (cmd.exe /c "echo foo & exit /b 1024" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (I\dont\exist.html &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-rem native cmd on Windows 7 shows a dialog for missing association, and waits for its dismisal...
-rem later native cmd.exe shows the dialog, but is not blocking. so, skip the Windows7 case
-rem FIRMWARE_TYPE (undocumented readonly dynamic env variable) appears from Windows 8 onwards
-set foobar_doskip=
-if not defined WINEPREFIX if not defined FIRMWARE_TYPE (set foobar_doskip=1)
-if defined foobar_doskip (
-  echo Skipping on Win7
-  set foobar_doskip=
-) else (
-  echo:>foobar.IDontExist
-  call :setError 666 & (foobar.IDontExist &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-)
+rem can't run this test, generates a nice popup under windows
+rem echo:>foobar.IDontExist
+rem call :setError 666 & (foobar.IDontExist &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 cd .. && rd /q /s foo
 echo --- success/failure for CALL command
 mkdir foo & cd foo
-echo exit /b %%1 > foobar.bat
+echo exit /b %%1 > foobarEB.bat
+echo type NUL > foobarS0.bat
+echo rmdir foobar.dir > foobarSEL.bat
+echo title foo >> foobarSEL.bat
+echo rmdir foobar.dir > foobarF2.bat
+echo type NUL > foobarS0WS.bat
+echo.>> foobarS0WS.bat
+echo goto :EOF > foobarGE.bat
+echo goto :end > foobarGL.bat
+echo :end >> foobarGL.bat
+echo goto :end > foobarGX.bat
+echo rmdir foobar.dir > foobarFGE.bat
+echo goto :EOF >> foobarFGE.bat
+echo rmdir foobar.dir > foobarFGL.bat
+echo goto :end >> foobarFGL.bat
+echo :end >> foobarFGL.bat
+echo rmdir foobar.dir > foobarFGX.bat
+echo goto :end >> foobarFGX.bat
 rem call :setError 666 & (call I\dont\exist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 rem terminates batch exec on native...
 call :setError 666 & (call Idontexist.exe &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (call .\foobar.bat 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
-call :setError 666 & (call .\foobar.bat 1024 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarEB.bat 0 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarEB.bat 1024 &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarS0.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarS0WS.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarSEL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarF2.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGE.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarGX.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGE.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGL.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
+call :setError 666 & (call .\foobarFGX.bat &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call cmd.exe /c "echo foo & exit /b 0" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call cmd.exe /c "echo foo & exit /b 1025" &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
 call :setError 666 & (call rmdir foobar.dir &&echo SUCCESS !errorlevel!||echo FAILURE !errorlevel!)
@@ -871,6 +946,7 @@ echo bar| cmd /v:on /c "set /p WINE_FOO=prompt & echo X!WINE_FOO!X"
 echo:| cmd /v:on /c "set /p WINE_FOO=prompt & echo Y!WINE_FOO!Y"
 echo:| cmd /v:on /c "set /p WINE_FOO='prompt' & echo Y!WINE_FOO!Y"
 echo:| cmd /v:on /c "set /p WINE_FOO="prompt" & echo Y!WINE_FOO!Y"
+set =
 
 echo ------------ Testing 'choice' ------------
 
@@ -959,9 +1035,29 @@ echo %WINE_VAR:~2,-3%
 echo '%WINE_VAR:~-2,-4%'
 echo %WINE_VAR:~-3,-2%
 echo %WINE_VAR:~4,4%
+echo '%WINE_VAR:~5%'
+echo '%WINE_VAR:~6%'
+echo '%WINE_VAR:~7%'
+echo '%WINE_VAR:~-0%'
+echo '%WINE_VAR:~,%'
+echo '%WINE_VAR:~,2%'
+echo '%WINE_VAR:~2a%'
+echo '%WINE_VAR:~2a,2%'
+echo '%WINE_VAR:~a,2%'
+echo '%WINE_VAR:~2,2a%'
+echo '%WINE_VAR:~-%'
+
+echo ------------ Testing variable partial replacement ------------
+set WINE_VAR=qwertyQWERTY
+echo %WINE_VAR:qw=az%
+echo %WINE_VAR:qw=%
+echo %WINE_VAR:*TY==_%
+echo %WINE_VAR:*TY=%
 set WINE_VAR=
 mkdir dummydir
+set WINE_VAR=\foo;\bar;%CD%
 cd dummydir
+for %%i in (dummydir) do echo %%~$WINE_VAR:i
 echo %CD:~-6,6%
 cd ..
 rmdir dummydir
@@ -1426,7 +1522,8 @@ if 1 == 0 (
 @tab@
 ) else echo block containing two lines with just tab seems to work
 ::
-echo @if 1 == 1 (> blockclosing.cmd
+set WINE_IDONTEXIST=
+echo @if [%%WINE_IDONTEXIST%%] == [] (@tab@> blockclosing.cmd
 echo   echo with closing bracket>> blockclosing.cmd
 echo )>> blockclosing.cmd
 cmd.exe /Q /C blockclosing.cmd
@@ -1603,6 +1700,10 @@ if not exist "" (
 )
 del foo subdir\bar
 rd subdir
+
+if exist %~D0 (echo ok) else echo failure
+if exist %~D0\ (echo ok) else echo failure
+if exist %~D0\. (echo ok) else echo failure
 
 echo ------ for numbers
 if -1 LSS 1 (echo negative numbers handled)
@@ -2053,6 +2154,15 @@ for %%i in (test) do (
     )
     echo d4
 )
+echo --- EXIT /B inside FOR loops
+goto :after_exitBinsideForLoop
+:exitBinsideForLoop
+for /l %%i in (1,1,3) do (
+  echo %%i
+  if %%i==2 exit /b 0
+)
+:after_exitBinsideForLoop
+call :exitBinsideForLoop
 echo --- set /a
 goto :testseta
 
@@ -2409,6 +2519,7 @@ echo a > foo
 echo b >> foo
 echo c >> foo
 for /f "skip=2" %%i in (foo) do echo %%i
+for /f "skip=2@tab@" %%i in (foo) do echo %%i
 for /f "skip=3" %%i in (foo) do echo %%i > output_file
 if not exist output_file (echo no output) else (del output_file)
 for /f "skip=4" %%i in (foo) do echo %%i > output_file
@@ -2432,14 +2543,20 @@ for /f "tokens=1,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k 
 for /f "tokens=3,2,1*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 rem Duplicates are ignored
 for /f "tokens=1,2,1*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
+rem errors can exist
+(for /f "tokens=1,2*,4" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o) || echo failure %%i
 rem Large tokens are allowed
 for /f "tokens=25,1,5*" %%i in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 rem Show tokens blanked in advance regardless of uniqueness of requested tokens
 for /f "tokens=1,1,1,2*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
 for /f "tokens=1-2,1-2,1-2" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m n=%%n o=%%o
-rem Show No wrapping from z to A BUT wrapping sort of occurs Z to a occurs
+rem Show mapping of most of the ASCII characters (on top of letters & digits)
 for /f "tokens=1-20" %%u in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo u=%%u v=%%v w=%%w x=%%x y=%%y z=%%z A=%%A a=%%a
-for /f "tokens=1-20" %%U in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo U=%%U V=%%V W=%%W X=%%X Y=%%Y Z=%%Z A=%%A a=%%a
+for /f "tokens=1-20" %%U in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo U=%%U V=%%V W=%%W X=%%X Y=%%Y Z=%%Z ^[=%%^[ ^\=%%^\ ^]=%%^] ^^=%%^^ _=%%_ `=%%` A=%%A a=%%a
+rem Testing limits (max number of contiguous variables, limit at 127)
+(for /f "tokens=1-31" %%A in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo U=%%U V=%%V W=%%W X=%%X Y=%%Y Z=%%Z ^[=%%^[ ^\=%%^\ ^]=%%^] ^^=%%^^ _=%%_ `=%%` A=%%A a=%%a) || echo failure
+(for /f "tokens=1-32" %%A in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo U=%%U V=%%V W=%%W X=%%X Y=%%Y Z=%%Z ^[=%%^[ ^\=%%^\ ^]=%%^] ^^=%%^^ _=%%_ `=%%` A=%%A a=%%a) || echo failure %%A
+for /f "tokens=1-20" %%} in ("a b c d e f g h i j k l m n o p q r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z") do echo ^}=%%^} ^~=%%^~
 rem Show negative ranges have no effect
 for /f "tokens=1-3,5" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
 for /f "tokens=3-1,5" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k l=%%l m=%%m o=%%o
@@ -2875,6 +2992,26 @@ popd
 cd
 rd /s/q foobar
 
+echo ------------ Testing dir /o ------------
+mkdir foobar & cd foobar
+echo AAA>a1.aa
+mkdir a1.ab
+echo A>a1.ac
+echo AA>a2.aa
+mkdir a2.ac
+echo ---
+dir /B /O:
+echo ---
+dir /B /O:GN
+echo ---
+dir /B /O:G-N
+echo ---
+dir /B /O:GNE
+echo ---
+dir /B /O:G-NE
+echo ---
+dir /B /O:G-E-N
+cd .. & rd /s/q foobar
 echo ------------ Testing attrib ------------
 rem FIXME Add tests for archive, hidden and system attributes + mixed attributes modifications
 mkdir foobar & cd foobar
@@ -3156,6 +3293,39 @@ call echo %1 %2 %3
 exit /b 0
 
 :call_expand_done
+
+echo --- search with dots
+echo @echo a> .bat
+call .bat
+echo @echo b> f00.bat.bat
+call f00.bat || echo fail1
+call f00 2> nul || echo fail2
+
+cd .. & rd /s/q foobar
+
+echo --- builtin in expansions
+
+mkdir foobar & cd foobar
+
+set foobar=echo
+
+echo echo %%*>bar.bat
+%foobar% bar p1 %foobar%
+%%foobar%% bar p2 %%foobar%%
+%%%foobar%%% bar p3 %%%foobar%%%
+call %foobar% bar cp1 %foobar%
+call %%foobar%% bar cp2 %%foobar%%
+call %%%foobar%%% bar cp3 %%%foobar%%%
+setlocal EnableDelayedExpansion
+!foobar! bar b1 !foobar!
+!!foobar!! bar b2 !!foobar!!
+!!!foobar!!! bar b3 !!!foobar!!!
+call !foobar! bar cb1 !foobar!
+call !!foobar!! bar cb2 !!foobar!!
+call !!!foobar!!! bar cb3 !!!foobar!!!
+call !!!!foobar!!!! bar cb4 !!!!foobar!!!!
+setlocal DisableDelayedExpansion
+set foobar=
 
 cd .. & rd /s/q foobar
 

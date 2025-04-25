@@ -165,8 +165,8 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
 
     if (info_size == sizeof(dib))
     {
-        blit_dc = *hdc;
-        blit_bitmap = *bitmap;
+        if (!GetDIBits( *hdc, *bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
+            return 0;
     }
     else
     {
@@ -214,9 +214,11 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
         if (!SelectObject( blit_dc, blit_bitmap )) goto err;
         if (!BitBlt( blit_dc, 0, 0, bmp.bmWidth, bmp.bmHeight, *hdc, 0, 0, SRCCOPY ))
             goto err;
+        if (!GetDIBits( blit_dc, blit_bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
+            goto err;
+        *hdc = blit_dc;
+        *bitmap = blit_bitmap;
     }
-    if (!GetDIBits( blit_dc, blit_bitmap, 0, INT_MAX, NULL, info, DIB_RGB_COLORS ))
-        goto err;
 
     bpp = info->bmiHeader.biBitCount;
     if (bpp <= 8)
@@ -227,8 +229,8 @@ static UINT get_bitmap_info( HDC *hdc, HBITMAP *bitmap, BITMAPINFO *info )
     return sizeof(BITMAPINFOHEADER);
 
 err:
-    if (blit_dc && blit_dc != *hdc) DeleteDC( blit_dc );
-    if (blit_bitmap && blit_bitmap != *bitmap) DeleteObject( blit_bitmap );
+    DeleteDC( blit_dc );
+    if (blit_bitmap) DeleteObject( blit_bitmap );
     return 0;
 }
 
@@ -658,33 +660,56 @@ static BOOL emfdc_select_font( DC_ATTR *dc_attr, HFONT font )
 
 static DWORD emfdc_ext_create_pen( struct emf *emf, HPEN pen )
 {
-    EMREXTCREATEPEN *emr;
+    EMREXTCREATEPEN *emr = NULL;
+    EXTLOGPEN *elp = NULL;
     int size, emr_size;
+    unsigned int i;
     DWORD ret = 0;
 
     if (!(size = GetObjectW( pen, 0, NULL )))
         return 0;
-    emr_size = sizeof(*emr) - sizeof(emr->elp) + size;
-    emr = HeapAlloc( GetProcessHeap(), 0, emr_size );
-    if (!emr)
-        return 0;
-    GetObjectW( pen, size, &emr->elp );
 
-    if (emr->elp.elpBrushStyle == BS_DIBPATTERN ||
-            emr->elp.elpBrushStyle == BS_DIBPATTERNPT ||
-            emr->elp.elpBrushStyle == BS_PATTERN)
-    {
-        FIXME( "elpBrushStyle = %d\n", emr->elp.elpBrushStyle );
-        HeapFree( GetProcessHeap(), 0, emr );
+    elp = malloc( size );
+    if (!elp)
         return 0;
+
+    /* Native adds an extra 4 bytes, presumably because someone wasn't careful about the
+     * dynamic array [1] at the end of EXTLOGPEN. Also note that GetObject returns an
+     * EXTLOGPEN with a pointer-sized elpHatch, whereas a metafile always has a 32 bit
+     * sized emr->elp.elpHatch .*/
+    emr_size = sizeof(*emr) - sizeof(*elp) + sizeof(emr->elp.elpStyleEntry) + size;
+    emr = calloc( 1, emr_size );
+    if (!emr)
+        goto out;
+    GetObjectW( pen, size, elp );
+
+    if (elp->elpBrushStyle == BS_DIBPATTERN ||
+            elp->elpBrushStyle == BS_DIBPATTERNPT ||
+            elp->elpBrushStyle == BS_PATTERN)
+    {
+        FIXME( "elpBrushStyle = %d\n", elp->elpBrushStyle );
+        goto out;
     }
-    emr->offBmi = emr->cbBmi = emr->offBits = emr->cbBits = 0;
+    emr->offBmi = emr->offBits = emr_size;
+
+    emr->elp.elpPenStyle = elp->elpPenStyle;
+    emr->elp.elpWidth = elp->elpWidth;
+    emr->elp.elpBrushStyle = elp->elpBrushStyle;
+    emr->elp.elpColor = elp->elpColor;
+    emr->elp.elpHatch = elp->elpHatch;
+    emr->elp.elpNumEntries = elp->elpNumEntries;
+
+    for (i = 0; i < elp->elpNumEntries; ++i)
+        emr->elp.elpStyleEntry[i] = elp->elpStyleEntry[i];
 
     emr->emr.iType = EMR_EXTCREATEPEN;
     emr->emr.nSize = emr_size;
     emr->ihPen = ret = emfdc_add_handle( emf, pen );
     ret = emfdc_record( emf, &emr->emr ) ? ret : 0;
-    HeapFree( GetProcessHeap(), 0, emr );
+
+out:
+    free( emr );
+    free( elp );
     return ret;
 }
 

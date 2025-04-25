@@ -77,6 +77,7 @@ typedef struct GifFilePrivateType {
     unsigned long CrntShiftDWord;   /* For bytes decomposition into codes. */
     unsigned long PixelCount;   /* Number of pixels in image. */
     InputFunc Read;     /* function to read gif input (TVT) */
+    int Offset;      /* accumulated file read offset */
     GifByteType Buf[256];   /* Compressed input is buffered here. */
     GifByteType Stack[LZ_MAX_CODE]; /* Decoded pixels are stacked here. */
     GifByteType Suffix[LZ_MAX_CODE + 1];    /* So we can trace the codes. */
@@ -85,7 +86,21 @@ typedef struct GifFilePrivateType {
 
 /* avoid extra function call in case we use fread (TVT) */
 #define READ(_gif,_buf,_len) \
-    ((GifFilePrivateType*)_gif->Private)->Read(_gif,_buf,_len)
+    _READ(_gif,_buf,_len)
+
+static int _READ(GifFileType *_gif, GifByteType *_buf, int _len)
+{
+    GifFilePrivateType *Private = (GifFilePrivateType *)_gif->Private;
+    int ret;
+
+    Private->Offset += (ret = Private->Read(_gif, _buf, _len));
+    return ret;
+}
+
+static int GetFileOffset(GifFileType *GifFile)
+{
+    return ((GifFilePrivateType *)GifFile->Private)->Offset;
+}
 
 static int DGifGetWord(GifFileType *GifFile, GifWord *Word);
 static int DGifSetupDecompress(GifFileType *GifFile);
@@ -367,10 +382,12 @@ DGifGetRecordType(GifFileType * GifFile,
 static int
 DGifGetImageDesc(GifFileType * GifFile) {
 
-    int i, BitsPerPixel, SortFlag;
+    int i, BitsPerPixel, SortFlag, ImageDescOffset;
     GifByteType Buf[3];
     GifFilePrivateType *Private = GifFile->Private;
     SavedImage *sp;
+
+    ImageDescOffset = GetFileOffset(GifFile);
 
     if (DGifGetWord(GifFile, &GifFile->Image.Left) == GIF_ERROR ||
         DGifGetWord(GifFile, &GifFile->Image.Top) == GIF_ERROR ||
@@ -417,6 +434,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
 
     sp = &GifFile->SavedImages[GifFile->ImageCount];
     sp->ImageDesc = GifFile->Image;
+    sp->ImageDescOffset = ImageDescOffset;
     if (GifFile->Image.ColorMap != NULL) {
         sp->ImageDesc.ColorMap = MakeMapObject(
                                  GifFile->Image.ColorMap->ColorCount,
@@ -984,6 +1002,7 @@ DGifOpen(void *userData,
     GifFile->Private = (void*)Private;
 
     Private->Read = readFunc;    /* TVT */
+    Private->Offset = 0;
     GifFile->UserData = userData;    /* TVT */
 
     /* Lets see if this is a GIF file: */

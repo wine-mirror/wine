@@ -36,7 +36,7 @@
 
 #include "wine/glu.h"
 #include "wine/debug.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
@@ -511,7 +511,6 @@ static enum attrib_match wgl_attrib_match_criteria( int attrib )
     case WGL_NEED_PALETTE_ARB:
     case WGL_NEED_SYSTEM_PALETTE_ARB:
     case WGL_SWAP_LAYER_BUFFERS_ARB:
-    case WGL_SWAP_METHOD_ARB:
     case WGL_SHARE_DEPTH_ARB:
     case WGL_SHARE_STENCIL_ARB:
     case WGL_SHARE_ACCUM_ARB:
@@ -557,6 +556,7 @@ static enum attrib_match wgl_attrib_match_criteria( int attrib )
     case WGL_TRANSPARENT_BLUE_VALUE_ARB:
     case WGL_TRANSPARENT_ALPHA_VALUE_ARB:
     case WGL_TRANSPARENT_INDEX_VALUE_ARB:
+    case WGL_SWAP_METHOD_ARB:
         return ATTRIB_MATCH_IGNORE;
     default:
         return ATTRIB_MATCH_INVALID;
@@ -572,14 +572,15 @@ static void filter_format_array( const struct wgl_pixel_format **array,
 
     assert(match != ATTRIB_MATCH_INVALID);
 
-    if (match == ATTRIB_MATCH_IGNORE) return;
+    if (match == ATTRIB_MATCH_IGNORE && attrib != WGL_SWAP_METHOD_ARB) return;
 
     for (i = 0; i < num_formats; ++i)
     {
         if (!array[i]) continue;
         if (!wgl_pixel_format_get_attrib( array[i], attrib, &fmt_value ) ||
             (match == ATTRIB_MATCH_EXACT && fmt_value != value) ||
-            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value))
+            (match == ATTRIB_MATCH_MINIMUM && fmt_value < value) ||
+            (attrib == WGL_SWAP_METHOD_ARB && ((fmt_value == WGL_SWAP_COPY_ARB) ^ (value == WGL_SWAP_COPY_ARB))))
         {
             array[i] = NULL;
         }
@@ -1176,7 +1177,7 @@ typedef struct _bezier_vector {
     GLdouble y;
 } bezier_vector;
 
-static double bezier_deviation_squared(const bezier_vector *p)
+static BOOL bezier_fits_deviation(const bezier_vector *p, FLOAT max_deviation)
 {
     bezier_vector deviation;
     bezier_vector vertex;
@@ -1184,25 +1185,36 @@ static double bezier_deviation_squared(const bezier_vector *p)
     double base_length;
     double dot;
 
+    max_deviation *= max_deviation;
+
     vertex.x = (p[0].x + p[1].x*2 + p[2].x)/4 - p[0].x;
     vertex.y = (p[0].y + p[1].y*2 + p[2].y)/4 - p[0].y;
 
     base.x = p[2].x - p[0].x;
     base.y = p[2].y - p[0].y;
 
-    base_length = sqrt(base.x*base.x + base.y*base.y);
-    base.x /= base_length;
-    base.y /= base_length;
+    base_length = base.x * base.x + base.y * base.y;
+    if (base_length <= max_deviation)
+    {
+        base.x = 0.0;
+        base.y = 0.0;
+    }
+    else
+    {
+        base_length = sqrt(base_length);
+        base.x /= base_length;
+        base.y /= base_length;
 
-    dot = base.x*vertex.x + base.y*vertex.y;
-    dot = min(max(dot, 0.0), base_length);
-    base.x *= dot;
-    base.y *= dot;
+        dot = base.x*vertex.x + base.y*vertex.y;
+        dot = min(max(dot, 0.0), base_length);
+        base.x *= dot;
+        base.y *= dot;
+    }
 
     deviation.x = vertex.x-base.x;
     deviation.y = vertex.y-base.y;
 
-    return deviation.x*deviation.x + deviation.y*deviation.y;
+    return deviation.x*deviation.x + deviation.y*deviation.y <= max_deviation;
 }
 
 static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLOAT deviation)
@@ -1212,7 +1224,7 @@ static int bezier_approximate(const bezier_vector *p, bezier_vector *points, FLO
     bezier_vector vertex;
     int total_vertices;
 
-    if(bezier_deviation_squared(p) <= deviation*deviation)
+    if (bezier_fits_deviation(p, deviation))
     {
         if(points)
             *points = p[2];

@@ -24,10 +24,6 @@
 #include "shellapi.h"
 
 GLOBALS globals;
-static const WCHAR wszRegEdit[] = { '\\','r','e','g','e','d','i','t','.','e','x','e','\0' };
-static const WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
-    'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
-    '>','\n','<','/','o','b','j','e','c','t','>','\0' };
 
 static INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -35,58 +31,49 @@ static INT_PTR CALLBACK SysConfProc(HWND hDlgWnd, UINT uMsg, WPARAM wParam, LPAR
     WCHAR buffer[MAX_LOAD_STRING];
     DWORD bufSize;
 
-    WCHAR wszReg[] = { 'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\','O','L','E','\\','\0' };
-    WCHAR wszEnableDCOM[] = { 'E','n','a','b','l','e','D','C','O','M','\0' };
-    WCHAR wszEnableRemote[] = { 'E','n','a','b','l','e',
-        'R','e','m','o','t','e','C','o','n','n','e','c','t','\0' };
-    WCHAR wszYes[] = { 'Y', '\0' };
-    WCHAR wszNo[] = { 'N', '\0' };
-
     switch(uMsg)
     {
         case WM_INITDIALOG:
-            if(RegOpenKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey) != ERROR_SUCCESS)
-                RegCreateKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+            if (RegCreateKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\OLE", &hKey) != ERROR_SUCCESS) break;
 
             bufSize = sizeof(buffer);
-            if(RegGetValueW(hKey, NULL, wszEnableDCOM, RRF_RT_REG_SZ,
+            if(RegGetValueW(hKey, NULL, L"EnableDCOM", RRF_RT_REG_SZ,
                         NULL, buffer, &bufSize) != ERROR_SUCCESS)
             {
-                bufSize = sizeof(wszYes);
-                RegSetValueExW(hKey, wszEnableDCOM, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+                bufSize = sizeof(L"Y");
+                RegSetValueExW(hKey, L"EnableDCOM", 0, REG_SZ, (BYTE*)L"Y", bufSize);
             }
 
             CheckDlgButton(hDlgWnd, IDC_ENABLEDCOM,
                     buffer[0]=='Y' ? BST_CHECKED : BST_UNCHECKED);
 
             bufSize = sizeof(buffer);
-            if(RegGetValueW(hKey, NULL, wszEnableRemote, RRF_RT_REG_SZ,
+            if(RegGetValueW(hKey, NULL, L"EnableRemoteConnect", RRF_RT_REG_SZ,
                         NULL, buffer, &bufSize) != ERROR_SUCCESS)
             {
-                bufSize = sizeof(wszYes);
-                RegSetValueExW(hKey, wszEnableRemote, 0, REG_SZ, (BYTE*)wszYes, bufSize);
+                bufSize = sizeof(L"Y");
+                RegSetValueExW(hKey, L"EnableRemoteConnect", 0, REG_SZ, (BYTE*)L"Y", bufSize);
             }
 
             CheckDlgButton(hDlgWnd, IDC_ENABLEREMOTE,
                     buffer[0]=='Y' ? BST_CHECKED : BST_UNCHECKED);
-            
+
             RegCloseKey(hKey);
             return TRUE;
         case WM_COMMAND:
             switch(LOWORD(wParam)) {
             case IDOK:
-                bufSize = sizeof(wszYes);
+                bufSize = sizeof(L"Y");
 
-                RegOpenKeyW(HKEY_LOCAL_MACHINE, wszReg, &hKey);
+                RegOpenKeyW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\OLE", &hKey);
 
-                RegSetValueExW(hKey, wszEnableDCOM, 0, REG_SZ,
+                RegSetValueExW(hKey, L"EnableDCOM", 0, REG_SZ,
                         IsDlgButtonChecked(hDlgWnd, IDC_ENABLEDCOM) == BST_CHECKED ?
-                        (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
+                        (BYTE*)L"Y" : (BYTE*)L"N", bufSize);
 
-                RegSetValueExW(hKey, wszEnableRemote, 0, REG_SZ,
+                RegSetValueExW(hKey, L"EnableRemoteConnect", 0, REG_SZ,
                         IsDlgButtonChecked(hDlgWnd, IDC_ENABLEREMOTE) == BST_CHECKED ?
-                        (BYTE*)wszYes : (BYTE*)wszNo, bufSize);
+                        (BYTE*)L"Y" : (BYTE*)L"N", bufSize);
 
                 RegCloseKey(hKey);
 
@@ -180,7 +167,8 @@ static void CopyHTMLTag(HTREEITEM item)
         int clsidLen = lstrlenW(((ITEM_INFO *)tvi.lParam)->clsid)-1;
 
         ((ITEM_INFO *)tvi.lParam)->clsid[clsidLen] = '\0';
-        wsprintfW(pLoc, wszFormat, ((ITEM_INFO *)tvi.lParam)->clsid+1);
+        wsprintfW(pLoc, L"<object\n   classid=\"clsid:%s\"\n>\n</object>",
+                  ((ITEM_INFO *)tvi.lParam)->clsid+1);
         ((ITEM_INFO *)tvi.lParam)->clsid[clsidLen] = '}';
 
         GlobalUnlock(hClipData);
@@ -379,8 +367,8 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             PROCESS_INFORMATION pi;
             WCHAR app[MAX_PATH];
 
-            GetWindowsDirectoryW(app, MAX_PATH - ARRAY_SIZE(wszRegEdit));
-            lstrcatW( app, wszRegEdit );
+            GetWindowsDirectoryW(app, MAX_PATH - ARRAY_SIZE(L"\\regedit.exe"));
+            lstrcatW( app, L"\\regedit.exe" );
             memset(&si, 0, sizeof(si));
             si.cb = sizeof(si);
             if (CreateProcessW(app, app, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
@@ -409,7 +397,6 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             break;
         case IDM_TYPELIB:
             {
-            static const WCHAR filterW[] = {'%','s','%','c','*','.','t','l','b',';','*','.','o','l','b',';','*','.','d','l','l',';','*','.','o','c','x',';','*','.','e','x','e','%','c','%','s','%','c','*','.','*','%','c',0};
             OPENFILENAMEW ofn;
             static WCHAR wszTitle[MAX_LOAD_STRING];
             static WCHAR wszName[MAX_LOAD_STRING];
@@ -418,7 +405,8 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, ARRAY_SIZE(wszTitle));
             LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_TYPELIB, filter_typelib, ARRAY_SIZE(filter_typelib));
             LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_ALL, filter_all, ARRAY_SIZE(filter_all));
-            wsprintfW( filter, filterW, filter_typelib, 0, 0, filter_all, 0, 0 );
+            wsprintfW( filter, L"%s%c*.tlb;*.olb;*.dll;*.ocx;*.exe%c%s%c*.*%c",
+                       filter_typelib, 0, 0, filter_all, 0, 0 );
             InitOpenFileName(hWnd, &ofn, filter, wszTitle, wszName);
             if(GetOpenFileNameW(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
             break;

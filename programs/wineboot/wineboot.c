@@ -69,6 +69,7 @@
 #include <ddk/wdm.h>
 #include <sddl.h>
 #include <wine/svcctl.h>
+#include <wine/list.h>
 #include <wine/asm.h>
 #include <wine/debug.h>
 
@@ -88,6 +89,7 @@ extern void kill_processes( BOOL kill_desktop );
 
 static WCHAR windowsdir[MAX_PATH];
 static const BOOL is_64bit = sizeof(void *) > sizeof(int);
+static SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
 
 /* retrieve the path to the wine.inf file */
 static WCHAR *get_wine_inf_path(void)
@@ -385,7 +387,6 @@ static UINT64 read_tsc_frequency(void)
 
 static void create_user_shared_data(void)
 {
-    SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
     struct _KUSER_SHARED_DATA *data;
     RTL_OSVERSIONINFOEXW version;
     SYSTEM_CPU_INFORMATION sci;
@@ -396,7 +397,6 @@ static void create_user_shared_data(void)
     NTSTATUS status;
     HANDLE handle;
     ULONG i;
-    HANDLE process = 0;
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
@@ -489,29 +489,25 @@ static void create_user_shared_data(void)
         features[PF_NX_ENABLED]                           = TRUE;
         features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
         /* add features for other architectures supported by wow64 */
-        if (!NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
-                                         machines, sizeof(machines), NULL ))
+        for (i = 0; machines[i].Machine; i++)
         {
-            for (i = 0; machines[i].Machine; i++)
+            switch (machines[i].Machine)
             {
-                switch (machines[i].Machine)
-                {
-                case IMAGE_FILE_MACHINE_ARMNT:
-                    features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
-                    features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    break;
-                case IMAGE_FILE_MACHINE_I386:
-                    features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
-                    features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                    features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
-                    features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                    features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
-                    features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
-                    features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
-                    break;
-                }
+            case IMAGE_FILE_MACHINE_ARMNT:
+                features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
+                features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
+                break;
+            case IMAGE_FILE_MACHINE_I386:
+                features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+                features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
+                features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+                features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
+                features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
+                features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
+                features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
+                features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+                break;
             }
         }
         break;
@@ -542,6 +538,7 @@ enum smbios_type
     SMBIOS_TYPE_CHASSIS = 3,
     SMBIOS_TYPE_PROCESSOR = 4,
     SMBIOS_TYPE_BOOTINFO = 32,
+    SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFO = 44,
     SMBIOS_TYPE_END = 127
 };
 
@@ -620,6 +617,31 @@ struct smbios_processor
     WORD                 core_enabled2;
     WORD                 thread_count2;
 };
+
+struct smbios_processor_specific_block
+{
+    BYTE length;
+    BYTE processor_type;
+    BYTE data[];
+};
+
+struct smbios_processor_additional_info
+{
+    struct smbios_header hdr;
+    WORD ref_handle;
+    struct smbios_processor_specific_block info_block;
+};
+
+struct smbios_wine_core_id_regs_arm64
+{
+    WORD num_regs;
+    struct smbios_wine_id_reg_value_arm64
+    {
+        WORD reg;
+        UINT64 value;
+    } regs[];
+};
+
 #include "poppack.h"
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
@@ -766,11 +788,37 @@ static void create_bios_system_values( HKEY bios_key, const char *buf, UINT len 
     }
 }
 
+#ifdef __aarch64__
+
+static void create_id_reg_keys_arm64( HKEY core_key, UINT core, const char *buf, UINT len )
+{
+    const struct smbios_header *hdr;
+    const struct smbios_processor_additional_info *additional_info;
+    const struct smbios_wine_core_id_regs_arm64 *core_id_regs;
+    static const char *reg_value_name = "CP %04X";
+    char buffer[9];
+    UINT i;
+
+    if (!(hdr = find_smbios_entry( SMBIOS_TYPE_PROCESSOR_ADDITIONAL_INFO, core, buf, len ))) return;
+
+    additional_info = (const struct smbios_processor_additional_info *)hdr;
+    core_id_regs = (const struct smbios_wine_core_id_regs_arm64 *)additional_info->info_block.data;
+
+    for (i = 0; i < core_id_regs->num_regs; i++)
+    {
+        snprintf( buffer, sizeof(buffer), reg_value_name, core_id_regs->regs[i].reg );
+        RegSetValueExA( core_key, buffer, 0, REG_QWORD,
+                        (const BYTE *)&core_id_regs->regs[i].value, sizeof(UINT64) );
+    }
+}
+
+#endif
+
 static void create_bios_processor_values( HKEY system_key, const char *buf, UINT len )
 {
     const struct smbios_header *hdr;
     const struct smbios_processor *proc;
-    unsigned int pkg, core, offset, i;
+    unsigned int pkg, core, offset, i, thread_count;
     HKEY hkey, cpu_key, fpu_key = 0, env_key;
     SYSTEM_CPU_INFORMATION sci;
     PROCESSOR_POWER_INFORMATION* power_info;
@@ -803,6 +851,7 @@ static void create_bios_processor_values( HKEY system_key, const char *buf, UINT
             fpu_key = 0;
         break;
     }
+    set_reg_value( system_key, L"SystemBiosDate", L"01/01/70" );
 
     if (RegCreateKeyExW( system_key, L"CentralProcessor", 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &cpu_key, NULL ))
@@ -811,6 +860,7 @@ static void create_bios_processor_values( HKEY system_key, const char *buf, UINT
     for (pkg = core = 0; ; pkg++)
     {
         if (!(hdr = find_smbios_entry( SMBIOS_TYPE_PROCESSOR, pkg, buf, len ))) break;
+        if (hdr->length < 0x28) break; /* version 2.5 is required */
         proc = (const struct smbios_processor *)hdr;
         offset = (const char *)proc - buf + proc->hdr.length;
         version = get_smbios_string( proc->version, buf, offset, len );
@@ -842,7 +892,8 @@ static void create_bios_processor_values( HKEY system_key, const char *buf, UINT
             break;
         }
 
-        for (i = 0; i < proc->thread_count2; i++, core++)
+        thread_count = (proc->hdr.length >= 0x30) ? proc->thread_count2 : proc->thread_count;
+        for (i = 0; i < thread_count; i++, core++)
         {
             swprintf( buffer, ARRAY_SIZE(buffer), L"%u", core );
             if (!RegCreateKeyExW( cpu_key, buffer, 0, NULL, REG_OPTION_VOLATILE,
@@ -857,6 +908,9 @@ static void create_bios_processor_values( HKEY system_key, const char *buf, UINT
                 if (vendorid) set_reg_value( hkey, L"VendorIdentifier", vendorid );
                 if (version) set_reg_value( hkey, L"ProcessorNameString", version );
                 RegSetValueExW( hkey, L"~MHz", 0, REG_DWORD, (BYTE *)&tsc_freq_mhz, sizeof(DWORD) );
+#ifdef __aarch64__
+                create_id_reg_keys_arm64( hkey, core, buf, len );
+#endif
                 RegCloseKey( hkey );
             }
             if (fpu_key && !RegCreateKeyExW( fpu_key, buffer, 0, NULL, REG_OPTION_VOLATILE,
@@ -1024,6 +1078,146 @@ static void create_volatile_environment_registry_key(void)
     set_reg_value( hkey, L"SESSIONNAME", L"Console" );
     RegCloseKey( hkey );
 }
+
+static const WCHAR *get_known_dll_ntdir( WORD machine )
+{
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_TARGET_HOST: return L"\\KnownDlls";
+    case IMAGE_FILE_MACHINE_I386:        return L"\\KnownDlls32";
+    case IMAGE_FILE_MACHINE_ARMNT:       return L"\\KnownDllsArm32";
+    default: return NULL;
+    }
+}
+
+static HANDLE create_known_dll_section( const WCHAR *sysdir, HANDLE root, const WCHAR *name )
+{
+    WCHAR buffer[MAX_PATH];
+    HANDLE handle, mapping;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING strW;
+    IO_STATUS_BLOCK io;
+    LARGE_INTEGER size;
+
+    swprintf( buffer, MAX_PATH, L"\\??\\%s\\%s", sysdir, name );
+    RtlInitUnicodeString( &strW, buffer );
+    InitializeObjectAttributes( &attr, &strW, OBJ_CASE_INSENSITIVE, 0, NULL );
+
+    if (NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
+                    FILE_SHARE_READ | FILE_SHARE_DELETE,
+                    FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))
+        return 0;
+
+    RtlInitUnicodeString( &strW, name );
+    InitializeObjectAttributes( &attr, &strW, OBJ_CASE_INSENSITIVE | OBJ_PERMANENT, root, NULL );
+    size.QuadPart = 0;
+    if (NtCreateSection( &mapping,
+                         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE,
+                         &attr, &size, PAGE_EXECUTE_READ, SEC_IMAGE, handle ))
+        mapping = 0;
+    NtClose( handle );
+    return mapping;
+}
+
+struct known_dll
+{
+    struct list entry;
+    WCHAR       name[64];
+};
+
+static void add_known_dll( struct list *dll_list, const WCHAR *name )
+{
+    struct known_dll *dll;
+
+    LIST_FOR_EACH_ENTRY( dll, dll_list, struct known_dll, entry )
+        if (!wcsicmp( name, dll->name )) return;
+
+    dll = malloc( sizeof(*dll) );
+    wcscpy( dll->name, name );
+    list_add_tail( dll_list, &dll->entry );
+}
+
+static void add_imports( struct list *dll_list, HANDLE mapping )
+{
+    const IMAGE_IMPORT_DESCRIPTOR *imp;
+    DWORD i, size;
+    void *module;
+
+    if (!(module = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 ))) return;
+    if ((imp = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
+    {
+        for ( ; imp->Name; imp++)
+        {
+            unsigned char *str = (unsigned char *)module + imp->Name;
+            WCHAR name[64];
+            for (i = 0; str[i] && i < ARRAY_SIZE(name); i++) name[i] = (unsigned char)str[i];
+            if (i == ARRAY_SIZE(name)) continue;
+            name[i] = 0;
+            add_known_dll( dll_list, name );
+        }
+    }
+    UnmapViewOfFile( module );
+}
+
+
+static void create_known_dlls(void)
+{
+    struct list dlls = LIST_INIT( dlls );
+    struct known_dll *dll, *next;
+    WCHAR name[64], value[64], sysdir[MAX_PATH];
+    UNICODE_STRING str, target;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE handle, root, mapping;
+    DWORD type, idx = 0;
+    HKEY key;
+
+    if (RegOpenKeyExW( HKEY_LOCAL_MACHINE,
+                       L"System\\CurrentControlSet\\Control\\Session Manager\\KnownDLLs",
+                       0, KEY_ALL_ACCESS, &key ))
+        return;
+
+    for (;;)
+    {
+        DWORD name_size = ARRAY_SIZE(name);
+        DWORD val_size = sizeof(value);
+        DWORD res = RegEnumValueW( key, idx++, name, &name_size, 0, &type, (BYTE *)value, &val_size );
+        if (res == ERROR_MORE_DATA) continue;  /* ignore it */
+        if (res) break;
+        add_known_dll( &dlls, value );
+    }
+
+    for (int i = 0; machines[i].Machine; i++)
+    {
+        WORD machine = machines[i].Native ? IMAGE_FILE_MACHINE_TARGET_HOST : machines[i].Machine;
+
+        if (!GetSystemWow64Directory2W( sysdir, MAX_PATH, machine )) continue;
+        RtlInitUnicodeString( &str, get_known_dll_ntdir( machine ));
+        InitializeObjectAttributes( &attr, &str, OBJ_PERMANENT, 0, NULL );
+        if (NtCreateDirectoryObject( &root, DIRECTORY_ALL_ACCESS, &attr )) continue;
+
+        RtlInitUnicodeString( &target, sysdir );
+        RtlInitUnicodeString( &str, L"KnownDllPath" );
+        InitializeObjectAttributes( &attr, &str, OBJ_PERMANENT, root, NULL );
+        if (!NtCreateSymbolicLinkObject( &handle, SYMBOLIC_LINK_ALL_ACCESS, &attr, &target ))
+            NtClose( handle );
+
+        LIST_FOR_EACH_ENTRY( dll, &dlls, struct known_dll, entry )
+        {
+            if (!(mapping = create_known_dll_section( sysdir, root, dll->name ))) continue;
+            if (machines[i].Native) add_imports( &dlls, mapping );
+            NtClose( mapping );
+        }
+        NtClose( root );
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE( dll, next, &dlls, struct known_dll, entry )
+    {
+        list_remove( &dll->entry );
+        free( dll );
+    }
+    RegCloseKey( key );
+}
+
 
 /* Performs the rename operations dictated in %SystemRoot%\Wininit.ini.
  * Returns FALSE if there was an error, or otherwise if all is ok.
@@ -1419,22 +1613,49 @@ static BOOL start_services_process(void)
     return TRUE;
 }
 
+static void set_wait_dialog_text( HWND hwnd, HWND text, const WCHAR *string )
+{
+    RECT win_rect, old_rect, new_rect;
+    HDC hdc = GetDC( text );
+
+    GetClientRect( text, &old_rect );
+    new_rect = old_rect;
+    SelectObject( hdc, (HFONT)SendMessageW( text, WM_GETFONT, 0, 0 ));
+    DrawTextW( hdc, string, -1, &new_rect, DT_CALCRECT | DT_EDITCONTROL | DT_WORDBREAK | DT_NOPREFIX );
+    ReleaseDC( text, hdc );
+    if (new_rect.bottom > old_rect.bottom)
+    {
+        GetWindowRect( hwnd, &win_rect );
+        win_rect.bottom += new_rect.bottom - old_rect.bottom;
+        SetWindowPos( hwnd, 0, 0, 0, win_rect.right - win_rect.left, win_rect.bottom - win_rect.top,
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+        SetWindowPos( text, 0, 0, 0, new_rect.right, new_rect.bottom,
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+    }
+    SendMessageW( text, WM_SETTEXT, 0, (LPARAM)string );
+}
+
 static INT_PTR CALLBACK wait_dlgproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     switch (msg)
     {
     case WM_INITDIALOG:
         {
-            DWORD len;
+            DWORD len, icon_size;
+            RECT rect;
             WCHAR *buffer, text[1024];
             const WCHAR *name = (WCHAR *)lp;
-            HICON icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 48, 48, LR_SHARED );
+            HICON icon;
+
+            GetClientRect( GetDlgItem( hwnd, IDC_WAITICON ), &rect );
+            icon_size = min( rect.right, rect.bottom );
+            icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, icon_size, icon_size, LR_SHARED );
             SendDlgItemMessageW( hwnd, IDC_WAITICON, STM_SETICON, (WPARAM)icon, 0 );
             SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_GETTEXT, 1024, (LPARAM)text );
             len = lstrlenW(text) + lstrlenW(name) + 1;
             buffer = malloc( len * sizeof(WCHAR) );
             swprintf( buffer, len, text, name );
-            SendDlgItemMessageW( hwnd, IDC_WAITTEXT, WM_SETTEXT, 0, (LPARAM)buffer );
+            set_wait_dialog_text( hwnd, GetDlgItem( hwnd, IDC_WAITTEXT ), buffer );
             free( buffer );
         }
         break;
@@ -1489,6 +1710,7 @@ static void install_root_pnp_devices(void)
     }
     root_devices[] =
     {
+        {"root\\wine\\winebth", "root\\winebth\0", "C:\\windows\\inf\\winebth.inf"},
         {"root\\wine\\winebus", "root\\winebus\0", "C:\\windows\\inf\\winebus.inf"},
         {"root\\wine\\wineusb", "root\\wineusb\0", "C:\\windows\\inf\\wineusb.inf"},
     };
@@ -1591,12 +1813,8 @@ static void update_wineprefix( BOOL force )
 
     if (update_timestamp( config_dir, st.st_mtime ) || force)
     {
-        SYSTEM_SUPPORTED_PROCESSOR_ARCHITECTURES_INFORMATION machines[8];
-        HANDLE process = 0;
+        HANDLE process;
         DWORD count = 0;
-
-        if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
-                                        machines, sizeof(machines), NULL )) machines[0].Machine = 0;
 
         if ((process = start_rundll32( inf_path, L"PreInstall", IMAGE_FILE_MACHINE_TARGET_HOST )))
         {
@@ -1734,6 +1952,7 @@ int __cdecl main( int argc, char *argv[] )
     HANDLE event;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wineboot_event" );
+    HANDLE process = 0;
     BOOL is_wow64;
 
     end_session = force = init = kill = restart = shutdown = update = FALSE;
@@ -1812,6 +2031,9 @@ int __cdecl main( int argc, char *argv[] )
 
     if (shutdown) return 0;
 
+    if (NtQuerySystemInformationEx( SystemSupportedProcessorArchitectures, &process, sizeof(process),
+                                    machines, sizeof(machines), NULL )) machines[0].Machine = 0;
+
     /* create event to be inherited by services.exe */
     InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF | OBJ_INHERIT, 0, NULL );
     NtCreateEvent( &event, EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
@@ -1836,6 +2058,7 @@ int __cdecl main( int argc, char *argv[] )
     if (init || update) update_wineprefix( update );
 
     create_volatile_environment_registry_key();
+    create_known_dlls();
 
     ProcessRunKeys( HKEY_LOCAL_MACHINE, L"RunOnce", TRUE, TRUE );
 

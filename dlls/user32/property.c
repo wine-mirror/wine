@@ -21,11 +21,12 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "ntuser.h"
-#include "wine/server.h"
 
 /* size of buffer needed to store an atom string */
 #define ATOM_BUFFER_SIZE 256
@@ -37,30 +38,19 @@
  * Retrieve the list of properties of a given window.
  * Returned buffer must be freed by caller.
  */
-static property_data_t *get_properties( HWND hwnd, int *count )
+static struct ntuser_property_list *get_properties( HWND hwnd, ULONG *count )
 {
-    property_data_t *data;
+    struct ntuser_property_list *props;
     int total = 32;
+    NTSTATUS status;
 
     while (total)
     {
-        int res = 0;
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*data) ))) break;
-        *count = 0;
-        SERVER_START_REQ( get_window_properties )
-        {
-            req->window = wine_server_user_handle( hwnd );
-            wine_server_set_reply( req, data, total * sizeof(*data) );
-            if (!wine_server_call( req )) res = reply->total;
-        }
-        SERVER_END_REQ;
-        if (res && res <= total)
-        {
-            *count = res;
-            return data;
-        }
-        HeapFree( GetProcessHeap(), 0, data );
-        total = res;  /* restart with larger buffer */
+        if (!(props = HeapAlloc( GetProcessHeap(), 0, total * sizeof(*props) ))) break;
+        if (!(status = NtUserBuildPropList( hwnd, total, props, count ))) return props;
+        HeapFree( GetProcessHeap(), 0, props );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+        total = *count;  /* restart with larger buffer */
     }
     return NULL;
 }
@@ -179,8 +169,9 @@ HANDLE WINAPI RemovePropW( HWND hwnd, LPCWSTR str )
  */
 INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
 {
-    int ret = -1, i, count;
-    property_data_t *list = get_properties( hwnd, &count );
+    int ret = -1;
+    ULONG i, count;
+    struct ntuser_property_list *list = get_properties( hwnd, &count );
 
     if (list)
     {
@@ -201,8 +192,9 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
  */
 INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
 {
-    int ret = -1, i, count;
-    property_data_t *list = get_properties( hwnd, &count );
+    int ret = -1;
+    ULONG i, count;
+    struct ntuser_property_list *list = get_properties( hwnd, &count );
 
     if (list)
     {

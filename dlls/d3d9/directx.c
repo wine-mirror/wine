@@ -683,7 +683,7 @@ static const struct IDirect3D9ExVtbl d3d9_vtbl =
     d3d9_GetAdapterLUID,
 };
 
-BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
+BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended, BOOL d3d9on12)
 {
     DWORD flags = WINED3D_PRESENT_CONVERSION | WINED3D_HANDLE_RESTORE | WINED3D_PIXEL_CENTER_INTEGER
             | WINED3D_SRGB_READ_WRITE_CONTROL | WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR
@@ -736,6 +736,7 @@ BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
 
     wined3d_mutex_unlock();
     d3d9->extended = extended;
+    d3d9->d3d9on12 = d3d9on12;
 
     return TRUE;
 }

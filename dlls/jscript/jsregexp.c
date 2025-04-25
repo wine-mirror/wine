@@ -208,6 +208,9 @@ static HRESULT regexp_match(script_ctx_t *ctx, jsdisp_t *dispex, jsstr_t *jsstr,
         ret[i].index = result->cp - str - result->match_len;
         ret[i++].length = result->match_len;
 
+        if (result->match_len == 0)
+	    result->cp++;
+
         if(!gflag && !(This->jsregexp->flags & REG_GLOB)) {
             hres = S_OK;
             break;

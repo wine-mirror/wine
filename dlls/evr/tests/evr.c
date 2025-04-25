@@ -2476,6 +2476,7 @@ static void test_presenter_video_window(void)
     hr = IDirect3DDevice9_GetCreationParameters(d3d_device, &device_params);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(device_params.hFocusWindow == GetDesktopWindow(), "Unexpected window %p.\n", device_params.hFocusWindow);
+    ok(device_params.BehaviorFlags & D3DCREATE_MULTITHREADED, "Unexpected flags %#lx.\n", device_params.BehaviorFlags);
 
     hr = IDirect3DDevice9_GetSwapChain(d3d_device, 0, &swapchain);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);

@@ -446,7 +446,7 @@ static struct security_descriptor *key_get_sd( struct object *obj )
         key_default_sd->dacl_len  = dacl_len;
         sid = (struct sid *)(key_default_sd + 1);
         sid = copy_sid( sid, &builtin_admins_sid );
-        sid = copy_sid( sid, &builtin_admins_sid );
+        copy_sid( sid, &builtin_admins_sid );
 
         dacl = (struct acl *)((char *)(key_default_sd + 1) + 2 * admins_sid_len);
         dacl->revision = ACL_REVISION;
@@ -979,8 +979,8 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
         if (len > namelen)
         {
             reply->namelen = namelen;
-            memcpy( data, key->obj.name->name, namelen );
-            memcpy( data + namelen, key->class, len - namelen );
+            data = mem_append( data, key->obj.name->name, namelen );
+            memcpy( data, key->class, len - namelen );
         }
         else if (info_class == KeyNameInformation)
         {
@@ -1001,7 +1001,7 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
 static void rename_key( struct key *key, const struct unicode_str *new_name )
 {
     struct object_name *new_name_ptr;
-    struct key *subkey, *parent = get_parent( key );
+    struct key *parent = get_parent( key );
     data_size_t len;
     int i, index, cur_index;
 
@@ -1014,7 +1014,7 @@ static void rename_key( struct key *key, const struct unicode_str *new_name )
     }
 
     /* check for existing subkey with the same name */
-    if (!parent || (subkey = find_subkey( parent, new_name, &index )))
+    if (!parent || find_subkey( parent, new_name, &index ))
     {
         set_error( STATUS_CANNOT_DELETE );
         return;
@@ -1292,8 +1292,8 @@ static void enum_value( struct key *key, int i, int info_class, struct enum_key_
             if (maxlen > namelen)
             {
                 reply->namelen = namelen;
-                memcpy( data, value->name, namelen );
-                memcpy( (char *)data + namelen, value->data, maxlen - namelen );
+                data = mem_append( data, value->name, namelen );
+                memcpy( data, value->data, maxlen - namelen );
             }
             else
             {
@@ -1635,7 +1635,7 @@ static int load_value( struct key *key, const char *buffer, struct file_load_inf
     case REG_SZ:
         if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return 0;
         len = info->tmplen;
-        if ((res = parse_strW( info->tmp, &len, buffer, '\"' )) == -1) goto error;
+        if (parse_strW( info->tmp, &len, buffer, '\"' ) == -1) goto error;
         ptr = info->tmp;
         break;
     case REG_DWORD:
@@ -1696,7 +1696,7 @@ static int get_prefix_len( struct key *key, const char *name, struct file_load_i
     if (!get_file_tmp_space( info, strlen(name) * sizeof(WCHAR) )) return 0;
 
     len = info->tmplen;
-    if ((res = parse_strW( info->tmp, &len, name, ']' )) == -1)
+    if (parse_strW( info->tmp, &len, name, ']' ) == -1)
     {
         file_read_error( "Malformed key", info );
         return 0;
@@ -1859,7 +1859,7 @@ static void init_supported_machines(void)
     {
         supported_machines[count++] = IMAGE_FILE_MACHINE_ARM64;
         supported_machines[count++] = IMAGE_FILE_MACHINE_I386;
-        /* supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;  not supported yet */
+        supported_machines[count++] = IMAGE_FILE_MACHINE_ARMNT;
     }
 #else
 #error Unsupported machine
@@ -1886,10 +1886,17 @@ void init_registry(void)
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                     'P','e','r','f','l','i','b','\\',
                                     '0','0','9'};
+    static const WCHAR controlset[] = {'S','y','s','t','e','m','\\',
+                                       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t'};
+    static const WCHAR controlset001_path[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                               'M','a','c','h','i','n','e','\\',
+                                               'S','y','s','t','e','m','\\',
+                                               'C','o','n','t','r','o','l','S','e','t','0','0','1'};
     static const struct unicode_str root_name = { REGISTRY, sizeof(REGISTRY) };
     static const struct unicode_str HKLM_name = { HKLM, sizeof(HKLM) };
     static const struct unicode_str HKU_name = { HKU_default, sizeof(HKU_default) };
     static const struct unicode_str perflib_name = { perflib, sizeof(perflib) };
+    static const struct unicode_str controlset_name = { controlset, sizeof(controlset) };
 
     WCHAR *current_user_path;
     struct unicode_str current_user_str;
@@ -1917,6 +1924,13 @@ void init_registry(void)
             prefix_type = PREFIX_32BIT;
         else
             prefix_type = sizeof(void *) > sizeof(int) ? PREFIX_64BIT : PREFIX_32BIT;
+
+        if ((key = create_key_recursive( hklm, &controlset_name, current_time )))
+        {
+            key->flags |= KEY_SYMLINK;
+            set_value( key, &symlink_str, REG_LINK, controlset001_path, sizeof(controlset001_path) );
+            release_object( key );
+        }
     }
     else if (prefix_type == PREFIX_UNKNOWN)
         prefix_type = PREFIX_32BIT;
@@ -2178,7 +2192,11 @@ DECL_HANDLER(create_key)
             key->classlen = (key->classlen / sizeof(WCHAR)) * sizeof(WCHAR);
             if (!(key->class = memdup( class, key->classlen ))) key->classlen = 0;
         }
-        reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
+        else
+            reply->hkey = alloc_handle_no_access_check( current->process, key,
+                                                        access, objattr->attributes );
         release_object( key );
     }
     if (parent) release_object( parent );

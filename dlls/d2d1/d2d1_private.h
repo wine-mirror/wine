@@ -613,6 +613,7 @@ struct d2d_device
     LONG refcount;
     ID2D1Factory1 *factory;
     IDXGIDevice *dxgi_device;
+    bool allow_get_dxgi_device;
 
     struct d2d_indexed_objects shaders;
 };
@@ -706,13 +707,16 @@ static inline struct d2d_factory *unsafe_impl_from_ID2D1Factory(ID2D1Factory *if
 }
 
 void d2d_effects_init_builtins(struct d2d_factory *factory);
+HRESULT d2d_factory_create_device(ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+        bool allow_get_dxgi_device, REFIID iid, void **device);
 struct d2d_effect_registration * d2d_factory_get_registered_effect(ID2D1Factory *factory,
         const GUID *effect_id);
 void d2d_factory_register_effect(struct d2d_factory *factory,
         struct d2d_effect_registration *effect);
 HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
         const struct d2d_effect_property *prop, UINT32 *value);
-void d2d_device_init(struct d2d_device *device, struct d2d_factory *factory, IDXGIDevice *dxgi_device);
+void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+        bool allow_get_dxgi_device);
 
 struct d2d_transform
 {

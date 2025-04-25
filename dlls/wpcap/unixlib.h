@@ -133,7 +133,7 @@ struct datalink_val_to_name_params
 
 struct dump_params
 {
-    unsigned char *user;
+    UINT64 handle;
     const struct pcap_pkthdr_win32 *hdr;
     const unsigned char *packet;
 };
@@ -222,7 +222,9 @@ struct next_ex_params
 {
     UINT64 handle;
     struct pcap_pkthdr_win32 *hdr;
-    const unsigned char **data;
+    const unsigned char *data;
+    unsigned char *buf;
+    UINT32 bufsize;
 };
 
 struct open_live_params
@@ -258,6 +260,12 @@ struct set_promisc_params
 {
     UINT64 handle;
     int enable;
+};
+
+struct set_immediate_mode_params
+{
+    UINT64 handle;
+    int mode;
 };
 
 struct set_rfmon_params
@@ -336,6 +344,7 @@ struct tstamp_type_val_to_name_params
 
 enum pcap_funcs
 {
+    unix_process_attach,
     unix_activate,
     unix_breakloop,
     unix_bufsize,
@@ -366,6 +375,7 @@ enum pcap_funcs
     unix_sendpacket,
     unix_set_buffer_size,
     unix_set_datalink,
+    unix_set_immediate_mode,
     unix_set_promisc,
     unix_set_rfmon,
     unix_set_snaplen,

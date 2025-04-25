@@ -1450,6 +1450,22 @@ NTSTATUS WINAPI wow64_NtSetIoCompletion( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtSetIoCompletionEx
+ */
+NTSTATUS WINAPI wow64_NtSetIoCompletionEx( UINT *args )
+{
+    HANDLE completion_handle = get_handle( &args );
+    HANDLE completion_reserve_handle = get_handle( &args );
+    ULONG_PTR key = get_ulong( &args );
+    ULONG_PTR value = get_ulong( &args );
+    NTSTATUS status = get_ulong( &args );
+    SIZE_T count = get_ulong( &args );
+
+    return NtSetIoCompletionEx( completion_handle, completion_reserve_handle, key, value, status, count );
+}
+
+
+/**********************************************************************
  *           wow64_NtSetTimer
  */
 NTSTATUS WINAPI wow64_NtSetTimer( UINT *args )
@@ -1787,4 +1803,18 @@ NTSTATUS WINAPI wow64_NtRollbackTransaction( UINT *args )
     BOOLEAN wait = get_ulong( &args );
 
     return NtRollbackTransaction( handle, wait );
+}
+
+
+/**********************************************************************
+ *           wow64_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter
+ */
+NTSTATUS WINAPI wow64_NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( UINT *args )
+{
+    ULONG flags = get_ulong( &args );
+    ULONGLONG *from = get_ptr( &args );
+    ULONGLONG *to = get_ptr( &args );
+    ULONGLONG *error = get_ptr( &args );
+
+    return NtConvertBetweenAuxiliaryCounterAndPerformanceCounter( flags, from, to, error );
 }

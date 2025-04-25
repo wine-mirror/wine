@@ -41,6 +41,7 @@
 #include "devpkey.h"
 #include "winreg.h"
 #include "spatialaudioclient.h"
+#include "mmddk.h"
 
 #include "mmdevapi_private.h"
 #include "wine/debug.h"
@@ -48,6 +49,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mmdevapi);
 
 DriverFuncs drvs;
+static DriverFuncs midi_driver;
+
+#define MIDI_CALL(code,args)  __wine_unix_call( midi_driver.module_unixlib, code, args )
 
 const WCHAR drv_keyW[] = L"Software\\Wine\\Drivers";
 
@@ -95,12 +99,6 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
         ERR("Unable to initialize library: %lx\n", status);
         goto fail;
     }
-
-#define LDFC(n) do { driver->p##n = (void*)GetProcAddress(driver->module, #n);\
-        if(!driver->p##n) { goto fail; } } while(0)
-    LDFC(get_device_guid);
-    LDFC(get_device_name_from_guid);
-#undef LDFC
 
     GetModuleFileNameW(NULL, path, ARRAY_SIZE(path));
     params.name     = wcsrchr(path, '\\');
@@ -173,11 +171,26 @@ static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
             *next = ',';
     }
 
-    if (drvs.module != 0){
+    if (drvs.module != 0)
+    {
+        WCHAR midi_drvname[64];
+
+        midi_drvname[0] = 0;
+        wine_unix_call( midi_get_driver, midi_drvname );
+        if (midi_drvname[0] && load_driver( midi_drvname, &midi_driver ))
+            TRACE( "loaded %s as MIDI driver\n", debugstr_w(midi_driver.module_name) );
+        else
+            midi_driver = drvs;
+
         load_devices_from_reg();
         load_driver_devices(eRender);
         load_driver_devices(eCapture);
     }
+
+    if (drvs.module == 0)
+        ERR("No driver from %s could be initialized. "
+            "Maybe check dependencies with WINEDEBUG=warn+module.\n",
+            wine_dbgstr_w(driver_list));
 
     return drvs.module != 0;
 }
@@ -192,12 +205,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             DisableThreadLibraryCalls(hinstDLL);
             break;
         case DLL_PROCESS_DETACH:
-            if (drvs.module_unixlib) {
-                const NTSTATUS status = __wine_unix_call(drvs.module_unixlib, process_detach, NULL);
-                if (status)
-                    WARN("Unable to deinitialize library: %lx\n", status);
+            if (drvs.module_unixlib)
+            {
+                wine_unix_call( process_detach, NULL );
+                FreeLibrary( drvs.module );
+                if (midi_driver.module != drvs.module)
+                {
+                    MIDI_CALL( process_detach, NULL );
+                    FreeLibrary( midi_driver.module );
+                }
             }
-
             main_loop_stop();
 
             if (!lpvReserved)
@@ -289,9 +306,10 @@ static IClassFactoryImpl MMDEVAPI_CF[] = {
     { { &MMCF_Vtbl }, &CLSID_MMDeviceEnumerator, (FnCreateInstance)MMDevEnum_Create }
 };
 
+static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
     unsigned int i = 0;
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
@@ -322,6 +340,126 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     WARN("(%s, %s, %p): no class found.\n", debugstr_guid(rclsid),
          debugstr_guid(riid), ppv);
     return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+static void notify_client(struct notify_context *notify)
+{
+    TRACE( "dev %u msg %x param1 %Ix param2 %0Ix\n",
+           notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+
+    DriverCallback( notify->callback, notify->flags, notify->device, notify->msg,
+                    notify->instance, notify->param_1, notify->param_2 );
+}
+
+static DWORD WINAPI notify_thread( void *p )
+{
+    struct midi_notify_wait_params params;
+    struct notify_context notify;
+    BOOL quit;
+
+    SetThreadDescription( GetCurrentThread(), L"mmdevapi_midi_notify" );
+    params.notify = &notify;
+    params.quit = &quit;
+
+    while (1)
+    {
+        MIDI_CALL( midi_notify_wait, &params );
+        if (quit) break;
+        if (notify.send_notify) notify_client(&notify);
+    }
+    return 0;
+}
+
+LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1, LPARAM param2 )
+{
+    InitOnceExecuteOnce( &init_once, init_driver, NULL, NULL );
+    if (!midi_driver.module_unixlib) return 0;
+
+    switch(msg)
+    {
+    case DRV_LOAD:
+    {
+        struct midi_init_params params;
+        UINT err = DRV_SUCCESS;
+
+        params.err = &err;
+        MIDI_CALL( midi_init, &params );
+        if (err == DRV_SUCCESS) CloseHandle( CreateThread( NULL, 0, notify_thread, NULL, 0, NULL ));
+        return err;
+    }
+    case DRV_FREE:
+        MIDI_CALL( midi_release, NULL );
+        return 1;
+    case DRV_OPEN:
+    case DRV_CLOSE:
+    case DRV_QUERYCONFIGURE:
+    case DRV_CONFIGURE:
+        return 1;
+    }
+    return DefDriverProc( id, driver, msg, param1, param2 );
+}
+
+DWORD WINAPI midMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    struct midi_in_message_params params;
+    struct notify_context notify;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    params.notify  = &notify;
+
+    do
+    {
+        MIDI_CALL( midi_in_message, &params );
+        if ((!err || err == ERROR_RETRY) && notify.send_notify) notify_client( &notify );
+    } while (err == ERROR_RETRY);
+
+    return err;
+}
+
+DWORD WINAPI modMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    struct midi_out_message_params params;
+    struct notify_context notify;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    params.notify  = &notify;
+
+    MIDI_CALL( midi_out_message, &params );
+    if (!err && notify.send_notify) notify_client( &notify );
+    return err;
+}
+
+DWORD WINAPI auxMessage( UINT id, UINT msg, DWORD_PTR user, DWORD_PTR param1, DWORD_PTR param2 )
+{
+    struct aux_message_params params;
+    UINT err = 0;
+
+    TRACE( "%04x %04x %08Ix %08Ix %08Ix\n", id, msg, user, param1, param2 );
+
+    params.dev_id  = id;
+    params.msg     = msg;
+    params.user    = user;
+    params.param_1 = param1;
+    params.param_2 = param2;
+    params.err     = &err;
+    wine_unix_call( aux_message, &params );
+    return err;
 }
 
 struct activate_async_op {

@@ -354,7 +354,7 @@ static int wait_select_reply( void *cookie )
 /***********************************************************************
  *              invoke_user_apc
  */
-static NTSTATUS invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTATUS status )
+static NTSTATUS invoke_user_apc( CONTEXT *context, const struct user_apc *apc, NTSTATUS status )
 {
     return call_user_apc_dispatcher( context, apc->args[0], apc->args[1], apc->args[2],
                                      wine_server_get_ptr( apc->func ), status );
@@ -364,7 +364,7 @@ static NTSTATUS invoke_user_apc( CONTEXT *context, const user_apc_t *apc, NTSTAT
 /***********************************************************************
  *              invoke_system_apc
  */
-static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOOL self )
+static void invoke_system_apc( const union apc_call *call, union apc_result *result, BOOL self )
 {
     SIZE_T size, bits;
     void *addr;
@@ -687,21 +687,21 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
 /***********************************************************************
  *              server_select
  */
-unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT flags,
-                            timeout_t abs_timeout, context_t *context, user_apc_t *user_apc )
+unsigned int server_select( const union select_op *select_op, data_size_t size, UINT flags,
+                            timeout_t abs_timeout, struct context_data *context, struct user_apc *user_apc )
 {
     unsigned int ret;
     int cookie;
     obj_handle_t apc_handle = 0;
     BOOL suspend_context = !!context;
-    apc_result_t result;
+    union apc_result result;
     sigset_t old_set;
     int signaled;
     data_size_t reply_size;
     struct
     {
-        apc_call_t call;
-        context_t  context[2];
+        union apc_call call;
+        struct context_data context[2];
     } reply_data;
 
     memset( &result, 0, sizeof(result) );
@@ -740,7 +740,7 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 
             /* don't signal multiple times */
             if (size >= sizeof(select_op->signal_and_wait) && select_op->op == SELECT_SIGNAL_AND_WAIT)
-                size = offsetof( select_op_t, signal_and_wait.signal );
+                size = offsetof( union select_op, signal_and_wait.signal );
         }
         pthread_sigmask( SIG_SETMASK, &old_set, NULL );
         if (signaled) break;
@@ -763,12 +763,12 @@ unsigned int server_select( const select_op_t *select_op, data_size_t size, UINT
 /***********************************************************************
  *              server_wait
  */
-unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT flags,
+unsigned int server_wait( const union select_op *select_op, data_size_t size, UINT flags,
                           const LARGE_INTEGER *timeout )
 {
     timeout_t abs_timeout = timeout ? timeout->QuadPart : TIMEOUT_INFINITE;
     unsigned int ret;
-    user_apc_t apc;
+    struct user_apc apc;
 
     if (abs_timeout < 0)
     {
@@ -794,8 +794,23 @@ unsigned int server_wait( const select_op_t *select_op, data_size_t size, UINT f
  */
 NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
 {
-    user_apc_t apc;
+    return NtContinueEx( context, ULongToPtr(alertable) );
+}
+
+
+/***********************************************************************
+ *              NtContinueEx  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtContinueEx( CONTEXT *context, KCONTINUE_ARGUMENT *args )
+{
+    struct user_apc apc;
     NTSTATUS status;
+    BOOL alertable;
+
+    if ((UINT_PTR)args > 0xff)
+        alertable = args->ContinueFlags & KCONTINUE_FLAG_TEST_ALERT;
+    else
+        alertable = !!args;
 
     if (alertable)
     {
@@ -811,7 +826,7 @@ NTSTATUS WINAPI NtContinue( CONTEXT *context, BOOLEAN alertable )
  */
 NTSTATUS WINAPI NtTestAlert(void)
 {
-    user_apc_t apc;
+    struct user_apc apc;
     NTSTATUS status;
 
     status = server_select( NULL, 0, SELECT_INTERRUPTIBLE | SELECT_ALERTABLE, 0, NULL, &apc );
@@ -823,7 +838,7 @@ NTSTATUS WINAPI NtTestAlert(void)
 /***********************************************************************
  *           server_queue_process_apc
  */
-unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
+unsigned int server_queue_process_apc( HANDLE process, const union apc_call *call, union apc_result *result )
 {
     for (;;)
     {
@@ -1547,8 +1562,8 @@ size_t server_init_process(void)
 
         if (is_win64 && arch && !strcmp( arch, "win32" ))
             fatal_error( "WINEARCH is set to 'win32' but this is not supported in wow64 mode.\n" );
-        if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ))
-            fatal_error( "WINEARCH set to invalid value '%s', it must be either win32 or win64.\n", arch );
+        if (arch && strcmp( arch, "win32" ) && strcmp( arch, "win64" ) && strcmp( arch, "wow64" ))
+            fatal_error( "WINEARCH set to invalid value '%s', it must be win32, win64, or wow64.\n", arch );
 
         fd_socket = server_connect();
     }
@@ -1635,8 +1650,8 @@ size_t server_init_process(void)
     {
         if (is_win64)
             fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n", config_dir );
-        if (arch && !strcmp( arch, "win64" ))
-            fatal_error( "WINEARCH set to win64 but '%s' is a 32-bit installation.\n", config_dir );
+        if (arch && (!strcmp( arch, "win64" ) || !strcmp( arch, "wow64" )))
+            fatal_error( "WINEARCH set to %s but '%s' is a 32-bit installation.\n", arch, config_dir );
     }
 
     set_thread_id( NtCurrentTeb(), pid, tid );
@@ -1719,6 +1734,31 @@ void server_init_thread( void *entry_point, BOOL *suspend )
     close( reply_pipe );
 }
 
+NTSTATUS WINAPI NtAllocateReserveObject( HANDLE *handle, const OBJECT_ATTRIBUTES *attr,
+                                         MEMORY_RESERVE_OBJECT_TYPE type )
+{
+    struct object_attributes *objattr;
+    unsigned int ret;
+    data_size_t len;
+
+    TRACE("(%p, %p, %d)\n", handle, attr, type);
+
+    *handle = 0;
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
+    SERVER_START_REQ( allocate_reserve_object )
+    {
+        req->type = type;
+        wine_server_add_data( req, objattr, len );
+        if (!(ret = wine_server_call( req )))
+            *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    free( objattr );
+    return ret;
+}
+
 
 /******************************************************************************
  *           NtDuplicateObject
@@ -1734,8 +1774,8 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
 
     if ((options & DUPLICATE_CLOSE_SOURCE) && source_process != NtCurrentProcess())
     {
-        apc_call_t call;
-        apc_result_t result;
+        union apc_call call;
+        union apc_result result;
 
         memset( &call, 0, sizeof(call) );
 

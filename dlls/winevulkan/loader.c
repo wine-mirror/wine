@@ -98,9 +98,9 @@ static BOOL is_available_device_function(VkDevice device, const char *name)
     return UNIX_CALL(is_available_device_function, &params);
 }
 
-static void *alloc_vk_object(size_t size)
+static void *vulkan_client_object_create(size_t size)
 {
-    struct wine_vk_base *object = calloc(1, size);
+    struct vulkan_client_object *object = calloc(1, size);
     object->loader_magic = VULKAN_ICD_MAGIC_VALUE;
     return object;
 }
@@ -358,11 +358,11 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     for (;;)
     {
-        if (!(instance = alloc_vk_object(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
+        if (!(instance = vulkan_client_object_create(FIELD_OFFSET(struct VkInstance_T, phys_devs[phys_dev_count]))))
             return VK_ERROR_OUT_OF_HOST_MEMORY;
         instance->phys_dev_count = phys_dev_count;
         for (i = 0; i < phys_dev_count; i++)
-            instance->phys_devs[i].base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+            instance->phys_devs[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
         params.pCreateInfo = create_info;
         params.pAllocator = allocator;
@@ -376,7 +376,7 @@ VkResult WINAPI vkCreateInstance(const VkInstanceCreateInfo *create_info,
         free(instance);
     }
 
-    if (!instance->base.unix_handle)
+    if (params.result)
         free(instance);
     return params.result;
 }
@@ -571,10 +571,10 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
 
     for (i = 0; i < create_info->queueCreateInfoCount; i++)
         queue_count += create_info->pQueueCreateInfos[i].queueCount;
-    if (!(device = alloc_vk_object(FIELD_OFFSET(struct VkDevice_T, queues[queue_count]))))
+    if (!(device = vulkan_client_object_create(FIELD_OFFSET(struct VkDevice_T, queues[queue_count]))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
     for (i = 0; i < queue_count; i++)
-        device->queues[i].base.loader_magic = VULKAN_ICD_MAGIC_VALUE;
+        device->queues[i].obj.loader_magic = VULKAN_ICD_MAGIC_VALUE;
 
     params.physicalDevice = phys_dev;
     params.pCreateInfo = create_info;
@@ -583,7 +583,7 @@ VkResult WINAPI vkCreateDevice(VkPhysicalDevice phys_dev, const VkDeviceCreateIn
     params.client_ptr = device;
     status = UNIX_CALL(vkCreateDevice, &params);
     assert(!status);
-    if (!device->base.unix_handle)
+    if (params.result)
         free(device);
     return params.result;
 }
@@ -607,9 +607,8 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     struct vk_command_pool *cmd_pool;
     NTSTATUS status;
 
-    if (!(cmd_pool = malloc(sizeof(*cmd_pool))))
+    if (!(cmd_pool = vulkan_client_object_create(sizeof(*cmd_pool))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
-    cmd_pool->unix_handle = 0;
     list_init(&cmd_pool->command_buffers);
 
     params.device = device;
@@ -619,7 +618,7 @@ VkResult WINAPI vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateIn
     params.client_ptr = cmd_pool;
     status = UNIX_CALL(vkCreateCommandPool, &params);
     assert(!status);
-    if (!cmd_pool->unix_handle)
+    if (params.result)
         free(cmd_pool);
     return params.result;
 }
@@ -660,7 +659,7 @@ VkResult WINAPI vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferA
     uint32_t i;
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
-        buffers[i] = alloc_vk_object(sizeof(*buffers[i]));
+        buffers[i] = vulkan_client_object_create(sizeof(*buffers[i]));
 
     params.device = device;
     params.pAllocateInfo = allocate_info;

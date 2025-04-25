@@ -825,12 +825,12 @@
 @ cdecl -arch=i386 _CItanh()
 @ cdecl _CRT_RTC_INIT(ptr ptr long long long)
 @ cdecl _CRT_RTC_INITW(ptr ptr long long long)
-@ cdecl _Cbuild(ptr double double)
+@ cdecl -norelay _Cbuild(double double)
 @ cdecl _CreateFrameInfo(ptr ptr)
 @ stdcall _CxxThrowException(ptr ptr)
 @ cdecl -arch=i386 -norelay _EH_prolog()
 @ stub -arch=arm _FPE_Raise
-@ stub _FCbuild
+@ cdecl -norelay _FCbuild(float float)
 @ cdecl _FindAndUnlinkFrame(ptr)
 @ stub -arch=win64 _GetImageBase
 @ stub -arch=win64 _GetThrowImageBase
@@ -2076,8 +2076,8 @@
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
-@ stub cimag
-@ stub cimagf
+@ cdecl cimag(int128)
+@ cdecl cimagf(int64)
 @ stub cimagl
 @ cdecl clearerr(ptr)
 @ cdecl clearerr_s(ptr)
@@ -2104,8 +2104,8 @@
 @ stub cproj
 @ stub cprojf
 @ stub cprojl
-@ cdecl creal(int128) MSVCR120_creal
-@ stub crealf
+@ cdecl creal(int128)
+@ cdecl crealf(int64)
 @ stub creall
 @ stub csin
 @ stub csinf
@@ -2212,7 +2212,7 @@
 @ cdecl ilogbf(float)
 @ cdecl ilogbl(double) ilogb
 @ cdecl -ret64 imaxabs(int64)
-@ stub imaxdiv
+@ cdecl -norelay imaxdiv(int64 int64)
 @ cdecl is_wctype(long long) iswctype
 @ cdecl isalnum(long)
 @ cdecl isalpha(long)

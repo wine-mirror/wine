@@ -1915,29 +1915,45 @@ static void http_release_netconn(http_request_t *req, BOOL reuse)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+static BOOL has_token(const WCHAR *str, const WCHAR *token)
+{
+    UINT len = wcslen(token);
+    const WCHAR *next;
+
+    for (; *str; str = next + wcsspn(next, L" ,"))
+    {
+        next = str + wcscspn(str, L" ,");
+        if (next - str != len) continue;
+        if (wcsnicmp(str, token, len)) continue;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+static BOOL has_keep_alive(const WCHAR *version, const WCHAR *connection)
+{
+    return !wcsicmp(version, L"HTTP/1.1") ? !has_token(connection, L"Close")
+                                          : has_token(connection, L"Keep-Alive");
+}
+
 static BOOL HTTP_KeepAlive(http_request_t *request)
 {
     WCHAR szVersion[10];
     WCHAR szConnectionResponse[20];
     DWORD dwBufferSize = sizeof(szVersion);
-    BOOL keepalive = FALSE;
 
     /* as per RFC 2068, S8.1.2.1, if the client is HTTP/1.1 then assume that
      * the connection is keep-alive by default */
-    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_VERSION, szVersion, &dwBufferSize, NULL) == ERROR_SUCCESS
-        && !wcsicmp(szVersion, L"HTTP/1.1"))
-    {
-        keepalive = TRUE;
-    }
+    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_VERSION, szVersion, &dwBufferSize, NULL) != ERROR_SUCCESS)
+        *szVersion = 0;
 
     dwBufferSize = sizeof(szConnectionResponse);
-    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS
-        || HTTP_HttpQueryInfoW(request, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) == ERROR_SUCCESS)
-    {
-        keepalive = !wcsicmp(szConnectionResponse, L"Keep-Alive");
-    }
+    if (HTTP_HttpQueryInfoW(request, HTTP_QUERY_PROXY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) != ERROR_SUCCESS &&
+        HTTP_HttpQueryInfoW(request, HTTP_QUERY_CONNECTION, szConnectionResponse, &dwBufferSize, NULL) != ERROR_SUCCESS)
+        *szConnectionResponse = 0;
 
-    return keepalive;
+    return has_keep_alive(szVersion, szConnectionResponse);
 }
 
 static void HTTPREQ_CloseConnection(object_header_t *hdr)
@@ -3886,26 +3902,23 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
     }
     else if (dwInfoLevel & HTTP_QUERY_FLAG_SYSTEMTIME && lpBuffer)
     {
-        time_t tmpTime;
-        struct tm tmpTM;
-        SYSTEMTIME *STHook;
+        SYSTEMTIME st;
 
-        tmpTime = ConvertTimeString(lphttpHdr->lpszValue);
-
-        tmpTM = *gmtime(&tmpTime);
-        STHook = (SYSTEMTIME *)lpBuffer;
-        STHook->wDay = tmpTM.tm_mday;
-        STHook->wHour = tmpTM.tm_hour;
-        STHook->wMilliseconds = 0;
-        STHook->wMinute = tmpTM.tm_min;
-        STHook->wDayOfWeek = tmpTM.tm_wday;
-        STHook->wMonth = tmpTM.tm_mon + 1;
-        STHook->wSecond = tmpTM.tm_sec;
-        STHook->wYear = 1900+tmpTM.tm_year;
-
-        TRACE(" returning time: %04d/%02d/%02d - %d - %02d:%02d:%02d.%02d\n",
-              STHook->wYear, STHook->wMonth, STHook->wDay, STHook->wDayOfWeek,
-              STHook->wHour, STHook->wMinute, STHook->wSecond, STHook->wMilliseconds);
+        if (!InternetTimeToSystemTimeW(lphttpHdr->lpszValue, &st, 0))
+        {
+            LeaveCriticalSection( &request->headers_section );
+            return ERROR_HTTP_INVALID_HEADER;
+        }
+        if (*lpdwBufferLength < sizeof(st))
+        {
+            *lpdwBufferLength = sizeof(st);
+            LeaveCriticalSection( &request->headers_section );
+            return ERROR_INSUFFICIENT_BUFFER;
+        }
+        TRACE(" returning time: %04u/%02u/%02u - %u - %02u:%02u:%02u.%02u\n",
+              st.wYear, st.wMonth, st.wDay, st.wDayOfWeek, st.wHour, st.wMinute, st.wSecond, st.wMilliseconds);
+        memcpy(lpBuffer, &st, sizeof(st));
+        *lpdwBufferLength = sizeof(st);
     }
     else if (lphttpHdr->lpszValue)
     {
@@ -4521,7 +4534,7 @@ static BOOL HTTP_ParseDateAsAsctime(LPCWSTR value, FILETIME *ft)
     /* asctime() doesn't report a timezone, but some web servers do, so accept
      * with or without GMT.
      */
-    if (*ptr && wcscmp(ptr, L"GMT"))
+    if (*ptr && (wcscmp(ptr, L"GMT") && wcscmp(ptr, L"UTC")))
     {
         ERR("unexpected timezone %s\n", debugstr_w(ptr));
         return FALSE;
@@ -4598,7 +4611,7 @@ static BOOL HTTP_ParseRfc1123Date(LPCWSTR value, FILETIME *ft)
     while (iswspace(*ptr))
         ptr++;
 
-    if (wcscmp(ptr, L"GMT"))
+    if (wcscmp(ptr, L"GMT") && wcscmp(ptr, L"UTC"))
     {
         ERR("unexpected time zone %s\n", debugstr_w(ptr));
         return FALSE;
@@ -4715,7 +4728,7 @@ static BOOL HTTP_ParseRfc850Date(LPCWSTR value, FILETIME *ft)
     while (iswspace(*ptr))
         ptr++;
 
-    if (wcscmp(ptr, L"GMT"))
+    if (wcscmp(ptr, L"GMT") && wcscmp(ptr, L"UTC"))
     {
         ERR("unexpected time zone %s\n", debugstr_w(ptr));
         return FALSE;
@@ -4860,16 +4873,15 @@ static void HTTP_ProcessLastModified(http_request_t *request)
 
 static void http_process_keep_alive(http_request_t *req)
 {
+    const WCHAR *connection = L"";
     int index;
 
     EnterCriticalSection( &req->headers_section );
 
-    if ((index = HTTP_GetCustomHeaderIndex(req, L"Connection", 0, FALSE)) != -1)
-        req->netconn->keep_alive = !wcsicmp(req->custHeaders[index].lpszValue, L"Keep-Alive");
-    else if ((index = HTTP_GetCustomHeaderIndex(req, L"Proxy-Connection", 0, FALSE)) != -1)
-        req->netconn->keep_alive = !wcsicmp(req->custHeaders[index].lpszValue, L"Keep-Alive");
-    else
-        req->netconn->keep_alive = !wcsicmp(req->version, L"HTTP/1.1");
+    if ((index = HTTP_GetCustomHeaderIndex(req, L"Connection", 0, FALSE)) != -1 ||
+        (index = HTTP_GetCustomHeaderIndex(req, L"Proxy-Connection", 0, FALSE)) != -1)
+        connection = req->custHeaders[index].lpszValue;
+    req->netconn->keep_alive = has_keep_alive(req->version, connection);
 
     LeaveCriticalSection( &req->headers_section );
 }
@@ -4988,6 +5000,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     WCHAR *request_header = NULL;
     INT responseLen, cnt;
     DWORD res;
+    const WCHAR *appinfo_agent;
 
     TRACE("--> %p\n", request);
 
@@ -5005,14 +5018,17 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         set_content_length_header(request, dwContentLength, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         request->bytesToWrite = dwContentLength;
     }
-    if (request->session->appInfo->agent)
+
+    appinfo_agent = request->session->appInfo->agent;
+
+    if (appinfo_agent && *appinfo_agent)
     {
         WCHAR *agent_header;
         int len;
 
-        len = lstrlenW(request->session->appInfo->agent) + lstrlenW(L"User-Agent: %s\r\n");
+        len = lstrlenW(appinfo_agent) + lstrlenW(L"User-Agent: %s\r\n");
         agent_header = malloc(len * sizeof(WCHAR));
-        swprintf(agent_header, len, L"User-Agent: %s\r\n", request->session->appInfo->agent);
+        swprintf(agent_header, len, L"User-Agent: %s\r\n", appinfo_agent);
 
         HTTP_HttpAddRequestHeadersW(request, agent_header, lstrlenW(agent_header), HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         free(agent_header);
@@ -5190,12 +5206,14 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                 case HTTP_STATUS_MOVED:
                 case HTTP_STATUS_REDIRECT_KEEP_VERB:
                 case HTTP_STATUS_REDIRECT_METHOD:
+                case HTTP_STATUS_PERMANENT_REDIRECT:
                     new_url = get_redirect_url(request);
                     if(!new_url)
                         break;
 
                     if (wcscmp(request->verb, L"GET") && wcscmp(request->verb, L"HEAD") &&
-                        request->status_code != HTTP_STATUS_REDIRECT_KEEP_VERB)
+                        request->status_code != HTTP_STATUS_REDIRECT_KEEP_VERB &&
+                        request->status_code != HTTP_STATUS_PERMANENT_REDIRECT)
                     {
                         free(request->verb);
                         request->verb = wcsdup(L"GET");
@@ -5385,7 +5403,8 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
         case HTTP_STATUS_REDIRECT:
         case HTTP_STATUS_MOVED:
         case HTTP_STATUS_REDIRECT_METHOD:
-        case HTTP_STATUS_REDIRECT_KEEP_VERB: {
+        case HTTP_STATUS_REDIRECT_KEEP_VERB:
+        case HTTP_STATUS_PERMANENT_REDIRECT: {
             WCHAR *new_url;
 
             new_url = get_redirect_url(request);
@@ -5393,7 +5412,8 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
                 break;
 
             if (wcscmp(request->verb, L"GET") && wcscmp(request->verb, L"HEAD") &&
-                request->status_code != HTTP_STATUS_REDIRECT_KEEP_VERB)
+                request->status_code != HTTP_STATUS_REDIRECT_KEEP_VERB &&
+                request->status_code != HTTP_STATUS_PERMANENT_REDIRECT)
             {
                 free(request->verb);
                 request->verb = wcsdup(L"GET");

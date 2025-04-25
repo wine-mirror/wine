@@ -107,11 +107,10 @@ static void test_reflection_references(void)
     ok(!count, "Got unexpected count %lu.\n", count);
 
     /* check invalid cases */
-#if D3D_COMPILER_VERSION >= 46
-    expected = E_INVALIDARG;
-#else
-    expected = E_NOINTERFACE;
-#endif
+    if (D3D_COMPILER_VERSION >= 46)
+        expected = E_INVALIDARG;
+    else
+        expected = E_NOINTERFACE;
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6], &IID_ID3D10ShaderReflection, (void **)&ref10);
     ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
             "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
@@ -120,34 +119,47 @@ static void test_reflection_references(void)
     ok(hr == expected || broken(hr == E_NOINTERFACE) /* Windows 8 */,
             "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
+    if (D3D_COMPILER_VERSION >= 43)
+        expected = D3DERR_INVALIDCALL;
+    else if (D3D_COMPILER_VERSION)
+        expected = E_INVALIDARG;
+    else
+        expected = E_FAIL;
     hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(NULL, test_reflection_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     /* returns different errors with different sizes */
     hr = D3DReflect(test_reflection_blob, 31, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
-#if D3D_COMPILER_VERSION >= 46
-    expected = D3DERR_INVALIDCALL;
-#else
-    expected = E_FAIL;
-#endif
+    if (D3D_COMPILER_VERSION >= 46)
+        expected = D3DERR_INVALIDCALL;
+    else if (D3D_COMPILER_VERSION == 42)
+        expected = E_INVALIDARG;
+    else
+        expected = E_FAIL;
     hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob, test_reflection_blob[6]-1, &IID_ID3D10ShaderReflection1, (void **)&ref10_1);
     ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
-    hr = D3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
-
     hr = D3DReflect(test_reflection_blob,  32, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 
     hr = D3DReflect(test_reflection_blob,  test_reflection_blob[6]-1, &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
+
+    if (D3D_COMPILER_VERSION >= 43)
+        expected = D3DERR_INVALIDCALL;
+    else if (D3D_COMPILER_VERSION)
+        expected = E_INVALIDARG;
+    else
+        expected = D3DERR_INVALIDCALL;
+    hr = D3DReflect(test_reflection_blob,  31, &IID_ID3D11ShaderReflection, (void **)&ref11);
     ok(hr == expected, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected);
 }
 #endif
@@ -776,7 +788,9 @@ static void test_reflection_desc_ps(void)
     D3D_NAME expected;
     unsigned int i;
 #if D3D_COMPILER_VERSION
+#if D3D_COMPILER_VERSION >= 43
     UINT size_x, size_y, size_z, size_total;
+#endif
     UINT ret;
 #endif
 
@@ -920,7 +934,7 @@ static void test_reflection_desc_ps(void)
             ok(!desc.Stream, "(%u): got unexpected Stream %u.\n", i, desc.Stream);
     }
 
-#if D3D_COMPILER_VERSION
+#if D3D_COMPILER_VERSION >= 43
     size_x = 0xdeadbeef;
     size_y = 0xdeadbeef;
     size_z = 0xdeadbeef;
@@ -1070,7 +1084,7 @@ static void test_reflection_desc_ps_output(void)
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = call_reflect(tests[i].blob, tests[i].blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-        if (!D3D_COMPILER_VERSION)
+        if (D3D_COMPILER_VERSION < 43)
         {
             todo_wine ok(hr == E_INVALIDARG, "%u: Got unexpected hr %#lx.\n", i, hr);
             if (SUCCEEDED(hr))
@@ -1264,10 +1278,13 @@ static void test_reflection_cs(void)
     if (FAILED(hr))
         return;
     size_total = ref11->lpVtbl->GetThreadGroupSize(ref11, &size_x, &size_y, &size_z);
-    ok(size_x == 16, "Unexpected size %u.\n", size_x);
-    ok(size_y == 8, "Unexpected size %u.\n", size_y);
-    ok(size_z == 4, "Unexpected size %u.\n", size_z);
-    ok(size_total == size_x * size_y * size_z, "Unexpected size %u.\n", size_total);
+    if (D3D_COMPILER_VERSION >= 43)
+    {
+        ok(size_x == 16, "Unexpected size %u.\n", size_x);
+        ok(size_y == 8, "Unexpected size %u.\n", size_y);
+        ok(size_z == 4, "Unexpected size %u.\n", size_z);
+        ok(size_total == size_x * size_y * size_z, "Unexpected size %u.\n", size_total);
+    }
 
     ref11->lpVtbl->Release(ref11);
 }

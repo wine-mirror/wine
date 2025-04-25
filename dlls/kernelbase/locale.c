@@ -5081,14 +5081,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesA( LOCALE_ENUMPROCA proc, DWORD f
     char name[10];
     DWORD i;
 
+    if (!flags)
+        flags = LCID_SUPPORTED;
+
     for (i = 0; i < locale_table->nb_lcnames; i++)
     {
         if (!lcnames_index[i].name) continue;  /* skip invariant locale */
         if (lcnames_index[i].id == LOCALE_CUSTOM_UNSPECIFIED) continue;  /* skip locales with no lcid */
         if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
         if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
-        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
-            continue;  /* skip alternate sorts */
+        if (SORTIDFROMLCID( lcnames_index[i].id ) != SORT_DEFAULT && !(flags & LCID_ALTERNATE_SORTS))
+            continue; /* skip alternate sorts if not requested */
+        if (SORTIDFROMLCID( lcnames_index[i].id ) == SORT_DEFAULT && !(flags & (LCID_INSTALLED | LCID_SUPPORTED)))
+            continue;  /* skip default sorts if not requested */
         sprintf( name, "%08x", lcnames_index[i].id );
         if (!proc( name )) break;
     }
@@ -5104,14 +5109,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesW( LOCALE_ENUMPROCW proc, DWORD f
     WCHAR name[10];
     DWORD i;
 
+    if (!flags)
+        flags = LCID_SUPPORTED;
+
     for (i = 0; i < locale_table->nb_lcnames; i++)
     {
         if (!lcnames_index[i].name) continue;  /* skip invariant locale */
         if (lcnames_index[i].id == LOCALE_CUSTOM_UNSPECIFIED) continue;  /* skip locales with no lcid */
         if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
         if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
-        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
-            continue;  /* skip alternate sorts */
+        if (SORTIDFROMLCID( lcnames_index[i].id ) != SORT_DEFAULT && !(flags & LCID_ALTERNATE_SORTS))
+            continue; /* skip alternate sorts if not requested */
+        if (SORTIDFROMLCID( lcnames_index[i].id ) == SORT_DEFAULT && !(flags & (LCID_INSTALLED | LCID_SUPPORTED)))
+            continue;  /* skip default sorts if not requested */
         swprintf( name, ARRAY_SIZE(name), L"%08lx", lcnames_index[i].id );
         if (!proc( name )) break;
     }

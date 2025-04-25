@@ -1934,7 +1934,7 @@ static inline void fpu_invalid_operation(void)
 
     d = acos(2.0);
     ok(_isnan(d), "d = %lf\n", d);
-    ok(_statusfp() == _SW_INVALID, "_statusfp() = %x\n", _statusfp());
+    ok(_statusfp() & _SW_INVALID, "_statusfp() = %x\n", _statusfp());
 }
 
 static DWORD WINAPI fpu_thread(void *param)

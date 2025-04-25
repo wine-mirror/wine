@@ -20,4 +20,12 @@
 
 #pragma makedep register
 
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#define DO_NO_IMPORTS
+#define _WINTYPES
+#include "windows.foundation.idl"
 #include "windows.foundation.metadata.idl"
+#include "windows.storage.streams.idl"

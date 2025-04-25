@@ -18,12 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "wine/test.h"
 #include "winbase.h"
 #include "winternl.h"
 #include "appmodel.h"
 
 static BOOL (WINAPI * pGetProductInfo)(DWORD, DWORD, DWORD, DWORD, DWORD *);
+static UINT (WINAPI * pEnumSystemFirmwareTables)(DWORD, void *, DWORD);
 static UINT (WINAPI * pGetSystemFirmwareTable)(DWORD, DWORD, void *, DWORD);
 static LONG (WINAPI * pPackageIdFromFullName)(const WCHAR *, UINT32, UINT32 *, BYTE *);
 static NTSTATUS (WINAPI * pNtQuerySystemInformation)(SYSTEM_INFORMATION_CLASS, void *, ULONG, ULONG *);
@@ -44,6 +47,7 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("kernel32.dll");
 
     GET_PROC(GetProductInfo);
+    GET_PROC(EnumSystemFirmwareTables);
     GET_PROC(GetSystemFirmwareTable);
     GET_PROC(PackageIdFromFullName);
 
@@ -701,17 +705,18 @@ static void test_VerifyVersionInfo(void)
     ok(ret, "VerifyVersionInfoA failed with error %ld\n", GetLastError());
 }
 
-static void test_GetSystemFirmwareTable(void)
+static void test_SystemFirmwareTable(void)
 {
     static const ULONG min_sfti_len = FIELD_OFFSET(SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer);
     ULONG expected_len;
     UINT len;
+    NTSTATUS status;
     SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti;
     UCHAR *smbios_table;
 
-    if (!pGetSystemFirmwareTable)
+    if (!pGetSystemFirmwareTable || !pEnumSystemFirmwareTables)
     {
-        win_skip("GetSystemFirmwareTable not available\n");
+        win_skip("SystemFirmwareTable functions not available\n");
         return;
     }
 
@@ -720,18 +725,21 @@ static void test_GetSystemFirmwareTable(void)
     sfti->ProviderSignature = RSMB;
     sfti->Action = SystemFirmwareTable_Get;
     sfti->TableID = 0;
-    pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
     if (expected_len == 0) /* xp, 2003 */
     {
         win_skip("SystemFirmwareTableInformation is not available\n");
         HeapFree(GetProcessHeap(), 0, sfti);
         return;
     }
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtQuerySystemInformation failed %lx\n", status );
     sfti = HeapReAlloc(GetProcessHeap(), 0, sfti, expected_len);
-    ok(!!sfti, "Failed to allocate memory\n");
-    pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
+    ok( !status, "NtQuerySystemInformation failed %lx\n", status );
 
     expected_len -= min_sfti_len;
+    ok( sfti->TableBufferLength == expected_len, "wrong len %lu/%lx\n",
+        sfti->TableBufferLength, expected_len );
     len = pGetSystemFirmwareTable(RSMB, 0, NULL, 0);
     ok(len == expected_len, "Expected length %lu, got %u\n", expected_len, len);
 
@@ -744,9 +752,27 @@ static void test_GetSystemFirmwareTable(void)
        sfti->TableBuffer[3], sfti->TableBuffer[4], sfti->TableBuffer[5],
        smbios_table[0], smbios_table[1], smbios_table[2],
        smbios_table[3], smbios_table[4], smbios_table[5]);
+    HeapFree(GetProcessHeap(), 0, smbios_table);
+
+    sfti->Action = SystemFirmwareTable_Enumerate;
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, min_sfti_len, &expected_len);
+    ok( status == STATUS_BUFFER_TOO_SMALL, "NtQuerySystemInformation failed %lx\n", status );
+    sfti = HeapReAlloc(GetProcessHeap(), 0, sfti, expected_len);
+    status = pNtQuerySystemInformation(SystemFirmwareTableInformation, sfti, expected_len, &expected_len);
+    ok( !status, "NtQuerySystemInformation failed %lx\n", status );
+    ok( expected_len == min_sfti_len + sizeof(UINT), "wrong len %lu\n", expected_len );
+    ok( sfti->TableBufferLength == sizeof(UINT), "wrong len %lu\n", sfti->TableBufferLength );
+    ok( *(UINT *)sfti->TableBuffer == 0, "wrong table id %x\n", *(UINT *)sfti->TableBuffer );
+
+    len = pEnumSystemFirmwareTables( RSMB, NULL, 0 );
+    ok( len == sizeof(UINT), "wrong len %u\n", len );
+    smbios_table = malloc( len );
+    len = pEnumSystemFirmwareTables( RSMB, smbios_table, len );
+    ok( len == sizeof(UINT), "wrong len %u\n", len );
+    ok( *(UINT *)smbios_table == 0, "wrong table id %x\n", *(UINT *)smbios_table );
+    free( smbios_table );
 
     HeapFree(GetProcessHeap(), 0, sfti);
-    HeapFree(GetProcessHeap(), 0, smbios_table);
 }
 
 static const struct
@@ -1100,6 +1126,6 @@ START_TEST(version)
     test_GetVersionEx();
     test_VerifyVersionInfo();
     test_pe_os_version();
-    test_GetSystemFirmwareTable();
+    test_SystemFirmwareTable();
     test_PackageIdFromFullName();
 }

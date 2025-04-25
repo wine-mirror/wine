@@ -26,6 +26,7 @@
 #include "shlwapi.h"
 #include "perflib.h"
 #include "winternl.h"
+#include "winperf.h"
 
 #include "wine/debug.h"
 #include "kernelbase.h"
@@ -301,6 +302,21 @@ ULONG WINAPI PerfSetCounterSetInfo( HANDLE handle, PERF_COUNTERSET_INFO *templat
     return STATUS_SUCCESS;
 }
 
+static PERF_COUNTER_INFO* get_performance_counter_info(PERF_COUNTERSET_INSTANCE *instance, ULONG counter_id)
+{
+    unsigned int i;
+    struct counterset_template *template;
+    struct counterset_instance *inst;
+
+    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
+    template = inst->template;
+
+    for (i = 0; i < template->counterset.NumCounters; ++i)
+        if (template->counter[i].CounterId == counter_id) return  &template->counter[i];
+
+    return NULL;
+}
+
 /***********************************************************************
  *           PerfSetCounterRefValue   (KERNELBASE.@)
  */
@@ -308,23 +324,69 @@ ULONG WINAPI PerfSetCounterRefValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *i
                                     ULONG counterid, void *address)
 {
     struct perf_provider *prov = perf_provider_from_handle( provider );
-    struct counterset_template *template;
-    struct counterset_instance *inst;
-    unsigned int i;
+    PERF_COUNTER_INFO* counter;
 
     FIXME( "provider %p, instance %p, counterid %lu, address %p semi-stub.\n",
            provider, instance, counterid, address );
 
     if (!prov || !instance || !address) return ERROR_INVALID_PARAMETER;
 
-    inst = CONTAINING_RECORD(instance, struct counterset_instance, instance);
-    template = inst->template;
+    counter = get_performance_counter_info(instance, counterid);
 
-    for (i = 0; i < template->counterset.NumCounters; ++i)
-        if (template->counter[i].CounterId == counterid) break;
+    if (counter == NULL) return ERROR_NOT_FOUND;
+    if (!(counter->Attrib & PERF_ATTRIB_BY_REFERENCE)) return ERROR_INVALID_PARAMETER;
 
-    if (i == template->counterset.NumCounters) return ERROR_NOT_FOUND;
-    *(void **)((BYTE *)&inst->instance + sizeof(PERF_COUNTERSET_INSTANCE) + template->counter[i].Offset) = address;
+    *(void **)((BYTE *)(instance + 1) + counter->Offset) = address;
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           PerfSetULongCounterValue   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfSetULongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
+                                      ULONG counterid, ULONG value)
+{
+    struct perf_provider *prov = perf_provider_from_handle( provider );
+    PERF_COUNTER_INFO* counter;
+
+    TRACE( "provider %p, instance %p, counterid %lu, address %lu semi-stub.\n",
+           provider, instance, counterid, value );
+
+    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
+
+    counter = get_performance_counter_info(instance, counterid);
+
+    if (counter == NULL) return ERROR_NOT_FOUND;
+    if (counter->Attrib & PERF_ATTRIB_BY_REFERENCE) return ERROR_INVALID_PARAMETER;
+    if (counter->Type & PERF_SIZE_LARGE) return ERROR_INVALID_PARAMETER;
+
+    *(ULONG*)((BYTE *)(instance + 1) + counter->Offset) = value;
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           PerfSetULongLongCounterValue   (KERNELBASE.@)
+ */
+ULONG WINAPI PerfSetULongLongCounterValue(HANDLE provider, PERF_COUNTERSET_INSTANCE *instance,
+                                          ULONG counterid, ULONGLONG value)
+{
+    struct perf_provider *prov = perf_provider_from_handle( provider );
+    PERF_COUNTER_INFO* counter;
+
+    TRACE( "provider %p, instance %p, counterid %lu, address %I64u semi-stub.\n",
+           provider, instance, counterid, value );
+
+    if (!prov || !instance) return ERROR_INVALID_PARAMETER;
+
+    counter = get_performance_counter_info(instance, counterid);
+
+    if (counter == NULL) return ERROR_NOT_FOUND;
+    if (counter->Attrib & PERF_ATTRIB_BY_REFERENCE) return ERROR_INVALID_PARAMETER;
+    if (!(counter->Type & PERF_SIZE_LARGE)) return ERROR_INVALID_PARAMETER;
+
+    *(ULONGLONG*)((BYTE *)(instance + 1) + counter->Offset) = value;
 
     return STATUS_SUCCESS;
 }

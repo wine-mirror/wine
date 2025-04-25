@@ -245,18 +245,23 @@ static HRESULT get_output_samples(struct dmo_wrapper *filter)
 static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 {
     DMO_OUTPUT_DATA_BUFFER *buffers = filter->buffers;
+    HRESULT hr = S_OK;
     DWORD status, i;
     BOOL more_data;
-    HRESULT hr;
 
     do
     {
         more_data = FALSE;
 
-        hr = IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
-                filter->source_count, buffers, &status);
-        if (hr != S_OK)
+        if (FAILED(hr = get_output_samples(filter)))
+            return hr;
+
+        if (FAILED(IMediaObject_ProcessOutput(dmo, DMO_PROCESS_OUTPUT_DISCARD_WHEN_NO_BUFFER,
+                filter->source_count, buffers, &status)))
+        {
+            release_output_samples(filter);
             break;
+        }
 
         for (i = 0; i < filter->source_count; ++i)
         {
@@ -284,19 +289,18 @@ static HRESULT process_output(struct dmo_wrapper *filter, IMediaObject *dmo)
 
             if (IMediaSample_GetActualDataLength(sample))
             {
-                if (FAILED(hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)))
+                if ((hr = IMemInputPin_Receive(filter->sources[i].pin.pMemInputPin, sample)) != S_OK)
                 {
                     WARN("Downstream sink returned %#lx.\n", hr);
                     release_output_samples(filter);
                     return hr;
                 }
-                IMediaSample_SetActualDataLength(sample, 0);
             }
-
         }
+
+        release_output_samples(filter);
     } while (more_data);
 
-    release_output_samples(filter);
     return hr;
 }
 
@@ -311,6 +315,8 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
 
     if (filter->filter.state == State_Stopped)
         return VFW_E_WRONG_STATE;
+    if (iface->flushing)
+        return S_FALSE;
 
     IUnknown_QueryInterface(filter->dmo, &IID_IMediaObject, (void **)&dmo);
 
@@ -325,13 +331,9 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         /* Calling Discontinuity() might change the DMO's mind about whether it
          * has more data to process. The DirectX documentation explicitly
          * states that we should call ProcessOutput() again in this case. */
-        if (FAILED(hr = get_output_samples(filter)))
+        if ((hr = process_output(filter, dmo)) != S_OK)
             goto out;
-        process_output(filter, dmo);
     }
-
-    if (FAILED(hr = get_output_samples(filter)))
-        goto out;
 
     if (IMediaSample_IsSyncPoint(sample) == S_OK)
         flags |= DMO_INPUT_DATA_BUFFERF_SYNCPOINT;
@@ -351,7 +353,7 @@ static HRESULT WINAPI dmo_wrapper_sink_Receive(struct strmbase_sink *iface, IMed
         goto out;
     }
 
-    process_output(filter, dmo);
+    hr = process_output(filter, dmo);
 
 out:
     filter->input_buffer.sample = NULL;
@@ -371,8 +373,7 @@ static HRESULT dmo_wrapper_sink_eos(struct strmbase_sink *iface)
     if (FAILED(hr = IMediaObject_Discontinuity(dmo, index)))
         ERR("Discontinuity() failed, hr %#lx.\n", hr);
 
-    if (SUCCEEDED(get_output_samples(filter)))
-        process_output(filter, dmo);
+    process_output(filter, dmo);
 
     if (FAILED(hr = IMediaObject_Flush(dmo)))
         ERR("Flush() failed, hr %#lx.\n", hr);

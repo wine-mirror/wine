@@ -76,7 +76,11 @@
 
 #ifndef NULL
 #ifdef __cplusplus
-#define NULL  0
+#ifndef _WIN64
+#define NULL 0
+#else
+#define NULL 0LL
+#endif
 #else
 #define NULL  ((void *)0)
 #endif
@@ -86,66 +90,53 @@
 #define __has_attribute(x) 0
 #endif
 
+#ifndef __has_declspec_attribute
+# if defined(_MSC_VER)
+#  define __has_declspec_attribute(x) 1
+# else
+#  define __has_declspec_attribute(x) 0
+# endif
+#endif
+
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 # undef __stdcall
-# ifdef __i386__
-#  ifdef __GNUC__
-#   if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
-#    define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
-#   else
-#    define __stdcall __attribute__((__stdcall__))
-#   endif
+# undef __cdecl
+# if defined(__i386__) && defined(__GNUC__)
+#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
+#   define __stdcall __attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))
+#   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
 #  else
-#   error You need to define __stdcall for your compiler
+#   define __stdcall __attribute__((__stdcall__))
+#   define __cdecl __attribute__((__cdecl__))
 #  endif
-# elif defined(__x86_64__) && defined (__GNUC__)
+# elif defined(__x86_64__) && defined(__GNUC__)
 #  if __has_attribute(__force_align_arg_pointer__)
 #   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
 #  else
 #   define __stdcall __attribute__((ms_abi))
 #  endif
-# elif defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__CYGWIN__)
-#   define __stdcall __attribute__((pcs("aapcs-vfp")))
-# elif defined(__aarch64__) && defined (__GNUC__) && __has_attribute(ms_abi)
-#  define __stdcall __attribute__((ms_abi))
-# else  /* __i386__ */
-#  define __stdcall
-# endif  /* __i386__ */
-# undef __cdecl
-# if defined(__i386__) && defined(__GNUC__)
-#  if (__GNUC__ > 4) || ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 2)) || defined(__APPLE__)
-#   define __cdecl __attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))
-#  else
-#   define __cdecl __attribute__((__cdecl__))
-#  endif
-# else
 #  define __cdecl __stdcall
+# else
+#  define __stdcall
+#  define __cdecl
 # endif
 #endif  /* _MSC_VER || __MINGW32__ */
 
-#ifndef WINAPIV
-# if defined(__arm__) && defined (__GNUC__) && !defined(__SOFTFP__) && !defined(__MINGW32__) && !defined(__CYGWIN__)
-#  define WINAPIV __attribute__((pcs("aapcs")))
-# else
-#  define WINAPIV __cdecl
-# endif
-#endif
-
 #ifndef DECLSPEC_NORETURN
-# if defined(_MSC_VER) && (_MSC_VER >= 1200) && !defined(MIDL_PASS)
-#  define DECLSPEC_NORETURN __declspec(noreturn)
-# elif defined(__GNUC__)
+# ifdef __GNUC__
 #  define DECLSPEC_NORETURN __attribute__((noreturn))
+# elif __has_declspec_attribute(noreturn) && !defined(MIDL_PASS)
+#  define DECLSPEC_NORETURN __declspec(noreturn)
 # else
 #  define DECLSPEC_NORETURN
 # endif
 #endif
 
 #ifndef DECLSPEC_ALIGN
-# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
-#  define DECLSPEC_ALIGN(x) __declspec(align(x))
-# elif defined(__GNUC__)
+# ifdef __GNUC__
 #  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
+# elif __has_declspec_attribute(align) &&  !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
 # else
 #  define DECLSPEC_ALIGN(x)
 # endif
@@ -154,7 +145,7 @@
 #ifndef _ACRTIMP
 # ifdef _CRTIMP
 #  define _ACRTIMP _CRTIMP
-# elif defined(_MSC_VER)
+# elif __has_declspec_attribute(dllimport)
 #  define _ACRTIMP __declspec(dllimport)
 # elif defined(__MINGW32__) || defined(__CYGWIN__)
 #  define _ACRTIMP __attribute__((dllimport))
@@ -214,6 +205,8 @@ typedef unsigned int size_t;
 #define _SIZE_T_DEFINED
 #endif
 
+typedef size_t rsize_t;
+
 #ifndef _TIME32_T_DEFINED
 typedef __msvcrt_long __time32_t;
 #define _TIME32_T_DEFINED
@@ -257,6 +250,15 @@ typedef unsigned short  wctype_t;
 #ifndef _ERRNO_T_DEFINED
 typedef int errno_t;
 #define _ERRNO_T_DEFINED
+#endif
+
+#ifndef _CONST_RETURN
+# ifdef __cplusplus
+#  define _CONST_RETURN const
+#  define _CRT_CONST_CORRECT_OVERLOADS
+# else
+#  define _CONST_RETURN
+# endif
 #endif
 
 struct threadlocaleinfostruct;
@@ -323,7 +325,7 @@ typedef struct threadlocaleinfostruct {
 #define _THREADLOCALEINFO
 #endif
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || (defined(_MSC_VER) && defined(__clang__))
 #define __WINE_CRT_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
 #define __WINE_CRT_SCANF_ATTR(fmt,args)  __attribute__((format (scanf,fmt,args)))
 #else

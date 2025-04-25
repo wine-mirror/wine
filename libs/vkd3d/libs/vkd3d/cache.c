@@ -69,7 +69,14 @@ static int vkd3d_shader_cache_compare_key(const void *key, const struct rb_entry
 static void vkd3d_shader_cache_add_entry(struct vkd3d_shader_cache *cache,
         struct shader_cache_entry *e)
 {
-    rb_put(&cache->tree, &e->h.hash, &e->entry);
+    const struct shader_cache_key k =
+    {
+        .hash = e->h.hash,
+        .key_size = e->h.key_size,
+        .key = e->payload
+    };
+
+    rb_put(&cache->tree, &k, &e->entry);
 }
 
 int vkd3d_shader_open_cache(struct vkd3d_shader_cache **cache)

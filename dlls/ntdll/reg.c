@@ -492,10 +492,9 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
     else
     {
         status = RTL_GetKeyHandle(RelativeTo, Path, &topkey);
+        if (status != STATUS_SUCCESS) return status;
         handle = topkey;
     }
-    if(status != STATUS_SUCCESS)
-        return status;
 
     /* Process query table entries */
     for (; QueryTable->QueryRoutine != NULL || QueryTable->Name != NULL; ++QueryTable)
@@ -661,7 +660,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
         return STATUS_SUCCESS;
 
     status = RTL_GetKeyHandle(RelativeTo, Path, &handle);
-    if (handle) NtClose(handle);
+    if (!status) NtClose(handle);
     if (status == STATUS_INVALID_HANDLE) status = STATUS_OBJECT_NAME_NOT_FOUND;
     return status;
 }

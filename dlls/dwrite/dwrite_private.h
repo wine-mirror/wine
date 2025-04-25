@@ -126,6 +126,18 @@ static inline BOOL is_simulation_valid(DWRITE_FONT_SIMULATIONS simulations)
         DWRITE_FONT_SIMULATIONS_OBLIQUE)) == 0;
 }
 
+static inline void dwrite_matrix_multiply(DWRITE_MATRIX *a, const DWRITE_MATRIX *b)
+{
+    DWRITE_MATRIX tmp = *a;
+
+    a->m11 = tmp.m11 * b->m11 + tmp.m12 * b->m21;
+    a->m12 = tmp.m11 * b->m12 + tmp.m12 * b->m22;
+    a->m21 = tmp.m21 * b->m11 + tmp.m22 * b->m21;
+    a->m22 = tmp.m21 * b->m12 + tmp.m22 * b->m22;
+    a->dx = tmp.dx * b->m11 + tmp.dy * b->m21 + b->dx;
+    a->dy = tmp.dy * b->m12 + tmp.dy * b->m22 + b->dx;
+}
+
 struct textlayout_desc
 {
     IDWriteFactory7 *factory;

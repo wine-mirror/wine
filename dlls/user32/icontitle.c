@@ -137,10 +137,10 @@ static BOOL ICONTITLE_Paint( HWND hwnd, HWND owner, HDC hDC, BOOL bActive )
 }
 
 /***********************************************************************
- *           IconTitleWndProc
+ *           IconTitleWndProc_common
  */
-LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
-                                 WPARAM wParam, LPARAM lParam )
+static LRESULT WINAPI IconTitleWndProc_common( HWND hWnd, UINT msg,
+                                               WPARAM wParam, LPARAM lParam )
 {
     HWND owner = GetWindow( hWnd, GW_OWNER );
 
@@ -178,6 +178,48 @@ LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg,
             if( ICONTITLE_Paint( hWnd, owner, (HDC)wParam, (BOOL)lParam ) )
                 NtUserValidateRect( hWnd, NULL );
             return 1;
+    }
+    return 0;
+}
+
+/***********************************************************************
+ *           IconTitleWndProcA
+ */
+LRESULT WINAPI IconTitleWndProcA( HWND hWnd, UINT msg,
+                                  WPARAM wParam, LPARAM lParam )
+{
+    switch (msg)
+    {
+    case WM_CREATE:
+    case WM_NCHITTEST:
+    case WM_NCMOUSEMOVE:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_ACTIVATE:
+    case WM_CLOSE:
+    case WM_SHOWWINDOW:
+    case WM_ERASEBKGND:
+        return IconTitleWndProc_common( hWnd, msg, wParam, lParam );
+    }
+    return DefWindowProcA( hWnd, msg, wParam, lParam );
+}
+
+/***********************************************************************
+ *           IconTitleWndProcW
+ */
+LRESULT WINAPI IconTitleWndProcW( HWND hWnd, UINT msg,
+                                  WPARAM wParam, LPARAM lParam )
+{
+    switch (msg)
+    {
+    case WM_CREATE:
+    case WM_NCHITTEST:
+    case WM_NCMOUSEMOVE:
+    case WM_NCLBUTTONDBLCLK:
+    case WM_ACTIVATE:
+    case WM_CLOSE:
+    case WM_SHOWWINDOW:
+    case WM_ERASEBKGND:
+        return IconTitleWndProc_common( hWnd, msg, wParam, lParam );
     }
     return DefWindowProcW( hWnd, msg, wParam, lParam );
 }

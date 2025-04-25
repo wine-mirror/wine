@@ -27,8 +27,8 @@
 #define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
 
 #if _MSVCP_VER >= 100
-typedef __int64 DECLSPEC_ALIGN(8) streamoff;
-typedef __int64 DECLSPEC_ALIGN(8) streamsize;
+typedef INT64 streamoff;
+typedef INT64 streamsize;
 #else
 typedef SSIZE_T streamoff;
 typedef SSIZE_T streamsize;
@@ -38,8 +38,8 @@ void __cdecl _invalid_parameter_noinfo(void);
 BOOL __cdecl __uncaught_exception(void);
 int __cdecl _callnewh(size_t);
 
-void* __cdecl operator_new(size_t);
 void __cdecl operator_delete(void*);
+void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
 extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
 #if _MSVCP_VER >= 110
@@ -160,8 +160,8 @@ void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
 size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __thiscall MSVCP_allocator_char_allocate(void*, size_t);
 void __thiscall MSVCP_allocator_char_deallocate(void*, char*, size_t);
+char* __thiscall MSVCP_allocator_char_allocate(void*, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(MSVCP_allocator_char_deallocate, 2) __WINE_MALLOC;
 size_t __thiscall MSVCP_allocator_char_max_size(const void*);
 wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, size_t);
 void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);
@@ -194,7 +194,11 @@ _Yarn_wchar* __thiscall _Yarn_wchar_op_assign_cstr(_Yarn_wchar*, const wchar_t*)
 /* class locale::facet */
 typedef struct {
     const vtable_ptr *vtable;
+#if _MSVCP_VER >= 110
+    unsigned int refs;
+#else
     size_t refs;
+#endif
 } locale_facet;
 
 typedef enum {
@@ -248,6 +252,8 @@ typedef enum convert_mode
 /* class codecvt<char16> */
 typedef struct {
     codecvt_base base;
+    unsigned int max_code;
+    codecvt_convert_mode convert_mode;
 } codecvt_char16;
 
 /* class codecvt<char32> */

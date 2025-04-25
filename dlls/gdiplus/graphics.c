@@ -5359,35 +5359,58 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
     HFONT map_hfont, hfont, old_font;
     LONG processed, progress = 0;
     struct gdip_font_link_section *section;
-    DWORD font_codepages, string_codepages;
+    DWORD string_codepages;
+    WORD *glyph_indices;
+    HRESULT hr;
+    GpStatus stat;
 
     list_init(&info->font_link_info.sections);
     info->font_link_info.base_font = base_font;
 
+    glyph_indices = calloc(length, sizeof(*glyph_indices));
+    GetGlyphIndicesW(info->hdc, info->string, length, glyph_indices, GGI_MARK_NONEXISTING_GLYPHS);
+
+    /* Newlines won't have a glyph but don't need a fallback */
+    for (progress = 0; progress < length; progress++)
+        if (info->string[progress] == '\r' || info->string[progress] == '\n')
+            glyph_indices[progress] = 0;
+
     GetGlobalFontLinkObject(&iMLFL);
 
     get_font_hfont(info->graphics, base_font, NULL, &hfont, NULL, NULL);
-    IMLangFontLink_GetFontCodePages(iMLFL, info->hdc, hfont, &font_codepages);
 
+    progress = 0;
     while (progress < length)
     {
         section = calloc(1, sizeof(*section));
         section->start = progress;
-        IMLangFontLink_GetStrCodePages(iMLFL, &info->string[progress], length - progress,
-                                        font_codepages, &string_codepages, &processed);
 
-        if (font_codepages & string_codepages)
+        if (glyph_indices[progress] != 0xffff)
         {
             section->font = (GpFont *)base_font;
+
+            processed = 0;
+            while (progress + processed < length && glyph_indices[progress + processed] != 0xffff)
+                processed++;
         }
         else
         {
-            IMLangFontLink_MapFont(iMLFL, info->hdc, string_codepages, hfont, &map_hfont);
-            old_font = SelectObject(info->hdc, map_hfont);
-            GdipCreateFontFromDC(info->hdc, &gpfont);
-            SelectObject(info->hdc, old_font);
-            IMLangFontLink_ReleaseFont(iMLFL, map_hfont);
-            section->font = gpfont;
+            IMLangFontLink_GetStrCodePages(iMLFL, &info->string[progress], length - progress,
+                                            0, &string_codepages, &processed);
+            hr = IMLangFontLink_MapFont(iMLFL, info->hdc, string_codepages, hfont, &map_hfont);
+            if (SUCCEEDED(hr))
+            {
+                old_font = SelectObject(info->hdc, map_hfont);
+                stat = GdipCreateFontFromDC(info->hdc, &gpfont);
+                SelectObject(info->hdc, old_font);
+                IMLangFontLink_ReleaseFont(iMLFL, map_hfont);
+                if (stat == Ok)
+                    section->font = gpfont;
+                else
+                    section->font = (GpFont *)base_font;
+            }
+            else
+                section->font = (GpFont *)base_font;
         }
 
         section->end = section->start + processed;
@@ -5397,6 +5420,7 @@ static void generate_font_link_info(struct gdip_format_string_info *info, DWORD 
 
     DeleteObject(hfont);
     IMLangFontLink_Release(iMLFL);
+    free(glyph_indices);
 }
 
 static void font_link_get_text_extent_point(struct gdip_format_string_info *info,
@@ -5602,7 +5626,7 @@ GpStatus gdip_format_string(GpGraphics *graphics, HDC hdc,
         {
             if (format->attr & StringFormatFlagsLineLimit)
                 break;
-            bounds.Height = nheight - (height + size.cy);
+            bounds.Height = nheight - height;
         }
         else
             bounds.Height = size.cy;
@@ -5994,6 +6018,7 @@ static GpStatus draw_string_callback(struct gdip_format_string_info *info)
 
         GetOutlineTextMetricsW(info->hdc, sizeof(otm), &otm);
 
+        position.X = args->x + info->bounds->X / args->rel_width;
         underline_height = otm.otmsUnderscoreSize / args->rel_height;
         underline_y = position.Y - otm.otmsUnderscorePosition / args->rel_height - underline_height / 2;
 
@@ -7332,9 +7357,8 @@ GpStatus gdip_transform_points(GpGraphics *graphics, GpCoordinateSpace dst_space
 GpStatus WINGDIPAPI GdipTransformPoints(GpGraphics *graphics, GpCoordinateSpace dst_space,
                                         GpCoordinateSpace src_space, GpPointF *points, INT count)
 {
-    if(!graphics || !points || count <= 0 ||
-       dst_space < 0 || dst_space > CoordinateSpaceDevice ||
-       src_space < 0 || src_space > CoordinateSpaceDevice)
+    if(!graphics || !points || count <= 0 || (UINT)dst_space > CoordinateSpaceDevice ||
+       (UINT)src_space > CoordinateSpaceDevice)
         return InvalidParameter;
 
     if(graphics->busy)

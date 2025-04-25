@@ -155,6 +155,9 @@ void init_process_tracing( struct process *process )
                 mach_port_deallocate( mach_task_self(), msg.task_port.name );
         }
     }
+    /* On Mach thread priorities depend on having the process port available, so
+     * reapply all thread priorities here after process tracing is initialized */
+    set_process_priority( process, process->priority );
 }
 
 /* terminate the per-process tracing mechanism */
@@ -173,7 +176,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
 #if defined(__i386__) || defined(__x86_64__)
     x86_debug_state_t state;
@@ -259,7 +262,7 @@ done:
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
 #if defined(__i386__) || defined(__x86_64__)
     x86_debug_state_t state;
@@ -392,12 +395,7 @@ int send_thread_signal( struct thread *thread, int sig )
 int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, char *dest )
 {
     kern_return_t ret;
-    mach_msg_type_number_t bytes_read;
-    mach_vm_offset_t offset;
-    vm_offset_t data;
-    mach_vm_address_t aligned_address;
-    mach_vm_size_t aligned_size;
-    unsigned int page_size = get_page_size();
+    mach_vm_size_t bytes_read;
     mach_port_t process_port = get_process_port( process );
 
     if (!process_port)
@@ -411,24 +409,8 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         return 0;
     }
 
-    if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        return 0;
-    }
-
-    offset = ptr % page_size;
-    aligned_address = (mach_vm_address_t)(ptr - offset);
-    aligned_size = (size + offset + page_size - 1) / page_size * page_size;
-
-    ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
-    if (ret != KERN_SUCCESS) mach_set_error( ret );
-    else
-    {
-        memcpy( dest, (char *)data + offset, size );
-        mach_vm_deallocate( mach_task_self(), data, bytes_read );
-    }
-    task_resume( process_port );
+    ret = mach_vm_read_overwrite( process_port, (mach_vm_address_t)ptr, (mach_vm_size_t)size, (mach_vm_address_t)dest, &bytes_read );
+    mach_set_error( ret );
     return (ret == KERN_SUCCESS);
 }
 
@@ -436,15 +418,8 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t size, const char *src )
 {
     kern_return_t ret;
-    mach_vm_address_t aligned_address, region_address;
-    mach_vm_size_t aligned_size, region_size;
-    mach_msg_type_number_t info_size, bytes_read;
-    mach_vm_offset_t offset;
-    vm_offset_t task_mem = 0;
-    struct vm_region_basic_info_64 info;
-    mach_port_t dummy;
-    unsigned int page_size = get_page_size();
     mach_port_t process_port = get_process_port( process );
+    mach_vm_offset_t data;
 
     if (!process_port)
     {
@@ -456,68 +431,114 @@ int write_process_memory( struct process *process, client_ptr_t ptr, data_size_t
         set_error( STATUS_ACCESS_DENIED );
         return 0;
     }
-
-    offset = ptr % page_size;
-    aligned_address = (mach_vm_address_t)(ptr - offset);
-    aligned_size = (size + offset + page_size - 1) / page_size * page_size;
-
-    if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
+    if (posix_memalign( (void **)&data, get_page_size(), size ))
     {
-        mach_set_error( ret );
+        set_error( STATUS_NO_MEMORY );
         return 0;
     }
 
-    ret = mach_vm_read( process_port, aligned_address, aligned_size, &task_mem, &bytes_read );
-    if (ret != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        goto failed;
-    }
-    region_address = aligned_address;
-    info_size = sizeof(info);
-    ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
-                     (vm_region_info_t)&info, &info_size, &dummy );
-    if (ret != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        goto failed;
-    }
-    if (region_address > aligned_address ||
-        region_address + region_size < aligned_address + aligned_size)
-    {
-        /* FIXME: should support multiple regions */
-        set_error( ERROR_ACCESS_DENIED );
-        goto failed;
-    }
-    ret = mach_vm_protect( process_port, aligned_address, aligned_size, 0, VM_PROT_READ | VM_PROT_WRITE );
-    if (ret != KERN_SUCCESS)
-    {
-        mach_set_error( ret );
-        goto failed;
-    }
+    memcpy( (void *)data, src, size );
 
-    /* FIXME: there's an optimization that can be made: check first and last */
-    /* pages for writability; read first and last pages; write interior */
-    /* pages to task without ever reading&modifying them; if that succeeds, */
-    /* modify first and last pages and write them. */
+    ret = mach_vm_write( process_port, (mach_vm_address_t)ptr, data, (mach_msg_type_number_t)size );
 
-    memcpy( (char*)task_mem + offset, src, size );
+    /*
+     * On arm64 macOS, enabling execute permission for a memory region automatically disables write
+     * permission for that region. This can also happen under Rosetta sometimes.
+     * In that case mach_vm_write returns KERN_INVALID_ADDRESS.
+     */
 
-    ret = mach_vm_write( process_port, aligned_address, task_mem, bytes_read );
-    if (ret != KERN_SUCCESS) mach_set_error( ret );
-    else
+    if (ret == KERN_INVALID_ADDRESS)
     {
-        mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
-        /* restore protection */
-        mach_vm_protect( process_port, aligned_address, aligned_size, 0, info.protection );
+        mach_vm_address_t current_address = (mach_vm_address_t)ptr;
+        mach_vm_address_t region_address = current_address;
+        mach_vm_size_t region_size, write_size;
+        vm_region_basic_info_data_t info;
+        mach_msg_type_number_t info_count = VM_REGION_BASIC_INFO_COUNT_64;
+        mach_port_t object_name;
+        data_size_t remaining_size = size;
+
+        ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
+                     (vm_region_info_t)&info, &info_count, &object_name );
+        if (ret != KERN_SUCCESS)
+            goto out;
+
+        /*
+         * Actually check that everything is sane before suspending.
+         * KERN_INVALID_ADDRESS can also be returned when address is illegal or
+         * specifies a non-allocated region.
+         */
+        if (region_address > current_address ||
+            region_address + region_size <= current_address)
+        {
+            ret = KERN_INVALID_ADDRESS;
+            goto out;
+        }
+
+        /*
+         * FIXME: Rosetta can turn RWX pages into R-X pages during execution.
+         * For now we will just have to ignore failures due to the wrong
+         * protection here.
+         */
+        if (!is_rosetta() && !(info.protection & VM_PROT_WRITE))
+        {
+            ret = KERN_PROTECTION_FAILURE;
+            goto out;
+        }
+
+        /* The following operations should seem atomic from the perspective of the
+         * target process. */
+        if ((ret = task_suspend( process_port )) != KERN_SUCCESS)
+            goto out;
+
+        /* Iterate over all applicable memory regions until the write is completed. */
+        while (remaining_size)
+        {
+            region_address = current_address;
+            info_count = VM_REGION_BASIC_INFO_COUNT_64;
+            ret = mach_vm_region( process_port, &region_address, &region_size, VM_REGION_BASIC_INFO_64,
+                     (vm_region_info_t)&info, &info_count, &object_name );
+            if (ret != KERN_SUCCESS) break;
+
+            if (region_address > current_address ||
+                region_address + region_size <= current_address)
+            {
+                ret = KERN_INVALID_ADDRESS;
+                break;
+            }
+
+            /* FIXME: See the above Rosetta remark. */
+            if (!is_rosetta() && !(info.protection & VM_PROT_WRITE))
+            {
+                ret = KERN_PROTECTION_FAILURE;
+                break;
+            }
+
+            write_size = region_size - (current_address - region_address);
+            if (write_size > remaining_size) write_size = remaining_size;
+
+            ret = mach_vm_protect( process_port, current_address, write_size, 0,
+                    VM_PROT_READ | VM_PROT_WRITE );
+            if (ret != KERN_SUCCESS) break;
+
+            ret = mach_vm_write( process_port, current_address,
+                    data + (current_address - (mach_vm_address_t)ptr), write_size );
+            if (ret != KERN_SUCCESS) break;
+
+            ret = mach_vm_protect( process_port, current_address, write_size, 0,
+                    info.protection );
+            if (ret != KERN_SUCCESS) break;
+
+            current_address += write_size;
+            remaining_size  -= write_size;
+        }
+
         task_resume( process_port );
-        return 1;
     }
 
-failed:
-    if (task_mem) mach_vm_deallocate( mach_task_self(), task_mem, bytes_read );
-    task_resume( process_port );
-    return 0;
+out:
+    free( (void *)data );
+    mach_set_error( ret );
+    return (ret == KERN_SUCCESS);
 }
 
 /* retrieve an LDT selector entry */
@@ -526,10 +547,9 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
 {
     const unsigned int total_size = (2 * sizeof(int) + 1) * 8192;
     struct process *process = thread->process;
-    unsigned int page_size = get_page_size();
-    vm_offset_t data;
+    mach_vm_address_t data;
     kern_return_t ret;
-    mach_msg_type_number_t bytes_read;
+    mach_vm_size_t bytes_read;
     mach_port_t process_port = get_process_port( thread->process );
 
     if (!process->ldt_copy || !process_port)
@@ -539,29 +559,27 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     }
     if (entry >= 8192)
     {
-        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
+        set_error( STATUS_ACCESS_VIOLATION );
         return;
     }
 
-    if ((ret = task_suspend( process_port )) == KERN_SUCCESS)
+    if (!(data = (mach_vm_address_t)malloc( total_size )))
     {
-        mach_vm_offset_t offset = process->ldt_copy % page_size;
-        mach_vm_address_t aligned_address = (mach_vm_address_t)(process->ldt_copy - offset);
-        mach_vm_size_t aligned_size = (total_size + offset + page_size - 1) / page_size * page_size;
-
-        ret = mach_vm_read( process_port, aligned_address, aligned_size, &data, &bytes_read );
-        if (ret != KERN_SUCCESS) mach_set_error( ret );
-        else
-        {
-            const int *ldt = (const int *)((char *)data + offset);
-            memcpy( base, ldt + entry, sizeof(int) );
-            memcpy( limit, ldt + entry + 8192, sizeof(int) );
-            memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
-            mach_vm_deallocate( mach_task_self(), data, bytes_read );
-        }
-        task_resume( process_port );
+        set_error( STATUS_NO_MEMORY );
+        return;
     }
-    else mach_set_error( ret );
+
+    ret = mach_vm_read_overwrite( process_port, (mach_vm_address_t)process->ldt_copy, (mach_vm_size_t)total_size, data, &bytes_read );
+    if (ret != KERN_SUCCESS) mach_set_error( ret );
+    else
+    {
+        const int *ldt = (const int *)data;
+        memcpy( base, ldt + entry, sizeof(int) );
+        memcpy( limit, ldt + entry + 8192, sizeof(int) );
+        memcpy( flags, (char *)(ldt + 2 * 8192) + entry, 1 );
+    }
+
+    free( (void *)data );
 }
 
 #endif  /* USE_MACH */

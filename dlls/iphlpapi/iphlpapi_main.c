@@ -836,52 +836,79 @@ static ULONG adapters_addresses_size( IP_ADAPTER_ADDRESSES *info )
     return size;
 }
 
-static void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES *src )
+static int __cdecl adapters_addresses_cmp( const void *a, const void *b )
 {
-    char *ptr;
-    DWORD len;
-    UINT_PTR align = sizeof(ULONGLONG) - 1;
-    struct address_entry_copy_params params;
+    const IP_ADAPTER_ADDRESSES *aa = *(const IP_ADAPTER_ADDRESSES **)a, *aa2 = *(const IP_ADAPTER_ADDRESSES **)b;
+    ULONG metric = min( aa->Ipv4Metric, aa->Ipv6Metric ), metric2 = min( aa2->Ipv4Metric, aa2->Ipv6Metric );
+
+    if (metric < metric2) return -1;
+    if (metric > metric2) return 1;
+    return 0;
+}
+
+static IP_ADAPTER_ADDRESSES **adapters_addresses_sort( IP_ADAPTER_ADDRESSES *src, ULONG count )
+{
+    IP_ADAPTER_ADDRESSES **sorted;
+    ULONG i = 0;
+
+    if (!(sorted = heap_alloc( count * sizeof(*sorted) ))) return NULL;
 
     while (src)
     {
+        sorted[i++] = src;
+        src = src->Next;
+    }
+
+    qsort( sorted, count, sizeof(*sorted), adapters_addresses_cmp );
+    return sorted;
+}
+
+static void adapters_addresses_copy( IP_ADAPTER_ADDRESSES *dst, IP_ADAPTER_ADDRESSES **src, ULONG count )
+{
+    char *ptr;
+    DWORD len, i;
+    UINT_PTR align = sizeof(ULONGLONG) - 1;
+    struct address_entry_copy_params params;
+
+    for (i = 0; i < count; i++)
+    {
         ptr = (char *)(dst + 1);
-        *dst = *src;
+        *dst = *src[i];
         dst->AdapterName = ptr;
-        len = strlen( src->AdapterName ) + 1;
-        memcpy( dst->AdapterName, src->AdapterName, len );
+        len = strlen( src[i]->AdapterName ) + 1;
+        memcpy( dst->AdapterName, src[i]->AdapterName, len );
         ptr += (len + 1) & ~1;
         dst->Description = (WCHAR *)ptr;
-        len = (wcslen( src->Description ) + 1) * sizeof(WCHAR);
-        memcpy( dst->Description, src->Description, len );
+        len = (wcslen( src[i]->Description ) + 1) * sizeof(WCHAR);
+        memcpy( dst->Description, src[i]->Description, len );
         ptr += len;
         dst->DnsSuffix = (WCHAR *)ptr;
-        len = (wcslen( src->DnsSuffix ) + 1) * sizeof(WCHAR);
-        memcpy( dst->DnsSuffix, src->DnsSuffix, len );
+        len = (wcslen( src[i]->DnsSuffix ) + 1) * sizeof(WCHAR);
+        memcpy( dst->DnsSuffix, src[i]->DnsSuffix, len );
         ptr += len;
-        if (src->FriendlyName)
+        if (src[i]->FriendlyName)
         {
             dst->FriendlyName = (WCHAR *)ptr;
-            len = (wcslen( src->FriendlyName ) + 1) * sizeof(WCHAR);
-            memcpy( dst->FriendlyName, src->FriendlyName, len );
+            len = (wcslen( src[i]->FriendlyName ) + 1) * sizeof(WCHAR);
+            memcpy( dst->FriendlyName, src[i]->FriendlyName, len );
             ptr += len;
         }
         ptr = (char *)(((UINT_PTR)ptr + align) & ~align);
 
-        params.src = src;
+        params.src = src[i];
         params.dst = dst;
         params.ptr = ptr;
         params.next = NULL;
         params.cur_offset = ~0u;
-        address_lists_iterate( src, address_entry_copy, &params );
+        address_lists_iterate( src[i], address_entry_copy, &params );
         ptr = params.ptr;
 
-        if (src->Next)
+        if (i < count - 1)
         {
             dst->Next = (IP_ADAPTER_ADDRESSES *)ptr;
             dst = dst->Next;
         }
-        src = src->Next;
+        else dst->Next = NULL;
     }
 }
 
@@ -1218,24 +1245,24 @@ static DWORD dns_info_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, ULONG flags
     return ERROR_SUCCESS;
 }
 
-static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info )
+static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADDRESSES **info, ULONG *count )
 {
     IP_ADAPTER_ADDRESSES *aa;
     NET_LUID *luids;
     struct nsi_ndis_ifinfo_rw *rw;
     struct nsi_ndis_ifinfo_dynamic *dyn;
     struct nsi_ndis_ifinfo_static *stat;
-    DWORD err, i, count, needed;
+    DWORD err, i, needed;
     GUID guid;
     char *str_ptr;
 
     err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luids, sizeof(*luids),
                                   (void **)&rw, sizeof(*rw), (void **)&dyn, sizeof(*dyn),
-                                  (void **)&stat, sizeof(*stat), &count, 0 );
+                                  (void **)&stat, sizeof(*stat), count, 0 );
     if (err) return err;
 
-    needed = count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(stat->descr.String));
-    needed += count * sizeof(rw->alias.String); /* GAA_FLAG_SKIP_FRIENDLY_NAME is ignored */
+    needed = *count * (sizeof(*aa) + ((CHARS_IN_GUID + 1) & ~1) + sizeof(stat->descr.String));
+    needed += *count * sizeof(rw->alias.String); /* GAA_FLAG_SKIP_FRIENDLY_NAME is ignored */
 
     aa = heap_alloc_zero( needed );
     if (!aa)
@@ -1244,12 +1271,12 @@ static DWORD adapters_addresses_alloc( ULONG family, ULONG flags, IP_ADAPTER_ADD
         goto err;
     }
 
-    str_ptr = (char *)(aa + count);
-    for (i = 0; i < count; i++)
+    str_ptr = (char *)(aa + *count);
+    for (i = 0; i < *count; i++)
     {
         aa[i].Length = sizeof(*aa);
         aa[i].IfIndex = stat[i].if_index;
-        if (i < count - 1) aa[i].Next = aa + i + 1;
+        if (i < *count - 1) aa[i].Next = aa + i + 1;
         ConvertInterfaceLuidToGuid( luids + i, &guid );
         ConvertGuidToStringA( &guid, str_ptr, CHARS_IN_GUID );
         aa[i].AdapterName = str_ptr;
@@ -1295,14 +1322,14 @@ err:
 ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses( ULONG family, ULONG flags, void *reserved,
                                                      IP_ADAPTER_ADDRESSES *aa, ULONG *size )
 {
-    IP_ADAPTER_ADDRESSES *info;
-    DWORD err, needed;
+    IP_ADAPTER_ADDRESSES *info, **sorted;
+    DWORD err, needed, count;
 
     TRACE( "(%ld, %08lx, %p, %p, %p)\n", family, flags, reserved, aa, size );
 
     if (!size) return ERROR_INVALID_PARAMETER;
 
-    err = adapters_addresses_alloc( family, flags, &info );
+    err = adapters_addresses_alloc( family, flags, &info, &count );
     if (err) return err;
 
     needed = adapters_addresses_size( info );
@@ -1312,7 +1339,14 @@ ULONG WINAPI DECLSPEC_HOTPATCH GetAdaptersAddresses( ULONG family, ULONG flags, 
         err = ERROR_BUFFER_OVERFLOW;
     }
     else
-        adapters_addresses_copy( aa, info );
+    {
+        if (!(sorted = adapters_addresses_sort( info, count ))) err = ERROR_OUTOFMEMORY;
+        else
+        {
+            adapters_addresses_copy( aa, sorted, count );
+            heap_free( sorted );
+        }
+    }
 
     adapters_addresses_free( info );
     return err;

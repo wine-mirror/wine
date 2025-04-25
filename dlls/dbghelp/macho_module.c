@@ -679,7 +679,7 @@ static int macho_load_section_info(struct image_file_map* ifm, const struct mach
     else if (!strncmp(segname, "__PAGEZERO", 10))
         TRACE("Ignoring __PAGEZERO segment\n");
     else if (ignore)
-        TRACE("Ignoring %s segment because image has split segments\n", segname);
+        TRACE("Ignoring %s segment because image has split segments\n", debugstr_a(segname));
     else
     {
         /* If this segment starts before previously-known earliest, record new earliest. */
@@ -1082,7 +1082,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 if (func->ranges[0].low == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                 {
                     TRACE("Adjusting function %p/%s!%s from %#I64x to %#Ix\n", func,
-                          debugstr_w(module->modulename), sym->hash_elt.name,
+                          debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                           func->ranges[0].low, ste->addr);
                     func->ranges[0].high += ste->addr - func->ranges[0].low;
                     func->ranges[0].low = ste->addr;
@@ -1100,7 +1100,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                     if (data->u.var.offset == module->format_info[DFI_MACHO]->u.macho_info->load_addr)
                     {
                         TRACE("Adjusting data symbol %p/%s!%s from 0x%08Ix to 0x%08Ix\n",
-                              data, debugstr_w(module->modulename), sym->hash_elt.name,
+                              data, debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                               data->u.var.offset, ste->addr);
                         data->u.var.offset = ste->addr;
                         adjusted = TRUE;
@@ -1113,7 +1113,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                         if (data->kind != new_kind)
                         {
                             WARN("Changing kind for %p/%s!%s from %d to %d\n", sym,
-                                 debugstr_w(module->modulename), sym->hash_elt.name,
+                                 debugstr_w(module->modulename), debugstr_a(sym->hash_elt.name),
                                  (int)data->kind, (int)new_kind);
                             data->kind = new_kind;
                             adjusted = TRUE;
@@ -1173,8 +1173,8 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 if (size && kind == (ste->is_global ? DataIsGlobal : DataIsFileStatic))
                     FIXME("Duplicate in %s: %s<%08Ix> %s<%I64x-%I64x>\n",
                           debugstr_w(module->modulename),
-                          ste->ht_elt.name, ste->addr,
-                          sym->hash_elt.name,
+                          debugstr_a(ste->ht_elt.name), ste->addr,
+                          debugstr_a(sym->hash_elt.name),
                           addr, size);
             }
         }
@@ -1190,7 +1190,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
             if (ste->is_code)
             {
                 symt_new_function(module, ste->compiland, ste->ht_elt.name,
-                    ste->addr, 0, NULL);
+                                  ste->addr, 0, 0, 0);
             }
             else
             {
@@ -1200,7 +1200,7 @@ static void macho_finish_stabs(struct module* module, struct hash_table* ht_symt
                 loc.reg = 0;
                 loc.offset = ste->addr;
                 symt_new_global_variable(module, ste->compiland, ste->ht_elt.name,
-                                         !ste->is_global, loc, 0, NULL);
+                                         !ste->is_global, loc, 0, 0);
             }
 
             ste->used = 1;
@@ -1479,11 +1479,17 @@ static BOOL macho_fetch_file_info(struct process* process, const WCHAR* name, UL
 /******************************************************************
  *              macho_module_remove
  */
-static void macho_module_remove(struct process* pcs, struct module_format* modfmt)
+static void macho_module_remove(struct module_format* modfmt)
 {
     macho_unmap_file(&modfmt->u.macho_info->file_map);
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
+
+static const struct module_format_vtable macho_module_format_vtable =
+{
+    macho_module_remove,
+    NULL,
+};
 
 /******************************************************************
  *              macho_load_file
@@ -1538,8 +1544,7 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
         macho_info->module->format_info[DFI_MACHO] = modfmt;
 
         modfmt->module       = macho_info->module;
-        modfmt->remove       = macho_module_remove;
-        modfmt->loc_compute  = NULL;
+        modfmt->vtable       = &macho_module_format_vtable;
         modfmt->u.macho_info = macho_module_info;
 
         macho_module_info->load_addr = load_addr;
@@ -1944,12 +1949,8 @@ static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_in
 
     if (!ret)
     {
-        WCHAR* loader = get_wine_loader_name(pcs);
-        if (loader)
-        {
-            ret = macho_search_and_load_file(pcs, loader, 0, macho_info);
-            HeapFree(GetProcessHeap(), 0, loader);
-        }
+        const WCHAR *loader = get_wine_loader_name(pcs);
+        if (loader) ret = macho_search_and_load_file(pcs, loader, 0, macho_info);
     }
     return ret;
 }

@@ -135,7 +135,7 @@ BOOL HCR_GetDefaultVerbW( HKEY hkeyClass, LPCWSTR szVerb, LPWSTR szDest, DWORD l
             lstrcpyW(sTemp, L"shell\\");
             lstrcatW(sTemp, szDest);
             lstrcatW(sTemp, L"\\command");
-            if (!RegOpenKeyExW(hkeyClass, sTemp, 0, 0, &hkey))
+            if (!RegOpenKeyExW(hkeyClass, sTemp, 0, KEY_ENUMERATE_SUB_KEYS, &hkey))
             {
                 RegCloseKey(hkey);
                 TRACE("default verb=%s\n", debugstr_w(szDest));
@@ -145,7 +145,7 @@ BOOL HCR_GetDefaultVerbW( HKEY hkeyClass, LPCWSTR szVerb, LPWSTR szDest, DWORD l
 
         /* then fallback to 'open' */
         lstrcpyW(sTemp, L"shell\\open\\command");
-        if (!RegOpenKeyExW(hkeyClass, sTemp, 0, 0, &hkey))
+        if (!RegOpenKeyExW(hkeyClass, sTemp, 0, KEY_ENUMERATE_SUB_KEYS, &hkey))
         {
             RegCloseKey(hkey);
             lstrcpynW(szDest, L"open", len);

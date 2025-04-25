@@ -96,6 +96,7 @@ MAKE_FUNCPTR(SDL_HapticClose);
 MAKE_FUNCPTR(SDL_HapticDestroyEffect);
 MAKE_FUNCPTR(SDL_HapticGetEffectStatus);
 MAKE_FUNCPTR(SDL_HapticNewEffect);
+MAKE_FUNCPTR(SDL_HapticNumAxes);
 MAKE_FUNCPTR(SDL_HapticOpenFromJoystick);
 MAKE_FUNCPTR(SDL_HapticPause);
 MAKE_FUNCPTR(SDL_HapticQuery);
@@ -198,7 +199,7 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
     hid_device_set_hatswitch_y(iface, index, y);
 }
 
-static BOOL descriptor_add_haptic(struct sdl_device *impl)
+static BOOL descriptor_add_haptic(struct sdl_device *impl, BOOL force)
 {
     USHORT i, count = 0;
     USAGE usages[16];
@@ -226,19 +227,22 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
 
     if ((impl->effect_support & EFFECT_SUPPORT_PHYSICAL))
     {
-        /* SDL_HAPTIC_SQUARE doesn't exist */
-        if (impl->effect_support & SDL_HAPTIC_SINE) usages[count++] = PID_USAGE_ET_SINE;
-        if (impl->effect_support & SDL_HAPTIC_TRIANGLE) usages[count++] = PID_USAGE_ET_TRIANGLE;
-        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
-        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
-        if (impl->effect_support & SDL_HAPTIC_SPRING) usages[count++] = PID_USAGE_ET_SPRING;
-        if (impl->effect_support & SDL_HAPTIC_DAMPER) usages[count++] = PID_USAGE_ET_DAMPER;
-        if (impl->effect_support & SDL_HAPTIC_INERTIA) usages[count++] = PID_USAGE_ET_INERTIA;
-        if (impl->effect_support & SDL_HAPTIC_FRICTION) usages[count++] = PID_USAGE_ET_FRICTION;
-        if (impl->effect_support & SDL_HAPTIC_CONSTANT) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
-        if (impl->effect_support & SDL_HAPTIC_RAMP) usages[count++] = PID_USAGE_ET_RAMP;
+        int axes_count;
 
-        if (!hid_device_add_physical(&impl->unix_device, usages, count))
+        /* SDL_HAPTIC_SQUARE doesn't exist */
+        if (force || (impl->effect_support & SDL_HAPTIC_SINE)) usages[count++] = PID_USAGE_ET_SINE;
+        if (force || (impl->effect_support & SDL_HAPTIC_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
+        if (force || (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
+        if (force || (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+        if (force || (impl->effect_support & SDL_HAPTIC_SPRING)) usages[count++] = PID_USAGE_ET_SPRING;
+        if (force || (impl->effect_support & SDL_HAPTIC_DAMPER)) usages[count++] = PID_USAGE_ET_DAMPER;
+        if (force || (impl->effect_support & SDL_HAPTIC_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
+        if (force || (impl->effect_support & SDL_HAPTIC_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
+        if (force || (impl->effect_support & SDL_HAPTIC_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
+        if (force || (impl->effect_support & SDL_HAPTIC_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
+
+        if ((axes_count = pSDL_HapticNumAxes(impl->sdl_haptic)) < 0) axes_count = 2;
+        if (!hid_device_add_physical(&impl->unix_device, usages, count, axes_count))
             return FALSE;
     }
 
@@ -360,7 +364,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
-    if (!descriptor_add_haptic(impl))
+    if (!descriptor_add_haptic(impl, physical_usage.Usage == HID_USAGE_SIMULATION_AUTOMOBILE_SIMULATION_DEVICE))
         return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))
@@ -414,7 +418,7 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
-    if (!descriptor_add_haptic(impl))
+    if (!descriptor_add_haptic(impl, FALSE))
         return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))
@@ -443,17 +447,12 @@ static void sdl_device_destroy(struct unix_device *iface)
 static NTSTATUS sdl_device_start(struct unix_device *iface)
 {
     struct sdl_device *impl = impl_from_unix_device(iface);
-    NTSTATUS status;
 
     pthread_mutex_lock(&sdl_cs);
-
-    if (impl->sdl_controller) status = build_controller_report_descriptor(iface);
-    else status = build_joystick_report_descriptor(iface);
-    impl->started = !status;
-
+    impl->started = TRUE;
     pthread_mutex_unlock(&sdl_cs);
 
-    return status;
+    return STATUS_SUCCESS;
 }
 
 static void sdl_device_stop(struct unix_device *iface)
@@ -595,7 +594,7 @@ static NTSTATUS sdl_device_physical_effect_control(struct unix_device *iface, BY
 
     TRACE("iface %p, index %u, control %04x, iterations %u.\n", iface, index, control, iterations);
 
-    if (impl->effect_ids[index] < 0) return STATUS_UNSUCCESSFUL;
+    if (id < 0) return STATUS_SUCCESS;
 
     switch (control)
     {
@@ -991,8 +990,6 @@ static void sdl_add_device(unsigned int index)
     if (controller)
     {
         desc.is_gamepad = TRUE;
-        desc.usages.UsagePage = HID_USAGE_PAGE_GENERIC;
-        desc.usages.Usage = HID_USAGE_GENERIC_GAMEPAD;
         axis_count = 6;
     }
     else
@@ -1000,12 +997,12 @@ static void sdl_add_device(unsigned int index)
         int button_count = pSDL_JoystickNumButtons(joystick);
         axis_count = pSDL_JoystickNumAxes(joystick);
         desc.is_gamepad = (axis_count == 6  && button_count >= 14);
-        desc.usages.UsagePage = HID_USAGE_PAGE_GENERIC;
-        desc.usages.Usage = HID_USAGE_GENERIC_JOYSTICK;
     }
 
     for (axis_offset = 0; axis_offset < axis_count; axis_offset += (options.split_controllers ? 6 : axis_count))
     {
+        NTSTATUS status;
+
         if (!axis_offset) strcpy(buffer, product);
         else snprintf(buffer, ARRAY_SIZE(buffer), "%s %d", product, axis_offset / 6);
         ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
@@ -1018,6 +1015,15 @@ static void sdl_add_device(unsigned int index)
         impl->sdl_controller = controller;
         impl->id = id;
         impl->axis_offset = axis_offset;
+
+        if (impl->sdl_controller) status = build_controller_report_descriptor(&impl->unix_device);
+        else status = build_joystick_report_descriptor(&impl->unix_device);
+        if (status)
+        {
+            list_remove(&impl->unix_device.entry);
+            impl->unix_device.vtbl->destroy(&impl->unix_device);
+            return;
+        }
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }
@@ -1120,6 +1126,7 @@ NTSTATUS sdl_bus_init(void *args)
     LOAD_FUNCPTR(SDL_HapticDestroyEffect);
     LOAD_FUNCPTR(SDL_HapticGetEffectStatus);
     LOAD_FUNCPTR(SDL_HapticNewEffect);
+    LOAD_FUNCPTR(SDL_HapticNumAxes);
     LOAD_FUNCPTR(SDL_HapticOpenFromJoystick);
     LOAD_FUNCPTR(SDL_HapticPause);
     LOAD_FUNCPTR(SDL_HapticQuery);

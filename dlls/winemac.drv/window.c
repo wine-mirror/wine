@@ -46,15 +46,6 @@ static CFMutableDictionaryRef win_datas;
 static unsigned int activate_on_focus_time;
 
 
-/**********************************************************************
- *       get_win_monitor_dpi
- */
-static UINT get_win_monitor_dpi(HWND hwnd)
-{
-    return NtUserGetSystemDpiForProcess(NULL);  /* FIXME: get monitor dpi */
-}
-
-
 /* per-monitor DPI aware NtUserSetWindowPos call */
 static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags)
 {
@@ -62,15 +53,6 @@ static BOOL set_window_pos(HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, 
     BOOL ret = NtUserSetWindowPos(hwnd, after, x, y, cx, cy, flags);
     NtUserSetThreadDpiAwarenessContext(context);
     return ret;
-}
-
-
-/* per-monitor DPI aware NtUserSetInternalWindowPos call */
-static void set_internal_window_pos(HWND hwnd, UINT cmd, RECT *rect, POINT *pt)
-{
-    UINT context = NtUserSetThreadDpiAwarenessContext(NTUSER_DPI_PER_MONITOR_AWARE_V2);
-    NtUserSetInternalWindowPos(hwnd, cmd, rect, pt);
-    NtUserSetThreadDpiAwarenessContext(context);
 }
 
 
@@ -364,7 +346,7 @@ static void sync_window_min_max_info(HWND hwnd)
 {
     LONG style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     LONG exstyle = NtUserGetWindowLongW(hwnd, GWL_EXSTYLE);
-    UINT dpi = get_win_monitor_dpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_RAW_DPI);
     RECT win_rect, primary_monitor_rect;
     MINMAXINFO minmax;
     LONG adjustedStyle;
@@ -378,7 +360,7 @@ static void sync_window_min_max_info(HWND hwnd)
 
     if (!macdrv_get_cocoa_window(hwnd, FALSE)) return;
 
-    NtUserGetWindowRect(hwnd, &win_rect, get_win_monitor_dpi(hwnd));
+    NtUserGetWindowRect(hwnd, &win_rect, dpi);
     minmax.ptReserved.x = win_rect.left;
     minmax.ptReserved.y = win_rect.top;
 
@@ -752,7 +734,7 @@ static void set_focus(HWND hwnd, BOOL raise)
     if (!(hwnd = NtUserGetAncestor(hwnd, GA_ROOT))) return;
 
     if (raise && hwnd == NtUserGetForegroundWindow() && hwnd != NtUserGetDesktopWindow() && !is_all_the_way_front(hwnd))
-        set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
+        NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOOWNERZORDER);
 
     if (!(data = get_win_data(hwnd))) return;
 
@@ -1023,53 +1005,6 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
 }
 
 
-/***********************************************************************
- *              move_window_bits
- *
- * Move the window bits when a window is moved.
- */
-static void move_window_bits(HWND hwnd, macdrv_window window, const RECT *old_rect, const RECT *new_rect,
-                             const RECT *old_client_rect, const RECT *new_client_rect,
-                             const RECT *new_window_rect)
-{
-    RECT src_rect = *old_rect;
-    RECT dst_rect = *new_rect;
-    HDC hdc_src, hdc_dst;
-    HRGN rgn;
-    HWND parent = 0;
-
-    if (!window)
-    {
-        OffsetRect(&dst_rect, -new_window_rect->left, -new_window_rect->top);
-        parent = NtUserGetAncestor(hwnd, GA_PARENT);
-        hdc_src = NtUserGetDCEx(parent, 0, DCX_CACHE);
-        hdc_dst = NtUserGetDCEx(hwnd, 0, DCX_CACHE | DCX_WINDOW);
-    }
-    else
-    {
-        OffsetRect(&dst_rect, -new_client_rect->left, -new_client_rect->top);
-        /* make src rect relative to the old position of the window */
-        OffsetRect(&src_rect, -old_client_rect->left, -old_client_rect->top);
-        if (dst_rect.left == src_rect.left && dst_rect.top == src_rect.top) return;
-        hdc_src = hdc_dst = NtUserGetDCEx(hwnd, 0, DCX_CACHE);
-    }
-
-    rgn = NtGdiCreateRectRgn(dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom);
-    NtGdiExtSelectClipRgn(hdc_dst, rgn, RGN_COPY);
-    NtGdiDeleteObjectApp(rgn);
-    NtUserExcludeUpdateRgn(hdc_dst, hwnd);
-
-    TRACE("copying bits for win %p/%p %s -> %s\n", hwnd, window,
-          wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect));
-    NtGdiBitBlt(hdc_dst, dst_rect.left, dst_rect.top,
-                dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
-                hdc_src, src_rect.left, src_rect.top, SRCCOPY, 0, 0);
-
-    NtUserReleaseDC(hwnd, hdc_dst);
-    if (hdc_src != hdc_dst) NtUserReleaseDC(parent, hdc_src);
-}
-
-
 /**********************************************************************
  *              activate_on_following_focus
  */
@@ -1143,7 +1078,7 @@ static HMONITOR monitor_from_point(POINT pt, UINT flags)
  */
 static LRESULT move_window(HWND hwnd, WPARAM wparam)
 {
-    UINT dpi = get_win_monitor_dpi(hwnd);
+    UINT dpi = NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT);
     MSG msg;
     RECT origRect, movedRect, desktopRect;
     int hittest = (int)(wparam & 0x0f);
@@ -1170,7 +1105,7 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
     else
         captionHeight = 0;
 
-    NtUserGetWindowRect(hwnd, &origRect, get_win_monitor_dpi(hwnd));
+    NtUserGetWindowRect(hwnd, &origRect, NtUserGetWinMonitorDpi(hwnd, MDT_DEFAULT));
     movedRect = origRect;
 
     if (!hittest)
@@ -1453,11 +1388,11 @@ void macdrv_DestroyWindow(HWND hwnd)
 
 
 /*****************************************************************
- *              SetFocus   (MACDRV.@)
+ *              ActivateWindow   (MACDRV.@)
  *
- * Set the Mac focus.
+ * Set the Mac active window.
  */
-void macdrv_SetFocus(HWND hwnd)
+void macdrv_ActivateWindow(HWND hwnd, HWND previous)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
 
@@ -1656,7 +1591,7 @@ done:
  *
  * Perform WM_SYSCOMMAND handling.
  */
-LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
+LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos)
 {
     struct macdrv_win_data *data;
     LRESULT ret = -1;
@@ -1692,7 +1627,7 @@ done:
 /***********************************************************************
  *              UpdateLayeredWindow   (MACDRV.@)
  */
-void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags)
+void macdrv_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags)
 {
     struct macdrv_win_data *data;
 
@@ -1703,7 +1638,7 @@ void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags)
             show_window(data);
 
         /* The ULW flags are a superset of the LWA flags. */
-        sync_window_opacity(data, 255, TRUE, flags);
+        sync_window_opacity(data, alpha, TRUE, flags);
         release_win_data(data);
     }
 }
@@ -1726,10 +1661,6 @@ LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             sync_window_region(data, (HRGN)1);
             release_win_data(data);
         }
-        return 0;
-    case WM_WINE_DESKTOP_RESIZED:
-        macdrv_reset_device_metrics();
-        macdrv_reassert_window_position(hwnd);
         return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
         activate_on_following_focus();
@@ -1761,35 +1692,6 @@ BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const stru
     return ret;
 }
 
-/***********************************************************************
- *              MoveWindowBits   (MACDRV.@)
- */
-void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects)
-{
-    RECT old_visible_rect, old_client_rect;
-    struct macdrv_win_data *data;
-    macdrv_window window;
-
-    if (!(data = get_win_data(hwnd))) return;
-    old_visible_rect = data->rects.visible;
-    old_client_rect = data->rects.client;
-    window = data->cocoa_window;
-    release_win_data(data);
-
-    /* if all that happened is that the whole window moved, copy everything */
-    if (EqualRect(&valid_rects[0], &new_rects->visible) && EqualRect(&valid_rects[1], &old_visible_rect))
-    {
-        /* A Cocoa window's bits are moved automatically */
-        if (!window && (valid_rects[0].left - valid_rects[1].left || valid_rects[0].top - valid_rects[1].top))
-            move_window_bits(hwnd, 0, &old_visible_rect, &new_rects->visible,
-                             &old_client_rect, &new_rects->client, &new_rects->window);
-    }
-    else
-    {
-        move_window_bits(hwnd, window, &valid_rects[1], &valid_rects[0],
-                         &old_client_rect, &new_rects->client, &new_rects->window);
-    }
-}
 
 /***********************************************************************
  *      GetWindowStyleMasks   (X11DRV.@)
@@ -1817,8 +1719,8 @@ BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *styl
 /***********************************************************************
  *              WindowPosChanged   (MACDRV.@)
  */
-void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
-                             struct window_surface *surface)
+void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+                             const struct window_rects *new_rects, struct window_surface *surface)
 {
     struct macdrv_thread_data *thread_data;
     struct macdrv_win_data *data;
@@ -1922,7 +1824,6 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 {
     struct macdrv_win_data *data;
     RECT rect;
-    HWND parent;
     UINT flags = SWP_NOACTIVATE | SWP_NOZORDER;
     int width, height;
     BOOL being_dragged;
@@ -1937,16 +1838,12 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 
     /* Get geometry */
 
-    parent = NtUserGetAncestor(hwnd, GA_PARENT);
-
     TRACE("win %p/%p new Cocoa frame %s fullscreen %d in_resize %d\n", hwnd, data->cocoa_window,
           wine_dbgstr_cgrect(event->window_frame_changed.frame),
           event->window_frame_changed.fullscreen, event->window_frame_changed.in_resize);
 
     rect = rect_from_cgrect(event->window_frame_changed.frame);
     rect = window_rect_from_visible(&data->rects, rect);
-    NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
-
     width = rect.right - rect.left;
     height = rect.bottom - rect.top;
 
@@ -1974,7 +1871,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         int send_sizemove = !event->window_frame_changed.in_resize && !being_dragged && !event->window_frame_changed.skip_size_move_loop;
         if (send_sizemove)
             send_message(hwnd, WM_ENTERSIZEMOVE, 0, 0);
-        set_window_pos(hwnd, 0, rect.left, rect.top, width, height, flags);
+        NtUserSetRawWindowPos(hwnd, rect, flags, FALSE);
         if (send_sizemove)
             send_message(hwnd, WM_EXITSIZEMOVE, 0, 0);
     }
@@ -1998,17 +1895,9 @@ void macdrv_window_got_focus(HWND hwnd, const macdrv_event *event)
 
     if (can_window_become_foreground(hwnd) && !(style & WS_MINIMIZE))
     {
-        /* simulate a mouse click on the menu to find out
-         * whether the window wants to be activated */
-        LRESULT ma = send_message(hwnd, WM_MOUSEACTIVATE,
-                                  (WPARAM)NtUserGetAncestor(hwnd, GA_ROOT),
-                                  MAKELONG(HTMENU, WM_LBUTTONDOWN));
-        if (ma != MA_NOACTIVATEANDEAT && ma != MA_NOACTIVATE)
-        {
-            TRACE("setting foreground window to %p\n", hwnd);
-            NtUserSetForegroundWindow(hwnd);
-            return;
-        }
+        TRACE("setting foreground window to %p\n", hwnd);
+        NtUserSetForegroundWindow(hwnd);
+        return;
     }
 
     TRACE("win %p/%p rejecting focus\n", hwnd, event->window);
@@ -2144,7 +2033,7 @@ done:
 void macdrv_window_brought_forward(HWND hwnd)
 {
     TRACE("win %p\n", hwnd);
-    set_window_pos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+    NtUserSetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 
@@ -2175,16 +2064,11 @@ void macdrv_window_restore_requested(HWND hwnd, const macdrv_event *event)
 
         if ((style & WS_MAXIMIZE) && (style & WS_VISIBLE) && (data = get_win_data(hwnd)))
         {
-            RECT rect;
-            HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
-
-            rect = rect_from_cgrect(event->window_restore_requested.frame);
+            RECT rect = rect_from_cgrect(event->window_restore_requested.frame);
             rect = window_rect_from_visible(&data->rects, rect);
-            NtUserMapWindowPoints(0, parent, (POINT *)&rect, 2, 0 /* per-monitor DPI */);
-
             release_win_data(data);
 
-            set_internal_window_pos(hwnd, SW_SHOW, &rect, NULL);
+            NtUserSetRawWindowPos(hwnd, rect, 0, TRUE);
         }
     }
 

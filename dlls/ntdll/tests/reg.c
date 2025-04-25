@@ -253,9 +253,7 @@ static void test_NtOpenKey(void)
     attr.Length = sizeof(attr);
     key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, 0, &attr);
-    todo_wine
     ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08lx\n", status);
-    todo_wine
     ok(!key, "key = %p\n", key);
     if (status == STATUS_SUCCESS) NtClose(key);
 
@@ -442,6 +440,7 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
@@ -453,6 +452,7 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
+    pRtlFreeUnicodeString( &str );
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey2\\\\test\\\\" );
     status = pNtCreateKey( &subkey2, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
@@ -1067,14 +1067,7 @@ static void test_symlinks(void)
     target = pRtlAllocateHeap( GetProcessHeap(), 0, target_len + sizeof(targetW) /*for loop test*/ );
     memcpy( target, winetestpath.Buffer, winetestpath.Length );
     memcpy( target + winetestpath.Length/sizeof(WCHAR), targetW, sizeof(targetW) );
-
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = 0;
-    attr.ObjectName = &winetestpath;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &winetestpath, 0, 0, NULL );
     status = pNtCreateKey( &root, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
@@ -1349,16 +1342,15 @@ static DWORD get_key_value( HANDLE root, const char *name, DWORD flags )
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)tmp;
     DWORD dw, len = sizeof(tmp);
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = root;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &str;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, root, NULL );
     pRtlCreateUnicodeStringFromAsciiz( &str, name );
 
     status = pNtOpenKey( &key, flags | KEY_ALL_ACCESS, &attr );
-    if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0;
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        pRtlFreeUnicodeString( &str );
+        return 0;
+    }
     ok( status == STATUS_SUCCESS, "%08lx: NtCreateKey failed: 0x%08lx\n", flags, status );
 
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
@@ -1395,13 +1387,7 @@ static void _check_enum_value( int line, const WCHAR *name, DWORD flags, int sub
     DWORD len;
     int i;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &str;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
     pRtlInitUnicodeString( &str, name );
     status = pNtOpenKey( &key, flags, &attr );
     ok_( __FILE__, line )( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
@@ -1469,13 +1455,7 @@ static void test_redirection(void)
         }
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &str;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
     pRtlInitUnicodeString( &str, L"\\Registry\\Machine\\Software\\Wine" );
     status = pNtCreateKey( &root64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     if (status == STATUS_ACCESS_DENIED)
@@ -2567,7 +2547,7 @@ static NTSTATUS WINAPI query_routine(const WCHAR *value_name, ULONG value_type, 
     ULONG expected_type;
 
     trace("Value name: %s\n", debugstr_w(value_name));
-    trace("Value data: %s\n", debugstr_w(value_data));
+    if (value_data_size) trace("Value data: %s\n", debugstr_w(value_data));
 
     if (!(test->flags & SKIP_NAME_CHECK))
     {

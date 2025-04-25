@@ -1,6 +1,6 @@
-/* WinRT Windows.Storage.ApplicationData Implementation
+/* WinRT Windows.Storage Implementation
  *
- * Copyright (C) 2023 Mohamad Al-Jaf
+ * Copyright (C) 2025 Mohamad Al-Jaf
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,8 +17,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_WINDOWS_STORAGE_APPLICATIONDATA_PRIVATE_H
-#define __WINE_WINDOWS_STORAGE_APPLICATIONDATA_PRIVATE_H
+#ifndef __WINE_WINDOWS_STORAGE_PRIVATE_H
+#define __WINE_WINDOWS_STORAGE_PRIVATE_H
 
 #include <stdarg.h>
 
@@ -28,6 +28,8 @@
 #include "winstring.h"
 
 #include "activation.h"
+
+#include "wine/debug.h"
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
@@ -41,6 +43,7 @@ extern IPropertySet *create_propertyset(void);
 extern IApplicationDataContainer *create_data_container(void);
 extern IActivationFactory *application_data_factory;
 extern IActivationFactory *datareader_factory;
+extern IActivationFactory *random_access_stream_reference_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

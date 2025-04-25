@@ -146,10 +146,10 @@ static int tickets(void)
     ULONG kerberos_package;
 
     KERB_QUERY_TKT_CACHE_REQUEST kerberos_cache_request = {
-        .MessageType = KerbQueryTicketCacheMessage,
+        .MessageType = KerbQueryTicketCacheExMessage,
         .LogonId = {0},
     };
-    KERB_QUERY_TKT_CACHE_RESPONSE *kerberos_cache;
+    KERB_QUERY_TKT_CACHE_EX_RESPONSE *kerberos_cache;
     ULONG kerberos_cache_size;
     NTSTATUS kerberos_call_status;
 
@@ -195,7 +195,7 @@ static int tickets(void)
 
     for (i = 0; i < kerberos_cache->CountOfTickets; i++)
     {
-        KERB_TICKET_CACHE_INFO ticket = kerberos_cache->Tickets[i];
+        KERB_TICKET_CACHE_INFO_EX ticket = kerberos_cache->Tickets[i];
         const FILETIME *const filetimes[] = { (FILETIME*)&ticket.StartTime,
             (FILETIME*)&ticket.EndTime, (FILETIME*)&ticket.RenewTime };
         const WCHAR *dates[3];
@@ -205,9 +205,13 @@ static int tickets(void)
         wprintf(L"\n");
         wprintf(L"#%ld>", i);
 
-        wprintf(L"     %ls: %.*ls @ %.*ls\n", load_resource(STRING_SERVER),
+        wprintf(L"     %ls: %.*ls @ %.*ls\n", load_resource(STRING_CLIENT),
+                ticket.ClientName.Length / sizeof(WCHAR), ticket.ClientName.Buffer,
+                ticket.ClientRealm.Length / sizeof(WCHAR), ticket.ClientRealm.Buffer);
+
+        wprintf(L"        %ls: %.*ls @ %.*ls\n", load_resource(STRING_SERVER),
                 ticket.ServerName.Length / sizeof(WCHAR), ticket.ServerName.Buffer,
-                ticket.RealmName.Length / sizeof(WCHAR), ticket.RealmName.Buffer);
+                ticket.ServerRealm.Length / sizeof(WCHAR), ticket.ServerRealm.Buffer);
 
         wprintf(L"        %ls: ", load_resource(STRING_ENCRYPTION_TYPE));
         wprintf(L"%s\n", get_etype_text(ticket.EncryptionType));

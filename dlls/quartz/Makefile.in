@@ -7,16 +7,17 @@ SOURCES = \
 	acmwrapper.c \
 	avidec.c \
 	control_tlb.idl \
+	decoder.c \
 	dsoundrender.c \
 	filesource.c \
 	filtergraph.c \
 	filtermapper.c \
 	main.c \
 	memallocator.c \
+	parser.c \
 	passthrough.c \
 	quartz.rc \
 	quartz_strmif.idl \
-	regsvr.c \
 	systemclock.c \
 	videorenderer.c \
 	vmr7.c \

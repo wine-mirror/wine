@@ -54,7 +54,7 @@ void wined3d_context_cleanup(struct wined3d_context *context)
  * A to avoid breaking caller code. */
 void context_restore(struct wined3d_context *context, struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
-    if (context->current_rt.texture != texture || context->current_rt.sub_resource_idx != sub_resource_idx)
+    if (texture && (context->current_rt.texture != texture || context->current_rt.sub_resource_idx != sub_resource_idx))
     {
         context_release(context);
         context = context_acquire(texture->resource.device, texture, sub_resource_idx);
@@ -161,8 +161,8 @@ void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_inf
         const struct wined3d_state *state, const struct wined3d_d3d_info *d3d_info)
 {
     /* We need to deal with frequency data! */
+    BOOL use_vshader = use_vs(state) || (d3d_info->ffp_hlsl && state->shader[WINED3D_SHADER_TYPE_VERTEX]);
     struct wined3d_vertex_declaration *declaration = state->vertex_declaration;
-    BOOL use_vshader = use_vs(state);
     unsigned int i;
 
     stream_info->use_map = 0;

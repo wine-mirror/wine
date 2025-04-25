@@ -764,10 +764,17 @@ int sort_func_list( ORDDEF **list, int count, int (*compare)(const void *, const
 }
 
 
-/* return the page size for the target CPU */
-unsigned int get_page_size(void)
+/* return the section alignment for the target CPU */
+unsigned int get_section_alignment(void)
 {
-    return 0x1000;  /* same on all platforms */
+    switch (target.cpu)
+    {
+    case CPU_ARM64:
+    case CPU_ARM64EC:
+        return 0x10000;
+    default:
+        return 0x1000;
+    }
 }
 
 /* return the total size in bytes of the arguments on the stack */
@@ -903,19 +910,17 @@ void output_rva( const char *format, ... )
     va_list valist;
 
     va_start( valist, format );
-    switch (target.platform)
+    if (is_pe())
     {
-    case PLATFORM_MINGW:
-    case PLATFORM_WINDOWS:
         output( "\t.rva " );
         vfprintf( output_file, format, valist );
         fputc( '\n', output_file );
-        break;
-    default:
+    }
+    else
+    {
         output( "\t.long " );
         vfprintf( output_file, format, valist );
         output( " - .L__wine_spec_rva_base\n" );
-        break;
     }
     va_end( valist );
 }
@@ -928,20 +933,18 @@ void output_thunk_rva( int ordinal, const char *format, ... )
         va_list valist;
 
         va_start( valist, format );
-        switch (target.platform)
+        if (is_pe())
         {
-        case PLATFORM_MINGW:
-        case PLATFORM_WINDOWS:
             output( "\t.rva " );
             vfprintf( output_file, format, valist );
             fputc( '\n', output_file );
             if (get_ptr_size() == 8) output( "\t.long 0\n" );
-            break;
-        default:
+        }
+        else
+        {
             output( "\t%s ", get_asm_ptr_keyword() );
             vfprintf( output_file, format, valist );
             output( " - .L__wine_spec_rva_base\n" );
-            break;
         }
         va_end( valist );
     }

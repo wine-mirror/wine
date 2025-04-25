@@ -32,12 +32,13 @@ build-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
   artifacts:
     expire_in: 1 day
     paths:
       - usr/local/
   script:
-    - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-linux
     - git diff --name-only $CI_MERGE_REQUEST_DIFF_BASE_SHA | sed -re '/\/tests\//!d; s@/tests/.*@/tests/Makefile.in@' |
       (xargs -r ls 2>/dev/null || true) | xargs -r sed '/TESTDLL/!d; s@.dll@@; s@.*= *@@' >usr/local/share/wine/winetest.args
@@ -46,8 +47,9 @@ build-clang:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
   script:
-    - mkdir -p build32 build64
     - ./tools/gitlab/build-clang
 
 build-mac:
@@ -66,8 +68,36 @@ build-mac:
       - build64/config.log
       - build32/config.log
   script:
-    - mkdir -p build32 build64
     - git rebase $CI_MERGE_REQUEST_DIFF_BASE_SHA --exec ./tools/gitlab/build-mac
+
+build-sast:
+  extends: .wine-build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  tags:
+    - build
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
+  variables:
+    SASTFLAGS: >-
+      -Xclang -analyzer-disable-checker=core.CallAndMessage
+      -Xclang -analyzer-disable-checker=core.DivideZero
+      -Xclang -analyzer-disable-checker=core.NullDereference
+      -Xclang -analyzer-disable-checker=core.UndefinedBinaryOperatorResult
+      -Xclang -analyzer-disable-checker=core.uninitialized.Assign
+      -Xclang -analyzer-disable-checker=deadcode.DeadStores
+      -Xclang -analyzer-disable-checker=unix.Malloc
+  script:
+    - ./tools/make_requests
+    - ./tools/make_specfiles
+    - ./tools/make_makefiles
+    - autoreconf -f
+    - cd build64
+    - ../configure -q -C --enable-sast --enable-win64
+    - make -s gl-code-quality-report.json SASTFLAGS="${SASTFLAGS}"
+    - mv gl-code-quality-report.json $BASEDIR
 
 build-winetest:
   stage: build
@@ -93,13 +123,31 @@ build-daily-linux:
   extends: .wine-build
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - build
   artifacts:
     expire_in: 1 day
     paths:
       - usr/local/
   script:
-    - mkdir -p build32 build64
     - ./tools/gitlab/build-linux
+
+build-daily-mac:
+  extends: .wine-build
+  image: winehq-sonoma-pristine
+  variables:
+    TART_EXECUTOR_SSH_USERNAME: "gitlab"
+    TART_EXECUTOR_SSH_PASSWORD: "gitlab"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  tags:
+    - mac
+  artifacts:
+    expire_in: 1 day
+    paths:
+      - usr/local/
+  script:
+    - ./tools/gitlab/build-mac
 
 build-daily-winetest:
   stage: build

@@ -27,6 +27,7 @@
 #include "objbase.h"
 
 #include "sapiddk.h"
+#include "sperror.h"
 
 #include "wine/debug.h"
 
@@ -38,6 +39,11 @@ struct spstream
 {
     ISpStream ISpStream_iface;
     LONG ref;
+
+    IStream *base_stream;
+    GUID format;
+    WAVEFORMATEX *wfx;
+    BOOL closed;
 };
 
 static inline struct spstream *impl_from_ISpStream(ISpStream *iface)
@@ -52,6 +58,9 @@ static HRESULT WINAPI spstream_QueryInterface(ISpStream *iface, REFIID iid, void
     TRACE("(%p, %s, %p).\n", iface, debugstr_guid(iid), obj);
 
     if (IsEqualIID(iid, &IID_IUnknown) ||
+        IsEqualIID(iid, &IID_ISequentialStream) ||
+        IsEqualIID(iid, &IID_IStream) ||
+        IsEqualIID(iid, &IID_ISpStreamFormat) ||
         IsEqualIID(iid, &IID_ISpStream))
         *obj = &This->ISpStream_iface;
     else
@@ -84,6 +93,8 @@ static ULONG WINAPI spstream_Release(ISpStream *iface)
 
     if (!ref)
     {
+        if (This->base_stream) IStream_Release(This->base_stream);
+        free(This->wfx);
         free(This);
     }
 
@@ -92,105 +103,228 @@ static ULONG WINAPI spstream_Release(ISpStream *iface)
 
 static HRESULT WINAPI spstream_Read(ISpStream *iface, void *pv, ULONG cb, ULONG *read)
 {
-    FIXME("(%p, %p, %ld, %p): stub.\n", iface, pv, cb, read);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %ld, %p).\n", iface, pv, cb, read);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Read(This->base_stream, pv, cb, read);
 }
 
 static HRESULT WINAPI spstream_Write(ISpStream *iface, const void *pv, ULONG cb, ULONG *written)
 {
-    FIXME("(%p, %p, %ld, %p): stub.\n", iface, pv, cb, written);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %ld, %p).\n", iface, pv, cb, written);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Write(This->base_stream, pv, cb, written);
 }
 
 static HRESULT WINAPI spstream_Seek(ISpStream *iface, LARGE_INTEGER mode, DWORD origin, ULARGE_INTEGER *position)
 {
-    FIXME("(%p, %s, %ld, %p): stub.\n", iface, wine_dbgstr_longlong(mode.QuadPart), origin, position);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s, %ld, %p).\n", iface, wine_dbgstr_longlong(mode.QuadPart), origin, position);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Seek(This->base_stream, mode, origin, position);
 }
 
 static HRESULT WINAPI spstream_SetSize(ISpStream *iface, ULARGE_INTEGER size)
 {
-    FIXME("(%p, %s): stub.\n", iface, wine_dbgstr_longlong(size.QuadPart));
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %s).\n", iface, wine_dbgstr_longlong(size.QuadPart));
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_SetSize(This->base_stream, size);
 }
 
 static HRESULT WINAPI spstream_CopyTo(ISpStream *iface, IStream *stream, ULARGE_INTEGER cb,
                                       ULARGE_INTEGER *read, ULARGE_INTEGER *written)
 {
-    FIXME("(%p, %p, %s, %p, %p): stub.\n", iface, stream, wine_dbgstr_longlong(cb.QuadPart),
-          read, written);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %p, %p).\n", iface, stream, wine_dbgstr_longlong(cb.QuadPart), read, written);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_CopyTo(This->base_stream, stream, cb, read, written);
 }
 
 static HRESULT WINAPI spstream_Commit(ISpStream *iface, DWORD flag)
 {
-    FIXME("(%p, %ld): stub.\n", iface, flag);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %ld).\n", iface, flag);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Commit(This->base_stream, flag);
 }
 
 static HRESULT WINAPI spstream_Revert(ISpStream *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p).\n", iface);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Revert(This->base_stream);
 }
 
 static HRESULT WINAPI spstream_LockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
 {
-    FIXME("(%p, %s, %s, %ld): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    struct spstream *This = impl_from_ISpStream(iface);
+
+    TRACE("(%p, %s, %s, %ld).\n", iface, wine_dbgstr_longlong(offset.QuadPart),
           wine_dbgstr_longlong(cb.QuadPart), type);
 
-    return E_NOTIMPL;
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_LockRegion(This->base_stream, offset, cb, type);
 }
 
 static HRESULT WINAPI spstream_UnlockRegion(ISpStream *iface, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD type)
 {
-    FIXME("(%p, %s, %s, %ld): stub.\n", iface, wine_dbgstr_longlong(offset.QuadPart),
+    struct spstream *This = impl_from_ISpStream(iface);
+
+    TRACE("(%p, %s, %s, %ld).\n", iface, wine_dbgstr_longlong(offset.QuadPart),
           wine_dbgstr_longlong(cb.QuadPart), type);
 
-    return E_NOTIMPL;
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_UnlockRegion(This->base_stream, offset, cb, type);
 }
 
 static HRESULT WINAPI spstream_Stat(ISpStream *iface, STATSTG *statstg, DWORD flag)
 {
-    FIXME("(%p, %p, %ld): stub.\n", iface, statstg, flag);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %ld).\n", iface, statstg, flag);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    return IStream_Stat(This->base_stream, statstg, flag);
 }
 
 static HRESULT WINAPI spstream_Clone(ISpStream *iface, IStream **stream)
 {
-    FIXME("(%p, %p): stub.\n", iface, stream);
+    TRACE("(%p, %p).\n", iface, stream);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFORMATEX **wave)
+static HRESULT WINAPI spstream_GetFormat(ISpStream *iface, GUID *format, WAVEFORMATEX **wfx)
 {
-    FIXME("(%p, %p, %p): stub.\n", iface, format, wave);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %p).\n", iface, format, wfx);
+
+    if (!format)
+        return E_POINTER;
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    if (This->wfx)
+    {
+        if (!wfx)
+            return E_POINTER;
+        if (!(*wfx = CoTaskMemAlloc(sizeof(WAVEFORMATEX) + This->wfx->cbSize)))
+            return E_OUTOFMEMORY;
+        memcpy(*wfx, This->wfx, sizeof(WAVEFORMATEX) + This->wfx->cbSize);
+    }
+
+    *format = This->format;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_SetBaseStream(ISpStream *iface, IStream *stream, REFGUID format,
-                                             const WAVEFORMATEX *wave)
+                                             const WAVEFORMATEX *wfx)
 {
-    FIXME("(%p, %p, %s, %p): stub.\n", iface, stream, debugstr_guid(format), wave);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p, %s, %p).\n", iface, stream, debugstr_guid(format), wfx);
+
+    if (!stream || !format)
+        return E_INVALIDARG;
+
+    if (This->base_stream || This->closed)
+        return SPERR_ALREADY_INITIALIZED;
+
+    This->format = *format;
+    if (IsEqualGUID(format, &SPDFID_WaveFormatEx))
+    {
+        if (!wfx)
+            return E_INVALIDARG;
+        if (!(This->wfx = malloc(sizeof(WAVEFORMATEX) + wfx->cbSize)))
+            return E_OUTOFMEMORY;
+        memcpy(This->wfx, wfx, sizeof(WAVEFORMATEX) + wfx->cbSize);
+    }
+
+    IStream_AddRef(stream);
+    This->base_stream = stream;
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_GetBaseStream(ISpStream *iface, IStream **stream)
 {
-    FIXME("(%p, %p): stub.\n", iface, stream);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p, %p).\n", iface, stream);
+
+    if (!stream)
+        return E_INVALIDARG;
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    *stream = This->base_stream;
+    if (*stream)
+        IStream_AddRef(*stream);
+    return S_OK;
 }
 
 static HRESULT WINAPI spstream_BindToFile(ISpStream *iface, LPCWSTR filename, SPFILEMODE mode,
@@ -205,9 +339,19 @@ static HRESULT WINAPI spstream_BindToFile(ISpStream *iface, LPCWSTR filename, SP
 
 static HRESULT WINAPI spstream_Close(ISpStream *iface)
 {
-    FIXME("(%p): stub.\n", iface);
+    struct spstream *This = impl_from_ISpStream(iface);
 
-    return E_NOTIMPL;
+    TRACE("(%p).\n", iface);
+
+    if (This->closed)
+        return SPERR_STREAM_CLOSED;
+    else if (!This->base_stream)
+        return SPERR_UNINITIALIZED;
+
+    IStream_Release(This->base_stream);
+    This->base_stream = NULL;
+    This->closed = TRUE;
+    return S_OK;
 }
 
 const static ISpStreamVtbl spstream_vtbl =
@@ -241,6 +385,11 @@ HRESULT speech_stream_create(IUnknown *outer, REFIID iid, void **obj)
     if (!This) return E_OUTOFMEMORY;
     This->ISpStream_iface.lpVtbl = &spstream_vtbl;
     This->ref = 1;
+
+    This->base_stream = NULL;
+    This->format = GUID_NULL;
+    This->wfx = NULL;
+    This->closed = FALSE;
 
     hr = ISpStream_QueryInterface(&This->ISpStream_iface, iid, obj);
 

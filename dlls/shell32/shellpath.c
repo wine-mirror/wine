@@ -679,11 +679,6 @@ BOOL WINAPI PathQualifyAW(LPCVOID pszPath)
 	return PathQualifyA(pszPath);
 }
 
-BOOL WINAPI PathFindOnPathExA(LPSTR,LPCSTR *,DWORD);
-BOOL WINAPI PathFindOnPathExW(LPWSTR,LPCWSTR *,DWORD);
-BOOL WINAPI PathFileExistsDefExtA(LPSTR,DWORD);
-BOOL WINAPI PathFileExistsDefExtW(LPWSTR,DWORD);
-
 static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
 {
     BOOL is_file_spec = PathIsFileSpecA(path);
@@ -719,7 +714,7 @@ static BOOL PathResolveA(char *path, const char **dirs, DWORD flags)
     return TRUE;
 }
 
-static BOOL PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
+BOOL WINAPI PathResolveW(WCHAR *path, const WCHAR **dirs, DWORD flags)
 {
     BOOL is_file_spec = PathIsFileSpecW(path);
     DWORD dwWhich = flags & PRF_DONTFINDLNK ? 0xf : 0xbf;
@@ -3881,7 +3876,7 @@ static HRESULT knownfolder_set_id(
     /* check is it registry-registered folder */
     hr = get_known_folder_registry_path(kfid, NULL, &knownfolder->registryPath);
     if(SUCCEEDED(hr))
-        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, 0, &hKey));
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, 0, KEY_ENUMERATE_SUB_KEYS, &hKey));
 
     if(SUCCEEDED(hr))
     {
@@ -4327,7 +4322,7 @@ static BOOL is_knownfolder( struct foldermanager *fm, const KNOWNFOLDERID *id )
     hr = get_known_folder_registry_path(id, NULL, &registryPath);
     if(SUCCEEDED(hr))
     {
-        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, 0, &hKey));
+        hr = HRESULT_FROM_WIN32(RegOpenKeyExW(HKEY_LOCAL_MACHINE, registryPath, 0, KEY_ENUMERATE_SUB_KEYS, &hKey));
         free(registryPath);
     }
 

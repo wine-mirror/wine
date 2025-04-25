@@ -61,7 +61,6 @@ static int fake_module;
 static DLLSPEC *main_spec;
 
 static const struct strarray empty_strarray;
-struct strarray lib_path = { 0 };
 struct strarray tools_path = { 0 };
 struct strarray as_command = { 0 };
 struct strarray cc_command = { 0 };
@@ -196,8 +195,6 @@ static const char usage_str[] =
 "   -K, FLAGS                 Compiler flags (only -KPIC is supported)\n"
 "       --large-address-aware Support an address space larger than 2Gb\n"
 "       --ld-cmd=LD           Command to use for linking (default: ld)\n"
-"   -l, --library=LIB         Import the specified library\n"
-"   -L, --library-path=DIR    Look for imports libraries in DIR\n"
 "   -m16, -m32, -m64          Force building 16-bit, 32-bit resp. 64-bit code\n"
 "   -M, --main-module=MODULE  Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM           Command to use to get undefined symbols (default: nm)\n"
@@ -290,8 +287,6 @@ static const struct long_option long_options[] =
     { "help",                0, 'h' },
     { "heap",                1, 'H' },
     { "kill-at",             0, 'k' },
-    { "library",             1, 'l' },
-    { "library-path",        1, 'L' },
     { "main-module",         1, 'M' },
     { "dll-name",            1, 'N' },
     { "output",              1, 'o' },
@@ -378,9 +373,6 @@ static void option_callback( int optc, char *optarg )
     case 'K':
         /* ignored, because cc generates correct code. */
         break;
-    case 'L':
-        strarray_add( &lib_path, xstrdup( optarg ));
-        break;
     case 'm':
         if (!strcmp( optarg, "16" )) main_spec->type = SPEC_WIN16;
         else if (!strcmp( optarg, "32" )) force_pointer_size = 4;
@@ -420,9 +412,6 @@ static void option_callback( int optc, char *optarg )
         break;
     case 'k':
         kill_at = 1;
-        break;
-    case 'l':
-        add_import_dll( optarg, NULL );
         break;
     case 'o':
         if (unlink( optarg ) == -1 && errno != ENOENT)
@@ -551,22 +540,6 @@ static struct strarray load_resources( struct strarray files, DLLSPEC *spec )
     return ret;
 }
 
-/* add input files that look like import libs to the import list */
-static struct strarray load_import_libs( struct strarray files )
-{
-    struct strarray ret = empty_strarray;
-    int i;
-
-    for (i = 0; i < files.count; i++)
-    {
-        if (strendswith( files.str[i], ".def" ))
-            add_import_dll( NULL, files.str[i] );
-        else
-            strarray_add( &ret, files.str[i] ); /* not an import dll, keep it in the list */
-    }
-    return ret;
-}
-
 static int parse_input_file( DLLSPEC *spec )
 {
     FILE *input_file = open_input_file( NULL, spec_file_name );
@@ -638,7 +611,6 @@ int main(int argc, char **argv)
         }
         if (!is_pe())
         {
-            files = load_import_libs( files );
             read_undef_symbols( spec, files );
             resolve_imports( spec );
         }

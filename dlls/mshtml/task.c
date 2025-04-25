@@ -112,6 +112,20 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
     free(timer);
 }
 
+static void unblock_timers(thread_data_t *thread_data)
+{
+    if(!thread_data->timer_blocked)
+        return;
+    thread_data->timer_blocked = FALSE;
+
+    if(!list_empty(&thread_data->timer_list)) {
+        task_timer_t *timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
+        DWORD tc = GetTickCount();
+
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
+    }
+}
+
 void remove_target_tasks(LONG target)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
@@ -128,11 +142,11 @@ void remove_target_tasks(LONG target)
             release_task_timer(thread_data->thread_hwnd, timer);
     }
 
-    if(!list_empty(&thread_data->timer_list)) {
+    if(!list_empty(&thread_data->timer_list) && !thread_data->tasks_locked && !thread_data->blocking_xhr) {
         DWORD tc = GetTickCount();
 
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, max( (int)(timer->time - tc), 0 ), NULL);
+        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
     }
 
     LIST_FOR_EACH_SAFE(liter, ltmp, &thread_data->task_list) {
@@ -212,8 +226,12 @@ HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, enum timer_type timer
     IDispatch_AddRef(disp);
     timer->disp = disp;
 
-    if(queue_timer(thread_data, timer))
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
+    if(queue_timer(thread_data, timer)) {
+        if(thread_data->tasks_locked || thread_data->blocking_xhr)
+            thread_data->timer_blocked = TRUE;
+        else
+            SetTimer(thread_data->thread_hwnd, TIMER_ID, msec, NULL);
+    }
 
     *id = timer->id;
     return S_OK;
@@ -310,25 +328,28 @@ static LRESULT process_timer(void)
     thread_data = get_thread_data(FALSE);
     assert(thread_data != NULL);
 
-    if(list_empty(&thread_data->timer_list) || thread_data->blocking_xhr) {
+    if(list_empty(&thread_data->timer_list) || thread_data->tasks_locked || thread_data->blocking_xhr) {
+        if(!list_empty(&thread_data->timer_list))
+            thread_data->timer_blocked = TRUE;
         KillTimer(thread_data->thread_hwnd, TIMER_ID);
         return 0;
     }
 
+    thread_data->tasks_locked++;
     last_timer = LIST_ENTRY(list_tail(&thread_data->timer_list), task_timer_t, entry);
     do {
         tc = GetTickCount();
         if(timer == last_timer) {
             timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
             SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time>tc ? timer->time-tc : 0, NULL);
-            return 0;
+            goto done;
         }
 
         timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
 
         if(timer->time > tc) {
             SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time-tc, NULL);
-            return 0;
+            goto done;
         }
 
         disp = timer->disp;
@@ -347,7 +368,13 @@ static LRESULT process_timer(void)
         IDispatch_Release(disp);
     }while(!list_empty(&thread_data->timer_list) && !thread_data->blocking_xhr);
 
+    if(!list_empty(&thread_data->timer_list))
+        thread_data->timer_blocked = TRUE;
     KillTimer(thread_data->thread_hwnd, TIMER_ID);
+
+done:
+    if(!--thread_data->tasks_locked && (!list_empty(&thread_data->task_list) || !list_empty(&thread_data->event_task_list)))
+        PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
     return 0;
 }
 
@@ -361,13 +388,16 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         if(!thread_data)
             return 0;
 
-        while(1) {
+        while(!thread_data->tasks_locked) {
             struct list *head = list_head(&thread_data->task_list);
 
             if(head) {
                 task_t *task = LIST_ENTRY(head, task_t, entry);
                 list_remove(&task->entry);
+                thread_data->tasks_locked++;
                 task->proc(task);
+                if(!--thread_data->tasks_locked)
+                    unblock_timers(thread_data);
                 task->destr(task);
                 free(task);
                 continue;
@@ -379,7 +409,10 @@ static LRESULT WINAPI hidden_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
                 if((!task->thread_blocked || !thread_data->blocking_xhr) && !task->window->blocking_depth) {
                     unlink_event_task(task, thread_data);
+                    thread_data->tasks_locked++;
                     task->proc(task);
+                    if(!--thread_data->tasks_locked)
+                        unblock_timers(thread_data);
                     release_event_task(task);
                     break;
                 }
@@ -481,13 +514,8 @@ ULONGLONG get_time_stamp(void)
 
 void unblock_tasks_and_timers(thread_data_t *thread_data)
 {
-    if(!list_empty(&thread_data->event_task_list))
+    if(!list_empty(&thread_data->task_list) || !list_empty(&thread_data->event_task_list))
         PostMessageW(thread_data->thread_hwnd, WM_PROCESSTASK, 0, 0);
 
-    if(!thread_data->blocking_xhr && !list_empty(&thread_data->timer_list)) {
-        task_timer_t *timer = LIST_ENTRY(list_head(&thread_data->timer_list), task_timer_t, entry);
-        DWORD tc = GetTickCount();
-
-        SetTimer(thread_data->thread_hwnd, TIMER_ID, timer->time > tc ? timer->time - tc : 0, NULL);
-    }
+    unblock_timers(thread_data);
 }

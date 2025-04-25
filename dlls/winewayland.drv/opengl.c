@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "waylanddrv.h"
 #include "wine/debug.h"
 
@@ -40,8 +42,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
-#include "wine/wgl.h"
-#include "wine/wgl_driver.h"
+#include "wine/opengl_driver.h"
+
+/* Support building on systems with older EGL headers, which may not include
+ * the EGL_EXT_present_opaque extension. */
+#ifndef EGL_PRESENT_OPAQUE_EXT
+#define EGL_PRESENT_OPAQUE_EXT 0x31DF
+#endif
 
 static void *egl_handle;
 static struct opengl_funcs opengl_funcs;
@@ -50,10 +57,6 @@ static char wgl_extensions[4096];
 static EGLConfig *egl_configs;
 static int num_egl_configs;
 static BOOL has_egl_ext_pixel_format_float;
-
-#define USE_GL_FUNC(name) #name,
-static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
-#undef USE_GL_FUNC
 
 #define DECL_FUNCPTR(f) static typeof(f) * p_##f
 DECL_FUNCPTR(eglBindAPI);
@@ -73,20 +76,22 @@ DECL_FUNCPTR(eglMakeCurrent);
 DECL_FUNCPTR(eglQueryString);
 DECL_FUNCPTR(eglSwapBuffers);
 DECL_FUNCPTR(eglSwapInterval);
+#undef DECL_FUNCPTR
+
+#define DECL_FUNCPTR(f) static PFN_##f p_##f
 DECL_FUNCPTR(glClear);
 #undef DECL_FUNCPTR
 
 static pthread_mutex_t gl_object_mutex = PTHREAD_MUTEX_INITIALIZER;
 static struct list gl_drawables = LIST_INIT(gl_drawables);
 static struct list gl_contexts = LIST_INIT(gl_contexts);
-static struct list gl_pbuffer_dcs = LIST_INIT(gl_pbuffer_dcs);
-static struct list gl_pbuffers = LIST_INIT(gl_pbuffers);
 
 struct wayland_gl_drawable
 {
     struct list entry;
     LONG ref;
     HWND hwnd;
+    HDC hdc;
     struct wayland_client_surface *client;
     struct wl_egl_window *wl_egl_window;
     EGLSurface surface;
@@ -95,7 +100,7 @@ struct wayland_gl_drawable
     BOOL double_buffered;
 };
 
-struct wgl_context
+struct wayland_context
 {
     struct list entry;
     EGLConfig config;
@@ -110,7 +115,7 @@ struct wgl_pbuffer
 {
     struct list entry;
     struct wayland_gl_drawable *gl;
-    int width, height;
+    int width, height, pixel_format;
     int texture_format, texture_target, texture_binding;
     EGLContext tmp_context, prev_context;
 };
@@ -126,16 +131,10 @@ struct wayland_pbuffer_dc
 static struct wayland_gl_drawable *find_drawable(HWND hwnd, HDC hdc)
 {
     struct wayland_gl_drawable *gl;
-    struct wayland_pbuffer_dc *pb;
-    if (hwnd)
+    LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
     {
-        LIST_FOR_EACH_ENTRY(gl, &gl_drawables, struct wayland_gl_drawable, entry)
-            if (gl->hwnd == hwnd) return gl;
-    }
-    if (hdc)
-    {
-        LIST_FOR_EACH_ENTRY(pb, &gl_pbuffer_dcs, struct wayland_pbuffer_dc, entry)
-            if (pb->hdc == hdc) return pb->gl;
+        if (hwnd && gl->hwnd == hwnd) return gl;
+        if (hdc && gl->hdc == hdc) return gl;
     }
     return NULL;
 }
@@ -166,12 +165,12 @@ static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
     if (gl->client)
     {
         HWND hwnd = wl_surface_get_user_data(gl->client->wl_surface);
-        struct wayland_surface *wayland_surface = wayland_surface_lock_hwnd(hwnd);
+        struct wayland_win_data *data = wayland_win_data_get(hwnd);
 
-        if (wayland_client_surface_release(gl->client) && wayland_surface)
-            wayland_surface->client = NULL;
+        if (wayland_client_surface_release(gl->client) && data)
+            data->client_surface = NULL;
 
-        if (wayland_surface) pthread_mutex_unlock(&wayland_surface->mutex);
+        if (data) wayland_win_data_release(data);
     }
 
     free(gl);
@@ -189,11 +188,10 @@ static inline EGLConfig egl_config_for_format(int format)
     return egl_configs[format - num_egl_configs - 1];
 }
 
-static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int format)
+static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc, int format, int width, int height)
 {
     struct wayland_gl_drawable *gl;
-    struct wayland_surface *wayland_surface;
-    int client_width = 0, client_height = 0;
+    const EGLint attribs[] = {EGL_PRESENT_OPAQUE_EXT, EGL_TRUE, EGL_NONE};
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
 
@@ -202,34 +200,15 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
 
     gl->ref = 1;
     gl->hwnd = hwnd;
+    gl->hdc = hdc;
     gl->swap_interval = 1;
 
     /* Get the client surface for the HWND. If don't have a wayland surface
      * (e.g., HWND_MESSAGE windows) just create a dummy surface to act as the
      * target render surface. */
-    if ((wayland_surface = wayland_surface_lock_hwnd(hwnd)))
-    {
-        gl->client = wayland_surface_get_client(wayland_surface);
-        client_width = wayland_surface->window.client_rect.right -
-                       wayland_surface->window.client_rect.left;
-        client_height = wayland_surface->window.client_rect.bottom -
-                        wayland_surface->window.client_rect.top;
-        if (client_width == 0 || client_height == 0)
-            client_width = client_height = 1;
-        pthread_mutex_unlock(&wayland_surface->mutex);
-    }
-    else if ((wayland_surface = wayland_surface_create(0)))
-    {
-        gl->client = wayland_surface_get_client(wayland_surface);
-        client_width = client_height = 1;
-        /* It's fine to destroy the wayland surface, the client surface
-         * can safely outlive it. */
-        wayland_surface_destroy(wayland_surface);
-    }
-    if (!gl->client) goto err;
+    if (!(gl->client = get_client_surface(hwnd))) goto err;
 
-    gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface,
-                                             client_width, client_height);
+    gl->wl_egl_window = wl_egl_window_create(gl->client->wl_surface, width, height);
     if (!gl->wl_egl_window)
     {
         ERR("Failed to create wl_egl_window\n");
@@ -237,7 +216,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, int for
     }
 
     gl->surface = p_eglCreateWindowSurface(egl_display, egl_config_for_format(format),
-                                           gl->wl_egl_window, NULL);
+                                           gl->wl_egl_window, attribs);
     if (!gl->surface)
     {
         ERR("Failed to create EGL surface\n");
@@ -258,9 +237,9 @@ err:
 static void update_context_drawables(struct wayland_gl_drawable *new,
                                      struct wayland_gl_drawable *old)
 {
-    struct wgl_context *ctx;
+    struct wayland_context *ctx;
 
-    LIST_FOR_EACH_ENTRY(ctx, &gl_contexts, struct wgl_context, entry)
+    LIST_FOR_EACH_ENTRY(ctx, &gl_contexts, struct wayland_context, entry)
     {
         if (ctx->draw == old || ctx->new_draw == old) ctx->new_draw = new;
         if (ctx->read == old || ctx->new_read == old) ctx->new_read = new;
@@ -289,50 +268,34 @@ static void wayland_update_gl_drawable(HWND hwnd, struct wayland_gl_drawable *ne
 static void wayland_gl_drawable_sync_size(struct wayland_gl_drawable *gl)
 {
     int client_width, client_height;
-    struct wayland_surface *wayland_surface;
+    RECT client_rect = {0};
 
     if (InterlockedCompareExchange(&gl->resized, FALSE, TRUE))
     {
-        if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
-
-        client_width = wayland_surface->window.client_rect.right -
-                       wayland_surface->window.client_rect.left;
-        client_height = wayland_surface->window.client_rect.bottom -
-                        wayland_surface->window.client_rect.top;
-        if (client_width == 0 || client_height == 0)
-            client_width = client_height = 1;
+        NtUserGetClientRect(gl->hwnd, &client_rect, NtUserGetDpiForWindow(gl->hwnd));
+        client_width = client_rect.right - client_rect.left;
+        client_height = client_rect.bottom - client_rect.top;
+        if (client_width == 0 || client_height == 0) client_width = client_height = 1;
 
         wl_egl_window_resize(gl->wl_egl_window, client_width, client_height, 0, 0);
-
-        pthread_mutex_unlock(&wayland_surface->mutex);
     }
 }
 
-static void wayland_gl_drawable_sync_surface_state(struct wayland_gl_drawable *gl)
-{
-    struct wayland_surface *wayland_surface;
-
-    if (!(wayland_surface = wayland_surface_lock_hwnd(gl->hwnd))) return;
-
-    wayland_surface_ensure_contents(wayland_surface);
-
-    /* Handle any processed configure request, to ensure the related
-     * surface state is applied by the compositor. */
-    if (wayland_surface->processing.serial &&
-        wayland_surface->processing.processed &&
-        wayland_surface_reconfigure(wayland_surface))
-    {
-        wl_surface_commit(wayland_surface->wl_surface);
-    }
-
-    pthread_mutex_unlock(&wayland_surface->mutex);
-}
-
-static BOOL wgl_context_make_current(struct wgl_context *ctx, HDC draw_hdc, HDC read_hdc)
+static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *private)
 {
     BOOL ret;
+    struct wayland_context *ctx = private;
     struct wayland_gl_drawable *draw, *read;
     struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
+
+    TRACE("draw_hdc=%p read_hdc=%p ctx=%p\n", draw_hdc, read_hdc, ctx);
+
+    if (!private)
+    {
+        p_eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        NtCurrentTeb()->glReserved2 = NULL;
+        return TRUE;
+    }
 
     draw = wayland_gl_drawable_get(NtUserWindowFromDC(draw_hdc), draw_hdc);
     read = wayland_gl_drawable_get(NtUserWindowFromDC(read_hdc), read_hdc);
@@ -360,7 +323,7 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HDC draw_hdc, HDC 
         ctx->read = read;
         ctx->new_draw = ctx->new_read = NULL;
         ctx->has_been_current = TRUE;
-        NtCurrentTeb()->glContext = ctx;
+        NtCurrentTeb()->glReserved2 = ctx;
     }
     else
     {
@@ -376,7 +339,7 @@ static BOOL wgl_context_make_current(struct wgl_context *ctx, HDC draw_hdc, HDC 
     return ret;
 }
 
-static BOOL wgl_context_populate_attribs(struct wgl_context *ctx, const int *wgl_attribs)
+static BOOL wayland_context_populate_attribs(struct wayland_context *ctx, const int *wgl_attribs)
 {
     EGLint *attribs_end = ctx->attribs;
 
@@ -438,7 +401,7 @@ out:
 }
 
 
-static void wgl_context_refresh(struct wgl_context *ctx)
+static void wayland_context_refresh(struct wayland_context *ctx)
 {
     BOOL refresh = FALSE;
     struct wayland_gl_drawable *old_draw = NULL, *old_read = NULL;
@@ -471,56 +434,42 @@ static void wgl_context_refresh(struct wgl_context *ctx)
     if (old_read) wayland_gl_drawable_release(old_read);
 }
 
-static BOOL set_pixel_format(HDC hdc, int format, BOOL internal)
+static BOOL wayland_set_pixel_format(HWND hwnd, int old_format, int new_format, BOOL internal)
 {
-    HWND hwnd = NtUserWindowFromDC(hdc);
     struct wayland_gl_drawable *gl;
-    int prev = 0;
-
-    if (!hwnd || hwnd == NtUserGetDesktopWindow())
-    {
-        WARN("not a proper window DC %p/%p\n", hdc, hwnd);
-        return FALSE;
-    }
-    if (!is_onscreen_format(format))
-    {
-        WARN("Invalid format %d\n", format);
-        return FALSE;
-    }
-    TRACE("%p/%p format %d\n", hdc, hwnd, format);
+    RECT rect;
 
     /* Even for internal pixel format fail setting it if the app has already set a
      * different pixel format. Let wined3d create a backup GL context instead.
      * Switching pixel format involves drawable recreation and is much more expensive
      * than blitting from backup context. */
-    if ((prev = win32u_get_window_pixel_format(hwnd)))
-        return prev == format;
+    if (old_format) return old_format == new_format;
 
-    if (!(gl = wayland_gl_drawable_create(hwnd, format))) return FALSE;
+    NtUserGetClientRect(hwnd, &rect, NtUserGetDpiForWindow(hwnd));
+    if (rect.right == rect.left) rect.right = rect.left + 1;
+    if (rect.bottom == rect.top) rect.bottom = rect.top + 1;
+
+    if (!(gl = wayland_gl_drawable_create(hwnd, 0, new_format, rect.right - rect.left, rect.bottom - rect.top))) return FALSE;
     wayland_update_gl_drawable(hwnd, gl);
-    win32u_set_window_pixel_format(hwnd, format, internal);
-
     return TRUE;
 }
 
-static struct wgl_context *create_context(HDC hdc, struct wgl_context *share,
-                                          const int *attribs)
+static BOOL wayland_context_create(HDC hdc, int format, void *share_private, const int *attribs, void **private)
 {
-    struct wayland_gl_drawable *gl;
-    struct wgl_context *ctx;
+    struct wayland_context *share = share_private, *ctx;
 
-    if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return NULL;
+    TRACE("hdc=%p format=%d share=%p attribs=%p\n", hdc, format, share, attribs);
 
     if (!(ctx = calloc(1, sizeof(*ctx))))
     {
         ERR("Failed to allocate memory for GL context\n");
-        goto out;
+        return FALSE;
     }
 
-    if (!wgl_context_populate_attribs(ctx, attribs))
+    if (!wayland_context_populate_attribs(ctx, attribs))
     {
         ctx->attribs[0] = EGL_NONE;
-        goto out;
+        return FALSE;
     }
 
     /* For now only OpenGL is supported. It's enough to set the API only for
@@ -541,108 +490,37 @@ static struct wgl_context *create_context(HDC hdc, struct wgl_context *share,
 
     TRACE("ctx=%p egl_context=%p\n", ctx, ctx->context);
 
-out:
-    wayland_gl_drawable_release(gl);
-    return ctx;
-}
-
-static struct wayland_gl_drawable *clear_pbuffer_dc(HDC hdc)
-{
-    struct wayland_pbuffer_dc *pd;
-    struct wayland_gl_drawable *gl;
-
-    LIST_FOR_EACH_ENTRY(pd, &gl_pbuffer_dcs, struct wayland_pbuffer_dc, entry)
-    {
-        if (pd->hdc == hdc)
-        {
-            list_remove(&pd->entry);
-            gl = pd->gl;
-            free(pd);
-            return gl;
-        }
-    }
-
-    return NULL;
-}
-
-static BOOL set_pbuffer_dc(struct wgl_pbuffer *pbuffer, HDC hdc)
-{
-    struct wayland_pbuffer_dc *pd;
-
-    if (!(pd = calloc(1, sizeof(*pd))))
-    {
-        ERR("Failed to allocate memory for pbuffer HDC mapping\n");
-        return FALSE;
-    }
-    pd->hdc = hdc;
-    pd->gl = wayland_gl_drawable_acquire(pbuffer->gl);
-    list_add_head(&gl_pbuffer_dcs, &pd->entry);
-
+    *private = ctx;
     return TRUE;
 }
 
 void wayland_glClear(GLbitfield mask)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct wayland_context *ctx = NtCurrentTeb()->glReserved2;
     /* Since glClear is one of the operations that may latch the native size,
      * perform any pending resizes before calling it. */
     if (ctx && ctx->draw) wayland_gl_drawable_sync_size(ctx->draw);
     p_glClear(mask);
 }
 
-static BOOL wayland_wglCopyContext(struct wgl_context *src,
-                                   struct wgl_context *dst, UINT mask)
+static BOOL wayland_context_copy(void *src, void *dst, UINT mask)
 {
     FIXME("%p -> %p mask %#x unsupported\n", src, dst, mask);
     return FALSE;
 }
 
-static struct wgl_context *wayland_wglCreateContext(HDC hdc)
+static BOOL wayland_context_destroy(void *private)
 {
-    TRACE("hdc=%p\n", hdc);
-    return create_context(hdc, NULL, NULL);
-}
-
-static struct wgl_context *wayland_wglCreateContextAttribsARB(HDC hdc,
-                                                              struct wgl_context *share,
-                                                              const int *attribs)
-{
-    TRACE("hdc=%p share=%p attribs=%p\n", hdc, share, attribs);
-    return create_context(hdc, share, attribs);
-}
-
-static BOOL wayland_wglDeleteContext(struct wgl_context *ctx)
-{
-    struct wgl_pbuffer *pb;
+    struct wayland_context *ctx = private;
 
     pthread_mutex_lock(&gl_object_mutex);
     list_remove(&ctx->entry);
-    LIST_FOR_EACH_ENTRY(pb, &gl_pbuffers, struct wgl_pbuffer, entry)
-    {
-        if (pb->prev_context == ctx->context)
-        {
-            p_eglDestroyContext(egl_display, pb->tmp_context);
-            pb->prev_context = pb->tmp_context = NULL;
-        }
-    }
     pthread_mutex_unlock(&gl_object_mutex);
     p_eglDestroyContext(egl_display, ctx->context);
     if (ctx->draw) wayland_gl_drawable_release(ctx->draw);
     if (ctx->read) wayland_gl_drawable_release(ctx->read);
     free(ctx);
     return TRUE;
-}
-
-static const char *wayland_wglGetExtensionsStringARB(HDC hdc)
-{
-    TRACE("() returning \"%s\"\n", wgl_extensions);
-    return wgl_extensions;
-}
-
-static const char *wayland_wglGetExtensionsStringEXT(void)
-{
-    TRACE("() returning \"%s\"\n", wgl_extensions);
-    return wgl_extensions;
 }
 
 static PROC wayland_wglGetProcAddress(LPCSTR name)
@@ -653,7 +531,7 @@ static PROC wayland_wglGetProcAddress(LPCSTR name)
 
 static int wayland_wglGetSwapIntervalEXT(void)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct wayland_context *ctx = NtCurrentTeb()->glReserved2;
 
     if (!ctx || !ctx->draw)
     {
@@ -666,45 +544,10 @@ static int wayland_wglGetSwapIntervalEXT(void)
     return ctx->draw->swap_interval;
 }
 
-static BOOL wayland_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc,
-                                             struct wgl_context *ctx)
+static BOOL wayland_context_share(void *src_private, void *dst_private)
 {
-    BOOL ret;
-
-    TRACE("draw_hdc=%p read_hdc=%p ctx=%p\n", draw_hdc, read_hdc, ctx);
-
-    if (!ctx)
-    {
-        p_eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        NtCurrentTeb()->glContext = NULL;
-        return TRUE;
-    }
-
-    ret = wgl_context_make_current(ctx, draw_hdc, read_hdc);
-    if (!ret) RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
-
-    return ret;
-}
-
-static BOOL wayland_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
-{
-    return wayland_wglMakeContextCurrentARB(hdc, hdc, ctx);
-}
-
-static BOOL wayland_wglSetPixelFormat(HDC hdc, int format,
-                                      const PIXELFORMATDESCRIPTOR *pfd)
-{
-    return set_pixel_format(hdc, format, FALSE);
-}
-
-static BOOL wayland_wglSetPixelFormatWINE(HDC hdc, int format)
-{
-    return set_pixel_format(hdc, format, TRUE);
-}
-
-static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *dest)
-{
-    struct wgl_context *keep, *clobber;
+    struct wayland_context *orig = src_private, *dest = dst_private;
+    struct wayland_context *keep, *clobber;
 
     TRACE("(%p, %p)\n", orig, dest);
 
@@ -747,13 +590,14 @@ static BOOL wayland_wglShareLists(struct wgl_context *orig, struct wgl_context *
 
 static BOOL wayland_wglSwapBuffers(HDC hdc)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct wayland_context *ctx = NtCurrentTeb()->glReserved2;
+    HWND hwnd = NtUserWindowFromDC(hdc), toplevel = NtUserGetAncestor(hwnd, GA_ROOT);
     struct wayland_gl_drawable *gl;
 
     if (!(gl = wayland_gl_drawable_get(NtUserWindowFromDC(hdc), hdc))) return FALSE;
 
-    if (ctx) wgl_context_refresh(ctx);
-    wayland_gl_drawable_sync_surface_state(gl);
+    if (ctx) wayland_context_refresh(ctx);
+    ensure_window_surface_contents(toplevel);
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
     if (gl->double_buffered) p_eglSwapBuffers(egl_display, gl->surface);
@@ -766,7 +610,7 @@ static BOOL wayland_wglSwapBuffers(HDC hdc)
 
 static BOOL wayland_wglSwapIntervalEXT(int interval)
 {
-    struct wgl_context *ctx = NtCurrentTeb()->glContext;
+    struct wayland_context *ctx = NtCurrentTeb()->glReserved2;
     BOOL ret;
 
     TRACE("(%d)\n", interval);
@@ -795,286 +639,59 @@ static BOOL wayland_wglSwapIntervalEXT(int interval)
     return ret;
 }
 
-static struct wgl_pbuffer *wayland_wglCreatePbufferARB(HDC hdc, int format,
-                                                       int width, int height,
-                                                       const int *attribs)
+static BOOL wayland_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                   GLint max_level, GLsizei *width, GLsizei *height, void **private)
 {
-    struct wgl_pbuffer *pbuffer;
+    struct wayland_gl_drawable *drawable;
 
-    TRACE("(%p, %d, %d, %d, %p)\n", hdc, format, width, height, attribs);
-
-    if (format <= 0 || format > 2 * num_egl_configs)
-    {
-        RtlSetLastWin32Error(ERROR_INVALID_PIXEL_FORMAT);
-        ERR("Invalid format %d\n", format);
-        return NULL;
-    }
+    TRACE("hdc %p, format %d, largest %u, texture_format %#x, texture_target %#x, max_level %#x, width %d, height %d, private %p\n",
+          hdc, format, largest, texture_format, texture_target, max_level, *width, *height, private);
 
     /* Use an unmapped wayland surface as our offscreen "pbuffer" surface. */
-    if (!(pbuffer = calloc(1, sizeof(*pbuffer))) ||
-        !(pbuffer->gl = wayland_gl_drawable_create(0, format)))
-    {
-        RtlSetLastWin32Error(ERROR_NO_SYSTEM_RESOURCES);
-        free(pbuffer);
-        return NULL;
-    }
-
-    pbuffer->width = width;
-    pbuffer->height = height;
-    wl_egl_window_resize(pbuffer->gl->wl_egl_window, width, height, 0, 0);
-
-    for (; attribs && attribs[0]; attribs += 2)
-    {
-        switch (attribs[0])
-        {
-        case WGL_TEXTURE_FORMAT_ARB:
-            TRACE("attribs[WGL_TEXTURE_FORMAT_ARB]=0x%x\n", attribs[1]);
-            switch(attribs[1])
-            {
-            case WGL_NO_TEXTURE_ARB:
-                pbuffer->texture_format = 0;
-                break;
-            case WGL_TEXTURE_RGB_ARB:
-                pbuffer->texture_format = GL_RGB;
-                break;
-            case WGL_TEXTURE_RGBA_ARB:
-                pbuffer->texture_format = GL_RGBA;
-                break;
-            /* WGL_FLOAT_COMPONENTS_NV */
-            case WGL_TEXTURE_FLOAT_R_NV:
-                pbuffer->texture_format = GL_FLOAT_R_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RG_NV:
-                pbuffer->texture_format = GL_FLOAT_RG_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RGB_NV:
-                pbuffer->texture_format = GL_FLOAT_RGB_NV;
-                break;
-            case WGL_TEXTURE_FLOAT_RGBA_NV:
-                pbuffer->texture_format = GL_FLOAT_RGBA_NV;
-                break;
-            default:
-                ERR("Unknown texture format: %x\n", attribs[1]);
-            }
-            break;
-
-        case WGL_TEXTURE_TARGET_ARB:
-            TRACE("attribs[WGL_TEXTURE_TARGET_ARB]=0x%x\n", attribs[1]);
-            switch (attribs[1])
-            {
-            case WGL_TEXTURE_CUBE_MAP_ARB:
-                if (width != height) goto err;
-                pbuffer->texture_target = GL_TEXTURE_CUBE_MAP;
-                pbuffer->texture_binding = GL_TEXTURE_BINDING_CUBE_MAP;
-                break;
-            case WGL_TEXTURE_1D_ARB:
-                if (height != 1) goto err;
-                pbuffer->texture_target = GL_TEXTURE_1D;
-                pbuffer->texture_binding = GL_TEXTURE_BINDING_1D;
-                break;
-            case WGL_TEXTURE_2D_ARB:
-                pbuffer->texture_target = GL_TEXTURE_2D;
-                pbuffer->texture_binding = GL_TEXTURE_BINDING_2D;
-                break;
-            case WGL_TEXTURE_RECTANGLE_NV:
-                pbuffer->texture_target = GL_TEXTURE_RECTANGLE_NV;
-                pbuffer->texture_binding = GL_TEXTURE_BINDING_RECTANGLE_NV;
-                break;
-            default:
-                ERR("Unknown texture target: %x\n", attribs[1]);
-                goto err;
-            }
-            break;
-
-        case WGL_MIPMAP_TEXTURE_ARB:
-            TRACE("attribs[WGL_MIPMAP_TEXTURE_ARB]=0x%x\n", attribs[1]);
-            break;
-
-        default:
-            WARN("Unknown attribute: %x\n", attribs[0]);
-            break;
-        }
-    }
+    if (!(drawable = wayland_gl_drawable_create(0, hdc, format, *width, *height))) return FALSE;
 
     pthread_mutex_lock(&gl_object_mutex);
-    list_add_head(&gl_pbuffers, &pbuffer->entry);
+    list_add_head(&gl_drawables, &drawable->entry);
     pthread_mutex_unlock(&gl_object_mutex);
 
-    return pbuffer;
-
-err:
-    RtlSetLastWin32Error(ERROR_INVALID_DATA);
-    wayland_gl_drawable_release(pbuffer->gl);
-    free(pbuffer);
-    return NULL;
+    *private = drawable;
+    return TRUE;
 }
 
-static BOOL wayland_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
+static BOOL wayland_pbuffer_destroy(HDC hdc, void *private)
 {
-    TRACE("(%p)\n", pbuffer);
+    struct wayland_gl_drawable *drawable = private;
+
+    TRACE("hdc %p, private %p\n", hdc, private);
 
     pthread_mutex_lock(&gl_object_mutex);
-    list_remove(&pbuffer->entry);
+    list_remove(&drawable->entry);
     pthread_mutex_unlock(&gl_object_mutex);
 
-    if (pbuffer->tmp_context) p_eglDestroyContext(egl_display, pbuffer->tmp_context);
-    wayland_gl_drawable_release(pbuffer->gl);
-    free(pbuffer);
+    wayland_gl_drawable_release(drawable);
 
     return GL_TRUE;
 }
 
-static HDC wayland_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
+static BOOL wayland_pbuffer_updated(HDC hdc, void *private, GLenum cube_face, GLint mipmap_level)
 {
-    HDC hdc;
-    BOOL set;
-    struct wayland_gl_drawable *old;
-
-    if (!(hdc = NtGdiOpenDCW(NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL))) return 0;
-
-    pthread_mutex_lock(&gl_object_mutex);
-    old = clear_pbuffer_dc(hdc);
-    set = set_pbuffer_dc(pbuffer, hdc);
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    if (old) wayland_gl_drawable_release(old);
-    if (!set)
-    {
-        NtGdiDeleteObjectApp(hdc);
-        return 0;
-    }
-
-    return hdc;
-}
-
-static BOOL wayland_wglQueryPbufferARB(struct wgl_pbuffer *pbuffer, int attrib, int *value)
-{
-    TRACE("(%p, 0x%x, %p)\n", pbuffer, attrib, value);
-
-    switch (attrib)
-    {
-        case WGL_PBUFFER_WIDTH_ARB: *value = pbuffer->width; break;
-        case WGL_PBUFFER_HEIGHT_ARB: *value = pbuffer->height; break;
-        case WGL_PBUFFER_LOST_ARB: *value = GL_FALSE; break;
-        case WGL_TEXTURE_FORMAT_ARB:
-            switch(pbuffer->texture_format)
-            {
-            case GL_RGB: *value = WGL_TEXTURE_RGB_ARB; break;
-            case GL_RGBA: *value = WGL_TEXTURE_RGBA_ARB; break;
-            case GL_FLOAT_R_NV: *value = WGL_TEXTURE_FLOAT_R_NV; break;
-            case GL_FLOAT_RG_NV: *value = WGL_TEXTURE_FLOAT_RG_NV; break;
-            case GL_FLOAT_RGB_NV: *value = WGL_TEXTURE_FLOAT_RGB_NV; break;
-            case GL_FLOAT_RGBA_NV: *value = WGL_TEXTURE_FLOAT_RGBA_NV; break;
-            default:
-                ERR("Unknown texture format: %x\n", pbuffer->texture_format);
-                break;
-            }
-            break;
-        case WGL_TEXTURE_TARGET_ARB:
-            switch (pbuffer->texture_target)
-            {
-                case GL_TEXTURE_1D: *value = WGL_TEXTURE_1D_ARB; break;
-                case GL_TEXTURE_2D: *value = WGL_TEXTURE_2D_ARB; break;
-                case GL_TEXTURE_CUBE_MAP: *value = WGL_TEXTURE_CUBE_MAP_ARB; break;
-                case GL_TEXTURE_RECTANGLE_NV: *value = WGL_TEXTURE_RECTANGLE_NV; break;
-                default:
-                    ERR("Unknown texture target: %x\n", pbuffer->texture_target);
-                    break;
-            }
-            break;
-        case WGL_MIPMAP_TEXTURE_ARB:
-            *value = GL_FALSE;
-            FIXME("unsupported attribute query for 0x%x\n", attrib);
-            break;
-        default:
-            FIXME("unexpected attribute %x\n", attrib);
-            break;
-    }
-
+    TRACE("hdc %p, private %p, cube_face %#x, mipmap_level %d\n", hdc, private, cube_face, mipmap_level);
     return GL_TRUE;
 }
 
-static int wayland_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
+static UINT wayland_pbuffer_bind(HDC hdc, void *private, GLenum buffer)
 {
-    struct wayland_gl_drawable *old;
-
-    pthread_mutex_lock(&gl_object_mutex);
-    old = clear_pbuffer_dc(hdc);
-    pthread_mutex_unlock(&gl_object_mutex);
-
-    if (old) wayland_gl_drawable_release(old);
-    else hdc = 0;
-
-    return hdc && NtGdiDeleteObjectApp(hdc);
+    TRACE("hdc %p, private %p, buffer %#x\n", hdc, private, buffer);
+    return -1; /* use default implementation */
 }
 
-static BOOL wayland_wglBindTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
-{
-    EGLContext prev_context = p_eglGetCurrentContext();
-    EGLSurface prev_draw = p_eglGetCurrentSurface(EGL_DRAW);
-    EGLSurface prev_read = p_eglGetCurrentSurface(EGL_READ);
-    int prev_bound_texture = 0;
-
-    TRACE("(%p, %d)\n", pbuffer, buffer);
-
-    if (!pbuffer->tmp_context || pbuffer->prev_context != prev_context)
-    {
-        if (pbuffer->tmp_context) p_eglDestroyContext(egl_display, pbuffer->tmp_context);
-        p_eglBindAPI(EGL_OPENGL_API);
-        pbuffer->tmp_context =
-            p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR, prev_context, NULL);
-        pbuffer->prev_context = prev_context;
-    }
-
-    opengl_funcs.gl.p_glGetIntegerv(pbuffer->texture_binding, &prev_bound_texture);
-
-    p_eglMakeCurrent(egl_display, pbuffer->gl->surface, pbuffer->gl->surface,
-                     pbuffer->tmp_context);
-
-    /* Make sure that the prev_bound_texture is set as the current texture
-     * state isn't shared between contexts. After that copy the pbuffer texture
-     * data. Note that at the moment we ignore the 'buffer' argument and always
-     * copy from the pbuffer back buffer. */
-    opengl_funcs.gl.p_glBindTexture(pbuffer->texture_target, prev_bound_texture);
-    opengl_funcs.gl.p_glCopyTexImage2D(pbuffer->texture_target, 0,
-                                       pbuffer->texture_format, 0, 0,
-                                       pbuffer->width, pbuffer->height, 0);
-
-    /* Switch back to the original surface and context. */
-    p_eglMakeCurrent(egl_display, prev_draw, prev_read, prev_context);
-
-    return GL_TRUE;
-}
-
-static BOOL wayland_wglReleaseTexImageARB(struct wgl_pbuffer *pbuffer, int buffer)
-{
-    TRACE("(%p, %d)\n", pbuffer, buffer);
-
-    if (!pbuffer->texture_format)
-    {
-        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
-    return GL_TRUE;
-}
-
-static BOOL wayland_wglSetPbufferAttribARB(struct wgl_pbuffer *pbuffer, const int *attribs)
-{
-    if (!pbuffer->texture_format)
-    {
-        RtlSetLastWin32Error(ERROR_INVALID_HANDLE);
-        return GL_FALSE;
-    }
-    return GL_TRUE;
-}
-
-static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
+static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
 {
     EGLint value, surface_type;
     PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
 
     /* If we can't get basic information, there is no point continuing */
-    if (!p_eglGetConfigAttrib(egl_display, config, EGL_SURFACE_TYPE, &surface_type)) return;
+    if (!p_eglGetConfigAttrib(egl_display, config, EGL_SURFACE_TYPE, &surface_type)) return FALSE;
 
     memset(fmt, 0, sizeof(*fmt));
     pfd->nSize = sizeof(*pfd);
@@ -1192,31 +809,19 @@ static void describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
 
 #undef SET_ATTRIB
 #undef SET_ATTRIB_ARB
+    return TRUE;
 }
 
-static BOOL has_opengl(void);
-
-static void wayland_get_pixel_formats(struct wgl_pixel_format *formats,
-                                      UINT max_formats, UINT *num_formats,
-                                      UINT *num_onscreen_formats)
+static BOOL wayland_describe_pixel_format(int format, struct wgl_pixel_format *desc)
 {
-    UINT i;
-
-    if (!has_opengl())
-    {
-        *num_formats = *num_onscreen_formats = 0;
-        return;
-    }
-    if (formats)
-    {
-        for (i = 0; i < min(max_formats, num_egl_configs); ++i)
-            describe_pixel_format(egl_configs[i], &formats[i], FALSE);
-        /* Add single-buffered pbuffer capable configs. */
-        for (i = num_egl_configs; i < min(max_formats, 2 * num_egl_configs); ++i)
-            describe_pixel_format(egl_configs[i - num_egl_configs], &formats[i], TRUE);
-    }
-    *num_formats = 2 * num_egl_configs;
-    *num_onscreen_formats = num_egl_configs;
+    if (format <= 0)
+        return FALSE;
+    if (format <= num_egl_configs)
+        return describe_pixel_format(egl_configs[format - 1], desc, FALSE);
+    /* Add single-buffered pbuffer capable configs. */
+    if (format <= 2 * num_egl_configs)
+        return describe_pixel_format(egl_configs[format - 1 - num_egl_configs], desc, TRUE);
+    return FALSE;
 }
 
 static BOOL has_extension(const char *list, const char *ext)
@@ -1243,46 +848,26 @@ static void register_extension(const char *ext)
 
 static BOOL init_opengl_funcs(void)
 {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(opengl_func_names); i++)
-    {
-        if (!(((void **)&opengl_funcs.gl)[i] = p_eglGetProcAddress(opengl_func_names[i])))
-        {
-            ERR("%s not found, disabling OpenGL.\n", opengl_func_names[i]);
-            return FALSE;
+#define USE_GL_FUNC(func) \
+        if (!(opengl_funcs.p_##func = (void *)p_eglGetProcAddress(#func))) \
+        { \
+            ERR("%s not found, disabling OpenGL.\n", #func); \
+            return FALSE; \
         }
-    }
+    ALL_GL_FUNCS
+#undef USE_GL_FUNC
 
-    p_glClear = opengl_funcs.gl.p_glClear;
-    opengl_funcs.gl.p_glClear = wayland_glClear;
+    p_glClear = opengl_funcs.p_glClear;
+    opengl_funcs.p_glClear = wayland_glClear;
 
-    register_extension("WGL_ARB_extensions_string");
-    opengl_funcs.ext.p_wglGetExtensionsStringARB = wayland_wglGetExtensionsStringARB;
+    return TRUE;
+}
 
-    register_extension("WGL_EXT_extensions_string");
-    opengl_funcs.ext.p_wglGetExtensionsStringEXT = wayland_wglGetExtensionsStringEXT;
-
-    register_extension("WGL_WINE_pixel_format_passthrough");
-    opengl_funcs.ext.p_wglSetPixelFormatWINE = wayland_wglSetPixelFormatWINE;
-
-    register_extension("WGL_ARB_make_current_read");
-    opengl_funcs.ext.p_wglGetCurrentReadDCARB = (void *)1;  /* never called */
-    opengl_funcs.ext.p_wglMakeContextCurrentARB = wayland_wglMakeContextCurrentARB;
-
-    register_extension("WGL_ARB_create_context");
-    register_extension("WGL_ARB_create_context_no_error");
-    register_extension("WGL_ARB_create_context_profile");
-    opengl_funcs.ext.p_wglCreateContextAttribsARB = wayland_wglCreateContextAttribsARB;
-
+static const char *wayland_init_wgl_extensions(void)
+{
     register_extension("WGL_EXT_swap_control");
-    opengl_funcs.ext.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
-    opengl_funcs.ext.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
-
-    register_extension("WGL_ARB_pixel_format");
-    opengl_funcs.ext.p_wglChoosePixelFormatARB = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = (void *)1; /* never called */
-    opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = (void *)1; /* never called */
+    opengl_funcs.p_wglGetSwapIntervalEXT = wayland_wglGetSwapIntervalEXT;
+    opengl_funcs.p_wglSwapIntervalEXT = wayland_wglSwapIntervalEXT;
 
     if (has_egl_ext_pixel_format_float)
     {
@@ -1290,22 +875,10 @@ static BOOL init_opengl_funcs(void)
         register_extension("WGL_ATI_pixel_format_float");
     }
 
-    register_extension("WGL_ARB_pbuffer");
-    opengl_funcs.ext.p_wglCreatePbufferARB = wayland_wglCreatePbufferARB;
-    opengl_funcs.ext.p_wglDestroyPbufferARB = wayland_wglDestroyPbufferARB;
-    opengl_funcs.ext.p_wglGetPbufferDCARB = wayland_wglGetPbufferDCARB;
-    opengl_funcs.ext.p_wglQueryPbufferARB = wayland_wglQueryPbufferARB;
-    opengl_funcs.ext.p_wglReleasePbufferDCARB = wayland_wglReleasePbufferDCARB;
-
-    register_extension("WGL_ARB_render_texture");
-    opengl_funcs.ext.p_wglBindTexImageARB = wayland_wglBindTexImageARB;
-    opengl_funcs.ext.p_wglReleaseTexImageARB = wayland_wglReleaseTexImageARB;
-    opengl_funcs.ext.p_wglSetPbufferAttribARB = wayland_wglSetPbufferAttribARB;
-
-    return TRUE;
+    return wgl_extensions;
 }
 
-static BOOL init_egl_configs(void)
+static UINT wayland_init_pixel_formats(UINT *onscreen_count)
 {
     EGLint i;
     const EGLint attribs[] =
@@ -1319,7 +892,7 @@ static BOOL init_egl_configs(void)
     if (!(egl_configs = malloc(num_egl_configs * sizeof(*egl_configs))))
     {
         ERR("Failed to allocate memory for EGL configs\n");
-        return FALSE;
+        return 0;
     }
     if (!p_eglChooseConfig(egl_display, attribs, egl_configs, num_egl_configs,
                            &num_egl_configs) ||
@@ -1329,7 +902,7 @@ static BOOL init_egl_configs(void)
         egl_configs = NULL;
         num_egl_configs = 0;
         ERR("Failed to get any configs from eglChooseConfig\n");
-        return FALSE;
+        return 0;
     }
 
     if (TRACE_ON(waylanddrv))
@@ -1356,18 +929,46 @@ static BOOL init_egl_configs(void)
         }
     }
 
-    return TRUE;
+    *onscreen_count = num_egl_configs;
+    return 2 * num_egl_configs;
 }
 
-static void init_opengl(void)
+static const struct opengl_driver_funcs wayland_driver_funcs =
+{
+    .p_init_pixel_formats = wayland_init_pixel_formats,
+    .p_describe_pixel_format = wayland_describe_pixel_format,
+    .p_init_wgl_extensions = wayland_init_wgl_extensions,
+    .p_set_pixel_format = wayland_set_pixel_format,
+    .p_context_create = wayland_context_create,
+    .p_context_destroy = wayland_context_destroy,
+    .p_context_copy = wayland_context_copy,
+    .p_context_share = wayland_context_share,
+    .p_context_make_current = wayland_context_make_current,
+    .p_pbuffer_create = wayland_pbuffer_create,
+    .p_pbuffer_destroy = wayland_pbuffer_destroy,
+    .p_pbuffer_updated = wayland_pbuffer_updated,
+    .p_pbuffer_bind = wayland_pbuffer_bind,
+};
+
+/**********************************************************************
+ *           WAYLAND_OpenGLInit
+ */
+UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
 {
     EGLint egl_version[2];
     const char *egl_client_exts, *egl_exts;
 
+    if (version != WINE_OPENGL_DRIVER_VERSION)
+    {
+        ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
+            version, WINE_OPENGL_DRIVER_VERSION);
+        return STATUS_INVALID_PARAMETER;
+    }
+
     if (!(egl_handle = dlopen(SONAME_LIBEGL, RTLD_NOW|RTLD_GLOBAL)))
     {
         ERR("Failed to load %s: %s\n", SONAME_LIBEGL, dlerror());
-        return;
+        return STATUS_NOT_SUPPORTED;
     }
 
 #define LOAD_FUNCPTR_DLSYM(func) \
@@ -1436,57 +1037,27 @@ static void init_opengl(void)
     REQUIRE_EXT(EGL_KHR_create_context);
     REQUIRE_EXT(EGL_KHR_create_context_no_error);
     REQUIRE_EXT(EGL_KHR_no_config_context);
+    REQUIRE_EXT(EGL_EXT_present_opaque);
 #undef REQUIRE_EXT
 
     has_egl_ext_pixel_format_float = has_extension(egl_exts, "EGL_EXT_pixel_format_float");
 
     if (!init_opengl_funcs()) goto err;
-    if (!init_egl_configs()) goto err;
-
-    return;
+    *funcs = &opengl_funcs;
+    *driver_funcs = &wayland_driver_funcs;
+    return STATUS_SUCCESS;
 
 err:
     dlclose(egl_handle);
     egl_handle = NULL;
-}
-
-static BOOL has_opengl(void)
-{
-    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
-
-    return !pthread_once(&init_once, init_opengl) && egl_handle;
+    return STATUS_NOT_SUPPORTED;
 }
 
 static struct opengl_funcs opengl_funcs =
 {
-    .wgl =
-    {
-        .p_wglCopyContext = wayland_wglCopyContext,
-        .p_wglCreateContext = wayland_wglCreateContext,
-        .p_wglDeleteContext = wayland_wglDeleteContext,
-        .p_wglGetProcAddress = wayland_wglGetProcAddress,
-        .p_wglMakeCurrent = wayland_wglMakeCurrent,
-        .p_wglSetPixelFormat = wayland_wglSetPixelFormat,
-        .p_wglShareLists = wayland_wglShareLists,
-        .p_wglSwapBuffers = wayland_wglSwapBuffers,
-        .p_get_pixel_formats = wayland_get_pixel_formats,
-    }
+    .p_wglGetProcAddress = wayland_wglGetProcAddress,
+    .p_wglSwapBuffers = wayland_wglSwapBuffers,
 };
-
-/**********************************************************************
- *           WAYLAND_wine_get_wgl_driver
- */
-struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
-{
-    if (version != WINE_WGL_DRIVER_VERSION)
-    {
-        ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
-            version, WINE_WGL_DRIVER_VERSION);
-        return NULL;
-    }
-    if (!has_opengl()) return NULL;
-    return &opengl_funcs;
-}
 
 /**********************************************************************
  *           wayland_destroy_gl_drawable
@@ -1512,9 +1083,9 @@ void wayland_resize_gl_drawable(HWND hwnd)
 
 #else /* No GL */
 
-struct opengl_funcs *WAYLAND_wine_get_wgl_driver(UINT version)
+UINT WAYLAND_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct opengl_driver_funcs **driver_funcs)
 {
-    return NULL;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 void wayland_destroy_gl_drawable(HWND hwnd)

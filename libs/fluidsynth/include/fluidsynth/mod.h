@@ -58,6 +58,15 @@ enum fluid_mod_flags
 };
 
 /**
+ * Transform types for the SoundFont2 modulators as defined by SoundFont 2.04 section 8.3.
+ */
+enum fluid_mod_transforms
+{
+    FLUID_MOD_TRANSFORM_LINEAR = 0, /**< Linear: directly add the computed value to summing node */
+    FLUID_MOD_TRANSFORM_ABS = 2     /**< Abs: add the absolute value of the computed to summing node */
+};
+
+/**
  * General controller (if #FLUID_MOD_GC in flags).  This
  * corresponds to SoundFont 2.04 PDF section 8.2.1
  */
@@ -83,6 +92,7 @@ FLUIDSYNTH_API void fluid_mod_set_source1(fluid_mod_t *mod, int src, int flags);
 FLUIDSYNTH_API void fluid_mod_set_source2(fluid_mod_t *mod, int src, int flags);
 FLUIDSYNTH_API void fluid_mod_set_dest(fluid_mod_t *mod, int dst);
 FLUIDSYNTH_API void fluid_mod_set_amount(fluid_mod_t *mod, double amount);
+FLUIDSYNTH_API void fluid_mod_set_transform(fluid_mod_t *mod, int type);
 
 FLUIDSYNTH_API int fluid_mod_get_source1(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags1(const fluid_mod_t *mod);
@@ -90,6 +100,7 @@ FLUIDSYNTH_API int fluid_mod_get_source2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_flags2(const fluid_mod_t *mod);
 FLUIDSYNTH_API int fluid_mod_get_dest(const fluid_mod_t *mod);
 FLUIDSYNTH_API double fluid_mod_get_amount(const fluid_mod_t *mod);
+FLUIDSYNTH_API int fluid_mod_get_transform(fluid_mod_t *mod);
 
 FLUIDSYNTH_API int fluid_mod_test_identity(const fluid_mod_t *mod1, const fluid_mod_t *mod2);
 FLUIDSYNTH_API int fluid_mod_has_source(const fluid_mod_t *mod, int cc, int ctrl);

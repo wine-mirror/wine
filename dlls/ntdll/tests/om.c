@@ -28,11 +28,14 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "wingdi.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ddk/wdm.h"
 #include "wine/test.h"
 
 static VOID     (WINAPI *pRtlInitUnicodeString)( PUNICODE_STRING, LPCWSTR );
+static NTSTATUS (WINAPI *pNtAllocateReserveObject)( HANDLE *, const OBJECT_ATTRIBUTES *, MEMORY_RESERVE_OBJECT_TYPE );
 static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, EVENT_TYPE, BOOLEAN);
 static NTSTATUS (WINAPI *pNtOpenEvent)   ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI *pNtCreateJobObject)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
@@ -70,9 +73,11 @@ static NTSTATUS (WINAPI *pNtOpenIoCompletion)( PHANDLE, ACCESS_MASK, POBJECT_ATT
 static NTSTATUS (WINAPI *pNtQueryInformationFile)(HANDLE, PIO_STATUS_BLOCK, void *, ULONG, FILE_INFORMATION_CLASS);
 static NTSTATUS (WINAPI *pNtOpenProcess)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID * );
 static NTSTATUS (WINAPI *pNtCreateDebugObject)( HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *, ULONG );
+static NTSTATUS (WINAPI *pNtGetNextProcess)(HANDLE process, ACCESS_MASK access, ULONG attributes, ULONG flags, HANDLE *handle);
 static NTSTATUS (WINAPI *pNtGetNextThread)(HANDLE process, HANDLE thread, ACCESS_MASK access, ULONG attributes,
                                             ULONG flags, HANDLE *handle);
 static NTSTATUS (WINAPI *pNtOpenProcessToken)(HANDLE,DWORD,HANDLE*);
+static NTSTATUS (WINAPI *pNtOpenThread)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, const CLIENT_ID * );
 static NTSTATUS (WINAPI *pNtOpenThreadToken)(HANDLE,DWORD,BOOLEAN,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateToken)(HANDLE,ACCESS_MASK,OBJECT_ATTRIBUTES*,BOOLEAN,TOKEN_TYPE,HANDLE*);
 static NTSTATUS (WINAPI *pNtDuplicateObject)(HANDLE,HANDLE,HANDLE,HANDLE*,ACCESS_MASK,ULONG,ULONG);
@@ -646,8 +651,7 @@ static void test_name_limits(void)
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenMutant failed %lx\n", str.Length, status );
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenMutant failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenMutant failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr2, 1, 2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateSemaphore failed %lx\n", str.Length, status );
@@ -655,8 +659,7 @@ static void test_name_limits(void)
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSemaphore failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr2, SynchronizationEvent, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateEvent failed %lx\n", str.Length, status );
@@ -664,8 +667,7 @@ static void test_name_limits(void)
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenEvent failed %lx\n", str.Length, status );
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenEvent failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenEvent failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateKeyedEvent failed %lx\n", str.Length, status );
@@ -673,8 +675,7 @@ static void test_name_limits(void)
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenKeyedEvent failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr2, NotificationTimer );
     ok( status == STATUS_SUCCESS, "%u: NtCreateTimer failed %lx\n", str.Length, status );
@@ -682,8 +683,7 @@ static void test_name_limits(void)
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenTimer failed %lx\n", str.Length, status );
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenTimer failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenTimer failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateCompletion failed %lx\n", str.Length, status );
@@ -691,8 +691,7 @@ static void test_name_limits(void)
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenCompletion failed %lx\n", str.Length, status );
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenCompletion failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenCompletion failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %lx\n", str.Length, status );
@@ -700,15 +699,13 @@ static void test_name_limits(void)
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %lx\n", str.Length, status );
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenJobObject failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %lx\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateDirectoryObject failed %lx\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr );
-    ok( status == STATUS_SUCCESS || broken(status == STATUS_ACCESS_DENIED), /* winxp */
-        "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
+    ok( status == STATUS_SUCCESS, "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
     if (!status) pNtClose( ret2 );
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr3 );
     ok( status == STATUS_SUCCESS, "%u: NtOpenDirectoryObject failed %lx\n", str.Length, status );
@@ -729,8 +726,7 @@ static void test_name_limits(void)
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSection failed %lx\n", str.Length, status );
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr3 );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE /* < 7 */,
-        "%u: NtOpenSection failed %lx\n", str.Length, status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSection failed %lx\n", str.Length, status );
     pNtClose( ret );
 
     str.Length = 67;
@@ -876,8 +872,7 @@ static void test_name_limits(void)
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenDirectoryObject failed %lx\n", status );
 
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, NULL, &target );
-    ok( status == STATUS_ACCESS_VIOLATION || broken( status == STATUS_SUCCESS), /* winxp */
-        "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
     if (!status) pNtClose( ret );
     status = pNtCreateSymbolicLinkObject( (HANDLE *)0xdeadbee0, GENERIC_ALL, NULL, &target );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateSymbolicLinkObject failed %lx\n", status );
@@ -1118,15 +1113,13 @@ static void test_name_limits(void)
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr2, 0, NULL, 0, NULL );
-    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE /* vista wow64 */,
-        "NULL: NtCreateKey failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr3, 0, NULL, 0, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtCreateKey( &ret, GENERIC_ALL, NULL, 0, NULL, 0, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr2 );
-    ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE /* vista wow64 */,
-        "NULL: NtOpenKey failed %lx\n", status );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %lx\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, NULL );
@@ -1562,7 +1555,7 @@ static void _test_file_info(unsigned line, HANDLE handle)
 
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
                                     FileIoCompletionNotificationInformation);
-    ok_(__FILE__,line)(status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS) /* XP */,
+    ok_(__FILE__,line)(status == STATUS_SUCCESS,
                        "FileIoCompletionNotificationInformation returned %lx\n", status);
 }
 
@@ -1583,7 +1576,7 @@ static void _test_no_file_info(unsigned line, HANDLE handle)
 
     status = pNtQueryInformationFile(handle, &io, buf, sizeof(buf),
                                     FileIoCompletionNotificationInformation);
-    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* XP */,
+    ok_(__FILE__,line)(status == STATUS_OBJECT_TYPE_MISMATCH,
                        "FileIoCompletionNotificationInformation returned %lx\n", status);
 }
 
@@ -1652,8 +1645,8 @@ static void _test_object_type( unsigned line, HANDLE handle, const WCHAR *expect
     add_object_type( type );
 }
 
-#define test_object_name(a,b,c) _test_object_name(__LINE__,a,b,c)
-static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name, BOOL todo )
+#define test_object_name(a,b) _test_object_name(__LINE__,a,b)
+static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expected_name )
 {
     char buffer[1024];
     UNICODE_STRING *str = (UNICODE_STRING *)buffer, expect;
@@ -1666,9 +1659,8 @@ static void _test_object_name( unsigned line, HANDLE handle, const WCHAR *expect
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
     ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryObject failed %lx\n", status );
     ok_(__FILE__,line)( len >= sizeof(OBJECT_NAME_INFORMATION) + str->Length, "unexpected len %lu\n", len );
-    todo_wine_if (todo)
-        ok_(__FILE__,line)(compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
-            debugstr_w(str->Buffer), debugstr_w(expected_name));
+    ok_(__FILE__,line)( compare_unicode_string( str, expected_name ), "got %s, expected %s\n",
+                        debugstr_w(str->Buffer), debugstr_w(expected_name) );
 }
 
 static void test_query_object(void)
@@ -1734,8 +1726,7 @@ static void test_query_object(void)
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     /* check for \\Sessions prefix in the name */
     swprintf( expect, ARRAY_SIZE(expect), L"\\Sessions\\%u%s", NtCurrentTeb()->Peb->SessionId, name );
-    ok( (str->Length == wcslen( expect ) * sizeof(WCHAR) && !wcscmp( str->Buffer, expect )) ||
-        broken( !wcscmp( str->Buffer, name )), /* winxp */
+    ok( (str->Length == wcslen( expect ) * sizeof(WCHAR) && !wcscmp( str->Buffer, expect )),
         "wrong name %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %lu\n", wine_dbgstr_w(str->Buffer), len );
 
@@ -1780,8 +1771,7 @@ static void test_query_object(void)
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, 0, &len );
     ok( status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status );
-    ok( len == expected_len || broken(!len /* XP */ || len == sizeof(UNICODE_STRING) /* 2003 */),
-        "unexpected len %lu\n", len );
+    ok( len == expected_len, "unexpected len %lu\n", len );
 
     len = 0;
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(UNICODE_STRING), &len );
@@ -1811,7 +1801,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_debug" );
     status = pNtCreateDebugObject( &handle, DEBUG_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateDebugObject failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_debug", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_debug" );
     test_object_type( handle, L"DebugObject" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1819,7 +1809,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_mutant" );
     status = pNtCreateMutant( &handle, MUTANT_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateMutant failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_mutant", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_mutant" );
     test_object_type( handle, L"Mutant" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1827,7 +1817,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_sem" );
     status = pNtCreateSemaphore( &handle, SEMAPHORE_ALL_ACCESS, &attr, 1, 2 );
     ok(!status, "NtCreateSemaphore failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_sem", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_sem" );
     test_object_type( handle, L"Semaphore" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1835,7 +1825,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_keyed" );
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateKeyedEvent failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_keyed", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_keyed" );
     test_object_type( handle, L"KeyedEvent" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1843,7 +1833,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_compl" );
     status = pNtCreateIoCompletion( &handle, IO_COMPLETION_ALL_ACCESS, &attr, 0 );
     ok(!status, "NtCreateIoCompletion failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_compl", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_compl" );
     test_object_type( handle, L"IoCompletion" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1851,7 +1841,7 @@ static void test_query_object(void)
     RtlInitUnicodeString( &path, L"\\BaseNamedObjects\\test_job" );
     status = pNtCreateJobObject( &handle, JOB_OBJECT_ALL_ACCESS, &attr );
     ok(!status, "NtCreateJobObject failed: %lx\n", status);
-    test_object_name( handle, L"\\BaseNamedObjects\\test_job", FALSE );
+    test_object_name( handle, L"\\BaseNamedObjects\\test_job" );
     test_object_type( handle, L"Job" );
     test_no_file_info( handle );
     pNtClose(handle);
@@ -1873,12 +1863,12 @@ static void test_query_object(void)
 
     handle = GetProcessWindowStation();
     swprintf( expect, ARRAY_SIZE(expect), L"\\Sessions\\%u\\Windows\\WindowStations\\WinSta0", NtCurrentTeb()->Peb->SessionId );
-    test_object_name( handle, expect, FALSE );
+    test_object_name( handle, expect );
     test_object_type( handle, L"WindowStation" );
     test_no_file_info( handle );
 
     handle = GetThreadDesktop( GetCurrentThreadId() );
-    test_object_name( handle, L"\\Default", FALSE );
+    test_object_name( handle, L"\\Default" );
     test_object_type( handle, L"Desktop" );
     test_no_file_info( handle );
 
@@ -1903,7 +1893,7 @@ static void test_query_object(void)
     handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateMailslot failed err %lu\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\Mailslot\\test_mailslot", FALSE );
+    test_object_name( handle, L"\\Device\\Mailslot\\test_mailslot" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1929,7 +1919,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\mailslot", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\Mailslot", FALSE );
+    test_object_name( handle, L"\\Device\\Mailslot" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1939,7 +1929,7 @@ static void test_query_object(void)
                                1, 1000, 1000, 1000, NULL );
     ok( handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed err %lu\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe\\test_pipe", FALSE );
+    test_object_name( handle, L"\\Device\\NamedPipe\\test_pipe" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1956,7 +1946,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\pipe", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe", FALSE );
+    test_object_name( handle, L"\\Device\\NamedPipe" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1965,7 +1955,7 @@ static void test_query_object(void)
     handle = CreateFileA( "\\\\.\\pipe\\", 0, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%lu)\n", GetLastError() );
 
-    test_object_name( handle, L"\\Device\\NamedPipe\\", TRUE );
+    test_object_name( handle, L"\\Device\\NamedPipe\\" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
 
@@ -1975,23 +1965,23 @@ static void test_query_object(void)
     status = pNtCreateKey( &handle, KEY_READ, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS, "NtCreateKey failed status %lx\n", status );
 
-    test_object_name( handle, L"\\REGISTRY\\MACHINE", FALSE );
+    test_object_name( handle, L"\\REGISTRY\\MACHINE" );
     test_object_type( handle, L"Key" );
 
     pNtClose( handle );
 
-    test_object_name( GetCurrentProcess(), L"", FALSE );
+    test_object_name( GetCurrentProcess(), L"" );
     test_object_type( GetCurrentProcess(), L"Process" );
     test_no_file_info( GetCurrentProcess() );
 
-    test_object_name( GetCurrentThread(), L"", FALSE );
+    test_object_name( GetCurrentThread(), L"" );
     test_object_type( GetCurrentThread(), L"Thread" );
     test_no_file_info( GetCurrentThread() );
 
     status = pNtOpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &handle);
     ok(!status, "OpenProcessToken failed: %lx\n", status);
 
-    test_object_name( handle, L"", FALSE );
+    test_object_name( handle, L"" );
     test_object_type( handle, L"Token" );
     test_no_file_info( handle );
 
@@ -1999,7 +1989,7 @@ static void test_query_object(void)
 
     handle = CreateFileA( "nul", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0 );
     ok( handle != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError() );
-    test_object_name( handle, L"\\Device\\Null", TRUE );
+    test_object_name( handle, L"\\Device\\Null" );
     test_object_type( handle, L"File" );
     test_file_info( handle );
     pNtClose( handle );
@@ -2009,14 +1999,7 @@ static void test_type_mismatch(void)
 {
     HANDLE h;
     NTSTATUS res;
-    OBJECT_ATTRIBUTES attr;
-
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = NULL;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
 
     res = pNtCreateEvent( &h, 0, &attr, NotificationEvent, 0 );
     ok(!res, "can't create event: %lx\n", res);
@@ -2206,6 +2189,10 @@ static void test_token(void)
 #define IO_COMPLETION_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE|SYNCHRONIZE)
 #define IO_COMPLETION_GENERIC_READ    (STANDARD_RIGHTS_READ|IO_COMPLETION_QUERY_STATE)
 #define IO_COMPLETION_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|IO_COMPLETION_MODIFY_STATE)
+#define IO_COMPLETION_RESERVE_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE)
+#define IO_COMPLETION_RESERVE_GENERIC_READ    (STANDARD_RIGHTS_READ|0x1)
+#define IO_COMPLETION_RESERVE_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|0x2)
+#define IO_COMPLETION_RESERVE_ALL_ACCESS      (STANDARD_RIGHTS_REQUIRED|0x3)
 #define JOB_OBJECT_GENERIC_EXECUTE    (STANDARD_RIGHTS_EXECUTE|SYNCHRONIZE)
 #define JOB_OBJECT_GENERIC_READ       (STANDARD_RIGHTS_READ|JOB_OBJECT_QUERY)
 #define JOB_OBJECT_GENERIC_WRITE      (STANDARD_RIGHTS_WRITE|JOB_OBJECT_TERMINATE|\
@@ -2253,6 +2240,10 @@ static void test_token(void)
 #define TYPE_GENERIC_EXECUTE          (STANDARD_RIGHTS_EXECUTE)
 #define TYPE_GENERIC_READ             (STANDARD_RIGHTS_READ)
 #define TYPE_GENERIC_WRITE            (STANDARD_RIGHTS_WRITE)
+#define USER_APC_RESERVE_GENERIC_EXECUTE (STANDARD_RIGHTS_EXECUTE)
+#define USER_APC_RESERVE_GENERIC_READ    (STANDARD_RIGHTS_READ|0x1)
+#define USER_APC_RESERVE_GENERIC_WRITE   (STANDARD_RIGHTS_WRITE|0x2)
+#define USER_APC_RESERVE_ALL_ACCESS      (STANDARD_RIGHTS_REQUIRED|0x3)
 #define WINSTA_GENERIC_EXECUTE        (STANDARD_RIGHTS_EXECUTE|WINSTA_EXITWINDOWS|WINSTA_ACCESSGLOBALATOMS)
 #define WINSTA_GENERIC_READ           (STANDARD_RIGHTS_READ|WINSTA_READSCREEN|WINSTA_ENUMERATE|\
                                        WINSTA_READATTRIBUTES|WINSTA_ENUMDESKTOPS)
@@ -2318,6 +2309,7 @@ static void test_object_types(void)
         TYPE( L"Event",         EVENT, 0, 0 ),
         TYPE( L"File",          FILE, 0, 0 ),
         TYPE( L"IoCompletion",  IO_COMPLETION, 0, 0 ),
+        TYPE( L"IoCompletionReserve", IO_COMPLETION_RESERVE, 0, 0 ),
         TYPE( L"Job",           JOB_OBJECT, 0, JOB_OBJECT_IMPERSONATE ),
         TYPE( L"Key",           KEY, SYNCHRONIZE, 0 ),
         TYPE( L"KeyedEvent",    KEYEDEVENT, SYNCHRONIZE, 0 ),
@@ -2330,6 +2322,7 @@ static void test_object_types(void)
         TYPE( L"Timer",         TIMER, 0, 0 ),
         TYPE( L"Token",         TOKEN, SYNCHRONIZE, 0 ),
         TYPE( L"Type",          TYPE, SYNCHRONIZE, 0 ),
+        TYPE( L"UserApcReserve", USER_APC_RESERVE, 0, 0 ),
         TYPE( L"WindowStation", WINSTA, 0, 0 ),
 #undef TYPE
     };
@@ -2390,6 +2383,7 @@ static void test_object_types(void)
             tested[j] = TRUE;
             break;
         }
+
         ok( j < ARRAY_SIZE(all_types), "type %s not found\n", debugstr_w(tests[i].name) );
     }
     for (j = 0; j < ARRAY_SIZE(all_types); j++)
@@ -2487,6 +2481,39 @@ static void test_get_next_thread(void)
     ok(found, "Thread not found.\n");
 
     CloseHandle(thread);
+}
+
+static void test_get_next_process(void)
+{
+    NTSTATUS status;
+    HANDLE handle, prev = 0;
+    BOOL found = FALSE;
+
+    if (!pNtGetNextProcess)
+    {
+        win_skip("NtGetNextProcess is not available.\n");
+        return;
+    }
+
+    while (!(status = pNtGetNextProcess(prev, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 0, &handle)))
+    {
+        DWORD pid = GetProcessId( handle );
+        ok( pid, "GetProcessId failed err %lu\n", GetLastError() );
+        if (pid == GetCurrentProcessId()) found = TRUE;
+        if (prev) pNtClose(prev);
+        prev = handle;
+    }
+    ok(status == STATUS_NO_MORE_ENTRIES, "Unexpected status %#lx.\n", status);
+    ok(found, "current process not found\n" );
+    pNtClose(prev);
+
+    /* Reversed search only supported in recent enough Win10 */
+    status = pNtGetNextProcess(0, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 1, &handle);
+    ok(!status || broken(status == STATUS_INVALID_PARAMETER), "Unexpected status %#lx.\n", status);
+    if (!status) pNtClose(handle);
+
+    status = pNtGetNextProcess(0, PROCESS_QUERY_LIMITED_INFORMATION, OBJ_INHERIT, 2, &handle);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %#lx.\n", status);
 }
 
 static void test_globalroot(void)
@@ -2855,10 +2882,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateEvent(&handle, GENERIC_ALL, &attr, NotificationEvent, FALSE);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenEvent(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenEvent(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2884,7 +2911,7 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateDebugObject(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     pNtClose(handle);
     status = pNtCreateDebugObject(&handle, GENERIC_ALL, &attr2, 0);
     ok(!status, "got %08lx\n", status);
@@ -2897,10 +2924,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateMutant(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenMutant(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenMutant(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2926,10 +2953,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateSemaphore(&handle, GENERIC_ALL, &attr, 1, 2);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenSemaphore(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenSemaphore(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2955,10 +2982,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateKeyedEvent(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenKeyedEvent(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     status = pNtOpenKeyedEvent(&handle2, GENERIC_ALL, &attr2);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -2984,10 +3011,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateIoCompletion(&handle, GENERIC_ALL, &attr, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenIoCompletion(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateIoCompletion(&handle, GENERIC_ALL, &attr2, 0);
@@ -3009,10 +3036,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateJobObject(&handle, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenJobObject(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateJobObject(&handle, GENERIC_ALL, &attr2);
@@ -3034,10 +3061,10 @@ static void test_null_in_object_name(void)
 
     status = pNtCreateTimer(&handle, GENERIC_ALL, &attr, NotificationTimer);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenTimer(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateTimer(&handle, GENERIC_ALL, &attr2, NotificationTimer);
@@ -3060,10 +3087,10 @@ static void test_null_in_object_name(void)
     size.QuadPart = 4096;
     status = pNtCreateSection(&handle, GENERIC_ALL, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle, name, FALSE);
+    test_object_name(handle, name);
     status = pNtOpenSection(&handle2, GENERIC_ALL, &attr);
     ok(!status, "got %08lx\n", status);
-    test_object_name(handle2, name, FALSE);
+    test_object_name(handle2, name);
     pNtClose(handle2);
     pNtClose(handle);
     status = pNtCreateSection(&handle, GENERIC_ALL, &attr2, &size, PAGE_READWRITE, SEC_COMMIT, 0);
@@ -3118,10 +3145,10 @@ static void test_null_in_object_name(void)
     ok(!status || status == STATUS_ACCESS_DENIED || broken(status == STATUS_OBJECT_PATH_NOT_FOUND) /* win8 */, "got %08lx\n", status);
     if (!status)
     {
-        test_object_name(handle, name_exp, FALSE);
+        test_object_name(handle, name_exp);
         status = pNtOpenKey(&handle2, GENERIC_ALL, &attr);
         ok(!status, "got %08lx\n", status);
-        test_object_name(handle2, name_exp, FALSE);
+        test_object_name(handle2, name_exp);
         pNtClose(handle2);
         status = pNtOpenKey(&handle2, GENERIC_ALL, &attr2);
         ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %08lx\n", status);
@@ -3325,7 +3352,7 @@ static void test_object_permanence(void)
             trace( "NOTE: object still has unclosed handle (%p) and shouldn't be deleted", handle );
 
         winetest_push_context( "first handle (%p) still open", handle );
-        status = NtOpenEvent( &handle2, GENERIC_ALL, &attr );
+        status = pNtOpenEvent( &handle2, GENERIC_ALL, &attr );
         ok( status == STATUS_SUCCESS, "NtOpenEvent returned %08lx\n", status );
         if (!NT_ERROR(status))
         {
@@ -3354,7 +3381,7 @@ static void test_object_permanence(void)
         NtClose( handle );
 
         winetest_push_context( "first handle closed" );
-        status = NtOpenEvent( &handle, GENERIC_ALL, &attr );
+        status = pNtOpenEvent( &handle, GENERIC_ALL, &attr );
         ok( status == (is_permanent ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND), "NtOpenEvent returned %08lx\n", status );
         if (!NT_ERROR(status))
         {
@@ -3380,10 +3407,457 @@ static void test_object_permanence(void)
     ok( status == STATUS_SUCCESS, "NtSetInformationThread returned %08lx\n", status );
 }
 
+static void test_zero_access(void)
+{
+    UNICODE_STRING target = RTL_CONSTANT_STRING( L"\\DosDevices" );
+    OBJECT_BASIC_INFORMATION obj_info;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER size, timeout;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING str;
+    NTSTATUS status, status2;
+    WCHAR name[256];
+    CLIENT_ID cid;
+    HANDLE h1, h2;
+    DWORD err;
+    HKEY key;
+
+    size.QuadPart = 4096;
+    timeout.QuadPart = -10000;
+    swprintf( name, ARRAY_SIZE(name), L"\\Sessions\\%u\\BaseNamedObjects\\test_object", NtCurrentTeb()->Peb->SessionId );
+    pRtlInitUnicodeString( &str, name );
+    InitializeObjectAttributes( &attr, &str, OBJ_OPENIF, 0, NULL );
+
+    status = pNtCreateEvent( &h1, 0, &attr, NotificationEvent, FALSE );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenEvent( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateEvent( &h1, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateEvent( &h2, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateEvent( &h2, 0, &attr, NotificationEvent, FALSE );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenEvent( &h2, EVENT_ALL_ACCESS, &attr );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtOpenEvent( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    InitializeObjectAttributes( &attr, &str, OBJ_INHERIT, 0, NULL );
+    status = pNtOpenEvent( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    status = pNtDuplicateObject( GetCurrentProcess(), h1, GetCurrentProcess(), &h2, 0, 0, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtDuplicateObject( GetCurrentProcess(), h1, GetCurrentProcess(), &h2, EVENT_ALL_ACCESS, 0, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    CloseHandle( h1 );
+
+    InitializeObjectAttributes( &attr, &str, OBJ_OPENIF, 0, NULL );
+    status = pNtCreateMutant( &h1, 0, &attr, FALSE );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenMutant( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateMutant( &h1, MUTANT_ALL_ACCESS, &attr, FALSE );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateMutant( &h2, MUTANT_ALL_ACCESS, &attr, FALSE );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateMutant( &h2, 0, &attr, FALSE );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenMutant( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateSemaphore( &h1, 0, &attr, 1, 2 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenSemaphore( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateSemaphore( &h1, SEMAPHORE_ALL_ACCESS, &attr, 1, 2 );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateSemaphore( &h2, SEMAPHORE_ALL_ACCESS, &attr, 1, 2 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateSemaphore( &h2, 0, &attr, 1, 2 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenSemaphore( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateKeyedEvent( &h1, 0, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenKeyedEvent( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateKeyedEvent( &h1, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateKeyedEvent( &h2, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateKeyedEvent( &h2, 0, &attr, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenKeyedEvent( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateIoCompletion( &h1, 0, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenIoCompletion( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateIoCompletion( &h1, IO_COMPLETION_ALL_ACCESS, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    status = NtCreateIoCompletion( &h2, IO_COMPLETION_ALL_ACCESS, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateIoCompletion( &h2, 0, &attr, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenIoCompletion( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateJobObject( &h1, 0, &attr );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenJobObject( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateJobObject( &h1, JOB_OBJECT_ALL_ACCESS, &attr );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateJobObject( &h2, JOB_OBJECT_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_EXISTS || broken( status == STATUS_ACCESS_DENIED), /* <= win10 1507 */
+        "got %#lx.\n", status );
+    if (NT_SUCCESS(status)) CloseHandle( h2 );
+    status = pNtCreateJobObject( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenJobObject( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateDirectoryObject( &h1, 0, &attr );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenDirectoryObject( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateDirectoryObject( &h1, DIRECTORY_ALL_ACCESS, &attr );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateDirectoryObject( &h2, DIRECTORY_ALL_ACCESS, &attr );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateDirectoryObject( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenDirectoryObject( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateTimer( &h1, 0, &attr, NotificationTimer );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenTimer( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateTimer( &h1, TIMER_ALL_ACCESS, &attr, NotificationTimer );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateTimer( &h2, TIMER_ALL_ACCESS, &attr, NotificationTimer );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateTimer( &h2, 0, &attr, NotificationTimer );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenTimer( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateSymbolicLinkObject( &h1, 0, &attr, &target );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenSymbolicLinkObject( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateSymbolicLinkObject( &h1, SYMBOLIC_LINK_ALL_ACCESS, &attr, &target );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateSymbolicLinkObject( &h2, SYMBOLIC_LINK_ALL_ACCESS, &attr, &target );
+    ok( !status || broken( status == STATUS_OBJECT_NAME_EXISTS ), /* <= win10 1507 */
+        "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateSymbolicLinkObject( &h2, 0, &attr, &target );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenSymbolicLinkObject( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateSection( &h1, 0, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenSection( &h1, 0, &attr );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx.\n", status );
+    status = pNtCreateSection( &h1, SECTION_ALL_ACCESS, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateSection( &h2, SECTION_ALL_ACCESS, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateSection( &h2, 0, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtOpenSection( &h2, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    status = pNtCreateDebugObject( &h1, 0, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtCreateDebugObject( &h1, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateDebugObject( &h2, DEBUG_ALL_ACCESS, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_EXISTS, "got %#lx.\n", status );
+    CloseHandle( h2 );
+    status = pNtCreateDebugObject( &h2, 0, &attr, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    pRtlInitUnicodeString( &str, L"\\Device\\Null" );
+    status = NtCreateFile( &h1, GENERIC_READ | SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = NtCreateFile( &h1, 0, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    pRtlInitUnicodeString( &str, L"\\??\\c:\\windows\\system32\\ntdll.dll" );
+    status = NtCreateFile( &h1, GENERIC_READ | SYNCHRONIZE, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = NtCreateFile( &h1, 0, &attr, &iosb, NULL, 0,
+                           FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    pRtlInitUnicodeString( &str, L"\\Device\\MailSlot\\abc" );
+    status = pNtCreateMailslotFile( &h1, 0, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtCreateMailslotFile( &h1, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateMailslotFile( &h2, GENERIC_READ, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_COLLISION, "got %#lx.\n", status );
+    status = pNtCreateMailslotFile( &h2, 0, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    pRtlInitUnicodeString( &str, L"\\??\\PIPE\\test\\pipe" );
+    status = pNtCreateNamedPipeFile( &h1, 0, &attr, &iosb,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE,
+                                     FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtCreateNamedPipeFile( &h1, GENERIC_READ | GENERIC_WRITE, &attr, &iosb,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE,
+                                     FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
+    ok( !status, "got %#lx.\n", status );
+    status = pNtCreateNamedPipeFile( &h2, GENERIC_READ, &attr, &iosb,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
+                                     FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
+    ok( status == STATUS_INSTANCE_NOT_AVAILABLE, "got %#lx.\n", status );
+    status = pNtCreateNamedPipeFile( &h2, 0, &attr, &iosb,
+                                     FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
+                                     FILE_PIPE_FULL_DUPLEX, FALSE, FALSE, FALSE, 1, 256, 256, &timeout );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    CloseHandle( h1 );
+
+    pRtlInitUnicodeString( &str, L"\\REGISTRY\\Machine" );
+    status = pNtCreateKey( &h1, 0, &attr, 0, 0, 0, 0 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    status = pNtCreateKey( &h1, KEY_READ, &attr, 0, 0, 0, 0 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenKey( &h1, KEY_READ, &attr );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    err = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software", 0, KEY_READ | KEY_WOW64_64KEY, &key);
+    ok( !err, "got %#lx.\n", status );
+    RegCloseKey( key );
+    err = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software", 0, KEY_READ | KEY_WOW64_32KEY, &key);
+    ok( !err, "got %#lx.\n", status );
+    RegCloseKey( key );
+    status = pNtOpenKey( &h1, 0, &attr );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+    err = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software", 0, KEY_WOW64_64KEY, &key);
+    ok( err == ERROR_ACCESS_DENIED, "got %#lx.\n", status );
+    err = RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software", 0, KEY_WOW64_32KEY, &key);
+    ok( err == ERROR_ACCESS_DENIED, "got %#lx.\n", status );
+
+    pRtlInitUnicodeString( &str, L"\\REGISTRY\\Machine\\Software\\foobar-test" );
+    status = pNtCreateKey( &h1, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( !status || status == STATUS_ACCESS_DENIED || broken(status == STATUS_OBJECT_PATH_NOT_FOUND), /* win7 */
+        "got %#lx.\n", status );
+    if (!status)
+    {
+        pNtDeleteKey( h1 );
+        CloseHandle( h1 );
+    }
+    status2 = pNtCreateKey( &h1, 0, &attr, 0, 0, 0, 0 );
+    ok( status2 == status, "got %#lx / %#lx.\n", status2, status );
+    if (!status2)
+    {
+        pNtDeleteKey( h1 );
+        CloseHandle( h1 );
+    }
+
+    status = pNtOpenProcessToken( GetCurrentProcess(), TOKEN_ALL_ACCESS, &h1 );
+    ok( !status, "got %#lx.\n", status );
+    CloseHandle( h1 );
+    status = pNtOpenProcessToken( GetCurrentProcess(), 0, &h1 );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    status = NtGetNextThread(GetCurrentProcess(), NULL, 0, 0, 0, &h1);
+    ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx.\n", status );
+
+    InitializeObjectAttributes( &attr, NULL, 0, 0, NULL );
+    cid.UniqueProcess = ULongToHandle( GetCurrentProcessId() );
+    cid.UniqueThread  = 0;
+    status = pNtOpenProcess( &h1, 0, &attr, &cid );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    InitializeObjectAttributes( &attr, NULL, 0, 0, NULL );
+    cid.UniqueProcess = 0;
+    cid.UniqueThread  = ULongToHandle( GetCurrentThreadId() );
+    status = pNtOpenThread( &h1, 0, &attr, &cid );
+    ok( status == STATUS_ACCESS_DENIED, "got %#lx.\n", status );
+
+    h1 = CreateWindowStationA( "WinSta0", 0, WINSTA_ALL_ACCESS, NULL );
+    err = GetLastError();
+    if (h1)
+    {
+        CloseWindowStation( h1 );
+        h1 = CreateWindowStationA( "WinSta0", 0, WINSTA_ALL_ACCESS, NULL );
+        ok( h1 != 0, "CreateWindowStationA failed err %lu\n", GetLastError());
+        CloseWindowStation( h1 );
+        h1 = CreateWindowStationA( "WinSta0", 0, 0, NULL );
+        err = GetLastError();
+        ok( !h1, "CreateWindowStationA succeeded\n" );
+        ok( err == ERROR_ACCESS_DENIED, "CreateWindowStationA failed %lu\n", err );
+    }
+    else if (err == ERROR_ACCESS_DENIED) win_skip( "Not enough privileges for CreateWindowStation\n" );
+
+    h1 = OpenWindowStationA( "WinSta0", TRUE, WINSTA_ALL_ACCESS );
+    ok( h1 != 0, "OpenWindowStation failed\n" );
+    CloseWindowStation( h1 );
+    h1 = OpenWindowStationA( "WinSta0", TRUE, 0 );
+    err = GetLastError();
+    ok( !h1, "OpenWindowStation succeeeded\n" );
+    ok( err == ERROR_ACCESS_DENIED, "OpenWindowStation failed %lu\n", err );
+
+    h1 = CreateDesktopA( "default", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( h1 != 0, "CreateDesktopA failed %lu\n", GetLastError() );
+    CloseDesktop( h1 );
+    SetLastError( 0xdeadbeef );
+    h1 = CreateDesktopA( "default", NULL, NULL, 0, 0, NULL );
+    err = GetLastError();
+    ok( !h1, "CreateDesktopA succeeded\n" );
+    ok( err == ERROR_ACCESS_DENIED, "CreateDesktopA failed %lu\n", err );
+
+    h1 = OpenDesktopA( "default", 0, TRUE, DESKTOP_ALL_ACCESS );
+    ok( h1 != 0, "OpenDesktopA failed %lu\n", GetLastError() );
+    CloseDesktop( h1 );
+    h1 = OpenDesktopA( "default", 0, TRUE, 0 );
+    ok( h1 != 0, "OpenDesktopA failed %lu\n", GetLastError() );
+    NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
+    ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS),
+        "wrong access %lx\n", obj_info.GrantedAccess );
+    CloseDesktop( h1 );
+    h1 = OpenDesktopA( "default", 0, TRUE, DESKTOP_CREATEWINDOW );
+    ok( h1 != 0, "OpenDesktopA failed %lu\n", GetLastError() );
+    NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
+    ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS | DESKTOP_CREATEWINDOW),
+        "wrong access %lx\n", obj_info.GrantedAccess );
+    CloseDesktop( h1 );
+
+    h1 = OpenInputDesktop( 0, FALSE, DESKTOP_ALL_ACCESS );
+    ok( h1 != 0, "OpenInputDesktop failed %lu\n", GetLastError() );
+    CloseDesktop( h1 );
+    h1 = OpenInputDesktop( 0, FALSE, 0 );
+    ok( h1 != 0, "OpenInputDesktop failed %lu\n", GetLastError() );
+    NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
+    ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS),
+        "wrong access %lx\n", obj_info.GrantedAccess );
+    CloseDesktop( h1 );
+    h1 = OpenInputDesktop( 0, FALSE, DESKTOP_ENUMERATE );
+    ok( h1 != 0, "OpenInputDesktop failed %lu\n", GetLastError() );
+    NtQueryObject( h1, ObjectBasicInformation, &obj_info, sizeof(obj_info), NULL );
+    ok( obj_info.GrantedAccess == (DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS | DESKTOP_ENUMERATE),
+        "wrong access %lx\n", obj_info.GrantedAccess );
+    CloseDesktop( h1 );
+}
+
+static void test_NtAllocateReserveObject(void)
+{
+    UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\BaseNamedObjects\\test_NtAllocateReserveObject_name");
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE handle;
+    int i;
+
+    static const struct
+    {
+        MEMORY_RESERVE_OBJECT_TYPE type;
+        const WCHAR *type_name;
+    }
+    tests[] =
+    {
+        {MemoryReserveObjectTypeUserApc, L"UserApcReserve"},
+        {MemoryReserveObjectTypeIoCompletion, L"IoCompletionReserve"},
+    };
+
+    if (!pNtAllocateReserveObject)
+    {
+        win_skip("NtAllocateReserveObject is unavailable.\n");
+        return;
+    }
+
+    InitializeObjectAttributes(&attr, &name, 0, NULL, NULL);
+
+    /* Parameter checks */
+    status = pNtAllocateReserveObject(NULL, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_ACCESS_VIOLATION, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, NULL, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = NtClose(handle);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, NULL, MemoryReserveObjectTypeIoCompletion + 1);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", status);
+
+    status = pNtAllocateReserveObject(&handle, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#lx.\n", status);
+
+    attr.ObjectName = NULL;
+    status = pNtAllocateReserveObject(&handle, &attr, MemoryReserveObjectTypeUserApc);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+    status = NtClose(handle);
+    ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+    /* Test creating objects */
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("type %d", tests[i].type);
+
+        status = pNtAllocateReserveObject(&handle, NULL, tests[i].type);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+
+        test_object_type(handle, tests[i].type_name);
+
+        status = NtClose(handle);
+        ok(status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(om)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
 
+    pNtAllocateReserveObject= (void *)GetProcAddress(hntdll, "NtAllocateReserveObject");
     pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
     pNtCreateJobObject      = (void *)GetProcAddress(hntdll, "NtCreateJobObject");
     pNtOpenJobObject        = (void *)GetProcAddress(hntdll, "NtOpenJobObject");
@@ -3418,12 +3892,14 @@ START_TEST(om)
     pNtQueryInformationFile =  (void *)GetProcAddress(hntdll, "NtQueryInformationFile");
     pNtOpenProcess          =  (void *)GetProcAddress(hntdll, "NtOpenProcess");
     pNtCreateDebugObject    =  (void *)GetProcAddress(hntdll, "NtCreateDebugObject");
+    pNtGetNextProcess       =  (void *)GetProcAddress(hntdll, "NtGetNextProcess");
     pNtGetNextThread        =  (void *)GetProcAddress(hntdll, "NtGetNextThread");
     pNtOpenProcessToken     =  (void *)GetProcAddress(hntdll, "NtOpenProcessToken");
     pNtOpenThreadToken      =  (void *)GetProcAddress(hntdll, "NtOpenThreadToken");
     pNtDuplicateToken       =  (void *)GetProcAddress(hntdll, "NtDuplicateToken");
     pNtDuplicateObject      =  (void *)GetProcAddress(hntdll, "NtDuplicateObject");
     pNtCompareObjects       =  (void *)GetProcAddress(hntdll, "NtCompareObjects");
+    pNtOpenThread           =  (void *)GetProcAddress(hntdll, "NtOpenThread");
 
     test_null_in_object_name();
     test_case_sensitive();
@@ -3440,8 +3916,11 @@ START_TEST(om)
     test_duplicate_object();
     test_object_types();
     test_get_next_thread();
+    test_get_next_process();
     test_globalroot();
     test_object_identity();
     test_query_directory();
     test_object_permanence();
+    test_zero_access();
+    test_NtAllocateReserveObject();
 }

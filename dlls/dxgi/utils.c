@@ -27,6 +27,7 @@ static const char *debug_feature_level(D3D_FEATURE_LEVEL feature_level)
 {
     switch (feature_level)
     {
+        WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_1_0_CORE);
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_9_1);
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_9_2);
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_9_3);
@@ -34,6 +35,9 @@ static const char *debug_feature_level(D3D_FEATURE_LEVEL feature_level)
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_10_1);
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_11_0);
         WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_11_1);
+        WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_12_0);
+        WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_12_1);
+        WINE_DXGI_TO_STR(D3D_FEATURE_LEVEL_12_2);
         default:
             FIXME("Unrecognized D3D_FEATURE_LEVEL %#x.\n", feature_level);
             return "unrecognized";
@@ -259,7 +263,7 @@ DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format)
         case WINED3DFMT_BC7_TYPELESS: return DXGI_FORMAT_BC7_TYPELESS;
         case WINED3DFMT_BC7_UNORM: return DXGI_FORMAT_BC7_UNORM;
         case WINED3DFMT_BC7_UNORM_SRGB: return DXGI_FORMAT_BC7_UNORM_SRGB;
-        case WINED3DFMT_NV12: return DXGI_FORMAT_NV12;
+        case WINED3DFMT_NV12_PLANAR: return DXGI_FORMAT_NV12;
         case WINED3DFMT_YUY2: return DXGI_FORMAT_YUY2;
         case WINED3DFMT_B4G4R4A4_UNORM: return DXGI_FORMAT_B4G4R4A4_UNORM;
         default:
@@ -372,7 +376,7 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
         case DXGI_FORMAT_BC7_TYPELESS: return WINED3DFMT_BC7_TYPELESS;
         case DXGI_FORMAT_BC7_UNORM: return WINED3DFMT_BC7_UNORM;
         case DXGI_FORMAT_BC7_UNORM_SRGB: return WINED3DFMT_BC7_UNORM_SRGB;
-        case DXGI_FORMAT_NV12: return WINED3DFMT_NV12;
+        case DXGI_FORMAT_NV12: return WINED3DFMT_NV12_PLANAR;
         case DXGI_FORMAT_YUY2: return WINED3DFMT_YUY2;
         case DXGI_FORMAT_B4G4R4A4_UNORM: return WINED3DFMT_B4G4R4A4_UNORM;
         default:

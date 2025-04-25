@@ -544,7 +544,7 @@ static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, s
 
         for (i = 0; i < hrefmap->href_count; i++)
         {
-            sprintf(name, "*\\Rffff*#%x", hrefmap->href[i]);
+            snprintf(name, sizeof(name), "*\\Rffff*#%x", hrefmap->href[i]);
             hrefinfo_size += 8 + 2 + strlen(name);
         }
 
@@ -581,7 +581,7 @@ static void write_hrefmap(struct sltg_data *data, const struct sltg_hrefmap *hre
     {
         short len;
 
-        sprintf(name, "*\\Rffff*#%x", hrefmap->href[i]);
+        snprintf(name, sizeof(name), "*\\Rffff*#%x", hrefmap->href[i]);
         len = strlen(name);
 
         append_data(data, &len, sizeof(len));
@@ -1733,7 +1733,7 @@ static void save_all_changes(struct sltg_typelib *typelib)
 
         expr_t *expr = get_attrp(typelib->typelib->attrs, ATTR_ID);
         if (expr)
-            sprintf(typelib_id, "#%d", expr->cval);
+            snprintf(typelib_id, sizeof(typelib_id), "#%d", expr->cval);
         add_output_to_resources("TYPELIB", typelib_id);
         if (strendswith(typelib_name, "_t.res"))  /* add typelib registration */
             output_typelib_regscript(typelib->typelib);

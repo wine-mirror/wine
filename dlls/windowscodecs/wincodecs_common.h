@@ -26,6 +26,11 @@ HRESULT CDECL decoder_get_frame_info(struct decoder *decoder, UINT frame, struct
     return decoder->vtable->get_frame_info(decoder, frame, info);
 }
 
+HRESULT CDECL decoder_get_decoder_palette(struct decoder *decoder, UINT frame, WICColor *colors, UINT *num_colors)
+{
+    return decoder->vtable->get_decoder_palette(decoder, frame, colors, num_colors);
+}
+
 HRESULT CDECL decoder_copy_pixels(struct decoder *decoder, UINT frame,
     const WICRect *prc, UINT stride, UINT buffersize, BYTE *buffer)
 {

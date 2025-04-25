@@ -33,7 +33,6 @@ SOURCES = \
 	regsvr.c \
 	scaler.c \
 	stream.c \
-	tgaformat.c \
 	ungif.c \
 	uuid.c \
 	version.rc \

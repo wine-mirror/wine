@@ -6207,14 +6207,18 @@ static HRESULT resolver_create_bytestream_handler(IMFByteStream *stream, DWORD f
 
 static HRESULT resolver_get_bytestream_url_hint(IMFByteStream *stream, WCHAR const **url)
 {
-    static const unsigned char asfmagic[]  = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
-    static const unsigned char wavmagic[]  = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
-    static const unsigned char wavmask[]   = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
-    static const unsigned char isommagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
-    static const unsigned char mp4_magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', 'S', 'N', 'V',0x00,0x00,0x00,0x00};
-    static const unsigned char mp42magic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
-    static const unsigned char mp4vmagic[] = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', '4', 'V', ' ',0x00,0x00,0x00,0x00};
-    static const unsigned char mp4mask[]   = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
+    static const unsigned char asfmagic[]     = {0x30,0x26,0xb2,0x75,0x8e,0x66,0xcf,0x11,0xa6,0xd9,0x00,0xaa,0x00,0x62,0xce,0x6c};
+    static const unsigned char wavmagic[]     = { 'R', 'I', 'F', 'F',0x00,0x00,0x00,0x00, 'W', 'A', 'V', 'E', 'f', 'm', 't', ' '};
+    static const unsigned char wavmask[]      = {0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+    static const unsigned char isommagic[]    = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'i', 's', 'o', 'm',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4_magic[]    = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', 'S', 'N', 'V',0x00,0x00,0x00,0x00};
+    static const unsigned char mp42magic[]    = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'm', 'p', '4', '2',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4vmagic[]    = {0x00,0x00,0x00,0x00, 'f', 't', 'y', 'p', 'M', '4', 'V', ' ',0x00,0x00,0x00,0x00};
+    static const unsigned char mp4mask[]      = {0x00,0x00,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00};
+    static const unsigned char mp3magic[]     = {0xff,0xf2,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const unsigned char mp3mask[]      = {0xff,0xf6,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const unsigned char idv2_3_magic[] = {'I','D','3',0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+    static const unsigned char idv2_3_mask[]  = {0xff,0xff,0xff,0xff,0x00,0x1f,0x80,0x80,0x80,0x80,0x00,0x00,0x00,0x00,0x00,0x00};
     static const struct stream_content_url_hint
     {
         const unsigned char *magic;
@@ -6229,6 +6233,8 @@ static HRESULT resolver_get_bytestream_url_hint(IMFByteStream *stream, WCHAR con
         { mp42magic, L".mp4", mp4mask },
         { mp4_magic, L".mp4", mp4mask },
         { mp4vmagic, L".m4v", mp4mask },
+        { mp3magic, L".mp3", mp3mask },
+        { idv2_3_magic, L".mp3", idv2_3_mask },
     };
     unsigned char buffer[4 * sizeof(unsigned int)], pattern[4 * sizeof(unsigned int)];
     IMFAttributes *attributes;
@@ -6257,10 +6263,9 @@ static HRESULT resolver_get_bytestream_url_hint(IMFByteStream *stream, WCHAR con
 
     if (FAILED(hr = IMFByteStream_GetCurrentPosition(stream, &position)))
         return hr;
-
-    hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length);
-    IMFByteStream_SetCurrentPosition(stream, position);
-    if (FAILED(hr))
+    if (position && FAILED(hr = IMFByteStream_SetCurrentPosition(stream, 0)))
+        return hr;
+    if (FAILED(hr = IMFByteStream_Read(stream, buffer, sizeof(buffer), &length)))
         return hr;
 
     if (length < sizeof(buffer))
@@ -6674,7 +6679,10 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromURL(IMFSourceResolver
             (IMFAsyncCallback *)&resolver->url_callback, (IUnknown *)result);
 
     if (SUCCEEDED(hr) && inner_cookie)
+    {
         resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_URL, inner_cookie, cancel_cookie);
+        IUnknown_Release(inner_cookie);
+    }
 
     IRtwqAsyncResult_Release(result);
 
@@ -6720,7 +6728,10 @@ static HRESULT WINAPI source_resolver_BeginCreateObjectFromByteStream(IMFSourceR
 
     /* Cancel object wraps underlying handler cancel cookie with context necessary to call CancelObjectCreate(). */
     if (SUCCEEDED(hr) && inner_cookie)
+    {
         resolver_create_cancel_object((IUnknown *)handler, OBJECT_FROM_BYTESTREAM, inner_cookie, cancel_cookie);
+        IUnknown_Release(inner_cookie);
+    }
 
     IRtwqAsyncResult_Release(result);
 

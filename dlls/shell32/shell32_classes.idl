@@ -194,3 +194,8 @@ coclass NewMenu {}
     threading(apartment),
     uuid(9ac9fbe1-e0a2-4ad6-b4ee-e212013ea917)
 ] coclass ShellItem { interface IShellItem2; }
+
+[
+    threading(apartment),
+    uuid(2d3468c1-36a7-43b6-ac24-d3f02fd9607a)
+] coclass EnumerableObjectCollection {}

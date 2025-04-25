@@ -26,9 +26,6 @@
 #define _STDINT_H
 
 #include <corecrt.h>
-
-#define __need_wint_t
-#define __need_wchar_t
 #include <stddef.h>
 
 /* 7.18.1.1  Exact-width integer types */

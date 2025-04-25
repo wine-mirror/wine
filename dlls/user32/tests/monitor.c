@@ -33,8 +33,10 @@
 #include "winternl.h"
 #include "ddk/d3dkmthk.h"
 #include "setupapi.h"
+#include "shellscalingapi.h"
 #include "ntddvdeo.h"
 #include <stdio.h>
+#include <math.h>
 
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_GPU_LUID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 1);
 DEFINE_DEVPROPKEY(DEVPROPKEY_MONITOR_OUTPUT_ID, 0xca085853, 0x16ce, 0x48aa, 0xb1, 0x14, 0xde, 0x9c, 0x72, 0x33, 0x42, 0x23, 2);
@@ -46,6 +48,12 @@ static LONG (WINAPI *pQueryDisplayConfig)(UINT32,UINT32*,DISPLAYCONFIG_PATH_INFO
 static LONG (WINAPI *pDisplayConfigGetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static LONG (WINAPI *pDisplayConfigSetDeviceInfo)(DISPLAYCONFIG_DEVICE_INFO_HEADER*);
 static DPI_AWARENESS_CONTEXT (WINAPI *pSetThreadDpiAwarenessContext)(DPI_AWARENESS_CONTEXT);
+static DPI_AWARENESS_CONTEXT (WINAPI *pGetThreadDpiAwarenessContext)(void);
+static DPI_AWARENESS_CONTEXT (WINAPI *pGetWindowDpiAwarenessContext)(HWND);
+static UINT (WINAPI *pGetDpiForSystem)(void);
+static UINT (WINAPI *pGetDpiForWindow)(HWND);
+static BOOL (WINAPI *pLogicalToPhysicalPointForPerMonitorDPI)(HWND,POINT*);
+static BOOL (WINAPI *pPhysicalToLogicalPointForPerMonitorDPI)(HWND,POINT*);
 
 static NTSTATUS (WINAPI *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER*);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME*);
@@ -66,6 +74,12 @@ static void init_function_pointers(void)
     GET_PROC(user32, DisplayConfigGetDeviceInfo)
     GET_PROC(user32, DisplayConfigSetDeviceInfo)
     GET_PROC(user32, SetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetThreadDpiAwarenessContext)
+    GET_PROC(user32, GetWindowDpiAwarenessContext)
+    GET_PROC(user32, GetDpiForSystem)
+    GET_PROC(user32, GetDpiForWindow)
+    GET_PROC(user32, LogicalToPhysicalPointForPerMonitorDPI)
+    GET_PROC(user32, PhysicalToLogicalPointForPerMonitorDPI)
 
     GET_PROC(gdi32, D3DKMTCloseAdapter)
     GET_PROC(gdi32, D3DKMTOpenAdapterFromGdiDisplayName)
@@ -1680,6 +1694,12 @@ static void test_GetDisplayConfigBufferSizes(void)
         ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
     else
         ok(ret == ERROR_NOT_SUPPORTED, "got %ld\n", ret);
+
+    paths = modes = 0;
+    ret = pGetDisplayConfigBufferSizes(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, &modes);
+    ok(!ret || broken(ret == ERROR_INVALID_PARAMETER || ret == ERROR_NOT_SUPPORTED) /* before Win10 */, "got %ld\n", ret);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
 }
 
 static BOOL CALLBACK test_EnumDisplayMonitors_normal_cb(HMONITOR monitor, HDC hdc, LPRECT rect,
@@ -1956,12 +1976,13 @@ static void check_preferred_mode(const DISPLAYCONFIG_TARGET_PREFERRED_MODE *mode
 static void test_QueryDisplayConfig_result(UINT32 flags,
         UINT32 paths, const DISPLAYCONFIG_PATH_INFO *pi, UINT32 modes, const DISPLAYCONFIG_MODE_INFO *mi)
 {
-    UINT32 i;
+    UINT32 i, src_mode_idx, tgt_mode_idx;
     LONG ret;
     DISPLAYCONFIG_SOURCE_DEVICE_NAME source_name;
     DISPLAYCONFIG_TARGET_DEVICE_NAME target_name;
     DISPLAYCONFIG_TARGET_PREFERRED_MODE preferred_mode;
     DISPLAYCONFIG_ADAPTER_NAME adapter_name;
+    const DISPLAYCONFIG_DESKTOP_IMAGE_INFO *di;
 
     for (i = 0; i < paths; i++)
     {
@@ -2014,65 +2035,141 @@ static void test_QueryDisplayConfig_result(UINT32 flags,
         }
 
         /* Check corresponding modes */
-        if (pi[i].sourceInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
         {
-            skip("Path doesn't contain source modeInfoIdx\n");
-            continue;
+            src_mode_idx = pi[i].sourceInfo.sourceModeInfoIdx;
+            if (src_mode_idx == DISPLAYCONFIG_PATH_SOURCE_MODE_IDX_INVALID)
+            {
+                ok(pi[i].sourceInfo.cloneGroupId != DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID, "got cloneGroupId %#x.\n",
+                        pi[i].sourceInfo.cloneGroupId);
+                skip("Path doesn't contain source modeInfoIdx\n");
+                continue;
+            }
+            ok(pi[i].sourceInfo.cloneGroupId == DISPLAYCONFIG_PATH_CLONE_GROUP_INVALID, "got cloneGroupId %#x.\n",
+                    pi[i].sourceInfo.cloneGroupId);
         }
-        ok(pi[i].sourceInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].sourceInfo.modeInfoIdx);
-        if (pi[i].sourceInfo.modeInfoIdx >= modes)
+        else
+        {
+            src_mode_idx = pi[i].sourceInfo.modeInfoIdx;
+            if (src_mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain source modeInfoIdx\n");
+                continue;
+            }
+        }
+        ok(src_mode_idx < modes, "Expected index <%d, got %d\n", modes, src_mode_idx);
+        if (src_mode_idx >= modes)
             continue;
 
-        ok(mi[pi[i].sourceInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, "Expected infoType %d, got %d\n",
-                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].sourceInfo.modeInfoIdx].infoType);
-        ok(pi[i].sourceInfo.id == mi[pi[i].sourceInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
-                pi[i].sourceInfo.id, mi[pi[i].sourceInfo.modeInfoIdx].id);
-        ok(pi[i].sourceInfo.adapterId.HighPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart &&
-           pi[i].sourceInfo.adapterId.LowPart == mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart,
+        ok(mi[src_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[src_mode_idx].infoType);
+        ok(pi[i].sourceInfo.id == mi[src_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].sourceInfo.id, mi[src_mode_idx].id);
+        ok(pi[i].sourceInfo.adapterId.HighPart == mi[src_mode_idx].adapterId.HighPart &&
+                pi[i].sourceInfo.adapterId.LowPart == mi[src_mode_idx].adapterId.LowPart,
                 "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
                 pi[i].sourceInfo.adapterId.HighPart, pi[i].sourceInfo.adapterId.LowPart,
-                mi[pi[i].sourceInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].sourceInfo.modeInfoIdx].adapterId.LowPart);
-        ok(mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width > 0 && mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height > 0,
+                mi[src_mode_idx].adapterId.HighPart, mi[src_mode_idx].adapterId.LowPart);
+        ok(mi[src_mode_idx].sourceMode.width > 0 && mi[src_mode_idx].sourceMode.height > 0,
                 "Expected non-zero height/width, got %ux%u\n",
-                mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.width, mi[pi[i].sourceInfo.modeInfoIdx].sourceMode.height);
+                mi[src_mode_idx].sourceMode.width, mi[src_mode_idx].sourceMode.height);
 
 
-        if (pi[i].targetInfo.modeInfoIdx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
         {
-            skip("Path doesn't contain target modeInfoIdx\n");
-            continue;
+            tgt_mode_idx = pi[i].targetInfo.targetModeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_TARGET_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain target modeInfoIdx\n");
+                continue;
+            }
         }
-        ok(pi[i].targetInfo.modeInfoIdx < modes, "Expected index <%d, got %d\n", modes, pi[i].targetInfo.modeInfoIdx);
-        if (pi[i].targetInfo.modeInfoIdx >= modes)
+        else
+        {
+            tgt_mode_idx = pi[i].targetInfo.modeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_MODE_IDX_INVALID)
+            {
+                skip("Path doesn't contain target modeInfoIdx\n");
+                continue;
+            }
+        }
+        ok(tgt_mode_idx < modes, "Expected index <%d, got %d\n", modes, tgt_mode_idx);
+        if (tgt_mode_idx >= modes)
             continue;
 
-        ok(mi[pi[i].targetInfo.modeInfoIdx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET, "Expected infoType %d, got %d\n",
-                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[pi[i].targetInfo.modeInfoIdx].infoType);
-        ok(pi[i].targetInfo.id == mi[pi[i].targetInfo.modeInfoIdx].id, "Expected id %u, got %u\n",
-                pi[i].targetInfo.id, mi[pi[i].targetInfo.modeInfoIdx].id);
-        ok(pi[i].targetInfo.adapterId.HighPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart &&
-           pi[i].targetInfo.adapterId.LowPart == mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart,
+        ok(mi[tgt_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_TARGET, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_SOURCE, mi[tgt_mode_idx].infoType);
+        ok(pi[i].targetInfo.id == mi[tgt_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].targetInfo.id, mi[tgt_mode_idx].id);
+        ok(pi[i].targetInfo.adapterId.HighPart == mi[tgt_mode_idx].adapterId.HighPart &&
+                pi[i].targetInfo.adapterId.LowPart == mi[tgt_mode_idx].adapterId.LowPart,
                 "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
                 pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
-                mi[pi[i].targetInfo.modeInfoIdx].adapterId.HighPart, mi[pi[i].targetInfo.modeInfoIdx].adapterId.LowPart);
-        ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx > 0 &&
-           mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy > 0,
+                mi[tgt_mode_idx].adapterId.HighPart, mi[tgt_mode_idx].adapterId.LowPart);
+        ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cx > 0 &&
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cy > 0,
                 "Expected non-zero height/width, got %ux%u\n",
-                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cx,
-                mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.activeSize.cy);
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cx,
+                mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.activeSize.cy);
 
         if (flags == QDC_DATABASE_CURRENT)
-            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx == 0 &&
-               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy == 0,
+            ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx == 0 &&
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy == 0,
                     "Expected zero height/width, got %ux%u\n",
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy);
         else
-            ok(mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx > 0 &&
-               mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy > 0,
+            ok(mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx > 0 &&
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy > 0,
                     "Expected non-zero height/width, got %ux%u\n",
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cx,
-                    mi[pi[i].targetInfo.modeInfoIdx].targetMode.targetVideoSignalInfo.totalSize.cy);
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cx,
+                    mi[tgt_mode_idx].targetMode.targetVideoSignalInfo.totalSize.cy);
+        if (flags & QDC_VIRTUAL_MODE_AWARE)
+        {
+            tgt_mode_idx = pi[i].targetInfo.desktopModeInfoIdx;
+            if (tgt_mode_idx == DISPLAYCONFIG_PATH_DESKTOP_IMAGE_IDX_INVALID)
+            {
+                ok(!(pi[i].flags & DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE), "got path flags %#x.\n", pi[i].flags);
+                skip("Path doesn't contain target desktopModeInfoIdx.\n");
+                continue;
+            }
+            ok(pi[i].flags & DISPLAYCONFIG_PATH_SUPPORT_VIRTUAL_MODE, "got path flags %#x.\n", pi[i].flags);
+        }
+        else
+        {
+            continue;
+        }
+
+        ok(mi[tgt_mode_idx].infoType == DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE, "Expected infoType %d, got %d\n",
+                DISPLAYCONFIG_MODE_INFO_TYPE_DESKTOP_IMAGE, mi[tgt_mode_idx].infoType);
+        ok(pi[i].targetInfo.id == mi[tgt_mode_idx].id, "Expected id %u, got %u\n",
+                pi[i].targetInfo.id, mi[tgt_mode_idx].id);
+        ok(pi[i].targetInfo.adapterId.HighPart == mi[tgt_mode_idx].adapterId.HighPart &&
+                pi[i].targetInfo.adapterId.LowPart == mi[tgt_mode_idx].adapterId.LowPart,
+                "Expected LUID %08lx:%08lx, got %08lx:%08lx\n",
+                pi[i].targetInfo.adapterId.HighPart, pi[i].targetInfo.adapterId.LowPart,
+                mi[tgt_mode_idx].adapterId.HighPart, mi[tgt_mode_idx].adapterId.LowPart);
+        di = &mi[tgt_mode_idx].desktopImageInfo;
+        ok(!di->DesktopImageRegion.left && !di->DesktopImageRegion.top,
+                "Expected zero left/top, got %lux%lu\n",
+                di->DesktopImageRegion.left,
+                di->DesktopImageRegion.top);
+        ok(di->DesktopImageRegion.right > 0 && di->DesktopImageRegion.bottom > 0,
+                "Expected non-zero height/width, got %lux%lu\n",
+                di->DesktopImageRegion.right,
+                di->DesktopImageRegion.bottom);
+        ok(!di->DesktopImageClip.left && !di->DesktopImageClip.top,
+                "Expected zero left/top, got %lux%lu\n",
+                di->DesktopImageClip.left,
+                di->DesktopImageClip.top);
+        ok(di->DesktopImageClip.right > 0 && di->DesktopImageClip.bottom > 0,
+                "Expected non-zero height/width, got %lux%lu\n",
+                di->DesktopImageClip.right,
+                di->DesktopImageClip.bottom);
+        ok(di->PathSourceSize.x > 0 && di->PathSourceSize.y > 0,
+                "Expected non-zero x/y, got %lux%lu\n",
+                di->PathSourceSize.x,
+                di->PathSourceSize.y);
     }
 }
 
@@ -2171,6 +2268,17 @@ static void test_QueryDisplayConfig(void)
     ok(topologyid != 0xFF, "expected topologyid to be set, got %d\n", topologyid);
     if (!ret && paths > 0 && modes > 0)
         test_QueryDisplayConfig_result(QDC_DATABASE_CURRENT, paths, pi, modes, mi);
+
+    paths = ARRAY_SIZE(pi);
+    modes = ARRAY_SIZE(mi);
+    memset(pi, 0xFF, sizeof(pi));
+    memset(mi, 0xFF, sizeof(mi));
+    ret = pQueryDisplayConfig(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, &paths, pi, &modes, mi, NULL);
+    ok(!ret || broken(ret == ERROR_INVALID_PARAMETER) /* before Win10 */, "got %ld\n", ret);
+    if (!ret)
+        ok(paths > 0 && modes > 0, "got %u, %u\n", paths, modes);
+    if (!ret && paths > 0 && modes > 0)
+        test_QueryDisplayConfig_result(QDC_ONLY_ACTIVE_PATHS | QDC_VIRTUAL_MODE_AWARE, paths, pi, modes, mi);
 }
 
 static void test_DisplayConfigGetDeviceInfo(void)
@@ -2969,6 +3077,681 @@ static void test_fullscreen(int argc, char **argv)
     CloseHandle(event1);
 }
 
+static void get_monitor_dpi_scale( HMONITOR monitor, int *min, int *cur, int *max )
+{
+    DISPLAYCONFIG_GET_SOURCE_DPI_SCALE req = {.header = {.type = DISPLAYCONFIG_DEVICE_INFO_GET_SOURCE_DPI_SCALE, .size = sizeof(req)}};
+    MONITORINFOEXW info = {.cbSize = sizeof(MONITORINFOEXW)};
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_desc = {{0}};
+    D3DKMT_CLOSEADAPTER close_desc = {0};
+    NTSTATUS status;
+    UINT ret;
+
+    ret = GetMonitorInfoW( monitor, (MONITORINFO *)&info );
+    ok( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+
+    wcscpy( open_desc.DeviceName, info.szDevice );
+    status = D3DKMTOpenAdapterFromGdiDisplayName( &open_desc );
+    ok( !status, "D3DKMTOpenAdapterFromGdiDisplayName returned %#lx\n", status );
+
+    req.header.adapterId = open_desc.AdapterLuid;
+    req.header.id = open_desc.VidPnSourceId;
+    ret = pDisplayConfigGetDeviceInfo( &req.header );
+    todo_wine ok( !ret, "DisplayConfigGetDeviceInfo returned %u\n", ret );
+    *min = req.minRelativeScaleStep;
+    *cur = req.curRelativeScaleStep;
+    *max = req.maxRelativeScaleStep;
+
+    close_desc.hAdapter = open_desc.hAdapter;
+    status = D3DKMTCloseAdapter( &close_desc );
+    ok( !status, "D3DKMTCloseAdapter returned %#lx\n", status );
+}
+
+static void set_monitor_dpi_scale( HMONITOR monitor, int scale )
+{
+    DISPLAYCONFIG_SET_SOURCE_DPI_SCALE req = {.header = {.type = DISPLAYCONFIG_DEVICE_INFO_SET_SOURCE_DPI_SCALE, .size = sizeof(req)}};
+    MONITORINFOEXW info = {.cbSize = sizeof(MONITORINFOEXW)};
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_desc = {{0}};
+    D3DKMT_CLOSEADAPTER close_desc = {0};
+    NTSTATUS status;
+    UINT ret;
+
+    if (!pDisplayConfigSetDeviceInfo) return;
+
+    ret = GetMonitorInfoW( monitor, (MONITORINFO *)&info );
+    ok( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+
+    wcscpy( open_desc.DeviceName, info.szDevice );
+    status = D3DKMTOpenAdapterFromGdiDisplayName( &open_desc );
+    ok( !status, "D3DKMTOpenAdapterFromGdiDisplayName returned %#lx\n", status );
+
+    req.header.adapterId = open_desc.AdapterLuid;
+    req.header.id = open_desc.VidPnSourceId;
+    req.relativeScaleStep = scale;
+    ret = pDisplayConfigSetDeviceInfo( &req.header );
+    todo_wine ok( !ret, "DisplayConfigSetDeviceInfo returned %u\n", ret );
+
+    close_desc.hAdapter = open_desc.hAdapter;
+    status = D3DKMTCloseAdapter( &close_desc );
+    ok( !status, "D3DKMTCloseAdapter returned %#lx\n", status );
+}
+
+struct monitor_info
+{
+    UINT eff_x, eff_y, ang_x, ang_y, raw_x, raw_y; /* default monitor DPIs */
+    HMONITOR handle;
+    RECT rect;
+};
+
+static BOOL CALLBACK enum_monitor_rect( HMONITOR handle, HDC hdc, RECT *rect, LPARAM lparam )
+{
+    struct monitor_info *info = (struct monitor_info *)lparam;
+    if (info->handle == handle) info->rect = *rect;
+    return TRUE;
+}
+
+#define check_physical_dpi(a,b,c,d,e,f) check_physical_dpi_(__LINE__,a,b,c,d,e,f,FALSE)
+static void check_physical_dpi_( int line, HWND hwnd, UINT log_x, UINT log_y, UINT phy_x, UINT phy_y, BOOL expect_ret, BOOL todo_ret )
+{
+    POINT log = {log_x, log_y}, phy = {phy_x, phy_y}, pt;
+    UINT ret;
+
+    pt = log;
+    ret = pLogicalToPhysicalPointForPerMonitorDPI( hwnd, &pt );
+    todo_wine_if(todo_ret)
+    ok_(__FILE__, line)( ret == expect_ret, "LogicalToPhysicalPointForPerMonitorDPI returned %u\n", ret );
+    ok_(__FILE__, line)( pt.x == phy.x && pt.y == phy.y, "got physical %s\n", wine_dbgstr_point(&pt) );
+}
+
+#define check_logical_dpi(a,b,c,d,e,f) check_logical_dpi_(__LINE__,a,b,c,d,e,f,FALSE)
+static void check_logical_dpi_( int line, HWND hwnd, UINT phy_x, UINT phy_y, UINT log_x, UINT log_y, BOOL expect_ret, BOOL todo_ret )
+{
+    POINT log = {log_x, log_y}, phy = {phy_x, phy_y}, pt;
+    UINT ret;
+
+    pt = phy;
+    ret = pPhysicalToLogicalPointForPerMonitorDPI( hwnd, &pt );
+    todo_wine_if(todo_ret)
+    ok_(__FILE__, line)( ret == expect_ret, "PhysicalToLogicalPointForPerMonitorDPI returned %u\n", ret );
+    ok_(__FILE__, line)( pt.x == log.x && pt.y == log.y, "got logical %s\n", wine_dbgstr_point(&pt) );
+}
+
+#define check_logical_physical_dpi(a,b,c,d,e,f) check_logical_physical_dpi_(__LINE__,a,b,c,d,e,f,FALSE)
+static void check_logical_physical_dpi_( int line, HWND hwnd, UINT log_x, UINT log_y, UINT phy_x, UINT phy_y, BOOL expect_ret, BOOL todo_ret )
+{
+    check_logical_dpi_( line, hwnd, phy_x, phy_y, log_x, log_y, expect_ret, todo_ret );
+    check_physical_dpi_( line, hwnd, log_x, log_y, phy_x, phy_y, expect_ret, todo_ret );
+}
+
+static void test_monitor_dpi_awareness( const struct monitor_info *infos, UINT count, int step, UINT system_dpi,
+                                        const struct monitor_info *info, struct monitor_info *phys, BOOL is_virtual )
+{
+    static const unsigned int scales[] = {100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500};
+    static const DPI_AWARENESS_CONTEXT tests[] =
+    {
+        0,
+        DPI_AWARENESS_CONTEXT_UNAWARE,
+        DPI_AWARENESS_CONTEXT_SYSTEM_AWARE,
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE,
+        DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2,
+        DPI_AWARENESS_CONTEXT_UNAWARE_GDISCALED,
+        (DPI_AWARENESS_CONTEXT)0x7811,
+    };
+    RECT virtual = {0}, scaled_virtual = {0}, monitor = {0}, scaled = {0}, primary = {0}, rect, expect_rect;
+    struct monitor_info tmp_info = {.handle = info->handle};
+    UINT ret, i, x, y, expect_width, expect_height;
+    HWND unaware_hwnd, aware_hwnd, primary_hwnd;
+    MONITORINFO mi = {.cbSize = sizeof(mi)};
+    DPI_AWARENESS_CONTEXT old_ctx = 0, cur_ctx, ctx;
+    float scale = scales[step], scale_x, scale_y;
+    HDC hdc;
+
+    scale_x = (info->rect.right - info->rect.left) / (float)(phys->rect.right - phys->rect.left);
+    scale_y = (info->rect.bottom - info->rect.top) / (float)(phys->rect.bottom - phys->rect.top);
+
+    for (i = 0; i < count; i++)
+    {
+        if (infos[i].rect.left == 0 && infos[i].rect.top == 0) primary = infos[i].rect;
+
+        if (info != infos + i) UnionRect( &scaled_virtual, &scaled_virtual, &infos[i].rect );
+        else
+        {
+            scaled = monitor = infos[i].rect;
+            scaled.right = scaled.left + MulDiv( scaled.right - scaled.left, 100, scale );
+            scaled.bottom = scaled.top + MulDiv( scaled.bottom - scaled.top, 100, scale );
+            UnionRect( &scaled_virtual, &scaled_virtual, &scaled );
+        }
+
+        UnionRect( &virtual, &virtual, &infos[i].rect );
+    }
+
+    unaware_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, monitor.left + 100,
+                                  monitor.top + 100, 100, 100, NULL, NULL, NULL, NULL );
+    ok( unaware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+    ctx = pGetWindowDpiAwarenessContext( unaware_hwnd );
+    ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+    ret = pGetDpiForWindow( unaware_hwnd );
+    ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
+
+    SetRect( &expect_rect, 0, 0, 100, 100 );
+    ret = GetClientRect( unaware_hwnd, &rect );
+    ok( ret, "GetClientRect failed, error %lu\n", GetLastError() );
+    ok( EqualRect( &rect, &expect_rect ), "GetClientRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+    SetRect( &expect_rect, monitor.left + 100, monitor.top + 100, monitor.left + 200, monitor.top + 200 );
+    ret = GetWindowRect( unaware_hwnd, &rect );
+    ok( ret, "GetWindowRect failed, error %lu\n", GetLastError() );
+    ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+    check_logical_physical_dpi( unaware_hwnd, monitor.left + 99, monitor.top + 99,
+                                monitor.left + 99, monitor.top + 99, FALSE );
+    check_logical_physical_dpi( unaware_hwnd, monitor.left + 100, monitor.top + 100,
+                                monitor.left + 1 * scale, monitor.top + 1 * scale, TRUE );
+    check_logical_physical_dpi( unaware_hwnd, monitor.left + 200, monitor.top + 200,
+                                monitor.left + 2 * scale, monitor.top + 2 * scale, TRUE );
+
+    /* physical to logical conversion is lossy in the area of the screen where coordinate systems overlap but don't match */
+    check_physical_dpi( unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                        monitor.left + 201, monitor.top + 201, FALSE );
+    check_logical_dpi_( __LINE__, unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                        monitor.left + MulDiv( 201, 100, scale ), monitor.top + MulDiv( 201, 100, scale ), TRUE, TRUE );
+
+    check_logical_physical_dpi( unaware_hwnd, monitor.left + 2 * scale + 1, monitor.top + 2 * scale + 1,
+                                monitor.left + 2 * scale + 1, monitor.top + 2 * scale + 1, FALSE );
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        BOOL monitor_aware = tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE ||
+                             tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2;
+        if (tests[i]) old_ctx = pSetThreadDpiAwarenessContext( tests[i] );
+        cur_ctx = pGetThreadDpiAwarenessContext();
+
+        winetest_push_context( "ctx %p", tests[i] );
+
+        ret = GetSystemMetrics( SM_XVIRTUALSCREEN );
+        ok( ret == virtual.left, "got SM_XVIRTUALSCREEN %d\n", ret );
+        ret = GetSystemMetrics( SM_YVIRTUALSCREEN );
+        ok( ret == virtual.top, "got SM_YVIRTUALSCREEN %d\n", ret );
+
+        if (monitor_aware)
+        {
+            expect_width = virtual.right - virtual.left;
+            expect_height = virtual.bottom - virtual.top;
+        }
+        else
+        {
+            expect_width = scaled_virtual.right - scaled_virtual.left;
+            expect_height = scaled_virtual.bottom - scaled_virtual.top;
+        }
+        ret = GetSystemMetrics( SM_CXVIRTUALSCREEN );
+        ok( ret == expect_width, "got SM_CXVIRTUALSCREEN %d\n", ret );
+        ret = GetSystemMetrics( SM_CYVIRTUALSCREEN );
+        ok( ret == expect_height, "got SM_CYVIRTUALSCREEN %d\n", ret );
+
+        if (monitor.left || monitor.top)
+        {
+            expect_width = primary.right - primary.left;
+            expect_height = primary.bottom - primary.top;
+        }
+        else if (monitor_aware)
+        {
+            expect_width = monitor.right - monitor.left;
+            expect_height = monitor.bottom - monitor.top;
+        }
+        else
+        {
+            expect_width = scaled.right - scaled.left;
+            expect_height = scaled.bottom - scaled.top;
+        }
+        ret = GetSystemMetrics( SM_CXSCREEN );
+        ok( ret == expect_width, "got SM_CXSCREEN %d\n", ret );
+        ret = GetSystemMetrics( SM_CYSCREEN );
+        ok( ret == expect_height, "got SM_CYSCREEN %d\n", ret );
+
+        hdc = GetDC( NULL );
+        ok( !!hdc, "GetDC failed\n" );
+        ret = GetDeviceCaps( hdc, LOGPIXELSX );
+        ok( ret == system_dpi, "got LOGPIXELSX %d\n", ret );
+        ret = GetDeviceCaps( hdc, LOGPIXELSY );
+        ok( ret == system_dpi, "got LOGPIXELSY %d\n", ret );
+        ret = GetDeviceCaps( hdc, HORZRES );
+        ok( ret == expect_width, "got HORZRES %u\n", ret );
+        ret = GetDeviceCaps( hdc, VERTRES );
+        ok( ret == expect_height, "got VERTRES %u\n", ret );
+        DeleteDC( hdc );
+
+        ret = GetMonitorInfoW( info->handle, &mi );
+        ok( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+        ok( mi.dwFlags == (monitor.left || monitor.top ? 0 : MONITORINFOF_PRIMARY), "got dwFlags %#lx\n", mi.dwFlags );
+        if (monitor_aware) ok( EqualRect( &monitor, &mi.rcMonitor ), "got rect %s\n", wine_dbgstr_rect(&mi.rcMonitor) );
+        else ok( EqualRect( &scaled, &mi.rcMonitor ), "got rect %s\n", wine_dbgstr_rect(&mi.rcMonitor) );
+        ok( mi.rcWork.top >= mi.rcMonitor.top, "got rect %s\n", wine_dbgstr_rect(&mi.rcWork) );
+        ok( mi.rcWork.left >= mi.rcMonitor.left, "got rect %s\n", wine_dbgstr_rect(&mi.rcWork) );
+        ok( mi.rcWork.right <= mi.rcMonitor.right, "got rect %s\n", wine_dbgstr_rect(&mi.rcWork) );
+        ok( mi.rcWork.bottom <= mi.rcMonitor.bottom, "got rect %s\n", wine_dbgstr_rect(&mi.rcWork) );
+
+        EnumDisplayMonitors( 0, NULL, enum_monitor_rect, (LPARAM)&tmp_info );
+        ok( EqualRect( &tmp_info.rect, &mi.rcMonitor ), "got rect %s\n", wine_dbgstr_rect(&tmp_info.rect) );
+
+        ret = pGetDpiForMonitorInternal( info->handle, MDT_EFFECTIVE_DPI, &x, &y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (monitor_aware)
+        {
+            ok( x == MulDiv( system_dpi, scale, 100 ), "got MDT_EFFECTIVE_DPI x %d\n", x );
+            ok( y == MulDiv( system_dpi, scale, 100 ), "got MDT_EFFECTIVE_DPI y %d\n", y );
+        }
+        else
+        {
+            ok( x == system_dpi, "got MDT_EFFECTIVE_DPI x %d\n", x );
+            ok( y == system_dpi, "got MDT_EFFECTIVE_DPI y %d\n", y );
+        }
+
+        ret = pGetDpiForMonitorInternal( info->handle, MDT_ANGULAR_DPI, &x, &y );
+        ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (monitor_aware && !is_virtual)
+        {
+            ok( x == phys->ang_x, "got MDT_ANGULAR_DPI x %u\n", x );
+            ok( y == phys->ang_y, "got MDT_ANGULAR_DPI y %u\n", y );
+        }
+        else if (monitor_aware)
+        {
+            todo_wine ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", y );
+        }
+        else if (!is_virtual)
+        {
+            ok( x == MulDiv( phys->ang_x, 100, scale ), "got MDT_ANGULAR_DPI x %d\n", x );
+            ok( y == MulDiv( phys->ang_y, 100, scale ), "got MDT_ANGULAR_DPI y %d\n", y );
+        }
+        else
+        {
+            todo_wine ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %d\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %d\n", y );
+        }
+
+        ret = pGetDpiForMonitorInternal( info->handle, MDT_RAW_DPI, &x, &y );
+        ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+        if (!ret)
+        {
+            ok( x == 0, "got MDT_RAW_DPI x %u\n", x );
+            ok( y == 0, "got MDT_RAW_DPI y %u\n", y );
+        }
+        else if (monitor_aware && !is_virtual)
+        {
+            ok( x == phys->raw_x, "got MDT_RAW_DPI x %u\n", x );
+            ok( y == phys->raw_y, "got MDT_RAW_DPI y %u\n", y );
+        }
+        else if (monitor_aware)
+        {
+            todo_wine ok( fabs( x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", y );
+        }
+        else if (!is_virtual)
+        {
+            ok( x == MulDiv( phys->raw_x, 100, scale ), "got MDT_RAW_DPI x %d\n", x );
+            ok( y == MulDiv( phys->raw_y, 100, scale ), "got MDT_RAW_DPI y %d\n", y );
+        }
+        else
+        {
+            todo_wine ok( fabs( x - system_dpi * scale_x * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI x %d\n", x );
+            todo_wine ok( fabs( y - system_dpi * scale_y * 100 / scale ) < system_dpi * 0.05, "got MDT_RAW_DPI y %d\n", y );
+        }
+
+
+        ctx = pGetWindowDpiAwarenessContext( unaware_hwnd );
+        ok( ctx == (DPI_AWARENESS_CONTEXT)0x6010, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( unaware_hwnd );
+        ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
+
+        if (monitor_aware) SetRect( &expect_rect, 0, 0, scale, scale );
+        else SetRect( &expect_rect, 0, 0, 100, 100 );
+        ret = GetClientRect( unaware_hwnd, &rect );
+        ok( ret, "GetClientRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetClientRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+        if (monitor_aware) SetRect( &expect_rect, monitor.left + scale, monitor.top + scale, monitor.left + 2 * scale, monitor.top + 2 * scale );
+        else SetRect( &expect_rect, monitor.left + 100, monitor.top + 100, monitor.left + 200, monitor.top + 200 );
+        ret = GetWindowRect( unaware_hwnd, &rect );
+        ok( ret, "GetWindowRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+
+        aware_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, mi.rcWork.left + 200,
+                                    mi.rcWork.top + 200, 100, 100, NULL, NULL, NULL, NULL );
+        ok( aware_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+        ctx = pGetWindowDpiAwarenessContext( aware_hwnd );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %p vs %p\n", ctx, cur_ctx );
+        ret = pGetDpiForWindow( aware_hwnd );
+        if (monitor_aware) ok( ret == MulDiv( 96, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
+
+        SetRect( &expect_rect, 0, 0, 100, 100 );
+        ret = GetClientRect( aware_hwnd, &rect );
+        ok( ret, "GetClientRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetClientRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+        SetRect( &expect_rect, mi.rcWork.left + 200, mi.rcWork.top + 200, mi.rcWork.left + 300, mi.rcWork.top + 300 );
+        ret = GetWindowRect( aware_hwnd, &rect );
+        ok( ret, "GetWindowRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+
+        primary_hwnd = CreateWindowW( L"static", NULL, WS_POPUP | WS_VISIBLE, primary.left + 300,
+                                      primary.top + 300, 100, 100, NULL, NULL, NULL, NULL );
+        ok( primary_hwnd != NULL, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+        ctx = pGetWindowDpiAwarenessContext( primary_hwnd );
+        todo_wine_if(tests[i] == DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)
+        ok( ctx == cur_ctx, "GetWindowDpiAwarenessContext returned %#Ix\n", (UINT_PTR)ctx );
+        ret = pGetDpiForWindow( primary_hwnd );
+        if (!monitor_aware) ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
+        else if (EqualRect( &primary, &monitor )) ok( ret == MulDiv( 96, scale, 100 ), "GetDpiForWindow returned %u\n", ret );
+        else ok( ret == 96, "GetDpiForWindow returned %u\n", ret );
+
+        SetRect( &expect_rect, 0, 0, 100, 100 );
+        ret = GetClientRect( primary_hwnd, &rect );
+        ok( ret, "GetClientRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetClientRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+        SetRect( &expect_rect, primary.left + 300, primary.top + 300, primary.left + 400, primary.top + 400 );
+        ret = GetWindowRect( primary_hwnd, &rect );
+        ok( ret, "GetWindowRect failed, error %lu\n", GetLastError() );
+        ok( EqualRect( &rect, &expect_rect ), "GetWindowRect returned %s\n", wine_dbgstr_rect(&rect) );
+
+
+        check_logical_physical_dpi( unaware_hwnd, monitor.left + 99, monitor.top + 99,
+                                    monitor.left + 99, monitor.top + 99, FALSE );
+        if (monitor_aware)
+        {
+            check_logical_physical_dpi_( __LINE__, unaware_hwnd, monitor.left + 100, monitor.top + 100,
+                                         monitor.left + 100, monitor.top + 100, FALSE, TRUE );
+            check_logical_physical_dpi( unaware_hwnd, monitor.left + 200, monitor.top + 200,
+                                        monitor.left + 2 * scale, monitor.top + 2 * scale, TRUE );
+            /* physical to logical conversion is lossy in the area of the screen where coordinate systems overlap but don't match */
+            check_physical_dpi_( __LINE__, unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                                monitor.left + MulDiv( 201, scale, 100 ), monitor.top + MulDiv( 201, scale, 100 ), TRUE, TRUE );
+            check_logical_dpi_( __LINE__, unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                                monitor.left + MulDiv( 201, 100, scale ), monitor.top + MulDiv( 201, 100, scale ), TRUE, TRUE );
+        }
+        else
+        {
+            check_logical_physical_dpi( unaware_hwnd, monitor.left + 100, monitor.top + 100,
+                                        monitor.left + 1 * scale, monitor.top + 1 * scale, TRUE );
+            check_logical_physical_dpi( unaware_hwnd, monitor.left + 200, monitor.top + 200,
+                                        monitor.left + 2 * scale, monitor.top + 2 * scale, TRUE );
+            /* physical to logical conversion is lossy in the area of the screen where coordinate systems overlap but don't match */
+            check_physical_dpi( unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                                monitor.left + 201, monitor.top + 201, FALSE );
+            check_logical_dpi_( __LINE__, unaware_hwnd, monitor.left + 201, monitor.top + 201,
+                                monitor.left + MulDiv( 201, 100, scale ), monitor.top + MulDiv( 201, 100, scale ), TRUE, TRUE );
+        }
+
+        check_logical_physical_dpi( unaware_hwnd, monitor.left + 2 * scale + 1, monitor.top + 2 * scale + 1,
+                                    monitor.left + 2 * scale + 1, monitor.top + 2 * scale + 1, FALSE );
+
+
+        check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 199, mi.rcWork.top + 199,
+                                    mi.rcWork.left + 199, mi.rcWork.top + 199, FALSE );
+        if (monitor_aware)
+        {
+            check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 200, mi.rcWork.top + 200,
+                                        mi.rcWork.left + 200, mi.rcWork.top + 200, TRUE );
+            check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 300, mi.rcWork.top + 300,
+                                        mi.rcWork.left + 300, mi.rcWork.top + 300, TRUE );
+            check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 301, mi.rcWork.top + 301,
+                                        mi.rcWork.left + 301, mi.rcWork.top + 301, FALSE );
+        }
+        else
+        {
+            check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 200, mi.rcWork.top + 200,
+                                        mi.rcWork.left + 2 * scale, mi.rcWork.top + 2 * scale, TRUE );
+            check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 300, mi.rcWork.top + 300,
+                                        mi.rcWork.left + 3 * scale, mi.rcWork.top + 3 * scale, TRUE );
+            /* physical to logical conversion is lossy in the area of the screen where coordinate systems overlap but don't match */
+            check_physical_dpi( aware_hwnd, mi.rcWork.left + 301, mi.rcWork.top + 301, mi.rcWork.left + 301, mi.rcWork.top + 301, FALSE );
+            check_logical_dpi_( __LINE__, aware_hwnd, mi.rcWork.left + 301, mi.rcWork.top + 301, mi.rcWork.left + MulDiv( 301, 100, scale ),
+                                mi.rcWork.top + MulDiv( 301, 100, scale ), TRUE, TRUE );
+        }
+
+        check_logical_physical_dpi( aware_hwnd, mi.rcWork.left + 3 * scale + 1, mi.rcWork.top + 3 * scale + 1,
+                                    mi.rcWork.left + 3 * scale + 1, mi.rcWork.top + 3 * scale + 1, FALSE );
+
+
+        check_logical_physical_dpi( primary_hwnd, primary.left + 299, primary.top + 299,
+                                    primary.left + 299, primary.top + 299, FALSE );
+        if (monitor_aware || !EqualRect( &monitor, &primary ))
+        {
+            check_logical_physical_dpi( primary_hwnd, primary.left + 300, primary.top + 300,
+                                        primary.left + 300, primary.top + 300, TRUE );
+            check_logical_physical_dpi( primary_hwnd, primary.left + 400, primary.top + 400,
+                                        primary.left + 400, primary.top + 400, TRUE );
+            check_logical_physical_dpi( primary_hwnd, primary.left + 401, primary.top + 401,
+                                        primary.left + 401, primary.top + 401, FALSE );
+        }
+        else
+        {
+            check_logical_physical_dpi( primary_hwnd, primary.left + 300, primary.top + 300,
+                                        primary.left + 3 * scale, primary.top + 3 * scale, TRUE );
+            check_logical_physical_dpi( primary_hwnd, primary.left + 400, primary.top + 400,
+                                        primary.left + 4 * scale, primary.top + 4 * scale, TRUE );
+            /* physical to logical conversion is lossy in the area of the screen where coordinate systems overlap but don't match */
+            check_physical_dpi( primary_hwnd, primary.left + 401, primary.top + 401, primary.left + 401, primary.top + 401, FALSE );
+            check_logical_dpi_( __LINE__, primary_hwnd, primary.left + 401, primary.top + 401, primary.left + MulDiv( 401, 100, scale ),
+                                primary.top + MulDiv( 401, 100, scale ), TRUE, TRUE );
+        }
+
+        check_logical_physical_dpi( primary_hwnd, primary.left + 4 * scale + 1, primary.top + 4 * scale + 1,
+                                    primary.left + 4 * scale + 1, primary.top + 4 * scale + 1, FALSE );
+
+        DestroyWindow( primary_hwnd );
+        DestroyWindow( aware_hwnd );
+
+        if (tests[i]) pSetThreadDpiAwarenessContext( old_ctx );
+
+        winetest_pop_context();
+    }
+
+    DestroyWindow( unaware_hwnd );
+    flush_events();
+}
+
+static BOOL CALLBACK enum_monitor_infos( HMONITOR handle, HDC hdc, RECT *rect, LPARAM lparam )
+{
+    struct monitor_info *info, **iter = (struct monitor_info **)lparam;
+
+    info = *iter;
+    info->handle = handle;
+    info->rect = *rect;
+    pGetDpiForMonitorInternal( handle, MDT_EFFECTIVE_DPI, &info->eff_x, &info->eff_y );
+    pGetDpiForMonitorInternal( handle, MDT_ANGULAR_DPI, &info->ang_x, &info->ang_y );
+    pGetDpiForMonitorInternal( handle, MDT_RAW_DPI, &info->raw_x, &info->raw_y );
+
+    *iter = info + 1;
+
+    return TRUE;
+}
+
+static void get_monitor_infos( struct monitor_info *infos )
+{
+    struct monitor_info *iter = infos;
+    BOOL ret;
+    ret = EnumDisplayMonitors( 0, NULL, enum_monitor_infos, (LPARAM)&iter );
+    ok( ret, "EnumDisplayMonitors failed\n" );
+}
+
+static BOOL set_display_settings( HMONITOR monitor, UINT width, UINT height )
+{
+    MONITORINFOEXW info = {.cbSize = sizeof(MONITORINFOEXW)};
+    DEVMODEW mode = {.dmSize = sizeof(DEVMODEW)};
+    UINT ret;
+
+    ret = GetMonitorInfoW( monitor, (MONITORINFO *)&info );
+    ok( ret, "GetMonitorInfoW failed, error %lu\n", GetLastError() );
+
+    mode.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+    mode.dmBitsPerPel = 32;
+    mode.dmPelsWidth = width;
+    mode.dmPelsHeight = height;
+
+    ret = ChangeDisplaySettingsExW( info.szDevice, &mode, 0, CDS_FULLSCREEN, NULL );
+    return !ret;
+}
+
+static void test_monitor_dpi(void)
+{
+    struct monitor_info infos[64] = {{0}}, phys_infos[ARRAY_SIZE(infos)] = {{0}};
+    struct { UINT width; UINT height; } tests[] =
+    {
+        {0, 0},
+        {940, 560},
+        {1600, 900},
+        {1024, 768},
+    };
+    UINT i, j, count, system_dpi, dpi_x, dpi_y;
+    DPI_AWARENESS_CONTEXT old_ctx;
+    float scale_x, scale_y;
+    BOOL ret, is_virtual;
+
+    if (!pGetDpiForMonitorInternal || !pSetThreadDpiAwarenessContext)
+    {
+        win_skip( "GetDpiForMonitorInternal / SetThreadDpiAwarenessContext not found, skipping tests\n" );
+        return;
+    }
+
+    old_ctx = pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    system_dpi = pGetDpiForSystem();
+
+    count = GetSystemMetrics( SM_CMONITORS );
+    ok( count > 0, "Found zero monitors\n" );
+    ok( count <= ARRAY_SIZE(infos), "Too many monitors\n" );
+
+    get_monitor_infos( infos );
+    memcpy( phys_infos, infos, sizeof(infos) );
+
+    /* check whether display driver (likely) supports display mode virtualization */
+    is_virtual = abs( (int)infos[0].ang_x - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].ang_y - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].raw_x - (int)system_dpi ) < system_dpi * 0.05 &&
+                 abs( (int)infos[0].raw_y - (int)system_dpi ) < system_dpi * 0.05;
+
+    for (i = 0; i < count; i++)
+    {
+        for (j = 0; j < ARRAY_SIZE(tests); j++)
+        {
+            if (tests[j].width && tests[j].height && !set_display_settings( infos[i].handle, tests[j].width, tests[j].height )) continue;
+
+            get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
+            scale_x = (infos[i].rect.right - infos[i].rect.left) / (float)(phys_infos[i].rect.right - phys_infos[i].rect.left);
+            scale_y = (infos[i].rect.bottom - infos[i].rect.top) / (float)(phys_infos[i].rect.bottom - phys_infos[i].rect.top);
+
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+            ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+            ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!ret)
+            {
+                ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+
+            pSetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 );
+
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_EFFECTIVE_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            ok( dpi_x == system_dpi, "got MDT_EFFECTIVE_DPI x %u\n", dpi_x );
+            ok( dpi_y == system_dpi, "got MDT_EFFECTIVE_DPI y %u\n", dpi_y );
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_ANGULAR_DPI, &dpi_x, &dpi_y );
+            ok( ret, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].ang_x, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].ang_y, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_ANGULAR_DPI y %u\n", dpi_y );
+            }
+            ret = pGetDpiForMonitorInternal( infos[i].handle, MDT_RAW_DPI, &dpi_x, &dpi_y );
+            ok( ret || GetLastError() == ERROR_NOT_SUPPORTED, "GetDpiForMonitorInternal failed, error %lu\n", GetLastError() );
+            if (!ret)
+            {
+                ok( dpi_x == 0, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == 0, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else if (!is_virtual)
+            {
+                ok( dpi_x == phys_infos[i].raw_x, "got MDT_RAW_DPI x %u\n", dpi_x );
+                ok( dpi_y == phys_infos[i].raw_y, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+            else
+            {
+                todo_wine_if(scale_x != 1.0)
+                ok( fabs( dpi_x - system_dpi * scale_x ) < system_dpi * 0.05, "got MDT_RAW_DPI x %u\n", dpi_x );
+                todo_wine_if(scale_y != 1.0)
+                ok( fabs( dpi_y - system_dpi * scale_y ) < system_dpi * 0.05, "got MDT_RAW_DPI y %u\n", dpi_y );
+            }
+
+            pSetThreadDpiAwarenessContext( old_ctx );
+        }
+    }
+
+    ChangeDisplaySettingsExW( NULL, NULL, 0, 0, NULL );
+    pSetThreadDpiAwarenessContext( old_ctx );
+
+    for (i = 0; i < count; i++)
+    {
+        int min = 0, max = 0, cur = 0;
+
+        set_display_settings( infos[i].handle, 800, 600 );
+        get_monitor_infos( infos ); /* refresh infos as changing display settings may invalidate HMONITOR */
+
+        get_monitor_dpi_scale( infos[i].handle, &min, &cur, &max );
+        if (min == max && !winetest_platform_is_wine)
+        {
+            skip( "Cannot change monitor %p dpi, skipping tests\n", infos[i].handle );
+            continue;
+        }
+
+        set_monitor_dpi_scale( infos[i].handle, max );
+        test_monitor_dpi_awareness( infos, count, max, system_dpi, infos + i, phys_infos + i, is_virtual );
+        set_monitor_dpi_scale( infos[i].handle, cur );
+    }
+
+    ChangeDisplaySettingsExW( NULL, NULL, 0, 0, NULL );
+}
+
 START_TEST(monitor)
 {
     char** myARGV;
@@ -2995,6 +3778,7 @@ START_TEST(monitor)
     test_ChangeDisplaySettingsEx(myARGC, myARGV);
     test_DisplayConfigSetDeviceInfo();
     test_EnumDisplayMonitors();
+    test_monitor_dpi();
     test_monitors();
     test_work_area();
     test_display_config();

@@ -300,20 +300,6 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
     return ret;
 }
 
-/******************************************************************
- *		invade_process
- *
- * SymInitialize helper: loads in dbghelp all known (and loaded modules)
- * this assumes that hProcess is a handle on a valid process
- */
-static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOID user)
-{
-    HANDLE      hProcess = user;
-
-    SymLoadModuleExW(hProcess, 0, name, NULL, base, size, NULL, 0);
-    return TRUE;
-}
-
 const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
 {
     size_t name_len;
@@ -432,7 +418,10 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
     TRACE("got debug info address %#I64x from PEB %p\n", base, pbi.PebBaseAddress);
     if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
+    {
         WARN("couldn't load process debug info at %#I64x\n", base);
+        pcs->loader = &empty_loader_ops;
+    }
     return TRUE;
 }
 
@@ -510,8 +499,9 @@ BOOL WINAPI SymInitializeW(HANDLE hProcess, PCWSTR UserSearchPath, BOOL fInvadeP
     if (check_live_target(pcs, wow64, child_wow64))
     {
         if (fInvadeProcess)
-            EnumerateLoadedModulesW64(hProcess, process_invade_cb, hProcess);
-        if (pcs->loader) pcs->loader->synchronize_module_list(pcs);
+            module_refresh_list(pcs);
+        else
+            pcs->loader->synchronize_module_list(pcs);
     }
     else if (fInvadeProcess)
     {
@@ -555,6 +545,8 @@ BOOL WINAPI SymCleanup(HANDLE hProcess)
 {
     struct process**    ppcs;
     struct process*     next;
+
+    TRACE("(%p)\n", hProcess);
 
     for (ppcs = &process_first; *ppcs; ppcs = &(*ppcs)->next)
     {
@@ -725,12 +717,15 @@ BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
 BOOL WINAPI SymSetScopeFromIndex(HANDLE hProcess, ULONG64 addr, DWORD index)
 {
     struct module_pair pair;
+    symref_t symref;
     struct symt* sym;
 
     TRACE("(%p %#I64x %lu)\n", hProcess, addr, index);
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    sym = symt_index2ptr(pair.effective, index);
+    symref = symt_index_to_symref(pair.effective, index);
+    if (!symt_is_symref_ptr(symref)) return FALSE;
+    sym = (struct symt*)symref;
     if (!symt_check_tag(sym, SymTagFunction)) return FALSE;
 
     pair.pcs->localscope_pc = ((struct symt_function*)sym)->ranges[0].low; /* FIXME of FuncDebugStart when it exists? */

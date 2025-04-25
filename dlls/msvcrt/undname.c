@@ -198,6 +198,7 @@ static BOOL str_array_push(struct parsed_symbol* sym, const char* ptr, int len,
     memcpy(a->elts[a->num], ptr, len);
     a->elts[a->num][len] = '\0'; 
     if (++a->num >= a->max) a->max = a->num;
+    if (TRACE_ON(msvcrt))
     {
         int i;
         char c;

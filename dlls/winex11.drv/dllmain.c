@@ -18,31 +18,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "x11drv_dll.h"
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "ntgdi.h"
+#include "unixlib.h"
 #include "wine/debug.h"
-
-
-HMODULE x11drv_module = 0;
-
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
-    struct init_params params =
-    {
-        .dnd_enter_event_callback = (UINT_PTR)x11drv_dnd_enter_event,
-        .dnd_position_event_callback = (UINT_PTR)x11drv_dnd_position_event,
-        .dnd_post_drop_callback = (UINT_PTR)x11drv_dnd_post_drop,
-        .dnd_drop_event_callback = (UINT_PTR)x11drv_dnd_drop_event,
-        .dnd_leave_event_callback = (UINT_PTR)x11drv_dnd_leave_event,
-        .foreign_window_proc = (UINT_PTR)foreign_window_proc,
-    };
-
     if (reason != DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( instance );
-    x11drv_module = instance;
     if (__wine_init_unix_call()) return FALSE;
-    if (X11DRV_CALL( init, &params )) return FALSE;
+    if (X11DRV_CALL( init, NULL )) return FALSE;
 
     return TRUE;
 }

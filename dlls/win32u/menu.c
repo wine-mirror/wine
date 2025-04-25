@@ -596,7 +596,7 @@ HMENU get_menu( HWND hwnd )
 }
 
 /* see CreateMenu and CreatePopupMenu */
-HMENU create_menu( BOOL is_popup )
+static HMENU create_menu( BOOL is_popup )
 {
     struct menu *menu;
     HMENU handle;
@@ -610,6 +610,22 @@ HMENU create_menu( BOOL is_popup )
 
     TRACE( "return %p\n", handle );
     return handle;
+}
+
+/**********************************************************************
+ *         NtUserCreateMenu   (win32u.@)
+ */
+HMENU WINAPI NtUserCreateMenu(void)
+{
+    return create_menu( FALSE );
+}
+
+/**********************************************************************
+ *         NtUserCreatePopupMenu   (win32u.@)
+ */
+HMENU WINAPI NtUserCreatePopupMenu(void)
+{
+    return create_menu( TRUE );
 }
 
 /**********************************************************************
@@ -765,8 +781,10 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
     return oldflags;
 }
 
-/* see DrawMenuBar */
-BOOL draw_menu_bar( HWND hwnd )
+/**********************************************************************
+ *           NtUserDrawMenuBar    (win32u.@)
+ */
+BOOL WINAPI NtUserDrawMenuBar( HWND hwnd )
 {
     HMENU handle;
 
@@ -1489,7 +1507,7 @@ static HMENU get_sys_menu( HWND hwnd, HMENU popup_menu )
     HMENU handle;
 
     TRACE("loading system menu, hwnd %p, popup_menu %p\n", hwnd, popup_menu);
-    if (!(handle = create_menu( FALSE )))
+    if (!(handle = NtUserCreateMenu()))
     {
         ERR("failed to load system menu!\n");
         return 0;
@@ -2882,7 +2900,7 @@ static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
     }
 }
 
-LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam )
+LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     TRACE( "hwnd=%p msg=0x%04x wp=0x%04lx lp=0x%08lx\n", hwnd, message, (long)wparam, lparam );
 
@@ -2938,7 +2956,7 @@ LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM l
         return get_window_long_ptr( hwnd, 0, FALSE );
 
     default:
-        return default_window_proc( hwnd, message, wparam, lparam, FALSE );
+        return default_window_proc( hwnd, message, wparam, lparam, ansi );
     }
     return 0;
 }
@@ -3046,10 +3064,9 @@ static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
                         int x, int y, INT xanchor, INT yanchor )
 {
     struct menu *menu;
-    HMONITOR monitor;
     MONITORINFO info;
     UINT max_height;
-    POINT pt;
+    RECT rect;
 
     TRACE( "owner=%p hmenu=%p id=0x%04x x=0x%04x y=0x%04x xa=0x%04x ya=0x%04x\n",
            owner, hmenu, id, x, y, xanchor, yanchor );
@@ -3064,11 +3081,8 @@ static BOOL show_popup( HWND owner, HMENU hmenu, UINT id, UINT flags,
     menu->nScrollPos = 0;
 
     /* FIXME: should use item rect */
-    pt.x = x;
-    pt.y = y;
-    monitor = monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, get_thread_dpi() );
-    info.cbSize = sizeof(info);
-    get_monitor_info( monitor, &info, get_thread_dpi() );
+    SetRect( &rect, x, y, x, y );
+    info = monitor_info_from_rect( rect, get_thread_dpi() );
 
     max_height = info.rcWork.bottom - info.rcWork.top;
     if (menu->cyMax) max_height = min( max_height, menu->cyMax );
@@ -4290,7 +4304,7 @@ static BOOL track_menu( HMENU hmenu, UINT flags, int x, int y, HWND hwnd, const 
                     pos = find_item_by_key( mt.hOwnerWnd, mt.hCurrentMenu,
                                             LOWORD( msg.wParam ), FALSE );
                     if (pos == -2) exit_menu = TRUE;
-                    else if (pos == -1) message_beep( 0 );
+                    else if (pos == -1) NtUserMessageBeep( 0 );
                     else
                     {
                         select_item( mt.hOwnerWnd, mt.hCurrentMenu, pos, TRUE, 0 );
@@ -4455,7 +4469,7 @@ void track_keyboard_menu_bar( HWND hwnd, UINT wparam, WCHAR ch )
         item = find_item_by_key( hwnd, menu, ch, wparam & HTSYSMENU );
         if (item >= -2)
         {
-            if (item == -1) message_beep( 0 );
+            if (item == -1) NtUserMessageBeep( 0 );
             /* schedule end of menu tracking */
             flags |= TF_ENDMENU;
             goto track_menu;

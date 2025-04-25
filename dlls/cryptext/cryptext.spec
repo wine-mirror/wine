@@ -12,8 +12,8 @@
 @ stub CryptExtAddSPCW
 @ stub CryptExtOpenCAT
 @ stub CryptExtOpenCATW
-@ stub CryptExtOpenCER
-@ stub CryptExtOpenCERW
+@ stdcall CryptExtOpenCER(long ptr str long)
+@ stdcall CryptExtOpenCERW(long ptr wstr long)
 @ stub CryptExtOpenCRL
 @ stub CryptExtOpenCRLW
 @ stub CryptExtOpenCTL

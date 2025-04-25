@@ -348,13 +348,18 @@ static void assembleshader_test(void)
             hr = D3DXAssembleShaderFromFileA(shader3_vsh_path, NULL, NULL,
                                              D3DXSHADER_SKIPVALIDATION,
                                              &shader, &messages);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            if (D3DX_SDK_VERSION < 42)
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            else
+                todo_wine ok(hr == D3DXERR_INVALIDDATA, "Unexpected hr %#lx.\n", hr);
             if(messages) {
                 trace("D3DXAssembleShaderFromFile path search messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
                 ID3DXBuffer_Release(messages);
             }
             if(shader) ID3DXBuffer_Release(shader);
-        } else skip("Couldn't create \"include\" directory\n");
+        }
+        else
+            skip("Couldn't create \"include\" directory, error %#lx\n", GetLastError());
 
         delete_file("shader.vsh");
         delete_file("incl.vsh");
@@ -483,13 +488,18 @@ static void d3dxpreprocess_test(void)
             messages = NULL;
             hr = D3DXPreprocessShaderFromFileA(shader3_vsh_path, NULL, NULL,
                                                &shader, &messages);
-            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            if (D3DX_SDK_VERSION < 42)
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+            else
+                todo_wine ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
             if(messages) {
                 trace("D3DXPreprocessShaderFromFile path search messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
                 ID3DXBuffer_Release(messages);
             }
             if(shader) ID3DXBuffer_Release(shader);
-        } else skip("Couldn't create \"include\" directory\n");
+        }
+        else
+            skip("Couldn't create \"include\" directory, error %#lx\n", GetLastError());
 
         /* D3DXPreprocessShaderFromFile + #include test */
         shader = NULL;

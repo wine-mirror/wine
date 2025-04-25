@@ -34,6 +34,8 @@ BEGIN
 
     IDS_HIDETABS     "Hide &Tabs"
     IDS_SHOWTABS     "Show &Tabs"
+
+    IDS_SELECT_TOPIC "Select Topic"
 END
 
 STRINGTABLE

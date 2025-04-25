@@ -36,24 +36,12 @@ static struct x11drv_settings_handler settings_handler;
 
 #define NEXT_DEVMODEW(mode) ((DEVMODEW *)((char *)((mode) + 1) + (mode)->dmDriverExtra))
 
-struct x11drv_display_depth
-{
-    struct list entry;
-    x11drv_settings_id display_id;
-    DWORD depth;
-};
-
-/* Display device emulated depth list, protected by modes_section */
-static struct list x11drv_display_depth_list = LIST_INIT(x11drv_display_depth_list);
-
 /* All Windows drivers seen so far either support 32 bit depths, or 24 bit depths, but never both. So if we have
  * a 32 bit framebuffer, report 32 bit bpps, otherwise 24 bit ones.
  */
 static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
 const unsigned int *depths;
-
-static pthread_mutex_t settings_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
@@ -158,84 +146,6 @@ void X11DRV_Settings_Init(void)
     X11DRV_Settings_SetHandler(&nores_handler);
 }
 
-static void set_display_depth(x11drv_settings_id display_id, DWORD depth)
-{
-    struct x11drv_display_depth *display_depth;
-
-    pthread_mutex_lock( &settings_mutex );
-    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
-    {
-        if (display_depth->display_id.id == display_id.id)
-        {
-            display_depth->depth = depth;
-            pthread_mutex_unlock( &settings_mutex );
-            return;
-        }
-    }
-
-    display_depth = malloc(sizeof(*display_depth));
-    if (!display_depth)
-    {
-        ERR("Failed to allocate memory.\n");
-        pthread_mutex_unlock( &settings_mutex );
-        return;
-    }
-
-    display_depth->display_id = display_id;
-    display_depth->depth = depth;
-    list_add_head(&x11drv_display_depth_list, &display_depth->entry);
-    pthread_mutex_unlock( &settings_mutex );
-}
-
-static DWORD get_display_depth(x11drv_settings_id display_id)
-{
-    struct x11drv_display_depth *display_depth;
-    DWORD depth;
-
-    pthread_mutex_lock( &settings_mutex );
-    LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
-    {
-        if (display_depth->display_id.id == display_id.id)
-        {
-            depth = display_depth->depth;
-            pthread_mutex_unlock( &settings_mutex );
-            return depth;
-        }
-    }
-    pthread_mutex_unlock( &settings_mutex );
-    return screen_bpp;
-}
-
-INT X11DRV_GetDisplayDepth(LPCWSTR name, BOOL is_primary)
-{
-    x11drv_settings_id id;
-
-    if (settings_handler.get_id( name, is_primary, &id ))
-        return get_display_depth( id );
-
-    return screen_bpp;
-}
-
-/***********************************************************************
- *      GetCurrentDisplaySettings  (X11DRV.@)
- *
- */
-BOOL X11DRV_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode )
-{
-    DEVMODEW mode;
-    x11drv_settings_id id;
-
-    if (!settings_handler.get_id( name, is_primary, &id ) || !settings_handler.get_current_mode( id, &mode ))
-    {
-        ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
-        return FALSE;
-    }
-
-    memcpy( &devmode->dmFields, &mode.dmFields, devmode->dmSize - offsetof(DEVMODEW, dmFields) );
-    if (!is_detached_mode( devmode )) devmode->dmBitsPerPel = get_display_depth( id );
-    return TRUE;
-}
-
 BOOL is_detached_mode(const DEVMODEW *mode)
 {
     return mode->dmFields & DM_POSITION &&
@@ -326,8 +236,6 @@ static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids,
               (int)full_mode->dmBitsPerPel, (int)full_mode->dmDisplayOrientation);
 
         ret = settings_handler.set_current_mode(*id, full_mode);
-        if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)
-            set_display_depth(*id, full_mode->dmBitsPerPel);
         free_full_mode(full_mode);
         if (ret != DISP_CHANGE_SUCCESSFUL)
             return ret;
@@ -376,7 +284,7 @@ done:
 
 POINT virtual_screen_to_root(INT x, INT y)
 {
-    RECT virtual = NtUserGetVirtualScreenRect();
+    RECT virtual = NtUserGetVirtualScreenRect( MDT_RAW_DPI );
     POINT pt;
 
     pt.x = x - virtual.left;
@@ -386,7 +294,7 @@ POINT virtual_screen_to_root(INT x, INT y)
 
 POINT root_to_virtual_screen(INT x, INT y)
 {
-    RECT virtual = NtUserGetVirtualScreenRect();
+    RECT virtual = NtUserGetVirtualScreenRect( MDT_RAW_DPI );
     POINT pt;
 
     pt.x = x + virtual.left;
@@ -496,10 +404,10 @@ BOOL X11DRV_DisplayDevices_SupportEventHandlers(void)
 
 UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager, void *param )
 {
+    INT gpu_count, adapter_count, monitor_count, current_adapter_count = 0;
     struct x11drv_adapter *adapters;
     struct gdi_monitor *monitors;
     struct x11drv_gpu *gpus;
-    INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
     DEVMODEW *modes;
     UINT mode_count;
@@ -525,9 +433,10 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             char buffer[32];
             x11drv_settings_id settings_id;
             BOOL is_primary = adapters[adapter].state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE;
+            UINT dpi = NtUserGetSystemDpiForProcess( NULL );
 
             sprintf( buffer, "%04lx", adapters[adapter].id );
-            device_manager->add_source( buffer, adapters[adapter].state_flags, param );
+            device_manager->add_source( buffer, adapters[adapter].state_flags, dpi, param );
 
             if (!host_handler.get_monitors( adapters[adapter].id, &monitors, &monitor_count )) break;
             TRACE("adapter: %#lx, monitor count: %d\n", adapters[adapter].id, monitor_count);
@@ -539,7 +448,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             host_handler.free_monitors( monitors, monitor_count );
 
             /* Get the settings handler id for the adapter */
-            snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", adapter + 1 );
+            snprintf( buffer, sizeof(buffer), "\\\\.\\DISPLAY%d", current_adapter_count + adapter + 1 );
             asciiz_to_unicode( devname, buffer );
             if (!settings_handler.get_id( devname, is_primary, &settings_id )) break;
 
@@ -551,6 +460,7 @@ UINT X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
             }
         }
 
+        current_adapter_count += adapter_count;
         host_handler.free_adapters( adapters );
     }
 

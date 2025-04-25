@@ -881,12 +881,15 @@ int main(int argc, char **argv)
         name = get_face_name( info[i] );
         fontdir_len += 0x74 + strlen(name) + 1;
         if(i == 0) {
-            sprintf(non_resident_name, "FONTRES 100,%d,%d : %s %d",
-                    info[i]->hdr.fi.dfVertRes, info[i]->hdr.fi.dfHorizRes,
-                    name, info[i]->hdr.fi.dfPoints );
+            snprintf(non_resident_name, sizeof(non_resident_name),
+                     "FONTRES 100,%d,%d : %s %d",
+                     info[i]->hdr.fi.dfVertRes, info[i]->hdr.fi.dfHorizRes,
+                     name, info[i]->hdr.fi.dfPoints );
             strcpy(resident_name, name);
         } else {
-            sprintf(non_resident_name + strlen(non_resident_name), ",%d", info[i]->hdr.fi.dfPoints );
+            snprintf(non_resident_name + strlen(non_resident_name),
+                     sizeof(non_resident_name) - strlen(non_resident_name),
+                     ",%d", info[i]->hdr.fi.dfPoints );
         }
     }
 

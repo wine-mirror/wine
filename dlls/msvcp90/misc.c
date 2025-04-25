@@ -715,10 +715,10 @@ unsigned int __cdecl _Random_device(void)
 typedef struct
 {
     DWORD flags;
-    cs cs;
 #if _MSVCP_VER >= 140
     ULONG_PTR unknown;
 #endif
+    cs cs;
     DWORD thread_id;
     DWORD count;
 } *_Mtx_t;
@@ -739,6 +739,9 @@ void __cdecl _Mtx_init_in_situ(_Mtx_t mtx, int flags)
         FIXME("unknown flags ignored: %x\n", flags);
 
     mtx->flags = flags;
+#if _MSVCP_VER >= 140
+    mtx->unknown = 0;
+#endif
     cs_init(&mtx->cs);
     mtx->thread_id = -1;
     mtx->count = 0;
@@ -829,6 +832,9 @@ void __cdecl _Mtx_reset_owner(_Mtx_arg_t mtx)
 
 typedef struct
 {
+#if _MSVCP_VER >= 140
+    ULONG_PTR unknown;
+#endif
     cv cv;
 } *_Cnd_t;
 
@@ -844,6 +850,9 @@ typedef _Cnd_t *_Cnd_arg_t;
 
 void __cdecl _Cnd_init_in_situ(_Cnd_t cnd)
 {
+#if _MSVCP_VER >= 140
+    cnd->unknown = 0;
+#endif
     cv_init(&cnd->cv);
 }
 

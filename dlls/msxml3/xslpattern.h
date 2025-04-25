@@ -21,6 +21,7 @@
 #ifndef __XSLPATTERN__
 #define __XSLPATTERN__
 
+#include <stdlib.h>
 #include <libxml/tree.h>
 #include <libxml/xmlstring.h>
 #include <libxml/xpath.h>

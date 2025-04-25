@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include <fenv.h>
 #include <fpieee.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <locale.h>
 #include <math.h>
@@ -1414,15 +1415,25 @@ int CDECL fegetenv(fenv_t *env)
 }
 
 /*********************************************************************
+ *      feraiseexcept (MSVCR120.@)
+ */
+int CDECL feraiseexcept(int flags)
+{
+    fenv_t env;
+
+    flags &= FE_ALL_EXCEPT;
+    fegetenv(&env);
+    env._Fe_stat |= fenv_encode(flags, flags);
+    return fesetenv(&env);
+}
+
+/*********************************************************************
  *		feupdateenv (MSVCR120.@)
  */
 int CDECL feupdateenv(const fenv_t *env)
 {
-    fenv_t set;
-    fegetenv(&set);
-    set._Fe_ctl = env->_Fe_ctl;
-    set._Fe_stat |= env->_Fe_stat;
-    return fesetenv(&set);
+    int except = fetestexcept(FE_ALL_EXCEPT);
+    return fesetenv(env) || feraiseexcept(except);
 }
 
 /*********************************************************************
@@ -1447,19 +1458,6 @@ int CDECL fesetexceptflag(const fexcept_t *status, int excepts)
     fegetenv(&env);
     env._Fe_stat &= ~fenv_encode(excepts, excepts);
     env._Fe_stat |= *status & fenv_encode(excepts, excepts);
-    return fesetenv(&env);
-}
-
-/*********************************************************************
- *      feraiseexcept (MSVCR120.@)
- */
-int CDECL feraiseexcept(int flags)
-{
-    fenv_t env;
-
-    flags &= FE_ALL_EXCEPT;
-    fegetenv(&env);
-    env._Fe_stat |= fenv_encode(flags, flags);
     return fesetenv(&env);
 }
 
@@ -2090,6 +2088,20 @@ lldiv_t CDECL lldiv(__int64 num, __int64 denom)
   ret.quot = num / denom;
   ret.rem = num % denom;
 
+  return ret;
+}
+#endif
+
+#if _MSVCR_VER>=120
+/*********************************************************************
+ *              imaxdiv (MSVCR100.@)
+ */
+imaxdiv_t CDECL imaxdiv(intmax_t num, intmax_t denom)
+{
+  imaxdiv_t ret;
+
+  ret.quot = num / denom;
+  ret.rem = num % denom;
   return ret;
 }
 #endif
@@ -2958,16 +2970,58 @@ double CDECL _except1(DWORD fpe, _FP_OPERATION_CODE op, double arg, double res, 
     return res;
 }
 
-_Dcomplex* CDECL _Cbuild(_Dcomplex *ret, double r, double i)
+_Dcomplex CDECL _Cbuild(double r, double i)
 {
-    ret->_Val[0] = r;
-    ret->_Val[1] = i;
+    _Dcomplex ret;
+    ret._Val[0] = r;
+    ret._Val[1] = i;
     return ret;
 }
 
-double CDECL MSVCR120_creal(_Dcomplex z)
+double CDECL creal(_Dcomplex z)
 {
     return z._Val[0];
+}
+
+double CDECL cimag(_Dcomplex z)
+{
+    return z._Val[1];
+}
+
+#if !defined(__i386__) || defined(__MINGW32__) || defined(_MSC_VER)
+_Fcomplex CDECL _FCbuild(float r, float i)
+{
+    _Fcomplex ret;
+    ret._Val[0] = r;
+    ret._Val[1] = i;
+    return ret;
+}
+#else
+#undef _FCbuild
+ULONGLONG CDECL _FCbuild(float r, float i)
+{
+    union
+    {
+        _Fcomplex c;
+        ULONGLONG ull;
+    } ret;
+
+    C_ASSERT(sizeof(_Fcomplex) == sizeof(ULONGLONG));
+
+    ret.c._Val[0] = r;
+    ret.c._Val[1] = i;
+    return ret.ull;
+}
+#endif
+
+float CDECL crealf(_Fcomplex z)
+{
+    return z._Val[0];
+}
+
+float CDECL cimagf(_Fcomplex z)
+{
+    return z._Val[1];
 }
 
 #endif /* _MSVCR_VER>=120 */

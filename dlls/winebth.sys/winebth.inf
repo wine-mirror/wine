@@ -1,0 +1,22 @@
+[Version]
+Signature="$CHICAGO$"
+ClassGuid={4d36e97d-e325-11ce-bfc1-08002be10318}
+Class=System
+
+[Manufacturer]
+Wine=mfg_section
+
+[mfg_section]
+Wine Bluetooth bus driver=device_section,root\winebth
+
+[device_section.Services]
+AddService = winebth,0x2,svc_section
+
+[svc_section]
+Description="Wine Bluetooth bus driver"
+DisplayName="Wine Bluetooth bus"
+ServiceBinary="%12%\winebth.sys"
+LoadOrderGroup="WinePlugPlay"
+ServiceType=1
+StartType=3
+ErrorControl=1

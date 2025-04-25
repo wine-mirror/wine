@@ -42,7 +42,7 @@
 #define VERSION_MAGIC  0xdbc01001
 #define VERSION_MAGIC2 0xdbc01002
 #define VALID_MAGIC(x) (((x) & 0xfffff000) == 0xdbc01000)
-#define TENSION_CONST (0.3)
+#define TENSION_CONST (0.333333333f)
 
 #define GIF_DISPOSE_UNSPECIFIED 0
 #define GIF_DISPOSE_DO_NOT_DISPOSE 1
@@ -378,6 +378,38 @@ struct GpAdjustableArrowCap{
     REAL height;
     REAL width;
 };
+
+typedef enum EffectType {
+    NoneEffect,
+    BlurEffect,
+    SharpenEffect,
+    TintEffect,
+    RedEyeCorrectionEffect,
+    ColorMatrixEffect,
+    ColorLUTEffect,
+    BrightnessContrastEffect,
+    HueSaturationLightnessEffect,
+    ColorBalanceEffect,
+    LevelsEffect,
+    ColorCurveEffect,
+} EffectType;
+
+typedef struct CGpEffect{
+    EffectType type;
+    union {
+        BYTE data[1];
+        struct BlurParams blur;
+        struct TintParams tint;
+        struct RedEyeCorrectionParams redeye;
+        ColorMatrix matrix;
+        struct ColorLUTParams lut;
+        struct BrightnessContrastParams brightness;
+        struct HueSaturationLightnessParams hue;
+        struct ColorBalanceParams balance;
+        struct LevelsParams levels;
+        struct ColorCurveParams curve;
+    } params;
+} CGpEffect;
 
 struct GpImage{
     IWICBitmapDecoder *decoder;

@@ -137,7 +137,7 @@ typedef struct
 #define TYPE_FLAG_VOLATILE   2
 #define TYPE_FLAG_REFERENCE  8
 
-void WINAPI _CxxThrowException(void*,const cxx_exception_type*);
+void WINAPI DECLSPEC_NORETURN _CxxThrowException(void*,const cxx_exception_type*);
 
 static inline BOOL is_cxx_exception( EXCEPTION_RECORD *rec )
 {

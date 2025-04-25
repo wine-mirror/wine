@@ -16,7 +16,20 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma makedep header
+
 import "wtypes.idl";
+
+cpp_quote("#if 0")
+typedef void *HDEVNOTIFY;
+typedef struct _DEV_BROADCAST_HDR DEV_BROADCAST_HDR;
+cpp_quote("#else")
+cpp_quote("#include \"dbt.h\"")
+cpp_quote("#endif")
+
+typedef DWORD (__stdcall *device_notify_callback)(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header);
+HDEVNOTIFY __stdcall I_ScRegisterDeviceNotification(HANDLE handle, DEV_BROADCAST_HDR *filter, device_notify_callback callback);
+BOOL __stdcall I_ScUnregisterDeviceNotification(HDEVNOTIFY handle);
 
 [
     uuid(57c680ac-7bce-4f39-97fd-ffea566754d5),
@@ -28,7 +41,9 @@ interface plugplay
     typedef [context_handle] void *plugplay_rpc_handle;
 
     plugplay_rpc_handle plugplay_register_listener();
-    DWORD plugplay_get_event([in] plugplay_rpc_handle handle, [out, size_is(,*size)] BYTE **data, [out] unsigned int *size);
+    DWORD plugplay_get_event([in] plugplay_rpc_handle handle, [out, string] WCHAR **path,
+                             [out, size_is(,*size)] BYTE **data, [out] unsigned int *size);
     void plugplay_unregister_listener([in] plugplay_rpc_handle handle);
-    void plugplay_send_event([in] DWORD event_code, [in, size_is(size)] const BYTE *data, [in] unsigned int size);
+    void plugplay_send_event([in, string] const WCHAR *path, [in] DWORD event_code,
+                             [in, size_is(size)] const BYTE *data, [in] unsigned int size);
 }

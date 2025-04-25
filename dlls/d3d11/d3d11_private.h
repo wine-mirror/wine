@@ -40,6 +40,8 @@
 
 struct d3d_device;
 
+extern const struct wined3d_parent_ops d3d_null_wined3d_parent_ops;
+
 /* TRACE helper functions */
 const char *debug_d3d10_primitive_topology(D3D10_PRIMITIVE_TOPOLOGY topology);
 const char *debug_dxgi_format(DXGI_FORMAT format);
@@ -91,6 +93,7 @@ static inline unsigned int wined3d_bind_flags_from_d3d11(UINT bind_flags, UINT m
             | D3D11_BIND_STREAM_OUTPUT
             | D3D11_BIND_RENDER_TARGET
             | D3D11_BIND_DEPTH_STENCIL
+            | D3D11_BIND_DECODER
             | D3D11_BIND_UNORDERED_ACCESS);
 
     if (misc_flags & D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS)
@@ -266,6 +269,23 @@ HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Reso
         const D3D11_UNORDERED_ACCESS_VIEW_DESC *desc, struct d3d11_unordered_access_view **view);
 struct d3d11_unordered_access_view *unsafe_impl_from_ID3D11UnorderedAccessView(
         ID3D11UnorderedAccessView *iface);
+
+struct d3d_video_decoder_output_view
+{
+    ID3D11VideoDecoderOutputView ID3D11VideoDecoderOutputView_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct wined3d_decoder_output_view *wined3d_view;
+    D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC desc;
+    ID3D11Resource *resource;
+    struct d3d_device *device;
+};
+
+HRESULT d3d_video_decoder_output_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *desc, struct d3d_video_decoder_output_view **view);
+struct d3d_video_decoder_output_view *unsafe_impl_from_ID3D11VideoDecoderOutputView(
+        ID3D11VideoDecoderOutputView *iface);
 
 /* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout
@@ -534,6 +554,7 @@ struct d3d11_device_context
 {
     ID3D11DeviceContext1 ID3D11DeviceContext1_iface;
     ID3D11Multithread ID3D11Multithread_iface;
+    ID3D11VideoContext ID3D11VideoContext_iface;
     ID3DUserDefinedAnnotation ID3DUserDefinedAnnotation_iface;
     LONG refcount;
 
@@ -552,6 +573,7 @@ struct d3d_device
     ID3D10Device1 ID3D10Device1_iface;
     ID3D10Multithread ID3D10Multithread_iface;
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
+    ID3D11VideoDevice1 ID3D11VideoDevice1_iface;
     IUnknown *outer_unk;
     LONG refcount;
 
@@ -599,6 +621,20 @@ static inline struct d3d_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
 }
 
 void d3d_device_init(struct d3d_device *device, void *outer_unknown);
+
+struct d3d_video_decoder
+{
+    ID3D11VideoDecoder ID3D11VideoDecoder_iface;
+    LONG refcount;
+
+    struct wined3d_private_store private_store;
+    struct d3d_device *device;
+    struct wined3d_decoder *wined3d_decoder;
+};
+
+HRESULT d3d_video_decoder_create(struct d3d_device *device, const D3D11_VIDEO_DECODER_DESC *desc,
+        const D3D11_VIDEO_DECODER_CONFIG *config, struct d3d_video_decoder **decoder);
+struct d3d_video_decoder *unsafe_impl_from_ID3D11VideoDecoder(ID3D11VideoDecoder *iface);
 
 /* Layered device */
 enum dxgi_device_layer_id

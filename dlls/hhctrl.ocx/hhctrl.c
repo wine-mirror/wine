@@ -99,10 +99,6 @@ static const char *command_to_string(UINT command)
 
 static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD buflen, WCHAR **index, WCHAR **window)
 {
-    static const WCHAR helpW[] = {'\\','h','e','l','p','\\',0};
-    static const WCHAR delimW[] = {':',':',0};
-    static const WCHAR delim2W[] = {'>',0};
-
     DWORD env_len;
     WCHAR *filename, *extra;
 
@@ -122,7 +118,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
 
     ExpandEnvironmentStringsW(env_filename, filename, env_len);
 
-    extra = wcsstr(filename, delim2W);
+    extra = wcschr(filename, '>');
     if (extra)
     {
         *extra = 0;
@@ -130,7 +126,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
             *window = wcsdup(extra + 1);
     }
 
-    extra = wcsstr(filename, delimW);
+    extra = wcsstr(filename, L"::");
     if (extra)
     {
         *extra = 0;
@@ -142,7 +138,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     if (GetFileAttributesW(fullname) == INVALID_FILE_ATTRIBUTES)
     {
         GetWindowsDirectoryW(fullname, buflen);
-        lstrcatW(fullname, helpW);
+        lstrcatW(fullname, L"\\help\\");
         lstrcatW(fullname, filename);
     }
 

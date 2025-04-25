@@ -221,7 +221,7 @@ void WINAPI DOSVM_Int3eHandler(CONTEXT *context)
  */
 static void FPU_ModifyCode(CONTEXT *context, BYTE Opcode)
 {
-    BYTE *code = CTX_SEG_OFF_TO_LIN(context, context->SegCs, context->Eip);
+    BYTE *code = ldt_get_ptr(context->SegCs, context->Eip);
 
     /*
      * All *NIX systems should have a real or kernel emulated FPU.

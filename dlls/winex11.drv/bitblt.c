@@ -1829,11 +1829,6 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
                 ptr[x] |= alpha_bits;
     }
 
-    if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
-        XPutImage( gdi_display, surface->window, surface->gc, ximage, dirty->left,
-                   dirty->top, rect->left + dirty->left, rect->top + dirty->top,
-                   dirty->right - dirty->left, dirty->bottom - dirty->top );
-
     if (shape_changed)
     {
 #ifdef HAVE_LIBXSHAPE
@@ -1852,6 +1847,11 @@ static BOOL x11drv_surface_flush( struct window_surface *window_surface, const R
         }
 #endif /* HAVE_LIBXSHAPE */
     }
+
+    if (!put_shm_image( ximage, &surface->image->shminfo, surface->window, surface->gc, rect, dirty ))
+        XPutImage( gdi_display, surface->window, surface->gc, ximage, dirty->left,
+                   dirty->top, rect->left + dirty->left, rect->top + dirty->top,
+                   dirty->right - dirty->left, dirty->bottom - dirty->top );
 
     XFlush( gdi_display );
 
@@ -1902,7 +1902,7 @@ static struct window_surface *create_surface( HWND hwnd, Window window, const XV
     info->bmiHeader.biPlanes      = 1;
     info->bmiHeader.biBitCount    = format->bits_per_pixel;
     info->bmiHeader.biSizeImage   = get_dib_image_size( info );
-    if (format->bits_per_pixel > 8) set_color_info( vis, info, use_alpha );
+    set_color_info( vis, info, use_alpha );
 
     if (!(image = x11drv_image_create( info, vis ))) return NULL;
 

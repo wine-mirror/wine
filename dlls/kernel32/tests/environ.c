@@ -379,12 +379,162 @@ static void test_GetSetEnvironmentVariableAW(void)
     ok(lstrcmpW(bufW, valueW) == 0, "expected %s, got %s\n", debugstr_w(valueW), debugstr_w(bufW));
 }
 
+static void test_ExpandEnvironmentStringsW(void)
+{
+    int i;
+    WCHAR buf[256];
+    DWORD ret;
+    BOOL success;
+    static const struct test_info
+    {
+        const WCHAR *input;
+        const WCHAR *expected_str;
+        int count_in;
+        int expected_count_out;
+    } tests[] =
+    {
+        /*  0 */ { L"Long long value",       L"abcdefghijklmnopqrstuv",  0, 16 },
+        /*  1 */ { L"Long long value",       L"abcdefghijklmnopqrstuv",  1, 16 },
+        /*  2 */ { L"Long long value",       L"Lbcdefghijklmnopqrstuv",  2, 16 },
+        /*  3 */ { L"Long long value",       L"Locdefghijklmnopqrstuv",  3, 16 },
+        /*  4 */ { L"Long long value",       L"Long long valuopqrstuv", 15, 16 },
+        /*  5 */ { L"Long long value",       L"Long long value",        16, 16 },
+        /*  6 */ { L"Long long value",       L"Long long value",        17, 16 },
+        /*  7 */ { L"%TVAR% long long",      L"abcdefghijklmnopqrstuv",  0, 15 },
+        /*  8 */ { L"%TVAR% long long",      L"",                        1, 15 },
+        /*  9 */ { L"%TVAR% long long",      L"",                        2, 15 },
+        /* 10 */ { L"%TVAR% long long",      L"",                        4, 15 },
+        /* 11 */ { L"%TVAR% long long",      L"WINE",                    5, 15 },
+        /* 12 */ { L"%TVAR% long long",      L"WINE fghijklmnopqrstuv",  6, 15 },
+        /* 13 */ { L"%TVAR% long long",      L"WINE lghijklmnopqrstuv",  7, 15 },
+        /* 14 */ { L"%TVAR% long long",      L"WINE long long",         15, 15 },
+        /* 15 */ { L"%TVAR% long long",      L"WINE long long",         16, 15 },
+        /* 16 */ { L"%TVAR%%TVAR% long",     L"",                        4, 14 },
+        /* 17 */ { L"%TVAR%%TVAR% long",     L"WINE",                    5, 14 },
+        /* 18 */ { L"%TVAR%%TVAR% long",     L"WINE",                    6, 14 },
+        /* 19 */ { L"%TVAR%%TVAR% long",     L"WINE",                    8, 14 },
+        /* 20 */ { L"%TVAR%%TVAR% long",     L"WINEWINE",                9, 14 },
+        /* 21 */ { L"%TVAR%%TVAR% long",     L"WINEWINE jklmnopqrstuv", 10, 14 },
+        /* 22 */ { L"%TVAR%%TVAR% long",     L"WINEWINE long",          14, 14 },
+        /* 23 */ { L"%TVAR%%TVAR% long",     L"WINEWINE long",          15, 14 },
+        /* 24 */ { L"%TVAR% %TVAR% long",    L"WINE",                    5, 15 },
+        /* 25 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   6, 15 },
+        /* 26 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   8, 15 },
+        /* 27 */ { L"%TVAR% %TVAR% long",    L"WINE ",                   9, 15 },
+        /* 28 */ { L"%TVAR% %TVAR% long",    L"WINE WINE",              10, 15 },
+        /* 29 */ { L"%TVAR% %TVAR% long",    L"WINE WINE klmnopqrstuv", 11, 15 },
+        /* 30 */ { L"%TVAR% %TVAR% long",    L"WINE WINE llmnopqrstuv", 12, 15 },
+        /* 31 */ { L"%TVAR% %TVAR% long",    L"WINE WINE lonnopqrstuv", 14, 15 },
+        /* 32 */ { L"%TVAR% %TVAR% long",    L"WINE WINE long",         15, 15 },
+        /* 33 */ { L"%TVAR% %TVAR% long",    L"WINE WINE long",         16, 15 },
+        /* 34 */ { L"%TVAR2% long long",     L"abcdefghijklmnopqrstuv",  1, 18 },
+        /* 35 */ { L"%TVAR2% long long",     L"%bcdefghijklmnopqrstuv",  2, 18 },
+        /* 36 */ { L"%TVAR2% long long",     L"%TVdefghijklmnopqrstuv",  4, 18 },
+        /* 37 */ { L"%TVAR2% long long",     L"%TVAR2ghijklmnopqrstuv",  7, 18 },
+        /* 38 */ { L"%TVAR2% long long",     L"%TVAR2%hijklmnopqrstuv",  8, 18 },
+        /* 39 */ { L"%TVAR2% long long",     L"%TVAR2% ijklmnopqrstuv",  9, 18 },
+        /* 40 */ { L"%TVAR2% long long",     L"%TVAR2% ljklmnopqrstuv", 10, 18 },
+        /* 41 */ { L"%TVAR2% long long",     L"%TVAR2% long long",      18, 18 },
+        /* 42 */ { L"%TVAR2% long long",     L"%TVAR2% long long",      19, 18 },
+        /* 43 */ { L"%TVAR long long",       L"abcdefghijklmnopqrstuv",  1, 16 },
+        /* 44 */ { L"%TVAR long long",       L"%bcdefghijklmnopqrstuv",  2, 16 },
+        /* 45 */ { L"%TVAR long long",       L"%Tcdefghijklmnopqrstuv",  3, 16 },
+        /* 46 */ { L"%TVAR long long",       L"%TVAR long lonopqrstuv", 15, 16 },
+        /* 47 */ { L"%TVAR long long",       L"%TVAR long long",        16, 16 },
+        /* 48 */ { L"%TVAR long long",       L"%TVAR long long",        17, 16 },
+    };
+
+    success = SetEnvironmentVariableW(L"TVAR", L"WINE");
+    ok(success, "SetEnvironmentVariableW failed with %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ExpandEnvironmentStringsW(L"Long long value", NULL, 0);
+    ok(ret == 16, "got %lu\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        const struct test_info *test = &tests[i];
+
+        SetLastError(0xdeadbeef);
+        wcscpy(buf, L"abcdefghijklmnopqrstuv");
+        ret = ExpandEnvironmentStringsW(test->input, buf, test->count_in);
+        ok(ret == test->expected_count_out, "Test %d: got %lu\n", i, ret);
+        ok(GetLastError() == 0xdeadbeef, "Test %d: got last error %ld\n", i, GetLastError());
+        ok(!wcscmp(buf, test->expected_str), "Test %d: got %s\n", i, debugstr_w(buf));
+    }
+
+    success = SetEnvironmentVariableW(L"TVAR", NULL);
+    ok(success, "SetEnvironmentVariableW failed with %ld\n", GetLastError());
+}
+
 static void test_ExpandEnvironmentStringsA(void)
 {
     const char* value="Long long value";
     const char* not_an_env_var="%NotAnEnvVar%";
     char buf[256], buf1[256], buf2[0x8000];
     DWORD ret_size, ret_size1;
+    int i;
+    DWORD ret;
+    BOOL success;
+    static const struct test_info
+    {
+    const char *input;
+    const char *expected_str;
+    int count_in;
+    int expected_count_out;
+    } tests[] =
+    {
+        /*  0 */ { "Long long value",       "",                   0, 17 },
+        /*  1 */ { "Long long value",       "",                   1, 17 },
+        /*  2 */ { "Long long value",       "",                   2, 17 },
+        /*  3 */ { "Long long value",       "",                   3, 17 },
+        /*  4 */ { "Long long value",       "",                  15, 17 },
+        /*  5 */ { "Long long value",       "",                  16, 17 },
+        /*  6 */ { "Long long value",       "Long long value",   17, 16 },
+        /*  7 */ { "%TVAR% long long",      "",                   0, 16 },
+        /*  8 */ { "%TVAR% long long",      "",                   1, 16 },
+        /*  9 */ { "%TVAR% long long",      "",                   2, 16 },
+        /* 10 */ { "%TVAR% long long",      "",                   4, 16 },
+        /* 11 */ { "%TVAR% long long",      "",                   5, 16 },
+        /* 12 */ { "%TVAR% long long",      "",                   6, 16 },
+        /* 13 */ { "%TVAR% long long",      "",                   7, 16 },
+        /* 14 */ { "%TVAR% long long",      "",                  15, 16 },
+        /* 15 */ { "%TVAR% long long",      "WINE long long",    16, 15 },
+        /* 16 */ { "%TVAR%%TVAR% long",     "",                   4, 15 },
+        /* 17 */ { "%TVAR%%TVAR% long",     "",                   5, 15 },
+        /* 18 */ { "%TVAR%%TVAR% long",     "",                   6, 15 },
+        /* 19 */ { "%TVAR%%TVAR% long",     "",                   8, 15 },
+        /* 20 */ { "%TVAR%%TVAR% long",     "",                   9, 15 },
+        /* 21 */ { "%TVAR%%TVAR% long",     "",                  10, 15 },
+        /* 22 */ { "%TVAR%%TVAR% long",     "",                  14, 15 },
+        /* 23 */ { "%TVAR%%TVAR% long",     "WINEWINE long",     15, 14 },
+        /* 24 */ { "%TVAR% %TVAR% long",    "",                   5, 16 },
+        /* 25 */ { "%TVAR% %TVAR% long",    "",                   6, 16 },
+        /* 26 */ { "%TVAR% %TVAR% long",    "",                   8, 16 },
+        /* 27 */ { "%TVAR% %TVAR% long",    "",                   9, 16 },
+        /* 28 */ { "%TVAR% %TVAR% long",    "",                  10, 16 },
+        /* 29 */ { "%TVAR% %TVAR% long",    "",                  11, 16 },
+        /* 30 */ { "%TVAR% %TVAR% long",    "",                  12, 16 },
+        /* 31 */ { "%TVAR% %TVAR% long",    "",                  14, 16 },
+        /* 32 */ { "%TVAR% %TVAR% long",    "",                  15, 16 },
+        /* 33 */ { "%TVAR% %TVAR% long",    "WINE WINE long",    16, 15 },
+        /* 34 */ { "%TVAR2% long long",     "",                   1, 19 },
+        /* 35 */ { "%TVAR2% long long",     "",                   2, 19 },
+        /* 36 */ { "%TVAR2% long long",     "",                   4, 19 },
+        /* 37 */ { "%TVAR2% long long",     "",                   7, 19 },
+        /* 38 */ { "%TVAR2% long long",     "",                   8, 19 },
+        /* 39 */ { "%TVAR2% long long",     "",                   9, 19 },
+        /* 40 */ { "%TVAR2% long long",     "",                  10, 19 },
+        /* 41 */ { "%TVAR2% long long",     "",                  18, 19 },
+        /* 42 */ { "%TVAR2% long long",     "%TVAR2% long long", 19, 18 },
+        /* 43 */ { "%TVAR long long",       "",                   1, 17 },
+        /* 44 */ { "%TVAR long long",       "",                   2, 17 },
+        /* 45 */ { "%TVAR long long",       "",                   3, 17 },
+        /* 46 */ { "%TVAR long long",       "",                  15, 17 },
+        /* 47 */ { "%TVAR long long",       "",                  16, 17 },
+        /* 48 */ { "%TVAR long long",       "%TVAR long long",   17, 16 },
+    };
 
     SetEnvironmentVariableA("EnvVar", value);
 
@@ -461,6 +611,55 @@ static void test_ExpandEnvironmentStringsA(void)
     SetEnvironmentVariableA("IndirectVar", NULL);
 
     SetEnvironmentVariableA("EnvVar", NULL);
+
+    success = SetEnvironmentVariableA("TVAR", "WINE");
+    ok(success, "SetEnvironmentVariableA failed with %ld\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ExpandEnvironmentStringsW(L"Long long value", NULL, 0);
+    ok(ret == 16, "got %lu\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        const struct test_info *test = &tests[i];
+
+        SetLastError(0xdeadbeef);
+        strcpy(buf, "abcdefghijklmnopqrstuv");
+        ret = ExpandEnvironmentStringsA(test->input, buf, test->count_in);
+        ok(ret == test->expected_count_out, "Test %d: got %lu\n", i, ret);
+        ok(GetLastError() == 0xdeadbeef, "Test %d: got last error %ld\n", i, GetLastError());
+        ok(!strcmp(buf, test->expected_str), "Test %d: got %s\n", i, debugstr_a(buf));
+    }
+
+    success = SetEnvironmentVariableA("TVAR", NULL);
+    ok(success, "SetEnvironmentVariableA failed with %ld\n", GetLastError());
+
+    if (GetACP() == 932) /* shift-jis */
+    {
+        const char *japanese_test = "\x88\xEA\x93\xF1\x8E\x4F\x8E\x6C\x8C\xDC\x98\x5A\x8E\xB5\x94\xAA\x8B\xE3"; /* Japanese Kanji for "one" to "nine", in shift-jis */
+        int japanese_len = strlen(japanese_test);
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, NULL, 0);
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, buf, ret_size);
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+        ok(!strcmp(buf, japanese_test), "Got %s\n", debugstr_a(buf));
+
+        SetLastError(0xdeadbeef);
+        ret_size = ExpandEnvironmentStringsA(japanese_test, buf, japanese_len / 2); /* Buffer too small */
+        ok(GetLastError() == 0xdeadbeef, "got last error %ld\n", GetLastError());
+        ok(ret_size >= japanese_len, "Needed at least %d, got %lu\n", japanese_len, ret_size);
+    }
+    else
+    {
+        skip("Skipping japanese language tests\n");
+    }
 }
 
 static void test_GetComputerName(void)
@@ -780,6 +979,7 @@ START_TEST(environ)
     test_GetSetEnvironmentVariableA();
     test_GetSetEnvironmentVariableW();
     test_GetSetEnvironmentVariableAW();
+    test_ExpandEnvironmentStringsW();
     test_ExpandEnvironmentStringsA();
     test_GetComputerName();
     test_GetComputerNameExA();

@@ -68,7 +68,7 @@ struct builtin_class_descr
     INT        extra;     /* window extra bytes */
     ULONG_PTR  cursor;    /* cursor id */
     HBRUSH     brush;     /* brush or system color */
-    enum builtin_winprocs proc;
+    enum ntuser_client_procs proc;
 };
 
 typedef struct tagWINDOWPROC
@@ -78,7 +78,7 @@ typedef struct tagWINDOWPROC
 } WINDOWPROC;
 
 static WINDOWPROC winproc_array[MAX_WINPROCS];
-static UINT winproc_used = NB_BUILTIN_WINPROCS;
+static UINT winproc_used = NTUSER_NB_PROCS;
 static pthread_mutex_t winproc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static struct list class_list = LIST_INIT( class_list );
@@ -91,13 +91,13 @@ static WINDOWPROC *find_winproc( WNDPROC func, BOOL ansi )
 {
     unsigned int i;
 
-    for (i = 0; i < NB_BUILTIN_AW_WINPROCS; i++)
+    for (i = 0; i < NTUSER_NB_PROCS; i++)
     {
         /* match either proc, some apps confuse A and W */
         if (winproc_array[i].procA != func && winproc_array[i].procW != func) continue;
         return &winproc_array[i];
     }
-    for (i = NB_BUILTIN_AW_WINPROCS; i < winproc_used; i++)
+    for ( ; i < winproc_used; i++)
     {
         if (ansi && winproc_array[i].procA != func) continue;
         if (!ansi && winproc_array[i].procW != func) continue;
@@ -257,41 +257,19 @@ static void init_user(void)
 /***********************************************************************
  *	     NtUserInitializeClientPfnArrays   (win32u.@)
  */
-NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
-                                                 const struct user_client_procs *client_procsW,
-                                                 const void *client_workers, HINSTANCE user_module )
+NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const ntuser_client_func_ptr *client_procsA,
+                                                 const ntuser_client_func_ptr *client_procsW,
+                                                 const ntuser_client_func_ptr *client_workers,
+                                                 HINSTANCE user_module )
 {
     static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+    UINT i;
 
-    winproc_array[WINPROC_BUTTON].procA = client_procsA->pButtonWndProc;
-    winproc_array[WINPROC_BUTTON].procW = client_procsW->pButtonWndProc;
-    winproc_array[WINPROC_COMBO].procA = client_procsA->pComboWndProc;
-    winproc_array[WINPROC_COMBO].procW = client_procsW->pComboWndProc;
-    winproc_array[WINPROC_DEFWND].procA = client_procsA->pDefWindowProc;
-    winproc_array[WINPROC_DEFWND].procW = client_procsW->pDefWindowProc;
-    winproc_array[WINPROC_DIALOG].procA = client_procsA->pDefDlgProc;
-    winproc_array[WINPROC_DIALOG].procW = client_procsW->pDefDlgProc;
-    winproc_array[WINPROC_EDIT].procA = client_procsA->pEditWndProc;
-    winproc_array[WINPROC_EDIT].procW = client_procsW->pEditWndProc;
-    winproc_array[WINPROC_LISTBOX].procA = client_procsA->pListBoxWndProc;
-    winproc_array[WINPROC_LISTBOX].procW = client_procsW->pListBoxWndProc;
-    winproc_array[WINPROC_MDICLIENT].procA = client_procsA->pMDIClientWndProc;
-    winproc_array[WINPROC_MDICLIENT].procW = client_procsW->pMDIClientWndProc;
-    winproc_array[WINPROC_SCROLLBAR].procA = client_procsA->pScrollBarWndProc;
-    winproc_array[WINPROC_SCROLLBAR].procW = client_procsW->pScrollBarWndProc;
-    winproc_array[WINPROC_STATIC].procA = client_procsA->pStaticWndProc;
-    winproc_array[WINPROC_STATIC].procW = client_procsW->pStaticWndProc;
-    winproc_array[WINPROC_IME].procA = client_procsA->pImeWndProc;
-    winproc_array[WINPROC_IME].procW = client_procsW->pImeWndProc;
-    winproc_array[WINPROC_DESKTOP].procA = client_procsA->pDesktopWndProc;
-    winproc_array[WINPROC_DESKTOP].procW = client_procsW->pDesktopWndProc;
-    winproc_array[WINPROC_ICONTITLE].procA = client_procsA->pIconTitleWndProc;
-    winproc_array[WINPROC_ICONTITLE].procW = client_procsW->pIconTitleWndProc;
-    winproc_array[WINPROC_MENU].procA = client_procsA->pPopupMenuWndProc;
-    winproc_array[WINPROC_MENU].procW = client_procsW->pPopupMenuWndProc;
-    winproc_array[WINPROC_MESSAGE].procA = client_procsA->pMessageWndProc;
-    winproc_array[WINPROC_MESSAGE].procW = client_procsW->pMessageWndProc;
-
+    for (i = 0; i < NTUSER_NB_PROCS; i++)
+    {
+        winproc_array[i].procA = client_procsA[i][0];
+        winproc_array[i].procW = client_procsW[i][0];
+    }
     user32_module = user_module;
 
     pthread_once( &init_once, init_user );
@@ -1081,14 +1059,14 @@ static const struct builtin_class_descr desktop_builtin_class =
 {
     .name = MAKEINTRESOURCEA(DESKTOP_CLASS_ATOM),
     .style = CS_DBLCLKS,
-    .proc = WINPROC_DESKTOP,
+    .proc = NTUSER_WNDPROC_DESKTOP,
     .brush = (HBRUSH)(COLOR_BACKGROUND + 1),
 };
 
 static const struct builtin_class_descr message_builtin_class =
 {
     .name = "Message",
-    .proc = WINPROC_MESSAGE,
+    .proc = NTUSER_WNDPROC_MESSAGE,
 };
 
 static const struct builtin_class_descr builtin_classes[] =
@@ -1097,7 +1075,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "Button",
         .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-        .proc = WINPROC_BUTTON,
+        .proc = NTUSER_WNDPROC_BUTTON,
         .extra = sizeof(UINT) + 2 * sizeof(HANDLE),
         .cursor = IDC_ARROW,
     },
@@ -1105,7 +1083,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "ComboBox",
         .style = CS_PARENTDC | CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW,
-        .proc = WINPROC_COMBO,
+        .proc = NTUSER_WNDPROC_COMBO,
         .extra = sizeof(void *),
         .cursor = IDC_ARROW,
     },
@@ -1113,7 +1091,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "ComboLBox",
         .style = CS_DBLCLKS | CS_SAVEBITS,
-        .proc = WINPROC_LISTBOX,
+        .proc = NTUSER_WNDPROC_COMBOLBOX,
         .extra = sizeof(void *),
         .cursor = IDC_ARROW,
     },
@@ -1121,20 +1099,20 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = MAKEINTRESOURCEA(DIALOG_CLASS_ATOM),
         .style = CS_SAVEBITS | CS_DBLCLKS,
-        .proc = WINPROC_DIALOG,
+        .proc = NTUSER_WNDPROC_DIALOG,
         .extra = DLGWINDOWEXTRA,
         .cursor = IDC_ARROW,
     },
     /* icon title */
     {
         .name = MAKEINTRESOURCEA(ICONTITLE_CLASS_ATOM),
-        .proc = WINPROC_ICONTITLE,
+        .proc = NTUSER_WNDPROC_ICONTITLE,
         .cursor = IDC_ARROW,
     },
     /* IME */
     {
         .name = "IME",
-        .proc = WINPROC_IME,
+        .proc = NTUSER_WNDPROC_IME,
         .extra = 2 * sizeof(LONG_PTR),
         .cursor = IDC_ARROW,
     },
@@ -1142,7 +1120,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "ListBox",
         .style = CS_DBLCLKS,
-        .proc = WINPROC_LISTBOX,
+        .proc = NTUSER_WNDPROC_LISTBOX,
         .extra = sizeof(void *),
         .cursor = IDC_ARROW,
     },
@@ -1150,7 +1128,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = MAKEINTRESOURCEA(POPUPMENU_CLASS_ATOM),
         .style = CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,
-        .proc = WINPROC_MENU,
+        .proc = NTUSER_WNDPROC_MENU,
         .extra = sizeof(HMENU),
         .cursor = IDC_ARROW,
         .brush = (HBRUSH)(COLOR_MENU + 1),
@@ -1158,7 +1136,7 @@ static const struct builtin_class_descr builtin_classes[] =
     /* MDIClient */
     {
         .name = "MDIClient",
-        .proc = WINPROC_MDICLIENT,
+        .proc = NTUSER_WNDPROC_MDICLIENT,
         .extra = 2 * sizeof(void *),
         .cursor = IDC_ARROW,
         .brush = (HBRUSH)(COLOR_APPWORKSPACE + 1),
@@ -1167,7 +1145,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "ScrollBar",
         .style = CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
-        .proc = WINPROC_SCROLLBAR,
+        .proc = NTUSER_WNDPROC_SCROLLBAR,
         .extra = sizeof(struct scroll_bar_win_data),
         .cursor = IDC_ARROW,
     },
@@ -1175,7 +1153,7 @@ static const struct builtin_class_descr builtin_classes[] =
     {
         .name = "Static",
         .style = CS_DBLCLKS | CS_PARENTDC,
-        .proc = WINPROC_STATIC,
+        .proc = NTUSER_WNDPROC_STATIC,
         .extra = 2 * sizeof(HANDLE),
         .cursor = IDC_ARROW,
     },
@@ -1231,7 +1209,7 @@ static void register_builtins(void)
     {
         .name = "Edit",
         .style = CS_DBLCLKS | CS_PARENTDC,
-        .proc = WINPROC_EDIT,
+        .proc = NTUSER_WNDPROC_EDIT,
         .extra = sizeof(void *) == 4 || NtCurrentTeb()->WowTebOffset ? 6 : sizeof(UINT64),
         .cursor = IDC_IBEAM,
     };

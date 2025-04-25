@@ -925,8 +925,9 @@ static void test_EnumDevicesBySemantics(void)
     DIACTIONFORMATA action_format;
     const GUID ACTION_MAPPING_GUID = {0x1, 0x2, 0x3, {0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb}};
     struct enum_semantics_test data = {0, 0, FALSE, FALSE, &action_format, NULL};
+    static const char *names[] = {NULL, "", "Ninja Brian", "Sh4d0w M4g3"};
     IDirectInput8A *dinput;
-    int device_total = 0;
+    int i, device_total = 0;
     HRESULT hr;
 
     hr = DirectInput8Create( instance, 0x800, &IID_IDirectInput8A, (void **)&dinput, NULL );
@@ -960,87 +961,101 @@ static void test_EnumDevicesBySemantics(void)
     data.keyboard = FALSE;
     data.mouse = FALSE;
     data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
-                                               &data, DIEDBSFL_FORCEFEEDBACK );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback, &data, DIEDBSFL_FORCEFEEDBACK );
+    ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
     ok( !data.keyboard, "Keyboard should not be enumerated when asking for forcefeedback\n" );
     ok( !data.mouse, "Mouse should not be enumerated when asking for forcefeedback\n" );
 
-    /* Enumerate available devices. That is devices not owned by any user.
-       Before setting the action map for all devices we still have them available. */
+    /* Enumerate available devices. That is devices not owned by any user. Before setting the action map for all devices we still have them available. */
     data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
-                                               &data, DIEDBSFL_AVAILABLEDEVICES );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count > 0,
-        "There should be devices available before action mapping available=%d\n", data.device_count );
-
-    /* Keep the device total */
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES );
+    ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+    ok( data.device_count > 0, "got device_count %d\n", data.device_count );
     device_total = data.device_count;
 
-    /* There should be no devices for any user. No device should be enumerated with DIEDBSFL_THISUSER.
-       MSDN defines that all unowned devices are also enumerated but this doesn't seem to be happening. */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Sh4d0w M4g3", &action_format,
-                                               enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == 0, "No devices should be assigned for this user assigned=%d\n", data.device_count );
+    for (i = 0; i < ARRAY_SIZE(names); i++)
+    {
+        winetest_push_context( "%s", debugstr_a(names[i]) );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, 0 );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER | DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        winetest_pop_context();
+    }
 
-    /* This enumeration builds and sets the action map for all devices with a NULL username */
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback,
-                                               &data, DIEDBSFL_ATTACHEDONLY );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%#lx\n", hr );
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback, &data, DIEDBSFL_ATTACHEDONLY );
+    ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
 
-    /* After a successful action mapping we should have no devices available */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback,
-                                               &data, DIEDBSFL_AVAILABLEDEVICES );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == 0, "No device should be available after action mapping available=%d\n",
-        data.device_count );
+    for (i = 0; i < ARRAY_SIZE(names); i++)
+    {
+        winetest_push_context( "%s", debugstr_a(names[i]) );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, 0 );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        if (!names[i] || !names[i][0]) ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        else ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER | DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        if (!names[i] || !names[i][0]) ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        else ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        winetest_pop_context();
+    }
 
-    /* Now we'll give all the devices to a specific user */
     data.username = "Sh4d0w M4g3";
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback,
-                                               &data, DIEDBSFL_ATTACHEDONLY );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%#lx\n", hr );
+    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, set_action_map_callback, &data, DIEDBSFL_ATTACHEDONLY );
+    ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
 
-    /* Testing with the default user, DIEDBSFL_THISUSER has no effect */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format,
-                                               enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == device_total, "THISUSER has no effect with NULL username owned=%d, expected=%d\n",
-        data.device_count, device_total );
-
-    /* Using an empty user string is the same as passing NULL, DIEDBSFL_THISUSER has no effect */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, "", &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == device_total, "THISUSER has no effect with \"\" as username owned=%d, expected=%d\n",
-        data.device_count, device_total );
-
-    /* Testing with a user with no ownership of the devices */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Ninja Brian", &action_format,
-                                               enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == 0, "This user should own no devices owned=%d\n", data.device_count );
-
-    /* Sh4d0w M4g3 has ownership of all devices */
-    data.device_count = 0;
-    hr = IDirectInput8_EnumDevicesBySemantics( dinput, "Sh4d0w M4g3", &action_format,
-                                               enum_semantics_callback, &data, DIEDBSFL_THISUSER );
-    ok( SUCCEEDED(hr), "EnumDevicesBySemantics failed hr=%#lx\n", hr );
-    ok( data.device_count == device_total, "This user should own %d devices owned=%d\n",
-        device_total, data.device_count );
+    for (i = 0; i < ARRAY_SIZE(names); i++)
+    {
+        winetest_push_context( "%s", debugstr_a(names[i]) );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, 0 );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        if (!names[i] || !names[i][0] || !strcmp( names[i], data.username )) ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        else ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        data.device_count = 0;
+        hr = IDirectInput8_EnumDevicesBySemantics( dinput, names[i], &action_format, enum_semantics_callback, &data, DIEDBSFL_THISUSER | DIEDBSFL_AVAILABLEDEVICES );
+        ok( hr == S_OK, "EnumDevicesBySemantics returned %#lx\n", hr );
+        if (!names[i] || !names[i][0] || !strcmp( names[i], data.username )) ok( data.device_count == device_total, "got device_count %d\n", data.device_count );
+        else ok( data.device_count == 0, "got device_count %d\n", data.device_count );
+        winetest_pop_context();
+    }
 
     /* The call fails with a zeroed GUID */
     memset( &action_format.guidActionMap, 0, sizeof(GUID) );
     data.device_count = 0;
     hr = IDirectInput8_EnumDevicesBySemantics( dinput, NULL, &action_format, enum_semantics_callback, NULL, 0 );
     todo_wine
-    ok( FAILED(hr), "EnumDevicesBySemantics succeeded with invalid GUID hr=%#lx\n", hr );
+    ok( hr == E_INVALIDARG, "EnumDevicesBySemantics returned %#lx\n", hr );
 
     IDirectInput8_Release( dinput );
 }

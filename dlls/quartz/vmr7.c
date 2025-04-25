@@ -125,6 +125,42 @@ static struct vmr7 *impl_from_IBaseFilter(IBaseFilter *iface)
     return CONTAINING_RECORD(iface, struct vmr7, renderer.filter.IBaseFilter_iface);
 }
 
+static void copy_plane(BYTE **dstp, unsigned int dst_pitch, unsigned int dst_height,
+                       const BYTE **srcp, unsigned int src_pitch, int src_height)
+{
+    size_t copy_size = min(src_pitch, dst_pitch);
+    const BYTE *src = *srcp;
+    BYTE *dst = *dstp;
+    unsigned int i;
+
+    if (src_height < 0)
+    {
+        TRACE("Inverting image.\n");
+
+        src_height = -src_height;
+        src += src_height * src_pitch;
+
+        for (i = 0; i < src_height; ++i)
+        {
+            src -= src_pitch;
+            memcpy(dst, src, copy_size);
+            dst += dst_pitch;
+        }
+    }
+    else
+    {
+        for (i = 0; i < src_height; ++i)
+        {
+            memcpy(dst, src, copy_size);
+            dst += dst_pitch;
+            src += src_pitch;
+        }
+    }
+
+    *srcp += src_pitch * src_height;
+    *dstp += dst_pitch * dst_height;
+}
+
 static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
 {
     struct vmr7 *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
@@ -173,7 +209,7 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
     depth = bitmap_header->biBitCount;
     if (bitmap_header->biCompression == mmioFOURCC('N','V','1','2')
             || bitmap_header->biCompression == mmioFOURCC('Y','V','1','2'))
-        src_pitch = width;
+        src_pitch = (width + 3) & ~3;
     else /* packed YUV (UYVY or YUY2) or RGB */
         src_pitch = ((width * depth / 8) + 3) & ~3;
 
@@ -196,36 +232,46 @@ static HRESULT vmr_render(struct strmbase_renderer *iface, IMediaSample *sample)
         return hr;
     }
 
-    if (height > 0 && bitmap_header->biCompression == BI_RGB)
+    if (width > surface_desc.dwWidth || abs(height)  > surface_desc.dwHeight)
     {
-        BYTE *dst = (BYTE *)surface_desc.lpSurface + (height * surface_desc.lPitch);
+        FIXME("src surface (%ux%u) larger than rendering surface (%lux%lu).\n", width, height,
+                surface_desc.dwWidth, surface_desc.dwHeight);
+    }
+
+    if (bitmap_header->biCompression == mmioFOURCC('N','V','1','2'))
+    {
+        BYTE *dst = surface_desc.lpSurface;
         const BYTE *src = data;
 
-        TRACE("Inverting image.\n");
+        copy_plane(&dst, surface_desc.lPitch, surface_desc.dwHeight, &src, src_pitch, height);
+        copy_plane(&dst, surface_desc.lPitch, surface_desc.dwHeight / 2, &src, src_pitch, height / 2);
+    }
+    else if (bitmap_header->biCompression == mmioFOURCC('Y','V','1','2'))
+    {
+        BYTE *dst = surface_desc.lpSurface;
+        const BYTE *src = data;
 
-        while (height--)
-        {
-            dst -= surface_desc.lPitch;
-            memcpy(dst, src, width * depth / 8);
-            src += src_pitch;
-        }
+        copy_plane(&dst, surface_desc.lPitch, surface_desc.dwHeight, &src, src_pitch, height);
+        copy_plane(&dst, surface_desc.lPitch / 2, surface_desc.dwHeight / 2, &src, src_pitch / 2, height / 2);
+        copy_plane(&dst, surface_desc.lPitch / 2, surface_desc.dwHeight / 2, &src, src_pitch / 2, height / 2);
+    }
+    else if (height > 0 && bitmap_header->biCompression == BI_RGB)
+    {
+        BYTE *dst = surface_desc.lpSurface;
+        const BYTE *src = data;
+
+        copy_plane(&dst, surface_desc.lPitch, surface_desc.dwHeight, &src, src_pitch, -height);
     }
     else if (surface_desc.lPitch != src_pitch)
     {
         BYTE *dst = surface_desc.lpSurface;
         const BYTE *src = data;
 
-        height = abs(height);
-
         TRACE("Source pitch %u does not match dest pitch %lu; copying manually.\n",
                 src_pitch, surface_desc.lPitch);
 
-        while (height--)
-        {
-            memcpy(dst, src, width * depth / 8);
-            src += src_pitch;
-            dst += surface_desc.lPitch;
-        }
+        height = abs(height);
+        copy_plane(&dst, surface_desc.lPitch, surface_desc.dwHeight, &src, src_pitch, height);
     }
     else
     {

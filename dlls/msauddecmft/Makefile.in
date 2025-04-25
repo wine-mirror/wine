@@ -1,4 +1,6 @@
 MODULE    = msauddecmft.dll
+IMPORTS   = combase mfplat mfuuid dmoguids strmiids wmcodecdspuuid uuid
 
 SOURCES = \
-	main.c
+	msauddecmft.c \
+	msauddecmft.idl

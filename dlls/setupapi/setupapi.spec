@@ -81,22 +81,22 @@
 @ stdcall CM_Get_Device_ID_ExW(ptr ptr long long ptr)
 @ stdcall CM_Get_Device_ID_ListA(str ptr long long)
 @ stdcall CM_Get_Device_ID_ListW(wstr ptr long long)
-@ stub CM_Get_Device_ID_List_ExA
-@ stub CM_Get_Device_ID_List_ExW
+@ stdcall CM_Get_Device_ID_List_ExA(str ptr long long ptr)
+@ stdcall CM_Get_Device_ID_List_ExW(wstr ptr long long ptr)
 @ stdcall CM_Get_Device_ID_List_SizeA(ptr str long)
 @ stdcall CM_Get_Device_ID_List_SizeW(ptr wstr long)
-@ stub CM_Get_Device_ID_List_Size_ExA
-@ stub CM_Get_Device_ID_List_Size_ExW
+@ stdcall CM_Get_Device_ID_List_Size_ExA(ptr str long ptr)
+@ stdcall CM_Get_Device_ID_List_Size_ExW(ptr wstr long ptr)
 @ stdcall CM_Get_Device_ID_Size(ptr ptr long)
 @ stub CM_Get_Device_ID_Size_Ex
 @ stdcall CM_Get_Device_Interface_AliasA(str ptr ptr ptr long)
 @ stdcall CM_Get_Device_Interface_AliasW(wstr ptr ptr ptr long)
 @ stub CM_Get_Device_Interface_Alias_ExA
 @ stub CM_Get_Device_Interface_Alias_ExW
-@ stub CM_Get_Device_Interface_ListA
-@ stub CM_Get_Device_Interface_ListW
-@ stub CM_Get_Device_Interface_List_ExA
-@ stub CM_Get_Device_Interface_List_ExW
+@ stdcall CM_Get_Device_Interface_ListA(ptr ptr ptr long long)
+@ stdcall CM_Get_Device_Interface_ListW(ptr ptr ptr long long)
+@ stdcall CM_Get_Device_Interface_List_ExA(ptr ptr ptr long long ptr)
+@ stdcall CM_Get_Device_Interface_List_ExW(ptr ptr ptr long long ptr)
 @ stdcall CM_Get_Device_Interface_List_SizeA(ptr ptr str long)
 @ stdcall CM_Get_Device_Interface_List_SizeW(ptr ptr wstr long)
 @ stdcall CM_Get_Device_Interface_List_Size_ExA(ptr ptr str long ptr)
@@ -357,6 +357,7 @@
 @ stub SetupDiGetDeviceInterfaceAlias
 @ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
 @ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
+@ stdcall SetupDiGetDevicePropertyKeys(ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDevicePropertyW(ptr ptr ptr ptr ptr long ptr long)
 @ stdcall SetupDiGetDeviceRegistryPropertyA(long ptr long ptr ptr long ptr)
 @ stdcall SetupDiGetDeviceRegistryPropertyW(long ptr long ptr ptr long ptr)

@@ -144,7 +144,9 @@ static int cc_parser_lex(void *lval, parser_ctx_t *ctx)
 /* FIXME: Implement missing expressions. */
 
 CCExpr
-    : CCUnaryExpression { ctx->ccval = $1; YYACCEPT; }
+    : CCUnaryExpression { ctx->ccval = $1;
+                          (void)cc_parser_nerrs; /* avoid unused variable warning */
+                          YYACCEPT; }
 
 CCUnaryExpression
     : tCCValue                      { $$ = $1; }

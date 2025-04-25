@@ -1470,7 +1470,7 @@ static HRESULT WINAPI FilterMapper_RegisterPin(IFilterMapper *iface, CLSID clsid
     if ((ret = RegSetValueExW(pin_key, L"IsRendered", 0, REG_DWORD, (const BYTE *)&rendered, sizeof(DWORD))))
         ERR("Failed to set IsRendered value, error %lu.\n", ret);
 
-    if (!(ret = RegCreateKeyExW(pin_key, L"Types", 0, NULL, 0, 0, NULL, &type_key, NULL)))
+    if (!(ret = RegCreateKeyExW(pin_key, L"Types", 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS, NULL, &type_key, NULL)))
         RegCloseKey(type_key);
     else
         ERR("Failed to create Types subkey, error %lu.\n", ret);
@@ -1512,7 +1512,7 @@ static HRESULT WINAPI FilterMapper_RegisterPinType(IFilterMapper *iface,
     StringFromGUID2(&majortype, type_keypath, ARRAY_SIZE(type_keypath));
     wcscat(type_keypath, L"\\");
     StringFromGUID2(&subtype, type_keypath + wcslen(type_keypath), ARRAY_SIZE(type_keypath) - wcslen(type_keypath));
-    if (!(ret = RegCreateKeyExW(key, type_keypath, 0, NULL, 0, 0, NULL, &type_key, NULL)))
+    if (!(ret = RegCreateKeyExW(key, type_keypath, 0, NULL, 0, KEY_ENUMERATE_SUB_KEYS, NULL, &type_key, NULL)))
         RegCloseKey(type_key);
     else
         ERR("Failed to create type key, error %lu.\n", ret);
@@ -1531,7 +1531,7 @@ static HRESULT WINAPI FilterMapper_UnregisterFilter(IFilterMapper *iface, CLSID 
 
     StringFromGUID2(&clsid, guidstr, ARRAY_SIZE(guidstr));
 
-    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"Filter", 0, 0, &key)))
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, L"Filter", 0, KEY_ENUMERATE_SUB_KEYS, &key)))
         return HRESULT_FROM_WIN32(ret);
     if ((ret = RegDeleteKeyW(key, guidstr)))
         ERR("Failed to delete filter key, error %lu.\n", ret);
@@ -1576,7 +1576,7 @@ static HRESULT WINAPI FilterMapper_UnregisterPin(IFilterMapper * iface, CLSID cl
     wcscpy(keypath, L"CLSID\\");
     StringFromGUID2(&clsid, keypath + wcslen(keypath), ARRAY_SIZE(keypath) - wcslen(keypath));
     wcscat(keypath, L"\\Pins");
-    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, 0, &key)))
+    if ((ret = RegOpenKeyExW(HKEY_CLASSES_ROOT, keypath, 0, KEY_ENUMERATE_SUB_KEYS, &key)))
         return HRESULT_FROM_WIN32(ret);
 
     if ((ret = RegDeleteTreeW(key, name)))

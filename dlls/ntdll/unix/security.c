@@ -258,6 +258,65 @@ NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRI
     return status;
 }
 
+static const char *debugstr_TokenInformationClass( TOKEN_INFORMATION_CLASS class )
+{
+    static const char * const names[] =
+    {
+        NULL,
+        "TokenUser",
+        "TokenGroups",
+        "TokenPrivileges",
+        "TokenOwner",
+        "TokenPrimaryGroup",
+        "TokenDefaultDacl",
+        "TokenSource",
+        "TokenType",
+        "TokenImpersonationLevel",
+        "TokenStatistics",
+        "TokenRestrictedSids",
+        "TokenSessionId",
+        "TokenGroupsAndPrivileges",
+        "TokenSessionReference",
+        "TokenSandBoxInert",
+        "TokenAuditPolicy",
+        "TokenOrigin",
+        "TokenElevationType",
+        "TokenLinkedToken",
+        "TokenElevation",
+        "TokenHasRestrictions",
+        "TokenAccessInformation",
+        "TokenVirtualizationAllowed",
+        "TokenVirtualizationEnabled",
+        "TokenIntegrityLevel",
+        "TokenUIAccess",
+        "TokenMandatoryPolicy",
+        "TokenLogonSid",
+        "TokenIsAppContainer",
+        "TokenCapabilities",
+        "TokenAppContainerSid",
+        "TokenAppContainerNumber",
+        "TokenUserClaimAttributes",
+        "TokenDeviceClaimAttributes",
+        "TokenRestrictedUserClaimAttributes",
+        "TokenRestrictedDeviceClaimAttributes",
+        "TokenDeviceGroups",
+        "TokenRestrictedDeviceGroups",
+        "TokenSecurityAttributes",
+        "TokenIsRestricted",
+        "TokenProcessTrustLevel",
+        "TokenPrivateNameSpace",
+        "TokenSingletonAttributes",
+        "TokenBnoIsolation",
+        "TokenChildProcessFlags",
+        "TokenIsLessPrivilegedAppContainer",
+        "TokenIsSandboxed",
+        "TokenIsAppSilo",
+        "TokenLoggingInformation",
+    };
+
+    if (class < ARRAY_SIZE(names) && names[class]) return names[class];
+    return wine_dbg_sprintf( "%u", class );
+}
 
 /***********************************************************************
  *             NtQueryInformationToken  (NTDLL.@)
@@ -314,7 +373,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
     ULONG len = 0;
     unsigned int status = STATUS_SUCCESS;
 
-    TRACE( "(%p,%d,%p,%d,%p)\n", token, class, info, (int)length, retlen );
+    TRACE( "(%p,%s,%p,%d,%p)\n", token, debugstr_TokenInformationClass(class), info, (int)length, retlen );
 
     if (class < MaxTokenInfoClass) len = info_len[class];
     if (retlen) *retlen = len;
@@ -598,7 +657,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     default:
-        ERR( "Unhandled token information class %u\n", class );
+        ERR( "Unhandled token information class %s\n", debugstr_TokenInformationClass(class) );
         return STATUS_NOT_IMPLEMENTED;
     }
     return status;

@@ -271,6 +271,7 @@ static const struct { const char *name; UINT cp; } charset_names[] =
     { "ISO88599", 28599 },
     { "KOI8R", 20866 },
     { "KOI8U", 21866 },
+    { "SHIFTJIS", 932 },
     { "SJIS", 932 },
     { "TIS620", 28601 },
     { "UTF8", CP_UTF8 }
@@ -1084,7 +1085,6 @@ static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 {
     const char *overrides = getenv( "WINEDLLOVERRIDES" );
-    const char *wineloader = getenv( "WINELOADER" );
     unsigned int i;
     char str[22];
 
@@ -1092,6 +1092,7 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     add_path_var( env, pos, size, "WINEHOMEDIR", home_dir );
     add_path_var( env, pos, size, "WINEBUILDDIR", build_dir );
     add_path_var( env, pos, size, "WINECONFIGDIR", config_dir );
+    add_path_var( env, pos, size, "WINELOADER", wineloader );
     for (i = 0; dll_paths[i]; i++)
     {
         snprintf( str, sizeof(str), "WINEDLLDIR%u", i );
@@ -1100,7 +1101,6 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     snprintf( str, sizeof(str), "WINEDLLDIR%u", i );
     append_envW( env, pos, size, str, NULL );
     add_system_dll_path_var( env, pos, size );
-    append_envA( env, pos, size, "WINELOADER", wineloader );
     append_envA( env, pos, size, "WINEUSERNAME", user_name );
     append_envA( env, pos, size, "WINEDLLOVERRIDES", overrides );
     if (unix_cp.CodePage != CP_UTF8)
@@ -1638,18 +1638,9 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
 
     wine_server_fd_to_handle( 2, GENERIC_WRITE | SYNCHRONIZE, OBJ_INHERIT, &params.hStdError );
 
-    if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
-    {
-        NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
-        status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
-                                      NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                      &create_info, &ps_attr );
-        NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
-    }
-    else
-        status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
-                                      NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                      &create_info, &ps_attr );
+    status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
+                                  NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
+                                  &create_info, &ps_attr );
     NtClose( params.hStdError );
 
     if (status)
@@ -1937,6 +1928,8 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     WCHAR *curdir = get_initial_directory();
     NTSTATUS status;
 
+    if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
+
     /* store the initial PATH value */
     path = get_env_var( env, env_pos, pathW, 4 );
     add_dynamic_environment( &env, &env_pos, &env_size );
@@ -1957,7 +1950,7 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
     env[env_pos++] = 0;
 
     status = load_main_exe( NULL, main_argv[1], curdir, 0, &image, module );
-    if (!status)
+    if (NT_SUCCESS(status))
     {
         char *loader;
 
@@ -1978,7 +1971,11 @@ static RTL_USER_PROCESS_PARAMETERS *build_initial_params( void **module )
         load_start_exe( &image, module );
         prepend_argv( args, 2 );
     }
-    else rebuild_argv();
+    else
+    {
+        rebuild_argv();
+        if (NtCurrentTeb64()) NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
+    }
 
     main_wargv = build_wargv( get_dos_path( image ));
     cmdline = build_command_line( main_wargv );
@@ -2036,7 +2033,7 @@ void init_startup_info(void)
     unsigned int status;
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
-    startup_info_t *info;
+    struct startup_info_data *info;
     USHORT machine;
 
     if (!startup_info_size)
@@ -2161,9 +2158,9 @@ static BOOL is_console_handle( HANDLE handle )
  */
 void *create_startup_info( const UNICODE_STRING *nt_image, ULONG process_flags,
                            const RTL_USER_PROCESS_PARAMETERS *params,
-                           const pe_image_info_t *pe_info, DWORD *info_size )
+                           const struct pe_image_info *pe_info, DWORD *info_size )
 {
-    startup_info_t *info;
+    struct startup_info_data *info;
     UNICODE_STRING dos_image = *nt_image;
     DWORD size;
     void *ptr;

@@ -383,13 +383,12 @@ static const event_target_vtbl_t HTMLLinkElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLLinkElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLLinkElement_tid,
     0
 };
 dispex_static_data_t HTMLLinkElement_dispex = {
-    .id           = PROT_HTMLLinkElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLLinkElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLLinkElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLLinkElement_tid,
     .iface_tids   = HTMLLinkElement_iface_tids,

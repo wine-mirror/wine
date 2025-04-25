@@ -10,7 +10,6 @@
 
 #include <corecrt.h>
 #include <stdint.h>
-#define __need_wchar_t
 #include <stddef.h>
 
 #ifdef	__cplusplus
@@ -234,6 +233,7 @@ typedef struct {
 #define SCNuPTR "u"
 #endif
 
+_ACRTIMP imaxdiv_t          __cdecl imaxdiv(intmax_t, intmax_t);
 _ACRTIMP __int64            __cdecl strtoimax(const char*,char**,int);
 _ACRTIMP __int64            __cdecl strtoimax_l(const char*,char**,int,_locale_t);
 _ACRTIMP unsigned __int64   __cdecl strtoumax(const char*,char**,int);

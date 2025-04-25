@@ -1965,7 +1965,8 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
                 "{\n  \"prop1\": true,\n  \"prop2\": {\n    \"prop\": \"string\"\n  }\n}"],
         [[{ },undefined," "], "{}"],
         [[[,2,undefined,3,{ },]],"[null,2,null,3,{},null]"],
-        [[[,2,undefined,3,{prop:0},],undefined,"  "],"[\n  null,\n  2,\n  null,\n  3,\n  {\n    \"prop\": 0\n  },\n  null\n]"]
+        [[[,2,undefined,3,{prop:0},],undefined,"  "],"[\n  null,\n  2,\n  null,\n  3,\n  {\n    \"prop\": 0\n  },\n  null\n]"],
+        [[[0,0,0,0,0,0,0,0,0,0,0,0]], "[0,0,0,0,0,0,0,0,0,0,0,0]"]
     ];
 
     var i, s, v, t;

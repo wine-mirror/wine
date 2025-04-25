@@ -175,9 +175,9 @@
 @ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z(ptr ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z
 @ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z(ptr ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z
 @ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z(ptr ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z
-@ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z
-@ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z
-@ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z(ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z
+@ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z
+@ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z(ptr ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z
+@ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z(ptr ptr long long long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z
 @ cdecl -arch=arm ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z(ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z
 @ thiscall -arch=i386 ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z(ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z
 @ cdecl -arch=win64 ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z(ptr long) msvcp140.??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z

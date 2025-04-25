@@ -41,6 +41,7 @@
 #include "windows.ui.viewmanagement.h"
 
 extern IActivationFactory *uisettings_factory;
+extern IActivationFactory *uiviewsettings_factory;
 extern IActivationFactory *inputpane_factory;
 extern IActivationFactory *jumplist_factory;
 

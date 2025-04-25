@@ -49,8 +49,12 @@ typedef enum DWRITE_GLYPH_IMAGE_FORMATS
     DWRITE_GLYPH_IMAGE_FORMATS_PNG                    = 1 << 4,
     DWRITE_GLYPH_IMAGE_FORMATS_JPEG                   = 1 << 5,
     DWRITE_GLYPH_IMAGE_FORMATS_TIFF                   = 1 << 6,
-    DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8 = 1 << 7
+    DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8 = 1 << 7,
+    DWRITE_GLYPH_IMAGE_FORMATS_COLR_PAINT_TREE        = 1 << 8,
 } DWRITE_GLYPH_IMAGE_FORMATS;
+
+cpp_quote("DEFINE_ENUM_FLAG_OPERATORS(DWRITE_GLYPH_IMAGE_FORMATS)")
+cpp_quote("#define DWRITE_GLYPH_IMAGE_FORMATS_COLR_PAINT_TREE_DEFINED")
 
 typedef enum D2D1_ALPHA_MODE
 {
@@ -95,6 +99,14 @@ typedef struct D2D_VECTOR_4F
     float z;
     float w;
 } D2D_VECTOR_4F;
+
+typedef struct D2D_RECT_F
+{
+    float left;
+    float top;
+    float right;
+    float bottom;
+} D2D_RECT_F;
 
 typedef RECT D2D_RECT_L, D2D1_RECT_L;
 

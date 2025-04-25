@@ -1,1 +1,7 @@
 MODULE  = cng.sys
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+SOURCES = \
+	cng.sys.spec \
+	main.c

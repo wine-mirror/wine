@@ -37,6 +37,7 @@ _ACRTIMP size_t __cdecl _msize(void*);
 
 _ACRTIMP void   __cdecl _aligned_free(void*);
 _ACRTIMP void*  __cdecl _aligned_malloc(size_t,size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(_aligned_free) __WINE_MALLOC;
+_ACRTIMP size_t __cdecl _aligned_msize(void*,size_t,size_t);
 _ACRTIMP void*  __cdecl _aligned_offset_malloc(size_t,size_t,size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(_aligned_free) __WINE_MALLOC;
 _ACRTIMP void*  __cdecl _aligned_realloc(void*,size_t,size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(_aligned_free);
 _ACRTIMP void*  __cdecl _aligned_offset_realloc(void*,size_t,size_t,size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(_aligned_free);

@@ -29,6 +29,7 @@ struct fd;
 struct mapping;
 struct async_queue;
 struct completion;
+struct reserve;
 
 /* server-side representation of I/O status block */
 struct iosb
@@ -180,10 +181,10 @@ extern void free_map_addr( client_ptr_t base, mem_size_t size );
 extern struct memory_view *find_mapped_view( struct process *process, client_ptr_t base );
 extern struct memory_view *get_exe_view( struct process *process );
 extern struct file *get_view_file( const struct memory_view *view, unsigned int access, unsigned int sharing );
-extern const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base );
+extern const struct pe_image_info *get_view_image_info( const struct memory_view *view, client_ptr_t *base );
 extern int get_view_nt_name( const struct memory_view *view, struct unicode_str *name );
 extern void free_mapped_views( struct process *process );
-extern int get_page_size(void);
+extern size_t get_page_size(void);
 extern struct mapping *create_fd_mapping( struct object *root, const struct unicode_str *name, struct fd *fd,
                                           unsigned int attr, const struct security_descriptor *sd );
 extern struct object *create_user_data_mapping( struct object *root, const struct unicode_str *name,
@@ -195,7 +196,7 @@ extern void set_session_mapping( struct mapping *mapping );
 extern const volatile void *alloc_shared_object(void);
 extern void free_shared_object( const volatile void *object_shm );
 extern void invalidate_shared_object( const volatile void *object_shm );
-extern obj_locator_t get_shared_object_locator( const volatile void *object_shm );
+extern struct obj_locator get_shared_object_locator( const volatile void *object_shm );
 
 #define SHARED_WRITE_BEGIN( object_shm, type )                          \
     do {                                                                \
@@ -204,13 +205,13 @@ extern obj_locator_t get_shared_object_locator( const volatile void *object_shm 
         shared_object_t *__obj = CONTAINING_RECORD( shared, shared_object_t, shm );  \
         LONG64 __seq = __obj->seq + 1, __end = __seq + 1;               \
         assert( (__seq & 1) != 0 );                                     \
-        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__seq );             \
+        WriteRelease64( &__obj->seq, __seq );                           \
         do
 
 #define SHARED_WRITE_END                                                \
         while(0);                                                       \
         assert( __seq == __obj->seq );                                  \
-        __WINE_ATOMIC_STORE_RELEASE( &__obj->seq, &__end );             \
+        WriteRelease64( &__obj->seq, __end );                           \
     } while(0)
 
 /* device functions */
@@ -236,8 +237,10 @@ extern struct dir *get_dir_obj( struct process *process, obj_handle_t handle, un
 /* completion */
 
 extern struct completion *get_completion_obj( struct process *process, obj_handle_t handle, unsigned int access );
+extern struct reserve *get_completion_reserve_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void add_completion( struct completion *completion, apc_param_t ckey, apc_param_t cvalue,
                             unsigned int status, apc_param_t information );
+extern void cleanup_thread_completion( struct thread *thread );
 
 /* serial port functions */
 
@@ -249,8 +252,9 @@ extern struct object *create_serial( struct fd *fd );
 typedef void (*async_completion_callback)( void *private );
 
 extern void free_async_queue( struct async_queue *queue );
-extern struct async *create_async( struct fd *fd, struct thread *thread, const async_data_t *data, struct iosb *iosb );
-extern struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const async_data_t *data );
+extern struct async *create_async( struct fd *fd, struct thread *thread, const struct async_data *data, struct iosb *iosb );
+extern struct async *create_request_async( struct fd *fd, unsigned int comp_flags, const struct async_data *data,
+                                           int is_system );
 extern obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_blocking );
 extern void queue_async( struct async_queue *queue, struct async *async );
 extern void async_set_timeout( struct async *async, timeout_t timeout, unsigned int status );

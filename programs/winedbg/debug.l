@@ -230,7 +230,7 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 <INITIAL,NOPROCESS>maintenance|maint    { BEGIN(MAINT_CMD); return tMAINTENANCE; }
 <INITIAL>minidump|mdmp                  { BEGIN(PATH_EXPECTED); return tMINIDUMP; }
 <INITIAL>echo				{ BEGIN(ASTRING_EXPECTED); return tECHO; }
-<NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
+<INITIAL,NOPROCESS>attach|attac|atta|att { BEGIN(NOCMD); return tATTACH; }
 <INFO_CMD>share|shar|sha                { return tSHARE; }
 <MAINT_CMD>module|modul|mod             { BEGIN(ASTRING_EXPECTED); return tMODULE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }

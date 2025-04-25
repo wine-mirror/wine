@@ -49,6 +49,19 @@ typedef enum tagWTS_INFO_CLASS
     WTSClientAddress,
     WTSClientDisplay,
     WTSClientProtocolType,
+    WTSIdleTime,
+    WTSLogonTime,
+    WTSIncomingBytes,
+    WTSOutgoingBytes,
+    WTSIncomingFrames,
+    WTSOutgoingFrames,
+    WTSClientInfo,
+    WTSSessionInfo,
+    WTSSessionInfoEx,
+    WTSConfigInfo,
+    WTSValidationInfo,
+    WTSSessionAddressV4,
+    WTSIsRemoteSession
 } WTS_INFO_CLASS;
 
 typedef enum _WTS_CONNECTSTATE_CLASS
@@ -168,6 +181,51 @@ typedef struct _WTS_SERVER_INFOW
 
 DECL_WINELIB_TYPE_AW(WTS_SERVER_INFO)
 DECL_WINELIB_TYPE_AW(PWTS_SERVER_INFO)
+
+#define WINSTATIONNAME_LENGTH 32
+#define USERNAME_LENGTH 20
+#define DOMAIN_LENGTH 17
+
+typedef struct _WTSINFOA {
+  WTS_CONNECTSTATE_CLASS State;
+  DWORD                  SessionId;
+  DWORD                  IncomingBytes;
+  DWORD                  OutgoingBytes;
+  DWORD                  IncomingFrames;
+  DWORD                  OutgoingFrames;
+  DWORD                  IncomingCompressedBytes;
+  DWORD                  OutgoingCompressedBytes;
+  CHAR                   WinStationName[WINSTATIONNAME_LENGTH];
+  CHAR                   Domain[DOMAIN_LENGTH];
+  CHAR                   UserName[USERNAME_LENGTH + 1];
+  LARGE_INTEGER          ConnectTime;
+  LARGE_INTEGER          DisconnectTime;
+  LARGE_INTEGER          LastInputTime;
+  LARGE_INTEGER          LogonTime;
+  LARGE_INTEGER          CurrentTime;
+} WTSINFOA, *PWTSINFOA;
+
+typedef struct _WTSINFOW {
+  WTS_CONNECTSTATE_CLASS State;
+  DWORD                  SessionId;
+  DWORD                  IncomingBytes;
+  DWORD                  OutgoingBytes;
+  DWORD                  IncomingFrames;
+  DWORD                  OutgoingFrames;
+  DWORD                  IncomingCompressedBytes;
+  DWORD                  OutgoingCompressedBytes;
+  WCHAR                  WinStationName[WINSTATIONNAME_LENGTH];
+  WCHAR                  Domain[DOMAIN_LENGTH];
+  WCHAR                  UserName[USERNAME_LENGTH + 1];
+  LARGE_INTEGER          ConnectTime;
+  LARGE_INTEGER          DisconnectTime;
+  LARGE_INTEGER          LastInputTime;
+  LARGE_INTEGER          LogonTime;
+  LARGE_INTEGER          CurrentTime;
+} WTSINFOW, *PWTSINFOW;
+
+DECL_WINELIB_TYPE_AW(WTSINFO)
+DECL_WINELIB_TYPE_AW(PWTSINFO)
 
 #define WTS_CURRENT_SERVER_HANDLE ((HANDLE)NULL)
 #define WTS_CURRENT_SESSION (~0u)

@@ -459,10 +459,12 @@ static void test_snprintf (void)
     const int bufsiz = sizeof buffer;
     unsigned int i;
 
+    int (__cdecl *p_snprintf)(char*,size_t,const char*,...) = _snprintf;
+
     for (i = 0; i < ARRAY_SIZE(tests); i++) {
         const char *fmt  = tests[i].format;
         const int expect = tests[i].expected;
-        const int n      = _snprintf (buffer, bufsiz, fmt);
+        const int n      = p_snprintf(buffer, bufsiz, fmt);
         const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         ok (n == expect, "\"%s\": expected %d, returned %d\n",

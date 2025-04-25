@@ -18,11 +18,12 @@ winedbg \- Wine debugger
 .B winedbg
 is a debugger for Wine. It allows:
 .RS 4
-.nf
-+ debugging native Win32 applications
-+ debugging Winelib applications
-+ being a drop-in replacement for Dr Watson
-.fi
+
+- debugging native Win32 applications
+.br
+- debugging Winelib applications
+.br
+- being a drop-in replacement for Dr Watson
 .RE
 .PP
 
@@ -78,14 +79,12 @@ and an instance of \fBgdb\fR for the front end.  This option instructs
 \fBwinedbg\fR to skip launching of \fBgdb\fR, and instead prints
 the GDB command that can be used to manually connect to the server.
 This command is in the form
+.RS
 .IP
-.in +4n
-.EX
 target remote localhost:\fI<port>\fR
-.EE
-.in
-.IP
+.PP
 where \fI<port>\fR is the TCP port \fBwinedbg\fR's proxy debugging server is bound to.
+.RE
 .IP
 This option allows the user to replace \fBgdb\fR with some other
 debugger front end, such as \fBddd\fR, \fBkgdb\fR, \fBgdbgui\fR, or Qt Creator.
@@ -142,10 +141,10 @@ IDs can be obtained using the \fBinfo\ process\fR command.  Note the
 Reload the state of a debuggee from the minidump \fIfile.mdmp\fR.
 See the \fBminidump\fR command to save such a file.
 .IP \fBdetach\fR
-Detach the current Wine-process. The process is no longer debugged by WineDbg,
+Detach the current Wine process. The process is no longer debugged by WineDbg,
 but is still running (for a live target).
 .IP \fBkill\fR
-Kills the current Wine-process. The process is no longer debugged by WineDbg,
+Kills the current Wine process. The process is no longer debugged by WineDbg,
 and is also terminated (for a live target).
 .IP \fBminidump\fR\ \fIfile.mdmp\fR
 Saves the debugging context of the debuggee into a minidump file called
@@ -326,23 +325,23 @@ Prints the C type of expression \fIexpr\fR
 is either \fIletter\fR or \fIcount letter\fR, where \fIletter\fR
 can be:
 .RS 4
-.IP s
+.IP \fBs\fR
 an ASCII string
-.IP u
+.IP \fBu\fR
 a UTF16 Unicode string
-.IP i
+.IP \fBi\fR
 instructions (disassemble)
-.IP x
+.IP \fBx\fR
 32-bit unsigned hexadecimal integer
-.IP d
+.IP \fBd\fR
 32-bit signed decimal integer
-.IP w
+.IP \fBw\fR
 16-bit unsigned hexadecimal integer
-.IP c
+.IP \fBc\fR
 character (only printable 0x20-0x7f are actually printed)
-.IP b
+.IP \fBb\fR
 8-bit unsigned hexadecimal integer
-.IP g
+.IP \fBg\fR
 Win32 GUID
 .RE
 .PP

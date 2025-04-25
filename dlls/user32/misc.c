@@ -485,6 +485,29 @@ BOOL WINAPI RegisterTouchHitTestingWindow(HWND hwnd, ULONG value)
 }
 
 /**********************************************************************
+ * EvaluateProximityToRect [USER32.@]
+ */
+BOOL WINAPI EvaluateProximityToRect(const RECT *box,
+                                    const TOUCH_HIT_TESTING_INPUT *input,
+                                    TOUCH_HIT_TESTING_PROXIMITY_EVALUATION *proximity)
+{
+    FIXME("(%p,%p,%p): stub\n", box, input, proximity);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/**********************************************************************
+ * PackTouchHitTestingProximityEvaluation [USER32.@]
+ */
+LRESULT WINAPI PackTouchHitTestingProximityEvaluation(const TOUCH_HIT_TESTING_INPUT *input,
+                                                      const TOUCH_HIT_TESTING_PROXIMITY_EVALUATION *proximity)
+{
+    FIXME("(%p,%p): stub\n", input, proximity);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/**********************************************************************
  * GetPointerType [USER32.@]
  */
 BOOL WINAPI GetPointerType(UINT32 id, POINTER_INPUT_TYPE *type)

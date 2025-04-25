@@ -7,4 +7,5 @@ SOURCES = \
 	propertyset.c \
 	classes.idl \
 	datareader.c \
+	streams.c \
 	main.c

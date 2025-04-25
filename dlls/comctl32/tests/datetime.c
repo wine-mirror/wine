@@ -35,9 +35,60 @@ static BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a datetime control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, DATETIMEPICK_CLASSA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, DATETIME_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
+static const struct message test_dtm_set_format_v6_seq[] = {
+    { DTM_SETFORMATA, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, CHILDID_SELF },
+    { DTM_SETFORMATA, sent|wparam, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, CHILDID_SELF },
+    { 0 }
+};
+
 static const struct message test_dtm_set_format_seq[] = {
     { DTM_SETFORMATA, sent|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, CHILDID_SELF }, /* Sent on Wine only */
     { DTM_SETFORMATA, sent|wparam, 0 },
+    { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, CHILDID_SELF }, /* Sent on Wine only */
     { 0 }
 };
 
@@ -181,7 +232,7 @@ static HWND create_datetime_control(DWORD style)
     return hWndDateTime;
 }
 
-static void test_dtm_set_format(void)
+static void test_dtm_set_format(BOOL comctl_v6)
 {
     HWND hWnd;
     CHAR txt[256];
@@ -199,7 +250,10 @@ static void test_dtm_set_format(void)
 		    (LPARAM)"'Today is: 'hh':'m':'s dddd MMM dd', 'yyyy");
     expect(1, r);
 
-    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_seq, "test_dtm_set_format", FALSE);
+    if (comctl_v6)
+        ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_v6_seq, "test_dtm_set_format_v6", FALSE);
+    else
+        ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_seq, "test_dtm_set_format", FALSE);
 
     r = SendMessageA(hWnd, DTM_SETFORMATA, 0, (LPARAM)"'hh' hh");
     expect(1, r);
@@ -859,7 +913,9 @@ START_TEST(datetime)
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
-    test_dtm_set_format();
+    init_winevent_hook();
+
+    test_dtm_set_format(FALSE);
     test_dtm_set_and_get_mccolor();
     test_dtm_set_and_get_mcfont();
     test_dtm_get_monthcal();
@@ -873,13 +929,15 @@ START_TEST(datetime)
     if (!load_v6_module(&cookie, &ctxt))
         return;
 
-    test_dtm_set_format();
+    test_dtm_set_format(TRUE);
     test_dtm_set_and_get_mccolor();
     test_dtm_set_and_get_mcfont();
     test_dtm_get_monthcal();
     test_dtm_get_ideal_size();
     test_wm_set_get_text();
     test_dts_shownone();
+
+    uninit_winevent_hook();
 
     unload_v6_module(cookie, ctxt);
 }

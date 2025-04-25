@@ -114,6 +114,7 @@ struct ddraw
     /* D3D things */
     HWND                    d3d_window;
     struct list             d3ddevice_list;
+    struct d3d_device      *device_last_applied_state;
     int                     d3dversion;
 
     /* Various HWNDs */
@@ -308,6 +309,7 @@ void ddraw_handle_table_destroy(struct ddraw_handle_table *t);
 DWORD ddraw_allocate_handle(struct ddraw_handle_table *t, void *object, enum ddraw_handle_type type);
 void *ddraw_free_handle(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type);
 void *ddraw_get_object(struct ddraw_handle_table *t, DWORD handle, enum ddraw_handle_type type);
+extern struct ddraw_handle_table global_handle_table;
 
 struct d3d_device
 {
@@ -710,6 +712,7 @@ static inline struct wined3d_texture *ddraw_surface_get_any_texture(struct ddraw
 }
 
 void d3d_device_sync_surfaces(struct d3d_device *device);
+void d3d_device_apply_state(struct d3d_device *device, BOOL clear_state);
 
 /* Used for generic dumping */
 struct flag_info

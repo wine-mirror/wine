@@ -8847,6 +8847,7 @@ static const BYTE ocsp_basic_signed_response_with_cert[] =
 static void test_decodeOCSPBasicSignedResponseInfo(DWORD dwEncoding)
 {
     OCSP_BASIC_SIGNED_RESPONSE_INFO *info;
+    OCSP_BASIC_RESPONSE_INFO *b;
     DWORD size;
     BOOL ret;
 
@@ -8875,12 +8876,25 @@ static void test_decodeOCSPBasicSignedResponseInfo(DWORD dwEncoding)
 
     ok(!info->SignatureInfo.cCertEncoded, "got %lu\n", info->SignatureInfo.cCertEncoded);
     ok(!info->SignatureInfo.rgCertEncoded, "got %p\n", info->SignatureInfo.rgCertEncoded);
+
+
+    ret = CryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, info->ToBeSigned.pbData, info->ToBeSigned.cbData,
+                             CRYPT_DECODE_ALLOC_FLAG, NULL, &b, &size);
+    ok(ret, "got %08lx\n", GetLastError());
+    ok(!b->cExtension, "got %lu.\n", b->cExtension);
+    LocalFree(b);
     LocalFree(info);
 
     size = 0;
     ret = CryptDecodeObjectEx(dwEncoding, OCSP_BASIC_SIGNED_RESPONSE, ocsp_basic_signed_response_with_cert,
                                sizeof(ocsp_basic_signed_response_with_cert), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
     ok(ret, "got %08lx\n", GetLastError());
+
+    ret = CryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, info->ToBeSigned.pbData, info->ToBeSigned.cbData,
+                             CRYPT_DECODE_ALLOC_FLAG, NULL, &b, &size);
+    ok(ret, "got %08lx\n", GetLastError());
+    ok(b->cExtension == 1, "got %lu.\n", b->cExtension);
+    LocalFree(b);
     LocalFree(info);
 }
 

@@ -51,6 +51,7 @@
     + (NSView*) dummyView
     {
         static NSWindow* dummyWindow;
+        static NSView* dummyWindowContentView;
         static dispatch_once_t once;
 
         dispatch_once(&once, ^{
@@ -59,10 +60,11 @@
                                                           styleMask:NSWindowStyleMaskBorderless
                                                             backing:NSBackingStoreBuffered
                                                               defer:NO];
+                dummyWindowContentView = dummyWindow.contentView;
             });
         });
 
-        return dummyWindow.contentView;
+        return dummyWindowContentView;
     }
 
     // Normally, we take care that disconnecting a context from a view doesn't

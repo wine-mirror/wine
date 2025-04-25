@@ -11,9 +11,11 @@ SOURCES = \
 	context_gl.c \
 	context_vk.c \
 	cs.c \
+	decoder.c \
 	device.c \
 	directx.c \
 	ffp_gl.c \
+	ffp_hlsl.c \
 	gl_compat.c \
 	glsl_shader.c \
 	palette.c \

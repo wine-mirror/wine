@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-03 11:22+0300\n"
+"PO-Revision-Date: 2025-02-04 09:30+0100\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.5\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -26,10 +26,8 @@ msgid "&Group or user names:"
 msgstr "По&льзователь:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "Жёлтый"
+msgstr "Разрешить"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
@@ -173,16 +171,17 @@ msgid ""
 "install it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> for "
-"details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> for details."
 msgstr ""
 "Wine не может найти пакет Gecko, который необходим для корректной работы "
 "приложений с поддержкой HTML. Wine может автоматически загрузить и "
 "установить его.\n"
 "\n"
 "Примечание: рекомендуется использовать пакет, предоставляемый вашим "
-"дистрибутивом. Посетите <a href=\"https://wiki.winehq.org/Gecko\">https://"
-"wiki.winehq.org/Gecko</a> для получения более подробной информации."
+"дистрибутивом. Посетите <a href=\"https://gitlab.winehq.org/wine/wine/-/"
+"wikis/Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> для "
+"получения более подробной информации."
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 msgid "&Install"
@@ -242,16 +241,17 @@ msgid ""
 "it for you.\n"
 "\n"
 "Note: it is recommended to use your distribution's packages instead. See <a "
-"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> for "
-"details."
+"href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono\">https://"
+"gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a> for details."
 msgstr ""
 "Wine не может найти пакет wine-mono, который необходим для корректной "
 "работы .NET приложений. Wine может автоматически загрузить и установить "
 "его.\n"
 "\n"
 "Примечание: рекомендуется использовать пакет, предоставляемый вашим "
-"дистрибутивом. Посетите <a href=\"https://wiki.winehq.org/Mono\">https://"
-"wiki.winehq.org/Mono</a> для получения более подробной информации."
+"дистрибутивом. Посетите <a href=\"https://gitlab.winehq.org/wine/wine/-/"
+"wikis/Wine-Mono\">https://gitlab.winehq.org/wine/wine/-/wikis/Wine-Mono</a> "
+"для получения более подробной информации."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -416,6 +416,7 @@ msgid "Properties for %s"
 msgstr "Свойства %s"
 
 #: dlls/comctl32/comctl32.rc:73 dlls/comdlg32/comdlg32.rc:265
+#: dlls/desk.cpl/desk.rc:41
 msgid "&Apply"
 msgstr "При&менить"
 
@@ -535,7 +536,7 @@ msgstr "Показать подробности"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
 #: programs/regedit/regedit.rc:291 programs/taskmgr/taskmgr.rc:434
-#: programs/winedbg/winedbg.rc:61 programs/winedbg/winedbg.rc:76
+#: programs/winedbg/winedbg.rc:62 programs/winedbg/winedbg.rc:77
 #: programs/wordpad/wordpad.rc:180
 msgid "Close"
 msgstr "Закрыть"
@@ -586,7 +587,7 @@ msgstr "Сохранить как"
 
 #: dlls/comdlg32/comdlg32.rc:202 dlls/comdlg32/comdlg32.rc:211
 #: dlls/comdlg32/comdlg32.rc:358 dlls/comdlg32/comdlg32.rc:55
-#: dlls/hhctrl.ocx/hhctrl.rc:49 programs/wordpad/wordpad.rc:173
+#: dlls/hhctrl.ocx/hhctrl.rc:51 programs/wordpad/wordpad.rc:173
 msgid "Print"
 msgstr "Печать"
 
@@ -725,6 +726,7 @@ msgid "Scr&ipt:"
 msgstr "На&бор символов:"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
+#: dlls/compstui/compstui.rc:33
 msgid "Color"
 msgstr "Выбор цвета"
 
@@ -1342,16 +1344,49 @@ msgstr "мм"
 msgid "Properties"
 msgstr "Сво&йства"
 
-#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
+#: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:52
 #: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
 msgid "Options"
 msgstr "Настройки"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
 msgstr "По умолчанию"
+
+#: dlls/compstui/compstui.rc:35
+#, fuzzy
+#| msgid "&Copy Background"
+msgid "&Copy count"
+msgstr "&Копировать фон"
+
+#: dlls/compstui/compstui.rc:36
+msgid "Print on Both Sides"
+msgstr "Печатать на обеих сторонах"
+
+#: dlls/compstui/compstui.rc:32
+#, fuzzy
+#| msgid "C&olor:"
+msgid "C&olor"
+msgstr "Цвет:"
+
+#: dlls/compstui/compstui.rc:34
+msgid "Bla&ck && White"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:37
+#, fuzzy
+#| msgctxt "hotkey"
+#| msgid "None"
+msgid "&None"
+msgstr "Нет"
+
+#: dlls/compstui/compstui.rc:38 dlls/compstui/compstui.rc:41
+msgid "Flip on Shor&t Edge"
+msgstr ""
+
+#: dlls/compstui/compstui.rc:39 dlls/compstui/compstui.rc:40
+msgid "Flip on Long E&dge"
+msgstr ""
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
@@ -3162,6 +3197,34 @@ msgstr "Выберите сертификат"
 msgid "Not yet implemented"
 msgstr "Ещё не реализовано"
 
+#: dlls/desk.cpl/desk.rc:35
+msgid "Desktop"
+msgstr "Рабочий стол"
+
+#: dlls/desk.cpl/desk.rc:38
+msgid "Virtual Desktop"
+msgstr "Виртуальный рабочий стол"
+
+#: dlls/desk.cpl/desk.rc:40 dlls/joy.cpl/joy.rc:41
+#, fuzzy
+#| msgid "Reset"
+msgid "&Reset"
+msgstr "Сброс"
+
+#: dlls/desk.cpl/desk.rc:42
+msgid "Emulate display mode changes (requires restart)"
+msgstr ""
+
+#: dlls/desk.cpl/desk.rc:29
+#, fuzzy
+#| msgid "Default Settings"
+msgid "Display Settings"
+msgstr "Установки по умолчанию"
+
+#: dlls/desk.cpl/desk.rc:30
+msgid "Configure monitors and display devices."
+msgstr ""
+
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
 msgstr "Настроить устройства"
@@ -3319,60 +3382,60 @@ msgstr "Подключение к камере"
 msgid "Connecting to camera... Please Wait"
 msgstr "Подключение к камере... Ждите"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:59
+#: dlls/hhctrl.ocx/hhctrl.rc:61
 msgid "S&ync"
 msgstr "С&инхронизировать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:60 dlls/hhctrl.ocx/hhctrl.rc:73
+#: dlls/hhctrl.ocx/hhctrl.rc:62 dlls/hhctrl.ocx/hhctrl.rc:75
 #: dlls/shdoclc/shdoclc.rc:41 programs/winhlp32/winhlp32.rc:89
 msgid "&Back"
 msgstr "&Назад"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:61 dlls/hhctrl.ocx/hhctrl.rc:74
+#: dlls/hhctrl.ocx/hhctrl.rc:63 dlls/hhctrl.ocx/hhctrl.rc:76
 msgid "&Forward"
 msgstr "&Вперёд"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:62
+#: dlls/hhctrl.ocx/hhctrl.rc:64
 msgctxt "table of contents"
 msgid "&Home"
 msgstr "&Начало"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:63
+#: dlls/hhctrl.ocx/hhctrl.rc:65
 msgid "&Stop"
 msgstr "Останов&ить"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:64 dlls/hhctrl.ocx/hhctrl.rc:81
+#: dlls/hhctrl.ocx/hhctrl.rc:66 dlls/hhctrl.ocx/hhctrl.rc:83
 #: dlls/oledb32/version.rc:73 dlls/shdoclc/shdoclc.rc:59
 msgid "&Refresh"
 msgstr "О&бновить"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:65 dlls/hhctrl.ocx/hhctrl.rc:80
+#: dlls/hhctrl.ocx/hhctrl.rc:67 dlls/hhctrl.ocx/hhctrl.rc:82
 #: programs/winhlp32/winhlp32.rc:34
 msgid "&Print..."
 msgstr "&Печатать..."
 
-#: dlls/hhctrl.ocx/hhctrl.rc:76 dlls/hhctrl.ocx/hhctrl.rc:90
+#: dlls/hhctrl.ocx/hhctrl.rc:78 dlls/hhctrl.ocx/hhctrl.rc:92
 #: dlls/shdoclc/shdoclc.rc:49 dlls/shdoclc/shdoclc.rc:98
 #: dlls/shdoclc/shdoclc.rc:120 dlls/user32/user32.rc:65
 msgid "Select &All"
 msgstr "Выделить в&сё"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:78 dlls/shdoclc/shdoclc.rc:54
+#: dlls/hhctrl.ocx/hhctrl.rc:80 dlls/shdoclc/shdoclc.rc:54
 msgid "&View Source"
 msgstr "&Открыть исходный текст"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:83
+#: dlls/hhctrl.ocx/hhctrl.rc:85
 msgid "Proper&ties"
 msgstr "Сво&йства"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:87 dlls/shdoclc/shdoclc.rc:79
+#: dlls/hhctrl.ocx/hhctrl.rc:89 dlls/shdoclc/shdoclc.rc:79
 #: dlls/shdoclc/shdoclc.rc:93 dlls/shdoclc/shdoclc.rc:117
 #: dlls/shdoclc/shdoclc.rc:159 dlls/shdoclc/shdoclc.rc:183
 #: dlls/user32/user32.rc:60 programs/wordpad/wordpad.rc:112
 msgid "Cu&t"
 msgstr "&Вырезать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:88 dlls/shdoclc/shdoclc.rc:80
+#: dlls/hhctrl.ocx/hhctrl.rc:90 dlls/shdoclc/shdoclc.rc:80
 #: dlls/shdoclc/shdoclc.rc:94 dlls/shdoclc/shdoclc.rc:118
 #: dlls/shdoclc/shdoclc.rc:133 dlls/shdoclc/shdoclc.rc:160
 #: dlls/shdoclc/shdoclc.rc:184 dlls/shell32/shell32.rc:98
@@ -3381,12 +3444,12 @@ msgstr "&Вырезать"
 msgid "&Copy"
 msgstr "&Копировать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:89 dlls/shdoclc/shdoclc.rc:119
+#: dlls/hhctrl.ocx/hhctrl.rc:91 dlls/shdoclc/shdoclc.rc:119
 #: dlls/shell32/shell32.rc:64
 msgid "Paste"
 msgstr "&Вставить"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:91 dlls/shdoclc/shdoclc.rc:121
+#: dlls/hhctrl.ocx/hhctrl.rc:93 dlls/shdoclc/shdoclc.rc:121
 #: dlls/shell32/shell32.rc:166
 msgid "&Print"
 msgstr "&Печать"
@@ -3415,38 +3478,44 @@ msgstr "Скрыть &вкладки"
 msgid "Show &Tabs"
 msgstr "Показать &вкладки"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:42
+#: dlls/hhctrl.ocx/hhctrl.rc:39
+#, fuzzy
+#| msgid "Select Source"
+msgid "Select Topic"
+msgstr "Выберите источник"
+
+#: dlls/hhctrl.ocx/hhctrl.rc:44
 msgid "Show"
 msgstr "Показать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:43 dlls/winemac.drv/winemac.rc:34
+#: dlls/hhctrl.ocx/hhctrl.rc:45 dlls/winemac.drv/winemac.rc:34
 msgid "Hide"
 msgstr "Спрятать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:44 dlls/ieframe/ieframe.rc:68
+#: dlls/hhctrl.ocx/hhctrl.rc:46 dlls/ieframe/ieframe.rc:68
 #: dlls/shdoclc/shdoclc.rc:167 dlls/shdoclc/shdoclc.rc:191
 msgid "Stop"
 msgstr "Остановить"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:45 dlls/ieframe/ieframe.rc:69
+#: dlls/hhctrl.ocx/hhctrl.rc:47 dlls/ieframe/ieframe.rc:69
 #: dlls/shell32/shell32.rc:62
 msgid "Refresh"
 msgstr "Обновить"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:46 dlls/ieframe/ieframe.rc:66
+#: dlls/hhctrl.ocx/hhctrl.rc:48 dlls/ieframe/ieframe.rc:66
 msgid "Back"
 msgstr "Назад"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:47
+#: dlls/hhctrl.ocx/hhctrl.rc:49
 msgctxt "table of contents"
 msgid "Home"
 msgstr "Начало"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:48
+#: dlls/hhctrl.ocx/hhctrl.rc:50
 msgid "Sync"
 msgstr "Синхронизировать"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:51 dlls/ieframe/ieframe.rc:67
+#: dlls/hhctrl.ocx/hhctrl.rc:53 dlls/ieframe/ieframe.rc:67
 msgid "Forward"
 msgstr "Вперёд"
 
@@ -3732,10 +3801,8 @@ msgid "High"
 msgstr "Высокий"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "Указатель"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
 #, fuzzy
@@ -3751,65 +3818,63 @@ msgstr "Джойстики"
 msgid "&Disable"
 msgstr "&Отключить"
 
-#: dlls/joy.cpl/joy.rc:41
-#, fuzzy
-#| msgid "Reset"
-msgid "&Reset"
-msgstr "Сброс"
-
 #: dlls/joy.cpl/joy.rc:42
-msgid "&Enable"
-msgstr "&Включить"
-
-#: dlls/joy.cpl/joy.rc:43
 #, fuzzy
 #| msgid "Edit Override"
 msgid "&Override"
 msgstr "Изменить замещение"
 
+#: dlls/joy.cpl/joy.rc:43
+msgid "&Enable"
+msgstr "&Включить"
+
 #: dlls/joy.cpl/joy.rc:44
-msgid "Connected"
-msgstr "Подключено"
+msgid "Connected (DirectInput devices)"
+msgstr "Подключено (устройства DirectInput)"
 
 #: dlls/joy.cpl/joy.rc:46
-msgid "Connected (xinput device)"
-msgstr "Подключено (устройство xinput)"
+msgid "Connected (XInput devices)"
+msgstr "Подключено (устройства XInput)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
 msgstr "Выключено"
 
-#: dlls/joy.cpl/joy.rc:50
-msgid ""
-"After disabling or enabling a device, the connected joysticks won't be "
-"updated here until you restart this applet."
+#: dlls/joy.cpl/joy.rc:51
+msgid "Advanced settings (restart prefix required to take effect)"
 msgstr ""
-"Список подключенных джойстиков не обновляется автоматически при подключении/"
-"отключении устройств, требуется перезапуск этой программы."
 
-#: dlls/joy.cpl/joy.rc:55
+#: dlls/joy.cpl/joy.rc:52
+#, fuzzy
+#| msgid "&Enable"
+msgid "Enable SDL"
+msgstr "&Включить"
+
+#: dlls/joy.cpl/joy.rc:53
+msgid "Disable hidraw"
+msgstr "Отключить hidraw"
+
+#: dlls/joy.cpl/joy.rc:58
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:62
 msgid "Axes"
-msgstr ""
+msgstr "Оси"
 
-#: dlls/joy.cpl/joy.rc:60
+#: dlls/joy.cpl/joy.rc:63
 msgid "POVs"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:61
+#: dlls/joy.cpl/joy.rc:64
 msgid "Buttons"
 msgstr "Кнопки"
 
-#: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
+#: dlls/joy.cpl/joy.rc:65
 msgid "Force Feedback Effect"
-msgstr "Проверить отдачу"
+msgstr "Эффект отдачи"
 
-#: dlls/joy.cpl/joy.rc:64
+#: dlls/joy.cpl/joy.rc:67
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
@@ -3817,60 +3882,60 @@ msgstr ""
 "Нажмите любую кнопку на контроллере, чтобы активировать выбранный эффект. "
 "Направление эффекта может быть изменено с помощью осей контроллера."
 
-#: dlls/joy.cpl/joy.rc:70
-msgid "XInput"
-msgstr ""
-
 #: dlls/joy.cpl/joy.rc:73
+msgid "XInput"
+msgstr "XInput"
+
+#: dlls/joy.cpl/joy.rc:76
 #, fuzzy
 #| msgid "User"
 msgid "User #0"
 msgstr "Имя"
 
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:77
 #, fuzzy
 #| msgid "User"
 msgid "User #1"
 msgstr "Имя"
 
-#: dlls/joy.cpl/joy.rc:75
+#: dlls/joy.cpl/joy.rc:78
 #, fuzzy
 #| msgid "User"
 msgid "User #2"
 msgstr "Имя"
 
-#: dlls/joy.cpl/joy.rc:76
+#: dlls/joy.cpl/joy.rc:79
 #, fuzzy
 #| msgid "User"
 msgid "User #3"
 msgstr "Имя"
 
-#: dlls/joy.cpl/joy.rc:78
+#: dlls/joy.cpl/joy.rc:81
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:82
+#: dlls/joy.cpl/joy.rc:85
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:86
+#: dlls/joy.cpl/joy.rc:89
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:90
+#: dlls/joy.cpl/joy.rc:93
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
-#: dlls/joy.cpl/joy.rc:98
+#: dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99 dlls/joy.cpl/joy.rc:100
+#: dlls/joy.cpl/joy.rc:101
 msgid "Rumble"
 msgstr ""
 
@@ -3914,239 +3979,245 @@ msgstr "Объект не поддерживает это свойство ил�
 msgid "Object doesn't support this action"
 msgstr "Объект не поддерживает это действие"
 
-#: dlls/jscript/jscript.rc:36
+#: dlls/jscript/jscript.rc:36 dlls/vbscript/vbscript.rc:54
 msgid "Argument not optional"
 msgstr "Отсутствует обязательный аргумент"
 
-#: dlls/jscript/jscript.rc:37
+#: dlls/jscript/jscript.rc:37 dlls/vbscript/vbscript.rc:56
+#, fuzzy
+#| msgid "Object Class Violation"
+msgid "Object not a collection"
+msgstr "Нарушение класса объекта"
+
+#: dlls/jscript/jscript.rc:38
 msgid "Syntax error"
 msgstr "Синтаксическая ошибка"
 
-#: dlls/jscript/jscript.rc:38
+#: dlls/jscript/jscript.rc:39
 msgid "Expected ';'"
 msgstr "Ожидается «;»"
 
-#: dlls/jscript/jscript.rc:39
+#: dlls/jscript/jscript.rc:40
 msgid "Expected '('"
 msgstr "Ожидается «(»"
 
-#: dlls/jscript/jscript.rc:40
+#: dlls/jscript/jscript.rc:41
 msgid "Expected ')'"
 msgstr "Ожидается «)»"
 
-#: dlls/jscript/jscript.rc:41
+#: dlls/jscript/jscript.rc:42
 msgid "Expected identifier"
 msgstr "Ожидается идентификатор"
 
-#: dlls/jscript/jscript.rc:42
+#: dlls/jscript/jscript.rc:43
 msgid "Expected '='"
 msgstr "Ожидается «=»"
 
-#: dlls/jscript/jscript.rc:43
+#: dlls/jscript/jscript.rc:44
 msgid "Invalid character"
 msgstr "Неверный символ"
 
-#: dlls/jscript/jscript.rc:44
+#: dlls/jscript/jscript.rc:45
 msgid "Unterminated string constant"
 msgstr "Незавершённая строковая константа"
 
-#: dlls/jscript/jscript.rc:45
+#: dlls/jscript/jscript.rc:46
 msgid "'return' statement outside of function"
 msgstr "Оператор «return» вне функции"
 
-#: dlls/jscript/jscript.rc:46
+#: dlls/jscript/jscript.rc:47
 msgid "Can't have 'break' outside of loop"
 msgstr "Оператор «break» не может находиться вне цикла"
 
-#: dlls/jscript/jscript.rc:47
+#: dlls/jscript/jscript.rc:48
 msgid "Can't have 'continue' outside of loop"
 msgstr "Оператор «continue» не может находиться вне цикла"
 
-#: dlls/jscript/jscript.rc:48
+#: dlls/jscript/jscript.rc:49
 msgid "Label redefined"
 msgstr "Метка переопределена"
 
-#: dlls/jscript/jscript.rc:49
+#: dlls/jscript/jscript.rc:50
 msgid "Label not found"
 msgstr "Метка не найдена"
 
-#: dlls/jscript/jscript.rc:50
+#: dlls/jscript/jscript.rc:51
 msgid "Expected '@end'"
 msgstr "Ожидается «@end»"
 
-#: dlls/jscript/jscript.rc:51
+#: dlls/jscript/jscript.rc:52
 msgid "Conditional compilation is turned off"
 msgstr "Условная компиляция отключена"
 
-#: dlls/jscript/jscript.rc:52
+#: dlls/jscript/jscript.rc:53
 msgid "Expected '@'"
 msgstr "Ожидается «@»"
 
-#: dlls/jscript/jscript.rc:89
+#: dlls/jscript/jscript.rc:90
 msgid "Microsoft JScript compilation error"
 msgstr "Ошибка компиляции Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:90
+#: dlls/jscript/jscript.rc:91
 msgid "Microsoft JScript runtime error"
 msgstr "Ошибка выполнения Microsoft JScript"
 
-#: dlls/jscript/jscript.rc:91 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:92 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Неизвестная ошибка времени выполнения"
 
-#: dlls/jscript/jscript.rc:55
+#: dlls/jscript/jscript.rc:56
 msgid "Number expected"
 msgstr "Ожидается число"
 
-#: dlls/jscript/jscript.rc:53
+#: dlls/jscript/jscript.rc:54
 msgid "Function expected"
 msgstr "Ожидается функция"
 
-#: dlls/jscript/jscript.rc:54
+#: dlls/jscript/jscript.rc:55
 msgid "'[object]' is not a date object"
 msgstr "«[object]» не объект типа «date»"
 
-#: dlls/jscript/jscript.rc:56
+#: dlls/jscript/jscript.rc:57
 msgid "Object expected"
 msgstr "Ожидается объект"
 
-#: dlls/jscript/jscript.rc:57
+#: dlls/jscript/jscript.rc:58
 msgid "Illegal assignment"
 msgstr "Неверное присваивание"
 
-#: dlls/jscript/jscript.rc:58
+#: dlls/jscript/jscript.rc:59
 msgid "'|' is undefined"
 msgstr "«|» не определён"
 
-#: dlls/jscript/jscript.rc:59
+#: dlls/jscript/jscript.rc:60
 msgid "Boolean object expected"
 msgstr "Ожидается объект типа «bool»"
 
-#: dlls/jscript/jscript.rc:60
+#: dlls/jscript/jscript.rc:61
 msgid "Cannot delete '|'"
 msgstr "Невозможно удалить «|»"
 
-#: dlls/jscript/jscript.rc:61
+#: dlls/jscript/jscript.rc:62
 msgid "VBArray object expected"
 msgstr "Ожидается объект типа «VBArray»"
 
-#: dlls/jscript/jscript.rc:62
+#: dlls/jscript/jscript.rc:63
 msgid "JScript object expected"
 msgstr "Ожидается объект типа «JScript»"
 
-#: dlls/jscript/jscript.rc:63
+#: dlls/jscript/jscript.rc:64
 #, fuzzy
 #| msgid "Array object expected"
 msgid "Enumerator object expected"
 msgstr "Ожидается объект типа «Array»"
 
-#: dlls/jscript/jscript.rc:64
+#: dlls/jscript/jscript.rc:65
 #, fuzzy
 #| msgid "Boolean object expected"
 msgid "Regular Expression object expected"
 msgstr "Ожидается объект типа «bool»"
 
-#: dlls/jscript/jscript.rc:65
+#: dlls/jscript/jscript.rc:66
 msgid "Syntax error in regular expression"
 msgstr "Синтаксическая ошибка в регулярном выражении"
 
-#: dlls/jscript/jscript.rc:66
+#: dlls/jscript/jscript.rc:67
 #, fuzzy
 #| msgid "Expected identifier"
 msgid "Unexpected quantifier"
 msgstr "Ожидается идентификатор"
 
-#: dlls/jscript/jscript.rc:67
+#: dlls/jscript/jscript.rc:68
 msgid "Exception thrown and not caught"
-msgstr ""
+msgstr "Исключение создано, но не перехвачено"
 
-#: dlls/jscript/jscript.rc:69
+#: dlls/jscript/jscript.rc:70
 msgid "URI to be encoded contains invalid characters"
 msgstr "В кодируемом URI обнаружен неверный символ"
 
-#: dlls/jscript/jscript.rc:68
+#: dlls/jscript/jscript.rc:69
 msgid "URI to be decoded is incorrect"
 msgstr "Декодируемый URI неверен"
 
-#: dlls/jscript/jscript.rc:70
+#: dlls/jscript/jscript.rc:71
 msgid "Number of fraction digits is out of range"
 msgstr "Количество знаков после запятой вне диапазона"
 
-#: dlls/jscript/jscript.rc:71
+#: dlls/jscript/jscript.rc:72
 msgid "Precision is out of range"
 msgstr "Точность представления вне диапазона"
 
-#: dlls/jscript/jscript.rc:72
+#: dlls/jscript/jscript.rc:73
 msgid "Array length must be a finite positive integer"
 msgstr "Длиной массива должно быть конечное положительное число"
 
-#: dlls/jscript/jscript.rc:73
+#: dlls/jscript/jscript.rc:74
 msgid "Array object expected"
 msgstr "Ожидается объект типа «Array»"
 
-#: dlls/jscript/jscript.rc:74
+#: dlls/jscript/jscript.rc:75
 msgid ""
 "'writable' attribute on the property descriptor cannot be set to 'true' on "
 "this object"
 msgstr "Невозможно установить атрибут «writable» в «true» для этого объекта"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:76
 msgid "Cyclic __proto__ value"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:76
-msgid "Cannot create property for a non-extensible object"
-msgstr ""
-
 #: dlls/jscript/jscript.rc:77
+msgid "Cannot create property for a non-extensible object"
+msgstr "Невозможно создать для нерасширяемого объекта"
+
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot define property '|': object is not extensible"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:79
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Невозможно переопределить ненастраиваемое свойство «|»"
 
-#: dlls/jscript/jscript.rc:79
+#: dlls/jscript/jscript.rc:80
 msgid "Cannot modify non-writable property '|'"
 msgstr "Невозможно изменить свойство «|»"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:81
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'this' is not a DataView object"
 msgstr "«this» не объект типа «Map»"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:82
 msgid "Required argument offset or value in DataView method is not specified"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:82
+#: dlls/jscript/jscript.rc:83
 msgid "DataView operation access beyond specified buffer length"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:83
+#: dlls/jscript/jscript.rc:84
 msgid "DataView constructor argument offset is invalid"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:84
+#: dlls/jscript/jscript.rc:85
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
 msgstr "«this» не объект типа «Map»"
 
-#: dlls/jscript/jscript.rc:85
+#: dlls/jscript/jscript.rc:86
 #, fuzzy
 #| msgid "'this' is not a Map object"
 msgid "'key' is not an object"
 msgstr "«this» не объект типа «Map»"
 
-#: dlls/jscript/jscript.rc:86
+#: dlls/jscript/jscript.rc:87
 #, fuzzy
 #| msgid "Array object expected"
 msgid "ArrayBuffer object expected"
 msgstr "Ожидается объект типа «Array»"
 
-#: dlls/jscript/jscript.rc:87
+#: dlls/jscript/jscript.rc:88
 msgid "Property cannot have both accessors and a value"
 msgstr "Свойство не может одновременно иметь методы для доступа и значение"
 
@@ -7153,32 +7224,24 @@ msgid "This network connection does not exist.\n"
 msgstr "Указанное сетевое соединение не существует.\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Нельзя обратиться к семафору во время обработки прерывания.\n"
+msgstr "Вызов прерван.\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Неверный дескриптор.\n"
+msgstr "Неверный файловый дескриптор.\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Неверный сетевой адрес.\n"
+msgstr "Неверный адрес указателя.\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Неверное имя.\n"
+msgstr "Неверный аргумент.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Cannot assign requested address.\n"
-msgstr ""
+msgstr "Не удалось задать указанный адрес.\n"
 
 #: dlls/kernelbase/winerror.mc:3783
 msgid "Connection reset by peer.\n"
@@ -7383,7 +7446,7 @@ msgstr "Конверт"
 
 #: dlls/localspl/localspl.rc:73
 msgid "Envelope Monarch"
-msgstr ""
+msgstr "Конверт Monarch"
 
 #: dlls/localspl/localspl.rc:74
 msgid "6 3/4 Envelope"
@@ -8194,7 +8257,7 @@ msgstr "Вся сеть"
 msgid "Sound Selection"
 msgstr "Выбор звука"
 
-#: dlls/msacm32/msacm32.rc:39 programs/winedbg/winedbg.rc:77
+#: dlls/msacm32/msacm32.rc:39 programs/winedbg/winedbg.rc:78
 msgid "&Save As..."
 msgstr "&Сохранить как..."
 
@@ -9273,7 +9336,7 @@ msgstr "Выберите формат для подключения:"
 
 #: dlls/oledb32/version.rc:70
 msgid "1. Specify the source of data:"
-msgstr ""
+msgstr "1. Укажите источник данных:"
 
 #: dlls/oledb32/version.rc:71
 #, fuzzy
@@ -9297,7 +9360,7 @@ msgstr "&Добавить..."
 
 #: dlls/oledb32/version.rc:78
 msgid "2. Enter information to log on to the server"
-msgstr ""
+msgstr "2. Введите информация для доступа к серверу"
 
 #: dlls/oledb32/version.rc:79
 msgid "User &name:"
@@ -9313,7 +9376,7 @@ msgstr "Разрешить &сохранять пароль"
 
 #: dlls/oledb32/version.rc:85
 msgid "3. Enter the &initial catalog to use:"
-msgstr ""
+msgstr "3. Укажите &начальный каталог:"
 
 #: dlls/oledb32/version.rc:87
 msgid "&Test Connection"
@@ -9362,10 +9425,8 @@ msgid ""
 msgstr ""
 
 #: dlls/oledb32/version.rc:115
-#, fuzzy
-#| msgid "&Edit..."
 msgid "&Edit Value..."
-msgstr "&Изменить..."
+msgstr "&Изменить знаяение..."
 
 #: dlls/oledb32/version.rc:49
 #, fuzzy
@@ -10224,7 +10285,8 @@ msgctxt "display name"
 msgid "Desktop"
 msgstr "Рабочий стол"
 
-#: dlls/shell32/shell32.rc:152 programs/regedit/regedit.rc:243
+#: dlls/shell32/shell32.rc:152 dlls/urlmon/urlmon.rc:56
+#: programs/regedit/regedit.rc:243
 msgid "My Computer"
 msgstr "Мой компьютер"
 
@@ -10234,7 +10296,7 @@ msgstr "Панель Управления"
 
 #: dlls/shell32/shell32.rc:162
 msgid "Ne&w"
-msgstr ""
+msgstr "&Новый"
 
 #: dlls/shell32/shell32.rc:164
 msgid "E&xplore"
@@ -10242,7 +10304,7 @@ msgstr "&Проводник"
 
 #: dlls/shell32/shell32.rc:167
 msgid "Run as &Administrator"
-msgstr ""
+msgstr "Выполнить от имени &Администратора"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Restart"
@@ -10656,24 +10718,18 @@ msgid "(UTC+05:45) Kathmandu"
 msgstr "(UTC+05:45) Катманду"
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Taipei Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
-msgstr "Тайбэйское стандартное время"
+msgstr "Кабо-Верде стандартное время"
 
 #: dlls/tzres/tzres.rc:73
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Taipei Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
-msgstr "Тайбэйское летнее время"
+msgstr "Кабо-Верде летнее время"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Cabo Verde Is."
-msgstr ""
+msgstr "(UTC-01:00) Кабо-Верде о."
 
 #: dlls/tzres/tzres.rc:165
 msgctxt "maximum 31 characters"
@@ -10690,15 +10746,11 @@ msgid "(UTC-05:00) Haiti"
 msgstr "(UTC-05:00) Гаити"
 
 #: dlls/tzres/tzres.rc:93
-#, fuzzy
-#| msgid "Central Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central European Standard Time"
 msgstr "Центральноевропейское стандартное время"
 
 #: dlls/tzres/tzres.rc:94
-#, fuzzy
-#| msgid "Central Europe Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central European Daylight Time"
 msgstr "Центральноевропейское летнее время"
@@ -10745,15 +10797,11 @@ msgid "(UTC+07:00) Barnaul, Gorno-Altaysk"
 msgstr "(UTC+07:00) Барнаул, Горно-Алтайск"
 
 #: dlls/tzres/tzres.rc:90
-#, fuzzy
-#| msgid "Central Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Europe Standard Time"
 msgstr "Центральноевропейское стандартное время"
 
 #: dlls/tzres/tzres.rc:91
-#, fuzzy
-#| msgid "Central Europe Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Europe Daylight Time"
 msgstr "Центральноевропейское летнее время"
@@ -10881,15 +10929,11 @@ msgid "(UTC+02:00) Juba"
 msgstr "(UTC+02:00) Джуба"
 
 #: dlls/tzres/tzres.rc:84
-#, fuzzy
-#| msgid "Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
 msgstr "Центральноазиатское стандартное время"
 
 #: dlls/tzres/tzres.rc:85
-#, fuzzy
-#| msgid "Central Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
 msgstr "Центральноазиатское летнее время"
@@ -10973,7 +11017,7 @@ msgstr "Гренландское летнее время"
 
 #: dlls/tzres/tzres.rc:242
 msgid "(UTC-03:30) Newfoundland"
-msgstr ""
+msgstr "(UTC-03:30) Ньюфаундленд"
 
 #: dlls/tzres/tzres.rc:330
 msgctxt "maximum 31 characters"
@@ -11030,8 +11074,6 @@ msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:51
-#, fuzzy
-#| msgid "Azerbaijan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
 msgstr "Азербайджанское стандартное время"
@@ -11080,8 +11122,6 @@ msgid "(UTC+13:00) Samoa"
 msgstr "(UTC+13:00) Самоа"
 
 #: dlls/tzres/tzres.rc:183
-#, fuzzy
-#| msgid "Kaliningrad Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Kaliningrad Standard Time"
 msgstr "Калининградское стандартное время"
@@ -11116,8 +11156,6 @@ msgid "(UTC-08:00) Baja California"
 msgstr "(UTC-08:00) Нижняя Калифорния"
 
 #: dlls/tzres/tzres.rc:210
-#, fuzzy
-#| msgid "Middle East Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Middle East Standard Time"
 msgstr "Ближневосточное стандартное время"
@@ -11210,7 +11248,7 @@ msgstr "(UTC-06:00) Центральное время (США и Канада)"
 #: dlls/tzres/tzres.rc:285 dlls/tzres/tzres.rc:286
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 3"
-msgstr ""
+msgstr "Россия часовой пояс 3"
 
 #: dlls/tzres/tzres.rc:287
 msgid "(UTC+04:00) Izhevsk, Samara"
@@ -11319,20 +11357,14 @@ msgid "(UTC-09:30) Marquesas Islands"
 msgstr "(UTC-09:30) Маркизские острова"
 
 #: dlls/tzres/tzres.rc:225
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Samoa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Myanmar Standard Time"
-msgstr "Стандартное время Самоа"
+msgstr "Мьянма стандартное время"
 
 #: dlls/tzres/tzres.rc:226
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Samoa Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Myanmar Daylight Time"
-msgstr "Летнее время Самоа"
+msgstr "Мьянма летнее время"
 
 #: dlls/tzres/tzres.rc:227
 msgid "(UTC+06:30) Yangon (Rangoon)"
@@ -11429,11 +11461,9 @@ msgid "Canada Central Standard Time"
 msgstr "Центральное канадское время"
 
 #: dlls/tzres/tzres.rc:70
-#, fuzzy
-#| msgid "Canada Central Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Canada Central Daylight Time"
-msgstr "Центральное канадское летнее время"
+msgstr "Центральная Канада летнее время"
 
 #: dlls/tzres/tzres.rc:71
 msgid "(UTC-06:00) Saskatchewan"
@@ -11468,8 +11498,6 @@ msgid "(UTC+08:00) Taipei"
 msgstr "(UTC+08:00) Тайбэй"
 
 #: dlls/tzres/tzres.rc:408
-#, fuzzy
-#| msgid "W. Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "W. Europe Standard Time"
 msgstr "Западноевропейское стандартное время"
@@ -11540,15 +11568,11 @@ msgid "(UTC+04:00) Yerevan"
 msgstr "(UTC+04:00) Ереван"
 
 #: dlls/tzres/tzres.rc:48
-#, fuzzy
-#| msgid "AUS Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Eastern Standard Time"
 msgstr "Восточноавстралийское стандартное время"
 
 #: dlls/tzres/tzres.rc:49
-#, fuzzy
-#| msgid "AUS Eastern Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "AUS Eastern Daylight Time"
 msgstr "Восточноавстралийское летнее время"
@@ -11610,15 +11634,11 @@ msgid "(UTC+09:00) Chita"
 msgstr "(UTC+09:00) Чита"
 
 #: dlls/tzres/tzres.rc:123
-#, fuzzy
-#| msgid "E. Europe Standard Time"
 msgctxt "maximum 31 characters"
 msgid "E. Europe Standard Time"
 msgstr "Восточноевропейское стандартное время"
 
 #: dlls/tzres/tzres.rc:124
-#, fuzzy
-#| msgid "E. Europe Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "E. Europe Daylight Time"
 msgstr "Восточноевропейское летнее время"
@@ -11628,20 +11648,14 @@ msgid "(UTC+02:00) Chisinau"
 msgstr "(UTC+02:00) Кишинёв"
 
 #: dlls/tzres/tzres.rc:102
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Central Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Standard Time (Mexico)"
-msgstr "Центральное время"
+msgstr "Центральное время (Мексика)"
 
 #: dlls/tzres/tzres.rc:103
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Central Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Daylight Time (Mexico)"
-msgstr "Центральное летнее время"
+msgstr "Центральное летнее время (Мексика)"
 
 #: dlls/tzres/tzres.rc:104
 msgid "(UTC-06:00) Guadalajara, Mexico City, Monterrey"
@@ -11696,18 +11710,14 @@ msgid "(UTC-07:00) Mountain Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:366
-#, fuzzy
-#| msgid "AUS Eastern Standard Time"
 msgctxt "maximum 31 characters"
 msgid "US Eastern Standard Time"
-msgstr "Восточноавстралийское стандартное время"
+msgstr "США восточное время"
 
 #: dlls/tzres/tzres.rc:367
-#, fuzzy
-#| msgid "AUS Eastern Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "US Eastern Daylight Time"
-msgstr "Восточноавстралийское летнее время"
+msgstr "США восточное летнее время"
 
 #: dlls/tzres/tzres.rc:368
 msgid "(UTC-05:00) Indiana (East)"
@@ -11728,8 +11738,6 @@ msgid "(UTC+11:00) Sakhalin"
 msgstr "(UTC+11:00) Сахалин"
 
 #: dlls/tzres/tzres.rc:252
-#, fuzzy
-#| msgid "North Korea Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Korea Standard Time"
 msgstr "Северокорейское стандартное время"
@@ -11758,15 +11766,11 @@ msgid "(UTC+10:00) Hobart"
 msgstr "(UTC+10:00) Хобарт"
 
 #: dlls/tzres/tzres.rc:81
-#, fuzzy
-#| msgid "Central America Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central America Standard Time"
 msgstr "Центральноамериканское стандартное время"
 
 #: dlls/tzres/tzres.rc:82
-#, fuzzy
-#| msgid "Central America Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central America Daylight Time"
 msgstr "Центральноамериканское летнее время"
@@ -11805,8 +11809,6 @@ msgid "(UTC-07:00) Arizona"
 msgstr "(UTC-07:00) Аризона"
 
 #: dlls/tzres/tzres.rc:321
-#, fuzzy
-#| msgid "South Africa Standard Time"
 msgctxt "maximum 31 characters"
 msgid "South Africa Standard Time"
 msgstr "Южноафриканское стандартное время"
@@ -11850,20 +11852,14 @@ msgid "(UTC-09:00) Coordinated Universal Time-09"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:327
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Syria Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Sri Lanka Standard Time"
-msgstr "Сирийское стандартное время"
+msgstr "Шри-Ланка стандартное время"
 
 #: dlls/tzres/tzres.rc:328
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Syria Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Sri Lanka Daylight Time"
-msgstr "Сирийское летнее время"
+msgstr "Шри-Ланка летнее время"
 
 #: dlls/tzres/tzres.rc:329
 msgid "(UTC+05:30) Sri Jayawardenepura"
@@ -12018,8 +12014,6 @@ msgid "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris"
 msgstr "(UTC+01:00) Брюссель, Копенгаген, Мадрид, Париж"
 
 #: dlls/tzres/tzres.rc:141
-#, fuzzy
-#| msgid "Ekaterinburg Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Ekaterinburg Standard Time"
 msgstr "Екатеринбургское стандартное время"
@@ -12036,27 +12030,21 @@ msgstr "(UTC+05:00) Екатеринбург"
 #: dlls/tzres/tzres.rc:282 dlls/tzres/tzres.rc:283
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 11"
-msgstr ""
+msgstr "Россия часовой пояс 11"
 
 #: dlls/tzres/tzres.rc:284
 msgid "(UTC+12:00) Anadyr, Petropavlovsk-Kamchatsky"
 msgstr "(UTC+12:00) Анадырь, Петропавловск-Камчатский"
 
 #: dlls/tzres/tzres.rc:417
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Pakistan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Standard Time"
-msgstr "Пакистанское стандартное время"
+msgstr "Западный берег стандартное время"
 
 #: dlls/tzres/tzres.rc:418
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Pakistan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "West Bank Daylight Time"
-msgstr "Пакистанское летнее время"
+msgstr "Западный берег летнее время"
 
 #: dlls/tzres/tzres.rc:419
 msgid "(UTC+02:00) Gaza, Hebron"
@@ -12165,20 +12153,14 @@ msgid "(UTC+02:00) Jerusalem"
 msgstr "(UTC+02:00) Иерусалим"
 
 #: dlls/tzres/tzres.rc:60
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Magadan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Bangladesh Standard Time"
-msgstr "Магаданское стандартное время"
+msgstr "Бангладеш стандартное время"
 
 #: dlls/tzres/tzres.rc:61
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Magadan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Bangladesh Daylight Time"
-msgstr "Магаданское летнее время"
+msgstr "Бангладеш летнее время"
 
 #: dlls/tzres/tzres.rc:62
 msgid "(UTC+06:00) Dhaka"
@@ -12205,38 +12187,28 @@ msgid "(UTC-05:00) Bogota, Lima, Quito, Rio Branco"
 msgstr "(UTC-05:00) Богота, Лима, Кито, Риу-Бранку"
 
 #: dlls/tzres/tzres.rc:414
-#, fuzzy
-#| msgid "Central Asia Standard Time"
 msgctxt "maximum 31 characters"
 msgid "West Asia Standard Time"
-msgstr "Центральноазиатское стандартное время"
+msgstr "Западноазиатское стандартное время"
 
 #: dlls/tzres/tzres.rc:415
-#, fuzzy
-#| msgid "Central Asia Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "West Asia Daylight Time"
-msgstr "Центральноазиатское летнее время"
+msgstr "Западноазиатское летнее время"
 
 #: dlls/tzres/tzres.rc:416
 msgid "(UTC+05:00) Ashgabat, Tashkent"
 msgstr "(UTC+05:00) Ашхабад, Ташкент"
 
 #: dlls/tzres/tzres.rc:15
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Astrakhan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Alaskan Standard Time"
-msgstr "Астраханское стандартное время"
+msgstr "Аляска стандартное время"
 
 #: dlls/tzres/tzres.rc:16
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Astrakhan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Alaskan Daylight Time"
-msgstr "Астраханское летнее время"
+msgstr "Аляска летнее время"
 
 #: dlls/tzres/tzres.rc:17
 msgid "(UTC-09:00) Alaska"
@@ -12359,40 +12331,28 @@ msgid "(UTC-10:00) Hawaii"
 msgstr "(UTC-10:00) Гавайи"
 
 #: dlls/tzres/tzres.rc:315
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Syria Standard Time"
 msgctxt "maximum 31 characters"
 msgid "SE Asia Standard Time"
-msgstr "Сирийское стандартное время"
+msgstr "Юговосточная Азия стандартное время"
 
 #: dlls/tzres/tzres.rc:316
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Syria Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "SE Asia Daylight Time"
-msgstr "Сирийское летнее время"
+msgstr "Юговосточная Азия летнее время"
 
 #: dlls/tzres/tzres.rc:317
 msgid "(UTC+07:00) Bangkok, Hanoi, Jakarta"
 msgstr "(UTC+07:00) Бангкок, Ханой, Джакарта"
 
 #: dlls/tzres/tzres.rc:273
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Jordan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Qyzylorda Standard Time"
-msgstr "Иорданское стандартное время"
+msgstr "Кызылорда стандартное время"
 
 #: dlls/tzres/tzres.rc:274
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Jordan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Qyzylorda Daylight Time"
-msgstr "Иорданское летнее время"
+msgstr "Кызылорда летнее время"
 
 #: dlls/tzres/tzres.rc:275
 msgid "(UTC+05:00) Qyzylorda"
@@ -12419,20 +12379,14 @@ msgid "(UTC+07:00) Hovd"
 msgstr "(UTC+07:00) Ховд"
 
 #: dlls/tzres/tzres.rc:237
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Greenland Standard Time"
 msgctxt "maximum 31 characters"
 msgid "New Zealand Standard Time"
-msgstr "Гренландское стандартное время"
+msgstr "Новая Зеландия стандартное время"
 
 #: dlls/tzres/tzres.rc:238
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Greenland Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "New Zealand Daylight Time"
-msgstr "Гренландское летнее время"
+msgstr "Новая Зеландия летнее время"
 
 #: dlls/tzres/tzres.rc:239
 msgid "(UTC+12:00) Auckland, Wellington"
@@ -12553,7 +12507,7 @@ msgstr "(UTC-06:00) Остров Пасхи"
 #: dlls/tzres/tzres.rc:279 dlls/tzres/tzres.rc:280
 msgctxt "maximum 31 characters"
 msgid "Russia Time Zone 10"
-msgstr ""
+msgstr "Россия часовой пояс 10"
 
 #: dlls/tzres/tzres.rc:281
 msgid "(UTC+11:00) Chokurdakh"
@@ -12865,6 +12819,49 @@ msgstr "Установить (%d)"
 msgid "Install"
 msgstr "Установить"
 
+#: dlls/urlmon/urlmon.rc:58
+msgid "Local intranet"
+msgstr "Локальный сеть"
+
+#: dlls/urlmon/urlmon.rc:60
+#, fuzzy
+#| msgid "Trusted Publishers"
+msgid "Trusted sites"
+msgstr "Доверенные издатели"
+
+#: dlls/urlmon/urlmon.rc:62
+msgid "Internet"
+msgstr "Интернет"
+
+#: dlls/urlmon/urlmon.rc:64
+msgid "Restricted sites"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:57
+msgid "Your computer"
+msgstr "Ваш компьютер"
+
+#: dlls/urlmon/urlmon.rc:59
+msgid ""
+"This zone contains all Web sites that are on your organization's intranet."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:61
+msgid ""
+"This zone contains Web sites that you trust not to damage your computer or "
+"data."
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:63
+msgid "This zone contains all Web sites you haven't placed in other zones"
+msgstr ""
+
+#: dlls/urlmon/urlmon.rc:65
+msgid ""
+"This zone contains Web sites that could potentially damage your computer or "
+"data."
+msgstr ""
+
 #: dlls/user32/user32.rc:30 dlls/user32/user32.rc:43
 #: programs/taskmgr/taskmgr.rc:138
 msgctxt "window"
@@ -12963,10 +12960,8 @@ msgid "Too many files"
 msgstr "Слишком много файлов"
 
 #: dlls/vbscript/vbscript.rc:40
-#, fuzzy
-#| msgid "Access denied.\n"
 msgid "Permission denied"
-msgstr "Доступ запрещён.\n"
+msgstr "Доступ запрещён"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
@@ -12977,10 +12972,8 @@ msgid "Path not found"
 msgstr "Путь не найден"
 
 #: dlls/vbscript/vbscript.rc:43
-#, fuzzy
-#| msgid "(value not set)"
 msgid "Object variable not set"
-msgstr "(значение не задано)"
+msgstr "Значение переменной (значение не задано)"
 
 #: dlls/vbscript/vbscript.rc:44
 msgid "Invalid use of Null"
@@ -13010,19 +13003,13 @@ msgstr "Объект не поддерживает именованные арг
 msgid "Object doesn't support current locale setting"
 msgstr "Объект не поддерживает выбор локали"
 
-#: dlls/vbscript/vbscript.rc:53 dlls/vbscript/vbscript.rc:54
+#: dlls/vbscript/vbscript.rc:53
 msgid "Named argument not found"
 msgstr "Именованный аргумент не найден"
 
 #: dlls/vbscript/vbscript.rc:55
 msgid "Wrong number of arguments or invalid property assignment"
 msgstr ""
-
-#: dlls/vbscript/vbscript.rc:56
-#, fuzzy
-#| msgid "Object Class Violation"
-msgid "Object not a collection"
-msgstr "Нарушение класса объекта"
 
 #: dlls/vbscript/vbscript.rc:57
 msgid "Specified DLL function not found"
@@ -13038,7 +13025,7 @@ msgstr ""
 
 #: dlls/vbscript/vbscript.rc:60
 msgid "Invalid or unqualified reference"
-msgstr ""
+msgstr "Некорректная или неполная ссылка"
 
 #: dlls/vbscript/vbscript.rc:62
 msgid "Microsoft VBScript compilation error"
@@ -13329,8 +13316,8 @@ msgid ""
 "A MIDI map was not found. There may be a problem with the driver, or the "
 "MIDIMAP.CFG file may be corrupt or missing."
 msgstr ""
-"Карта (map) MIDI не найдена. Возможно, это ошибка драйвера, или файл MIDIMAP."
-"CFG отсутствует или повреждён."
+"Карта (map) MIDI не найдена. Возможно, это ошибка драйвера, или файл "
+"MIDIMAP.CFG отсутствует или повреждён."
 
 #: dlls/winmm/winmm.rc:55
 msgid ""
@@ -15011,16 +14998,12 @@ msgid "Syntax error: unexpected %1\n"
 msgstr "Синтаксическая ошибка\n"
 
 #: programs/cmd/cmd.rc:408
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of line"
-msgstr "Достигнут конец файла.\n"
+msgstr "Конец строки"
 
 #: programs/cmd/cmd.rc:409
-#, fuzzy
-#| msgid "End of file.\n"
 msgid "End of file"
-msgstr "Достигнут конец файла.\n"
+msgstr "Конец файла"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -15208,11 +15191,8 @@ msgid ""
 msgstr "Вы уверены что хотите удалить эти значения?"
 
 #: programs/explorer/explorer.rc:38
-#, fuzzy
-#| msgctxt "display name"
-#| msgid "Desktop"
 msgid "Wine Desktop"
-msgstr "Рабочий стол"
+msgstr "Рабочий стол Wine"
 
 #: programs/findstr/findstr.rc:28
 #, fuzzy
@@ -15228,7 +15208,7 @@ msgstr "Неверная командная строка.\n"
 
 #: programs/findstr/findstr.rc:30
 msgid "FINDSTR: Cannot open %s\n"
-msgstr ""
+msgstr "FINDSTR: Невозможно открыть %s\n"
 
 #: programs/findstr/findstr.rc:31
 msgid "FINDSTR: /%c ignored\n"
@@ -15347,10 +15327,8 @@ msgid "Usage: klist <tickets | tgt | purge | get [service principal name]>\n"
 msgstr ""
 
 #: programs/klist/klist.rc:29
-#, fuzzy
-#| msgid "Unknown error"
 msgid "Unknown error\n"
-msgstr "Неизвестная ошибка"
+msgstr "Неизвестная ошибка\n"
 
 #: programs/klist/klist.rc:30
 #, fuzzy
@@ -15390,6 +15368,12 @@ msgstr "Тип шифрования"
 #| msgid "Current Connections"
 msgid "Current LogonId is"
 msgstr "Текущих подключений"
+
+#: programs/klist/klist.rc:38
+#, fuzzy
+#| msgid "client"
+msgid "Client"
+msgstr "клиент"
 
 #: programs/msinfo32/msinfo32.rc:28
 msgid "System Information"
@@ -15759,17 +15743,15 @@ msgstr "&Верхнее:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Перейти к строке"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "Номер CRL"
+msgstr "&Номер строки:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Перейти"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15912,7 +15894,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Лн %ld, Ст %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -16872,10 +16854,8 @@ msgstr "&Параметр DWORD"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "&Параметр DWORD"
+msgstr "П&араметр QWORD"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17428,16 +17408,12 @@ msgid "Collapse"
 msgstr "Свернуть"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Добавление 32-битного параметра"
+msgstr "Добавление 64-битного параметра"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Изменение параметра DWORD"
+msgstr "Изменение параметра QWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
@@ -17710,7 +17686,7 @@ msgstr "список вкладок страницы"
 
 #: programs/tasklist/tasklist.rc:29
 msgid "Usage: tasklist [/?]\n"
-msgstr ""
+msgstr "Ипользование: tasklist [/?]\n"
 
 #: programs/tasklist/tasklist.rc:30 programs/taskmgr/taskmgr.rc:272
 msgid "Image Name"
@@ -18544,6 +18520,40 @@ msgstr "Работает"
 msgid "Task"
 msgstr "Задача"
 
+#: programs/timeout/timeout.rc:28
+msgid "Usage: timeout /T <timeout> [</NOBREAK>]\n"
+msgstr ""
+
+#: programs/timeout/timeout.rc:29
+#, fuzzy
+#| msgid "Invalid command line.\n"
+msgid "TIMEOUT: Bad command line\n"
+msgstr "Неверная командная строка.\n"
+
+#: programs/timeout/timeout.rc:30
+msgid "waiting since %d sec. "
+msgstr ""
+
+#: programs/timeout/timeout.rc:31
+msgid "press CTRL+C..."
+msgstr ""
+
+#: programs/timeout/timeout.rc:32
+#, fuzzy
+#| msgid "Press any key to continue... "
+msgid "press a key to continue..."
+msgstr "Нажмите любую клавишу для продолжения... "
+
+#: programs/timeout/timeout.rc:33
+msgid "ERROR: not possible to redirect input\n"
+msgstr ""
+
+#: programs/timeout/timeout.rc:34
+msgid ""
+"ERROR: Timeout value out of range or invalid number. Valid range is -1 to "
+"99999.\n"
+msgstr ""
+
 #: programs/uninstaller/uninstaller.rc:29
 msgid "Wine Application Uninstaller"
 msgstr "Удаление приложений Wine"
@@ -19015,14 +19025,12 @@ msgid "Mono"
 msgstr "Моно"
 
 #: programs/winecfg/winecfg.rc:98
-#, fuzzy
-#| msgid "Right"
 msgid "Light"
-msgstr "По правому краю"
+msgstr "Светлая"
 
 #: programs/winecfg/winecfg.rc:99
 msgid "Dark"
-msgstr ""
+msgstr "Темная"
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
@@ -19270,11 +19278,11 @@ msgstr ""
 "wineconsole: не удалось запустить программу «%s».\n"
 "Неверно указана команда.\n"
 
-#: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
+#: programs/winedbg/winedbg.rc:51 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
 msgstr "Программная ошибка"
 
-#: programs/winedbg/winedbg.rc:55
+#: programs/winedbg/winedbg.rc:56
 msgid ""
 "The program %s has encountered a serious problem and needs to close. We are "
 "sorry for the inconvenience."
@@ -19282,7 +19290,7 @@ msgstr ""
 "В программе %s обнаружена серьёзная ошибка. Программа будет закрыта. "
 "Приносим извинения за неудобство."
 
-#: programs/winedbg/winedbg.rc:59
+#: programs/winedbg/winedbg.rc:60
 msgid ""
 "This can be caused by a problem in the program or a deficiency in Wine. You "
 "may want to check the <a href=\"https://appdb.winehq.org\">Application "
@@ -19292,25 +19300,25 @@ msgstr ""
 "можете посетить <a href=\"https://appdb.winehq.org\">Application Database</"
 "a> и поискать советы о запуске этой программы."
 
-#: programs/winedbg/winedbg.rc:62
+#: programs/winedbg/winedbg.rc:63
 msgid "Show &Details"
 msgstr "&Подробно"
 
-#: programs/winedbg/winedbg.rc:67
+#: programs/winedbg/winedbg.rc:68
 msgid "Program Error Details"
 msgstr "Подробности об ошибке"
 
-#: programs/winedbg/winedbg.rc:74
+#: programs/winedbg/winedbg.rc:75
 msgid ""
 "If this problem is not present under Windows and has not been reported yet, "
 "you can save the detailed information to a file using the \"Save As\" "
-"button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
-"and attach that file to the report."
+"button, then <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
+"Bugs\">file a bug report</a> and attach that file to the report."
 msgstr ""
 "Если эта проблема отсутствует в Windows и о ней ещё никто не сообщил, вы "
 "можете сохранить подробную информация в файл с помощью кнопки «Сохранить "
-"как», затем <a href=\"https://wiki.winehq.org/Bugs\">сообщить об ошибке</a> "
-"и приложить этот файл к отчету."
+"как», затем <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
+"Bugs\">сообщить об ошибке</a> и приложить этот файл к отчету."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""

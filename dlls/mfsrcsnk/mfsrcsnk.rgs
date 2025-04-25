@@ -1,0 +1,57 @@
+HKLM
+{
+    NoRemove 'Software'
+    {
+        NoRemove 'Microsoft'
+        {
+            NoRemove 'Windows Media Foundation'
+            {
+                NoRemove 'ByteStreamHandlers'
+                {
+                    '.avi'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/avi'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/msvideo'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+                    'video/x-msvideo'
+                    {
+                        val '{7afa253e-f823-42f6-a5d9-714bde467412}' = s 'AVI Byte Stream Handler'
+                    }
+
+                    '.wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
+                    'audio/wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
+                    'audio/x-wav'
+                    {
+                        val '{42c9b9f5-16fc-47ef-af22-da05f7c842e3}' = s 'WAV Byte Stream Handler'
+                    }
+
+                    '.mp3'
+                    {
+                        val '{a82e50ba-8e92-41eb-9df2-433f50ec2993}' = s 'MP3 Byte Stream Handler'
+                    }
+                    'audio/mp3'
+                    {
+                        val '{a82e50ba-8e92-41eb-9df2-433f50ec2993}' = s 'MP3 Byte Stream Handler'
+                    }
+                    'audio/x-mp3'
+                    {
+                        val '{a82e50ba-8e92-41eb-9df2-433f50ec2993}' = s 'MP3 Byte Stream Handler'
+                    }
+                }
+            }
+        }
+    }
+}

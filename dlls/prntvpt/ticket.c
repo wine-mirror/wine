@@ -85,7 +85,14 @@ static const struct
     int paper;
 } psk_media[] =
 {
+    { L"psk:NorthAmericaLetter", DMPAPER_LETTER },
+    { L"psk:NorthAmericaLegal", DMPAPER_LEGAL },
+    { L"psk:NorthAmericaExecutive", DMPAPER_EXECUTIVE },
+    { L"psk:ISOA3", DMPAPER_A3 },
     { L"psk:ISOA4", DMPAPER_A4 },
+    { L"psk:ISOA5", DMPAPER_A5 },
+    { L"psk:JISB4", DMPAPER_B4 },
+    { L"psk:JISB5", DMPAPER_B5 },
 };
 
 static int media_to_paper(const WCHAR *name)
@@ -109,7 +116,7 @@ static const WCHAR *paper_to_media(int paper)
             return psk_media[i].name;
 
     FIXME("%d\n", paper);
-    return psk_media[0].name;
+    return NULL;
 }
 
 static BOOL is_valid_node_name(const WCHAR *name)
@@ -650,13 +657,14 @@ static void ticket_to_devmode(const struct ticket *ticket, DEVMODEW *dm)
 
     dm->dmSize = sizeof(*dm);
     dm->dmFields = DM_ORIENTATION | DM_PAPERSIZE | DM_PAPERLENGTH | DM_PAPERWIDTH | DM_SCALE |
-                   DM_COPIES | DM_COLOR | DM_PRINTQUALITY | DM_YRESOLUTION | DM_COLLATE;
+                   DM_COPIES | DM_DEFAULTSOURCE | DM_COLOR | DM_PRINTQUALITY | DM_YRESOLUTION | DM_COLLATE;
     dm->dmOrientation = ticket->page.orientation;
     dm->dmPaperSize = ticket->page.media.paper;
     dm->dmPaperWidth = ticket->page.media.size.width / 100;
     dm->dmPaperLength = ticket->page.media.size.height / 100;
     dm->dmScale = ticket->page.scaling;
     dm->dmCopies = ticket->job.copies;
+    dm->dmDefaultSource = ticket->job.input_bin;
     dm->dmColor = ticket->page.color;
     dm->dmPrintQuality = ticket->page.resolution.x;
     dm->dmYResolution = ticket->page.resolution.y;
@@ -677,6 +685,8 @@ static void devmode_to_ticket(const DEVMODEW *dm, struct ticket *ticket)
         ticket->page.scaling = dm->dmScale;
     if (dm->dmFields & DM_COPIES)
         ticket->job.copies = dm->dmCopies;
+    if (dm->dmFields & DM_DEFAULTSOURCE)
+        ticket->job.input_bin = dm->dmDefaultSource;
     if (dm->dmFields & DM_COLOR)
         ticket->page.color = dm->dmColor;
     if (dm->dmFields & DM_PRINTQUALITY)
@@ -744,6 +754,31 @@ HRESULT WINAPI PTConvertPrintTicketToDevMode(HPTPROVIDER provider, IStream *stre
     return S_OK;
 }
 
+HRESULT WINAPI ConvertPrintTicketToDevModeThunk2(HPTPROVIDER provider, BYTE *ticket, ULONG ticket_size, EDefaultDevmodeType type,
+                                                 EPrintTicketScope scope, BYTE **dm, ULONG *size, BSTR *error)
+{
+    static const LARGE_INTEGER zero;
+    HRESULT hr;
+    IStream *stream;
+
+    TRACE("%p,%p,%lu,%d,%d,%p,%p,%p\n", provider, ticket, ticket_size, type, scope, dm, size, error);
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = IStream_Write(stream, ticket, ticket_size, NULL);
+    if (hr == S_OK)
+    {
+        IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+        hr = PTConvertPrintTicketToDevMode(provider, stream, type, scope, size, (PDEVMODEW *)dm, error);
+    }
+
+    IStream_Release(stream);
+
+    return hr;
+}
+
 static HRESULT add_attribute(IXMLDOMElement *element, const WCHAR *attr, const WCHAR *value)
 {
     VARIANT var;
@@ -788,12 +823,52 @@ static HRESULT write_int_value(IXMLDOMElement *root, int value)
     if (hr != S_OK) return hr;
 
     hr = add_attribute(child, L"xsi:type", L"xsd:integer");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_I4;
+        V_I4(&var) = value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
+    IXMLDOMElement_Release(child);
+    return hr;
+}
+
+static HRESULT write_string_value(IXMLDOMElement *root, const WCHAR *value)
+{
+    HRESULT hr;
+    IXMLDOMElement *child;
+    VARIANT var;
+
+    hr = create_element(root, L"psf:Value", &child);
     if (hr != S_OK) return hr;
 
-    V_VT(&var) = VT_I4;
-    V_I4(&var) = value;
-    hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    hr = add_attribute(child, L"xsi:type", L"xsd:string");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = (BSTR)value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
+    IXMLDOMElement_Release(child);
+    return hr;
+}
 
+static HRESULT write_qname_value(IXMLDOMElement *root, const WCHAR *value)
+{
+    HRESULT hr;
+    IXMLDOMElement *child;
+    VARIANT var;
+
+    hr = create_element(root, L"psf:Value", &child);
+    if (hr != S_OK) return hr;
+
+    hr = add_attribute(child, L"xsi:type", L"xsd:QName");
+    if (hr == S_OK)
+    {
+        V_VT(&var) = VT_BSTR;
+        V_BSTR(&var) = (BSTR)value;
+        hr = IXMLDOMElement_put_nodeTypedValue(child, var);
+    }
     IXMLDOMElement_Release(child);
     return hr;
 }
@@ -861,15 +936,29 @@ static HRESULT create_ScoredProperty(IXMLDOMElement *root, const WCHAR *name, IX
     return add_attribute(*child, L"name", name);
 }
 
+static HRESULT create_Property(IXMLDOMElement *root, const WCHAR *name, IXMLDOMElement **child)
+{
+    HRESULT hr;
+
+    hr = create_element(root, L"psf:Property", child);
+    if (hr != S_OK) return hr;
+
+    return add_attribute(*child, L"name", name);
+}
+
 static HRESULT write_PageMediaSize(IXMLDOMElement *root, const struct ticket *ticket)
 {
     IXMLDOMElement *feature, *option = NULL, *property;
+    const WCHAR *media;
     HRESULT hr;
+
+    media = paper_to_media(ticket->page.media.paper);
+    if (!media) return E_FAIL;
 
     hr = create_Feature(root, L"psk:PageMediaSize", &feature);
     if (hr != S_OK) return hr;
 
-    hr = create_Option(feature, paper_to_media(ticket->page.media.paper), &option);
+    hr = create_Option(feature, media, &option);
     if (hr != S_OK) goto fail;
 
     hr = create_ScoredProperty(option, L"psk:MediaSizeWidth", &property);
@@ -1234,6 +1323,47 @@ HRESULT WINAPI PTConvertDevModeToPrintTicket(HPTPROVIDER provider, ULONG size, P
     return write_ticket(stream, &ticket, scope);
 }
 
+HRESULT WINAPI ConvertDevModeToPrintTicketThunk2(HPTPROVIDER provider, BYTE *dm, ULONG size,
+                                                 EPrintTicketScope scope, BYTE **ticket, INT *length)
+{
+    HRESULT hr;
+    IStream *stream;
+
+    TRACE("%p,%p,%lu,%d,%p,%p\n", provider, dm, size, scope, ticket, length);
+
+    if (!is_valid_provider(provider) || !dm || !ticket || !length)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = PTConvertDevModeToPrintTicket(provider, size, (DEVMODEW *)dm, scope, stream);
+    if (hr == S_OK)
+    {
+        HGLOBAL hmem;
+        DWORD mem_size;
+
+        hr = GetHGlobalFromStream(stream, &hmem);
+        if (hr == S_OK)
+        {
+            mem_size = GlobalSize(hmem);
+            *ticket = CoTaskMemAlloc(mem_size);
+            if (*ticket)
+            {
+                BYTE *p = GlobalLock(hmem);
+                memcpy(*ticket, p, mem_size);
+                GlobalUnlock(hmem);
+                *length = mem_size;
+            }
+            else
+                hr = E_OUTOFMEMORY;
+        }
+    }
+
+    IStream_Release(stream);
+    return hr;
+}
+
 HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base, IStream *delta,
                                              EPrintTicketScope scope, IStream *result, BSTR *error)
 {
@@ -1264,37 +1394,174 @@ HRESULT WINAPI PTMergeAndValidatePrintTicket(HPTPROVIDER provider, IStream *base
 
 static HRESULT write_PageMediaSize_caps(const WCHAR *device, IXMLDOMElement *root)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
     int count, i;
     POINT *pt;
-    IXMLDOMElement *feature = NULL;
-
-    FIXME("stub\n");
+    WORD *papers = NULL;
+    WCHAR *paper_names = NULL;
+    IXMLDOMElement *feature = NULL, *property;
 
     count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, NULL, NULL);
     if (count <= 0)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    pt = calloc(count, sizeof(*pt));
-    if (!pt) return E_OUTOFMEMORY;
-
-    count = DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, (LPWSTR)pt, NULL);
-    if (count <= 0)
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERS, NULL, NULL) != count)
     {
-        hr = HRESULT_FROM_WIN32(GetLastError());
+        FIXME("Count of DC_PAPERS doesn't match count of DC_PAPERSIZE\n");
+        return E_FAIL;
+    }
+
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERNAMES, NULL, NULL) != count)
+    {
+        FIXME("Count of DC_PAPERNAMES doesn't match count of DC_PAPERSIZE\n");
+        return E_FAIL;
+    }
+
+    hr = E_OUTOFMEMORY;
+    pt = calloc(count, sizeof(*pt));
+    if (!pt) goto fail;
+    papers = calloc(count, sizeof(*papers));
+    if (!papers) goto fail;
+    paper_names = calloc(count, sizeof(WCHAR) * 64);
+    if (!paper_names) goto fail;
+
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERSIZE, (LPWSTR)pt, NULL) != count)
+    {
+        hr = E_FAIL;
+        goto fail;
+    }
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERS, (LPWSTR)papers, NULL) != count)
+    {
+        hr = E_FAIL;
+        goto fail;
+    }
+    if (DeviceCapabilitiesW(device, NULL, DC_PAPERNAMES, (LPWSTR)paper_names, NULL) != count)
+    {
+        hr = E_FAIL;
         goto fail;
     }
 
     hr = create_Feature(root, L"psk:PageMediaSize", &feature);
     if (hr != S_OK) goto fail;
 
+    hr = create_Property(feature, L"psk:SelectionType", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_qname_value(property, L"psk:PickOne");
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
+    hr = create_Property(feature, L"psk:DisplayName", &property);
+    if (hr != S_OK) goto fail;
+    hr = write_string_value(property, L"PageSize");
+    IXMLDOMElement_Release(property);
+    if (hr != S_OK) goto fail;
+
     for (i = 0; i < count; i++)
     {
+        const WCHAR *media;
+        IXMLDOMElement *option;
+
+        media = paper_to_media(papers[i]);
+        if (!media) continue;
+
+        hr = create_Option(feature, media, &option);
+        if (hr != S_OK) goto fail;
+
+        hr = create_Property(option, L"psk:DisplayName", &property);
+        if (hr == S_OK)
+        {
+            write_string_value(property, paper_names + i * 64);
+            IXMLDOMElement_Release(property);
+        }
+
+        hr = create_ScoredProperty(option, L"psk:MediaSizeWidth", &property);
+        if (hr == S_OK)
+        {
+            write_int_value(property, pt[i].x * 100);
+            IXMLDOMElement_Release(property);
+        }
+        hr = create_ScoredProperty(option, L"psk:MediaSizeHeight", &property);
+        if (hr == S_OK)
+        {
+            write_int_value(property, pt[i].y * 100);
+            IXMLDOMElement_Release(property);
+        }
+
+        IXMLDOMElement_Release(option);
     }
 
 fail:
     if (feature) IXMLDOMElement_Release(feature);
+    free(paper_names);
+    free(papers);
     free(pt);
+    return hr;
+}
+
+static inline int pixels_to_mm_x1000(int pixels, int dpi)
+{
+    return MulDiv(pixels, 25400, dpi);
+}
+
+static HRESULT write_PageImageableSize_caps(const WCHAR *device, IXMLDOMElement *root, int orientation)
+{
+    HRESULT hr;
+    HDC hdc;
+    int res_x, res_y, phys_width, phys_height, width, height, offset_x, offset_y;
+    IXMLDOMElement *page, *area, *property;
+
+    hdc = CreateDCW(NULL, device, NULL, NULL);
+    if (!hdc) return HRESULT_FROM_WIN32(GetLastError());
+
+    res_x = GetDeviceCaps(hdc, LOGPIXELSX);
+    res_y = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    phys_width = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALWIDTH), res_x);
+    phys_height = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALHEIGHT), res_y);
+    width = pixels_to_mm_x1000(GetDeviceCaps(hdc, HORZRES), res_x);
+    height = pixels_to_mm_x1000(GetDeviceCaps(hdc, VERTRES), res_y);
+
+    offset_x = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALOFFSETX), res_x);
+    offset_y = pixels_to_mm_x1000(GetDeviceCaps(hdc, PHYSICALOFFSETY), res_y);
+    DeleteDC(hdc);
+
+    hr = create_Property(root, L"psk:PageImageableSize", &page);
+    if (hr != S_OK) return hr;
+
+    hr = create_Property(page, L"psk:ImageableSizeWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? phys_width : phys_height);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(page, L"psk:ImageableSizeHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? phys_height : phys_width);
+    IXMLDOMElement_Release(property);
+
+    hr = create_Property(page, L"psk:ImageableArea", &area);
+    if (hr != S_OK) goto fail;
+
+    hr = create_Property(area, L"psk:OriginWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? offset_x : offset_y);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(area, L"psk:OriginHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? offset_y : offset_x);
+    IXMLDOMElement_Release(property);
+
+    hr = create_Property(area, L"psk:ExtentWidth", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? width : height);
+    IXMLDOMElement_Release(property);
+    hr = create_Property(area, L"psk:ExtentHeight", &property);
+    if (hr != S_OK) goto fail;
+    write_int_value(property, orientation == DMORIENT_PORTRAIT ? height : width);
+    IXMLDOMElement_Release(property);
+
+    IXMLDOMElement_Release(area);
+
+fail:
+    IXMLDOMElement_Release(page);
     return hr;
 }
 
@@ -1465,7 +1732,7 @@ fail:
     return hr;
 }
 
-static HRESULT write_print_capabilities(const WCHAR *device, IStream *stream)
+static HRESULT write_print_capabilities(const WCHAR *device, IStream *stream, int orientation)
 {
     static const char xmldecl[] = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n";
     HRESULT hr;
@@ -1487,6 +1754,8 @@ static HRESULT write_print_capabilities(const WCHAR *device, IStream *stream)
     if (hr != S_OK) goto fail;
 
     hr = write_PageMediaSize_caps(device, root);
+    if (hr != S_OK) goto fail;
+    hr = write_PageImageableSize_caps(device, root, orientation);
     if (hr != S_OK) goto fail;
     hr = write_PageOutputColor_caps(device, root);
     if (hr != S_OK) goto fail;
@@ -1530,5 +1799,56 @@ HRESULT WINAPI PTGetPrintCapabilities(HPTPROVIDER provider, IStream *stream, ISt
     hr = parse_ticket(stream, kPTJobScope, &ticket);
     if (hr != S_OK) return hr;
 
-    return write_print_capabilities(prov->name, caps);
+    return write_print_capabilities(prov->name, caps, ticket.page.orientation);
+}
+
+HRESULT WINAPI GetPrintCapabilitiesThunk2(HPTPROVIDER provider, BYTE *ticket, INT ticket_size,
+                                          BYTE **print_caps, INT *print_caps_length, BSTR *error)
+{
+    static const LARGE_INTEGER zero;
+    HRESULT hr;
+    IStream *stream, *caps = NULL;
+    HGLOBAL hmem;
+    DWORD mem_size;
+
+    TRACE("%p,%p,%d,%p,%p,%p\n", provider, ticket, ticket_size, print_caps, print_caps_length, error);
+
+    if (!is_valid_provider(provider) || !ticket || !print_caps || !print_caps_length)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &stream);
+    if (hr != S_OK) return hr;
+
+    hr = IStream_Write(stream, ticket, ticket_size, NULL);
+    if (hr != S_OK) goto fail;
+
+    IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
+
+    hr = CreateStreamOnHGlobal(0, TRUE, &caps);
+    if (hr != S_OK) goto fail;
+
+    hr = PTGetPrintCapabilities(provider, stream, caps, error);
+    if (hr != S_OK) goto fail;
+
+    hr = GetHGlobalFromStream(caps, &hmem);
+    if (hr == S_OK)
+    {
+        mem_size = GlobalSize(hmem);
+        *print_caps = CoTaskMemAlloc(mem_size);
+        if (*print_caps)
+        {
+            BYTE *p = GlobalLock(hmem);
+            memcpy(*print_caps, p, mem_size);
+            GlobalUnlock(hmem);
+            *print_caps_length = mem_size;
+        }
+        else
+            hr = E_OUTOFMEMORY;
+    }
+
+fail:
+    IStream_Release(stream);
+    if (caps) IStream_Release(caps);
+
+    return hr;
 }

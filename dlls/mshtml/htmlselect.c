@@ -341,13 +341,12 @@ static const event_target_vtbl_t HTMLOptionElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLOptionElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLOptionElement_tid,
     0
 };
 dispex_static_data_t HTMLOptionElement_dispex = {
-    .id           = PROT_HTMLOptionElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLOptionElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLOptionElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLOptionElement_tid,
     .iface_tids   = HTMLOptionElement_iface_tids,
@@ -511,10 +510,11 @@ static HRESULT HTMLOptionElementFactory_value(DispatchEx *dispex, LCID lcid,
     return S_OK;
 }
 
-static const tid_t HTMLOptionElementFactory_iface_tids[] = {
-    IHTMLOptionElementFactory_tid,
-    0
-};
+static void HTMLOptionElementFactory_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode < COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLOptionElementFactory_tid, NULL);
+}
 
 static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
     .query_interface  = HTMLOptionElementFactory_query_interface,
@@ -524,15 +524,7 @@ static const dispex_static_data_vtbl_t HTMLOptionElementFactory_dispex_vtbl = {
     .value            = HTMLOptionElementFactory_value,
 };
 
-static dispex_static_data_t HTMLOptionElementFactory_dispex = {
-    .name           = "Function",
-    .constructor_id = PROT_HTMLOptionElement,
-    .vtbl           = &HTMLOptionElementFactory_dispex_vtbl,
-    .disp_tid       = IHTMLOptionElementFactory_tid,
-    .iface_tids     = HTMLOptionElementFactory_iface_tids,
-};
-
-HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionElementFactory **ret_ptr)
+static HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, DispatchEx **ret_ptr)
 {
     HTMLOptionElementFactory *ret;
 
@@ -544,12 +536,21 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionEleme
     ret->window = window;
     IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 
-    init_dispatch(&ret->dispex, &HTMLOptionElementFactory_dispex, window,
+    init_dispatch(&ret->dispex, &Option_dispex, window,
                   dispex_compat_mode(&window->event_target.dispex));
 
-    *ret_ptr = ret;
+    *ret_ptr = &ret->dispex;
     return S_OK;
 }
+
+dispex_static_data_t Option_dispex = {
+    .name             = "Function",
+    .constructor_id   = OBJID_HTMLOptionElement,
+    .init_constructor = HTMLOptionElementFactory_Create,
+    .vtbl             = &HTMLOptionElementFactory_dispex_vtbl,
+    .disp_tid         = IHTMLOptionElementFactory_tid,
+    .init_info        = HTMLOptionElementFactory_init_dispex_info,
+};
 
 struct HTMLSelectElement {
     HTMLElement element;
@@ -1294,14 +1295,13 @@ static const event_target_vtbl_t HTMLSelectElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLSelectElement_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLSelectElement_tid,
     0
 };
 
 dispex_static_data_t HTMLSelectElement_dispex = {
-    .id           = PROT_HTMLSelectElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLSelectElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLSelectElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLSelectElement_tid,
     .iface_tids   = HTMLSelectElement_tids,

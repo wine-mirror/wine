@@ -103,7 +103,7 @@ int __cdecl memcmp( const void *ptr1, const void *ptr2, size_t n )
  */
 void * __cdecl memcpy( void *dst, const void *src, size_t n )
 {
-    volatile unsigned char *d = dst;  /* avoid gcc optimizations */
+    unsigned char *d = dst;
     const unsigned char *s = src;
 
     if ((size_t)dst - (size_t)src >= n)
@@ -125,7 +125,7 @@ void * __cdecl memcpy( void *dst, const void *src, size_t n )
  */
 void * __cdecl memmove( void *dst, const void *src, size_t n )
 {
-    volatile unsigned char *d = dst;  /* avoid gcc optimizations */
+    unsigned char *d = dst;
     const unsigned char *s = src;
 
     if ((size_t)dst - (size_t)src >= n)
@@ -1479,7 +1479,7 @@ static int char2digit( char c, int base )
 }
 
 
-static int vsscanf( const char *str, const char *format, va_list ap)
+static int _vsscanf( const char *str, const char *format, va_list ap)
 {
     int rd = 0, consumed = 0;
     int nch;
@@ -1919,7 +1919,7 @@ int WINAPIV sscanf( const char *str, const char *format, ... )
     int ret;
     va_list valist;
     va_start( valist, format );
-    ret = vsscanf( str, format, valist );
+    ret = _vsscanf( str, format, valist );
     va_end( valist );
     return ret;
 }

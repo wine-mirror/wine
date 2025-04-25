@@ -490,7 +490,7 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
         }
     }
 
-    if(!doc->window || !doc->window->base.outer_window)
+    if(!doc->window || is_detached_window(doc->window))
         return E_UNEXPECTED;
 
     return reload_page(doc->window->base.outer_window);

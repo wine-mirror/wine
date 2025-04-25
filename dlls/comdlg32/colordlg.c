@@ -393,7 +393,7 @@ static BOOL CC_MouseCheckResultWindow( HWND hDlg, LPARAM lParam )
 /***********************************************************************
  *                       CC_CheckDigitsInEdit                 [internal]
  */
-static int CC_CheckDigitsInEdit( HWND hwnd, int maxval )
+static int CC_CheckDigitsInEdit( CCPRIV *infoPtr, HWND hwnd, int maxval )
 {
  int i, k, m, result, value;
  char buffer[30];
@@ -417,14 +417,17 @@ static int CC_CheckDigitsInEdit( HWND hwnd, int maxval )
  value = atoi(buffer);
  if (value > maxval)       /* build a new string */
  {
+  value = maxval;
   sprintf(buffer, "%d", maxval);
   result = 2;
  }
  if (result)
  {
   LRESULT editpos = SendMessageA(hwnd, EM_GETSEL, 0, 0);
+  infoPtr->updating = TRUE;
   SetWindowTextA(hwnd, buffer );
   SendMessageA(hwnd, EM_SETSEL, 0, editpos);
+  infoPtr->updating = FALSE;
  }
  return value;
 }
@@ -966,10 +969,10 @@ static LRESULT CC_WMCommand(CCPRIV *lpp, WPARAM wParam, LPARAM lParam, WORD noti
         case COLOR_BLUE:
 	       if (notifyCode == EN_UPDATE && !lpp->updating)
 			 {
-			   i = CC_CheckDigitsInEdit(hwndCtl, 255);
+			   i = CC_CheckDigitsInEdit(lpp, hwndCtl, 255);
 			   r = GetRValue(lpp->lpcc->rgbResult);
 			   g = GetGValue(lpp->lpcc->rgbResult);
-			   b= GetBValue(lpp->lpcc->rgbResult);
+			   b = GetBValue(lpp->lpcc->rgbResult);
 			   xx = 0;
 			   switch (LOWORD(wParam))
 			   {
@@ -996,7 +999,7 @@ static LRESULT CC_WMCommand(CCPRIV *lpp, WPARAM wParam, LPARAM lParam, WORD noti
         case COLOR_LUM:
 	       if (notifyCode == EN_UPDATE && !lpp->updating)
 			 {
-			   i = CC_CheckDigitsInEdit(hwndCtl , LOWORD(wParam) == COLOR_HUE ? 239 : 240);
+			   i = CC_CheckDigitsInEdit(lpp, hwndCtl, LOWORD(wParam) == COLOR_HUE ? 239 : 240);
 			   xx = 0;
 			   switch (LOWORD(wParam))
 			   {
@@ -1011,6 +1014,7 @@ static LRESULT CC_WMCommand(CCPRIV *lpp, WPARAM wParam, LPARAM lParam, WORD noti
 			    CC_EditSetRGB(lpp);
 			    CC_PaintCross(lpp);
 			    CC_PaintTriangle(lpp);
+			    CC_PaintLumBar(lpp);
 			   }
 			 }
 	       break;

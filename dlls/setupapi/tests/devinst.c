@@ -32,6 +32,7 @@
 #include "wincrypt.h"
 #include "mscat.h"
 #include "devguid.h"
+#include "ntddvdeo.h"
 #include "initguid.h"
 #include "devpkey.h"
 #include "setupapi.h"
@@ -56,6 +57,7 @@ static HRESULT (WINAPI *pDriverStoreFindDriverPackageA)(const char *inf_path, vo
 static BOOL (WINAPI *pSetupDiSetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE, const BYTE *, DWORD, DWORD);
 static BOOL (WINAPI *pSetupDiGetDevicePropertyW)(HDEVINFO, SP_DEVINFO_DATA *, const DEVPROPKEY *, DEVPROPTYPE *, BYTE *, DWORD, DWORD *, DWORD);
 static BOOL (WINAPI *pSetupQueryInfOriginalFileInformationA)(SP_INF_INFORMATION *, UINT, SP_ALTPLATFORM_INFO *, SP_ORIGINAL_FILE_INFO_A *);
+static BOOL (WINAPI *pSetupDiGetDevicePropertyKeys)(HDEVINFO, PSP_DEVINFO_DATA, DEVPROPKEY *,DWORD, DWORD *, DWORD);
 
 static BOOL wow64;
 
@@ -885,6 +887,7 @@ static void test_device_property(void)
     hmod = LoadLibraryA("setupapi.dll");
     pSetupDiSetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiSetDevicePropertyW");
     pSetupDiGetDevicePropertyW = (void *)GetProcAddress(hmod, "SetupDiGetDevicePropertyW");
+    pSetupDiGetDevicePropertyKeys = (void *)GetProcAddress(hmod, "SetupDiGetDevicePropertyKeys");
 
     if (!pSetupDiSetDevicePropertyW || !pSetupDiGetDevicePropertyW)
     {
@@ -1189,6 +1192,86 @@ static void test_device_property(void)
     ok(type == DEVPROP_TYPE_STRING, "Expect type %#x, got %#lx\n", DEVPROP_TYPE_STRING, type);
     ok(size == sizeof(valueW), "Got size %ld\n", size);
     ok(!lstrcmpW((WCHAR *)buffer, valueW), "Expect buffer %s, got %s\n", wine_dbgstr_w(valueW), wine_dbgstr_w((WCHAR *)buffer));
+
+    if (pSetupDiGetDevicePropertyKeys)
+    {
+        DWORD keys_len = 0, n, required_len, expected_keys = 1;
+        DEVPROPKEY *keys;
+
+        ret = pSetupDiGetDevicePropertyKeys(NULL, NULL, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INVALID_HANDLE, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_HANDLE, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, NULL, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INVALID_PARAMETER, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_PARAMETER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 10, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INVALID_USER_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_USER_BUFFER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, NULL, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INSUFFICIENT_BUFFER, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0xdeadbeef);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_FLAGS, err);
+
+        SetLastError(0xdeadbeef);
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, NULL, 0, &keys_len, 0);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INSUFFICIENT_BUFFER, "Expect last error %#x, got %#lx\n",
+           ERROR_INSUFFICIENT_BUFFER, err);
+
+        keys = calloc(keys_len, sizeof(*keys));
+        ok(keys_len && !!keys, "Failed to allocate buffer\n");
+        SetLastError(0xdeadbeef);
+
+        ret = pSetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &keys_len, 0xdeadbeef);
+        ok(!ret, "Expect failure\n");
+        err = GetLastError();
+        ok(err == ERROR_INVALID_FLAGS, "Expect last error %#x, got %#lx\n",
+           ERROR_INVALID_FLAGS, err);
+
+        required_len = 0xdeadbeef;
+        ret = SetupDiGetDevicePropertyKeys(set, &device_data, keys, keys_len, &required_len, 0);
+        ok(ret, "Expect success\n");
+        err = GetLastError();
+        ok(!err, "Expect last error %#x, got %#lx\n", ERROR_SUCCESS, err);
+        ok(keys_len == required_len, "%lu != %lu\n", keys_len, required_len);
+        ok(keys_len >= expected_keys, "Expected %lu >= %lu\n", keys_len, expected_keys);
+
+        keys_len = 0;
+        if (keys)
+        {
+            for (n = 0; n < required_len; n++)
+            {
+                if (!memcmp(&keys[n], &DEVPKEY_Device_FriendlyName, sizeof(keys[n])))
+                    keys_len++;
+            }
+
+        }
+        ok(keys_len == expected_keys, "%lu != %lu\n", keys_len, expected_keys);
+        free(keys);
+    }
+    else
+        win_skip("SetupDiGetDevicePropertyKeys not available\n");
 
     ret = SetupDiRemoveDevice(set, &device_data);
     ok(ret, "Got unexpected error %#lx.\n", GetLastError());
@@ -1866,11 +1949,9 @@ static void test_device_key(void)
 
     SetLastError(0xdeadbeef);
     key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, 0);
-todo_wine {
     ok(key == INVALID_HANDLE_VALUE, "Expected failure.\n");
     ok(GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_ACCESS_DENIED, /* win2k3 */
             "Got unexpected error %#lx.\n", GetLastError());
-}
 
     key = SetupDiOpenDevRegKey(set, &device, DICS_FLAG_GLOBAL, 0, DIREG_DRV, KEY_READ);
     ok(key != INVALID_HANDLE_VALUE, "Failed to open device key, error %#lx.\n", GetLastError());
@@ -3860,6 +3941,84 @@ todo_wine {
     SetupDiDestroyDeviceInfoList(set);
 }
 
+static void test_SetupDiOpenDeviceInterface(void)
+{
+    BYTE iface_detail_buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + 256 * sizeof(WCHAR)];
+    SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
+    SP_DEVICE_INTERFACE_DETAIL_DATA_W *iface_data;
+    SP_DEVINFO_DATA device = { sizeof(device) };
+    WCHAR device_path[256];
+    char device_patha[256];
+    HDEVINFO set;
+    BOOL ret;
+
+    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_DISPLAY_ADAPTER, NULL, NULL, DIGCF_DEVICEINTERFACE);
+    ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, 0, &iface);
+    if (!ret && GetLastError() == ERROR_NO_MORE_ITEMS)
+    {
+        skip("No display adapters, skipping test.\n");
+        SetupDiDestroyDeviceInfoList(set);
+        return;
+    }
+    ok(ret, "got error %lu.\n", GetLastError());
+    iface_data = (SP_DEVICE_INTERFACE_DETAIL_DATA_W *)iface_detail_buffer;
+    iface_data->cbSize = sizeof(*iface_data);
+    ret = SetupDiGetDeviceInterfaceDetailW(set, &iface, iface_data, sizeof(iface_detail_buffer), NULL, &device);
+    ok(ret, "got error %lu.\n", GetLastError());
+    wcscpy(device_path, iface_data->DevicePath);
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+    memset(&iface, 0xcc, sizeof(iface));
+    iface.cbSize = sizeof(iface);
+
+    ret = SetupDiOpenDeviceInterfaceW(set, NULL, 0, &iface);
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got ret %d, error %#lx.\n", ret, GetLastError());
+
+    ret = SetupDiOpenDeviceInfoW(set, L"qqq", NULL, 0, &device);
+    todo_wine_if(!ret && GetLastError() == ERROR_NO_SUCH_DEVINST)
+    ok(!ret && GetLastError() == ERROR_INVALID_DEVINST_NAME, "got ret %d, error %#lx.\n", ret, GetLastError());
+    ret = SetupDiOpenDeviceInterfaceW(set, L"\\\\?\\", 0, &iface);
+    ok((!ret && GetLastError() == ERROR_NO_SUCH_DEVICE_INTERFACE) ||
+       broken(!ret && GetLastError() == ERROR_BAD_PATHNAME), /* Win7 */
+       "got ret %d, error %#lx.\n", ret, GetLastError());
+    ret = SetupDiOpenDeviceInterfaceW(set, device_path, 0, NULL);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+    memset(&iface, 0xcc, sizeof(iface));
+    iface.cbSize = sizeof(iface);
+
+    ret = SetupDiOpenDeviceInterfaceW(set, device_path, 0, &iface);
+    ok(ret, "got error %lu.\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &GUID_DEVINTERFACE_DISPLAY_ADAPTER), "got %s.\n",
+            debugstr_guid(&iface.InterfaceClassGuid));
+    memset(&iface, 0xcc, sizeof(iface));
+    iface.cbSize = sizeof(iface);
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, 0, &iface);
+    ok(ret, "got error %lu.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+
+    set = SetupDiCreateDeviceInfoListExW(NULL, NULL, NULL, NULL);
+    ok(set != INVALID_HANDLE_VALUE, "got %p.\n", set);
+    WideCharToMultiByte(CP_ACP, 0, device_path, -1, device_patha, sizeof(device_patha), NULL, NULL);
+    memset(&iface, 0xcc, sizeof(iface));
+    iface.cbSize = sizeof(iface);
+    ret = SetupDiOpenDeviceInterfaceA(set, device_patha, 0, &iface);
+    ok(ret, "got error %lu.\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &GUID_DEVINTERFACE_DISPLAY_ADAPTER), "got %s.\n",
+            debugstr_guid(&iface.InterfaceClassGuid));
+    memset(&iface, 0xcc, sizeof(iface));
+    iface.cbSize = sizeof(iface);
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_DISPLAY_ADAPTER, 0, &iface);
+    ok(ret, "got error %lu.\n", GetLastError());
+    SetupDiDestroyDeviceInfoList(set);
+}
+
 static BOOL file_exists(const char *path)
 {
     return GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES;
@@ -4619,6 +4778,7 @@ START_TEST(devinst)
     test_driver_list();
     test_call_class_installer();
     test_get_class_devs();
+    test_SetupDiOpenDeviceInterface();
 
     if (!testsign_create_cert(&ctx))
         return;

@@ -254,6 +254,7 @@ DEFINE_IINSPECTABLE( hostname_factory, IHostNameFactory, struct hostname_statics
 static HRESULT WINAPI hostname_factory_CreateHostName( IHostNameFactory *iface, HSTRING name, IHostName **value )
 {
     struct hostname *impl;
+    HRESULT hr;
 
     TRACE( "iface %p, name %s, value %p\n", iface, debugstr_hstring(name), value );
 
@@ -263,7 +264,11 @@ static HRESULT WINAPI hostname_factory_CreateHostName( IHostNameFactory *iface, 
 
     impl->IHostName_iface.lpVtbl = &hostname_vtbl;
     impl->ref = 1;
-    WindowsDuplicateString( name, &impl->raw_name );
+    if (FAILED(hr = WindowsDuplicateString( name, &impl->raw_name )))
+    {
+        free( impl );
+        return hr;
+    }
 
     *value = &impl->IHostName_iface;
     TRACE( "created IHostName %p.\n", *value );

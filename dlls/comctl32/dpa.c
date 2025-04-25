@@ -910,14 +910,12 @@ HDPA WINAPI DPA_CreateEx (INT nGrow, HANDLE hHeap)
 
     TRACE("(%d %p)\n", nGrow, hHeap);
 
-    if (hHeap)
-        hdpa = HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
-    else
-        hdpa = Alloc (sizeof(*hdpa));
+    if (!hHeap) hHeap = GetProcessHeap();
+    hdpa = HeapAlloc (hHeap, HEAP_ZERO_MEMORY, sizeof(*hdpa));
 
     if (hdpa) {
         hdpa->nGrow = max(8, nGrow);
-        hdpa->hHeap = hHeap ? hHeap : GetProcessHeap();
+        hdpa->hHeap = hHeap;
         hdpa->nMaxCount = hdpa->nGrow * 2;
         hdpa->ptrs = HeapAlloc (hdpa->hHeap, HEAP_ZERO_MEMORY,
                                 hdpa->nMaxCount * sizeof(LPVOID));

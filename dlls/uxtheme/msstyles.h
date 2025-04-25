@@ -27,6 +27,8 @@
 #define MAX_THEME_CLASS_NAME 60
 #define MAX_THEME_VALUE_NAME 60
 
+#define DEFAULT_TRANSPARENT_COLOR RGB(255, 0, 255)
+
 typedef struct _THEME_PROPERTY {
     int iPrimitiveType;
     int iPropertyId;
@@ -65,7 +67,8 @@ typedef struct _THEME_CLASS {
 typedef struct _THEME_IMAGE {
     WCHAR name[MAX_PATH];
     HBITMAP image;
-    BOOL hasAlpha;
+    unsigned int hasAlpha : 1;
+    unsigned int hasDefaultTransparentColour : 1;
     
     struct _THEME_IMAGE *next;
 } THEME_IMAGE, *PTHEME_IMAGE;
@@ -101,7 +104,7 @@ PTHEME_PARTSTATE MSSTYLES_FindPart(PTHEME_CLASS tc, int iPartId);
 PTHEME_PARTSTATE MSSTYLES_FindPartState(PTHEME_CLASS tc, int iPartId, int iStateId, PTHEME_CLASS *tcNext);
 PTHEME_PROPERTY MSSTYLES_FindProperty(PTHEME_CLASS tc, int iPartId, int iStateId, int iPropertyPrimitive, int iPropertyId);
 PTHEME_PROPERTY MSSTYLES_FindMetric(int iPropertyPrimitive, int iPropertyId);
-HBITMAP MSSTYLES_LoadBitmap(PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha);
+HBITMAP MSSTYLES_LoadBitmap(PTHEME_CLASS tc, LPCWSTR lpFilename, BOOL* hasAlpha, BOOL *hasDefaultTransparentColour);
 
 HRESULT MSSTYLES_GetPropertyBool(PTHEME_PROPERTY tp, BOOL *pfVal);
 HRESULT MSSTYLES_GetPropertyColor(PTHEME_PROPERTY tp, COLORREF *pColor);

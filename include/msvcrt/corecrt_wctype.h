@@ -24,6 +24,7 @@ extern "C" {
 #define _LEADBYTE     0x8000
 #define _ALPHA       (0x0100|_UPPER|_LOWER)  /* (C1_ALPHA|_UPPER|_LOWER) */
 
+_ACRTIMP const unsigned short* __cdecl __pctype_func(void);
 _ACRTIMP int     __cdecl _isleadbyte_l(int,_locale_t);
 _ACRTIMP int     __cdecl _iswalnum_l(wint_t,_locale_t);
 _ACRTIMP int     __cdecl _iswalpha_l(wint_t,_locale_t);

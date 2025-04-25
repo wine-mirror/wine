@@ -1674,7 +1674,7 @@ static void d3dpreprocess_test(void)
     /* NULL shader test */
     messages = NULL;
     hr = D3DPreprocess(test1, strlen(test1), NULL, defines, NULL, NULL, &messages);
-    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));

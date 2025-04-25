@@ -30,11 +30,11 @@ https://www.winehq.org.
 
 Para compilar e correr o Wine, deves ter o seguinte:
 
-- Linux version 2.0.36 ou superior
+- Linux version 2.6.22 ou superior
 - FreeBSD 12.4 ou seguinte
 - Solaris x86 9 ou seguinte
 - NetBSD-current
-- Mac OS X 10.8 ou seguinte
+- macOS 10.12 ou seguinte
 
 Como o Wine requer sequências kernel-level para poder correr, apenas
 os sistemas operativos acima mencionados são suportados.
@@ -159,14 +159,14 @@ http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
         dados de aplicações, localizaçao de erros. Isto é provavelmente o
         melhor ponto de começo.
 
-- **FAQ**: A Wine FAQ está localizada em https://www.winehq.org/FAQ
+- **FAQ**: A Wine FAQ está localizada em https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: https://wiki.winehq.org
+- **Wiki**: https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **Mailing Lists**:
 	Há algumas mailing list para responsaveis pelo desenvolvimento Wine; ver em
-	https://www.winehq.org/forums para mais informação.
+	https://gitlab.winehq.org/wine/wine/-/wikis/Forums para mais informação.
 
 - **IRC** Ajuda online está disponivel em `#WineHQ` on irc.libera.chat.

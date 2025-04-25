@@ -37,10 +37,11 @@ static int indent;
 static const char *format_uuid( const struct uuid *uuid )
 {
     static char buffer[40];
-    sprintf( buffer, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-             uuid->Data1, uuid->Data2, uuid->Data3,
-             uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
-             uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7] );
+    snprintf( buffer, sizeof(buffer),
+              "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+              uuid->Data1, uuid->Data2, uuid->Data3,
+              uuid->Data4[0], uuid->Data4[1], uuid->Data4[2], uuid->Data4[3],
+              uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7] );
     return buffer;
 }
 
@@ -358,7 +359,7 @@ void output_typelib_regscript( const typelib_t *typelib )
     expr = get_attrp( typelib->attrs, ATTR_ID );
     if (expr)
     {
-        sprintf(id_part, "\\%d", expr->cval);
+        snprintf(id_part, sizeof(id_part), "\\%d", expr->cval);
         resname = strmake("%s\\%d", typelib_name, expr->cval);
     }
     put_str( indent, "'%x' { %s = s '%%MODULE%%%s' }\n",

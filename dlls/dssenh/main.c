@@ -48,9 +48,11 @@ struct container
 {
     DWORD       magic;
     DWORD       flags;
+    DWORD       type;
     struct key *exch_key;
     struct key *sign_key;
     char        name[MAX_PATH];
+    DWORD       alg_idx;
 };
 
 #define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
@@ -64,6 +66,14 @@ struct hash
 };
 
 static const char dss_path_fmt[] = "Software\\Wine\\Crypto\\DSS\\%s";
+
+#define S(s) sizeof(s), s
+static const PROV_ENUMALGS_EX supported_base_algs[] =
+{
+    { CALG_SHA1, 160, 160, 160, CRYPT_FLAG_SIGNING, S("SHA-1"), S("Secure Hash Algorithm (SHA-1)") },
+    { CALG_MD5, 128, 128, 128, 0, S("MD5"), S("Message Digest 5 (MD5)") },
+    { CALG_DSS_SIGN, 1024, 512, 1024, CRYPT_FLAG_SIGNING, S("DSA_SIGN"), S("Digital Signature Algorithm") }
+};
 
 static BOOL create_container_regkey( struct container *container, REGSAM sam, HKEY *hkey )
 {
@@ -82,14 +92,16 @@ static BOOL create_container_regkey( struct container *container, REGSAM sam, HK
     return !RegCreateKeyExA( rootkey, path, 0, NULL, REG_OPTION_NON_VOLATILE, sam, NULL, hkey, NULL );
 }
 
-static struct container *create_key_container( const char *name, DWORD flags )
+static struct container *create_key_container( const char *name, DWORD flags, DWORD type )
 {
     struct container *ret;
 
     if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
     ret->magic = MAGIC_CONTAINER;
     ret->flags = flags;
+    ret->type = type;
     if (name) strcpy( ret->name, name );
+    ret->alg_idx = 0;
 
     if (!(flags & CRYPT_VERIFYCONTEXT))
     {
@@ -219,7 +231,7 @@ static void destroy_container( struct container *container )
     free( container );
 }
 
-static struct container *read_key_container( const char *name, DWORD flags )
+static struct container *read_key_container( const char *name, DWORD flags, DWORD type )
 {
     DWORD protect_flags = (flags & CRYPT_MACHINE_KEYSET) ? CRYPTPROTECT_LOCAL_MACHINE : 0;
     struct container *ret;
@@ -227,7 +239,7 @@ static struct container *read_key_container( const char *name, DWORD flags )
 
     if (!open_container_regkey( name, flags, KEY_READ, &hkey )) return NULL;
 
-    if ((ret = create_key_container( name, flags )))
+    if ((ret = create_key_container( name, flags, type )))
     {
         ret->exch_key = read_key( hkey, AT_KEYEXCHANGE, protect_flags );
         ret->sign_key = read_key( hkey, AT_SIGNATURE, protect_flags );
@@ -276,24 +288,24 @@ BOOL WINAPI CPAcquireContext( HCRYPTPROV *ret_prov, LPSTR container, DWORD flags
     {
     case 0:
     case 0 | CRYPT_MACHINE_KEYSET:
-        if (!(ret = read_key_container( name, flags )))
+        if (!(ret = read_key_container( name, flags, vtable->dwProvType )))
             SetLastError( NTE_BAD_KEYSET );
         break;
 
     case CRYPT_NEWKEYSET:
     case CRYPT_NEWKEYSET | CRYPT_MACHINE_KEYSET:
-        if ((ret = read_key_container( name, flags )))
+        if ((ret = read_key_container( name, flags, vtable->dwProvType )))
         {
             free( ret );
             SetLastError( NTE_EXISTS );
             return FALSE;
         }
-        ret = create_key_container( name, flags );
+        ret = create_key_container( name, flags, vtable->dwProvType );
         break;
 
     case CRYPT_VERIFYCONTEXT:
     case CRYPT_VERIFYCONTEXT | CRYPT_MACHINE_KEYSET:
-        ret = create_key_container( "", flags );
+        ret = create_key_container( "", flags, vtable->dwProvType );
         break;
 
     case CRYPT_DELETEKEYSET:
@@ -323,9 +335,104 @@ BOOL WINAPI CPReleaseContext( HCRYPTPROV hprov, DWORD flags )
     return TRUE;
 }
 
+static BOOL copy_param( void *dst, DWORD *dst_size, const void *src, DWORD src_size )
+{
+    if (!dst_size)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+
+    if (!dst)
+    {
+        *dst_size = src_size;
+        return TRUE;
+    }
+
+    if (*dst_size < src_size)
+    {
+        SetLastError( ERROR_MORE_DATA );
+        return FALSE;
+    }
+
+    *dst_size = src_size;
+    memcpy( dst, src, src_size );
+    return TRUE;
+}
+
 BOOL WINAPI CPGetProvParam( HCRYPTPROV hprov, DWORD param, BYTE *data, DWORD *len, DWORD flags )
 {
-    return FALSE;
+    struct container *container = (struct container *)hprov;
+
+    TRACE( "%p, %lu, %p, %p, %08lx\n", (void *)hprov, param, data, len, flags );
+
+    if (!len)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (container->magic != MAGIC_CONTAINER)
+    {
+        SetLastError(NTE_BAD_UID);
+        return FALSE;
+    }
+
+    switch (param)
+    {
+    case PP_NAME:
+    {
+        const char *name;
+
+        switch (container->type)
+        {
+        default:
+        case PROV_DSS:
+            name = MS_DEF_DSS_PROV_A;
+            break;
+        case PROV_DSS_DH:
+            name = MS_ENH_DSS_DH_PROV_A;
+            break;
+        case PROV_DH_SCHANNEL:
+            name = MS_DEF_DH_SCHANNEL_PROV_A;
+            break;
+        }
+        return copy_param( data, len, name, strlen(name) + 1 );
+    }
+
+    case PP_ENUMALGS:
+    case PP_ENUMALGS_EX:
+    {
+        if (flags & CRYPT_FIRST)
+            container->alg_idx = 0;
+        else
+            container->alg_idx++;
+
+        if (container->alg_idx >= ARRAY_SIZE(supported_base_algs))
+        {
+            SetLastError( ERROR_NO_MORE_ITEMS );
+            return FALSE;
+        }
+
+        if (param == PP_ENUMALGS)
+        {
+            PROV_ENUMALGS alg;
+
+            alg.aiAlgid = supported_base_algs[container->alg_idx].aiAlgid;
+            alg.dwBitLen = supported_base_algs[container->alg_idx].dwDefaultLen;
+            strcpy( alg.szName, supported_base_algs[container->alg_idx].szName );
+            alg.dwNameLen = supported_base_algs[container->alg_idx].dwNameLen;
+            return copy_param( data, len, &alg, sizeof(alg) );
+        }
+        else
+            return copy_param( data, len, &supported_base_algs[container->alg_idx], sizeof(PROV_ENUMALGS_EX) );
+    }
+
+    default:
+        FIXME( "param %lu is not supported\n", param );
+        SetLastError( NTE_BAD_TYPE );
+        return FALSE;
+    }
 }
 
 static BOOL store_key_pair( struct key *key, HKEY hkey, DWORD keyspec, DWORD flags )

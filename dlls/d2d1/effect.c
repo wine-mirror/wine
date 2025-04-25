@@ -1071,6 +1071,29 @@ L"<?xml version='1.0'?>                                                   \
     </Inputs>                                                             \
   </Effect>";
 
+static const WCHAR color_matrix_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Color Matrix'/>     \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Color Matrix'/>     \
+    <Inputs >                                                             \
+      <Input name='Source'/>                                              \
+    </Inputs>                                                             \
+  </Effect>";
+
+static const WCHAR flood_description[] =
+L"<?xml version='1.0'?>                                                   \
+  <Effect>                                                                \
+    <Property name='DisplayName' type='string' value='Flood'/>            \
+    <Property name='Author'      type='string' value='The Wine Project'/> \
+    <Property name='Category'    type='string' value='Stub'/>             \
+    <Property name='Description' type='string' value='Flood'/>            \
+    <Inputs minimum='0' maximum='0' >                                     \
+    </Inputs>                                                             \
+  </Effect>";
+
 void d2d_effects_init_builtins(struct d2d_factory *factory)
 {
     static const struct builtin_description
@@ -1086,6 +1109,8 @@ void d2d_effects_init_builtins(struct d2d_factory *factory)
         { &CLSID_D2D1Crop, crop_description },
         { &CLSID_D2D1Shadow, shadow_description },
         { &CLSID_D2D1Grayscale, grayscale_description },
+        { &CLSID_D2D1ColorMatrix, color_matrix_description },
+        { &CLSID_D2D1Flood, flood_description },
     };
     unsigned int i;
     HRESULT hr;
@@ -1157,7 +1182,7 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
         [D2D1_PROPERTY_TYPE_VECTOR2]       = sizeof(D2D_VECTOR_2F),
         [D2D1_PROPERTY_TYPE_VECTOR3]       = sizeof(D2D_VECTOR_3F),
         [D2D1_PROPERTY_TYPE_VECTOR4]       = sizeof(D2D_VECTOR_4F),
-        [D2D1_PROPERTY_TYPE_BLOB]          = 0 /* FIXME */,
+        [D2D1_PROPERTY_TYPE_BLOB]          = 0,
         [D2D1_PROPERTY_TYPE_IUNKNOWN]      = sizeof(IUnknown *),
         [D2D1_PROPERTY_TYPE_ENUM]          = sizeof(UINT32),
         [D2D1_PROPERTY_TYPE_ARRAY]         = sizeof(UINT32),
@@ -1172,12 +1197,6 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
     HRESULT hr;
 
     assert(type >= D2D1_PROPERTY_TYPE_STRING && type <= D2D1_PROPERTY_TYPE_COLOR_CONTEXT);
-
-    if (type == D2D1_PROPERTY_TYPE_BLOB)
-    {
-        FIXME("Ignoring property %s of type %u.\n", wine_dbgstr_w(name), type);
-        return S_OK;
-    }
 
     if (!d2d_array_reserve((void **)&props->properties, &props->size, props->count + 1,
             sizeof(*props->properties)))
@@ -1212,6 +1231,11 @@ static HRESULT d2d_effect_properties_internal_add(struct d2d_effect_properties *
     {
         p->data.ptr = wcsdup(value);
         p->size = value ? (wcslen(value) + 1) * sizeof(WCHAR) : sizeof(WCHAR);
+    }
+    else if (p->type == D2D1_PROPERTY_TYPE_BLOB)
+    {
+        p->data.ptr = NULL;
+        p->size = 0;
     }
     else
     {
@@ -1394,7 +1418,13 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     memset(value, 0, size);
 
     if (type != D2D1_PROPERTY_TYPE_UNKNOWN && prop->type != type) return E_INVALIDARG;
-    if (prop->type != D2D1_PROPERTY_TYPE_STRING && prop->size != size) return E_INVALIDARG;
+    /* Do not check sizes for variable-length properties. */
+    if (prop->type != D2D1_PROPERTY_TYPE_STRING
+            && prop->type != D2D1_PROPERTY_TYPE_BLOB
+            && prop->size != size)
+    {
+        return E_INVALIDARG;
+    }
 
     if (prop->get_function)
         return prop->get_function((IUnknown *)effect->impl, value, size, &actual_size);
@@ -1402,8 +1432,8 @@ static HRESULT d2d_effect_property_get_value(const struct d2d_effect_properties 
     switch (prop->type)
     {
         case D2D1_PROPERTY_TYPE_BLOB:
-            FIXME("Unimplemented for type %u.\n", prop->type);
-            return E_NOTIMPL;
+            memset(value, 0, size);
+            break;
         case D2D1_PROPERTY_TYPE_STRING:
             return d2d_effect_return_string(prop->data.ptr, (WCHAR *)value, size / sizeof(WCHAR));
         default:
@@ -1858,7 +1888,7 @@ static void d2d_effect_cleanup(struct d2d_effect *effect)
     ID2D1EffectContext_Release(&effect->effect_context->ID2D1EffectContext_iface);
     if (effect->graph)
         ID2D1TransformGraph_Release(&effect->graph->ID2D1TransformGraph_iface);
-    //d2d_effect_properties_cleanup(&effect->properties);
+    d2d_effect_properties_cleanup(&effect->properties);
     if (effect->impl)
         ID2D1EffectImpl_Release(effect->impl);
 }

@@ -763,6 +763,7 @@ static NTSTATUS initialize_context( void *args )
             TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, (unsigned int)*params->output_token_length);
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
+            if (target != GSS_C_NO_NAME) pgss_release_name( &minor_status, &target );
             return SEC_E_INCOMPLETE_MESSAGE;
         }
         *params->output_token_length = output_token.length;
@@ -803,8 +804,8 @@ static NTSTATUS make_signature( void *args )
     return status_gss_to_sspi( ret );
 }
 
-#define KERBEROS_MAX_SIGNATURE        37
-#define KERBEROS_SECURITY_TRAILER     49
+#define KERBEROS_MAX_SIGNATURE        64
+#define KERBEROS_SECURITY_TRAILER     64
 #define KERBEROS_MAX_SIGNATURE_DCE    28
 #define KERBEROS_SECURITY_TRAILER_DCE 76
 
@@ -869,7 +870,7 @@ static NTSTATUS query_context_attributes( void *args )
         }
         sizes->cbMaxToken        = KERBEROS_MAX_BUF;
         sizes->cbMaxSignature    = size_max_signature;
-        sizes->cbBlockSize       = 1;
+        sizes->cbBlockSize       = 8;
         sizes->cbSecurityTrailer = size_security_trailer;
         return SEC_E_OK;
     }

@@ -69,8 +69,8 @@ struct pid_effect_update
     UINT axis_count;
     UINT direction_coll;
     UINT direction_count;
-    struct hid_value_caps *axis_caps[6];
-    struct hid_value_caps *direction_caps[6];
+    struct hid_value_caps *axis_caps[MAX_PID_AXES];
+    struct hid_value_caps *direction_caps[MAX_PID_AXES];
     struct hid_value_caps *duration_caps;
     struct hid_value_caps *gain_caps;
     struct hid_value_caps *sample_period_caps;
@@ -221,11 +221,11 @@ struct hid_joystick_effect
     struct list entry;
     struct hid_joystick *joystick;
 
-    DWORD axes[6];
-    LONG directions[6];
+    DWORD axes[MAX_PID_AXES];
+    LONG directions[MAX_PID_AXES];
     DICONSTANTFORCE constant_force;
     DIRAMPFORCE ramp_force;
-    DICONDITION condition[6];
+    DICONDITION condition[MAX_PID_AXES];
     DIENVELOPE envelope;
     DIPERIODIC periodic;
     DIEFFECT params;
@@ -415,6 +415,9 @@ static const WCHAR *object_usage_to_string( DIDEVICEOBJECTINSTANCEW *instance )
     case MAKELONG(PID_USAGE_START_DELAY, HID_USAGE_PAGE_PID): return L"Start Delay";
     case MAKELONG(PID_USAGE_STATE_REPORT, HID_USAGE_PAGE_PID): return L"PID State Report";
     case MAKELONG(PID_USAGE_TRIGGER_BUTTON, HID_USAGE_PAGE_PID): return L"Trigger Button";
+
+    case MAKELONG(PID_USAGE_SET_CONSTANT_FORCE_REPORT, HID_USAGE_PAGE_PID): return L"Set Constant Force Report";
+    case MAKELONG(PID_USAGE_SET_RAMP_FORCE_REPORT, HID_USAGE_PAGE_PID): return L"Set Ramp Force Report";
 
     case MAKELONG(HID_USAGE_SIMULATION_RUDDER, HID_USAGE_PAGE_SIMULATION): return L"Rudder";
     case MAKELONG(HID_USAGE_SIMULATION_THROTTLE, HID_USAGE_PAGE_SIMULATION): return L"Throttle";
@@ -749,21 +752,9 @@ static void set_report_value( struct hid_joystick *impl, char *report_buf,
 {
     ULONG report_len = impl->caps.OutputReportByteLength;
     PHIDP_PREPARSED_DATA preparsed = impl->preparsed;
-    LONG log_min, log_max, phy_min, phy_max;
     NTSTATUS status;
 
     if (!caps) return;
-
-    log_min = caps->logical_min;
-    log_max = caps->logical_max;
-    phy_min = caps->physical_min;
-    phy_max = caps->physical_max;
-
-    if (phy_max || phy_min)
-    {
-        if (value > phy_max || value < phy_min) value = -1;
-        else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
-    }
 
     status = HidP_SetUsageValue( HidP_Output, caps->usage_page, caps->link_collection,
                                  caps->usage_min, value, preparsed, report_buf, report_len );
@@ -837,6 +828,37 @@ static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD pro
     return DIERR_UNSUPPORTED;
 }
 
+static LONG scale_to_logical_value( LONG value, struct hid_value_caps *caps )
+{
+    LONG log_min, log_max, phy_min, phy_max;
+
+    if (!caps) return value;
+
+    log_min = caps->logical_min;
+    log_max = caps->logical_max;
+    phy_min = caps->physical_min;
+    phy_max = caps->physical_max;
+
+    if (phy_max || phy_min)
+    {
+        if (value > phy_max || value < phy_min) value = -1;
+        else value = log_min + (value - phy_min) * (log_max - log_min) / (phy_max - phy_min);
+    }
+
+    return value;
+}
+
+static LONG clamp_to_physical_value( LONG value, struct hid_value_caps *caps )
+{
+    LONG phy_min, phy_max;
+
+    if (!caps) return value;
+
+    phy_min = caps->physical_min;
+    phy_max = caps->physical_max;
+    return max( min( value, phy_max ), phy_min );
+}
+
 static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG device_gain )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
@@ -852,6 +874,8 @@ static HRESULT hid_joystick_send_device_gain( IDirectInputDevice8W *iface, LONG 
     status = HidP_InitializeReportForID( HidP_Output, report->id, impl->preparsed, report_buf, report_len );
     if (status != HIDP_STATUS_SUCCESS) return status;
 
+    device_gain = clamp_to_physical_value( device_gain, report->device_gain_caps );
+    device_gain = scale_to_logical_value( device_gain, report->device_gain_caps );
     set_report_value( impl, report_buf, report->device_gain_caps, device_gain );
 
     if (!WriteFile( impl->device, report_buf, report_len, NULL, NULL )) return DIERR_INPUTLOST;
@@ -1828,7 +1852,7 @@ static BOOL init_pid_caps( struct dinput_device *device, UINT index, struct hid_
     if (instance->wCollectionNumber == effect_update->axes_coll)
     {
         SET_REPORT_ID( effect_update );
-        if (effect_update->axis_count >= 6) FIXME( "more than 6 PID axes detected\n" );
+        if (effect_update->axis_count >= MAX_PID_AXES) FIXME( "more than %d PID axes detected\n", MAX_PID_AXES );
         else effect_update->axis_caps[effect_update->axis_count] = caps;
         effect_update->axis_count++;
     }
@@ -1837,7 +1861,7 @@ static BOOL init_pid_caps( struct dinput_device *device, UINT index, struct hid_
         SET_REPORT_ID( effect_update );
         caps->physical_min = 0;
         caps->physical_max = 35900;
-        if (effect_update->direction_count >= 6) FIXME( "more than 6 PID directions detected\n" );
+        if (effect_update->direction_count >= MAX_PID_AXES) FIXME( "more than %d PID directions detected\n", MAX_PID_AXES );
         else effect_update->direction_caps[effect_update->direction_count] = caps;
         effect_update->direction_count++;
     }
@@ -2350,7 +2374,7 @@ static void convert_directions_from_spherical( const DIEFFECT *in, DIEFFECT *out
 static void convert_directions( const DIEFFECT *in, DIEFFECT *out )
 {
     DWORD direction_flags = DIEFF_CARTESIAN | DIEFF_POLAR | DIEFF_SPHERICAL;
-    LONG directions[6] = {0};
+    LONG directions[MAX_PID_AXES] = {0};
     DIEFFECT spherical = {.rglDirection = directions};
 
     switch (in->dwFlags & direction_flags)
@@ -2810,7 +2834,15 @@ static HRESULT WINAPI hid_joystick_effect_GetEffectStatus( IDirectInputEffect *i
 static void set_parameter_value( struct hid_joystick_effect *impl, char *report_buf,
                                  struct hid_value_caps *caps, LONG value )
 {
+    value = scale_to_logical_value( value, caps );
     return set_report_value( impl->joystick, report_buf, caps, value );
+}
+
+static void set_parameter_value_clamp( struct hid_joystick_effect *impl, char *report_buf,
+                                       struct hid_value_caps *caps, LONG value )
+{
+    value = clamp_to_physical_value( value, caps );
+    return set_parameter_value( impl, report_buf, caps, value );
 }
 
 static void set_parameter_value_angle( struct hid_joystick_effect *impl, char *report_buf,
@@ -2822,19 +2854,23 @@ static void set_parameter_value_angle( struct hid_joystick_effect *impl, char *r
     if (caps->units != 0x14) WARN( "unknown angle unit caps %#lx\n", caps->units );
     else if (exp < -2) while (exp++ < -2) value *= 10;
     else if (exp > -2) while (exp-- > -2) value /= 10;
-    set_parameter_value( impl, report_buf, caps, value );
+    set_parameter_value_clamp( impl, report_buf, caps, value );
 }
 
 static void set_parameter_value_us( struct hid_joystick_effect *impl, char *report_buf,
                                     struct hid_value_caps *caps, LONG value )
 {
     LONG exp;
+
     if (!caps) return;
+    if (value == INFINITE) return set_report_value( impl->joystick, report_buf, caps, caps->physical_min - 1 );
+
     exp = caps->units_exp;
-    if (value == INFINITE) value = caps->physical_min - 1;
-    else if (caps->units != 0x1003) WARN( "unknown time unit caps %#lx\n", caps->units );
+    if (caps->units != 0x1003) WARN( "unknown time unit caps %#lx\n", caps->units );
     else if (exp < -6) while (exp++ < -6) value *= 10;
     else if (exp > -6) while (exp-- > -6) value /= 10;
+
+    /* testing shows that duration values are not clamped, any out-of-range values becomes -1 */
     set_parameter_value( impl, report_buf, caps, value );
 }
 
@@ -2858,7 +2894,7 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     ULONG report_len = impl->joystick->caps.OutputReportByteLength;
     HANDLE device = impl->joystick->device;
     struct hid_value_caps *caps;
-    LONG directions[4] = {0};
+    LONG directions[MAX_PID_AXES] = {0};
     DWORD i, tmp, count;
     DIEFFECT spherical;
     NTSTATUS status;
@@ -2904,14 +2940,14 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_SAWTOOTH_DOWN:
             if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
 
-            set_parameter_value( impl, impl->type_specific_buf, set_periodic->magnitude_caps,
-                                 impl->periodic.dwMagnitude );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_periodic->magnitude_caps,
+                                       impl->periodic.dwMagnitude );
             set_parameter_value_us( impl, impl->type_specific_buf, set_periodic->period_caps,
                                     impl->periodic.dwPeriod );
-            set_parameter_value( impl, impl->type_specific_buf, set_periodic->phase_caps,
-                                 impl->periodic.dwPhase );
-            set_parameter_value( impl, impl->type_specific_buf, set_periodic->offset_caps,
-                                 impl->periodic.lOffset );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_periodic->phase_caps,
+                                       impl->periodic.dwPhase );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_periodic->offset_caps,
+                                       impl->periodic.lOffset );
 
             if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
             else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
@@ -2928,18 +2964,21 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
                                              i, impl->joystick->preparsed, impl->type_specific_buf, report_len );
                 if (status != HIDP_STATUS_SUCCESS) WARN( "HidP_SetUsageValue %04x:%04x returned %#lx\n",
                                                          HID_USAGE_PAGE_PID, PID_USAGE_PARAMETER_BLOCK_OFFSET, status );
-                set_parameter_value( impl, impl->type_specific_buf, set_condition->center_point_offset_caps,
-                                     impl->condition[i].lOffset );
-                set_parameter_value( impl, impl->type_specific_buf, set_condition->positive_coefficient_caps,
-                                     impl->condition[i].lPositiveCoefficient );
-                set_parameter_value( impl, impl->type_specific_buf, set_condition->negative_coefficient_caps,
-                                     impl->condition[i].lNegativeCoefficient );
+                set_parameter_value_clamp( impl, impl->type_specific_buf, set_condition->center_point_offset_caps,
+                                           impl->condition[i].lOffset );
+                set_parameter_value_clamp( impl, impl->type_specific_buf, set_condition->positive_coefficient_caps,
+                                           impl->condition[i].lPositiveCoefficient );
+                set_parameter_value_clamp( impl, impl->type_specific_buf, set_condition->negative_coefficient_caps,
+                                           impl->condition[i].lNegativeCoefficient );
+
+                /* testing shows that saturation values are not clamped, any out-of-range values becomes -1 */
                 set_parameter_value( impl, impl->type_specific_buf, set_condition->positive_saturation_caps,
                                      impl->condition[i].dwPositiveSaturation );
                 set_parameter_value( impl, impl->type_specific_buf, set_condition->negative_saturation_caps,
                                      impl->condition[i].dwNegativeSaturation );
-                set_parameter_value( impl, impl->type_specific_buf, set_condition->dead_band_caps,
-                                     impl->condition[i].lDeadBand );
+
+                set_parameter_value_clamp( impl, impl->type_specific_buf, set_condition->dead_band_caps,
+                                           impl->condition[i].lDeadBand );
 
                 if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
                 else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
@@ -2948,8 +2987,8 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_CONSTANT_FORCE:
             if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
 
-            set_parameter_value( impl, impl->type_specific_buf, set_constant_force->magnitude_caps,
-                                 impl->constant_force.lMagnitude );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_constant_force->magnitude_caps,
+                                       impl->constant_force.lMagnitude );
 
             if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
             else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
@@ -2957,10 +2996,10 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
         case PID_USAGE_ET_RAMP:
             if (!(impl->modified & DIEP_TYPESPECIFICPARAMS)) break;
 
-            set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->start_caps,
-                                 impl->ramp_force.lStart );
-            set_parameter_value( impl, impl->type_specific_buf, set_ramp_force->end_caps,
-                                 impl->ramp_force.lEnd );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_ramp_force->start_caps,
+                                       impl->ramp_force.lStart );
+            set_parameter_value_clamp( impl, impl->type_specific_buf, set_ramp_force->end_caps,
+                                       impl->ramp_force.lEnd );
 
             if (!WriteFile( device, impl->type_specific_buf, report_len, NULL, NULL )) hr = DIERR_INPUTLOST;
             else impl->modified &= ~DIEP_TYPESPECIFICPARAMS;
@@ -2982,12 +3021,12 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
             if (!(impl->flags & DIEP_ENVELOPE)) break;
             if (!(impl->modified & DIEP_ENVELOPE)) break;
 
-            set_parameter_value( impl, impl->set_envelope_buf, set_envelope->attack_level_caps,
-                                 impl->envelope.dwAttackLevel );
+            set_parameter_value_clamp( impl, impl->set_envelope_buf, set_envelope->attack_level_caps,
+                                       impl->envelope.dwAttackLevel );
             set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->attack_time_caps,
                                     impl->envelope.dwAttackTime );
-            set_parameter_value( impl, impl->set_envelope_buf, set_envelope->fade_level_caps,
-                                 impl->envelope.dwFadeLevel );
+            set_parameter_value_clamp( impl, impl->set_envelope_buf, set_envelope->fade_level_caps,
+                                       impl->envelope.dwFadeLevel );
             set_parameter_value_us( impl, impl->set_envelope_buf, set_envelope->fade_time_caps,
                                     impl->envelope.dwFadeTime );
 
@@ -3001,8 +3040,8 @@ static HRESULT WINAPI hid_joystick_effect_Download( IDirectInputEffect *iface )
     {
         set_parameter_value_us( impl, impl->effect_update_buf, effect_update->duration_caps,
                                 impl->params.dwDuration );
-        set_parameter_value( impl, impl->effect_update_buf, effect_update->gain_caps,
-                             impl->params.dwGain );
+        set_parameter_value_clamp( impl, impl->effect_update_buf, effect_update->gain_caps,
+                                   impl->params.dwGain );
         set_parameter_value_us( impl, impl->effect_update_buf, effect_update->sample_period_caps,
                                 impl->params.dwSamplePeriod );
         set_parameter_value_us( impl, impl->effect_update_buf, effect_update->start_delay_caps,

@@ -468,12 +468,15 @@ DECL_HANDLER(get_clipboard_data)
 
     if (req->cached && req->seqno == format->seqno) goto done;  /* client-side cache still valid */
 
-    if (format->size > get_reply_max_size())
+    if (format->data)
     {
-        set_error( STATUS_BUFFER_OVERFLOW );
-        return;
+        if (format->size > get_reply_max_size())
+        {
+            set_error( STATUS_BUFFER_OVERFLOW );
+            return;
+        }
+        set_reply_data( format->data, format->size );
     }
-    set_reply_data( format->data, format->size );
 
 done:
     if (!req->render) clipboard->rendering--;

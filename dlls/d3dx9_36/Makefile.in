@@ -1,7 +1,7 @@
 EXTRADEFS = -DD3DX_SDK_VERSION=36
 MODULE    = d3dx9_36.dll
 IMPORTLIB = d3dx9
-IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32
+IMPORTS   = d3d9 d3dcompiler dxguid d3dxof ole32 gdi32 user32 wined3d
 DELAYIMPORTS = windowscodecs
 
 EXTRADLLFLAGS = -Wb,--prefer-native

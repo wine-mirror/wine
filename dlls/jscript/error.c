@@ -407,6 +407,8 @@ void handle_dispatch_exception(script_ctx_t *ctx, EXCEPINFO *ei)
     TRACE("%08lx %s %s\n", ei->scode, debugstr_w(ei->bstrSource), debugstr_w(ei->bstrDescription));
 
     reset_ei(ctx->ei);
+    if(ei->pfnDeferredFillIn)
+        ei->pfnDeferredFillIn(ei);
     ctx->ei->error = (SUCCEEDED(ei->scode) || ei->scode == DISP_E_EXCEPTION) ? E_FAIL : ei->scode;
     if(ei->bstrSource)
         ctx->ei->source = jsstr_alloc_len(ei->bstrSource, SysStringLen(ei->bstrSource));
@@ -475,6 +477,7 @@ jsdisp_t *create_builtin_error(script_ctx_t *ctx)
         case JS_E_INVALID_PROPERTY:
         case JS_E_INVALID_ACTION:
         case JS_E_MISSING_ARG:
+        case JS_E_OBJECT_NOT_COLLECTION:
         case JS_E_FUNCTION_EXPECTED:
         case JS_E_DATE_EXPECTED:
         case JS_E_NUMBER_EXPECTED:

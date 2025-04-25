@@ -87,6 +87,24 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
     }
 }
 
+static void redirect_path( UNICODE_STRING *path )
+{
+#ifndef _WIN64
+    static const WCHAR nt_sysdir[] = L"\\??\\C:\\windows\\system32\\";
+#ifdef __arm__
+    const WCHAR *dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_ARMNT );
+#else
+    const WCHAR *dir = get_machine_wow64_dir( IMAGE_FILE_MACHINE_I386 );
+#endif
+
+    if (!NtCurrentTeb()->GdiBatchCount) return;  /* not wow64 */
+    if (((TEB64 *)NtCurrentTeb()->GdiBatchCount)->TlsSlots[WOW64_TLS_FILESYSREDIR]) return; /* disabled */
+    if (path->Length <= sizeof(nt_sysdir)) return;
+    if (wcsnicmp( path->Buffer, nt_sysdir, wcslen(nt_sysdir))) return;
+    memcpy( path->Buffer + 4, dir, wcslen(dir) * sizeof(WCHAR) );
+#endif
+}
+
 
 /***********************************************************************
  * Operations on file names
@@ -101,7 +119,7 @@ static const WCHAR *get_machine_wow64_dir( WORD machine )
  */
 static inline BOOL contains_path( const WCHAR *name )
 {
-    if (RtlDetermineDosPathNameType_U( name ) != RELATIVE_PATH) return TRUE;
+    if (RtlDetermineDosPathNameType_U( name ) != RtlPathTypeRelative) return TRUE;
     if (name[0] != '.') return FALSE;
     if (name[1] == '/' || name[1] == '\\') return TRUE;
     return (name[1] == '.' && (name[2] == '/' || name[2] == '\\'));
@@ -168,13 +186,10 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
         return FALSE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.ObjectName = &session_manager;
-    attr.Attributes = 0;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
+    redirect_path( &source_name );
+    if (dest) redirect_path( &dest_name );
 
+    InitializeObjectAttributes( &attr, &session_manager, 0, 0, NULL );
     if (NtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
     {
         RtlFreeUnicodeString( &source_name );
@@ -665,13 +680,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryW( LPCWSTR path, LPSECURITY_ATTRIBU
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, sa ? sa->lpSecurityDescriptor : NULL );
     status = NtCreateFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL,
                            FILE_ATTRIBUTE_NORMAL, FILE_SHARE_READ, FILE_CREATE,
                            FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
@@ -841,11 +850,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
     if (attributes & FILE_FLAG_DELETE_ON_CLOSE)
         access |= DELETE;
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, sa ? sa->lpSecurityDescriptor : NULL );
     if (attributes & SECURITY_SQOS_PRESENT)
     {
         qos.Length = sizeof(qos);
@@ -854,9 +859,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileW( LPCWSTR filename, DWORD access, DWO
         qos.EffectiveOnly = (attributes & SECURITY_EFFECTIVE_ONLY) != 0;
         attr.SecurityQualityOfService = &qos;
     }
-    else
-        attr.SecurityQualityOfService = NULL;
-
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
     status = NtCreateFile( &ret, access | SYNCHRONIZE | FILE_READ_ATTRIBUTES, &attr, &io,
@@ -1016,13 +1018,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileW( LPCWSTR path )
         return FALSE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nameW;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
 			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 			  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
@@ -1079,13 +1075,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstChangeNotificationW( LPCWSTR path, BOOL
         return handle;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, FILE_LIST_DIRECTORY | SYNCHRONIZE, &attr, &dummy_iosb,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
@@ -1273,13 +1263,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_
         info->is_root = (pos * sizeof(WCHAR) >= nt_name.Length);
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &info->handle, FILE_LIST_DIRECTORY | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT );
@@ -1374,6 +1358,15 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileW( const WCHAR *filename, WIN32_FIN
     return FindFirstFileExW( filename, FindExInfoStandard, data, FindExSearchNameMatch, NULL, 0 );
 }
 
+/******************************************************************************
+ *     FindFirstFileNameW   (kernelbase.@)
+ */
+HANDLE WINAPI FindFirstFileNameW( const WCHAR *file_name, DWORD flags, DWORD *len, WCHAR *link_name )
+{
+    FIXME( "(%s, %lu, %p, %p): stub!\n", debugstr_w(file_name), flags, len, link_name );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return INVALID_HANDLE_VALUE;
+}
 
 /**************************************************************************
  *	FindFirstStreamW   (kernelbase.@)
@@ -1587,13 +1580,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetCompressedFileSizeW( LPCWSTR name, LPDWORD siz
         return INVALID_FILE_SIZE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
     if (!set_ntstatus( status )) return INVALID_FILE_SIZE;
@@ -1674,13 +1661,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileAttributesW( LPCWSTR name )
         return INVALID_FILE_ATTRIBUTES;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtQueryAttributesFile( &attr, &info );
     RtlFreeUnicodeString( &nt_name );
 
@@ -1731,13 +1712,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetFileAttributesExW( LPCWSTR name, GET_FILEEX_INF
         return FALSE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtQueryFullAttributesFile( &attr, &info );
     RtlFreeUnicodeString( &nt_name );
     if (!set_ntstatus( status )) return FALSE;
@@ -2482,7 +2457,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTempPathW( DWORD count, LPWSTR path )
 DWORD WINAPI DECLSPEC_HOTPATCH GetTempPath2A(DWORD count, LPSTR path)
 {
     /* TODO: Set temp path to C:\Windows\SystemTemp\ when a SYSTEM process calls this function */
-    FIXME("(%lu, %s) semi-stub\n", count, path);
+    FIXME("(%lu, %p) semi-stub\n", count, path);
     return GetTempPathA(count, path);
 }
 
@@ -2493,7 +2468,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetTempPath2A(DWORD count, LPSTR path)
 DWORD WINAPI DECLSPEC_HOTPATCH GetTempPath2W(DWORD count, LPWSTR path)
 {
     /* TODO: Set temp path to C:\Windows\SystemTemp\ when a SYSTEM process calls this function */
-    FIXME("(%lu, %s) semi-stub\n", count, debugstr_w(path));
+    FIXME("(%lu, %p) semi-stub\n", count, path);
     return GetTempPathW(count, path);
 }
 
@@ -2554,13 +2529,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH MoveFileWithProgressW( const WCHAR *source, const 
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &source_handle, DELETE | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                          FILE_SYNCHRONOUS_IO_NONALERT );
@@ -2655,20 +2624,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
         return FALSE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = NULL;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
     /* Open the "replaced" file for reading */
     if (!RtlDosPathNameToNtPathName_U( replaced, &nt_replaced_name, NULL, NULL ))
     {
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
-    attr.ObjectName = &nt_replaced_name;
+    InitializeObjectAttributes( &attr, &nt_replaced_name, OBJ_CASE_INSENSITIVE, 0, NULL );
 
     /* Replacement should fail if replaced is READ_ONLY */
     status = NtQueryAttributesFile(&attr, &info);
@@ -2707,9 +2669,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH ReplaceFileW( const WCHAR *replaced, const WCHAR *
         /* ReplaceFile() can replace an open target. To do this, we need to move
          * it out of the way first. */
         WCHAR temp_path[MAX_PATH], temp_file[MAX_PATH];
+        WCHAR* filePart;
+        DWORD cnt = GetFullPathNameW(replaced, ARRAY_SIZE( temp_path ), temp_path, &filePart);
+        if (!cnt) return FALSE;
+        if (cnt >= ARRAY_SIZE( temp_path ) || !filePart)
+        {
+            SetLastError( ERROR_PATH_NOT_FOUND );
+            return FALSE;
+        }
+        *filePart = 0;
 
-        lstrcpynW( temp_path, replaced, ARRAY_SIZE( temp_path ) );
-        PathRemoveFileSpecW( temp_path );
         if (!GetTempFileNameW( temp_path, L"rf", 0, temp_file ) ||
             !MoveFileExW( replaced, temp_file, MOVEFILE_REPLACE_EXISTING ))
             return FALSE;
@@ -2922,13 +2891,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFileAttributesW( LPCWSTR name, DWORD attributes
         return FALSE;
     }
 
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &nt_name;
-    attr.SecurityDescriptor = NULL;
-    attr.SecurityQualityOfService = NULL;
-
+    InitializeObjectAttributes( &attr, &nt_name, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
 
@@ -3370,14 +3333,9 @@ HANDLE WINAPI DECLSPEC_HOTPATCH OpenFileById( HANDLE handle, LPFILE_ID_DESCRIPTO
     if (flags & FILE_FLAG_SEQUENTIAL_SCAN) options |= FILE_SEQUENTIAL_ONLY;
     flags &= FILE_ATTRIBUTE_VALID_FLAGS;
 
-    objectName.Length             = sizeof(ULONGLONG);
-    objectName.Buffer             = (WCHAR *)&id->FileId;
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = handle;
-    attr.Attributes               = 0;
-    attr.ObjectName               = &objectName;
-    attr.SecurityDescriptor       = sec_attr ? sec_attr->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
+    objectName.Length = sizeof(ULONGLONG);
+    objectName.Buffer = (WCHAR *)&id->FileId;
+    InitializeObjectAttributes( &attr, &objectName, 0, handle, sec_attr ? sec_attr->lpSecurityDescriptor : NULL );
     if (sec_attr && sec_attr->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
     if (!set_ntstatus( NtCreateFile( &result, access | SYNCHRONIZE, &attr, &io, NULL, flags,

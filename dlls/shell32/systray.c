@@ -34,12 +34,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
+struct notify_data_icon
+{
+    /* data for the icon bitmap */
+    UINT width;
+    UINT height;
+    UINT planes;
+    UINT bpp;
+};
+
 struct notify_data  /* platform-independent format for NOTIFYICONDATA */
 {
     LONG  hWnd;
     UINT  uID;
     UINT  uFlags;
     UINT  uCallbackMessage;
+    struct notify_data_icon icon_info; /* systray icon bitmap info */
     WCHAR szTip[128];
     DWORD dwState;
     DWORD dwStateMask;
@@ -51,12 +61,10 @@ struct notify_data  /* platform-independent format for NOTIFYICONDATA */
     WCHAR szInfoTitle[64];
     DWORD dwInfoFlags;
     GUID  guidItem;
-    /* data for the icon bitmap */
-    UINT width;
-    UINT height;
-    UINT planes;
-    UINT bpp;
+    struct notify_data_icon balloon_icon_info; /* balloon icon bitmap info */
+    BYTE icon_data[];
 };
+
 
 /*************************************************************************
  * Shell_NotifyIcon			[SHELL32.296]
@@ -116,6 +124,55 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
     return Shell_NotifyIconW(dwMessage, &nidW);
 }
 
+
+/*************************************************************************
+ * get_bitmap_info Helper function for filling BITMAP structs and calculating buffer size in bits
+ */
+static void get_bitmap_info( ICONINFO *icon_info, BITMAP *mask, BITMAP *color, LONG *mask_bits, LONG *color_bits )
+{
+    if ((icon_info->hbmMask && !GetObjectW( icon_info->hbmMask, sizeof(*mask), mask )) ||
+        (icon_info->hbmColor && !GetObjectW( icon_info->hbmColor, sizeof(*color), color )))
+    {
+        if (icon_info->hbmMask) DeleteObject( icon_info->hbmMask );
+        if (icon_info->hbmColor) DeleteObject( icon_info->hbmColor );
+        memset( icon_info, 0, sizeof(*icon_info) );
+        return;
+    }
+
+    if (icon_info->hbmMask)
+        *mask_bits = (mask->bmPlanes * mask->bmWidth * mask->bmHeight * mask->bmBitsPixel + 15) / 16 * 2;
+    if (icon_info->hbmColor)
+        *color_bits = (color->bmPlanes * color->bmWidth * color->bmHeight * color->bmBitsPixel + 15) / 16 * 2;
+}
+
+
+/*************************************************************************
+ * fill_icon_info Helper function for filling struct image metadata and buffer with bitmap data
+ */
+static void fill_icon_info( const BITMAP *mask, const BITMAP *color, LONG mask_bits, LONG color_bits,
+                            ICONINFO *icon_info, struct notify_data_icon *msg_icon_info, BYTE *image_data_buffer )
+{
+    if (icon_info->hbmColor)
+    {
+        msg_icon_info->width  = color->bmWidth;
+        msg_icon_info->height = color->bmHeight;
+        msg_icon_info->planes = color->bmPlanes;
+        msg_icon_info->bpp    = color->bmBitsPixel;
+        GetBitmapBits( icon_info->hbmColor, color_bits, image_data_buffer + mask_bits );
+        DeleteObject( icon_info->hbmColor );
+    }
+    else
+    {
+        msg_icon_info->width  = mask->bmWidth;
+        msg_icon_info->height = mask->bmHeight / 2;
+        msg_icon_info->planes = 1;
+        msg_icon_info->bpp    = 1;
+    }
+
+    GetBitmapBits( icon_info->hbmMask, mask_bits, image_data_buffer );
+    DeleteObject( icon_info->hbmMask );
+}
+
 /*************************************************************************
  * Shell_NotifyIconW			[SHELL32.298]
  */
@@ -125,6 +182,9 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     COPYDATASTRUCT cds;
     struct notify_data data_buffer;
     struct notify_data *data = &data_buffer;
+    ICONINFO icon_info = { 0 }, balloon_icon_info = { 0 };
+    BITMAP mask, color, balloon_mask, balloon_color;
+    LONG mask_size = 0, color_size = 0, balloon_mask_size = 0, balloon_color_size = 0;
     BOOL ret;
 
     TRACE("dwMessage = %ld, nid->cbSize=%ld\n", dwMessage, nid->cbSize);
@@ -158,63 +218,49 @@ BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW nid)
     /* FIXME: if statement only needed because we don't support interprocess
      * icon handles */
     if (nid->uFlags & NIF_ICON)
+        GetIconInfo( nid->hIcon, &icon_info );
+
+    if ((nid->uFlags & NIF_INFO) && (nid->dwInfoFlags & NIIF_ICONMASK) == NIIF_USER)
+        GetIconInfo( nid->hBalloonIcon, &balloon_icon_info );
+
+    get_bitmap_info( &icon_info, &mask, &color, &mask_size, &color_size );
+    cds.cbData += mask_size + color_size;
+
+    get_bitmap_info( &balloon_icon_info, &balloon_mask, &balloon_color, &balloon_mask_size, &balloon_color_size );
+    cds.cbData += balloon_mask_size + balloon_color_size;
+
+    if (cds.cbData > sizeof(*data))
     {
-        ICONINFO iconinfo;
-        BITMAP bmMask;
-        BITMAP bmColour;
-        LONG cbMaskBits;
-        LONG cbColourBits = 0;
-        char *buffer;
-
-        if (!GetIconInfo(nid->hIcon, &iconinfo))
-            goto noicon;
-
-        if (!GetObjectW(iconinfo.hbmMask, sizeof(bmMask), &bmMask) ||
-            (iconinfo.hbmColor && !GetObjectW(iconinfo.hbmColor, sizeof(bmColour), &bmColour)))
-        {
-            DeleteObject(iconinfo.hbmMask);
-            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
-            goto noicon;
-        }
-
-        cbMaskBits = (bmMask.bmPlanes * bmMask.bmWidth * bmMask.bmHeight * bmMask.bmBitsPixel + 15) / 16 * 2;
-        if (iconinfo.hbmColor)
-            cbColourBits = (bmColour.bmPlanes * bmColour.bmWidth * bmColour.bmHeight * bmColour.bmBitsPixel + 15) / 16 * 2;
-        cds.cbData = sizeof(*data) + cbMaskBits + cbColourBits;
+        BYTE *buffer;
         buffer = malloc(cds.cbData);
         if (!buffer)
         {
-            DeleteObject(iconinfo.hbmMask);
-            if (iconinfo.hbmColor) DeleteObject(iconinfo.hbmColor);
+            if (icon_info.hbmMask) DeleteObject( icon_info.hbmMask );
+            if (icon_info.hbmColor) DeleteObject( icon_info.hbmColor );
+            if (balloon_icon_info.hbmMask) DeleteObject( balloon_icon_info.hbmMask );
+            if (balloon_icon_info.hbmColor) DeleteObject( balloon_icon_info.hbmColor );
             SetLastError(E_OUTOFMEMORY);
             return FALSE;
         }
 
         data = (struct notify_data *)buffer;
+        buffer = data->icon_data;
         memset( data, 0, sizeof(*data) );
-        buffer += sizeof(*data);
-        GetBitmapBits(iconinfo.hbmMask, cbMaskBits, buffer);
-        if (!iconinfo.hbmColor)
+
+        if (icon_info.hbmMask)
         {
-            data->width  = bmMask.bmWidth;
-            data->height = bmMask.bmHeight / 2;
-            data->planes = 1;
-            data->bpp    = 1;
+            fill_icon_info( &mask, &color, mask_size, color_size, &icon_info, &data->icon_info, buffer );
+            buffer += mask_size + color_size;
         }
-        else
+
+        if (balloon_icon_info.hbmMask)
         {
-            data->width  = bmColour.bmWidth;
-            data->height = bmColour.bmHeight;
-            data->planes = bmColour.bmPlanes;
-            data->bpp    = bmColour.bmBitsPixel;
-            buffer += cbMaskBits;
-            GetBitmapBits(iconinfo.hbmColor, cbColourBits, buffer);
-            DeleteObject(iconinfo.hbmColor);
+            fill_icon_info( &balloon_mask, &balloon_color, balloon_mask_size, balloon_color_size,
+                            &balloon_icon_info, &data->balloon_icon_info, buffer );
+            buffer += mask_size + color_size;
         }
-        DeleteObject(iconinfo.hbmMask);
     }
 
-noicon:
     data->hWnd   = HandleToLong( nid->hWnd );
     data->uID    = nid->uID;
     data->uFlags = nid->uFlags;

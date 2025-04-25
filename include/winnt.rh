@@ -26,7 +26,7 @@
 #ifndef WINE_NO_UNICODE_MACROS
 # ifndef UNICODE
 #  define __TEXT(string) string
-# elif defined(WINE_UNICODE_NATIVE)
+# elif defined(WINE_UNICODE_NATIVE) || defined(__MINGW32__) || defined(_MSC_VER)
 #  define __TEXT(string) L##string
 # else
 #  define __TEXT(string) u##string

@@ -744,11 +744,11 @@ static LONG WINAPI rpc_filter( EXCEPTION_POINTERS *eptr )
     return I_RpcExceptionFilter( eptr->ExceptionRecord->ExceptionCode );
 }
 
-static void send_devicechange( DWORD code, void *data, unsigned int size )
+static void send_devicechange( const WCHAR *path, DWORD code, void *data, unsigned int size )
 {
     __TRY
     {
-        plugplay_send_event( code, data, size );
+        plugplay_send_event( path, code, data, size );
     }
     __EXCEPT(rpc_filter)
     {
@@ -864,7 +864,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         broadcast->dbcc_classguid  = iface->interface_class;
         lstrcpynW( broadcast->dbcc_name, name->Buffer, namelen + 1 );
         if (namelen > 1) broadcast->dbcc_name[1] = '\\';
-        send_devicechange( enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
+        send_devicechange( L"", enable ? DBT_DEVICEARRIVAL : DBT_DEVICEREMOVECOMPLETE, broadcast, len );
         heap_free( broadcast );
     }
     return ret;
@@ -1002,6 +1002,61 @@ NTSTATUS WINAPI IoRegisterDeviceInterface(DEVICE_OBJECT *device, const GUID *cla
 }
 
 /***********************************************************************
+ *           IoReportTargetDeviceChange   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoReportTargetDeviceChange( DEVICE_OBJECT *device, void *data )
+{
+    TARGET_DEVICE_CUSTOM_NOTIFICATION *notification = data;
+    OBJECT_NAME_INFORMATION *name_info;
+    DEV_BROADCAST_HANDLE *event_handle;
+    DWORD size, data_size;
+    NTSTATUS ret;
+
+    TRACE( "(%p, %p)\n", device, data );
+
+    if (notification->Version != 1) return STATUS_INVALID_PARAMETER;
+
+    ret = ObQueryNameString( device, NULL, 0, &size );
+    if (ret != STATUS_INFO_LENGTH_MISMATCH) return ret;
+    if (!(name_info = heap_alloc( size ))) return STATUS_NO_MEMORY;
+    ret = ObQueryNameString( device, name_info, size, &size );
+    if (ret != STATUS_SUCCESS) return ret;
+
+    data_size = notification->Size - offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer );
+    size = offsetof( DEV_BROADCAST_HANDLE, dbch_data[data_size + 2 * sizeof(WCHAR)] );
+    if (!(event_handle = heap_alloc_zero( size )))
+    {
+        heap_free( name_info );
+        return STATUS_NO_MEMORY;
+    }
+
+    event_handle->dbch_size = size;
+    event_handle->dbch_devicetype = DBT_DEVTYP_HANDLE;
+    event_handle->dbch_eventguid = notification->Event;
+    event_handle->dbch_nameoffset = notification->NameBufferOffset;
+    memcpy( event_handle->dbch_data, notification->CustomDataBuffer, data_size );
+    send_devicechange( name_info->Name.Buffer, DBT_CUSTOMEVENT, (BYTE *)event_handle, event_handle->dbch_size );
+    heap_free( event_handle );
+    heap_free( name_info );
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           IoReportTargetDeviceChangeAsynchronous   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI IoReportTargetDeviceChangeAsynchronous( DEVICE_OBJECT *device, void *data, PDEVICE_CHANGE_COMPLETE_CALLBACK callback,
+                                                        void *context )
+{
+    NTSTATUS status;
+
+    TRACE( "(%p, %p, %p, %p) semi-stub!\n", device, data, callback, context );
+
+    if (!(status = IoReportTargetDeviceChange( device, data ))) callback( context );
+    return status;
+}
+
+/***********************************************************************
  *           IoOpenDeviceRegistryKey   (NTOSKRNL.EXE.@)
  */
 NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCESS_MASK access, HANDLE *key )
@@ -1028,6 +1083,17 @@ NTSTATUS WINAPI IoOpenDeviceRegistryKey( DEVICE_OBJECT *device, ULONG type, ACCE
     if (*key == INVALID_HANDLE_VALUE)
         return GetLastError();
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           PoRequestPowerIrp   (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI PoRequestPowerIrp( DEVICE_OBJECT *device, UCHAR minor,
+        POWER_STATE state, PREQUEST_POWER_COMPLETE complete_cb, void *ctx, IRP **irp )
+{
+    FIXME("device %p, minor %#x, state %u, complete_cb %p, ctx %p, irp %p, stub!\n",
+            device, minor, state.DeviceState, complete_cb, ctx, irp);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /***********************************************************************

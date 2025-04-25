@@ -8,7 +8,7 @@
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2007-2008 Stefan Dösinger for CodeWeavers
  * Copyright 2009, 2021 Henri Verbeet for CodeWeavers
- * Copyright 2019-2020 Zebediah Figura for CodeWeavers
+ * Copyright 2019-2020, 2023-2024 Elizabeth Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "hlsl.h"
+#include "vkd3d_shader_private.h"
 
 #define VKD3D_SM1_VS  0xfffeu
 #define VKD3D_SM1_PS  0xffffu
@@ -89,6 +89,32 @@
 #define VKD3D_SM1_VERSION_MAJOR(version)       (((version) >> 8u) & 0xffu)
 #define VKD3D_SM1_VERSION_MINOR(version)       (((version) >> 0u) & 0xffu)
 
+enum vkd3d_sm1_register_type
+{
+    VKD3D_SM1_REG_TEMP              = 0x00,
+    VKD3D_SM1_REG_INPUT             = 0x01,
+    VKD3D_SM1_REG_CONST             = 0x02,
+    VKD3D_SM1_REG_ADDR              = 0x03,
+    VKD3D_SM1_REG_TEXTURE           = 0x03,
+    VKD3D_SM1_REG_RASTOUT           = 0x04,
+    VKD3D_SM1_REG_ATTROUT           = 0x05,
+    VKD3D_SM1_REG_TEXCRDOUT         = 0x06,
+    VKD3D_SM1_REG_OUTPUT            = 0x06,
+    VKD3D_SM1_REG_CONSTINT          = 0x07,
+    VKD3D_SM1_REG_COLOROUT          = 0x08,
+    VKD3D_SM1_REG_DEPTHOUT          = 0x09,
+    VKD3D_SM1_REG_SAMPLER           = 0x0a,
+    VKD3D_SM1_REG_CONST2            = 0x0b,
+    VKD3D_SM1_REG_CONST3            = 0x0c,
+    VKD3D_SM1_REG_CONST4            = 0x0d,
+    VKD3D_SM1_REG_CONSTBOOL         = 0x0e,
+    VKD3D_SM1_REG_LOOP              = 0x0f,
+    VKD3D_SM1_REG_TEMPFLOAT16       = 0x10,
+    VKD3D_SM1_REG_MISCTYPE          = 0x11,
+    VKD3D_SM1_REG_LABEL             = 0x12,
+    VKD3D_SM1_REG_PREDICATE         = 0x13,
+};
+
 enum vkd3d_sm1_address_mode_type
 {
     VKD3D_SM1_ADDRESS_MODE_ABSOLUTE = 0x0,
@@ -102,6 +128,12 @@ enum vkd3d_sm1_resource_type
     VKD3D_SM1_RESOURCE_TEXTURE_2D   = 0x2,
     VKD3D_SM1_RESOURCE_TEXTURE_CUBE = 0x3,
     VKD3D_SM1_RESOURCE_TEXTURE_3D   = 0x4,
+};
+
+enum vkd3d_sm1_misc_register
+{
+    VKD3D_SM1_MISC_POSITION         = 0x0,
+    VKD3D_SM1_MISC_FACE             = 0x1,
 };
 
 enum vkd3d_sm1_opcode
@@ -229,7 +261,7 @@ static const struct vkd3d_sm1_opcode_info vs_opcode_table[] =
     /* Arithmetic */
     {VKD3D_SM1_OP_NOP,          0, 0, VKD3DSIH_NOP},
     {VKD3D_SM1_OP_MOV,          1, 1, VKD3DSIH_MOV},
-    {VKD3D_SM1_OP_MOVA,         1, 1, VKD3DSIH_MOVA,         {2, 0}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_MOVA,         1, 1, VKD3DSIH_MOVA,         {2, 0}},
     {VKD3D_SM1_OP_ADD,          1, 2, VKD3DSIH_ADD},
     {VKD3D_SM1_OP_SUB,          1, 2, VKD3DSIH_SUB},
     {VKD3D_SM1_OP_MAD,          1, 3, VKD3DSIH_MAD},
@@ -242,22 +274,22 @@ static const struct vkd3d_sm1_opcode_info vs_opcode_table[] =
     {VKD3D_SM1_OP_MAX,          1, 2, VKD3DSIH_MAX},
     {VKD3D_SM1_OP_SLT,          1, 2, VKD3DSIH_SLT},
     {VKD3D_SM1_OP_SGE,          1, 2, VKD3DSIH_SGE},
-    {VKD3D_SM1_OP_ABS,          1, 1, VKD3DSIH_ABS},
+    {VKD3D_SM1_OP_ABS,          1, 1, VKD3DSIH_ABS,          {2, 0}},
     {VKD3D_SM1_OP_EXP,          1, 1, VKD3DSIH_EXP},
     {VKD3D_SM1_OP_LOG,          1, 1, VKD3DSIH_LOG},
     {VKD3D_SM1_OP_EXPP,         1, 1, VKD3DSIH_EXPP},
     {VKD3D_SM1_OP_LOGP,         1, 1, VKD3DSIH_LOGP},
     {VKD3D_SM1_OP_LIT,          1, 1, VKD3DSIH_LIT},
     {VKD3D_SM1_OP_DST,          1, 2, VKD3DSIH_DST},
-    {VKD3D_SM1_OP_LRP,          1, 3, VKD3DSIH_LRP},
+    {VKD3D_SM1_OP_LRP,          1, 3, VKD3DSIH_LRP,          {2, 0}},
     {VKD3D_SM1_OP_FRC,          1, 1, VKD3DSIH_FRC},
-    {VKD3D_SM1_OP_POW,          1, 2, VKD3DSIH_POW},
-    {VKD3D_SM1_OP_CRS,          1, 2, VKD3DSIH_CRS},
-    {VKD3D_SM1_OP_SGN,          1, 3, VKD3DSIH_SGN,          {2, 0}, {  2,   1}},
-    {VKD3D_SM1_OP_SGN,          1, 1, VKD3DSIH_SGN,          {3, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_NRM,          1, 1, VKD3DSIH_NRM,},
-    {VKD3D_SM1_OP_SINCOS,       1, 3, VKD3DSIH_SINCOS,       {2, 0}, {  2,   1}},
-    {VKD3D_SM1_OP_SINCOS,       1, 1, VKD3DSIH_SINCOS,       {3, 0}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_POW,          1, 2, VKD3DSIH_POW,          {2, 0}},
+    {VKD3D_SM1_OP_CRS,          1, 2, VKD3DSIH_CRS,          {2, 0}},
+    {VKD3D_SM1_OP_SGN,          1, 3, VKD3DSIH_SGN,          {2, 0}, {2, 1}},
+    {VKD3D_SM1_OP_SGN,          1, 1, VKD3DSIH_SGN,          {3, 0}},
+    {VKD3D_SM1_OP_NRM,          1, 1, VKD3DSIH_NRM,          {2, 0}},
+    {VKD3D_SM1_OP_SINCOS,       1, 3, VKD3DSIH_SINCOS,       {2, 0}, {2, 1}},
+    {VKD3D_SM1_OP_SINCOS,       1, 1, VKD3DSIH_SINCOS,       {3, 0}},
     /* Matrix */
     {VKD3D_SM1_OP_M4x4,         1, 2, VKD3DSIH_M4x4},
     {VKD3D_SM1_OP_M4x3,         1, 2, VKD3DSIH_M4x3},
@@ -268,27 +300,27 @@ static const struct vkd3d_sm1_opcode_info vs_opcode_table[] =
     {VKD3D_SM1_OP_DCL,          0, 0, VKD3DSIH_DCL},
     /* Constant definitions */
     {VKD3D_SM1_OP_DEF,          1, 1, VKD3DSIH_DEF},
-    {VKD3D_SM1_OP_DEFB,         1, 1, VKD3DSIH_DEFB},
-    {VKD3D_SM1_OP_DEFI,         1, 1, VKD3DSIH_DEFI},
+    {VKD3D_SM1_OP_DEFB,         1, 1, VKD3DSIH_DEFB,         {2, 0}},
+    {VKD3D_SM1_OP_DEFI,         1, 1, VKD3DSIH_DEFI,         {2, 0}},
     /* Control flow */
-    {VKD3D_SM1_OP_REP,          0, 1, VKD3DSIH_REP,          {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDREP,       0, 0, VKD3DSIH_ENDREP,       {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_IF,           0, 1, VKD3DSIH_IF,           {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_IFC,          0, 2, VKD3DSIH_IFC,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ELSE,         0, 0, VKD3DSIH_ELSE,         {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDIF,        0, 0, VKD3DSIH_ENDIF,        {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAK,        0, 0, VKD3DSIH_BREAK,        {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAKC,       0, 2, VKD3DSIH_BREAKC,       {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAKP,       0, 1, VKD3DSIH_BREAKP},
-    {VKD3D_SM1_OP_CALL,         0, 1, VKD3DSIH_CALL,         {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_CALLNZ,       0, 2, VKD3DSIH_CALLNZ,       {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_LOOP,         0, 2, VKD3DSIH_LOOP,         {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_RET,          0, 0, VKD3DSIH_RET,          {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDLOOP,      0, 0, VKD3DSIH_ENDLOOP,      {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_LABEL,        0, 1, VKD3DSIH_LABEL,        {2, 0}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_REP,          0, 1, VKD3DSIH_REP,          {2, 0}},
+    {VKD3D_SM1_OP_ENDREP,       0, 0, VKD3DSIH_ENDREP,       {2, 0}},
+    {VKD3D_SM1_OP_IF,           0, 1, VKD3DSIH_IF,           {2, 0}},
+    {VKD3D_SM1_OP_IFC,          0, 2, VKD3DSIH_IFC,          {2, 1}},
+    {VKD3D_SM1_OP_ELSE,         0, 0, VKD3DSIH_ELSE,         {2, 0}},
+    {VKD3D_SM1_OP_ENDIF,        0, 0, VKD3DSIH_ENDIF,        {2, 0}},
+    {VKD3D_SM1_OP_BREAK,        0, 0, VKD3DSIH_BREAK,        {2, 1}},
+    {VKD3D_SM1_OP_BREAKC,       0, 2, VKD3DSIH_BREAKC,       {2, 1}},
+    {VKD3D_SM1_OP_BREAKP,       0, 1, VKD3DSIH_BREAKP,       {2, 1}},
+    {VKD3D_SM1_OP_CALL,         0, 1, VKD3DSIH_CALL,         {2, 0}},
+    {VKD3D_SM1_OP_CALLNZ,       0, 2, VKD3DSIH_CALLNZ,       {2, 0}},
+    {VKD3D_SM1_OP_LOOP,         0, 2, VKD3DSIH_LOOP,         {2, 0}},
+    {VKD3D_SM1_OP_RET,          0, 0, VKD3DSIH_RET,          {2, 0}},
+    {VKD3D_SM1_OP_ENDLOOP,      0, 0, VKD3DSIH_ENDLOOP,      {2, 0}},
+    {VKD3D_SM1_OP_LABEL,        0, 1, VKD3DSIH_LABEL,        {2, 0}},
 
-    {VKD3D_SM1_OP_SETP,         1, 2, VKD3DSIH_SETP},
-    {VKD3D_SM1_OP_TEXLDL,       1, 2, VKD3DSIH_TEXLDL,       {3, 0}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_SETP,         1, 2, VKD3DSIH_SETP,         {2, 1}},
+    {VKD3D_SM1_OP_TEXLDL,       1, 2, VKD3DSIH_TEXLDL,       {3, 0}},
     {0,                         0, 0, VKD3DSIH_INVALID},
 };
 
@@ -301,90 +333,113 @@ static const struct vkd3d_sm1_opcode_info ps_opcode_table[] =
     {VKD3D_SM1_OP_SUB,          1, 2, VKD3DSIH_SUB},
     {VKD3D_SM1_OP_MAD,          1, 3, VKD3DSIH_MAD},
     {VKD3D_SM1_OP_MUL,          1, 2, VKD3DSIH_MUL},
-    {VKD3D_SM1_OP_RCP,          1, 1, VKD3DSIH_RCP},
-    {VKD3D_SM1_OP_RSQ,          1, 1, VKD3DSIH_RSQ},
+    {VKD3D_SM1_OP_RCP,          1, 1, VKD3DSIH_RCP,          {2, 0}},
+    {VKD3D_SM1_OP_RSQ,          1, 1, VKD3DSIH_RSQ,          {2, 0}},
     {VKD3D_SM1_OP_DP3,          1, 2, VKD3DSIH_DP3},
-    {VKD3D_SM1_OP_DP4,          1, 2, VKD3DSIH_DP4},
-    {VKD3D_SM1_OP_MIN,          1, 2, VKD3DSIH_MIN},
-    {VKD3D_SM1_OP_MAX,          1, 2, VKD3DSIH_MAX},
-    {VKD3D_SM1_OP_SLT,          1, 2, VKD3DSIH_SLT},
-    {VKD3D_SM1_OP_SGE,          1, 2, VKD3DSIH_SGE},
-    {VKD3D_SM1_OP_ABS,          1, 1, VKD3DSIH_ABS},
-    {VKD3D_SM1_OP_EXP,          1, 1, VKD3DSIH_EXP},
-    {VKD3D_SM1_OP_LOG,          1, 1, VKD3DSIH_LOG},
-    {VKD3D_SM1_OP_EXPP,         1, 1, VKD3DSIH_EXPP},
-    {VKD3D_SM1_OP_LOGP,         1, 1, VKD3DSIH_LOGP},
-    {VKD3D_SM1_OP_DST,          1, 2, VKD3DSIH_DST},
+    {VKD3D_SM1_OP_DP4,          1, 2, VKD3DSIH_DP4,          {1, 2}},
+    {VKD3D_SM1_OP_MIN,          1, 2, VKD3DSIH_MIN,          {2, 0}},
+    {VKD3D_SM1_OP_MAX,          1, 2, VKD3DSIH_MAX,          {2, 0}},
+    {VKD3D_SM1_OP_ABS,          1, 1, VKD3DSIH_ABS,          {2, 0}},
+    {VKD3D_SM1_OP_EXP,          1, 1, VKD3DSIH_EXP,          {2, 0}},
+    {VKD3D_SM1_OP_LOG,          1, 1, VKD3DSIH_LOG,          {2, 0}},
     {VKD3D_SM1_OP_LRP,          1, 3, VKD3DSIH_LRP},
-    {VKD3D_SM1_OP_FRC,          1, 1, VKD3DSIH_FRC},
-    {VKD3D_SM1_OP_CND,          1, 3, VKD3DSIH_CND,          {1, 0}, {  1,   4}},
-    {VKD3D_SM1_OP_CMP,          1, 3, VKD3DSIH_CMP,          {1, 2}, {  3,   0}},
-    {VKD3D_SM1_OP_POW,          1, 2, VKD3DSIH_POW},
-    {VKD3D_SM1_OP_CRS,          1, 2, VKD3DSIH_CRS},
-    {VKD3D_SM1_OP_NRM,          1, 1, VKD3DSIH_NRM},
-    {VKD3D_SM1_OP_SINCOS,       1, 3, VKD3DSIH_SINCOS,       {2, 0}, {  2,   1}},
-    {VKD3D_SM1_OP_SINCOS,       1, 1, VKD3DSIH_SINCOS,       {3, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_DP2ADD,       1, 3, VKD3DSIH_DP2ADD,       {2, 0}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_FRC,          1, 1, VKD3DSIH_FRC,          {2, 0}},
+    {VKD3D_SM1_OP_CND,          1, 3, VKD3DSIH_CND,          {1, 0}, {1, 4}},
+    {VKD3D_SM1_OP_CMP,          1, 3, VKD3DSIH_CMP,          {1, 2}},
+    {VKD3D_SM1_OP_POW,          1, 2, VKD3DSIH_POW,          {2, 0}},
+    {VKD3D_SM1_OP_CRS,          1, 2, VKD3DSIH_CRS,          {2, 0}},
+    {VKD3D_SM1_OP_NRM,          1, 1, VKD3DSIH_NRM,          {2, 0}},
+    {VKD3D_SM1_OP_SINCOS,       1, 3, VKD3DSIH_SINCOS,       {2, 0}, {2, 1}},
+    {VKD3D_SM1_OP_SINCOS,       1, 1, VKD3DSIH_SINCOS,       {3, 0}},
+    {VKD3D_SM1_OP_DP2ADD,       1, 3, VKD3DSIH_DP2ADD,       {2, 0}},
     /* Matrix */
-    {VKD3D_SM1_OP_M4x4,         1, 2, VKD3DSIH_M4x4},
-    {VKD3D_SM1_OP_M4x3,         1, 2, VKD3DSIH_M4x3},
-    {VKD3D_SM1_OP_M3x4,         1, 2, VKD3DSIH_M3x4},
-    {VKD3D_SM1_OP_M3x3,         1, 2, VKD3DSIH_M3x3},
-    {VKD3D_SM1_OP_M3x2,         1, 2, VKD3DSIH_M3x2},
+    {VKD3D_SM1_OP_M4x4,         1, 2, VKD3DSIH_M4x4,         {2, 0}},
+    {VKD3D_SM1_OP_M4x3,         1, 2, VKD3DSIH_M4x3,         {2, 0}},
+    {VKD3D_SM1_OP_M3x4,         1, 2, VKD3DSIH_M3x4,         {2, 0}},
+    {VKD3D_SM1_OP_M3x3,         1, 2, VKD3DSIH_M3x3,         {2, 0}},
+    {VKD3D_SM1_OP_M3x2,         1, 2, VKD3DSIH_M3x2,         {2, 0}},
     /* Declarations */
-    {VKD3D_SM1_OP_DCL,          0, 0, VKD3DSIH_DCL},
+    {VKD3D_SM1_OP_DCL,          0, 0, VKD3DSIH_DCL,          {2, 0}},
     /* Constant definitions */
     {VKD3D_SM1_OP_DEF,          1, 1, VKD3DSIH_DEF},
-    {VKD3D_SM1_OP_DEFB,         1, 1, VKD3DSIH_DEFB},
-    {VKD3D_SM1_OP_DEFI,         1, 1, VKD3DSIH_DEFI},
+    {VKD3D_SM1_OP_DEFB,         1, 1, VKD3DSIH_DEFB,         {2, 0}},
+    {VKD3D_SM1_OP_DEFI,         1, 1, VKD3DSIH_DEFI,         {2, 1}},
     /* Control flow */
-    {VKD3D_SM1_OP_REP,          0, 1, VKD3DSIH_REP,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDREP,       0, 0, VKD3DSIH_ENDREP,       {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_IF,           0, 1, VKD3DSIH_IF,           {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_IFC,          0, 2, VKD3DSIH_IFC,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ELSE,         0, 0, VKD3DSIH_ELSE,         {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDIF,        0, 0, VKD3DSIH_ENDIF,        {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAK,        0, 0, VKD3DSIH_BREAK,        {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAKC,       0, 2, VKD3DSIH_BREAKC,       {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_BREAKP,       0, 1, VKD3DSIH_BREAKP},
-    {VKD3D_SM1_OP_CALL,         0, 1, VKD3DSIH_CALL,         {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_CALLNZ,       0, 2, VKD3DSIH_CALLNZ,       {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_LOOP,         0, 2, VKD3DSIH_LOOP,         {3, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_RET,          0, 0, VKD3DSIH_RET,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_ENDLOOP,      0, 0, VKD3DSIH_ENDLOOP,      {3, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_LABEL,        0, 1, VKD3DSIH_LABEL,        {2, 1}, {~0u, ~0u}},
+    {VKD3D_SM1_OP_REP,          0, 1, VKD3DSIH_REP,          {2, 1}},
+    {VKD3D_SM1_OP_ENDREP,       0, 0, VKD3DSIH_ENDREP,       {2, 1}},
+    {VKD3D_SM1_OP_IF,           0, 1, VKD3DSIH_IF,           {2, 1}},
+    {VKD3D_SM1_OP_IFC,          0, 2, VKD3DSIH_IFC,          {2, 1}},
+    {VKD3D_SM1_OP_ELSE,         0, 0, VKD3DSIH_ELSE,         {2, 1}},
+    {VKD3D_SM1_OP_ENDIF,        0, 0, VKD3DSIH_ENDIF,        {2, 1}},
+    {VKD3D_SM1_OP_BREAK,        0, 0, VKD3DSIH_BREAK,        {2, 1}},
+    {VKD3D_SM1_OP_BREAKC,       0, 2, VKD3DSIH_BREAKC,       {2, 1}},
+    {VKD3D_SM1_OP_BREAKP,       0, 1, VKD3DSIH_BREAKP,       {2, 1}},
+    {VKD3D_SM1_OP_CALL,         0, 1, VKD3DSIH_CALL,         {2, 1}},
+    {VKD3D_SM1_OP_CALLNZ,       0, 2, VKD3DSIH_CALLNZ,       {2, 1}},
+    {VKD3D_SM1_OP_LOOP,         0, 2, VKD3DSIH_LOOP,         {3, 0}},
+    {VKD3D_SM1_OP_RET,          0, 0, VKD3DSIH_RET,          {2, 1}},
+    {VKD3D_SM1_OP_ENDLOOP,      0, 0, VKD3DSIH_ENDLOOP,      {3, 0}},
+    {VKD3D_SM1_OP_LABEL,        0, 1, VKD3DSIH_LABEL,        {2, 1}},
     /* Texture */
-    {VKD3D_SM1_OP_TEXCOORD,     1, 0, VKD3DSIH_TEXCOORD,     {0, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXCOORD,     1, 1, VKD3DSIH_TEXCOORD,     {1 ,4}, {  1,   4}},
-    {VKD3D_SM1_OP_TEXKILL,      1, 0, VKD3DSIH_TEXKILL,      {1 ,0}, {  3,   0}},
-    {VKD3D_SM1_OP_TEX,          1, 0, VKD3DSIH_TEX,          {0, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEX,          1, 1, VKD3DSIH_TEX,          {1, 4}, {  1,   4}},
-    {VKD3D_SM1_OP_TEX,          1, 2, VKD3DSIH_TEX,          {2, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_TEXBEM,       1, 1, VKD3DSIH_TEXBEM,       {0, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXBEML,      1, 1, VKD3DSIH_TEXBEML,      {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXREG2AR,    1, 1, VKD3DSIH_TEXREG2AR,    {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXREG2GB,    1, 1, VKD3DSIH_TEXREG2GB,    {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXREG2RGB,   1, 1, VKD3DSIH_TEXREG2RGB,   {1, 2}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x2PAD,   1, 1, VKD3DSIH_TEXM3x2PAD,   {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x2TEX,   1, 1, VKD3DSIH_TEXM3x2TEX,   {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x3PAD,   1, 1, VKD3DSIH_TEXM3x3PAD,   {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x3DIFF,  1, 1, VKD3DSIH_TEXM3x3DIFF,  {0, 0}, {  0,   0}},
-    {VKD3D_SM1_OP_TEXM3x3SPEC,  1, 2, VKD3DSIH_TEXM3x3SPEC,  {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x3VSPEC, 1, 1, VKD3DSIH_TEXM3x3VSPEC, {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x3TEX,   1, 1, VKD3DSIH_TEXM3x3TEX,   {1, 0}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXDP3TEX,    1, 1, VKD3DSIH_TEXDP3TEX,    {1, 2}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x2DEPTH, 1, 1, VKD3DSIH_TEXM3x2DEPTH, {1, 3}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXDP3,       1, 1, VKD3DSIH_TEXDP3,       {1, 2}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXM3x3,      1, 1, VKD3DSIH_TEXM3x3,      {1, 2}, {  1,   3}},
-    {VKD3D_SM1_OP_TEXDEPTH,     1, 0, VKD3DSIH_TEXDEPTH,     {1, 4}, {  1,   4}},
-    {VKD3D_SM1_OP_BEM,          1, 2, VKD3DSIH_BEM,          {1, 4}, {  1,   4}},
-    {VKD3D_SM1_OP_DSX,          1, 1, VKD3DSIH_DSX,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_DSY,          1, 1, VKD3DSIH_DSY,          {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_TEXLDD,       1, 4, VKD3DSIH_TEXLDD,       {2, 1}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_SETP,         1, 2, VKD3DSIH_SETP},
-    {VKD3D_SM1_OP_TEXLDL,       1, 2, VKD3DSIH_TEXLDL,       {3, 0}, {~0u, ~0u}},
-    {VKD3D_SM1_OP_PHASE,        0, 0, VKD3DSIH_PHASE},
+    {VKD3D_SM1_OP_TEXCOORD,     1, 0, VKD3DSIH_TEXCOORD,     {0, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXCOORD,     1, 1, VKD3DSIH_TEXCOORD,     {1, 4}, {1, 4}},
+    {VKD3D_SM1_OP_TEXKILL,      1, 0, VKD3DSIH_TEXKILL,      {1, 0}},
+    {VKD3D_SM1_OP_TEX,          1, 0, VKD3DSIH_TEX,          {0, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEX,          1, 1, VKD3DSIH_TEX,          {1, 4}, {1, 4}},
+    {VKD3D_SM1_OP_TEX,          1, 2, VKD3DSIH_TEX,          {2, 0}},
+    {VKD3D_SM1_OP_TEXBEM,       1, 1, VKD3DSIH_TEXBEM,       {0, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXBEML,      1, 1, VKD3DSIH_TEXBEML,      {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXREG2AR,    1, 1, VKD3DSIH_TEXREG2AR,    {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXREG2GB,    1, 1, VKD3DSIH_TEXREG2GB,    {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXREG2RGB,   1, 1, VKD3DSIH_TEXREG2RGB,   {1, 2}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x2PAD,   1, 1, VKD3DSIH_TEXM3x2PAD,   {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x2TEX,   1, 1, VKD3DSIH_TEXM3x2TEX,   {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x3PAD,   1, 1, VKD3DSIH_TEXM3x3PAD,   {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x3DIFF,  1, 1, VKD3DSIH_TEXM3x3DIFF,  {0, 0}, {0, 0}},
+    {VKD3D_SM1_OP_TEXM3x3SPEC,  1, 2, VKD3DSIH_TEXM3x3SPEC,  {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x3VSPEC, 1, 1, VKD3DSIH_TEXM3x3VSPEC, {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x3TEX,   1, 1, VKD3DSIH_TEXM3x3TEX,   {1, 0}, {1, 3}},
+    {VKD3D_SM1_OP_TEXDP3TEX,    1, 1, VKD3DSIH_TEXDP3TEX,    {1, 2}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x2DEPTH, 1, 1, VKD3DSIH_TEXM3x2DEPTH, {1, 3}, {1, 3}},
+    {VKD3D_SM1_OP_TEXDP3,       1, 1, VKD3DSIH_TEXDP3,       {1, 2}, {1, 3}},
+    {VKD3D_SM1_OP_TEXM3x3,      1, 1, VKD3DSIH_TEXM3x3,      {1, 2}, {1, 3}},
+    {VKD3D_SM1_OP_TEXDEPTH,     1, 0, VKD3DSIH_TEXDEPTH,     {1, 4}, {1, 4}},
+    {VKD3D_SM1_OP_BEM,          1, 2, VKD3DSIH_BEM,          {1, 4}, {1, 4}},
+    {VKD3D_SM1_OP_DSX,          1, 1, VKD3DSIH_DSX,          {2, 1}},
+    {VKD3D_SM1_OP_DSY,          1, 1, VKD3DSIH_DSY,          {2, 1}},
+    {VKD3D_SM1_OP_TEXLDD,       1, 4, VKD3DSIH_TEXLDD,       {2, 1}},
+    {VKD3D_SM1_OP_SETP,         1, 2, VKD3DSIH_SETP,         {2, 1}},
+    {VKD3D_SM1_OP_TEXLDL,       1, 2, VKD3DSIH_TEXLDL,       {3, 0}},
+    {VKD3D_SM1_OP_PHASE,        0, 0, VKD3DSIH_PHASE,        {1, 4}, {1, 4}},
     {0,                         0, 0, VKD3DSIH_INVALID},
+};
+
+static const struct
+{
+    enum vkd3d_sm1_register_type d3dbc_type;
+    enum vkd3d_shader_register_type vsir_type;
+}
+register_types[] =
+{
+    {VKD3D_SM1_REG_TEMP,        VKD3DSPR_TEMP},
+    {VKD3D_SM1_REG_INPUT,       VKD3DSPR_INPUT},
+    {VKD3D_SM1_REG_CONST,       VKD3DSPR_CONST},
+    {VKD3D_SM1_REG_ADDR,        VKD3DSPR_ADDR},
+    {VKD3D_SM1_REG_TEXTURE,     VKD3DSPR_TEXTURE},
+    {VKD3D_SM1_REG_RASTOUT,     VKD3DSPR_RASTOUT},
+    {VKD3D_SM1_REG_ATTROUT,     VKD3DSPR_ATTROUT},
+    {VKD3D_SM1_REG_OUTPUT,      VKD3DSPR_OUTPUT},
+    {VKD3D_SM1_REG_TEXCRDOUT,   VKD3DSPR_TEXCRDOUT},
+    {VKD3D_SM1_REG_CONSTINT,    VKD3DSPR_CONSTINT},
+    {VKD3D_SM1_REG_COLOROUT,    VKD3DSPR_COLOROUT},
+    {VKD3D_SM1_REG_DEPTHOUT,    VKD3DSPR_DEPTHOUT},
+    {VKD3D_SM1_REG_SAMPLER,     VKD3DSPR_COMBINED_SAMPLER},
+    {VKD3D_SM1_REG_CONSTBOOL,   VKD3DSPR_CONSTBOOL},
+    {VKD3D_SM1_REG_LOOP,        VKD3DSPR_LOOP},
+    {VKD3D_SM1_REG_TEMPFLOAT16, VKD3DSPR_TEMPFLOAT16},
+    {VKD3D_SM1_REG_MISCTYPE,    VKD3DSPR_MISCTYPE},
+    {VKD3D_SM1_REG_LABEL,       VKD3DSPR_LABEL},
+    {VKD3D_SM1_REG_PREDICATE,   VKD3DSPR_PREDICATE},
 };
 
 static const enum vkd3d_shader_resource_type resource_type_table[] =
@@ -444,44 +499,98 @@ static uint32_t swizzle_from_sm1(uint32_t swizzle)
             shader_sm1_get_swizzle_component(swizzle, 3));
 }
 
-static void shader_sm1_parse_src_param(uint32_t param, struct vkd3d_shader_src_param *rel_addr,
-        struct vkd3d_shader_src_param *src)
+/* D3DBC doesn't have the concept of index count. All registers implicitly have
+ * exactly one index. However for some register types the index doesn't make
+ * sense, so we remove it. */
+static unsigned int idx_count_from_reg_type(enum vkd3d_shader_register_type reg_type)
 {
-    enum vkd3d_shader_register_type reg_type = ((param & VKD3D_SM1_REGISTER_TYPE_MASK) >> VKD3D_SM1_REGISTER_TYPE_SHIFT)
+    switch (reg_type)
+    {
+        case VKD3DSPR_DEPTHOUT:
+        case VKD3DSPR_ADDR:
+            return 0;
+
+        default:
+            return 1;
+    }
+}
+
+static enum vkd3d_shader_register_type parse_register_type(
+        struct vkd3d_shader_sm1_parser *sm1, uint32_t param, unsigned int *index_offset)
+{
+    enum vkd3d_sm1_register_type d3dbc_type = ((param & VKD3D_SM1_REGISTER_TYPE_MASK) >> VKD3D_SM1_REGISTER_TYPE_SHIFT)
             | ((param & VKD3D_SM1_REGISTER_TYPE_MASK2) >> VKD3D_SM1_REGISTER_TYPE_SHIFT2);
 
-    vsir_register_init(&src->reg, reg_type, VKD3D_DATA_FLOAT, 1);
-    src->reg.precision = VKD3D_SHADER_REGISTER_PRECISION_DEFAULT;
-    src->reg.non_uniform = false;
-    src->reg.idx[0].offset = param & VKD3D_SM1_REGISTER_NUMBER_MASK;
-    src->reg.idx[0].rel_addr = rel_addr;
-    if (src->reg.type == VKD3DSPR_SAMPLER)
-        src->reg.dimension = VSIR_DIMENSION_NONE;
-    else if (src->reg.type == VKD3DSPR_DEPTHOUT)
-        src->reg.dimension = VSIR_DIMENSION_SCALAR;
+    *index_offset = 0;
+
+    if (d3dbc_type == VKD3D_SM1_REG_CONST2)
+    {
+        *index_offset = 2048;
+        return VKD3DSPR_CONST;
+    }
+
+    if (d3dbc_type == VKD3D_SM1_REG_CONST3)
+    {
+        *index_offset = 4096;
+        return VKD3DSPR_CONST;
+    }
+
+    if (d3dbc_type == VKD3D_SM1_REG_CONST4)
+    {
+        *index_offset = 6144;
+        return VKD3DSPR_CONST;
+    }
+
+    if (d3dbc_type == VKD3D_SM1_REG_ADDR)
+        return sm1->p.program->shader_version.type == VKD3D_SHADER_TYPE_PIXEL ? VKD3DSPR_TEXTURE : VKD3DSPR_ADDR;
+    if (d3dbc_type == VKD3D_SM1_REG_TEXCRDOUT)
+        return vkd3d_shader_ver_ge(&sm1->p.program->shader_version, 3, 0) ? VKD3DSPR_OUTPUT : VKD3DSPR_TEXCRDOUT;
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(register_types); ++i)
+    {
+        if (register_types[i].d3dbc_type == d3dbc_type)
+            return register_types[i].vsir_type;
+    }
+
+    return VKD3DSPR_INVALID;
+}
+
+static void d3dbc_parse_register(struct vkd3d_shader_sm1_parser *d3dbc,
+        struct vkd3d_shader_register *reg, uint32_t param, struct vkd3d_shader_src_param *rel_addr)
+{
+    enum vkd3d_shader_register_type reg_type;
+    unsigned int index_offset, idx_count;
+
+    reg_type = parse_register_type(d3dbc, param, &index_offset);
+    idx_count = idx_count_from_reg_type(reg_type);
+    vsir_register_init(reg, reg_type, VKD3D_DATA_FLOAT, idx_count);
+    reg->precision = VKD3D_SHADER_REGISTER_PRECISION_DEFAULT;
+    reg->non_uniform = false;
+    if (idx_count == 1)
+    {
+        reg->idx[0].offset = index_offset + (param & VKD3D_SM1_REGISTER_NUMBER_MASK);
+        reg->idx[0].rel_addr = rel_addr;
+    }
+    if (reg->type == VKD3DSPR_SAMPLER)
+        reg->dimension = VSIR_DIMENSION_NONE;
+    else if (reg->type == VKD3DSPR_DEPTHOUT)
+        reg->dimension = VSIR_DIMENSION_SCALAR;
     else
-        src->reg.dimension = VSIR_DIMENSION_VEC4;
+        reg->dimension = VSIR_DIMENSION_VEC4;
+}
+
+static void shader_sm1_parse_src_param(struct vkd3d_shader_sm1_parser *sm1, uint32_t param,
+        struct vkd3d_shader_src_param *rel_addr, struct vkd3d_shader_src_param *src)
+{
+    d3dbc_parse_register(sm1, &src->reg, param, rel_addr);
     src->swizzle = swizzle_from_sm1((param & VKD3D_SM1_SWIZZLE_MASK) >> VKD3D_SM1_SWIZZLE_SHIFT);
     src->modifiers = (param & VKD3D_SM1_SRC_MODIFIER_MASK) >> VKD3D_SM1_SRC_MODIFIER_SHIFT;
 }
 
-static void shader_sm1_parse_dst_param(uint32_t param, struct vkd3d_shader_src_param *rel_addr,
-        struct vkd3d_shader_dst_param *dst)
+static void shader_sm1_parse_dst_param(struct vkd3d_shader_sm1_parser *sm1, uint32_t param,
+        struct vkd3d_shader_src_param *rel_addr, struct vkd3d_shader_dst_param *dst)
 {
-    enum vkd3d_shader_register_type reg_type = ((param & VKD3D_SM1_REGISTER_TYPE_MASK) >> VKD3D_SM1_REGISTER_TYPE_SHIFT)
-            | ((param & VKD3D_SM1_REGISTER_TYPE_MASK2) >> VKD3D_SM1_REGISTER_TYPE_SHIFT2);
-
-    vsir_register_init(&dst->reg, reg_type, VKD3D_DATA_FLOAT, 1);
-    dst->reg.precision = VKD3D_SHADER_REGISTER_PRECISION_DEFAULT;
-    dst->reg.non_uniform = false;
-    dst->reg.idx[0].offset = param & VKD3D_SM1_REGISTER_NUMBER_MASK;
-    dst->reg.idx[0].rel_addr = rel_addr;
-    if (dst->reg.type == VKD3DSPR_SAMPLER)
-        dst->reg.dimension = VSIR_DIMENSION_NONE;
-    else if (dst->reg.type == VKD3DSPR_DEPTHOUT)
-        dst->reg.dimension = VSIR_DIMENSION_SCALAR;
-    else
-        dst->reg.dimension = VSIR_DIMENSION_VEC4;
+    d3dbc_parse_register(sm1, &dst->reg, param, rel_addr);
     dst->modifiers = (param & VKD3D_SM1_DST_MODIFIER_MASK) >> VKD3D_SM1_DST_MODIFIER_SHIFT;
     dst->shift = (param & VKD3D_SM1_DSTSHIFT_MASK) >> VKD3D_SM1_DSTSHIFT_SHIFT;
 
@@ -532,6 +641,21 @@ static struct signature_element *find_signature_element_by_register_index(
     return NULL;
 }
 
+/* Add missing bits to a mask to make it contiguous. */
+static unsigned int make_mask_contiguous(unsigned int mask)
+{
+    static const unsigned int table[] =
+    {
+        0x0, 0x1, 0x2, 0x3,
+        0x4, 0x7, 0x6, 0x7,
+        0x8, 0xf, 0xe, 0xf,
+        0xc, 0xf, 0xe, 0xf,
+    };
+
+    VKD3D_ASSERT(mask < ARRAY_SIZE(table));
+    return table[mask];
+}
+
 static bool add_signature_element(struct vkd3d_shader_sm1_parser *sm1, bool output,
         const char *name, unsigned int index, enum vkd3d_shader_sysval_semantic sysval,
         unsigned int register_index, bool is_dcl, unsigned int mask)
@@ -547,7 +671,7 @@ static bool add_signature_element(struct vkd3d_shader_sm1_parser *sm1, bool outp
 
     if ((element = find_signature_element(signature, name, index)))
     {
-        element->mask |= mask;
+        element->mask = make_mask_contiguous(element->mask | mask);
         if (!is_dcl)
             element->used_mask |= mask;
         return true;
@@ -567,7 +691,7 @@ static bool add_signature_element(struct vkd3d_shader_sm1_parser *sm1, bool outp
     element->register_index = register_index;
     element->target_location = register_index;
     element->register_count = 1;
-    element->mask = mask;
+    element->mask = make_mask_contiguous(mask);
     element->used_mask = is_dcl ? 0 : mask;
     if (program->shader_version.type == VKD3D_SHADER_TYPE_PIXEL && !output)
         element->interpolation_mode = VKD3DSIM_LINEAR;
@@ -594,14 +718,39 @@ static void add_signature_mask(struct vkd3d_shader_sm1_parser *sm1, bool output,
         return;
     }
 
+    /* Normally VSIR mandates that the register mask is a subset of the usage
+     * mask, and the usage mask is a subset of the signature mask. This is
+     * doesn't always happen with SM1-3 registers, because of the limited
+     * flexibility with expressing swizzles.
+     *
+     * For example it's easy to find shaders like this:
+     *   ps_3_0
+     *   [...]
+     *   dcl_texcoord0 v0
+     *   [...]
+     *   texld r2.xyzw, v0.xyzw, s1.xyzw
+     *   [...]
+     *
+     * The dcl_textcoord0 instruction secretly has a .xy mask, which is used to
+     * compute the signature mask, but the texld instruction apparently uses all
+     * the components. Of course the last two components are ignored, but
+     * formally they seem to be used. So we end up with a signature element with
+     * mask .xy and usage mask .xyzw.
+     *
+     * In order to avoid this problem, when generating VSIR code with SM4
+     * normalisation level we remove the unused components in the write mask. We
+     * don't do that when targetting the SM1 normalisation level (i.e., when
+     * disassembling) so as to generate the same disassembly code as native. */
     element->used_mask |= mask;
+    if (program->normalisation_level >= VSIR_NORMALISED_SM4)
+        element->used_mask &= element->mask;
 }
 
 static bool add_signature_element_from_register(struct vkd3d_shader_sm1_parser *sm1,
         const struct vkd3d_shader_register *reg, bool is_dcl, unsigned int mask)
 {
     const struct vkd3d_shader_version *version = &sm1->p.program->shader_version;
-    unsigned int register_index = reg->idx[0].offset;
+    unsigned int register_index = reg->idx_count > 0 ? reg->idx[0].offset : 0;
 
     switch (reg->type)
     {
@@ -622,26 +771,18 @@ static bool add_signature_element_from_register(struct vkd3d_shader_sm1_parser *
                     VKD3D_SHADER_SV_NONE, SM1_COLOR_REGISTER_OFFSET + register_index, is_dcl, mask);
 
         case VKD3DSPR_TEXTURE:
-            /* For vertex shaders, this is ADDR. */
-            if (version->type == VKD3D_SHADER_TYPE_VERTEX)
-                return true;
             return add_signature_element(sm1, false, "TEXCOORD", register_index,
+                    VKD3D_SHADER_SV_NONE, register_index, is_dcl, mask);
+
+        case VKD3DSPR_TEXCRDOUT:
+            return add_signature_element(sm1, true, "TEXCOORD", register_index,
                     VKD3D_SHADER_SV_NONE, register_index, is_dcl, mask);
 
         case VKD3DSPR_OUTPUT:
             if (version->type == VKD3D_SHADER_TYPE_VERTEX)
             {
-                /* For sm < 2 vertex shaders, this is TEXCRDOUT.
-                 *
-                 * For sm3 vertex shaders, this is OUTPUT, but we already
-                 * should have had a DCL instruction. */
-                if (version->major == 3)
-                {
-                    add_signature_mask(sm1, true, register_index, mask);
-                    return true;
-                }
-                return add_signature_element(sm1, true, "TEXCOORD", register_index,
-                        VKD3D_SHADER_SV_NONE, register_index, is_dcl, mask);
+                add_signature_mask(sm1, true, register_index, mask);
+                return true;
             }
             /* fall through */
 
@@ -757,7 +898,7 @@ static void record_constant_register(struct vkd3d_shader_sm1_parser *sm1,
     {
         /* d3d shaders have a maximum of 8192 constants; we should not overrun
          * this array. */
-        assert((index / 32) <= ARRAY_SIZE(sm1->constants[set].def_mask));
+        VKD3D_ASSERT((index / 32) <= ARRAY_SIZE(sm1->constants[set].def_mask));
         bitmap_set(sm1->constants[set].def_mask, index);
     }
 }
@@ -776,18 +917,6 @@ static void shader_sm1_scan_register(struct vkd3d_shader_sm1_parser *sm1,
 
         case VKD3DSPR_CONST:
             record_constant_register(sm1, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER, register_index, from_def);
-            break;
-
-        case VKD3DSPR_CONST2:
-            record_constant_register(sm1, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER, 2048 + register_index, from_def);
-            break;
-
-        case VKD3DSPR_CONST3:
-            record_constant_register(sm1, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER, 4096 + register_index, from_def);
-            break;
-
-        case VKD3DSPR_CONST4:
-            record_constant_register(sm1, VKD3D_SHADER_D3DBC_FLOAT_CONSTANT_REGISTER, 6144 + register_index, from_def);
             break;
 
         case VKD3DSPR_CONSTINT:
@@ -897,9 +1026,9 @@ static void shader_sm1_read_src_param(struct vkd3d_shader_sm1_parser *sm1, const
             sm1->abort = true;
             return;
         }
-        shader_sm1_parse_src_param(addr_token, NULL, src_rel_addr);
+        shader_sm1_parse_src_param(sm1, addr_token, NULL, src_rel_addr);
     }
-    shader_sm1_parse_src_param(token, src_rel_addr, src_param);
+    shader_sm1_parse_src_param(sm1, token, src_rel_addr, src_param);
 }
 
 static void shader_sm1_read_dst_param(struct vkd3d_shader_sm1_parser *sm1, const uint32_t **ptr,
@@ -918,9 +1047,14 @@ static void shader_sm1_read_dst_param(struct vkd3d_shader_sm1_parser *sm1, const
             sm1->abort = true;
             return;
         }
-        shader_sm1_parse_src_param(addr_token, NULL, dst_rel_addr);
+        shader_sm1_parse_src_param(sm1, addr_token, NULL, dst_rel_addr);
     }
-    shader_sm1_parse_dst_param(token, dst_rel_addr, dst_param);
+    shader_sm1_parse_dst_param(sm1, token, dst_rel_addr, dst_param);
+
+    if (dst_param->reg.type == VKD3DSPR_RASTOUT && dst_param->reg.idx[0].offset == VSIR_RASTOUT_POINT_SIZE)
+        sm1->p.program->has_point_size = true;
+    if (dst_param->reg.type == VKD3DSPR_RASTOUT && dst_param->reg.idx[0].offset == VSIR_RASTOUT_FOG)
+        sm1->p.program->has_fog = true;
 }
 
 static void shader_sm1_read_semantic(struct vkd3d_shader_sm1_parser *sm1,
@@ -958,7 +1092,7 @@ static void shader_sm1_read_semantic(struct vkd3d_shader_sm1_parser *sm1,
     semantic->resource_data_type[1] = VKD3D_DATA_FLOAT;
     semantic->resource_data_type[2] = VKD3D_DATA_FLOAT;
     semantic->resource_data_type[3] = VKD3D_DATA_FLOAT;
-    shader_sm1_parse_dst_param(dst_token, NULL, &semantic->resource.reg);
+    shader_sm1_parse_dst_param(sm1, dst_token, NULL, &semantic->resource.reg);
     range = &semantic->resource.range;
     range->space = 0;
     range->first = range->last = semantic->resource.reg.reg.idx[0].offset;
@@ -1060,7 +1194,7 @@ static void shader_sm1_read_comment(struct vkd3d_shader_sm1_parser *sm1)
 
 static void shader_sm1_validate_instruction(struct vkd3d_shader_sm1_parser *sm1, struct vkd3d_shader_instruction *ins)
 {
-    if ((ins->handler_idx == VKD3DSIH_BREAKP || ins->handler_idx == VKD3DSIH_IF) && ins->flags)
+    if ((ins->opcode == VKD3DSIH_BREAKP || ins->opcode == VKD3DSIH_IF) && ins->flags)
     {
         vkd3d_shader_parser_warning(&sm1->p, VKD3D_SHADER_WARNING_D3DBC_IGNORED_INSTRUCTION_FLAGS,
                 "Ignoring unexpected instruction flags %#x.", ins->flags);
@@ -1142,23 +1276,23 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
         goto fail;
     }
 
-    if (ins->handler_idx == VKD3DSIH_DCL)
+    if (ins->opcode == VKD3DSIH_DCL)
     {
         shader_sm1_read_semantic(sm1, &p, &ins->declaration.semantic);
     }
-    else if (ins->handler_idx == VKD3DSIH_DEF)
+    else if (ins->opcode == VKD3DSIH_DEF)
     {
         shader_sm1_read_dst_param(sm1, &p, dst_param);
         shader_sm1_read_immconst(sm1, &p, &src_params[0], VSIR_DIMENSION_VEC4, VKD3D_DATA_FLOAT);
         shader_sm1_scan_register(sm1, &dst_param->reg, dst_param->write_mask, true);
     }
-    else if (ins->handler_idx == VKD3DSIH_DEFB)
+    else if (ins->opcode == VKD3DSIH_DEFB)
     {
         shader_sm1_read_dst_param(sm1, &p, dst_param);
         shader_sm1_read_immconst(sm1, &p, &src_params[0], VSIR_DIMENSION_SCALAR, VKD3D_DATA_UINT);
         shader_sm1_scan_register(sm1, &dst_param->reg, dst_param->write_mask, true);
     }
-    else if (ins->handler_idx == VKD3DSIH_DEFI)
+    else if (ins->opcode == VKD3DSIH_DEFI)
     {
         shader_sm1_read_dst_param(sm1, &p, dst_param);
         shader_sm1_read_immconst(sm1, &p, &src_params[0], VSIR_DIMENSION_VEC4, VKD3D_DATA_INT);
@@ -1195,7 +1329,7 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
     return;
 
 fail:
-    ins->handler_idx = VKD3DSIH_INVALID;
+    ins->opcode = VKD3DSIH_INVALID;
     *ptr = sm1->end;
 }
 
@@ -1221,6 +1355,7 @@ static enum vkd3d_result shader_sm1_init(struct vkd3d_shader_sm1_parser *sm1, st
         const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_message_context *message_context)
 {
     const struct vkd3d_shader_location location = {.source_name = compile_info->source_name};
+    enum vsir_normalisation_level normalisation_level;
     const uint32_t *code = compile_info->source.code;
     size_t code_size = compile_info->source.size;
     struct vkd3d_shader_version version;
@@ -1271,8 +1406,13 @@ static enum vkd3d_result shader_sm1_init(struct vkd3d_shader_sm1_parser *sm1, st
     sm1->start = &code[1];
     sm1->end = &code[token_count];
 
+    normalisation_level = VSIR_NORMALISED_SM1;
+    if (compile_info->target_type != VKD3D_SHADER_TARGET_D3D_ASM)
+        normalisation_level = VSIR_NORMALISED_SM4;
+
     /* Estimate instruction count to avoid reallocation in most shaders. */
-    if (!vsir_program_init(program, &version, code_size != ~(size_t)0 ? token_count / 4u + 4 : 16))
+    if (!vsir_program_init(program, compile_info, &version,
+            code_size != ~(size_t)0 ? token_count / 4u + 4 : 16, VSIR_CF_STRUCTURED, normalisation_level))
         return VKD3D_ERROR_OUT_OF_MEMORY;
 
     vkd3d_shader_parser_init(&sm1->p, program, message_context, compile_info->source_name);
@@ -1326,7 +1466,7 @@ int d3dbc_parse(const struct vkd3d_shader_compile_info *compile_info, uint64_t c
         ins = &instructions->elements[instructions->count];
         shader_sm1_read_instruction(&sm1, ins);
 
-        if (ins->handler_idx == VKD3DSIH_INVALID)
+        if (ins->opcode == VKD3DSIH_INVALID)
         {
             WARN("Encountered unrecognized or invalid instruction.\n");
             vsir_program_cleanup(program);
@@ -1338,24 +1478,20 @@ int d3dbc_parse(const struct vkd3d_shader_compile_info *compile_info, uint64_t c
     for (i = 0; i < ARRAY_SIZE(program->flat_constant_count); ++i)
         program->flat_constant_count[i] = get_external_constant_count(&sm1, i);
 
-    if (!sm1.p.failed)
-        ret = vkd3d_shader_parser_validate(&sm1.p, config_flags);
-
     if (sm1.p.failed && ret >= 0)
         ret = VKD3D_ERROR_INVALID_SHADER;
 
     if (ret < 0)
     {
-        WARN("Failed to parse shader.\n");
         vsir_program_cleanup(program);
         return ret;
     }
 
-    return ret;
+    return VKD3D_OK;
 }
 
-bool hlsl_sm1_register_from_semantic(struct hlsl_ctx *ctx, const struct hlsl_semantic *semantic,
-        bool output, D3DSHADER_PARAM_REGISTER_TYPE *type, unsigned int *reg)
+bool sm1_register_from_semantic_name(const struct vkd3d_shader_version *version, const char *semantic_name,
+        unsigned int semantic_index, bool output, enum vkd3d_shader_register_type *type, unsigned int *reg)
 {
     unsigned int i;
 
@@ -1365,56 +1501,56 @@ bool hlsl_sm1_register_from_semantic(struct hlsl_ctx *ctx, const struct hlsl_sem
         bool output;
         enum vkd3d_shader_type shader_type;
         unsigned int major_version;
-        D3DSHADER_PARAM_REGISTER_TYPE type;
+        enum vkd3d_shader_register_type type;
         unsigned int offset;
     }
     register_table[] =
     {
-        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 1, D3DSPR_INPUT},
-        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 1, D3DSPR_TEXTURE},
+        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3DSPR_INPUT},
+        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3DSPR_TEXTURE},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_COLOROUT},
-        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_DEPTHOUT},
-        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_DEPTHOUT},
-        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_COLOROUT},
-        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_INPUT},
-        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 2, D3DSPR_TEXTURE},
+        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_COLOROUT},
+        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_DEPTHOUT},
+        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_DEPTHOUT},
+        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_COLOROUT},
+        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_INPUT},
+        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_TEXTURE},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_COLOROUT},
-        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_DEPTHOUT},
-        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_DEPTHOUT},
-        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_COLOROUT},
-        {"sv_position", false, VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_MISCTYPE,    D3DSMO_POSITION},
-        {"vface",       false, VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_MISCTYPE,    D3DSMO_FACE},
-        {"vpos",        false, VKD3D_SHADER_TYPE_PIXEL, 3, D3DSPR_MISCTYPE,    D3DSMO_POSITION},
+        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_COLOROUT},
+        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_DEPTHOUT},
+        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_DEPTHOUT},
+        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_COLOROUT},
+        {"sv_position", false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_POSITION},
+        {"vface",       false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_FACE},
+        {"vpos",        false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_POSITION},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_ATTROUT},
-        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_RASTOUT,     D3DSRO_FOG},
-        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_RASTOUT,     D3DSRO_POSITION},
-        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_RASTOUT,     D3DSRO_POINT_SIZE},
-        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_RASTOUT,     D3DSRO_POSITION},
-        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, D3DSPR_TEXCRDOUT},
+        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_ATTROUT},
+        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_FOG},
+        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POINT_SIZE},
+        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_TEXCRDOUT},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_ATTROUT},
-        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_RASTOUT,     D3DSRO_FOG},
-        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_RASTOUT,     D3DSRO_POSITION},
-        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_RASTOUT,     D3DSRO_POINT_SIZE},
-        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_RASTOUT,     D3DSRO_POSITION},
-        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, D3DSPR_TEXCRDOUT},
+        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_ATTROUT},
+        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_FOG},
+        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POINT_SIZE},
+        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_TEXCRDOUT},
     };
 
     for (i = 0; i < ARRAY_SIZE(register_table); ++i)
     {
-        if (!ascii_strcasecmp(semantic->name, register_table[i].semantic)
+        if (!ascii_strcasecmp(semantic_name, register_table[i].semantic)
                 && output == register_table[i].output
-                && ctx->profile->type == register_table[i].shader_type
-                && ctx->profile->major_version == register_table[i].major_version)
+                && version->type == register_table[i].shader_type
+                && version->major == register_table[i].major_version)
         {
             *type = register_table[i].type;
-            if (register_table[i].type == D3DSPR_MISCTYPE || register_table[i].type == D3DSPR_RASTOUT)
+            if (register_table[i].type == VKD3DSPR_MISCTYPE || register_table[i].type == VKD3DSPR_RASTOUT)
                 *reg = register_table[i].offset;
             else
-                *reg = semantic->index;
+                *reg = semantic_index;
             return true;
         }
     }
@@ -1422,42 +1558,43 @@ bool hlsl_sm1_register_from_semantic(struct hlsl_ctx *ctx, const struct hlsl_sem
     return false;
 }
 
-bool hlsl_sm1_usage_from_semantic(const struct hlsl_semantic *semantic, D3DDECLUSAGE *usage, uint32_t *usage_idx)
+bool sm1_usage_from_semantic_name(const char *semantic_name,
+        uint32_t semantic_index, enum vkd3d_decl_usage *usage, uint32_t *usage_idx)
 {
     static const struct
     {
         const char *name;
-        D3DDECLUSAGE usage;
+        enum vkd3d_decl_usage usage;
     }
     semantics[] =
     {
-        {"binormal",        D3DDECLUSAGE_BINORMAL},
-        {"blendindices",    D3DDECLUSAGE_BLENDINDICES},
-        {"blendweight",     D3DDECLUSAGE_BLENDWEIGHT},
-        {"color",           D3DDECLUSAGE_COLOR},
-        {"depth",           D3DDECLUSAGE_DEPTH},
-        {"fog",             D3DDECLUSAGE_FOG},
-        {"normal",          D3DDECLUSAGE_NORMAL},
-        {"position",        D3DDECLUSAGE_POSITION},
-        {"positiont",       D3DDECLUSAGE_POSITIONT},
-        {"psize",           D3DDECLUSAGE_PSIZE},
-        {"sample",          D3DDECLUSAGE_SAMPLE},
-        {"sv_depth",        D3DDECLUSAGE_DEPTH},
-        {"sv_position",     D3DDECLUSAGE_POSITION},
-        {"sv_target",       D3DDECLUSAGE_COLOR},
-        {"tangent",         D3DDECLUSAGE_TANGENT},
-        {"tessfactor",      D3DDECLUSAGE_TESSFACTOR},
-        {"texcoord",        D3DDECLUSAGE_TEXCOORD},
+        {"binormal",        VKD3D_DECL_USAGE_BINORMAL},
+        {"blendindices",    VKD3D_DECL_USAGE_BLEND_INDICES},
+        {"blendweight",     VKD3D_DECL_USAGE_BLEND_WEIGHT},
+        {"color",           VKD3D_DECL_USAGE_COLOR},
+        {"depth",           VKD3D_DECL_USAGE_DEPTH},
+        {"fog",             VKD3D_DECL_USAGE_FOG},
+        {"normal",          VKD3D_DECL_USAGE_NORMAL},
+        {"position",        VKD3D_DECL_USAGE_POSITION},
+        {"positiont",       VKD3D_DECL_USAGE_POSITIONT},
+        {"psize",           VKD3D_DECL_USAGE_PSIZE},
+        {"sample",          VKD3D_DECL_USAGE_SAMPLE},
+        {"sv_depth",        VKD3D_DECL_USAGE_DEPTH},
+        {"sv_position",     VKD3D_DECL_USAGE_POSITION},
+        {"sv_target",       VKD3D_DECL_USAGE_COLOR},
+        {"tangent",         VKD3D_DECL_USAGE_TANGENT},
+        {"tessfactor",      VKD3D_DECL_USAGE_TESS_FACTOR},
+        {"texcoord",        VKD3D_DECL_USAGE_TEXCOORD},
     };
 
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(semantics); ++i)
     {
-        if (!ascii_strcasecmp(semantic->name, semantics[i].name))
+        if (!ascii_strcasecmp(semantic_name, semantics[i].name))
         {
             *usage = semantics[i].usage;
-            *usage_idx = semantic->index;
+            *usage_idx = semantic_index;
             return true;
         }
     }
@@ -1465,1263 +1602,498 @@ bool hlsl_sm1_usage_from_semantic(const struct hlsl_semantic *semantic, D3DDECLU
     return false;
 }
 
+struct d3dbc_compiler
+{
+    const struct vkd3d_sm1_opcode_info *opcode_table;
+    struct vsir_program *program;
+    struct vkd3d_bytecode_buffer buffer;
+    struct vkd3d_shader_message_context *message_context;
+    bool failed;
+};
+
 static uint32_t sm1_version(enum vkd3d_shader_type type, unsigned int major, unsigned int minor)
 {
-    if (type == VKD3D_SHADER_TYPE_VERTEX)
-        return D3DVS_VERSION(major, minor);
-    else
-        return D3DPS_VERSION(major, minor);
+    return vkd3d_make_u32(vkd3d_make_u16(minor, major),
+            type == VKD3D_SHADER_TYPE_VERTEX ? VKD3D_SM1_VS : VKD3D_SM1_PS);
 }
 
-D3DXPARAMETER_CLASS hlsl_sm1_class(const struct hlsl_type *type)
+static const struct vkd3d_sm1_opcode_info *shader_sm1_get_opcode_info_from_vsir(
+        struct d3dbc_compiler *d3dbc, enum vkd3d_shader_opcode vkd3d_opcode)
 {
-    switch (type->class)
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    const struct vkd3d_sm1_opcode_info *info;
+    unsigned int i = 0;
+
+    for (;;)
     {
-        case HLSL_CLASS_ARRAY:
-            return hlsl_sm1_class(type->e.array.type);
-        case HLSL_CLASS_MATRIX:
-            assert(type->modifiers & HLSL_MODIFIERS_MAJORITY_MASK);
-            if (type->modifiers & HLSL_MODIFIER_COLUMN_MAJOR)
-                return D3DXPC_MATRIX_COLUMNS;
-            else
-                return D3DXPC_MATRIX_ROWS;
-        case HLSL_CLASS_SCALAR:
-            return D3DXPC_SCALAR;
-        case HLSL_CLASS_STRUCT:
-            return D3DXPC_STRUCT;
-        case HLSL_CLASS_VECTOR:
-            return D3DXPC_VECTOR;
-        case HLSL_CLASS_PIXEL_SHADER:
-        case HLSL_CLASS_SAMPLER:
-        case HLSL_CLASS_STRING:
-        case HLSL_CLASS_TEXTURE:
-        case HLSL_CLASS_VERTEX_SHADER:
-            return D3DXPC_OBJECT;
-        case HLSL_CLASS_DEPTH_STENCIL_VIEW:
-        case HLSL_CLASS_EFFECT_GROUP:
-        case HLSL_CLASS_PASS:
-        case HLSL_CLASS_RENDER_TARGET_VIEW:
-        case HLSL_CLASS_TECHNIQUE:
-        case HLSL_CLASS_UAV:
-        case HLSL_CLASS_VOID:
-            break;
+        info = &d3dbc->opcode_table[i++];
+        if (info->vkd3d_opcode == VKD3DSIH_INVALID)
+            return NULL;
+
+        if (vkd3d_opcode == info->vkd3d_opcode
+                && vkd3d_shader_ver_ge(version, info->min_version.major, info->min_version.minor)
+                && (vkd3d_shader_ver_le(version, info->max_version.major, info->max_version.minor)
+                        || !info->max_version.major))
+            return info;
+    }
+}
+
+static const struct vkd3d_sm1_opcode_info *shader_sm1_get_opcode_info_from_vsir_instruction(
+        struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    const struct vkd3d_sm1_opcode_info *info;
+
+    if (!(info = shader_sm1_get_opcode_info_from_vsir(d3dbc, ins->opcode)))
+    {
+        vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_OPCODE,
+                "Opcode %#x not supported for shader profile.", ins->opcode);
+        d3dbc->failed = true;
+        return NULL;
+    }
+
+    if (ins->dst_count != info->dst_count)
+    {
+        vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_REGISTER_COUNT,
+                "Invalid destination count %u for vsir instruction %#x (expected %u).",
+                ins->dst_count, ins->opcode, info->dst_count);
+        d3dbc->failed = true;
+        return NULL;
+    }
+    if (ins->src_count != info->src_count)
+    {
+        vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_REGISTER_COUNT,
+                "Invalid source count %u for vsir instruction %#x (expected %u).",
+                ins->src_count, ins->opcode, info->src_count);
+        d3dbc->failed = true;
+        return NULL;
+    }
+
+    return info;
+}
+
+static void d3dbc_write_comment(struct d3dbc_compiler *d3dbc,
+        uint32_t tag, const struct vkd3d_shader_code *comment)
+{
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    size_t offset, start, end;
+
+    offset = put_u32(buffer, 0);
+
+    start = put_u32(buffer, tag);
+    bytecode_put_bytes(buffer, comment->code, comment->size);
+    end = bytecode_align(buffer);
+
+    set_u32(buffer, offset, vkd3d_make_u32(VKD3D_SM1_OP_COMMENT, (end - start) / sizeof(uint32_t)));
+}
+
+static enum vkd3d_sm1_register_type d3dbc_register_type_from_vsir(const struct vkd3d_shader_register *reg)
+{
+    if (reg->type == VKD3DSPR_CONST)
+    {
+        if (reg->idx[0].offset >= 6144)
+            return VKD3D_SM1_REG_CONST4;
+        if (reg->idx[0].offset >= 4096)
+            return VKD3D_SM1_REG_CONST3;
+        if (reg->idx[0].offset >= 2048)
+            return VKD3D_SM1_REG_CONST2;
+    }
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(register_types); ++i)
+    {
+        if (register_types[i].vsir_type == reg->type)
+            return register_types[i].d3dbc_type;
     }
 
     vkd3d_unreachable();
 }
 
-D3DXPARAMETER_TYPE hlsl_sm1_base_type(const struct hlsl_type *type)
+static uint32_t sm1_encode_register_type(const struct vkd3d_shader_register *reg)
 {
-    switch (type->class)
-    {
-        case HLSL_CLASS_SCALAR:
-        case HLSL_CLASS_VECTOR:
-        case HLSL_CLASS_MATRIX:
-            switch (type->e.numeric.type)
-            {
-                case HLSL_TYPE_BOOL:
-                    return D3DXPT_BOOL;
-                /* Actually double behaves differently depending on DLL version:
-                 * For <= 36, it maps to D3DXPT_FLOAT.
-                 * For 37-40, it maps to zero (D3DXPT_VOID).
-                 * For >= 41, it maps to 39, which is D3D_SVT_DOUBLE (note D3D_SVT_*
-                 *            values are mostly compatible with D3DXPT_*).
-                 * However, the latter two cases look like bugs, and a reasonable
-                 * application certainly wouldn't know what to do with them.
-                 * For fx_2_0 it's always D3DXPT_FLOAT regardless of DLL version. */
-                case HLSL_TYPE_DOUBLE:
-                case HLSL_TYPE_FLOAT:
-                case HLSL_TYPE_HALF:
-                    return D3DXPT_FLOAT;
-                case HLSL_TYPE_INT:
-                case HLSL_TYPE_UINT:
-                    return D3DXPT_INT;
-                default:
-                    vkd3d_unreachable();
-            }
+    enum vkd3d_sm1_register_type sm1_type = d3dbc_register_type_from_vsir(reg);
 
-        case HLSL_CLASS_SAMPLER:
-            switch (type->sampler_dim)
-            {
-                case HLSL_SAMPLER_DIM_1D:
-                    return D3DXPT_SAMPLER1D;
-                case HLSL_SAMPLER_DIM_2D:
-                    return D3DXPT_SAMPLER2D;
-                case HLSL_SAMPLER_DIM_3D:
-                    return D3DXPT_SAMPLER3D;
-                case HLSL_SAMPLER_DIM_CUBE:
-                    return D3DXPT_SAMPLERCUBE;
-                case HLSL_SAMPLER_DIM_GENERIC:
-                    return D3DXPT_SAMPLER;
-                default:
-                    ERR("Invalid dimension %#x.\n", type->sampler_dim);
-                    vkd3d_unreachable();
-            }
-            break;
-
-        case HLSL_CLASS_TEXTURE:
-            switch (type->sampler_dim)
-            {
-                case HLSL_SAMPLER_DIM_1D:
-                    return D3DXPT_TEXTURE1D;
-                case HLSL_SAMPLER_DIM_2D:
-                    return D3DXPT_TEXTURE2D;
-                case HLSL_SAMPLER_DIM_3D:
-                    return D3DXPT_TEXTURE3D;
-                case HLSL_SAMPLER_DIM_CUBE:
-                    return D3DXPT_TEXTURECUBE;
-                case HLSL_SAMPLER_DIM_GENERIC:
-                    return D3DXPT_TEXTURE;
-                default:
-                    ERR("Invalid dimension %#x.\n", type->sampler_dim);
-                    vkd3d_unreachable();
-            }
-            break;
-
-        case HLSL_CLASS_ARRAY:
-            return hlsl_sm1_base_type(type->e.array.type);
-
-        case HLSL_CLASS_STRUCT:
-            return D3DXPT_VOID;
-
-        case HLSL_CLASS_STRING:
-            return D3DXPT_STRING;
-
-        case HLSL_CLASS_PIXEL_SHADER:
-            return D3DXPT_PIXELSHADER;
-
-        case HLSL_CLASS_VERTEX_SHADER:
-            return D3DXPT_VERTEXSHADER;
-
-        case HLSL_CLASS_DEPTH_STENCIL_VIEW:
-        case HLSL_CLASS_EFFECT_GROUP:
-        case HLSL_CLASS_PASS:
-        case HLSL_CLASS_RENDER_TARGET_VIEW:
-        case HLSL_CLASS_TECHNIQUE:
-        case HLSL_CLASS_UAV:
-        case HLSL_CLASS_VOID:
-            break;
-    }
-
-    vkd3d_unreachable();
+    return ((sm1_type << VKD3D_SM1_REGISTER_TYPE_SHIFT) & VKD3D_SM1_REGISTER_TYPE_MASK)
+            | ((sm1_type << VKD3D_SM1_REGISTER_TYPE_SHIFT2) & VKD3D_SM1_REGISTER_TYPE_MASK2);
 }
 
-static void write_sm1_type(struct vkd3d_bytecode_buffer *buffer, struct hlsl_type *type, unsigned int ctab_start)
+static uint32_t swizzle_from_vsir(uint32_t swizzle)
 {
-    const struct hlsl_type *array_type = hlsl_get_multiarray_element_type(type);
-    unsigned int array_size = hlsl_get_multiarray_size(type);
-    unsigned int field_count = 0;
-    size_t fields_offset = 0;
-    size_t i;
+    uint32_t x = vsir_swizzle_get_component(swizzle, 0);
+    uint32_t y = vsir_swizzle_get_component(swizzle, 1);
+    uint32_t z = vsir_swizzle_get_component(swizzle, 2);
+    uint32_t w = vsir_swizzle_get_component(swizzle, 3);
 
-    if (type->bytecode_offset)
-        return;
+    if (x & ~0x3u || y & ~0x3u || z & ~0x3u || w & ~0x3u)
+        ERR("Unexpected vsir swizzle: 0x%08x.\n", swizzle);
 
-    if (array_type->class == HLSL_CLASS_STRUCT)
-    {
-        field_count = array_type->e.record.field_count;
-
-        for (i = 0; i < field_count; ++i)
-        {
-            struct hlsl_struct_field *field = &array_type->e.record.fields[i];
-
-            field->name_bytecode_offset = put_string(buffer, field->name);
-            write_sm1_type(buffer, field->type, ctab_start);
-        }
-
-        fields_offset = bytecode_align(buffer) - ctab_start;
-
-        for (i = 0; i < field_count; ++i)
-        {
-            struct hlsl_struct_field *field = &array_type->e.record.fields[i];
-
-            put_u32(buffer, field->name_bytecode_offset - ctab_start);
-            put_u32(buffer, field->type->bytecode_offset - ctab_start);
-        }
-    }
-
-    type->bytecode_offset = put_u32(buffer, vkd3d_make_u32(hlsl_sm1_class(type), hlsl_sm1_base_type(array_type)));
-    put_u32(buffer, vkd3d_make_u32(type->dimy, type->dimx));
-    put_u32(buffer, vkd3d_make_u32(array_size, field_count));
-    put_u32(buffer, fields_offset);
+    return ((x & 0x3u) << VKD3D_SM1_SWIZZLE_COMPONENT_SHIFT(0))
+            | ((y & 0x3) << VKD3D_SM1_SWIZZLE_COMPONENT_SHIFT(1))
+            | ((z & 0x3) << VKD3D_SM1_SWIZZLE_COMPONENT_SHIFT(2))
+            | ((w & 0x3) << VKD3D_SM1_SWIZZLE_COMPONENT_SHIFT(3));
 }
 
-static void sm1_sort_extern(struct list *sorted, struct hlsl_ir_var *to_sort)
+static bool is_inconsequential_instr(const struct vkd3d_shader_instruction *ins)
 {
-    struct hlsl_ir_var *var;
-
-    list_remove(&to_sort->extern_entry);
-
-    LIST_FOR_EACH_ENTRY(var, sorted, struct hlsl_ir_var, extern_entry)
-    {
-        if (strcmp(to_sort->name, var->name) < 0)
-        {
-            list_add_before(&var->extern_entry, &to_sort->extern_entry);
-            return;
-        }
-    }
-
-    list_add_tail(sorted, &to_sort->extern_entry);
-}
-
-static void sm1_sort_externs(struct hlsl_ctx *ctx)
-{
-    struct list sorted = LIST_INIT(sorted);
-    struct hlsl_ir_var *var, *next;
-
-    LIST_FOR_EACH_ENTRY_SAFE(var, next, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
-    {
-        if (var->is_uniform)
-            sm1_sort_extern(&sorted, var);
-    }
-    list_move_tail(&ctx->extern_vars, &sorted);
-}
-
-static void write_sm1_uniforms(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        struct hlsl_ir_function_decl *entry_func)
-{
-    size_t ctab_offset, ctab_start, ctab_end, vars_start, size_offset, creator_offset, offset;
-    unsigned int uniform_count = 0;
-    struct hlsl_ir_var *var;
-
-    LIST_FOR_EACH_ENTRY(var, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
-    {
-        unsigned int r;
-
-        for (r = 0; r <= HLSL_REGSET_LAST; ++r)
-        {
-            if (var->semantic.name || !var->regs[r].allocated || !var->last_read)
-                continue;
-
-            ++uniform_count;
-
-            if (var->is_param && var->is_uniform)
-            {
-                char *new_name;
-
-                if (!(new_name = hlsl_sprintf_alloc(ctx, "$%s", var->name)))
-                    return;
-                vkd3d_free((char *)var->name);
-                var->name = new_name;
-            }
-        }
-    }
-
-    sm1_sort_externs(ctx);
-
-    size_offset = put_u32(buffer, 0);
-    ctab_offset = put_u32(buffer, VKD3D_MAKE_TAG('C','T','A','B'));
-
-    ctab_start = put_u32(buffer, sizeof(D3DXSHADER_CONSTANTTABLE));
-    creator_offset = put_u32(buffer, 0);
-    put_u32(buffer, sm1_version(ctx->profile->type, ctx->profile->major_version, ctx->profile->minor_version));
-    put_u32(buffer, uniform_count);
-    put_u32(buffer, sizeof(D3DXSHADER_CONSTANTTABLE)); /* offset of constants */
-    put_u32(buffer, 0); /* FIXME: flags */
-    put_u32(buffer, 0); /* FIXME: target string */
-
-    vars_start = bytecode_align(buffer);
-
-    LIST_FOR_EACH_ENTRY(var, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
-    {
-        unsigned int r;
-
-        for (r = 0; r <= HLSL_REGSET_LAST; ++r)
-        {
-            if (var->semantic.name || !var->regs[r].allocated || !var->last_read)
-                continue;
-
-            put_u32(buffer, 0); /* name */
-            if (r == HLSL_REGSET_NUMERIC)
-            {
-                put_u32(buffer, vkd3d_make_u32(D3DXRS_FLOAT4, var->regs[r].id));
-                put_u32(buffer, var->bind_count[r]);
-            }
-            else
-            {
-                put_u32(buffer, vkd3d_make_u32(D3DXRS_SAMPLER, var->regs[r].id));
-                put_u32(buffer, var->bind_count[r]);
-            }
-            put_u32(buffer, 0); /* type */
-            put_u32(buffer, 0); /* FIXME: default value */
-        }
-    }
-
-    uniform_count = 0;
-
-    LIST_FOR_EACH_ENTRY(var, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
-    {
-        unsigned int r;
-
-        for (r = 0; r <= HLSL_REGSET_LAST; ++r)
-        {
-            size_t var_offset, name_offset;
-
-            if (var->semantic.name || !var->regs[r].allocated || !var->last_read)
-                continue;
-
-            var_offset = vars_start + (uniform_count * 5 * sizeof(uint32_t));
-
-            name_offset = put_string(buffer, var->name);
-            set_u32(buffer, var_offset, name_offset - ctab_start);
-
-            write_sm1_type(buffer, var->data_type, ctab_start);
-            set_u32(buffer, var_offset + 3 * sizeof(uint32_t), var->data_type->bytecode_offset - ctab_start);
-            ++uniform_count;
-        }
-    }
-
-    offset = put_string(buffer, vkd3d_shader_get_version(NULL, NULL));
-    set_u32(buffer, creator_offset, offset - ctab_start);
-
-    ctab_end = bytecode_align(buffer);
-    set_u32(buffer, size_offset, vkd3d_make_u32(D3DSIO_COMMENT, (ctab_end - ctab_offset) / sizeof(uint32_t)));
-}
-
-static uint32_t sm1_encode_register_type(D3DSHADER_PARAM_REGISTER_TYPE type)
-{
-    return ((type << D3DSP_REGTYPE_SHIFT) & D3DSP_REGTYPE_MASK)
-            | ((type << D3DSP_REGTYPE_SHIFT2) & D3DSP_REGTYPE_MASK2);
-}
-
-struct sm1_instruction
-{
-    D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode;
-    unsigned int flags;
-
-    struct sm1_dst_register
-    {
-        D3DSHADER_PARAM_REGISTER_TYPE type;
-        D3DSHADER_PARAM_DSTMOD_TYPE mod;
-        unsigned int writemask;
-        uint32_t reg;
-    } dst;
-
-    struct sm1_src_register
-    {
-        D3DSHADER_PARAM_REGISTER_TYPE type;
-        D3DSHADER_PARAM_SRCMOD_TYPE mod;
-        unsigned int swizzle;
-        uint32_t reg;
-    } srcs[3];
-    unsigned int src_count;
-
-    unsigned int has_dst;
-};
-
-static void write_sm1_dst_register(struct vkd3d_bytecode_buffer *buffer, const struct sm1_dst_register *reg)
-{
-    assert(reg->writemask);
-    put_u32(buffer, (1u << 31) | sm1_encode_register_type(reg->type) | reg->mod | (reg->writemask << 16) | reg->reg);
-}
-
-static void write_sm1_src_register(struct vkd3d_bytecode_buffer *buffer,
-        const struct sm1_src_register *reg)
-{
-    put_u32(buffer, (1u << 31) | sm1_encode_register_type(reg->type) | reg->mod | (reg->swizzle << 16) | reg->reg);
-}
-
-static void write_sm1_instruction(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct sm1_instruction *instr)
-{
-    uint32_t token = instr->opcode;
+    const struct vkd3d_shader_dst_param *dst = &ins->dst[0];
+    const struct vkd3d_shader_src_param *src = &ins->src[0];
     unsigned int i;
 
-    token |= VKD3D_SM1_INSTRUCTION_FLAGS_MASK & (instr->flags << VKD3D_SM1_INSTRUCTION_FLAGS_SHIFT);
+    if (ins->opcode != VKD3DSIH_MOV)
+        return false;
+    if (dst->modifiers != VKD3DSPDM_NONE)
+        return false;
+    if (src->modifiers != VKD3DSPSM_NONE)
+        return false;
+    if (src->reg.type != dst->reg.type)
+        return false;
+    if (src->reg.idx[0].offset != dst->reg.idx[0].offset)
+        return false;
 
-    if (ctx->profile->major_version > 1)
-        token |= (instr->has_dst + instr->src_count) << D3DSI_INSTLENGTH_SHIFT;
-    put_u32(buffer, token);
-
-    if (instr->has_dst)
-        write_sm1_dst_register(buffer, &instr->dst);
-
-    for (i = 0; i < instr->src_count; ++i)
-        write_sm1_src_register(buffer, &instr->srcs[i]);
-};
-
-static void sm1_map_src_swizzle(struct sm1_src_register *src, unsigned int map_writemask)
-{
-    src->swizzle = hlsl_map_swizzle(src->swizzle, map_writemask);
-}
-
-static void write_sm1_dp2add(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_reg *dst, const struct hlsl_reg *src1, const struct hlsl_reg *src2,
-        const struct hlsl_reg *src3)
-{
-    struct sm1_instruction instr =
+    for (i = 0; i < 4; ++i)
     {
-        .opcode = D3DSIO_DP2ADD,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.writemask = dst->writemask,
-        .dst.reg = dst->id,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(src1->writemask),
-        .srcs[0].reg = src1->id,
-        .srcs[1].type = D3DSPR_TEMP,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(src2->writemask),
-        .srcs[1].reg = src2->id,
-        .srcs[2].type = D3DSPR_TEMP,
-        .srcs[2].swizzle = hlsl_swizzle_from_writemask(src3->writemask),
-        .srcs[2].reg = src3->id,
-        .src_count = 3,
-    };
-
-    write_sm1_instruction(ctx, buffer, &instr);
-}
-
-static void write_sm1_ternary_op(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode, const struct hlsl_reg *dst, const struct hlsl_reg *src1,
-        const struct hlsl_reg *src2, const struct hlsl_reg *src3)
-{
-    struct sm1_instruction instr =
-    {
-        .opcode = opcode,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.writemask = dst->writemask,
-        .dst.reg = dst->id,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(src1->writemask),
-        .srcs[0].reg = src1->id,
-        .srcs[1].type = D3DSPR_TEMP,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(src2->writemask),
-        .srcs[1].reg = src2->id,
-        .srcs[2].type = D3DSPR_TEMP,
-        .srcs[2].swizzle = hlsl_swizzle_from_writemask(src3->writemask),
-        .srcs[2].reg = src3->id,
-        .src_count = 3,
-    };
-
-    sm1_map_src_swizzle(&instr.srcs[0], instr.dst.writemask);
-    sm1_map_src_swizzle(&instr.srcs[1], instr.dst.writemask);
-    sm1_map_src_swizzle(&instr.srcs[2], instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &instr);
-}
-
-static void write_sm1_binary_op(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode, const struct hlsl_reg *dst,
-        const struct hlsl_reg *src1, const struct hlsl_reg *src2)
-{
-    struct sm1_instruction instr =
-    {
-        .opcode = opcode,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.writemask = dst->writemask,
-        .dst.reg = dst->id,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(src1->writemask),
-        .srcs[0].reg = src1->id,
-        .srcs[1].type = D3DSPR_TEMP,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(src2->writemask),
-        .srcs[1].reg = src2->id,
-        .src_count = 2,
-    };
-
-    sm1_map_src_swizzle(&instr.srcs[0], instr.dst.writemask);
-    sm1_map_src_swizzle(&instr.srcs[1], instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &instr);
-}
-
-static void write_sm1_binary_op_dot(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode, const struct hlsl_reg *dst,
-        const struct hlsl_reg *src1, const struct hlsl_reg *src2)
-{
-    struct sm1_instruction instr =
-    {
-        .opcode = opcode,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.writemask = dst->writemask,
-        .dst.reg = dst->id,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(src1->writemask),
-        .srcs[0].reg = src1->id,
-        .srcs[1].type = D3DSPR_TEMP,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(src2->writemask),
-        .srcs[1].reg = src2->id,
-        .src_count = 2,
-    };
-
-    write_sm1_instruction(ctx, buffer, &instr);
-}
-
-static void write_sm1_unary_op(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode, const struct hlsl_reg *dst,
-        const struct hlsl_reg *src, D3DSHADER_PARAM_SRCMOD_TYPE src_mod, D3DSHADER_PARAM_DSTMOD_TYPE dst_mod)
-{
-    struct sm1_instruction instr =
-    {
-        .opcode = opcode,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.mod = dst_mod,
-        .dst.writemask = dst->writemask,
-        .dst.reg = dst->id,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(src->writemask),
-        .srcs[0].reg = src->id,
-        .srcs[0].mod = src_mod,
-        .src_count = 1,
-    };
-
-    sm1_map_src_swizzle(&instr.srcs[0], instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &instr);
-}
-
-static void write_sm1_cast(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr)
-{
-    struct hlsl_ir_expr *expr = hlsl_ir_expr(instr);
-    const struct hlsl_ir_node *arg1 = expr->operands[0].node;
-    const struct hlsl_type *dst_type = expr->node.data_type;
-    const struct hlsl_type *src_type = arg1->data_type;
-
-    /* Narrowing casts were already lowered. */
-    assert(src_type->dimx == dst_type->dimx);
-
-    switch (dst_type->e.numeric.type)
-    {
-        case HLSL_TYPE_HALF:
-        case HLSL_TYPE_FLOAT:
-            switch (src_type->e.numeric.type)
-            {
-                case HLSL_TYPE_INT:
-                case HLSL_TYPE_UINT:
-                case HLSL_TYPE_BOOL:
-                    /* Integrals are internally represented as floats, so no change is necessary.*/
-                case HLSL_TYPE_HALF:
-                case HLSL_TYPE_FLOAT:
-                    write_sm1_unary_op(ctx, buffer, D3DSIO_MOV, &instr->reg, &arg1->reg, 0, 0);
-                    break;
-
-                case HLSL_TYPE_DOUBLE:
-                    hlsl_fixme(ctx, &instr->loc, "SM1 cast from double to float.");
-                    break;
-
-                default:
-                    vkd3d_unreachable();
-            }
-            break;
-
-        case HLSL_TYPE_INT:
-        case HLSL_TYPE_UINT:
-            switch(src_type->e.numeric.type)
-            {
-                case HLSL_TYPE_HALF:
-                case HLSL_TYPE_FLOAT:
-                    /* A compilation pass turns these into FLOOR+REINTERPRET, so we should not
-                     * reach this case unless we are missing something. */
-                    hlsl_fixme(ctx, &instr->loc, "Unlowered SM1 cast from float to integer.");
-                    break;
-                case HLSL_TYPE_INT:
-                case HLSL_TYPE_UINT:
-                    write_sm1_unary_op(ctx, buffer, D3DSIO_MOV, &instr->reg, &arg1->reg, 0, 0);
-                    break;
-
-                case HLSL_TYPE_BOOL:
-                    hlsl_fixme(ctx, &instr->loc, "SM1 cast from bool to integer.");
-                    break;
-
-                case HLSL_TYPE_DOUBLE:
-                    hlsl_fixme(ctx, &instr->loc, "SM1 cast from double to integer.");
-                    break;
-
-                default:
-                    vkd3d_unreachable();
-            }
-            break;
-
-        case HLSL_TYPE_DOUBLE:
-            hlsl_fixme(ctx, &instr->loc, "SM1 cast to double.");
-            break;
-
-        case HLSL_TYPE_BOOL:
-            /* Casts to bool should have already been lowered. */
-        default:
-            hlsl_fixme(ctx, &expr->node.loc, "SM1 cast from %s to %s.",
-                debug_hlsl_type(ctx, src_type), debug_hlsl_type(ctx, dst_type));
-            break;
+        if ((dst->write_mask & (1u << i)) && (vsir_swizzle_get_component(src->swizzle, i) != i))
+            return false;
     }
+
+    return true;
 }
 
-static void write_sm1_constant_defs(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer)
+static void write_sm1_dst_register(struct vkd3d_bytecode_buffer *buffer, const struct vkd3d_shader_dst_param *reg)
 {
-    unsigned int i, x;
-
-    for (i = 0; i < ctx->constant_defs.count; ++i)
-    {
-        const struct hlsl_constant_register *constant_reg = &ctx->constant_defs.regs[i];
-        uint32_t token = D3DSIO_DEF;
-        const struct sm1_dst_register reg =
-        {
-            .type = D3DSPR_CONST,
-            .writemask = VKD3DSP_WRITEMASK_ALL,
-            .reg = constant_reg->index,
-        };
-
-        if (ctx->profile->major_version > 1)
-            token |= 5 << D3DSI_INSTLENGTH_SHIFT;
-        put_u32(buffer, token);
-
-        write_sm1_dst_register(buffer, &reg);
-        for (x = 0; x < 4; ++x)
-            put_f32(buffer, constant_reg->value.f[x]);
-    }
+    VKD3D_ASSERT(reg->write_mask);
+    put_u32(buffer, VKD3D_SM1_INSTRUCTION_PARAMETER
+            | sm1_encode_register_type(&reg->reg)
+            | (reg->modifiers << VKD3D_SM1_DST_MODIFIER_SHIFT)
+            | (reg->write_mask << VKD3D_SM1_WRITEMASK_SHIFT)
+            | (reg->reg.idx[0].offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
 }
 
-static void write_sm1_semantic_dcl(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_var *var, bool output)
+static void write_sm1_src_register(struct vkd3d_bytecode_buffer *buffer, const struct vkd3d_shader_src_param *reg)
 {
-    struct sm1_dst_register reg = {0};
-    uint32_t token, usage_idx;
-    D3DDECLUSAGE usage;
-    bool ret;
+    put_u32(buffer, VKD3D_SM1_INSTRUCTION_PARAMETER
+            | sm1_encode_register_type(&reg->reg)
+            | (reg->modifiers << VKD3D_SM1_SRC_MODIFIER_SHIFT)
+            | (swizzle_from_vsir(reg->swizzle) << VKD3D_SM1_SWIZZLE_SHIFT)
+            | (reg->reg.idx[0].offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
+}
 
-    if ((!output && !var->last_read) || (output && !var->first_write))
+static void d3dbc_write_instruction(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    const struct vkd3d_sm1_opcode_info *info;
+    unsigned int i;
+    uint32_t token;
+
+    if (!(info = shader_sm1_get_opcode_info_from_vsir_instruction(d3dbc, ins)))
         return;
 
-    if (hlsl_sm1_register_from_semantic(ctx, &var->semantic, output, &reg.type, &reg.reg))
+    if (is_inconsequential_instr(ins))
+        return;
+
+    token = info->sm1_opcode;
+    token |= VKD3D_SM1_INSTRUCTION_FLAGS_MASK & (ins->flags << VKD3D_SM1_INSTRUCTION_FLAGS_SHIFT);
+
+    if (version->major > 1)
+        token |= (ins->dst_count + ins->src_count) << VKD3D_SM1_INSTRUCTION_LENGTH_SHIFT;
+    put_u32(buffer, token);
+
+    for (i = 0; i < ins->dst_count; ++i)
+    {
+        if (ins->dst[i].reg.idx[0].rel_addr)
+        {
+            vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_NOT_IMPLEMENTED,
+                    "Unhandled relative addressing on destination register.");
+            d3dbc->failed = true;
+        }
+        write_sm1_dst_register(buffer, &ins->dst[i]);
+    }
+
+    for (i = 0; i < ins->src_count; ++i)
+    {
+        if (ins->src[i].reg.idx[0].rel_addr)
+        {
+            vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_NOT_IMPLEMENTED,
+                    "Unhandled relative addressing on source register.");
+            d3dbc->failed = true;
+        }
+        write_sm1_src_register(buffer, &ins->src[i]);
+    }
+};
+
+static void d3dbc_write_vsir_def(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    uint32_t token;
+
+    const struct vkd3d_shader_dst_param reg =
+    {
+        .reg.type = VKD3DSPR_CONST,
+        .write_mask = VKD3DSP_WRITEMASK_ALL,
+        .reg.idx[0].offset = ins->dst[0].reg.idx[0].offset,
+    };
+
+    token = VKD3D_SM1_OP_DEF;
+    if (version->major > 1)
+        token |= 5 << VKD3D_SM1_INSTRUCTION_LENGTH_SHIFT;
+    put_u32(buffer, token);
+
+    write_sm1_dst_register(buffer, &reg);
+    for (unsigned int x = 0; x < 4; ++x)
+        put_f32(buffer, ins->src[0].reg.u.immconst_f32[x]);
+}
+
+static void d3dbc_write_vsir_sampler_dcl(struct d3dbc_compiler *d3dbc,
+        unsigned int reg_id, enum vkd3d_sm1_resource_type res_type)
+{
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    struct vkd3d_shader_dst_param reg = {0};
+    uint32_t token;
+
+    token = VKD3D_SM1_OP_DCL;
+    if (version->major > 1)
+        token |= 2 << VKD3D_SM1_INSTRUCTION_LENGTH_SHIFT;
+    put_u32(buffer, token);
+
+    token = VKD3D_SM1_INSTRUCTION_PARAMETER;
+    token |= res_type << VKD3D_SM1_RESOURCE_TYPE_SHIFT;
+    put_u32(buffer, token);
+
+    reg.reg.type = VKD3DSPR_COMBINED_SAMPLER;
+    reg.write_mask = VKD3DSP_WRITEMASK_ALL;
+    reg.reg.idx[0].offset = reg_id;
+
+    write_sm1_dst_register(buffer, &reg);
+}
+
+static void d3dbc_write_vsir_dcl(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    const struct vkd3d_shader_semantic *semantic = &ins->declaration.semantic;
+    unsigned int reg_id;
+
+    if (version->major < 2)
+        return;
+
+    reg_id = semantic->resource.reg.reg.idx[0].offset;
+
+    if (semantic->resource.reg.reg.type != VKD3DSPR_SAMPLER)
+    {
+        vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_REGISTER_TYPE,
+                "dcl instruction with register type %u.", semantic->resource.reg.reg.type);
+        d3dbc->failed = true;
+        return;
+    }
+
+    switch (semantic->resource_type)
+    {
+        case VKD3D_SHADER_RESOURCE_TEXTURE_2D:
+            d3dbc_write_vsir_sampler_dcl(d3dbc, reg_id, VKD3D_SM1_RESOURCE_TEXTURE_2D);
+            break;
+
+        case VKD3D_SHADER_RESOURCE_TEXTURE_CUBE:
+            d3dbc_write_vsir_sampler_dcl(d3dbc, reg_id, VKD3D_SM1_RESOURCE_TEXTURE_CUBE);
+            break;
+
+        case VKD3D_SHADER_RESOURCE_TEXTURE_3D:
+            d3dbc_write_vsir_sampler_dcl(d3dbc, reg_id, VKD3D_SM1_RESOURCE_TEXTURE_3D);
+            break;
+
+        default:
+            vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_RESOURCE_TYPE,
+                   "dcl instruction with resource_type %u.", semantic->resource_type);
+            d3dbc->failed = true;
+            return;
+    }
+}
+
+static void d3dbc_write_vsir_instruction(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    uint32_t writemask;
+
+    switch (ins->opcode)
+    {
+        case VKD3DSIH_DEF:
+            d3dbc_write_vsir_def(d3dbc, ins);
+            break;
+
+        case VKD3DSIH_DCL:
+            d3dbc_write_vsir_dcl(d3dbc, ins);
+            break;
+
+        case VKD3DSIH_ABS:
+        case VKD3DSIH_ADD:
+        case VKD3DSIH_CMP:
+        case VKD3DSIH_DP2ADD:
+        case VKD3DSIH_DP3:
+        case VKD3DSIH_DP4:
+        case VKD3DSIH_DSX:
+        case VKD3DSIH_DSY:
+        case VKD3DSIH_ELSE:
+        case VKD3DSIH_ENDIF:
+        case VKD3DSIH_FRC:
+        case VKD3DSIH_IFC:
+        case VKD3DSIH_MAD:
+        case VKD3DSIH_MAX:
+        case VKD3DSIH_MIN:
+        case VKD3DSIH_MOV:
+        case VKD3DSIH_MUL:
+        case VKD3DSIH_SINCOS:
+        case VKD3DSIH_SLT:
+        case VKD3DSIH_TEX:
+        case VKD3DSIH_TEXKILL:
+        case VKD3DSIH_TEXLDD:
+            d3dbc_write_instruction(d3dbc, ins);
+            break;
+
+        case VKD3DSIH_EXP:
+        case VKD3DSIH_LOG:
+        case VKD3DSIH_RCP:
+        case VKD3DSIH_RSQ:
+            writemask = ins->dst->write_mask;
+            if (writemask != VKD3DSP_WRITEMASK_0 && writemask != VKD3DSP_WRITEMASK_1
+                    && writemask != VKD3DSP_WRITEMASK_2 && writemask != VKD3DSP_WRITEMASK_3)
+            {
+                vkd3d_shader_error(d3dbc->message_context, &ins->location,
+                        VKD3D_SHADER_ERROR_D3DBC_INVALID_WRITEMASK,
+                        "writemask %#x for vsir instruction with opcode %#x is not single component.",
+                        writemask, ins->opcode);
+                d3dbc->failed = true;
+            }
+            d3dbc_write_instruction(d3dbc, ins);
+            break;
+
+        default:
+            vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_INVALID_OPCODE,
+                   "vsir instruction with opcode %#x.", ins->opcode);
+            d3dbc->failed = true;
+            break;
+    }
+}
+
+static void d3dbc_write_semantic_dcl(struct d3dbc_compiler *d3dbc,
+        const struct signature_element *element, bool output)
+{
+    const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    struct vkd3d_shader_dst_param reg = {0};
+    enum vkd3d_decl_usage usage;
+    uint32_t token, usage_idx;
+    bool ret;
+
+    if (sm1_register_from_semantic_name(version, element->semantic_name,
+            element->semantic_index, output, &reg.reg.type, &reg.reg.idx[0].offset))
     {
         usage = 0;
         usage_idx = 0;
     }
     else
     {
-        ret = hlsl_sm1_usage_from_semantic(&var->semantic, &usage, &usage_idx);
-        assert(ret);
-        reg.type = output ? D3DSPR_OUTPUT : D3DSPR_INPUT;
-        reg.reg = var->regs[HLSL_REGSET_NUMERIC].id;
+        ret = sm1_usage_from_semantic_name(element->semantic_name, element->semantic_index, &usage, &usage_idx);
+        VKD3D_ASSERT(ret);
+        reg.reg.type = output ? VKD3DSPR_OUTPUT : VKD3DSPR_INPUT;
+        reg.reg.idx[0].offset = element->register_index;
     }
 
-    token = D3DSIO_DCL;
-    if (ctx->profile->major_version > 1)
-        token |= 2 << D3DSI_INSTLENGTH_SHIFT;
+    token = VKD3D_SM1_OP_DCL;
+    if (version->major > 1)
+        token |= 2 << VKD3D_SM1_INSTRUCTION_LENGTH_SHIFT;
     put_u32(buffer, token);
 
     token = (1u << 31);
-    token |= usage << D3DSP_DCL_USAGE_SHIFT;
-    token |= usage_idx << D3DSP_DCL_USAGEINDEX_SHIFT;
+    token |= usage << VKD3D_SM1_DCL_USAGE_SHIFT;
+    token |= usage_idx << VKD3D_SM1_DCL_USAGE_INDEX_SHIFT;
     put_u32(buffer, token);
 
-    reg.writemask = (1 << var->data_type->dimx) - 1;
+    reg.write_mask = element->mask;
     write_sm1_dst_register(buffer, &reg);
 }
 
-static void write_sm1_semantic_dcls(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer)
+static void d3dbc_write_semantic_dcls(struct d3dbc_compiler *d3dbc)
 {
+    struct vsir_program *program = d3dbc->program;
+    const struct vkd3d_shader_version *version;
     bool write_in = false, write_out = false;
-    struct hlsl_ir_var *var;
 
-    if (ctx->profile->type == VKD3D_SHADER_TYPE_PIXEL && ctx->profile->major_version >= 2)
+    version = &program->shader_version;
+    if (version->type == VKD3D_SHADER_TYPE_PIXEL && version->major >= 2)
         write_in = true;
-    else if (ctx->profile->type == VKD3D_SHADER_TYPE_VERTEX && ctx->profile->major_version == 3)
+    else if (version->type == VKD3D_SHADER_TYPE_VERTEX && version->major == 3)
         write_in = write_out = true;
-    else if (ctx->profile->type == VKD3D_SHADER_TYPE_VERTEX && ctx->profile->major_version < 3)
+    else if (version->type == VKD3D_SHADER_TYPE_VERTEX && version->major < 3)
         write_in = true;
 
-    LIST_FOR_EACH_ENTRY(var, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
+    if (write_in)
     {
-        if (write_in && var->is_input_semantic)
-            write_sm1_semantic_dcl(ctx, buffer, var, false);
-        if (write_out && var->is_output_semantic)
-            write_sm1_semantic_dcl(ctx, buffer, var, true);
+        for (unsigned int i = 0; i < program->input_signature.element_count; ++i)
+            d3dbc_write_semantic_dcl(d3dbc, &program->input_signature.elements[i], false);
+    }
+
+    if (write_out)
+    {
+        for (unsigned int i = 0; i < program->output_signature.element_count; ++i)
+            d3dbc_write_semantic_dcl(d3dbc, &program->output_signature.elements[i], true);
     }
 }
 
-static void write_sm1_sampler_dcl(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        unsigned int reg_id, enum hlsl_sampler_dim sampler_dim)
+static void d3dbc_write_program_instructions(struct d3dbc_compiler *d3dbc)
 {
-    struct sm1_dst_register reg = {0};
-    uint32_t token, res_type = 0;
-
-    token = D3DSIO_DCL;
-    if (ctx->profile->major_version > 1)
-        token |= 2 << D3DSI_INSTLENGTH_SHIFT;
-    put_u32(buffer, token);
-
-    switch (sampler_dim)
-    {
-        case HLSL_SAMPLER_DIM_2D:
-            res_type = VKD3D_SM1_RESOURCE_TEXTURE_2D;
-            break;
-
-        case HLSL_SAMPLER_DIM_CUBE:
-            res_type = VKD3D_SM1_RESOURCE_TEXTURE_CUBE;
-            break;
-
-        case HLSL_SAMPLER_DIM_3D:
-            res_type = VKD3D_SM1_RESOURCE_TEXTURE_3D;
-            break;
-
-        default:
-            vkd3d_unreachable();
-            break;
-    }
-
-    token = (1u << 31);
-    token |= res_type << VKD3D_SM1_RESOURCE_TYPE_SHIFT;
-    put_u32(buffer, token);
-
-    reg.type = D3DSPR_SAMPLER;
-    reg.writemask = VKD3DSP_WRITEMASK_ALL;
-    reg.reg = reg_id;
-
-    write_sm1_dst_register(buffer, &reg);
-}
-
-static void write_sm1_sampler_dcls(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer)
-{
-    enum hlsl_sampler_dim sampler_dim;
-    unsigned int i, count, reg_id;
-    struct hlsl_ir_var *var;
-
-    if (ctx->profile->major_version < 2)
-        return;
-
-    LIST_FOR_EACH_ENTRY(var, &ctx->extern_vars, struct hlsl_ir_var, extern_entry)
-    {
-        if (!var->regs[HLSL_REGSET_SAMPLERS].allocated)
-            continue;
-
-        count = var->bind_count[HLSL_REGSET_SAMPLERS];
-
-        for (i = 0; i < count; ++i)
-        {
-            if (var->objects_usage[HLSL_REGSET_SAMPLERS][i].used)
-            {
-                sampler_dim = var->objects_usage[HLSL_REGSET_SAMPLERS][i].sampler_dim;
-                if (sampler_dim == HLSL_SAMPLER_DIM_GENERIC)
-                {
-                    /* These can appear in sm4-style combined sample instructions. */
-                    hlsl_fixme(ctx, &var->loc, "Generic samplers need to be lowered.");
-                    continue;
-                }
-
-                reg_id = var->regs[HLSL_REGSET_SAMPLERS].id + i;
-                write_sm1_sampler_dcl(ctx, buffer, reg_id, sampler_dim);
-            }
-        }
-    }
-}
-
-static void write_sm1_constant(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_constant *constant = hlsl_ir_constant(instr);
-    struct sm1_instruction sm1_instr =
-    {
-        .opcode = D3DSIO_MOV,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.reg = instr->reg.id,
-        .dst.writemask = instr->reg.writemask,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_CONST,
-        .srcs[0].reg = constant->reg.id,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(constant->reg.writemask),
-        .src_count = 1,
-    };
-
-    assert(instr->reg.allocated);
-    assert(constant->reg.allocated);
-    sm1_map_src_swizzle(&sm1_instr.srcs[0], sm1_instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &sm1_instr);
-}
-
-static void write_sm1_per_component_unary_op(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr, D3DSHADER_INSTRUCTION_OPCODE_TYPE opcode)
-{
-    struct hlsl_ir_expr *expr = hlsl_ir_expr(instr);
-    struct hlsl_ir_node *arg1 = expr->operands[0].node;
+    struct vsir_program *program = d3dbc->program;
     unsigned int i;
 
-    for (i = 0; i < instr->data_type->dimx; ++i)
-    {
-        struct hlsl_reg src = arg1->reg, dst = instr->reg;
-
-        src.writemask = hlsl_combine_writemasks(src.writemask, 1u << i);
-        dst.writemask = hlsl_combine_writemasks(dst.writemask, 1u << i);
-        write_sm1_unary_op(ctx, buffer, opcode, &dst, &src, 0, 0);
-    }
+    for (i = 0; i < program->instructions.count; ++i)
+        d3dbc_write_vsir_instruction(d3dbc, &program->instructions.elements[i]);
 }
 
-static void write_sm1_expr(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer, const struct hlsl_ir_node *instr)
+int d3dbc_compile(struct vsir_program *program, uint64_t config_flags,
+        const struct vkd3d_shader_compile_info *compile_info, const struct vkd3d_shader_code *ctab,
+        struct vkd3d_shader_code *out, struct vkd3d_shader_message_context *message_context)
 {
-    struct hlsl_ir_expr *expr = hlsl_ir_expr(instr);
-    struct hlsl_ir_node *arg1 = expr->operands[0].node;
-    struct hlsl_ir_node *arg2 = expr->operands[1].node;
-    struct hlsl_ir_node *arg3 = expr->operands[2].node;
+    const struct vkd3d_shader_version *version = &program->shader_version;
+    struct d3dbc_compiler d3dbc = {0};
+    struct vkd3d_bytecode_buffer *buffer = &d3dbc.buffer;
+    int result;
 
-    assert(instr->reg.allocated);
-
-    if (expr->op == HLSL_OP1_REINTERPRET)
+    d3dbc.program = program;
+    d3dbc.message_context = message_context;
+    switch (version->type)
     {
-        write_sm1_unary_op(ctx, buffer, D3DSIO_MOV, &instr->reg, &arg1->reg, 0, 0);
-        return;
-    }
-
-    if (expr->op == HLSL_OP1_CAST)
-    {
-        write_sm1_cast(ctx, buffer, instr);
-        return;
-    }
-
-    if (instr->data_type->e.numeric.type != HLSL_TYPE_FLOAT)
-    {
-        /* These need to be lowered. */
-        hlsl_fixme(ctx, &instr->loc, "SM1 non-float expression.");
-        return;
-    }
-
-    switch (expr->op)
-    {
-        case HLSL_OP1_ABS:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_ABS, &instr->reg, &arg1->reg, 0, 0);
+        case VKD3D_SHADER_TYPE_VERTEX:
+            d3dbc.opcode_table = vs_opcode_table;
             break;
 
-        case HLSL_OP1_DSX:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_DSX, &instr->reg, &arg1->reg, 0, 0);
-            break;
-
-        case HLSL_OP1_DSY:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_DSY, &instr->reg, &arg1->reg, 0, 0);
-            break;
-
-        case HLSL_OP1_EXP2:
-            write_sm1_per_component_unary_op(ctx, buffer, instr, D3DSIO_EXP);
-            break;
-
-        case HLSL_OP1_LOG2:
-            write_sm1_per_component_unary_op(ctx, buffer, instr, D3DSIO_LOG);
-            break;
-
-        case HLSL_OP1_NEG:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_MOV, &instr->reg, &arg1->reg, D3DSPSM_NEG, 0);
-            break;
-
-        case HLSL_OP1_SAT:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_MOV, &instr->reg, &arg1->reg, 0, D3DSPDM_SATURATE);
-            break;
-
-        case HLSL_OP1_RCP:
-            write_sm1_per_component_unary_op(ctx, buffer, instr, D3DSIO_RCP);
-            break;
-
-        case HLSL_OP1_RSQ:
-            write_sm1_per_component_unary_op(ctx, buffer, instr, D3DSIO_RSQ);
-            break;
-
-        case HLSL_OP2_ADD:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_ADD, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP2_MAX:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_MAX, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP2_MIN:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_MIN, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP2_MUL:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_MUL, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP1_FRACT:
-            write_sm1_unary_op(ctx, buffer, D3DSIO_FRC, &instr->reg, &arg1->reg, D3DSPSM_NONE, 0);
-            break;
-
-        case HLSL_OP2_DOT:
-            switch (arg1->data_type->dimx)
-            {
-                case 4:
-                    write_sm1_binary_op_dot(ctx, buffer, D3DSIO_DP4, &instr->reg, &arg1->reg, &arg2->reg);
-                    break;
-
-                case 3:
-                    write_sm1_binary_op_dot(ctx, buffer, D3DSIO_DP3, &instr->reg, &arg1->reg, &arg2->reg);
-                    break;
-
-                default:
-                    vkd3d_unreachable();
-            }
-            break;
-
-        case HLSL_OP2_LOGIC_AND:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_MIN, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP2_LOGIC_OR:
-            write_sm1_binary_op(ctx, buffer, D3DSIO_MAX, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP2_SLT:
-            if (ctx->profile->type == VKD3D_SHADER_TYPE_PIXEL)
-                hlsl_fixme(ctx, &instr->loc, "Lower SLT instructions for pixel shaders.");
-            write_sm1_binary_op(ctx, buffer, D3DSIO_SLT, &instr->reg, &arg1->reg, &arg2->reg);
-            break;
-
-        case HLSL_OP3_CMP:
-            if (ctx->profile->type == VKD3D_SHADER_TYPE_VERTEX)
-                hlsl_fixme(ctx, &instr->loc, "Lower CMP instructions for vertex shaders.");
-            write_sm1_ternary_op(ctx, buffer, D3DSIO_CMP, &instr->reg, &arg1->reg, &arg2->reg, &arg3->reg);
-            break;
-
-        case HLSL_OP3_DP2ADD:
-            write_sm1_dp2add(ctx, buffer, &instr->reg, &arg1->reg, &arg2->reg, &arg3->reg);
+        case VKD3D_SHADER_TYPE_PIXEL:
+            d3dbc.opcode_table = ps_opcode_table;
             break;
 
         default:
-            hlsl_fixme(ctx, &instr->loc, "SM1 \"%s\" expression.", debug_hlsl_expr_op(expr->op));
-            break;
-    }
-}
-
-static void write_sm1_block(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_block *block);
-
-static void write_sm1_if(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer, const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_if *iff = hlsl_ir_if(instr);
-    const struct hlsl_ir_node *condition;
-    struct sm1_instruction sm1_ifc, sm1_else, sm1_endif;
-
-    condition = iff->condition.node;
-    assert(condition->data_type->dimx == 1 && condition->data_type->dimy == 1);
-
-    sm1_ifc = (struct sm1_instruction)
-    {
-        .opcode = D3DSIO_IFC,
-        .flags = VKD3D_SHADER_REL_OP_NE, /* Make it a "if_ne" instruction. */
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(condition->reg.writemask),
-        .srcs[0].reg = condition->reg.id,
-        .srcs[0].mod = 0,
-
-        .srcs[1].type = D3DSPR_TEMP,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(condition->reg.writemask),
-        .srcs[1].reg = condition->reg.id,
-        .srcs[1].mod = D3DSPSM_NEG,
-
-        .src_count = 2,
-    };
-    write_sm1_instruction(ctx, buffer, &sm1_ifc);
-    write_sm1_block(ctx, buffer, &iff->then_block);
-
-    if (!list_empty(&iff->else_block.instrs))
-    {
-        sm1_else = (struct sm1_instruction){.opcode = D3DSIO_ELSE};
-        write_sm1_instruction(ctx, buffer, &sm1_else);
-        write_sm1_block(ctx, buffer, &iff->else_block);
+            vkd3d_shader_error(message_context, NULL, VKD3D_SHADER_ERROR_D3DBC_INVALID_PROFILE,
+                    "Invalid shader type %u.", version->type);
+            return VKD3D_ERROR_INVALID_SHADER;
     }
 
-    sm1_endif = (struct sm1_instruction){.opcode = D3DSIO_ENDIF};
-    write_sm1_instruction(ctx, buffer, &sm1_endif);
-}
+    put_u32(buffer, sm1_version(version->type, version->major, version->minor));
+    d3dbc_write_comment(&d3dbc, VKD3D_MAKE_TAG('C','T','A','B'), ctab);
+    d3dbc_write_semantic_dcls(&d3dbc);
+    d3dbc_write_program_instructions(&d3dbc);
 
-static void write_sm1_jump(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer, const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_jump *jump = hlsl_ir_jump(instr);
+    put_u32(buffer, VKD3D_SM1_OP_END);
 
-    switch (jump->type)
+    result = VKD3D_OK;
+    if (buffer->status)
+        result = buffer->status;
+    if (d3dbc.failed)
+        result = VKD3D_ERROR_INVALID_SHADER;
+
+    if (!result)
     {
-        case HLSL_IR_JUMP_DISCARD_NEG:
-        {
-            struct hlsl_reg *reg = &jump->condition.node->reg;
-
-            struct sm1_instruction sm1_instr =
-            {
-                .opcode = D3DSIO_TEXKILL,
-
-                .dst.type = D3DSPR_TEMP,
-                .dst.reg = reg->id,
-                .dst.writemask = reg->writemask,
-                .has_dst = 1,
-            };
-
-            write_sm1_instruction(ctx, buffer, &sm1_instr);
-            break;
-        }
-
-        default:
-            hlsl_fixme(ctx, &jump->node.loc, "Jump type %s.", hlsl_jump_type_to_string(jump->type));
-    }
-}
-
-static void write_sm1_load(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer, const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_load *load = hlsl_ir_load(instr);
-    const struct hlsl_reg reg = hlsl_reg_from_deref(ctx, &load->src);
-    struct sm1_instruction sm1_instr =
-    {
-        .opcode = D3DSIO_MOV,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.reg = instr->reg.id,
-        .dst.writemask = instr->reg.writemask,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].reg = reg.id,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(reg.writemask),
-        .src_count = 1,
-    };
-
-    assert(instr->reg.allocated);
-
-    if (load->src.var->is_uniform)
-    {
-        assert(reg.allocated);
-        sm1_instr.srcs[0].type = D3DSPR_CONST;
-    }
-    else if (load->src.var->is_input_semantic)
-    {
-        if (!hlsl_sm1_register_from_semantic(ctx, &load->src.var->semantic,
-                false, &sm1_instr.srcs[0].type, &sm1_instr.srcs[0].reg))
-        {
-            assert(reg.allocated);
-            sm1_instr.srcs[0].type = D3DSPR_INPUT;
-            sm1_instr.srcs[0].reg = reg.id;
-        }
-        else
-            sm1_instr.srcs[0].swizzle = hlsl_swizzle_from_writemask((1 << load->src.var->data_type->dimx) - 1);
-    }
-
-    sm1_map_src_swizzle(&sm1_instr.srcs[0], sm1_instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &sm1_instr);
-}
-
-static void write_sm1_resource_load(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_resource_load *load = hlsl_ir_resource_load(instr);
-    struct hlsl_ir_node *coords = load->coords.node;
-    unsigned int sampler_offset, reg_id;
-    struct sm1_instruction sm1_instr;
-
-    sampler_offset = hlsl_offset_from_deref_safe(ctx, &load->resource);
-    reg_id = load->resource.var->regs[HLSL_REGSET_SAMPLERS].id + sampler_offset;
-
-    sm1_instr = (struct sm1_instruction)
-    {
-        .dst.type = D3DSPR_TEMP,
-        .dst.reg = instr->reg.id,
-        .dst.writemask = instr->reg.writemask,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].reg = coords->reg.id,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(VKD3DSP_WRITEMASK_ALL),
-
-        .srcs[1].type = D3DSPR_SAMPLER,
-        .srcs[1].reg = reg_id,
-        .srcs[1].swizzle = hlsl_swizzle_from_writemask(VKD3DSP_WRITEMASK_ALL),
-
-        .src_count = 2,
-    };
-
-    switch (load->load_type)
-    {
-        case HLSL_RESOURCE_SAMPLE:
-            sm1_instr.opcode = D3DSIO_TEX;
-            break;
-
-        case HLSL_RESOURCE_SAMPLE_PROJ:
-            sm1_instr.opcode = D3DSIO_TEX;
-            sm1_instr.opcode |= VKD3DSI_TEXLD_PROJECT << VKD3D_SM1_INSTRUCTION_FLAGS_SHIFT;
-            break;
-
-        default:
-            hlsl_fixme(ctx, &instr->loc, "Resource load type %u.", load->load_type);
-            return;
-    }
-
-    assert(instr->reg.allocated);
-
-    write_sm1_instruction(ctx, buffer, &sm1_instr);
-}
-
-static void write_sm1_store(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_store *store = hlsl_ir_store(instr);
-    const struct hlsl_ir_node *rhs = store->rhs.node;
-    const struct hlsl_reg reg = hlsl_reg_from_deref(ctx, &store->lhs);
-    struct sm1_instruction sm1_instr =
-    {
-        .opcode = D3DSIO_MOV,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.reg = reg.id,
-        .dst.writemask = hlsl_combine_writemasks(reg.writemask, store->writemask),
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].reg = rhs->reg.id,
-        .srcs[0].swizzle = hlsl_swizzle_from_writemask(rhs->reg.writemask),
-        .src_count = 1,
-    };
-
-    if (store->lhs.var->data_type->class == HLSL_CLASS_MATRIX)
-    {
-        hlsl_fixme(ctx, &instr->loc, "Lower matrix writemasks.");
-        return;
-    }
-
-    if (store->lhs.var->is_output_semantic)
-    {
-        if (ctx->profile->type == VKD3D_SHADER_TYPE_PIXEL && ctx->profile->major_version == 1)
-        {
-            sm1_instr.dst.type = D3DSPR_TEMP;
-            sm1_instr.dst.reg = 0;
-        }
-        else if (!hlsl_sm1_register_from_semantic(ctx, &store->lhs.var->semantic,
-                true, &sm1_instr.dst.type, &sm1_instr.dst.reg))
-        {
-            assert(reg.allocated);
-            sm1_instr.dst.type = D3DSPR_OUTPUT;
-            sm1_instr.dst.reg = reg.id;
-        }
-        else
-            sm1_instr.dst.writemask = (1u << store->lhs.var->data_type->dimx) - 1;
-    }
-    else
-        assert(reg.allocated);
-
-    sm1_map_src_swizzle(&sm1_instr.srcs[0], sm1_instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &sm1_instr);
-}
-
-static void write_sm1_swizzle(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_ir_node *instr)
-{
-    const struct hlsl_ir_swizzle *swizzle = hlsl_ir_swizzle(instr);
-    const struct hlsl_ir_node *val = swizzle->val.node;
-    struct sm1_instruction sm1_instr =
-    {
-        .opcode = D3DSIO_MOV,
-
-        .dst.type = D3DSPR_TEMP,
-        .dst.reg = instr->reg.id,
-        .dst.writemask = instr->reg.writemask,
-        .has_dst = 1,
-
-        .srcs[0].type = D3DSPR_TEMP,
-        .srcs[0].reg = val->reg.id,
-        .srcs[0].swizzle = hlsl_combine_swizzles(hlsl_swizzle_from_writemask(val->reg.writemask),
-                swizzle->swizzle, instr->data_type->dimx),
-        .src_count = 1,
-    };
-
-    assert(instr->reg.allocated);
-    assert(val->reg.allocated);
-    sm1_map_src_swizzle(&sm1_instr.srcs[0], sm1_instr.dst.writemask);
-    write_sm1_instruction(ctx, buffer, &sm1_instr);
-}
-
-static void write_sm1_block(struct hlsl_ctx *ctx, struct vkd3d_bytecode_buffer *buffer,
-        const struct hlsl_block *block)
-{
-    const struct hlsl_ir_node *instr;
-
-    LIST_FOR_EACH_ENTRY(instr, &block->instrs, struct hlsl_ir_node, entry)
-    {
-        if (instr->data_type)
-        {
-            if (instr->data_type->class != HLSL_CLASS_SCALAR && instr->data_type->class != HLSL_CLASS_VECTOR)
-            {
-                hlsl_fixme(ctx, &instr->loc, "Class %#x should have been lowered or removed.", instr->data_type->class);
-                break;
-            }
-        }
-
-        switch (instr->type)
-        {
-            case HLSL_IR_CALL:
-                vkd3d_unreachable();
-
-            case HLSL_IR_CONSTANT:
-                write_sm1_constant(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_EXPR:
-                write_sm1_expr(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_IF:
-                if (hlsl_version_ge(ctx, 2, 1))
-                    write_sm1_if(ctx, buffer, instr);
-                else
-                    hlsl_fixme(ctx, &instr->loc, "Flatten \"if\" conditionals branches.");
-                break;
-
-            case HLSL_IR_JUMP:
-                write_sm1_jump(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_LOAD:
-                write_sm1_load(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_RESOURCE_LOAD:
-                write_sm1_resource_load(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_STORE:
-                write_sm1_store(ctx, buffer, instr);
-                break;
-
-            case HLSL_IR_SWIZZLE:
-                write_sm1_swizzle(ctx, buffer, instr);
-                break;
-
-            default:
-                hlsl_fixme(ctx, &instr->loc, "Instruction type %s.", hlsl_node_type_to_string(instr->type));
-        }
-    }
-}
-
-int hlsl_sm1_write(struct hlsl_ctx *ctx, struct hlsl_ir_function_decl *entry_func, struct vkd3d_shader_code *out)
-{
-    struct vkd3d_bytecode_buffer buffer = {0};
-
-    put_u32(&buffer, sm1_version(ctx->profile->type, ctx->profile->major_version, ctx->profile->minor_version));
-
-    write_sm1_uniforms(ctx, &buffer, entry_func);
-
-    write_sm1_constant_defs(ctx, &buffer);
-    write_sm1_semantic_dcls(ctx, &buffer);
-    write_sm1_sampler_dcls(ctx, &buffer);
-    write_sm1_block(ctx, &buffer, &entry_func->body);
-
-    put_u32(&buffer, D3DSIO_END);
-
-    if (buffer.status)
-        ctx->result = buffer.status;
-
-    if (!ctx->result)
-    {
-        out->code = buffer.data;
-        out->size = buffer.size;
+        out->code = buffer->data;
+        out->size = buffer->size;
     }
     else
     {
-        vkd3d_free(buffer.data);
+        vkd3d_free(buffer->data);
     }
-    return ctx->result;
+    return result;
 }

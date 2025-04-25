@@ -42,6 +42,14 @@ WINE_DECLARE_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(globalmem);
 
 
+static CRITICAL_SECTION memstatus_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &memstatus_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": memstatus_section") }
+};
+static CRITICAL_SECTION memstatus_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static CROSS_PROCESS_WORK_LIST *open_cross_process_connection( HANDLE process )
 {
@@ -1365,7 +1373,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetPhysicallyInstalledSystemMemory( ULONGLONG *mem
 BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
 {
     static MEMORYSTATUSEX cached_status;
-    static DWORD last_check;
+    static ULONGLONG last_check;
     SYSTEM_BASIC_INFORMATION basic_info;
     SYSTEM_PERFORMANCE_INFORMATION perf_info;
     VM_COUNTERS_EX vmc;
@@ -1375,12 +1383,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if ((NtGetTickCount() - last_check) < 1000)
+    RtlEnterCriticalSection(&memstatus_section);
+    if ((GetTickCount64() - last_check) < 1000 && cached_status.dwLength > 0)
     {
 	*status = cached_status;
+	RtlLeaveCriticalSection(&memstatus_section);
 	return TRUE;
     }
-    last_check = NtGetTickCount();
 
     if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation,
                                                  &basic_info, sizeof(basic_info), NULL )) ||
@@ -1388,7 +1397,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
                                                  &perf_info, sizeof(perf_info), NULL)) ||
         !set_ntstatus( NtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters,
                                                   &vmc, sizeof(vmc), NULL )))
+    {
+        RtlLeaveCriticalSection(&memstatus_section);
         return FALSE;
+    }
 
     status->dwMemoryLoad     = 0;
     status->ullTotalPhys     = basic_info.MmNumberOfPhysicalPages;
@@ -1413,6 +1425,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
                      status->ullAvailPageFile, status->ullTotalVirtual, status->ullAvailVirtual );
 
     cached_status = *status;
+    last_check = GetTickCount64();
+    RtlLeaveCriticalSection(&memstatus_section);
     return TRUE;
 }
 
@@ -1817,26 +1831,12 @@ BOOL WINAPI GetXStateFeaturesMask( CONTEXT *context, DWORD64 *feature_mask )
  * Firmware functions
  ***********************************************************************/
 
-
-/***********************************************************************
- *             EnumSystemFirmwareTable   (kernelbase.@)
- */
-UINT WINAPI EnumSystemFirmwareTables( DWORD provider, void *buffer, DWORD size )
-{
-    FIXME( "(0x%08lx, %p, %ld)\n", provider, buffer, size );
-    return 0;
-}
-
-
-/***********************************************************************
- *             GetSystemFirmwareTable   (kernelbase.@)
- */
-UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWORD size )
+static UINT get_firmware_table( DWORD provider, SYSTEM_FIRMWARE_TABLE_ACTION action, DWORD id,
+                                void *buffer, DWORD size )
 {
     SYSTEM_FIRMWARE_TABLE_INFORMATION *info;
     ULONG buffer_size = offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer ) + size;
-
-    TRACE( "(0x%08lx, 0x%08lx, %p, %ld)\n", provider, id, buffer, size );
+    NTSTATUS status;
 
     if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, buffer_size )))
     {
@@ -1845,14 +1845,34 @@ UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWOR
     }
 
     info->ProviderSignature = provider;
-    info->Action = SystemFirmwareTable_Get;
+    info->Action = action;
     info->TableID = id;
 
-    set_ntstatus( NtQuerySystemInformation( SystemFirmwareTableInformation,
-                                            info, buffer_size, &buffer_size ));
+    status = NtQuerySystemInformation( SystemFirmwareTableInformation, info, buffer_size, &buffer_size );
+    set_ntstatus(status);
     buffer_size -= offsetof( SYSTEM_FIRMWARE_TABLE_INFORMATION, TableBuffer );
     if (buffer_size <= size) memcpy( buffer, info->TableBuffer, buffer_size );
 
     HeapFree( GetProcessHeap(), 0, info );
-    return buffer_size;
+    return NT_SUCCESS(status) || status == STATUS_BUFFER_TOO_SMALL ? buffer_size : 0;
+}
+
+/***********************************************************************
+ *             EnumSystemFirmwareTables   (kernelbase.@)
+ */
+UINT WINAPI EnumSystemFirmwareTables( DWORD provider, void *buffer, DWORD size )
+{
+    TRACE( "(0x%08lx, %p, %ld)\n", provider, buffer, size );
+
+    return get_firmware_table( provider, SystemFirmwareTable_Enumerate, 0, buffer, size );
+}
+
+/***********************************************************************
+ *             GetSystemFirmwareTable   (kernelbase.@)
+ */
+UINT WINAPI GetSystemFirmwareTable( DWORD provider, DWORD id, void *buffer, DWORD size )
+{
+    TRACE( "(0x%08lx, 0x%08lx, %p, %ld)\n", provider, id, buffer, size );
+
+    return get_firmware_table( provider, SystemFirmwareTable_Get, id, buffer, size );
 }

@@ -35,7 +35,7 @@
 #define IMAGE_FILE_MACHINE_I386    0x014c
 #define IMAGE_FILE_MACHINE_POWERPC 0x01f0
 #define IMAGE_FILE_MACHINE_AMD64   0x8664
-#define IMAGE_FILE_MACHINE_ARMNT   0x01C4
+#define IMAGE_FILE_MACHINE_ARMNT   0x01c4
 #define IMAGE_FILE_MACHINE_ARM64   0xaa64
 
 #define IMAGE_SIZEOF_NT_OPTIONAL32_HEADER 224
@@ -739,7 +739,7 @@ void output_module( DLLSPEC *spec )
 {
     int machine = 0;
     int i;
-    unsigned int page_size = get_page_size();
+    unsigned int page_size = 0x1000;
     const char *data_dirs[16] = { NULL };
 
     /* Reserve some space for the PE header */
@@ -942,7 +942,8 @@ static unsigned int flush_output_to_section( const char *name, int dir_idx, unsi
 
     if (!output_buffer_pos) return 0;
 
-    strncpy( sec->name, name, sizeof(sec->name) );
+    memset( sec->name, 0, sizeof(sec->name) );
+    memcpy( sec->name, name, min( strlen(name), sizeof(sec->name) ));
     sec->ptr       = output_buffer;
     sec->size      = output_buffer_pos;
     sec->flags     = flags;
@@ -1303,7 +1304,7 @@ void output_fake_module( DLLSPEC *spec )
     unsigned int i;
 
     resolve_imports( spec );
-    pe.section_align = get_page_size();
+    pe.section_align = 0x1000;
     pe.file_align    = 0x200;
     init_output_buffer();
 
@@ -1372,7 +1373,7 @@ void output_fake_module( DLLSPEC *spec )
  */
 void output_data_module( DLLSPEC *spec )
 {
-    pe.section_align = pe.file_align = get_page_size();
+    pe.section_align = pe.file_align = get_section_alignment();
 
     output_pe_exports( spec );
     if (spec->apiset.count) output_apiset_section( &spec->apiset );

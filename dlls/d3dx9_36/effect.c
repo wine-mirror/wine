@@ -224,7 +224,7 @@ static HRESULT d3dx9_effect_init_from_binary(struct d3dx_effect *effect,
         struct IDirect3DDevice9 *device, const char *data, SIZE_T data_size,
         unsigned int flags, struct ID3DXEffectPool *pool, const char *skip_constants_string);
 static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
-        const char *data, const char **ptr, struct d3dx_object *objects);
+        const char *data, const char **ptr);
 static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL child);
 
 typedef BOOL (*walk_parameter_dep_func)(void *data, struct d3dx_parameter *param);
@@ -2453,6 +2453,7 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
 {
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     struct d3dx_parameter *param = get_valid_parameter(effect, parameter);
+    unsigned int i;
 
     TRACE("iface %p, parameter %p, data %p, bytes %u.\n", iface, parameter, data, bytes);
 
@@ -2474,11 +2475,21 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
         switch (param->type)
         {
             case D3DXPT_VOID:
-            case D3DXPT_BOOL:
             case D3DXPT_INT:
             case D3DXPT_FLOAT:
             case D3DXPT_STRING:
                 break;
+
+            case D3DXPT_BOOL:
+            {
+                BOOL *src = (BOOL *)param->data;
+                BOOL *dst = (BOOL *)data;
+
+                for (i = 0; i < (param->bytes / sizeof(*src)); ++i)
+                    dst[i] = !!src[i];
+
+                return D3D_OK;
+            }
 
             case D3DXPT_VERTEXSHADER:
             case D3DXPT_PIXELSHADER:
@@ -2487,9 +2498,6 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
             case D3DXPT_TEXTURE2D:
             case D3DXPT_TEXTURE3D:
             case D3DXPT_TEXTURECUBE:
-            {
-                unsigned int i;
-
                 for (i = 0; i < (param->element_count ? param->element_count : 1); ++i)
                 {
                     IUnknown *unk = ((IUnknown **)param->data)[i];
@@ -2497,7 +2505,6 @@ static HRESULT WINAPI d3dx_effect_GetValue(ID3DXEffect *iface, D3DXHANDLE parame
                         IUnknown_AddRef(unk);
                 }
                 break;
-            }
 
             default:
                 FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(param->type));
@@ -4431,10 +4438,77 @@ static HRESULT WINAPI d3dx_effect_CloneEffect(ID3DXEffect *iface, IDirect3DDevic
 static HRESULT WINAPI d3dx_effect_SetRawValue(ID3DXEffect *iface, D3DXHANDLE parameter, const void *data,
         UINT byte_offset, UINT bytes)
 {
-    FIXME("iface %p, parameter %p, data %p, byte_offset %u, bytes %u stub!\n",
-            iface, parameter, data, byte_offset, bytes);
+    struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
+    struct d3dx_parameter *param = get_valid_parameter(effect, parameter);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, parameter %p, data %p, byte_offset %u, bytes %u.\n", iface, parameter, data, byte_offset, bytes);
+
+    if (!param)
+    {
+        WARN("Invalid parameter %p specified.\n", parameter);
+        return D3DERR_INVALIDCALL;
+    }
+
+    switch (param->class)
+    {
+        case D3DXPC_VECTOR:
+        {
+            uint8_t *dst_data;
+
+            if (param->columns != 4)
+            {
+                FIXME("Vec%u parameters are currently unsupported.\n", param->columns);
+                return E_NOTIMPL;
+            }
+
+            if ((byte_offset + bytes) > param->bytes)
+            {
+                FIXME("Writing adjacent parameters is currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            dst_data = param_get_data_and_dirtify(effect, param, !byte_offset ? bytes : param->bytes, TRUE);
+            memcpy(dst_data + byte_offset, data, bytes);
+            break;
+        }
+
+        case D3DXPC_MATRIX_ROWS:
+        {
+            D3DXMATRIX *dst_elem;
+            uint8_t *dst_data;
+            unsigned int i;
+
+            if (param->columns != 4 || param->rows != 4)
+            {
+                FIXME("%ux%u matrix parameters are currently unsupported.\n", param->rows, param->columns);
+                return E_NOTIMPL;
+            }
+
+            if (byte_offset & 0x3f || bytes & 0x3f)
+            {
+                FIXME("Partial matrix updates are currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            if ((byte_offset + bytes) > param->bytes)
+            {
+                FIXME("Writing adjacent parameters is currently unsupported.\n");
+                return E_NOTIMPL;
+            }
+
+            dst_data = param_get_data_and_dirtify(effect, param, !byte_offset ? bytes : param->bytes, TRUE);
+            dst_elem = (D3DXMATRIX *)(dst_data + byte_offset);
+            for (i = 0; i < (bytes / sizeof(D3DXMATRIX)); ++i)
+                D3DXMatrixTranspose(&dst_elem[i], &((const D3DXMATRIX *)data)[i]);
+            break;
+        }
+
+        default:
+            FIXME("Unhandled parameter class %s.\n", debug_d3dxparameter_class(param->class));
+            return E_NOTIMPL;
+    }
+
+    return D3D_OK;
 }
 #endif
 
@@ -5100,7 +5174,7 @@ static const struct ID3DXEffectCompilerVtbl ID3DXEffectCompiler_Vtbl =
 };
 
 static HRESULT d3dx_parse_sampler(struct d3dx_effect *effect, struct d3dx_sampler *sampler,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     HRESULT hr;
     UINT i;
@@ -5117,7 +5191,7 @@ static HRESULT d3dx_parse_sampler(struct d3dx_effect *effect, struct d3dx_sample
 
     for (i = 0; i < sampler->state_count; ++i)
     {
-        hr = d3dx_parse_state(effect, &sampler->states[i], data, ptr, objects);
+        hr = d3dx_parse_state(effect, &sampler->states[i], data, ptr);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse state %u\n", i);
@@ -5140,7 +5214,7 @@ err_out:
 }
 
 static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_parameter *param,
-        void *value, const char *data, const char **ptr, struct d3dx_object *objects)
+        void *value, const char *data, const char **ptr)
 {
     unsigned int i;
     HRESULT hr;
@@ -5154,7 +5228,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
         {
             struct d3dx_parameter *member = &param->members[i];
 
-            hr = d3dx_parse_value(effect, member, value ? (char *)value + old_size : NULL, data, ptr, objects);
+            hr = d3dx_parse_value(effect, member, value ? (char *)value + old_size : NULL, data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse value %u\n", i);
@@ -5183,7 +5257,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
             {
                 struct d3dx_parameter *member = &param->members[i];
 
-                hr = d3dx_parse_value(effect, member, (char *)value + old_size, data, ptr, objects);
+                hr = d3dx_parse_value(effect, member, (char *)value + old_size, data, ptr);
                 if (hr != D3D_OK)
                 {
                     WARN("Failed to parse value %u\n", i);
@@ -5207,7 +5281,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
                 case D3DXPT_VERTEXSHADER:
                     param->object_id = read_u32(ptr);
                     TRACE("Id: %u\n", param->object_id);
-                    objects[param->object_id].param = param;
+                    effect->objects[param->object_id].param = param;
                     param->data = value;
                     break;
 
@@ -5223,7 +5297,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
                     if (!sampler)
                         return E_OUTOFMEMORY;
 
-                    hr = d3dx_parse_sampler(effect, sampler, data, ptr, objects);
+                    hr = d3dx_parse_sampler(effect, sampler, data, ptr);
                     if (hr != D3D_OK)
                     {
                         free(sampler);
@@ -5250,7 +5324,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
 }
 
 static HRESULT d3dx_parse_init_value(struct d3dx_effect *effect, struct d3dx_parameter *param,
-        const char *data, const char *ptr, struct d3dx_object *objects)
+        const char *data, const char *ptr)
 {
     UINT size = param->bytes;
     HRESULT hr;
@@ -5287,7 +5361,7 @@ static HRESULT d3dx_parse_init_value(struct d3dx_effect *effect, struct d3dx_par
         }
     }
 
-    hr = d3dx_parse_value(effect, param, value, data, &ptr, objects);
+    hr = d3dx_parse_value(effect, param, value, data, &ptr);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value\n");
@@ -5624,7 +5698,7 @@ err_out:
 }
 
 static HRESULT d3dx_parse_effect_annotation(struct d3dx_effect *effect, struct d3dx_parameter *anno,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     const char *ptr2;
     uint32_t offset;
@@ -5644,7 +5718,7 @@ static HRESULT d3dx_parse_effect_annotation(struct d3dx_effect *effect, struct d
 
     offset = read_u32(ptr);
     TRACE("Value offset: %#x.\n", offset);
-    hr = d3dx_parse_init_value(effect, anno, data, data + offset, objects);
+    hr = d3dx_parse_init_value(effect, anno, data, data + offset);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value.\n");
@@ -5655,7 +5729,7 @@ static HRESULT d3dx_parse_effect_annotation(struct d3dx_effect *effect, struct d
 }
 
 static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *state,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     struct d3dx_parameter *param = &state->parameter;
     enum STATE_CLASS state_class;
@@ -5689,7 +5763,7 @@ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *s
 
     offset = read_u32(ptr);
     TRACE("Value offset: %#x.\n", offset);
-    hr = d3dx_parse_init_value(effect, param, data, data + offset, objects);
+    hr = d3dx_parse_init_value(effect, param, data, data + offset);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value\n");
@@ -5730,7 +5804,7 @@ err_out:
 }
 
 static HRESULT d3dx_parse_effect_parameter(struct d3dx_effect *effect, struct d3dx_top_level_parameter *param,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     const char *ptr2;
     uint32_t offset;
@@ -5757,7 +5831,7 @@ static HRESULT d3dx_parse_effect_parameter(struct d3dx_effect *effect, struct d3
         return hr;
     }
 
-    hr = d3dx_parse_init_value(effect, &param->param, data, data + offset, objects);
+    hr = d3dx_parse_init_value(effect, &param->param, data, data + offset);
     if (hr != D3D_OK)
     {
         WARN("Failed to parse value.\n");
@@ -5777,7 +5851,7 @@ static HRESULT d3dx_parse_effect_parameter(struct d3dx_effect *effect, struct d3
         for (i = 0; i < param->annotation_count; ++i)
         {
             param_set_magic_number(&param->annotations[i]);
-            hr = d3dx_parse_effect_annotation(effect, &param->annotations[i], data, ptr, objects);
+            hr = d3dx_parse_effect_annotation(effect, &param->annotations[i], data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse annotation.\n");
@@ -5802,7 +5876,7 @@ err_out:
 }
 
 static HRESULT d3dx_parse_effect_pass(struct d3dx_effect *effect, struct d3dx_pass *pass,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     struct d3dx_state *states = NULL;
     char *name = NULL;
@@ -5838,7 +5912,7 @@ static HRESULT d3dx_parse_effect_pass(struct d3dx_effect *effect, struct d3dx_pa
         for (i = 0; i < pass->annotation_count; ++i)
         {
             param_set_magic_number(&pass->annotations[i]);
-            hr = d3dx_parse_effect_annotation(effect, &pass->annotations[i], data, ptr, objects);
+            hr = d3dx_parse_effect_annotation(effect, &pass->annotations[i], data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse annotation %u\n", i);
@@ -5859,7 +5933,7 @@ static HRESULT d3dx_parse_effect_pass(struct d3dx_effect *effect, struct d3dx_pa
 
         for (i = 0; i < pass->state_count; ++i)
         {
-            hr = d3dx_parse_state(effect, &states[i], data, ptr, objects);
+            hr = d3dx_parse_state(effect, &states[i], data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse annotation %u\n", i);
@@ -5898,7 +5972,7 @@ err_out:
 }
 
 static HRESULT d3dx_parse_effect_technique(struct d3dx_effect *effect, struct d3dx_technique *technique,
-        const char *data, const char **ptr, struct d3dx_object *objects)
+        const char *data, const char **ptr)
 {
     char *name = NULL;
     uint32_t offset;
@@ -5933,7 +6007,7 @@ static HRESULT d3dx_parse_effect_technique(struct d3dx_effect *effect, struct d3
         for (i = 0; i < technique->annotation_count; ++i)
         {
             param_set_magic_number(&technique->annotations[i]);
-            hr = d3dx_parse_effect_annotation(effect, &technique->annotations[i], data, ptr, objects);
+            hr = d3dx_parse_effect_annotation(effect, &technique->annotations[i], data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse annotation %u\n", i);
@@ -5954,7 +6028,7 @@ static HRESULT d3dx_parse_effect_technique(struct d3dx_effect *effect, struct d3
 
         for (i = 0; i < technique->pass_count; ++i)
         {
-            hr = d3dx_parse_effect_pass(effect, &technique->passes[i], data, ptr, objects);
+            hr = d3dx_parse_effect_pass(effect, &technique->passes[i], data, ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse pass %u\n", i);
@@ -6054,7 +6128,6 @@ static HRESULT d3dx_parse_array_selector(struct d3dx_effect *effect, struct d3dx
         FIXME("Referenced parameter %s not found.\n", ptr + 4);
         return D3DXERR_INVALIDDATA;
     }
-    TRACE("Unknown u32: 0x%.8x.\n", *(uint32_t *)(ptr + string_size));
 
     if (string_size % sizeof(uint32_t))
         FIXME("Unaligned string_size %u.\n", string_size);
@@ -6314,7 +6387,7 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
     for (i = 0; i < effect->params.count; ++i)
     {
         param_set_magic_number(&effect->params.parameters[i].param);
-        hr = d3dx_parse_effect_parameter(effect, &effect->params.parameters[i], data, &ptr, effect->objects);
+        hr = d3dx_parse_effect_parameter(effect, &effect->params.parameters[i], data, &ptr);
         if (hr != D3D_OK)
         {
             WARN("Failed to parse parameter %u.\n", i);
@@ -6337,7 +6410,7 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
         for (i = 0; i < effect->technique_count; ++i)
         {
             TRACE("Parsing technique %u.\n", i);
-            hr = d3dx_parse_effect_technique(effect, &effect->techniques[i], data, &ptr, effect->objects);
+            hr = d3dx_parse_effect_technique(effect, &effect->techniques[i], data, &ptr);
             if (hr != D3D_OK)
             {
                 WARN("Failed to parse technique %u.\n", i);

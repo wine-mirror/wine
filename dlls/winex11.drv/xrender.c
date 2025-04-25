@@ -177,6 +177,7 @@ MAKE_FUNCPTR(XRenderComposite)
 MAKE_FUNCPTR(XRenderCompositeText16)
 MAKE_FUNCPTR(XRenderCreateGlyphSet)
 MAKE_FUNCPTR(XRenderCreatePicture)
+MAKE_FUNCPTR(XRenderSetPictureFilter)
 MAKE_FUNCPTR(XRenderFillRectangle)
 MAKE_FUNCPTR(XRenderFindFormat)
 MAKE_FUNCPTR(XRenderFindVisualFormat)
@@ -249,15 +250,15 @@ static BOOL get_xrender_template(const WineXRenderFormatTemplate *fmt, XRenderPi
     return TRUE;
 }
 
-static BOOL is_wxrformat_compatible_with_default_visual(const WineXRenderFormatTemplate *fmt)
+static BOOL is_wxrformat_compatible_with_visual( const WineXRenderFormatTemplate *fmt, const XVisualInfo *visual )
 {
-    if(fmt->depth != default_visual.depth) return FALSE;
-    if( (fmt->redMask << fmt->red) != default_visual.red_mask) return FALSE;
-    if( (fmt->greenMask << fmt->green) != default_visual.green_mask) return FALSE;
-    if( (fmt->blueMask << fmt->blue) != default_visual.blue_mask) return FALSE;
+    if (fmt->depth != visual->depth) return FALSE;
+    if ((fmt->redMask << fmt->red) != visual->red_mask) return FALSE;
+    if ((fmt->greenMask << fmt->green) != visual->green_mask) return FALSE;
+    if ((fmt->blueMask << fmt->blue) != visual->blue_mask) return FALSE;
 
-    /* We never select a default ARGB visual */
-    if(fmt->alphaMask) return FALSE;
+    /* Non-default visual is only used when alpha is required. */
+    if (fmt->alphaMask && visual->visualid == default_visual.visualid) return FALSE;
     return TRUE;
 }
 
@@ -277,7 +278,7 @@ static int load_xrender_formats(void)
             TRACE( "Loaded root pict_format with id=%#lx\n", pict_formats[i]->id );
             continue;
         }
-        if(is_wxrformat_compatible_with_default_visual(&wxr_formats_template[i]))
+        if (is_wxrformat_compatible_with_visual( &wxr_formats_template[i], &default_visual ))
         {
             pict_formats[i] = pXRenderFindVisualFormat(gdi_display, default_visual.visual);
             if (!pict_formats[i])
@@ -332,6 +333,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
     LOAD_FUNCPTR(XRenderCompositeText16);
     LOAD_FUNCPTR(XRenderCreateGlyphSet);
     LOAD_FUNCPTR(XRenderCreatePicture);
+    LOAD_FUNCPTR(XRenderSetPictureFilter);
     LOAD_FUNCPTR(XRenderFillRectangle);
     LOAD_FUNCPTR(XRenderFindFormat);
     LOAD_FUNCPTR(XRenderFindVisualFormat);
@@ -983,8 +985,25 @@ static INT xrenderdrv_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID 
             BOOL ret = dev->funcs->pExtEscape( dev, escape, in_count, in_data, out_count, out_data );
             if (ret)
             {
+                const struct x11drv_escape_set_drawable *set = in_data;
+                enum wxr_format format = physdev->format;
+                unsigned int i;
+
+                if (set->visual.visual)
+                {
+                    for (i = 0; i < WXR_NB_FORMATS; ++i)
+                    {
+                        if (!pict_formats[i]) continue;
+                        if (is_wxrformat_compatible_with_visual( &wxr_formats_template[i], &set->visual ))
+                        {
+                            format = i;
+                            break;
+                        }
+                    }
+                    if (i == WXR_NB_FORMATS) WARN( "Format not found for drawable visual.\n" );
+                }
                 free_xrender_picture( physdev );
-                set_physdev_format( physdev, default_format );
+                set_physdev_format( physdev, format );
             }
             return ret;
         }
@@ -1493,6 +1512,7 @@ static void xrender_blit( int op, Picture src_pict, Picture mask_pict, Picture d
         y_offset = y_src;
         set_xrender_transformation(src_pict, 1, 1, 0, 0);
     }
+    pXRenderSetPictureFilter( gdi_display, src_pict, FilterBilinear, 0, 0 );
     pXRenderComposite( gdi_display, op, src_pict, mask_pict, dst_pict,
                        x_offset, y_offset, 0, 0, x_dst, y_dst, width_dst, height_dst );
 }

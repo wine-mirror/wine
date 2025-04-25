@@ -1594,6 +1594,34 @@ static NTSTATUS query_property( struct disk_device *device, IRP *irp )
 
         break;
     }
+    case StorageDeviceSeekPenaltyProperty:
+    {
+        DEVICE_SEEK_PENALTY_DESCRIPTOR *d = irp->AssociatedIrp.SystemBuffer;
+
+        if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(STORAGE_DESCRIPTOR_HEADER))
+        {
+            status = STATUS_INVALID_PARAMETER;
+        }
+        else
+        {
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(*d))
+            {
+                d->Version = d->Size = sizeof(*d);
+                irp->IoStatus.Information = sizeof(STORAGE_DESCRIPTOR_HEADER);
+            }
+            else
+            {
+                FIXME( "Faking StorageDeviceSeekPenaltyProperty data.\n" );
+
+                memset( d, 0, sizeof(*d) );
+                d->Version = d->Size = sizeof(*d);
+                irp->IoStatus.Information = sizeof(*d);
+            }
+            status = STATUS_SUCCESS;
+        }
+        break;
+    }
+
     default:
         FIXME( "Unsupported property %#x\n", query->PropertyId );
         status = STATUS_NOT_SUPPORTED;

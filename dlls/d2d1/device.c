@@ -3458,7 +3458,6 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         struct d2d_device *device, IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
 {
     D3D11_SUBRESOURCE_DATA buffer_data;
-    struct d2d_device *device_impl;
     IDWriteFactory *dwrite_factory;
     D3D11_RASTERIZER_DESC rs_desc;
     D3D11_BUFFER_DESC buffer_desc;
@@ -3772,6 +3771,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         "    if (position < p_low)\n"
         "        return c_low;\n"
         "\n"
+        "    [loop]\n"
         "    for (i = 1; i < stop_count; ++i)\n"
         "    {\n"
         "        p_high = gradient.Load(i * 2).x;\n"
@@ -3986,8 +3986,7 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     render_target->outer_unknown = outer_unknown ? outer_unknown : &render_target->IUnknown_iface;
     render_target->ops = ops;
 
-    device_impl = unsafe_impl_from_ID2D1Device((ID2D1Device1 *)device);
-    if (FAILED(hr = IDXGIDevice_QueryInterface(device_impl->dxgi_device,
+    if (FAILED(hr = IDXGIDevice_QueryInterface(device->dxgi_device,
             &IID_ID3D11Device1, (void **)&render_target->d3d_device)))
     {
         WARN("Failed to query ID3D11Device1 interface, hr %#lx.\n", hr);
@@ -4428,9 +4427,19 @@ static void STDMETHODCALLTYPE d2d_device_FlushDeviceContexts(ID2D1Device6 *iface
 static HRESULT STDMETHODCALLTYPE d2d_device_GetDxgiDevice(ID2D1Device6 *iface,
         IDXGIDevice **dxgi_device)
 {
-    FIXME("iface %p, dxgi_device %p stub!\n", iface, dxgi_device);
+    struct d2d_device *device = impl_from_ID2D1Device(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, dxgi_device %p.\n", iface, dxgi_device);
+
+    if (!device->allow_get_dxgi_device)
+    {
+        *dxgi_device = NULL;
+        return D2DERR_INVALID_CALL;
+    }
+
+    IDXGIDevice_AddRef(device->dxgi_device);
+    *dxgi_device = device->dxgi_device;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_ID2D1Device3_CreateDeviceContext(ID2D1Device6 *iface,
@@ -4519,14 +4528,16 @@ struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
     return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device6_iface);
 }
 
-void d2d_device_init(struct d2d_device *device, struct d2d_factory *factory, IDXGIDevice *dxgi_device)
+void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+    bool allow_get_dxgi_device)
 {
     device->ID2D1Device6_iface.lpVtbl = &d2d_device_vtbl;
     device->refcount = 1;
-    device->factory = (ID2D1Factory1 *)&factory->ID2D1Factory7_iface;
+    device->factory = factory;
     ID2D1Factory1_AddRef(device->factory);
     device->dxgi_device = dxgi_device;
     IDXGIDevice_AddRef(device->dxgi_device);
+    device->allow_get_dxgi_device = allow_get_dxgi_device;
 }
 
 HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects,

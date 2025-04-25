@@ -398,7 +398,7 @@ DEFINE_RTTI_DATA0(_Runtime_object, 0, ".?AV_Runtime_object@details@Concurrency@@
 
 typedef struct __Concurrent_vector_base_v4
 {
-    void* (__cdecl *allocator)(struct __Concurrent_vector_base_v4 *, size_t);
+    void* (__cdecl __WINE_ALLOC_SIZE(2) *allocator)(struct __Concurrent_vector_base_v4 *, size_t);
     void *storage[3];
     size_t first_block;
     size_t early_size;

@@ -21,6 +21,7 @@
 #define __WINE_WINDOWS_WEB_PRIVATE_H
 
 #include <stdarg.h>
+#include <errno.h>
 
 #define COBJMACROS
 #include "windef.h"

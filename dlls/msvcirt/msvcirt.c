@@ -5129,7 +5129,7 @@ void __cdecl _mtunlock(CRITICAL_SECTION *crit)
     LeaveCriticalSection(crit);
 }
 
-static void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
+static void* (__cdecl __WINE_ALLOC_SIZE(1) *MSVCRT_operator_new)(SIZE_T);
 static void (__cdecl *MSVCRT_operator_delete)(void*);
 
 void* __cdecl operator_new(SIZE_T size)

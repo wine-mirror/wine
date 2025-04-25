@@ -128,7 +128,7 @@ struct memory_view
     struct fd      *fd;              /* fd for mapped file */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
-    pe_image_info_t image;           /* image info (for PE image mapping) */
+    struct pe_image_info image;      /* image info (for PE image mapping) */
     unsigned int    flags;           /* SEC_* flags */
     client_ptr_t    base;            /* view base address (in process addr space) */
     mem_size_t      size;            /* view size */
@@ -158,7 +158,7 @@ struct mapping
     mem_size_t      size;            /* mapping size */
     unsigned int    flags;           /* SEC_* flags */
     struct fd      *fd;              /* fd for mapped file */
-    pe_image_info_t image;           /* image info (for PE image mapping) */
+    struct pe_image_info image;      /* image info (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
     struct shared_map *shared;       /* temp file for shared PE mapping */
 };
@@ -220,8 +220,9 @@ struct addr_range
     } *free;
 };
 
-static size_t page_mask;
-static const mem_size_t granularity_mask = 0xffff;
+static size_t host_page_mask;
+static const size_t page_mask = 0xfff;
+static const size_t granularity_mask = 0xffff;
 static struct addr_range ranges32;
 static struct addr_range ranges64;
 
@@ -255,11 +256,14 @@ static struct session session =
     .free_objects = LIST_INIT(session.free_objects),
 };
 
-#define ROUND_SIZE(size)  (((size) + page_mask) & ~page_mask)
+static inline mem_size_t round_size( mem_size_t size, mem_size_t mask )
+{
+    return (size + mask) & ~mask;
+}
 
 void init_memory(void)
 {
-    page_mask = sysconf( _SC_PAGESIZE ) - 1;
+    host_page_mask = sysconf( _SC_PAGESIZE ) - 1;
     free_map_addr( 0x60000000, 0x1c000000 );
     free_map_addr( 0x600000000000, 0x100000000000 );
 }
@@ -415,7 +419,7 @@ static int is_valid_view_addr( struct process *process, client_ptr_t addr, mem_s
     struct memory_view *view;
 
     if (!size) return 0;
-    if (addr & page_mask) return 0;
+    if (addr & host_page_mask) return 0;
     if (addr + size < addr) return 0;  /* overflow */
 
     /* check for overlapping view */
@@ -500,16 +504,16 @@ static struct shared_map *get_shared_file( struct fd *fd )
 }
 
 /* return the size of the memory mapping and file range of a given section */
-static inline void get_section_sizes( const IMAGE_SECTION_HEADER *sec, size_t *map_size,
-                                      off_t *file_start, size_t *file_size )
+static inline void get_section_sizes( const IMAGE_SECTION_HEADER *sec, size_t align_mask,
+                                      size_t *map_size, off_t *file_start, size_t *file_size )
 {
     static const unsigned int sector_align = 0x1ff;
 
-    if (!sec->Misc.VirtualSize) *map_size = ROUND_SIZE( sec->SizeOfRawData );
-    else *map_size = ROUND_SIZE( sec->Misc.VirtualSize );
+    if (!sec->Misc.VirtualSize) *map_size = round_size( sec->SizeOfRawData, align_mask );
+    else *map_size = round_size( sec->Misc.VirtualSize, align_mask );
 
     *file_start = sec->PointerToRawData & ~sector_align;
-    *file_size = (sec->SizeOfRawData + (sec->PointerToRawData & sector_align) + sector_align) & ~sector_align;
+    *file_size = round_size( sec->SizeOfRawData + (sec->PointerToRawData & sector_align), sector_align );
     if (*file_size > *map_size) *file_size = *map_size;
 }
 
@@ -521,7 +525,7 @@ static void add_committed_range( struct memory_view *view, file_pos_t start, fil
     struct range *ranges;
 
     if ((start & page_mask) || (end & page_mask) ||
-        start >= view->size || end >= view->size ||
+        start >= view->size || end > view->size ||
         start >= end)
     {
         set_error( STATUS_INVALID_PARAMETER );
@@ -606,7 +610,7 @@ static int find_committed_range( struct memory_view *view, file_pos_t start, mem
 }
 
 /* allocate and fill the temp file for a shared PE image mapping */
-static int build_shared_mapping( struct mapping *mapping, int fd,
+static int build_shared_mapping( struct mapping *mapping, size_t align_mask, int fd,
                                  IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
     struct shared_map *shared;
@@ -627,7 +631,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if ((sec[i].Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE))
         {
-            get_section_sizes( &sec[i], &map_size, &read_pos, &file_size );
+            get_section_sizes( &sec[i], align_mask, &map_size, &read_pos, &file_size );
             if (file_size > max_size) max_size = file_size;
             total_size += map_size;
         }
@@ -650,7 +654,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     {
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_SHARED)) continue;
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
-        get_section_sizes( &sec[i], &map_size, &read_pos, &file_size );
+        get_section_sizes( &sec[i], align_mask, &map_size, &read_pos, &file_size );
         write_pos = shared_pos;
         shared_pos += map_size;
         if (!sec[i].PointerToRawData || !file_size) continue;
@@ -685,8 +689,8 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* load a data directory header from its section */
-static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, int unix_fd,
-                          IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, size_t align_mask,
+                          int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
     size_t map_size, file_size;
     off_t file_start;
@@ -698,7 +702,7 @@ static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, in
     {
         if (va < sec[i].VirtualAddress) continue;
         if (sec[i].Misc.VirtualSize && va - sec[i].VirtualAddress >= sec[i].Misc.VirtualSize) continue;
-        get_section_sizes( &sec[i], &map_size, &file_start, &file_size );
+        get_section_sizes( &sec[i], align_mask, &map_size, &file_start, &file_size );
         if (size >= map_size) continue;
         if (va - sec[i].VirtualAddress >= map_size - size) continue;
         if (size > dir_size) size = dir_size;
@@ -709,10 +713,10 @@ static int load_data_dir( void *dir, size_t dir_size, size_t va, size_t size, in
 }
 
 /* load the CLR header from its section */
-static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int unix_fd,
-                            IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
+static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, size_t align_mask,
+                            int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
-    int ret = load_data_dir( hdr, sizeof(*hdr), va, size, unix_fd, sec, nb_sec );
+    int ret = load_data_dir( hdr, sizeof(*hdr), va, size, align_mask, unix_fd, sec, nb_sec );
 
     if (ret <= 0) return 0;
     if (ret < sizeof(*hdr)) memset( (char *)hdr + ret, 0, sizeof(*hdr) - ret );
@@ -722,11 +726,11 @@ static int load_clr_header( IMAGE_COR20_HEADER *hdr, size_t va, size_t size, int
 }
 
 /* load the LOAD_CONFIG header from its section */
-static int load_cfg_header( IMAGE_LOAD_CONFIG_DIRECTORY64 *cfg, size_t va, size_t size,
+static int load_cfg_header( IMAGE_LOAD_CONFIG_DIRECTORY64 *cfg, size_t va, size_t size, size_t align_mask,
                             int unix_fd, IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
     unsigned int cfg_size;
-    int ret = load_data_dir( cfg, sizeof(*cfg), va, size, unix_fd, sec, nb_sec );
+    int ret = load_data_dir( cfg, sizeof(*cfg), va, size, align_mask, unix_fd, sec, nb_sec );
 
     if (ret <= 0) return 0;
     cfg_size = ret;
@@ -743,7 +747,7 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     static const char fakedll_signature[] = "Wine placeholder DLL";
 
     IMAGE_COR20_HEADER clr;
-    IMAGE_SECTION_HEADER sec[96];
+    IMAGE_SECTION_HEADER *sec;
     struct
     {
         IMAGE_DOS_HEADER dos;
@@ -766,8 +770,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     } cfg;
     off_t pos;
     int size, has_relocs;
-    size_t mz_size, clr_va = 0, clr_size = 0, cfg_va, cfg_size;
-    unsigned int i;
+    size_t mz_size, clr_va = 0, clr_size = 0, cfg_va, cfg_size, align_mask;
+    unsigned int i, ret;
 
     /* load the headers */
 
@@ -815,7 +819,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
         mapping->image.base            = nt.opt.hdr32.ImageBase;
         mapping->image.entry_point     = nt.opt.hdr32.AddressOfEntryPoint;
-        mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr32.SizeOfImage );
+        mapping->image.map_size        = nt.opt.hdr32.SizeOfImage;
+        mapping->image.alignment       = nt.opt.hdr32.SectionAlignment;
         mapping->image.stack_size      = nt.opt.hdr32.SizeOfStackReserve;
         mapping->image.stack_commit    = nt.opt.hdr32.SizeOfStackCommit;
         mapping->image.subsystem       = nt.opt.hdr32.Subsystem;
@@ -829,17 +834,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
                                           nt.opt.hdr32.SectionAlignment & page_mask);
         mapping->image.header_size     = nt.opt.hdr32.SizeOfHeaders;
         mapping->image.checksum        = nt.opt.hdr32.CheckSum;
-        mapping->image.image_flags     = 0;
 
         has_relocs = (nt.opt.hdr32.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
                       nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
                       nt.opt.hdr32.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
                       !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
-        if (nt.opt.hdr32.SectionAlignment & page_mask)
-            mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
-        else if ((nt.opt.hdr32.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
-                 (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
-            mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         break;
 
     case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
@@ -866,7 +865,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
 
         mapping->image.base            = nt.opt.hdr64.ImageBase;
         mapping->image.entry_point     = nt.opt.hdr64.AddressOfEntryPoint;
-        mapping->image.map_size        = ROUND_SIZE( nt.opt.hdr64.SizeOfImage );
+        mapping->image.map_size        = nt.opt.hdr64.SizeOfImage;
+        mapping->image.alignment       = nt.opt.hdr64.SectionAlignment;
         mapping->image.stack_size      = nt.opt.hdr64.SizeOfStackReserve;
         mapping->image.stack_commit    = nt.opt.hdr64.SizeOfStackCommit;
         mapping->image.subsystem       = nt.opt.hdr64.Subsystem;
@@ -880,17 +880,11 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
                                           nt.opt.hdr64.SectionAlignment & page_mask);
         mapping->image.header_size     = nt.opt.hdr64.SizeOfHeaders;
         mapping->image.checksum        = nt.opt.hdr64.CheckSum;
-        mapping->image.image_flags     = 0;
 
         has_relocs = (nt.opt.hdr64.NumberOfRvaAndSizes > IMAGE_DIRECTORY_ENTRY_BASERELOC &&
                       nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress &&
                       nt.opt.hdr64.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size &&
                       !(nt.FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED));
-        if (nt.opt.hdr64.SectionAlignment & page_mask)
-            mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
-        else if ((nt.opt.hdr64.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
-                 (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
-            mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
         break;
 
     default:
@@ -906,27 +900,43 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
     mapping->image.dbg_size      = nt.FileHeader.NumberOfSymbols;
     mapping->image.zerobits      = 0; /* FIXME */
     mapping->image.file_size     = file_size;
+    mapping->image.image_flags   = 0;
     mapping->image.loader_flags  = clr_va && clr_size;
     mapping->image.wine_builtin  = (mz_size == sizeof(mz) &&
                                     !memcmp( mz.buffer, builtin_signature, sizeof(builtin_signature) ));
     mapping->image.wine_fakedll  = (mz_size == sizeof(mz) &&
                                     !memcmp( mz.buffer, fakedll_signature, sizeof(fakedll_signature) ));
 
+    if (mapping->image.alignment & page_mask)
+        mapping->image.image_flags |= IMAGE_FLAGS_ImageMappedFlat;
+    else if ((mapping->image.dll_charact & IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE) &&
+             (has_relocs || mapping->image.contains_code) && !(clr_va && clr_size))
+        mapping->image.image_flags |= IMAGE_FLAGS_ImageDynamicallyRelocated;
+
+    align_mask = max( mapping->image.alignment - 1, page_mask );
+    mapping->image.map_size = round_size( mapping->image.map_size, align_mask );
+
     /* load the section headers */
 
     pos += sizeof(nt.Signature) + sizeof(nt.FileHeader) + nt.FileHeader.SizeOfOptionalHeader;
-    if (nt.FileHeader.NumberOfSections > ARRAY_SIZE( sec )) return STATUS_INVALID_IMAGE_FORMAT;
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (!mapping->size) mapping->size = mapping->image.map_size;
     else if (mapping->size > mapping->image.map_size) return STATUS_SECTION_TOO_BIG;
     if (pos + size > mapping->image.map_size) return STATUS_INVALID_FILE_FOR_SECTION;
     if (pos + size > mapping->image.header_size) mapping->image.header_size = pos + size;
-    if (pread( unix_fd, sec, size, pos ) != size) return STATUS_INVALID_FILE_FOR_SECTION;
+    if (!(sec = malloc( size ))) return STATUS_NO_MEMORY;
+    ret = STATUS_INVALID_FILE_FOR_SECTION;
+    if (pread( unix_fd, sec, size, pos ) != size) goto done;
 
-    for (i = 0; i < nt.FileHeader.NumberOfSections && !mapping->image.contains_code; i++)
+    mapping->image.header_map_size = mapping->image.map_size;
+    for (i = 0; i < nt.FileHeader.NumberOfSections; i++)
+    {
+        mapping->image.header_map_size = min( mapping->image.header_map_size, sec[i].VirtualAddress );
         if (sec[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) mapping->image.contains_code = 1;
+    }
 
-    if (load_clr_header( &clr, clr_va, clr_size, unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
+    if (load_clr_header( &clr, clr_va, clr_size, align_mask,
+                         unix_fd, sec, nt.FileHeader.NumberOfSections ) &&
         (clr.Flags & COMIMAGE_FLAGS_ILONLY))
     {
         mapping->image.image_flags |= IMAGE_FLAGS_ComPlusILOnly;
@@ -939,7 +949,8 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
         }
     }
 
-    if (load_cfg_header( &cfg.cfg64, cfg_va, cfg_size, unix_fd, sec, nt.FileHeader.NumberOfSections ))
+    if (load_cfg_header( &cfg.cfg64, cfg_va, cfg_size, align_mask,
+                         unix_fd, sec, nt.FileHeader.NumberOfSections ))
     {
         if (nt.opt.hdr32.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
             mapping->image.is_hybrid = !!cfg.cfg32.CHPEMetadataPointer;
@@ -947,10 +958,12 @@ static unsigned int get_image_params( struct mapping *mapping, file_pos_t file_s
             mapping->image.is_hybrid = !!cfg.cfg64.CHPEMetadataPointer;
     }
 
-    if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections ))
-        return STATUS_INVALID_FILE_FOR_SECTION;
+    if (build_shared_mapping( mapping, align_mask, unix_fd, sec, nt.FileHeader.NumberOfSections ))
+        ret = STATUS_SUCCESS;
 
-    return STATUS_SUCCESS;
+done:
+    free( sec );
+    return ret;
 }
 
 static struct ranges *create_ranges(void)
@@ -1073,7 +1086,7 @@ static struct mapping *create_mapping( struct object *root, const struct unicode
             goto error;
         }
         if ((flags & SEC_RESERVE) && !(mapping->committed = create_ranges())) goto error;
-        mapping->size = (mapping->size + page_mask) & ~((mem_size_t)page_mask);
+        mapping->size = round_size( mapping->size, page_mask );
         if ((unix_fd = create_temp_file( mapping->size )) == -1) goto error;
         if (!(mapping->fd = create_anonymous_fd( &mapping_fd_ops, unix_fd, &mapping->obj,
                                                  FILE_SYNCHRONOUS_IO_NONALERT ))) goto error;
@@ -1134,7 +1147,7 @@ struct file *get_view_file( const struct memory_view *view, unsigned int access,
 }
 
 /* get the image info for a SEC_IMAGE mapped view */
-const pe_image_info_t *get_view_image_info( const struct memory_view *view, client_ptr_t *base )
+const struct pe_image_info *get_view_image_info( const struct memory_view *view, client_ptr_t *base )
 {
     if (!(view->flags & SEC_IMAGE)) return NULL;
     *base = view->base;
@@ -1223,7 +1236,7 @@ static client_ptr_t assign_map_address( struct mapping *mapping )
     unsigned int i;
     client_ptr_t ret;
     struct addr_range *range = (mapping->image.base >> 32) ? &ranges64 : &ranges32;
-    mem_size_t size = (mapping->size + granularity_mask) & ~granularity_mask;
+    mem_size_t size = round_size( mapping->size, granularity_mask );
 
     if (!(mapping->image.image_charact & IMAGE_FILE_DLL)) return 0;
 
@@ -1281,24 +1294,25 @@ void free_map_addr( client_ptr_t base, mem_size_t size )
     range->count++;
 }
 
-int get_page_size(void)
+size_t get_page_size(void)
 {
-    return page_mask + 1;
+    return host_page_mask + 1;
 }
 
 struct mapping *create_session_mapping( struct object *root, const struct unicode_str *name,
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
-    mem_size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
+    size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
 
+    size = round_size( size, host_page_mask );
     return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
 }
 
 void set_session_mapping( struct mapping *mapping )
 {
     int unix_fd = get_unix_fd( mapping->fd );
-    mem_size_t size = mapping->size;
+    size_t size = mapping->size;
     struct session_block *block;
     void *tmp;
 
@@ -1320,13 +1334,13 @@ void set_session_mapping( struct mapping *mapping )
 
 static struct session_block *grow_session_mapping( mem_size_t needed )
 {
-    mem_size_t old_size = session_mapping->size, new_size;
+    size_t old_size = session_mapping->size, new_size;
     struct session_block *block;
     int unix_fd;
     void *tmp;
 
     new_size = max( old_size * 3 / 2, old_size + max( needed, 0x10000 ) );
-    new_size = (new_size + page_mask) & ~((mem_size_t)page_mask);
+    new_size = round_size( new_size, host_page_mask );
     assert( new_size > old_size );
 
     unix_fd = get_unix_fd( session_mapping->fd );
@@ -1419,10 +1433,10 @@ void invalidate_shared_object( const volatile void *object_shm )
     SHARED_WRITE_END;
 }
 
-obj_locator_t get_shared_object_locator( const volatile void *object_shm )
+struct obj_locator get_shared_object_locator( const volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
-    obj_locator_t locator = {.offset = object->offset, .id = object->obj.id};
+    struct obj_locator locator = {.offset = object->offset, .id = object->obj.id};
     return locator;
 }
 
@@ -1494,14 +1508,13 @@ DECL_HANDLER(get_mapping_info)
         void *data;
 
         if (mapping->fd) get_nt_name( mapping->fd, &name );
-        size = min( sizeof(pe_image_info_t) + name.len, get_reply_max_size() );
+        size = min( sizeof(struct pe_image_info) + name.len, get_reply_max_size() );
         if ((data = set_reply_data_size( size )))
         {
-            memcpy( data, &mapping->image, min( sizeof(pe_image_info_t), size ));
-            if (size > sizeof(pe_image_info_t))
-                memcpy( (pe_image_info_t *)data + 1, name.str, size - sizeof(pe_image_info_t) );
+            data = mem_append( data, &mapping->image, min( sizeof(struct pe_image_info), size ));
+            if (size > sizeof(struct pe_image_info)) memcpy( data, name.str, size - sizeof(struct pe_image_info) );
         }
-        reply->total = sizeof(pe_image_info_t) + name.len;
+        reply->total = sizeof(struct pe_image_info) + name.len;
     }
 
     if (!(req->access & (SECTION_MAP_READ | SECTION_MAP_WRITE)))  /* query only */
@@ -1551,7 +1564,7 @@ DECL_HANDLER(map_view)
     if ((mapping->flags & SEC_IMAGE) ||
         req->start >= mapping->size ||
         req->start + req->size < req->start ||
-        req->start + req->size > ((mapping->size + page_mask) & ~(mem_size_t)page_mask))
+        req->start + req->size > round_size( mapping->size, page_mask ))
     {
         set_error( STATUS_INVALID_PARAMETER );
         goto done;
@@ -1630,7 +1643,7 @@ done:
 DECL_HANDLER(map_builtin_view)
 {
     struct memory_view *view;
-    const pe_image_info_t *image = get_req_data();
+    const struct pe_image_info *image = get_req_data();
     data_size_t namelen = get_req_data_size() - sizeof(*image);
 
     if (get_req_data_size() < sizeof(*image) ||

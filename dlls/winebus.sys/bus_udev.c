@@ -648,7 +648,7 @@ static NTSTATUS build_report_descriptor(struct unix_device *iface, struct udev_d
         if (test_bit(ffbits, FF_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
         if (test_bit(ffbits, FF_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
-        if (!hid_device_add_physical(iface, usages, count))
+        if (!hid_device_add_physical(iface, usages, count, 2))
             return STATUS_NO_MEMORY;
     }
 
@@ -728,12 +728,6 @@ static void lnxev_device_destroy(struct unix_device *iface)
 
 static NTSTATUS lnxev_device_start(struct unix_device *iface)
 {
-    struct lnxev_device *impl = lnxev_impl_from_unix_device(iface);
-    NTSTATUS status;
-
-    if ((status = build_report_descriptor(iface, impl->base.udev_device)))
-        return status;
-
     pthread_mutex_lock(&udev_cs);
     start_polling_device(iface);
     pthread_mutex_unlock(&udev_cs);
@@ -1254,7 +1248,6 @@ static void udev_add_device(struct udev_device *dev, int fd)
 #ifdef HAS_PROPER_INPUT_HEADER
     else if (!strcmp(subsystem, "input"))
     {
-        const USAGE_AND_PAGE device_usage = *what_am_I(dev, fd);
         static const WCHAR evdev[] = {'e','v','d','e','v',0};
         struct input_id device_id = {0};
         char buffer[MAX_PATH];
@@ -1275,8 +1268,6 @@ static void udev_add_device(struct udev_device *dev, int fd)
 
         if (!desc.serialnumber[0] && ioctl(fd, EVIOCGUNIQ(sizeof(buffer)), buffer) >= 0)
             ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
-
-        desc.usages = device_usage;
     }
 #endif
 
@@ -1320,6 +1311,13 @@ static void udev_add_device(struct udev_device *dev, int fd)
         impl->udev_device = udev_device_ref(dev);
         strcpy(impl->devnode, devnode);
         impl->device_fd = fd;
+
+        if (build_report_descriptor(&impl->unix_device, impl->udev_device))
+        {
+            list_remove(&impl->unix_device.entry);
+            impl->unix_device.vtbl->destroy(&impl->unix_device);
+            return;
+        }
 
         bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
     }

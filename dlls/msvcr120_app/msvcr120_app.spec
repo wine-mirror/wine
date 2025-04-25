@@ -820,12 +820,12 @@
 @ cdecl -arch=i386 _CIsqrt() msvcr120._CIsqrt
 @ cdecl -arch=i386 _CItan() msvcr120._CItan
 @ cdecl -arch=i386 _CItanh() msvcr120._CItanh
-@ cdecl _Cbuild(ptr double double) msvcr120._Cbuild
+@ cdecl -norelay _Cbuild(double double) msvcr120._Cbuild
 @ cdecl _CreateFrameInfo(ptr ptr) msvcr120._CreateFrameInfo
 @ stdcall _CxxThrowException(ptr ptr) msvcr120._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() msvcr120._EH_prolog
 @ stub -arch=arm _FPE_Raise
-@ stub _FCbuild
+@ cdecl -norelay _FCbuild(float float) msvcr120._FCbuild
 @ cdecl _FindAndUnlinkFrame(ptr) msvcr120._FindAndUnlinkFrame
 @ stub -arch=win64 _GetImageBase
 @ stub -arch=win64 _GetThrowImageBase
@@ -1743,8 +1743,8 @@
 @ stub cexp
 @ stub cexpf
 @ stub cexpl
-@ stub cimag
-@ stub cimagf
+@ cdecl cimag(int128) msvcr120.cimag
+@ cdecl cimagf(int64) msvcr120.cimagf
 @ stub cimagl
 @ cdecl clearerr(ptr) msvcr120.clearerr
 @ cdecl clearerr_s(ptr) msvcr120.clearerr_s
@@ -1772,7 +1772,7 @@
 @ stub cprojf
 @ stub cprojl
 @ cdecl creal(int128) msvcr120.creal
-@ stub crealf
+@ cdecl crealf(int64) msvcr120.crealf
 @ stub creall
 @ stub csin
 @ stub csinf
@@ -1877,7 +1877,7 @@
 @ cdecl ilogbf(float) msvcr120.ilogbf
 @ cdecl ilogbl(double) msvcr120.ilogbl
 @ cdecl -ret64 imaxabs(int64) msvcr120.imaxabs
-@ stub imaxdiv
+@ cdecl -norelay imaxdiv(int64 int64) msvcr120.imaxdiv
 @ cdecl isalnum(long) msvcr120.isalnum
 @ cdecl isalpha(long) msvcr120.isalpha
 @ cdecl isblank(long) msvcr120.isblank

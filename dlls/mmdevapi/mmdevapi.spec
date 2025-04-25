@@ -19,3 +19,11 @@
 @ stdcall -private DllGetClassObject( ptr ptr ptr )
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
+
+##################
+# Wine extensions
+#
+@ stdcall -private DriverProc(long long long long long)
+@ stdcall -private auxMessage(long long long long long)
+@ stdcall -private midMessage(long long long long long)
+@ stdcall -private modMessage(long long long long long)

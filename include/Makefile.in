@@ -58,6 +58,8 @@ SOURCES = \
 	bits5_0.idl \
 	bitsmsg.h \
 	bluetoothapis.h \
+	bthdef.h \
+	bthioctl.h \
 	bthsdpdef.h \
 	cderr.h \
 	cdosys.idl \
@@ -139,6 +141,7 @@ SOURCES = \
 	d3d8types.h \
 	d3d9.h \
 	d3d9caps.h \
+	d3d9on12.idl \
 	d3d9types.h \
 	d3dcaps.h \
 	d3dcommon.idl \
@@ -269,6 +272,7 @@ SOURCES = \
 	dplobby.h \
 	dplobby8.h \
 	dpnathlp.h \
+	dragdropinterop.idl \
 	driverspecs.h \
 	drmexternals.idl \
 	dsclient.h \
@@ -303,6 +307,7 @@ SOURCES = \
 	dxgitype.idl \
 	dxva.h \
 	dxva2api.idl \
+	dxvahd.idl \
 	dyngraph.idl \
 	endpointvolume.idl \
 	errorrep.h \
@@ -321,6 +326,7 @@ SOURCES = \
 	fci.h \
 	fdi.h \
 	featurestagingapi.h \
+	fibersapi.h \
 	fileapi.h \
 	filter.idl \
 	fltdefs.h \
@@ -329,6 +335,7 @@ SOURCES = \
 	gameux.idl \
 	gamingtcui.h \
 	gdiplus.h \
+	gdiplusbase.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
 	gdipluseffects.h \
@@ -452,6 +459,8 @@ SOURCES = \
 	minidumpapiset.h \
 	minmax.h \
 	minschannel.h \
+	minwinbase.h \
+	minwindef.h \
 	mlang.idl \
 	mmc.idl \
 	mmddk.h \
@@ -459,6 +468,9 @@ SOURCES = \
 	mmreg.h \
 	mmstream.idl \
 	mmsystem.h \
+	mpeg2bits.h \
+	mpeg2data.idl \
+	mpeg2structs.idl \
 	mpegtype.idl \
 	mprapi.h \
 	mprerror.h \
@@ -628,6 +640,7 @@ SOURCES = \
 	physicalmonitorenumerationapi.h \
 	pktdef.h \
 	poppack.h \
+	powersetting.h \
 	powrprof.h \
 	prntvpt.h \
 	processthreadsapi.h \
@@ -661,6 +674,7 @@ SOURCES = \
 	rmxfguid.h \
 	rmxftmpl.x \
 	roapi.h \
+	robuffer.idl \
 	roerrorapi.h \
 	rometadata.h \
 	rometadataresolution.h \
@@ -679,10 +693,14 @@ SOURCES = \
 	rpcsal.h \
 	rstbas.idl \
 	rstchg.idl \
+	rstfnd.idl \
+	rstidn.idl \
 	rstinf.idl \
 	rstloc.idl \
 	rstnot.idl \
+	rstscr.idl \
 	rstupd.idl \
+	rstxsc.idl \
 	rtlsupportapi.h \
 	rtutils.h \
 	rtworkq.idl \
@@ -745,6 +763,7 @@ SOURCES = \
 	structuredquerycondition.idl \
 	svrapi.h \
 	synchapi.h \
+	sysinfoapi.h \
 	systemmediatransportcontrolsinterop.idl \
 	t2embapi.h \
 	tapi.h \
@@ -808,6 +827,7 @@ SOURCES = \
 	wdbgexts.h \
 	weakreference.idl \
 	webservices.h \
+	websocket.h \
 	werapi.h \
 	wfext.h \
 	wia.h \
@@ -830,8 +850,12 @@ SOURCES = \
 	windows.applicationmodel.activation.idl \
 	windows.applicationmodel.background.idl \
 	windows.applicationmodel.core.idl \
+	windows.applicationmodel.datatransfer.dragdrop.core.idl \
+	windows.applicationmodel.datatransfer.dragdrop.idl \
+	windows.applicationmodel.datatransfer.idl \
 	windows.applicationmodel.idl \
 	windows.data.json.idl \
+	windows.data.xml.dom.idl \
 	windows.devices.bluetooth.idl \
 	windows.devices.enumeration.idl \
 	windows.devices.enumeration.pnp.idl \
@@ -876,9 +900,11 @@ SOURCES = \
 	windows.perception.spatial.idl \
 	windows.perception.spatial.surfaces.idl \
 	windows.security.authentication.onlineid.idl \
+	windows.security.authorization.appcapabilityaccess.idl \
 	windows.security.credentials.idl \
 	windows.security.credentials.ui.idl \
 	windows.security.cryptography.idl \
+	windows.security.enterprisedata.idl \
 	windows.security.exchangeactivesyncprovisioning.idl \
 	windows.security.isolation.idl \
 	windows.storage.fileproperties.idl \
@@ -898,8 +924,11 @@ SOURCES = \
 	windows.ui.idl \
 	windows.ui.input.idl \
 	windows.ui.startscreen.idl \
+	windows.ui.notifications.idl \
 	windows.ui.viewmanagement.idl \
 	windows.ui.xaml.hosting.desktopwindowxamlsource.idl \
+	windows.ui.xaml.idl \
+	windows.ui.xaml.interop.idl \
 	windowscontracts.idl \
 	windowsx.h \
 	wine/afd.h \
@@ -927,6 +956,7 @@ SOURCES = \
 	wine/mscvpdb.h \
 	wine/mssign.h \
 	wine/nsi.h \
+	wine/opengl_driver.h \
 	wine/orpc.idl \
 	wine/plugplay.idl \
 	wine/rbtree.h \
@@ -940,11 +970,12 @@ SOURCES = \
 	wine/vulkan.h \
 	wine/vulkan_driver.h \
 	wine/wgl.h \
-	wine/wgl_driver.h \
 	wine/winbase16.h \
 	wine/windef16.h \
 	wine/wine_common_ver.rc \
+	wine/winebth.h \
 	wine/wined3d.h \
+	wine/winedmo.h \
 	wine/winedxgi.idl \
 	wine/wingdi16.h \
 	wine/winnet16.h \
@@ -1004,6 +1035,7 @@ SOURCES = \
 	wownt16.h \
 	wownt32.h \
 	wpcapi.idl \
+	ws2bth.h \
 	ws2def.h \
 	ws2ipdef.h \
 	ws2spi.h \

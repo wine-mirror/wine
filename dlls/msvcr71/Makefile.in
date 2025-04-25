@@ -8,6 +8,11 @@ PARENTSRC = ../msvcrt
 SOURCES = \
 	console.c \
 	cpp.c \
+	crt_gccmain.c \
+	crt_main.c \
+	crt_winmain.c \
+	crt_wmain.c \
+	crt_wwinmain.c \
 	ctype.c \
 	data.c \
 	dir.c \

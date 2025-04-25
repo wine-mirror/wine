@@ -29,6 +29,7 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.system.idl";
 
 #define DO_NO_IMPORTS
 #define _WINDOWS_GLOBALIZATION

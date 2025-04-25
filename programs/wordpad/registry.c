@@ -24,56 +24,27 @@
 
 #include "wordpad.h"
 
-static const WCHAR key_recentfiles[] = {'R','e','c','e','n','t',' ','f','i','l','e',
-                                        ' ','l','i','s','t',0};
-static const WCHAR key_options[] = {'O','p','t','i','o','n','s',0};
-static const WCHAR key_settings[] = {'S','e','t','t','i','n','g','s',0};
-static const WCHAR key_rtf[] = {'R','T','F',0};
-static const WCHAR key_text[] = {'T','e','x','t',0};
-
-static const WCHAR var_file[] = {'F','i','l','e','%','d',0};
-static const WCHAR var_framerect[] = {'F','r','a','m','e','R','e','c','t',0};
-static const WCHAR var_barstate0[] = {'B','a','r','S','t','a','t','e','0',0};
-static const WCHAR var_wrap[] = {'W','r','a','p',0};
-static const WCHAR var_maximized[] = {'M','a','x','i','m','i','z','e','d',0};
-
 static LRESULT registry_get_handle(HKEY *hKey, LPDWORD action, LPCWSTR subKey)
 {
     LONG ret;
-    static const WCHAR wszProgramKey[] = {'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'A','p','p','l','e','t','s','\\',
-        'W','o','r','d','p','a','d',0};
-        LPWSTR key = (LPWSTR)wszProgramKey;
+    LPWSTR key = calloc(lstrlenW(L"Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\Wordpad\\")+lstrlenW(subKey)+1, sizeof(WCHAR));
 
-        if(subKey)
-        {
-            WCHAR backslash[] = {'\\',0};
-            key = calloc(lstrlenW(wszProgramKey)+lstrlenW(subKey)+lstrlenW(backslash)+1, sizeof(WCHAR));
+    if(!key) return 1;
 
-            if(!key)
-                return 1;
+    lstrcpyW(key, L"Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\Wordpad\\");
+    lstrcatW(key, subKey);
 
-            lstrcpyW(key, wszProgramKey);
-            lstrcatW(key, backslash);
-            lstrcatW(key, subKey);
-        }
+    if(action)
+    {
+        ret = RegCreateKeyExW(HKEY_CURRENT_USER, key, 0, NULL, REG_OPTION_NON_VOLATILE,
+                              KEY_READ | KEY_WRITE, NULL, hKey, action);
+    } else
+    {
+        ret = RegOpenKeyExW(HKEY_CURRENT_USER, key, 0, KEY_READ | KEY_WRITE, hKey);
+    }
 
-        if(action)
-        {
-            ret = RegCreateKeyExW(HKEY_CURRENT_USER, key, 0, NULL, REG_OPTION_NON_VOLATILE,
-                                  KEY_READ | KEY_WRITE, NULL, hKey, action);
-        } else
-        {
-            ret = RegOpenKeyExW(HKEY_CURRENT_USER, key, 0, KEY_READ | KEY_WRITE, hKey);
-        }
-
-        if(subKey)
-            free(key);
-
-        return ret;
+    free(key);
+    return ret;
 }
 
 void registry_set_options(HWND hMainWnd)
@@ -81,7 +52,7 @@ void registry_set_options(HWND hMainWnd)
     HKEY hKey = 0;
     DWORD action;
 
-    if(registry_get_handle(&hKey, &action, key_options) == ERROR_SUCCESS)
+    if(registry_get_handle(&hKey, &action, L"Options") == ERROR_SUCCESS)
     {
         WINDOWPLACEMENT wp;
         DWORD isMaximized;
@@ -90,14 +61,14 @@ void registry_set_options(HWND hMainWnd)
         GetWindowPlacement(hMainWnd, &wp);
         isMaximized = (wp.showCmd == SW_SHOWMAXIMIZED);
 
-        RegSetValueExW(hKey, var_framerect, 0, REG_BINARY, (LPBYTE)&wp.rcNormalPosition, sizeof(RECT));
-        RegSetValueExW(hKey, var_maximized, 0, REG_DWORD, (LPBYTE)&isMaximized, sizeof(DWORD));
+        RegSetValueExW(hKey, L"FrameRect", 0, REG_BINARY, (LPBYTE)&wp.rcNormalPosition, sizeof(RECT));
+        RegSetValueExW(hKey, L"Maximized", 0, REG_DWORD, (LPBYTE)&isMaximized, sizeof(DWORD));
 
         registry_set_pagemargins(hKey);
         RegCloseKey(hKey);
     }
 
-    if(registry_get_handle(&hKey, &action, key_settings) == ERROR_SUCCESS)
+    if(registry_get_handle(&hKey, &action, L"Settings") == ERROR_SUCCESS)
     {
         registry_set_previewpages(hKey);
         RegCloseKey(hKey);
@@ -109,8 +80,8 @@ void registry_read_winrect(RECT* rc)
     HKEY hKey = 0;
     DWORD size = sizeof(RECT);
 
-    if(registry_get_handle(&hKey, 0, key_options) != ERROR_SUCCESS ||
-       RegQueryValueExW(hKey, var_framerect, 0, NULL, (LPBYTE)rc, &size) !=
+    if(registry_get_handle(&hKey, 0, L"Options") != ERROR_SUCCESS ||
+       RegQueryValueExW(hKey, L"FrameRect", 0, NULL, (LPBYTE)rc, &size) !=
        ERROR_SUCCESS || size != sizeof(RECT))
         SetRect(rc, 0, 0, 600, 300);
 
@@ -122,8 +93,8 @@ void registry_read_maximized(DWORD *bMaximized)
     HKEY hKey = 0;
     DWORD size = sizeof(DWORD);
 
-    if(registry_get_handle(&hKey, 0, key_options) != ERROR_SUCCESS ||
-       RegQueryValueExW(hKey, var_maximized, 0, NULL, (LPBYTE)bMaximized, &size) !=
+    if(registry_get_handle(&hKey, 0, L"Options") != ERROR_SUCCESS ||
+       RegQueryValueExW(hKey, L"Maximized", 0, NULL, (LPBYTE)bMaximized, &size) !=
        ERROR_SUCCESS || size != sizeof(DWORD))
     {
         *bMaximized = FALSE;
@@ -134,12 +105,10 @@ void registry_read_maximized(DWORD *bMaximized)
 
 static void truncate_path(LPWSTR file, LPWSTR out, LPWSTR pos1, LPWSTR pos2)
 {
-    static const WCHAR dots[] = {'.','.','.',0};
-
     *++pos1 = 0;
 
     lstrcatW(out, file);
-    lstrcatW(out, dots);
+    lstrcatW(out, L"...");
     lstrcatW(out, pos2);
 }
 
@@ -214,13 +183,12 @@ void registry_read_filelist(HWND hMainWnd)
 {
     HKEY hFileKey;
 
-    if(registry_get_handle(&hFileKey, 0, key_recentfiles) == ERROR_SUCCESS)
+    if(registry_get_handle(&hFileKey, 0, L"Recent file list") == ERROR_SUCCESS)
     {
         WCHAR itemText[MAX_PATH+3], buffer[MAX_PATH];
         /* The menu item name is not the same as the file name, so we need to store
         the file name here */
         static WCHAR file1[MAX_PATH], file2[MAX_PATH], file3[MAX_PATH], file4[MAX_PATH];
-        WCHAR numFormat[] = {'&','%','d',' ',0};
         LPWSTR pFile[] = {file1, file2, file3, file4};
         DWORD pathSize = MAX_PATH*sizeof(WCHAR);
         int i;
@@ -237,14 +205,14 @@ void registry_read_filelist(HWND hMainWnd)
         RemoveMenu(hMenu, ID_FILE_RECENT_SEPARATOR, MF_BYCOMMAND);
         for(i = 0; i < FILELIST_ENTRIES; i++)
         {
-            wsprintfW(key, var_file, i+1);
+            wsprintfW(key, L"File%d", i+1);
             RemoveMenu(hMenu, ID_FILE_RECENT1+i, MF_BYCOMMAND);
             if(RegQueryValueExW(hFileKey, (LPWSTR)key, 0, NULL, (LPBYTE)pFile[i], &pathSize)
                != ERROR_SUCCESS)
                 break;
 
             mi.dwItemData = (ULONG_PTR)pFile[i];
-            wsprintfW(itemText, numFormat, i+1);
+            wsprintfW(itemText, L"&%d ", i+1);
 
             lstrcpyW(buffer, pFile[i]);
 
@@ -267,7 +235,7 @@ void registry_set_filelist(LPCWSTR newFile, HWND hMainWnd)
     HKEY hKey;
     DWORD action;
 
-    if(registry_get_handle(&hKey, &action, key_recentfiles) == ERROR_SUCCESS)
+    if(registry_get_handle(&hKey, &action, L"Recent file list") == ERROR_SUCCESS)
     {
         LPCWSTR pFiles[FILELIST_ENTRIES];
         int i;
@@ -313,7 +281,7 @@ void registry_set_filelist(LPCWSTR newFile, HWND hMainWnd)
 
             for(i = 0; i < FILELIST_ENTRIES && pFiles[i]; i++)
             {
-                wsprintfW(buffer, var_file, i+1);
+                wsprintfW(buffer, L"File%d", i+1);
                 RegSetValueExW(hKey, (LPWSTR)&buffer, 0, REG_SZ, (const BYTE*)pFiles[i],
                                (lstrlenW(pFiles[i])+1)*sizeof(WCHAR));
             }
@@ -332,7 +300,7 @@ void registry_read_options(void)
 {
     HKEY hKey;
 
-    if(registry_get_handle(&hKey, 0, key_options) != ERROR_SUCCESS)
+    if(registry_get_handle(&hKey, 0, L"Options") != ERROR_SUCCESS)
         registry_read_pagemargins(NULL);
     else
     {
@@ -340,7 +308,7 @@ void registry_read_options(void)
         RegCloseKey(hKey);
     }
 
-    if(registry_get_handle(&hKey, 0, key_settings) != ERROR_SUCCESS) {
+    if(registry_get_handle(&hKey, 0, L"Settings") != ERROR_SUCCESS) {
         registry_read_previewpages(NULL);
     } else {
         registry_read_previewpages(hKey);
@@ -363,7 +331,7 @@ static void registry_read_formatopts(int index, LPCWSTR key, DWORD barState[], D
     {
         DWORD size = sizeof(DWORD);
 
-        if(RegQueryValueExW(hKey, var_barstate0, 0, NULL, (LPBYTE)&barState[index],
+        if(RegQueryValueExW(hKey, L"BarState0", 0, NULL, (LPBYTE)&barState[index],
            &size) == ERROR_SUCCESS)
             fetched = TRUE;
     }
@@ -375,7 +343,7 @@ static void registry_read_formatopts(int index, LPCWSTR key, DWORD barState[], D
     if(action == REG_OPENED_EXISTING_KEY)
     {
         DWORD size = sizeof(DWORD);
-        if(RegQueryValueExW(hKey, var_wrap, 0, NULL, (LPBYTE)&wordWrap[index],
+        if(RegQueryValueExW(hKey, L"Wrap", 0, NULL, (LPBYTE)&wordWrap[index],
            &size) == ERROR_SUCCESS)
             fetched = TRUE;
     }
@@ -393,8 +361,8 @@ static void registry_read_formatopts(int index, LPCWSTR key, DWORD barState[], D
 
 void registry_read_formatopts_all(DWORD barState[], DWORD wordWrap[])
 {
-    registry_read_formatopts(reg_formatindex(SF_RTF), key_rtf, barState, wordWrap);
-    registry_read_formatopts(reg_formatindex(SF_TEXT), key_text, barState, wordWrap);
+    registry_read_formatopts(reg_formatindex(SF_RTF), L"RTF", barState, wordWrap);
+    registry_read_formatopts(reg_formatindex(SF_TEXT), L"Text", barState, wordWrap);
 }
 
 static void registry_set_formatopts(int index, LPCWSTR key, DWORD barState[], DWORD wordWrap[])
@@ -404,9 +372,9 @@ static void registry_set_formatopts(int index, LPCWSTR key, DWORD barState[], DW
 
     if(registry_get_handle(&hKey, &action, key) == ERROR_SUCCESS)
     {
-        RegSetValueExW(hKey, var_barstate0, 0, REG_DWORD, (LPBYTE)&barState[index],
+        RegSetValueExW(hKey, L"BarState0", 0, REG_DWORD, (LPBYTE)&barState[index],
                        sizeof(DWORD));
-        RegSetValueExW(hKey, var_wrap, 0, REG_DWORD, (LPBYTE)&wordWrap[index],
+        RegSetValueExW(hKey, L"Wrap", 0, REG_DWORD, (LPBYTE)&wordWrap[index],
                        sizeof(DWORD));
         RegCloseKey(hKey);
     }
@@ -414,6 +382,6 @@ static void registry_set_formatopts(int index, LPCWSTR key, DWORD barState[], DW
 
 void registry_set_formatopts_all(DWORD barState[], DWORD wordWrap[])
 {
-    registry_set_formatopts(reg_formatindex(SF_RTF), key_rtf, barState, wordWrap);
-    registry_set_formatopts(reg_formatindex(SF_TEXT), key_text, barState, wordWrap);
+    registry_set_formatopts(reg_formatindex(SF_RTF), L"RTF", barState, wordWrap);
+    registry_set_formatopts(reg_formatindex(SF_TEXT), L"Text", barState, wordWrap);
 }

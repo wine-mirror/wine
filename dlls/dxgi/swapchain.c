@@ -1191,8 +1191,7 @@ struct d3d12_swapchain
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
     LONG in_set_fullscreen_state;
 
-    ID3D12Fence *frame_latency_fence;
-    HANDLE frame_latency_event;
+    HANDLE frame_latency_semaphore;
 
     uint64_t frame_number;
     uint32_t frame_latency;
@@ -2054,11 +2053,8 @@ static void d3d12_swapchain_destroy(struct d3d12_swapchain *swapchain)
     if (swapchain->present_fence)
         ID3D12Fence_Release(swapchain->present_fence);
 
-    if (swapchain->frame_latency_event)
-        CloseHandle(swapchain->frame_latency_event);
-
-    if (swapchain->frame_latency_fence)
-        ID3D12Fence_Release(swapchain->frame_latency_fence);
+    if (swapchain->frame_latency_semaphore)
+        CloseHandle(swapchain->frame_latency_semaphore);
 
     if (swapchain->command_queue)
         ID3D12CommandQueue_Release(swapchain->command_queue);
@@ -2294,18 +2290,10 @@ static HRESULT d3d12_swapchain_op_present_execute(struct d3d12_swapchain *swapch
         return hresult_from_vk_result(vr);
     }
 
-    if (swapchain->frame_latency_fence)
+    if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, 1, NULL))
     {
-        /* Use the same bias as d3d12_swapchain_present(). Add one to
-         * account for the "++swapchain->frame_number" there. */
-        uint64_t number = op->present.frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS + 1;
-
-        if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
-                swapchain->frame_latency_fence, number)))
-        {
-            ERR("Failed to signal frame latency fence, hr %#lx.\n", hr);
-            return hr;
-        }
+        ERR("Failed to release frame latency semaphore, last error %ld.\n", GetLastError());
+        return HRESULT_FROM_WIN32(GetLastError());
     }
 
     return S_OK;
@@ -2315,7 +2303,6 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
         unsigned int sync_interval, unsigned int flags)
 {
     struct d3d12_swapchain_op *op;
-    HANDLE frame_latency_event;
     HRESULT hr;
 
     if (sync_interval > 4)
@@ -2330,6 +2317,17 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     {
         WARN("Returning S_OK for DXGI_PRESENT_TEST.\n");
         return S_OK;
+    }
+
+    if (!(swapchain->desc.Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        /* After around two seconds Present() will succeed anyway, without any error. */
+        DWORD ret = WaitForSingleObject(swapchain->frame_latency_semaphore, 2000);
+        if (ret != WAIT_OBJECT_0 && ret != WAIT_TIMEOUT)
+        {
+            ERR("Failed to wait for frame latency semaphore, last error %ld.\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
     }
 
     if (!(op = calloc(1, sizeof(*op))))
@@ -2349,21 +2347,8 @@ static HRESULT d3d12_swapchain_present(struct d3d12_swapchain *swapchain,
     LeaveCriticalSection(&swapchain->worker_cs);
 
     ++swapchain->frame_number;
-    if ((frame_latency_event = swapchain->frame_latency_event))
-    {
-        /* Bias the frame number to avoid underflowing in
-         * SetEventOnCompletion(). */
-        uint64_t number = swapchain->frame_number + DXGI_MAX_SWAP_CHAIN_BUFFERS;
 
-        if (FAILED(hr = ID3D12Fence_SetEventOnCompletion(swapchain->frame_latency_fence,
-                number - swapchain->frame_latency, frame_latency_event)))
-        {
-            ERR("Failed to enqueue frame latency event, hr %#lx.\n", hr);
-            return hr;
-        }
-    }
-
-    if (FAILED(hr = ID3D12CommandQueue_Signal(swapchain->command_queue,
+    if (FAILED(hr = vkd3d_queue_signal_on_cpu(swapchain->command_queue,
             swapchain->present_fence, swapchain->frame_number)))
     {
         ERR("Failed to signal present fence, hf %#lx.\n", hr);
@@ -2886,6 +2871,15 @@ static HRESULT STDMETHODCALLTYPE d3d12_swapchain_SetMaximumFrameLatency(IDXGISwa
         return DXGI_ERROR_INVALID_CALL;
     }
 
+    if (max_latency > swapchain->frame_latency)
+    {
+        if (!ReleaseSemaphore(swapchain->frame_latency_semaphore, max_latency - swapchain->frame_latency, NULL))
+        {
+            ERR("Failed to release frame latency semaphore, last error %lu.\n", GetLastError());
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
+
     swapchain->frame_latency = max_latency;
     return S_OK;
 }
@@ -2914,10 +2908,13 @@ static HANDLE STDMETHODCALLTYPE d3d12_swapchain_GetFrameLatencyWaitableObject(ID
 
     TRACE("iface %p.\n", iface);
 
-    if (!swapchain->frame_latency_event)
+    if (!(swapchain->desc.Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT))
+    {
+        WARN("DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT not set for swap chain %p.\n", iface);
         return NULL;
+    }
 
-    ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_event, GetCurrentProcess(),
+    ret = DuplicateHandle(GetCurrentProcess(), swapchain->frame_latency_semaphore, GetCurrentProcess(),
             &dup, 0, FALSE, DUPLICATE_SAME_ACCESS);
 
     if (!ret)
@@ -3355,24 +3352,16 @@ static HRESULT d3d12_swapchain_init(struct d3d12_swapchain *swapchain, IWineDXGI
     swapchain->current_buffer_index = 0;
 
     if (swapchain_desc->Flags & DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT)
-    {
         swapchain->frame_latency = 1;
+    else
+        swapchain->frame_latency = 3;
 
-        if (FAILED(hr = ID3D12Device_CreateFence(device, DXGI_MAX_SWAP_CHAIN_BUFFERS,
-                0, &IID_ID3D12Fence, (void **)&swapchain->frame_latency_fence)))
-        {
-            WARN("Failed to create frame latency fence, hr %#lx.\n", hr);
-            d3d12_swapchain_destroy(swapchain);
-            return hr;
-        }
-
-        if (!(swapchain->frame_latency_event = CreateEventW(NULL, FALSE, TRUE, NULL)))
-        {
-            hr = HRESULT_FROM_WIN32(GetLastError());
-            WARN("Failed to create frame latency event, hr %#lx.\n", hr);
-            d3d12_swapchain_destroy(swapchain);
-            return hr;
-        }
+    if (!(swapchain->frame_latency_semaphore = CreateSemaphoreW(NULL, swapchain->frame_latency, LONG_MAX, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        WARN("Failed to create frame latency semaphore, hr %#lx.\n", hr);
+        d3d12_swapchain_destroy(swapchain);
+        return hr;
     }
 
     if (FAILED(hr = ID3D12Device_CreateFence(device, 0, 0,

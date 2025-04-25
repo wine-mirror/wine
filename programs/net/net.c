@@ -365,7 +365,7 @@ int __cdecl wmain(int argc, const WCHAR* argv[])
         if(arg_is(argv[2], L"/help"))
             output_string(STRING_STOP_USAGE);
         else if(!net_service(NET_STOP, argv[2]))
-            return 1;
+            return 2;
     }
     else if(arg_is(argv[1], L"use"))
     {

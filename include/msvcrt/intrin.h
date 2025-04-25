@@ -15,15 +15,32 @@
 extern "C" {
 #endif
 
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
+
 #if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
+
+#if __has_builtin(__cpuidex) || (defined(_MSC_VER) && !defined(__clang__))
+void __cpuidex(int info[4], int ax, int cx);
+#pragma intrinsic(__cpuidex)
+#else
 static inline void __cpuidex(int info[4], int ax, int cx)
 {
   __asm__ ("cpuid" : "=a"(info[0]), "=b" (info[1]), "=c"(info[2]), "=d"(info[3]) : "a"(ax), "c"(cx));
 }
+#endif
+
+#if __has_builtin(__cpuid) || (defined(_MSC_VER) && !defined(__clang__))
+void __cpuid(int info[4], int ax);
+#pragma intrinsic(__cpuid)
+#else
 static inline void __cpuid(int info[4], int ax)
 {
     return __cpuidex(info, ax, 0);
 }
+#endif
+
 #endif
 
 #if defined(__aarch64__) || defined(__arm64ec__)
@@ -71,6 +88,19 @@ void __dmb(unsigned int);
 unsigned __int64 __getReg(int);
 #pragma intrinsic(__getReg)
 
+#endif
+
+#if defined(_MSC_VER)
+unsigned char _BitScanForward(unsigned long*,unsigned long);
+#endif
+
+#if defined(_MSC_VER) && (defined(__x86_64__) || defined(__aarch64__))
+unsigned char _BitScanForward64(unsigned long*,unsigned __int64);
+#endif
+
+#if defined(_MSC_VER) && defined(__x86_64__)
+unsigned __int64 __shiftright128(unsigned __int64, unsigned __int64, unsigned char);
+unsigned __int64 _umul128(unsigned __int64, unsigned __int64, unsigned __int64*);
 #endif
 
 #ifdef __cplusplus

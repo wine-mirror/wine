@@ -407,8 +407,8 @@ static HRESULT WINAPI file_stream_Clone(IStream *iface, IStream **ret_iface)
     if (SUCCEEDED(hr = file_stream_create(This->path, ret_iface)))
     {
         LARGE_INTEGER position = {0};
-        position.LowPart = SetFilePointer(This->file, 0, NULL, SEEK_CUR);
-        hr = IStream_Seek(*ret_iface, position, SEEK_SET, NULL);
+        position.LowPart = SetFilePointer(This->file, 0, NULL, FILE_CURRENT);
+        hr = IStream_Seek(*ret_iface, position, STREAM_SEEK_SET, NULL);
     }
 
     return hr;

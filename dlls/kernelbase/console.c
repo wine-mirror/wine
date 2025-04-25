@@ -72,7 +72,10 @@ struct ctrl_handler
 static BOOL WINAPI default_ctrl_handler( DWORD type )
 {
     FIXME( "Terminating process %lx on event %lx\n", GetCurrentProcessId(), type );
-    RtlExitUserProcess( 0 );
+    if (type == CTRL_C_EVENT || type == CTRL_BREAK_EVENT)
+        RtlExitUserProcess( STATUS_CONTROL_C_EXIT );
+    else
+        RtlExitUserProcess( 0 );
     return TRUE;
 }
 
@@ -499,7 +502,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
                                                            SECURITY_ATTRIBUTES *sa, DWORD flags,
                                                            void *data )
 {
-    OBJECT_ATTRIBUTES attr = {sizeof(attr)};
+    OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK iosb;
     UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\Device\\ConDrv\\ScreenBuffer" );
     HANDLE handle;
@@ -513,8 +516,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
 	return INVALID_HANDLE_VALUE;
     }
 
-    attr.ObjectName = &name;
-    attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
+    InitializeObjectAttributes( &attr, &name, 0, 0, sa ? sa->lpSecurityDescriptor : NULL );
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
     status = NtCreateFile( &handle, access, &attr, &iosb, NULL, FILE_ATTRIBUTE_NORMAL, 0, FILE_OPEN,
                            FILE_NON_DIRECTORY_FILE, NULL, 0 );
@@ -1203,11 +1205,8 @@ COORD WINAPI DECLSPEC_HOTPATCH GetLargestConsoleWindowSize( HANDLE handle )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetNumberOfConsoleInputEvents( HANDLE handle, DWORD *count )
 {
-    struct condrv_input_info info;
-    if (!console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_INFO, NULL, 0, &info, sizeof(info), NULL ))
-        return FALSE;
-    *count = info.input_count;
-    return TRUE;
+    return console_ioctl( handle, IOCTL_CONDRV_GET_INPUT_COUNT, NULL, 0,
+                          count, sizeof(*count), NULL );
 }
 
 

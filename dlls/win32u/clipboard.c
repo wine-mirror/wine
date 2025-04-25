@@ -487,8 +487,10 @@ DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
     return seqno;
 }
 
-/* see EnumClipboardFormats */
-UINT enum_clipboard_formats( UINT format )
+/**************************************************************************
+ *	     NtUserEnumClipboardFormats    (win32u.@)
+ */
+UINT WINAPI NtUserEnumClipboardFormats( UINT format )
 {
     UINT ret = 0;
 
@@ -753,4 +755,73 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
         TRACE( "%s returning 0\n", debugstr_format( format ));
         return 0;
     }
+}
+
+LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data )
+{
+    void *ret_ptr;
+    ULONG ret_len;
+
+    TRACE( "hwnd %p, msg %#x, wparam %#zx, lparam %#lx, data %p\n", hwnd, msg, wparam, lparam, data );
+
+    switch (msg)
+    {
+    case WINE_DRAG_DROP_ENTER:
+        return KeUserModeCallback( NtUserDragDropEnter, (struct format_entry *)lparam, wparam, &ret_ptr, &ret_len );
+    case WINE_DRAG_DROP_LEAVE:
+        return KeUserModeCallback( NtUserDragDropLeave, 0, 0, &ret_ptr, &ret_len );
+    case WINE_DRAG_DROP_DRAG:
+    {
+        RECT rect = {LOWORD(wparam), HIWORD(wparam), LOWORD(wparam), HIWORD(wparam)};
+        struct drag_drop_drag_params params =
+        {
+            .hwnd = hwnd,
+            .effect = lparam,
+        };
+
+        rect = map_rect_raw_to_virt( rect, get_thread_dpi() );
+        params.point.x = rect.left;
+        params.point.y = rect.top;
+
+        if (KeUserModeCallback( NtUserDragDropDrag, &params, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(DWORD))
+            return DROPEFFECT_NONE;
+        return *(DWORD *)ret_ptr;
+    }
+    case WINE_DRAG_DROP_DROP:
+    {
+        struct drag_drop_drop_params params = {.hwnd = hwnd};
+        if (KeUserModeCallback( NtUserDragDropDrop, &params, sizeof(params), &ret_ptr, &ret_len ) || ret_len != sizeof(DWORD))
+            return DROPEFFECT_NONE;
+        return *(DWORD *)ret_ptr;
+    }
+
+    case WINE_DRAG_DROP_POST:
+    {
+        struct drag_drop_post_params *params;
+        const DROPFILES *drop = (DROPFILES *)lparam;
+        RECT rect = {drop->pt.x, drop->pt.y, drop->pt.x, drop->pt.y};
+        UINT drop_size = wparam, size;
+        NTSTATUS status;
+
+        size = offsetof(struct drag_drop_post_params, drop) + drop_size;
+        if (!(params = malloc( size ))) return STATUS_NO_MEMORY;
+        params->hwnd = hwnd;
+        params->drop_size = drop_size;
+        memcpy( &params->drop, drop, drop_size );
+
+        rect = map_rect_raw_to_virt( rect, get_thread_dpi() );
+        params->drop.pt.x = rect.left;
+        params->drop.pt.y = rect.top;
+
+        status = KeUserModeCallback( NtUserDragDropPost, params, size, &ret_ptr, &ret_len );
+        free( params );
+        return status;
+    }
+
+    default:
+        FIXME( "Unknown NtUserDragDropCall msg %#x\n", msg );
+        break;
+    }
+
+    return -1;
 }

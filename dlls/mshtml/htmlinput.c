@@ -1283,14 +1283,13 @@ static const event_target_vtbl_t HTMLInputElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLInputElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLInputElement_tid,
     IHTMLInputTextElement2_tid,
     0
 };
 dispex_static_data_t HTMLInputElement_dispex = {
-    .id           = PROT_HTMLInputElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLInputElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLInputElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLInputElement_tid,
     .iface_tids   = HTMLInputElement_iface_tids,
@@ -1427,14 +1426,13 @@ static const event_target_vtbl_t HTMLLabelElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLLabelElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLLabelElement_tid,
     0
 };
 
 dispex_static_data_t HTMLLabelElement_dispex = {
-    .id           = PROT_HTMLLabelElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLLabelElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLLabelElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLLabelElement_tid,
     .iface_tids   = HTMLLabelElement_iface_tids,
@@ -1714,14 +1712,13 @@ static const event_target_vtbl_t HTMLButtonElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLButtonElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLButtonElement_tid,
     0
 };
 
 dispex_static_data_t HTMLButtonElement_dispex = {
-    .id           = PROT_HTMLButtonElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLButtonElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLButtonElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLButtonElement_tid,
     .iface_tids   = HTMLButtonElement_iface_tids,

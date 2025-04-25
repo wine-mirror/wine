@@ -34,6 +34,7 @@
 #include "docobj.h"
 #include "shlobj.h"
 #include "shellapi.h"
+#include "shlwapi.h"
 #include "wine/heap.h"
 #include "wine/list.h"
 
@@ -103,6 +104,7 @@ HRESULT WINAPI ExplorerBrowser_Constructor(IUnknown *pUnkOuter, REFIID riid, LPV
 HRESULT WINAPI KnownFolderManager_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv);
 HRESULT WINAPI IFileOperation_Constructor(IUnknown *outer, REFIID riid, void **out);
 HRESULT WINAPI ActiveDesktop_Constructor(IUnknown *outer, REFIID riid, void **out);
+HRESULT WINAPI EnumerableObjectCollection_Constructor(IUnknown *outer, REFIID riid, void **obj);
 
 extern HRESULT CPanel_GetIconLocationW(LPCITEMIDLIST, LPWSTR, UINT, int*);
 HRESULT WINAPI CPanel_ExtractIconA(LPITEMIDLIST pidl, LPCSTR pszFile, UINT nIconIndex, HICON *phiconLarge, HICON *phiconSmall, UINT nIconSize);
@@ -269,9 +271,6 @@ typedef struct
     DWORD dwType;
     ITEMIDLIST idl;
 } CWTESTPATHSTRUCT;
-
-BOOL WINAPI StrRetToStrNA(char *, DWORD, STRRET *, const ITEMIDLIST *);
-BOOL WINAPI StrRetToStrNW(WCHAR *, DWORD, STRRET *, const ITEMIDLIST *);
 
 WCHAR *shell_get_resource_string(UINT id);
 

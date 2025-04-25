@@ -525,11 +525,19 @@ void find_domain_name(const WCHAR *host, DWORD host_len,
                     return;
             }
         } else if(last_tld-host < 3)
-            /* Anything less than 3 characters is considered part
+        {
+            /* Anything less than 3 ASCII characters is considered part
              * of the TLD name.
              *  Ex: ak.uk -> Has no domain name.
              */
-            return;
+            for(p = host; p < last_tld; p++) {
+                if(!is_ascii(*p))
+                    break;
+            }
+
+            if(p == last_tld)
+                return;
+        }
 
         /* Otherwise the domain name is the whole host name. */
         *domain_start = 0;
@@ -1339,11 +1347,21 @@ static BOOL parse_reg_name(const WCHAR **ptr, parse_data *data, DWORD extras) {
     /* If the host is empty, then it's an unknown host type. */
     if(data->host_len == 0 || is_res)
         data->host_type = Uri_HOST_UNKNOWN;
-    else
+    else {
+        unsigned int i;
+
         data->host_type = Uri_HOST_DNS;
 
-    TRACE("(%p %p %lx): Parsed reg-name. host=%s len=%ld\n", ptr, data, extras,
-        debugstr_wn(data->host, data->host_len), data->host_len);
+        for(i = 0; i < data->host_len; i++) {
+            if(!is_ascii(data->host[i])) {
+                data->host_type = Uri_HOST_IDN;
+                break;
+            }
+        }
+    }
+
+    TRACE("(%p %p %lx): Parsed reg-name. host=%s len=%ld type=%d\n", ptr, data, extras,
+          debugstr_wn(data->host, data->host_len), data->host_len, data->host_type);
     return TRUE;
 }
 
@@ -2275,6 +2293,13 @@ static BOOL canonicalize_host(const parse_data *data, Uri *uri, DWORD flags, BOO
                 return FALSE;
 
             uri->host_type = Uri_HOST_IPV6;
+            break;
+
+        case Uri_HOST_IDN:
+            uri->host_type = Uri_HOST_IDN;
+            if(!canonicalize_reg_name(data, uri, flags, computeOnly))
+                return FALSE;
+
             break;
         case Uri_HOST_UNKNOWN:
             if(data->host_len > 0 || data->scheme_type != URL_SCHEME_FILE) {
@@ -3873,17 +3898,37 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         return E_INVALIDARG;
     }
 
-    /* Don't have support for flags yet. */
-    if(dwFlags) {
-        FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pbstrProperty, dwFlags);
-        return E_NOTIMPL;
-    }
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST
+       && dwFlags != Uri_DISPLAY_IDN_HOST)
+        return E_INVALIDARG;
+
+    if((dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)
+       || (dwFlags == Uri_PUNYCODE_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+           && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST)
+       || (dwFlags == Uri_DISPLAY_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+           && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST))
+        return E_INVALIDARG;
 
     switch(uriProp) {
     case Uri_PROPERTY_ABSOLUTE_URI:
         if(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI) {
             *pbstrProperty = SysAllocStringLen(NULL, 0);
             hres = S_FALSE;
+        }
+        /* Uri_PUNYCODE_IDN_HOST doesn't remove user info containing only "@" and ":@" */
+        else if (dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN && This->host_start > -1) {
+            unsigned int punycode_host_len;
+
+            punycode_host_len = IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, NULL, 0);
+            *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-This->host_len+punycode_host_len);
+            hres = S_OK;
+            if(*pbstrProperty) {
+                memcpy(*pbstrProperty, This->canon_uri, This->host_start*sizeof(WCHAR));
+                IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, *pbstrProperty+This->host_start, punycode_host_len);
+                memcpy(*pbstrProperty+This->host_start+punycode_host_len,
+                       This->canon_uri+This->host_start+This->host_len,
+                       (This->canon_len-This->host_start-This->host_len)*sizeof(WCHAR));
+            }
         } else {
             if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1) {
                 if(This->userinfo_len == 0) {
@@ -3944,18 +3989,32 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
          * scheme types.
          */
         if(This->scheme_type != URL_SCHEME_UNKNOWN && This->userinfo_start > -1) {
-            *pbstrProperty = SysAllocStringLen(NULL, This->canon_len-This->userinfo_len);
+            unsigned int length = This->canon_len-This->userinfo_len;
+
+            /* Skip fragment if Uri_DISPLAY_NO_FRAGMENT is specified */
+            if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+                length -= This->fragment_len;
+
+            *pbstrProperty = SysAllocStringLen(NULL, length);
 
             if(*pbstrProperty) {
                 /* Copy everything before the userinfo over. */
                 memcpy(*pbstrProperty, This->canon_uri, This->userinfo_start*sizeof(WCHAR));
+
                 /* Copy everything after the userinfo over. */
+                length -= This->userinfo_start+1;
                 memcpy(*pbstrProperty+This->userinfo_start,
-                   This->canon_uri+This->userinfo_start+This->userinfo_len+1,
-                   (This->canon_len-(This->userinfo_start+This->userinfo_len+1))*sizeof(WCHAR));
+                   This->canon_uri+This->userinfo_start+This->userinfo_len+1, length*sizeof(WCHAR));
             }
-        } else
-            *pbstrProperty = SysAllocString(This->canon_uri);
+        } else {
+            unsigned int length = This->canon_len;
+
+            /* Skip fragment if Uri_DISPLAY_NO_FRAGMENT is specified */
+            if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+                length -= This->fragment_len;
+
+            *pbstrProperty = SysAllocStringLen(This->canon_uri, length);
+        }
 
         if(!(*pbstrProperty))
             hres = E_OUTOFMEMORY;
@@ -3965,8 +4024,20 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         break;
     case Uri_PROPERTY_DOMAIN:
         if(This->domain_offset > -1) {
-            *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+This->domain_offset,
-                                               This->host_len-This->domain_offset);
+            if(dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN) {
+                unsigned int punycode_length;
+
+                punycode_length = IdnToAscii(0, This->canon_uri+This->host_start+This->domain_offset,
+                                             This->host_len-This->domain_offset, NULL, 0);
+                *pbstrProperty = SysAllocStringLen(NULL, punycode_length);
+                if (*pbstrProperty)
+                    IdnToAscii(0, This->canon_uri+This->host_start+This->domain_offset,
+                               This->host_len-This->domain_offset, *pbstrProperty, punycode_length);
+            } else {
+                *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+This->domain_offset,
+                                                   This->host_len-This->domain_offset);
+            }
+
             hres = S_OK;
         } else {
             *pbstrProperty = SysAllocStringLen(NULL, 0);
@@ -4009,6 +4080,14 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
             /* The '[' and ']' aren't included for IPv6 addresses. */
             if(This->host_type == Uri_HOST_IPV6)
                 *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start+1, This->host_len-2);
+            else if(dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN) {
+                unsigned int punycode_length;
+
+                punycode_length = IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, NULL, 0);
+                *pbstrProperty = SysAllocStringLen(NULL, punycode_length);
+                if (*pbstrProperty)
+                    IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, *pbstrProperty, punycode_length);
+            }
             else
                 *pbstrProperty = SysAllocStringLen(This->canon_uri+This->host_start, This->host_len);
 
@@ -4156,10 +4235,10 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     if(uriProp > Uri_PROPERTY_STRING_LAST)
         return E_INVALIDARG;
 
-    /* Don't have support for flags yet. */
-    if(dwFlags) {
-        FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pcchProperty, dwFlags);
-        return E_NOTIMPL;
+    if(dwFlags != 0 && dwFlags != Uri_DISPLAY_NO_FRAGMENT && dwFlags != Uri_PUNYCODE_IDN_HOST
+       && dwFlags != Uri_DISPLAY_IDN_HOST) {
+        *pcchProperty = 0;
+        return E_INVALIDARG;
     }
 
     switch(uriProp) {
@@ -4167,6 +4246,12 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         if(This->display_modifiers & URI_DISPLAY_NO_ABSOLUTE_URI) {
             *pcchProperty = 0;
             hres = S_FALSE;
+        }
+        /* Uri_PUNYCODE_IDN_HOST doesn't remove user info containing only "@" and ":@" */
+        else if(dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN && This->host_start > -1) {
+            unsigned int punycode_host_len = IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, NULL, 0);
+            *pcchProperty = This->canon_len - This->host_len + punycode_host_len;
+            hres = S_OK;
         } else {
             if(This->scheme_type != URL_SCHEME_UNKNOWN) {
                 if(This->userinfo_start > -1 && This->userinfo_len == 0)
@@ -4201,11 +4286,18 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         else
             *pcchProperty = This->canon_len;
 
+        if(dwFlags == Uri_DISPLAY_NO_FRAGMENT && This->fragment_start > -1)
+            *pcchProperty -= This->fragment_len;
+
         hres = S_OK;
         break;
     case Uri_PROPERTY_DOMAIN:
-        if(This->domain_offset > -1)
-            *pcchProperty = This->host_len - This->domain_offset;
+        if(This->domain_offset > -1) {
+            if(dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN)
+                *pcchProperty = IdnToAscii(0, This->canon_uri+This->host_start+This->domain_offset, This->host_len-This->domain_offset, NULL, 0);
+            else
+                *pcchProperty = This->host_len - This->domain_offset;
+        }
         else
             *pcchProperty = 0;
 
@@ -4231,6 +4323,8 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
         /* '[' and ']' aren't included in the length. */
         if(This->host_type == Uri_HOST_IPV6)
             *pcchProperty -= 2;
+        else if(dwFlags == Uri_PUNYCODE_IDN_HOST && This->host_type == Uri_HOST_IDN && This->host_start > -1)
+            *pcchProperty = IdnToAscii(0, This->canon_uri+This->host_start, This->host_len, NULL, 0);
 
         hres = (This->host_start > -1) ? S_OK : S_FALSE;
         break;
@@ -4272,6 +4366,16 @@ static HRESULT WINAPI Uri_GetPropertyLength(IUri *iface, Uri_PROPERTY uriProp, D
     default:
         FIXME("(%p)->(%d %p %lx)\n", This, uriProp, pcchProperty, dwFlags);
         hres = E_NOTIMPL;
+    }
+
+    if(hres == S_OK
+       && ((dwFlags == Uri_DISPLAY_NO_FRAGMENT && uriProp != Uri_PROPERTY_DISPLAY_URI)
+            || (dwFlags == Uri_PUNYCODE_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+                && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST)
+            || (dwFlags == Uri_DISPLAY_IDN_HOST && uriProp != Uri_PROPERTY_ABSOLUTE_URI
+                && uriProp != Uri_PROPERTY_DOMAIN && uriProp != Uri_PROPERTY_HOST))) {
+        *pcchProperty = 0;
+        hres = E_INVALIDARG;
     }
 
     return hres;

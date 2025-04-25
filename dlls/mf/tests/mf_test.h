@@ -101,6 +101,7 @@ struct buffer_desc
     RECT compare_rect;
     dump_cb dump;
     SIZE size;
+    BOOL todo_data;
 };
 
 struct sample_desc
@@ -115,6 +116,7 @@ struct sample_desc
     BOOL todo_length;
     BOOL todo_duration;
     BOOL todo_time;
+    BOOL todo_data;
 };
 
 #define check_mf_sample_collection(a, b, c) check_mf_sample_collection_(__FILE__, __LINE__, a, b, c, FALSE)

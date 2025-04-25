@@ -29,6 +29,7 @@
 #include "unixlib.h"
 
 #include "wine/list.h"
+#include "wine/hid.h"
 
 struct effect_periodic
 {
@@ -75,9 +76,9 @@ struct effect_params
     UINT16 sample_period;
     UINT16 start_delay;
     BYTE trigger_button;
-    BOOL axis_enabled[2];
+    BOOL axis_enabled[MAX_PID_AXES];
     BOOL direction_enabled;
-    UINT16 direction[2];
+    UINT16 direction[MAX_PID_AXES];
     BYTE gain_percent;
     BYTE condition_count;
     /* only for periodic, constant or ramp forces */
@@ -85,7 +86,7 @@ struct effect_params
     union
     {
         struct effect_periodic periodic;
-        struct effect_condition condition[2];
+        struct effect_condition condition[MAX_PID_AXES];
         struct effect_constant_force constant_force;
         struct effect_ramp_force ramp_force;
     };
@@ -183,6 +184,7 @@ struct hid_physical
     BYTE set_ramp_force_report;
 
     struct hid_effect_state effect_state;
+    USHORT axes_count;
 };
 
 struct hid_device_state
@@ -252,7 +254,7 @@ extern BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usa
                                 const USAGE *usages, BOOL rel, LONG min, LONG max);
 
 extern BOOL hid_device_add_haptics(struct unix_device *iface);
-extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count);
+extern BOOL hid_device_add_physical(struct unix_device *iface, USAGE *usages, USHORT count, USHORT axes_count);
 
 extern BOOL hid_device_set_abs_axis(struct unix_device *iface, ULONG index, LONG value);
 extern BOOL hid_device_set_rel_axis(struct unix_device *iface, ULONG index, LONG value);

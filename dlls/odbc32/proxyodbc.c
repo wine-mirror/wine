@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
 #define ODBC_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
-static BOOL is_wow64;
+static BOOL is_wow64, is_old_wow64;
 
 struct win32_funcs
 {
@@ -777,25 +777,33 @@ static BOOL alloc_binding( struct param_binding *binding, USHORT type, UINT colu
 static SQLRETURN bind_col_unix( struct statement *stmt, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
                                 SQLLEN buflen, SQLLEN *retlen )
 {
-    struct SQLBindCol_params params = { stmt->hdr.unix_handle, column, type, value, buflen };
-    UINT i = column - 1;
-    SQLRETURN ret;
-
-    if (!column)
+    if (is_wow64 && !is_old_wow64)
     {
-        FIXME( "column 0 not handled\n" );
-        return SQL_ERROR;
+        struct SQLBindCol_params params = { stmt->hdr.unix_handle, column, type, value, buflen };
+        UINT i = column - 1;
+        SQLRETURN ret;
+
+        if (!column)
+        {
+            FIXME( "column 0 not handled\n" );
+            return SQL_ERROR;
+        }
+
+        if (!alloc_binding( &stmt->bind_col, SQL_PARAM_INPUT_OUTPUT, column, stmt->row_count ))
+            return SQL_ERROR;
+        stmt->bind_col.param[i].col.target_type   = type;
+        stmt->bind_col.param[i].col.target_value  = value;
+        stmt->bind_col.param[i].col.buffer_length = buflen;
+
+        if (retlen) params.StrLen_or_Ind = stmt->bind_col.param[i].len;
+        if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) stmt->bind_col.param[i].ptr = retlen;
+        return ret;
     }
-
-    if (!alloc_binding( &stmt->bind_col, SQL_PARAM_INPUT_OUTPUT, column, stmt->row_count ))
-        return SQL_ERROR;
-    stmt->bind_col.param[i].col.target_type   = type;
-    stmt->bind_col.param[i].col.target_value  = value;
-    stmt->bind_col.param[i].col.buffer_length = buflen;
-
-    if (retlen) params.StrLen_or_Ind = stmt->bind_col.param[i].len;
-    if (SUCCESS(( ret = ODBC_CALL( SQLBindCol, &params )))) stmt->bind_col.param[i].ptr = retlen;
-    return ret;
+    else
+    {
+        struct SQLBindCol_params params = { stmt->hdr.unix_handle, column, type, value, buflen, retlen };
+        return ODBC_CALL( SQLBindCol, &params );
+    }
 }
 
 static SQLRETURN bind_col_win32( struct statement *stmt, SQLUSMALLINT column, SQLSMALLINT type, SQLPOINTER value,
@@ -1068,7 +1076,7 @@ SQLRETURN WINAPI SQLColAttribute(SQLHSTMT StatementHandle, SQLUSMALLINT ColumnNu
 
 static const char *debugstr_sqlstr( const SQLCHAR *str, SQLSMALLINT len )
 {
-    if (len == SQL_NTS) len = strlen( (const char *)str );
+    if (len == SQL_NTS) len = -1;
     return wine_dbgstr_an( (const char *)str, len );
 }
 
@@ -1833,6 +1841,9 @@ SQLRETURN WINAPI SQLExecDirect(SQLHSTMT StatementHandle, SQLCHAR *StatementText,
 static void len_to_user( SQLLEN *ptr, UINT8 *len, UINT row_count, UINT width )
 {
     UINT i;
+
+    if (ptr == NULL) return;
+
     for (i = 0; i < row_count; i++)
     {
         *ptr++ = *(SQLLEN *)(len + i * width);
@@ -1842,6 +1853,9 @@ static void len_to_user( SQLLEN *ptr, UINT8 *len, UINT row_count, UINT width )
 static void len_from_user( UINT8 *len, SQLLEN *ptr, UINT row_count, UINT width )
 {
     UINT i;
+
+    if (ptr == NULL) return;
+
     for (i = 0; i < row_count; i++)
     {
         *(SQLLEN *)(len + i * width) = *ptr++;
@@ -1850,7 +1864,9 @@ static void len_from_user( UINT8 *len, SQLLEN *ptr, UINT row_count, UINT width )
 
 static void update_result_lengths( struct statement *stmt, USHORT type )
 {
-    UINT i, width = sizeof(void *) == 8 ? 8 : is_wow64 ? 8 : 4;
+    UINT i, width = is_old_wow64 ? 4 : 8;
+
+    if (!is_wow64 || is_old_wow64) return;
 
     switch (type)
     {
@@ -2776,7 +2792,7 @@ SQLRETURN WINAPI SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMAL
                                SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, SqlState %p, NativeError %p, MessageText %p, BufferLength %d,"
           " TextLength %p)\n", HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
@@ -2966,7 +2982,7 @@ static SQLRETURN get_info_win32_a( struct connection *con, SQLUSMALLINT type, SQ
         default: break;
         }
 
-        ret = SQLGetInfoW( con->hdr.win32_handle, type, buf, buflen, retlen );
+        ret = con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, buf, buflen, retlen );
         if (SUCCESS( ret ) && strW)
         {
             int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
@@ -3833,6 +3849,11 @@ SQLRETURN WINAPI SQLSetParam(SQLHSTMT StatementHandle, SQLUSMALLINT ParameterNum
 static BOOL resize_result_lengths( struct statement *stmt, UINT size )
 {
     UINT i;
+
+    if (!is_wow64 || is_old_wow64) return TRUE;
+
+    TRACE( "resizing result length array\n" );
+
     for (i = 0; i < stmt->bind_col.count; i++)
     {
         UINT8 *tmp;
@@ -3856,6 +3877,7 @@ static BOOL resize_result_lengths( struct statement *stmt, UINT size )
         }
         stmt->bind_col.param[i].len = tmp;
     }
+
     for (i = 0; i < stmt->bind_parameter.count; i++)
     {
         UINT8 *tmp;
@@ -3895,7 +3917,6 @@ static SQLRETURN set_stmt_attr_unix_a( struct statement *stmt, SQLINTEGER attr, 
         SQLULEN row_count = (SQLULEN)value;
         if (attr == SQL_ATTR_ROW_ARRAY_SIZE && row_count != stmt->row_count)
         {
-            TRACE( "resizing result length array\n" );
             if (!resize_result_lengths( stmt, row_count )) ret = SQL_ERROR;
             else stmt->row_count = row_count;
         }
@@ -4290,6 +4311,9 @@ static void free_attribute_list( struct attribute_list *list )
 {
     UINT32 i;
     for (i = 0; i < list->count; i++) free_attribute( list->attrs[i] );
+    free( list->attrs );
+    list->count = 0;
+    list->attrs = NULL;
 }
 
 static BOOL append_attribute( struct attribute_list *list, struct attribute *attr )
@@ -4385,7 +4409,7 @@ static const WCHAR *get_attribute( const struct attribute_list *list, const WCHA
 static WCHAR *build_connect_string( struct attribute_list *list )
 {
     WCHAR *ret, *ptr;
-    UINT32 i, len = 0;
+    UINT32 i, len = 1;
 
     for (i = 0; i < list->count; i++) len += wcslen( list->attrs[i]->name ) + wcslen( list->attrs[i]->value ) + 2;
     if (!(ptr = ret = malloc( len * sizeof(WCHAR) ))) return NULL;
@@ -5460,29 +5484,38 @@ static SQLRETURN bind_parameter_unix( struct statement *stmt, SQLUSMALLINT param
                                       SQLSMALLINT value_type, SQLSMALLINT param_type, SQLULEN size,
                                       SQLSMALLINT digits, SQLPOINTER value, SQLLEN buflen, SQLLEN *len )
 {
-    struct SQLBindParameter_params params = { stmt->hdr.unix_handle, param, io_type, value_type, param_type, size,
-                                              digits, value, buflen };
-    UINT i = param - 1;
-    SQLRETURN ret;
-
-    if (!param)
+    if (is_wow64 && !is_old_wow64)
     {
-        FIXME( "parameter 0 not handled\n" );
-        return SQL_ERROR;
-    }
-    if (!alloc_binding( &stmt->bind_parameter, io_type, param, stmt->row_count )) return SQL_ERROR;
-    stmt->bind_parameter.param[i].parameter.input_output_type = io_type;
-    stmt->bind_parameter.param[i].parameter.value_type        = value_type;
-    stmt->bind_parameter.param[i].parameter.parameter_type    = param_type;
-    stmt->bind_parameter.param[i].parameter.column_size       = size;
-    stmt->bind_parameter.param[i].parameter.decimal_digits    = digits;
-    stmt->bind_parameter.param[i].parameter.parameter_value   = value;
-    stmt->bind_parameter.param[i].parameter.buffer_length     = buflen;
+        struct SQLBindParameter_params params = { stmt->hdr.unix_handle, param, io_type, value_type, param_type,
+                                                  size, digits, value, buflen };
+        UINT i = param - 1;
+        SQLRETURN ret;
 
-    params.StrLen_or_Ind = stmt->bind_parameter.param[i].len;
-    *(UINT64 *)params.StrLen_or_Ind = *len;
-    if (SUCCESS((ret = ODBC_CALL( SQLBindParameter, &params )))) stmt->bind_parameter.param[i].ptr = len;
-    return ret;
+        if (!param)
+        {
+            FIXME( "parameter 0 not handled\n" );
+            return SQL_ERROR;
+        }
+        if (!alloc_binding( &stmt->bind_parameter, io_type, param, stmt->row_count )) return SQL_ERROR;
+        stmt->bind_parameter.param[i].parameter.input_output_type = io_type;
+        stmt->bind_parameter.param[i].parameter.value_type        = value_type;
+        stmt->bind_parameter.param[i].parameter.parameter_type    = param_type;
+        stmt->bind_parameter.param[i].parameter.column_size       = size;
+        stmt->bind_parameter.param[i].parameter.decimal_digits    = digits;
+        stmt->bind_parameter.param[i].parameter.parameter_value   = value;
+        stmt->bind_parameter.param[i].parameter.buffer_length     = buflen;
+
+        params.StrLen_or_Ind = stmt->bind_parameter.param[i].len;
+        *(UINT64 *)params.StrLen_or_Ind = *len;
+        if (SUCCESS((ret = ODBC_CALL( SQLBindParameter, &params )))) stmt->bind_parameter.param[i].ptr = len;
+        return ret;
+    }
+    else
+    {
+        struct SQLBindParameter_params params = { stmt->hdr.unix_handle, param, io_type, value_type, param_type,
+                                                  size, digits, value, buflen, len };
+        return ODBC_CALL( SQLBindParameter, &params );
+    }
 }
 
 static SQLRETURN bind_parameter_win32( struct statement *stmt, SQLUSMALLINT param, SQLSMALLINT io_type,
@@ -6543,7 +6576,7 @@ SQLRETURN WINAPI SQLGetDiagRecW(SQLSMALLINT HandleType, SQLHANDLE Handle, SQLSMA
                                 SQLSMALLINT *TextLength)
 {
     struct object *obj = lock_object( Handle, HandleType );
-    SQLRETURN ret = SQL_ERROR;
+    SQLRETURN ret = SQL_NO_DATA;
 
     TRACE("(HandleType %d, Handle %p, RecNumber %d, SqlState %p, NativeError %p, MessageText %p, BufferLength %d,"
           " TextLength %p)\n", HandleType, Handle, RecNumber, SqlState, NativeError, MessageText, BufferLength,
@@ -7905,10 +7938,21 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         {
             if (WINE_UNIX_CALL( process_attach, NULL )) __wine_unixlib_handle = 0;
         }
+
         IsWow64Process( GetCurrentProcess(), &is_wow64 );
+        if (is_wow64)
+        {
+            TEB64 *teb64 = ULongToPtr( NtCurrentTeb()->GdiBatchCount );
+            if (teb64)
+            {
+                PEB64 *peb64 = ULongToPtr( teb64->Peb );
+                is_old_wow64 = !peb64->LdrData;
+            }
+        }
         break;
 
     case DLL_PROCESS_DETACH:
+        if (__wine_unixlib_handle) WINE_UNIX_CALL( process_detach, NULL );
         if (reserved) break;
     }
 

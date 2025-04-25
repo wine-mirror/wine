@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <locale.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -87,6 +88,7 @@ static const PSDRV_DEVMODE DefaultDevmode =
 
 HINSTANCE PSDRV_hInstance = 0;
 HANDLE PSDRV_Heap = 0;
+_locale_t c_locale;
 
 static BOOL import_ntf_from_reg(void)
 {
@@ -294,6 +296,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         {
             PSDRV_hInstance = hinst;
             DisableThreadLibraryCalls(hinst);
+            c_locale = _create_locale( LC_ALL, "C" );
 
             if (__wine_init_unix_call())
                 return FALSE;
@@ -319,7 +322,8 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 	case DLL_PROCESS_DETACH:
             if (reserved) break;
             WINE_UNIX_CALL(unix_free_printer_info, NULL);
-	    HeapDestroy( PSDRV_Heap );
+            _free_locale( c_locale );
+            HeapDestroy( PSDRV_Heap );
             break;
     }
 

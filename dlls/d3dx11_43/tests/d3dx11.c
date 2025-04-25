@@ -575,72 +575,40 @@ static void test_D3DX11CompileFromFile(void)
 
     hr = D3DX11CompileFromFileW(filename, NULL, &include.ID3DInclude_iface,
             "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    todo_wine ok(!!blob, "Got unexpected blob.\n");
-    todo_wine ok(!errors, "Got unexpected errors.\n");
-    if (errors)
-    {
-        ID3D10Blob_Release(errors);
-        errors = NULL;
-    }
-    if (blob)
-    {
-        ID3D10Blob_Release(blob);
-        blob = NULL;
-    }
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
 
     /* Windows always seems to resolve includes from the initial file location
      * instead of using the immediate parent, as it would be the case for
      * standard C preprocessor includes. */
     hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    todo_wine ok(!!blob, "Got unexpected blob.\n");
-    todo_wine ok(!errors, "Got unexpected errors.\n");
-    if (errors)
-    {
-        ID3D10Blob_Release(errors);
-        errors = NULL;
-    }
-    if (blob)
-    {
-        ID3D10Blob_Release(blob);
-        blob = NULL;
-    }
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
 
     len = WideCharToMultiByte(CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
     hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    todo_wine ok(!!blob, "Got unexpected blob.\n");
-    todo_wine ok(!errors, "Got unexpected errors.\n");
-    if (errors)
-    {
-        ID3D10Blob_Release(errors);
-        errors = NULL;
-    }
-    if (blob)
-    {
-        ID3D10Blob_Release(blob);
-        blob = NULL;
-    }
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
 
     GetCurrentDirectoryW(MAX_PATH, directory);
     SetCurrentDirectoryW(temp_dir);
 
     hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
-    todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
-    todo_wine ok(!!blob, "Got unexpected blob.\n");
-    todo_wine ok(!errors, "Got unexpected errors.\n");
-    if (errors)
-    {
-        ID3D10Blob_Release(errors);
-        errors = NULL;
-    }
-    if (blob)
-    {
-        ID3D10Blob_Release(blob);
-        blob = NULL;
-    }
+    ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
+    ok(!!blob, "Got unexpected blob.\n");
+    ok(!errors, "Got unexpected errors.\n");
+    ID3D10Blob_Release(blob);
+    blob = NULL;
 
     SetCurrentDirectoryW(directory);
 

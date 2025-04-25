@@ -1,5 +1,5 @@
 MODULE    = rundll32.exe
-IMPORTS   = user32
+IMPORTS   = user32 kernelbase
 
 EXTRADLLFLAGS = -mwindows -municode
 

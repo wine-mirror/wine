@@ -1738,6 +1738,76 @@ static void test_WriteLine(void)
     SysFreeString(nameW);
 }
 
+static HRESULT write_blank_lines(WCHAR *nameW, VARIANT_BOOL is_unicode, LONG lines)
+{
+    HRESULT hr;
+    ITextStream *stream;
+
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, is_unicode, &stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ITextStream_WriteBlankLines(stream, lines);
+    ITextStream_Release(stream);
+    return hr;
+}
+
+static void test_WriteBlankLines(void)
+{
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
+    BSTR nameW;
+    HRESULT hr;
+    BOOL ret;
+
+    get_temp_filepath(testfileW, pathW, dirW);
+
+    ret = CreateDirectoryW(dirW, NULL);
+    ok(ret, "Unexpected retval %d, error %ld.\n", ret, GetLastError());
+
+    nameW = SysAllocString(pathW);
+
+    hr = write_blank_lines(nameW, VARIANT_FALSE, -1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 0, NULL);
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_FALSE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 0, NULL);
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_FALSE, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 2, "\r\n");
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_FALSE, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 4, "\r\n\r\n");
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_TRUE, -1);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 1*sizeof(WCHAR), L"\ufeff");
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_TRUE, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 1*sizeof(WCHAR), L"\ufeff");
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_TRUE, 1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 3*sizeof(WCHAR), L"\ufeff\r\n");
+    DeleteFileW(nameW);
+
+    hr = write_blank_lines(nameW, VARIANT_TRUE, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_file_contents(pathW, 5*sizeof(WCHAR), L"\ufeff\r\n\r\n");
+    DeleteFileW(nameW);
+
+    RemoveDirectoryW(dirW);
+    SysFreeString(nameW);
+}
+
 static void test_ReadAll(void)
 {
     static const WCHAR firstlineW[] = L"first";
@@ -2762,6 +2832,7 @@ START_TEST(filesystem)
     test_CreateTextFile();
     test_FolderCreateTextFile();
     test_WriteLine();
+    test_WriteBlankLines();
     test_ReadAll();
     test_Read();
     test_ReadLine();

@@ -110,10 +110,12 @@ void editor_draw( ME_TextEditor *editor, HDC hDC, const RECT *update )
   if (oldRgn) DeleteObject( oldRgn );
   ME_DestroyContext( &c );
 
-  if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)
-    ME_SendRequestResize(editor, FALSE);
-  editor->nLastTotalLength = editor->nTotalLength;
-  editor->nLastTotalWidth = editor->nTotalWidth;
+  if (editor->in_place_active) {
+    if (editor->nTotalLength != editor->nLastTotalLength || editor->nTotalWidth != editor->nLastTotalWidth)
+      ME_SendRequestResize(editor, FALSE);
+    editor->nLastTotalLength = editor->nTotalLength;
+    editor->nLastTotalWidth = editor->nTotalWidth;
+  }
 }
 
 void ME_Repaint(ME_TextEditor *editor)
@@ -1212,6 +1214,8 @@ void editor_ensure_visible( ME_TextEditor *editor, ME_Cursor *cursor )
   ME_Paragraph *para = cursor->para;
   int x, y, yheight;
 
+  if (!editor->in_place_active)
+    return;
 
   if (editor->scrollbars & ES_AUTOHSCROLL)
   {

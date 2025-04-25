@@ -618,7 +618,8 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
                 strcpy(tmp, "__inherited_class_");
                 strcat(tmp, symt_get_name(adt));
 
-                symt_add_udt_element(ptd->module, sdt, tmp, adt, ofs, 0, 0);
+                symt_add_udt_element(ptd->module, sdt, tmp, symt_ptr_to_symref(adt),
+                                     ofs, 0, 0);
             }
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
         }
@@ -692,7 +693,8 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
             PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &sz) == -1);
             PTS_ABORTIF(ptd, *ptd->ptr++ != ';');
 
-            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, adt, ofs, 0, 0);
+            if (doadd) symt_add_udt_element(ptd->module, sdt, ptd->buf + idx, symt_ptr_to_symref(adt),
+                                            ofs, 0, 0);
             break;
         case ':':
             {
@@ -718,9 +720,10 @@ static inline int stabs_pts_read_aggregate(struct ParseTypedefData* ptd,
     return 0;
 }
 
-static inline int stabs_pts_read_enum(struct ParseTypedefData* ptd, 
+static inline int stabs_pts_read_enum(struct ParseTypedefData* ptd,
                                       struct symt_enum* edt)
 {
+    VARIANT     v;
     LONG_PTR    value;
     int		idx;
 
@@ -730,7 +733,9 @@ static inline int stabs_pts_read_enum(struct ParseTypedefData* ptd,
 	PTS_ABORTIF(ptd, stabs_pts_read_id(ptd) == -1);
 	PTS_ABORTIF(ptd, stabs_pts_read_number(ptd, &value) == -1);
 	PTS_ABORTIF(ptd, *ptd->ptr++ != ',');
-	symt_add_enum_element(ptd->module, edt, ptd->buf + idx, value);
+	V_VT(&v) = VT_I4;
+	V_I4(&v) = value;
+	symt_add_enum_element(ptd->module, edt, ptd->buf + idx, &v);
 	ptd->idx = idx;
     }
     ptd->ptr++;
@@ -859,7 +864,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                     if (udt->symt.tag != SymTagUDT)
                     {
                         ERR("Forward declaration (%p/%s) is not an aggregate (%u)\n",
-                            udt, symt_get_name(&udt->symt), udt->symt.tag);
+                            udt, debugstr_a(symt_get_name(&udt->symt)), udt->symt.tag);
                         return -1;
                     }
                     /* FIXME: we currently don't correctly construct nested C++
@@ -876,7 +881,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
                     l2 = strlen(typename);
                     if (l1 > l2 || strcmp(udt->hash_elt.name, typename + l2 - l1))
                         ERR("Forward declaration name mismatch %s <> %s\n",
-                            udt->hash_elt.name, typename);
+                            debugstr_a(udt->hash_elt.name), debugstr_a(typename));
                     new_dt = &udt->symt;
                 }
                 PTS_ABORTIF(ptd, stabs_pts_read_aggregate(ptd, udt) == -1);
@@ -1168,7 +1173,7 @@ static void pending_flush(struct pending_list* pending, struct module* module,
         case PENDING_VAR:
             symt_add_func_local(module, func,
                                 pending->objs[i].u.var.kind, &pending->objs[i].u.var.loc,
-                                block, pending->objs[i].u.var.type, pending->objs[i].u.var.name);
+                                block, symt_ptr_to_symref(pending->objs[i].u.var.type), pending->objs[i].u.var.name);
             break;
         case PENDING_LINE:
             if (module->type == DMT_MACHO)
@@ -1360,7 +1365,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             loc.reg = 0;
             loc.offset = load_offset + n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     loc, 0, stabs_parse_type(ptr));
+                                     loc, 0, symt_ptr_to_symref(stabs_parse_type(ptr)));
             break;
         case N_LCSYM:
         case N_STSYM:
@@ -1375,7 +1380,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             loc.reg = 0;
             loc.offset = load_offset + n_value;
             symt_new_global_variable(module, compiland, symname, TRUE /* FIXME */,
-                                     loc, 0, stabs_parse_type(ptr));
+                                     loc, 0, symt_ptr_to_symref(stabs_parse_type(ptr)));
             break;
         case N_LBRAC:
             if (curr_func)
@@ -1409,9 +1414,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 loc.offset = n_value;
                 symt_add_func_local(module, curr_func,
                                     (int)n_value >= 0 ? DataIsParam : DataIsLocal,
-                                    &loc, NULL, param_type, symname);
-                symt_add_function_signature_parameter(module, 
-                                                      (struct symt_function_signature*)curr_func->type, 
+                                    &loc, NULL, symt_ptr_to_symref(param_type), symname);
+                symt_add_function_signature_parameter(module,
+                                                      (struct symt_function_signature*)curr_func->type,
                                                       param_type);
             }
             break;
@@ -1473,9 +1478,9 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                     struct symt*    param_type = stabs_parse_type(ptr);
                     stab_strcpy(symname, sizeof(symname), ptr);
                     symt_add_func_local(module, curr_func, DataIsParam, &loc,
-                                        NULL, param_type, symname);
-                    symt_add_function_signature_parameter(module, 
-                                                          (struct symt_function_signature*)curr_func->type, 
+                                        NULL, symt_ptr_to_symref(param_type), symname);
+                    symt_add_function_signature_parameter(module,
+                                                          (struct symt_function_signature*)curr_func->type,
                                                           param_type);
                 }
                 else
@@ -1490,21 +1495,24 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             if (curr_func != NULL) pending_add_var(&pending_block, ptr, DataIsLocal, &loc);
             break;
         case N_SLINE:
-            /*
-             * This is a line number.  These are always relative to the start
-             * of the function (N_FUN), and this makes the lookup easier.
-             */
-            assert(source_idx >= 0);
-            if (curr_func != NULL)
+            if (SymGetOptions() & SYMOPT_LOAD_LINES)
             {
-                ULONG_PTR offset = n_value;
-                if (module->type == DMT_MACHO)
-                    offset -= curr_func->ranges[0].low - load_offset;
-                symt_add_func_line(module, curr_func, source_idx, 
-                                   stab_ptr->n_desc, curr_func->ranges[0].low + offset);
+                /*
+                 * This is a line number.  These are always relative to the start
+                 * of the function (N_FUN), and this makes the lookup easier.
+                 */
+                assert(source_idx >= 0);
+                if (curr_func != NULL)
+                {
+                    ULONG_PTR offset = n_value;
+                    if (module->type == DMT_MACHO)
+                        offset -= curr_func->ranges[0].low - load_offset;
+                    symt_add_func_line(module, curr_func, source_idx,
+                                       stab_ptr->n_desc, curr_func->ranges[0].low + offset);
+                }
+                else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
+                                      n_value, load_offset);
             }
-            else pending_add_line(&pending_func, source_idx, stab_ptr->n_desc,
-                                  n_value, load_offset);
             break;
         case N_FUN:
             /*
@@ -1539,11 +1547,11 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                                             n_value ?
                                                 (load_offset + n_value - curr_func->ranges[0].low) : 0);
                 }
-                func_type = symt_new_function_signature(module, 
+                func_type = symt_new_function_signature(module,
                                                         stabs_parse_type(ptr), -1);
-                curr_func = symt_new_function(module, compiland, symname, 
+                curr_func = symt_new_function(module, compiland, symname,
                                               load_offset + n_value, 0,
-                                              &func_type->symt);
+                                              symt_ptr_to_symref(&func_type->symt), 0);
                 pending_flush(&pending_func, module, curr_func, NULL);
             }
             else
@@ -1579,7 +1587,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
                 {
                     stabs_reset_includes();
                     source_idx = source_new(module, srcpath, ptr);
-                    compiland = symt_new_compiland(module, source_idx);
+                    compiland = symt_new_compiland(module, source_get(module, source_idx));
                 }
                 else
                 {
@@ -1597,7 +1605,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
             /* I'm not sure this is needed, so trace it before we obsolete it */
             if (curr_func)
             {
-                FIXME("UNDF: curr_func %s\n", curr_func->hash_elt.name);
+                FIXME("UNDF: curr_func %s\n", debugstr_a(curr_func->hash_elt.name));
                 stabs_finalize_function(module, curr_func, 0); /* FIXME */
                 curr_func = NULL;
             }
@@ -1618,7 +1626,7 @@ BOOL stabs_parse(struct module* module, ULONG_PTR load_offset,
 	case N_EXCL:
             if (stabs_add_include(stabs_find_include(ptr, n_value)) < 0)
             {
-                ERR("Excluded header not found (%s,%Id)\n", ptr, (ULONG_PTR)n_value);
+                ERR("Excluded header not found (%s,%Id)\n", debugstr_a(ptr), (ULONG_PTR)n_value);
                 module_reset_debug_info(module);
                 ret = FALSE;
                 goto done;

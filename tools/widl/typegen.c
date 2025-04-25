@@ -1270,7 +1270,7 @@ static unsigned int write_new_procformatstring_type(FILE *file, int indent, cons
     if (flags & IsBasetype) strcat( buffer, " base type," );
     if (flags & IsByValue) strcat( buffer, " by value," );
     if (flags & IsSimpleRef) strcat( buffer, " simple ref," );
-    if (flags >> 13) sprintf( buffer + strlen(buffer), " srv size=%u,", (flags >> 13) * 8 );
+    if (flags >> 13) snprintf( buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), " srv size=%u,", (flags >> 13) * 8 );
     strcpy( buffer + strlen( buffer ) - 1, " */" );
     print_file( file, indent, "NdrFcShort(0x%hx),\t%s\n", flags, buffer );
     print_file( file, indent, "NdrFcShort(0x%x),	/* stack offset = %u */\n",
@@ -4896,7 +4896,7 @@ void declare_stub_args( FILE *file, int indent, const var_t *func )
                     type_to_print = &var->declspec;
                 else
                     type_to_print = type_pointer_get_ref(var->declspec.type);
-                sprintf(name, "_W%u", i++);
+                snprintf(name, sizeof(name), "_W%u", i++);
                 write_type_decl(file, type_to_print, name);
                 fprintf(file, ";\n");
             }
@@ -5047,7 +5047,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
 
     needs_packing = (align > pointer_size);
 
-    if (needs_packing) print_file( file, 0, "#include <pshpack%u.h>\n", pointer_size );
+    if (needs_packing) print_file( file, 0, "#pragma pack(push,%u)\n", pointer_size );
     print_file(file, 1, "struct _PARAM_STRUCT\n" );
     print_file(file, 1, "{\n" );
     if (is_object( iface )) print_file(file, 2, "%s *This;\n", iface->name );
@@ -5081,7 +5081,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
         fprintf( file, "%s;\n", retval->name );
     }
     print_file(file, 1, "} %s;\n", var_decl );
-    if (needs_packing) print_file( file, 0, "#include <poppack.h>\n" );
+    if (needs_packing) print_file( file, 0, "#pragma pack(pop)\n" );
     print_file( file, 0, "\n" );
 }
 

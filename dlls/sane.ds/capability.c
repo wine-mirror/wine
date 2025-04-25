@@ -312,7 +312,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
     TW_UINT32 val;
     TW_UINT16 current_pixeltype = TWPT_BW;
     enum { buf_len = 64, buf_count = 3 };
-    char color_modes[buf_len * buf_count] = {'\0'}, current_mode[buf_len] = {'\0'}, *output = 0;
+    char color_modes[buf_len * buf_count] = {'\0'}, current_mode[buf_len];
     /* most of the values are taken from https://gitlab.gnome.org/GNOME/simple-scan/-/blob/master/src/scanner.vala */
     static const WCHAR* bw[] = {L"Lineart", L"LineArt", L"Black & White", L"Binary", L"Thresholded",
         L"1-bit Black & White", L"Black and White - Line Art", L"Black and White - Halftone", L"Monochrome", L"bw", 0};
@@ -320,6 +320,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
         L"gray", 0};
     static const WCHAR* rgb[] = {L"Color", L"24bit Color[Fast]", L"24bit Color", L"24 bit Color",
         L"Color - 16 Million Colors", L"color", 0};
+    /* TWPT_BW = 0, TWPT_GRAY = 1, TWPT_RGB = 2 */
     static const WCHAR* const* filter[] = {bw, gray, rgb, 0};
 
     TRACE("ICAP_PIXELTYPE\n");
@@ -330,13 +331,14 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
         return twCC;
     }
 
-    twCC = sane_option_get_str("mode", current_mode, buf_len);
+    twCC = sane_option_get_str("mode", current_mode, sizeof(current_mode));
     if (twCC != TWCC_SUCCESS)
     {
         ERR("Unable to retrieve current mode from sane, ICAP_PIXELTYPE unsupported\n");
         return twCC;
     }
 
+    /* Map current mode name to TWPT_BW (0), TWPT_GRAY (1) or TWPT_RGB (2) */
     current_pixeltype = find_value_pos(current_mode, color_modes, buf_len, buf_count);
     if (current_pixeltype == buf_count)
     {
@@ -374,7 +376,7 @@ static TW_UINT16 SANE_ICAPPixelType (pTW_CAPABILITY pCapability, TW_UINT16 actio
             twCC = msg_set(pCapability, &val);
             if ((twCC == TWCC_SUCCESS) && (val < buf_count))
             {
-                output = color_modes + val * buf_len;
+                char *output = color_modes + val * buf_len;
                 TRACE("Setting pixeltype to %lu: %s\n", val, output);
                 twCC = set_option_value("mode", output);
                 if (twCC != TWCC_SUCCESS)
@@ -953,7 +955,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
     TW_UINT32 val;
     TW_BOOL enabled;
     enum { buf_len = 64, buf_count = 2 };
-    char paper_sources[buf_len * buf_count] = {'\0'}, current_source[buf_len] = {'\0'}, *output = 0;
+    char paper_sources[buf_len * buf_count] = {'\0'}, current_source[buf_len], *output;
     /* most of the values are taken from https://gitlab.gnome.org/GNOME/simple-scan/-/blob/master/src/scanner.vala */
     static const WCHAR* flatbed[] = {L"Flatbed", L"FlatBed", L"Platen", L"Normal", L"Document Table", 0};
     static const WCHAR* autofeeder[] = {L"Auto", L"ADF", L"ADF Front", L"ADF Back", L"adf",
@@ -970,7 +972,7 @@ static TW_UINT16 SANE_CAPFeederEnabled (pTW_CAPABILITY pCapability, TW_UINT16 ac
         return twCC;
     }
 
-    twCC = sane_option_get_str("source", current_source, buf_len);
+    twCC = sane_option_get_str("source", current_source, sizeof(current_source));
     if (twCC != TWCC_SUCCESS)
     {
         ERR("Unable to retrieve current paper source from sane, CAP_FEEDERENABLED unsupported\n");

@@ -46,9 +46,6 @@ extern BOOL allow_software_rendering;
 
 extern UINT64 app_icon_callback;
 extern UINT64 app_quit_request_callback;
-extern UINT64 dnd_query_drag_callback;
-extern UINT64 dnd_query_drop_callback;
-extern UINT64 dnd_query_exited_callback;
 
 extern const char* debugstr_cf(CFTypeRef t);
 
@@ -129,8 +126,6 @@ static inline struct macdrv_thread_data *macdrv_thread_data(void)
 extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags);
 extern void macdrv_Beep(void);
 extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid);
-extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode);
-extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary);
 extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager, void *param);
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp);
@@ -141,7 +136,7 @@ extern void macdrv_CleanupIcons(HWND hwnd);
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 extern void macdrv_DestroyWindow(HWND hwnd);
 extern void macdrv_SetDesktopWindow(HWND hwnd);
-extern void macdrv_SetFocus(HWND hwnd);
+extern void macdrv_ActivateWindow(HWND hwnd, HWND previous);
 extern void macdrv_SetLayeredWindowAttributes(HWND hwnd, COLORREF key, BYTE alpha,
                                               DWORD flags);
 extern void macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent);
@@ -149,15 +144,14 @@ extern void macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw);
 extern void macdrv_SetWindowStyle(HWND hwnd, INT offset, STYLESTRUCT *style);
 extern void macdrv_SetWindowText(HWND hwnd, LPCWSTR text);
 extern UINT macdrv_ShowWindow(HWND hwnd, INT cmd, RECT *rect, UINT swp);
-extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam);
-extern void macdrv_UpdateLayeredWindow(HWND hwnd, UINT flags);
+extern LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos);
+extern void macdrv_UpdateLayeredWindow(HWND hwnd, BYTE alpha, UINT flags);
 extern LRESULT macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 extern BOOL macdrv_WindowPosChanging(HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects);
 extern BOOL macdrv_GetWindowStyleMasks(HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask);
 extern BOOL macdrv_CreateWindowSurface(HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface);
-extern void macdrv_MoveWindowBits(HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects);
-extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
-                                    struct window_surface *surface);
+extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+                                    const struct window_rects *new_rects, struct window_surface *surface);
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor);
 extern BOOL macdrv_GetCursorPos(LPPOINT pos);
 extern void macdrv_SetCapture(HWND hwnd, UINT flags);
@@ -172,7 +166,8 @@ extern INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyStat
                               LPWSTR bufW, int bufW_size, UINT flags, HKL hkl);
 extern UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list);
 extern INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size);
-extern void macdrv_NotifyIMEStatus( HWND hwnd, UINT status );
+extern void macdrv_NotifyIMEStatus(HWND hwnd, UINT status);
+extern BOOL macdrv_SetIMECompositionRect(HWND hwnd, RECT rect);
 extern BOOL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_param,
                                         UINT flags);
 extern BOOL macdrv_ProcessEvents(DWORD mask);
@@ -246,7 +241,7 @@ extern void macdrv_UpdateClipboard(void);
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type);
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd);
 
-extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version);
+extern UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **opengl_funcs, const struct opengl_driver_funcs **driver_funcs);
 extern UINT macdrv_VulkanInit(UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs);
 extern void sync_gl_view(struct macdrv_win_data* data, const struct window_rects *old_rects);
 
@@ -263,13 +258,7 @@ extern void macdrv_status_item_mouse_move(const macdrv_event *event);
 extern void check_retina_status(void);
 extern void init_user_driver(void);
 
-/* unixlib interface */
-
-extern NTSTATUS macdrv_dnd_get_data(void *arg);
-extern NTSTATUS macdrv_dnd_get_formats(void *arg);
-extern NTSTATUS macdrv_dnd_have_format(void *arg);
-extern NTSTATUS macdrv_dnd_release(void *arg);
-extern NTSTATUS macdrv_dnd_retain(void *arg);
+extern struct format_entry *get_format_entries(CFTypeRef pasteboard, UINT *entries_size);
 
 /* user helpers */
 

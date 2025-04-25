@@ -142,12 +142,24 @@ static HRESULT stack_pop_object(script_ctx_t *ctx, IDispatch **r)
 
 static inline HRESULT stack_pop_int(script_ctx_t *ctx, INT *r)
 {
-    return to_int32(ctx, stack_pop(ctx), r);
+    jsval_t v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    hres = to_int32(ctx, v, r);
+    jsval_release(v);
+    return hres;
 }
 
 static inline HRESULT stack_pop_uint(script_ctx_t *ctx, UINT32 *r)
 {
-    return to_uint32(ctx, stack_pop(ctx), r);
+    jsval_t v;
+    HRESULT hres;
+
+    v = stack_pop(ctx);
+    hres = to_uint32(ctx, v, r);
+    jsval_release(v);
+    return hres;
 }
 
 static inline unsigned local_off(call_frame_t *frame, int ref)
@@ -1840,7 +1852,7 @@ static HRESULT interp_carray_set(script_ctx_t *ctx)
     array = stack_top(ctx);
     assert(is_object_instance(array));
 
-    hres = jsdisp_propput_idx(to_jsdisp(get_object(array)), index, value);
+    hres = jsdisp_propput_idx(as_jsdisp(get_object(array)), index, value);
     jsval_release(value);
     return hres;
 }
@@ -1887,7 +1899,7 @@ static HRESULT interp_obj_prop(script_ctx_t *ctx)
         jsdisp_t *func;
 
         assert(is_object_instance(val));
-        func = to_jsdisp(get_object(val));
+        func = as_jsdisp(get_object(val));
 
         desc.mask = desc.flags;
         if(type == PROPERTY_DEFINITION_GETTER) {

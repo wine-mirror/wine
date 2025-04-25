@@ -424,6 +424,23 @@ NTSTATUS WINAPI wow64_NtAllocateLocallyUniqueId( UINT *args )
     return NtAllocateLocallyUniqueId( luid );
 }
 
+/**********************************************************************
+ *           wow64_NtAllocateReserveObject
+ */
+NTSTATUS WINAPI wow64_NtAllocateReserveObject( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    MEMORY_RESERVE_OBJECT_TYPE type = get_ulong( &args );
+    NTSTATUS status;
+
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+
+    status = NtAllocateReserveObject( &handle, objattr_32to64( &attr, attr32 ), type );
+    put_handle( handle_ptr, handle );
+    return status;
+}
 
 /**********************************************************************
  *           wow64_NtAllocateUuids
@@ -472,24 +489,39 @@ NTSTATUS WINAPI wow64_NtClose( UINT *args )
 
 
 /**********************************************************************
- *           wow64_NtContinue
+ *           wow64_NtContinueEx
  */
-NTSTATUS WINAPI wow64_NtContinue( UINT *args )
+NTSTATUS WINAPI wow64_NtContinueEx( UINT *args )
 {
     void *context = get_ptr( &args );
-    BOOLEAN alertable = get_ulong( &args );
+    KCONTINUE_ARGUMENT *cont_args = get_ptr( &args );
 
     NTSTATUS status = get_context_return_value( context );
     struct user_apc_frame *frame = NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST];
+    BOOL alertable;
 
     pBTCpuSetContext( GetCurrentThread(), GetCurrentProcess(), NULL, context );
 
     while (frame && frame->wow_context != context) frame = frame->prev_frame;
     NtCurrentTeb()->TlsSlots[WOW64_TLS_APCLIST] = frame ? frame->prev_frame : NULL;
-    if (frame) NtContinue( frame->context, alertable );
+    if (frame) NtContinueEx( frame->context, cont_args );
+
+    if ((UINT_PTR)cont_args > 0xff)
+        alertable = cont_args->ContinueFlags & KCONTINUE_FLAG_TEST_ALERT;
+    else
+        alertable = !!cont_args;
 
     if (alertable) NtTestAlert();
     return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtContinue
+ */
+NTSTATUS WINAPI wow64_NtContinue( UINT *args )
+{
+    return wow64_NtContinueEx( args );
 }
 
 

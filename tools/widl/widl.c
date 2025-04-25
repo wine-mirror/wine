@@ -243,7 +243,7 @@ static void add_widl_version_define(void)
     if (p)
         version += atoi(p + 1);
 
-    sprintf(version_str, "__WIDL__=0x%x", version);
+    snprintf(version_str, sizeof(version_str), "__WIDL__=0x%x", version);
     wpp_add_cmdline_define(version_str);
 }
 
@@ -365,7 +365,7 @@ void write_dlldata(const statement_list_t *stmts)
     fclose(dlldata);
   }
 
-  if (strarray_exists( &filenames, proxy_token ))
+  if (strarray_exists( filenames, proxy_token ))
       /* We're already in the list, no need to regenerate this file.  */
       return;
 

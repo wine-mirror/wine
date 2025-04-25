@@ -76,12 +76,9 @@ typedef struct jsdisp_t jsdisp_t;
 extern HINSTANCE jscript_hinstance ;
 HRESULT get_dispatch_typeinfo(ITypeInfo**);
 
-#define PROPF_ARGMASK       0x00ff
-#define PROPF_METHOD        0x0100
-#define PROPF_CONSTR        0x0200
-
 #define PROPF_ALL           (PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE)
 
+#define PROPF_ARGMASK       0x000000ff
 #define PROPF_VERSION_MASK  0x01ff0000
 #define PROPF_VERSION_SHIFT 16
 #define PROPF_HTML          (SCRIPTLANGUAGEVERSION_HTML << PROPF_VERSION_SHIFT)
@@ -281,7 +278,7 @@ HRESULT create_builtin_function(script_ctx_t*,builtin_invoke_t,const WCHAR*,cons
         jsdisp_t*,jsdisp_t**);
 HRESULT create_builtin_constructor(script_ctx_t*,builtin_invoke_t,const WCHAR*,const builtin_info_t*,DWORD,
         jsdisp_t*,jsdisp_t**);
-HRESULT create_host_function(script_ctx_t*,const struct property_info*,jsdisp_t**);
+HRESULT create_host_function(script_ctx_t*,const struct property_info*,DWORD,jsdisp_t**);
 HRESULT Function_invoke(jsdisp_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
 
 HRESULT Function_value(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*);
@@ -530,6 +527,7 @@ static inline HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_
 #define JS_E_INVALID_PROPERTY        MAKE_JSERROR(IDS_NO_PROPERTY)
 #define JS_E_INVALID_ACTION          MAKE_JSERROR(IDS_UNSUPPORTED_ACTION)
 #define JS_E_MISSING_ARG             MAKE_JSERROR(IDS_ARG_NOT_OPT)
+#define JS_E_OBJECT_NOT_COLLECTION   MAKE_JSERROR(IDS_OBJECT_NOT_COLLECTION)
 #define JS_E_SYNTAX                  MAKE_JSERROR(IDS_SYNTAX_ERROR)
 #define JS_E_MISSING_SEMICOLON       MAKE_JSERROR(IDS_SEMICOLON)
 #define JS_E_MISSING_LBRACKET        MAKE_JSERROR(IDS_LBRACKET)

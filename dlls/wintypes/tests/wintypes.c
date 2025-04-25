@@ -25,11 +25,267 @@
 
 #include "initguid.h"
 #include "roapi.h"
+#include "rometadataresolution.h"
 
+#define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Metadata
 #include "windows.foundation.metadata.h"
+#include "wintypes_test.h"
+
+#define WIDL_using_Windows_Storage_Streams
+#include "windows.storage.streams.h"
+
+#include "robuffer.h"
 
 #include "wine/test.h"
+
+static BOOL is_wow64;
+
+#define check_interface(obj, iid, supported) check_interface_(__LINE__, obj, iid, supported)
+static void check_interface_(unsigned int line, void *obj, const IID *iid, BOOL supported)
+{
+    HRESULT hr, expected_hr;
+    IUnknown *iface = obj;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
+static void test_interfaces(void)
+{
+    static WCHAR class_name[1024];
+    IActivationFactory *factory;
+    IUnknown *unk;
+    HSTRING str;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    wcscpy(class_name, L"Windows.Foundation.Metadata.ApiInformation");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* pre-win8 */, "Got hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        check_interface(factory, &IID_IUnknown, TRUE);
+        check_interface(factory, &IID_IInspectable, TRUE);
+        check_interface(factory, &IID_IAgileObject, TRUE);
+        check_interface(factory, &IID_IActivationFactory, TRUE);
+        check_interface(factory, &IID_IApiInformationStatics, TRUE);
+        check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+        IActivationFactory_Release(factory);
+    }
+    else
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Foundation.PropertyValue");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, TRUE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Storage.Streams.DataWriter");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    todo_wine check_interface(factory, &IID_IDataWriterFactory, TRUE);
+    check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, FALSE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    wcscpy(class_name, L"Windows.Storage.Streams.RandomAccessStreamReference");
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&unk);
+    ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* pre win10 v1809 */, "Got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(unk);
+    check_interface(factory, &IID_IActivationFactory, TRUE);
+    check_interface(factory, &IID_IDataWriterFactory, FALSE);
+    check_interface(factory, &IID_IRandomAccessStreamReferenceStatics, TRUE);
+    check_interface(factory, &IID_IApiInformationStatics, FALSE);
+    check_interface(factory, &IID_IPropertyValueStatics, FALSE);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+
+    RoUninitialize();
+}
+
+static void test_IBufferStatics(void)
+{
+    static const WCHAR *class_name = L"Windows.Storage.Streams.Buffer";
+    IBufferByteAccess *buffer_byte_access = NULL;
+    IBufferFactory *buffer_factory = NULL;
+    IActivationFactory *factory = NULL;
+    UINT32 capacity, length;
+    IBuffer *buffer = NULL;
+    HSTRING str;
+    HRESULT hr;
+    BYTE *data;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        RoUninitialize();
+        return;
+    }
+
+    check_interface(factory, &IID_IUnknown, TRUE);
+    check_interface(factory, &IID_IInspectable, TRUE);
+    check_interface(factory, &IID_IAgileObject, TRUE);
+    check_interface(factory, &IID_IBufferByteAccess, FALSE);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IBufferFactory, (void **)&buffer_factory);
+    ok(hr == S_OK, "QueryInterface IID_IBufferFactory failed, hr %#lx.\n", hr);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBufferFactory_Create(buffer_factory, 0, NULL);
+    ok(hr == E_INVALIDARG, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+    }
+
+    hr = IBufferFactory_Create(buffer_factory, 0, &buffer);
+    ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+
+    check_interface(buffer, &IID_IAgileObject, TRUE);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBuffer_get_Capacity(buffer, NULL);
+    ok(hr == E_INVALIDARG, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    }
+
+    capacity = 0xdeadbeef;
+    hr = IBuffer_get_Capacity(buffer, &capacity);
+    ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    ok(capacity == 0, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBuffer_get_Length(buffer, NULL);
+    ok(hr == E_INVALIDARG, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    }
+
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 1);
+    ok(hr == E_INVALIDARG, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+
+    hr = IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&buffer_byte_access);
+    ok(hr == S_OK, "QueryInterface IID_IBufferByteAccess failed, hr %#lx.\n", hr);
+
+    check_interface(buffer_byte_access, &IID_IInspectable, TRUE);
+    check_interface(buffer_byte_access, &IID_IAgileObject, TRUE);
+    check_interface(buffer_byte_access, &IID_IBuffer, TRUE);
+
+    if (0) /* Crash on Windows */
+    {
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, NULL);
+    ok(hr == E_INVALIDARG, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+    }
+
+    data = NULL;
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, &data);
+    ok(hr == S_OK, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+    ok(data != NULL, "IBufferByteAccess_Buffer returned NULL data.\n");
+
+    IBufferByteAccess_Release(buffer_byte_access);
+    IBuffer_Release(buffer);
+
+    hr = IBufferFactory_Create(buffer_factory, 100, &buffer);
+    ok(hr == S_OK, "IBufferFactory_Create failed, hr %#lx.\n", hr);
+
+    capacity = 0;
+    hr = IBuffer_get_Capacity(buffer, &capacity);
+    ok(hr == S_OK, "IBuffer_get_Capacity failed, hr %#lx.\n", hr);
+    ok(capacity == 100, "IBuffer_get_Capacity returned capacity %u.\n", capacity);
+
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 1);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 1, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_put_Length(buffer, 100 + 1);
+    ok(hr == E_INVALIDARG, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+
+    hr = IBuffer_put_Length(buffer, 100);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    length = 0;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 100, "IBuffer_get_Length returned length %u.\n", length);
+
+    hr = IBuffer_QueryInterface(buffer, &IID_IBufferByteAccess, (void **)&buffer_byte_access);
+    ok(hr == S_OK, "QueryInterface IID_IBufferByteAccess failed, hr %#lx.\n", hr);
+
+    hr = IBufferByteAccess_Buffer(buffer_byte_access, &data);
+    ok(hr == S_OK, "IBufferByteAccess_Buffer failed, hr %#lx.\n", hr);
+
+    /* Windows does not zero out data when changing Length */
+
+    hr = IBuffer_put_Length(buffer, 0);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    data[0] = 1;
+    data[10] = 10;
+    length = 0xdeadbeef;
+    hr = IBuffer_get_Length(buffer, &length);
+    ok(hr == S_OK, "IBuffer_get_Length failed, hr %#lx.\n", hr);
+    ok(length == 0, "IBuffer_get_Length returned length %u.\n", length);
+    hr = IBuffer_put_Length(buffer, 1);
+    ok(hr == S_OK, "IBuffer_put_Length failed, hr %#lx.\n", hr);
+    ok(data[0] == 1, "Buffer returned %#x.\n", data[0]);
+    ok(data[10] == 10, "Buffer returned %#x.\n", data[10]);
+
+    IBufferByteAccess_Release(buffer_byte_access);
+    IBuffer_Release(buffer);
+    IBufferFactory_Release(buffer_factory);
+    IActivationFactory_Release(factory);
+    RoUninitialize();
+}
 
 static void test_IApiInformationStatics(void)
 {
@@ -457,7 +713,513 @@ static void test_IApiInformationStatics(void)
     RoUninitialize();
 }
 
+static void test_IPropertyValueStatics(void)
+{
+    static const WCHAR *class_name = L"Windows.Foundation.PropertyValue";
+    static const BYTE byte_value = 0x12;
+    static const INT16 int16_value = 0x1234;
+    static const UINT16 uint16_value = 0x1234;
+    static const INT32 int32_value= 0x1234abcd;
+    static const UINT32 uint32_value = 0x1234abcd;
+    static const INT64 int64_value = 0x12345678abcdef;
+    static const UINT64 uint64_value = 0x12345678abcdef;
+    static const FLOAT float_value = 1.5;
+    static const DOUBLE double_value = 1.5;
+    static const WCHAR wchar_value = 0x1234;
+    static const boolean boolean_value = TRUE;
+    static const struct DateTime datetime_value = {0x12345678abcdef};
+    static const struct TimeSpan timespan_value = {0x12345678abcdef};
+    static const struct Point point_value = {1, 2};
+    static const struct Size size_value = {1, 2};
+    static const struct Rect rect_value = {1, 2, 3, 4};
+    IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
+    IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
+    IPropertyValueStatics *statics = NULL;
+    IActivationFactory *factory = NULL;
+    IReference_boolean *iref_boolean;
+    IReference_HSTRING *iref_hstring;
+    IReference_DOUBLE *iref_double;
+    IPropertyValue *value = NULL;
+    enum PropertyType type;
+    unsigned int i, count;
+    BYTE byte, *ptr_byte;
+    HSTRING str, ret_str;
+    DOUBLE ret_double;
+    boolean ret;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        WindowsDeleteString(str);
+        RoUninitialize();
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IPropertyValueStatics, (void **)&statics);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_QueryInterface(statics, &IID_IInspectable, (void **)&tmp_inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(tmp_inspectable == inspectable, "QueryInterface IID_IInspectable returned %p, expected %p.\n",
+            tmp_inspectable, inspectable);
+    IInspectable_Release(tmp_inspectable);
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValueStatics_QueryInterface(statics, &IID_IAgileObject, (void **)&tmp_agile_object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(tmp_agile_object == agile_object, "QueryInterface IID_IAgileObject returned %p, expected %p.\n",
+            tmp_agile_object, agile_object);
+    IAgileObject_Release(tmp_agile_object);
+    IAgileObject_Release(agile_object);
+
+    /* Parameter checks */
+    hr = IPropertyValueStatics_CreateUInt8(statics, 0x12, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8(statics, 0x12, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValue_get_Type(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, &ret);
+    ok(hr == TYPE_E_TYPEMISMATCH, "Got unexpected hr %#lx.\n", hr);
+
+    IPropertyValue_Release(value);
+
+    /* Parameter checks for array types */
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, NULL, &inspectable);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, &byte, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValueStatics_CreateUInt8Array(statics, 1, &byte, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");
+    IInspectable_Release(inspectable);
+
+    hr = IPropertyValue_get_Type(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetBoolean(value, &ret);
+    ok(hr == TYPE_E_TYPEMISMATCH, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, NULL, &ptr_byte);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, &count, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IPropertyValue_GetUInt8Array(value, &count, &ptr_byte);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    IPropertyValue_Release(value);
+
+    /* PropertyType_Empty */
+    hr = IPropertyValueStatics_CreateEmpty(statics, NULL);
+    ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+    inspectable = (IInspectable *)0xdeadbeef;
+    hr = IPropertyValueStatics_CreateEmpty(statics, &inspectable);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(inspectable == NULL, "Got unexpected inspectable.\n");
+
+    /* Test a single property value */
+#define TEST_PROPERTY_VALUE(PROPERTY_TYPE, TYPE, VALUE)                                      \
+    do                                                                                       \
+    {                                                                                        \
+        TYPE expected_value;                                                                 \
+                                                                                             \
+        inspectable = NULL;                                                                  \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, VALUE, &inspectable);      \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(inspectable != NULL, "Got unexpected inspectable.\n");                            \
+                                                                                             \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value); \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        IInspectable_Release(inspectable);                                                   \
+                                                                                             \
+        hr = IPropertyValue_get_Type(value, &type);                                          \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(type == PropertyType_##PROPERTY_TYPE, "Got unexpected type %d.\n",                \
+           PropertyType_##PROPERTY_TYPE);                                                    \
+                                                                                             \
+        ret = TRUE;                                                                          \
+        hr = IPropertyValue_get_IsNumericScalar(value, &ret);                                \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(ret == FALSE, "Expected not numeric scalar.\n");                                  \
+                                                                                             \
+        hr = IPropertyValue_Get##PROPERTY_TYPE(value, &expected_value);                      \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(!memcmp(&VALUE, &expected_value, sizeof(VALUE)), "Got unexpected value.\n");      \
+                                                                                             \
+        IPropertyValue_Release(value);                                                       \
+    } while (0);
+
+    TEST_PROPERTY_VALUE(UInt8, BYTE, byte_value)
+    TEST_PROPERTY_VALUE(Int16, INT16, int16_value)
+    TEST_PROPERTY_VALUE(UInt16, UINT16, uint16_value)
+    TEST_PROPERTY_VALUE(Int32, INT32, int32_value)
+    TEST_PROPERTY_VALUE(UInt32, UINT32, uint32_value)
+    TEST_PROPERTY_VALUE(Int64, INT64, int64_value)
+    TEST_PROPERTY_VALUE(UInt64, UINT64, uint64_value)
+    TEST_PROPERTY_VALUE(Single, FLOAT, float_value)
+    TEST_PROPERTY_VALUE(Double, DOUBLE, double_value)
+    TEST_PROPERTY_VALUE(Char16, WCHAR, wchar_value)
+    TEST_PROPERTY_VALUE(Boolean, boolean, boolean_value)
+    TEST_PROPERTY_VALUE(String, HSTRING, str)
+    TEST_PROPERTY_VALUE(DateTime, DateTime, datetime_value)
+    TEST_PROPERTY_VALUE(TimeSpan, TimeSpan, timespan_value)
+    TEST_PROPERTY_VALUE(Guid, GUID, IID_IPropertyValue)
+    TEST_PROPERTY_VALUE(Point, Point, point_value)
+    TEST_PROPERTY_VALUE(Size, Size, size_value)
+    TEST_PROPERTY_VALUE(Rect, Rect, rect_value)
+
+#undef TEST_PROPERTY_VALUE
+
+    /* Test property value array */
+#define TEST_PROPERTY_COUNT 2
+#define TEST_PROPERTY_VALUE_ARRAY(PROPERTY_TYPE, TYPE, VALUE)                                   \
+    do                                                                                          \
+    {                                                                                           \
+        TYPE values[TEST_PROPERTY_COUNT], *expected_values;                                     \
+                                                                                                \
+        for (i = 0; i < TEST_PROPERTY_COUNT; i++)                                               \
+            memcpy(&values[i], &VALUE, sizeof(VALUE));                                          \
+                                                                                                \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, TEST_PROPERTY_COUNT, values,  \
+                                                         NULL);                                 \
+        ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);                                   \
+                                                                                                \
+        inspectable = NULL;                                                                     \
+        hr = IPropertyValueStatics_Create##PROPERTY_TYPE(statics, TEST_PROPERTY_COUNT, values,  \
+                                                         &inspectable);                         \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(inspectable != NULL, "Got unexpected inspectable.\n");                               \
+                                                                                                \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value);    \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        IInspectable_Release(inspectable);                                                      \
+                                                                                                \
+        hr = IPropertyValue_get_Type(value, &type);                                             \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(type == PropertyType_##PROPERTY_TYPE, "Got unexpected type %d.\n",                   \
+           PropertyType_##PROPERTY_TYPE);                                                       \
+                                                                                                \
+        ret = TRUE;                                                                             \
+        hr = IPropertyValue_get_IsNumericScalar(value, &ret);                                   \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(ret == FALSE, "Expected not numeric scalar.\n");                                     \
+                                                                                                \
+        count = 0;                                                                              \
+        hr = IPropertyValue_Get##PROPERTY_TYPE(value, &count, &expected_values);                \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                        \
+        ok(count == TEST_PROPERTY_COUNT, "Got unexpected count %u.\n", count);                  \
+        ok(expected_values != values, "Got same pointer.\n");                                   \
+        for (i = 0; i < TEST_PROPERTY_COUNT; i++)                                               \
+            ok(!memcmp(&VALUE, &expected_values[i], sizeof(VALUE)), "Got unexpected value.\n"); \
+                                                                                                \
+        IPropertyValue_Release(value);                                                          \
+    } while (0);
+
+    TEST_PROPERTY_VALUE_ARRAY(UInt8Array, BYTE, byte_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int16Array, INT16, int16_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt16Array, UINT16, uint16_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int32Array, INT32, int32_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt32Array, UINT32, uint32_value)
+    TEST_PROPERTY_VALUE_ARRAY(Int64Array, INT64, int64_value)
+    TEST_PROPERTY_VALUE_ARRAY(UInt64Array, UINT64, uint64_value)
+    TEST_PROPERTY_VALUE_ARRAY(SingleArray, FLOAT, float_value)
+    TEST_PROPERTY_VALUE_ARRAY(DoubleArray, DOUBLE, double_value)
+    TEST_PROPERTY_VALUE_ARRAY(Char16Array, WCHAR, wchar_value)
+    TEST_PROPERTY_VALUE_ARRAY(BooleanArray, boolean, boolean_value)
+    TEST_PROPERTY_VALUE_ARRAY(StringArray, HSTRING, str)
+    TEST_PROPERTY_VALUE_ARRAY(DateTimeArray, DateTime, datetime_value)
+    TEST_PROPERTY_VALUE_ARRAY(TimeSpanArray, TimeSpan, timespan_value)
+    TEST_PROPERTY_VALUE_ARRAY(GuidArray, GUID, IID_IPropertyValue)
+    TEST_PROPERTY_VALUE_ARRAY(PointArray, Point, point_value)
+    TEST_PROPERTY_VALUE_ARRAY(SizeArray, Size, size_value)
+    TEST_PROPERTY_VALUE_ARRAY(RectArray, Rect, rect_value)
+
+#undef TEST_PROPERTY_VALUE_ARRAY
+#undef TEST_PROPERTY_COUNT
+
+    /* Test IReference<*> interface */
+#define TEST_PROPERTY_VALUE_IREFERENCE(TYPE, IFACE_TYPE, VALUE, RET_OBJ, RET_VALUE)          \
+    do                                                                                       \
+    {                                                                                        \
+        hr = IPropertyValueStatics_Create##TYPE(statics, VALUE, &inspectable);               \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+                                                                                             \
+        hr = IInspectable_QueryInterface(inspectable, &IID_IPropertyValue, (void **)&value); \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(value == (IPropertyValue *)inspectable, "Expected the same pointer.\n");          \
+                                                                                             \
+        hr = IPropertyValue_QueryInterface(value, &IID_##IFACE_TYPE, (void **)&RET_OBJ);     \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+                                                                                             \
+        hr = IFACE_TYPE##_get_Value(RET_OBJ, &RET_VALUE);                                    \
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
+        ok(RET_VALUE == VALUE, "Got unexpected value.\n");                                   \
+                                                                                             \
+        IFACE_TYPE##_Release(RET_OBJ);                                                       \
+        IPropertyValue_Release(value);                                                       \
+        IInspectable_Release(inspectable);                                                   \
+    } while (0);
+
+    TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, TRUE, iref_boolean, ret)
+    TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
+    TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, 1.5, iref_double, ret_double)
+
+#undef TEST_PROPERTY_VALUE_IREFERENCE
+
+    IPropertyValueStatics_Release(statics);
+    IActivationFactory_Release(factory);
+    WindowsDeleteString(str);
+    RoUninitialize();
+}
+
+static void test_RoResolveNamespace(void)
+{
+    static const WCHAR foundation[] = L"c:\\windows\\system32\\winmetadata\\windows.foundation.winmd";
+    static const WCHAR foundation_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.foundation.winmd";
+    static const WCHAR networking[] = L"c:\\windows\\system32\\winmetadata\\windows.networking.winmd";
+    static const WCHAR networking_wow64[] = L"c:\\windows\\sysnative\\winmetadata\\windows.networking.winmd";
+    HSTRING name, *paths;
+    DWORD count, i;
+    HRESULT hr;
+    static const struct
+    {
+        const WCHAR *namespace;
+        DWORD        len_namespace;
+        const WCHAR *path;
+        const WCHAR *path_wow64;
+    }
+    tests[] =
+    {
+        { L"Windows.Networking.Connectivity", ARRAY_SIZE(L"Windows.Networking.Connectivity") - 1,
+          networking, networking_wow64 },
+        { L"Windows.Foundation", ARRAY_SIZE(L"Windows.Foundation") - 1,
+          foundation, foundation_wow64 },
+    };
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%lu: ", i);
+        hr = WindowsCreateString(tests[i].namespace, tests[i].len_namespace, &name);
+        ok(hr == S_OK, "got %#lx\n", hr);
+
+        count = 0;
+        hr = RoResolveNamespace(name, NULL, 0, NULL, &count, &paths, 0, NULL);
+        todo_wine ok(hr == S_OK, "got %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            const WCHAR *str = WindowsGetStringRawBuffer(paths[0], NULL);
+
+            ok(count == 1, "got %lu\n", count);
+            ok((!is_wow64 && !wcsicmp( str, tests[i].path )) ||
+               (is_wow64 && !wcsicmp( str, tests[i].path_wow64 )) ||
+               broken(is_wow64 && !wcsicmp( str, tests[i].path )) /* win8, win10 1507 */,
+               "got %s\n", wine_dbgstr_w(str) );
+
+            WindowsDeleteString(paths[0]);
+            CoTaskMemFree(paths);
+        }
+
+        WindowsDeleteString(name);
+        winetest_pop_context();
+    }
+
+    RoUninitialize();
+}
+
+static void test_RoParseTypeName(void)
+{
+    static const struct
+    {
+        const WCHAR *type_name;
+        HRESULT hr;
+        DWORD parts_count;
+        const WCHAR *parts[16];
+    }
+    tests[] =
+    {
+        /* Invalid type names */
+        {L"", E_INVALIDARG},
+        {L" ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"<", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L">", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L",", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a b", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a,b", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"1<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`<b> ", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"`1<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L" a`1<b>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<b>c", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`1<b,>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`2<b, <c, d>>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`10<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`0xa<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        {L"a`a<b1, b2, b3, b4, b5, b6, b7, b8, b9, b10>", RO_E_METADATA_INVALID_TYPE_FORMAT},
+        /* Valid type names */
+        {L"1", S_OK, 1, {L"1"}},
+        {L"a", S_OK, 1, {L"a"}},
+        {L"-", S_OK, 1, {L"-"}},
+        {L"a ", S_OK, 1, {L"a"}},
+        {L"0`1<b>", S_OK, 2, {L"0`1", L"b"}},
+        {L"a`1<b>", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1<b> ", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1<b >", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1< b>", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`1< b >", S_OK, 2, {L"a`1", L"b"}},
+        {L"a`2<b,c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b, c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b ,c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`2<b , c>", S_OK, 3, {L"a`2", L"b", L"c"}},
+        {L"a`3<b, c, d>", S_OK, 4, {L"a`3", L"b", L"c", L"d"}},
+        {L"a`1<b`1<c>>", S_OK, 3, {L"a`1", L"b`1", L"c"}},
+        {L"a`1<b`2<c, d>>", S_OK, 4, {L"a`1", L"b`2", L"c", L"d"}},
+        {L"a`2<b`2<c, d>, e>", S_OK, 5, {L"a`2", L"b`2", L"c", L"d", L"e"}},
+        {L"a`2<b, c`2<d, e>>", S_OK, 5, {L"a`2", L"b", L"c`2", L"d", L"e"}},
+        {L"a`9<b1, b2, b3, b4, b5, b6, b7, b8, b9>", S_OK, 10, {L"a`9", L"b1", L"b2", L"b3", L"b4", L"b5", L"b6", L"b7", L"b8", L"b9"}},
+        {L"Windows.Foundation.IExtensionInformation", S_OK, 1, {L"Windows.Foundation.IExtensionInformation"}},
+        {L"Windows.Foundation.IReference`1<Windows.UI.Color>", S_OK, 2, {L"Windows.Foundation.IReference`1", L"Windows.UI.Color"}},
+        {L"Windows.Foundation.Collections.IIterator`1<Windows.Foundation.Collections.IMapView`2<Windows.Foundation.Collections.IVector`1<String>, String>>",
+         S_OK, 5, {L"Windows.Foundation.Collections.IIterator`1",
+                   L"Windows.Foundation.Collections.IMapView`2",
+                   L"Windows.Foundation.Collections.IVector`1",
+                   L"String",
+                   L"String"}},
+    };
+    HSTRING type_name, *parts;
+    const WCHAR *buffer;
+    DWORD parts_count;
+    unsigned int i, j;
+    HRESULT hr;
+
+    /* Parameter checks */
+    hr = WindowsCreateString(L"a", 1, &type_name);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = RoParseTypeName(NULL, &parts_count, &parts);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    /* Crash on Windows */
+    if (0)
+    {
+    hr = RoParseTypeName(type_name, NULL, &parts);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    hr = RoParseTypeName(type_name, &parts_count, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    }
+
+    hr = RoParseTypeName(type_name, &parts_count, &parts);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(parts_count == 1, "Got unexpected %ld.\n", parts_count);
+    hr = WindowsDeleteString(parts[0]);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    CoTaskMemFree(parts);
+    hr = WindowsDeleteString(type_name);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Parsing checks */
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%s", wine_dbgstr_w(tests[i].type_name));
+
+        if (tests[i].type_name)
+        {
+            hr = WindowsCreateString(tests[i].type_name, wcslen(tests[i].type_name), &type_name);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+        else
+        {
+            type_name = NULL;
+        }
+
+        parts_count = 0;
+        hr = RoParseTypeName(type_name, &parts_count, &parts);
+        ok(hr == tests[i].hr, "Got unexpected hr %#lx.\n", hr);
+        if (FAILED(hr))
+        {
+            hr = WindowsDeleteString(type_name);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            winetest_pop_context();
+            continue;
+        }
+        ok(parts_count == tests[i].parts_count, "Got unexpected %lu.\n", parts_count);
+
+        for (j = 0; j < parts_count; j++)
+        {
+            winetest_push_context("%s", wine_dbgstr_w(tests[i].parts[j]));
+
+            buffer = WindowsGetStringRawBuffer(parts[j], NULL);
+            ok(!lstrcmpW(tests[i].parts[j], buffer), "Got unexpected %s.\n", wine_dbgstr_w(buffer));
+            hr = WindowsDeleteString(parts[j]);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            winetest_pop_context();
+        }
+        CoTaskMemFree(parts);
+
+        hr = WindowsDeleteString(type_name);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        winetest_pop_context();
+    }
+}
+
 START_TEST(wintypes)
 {
+    IsWow64Process(GetCurrentProcess(), &is_wow64);
+
+    test_interfaces();
     test_IApiInformationStatics();
+    test_IBufferStatics();
+    test_IPropertyValueStatics();
+    test_RoParseTypeName();
+    test_RoResolveNamespace();
 }

@@ -231,22 +231,30 @@ static void init_options(void)
 unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
     int min, max, pos, res;
+    unsigned char flags;
+
+    if (!(channel->flags & (1 << __WINE_DBCL_INIT))) return channel->flags;
 
     if (nb_debug_options == -1) init_options();
 
+    flags = default_flags;
     min = 0;
     max = nb_debug_options - 1;
     while (min <= max)
     {
         pos = (min + max) / 2;
         res = strcmp( channel->name, debug_options[pos].name );
-        if (!res) return debug_options[pos].flags;
+        if (!res)
+        {
+            flags = debug_options[pos].flags;
+            break;
+        }
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
-    /* no option for this channel */
-    if (channel->flags & (1 << __WINE_DBCL_INIT)) channel->flags = default_flags;
-    return default_flags;
+
+    if (!(flags & (1 << __WINE_DBCL_INIT))) channel->flags = flags; /* not dynamically changeable */
+    return flags;
 }
 
 /***********************************************************************

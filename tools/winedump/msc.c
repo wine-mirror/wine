@@ -79,7 +79,7 @@ static int full_numeric_leaf(struct full_value *fv, const unsigned char *leaf)
 
         case LF_USHORT:
             length += 2;
-            fv->v.i = *leaf;
+            fv->v.i = *(const unsigned short*)leaf;
             break;
 
         case LF_LONG:
@@ -676,21 +676,21 @@ static void do_field(const unsigned char* start, const unsigned char* end)
             printf("\t\tFriend function V1: '%s' type:%x\n",
                    p_string(&fieldtype->friendfcn_v1.p_name),
                    fieldtype->friendfcn_v1.type);
-            ptr += 2 + 2 + (1 + fieldtype->stmember_v2.p_name.namelen);
+            ptr += 2 + 2 + (1 + fieldtype->friendfcn_v1.p_name.namelen);
             break;
 
         case LF_FRIENDFCN_V2:
             printf("\t\tFriend function V2: '%s' type:%x\n",
                    p_string(&fieldtype->friendfcn_v2.p_name),
                    fieldtype->friendfcn_v2.type);
-            ptr += 2 + 2 + 4 + (1 + fieldtype->stmember_v2.p_name.namelen);
+            ptr += 2 + 2 + 4 + (1 + fieldtype->friendfcn_v2.p_name.namelen);
             break;
 
         case LF_FRIENDFCN_V3:
             printf("\t\tFriend function V3: '%s' type:%x\n",
                    fieldtype->friendfcn_v3.name,
                    fieldtype->friendfcn_v3.type);
-            ptr += 2 + 2 + 4 + (strlen(fieldtype->stmember_v3.name) + 1);
+            ptr += 2 + 2 + 4 + (strlen(fieldtype->friendfcn_v3.name) + 1);
             break;
 
         case LF_BCLASS_V1:
@@ -713,7 +713,7 @@ static void do_field(const unsigned char* start, const unsigned char* end)
         case LF_IVBCLASS_V1:
             leaf_len = numeric_leaf(&value, fieldtype->vbclass_v1.data);
             printf("\t\t%sirtual base class V1: type:%x (ptr:%x) attr:%s vbpoff:%d ",
-                   (fieldtype->generic.id == LF_VBCLASS_V2) ? "V" : "Indirect v",
+                   (fieldtype->generic.id == LF_VBCLASS_V1) ? "V" : "Indirect v",
                    fieldtype->vbclass_v1.btype, fieldtype->vbclass_v1.vbtype,
                    get_attr(fieldtype->vbclass_v1.attribute), value);
             ptr += 2 + 2 + 2 + 2 + leaf_len;
@@ -724,7 +724,7 @@ static void do_field(const unsigned char* start, const unsigned char* end)
 
         case LF_VBCLASS_V2:
         case LF_IVBCLASS_V2:
-            leaf_len = numeric_leaf(&value, fieldtype->vbclass_v1.data);
+            leaf_len = numeric_leaf(&value, fieldtype->vbclass_v2.data);
             printf("\t\t%sirtual base class V2: type:%x (ptr:%x) attr:%s vbpoff:%d ",
                    (fieldtype->generic.id == LF_VBCLASS_V2) ? "V" : "Indirect v",
                    fieldtype->vbclass_v2.btype, fieldtype->vbclass_v2.vbtype,
@@ -902,7 +902,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                str, type->struct_v3.n_element, get_property(type->struct_v3.property),
                type->struct_v3.fieldlist, type->struct_v3.derived,
                type->struct_v3.vshape, value);
-        if (type->union_v3.property.has_decorated_name)
+        if (type->struct_v3.property.has_decorated_name)
             printf("\t\tDecorated name:%s\n", str + strlen(str) + 1);
         break;
 
@@ -958,7 +958,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
                type->enumeration_v3.fieldlist,
                type->enumeration_v3.count,
                get_property(type->enumeration_v3.property));
-        if (type->union_v3.property.has_decorated_name)
+        if (type->enumeration_v3.property.has_decorated_name)
             printf("\t\tDecorated name:%s\n", type->enumeration_v3.name + strlen(type->enumeration_v3.name) + 1);
         break;
 
@@ -990,7 +990,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
     case LF_PROCEDURE_V2:
         printf("\t%x => Procedure V2 ret_type:%x callconv:%s attr:%s (#%u args_type:%x)\n",
                curr_type, type->procedure_v2.rvtype,
-               get_callconv(type->procedure_v2.callconv), get_funcattr(type->procedure_v1.funcattr),
+               get_callconv(type->procedure_v2.callconv), get_funcattr(type->procedure_v2.funcattr),
                type->procedure_v2.params, type->procedure_v2.arglist);
         break;
 

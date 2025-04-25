@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "mshtml_private.h"
 #include "htmlstyle.h"
@@ -38,6 +39,7 @@ struct HTMLCurrentStyle {
     IHTMLCurrentStyle2 IHTMLCurrentStyle2_iface;
     IHTMLCurrentStyle3 IHTMLCurrentStyle3_iface;
     IHTMLCurrentStyle4 IHTMLCurrentStyle4_iface;
+    IWineCSSProperties IWineCSSProperties_iface;
 
     HTMLElement *elem;
 };
@@ -1086,6 +1088,46 @@ static const IHTMLCurrentStyle4Vtbl HTMLCurrentStyle4Vtbl = {
     HTMLCurrentStyle4_get_maxWidth
 };
 
+static inline HTMLCurrentStyle *impl_from_IWineCSSProperties(IWineCSSProperties *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLCurrentStyle, IWineCSSProperties_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLCurrentStyle_CSSProperties, IWineCSSProperties, impl_from_IWineCSSProperties(iface)->css_style.dispex)
+
+static HRESULT WINAPI HTMLCurrentStyle_CSSProperties_getAttribute(IWineCSSProperties *iface, BSTR name, LONG flags, VARIANT *p)
+{
+    HTMLCurrentStyle *This = impl_from_IWineCSSProperties(iface);
+    return HTMLCurrentStyle_getAttribute(&This->IHTMLCurrentStyle_iface, name, flags, p);
+}
+
+static HRESULT WINAPI HTMLCurrentStyle_CSSProperties_setAttribute(IWineCSSProperties *iface, BSTR name, VARIANT value, LONG flags)
+{
+    HTMLCurrentStyle *This = impl_from_IWineCSSProperties(iface);
+    FIXME("(%p)->(%s %s %08lx)\n", This, debugstr_w(name), debugstr_variant(&value), flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI HTMLCurrentStyle_CSSProperties_removeAttribute(IWineCSSProperties *iface, BSTR name, LONG flags, VARIANT_BOOL *p)
+{
+    HTMLCurrentStyle *This = impl_from_IWineCSSProperties(iface);
+    FIXME("(%p)->(%s %08lx %p)\n", This, debugstr_w(name), flags, p);
+    return E_NOTIMPL;
+}
+
+static const IWineCSSPropertiesVtbl HTMLCurrentStyle_CSSPropertiesVtbl = {
+    HTMLCurrentStyle_CSSProperties_QueryInterface,
+    HTMLCurrentStyle_CSSProperties_AddRef,
+    HTMLCurrentStyle_CSSProperties_Release,
+    HTMLCurrentStyle_CSSProperties_GetTypeInfoCount,
+    HTMLCurrentStyle_CSSProperties_GetTypeInfo,
+    HTMLCurrentStyle_CSSProperties_GetIDsOfNames,
+    HTMLCurrentStyle_CSSProperties_Invoke,
+    HTMLCurrentStyle_CSSProperties_setAttribute,
+    HTMLCurrentStyle_CSSProperties_getAttribute,
+    HTMLCurrentStyle_CSSProperties_removeAttribute
+};
+
 static inline HTMLCurrentStyle *impl_from_DispatchEx(DispatchEx *dispex)
 {
     return CONTAINING_RECORD(dispex, HTMLCurrentStyle, css_style.dispex);
@@ -1103,6 +1145,8 @@ static void *HTMLCurrentStyle_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IHTMLCurrentStyle3_iface;
     if(IsEqualGUID(&IID_IHTMLCurrentStyle4, riid))
         return &This->IHTMLCurrentStyle4_iface;
+    if(IsEqualGUID(&IID_IWineCSSProperties, riid))
+        return &This->IWineCSSProperties_iface;
     return CSSStyle_query_interface(&This->css_style.dispex, riid);
 }
 
@@ -1127,6 +1171,16 @@ static void HTMLCurrentStyle_unlink(DispatchEx *dispex)
     }
 }
 
+static void MSCurrentStyleCSSProperties_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t currentstyle_ie11_hooks[] = {
+        {DISPID_IHTMLCURRENTSTYLE_BEHAVIOR},
+        {DISPID_UNKNOWN}
+    };
+    MSCSSProperties_init_dispex_info(info, mode);
+    dispex_info_add_interface(info, IHTMLCurrentStyle_tid, mode >= COMPAT_MODE_IE11 ? currentstyle_ie11_hooks : NULL);
+}
+
 static const dispex_static_data_vtbl_t MSCurrentStyleCSSProperties_dispex_vtbl = {
     CSSSTYLE_DISPEX_VTBL_ENTRIES,
     .query_interface   = HTMLCurrentStyle_query_interface,
@@ -1135,19 +1189,18 @@ static const dispex_static_data_vtbl_t MSCurrentStyleCSSProperties_dispex_vtbl =
 };
 
 static const tid_t MSCurrentStyleCSSProperties_iface_tids[] = {
-    IHTMLCurrentStyle_tid,
     IHTMLCurrentStyle2_tid,
     IHTMLCurrentStyle3_tid,
     IHTMLCurrentStyle4_tid,
     0
 };
 dispex_static_data_t MSCurrentStyleCSSProperties_dispex = {
-    .id           = PROT_MSCurrentStyleCSSProperties,
-    .prototype_id = PROT_MSCSSProperties,
+    .id           = OBJID_MSCurrentStyleCSSProperties,
+    .prototype_id = OBJID_MSCSSProperties,
     .vtbl         = &MSCurrentStyleCSSProperties_dispex_vtbl,
     .disp_tid     = DispHTMLCurrentStyle_tid,
     .iface_tids   = MSCurrentStyleCSSProperties_iface_tids,
-    .init_info    = CSSStyle_init_dispex_info,
+    .init_info    = MSCurrentStyleCSSProperties_init_dispex_info,
 };
 
 HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
@@ -1198,6 +1251,7 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     ret->IHTMLCurrentStyle2_iface.lpVtbl = &HTMLCurrentStyle2Vtbl;
     ret->IHTMLCurrentStyle3_iface.lpVtbl = &HTMLCurrentStyle3Vtbl;
     ret->IHTMLCurrentStyle4_iface.lpVtbl = &HTMLCurrentStyle4Vtbl;
+    ret->IWineCSSProperties_iface.lpVtbl = &HTMLCurrentStyle_CSSPropertiesVtbl;
 
     init_css_style(&ret->css_style, nsstyle, &MSCurrentStyleCSSProperties_dispex, &elem->node.event_target.dispex);
     nsIDOMCSSStyleDeclaration_Release(nsstyle);

@@ -897,6 +897,9 @@ static HRESULT WINAPI media_object_Flush(IMediaObject *iface)
 
     TRACE("iface %p.\n", iface);
 
+    if (!decoder->wg_transform)
+        return DMO_E_TYPE_NOT_SET;
+
     if (FAILED(hr = wg_transform_flush(decoder->wg_transform)))
         return hr;
 

@@ -40,6 +40,49 @@ static REFERENCE_TIME samplelen(DWORD samples, int rate)
     return (REFERENCE_TIME) 10000000 * samples / rate;
 }
 
+#define check_member_(line, val, exp, fmt, member)                                           \
+    ok_ (__FILE__, line)((val).member == (exp).member, "Got " #member " " fmt ", expected " fmt ".\n", (val).member, (exp).member)
+#define check_member(val, exp, fmt, member) check_member_(__LINE__, val, exp, fmt, member)
+
+#define check_wave_format(a, b) check_wave_format_(__LINE__, a, b)
+static void check_wave_format_(int line, WAVEFORMATEX *info, const WAVEFORMATEX *expected)
+{
+    check_member_(line, *info, *expected, "%#x", wFormatTag);
+    check_member_(line, *info, *expected, "%u",  nChannels);
+    check_member_(line, *info, *expected, "%lu", nSamplesPerSec);
+    check_member_(line, *info, *expected, "%lu", nAvgBytesPerSec);
+    check_member_(line, *info, *expected, "%u",  nBlockAlign);
+    check_member_(line, *info, *expected, "%u",  wBitsPerSample);
+    check_member_(line, *info, *expected, "%u",  cbSize);
+}
+
+#define check_dmo_media_type(a, b) check_dmo_media_type_(__LINE__, a, b)
+static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DMO_MEDIA_TYPE *expected)
+{
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->majortype, &expected->majortype),
+            "Got unexpected majortype %s, expected %s.\n",
+            debugstr_guid(&media_type->majortype), debugstr_guid(&expected->majortype));
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->subtype, &expected->subtype),
+            "Got unexpected subtype %s, expected %s.\n",
+            debugstr_guid(&media_type->subtype), debugstr_guid(&expected->subtype));
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->formattype, &expected->formattype),
+            "Got unexpected formattype %s.\n",
+            debugstr_guid(&media_type->formattype));
+    ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
+    check_member_(line, *media_type, *expected, "%lu", cbFormat);
+
+    if (expected->pbFormat)
+    {
+        ok_(__FILE__, line)(!!media_type->pbFormat, "Got NULL pbFormat.\n");
+        if (!media_type->pbFormat)
+            return;
+
+        if (IsEqualGUID(&media_type->formattype, &FORMAT_WaveFormatEx)
+                && IsEqualGUID(&expected->formattype, &FORMAT_WaveFormatEx))
+            check_wave_format((WAVEFORMATEX *)media_type->pbFormat, (WAVEFORMATEX *)expected->pbFormat);
+    }
+}
+
 struct test_buffer
 {
     IMediaBuffer IMediaBuffer_iface;
@@ -171,6 +214,8 @@ static void test_convert(void)
     for (i = 0; i < 5; i++)
         memcpy(inbuf.data + 96 * i, mp3hdr, 4);
     inbuf.len = 96 * 5;
+    hr = IMediaObject_ProcessInput(dmo, 1, &inbuf.IMediaBuffer_iface, 0, 0, 0);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "got %#lx\n", hr);
     hr = IMediaObject_ProcessInput(dmo, 0, &inbuf.IMediaBuffer_iface, 0, 0, 0);
     ok(hr == S_OK, "got %#lx\n", hr);
     ok(inbuf.refcount == 2, "Got refcount %ld.\n", inbuf.refcount);
@@ -425,6 +470,11 @@ static void test_stream_info(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(!flags, "Got flags %#lx.\n", flags);
 
+    hr = IMediaObject_GetInputSizeInfo(dmo, 1, &size, &lookahead, &alignment);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(dmo, 1, &size, &alignment);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+
     hr = IMediaObject_GetInputSizeInfo(dmo, 0, &size, &lookahead, &alignment);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetOutputSizeInfo(dmo, 0, &size, &alignment);
@@ -524,6 +574,8 @@ static void test_media_types(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+    hr = IMediaObject_GetInputType(dmo, 1, 0, &mt);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(dmo, 0, 0, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&mt.majortype, &MEDIATYPE_Audio), "Got major type %s.\n", wine_dbgstr_guid(&mt.majortype));
@@ -541,11 +593,27 @@ static void test_media_types(void)
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#lx.\n", hr);
 
     memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
+    hr = IMediaObject_GetOutputType(dmo, 1, 0, &mt);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(dmo, 0, 0, &mt);
     ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 1, &mt);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_SetInputType(dmo, 1, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     input_mt.majortype = GUID_NULL;
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
@@ -573,6 +641,12 @@ static void test_media_types(void)
 
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    check_dmo_media_type(&mt, &input_mt);
+    MoFreeMediaType(&mt);
 
     for (i = 0; i < 4; ++i)
     {
@@ -606,6 +680,12 @@ static void test_media_types(void)
     hr = IMediaObject_SetInputType(dmo, 0, &input_mt, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    hr = IMediaObject_GetInputCurrentType(dmo, 0, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    check_dmo_media_type(&mt, &input_mt);
+    MoFreeMediaType(&mt);
+
     for (i = 0; i < 2; ++i)
     {
         memset(&mt, 0xcc, sizeof(DMO_MEDIA_TYPE));
@@ -634,8 +714,20 @@ static void test_media_types(void)
     hr = IMediaObject_GetOutputType(dmo, 0, 2, &mt);
     ok(hr == DMO_E_NO_MORE_ITEMS, "Got hr %#lx.\n", hr);
 
+    hr = IMediaObject_SetOutputType(dmo, 1, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 1, &mt);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
+
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
+    ok(hr == DMO_E_TYPE_NOT_SET, "Got hr %#lx.\n", hr);
 
     output_mt.formattype = GUID_NULL;
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
@@ -644,6 +736,54 @@ static void test_media_types(void)
     hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
     output_mt.formattype = FORMAT_WaveFormatEx;
+
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaObject_GetOutputCurrentType(dmo, 0, &mt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    check_dmo_media_type(&mt, &output_mt);
+    MoFreeMediaType(&mt);
+
+    output_format.nSamplesPerSec = 24000;
+    output_format.nAvgBytesPerSec = 24000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 12000;
+    output_format.nAvgBytesPerSec = 12000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 6000;
+    output_format.nAvgBytesPerSec = 6000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 12000;
+    output_format.nAvgBytesPerSec = 6000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    output_format.nSamplesPerSec = 48000;
+    output_format.nAvgBytesPerSec = 48000;
+    output_format.nChannels = 2;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    /* Windows accepts 32 bits per sample but does not enumerate it */
+    output_format.nChannels = 1;
+    output_format.wBitsPerSample = 32;
+    output_format.nBlockAlign = 4;
+    output_format.nSamplesPerSec = 48000;
+    output_format.nAvgBytesPerSec = 192000;
+    hr = IMediaObject_SetOutputType(dmo, 0, &output_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    mp3fmt.wfx.nChannels = 0;
+    hr = IMediaObject_SetInputType(dmo, 0, &input_mt, DMO_SET_TYPEF_TEST_ONLY);
+    ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "Got hr %#lx.\n", hr);
 
     IMediaObject_Release(dmo);
 }

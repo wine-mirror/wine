@@ -2747,7 +2747,7 @@ static void test_BTNS_SEP(void)
 {
     TBBUTTON buttons[1], button;
     LRESULT ret;
-    HWND hwnd;
+    HWND hwnd = NULL;
 
     rebuild_toolbar(&hwnd);
 

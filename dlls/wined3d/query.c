@@ -1915,7 +1915,7 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
             break;
 
         case WINED3D_QUERY_TYPE_TIMESTAMP:
-            if (!wined3d_device_vk(device)->timestamp_bits)
+            if (!wined3d_device_vk(device)->graphics_queue.timestamp_bits)
             {
                 WARN("Timestamp queries not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;
@@ -1925,7 +1925,7 @@ HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_quer
             break;
 
         case WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT:
-            if (!wined3d_device_vk(device)->timestamp_bits)
+            if (!wined3d_device_vk(device)->graphics_queue.timestamp_bits)
             {
                 WARN("Timestamp queries not supported.\n");
                 return WINED3DERR_NOTAVAILABLE;

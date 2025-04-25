@@ -145,3 +145,38 @@ coclass VideoMixingRenderer9 { interface IBaseFilter; }
     uuid(99d54f63-1a69-41ae-aa4d-c976eb3f0713)
 ]
 coclass AllocPresenter {}
+
+[
+    helpstring("MPEG-I Stream Splitter"),
+    threading(both),
+    uuid(336475d0-942a-11ce-a870-00aa002feab5)
+]
+coclass MPEG1Splitter {}
+
+[
+    helpstring("AVI Splitter"),
+    threading(both),
+    uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
+]
+coclass AviSplitter {}
+
+[
+    helpstring("Wave Parser"),
+    threading(both),
+    uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
+]
+coclass WAVEParser {}
+
+[
+    helpstring("MPEG Audio Decoder"),
+    threading(both),
+    uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
+]
+coclass CMpegAudioCodec {}
+
+[
+    helpstring("MPEG Video Decoder"),
+    threading(both),
+    uuid(feb50740-7bef-11ce-9bd9-0000e202599c)
+]
+coclass CMpegVideoCodec {}

@@ -56,7 +56,7 @@ DECL_FUNCPTR( ANativeWindow_release );
 extern pthread_mutex_t drawable_mutex;
 extern void update_gl_drawable( HWND hwnd );
 extern void destroy_gl_drawable( HWND hwnd );
-extern struct opengl_funcs *get_wgl_driver( UINT version );
+extern UINT ANDROID_OpenGLInit( UINT version, struct opengl_funcs **opengl_funcs, const struct opengl_driver_funcs **driver_funcs );
 
 
 /**************************************************************************
@@ -97,8 +97,8 @@ extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp );
 extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp );
 extern BOOL ANDROID_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, const struct window_rects *rects );
 extern BOOL ANDROID_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *surface_rect, struct window_surface **surface );
-extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
-                                      struct window_surface *surface );
+extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+                                      const struct window_rects *new_rects, struct window_surface *surface );
 
 /* unixlib interface */
 
@@ -124,7 +124,6 @@ extern HWND get_capture_window(void);
 extern void init_monitors( int width, int height );
 extern void set_screen_dpi( DWORD dpi );
 extern void update_keyboard_lock_state( WORD vkey, UINT state );
-extern UINT get_win_monitor_dpi( HWND hwnd );
 
 /* JNI entry points */
 extern void desktop_changed( JNIEnv *env, jobject obj, jint width, jint height );

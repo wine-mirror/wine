@@ -1078,6 +1078,9 @@ BOOL WINAPI MiniDumpWriteDump(HANDLE hProcess, DWORD pid, HANDLE hFile,
     BOOL                sym_initialized = FALSE;
     BOOL                ret = FALSE;
 
+    TRACE("(%p, %lu, %p, %u, %p, %p, %p)\n",
+          hProcess, pid, hFile, DumpType, ExceptionParam, UserStreamParam, CallbackParam);
+
     if (!(dc.process = process_find_by_handle(hProcess)))
     {
         if (!(sym_initialized = SymInitializeW(hProcess, NULL, TRUE)))

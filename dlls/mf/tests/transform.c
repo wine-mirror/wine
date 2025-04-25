@@ -728,6 +728,7 @@ static void check_mft_set_input_type_(int line, IMFTransform *transform, const s
     init_media_type(media_type, attributes, -1);
 
     hr = IMFTransform_SetInputType(transform, 0, media_type, MFT_SET_TYPE_TEST_ONLY);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(hr == expect_hr, "SetInputType returned %#lx.\n", hr);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
     todo_wine_if(todo)
@@ -1344,7 +1345,7 @@ static DWORD check_mf_media_buffer_(const char *file, int line, IMFMediaBuffer *
     if (*expect_data)
     {
         if (*expect_data_len < length)
-            todo_wine_if(expect->todo_length)
+            todo_wine_if(expect->todo_length || expect->todo_data)
             ok_(file, line)(0, "missing %#lx bytes\n", length - *expect_data_len);
         else if (!expect->compare)
             diff = compare_bytes(data, &length, NULL, NULL, *expect_data);
@@ -1429,6 +1430,7 @@ static DWORD check_mf_sample_(const char *file, int line, IMFSample *sample, con
     todo_wine_if(expect->todo_length)
     ok_(file, line)(total_length == expect_length,
             "got total length %#lx\n", total_length);
+    todo_wine_if(expect->todo_data)
     ok_(file, line)(!*expect_data || *expect_data_len >= expect_length,
             "missing %#lx data\n", expect_length - *expect_data_len);
 
@@ -1655,8 +1657,7 @@ static void check_dmo_get_output_size_info_video_(int line, IMediaObject *dmo,
 
     init_dmo_media_type_video(type, output_subtype, width, height, 0);
     hr = IMediaObject_SetOutputType(dmo, 0, type, 0);
-    todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11)
-            || IsEqualGUID(output_subtype, &MEDIASUBTYPE_IYUV))
+    todo_wine_if(IsEqualGUID(output_subtype, &MEDIASUBTYPE_NV11))
     ok_(__FILE__, line)(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     if (hr != S_OK)
         return;
@@ -2871,6 +2872,135 @@ static void test_aac_decoder_channels(const struct attribute_desc *input_type_de
             ok(i == ARRAY_SIZE(expect_available_outputs) * 2, "got %lu media types.\n", i);
         else
             ok(i == ARRAY_SIZE(expect_available_outputs), "got %lu media types.\n", i);
+        winetest_pop_context();
+    }
+
+    ret = IMFTransform_Release(transform);
+    ok(!ret, "got %lu.\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_aac_decoder_user_data(void)
+{
+    /* https://wiki.multimedia.cx/index.php/MPEG-4_Audio */
+    static const BYTE aac_raw_codec_data[] = {0x12, 0x08}; /* short form of 1 channel 44.1 Khz */
+    static const BYTE aac_raw_codec_data_long[] = {0x17, 0x80, 0x56, 0x22, 0x08}; /* long form of 1 channel 44.1 Khz */
+    static const BYTE aac_raw_codec_data_48khz[] = {0x11, 0x90}; /* short form of 1 channel 48 Khz */
+    static const struct attribute_desc raw_aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data, sizeof(aac_raw_codec_data), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_long[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_long, sizeof(aac_raw_codec_data_long), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_48khz[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_48khz, sizeof(aac_raw_codec_data_48khz), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc raw_aac_input_type_desc_mismatch[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data_48khz, sizeof(aac_raw_codec_data_48khz), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, test_aac_codec_data, sizeof(test_aac_codec_data), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
+        ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
+        ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
+        {0},
+    };
+
+    static struct {
+        const char *name;
+        const struct attribute_desc *desc;
+        HRESULT exp_result;
+        BOOL todo;
+        BOOL todo_short;
+    } tests[] = {
+        { "aac",              aac_input_type_desc,              S_OK,                  FALSE, TRUE },
+        { "raw aac",          raw_aac_input_type_desc,          S_OK                               },
+        { "raw aac long",     raw_aac_input_type_desc_long,     S_OK,                  FALSE, TRUE },
+        { "raw aac 48Khz",    raw_aac_input_type_desc_48khz,    S_OK                               },
+        { "raw aac mismatch", raw_aac_input_type_desc_mismatch, MF_E_INVALIDMEDIATYPE, TRUE        },
+    };
+
+    const struct attribute_desc *input_type_desc;
+    struct attribute_desc input_desc[64];
+    unsigned int user_data_index = ~0u;
+    IMFTransform *transform;
+    ULONG ret, i, j;
+    HRESULT hr;
+
+    winetest_push_context("aacdec user_data");
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSAACDecMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+    {
+        win_skip("AAC decoder transform is not available.\n");
+        goto failed;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%s", tests[i].name);
+        user_data_index = ~0u;
+        input_type_desc = tests[i].desc;
+        for (j = 0; j < ARRAY_SIZE(input_desc); j++)
+        {
+            input_desc[j] = input_type_desc[j];
+            if (!input_desc[j].key)
+                break;
+            if (IsEqualGUID(input_desc[j].key, &MF_MT_USER_DATA))
+                user_data_index = j;
+        }
+
+        ok(user_data_index != ~0u, "Could not find MF_MT_USER_DATA.\n");
+        ok(i < ARRAY_SIZE(input_desc), "Too many attributes.\n");
+
+        /* confirm standard input result */
+        check_mft_set_input_type_(__LINE__, transform, input_desc, tests[i].exp_result, tests[i].todo);
+
+        if (tests[i].exp_result == S_OK)
+        {
+            /* confirm shorter fails */
+            input_desc[user_data_index].value.blob.cbSize = input_type_desc[user_data_index].value.blob.cbSize - 1;
+            check_mft_set_input_type_(__LINE__, transform, input_desc, MF_E_INVALIDMEDIATYPE, tests[i].todo_short);
+
+            /* confirm longer is OK */
+            input_desc[user_data_index].value.blob.cbSize = input_type_desc[user_data_index].value.blob.cbSize + 1;
+            check_mft_set_input_type(transform, input_desc, S_OK);
+        }
         winetest_pop_context();
     }
 
@@ -4945,6 +5075,312 @@ failed:
     CoUninitialize();
 }
 
+static void test_h264_decoder_timestamps(void)
+{
+    struct timestamps
+    {
+        LONGLONG time;
+        LONGLONG duration;
+        LONGLONG dts;
+    };
+
+    static const DWORD actual_width = 96, actual_height = 96;
+
+    const struct attribute_desc input_type_nofps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        {0},
+    };
+    const struct attribute_desc output_type_nofps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        {0},
+    };
+
+    const struct attribute_desc input_type_24fps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 24, 1),
+        {0},
+    };
+    const struct attribute_desc output_type_24fps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 24, 1),
+        {0},
+    };
+    static const struct timestamps exp_nofps[] =
+    {
+        {      0 , 333667 },
+        {  333667, 333667 },
+        {  667334, 333667 },
+        { 1001001, 333667 },
+        { 1334668, 333667 },
+        { 1668335, 333667 },
+        { 2002002, 333667 },
+        { 2335669, 333667 },
+        { 2669336, 333667 },
+        { 3003003, 333667 },
+    };
+    static const struct timestamps exp_24fps[] =
+    {
+        {       0, 416667 },
+        {  416667, 416667 },
+        {  833334, 416667 },
+        { 1250001, 416667 },
+        { 1666668, 416667 },
+        { 2083335, 416667 },
+        { 2500002, 416667 },
+        { 2916669, 416667 },
+        { 3333336, 416667 },
+        { 3750003, 416667 },
+    };
+    static const struct timestamps input_sample_ts[] =
+    {
+        { 1334666, 333667, 667333 },
+        { 1334666, 333667, 667333 },
+        { 1334666, 333667, 667333 },
+        { 2669332, 333667, 1000999 },
+        { 2001999, 333666, 1334666 },
+        { 1668333, 333666 },
+        { 2335665, 333667, 2001999 },
+        { 4003999, 333667, 2335666 },
+        { 3336666, 333666, 2669333 },
+        { 3002999, 333667 },
+        { 3670332, 333667, 3336666 },
+        { 5338666, 333667, 3670333 },
+        { 4671332, 333667, 4003999 },
+        { 4337666, 333666 },
+        { 5004999, 333667, 4671333 },
+        { 6673332, 333667, 5004999 },
+        { 6005999, 333666, 5338666 },
+        { 5672333, 333666 },
+        { 6339665, 333667, 6005999 },
+        { 8007999, 333667, 6339666 },
+        { 7340666, 333666, 6673333 },
+        { 7006999, 333667 },
+        { 7674332, 333667, 7340666 },
+        { 9342666, 333667, 7674333 },
+        { 8675332, 333667, 8007999 },
+        { 8341666, 333666 },
+        { 9008999, 333667, 8675333 },
+        { 10677332, 333667, 9008999 },
+        { 10009999, 333666, 9342666 },
+        { 9676333, 333666 },
+        { 10343665, 333667, 10009999 },
+        { 12011999, 333667, 10343666 },
+        { 11344666, 333666, 10677333 },
+        { 11010999, 333667 },
+        { 11678332, 333667, 11344666 },
+        { 13346666, 333667, 11678333 },
+    };
+    static const struct timestamps exp_sample_ts[] =
+    {
+        { 1334666, 333667 },
+        { 1668333, 333666 },
+        { 2001999, 333666 },
+        { 2335665, 333667 },
+        { 2669332, 333667 },
+        { 3002999, 333667 },
+        { 3336666, 333666 },
+        { 3670332, 333667 },
+        { 4003999, 333667 },
+        { 4337666, 333666 },
+    };
+
+    IMFSample *input_sample, *output_sample;
+    const BYTE *h264_encoded_data;
+    ULONG h264_encoded_data_len;
+    IMFTransform *transform;
+    LONGLONG duration, time;
+    DWORD output_status;
+    ULONG i, j, ret;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("h264dec timestamps");
+
+    /* Test when no framerate is provided and samples contain no timestamps */
+    if (FAILED(hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_nofps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_nofps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_nofps);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_nofps[i].time, "got time %I64d, expected %I64d\n", time, exp_nofps[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_nofps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_nofps[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when 24fps framerate is provided and samples contain no timestamps */
+    hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_24fps);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_24fps[i].time, "got time %I64d, expected %I64d\n", time, exp_24fps[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_24fps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_24fps[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when supplied sample timestamps disagree with MT_MF_FRAME_RATE */
+    hr = CoCreateInstance(&CLSID_MSH264DecoderMFT, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"h264data.bin", &h264_encoded_data, &h264_encoded_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    j = 0;
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_sample_ts);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_sample_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_ts[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_sample_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_ts[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j < ARRAYSIZE(input_sample_ts))
+        {
+            input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+            hr = IMFSample_SetSampleTime(input_sample, input_sample_ts[j].time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            hr = IMFSample_SetSampleDuration(input_sample, input_sample_ts[j].duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            if (input_sample_ts[j].dts)
+            {
+                hr = IMFSample_SetUINT64(input_sample, &MFSampleExtension_DecodeTimestamp, input_sample_ts[j].dts);
+                ok(hr == S_OK, "Got %#lx\n", hr);
+            }
+            j++;
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j == ARRAYSIZE(input_sample_ts))
+        {
+            ok(0, "no more input to provide\n");
+            i = ARRAYSIZE(exp_sample_ts);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
 static void test_h264_decoder_concat_streams(void)
 {
     const struct buffer_desc output_buffer_desc[] =
@@ -6295,6 +6731,13 @@ static void test_wmv_decoder(void)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 333333,
         .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
+        .todo_duration = TRUE,
+    };
+    const struct sample_desc output_sample_desc_rgb_todo_time =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_rgb,
         .todo_time = TRUE, .todo_duration = TRUE,
     };
 
@@ -6307,6 +6750,7 @@ static void test_wmv_decoder(void)
         const struct sample_desc *output_sample_desc;
         const WCHAR *result_bitmap;
         ULONG delta;
+        BOOL new_transform;
         BOOL todo;
     }
     transform_tests[] =
@@ -6339,7 +6783,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6350,7 +6794,7 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
@@ -6361,11 +6805,57 @@ static void test_wmv_decoder(void)
             .expect_output_type_desc = expect_output_type_desc_rgb,
             .expect_input_info = &expect_input_info_rgb,
             .expect_output_info = &expect_output_info_rgb,
-            .output_sample_desc = &output_sample_desc_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
             .result_bitmap = L"rgb32frame-flip.bmp",
             .delta = 5,
         },
 
+        {
+            /* WMV1 -> RGB (w/ new transform) */
+            .output_type_desc = output_type_desc_rgb,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+        },
+
+        {
+            /* WMV1 -> RGB (negative stride, but reusing MFT w/ positive stride) */
+            .output_type_desc = output_type_desc_rgb_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb_todo_time,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+        },
+
+        {
+            /* WMV1 -> RGB (negative stride w/ new transform) */
+            .output_type_desc = output_type_desc_rgb_negative_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb_negative_stride,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame-flip.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+        },
+
+        {
+            /* WMV1 -> RGB (positive stride w/ new transform) */
+            .output_type_desc = output_type_desc_rgb_positive_stride,
+            .expect_output_type_desc = expect_output_type_desc_rgb,
+            .expect_input_info = &expect_input_info_rgb,
+            .expect_output_info = &expect_output_info_rgb,
+            .output_sample_desc = &output_sample_desc_rgb,
+            .result_bitmap = L"rgb32frame.bmp",
+            .delta = 5,
+            .new_transform = TRUE,
+        },
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
@@ -6471,9 +6961,22 @@ static void test_wmv_decoder(void)
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == ARRAY_SIZE(expect_available_outputs), "%lu input media types\n", i);
 
+    check_mft_set_output_type(transform, output_type_desc_rgb, S_OK);
+
     for (j = 0; j < ARRAY_SIZE(transform_tests); j++)
     {
         winetest_push_context("transform #%lu", j);
+
+        if (transform_tests[j].new_transform)
+        {
+            ret = IMFTransform_Release(transform);
+            ok(ret == 0, "Release returned %lu\n", ret);
+
+            if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IMFTransform, (void **)&transform)))
+                goto failed;
+            check_mft_set_input_type(transform, input_type_desc, S_OK);
+        }
 
         check_mft_set_output_type_required(transform, transform_tests[j].output_type_desc);
         check_mft_set_output_type(transform, transform_tests[j].output_type_desc, S_OK);
@@ -6536,6 +7039,7 @@ static void test_wmv_decoder(void)
 
         ret = check_mf_sample_collection(output_samples, transform_tests[j].output_sample_desc,
                                          transform_tests[j].result_bitmap);
+        todo_wine_if(transform_tests[j].todo)
         ok(ret <= transform_tests[j].delta, "got %lu%% diff\n", ret);
         IMFCollection_Release(output_samples);
 
@@ -6546,6 +7050,298 @@ static void test_wmv_decoder(void)
     }
 
 skip_tests:
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    winetest_pop_context();
+    CoUninitialize();
+}
+
+static void test_wmv_decoder_timestamps(void)
+{
+    struct timestamps
+    {
+        LONGLONG time;
+        LONGLONG duration;
+    };
+
+    static const DWORD actual_width = 96, actual_height = 96;
+
+    const struct attribute_desc input_type_nofps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE, .todo = TRUE),
+        {0},
+    };
+    const struct attribute_desc output_type_nofps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        {0},
+    };
+
+    const struct attribute_desc input_type_24fps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_WMV1, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE, .todo = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 24, 1,),
+        {0},
+    };
+    const struct attribute_desc output_type_24fps_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_RATE, 24, 1,),
+        {0},
+    };
+    static const struct timestamps exp_nofps[] =
+    {
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+    };
+    static const struct timestamps exp_24fps[] =
+    {
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+        { 0, 0 },
+    };
+    static const struct timestamps input_sample_ts[] =
+    {
+        {  666666, 166667 },
+        {  833333, 166666 },
+        {  999999, 166666 },
+        { 1166665, 166667 },
+        { 1333332, 166667 },
+        { 1499999, 166667 },
+        { 1666666, 166666 },
+        { 1833332, 166667 },
+        { 1999999, 166667 },
+        { 2166666, 166666 },
+        { 2333332, 166667 },
+        { 2499999, 166667 },
+        { 2666666, 166667 },
+        { 2833333, 166666 },
+        { 2999999, 166666 },
+        { 3166665, 166667 },
+        { 3333332, 166667 },
+        { 3499999, 166667 },
+        { 3666666, 166666 },
+        { 3833332, 166667 },
+        { 3999999, 166667 },
+    };
+    static const struct timestamps exp_sample_ts[] =
+    {
+        {  666666, 166667 },
+        {  833333, 166666 },
+        {  999999, 166666 },
+        { 1166665, 166667 },
+        { 1333332, 166667 },
+        { 1499999, 166667 },
+        { 1666666, 166666 },
+        { 1833332, 166667 },
+        { 1999999, 166667 },
+        { 2166666, 166666 },
+    };
+
+    IMFSample *input_sample, *output_sample;
+    IMFTransform *transform;
+    LONGLONG duration, time;
+    const BYTE *wmvenc_data;
+    ULONG wmvenc_data_len;
+    DWORD output_status;
+    ULONG i, j, ret;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    winetest_push_context("wmvdec timestamps");
+
+    /* Test when no framerate is provided and samples contain no timestamps */
+    if (FAILED(hr = CoCreateInstance(&CLSID_CWMVDecMediaObject, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform)))
+        goto failed;
+
+    load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
+
+    check_mft_set_input_type(transform, input_type_nofps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_nofps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_nofps);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_nofps[i].time, "got time %I64d, expected %I64d\n", time, exp_nofps[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_nofps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_nofps[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && wmvenc_data_len)
+        {
+            input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
+            wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
+            wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && !wmvenc_data_len)
+        {
+            i = ARRAYSIZE(exp_nofps) + 1;
+        }
+        winetest_pop_context();
+    }
+
+    ok(i == ARRAYSIZE(exp_nofps), "transform requires more input than available\n");
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when 24fps framerate is provided and samples contain no timestamps */
+    hr = CoCreateInstance(&CLSID_CWMVDecMediaObject, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_24fps);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_24fps[i].time, "got time %I64d, expected %I64d\n", time, exp_24fps[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_24fps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_24fps[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && wmvenc_data_len)
+        {
+            input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
+            wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
+            wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && !wmvenc_data_len)
+        {
+            i = ARRAYSIZE(exp_24fps) + 1;
+        }
+        winetest_pop_context();
+    }
+
+    ok(i == ARRAYSIZE(exp_24fps), "transform requires more input than available\n");
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* Test when provided sample timestamps disagree with MT_MF_FRAME_RATE */
+    hr = CoCreateInstance(&CLSID_CWMVDecMediaObject, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMFTransform, (void **)&transform);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    load_resource(L"wmvencdata.bin", &wmvenc_data, &wmvenc_data_len);
+
+    check_mft_set_input_type(transform, input_type_24fps_desc, S_OK);
+    check_mft_set_output_type(transform, output_type_24fps_desc, S_OK);
+
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+
+    j = 0;
+    output_sample = create_sample(NULL, actual_width * actual_height * 2);
+    for (i = 0; i < ARRAYSIZE(exp_sample_ts);)
+    {
+        winetest_push_context("output %ld", i);
+        hr = check_mft_process_output(transform, output_sample, &output_status);
+        ok(hr == S_OK || hr == MF_E_TRANSFORM_STREAM_CHANGE || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+        if (hr == S_OK)
+        {
+            hr = IMFSample_GetSampleTime(output_sample, &time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine_if(i)
+            ok(time == exp_sample_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_ts[i].time);
+            hr = IMFSample_GetSampleDuration(output_sample, &duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            todo_wine
+            ok(duration == exp_sample_ts[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_sample_ts[i].duration);
+            ret = IMFSample_Release(output_sample);
+            ok(ret == 0, "Release returned %lu\n", ret);
+            output_sample = create_sample(NULL, actual_width * actual_height * 2);
+            i++;
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j < ARRAYSIZE(input_sample_ts))
+        {
+            input_sample = create_sample(wmvenc_data + sizeof(DWORD), *(DWORD *)wmvenc_data);
+            wmvenc_data_len -= *(DWORD *)wmvenc_data + sizeof(DWORD);
+            wmvenc_data += *(DWORD *)wmvenc_data + sizeof(DWORD);
+            hr = IMFSample_SetSampleTime(input_sample, input_sample_ts[j].time);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            hr = IMFSample_SetSampleDuration(input_sample, input_sample_ts[j].duration);
+            ok(hr == S_OK, "Got %#lx\n", hr);
+            j++;
+            hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+            ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+            ret = IMFSample_Release(input_sample);
+            ok(ret <= 1, "Release returned %lu\n", ret);
+        }
+        else if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && j == ARRAYSIZE(input_sample_ts))
+        {
+            todo_wine
+            ok(0, "no more input to provide\n");
+            i = ARRAYSIZE(exp_sample_ts);
+        }
+        winetest_pop_context();
+    }
+
+    ret = IMFSample_Release(output_sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -7779,10 +8575,10 @@ static void test_video_processor(BOOL use_2d_buffer)
         {0},
     };
 
-    static const MFVideoArea actual_aperture = {.Area={82,84}};
-    static const DWORD actual_width = 96, actual_height = 96, nv12_aligned_width = 128;
-    static const DWORD extra_width = actual_width + 0x30;
-    static const DWORD nv12_aligned_extra_width = 192;
+    const MFVideoArea actual_aperture = {.Area={82,84}};
+    const DWORD actual_width = 96, actual_height = 96, nv12_aligned_width = 128;
+    const DWORD extra_width = actual_width + 0x30;
+    const DWORD nv12_aligned_extra_width = 192;
     const struct attribute_desc rgb32_with_aperture[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
@@ -8923,8 +9719,9 @@ static void test_mp3_decoder(void)
 
     const struct buffer_desc output_buffer_desc[] =
     {
-        {.length = 0x9c0, .compare = compare_pcm16},
+        {.length = 0x9c0, .compare = compare_pcm16, .todo_length = TRUE},
         {.length = mp3dec_block_size, .compare = compare_pcm16},
+        {.length = mp3dec_block_size, .compare = compare_pcm16, .todo_data = TRUE},
     };
     const struct attribute_desc output_sample_attributes[] =
     {
@@ -8938,16 +9735,19 @@ static void test_mp3_decoder(void)
             .attributes = output_sample_attributes + 0,
             .sample_time = 0, .sample_duration = 282993,
             .buffer_count = 1, .buffers = output_buffer_desc + 0,
+            .todo_length = TRUE, .todo_duration = TRUE,
         },
         {
             .attributes = output_sample_attributes + 0,
             .sample_time = 282993, .sample_duration = 522449,
             .buffer_count = 1, .buffers = output_buffer_desc + 1, .repeat_count = 18,
+            .todo_time = TRUE,
         },
         {
             .attributes = output_sample_attributes + 1, /* not MFT_OUTPUT_DATA_BUFFER_INCOMPLETE */
             .sample_time = 10209524, .sample_duration = 522449,
-            .buffer_count = 1, .buffers = output_buffer_desc + 1,
+            .buffer_count = 1, .buffers = output_buffer_desc + 2,
+            .todo_time = TRUE, .todo_data = TRUE,
         },
     };
 
@@ -9001,9 +9801,7 @@ static void test_mp3_decoder(void)
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
-    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
-    todo_wine
     ok(i == ARRAY_SIZE(expect_available_inputs), "%lu input media types\n", i);
 
     /* setting output media type first doesn't work */
@@ -9098,6 +9896,7 @@ static void test_mp3_decoder(void)
     else
     {
         ret = check_mf_sample_collection(output_samples, output_sample_desc, L"mp3decdata.bin");
+        todo_wine
         ok(ret == 0, "got %lu%% diff\n", ret);
     }
     IMFCollection_Release(output_samples);
@@ -10236,14 +11035,17 @@ START_TEST(transform)
     test_sample_copier_output_processing();
     test_aac_encoder();
     test_aac_decoder();
+    test_aac_decoder_user_data();
     test_wma_encoder();
     test_wma_decoder();
     test_wma_decoder_dmo_input_type();
     test_wma_decoder_dmo_output_type();
     test_h264_encoder();
     test_h264_decoder();
+    test_h264_decoder_timestamps();
     test_wmv_encoder();
     test_wmv_decoder();
+    test_wmv_decoder_timestamps();
     test_wmv_decoder_dmo_input_type();
     test_wmv_decoder_dmo_output_type();
     test_wmv_decoder_dmo_get_size_info();

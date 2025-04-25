@@ -55,7 +55,7 @@ struct type_descr
 {
     struct unicode_str name;          /* type name */
     unsigned int       valid_access;  /* mask for valid access bits */
-    generic_map_t      mapping;       /* generic access mapping */
+    struct generic_map mapping;       /* generic access mapping */
     unsigned int       index;         /* index in global array of types */
     unsigned int       obj_count;     /* count of objects of this type */
     unsigned int       handle_count;  /* count of handles of this type */
@@ -193,13 +193,20 @@ extern void close_objects(void);
 static inline void make_object_permanent( struct object *obj ) { obj->is_permanent = 1; }
 static inline void make_object_temporary( struct object *obj ) { obj->is_permanent = 0; }
 
-static inline unsigned int map_access( unsigned int access, const generic_map_t *mapping )
+static inline unsigned int map_access( unsigned int access, const struct generic_map *mapping )
 {
     if (access & GENERIC_READ)    access |= mapping->read;
     if (access & GENERIC_WRITE)   access |= mapping->write;
     if (access & GENERIC_EXECUTE) access |= mapping->exec;
     if (access & GENERIC_ALL)     access |= mapping->all;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static inline void *mem_append( void *ptr, const void *src, data_size_t len )
+{
+    if (!len) return ptr;
+    memcpy( ptr, src, len );
+    return (char *)ptr + len;
 }
 
 /* event functions */
@@ -280,6 +287,10 @@ extern struct object *get_directory_obj( struct process *process, obj_handle_t h
 extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void init_directories( struct fd *intl_fd );
 
+/* thread functions */
+
+extern void init_threading(void);
+
 /* symbolic link functions */
 
 extern struct object *create_root_symlink( struct object *root, const struct unicode_str *name,
@@ -324,6 +335,8 @@ extern struct type_descr completion_type;
 extern struct type_descr file_type;
 extern struct type_descr mapping_type;
 extern struct type_descr key_type;
+extern struct type_descr apc_reserve_type;
+extern struct type_descr completion_reserve_type;
 
 #define KEYEDEVENT_WAIT       0x0001
 #define KEYEDEVENT_WAKE       0x0002

@@ -233,10 +233,6 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
 
 static BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
 {
-    static const WCHAR url_format[] =
-        {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','%','s','%','s',0};
-    static const WCHAR slash[] = {'/',0};
-    static const WCHAR empty[] = {0};
     WCHAR full_path[MAX_PATH];
 
     TRACE("%s %p %s\n", debugstr_w(file), buf, debugstr_w(index));
@@ -246,7 +242,7 @@ static BOOL AppendFullPathURL(LPCWSTR file, LPWSTR buf, LPCWSTR index)
         return FALSE;
     }
 
-    wsprintfW(buf, url_format, full_path, (!index || index[0] == '/') ? empty : slash, index);
+    wsprintfW(buf, L"mk:@MSITStore:%s::%s%s", full_path, (!index || index[0] == '/') ? L"" : L"/", index);
     return TRUE;
 }
 
@@ -285,10 +281,9 @@ static void DoSync(HHInfo *info)
 
     if (lstrcmpiW(buf, url) > 0)
     {
-        static const WCHAR delimW[] = {':',':','/',0};
         const WCHAR *index;
 
-        index = wcsstr(url, delimW);
+        index = wcsstr(url, L"::/");
 
         if (index)
             ActivateContentTopic(info->tabs[TAB_CONTENTS].hwnd, index + 3, info->content); /* skip over ::/ */
@@ -300,10 +295,6 @@ static void DoSync(HHInfo *info)
 /* Size Bar */
 
 #define SIZEBAR_WIDTH   4
-
-static const WCHAR szSizeBarClass[] = {
-    'H','H',' ','S','i','z','e','B','a','r',0
-};
 
 /* Draw the SizeBar */
 static void SB_OnPaint(HWND hWnd)
@@ -398,7 +389,7 @@ static void HH_RegisterSizeBarClass(HHInfo *pHHInfo)
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_SIZEWE);
     wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
     wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = szSizeBarClass;
+    wcex.lpszClassName  = L"HH SizeBar";
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
 
     RegisterClassExW(&wcex);
@@ -428,7 +419,7 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
 
     SB_GetSizeBarRect(pHHInfo, &rc);
 
-    hWnd = CreateWindowExW(dwExStyles, szSizeBarClass, szEmpty, dwStyles,
+    hWnd = CreateWindowExW(dwExStyles, L"HH SizeBar", L"", dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
                            hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
@@ -442,10 +433,6 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
 }
 
 /* Child Window */
-
-static const WCHAR szChildClass[] = {
-    'H','H',' ','C','h','i','l','d',0
-};
 
 static LRESULT Child_OnPaint(HWND hWnd)
 {
@@ -668,7 +655,7 @@ static LRESULT OnTopicChange(HHInfo *info, void *user_data)
         return 0;
     }
 
-    TRACE("name %s loal %s\n", debugstr_w(name), debugstr_w(local));
+    TRACE("name %s local %s\n", debugstr_w(name), debugstr_w(local));
 
     NavigateToChm(info, chmfile, local);
     return 0;
@@ -806,7 +793,7 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
     wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = szChildClass;
+    wcex.lpszClassName  = L"HH Child";
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
 
     RegisterClassExW(&wcex);
@@ -1092,7 +1079,7 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
 
     NP_GetNavigationRect(info, &rc);
 
-    hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
+    hWnd = CreateWindowExW(dwExStyles, L"HH Child", szEmpty, dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
                            hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
@@ -1162,7 +1149,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
     HP_GetHTMLRect(pHHInfo, &rc);
 
-    hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
+    hWnd = CreateWindowExW(dwExStyles, L"HH Child", szEmpty, dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
                            hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
@@ -1248,7 +1235,7 @@ static BOOL AddSearchTab(HHInfo *info)
 
     if(info->tabs[TAB_SEARCH].id == -1)
         return TRUE; /* No "Search" tab */
-    hwndContainer = CreateWindowExW(WS_EX_CONTROLPARENT, szChildClass, szEmpty,
+    hwndContainer = CreateWindowExW(WS_EX_CONTROLPARENT, L"HH Child", szEmpty,
                                     WS_CHILD, 0, 0, 0, 0, info->WinType.hwndNavigation,
                                     NULL, hhctrl_hinstance, NULL);
     if(!hwndContainer) {
@@ -1405,11 +1392,9 @@ static LRESULT CALLBACK PopupChild_WndProc(HWND hWnd, UINT message, WPARAM wPara
 
 static BOOL AddIndexPopup(HHInfo *info)
 {
-    static const WCHAR szPopupChildClass[] = {'H','H',' ','P','o','p','u','p',' ','C','h','i','l','d',0};
-    static const WCHAR windowCaptionW[] = {'S','e','l','e','c','t',' ','T','o','p','i','c',':',0};
-    static const WCHAR windowClassW[] = {'H','H',' ','P','o','p','u','p',0};
     HWND hwndList, hwndPopup, hwndCallback;
     char hidden_column[] = "Column";
+    WCHAR *window_title;
     WNDCLASSEXW wcex;
     LVCOLUMNA lvc;
 
@@ -1426,7 +1411,7 @@ static BOOL AddIndexPopup(HHInfo *info)
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
     wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = windowClassW;
+    wcex.lpszClassName  = L"HH Popup";
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     RegisterClassExW(&wcex);
 
@@ -1440,22 +1425,24 @@ static BOOL AddIndexPopup(HHInfo *info)
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
     wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = szPopupChildClass;
+    wcex.lpszClassName  = L"HH Popup Child";
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     RegisterClassExW(&wcex);
 
+    window_title = HH_LoadString(IDS_SELECT_TOPIC);
     hwndPopup = CreateWindowExW(WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_APPWINDOW
                                  | WS_EX_WINDOWEDGE | WS_EX_RIGHTSCROLLBAR,
-                                windowClassW, windowCaptionW, WS_POPUPWINDOW
+                                L"HH Popup", window_title, WS_POPUPWINDOW
                                  | WS_OVERLAPPEDWINDOW | WS_VISIBLE
                                  | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, CW_USEDEFAULT,
                                 CW_USEDEFAULT, 300, 200, info->WinType.hwndHelp,
                                 NULL, hhctrl_hinstance, NULL);
+    free(window_title);
     if (!hwndPopup)
         return FALSE;
 
     hwndCallback = CreateWindowExW(WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR,
-                                   szPopupChildClass, szEmpty, WS_CHILDWINDOW | WS_VISIBLE,
+                                   L"HH Popup Child", szEmpty, WS_CHILDWINDOW | WS_VISIBLE,
                                    0, 0, 0, 0,
                                    hwndPopup, NULL, hhctrl_hinstance, NULL);
     if (!hwndCallback)
@@ -1610,10 +1597,6 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     DWORD x, y, width = 0, height = 0;
     LPCWSTR caption;
 
-    static const WCHAR windowClassW[] = {
-        'H','H',' ', 'P','a','r','e','n','t',0
-    };
-
     wcex.cbSize         = sizeof(WNDCLASSEXW);
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = Help_WndProc;
@@ -1624,7 +1607,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
     wcex.lpszMenuName   = NULL;
-    wcex.lpszClassName  = windowClassW;
+    wcex.lpszClassName  = L"HH Parent";
     wcex.hIconSm        = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
 
     RegisterClassExW(&wcex);
@@ -1677,7 +1660,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
     caption = info->WinType.pszCaption;
     if (!*caption) caption = info->pCHMInfo->defTitle;
 
-    hWnd = CreateWindowExW(dwExStyles, windowClassW, caption, dwStyles, x, y, width, height,
+    hWnd = CreateWindowExW(dwExStyles, L"HH Parent", caption, dwStyles, x, y, width, height,
                            info->WinType.hwndCaller, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;

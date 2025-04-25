@@ -354,11 +354,13 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
     /******************* amplitude **********************/
 
     count = fluid_rvoice_calc_amp(voice);
-
-    if(count <= 0)
+    if(count == 0)
     {
-        return count; /* return -1 if voice is quiet, 0 if voice has finished */
+        // Voice has finished, remove from dsp loop
+        return 0;
     }
+    // else if count is negative, still process the voice
+
 
     /******************* phase **********************/
 
@@ -420,6 +422,14 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
         voice->dsp.phase_incr = 1;
     }
 
+    /* loop mode release? if not in release, the voice is silent
+     * note: this intentionally processes the volenv before returning silence,
+     * since that's what polyphone does (PR #1400) */
+    if(voice->dsp.samplemode == FLUID_START_ON_RELEASE && fluid_adsr_env_get_section(&voice->envlfo.volenv) < FLUID_VOICE_ENVRELEASE)
+    {
+        return -1;
+    }
+
     /* voice is currently looping? */
     is_looping = voice->dsp.samplemode == FLUID_LOOP_DURING_RELEASE
                  || (voice->dsp.samplemode == FLUID_LOOP_UNTIL_RELEASE
@@ -430,6 +440,19 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
      * The buffer has to be filled from 0 to FLUID_BUFSIZE-1.
      * Depending on the position in the loop and the loop size, this
      * may require several runs. */
+
+    if(count < 0)
+    {
+        // The voice is quite, i.e. either in delay phase or zero volume.
+        // We need to update the rvoice's dsp phase, as the delay phase shall not "postpone" the sound, rather
+        // it should be played silently, see https://github.com/FluidSynth/fluidsynth/issues/1312
+        //
+        // Currently, this does access the sample buffers, which is redundant and could be optimized away.
+        // On the other hand, entering this if-clause is not supposed to happen often.
+        //
+        // Also note, that we're returning directly without running the IIR filter below.
+        return fluid_rvoice_dsp_interpolate_none(&voice->dsp, dsp_buf, is_looping);
+    }
 
     switch(voice->dsp.interp_method)
     {
@@ -455,6 +478,7 @@ fluid_rvoice_write(fluid_rvoice_t *voice, fluid_real_t *dsp_buf)
 
     if(count == 0)
     {
+        // voice has finished
         return count;
     }
 

@@ -620,6 +620,17 @@ static void empty_message_queue(void)
     }
 }
 
+static void pump_messages(void)
+{
+    MSG msg;
+
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+}
+
 struct send_input_keyboard_test
 {
     WORD scan;
@@ -4131,6 +4142,7 @@ static void test_SendInput_mouse_messages(void)
 
     mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
     /* recent Windows versions don't call the hooks with no movement */
+    ok(!current_sequence_len || broken(current_sequence_len) /* before Win10 1709 */, "got %ld.\n", current_sequence_len);
     if (current_sequence_len)
     {
         ok_seq( mouse_move );
@@ -6116,6 +6128,8 @@ static void test_input_desktop( char **argv )
     test_LoadKeyboardLayoutEx( hkl );
 
     ok_ret( 1, SetCursorPos( pos.x, pos.y ) );
+
+    run_in_process( argv, "test_SetFocus" );
 }
 
 static void test_keyboard_layout(void)
@@ -6143,6 +6157,157 @@ static void test_keyboard_layout(void)
     }
 }
 
+static void test_system_messages_with_rawinput_nolegacy(void)
+{
+    RAWINPUTDEVICE raw_devices[1];
+    INPUT inp;
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowA( "static", "test", WS_VISIBLE | WS_POPUP, 0, 0, 200, 200, NULL, NULL, NULL, NULL );
+    ok_ne( NULL, hwnd, HWND, "%p" );
+    SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)rawinput_wndproc);
+    pump_messages();
+    SetCursorPos( 50, 50 );
+    empty_message_queue();
+    pump_messages();
+
+    /* Sanity check, receiving system generated WM_MOUSEMOVE. */
+    rawinput_test_received_legacy = FALSE;
+    SetCursorPos( 51, 51 );
+    empty_message_queue();
+    ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
+
+    /* SetCursorPos is called before raw input setup, WM_MOUSEMOVE is not delievered after. */
+    rawinput_test_received_legacy = FALSE;
+    SetCursorPos( 50, 50 );
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+    raw_devices[0].dwFlags = RIDEV_NOLEGACY;
+    raw_devices[0].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    empty_message_queue();
+    pump_messages();
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = NULL;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    pump_messages();
+
+    /* However, if PeekMessage( ..., PM_NOREMOVE ) got it before setting up raw input that will be delievered. */
+    rawinput_test_received_legacy = FALSE;
+    SetCursorPos( 52, 52 );
+    MsgWaitForMultipleObjects(0, NULL, FALSE, 300, QS_ALLINPUT);
+    ok_ret( 1, PeekMessageA( &msg, NULL, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_NOREMOVE ) );
+    raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
+    raw_devices[0].usUsage = HID_USAGE_GENERIC_MOUSE;
+    raw_devices[0].dwFlags = RIDEV_NOLEGACY;
+    raw_devices[0].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    empty_message_queue();
+    todo_wine ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = NULL;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    pump_messages();
+
+    /* Moving window generates WM_MOUSEMOVE without raw input. */
+    rawinput_test_received_legacy = FALSE;
+    MoveWindow( hwnd, 1, 1, 200, 200, FALSE );
+    empty_message_queue();
+    ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
+
+    /* Window moved before raw input setup, WM_MOUSEMOVE is not delievered after. */
+    rawinput_test_received_legacy = FALSE;
+    MoveWindow( hwnd, 0, 0, 200, 200, FALSE );
+    raw_devices[0].dwFlags = RIDEV_NOLEGACY;
+    raw_devices[0].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    empty_message_queue();
+    pump_messages();
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+
+    memset(&inp, 0, sizeof(inp));
+    inp.type = INPUT_MOUSE;
+    inp.mi.dwFlags = MOUSEEVENTF_MOVE | MOUSEEVENTF_MOVE_NOCOALESCE;
+    inp.mi.dx = 10;
+    inp.mi.dy = 10;
+
+    /* WM_MOUSEMOVE is not delivered with raw input. */
+    rawinput_test_received_legacy = FALSE;
+    ok_ret( 1, SendInput( 1, &inp, sizeof(inp) ) );
+    empty_message_queue();
+    pump_messages();
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = NULL;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    pump_messages();
+
+    /* Input sent before rawinput setup, WM_MOUSEMOVE is most of the time delivered after with MOUSEEVENTF_MOVE_NOCOALESCE. */
+    ok_ret( 1, SendInput( 1, &inp, sizeof(inp) ) );
+    rawinput_test_received_legacy = FALSE;
+    raw_devices[0].dwFlags = RIDEV_NOLEGACY;
+    raw_devices[0].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    MsgWaitForMultipleObjects(0, NULL, FALSE, 300, QS_ALLINPUT);
+    pump_messages();
+    flaky todo_wine ok( rawinput_test_received_legacy, "Expected WM_MOUSEMOVE.\n" );
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = NULL;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    pump_messages();
+
+    /* Input sent before rawinput setup, WM_MOUSEMOVE is not delivered after without MOUSEEVENTF_MOVE_NOCOALESCE. */
+    inp.mi.dwFlags = MOUSEEVENTF_MOVE;
+    ok_ret( 1, SendInput( 1, &inp, sizeof(inp) ) );
+    rawinput_test_received_legacy = FALSE;
+    raw_devices[0].dwFlags = RIDEV_NOLEGACY;
+    raw_devices[0].hwndTarget = hwnd;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+    empty_message_queue();
+    pump_messages();
+    ok( !rawinput_test_received_legacy, "Did not expect WM_MOUSEMOVE.\n" );
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = NULL;
+    ok_ret( 1, RegisterRawInputDevices( raw_devices, ARRAY_SIZE( raw_devices ), sizeof(RAWINPUTDEVICE) ) );
+
+    DestroyWindow( hwnd );
+    pump_messages();
+}
+
+static void test_SetFocus_process(void)
+{
+    HWND hwnd, foreground;
+
+    ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
+    foreground = GetForegroundWindow();
+
+    hwnd = CreateWindowExW( 0, L"static", NULL, WS_OVERLAPPEDWINDOW, 100, 100, 200, 200, 0, 0, NULL, NULL );
+    ok( !!hwnd, "CreateWindowExW failed, error %lu\n", GetLastError() );
+    wait_messages( 200, FALSE );
+
+    ShowWindow( hwnd, SW_SHOWNA );
+    wait_messages( 200, FALSE );
+    ok( GetFocus() == 0, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == 0, "got active %p\n", GetActiveWindow() );
+    ok( GetForegroundWindow() == foreground, "got foreground %p\n", GetForegroundWindow() );
+
+    SetFocus( hwnd );
+    ok( GetFocus() == hwnd, "got focus %p\n", GetFocus() );
+    ok( GetActiveWindow() == hwnd, "got active %p\n", GetActiveWindow() );
+    ok( GetForegroundWindow() == hwnd, "got foreground %p\n", GetForegroundWindow() );
+
+    SetForegroundWindow( hwnd );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -6167,6 +6332,10 @@ START_TEST(input)
         return test_ClipCursor_desktop( argv );
     if (argc >= 3 && !strcmp( argv[2], "test_input_desktop" ))
         return test_input_desktop( argv );
+    if (argc >= 3 && !strcmp( argv[2], "test_system_messages_with_rawinput_nolegacy" ))
+        return test_system_messages_with_rawinput_nolegacy();
+    if (argc >= 3 && !strcmp( argv[2], "test_SetFocus" ))
+        return test_SetFocus_process();
 
     run_in_desktop( argv, "test_input_desktop", 1 );
     test_keynames();
@@ -6217,4 +6386,5 @@ START_TEST(input)
     }
 
     test_ClipCursor( argv );
+    run_in_desktop( argv, "test_system_messages_with_rawinput_nolegacy", 1 );
 }

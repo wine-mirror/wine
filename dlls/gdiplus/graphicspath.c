@@ -202,6 +202,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
     struct list jobs;
     struct flatten_bezier_job *current, *next;
 
+    flatness = 0.62f * flatness;
     list_init( &jobs );
     flatten_bezier_add(&jobs, start, x2, y2, x3, y3, end);
     LIST_FOR_EACH_ENTRY( current, &jobs, struct flatten_bezier_job, entry )
@@ -238,7 +239,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          * Also avoids limited-precision errors in flatness check
          */
         if((fabs(pt.X - mp[2].X) + fabs(pt.Y - mp[2].Y) +
-            fabs(pt_st.X - mp[2].X) + fabs(pt_st.Y - mp[2].Y) ) <= flatness * 0.5)
+            fabs(pt_st.X - mp[2].X) + fabs(pt_st.Y - mp[2].Y) ) <= flatness)
             continue;
 
         /* check flatness as a half of distance between middle point and a linearized path
@@ -250,7 +251,7 @@ static BOOL flatten_bezier(path_list_node_t *start, REAL x2, REAL y2, REAL x3, R
          */
         area_triangle = (pt.Y - pt_st.Y)*mp[2].X + (pt_st.X - pt.X)*mp[2].Y + (pt_st.Y*pt.X - pt_st.X*pt.Y);
         distance_start_end = hypotf(pt.Y - pt_st.Y, pt_st.X - pt.X);
-        if(fabs(area_triangle) <= (0.5 * flatness * distance_start_end)){
+        if(fabs(area_triangle) <= flatness * distance_start_end){
             continue;
         }
         else
@@ -323,6 +324,28 @@ static GpStatus extend_current_figure(GpPath *path, GDIPCONST PointF *points, IN
 
     return Ok;
 }
+
+static GpStatus add_closed_figure(GpPath *path, GDIPCONST PointF *points, INT count, BYTE type)
+{
+    INT insert_index = path->pathdata.Count;
+
+    if(!count)
+        return Ok;
+
+    if(!lengthen_path(path, count))
+        return OutOfMemory;
+
+    memcpy(path->pathdata.Points + insert_index, points, sizeof(GpPointF)*count);
+    path->pathdata.Types[insert_index] = PathPointTypeStart;
+    memset(path->pathdata.Types + insert_index + 1, type, count - 1);
+
+    path->newfigure = TRUE;
+    path->pathdata.Count += count;
+    path->pathdata.Types[path->pathdata.Count - 1] |= PathPointTypeCloseSubpath;
+
+    return Ok;
+}
+
 
 /*******************************************************************************
  * GdipAddPathArc   [GDIPLUS.1]
@@ -536,13 +559,7 @@ GpStatus WINGDIPAPI GdipAddPathClosedCurve2(GpPath *path, GDIPCONST GpPointF *po
     pt[len_pt-1].X = pt[0].X;
     pt[len_pt-1].Y = pt[0].Y;
 
-    stat = extend_current_figure(path, pt, len_pt, PathPointTypeBezier);
-
-    /* close figure */
-    if(stat == Ok){
-        path->pathdata.Types[path->pathdata.Count - 1] |= PathPointTypeCloseSubpath;
-        path->newfigure = TRUE;
-    }
+    stat = add_closed_figure(path, pt, len_pt, PathPointTypeBezier);
 
     free(pts);
     free(pt);
@@ -865,7 +882,6 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
     REAL startAngle, REAL sweepAngle)
 {
     GpPointF *ptf;
-    GpStatus status;
     INT i, count;
 
     TRACE("(%p, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f)\n",
@@ -896,28 +912,29 @@ GpStatus WINGDIPAPI GdipAddPathPie(GpPath *path, REAL x, REAL y, REAL width, REA
 
     arc2polybezier(ptf, x, y, width, height, startAngle, sweepAngle);
 
-    status = GdipAddPathLine(path, x + width/2, y + height/2, ptf[0].X, ptf[0].Y);
-    if(status != Ok){
-        free(ptf);
-        return status;
-    }
-    /* one spline is already added as a line endpoint */
-    if(!lengthen_path(path, count - 1)){
+    if (!lengthen_path(path, count + 1))
+    {
         free(ptf);
         return OutOfMemory;
     }
 
-    memcpy(&(path->pathdata.Points[path->pathdata.Count]), &(ptf[1]),sizeof(GpPointF)*(count-1));
-    for(i = 0; i < count-1; i++)
-        path->pathdata.Types[path->pathdata.Count+i] = PathPointTypeBezier;
+    path->pathdata.Points[path->pathdata.Count].X = x + width/2;
+    path->pathdata.Points[path->pathdata.Count].Y = y + height/2;
+    path->pathdata.Types[path->pathdata.Count] = PathPointTypeStart;
 
-    path->pathdata.Count += count-1;
+    memcpy(&(path->pathdata.Points[path->pathdata.Count + 1]), ptf, sizeof(GpPointF)*(count));
+
+    path->pathdata.Types[path->pathdata.Count + 1] = PathPointTypeLine;
+    for(i = 0; i < count-1; i++)
+        path->pathdata.Types[path->pathdata.Count + 2 + i] = PathPointTypeBezier;
+
+    path->pathdata.Count += count + 1;
 
     GdipClosePathFigure(path);
 
     free(ptf);
 
-    return status;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipAddPathPieI(GpPath *path, INT x, INT y, INT width, INT height,
@@ -1607,7 +1624,7 @@ GpStatus WINGDIPAPI GdipGetPathWorldBounds(GpPath* path, GpRectF* bounds,
 
     /* If path is empty just return. */
     count = path->pathdata.Count;
-    if(count == 0){
+    if(count < 2){
         bounds->X = bounds->Y = bounds->Width = bounds->Height = 0.0;
         return Ok;
     }
@@ -1732,20 +1749,24 @@ GpStatus WINGDIPAPI GdipReversePath(GpPath* path)
     }
 
     for(i = 0; i < count; i++){
-
         /* find next start point */
         if(path->pathdata.Types[count-i-1] == PathPointTypeStart){
             INT j;
             for(j = start; j <= i; j++){
+                /* copy points coordinate of subpath in reverse order */
                 revpath.Points[j] = path->pathdata.Points[count-j-1];
-                revpath.Types[j] = path->pathdata.Types[count-j-1];
+                /* copy points type shifted by one (j + 1), as the first point type is always PathPointTypeStart */
+                if (j < i)
+                    revpath.Types[j + 1] = path->pathdata.Types[count - j - 1];
             }
-            /* mark start point */
+            /* first point of subpath is always Start point */
             revpath.Types[start] = PathPointTypeStart;
-            /* set 'figure' endpoint type */
+            /* check if subpath contains more than 1 point */
             if(i-start > 1){
-                revpath.Types[i] = path->pathdata.Types[count-start-1] & ~PathPointTypePathTypeMask;
-                revpath.Types[i] |= revpath.Types[i-1];
+                /* add e.g. PathPointTypeCloseSubpath type to endpoint, if existing in original subpath */
+                revpath.Types[i] |= path->pathdata.Types[count - start - 1] & ~PathPointTypePathTypeMask;
+                /* remove e.g. PathPointTypeCloseSubpath type from second point */
+                revpath.Types[start + 1] &= PathPointTypePathTypeMask;
             }
             else
                 revpath.Types[i] = path->pathdata.Types[start];
@@ -2021,8 +2042,8 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
         }
         else if (cap == LineCapArrowAnchor)
         {
-            extend_dx = -3.0 * extend_dx;
-            extend_dy = -3.0 * extend_dy;
+            extend_dx = -2.0 * extend_dx;
+            extend_dy = -2.0 * extend_dy;
         }
 
         if (add_first_points)
@@ -2269,7 +2290,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
 
         if (!custom->fill)
         {
-            tmp_points = malloc(custom->pathdata.Count * sizeof(GpPoint));
+            tmp_points = malloc(custom->pathdata.Count * sizeof(*tmp_points));
             if (!tmp_points) {
                 ERR("Out of memory\n");
                 return;
@@ -2433,7 +2454,7 @@ static void widen_dashed_figure(GpPath *path, int start, int end, int closed,
     for (i = 0; i < dash_count; i++)
         dash_pattern_scaled[i] = dash_pattern_scaling * dash_pattern[i];
 
-    tmp_points = calloc(end - start + 2, sizeof(GpPoint));
+    tmp_points = calloc(end - start + 2, sizeof(*tmp_points));
     if (!tmp_points) {
         free(dash_pattern_scaled);
         return; /* FIXME */
@@ -2703,6 +2724,7 @@ GpStatus WINGDIPAPI GdipAddPathRectangle(GpPath *path, REAL x, REAL y,
 
     if((retstat = GdipAddPathLine2(path, ptf, 2)) != Ok)  goto fail;
     path->pathdata.Types[path->pathdata.Count-1] |= PathPointTypeCloseSubpath;
+    path->newfigure = TRUE;
 
     /* free backup */
     GdipDeletePath(backup);

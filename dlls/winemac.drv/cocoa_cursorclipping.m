@@ -428,14 +428,9 @@ static void scale_rect_for_retina_mode(int mode, CGRect *cursorClipRect)
 
     + (BOOL) isAvailable
     {
-        if ([NSProcessInfo instancesRespondToSelector:@selector(isOperatingSystemAtLeastVersion:)])
-        {
-            NSOperatingSystemVersion requiredVersion = { 10, 13, 0 };
-            return [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:requiredVersion] &&
-                   [NSWindow instancesRespondToSelector:@selector(setMouseConfinementRect:)];
-        }
-
-        return FALSE;
+        NSOperatingSystemVersion requiredVersion = { 10, 13, 0 };
+        return [[NSProcessInfo processInfo] isOperatingSystemAtLeastVersion:requiredVersion] &&
+               [NSWindow instancesRespondToSelector:@selector(setMouseConfinementRect:)];
     }
 
     /* Returns the region of the given rect that intersects with the given

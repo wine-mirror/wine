@@ -714,7 +714,8 @@ static void test_mui(void)
     ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
     r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &ln_mui_res, 4 );
     ok( r, "UpdateResource failed: %ld\n", GetLastError() );
-    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+    r = EndUpdateResourceW( res, FALSE );
+    ok( r, "EndUpdateResourceW failed: %ld\n", GetLastError() );
 
     size = 0;
     r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
@@ -726,7 +727,8 @@ static void test_mui(void)
     ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
     r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &ln_mui_res, sizeof(ln_mui_res) );
     ok( r, "UpdateResource failed: %ld\n", GetLastError() );
-    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+    r = EndUpdateResourceW( res, FALSE );
+    ok( r, "EndUpdateResourceW failed: %ld\n", GetLastError() );
 
     size = 0;
     r = GetFileMUIInfo( MUI_QUERY_TYPE | MUI_QUERY_CHECKSUM | MUI_QUERY_LANGUAGE_NAME
@@ -775,7 +777,8 @@ static void test_mui(void)
     ok( res != NULL, "BeginUpdateResourceW failed: %ld\n", GetLastError() );
     r = UpdateResourceW( res, L"MUI", MAKEINTRESOURCEW(1), 0, &en_mui_res, sizeof(en_mui_res) );
     ok( r, "UpdateResource failed: %ld\n", GetLastError() );
-    ok( EndUpdateResourceW( res, FALSE ), "EndUpdateResourceW failed: %ld\n", GetLastError() );
+    r = EndUpdateResourceW( res, FALSE );
+    ok( r, "EndUpdateResourceW failed: %ld\n", GetLastError() );
 
     memset( buf, 0xfe, sizeof(buf) );
     size = sizeof(buf);

@@ -219,7 +219,6 @@ extern UINT get_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries,
 extern UINT set_dib_dc_color_table( HDC hdc, UINT startpos, UINT entries,
                                     const RGBQUAD *colors );
 extern void dibdrv_set_window_surface( DC *dc, struct window_surface *surface );
-extern struct opengl_funcs *dibdrv_get_wgl_driver(void);
 
 /* driver.c */
 extern const struct gdi_dc_funcs null_driver;
@@ -227,6 +226,7 @@ extern const struct gdi_dc_funcs dib_driver;
 extern const struct gdi_dc_funcs path_driver;
 extern const struct gdi_dc_funcs font_driver;
 extern const struct gdi_dc_funcs *get_display_driver(void);
+extern void init_display_driver(void);
 
 /* font.c */
 
@@ -410,7 +410,6 @@ extern POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut );
 extern HPALETTE PALETTE_Init(void);
 extern UINT get_palette_entries( HPALETTE hpalette, UINT start, UINT count,
                                  PALETTEENTRY *entries );
-extern UINT realize_palette( HDC hdc );
 
 /* pen.c */
 extern HPEN create_pen( INT style, INT width, COLORREF color );

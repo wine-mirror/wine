@@ -34,12 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 extern HINSTANCE shlwapi_hInstance; /* in shlwapi_main.c */
 
-static const WCHAR szDontShowKey[] = { 'S','o','f','t','w','a','r','e','\\',
-  'M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\',
-  'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-  'E','x','p','l','o','r','e','r','\\','D','o','n','t','S','h','o','w',
-  'M','e','T','h','i','s','D','i','a','l','o','g','A','g','a','i','n','\0'
-};
+static const WCHAR szDontShowKey[] =
+  L"Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\DontShowMeThisDialogAgain";
 
 INT_PTR WINAPI SHMessageBoxCheckExW(HWND,HINSTANCE,LPCWSTR,DLGPROC,LPARAM,INT_PTR,LPCWSTR);
 INT_PTR WINAPI SHMessageBoxCheckW(HWND,LPCWSTR,LPCWSTR,DWORD,INT_PTR,LPCWSTR);

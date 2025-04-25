@@ -142,6 +142,13 @@ foo
 bar
 foo2
 bar2
+------------ Testing call and echo modes ------------
+ECHO_IS_ON
+ECHO_IS_OFF
+ECHO_IS_ON
+ECHO_IS_OFF
+ECHO_IS_ON
+ECHO_IS_OFF
 ------------ Testing parameterization ------------
 'a', 'b', 'c'
 '"a b c"', '', ''
@@ -204,6 +211,9 @@ food2
 food21
 foo7@space@@space@@or_broken@not supported@space@
 foo@or_broken@not supported
+--- right-to-left redirection
+good
+foo
 --- redirect at beginning of line
 foo
 foo1
@@ -478,11 +488,20 @@ SUCCESS 0
 foo@space@
 FAILURE 1024
 FAILURE 1
-@todo_wine@SUCCESS 666@or_broken@Skipping on Win7
 --- success/failure for CALL command
 FAILURE 1
 SUCCESS 0
 FAILURE 1024
+SUCCESS 0
+SUCCESS 0
+FAILURE 666
+FAILURE 2
+FAILURE 666
+FAILURE 666
+FAILURE 1
+FAILURE 666
+FAILURE 666
+FAILURE 1
 foo@space@
 SUCCESS 0
 foo@space@
@@ -761,6 +780,23 @@ e@or_broken@qwerty
 ''@or_broken@'qwerty'
 r@or_broken@qwerty
 ty
+'y'
+''
+''
+'qwerty'
+''
+'qw'
+'WINE_VAR:~2a'
+'WINE_VAR:~2a,2'
+'WINE_VAR:~a,2'
+'WINE_VAR:~2,2a'
+'WINE_VAR:~-'
+------------ Testing variable partial replacement ------------
+azertyazERTY
+ertyERTY
+=_QWERTY
+QWERTY
+@drive@@path@dummydir
 mmydir
 ------------ Testing variable substitution ------------
 --- in FOR variables
@@ -1085,6 +1121,9 @@ exist subdir with /. ok
 exist subdir with / ok
 exist subdir with / and quotes ok
 exist empty string works
+ok
+ok
+ok
 ------ for numbers
 negative numbers handled
 negative numbers handled
@@ -1336,6 +1375,9 @@ d3
 a4
 c4
 d4
+--- EXIT /B inside FOR loops
+1
+2
 --- set /a
 ------ individual operations
 WINE_foo correctly 3
@@ -1578,6 +1620,7 @@ foo bar baz
 c:\
 ------ skip option
 c
+c
 no output
 no output
 c
@@ -1593,11 +1636,15 @@ h=%h i=f j=i k=j k l m  n;;==  o p q r s t u v w x y z l=%l m=%m o=%o
 h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
 h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o
 h=%h i=a j=b k= l= m=%m n=%n o=%o
+failure %i
 h=%h i=a j=e k=y l=z A B C D E F G H I J K L M N O P Q R S T U V W X Y Z m=%m n=%n o=%o
 h=%h i=a j=b k= l= m= n=%n o=%o
 h=%h i=a j=b k= l= m= n= o=%o
 u=a v=b w=c x=d y=e z=f A=%A a=%a
-@todo_wine@U=a V=b W=c X=d Y=e Z=f A=%A a=m
+U=a V=b W=c X=d Y=e Z=f [=g \=h ]=i ^=j _=k `=l A=%A a=m
+U=u V=v W=w X=x Y=y Z=z [=A \=B ]=C ^=D _=E `=%` A=a a=%a
+failure %A
+}=a ~=b
 h=%h i=a j=b k=c l=e m=%m o=%o@or_broken@h=%h i=a j=b k=c l=e m= o=%o
 h=%h i=e j=%j k=%k l=%l m=%m o=%o
 h=%h i=a j=b k=c l=d e f g m=%m n=%n o=%o@or_broken@h=%h i=a j=b k=c l=d e f g m= n=%n o=%o
@@ -1729,6 +1776,43 @@ bar\baz removed
 @pwd@
 @drive@@path@foobar
 @pwd@
+------------ Testing dir /o ------------
+---
+a1.ab
+a2.ac
+a1.aa
+a1.ac
+a2.aa
+---
+a1.ab
+a2.ac
+a1.aa
+a1.ac
+a2.aa
+---
+a2.ac
+a1.ab
+a2.aa
+a1.ac
+a1.aa
+---
+a1.ab
+a2.ac
+a1.aa
+a1.ac
+a2.aa
+---
+a2.ac
+a1.ab
+a2.aa
+a1.ac
+a1.aa
+---
+a2.ac
+a1.ab
+a1.ac
+a2.aa
+a1.aa
 ------------ Testing attrib ------------
 A@spaces@@drive@@path@foobar\foo@or_broken@A       I@spaces@@drive@@path@foobar\foo
 A@spaces@@drive@@path@foobar\foo@or_broken@A       I@spaces@@drive@@path@foobar\foo
@@ -1817,9 +1901,22 @@ abc
 abc
 abc %WINE_BAR% %WINE_BAR%
 abc def def
+--- search with dots
+a
+b
+fail2
+--- builtin in expansions
+bar p1 echo
+bar cp1 echo
+bar cp2 echo
+@todo_wine@cp3
+bar b1 echo
+bar b2 echo
+bar b3 echo
+bar cb1 echo
 --- mixing batch and builtins
 bar@space@
-@todo_wine@foo
+foo
 foo
 foo
 bar@space@

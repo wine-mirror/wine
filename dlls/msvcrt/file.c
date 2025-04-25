@@ -65,6 +65,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #undef _stat64i32
 #undef _wstat64i32
 #undef _wstat64
+int __cdecl _wstat64(const wchar_t*, struct _stat64*);
 
 /* for stat mode, permissions apply to all,owner and group */
 #define ALL_S_IREAD  (_S_IREAD  | (_S_IREAD  >> 3) | (_S_IREAD  >> 6))
@@ -283,11 +284,6 @@ static int MSVCRT_umask = 0;
 /* INTERNAL: static data for tmpnam and _wtmpname functions */
 static LONG tmpnam_unique;
 static LONG tmpnam_s_unique;
-
-static const unsigned int EXE = 'e' << 16 | 'x' << 8 | 'e';
-static const unsigned int BAT = 'b' << 16 | 'a' << 8 | 't';
-static const unsigned int CMD = 'c' << 16 | 'm' << 8 | 'd';
-static const unsigned int COM = 'c' << 16 | 'o' << 8 | 'm';
 
 #define TOUL(x) (ULONGLONG)(x)
 static const ULONGLONG WCEXE = TOUL('e') << 32 | TOUL('x') << 16 | TOUL('e');
@@ -993,21 +989,13 @@ FILE * CDECL __acrt_iob_func(unsigned idx)
  */
 int CDECL _access(const char *filename, int mode)
 {
-  DWORD attr = GetFileAttributesA(filename);
+    wchar_t *filenameW = NULL;
+    int ret;
 
-  TRACE("(%s,%d) %ld\n", filename, mode, attr);
-
-  if (!filename || attr == INVALID_FILE_ATTRIBUTES)
-  {
-    msvcrt_set_errno(GetLastError());
-    return -1;
-  }
-  if ((attr & FILE_ATTRIBUTE_READONLY) && (mode & MSVCRT_W_OK))
-  {
-    msvcrt_set_errno(ERROR_ACCESS_DENIED);
-    return -1;
-  }
-  return 0;
+    if (filename && !(filenameW = wstrdupa_utf8(filename))) return -1;
+    ret = _waccess(filenameW, mode);
+    free(filenameW);
+    return ret;
 }
 
 /*********************************************************************
@@ -1063,18 +1051,13 @@ int CDECL _waccess_s(const wchar_t *filename, int mode)
  */
 int CDECL _chmod(const char *path, int flags)
 {
-  DWORD oldFlags = GetFileAttributesA(path);
+    wchar_t *pathW = NULL;
+    int ret;
 
-  if (oldFlags != INVALID_FILE_ATTRIBUTES)
-  {
-    DWORD newFlags = (flags & _S_IWRITE)? oldFlags & ~FILE_ATTRIBUTE_READONLY:
-      oldFlags | FILE_ATTRIBUTE_READONLY;
-
-    if (newFlags == oldFlags || SetFileAttributesA(path, newFlags))
-      return 0;
-  }
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    if (path && !(pathW = wstrdupa_utf8(path))) return -1;
+    ret = _wchmod(pathW, flags);
+    free(pathW);
+    return ret;
 }
 
 /*********************************************************************
@@ -1101,12 +1084,13 @@ int CDECL _wchmod(const wchar_t *path, int flags)
  */
 int CDECL _unlink(const char *path)
 {
-  TRACE("%s\n", debugstr_a(path));
-  if(DeleteFileA(path))
-    return 0;
-  TRACE("failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *pathW = NULL;
+    int ret;
+
+    if (path && !(pathW = wstrdupa_utf8(path))) return -1;
+    ret = _wunlink(pathW);
+    free(pathW);
+    return ret;
 }
 
 /*********************************************************************
@@ -2145,7 +2129,8 @@ intptr_t CDECL _get_osfhandle(int fd)
  */
 int CDECL _mktemp_s(char *pattern, size_t size)
 {
-    DWORD len, xno, id;
+    DWORD len, wlen, xno, id;
+    wchar_t *pathW;
 
     if(!MSVCRT_CHECK_PMT(pattern!=NULL))
         return EINVAL;
@@ -2169,10 +2154,16 @@ int CDECL _mktemp_s(char *pattern, size_t size)
         id /= 10;
     }
 
-    for(pattern[len-6]='a'; pattern[len-6]<='z'; pattern[len-6]++) {
-        if(GetFileAttributesA(pattern) == INVALID_FILE_ATTRIBUTES)
+    if(!(pathW = wstrdupa_utf8(pattern))) return *_errno();
+    wlen = wcslen(pathW);
+    for(pathW[wlen-6]='a'; pathW[wlen-6]<='z'; pathW[wlen-6]++) {
+        if(GetFileAttributesW(pathW) == INVALID_FILE_ATTRIBUTES) {
+            pattern[len-6] = pathW[wlen-6];
+            free(pathW);
             return 0;
+        }
     }
+    free(pathW);
 
     pattern[0] = 0;
     *_errno() = EEXIST;
@@ -2184,6 +2175,7 @@ int CDECL _mktemp_s(char *pattern, size_t size)
  */
 char * CDECL _mktemp(char *pattern)
 {
+  wchar_t *pathW, *p;
   int numX = 0;
   char *retVal = pattern;
   int id;
@@ -2206,12 +2198,20 @@ char * CDECL _mktemp(char *pattern)
     id = tempNum;
   }
   pattern++;
+  if (!(pathW = wstrdupa_utf8(retVal)))
+    return NULL;
+  p = pathW + wcslen(pathW) - 6;
   do
   {
-    *pattern = letter++;
-    if (GetFileAttributesA(retVal) == INVALID_FILE_ATTRIBUTES)
+    *p = letter++;
+    if (GetFileAttributesW(pathW) == INVALID_FILE_ATTRIBUTES)
+    {
+      *pattern = *p;
+      free(pathW);
       return retVal;
+    }
   } while(letter <= 'z');
+  free(pathW);
   return NULL;
 }
 
@@ -2407,8 +2407,9 @@ int CDECL _wsopen_dispatch( const wchar_t* path, int oflags, int shflags, int pm
         debugstr_w(path), oflags, shflags, pmode, fd, secure);
 
   if (!MSVCRT_CHECK_PMT( fd != NULL )) return EINVAL;
-
   *fd = -1;
+  if (!MSVCRT_CHECK_PMT(path != NULL)) return EINVAL;
+
   wxflag = split_oflags(oflags);
   switch (oflags & (_O_RDONLY | _O_WRONLY | _O_RDWR))
   {
@@ -2605,14 +2606,13 @@ int WINAPIV _wsopen( const wchar_t *path, int oflags, int shflags, ... )
 int CDECL _sopen_dispatch( const char *path, int oflags, int shflags,
     int pmode, int *fd, int secure)
 {
-    wchar_t *pathW;
+    wchar_t *pathW = NULL;
     int ret;
 
     if (!MSVCRT_CHECK_PMT(fd != NULL))
         return EINVAL;
     *fd = -1;
-    if(!MSVCRT_CHECK_PMT(path && (pathW = msvcrt_wstrdupa(path))))
-        return EINVAL;
+    if (path && !(pathW = wstrdupa_utf8(path))) return *_errno();
 
     ret = _wsopen_dispatch(pathW, oflags, shflags, pmode, fd, secure);
     free(pathW);
@@ -3187,80 +3187,13 @@ int CDECL _setmode(int fd,int mode)
  */
 int CDECL _stat64(const char* path, struct _stat64 * buf)
 {
-  DWORD dw;
-  WIN32_FILE_ATTRIBUTE_DATA hfi;
-  unsigned short mode = ALL_S_IREAD;
-  int plen;
+    wchar_t *pathW = NULL;
+    int ret;
 
-  TRACE(":file (%s) buf(%p)\n", path, buf);
-
-  plen = strlen(path);
-  while (plen && path[plen-1]==' ')
-    plen--;
-
-  if (plen==2 && path[1]==':')
-  {
-    *_errno() = ENOENT;
-    return -1;
-  }
-
-#if _MSVCR_VER<140
-  if (plen>=2 && path[plen-2]!=':' && (path[plen-1]=='\\' || path[plen-1]=='/'))
-  {
-    *_errno() = ENOENT;
-    return -1;
-  }
-#endif
-
-  if (!GetFileAttributesExA(path, GetFileExInfoStandard, &hfi))
-  {
-      TRACE("failed (%ld)\n", GetLastError());
-      *_errno() = ENOENT;
-      return -1;
-  }
-
-  memset(buf,0,sizeof(struct _stat64));
-
-  /* FIXME: rdev isn't drive num, despite what the docs say-what is it?
-     Bon 011120: This FIXME seems incorrect
-                 Also a letter as first char isn't enough to be classified
-		 as a drive letter
-  */
-  if (isalpha(*path)&& (*(path+1)==':'))
-    buf->st_dev = buf->st_rdev = _toupper_l(*path, NULL) - 'A'; /* drive num */
-  else
-    buf->st_dev = buf->st_rdev = _getdrive() - 1;
-
-  /* Dir, or regular file? */
-  if (hfi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-    mode |= (_S_IFDIR | ALL_S_IEXEC);
-  else
-  {
-    mode |= _S_IFREG;
-    /* executable? */
-    if (plen > 6 && path[plen-4] == '.')  /* shortest exe: "\x.exe" */
-    {
-      unsigned int ext = _tolower_l(path[plen-1], NULL) |
-          (_tolower_l(path[plen-2], NULL) << 8) |
-          (_tolower_l(path[plen-3], NULL) << 16);
-      if (ext == EXE || ext == BAT || ext == CMD || ext == COM)
-          mode |= ALL_S_IEXEC;
-    }
-  }
-
-  if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-    mode |= ALL_S_IWRITE;
-
-  buf->st_mode  = mode;
-  buf->st_nlink = 1;
-  buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
-  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
-  buf->st_atime = dw;
-  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
-  buf->st_mtime = buf->st_ctime = dw;
-  TRACE("%d %d %#I64x %I64d %I64d %I64d\n", buf->st_mode, buf->st_nlink,
-          buf->st_size, buf->st_atime, buf->st_mtime, buf->st_ctime);
-  return 0;
+    if (path && !(pathW = wstrdupa_utf8(path))) return -1;
+    ret = _wstat64(pathW, buf);
+    free(pathW);
+    return ret;
 }
 
 /*********************************************************************
@@ -3507,20 +3440,22 @@ __int64 CDECL _telli64(int fd)
  */
 char * CDECL _tempnam(const char *dir, const char *prefix)
 {
-  char tmpbuf[MAX_PATH];
-  const char *tmp_dir = getenv("TMP");
+    wchar_t *dirW = NULL, *prefixW = NULL, *retW;
+    char *ret;
 
-  if (tmp_dir) dir = tmp_dir;
-
-  TRACE("dir (%s) prefix (%s)\n", dir, prefix);
-  if (GetTempFileNameA(dir,prefix,0,tmpbuf))
-  {
-    TRACE("got name (%s)\n", tmpbuf);
-    DeleteFileA(tmpbuf);
-    return _strdup(tmpbuf);
-  }
-  TRACE("failed (%ld)\n", GetLastError());
-  return NULL;
+    if (dir && !(dirW = wstrdupa_utf8(dir))) return NULL;
+    if (prefix && !(prefixW = wstrdupa_utf8(prefix)))
+    {
+        free(dirW);
+        return NULL;
+    }
+    retW = _wtempnam(dirW, prefixW);
+    free(dirW);
+    free(prefixW);
+    /* TODO: don't do the conversion */
+    ret = astrdupw_utf8(retW);
+    free(retW);
+    return ret;
 }
 
 /*********************************************************************
@@ -3534,6 +3469,7 @@ wchar_t * CDECL _wtempnam(const wchar_t *dir, const wchar_t *prefix)
   if (tmp_dir) dir = tmp_dir;
 
   TRACE("dir (%s) prefix (%s)\n", debugstr_w(dir), debugstr_w(prefix));
+  /* TODO: use whole prefix */
   if (GetTempFileNameW(dir,prefix,0,tmpbuf))
   {
     TRACE("got name (%s)\n", debugstr_w(tmpbuf));
@@ -3898,7 +3834,7 @@ int CDECL _filbuf(FILE* file)
             return EOF;
     }
 
-    if(!(file->_flag & (_IOMYBUF | MSVCRT__USERBUF))) {
+    if(!(file->_flag & (MSVCRT__NOBUF | _IOMYBUF | MSVCRT__USERBUF))) {
         int r;
         if ((r = _read(file->_file,&c,1)) != 1) {
             file->_flag |= (r == 0) ? _IOEOF : _IOERR;
@@ -4165,6 +4101,8 @@ int CDECL _flsbuf(int c, FILE* file)
         int res = 0;
 
         if(file->_cnt <= 0) {
+            if(!file->_cnt && get_ioinfo_nolock(file->_file)->wxflag & WX_APPEND)
+                _lseek(file->_file, 0, FILE_END);
             res = msvcrt_flush_buffer(file);
             if(res)
                 return res;
@@ -4351,19 +4289,13 @@ FILE * CDECL _wfsopen(const wchar_t *path, const wchar_t *mode, int share)
  */
 FILE * CDECL _fsopen(const char *path, const char *mode, int share)
 {
-    FILE *ret;
     wchar_t *pathW = NULL, *modeW = NULL;
+    FILE *ret;
 
-    if (path && !(pathW = msvcrt_wstrdupa(path))) {
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *_errno() = EINVAL;
-        return NULL;
-    }
-    if (mode && !(modeW = msvcrt_wstrdupa(mode)))
+    if (path && !(pathW = wstrdupa_utf8(path))) return NULL;
+    if (mode && !(modeW = wstrdupa_utf8(mode)))
     {
         free(pathW);
-        _invalid_parameter(NULL, NULL, NULL, 0, 0);
-        *_errno() = EINVAL;
         return NULL;
     }
 
@@ -4696,7 +4628,7 @@ FILE* CDECL freopen(const char *path, const char *mode, FILE* file)
     FILE *ret;
     wchar_t *pathW = NULL, *modeW = NULL;
 
-    if (path && !(pathW = msvcrt_wstrdupa(path))) return NULL;
+    if (path && !(pathW = wstrdupa_utf8(path))) return NULL;
     if (mode && !(modeW = msvcrt_wstrdupa(mode)))
     {
         free(pathW);
@@ -5026,12 +4958,7 @@ int CDECL _putws(const wchar_t *s)
  */
 int CDECL remove(const char *path)
 {
-  TRACE("(%s)\n", path);
-  if (DeleteFileA(path))
-    return 0;
-  TRACE(":failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    return _unlink(path);
 }
 
 /*********************************************************************
@@ -5039,12 +4966,7 @@ int CDECL remove(const char *path)
  */
 int CDECL _wremove(const wchar_t *path)
 {
-  TRACE("(%s)\n", debugstr_w(path));
-  if (DeleteFileW(path))
-    return 0;
-  TRACE(":failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    return _wunlink(path);
 }
 
 /*********************************************************************
@@ -5052,12 +4974,19 @@ int CDECL _wremove(const wchar_t *path)
  */
 int CDECL rename(const char *oldpath,const char *newpath)
 {
-  TRACE(":from %s to %s\n", oldpath, newpath);
-  if (MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED))
-    return 0;
-  TRACE(":failed (%ld)\n", GetLastError());
-  msvcrt_set_errno(GetLastError());
-  return -1;
+    wchar_t *oldpathW = NULL, *newpathW = NULL;
+    int ret;
+
+    if (oldpath && !(oldpathW = wstrdupa_utf8(oldpath))) return -1;
+    if (newpath && !(newpathW = wstrdupa_utf8(newpath)))
+    {
+        free(oldpathW);
+        return -1;
+    }
+    ret = _wrename(oldpathW, newpathW);
+    free(oldpathW);
+    free(newpathW);
+    return ret;
 }
 
 /*********************************************************************

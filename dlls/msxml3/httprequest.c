@@ -42,8 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
-static const WCHAR colspaceW[] = {':',' ',0};
-static const WCHAR crlfW[] = {'\r','\n',0};
 static const DWORD safety_supported_options =
     INTERFACESAFE_FOR_UNTRUSTED_CALLER |
     INTERFACESAFE_FOR_UNTRUSTED_DATA   |
@@ -459,9 +457,7 @@ static ULONG WINAPI BSCHttpNegotiate_Release(IHttpNegotiate *iface)
 static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *iface,
         LPCWSTR url, LPCWSTR headers, DWORD reserved, LPWSTR *add_headers)
 {
-    static const WCHAR content_type_utf8W[] = {'C','o','n','t','e','n','t','-','T','y','p','e',':',' ',
-        't','e','x','t','/','p','l','a','i','n',';','c','h','a','r','s','e','t','=','u','t','f','-','8','\r','\n',0};
-    static const WCHAR refererW[] = {'R','e','f','e','r','e','r',':',' ',0};
+    static const WCHAR content_type_utf8W[] = L"Content-Type: text/plain;charset=utf-8\r\n";
 
     BindStatusCallback *This = impl_from_IHttpNegotiate(iface);
     const struct httpheader *entry;
@@ -482,7 +478,7 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
     if (This->request->base_uri)
     {
         IUri_GetRawUri(This->request->base_uri, &base_uri);
-        size += SysStringLen(base_uri)*sizeof(WCHAR) + sizeof(refererW) + sizeof(crlfW);
+        size += SysStringLen(base_uri)*sizeof(WCHAR) + sizeof(L"Referer: ") + sizeof(L"\r\n");
     }
 
     if (!size)
@@ -507,10 +503,10 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
 
     if (base_uri)
     {
-        lstrcpyW(ptr, refererW);
+        lstrcpyW(ptr, L"Referer: ");
         lstrcatW(ptr, base_uri);
-        lstrcatW(ptr, crlfW);
-        ptr += lstrlenW(refererW) + SysStringLen(base_uri) + lstrlenW(crlfW);
+        lstrcatW(ptr, L"\r\n");
+        ptr += lstrlenW(L"Referer: ") + SysStringLen(base_uri) + lstrlenW(L"\r\n");
         SysFreeString(base_uri);
     }
 
@@ -520,14 +516,14 @@ static HRESULT WINAPI BSCHttpNegotiate_BeginningTransaction(IHttpNegotiate *ifac
         lstrcpyW(ptr, entry->header);
         ptr += SysStringLen(entry->header);
 
-        lstrcpyW(ptr, colspaceW);
-        ptr += ARRAY_SIZE(colspaceW) - 1;
+        lstrcpyW(ptr, L": ");
+        ptr += 2;
 
         lstrcpyW(ptr, entry->value);
         ptr += SysStringLen(entry->value);
 
-        lstrcpyW(ptr, crlfW);
-        ptr += ARRAY_SIZE(crlfW) - 1;
+        lstrcpyW(ptr, L"\r\n");
+        ptr += 2;
     }
 
     *add_headers = buff;
@@ -869,12 +865,6 @@ static HRESULT verify_uri(httprequest *This, IUri *uri)
 static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
         VARIANT async, VARIANT user, VARIANT password)
 {
-    static const WCHAR MethodHeadW[] = {'H','E','A','D',0};
-    static const WCHAR MethodGetW[] = {'G','E','T',0};
-    static const WCHAR MethodPutW[] = {'P','U','T',0};
-    static const WCHAR MethodPostW[] = {'P','O','S','T',0};
-    static const WCHAR MethodDeleteW[] = {'D','E','L','E','T','E',0};
-    static const WCHAR MethodPropFindW[] = {'P','R','O','P','F','I','N','D',0};
     VARIANT str, is_async;
     IUri *uri;
     HRESULT hr;
@@ -892,21 +882,21 @@ static HRESULT httprequest_open(httprequest *This, BSTR method, BSTR url,
     This->user = This->password = NULL;
     free_request_headers(This);
 
-    if (!wcsicmp(method, MethodGetW))
+    if (!wcsicmp(method, L"GET"))
     {
         This->verb = BINDVERB_GET;
     }
-    else if (!wcsicmp(method, MethodPutW))
+    else if (!wcsicmp(method, L"PUT"))
     {
         This->verb = BINDVERB_PUT;
     }
-    else if (!wcsicmp(method, MethodPostW))
+    else if (!wcsicmp(method, L"POST"))
     {
         This->verb = BINDVERB_POST;
     }
-    else if (!wcsicmp(method, MethodDeleteW) ||
-             !wcsicmp(method, MethodHeadW) ||
-             !wcsicmp(method, MethodPropFindW))
+    else if (!wcsicmp(method, L"DELETE") ||
+             !wcsicmp(method, L"HEAD") ||
+             !wcsicmp(method, L"PROPFIND"))
     {
         This->verb = BINDVERB_CUSTOM;
         SysReAllocString(&This->custom, method);
@@ -1013,8 +1003,8 @@ static HRESULT httprequest_setRequestHeader(httprequest *This, BSTR header, BSTR
     entry->value  = SysAllocString(value);
 
     /* header length including null terminator */
-    This->reqheader_size += SysStringLen(entry->header) + ARRAY_SIZE(colspaceW) +
-        SysStringLen(entry->value) + ARRAY_SIZE(crlfW) - 1;
+    This->reqheader_size += SysStringLen(entry->header) + sizeof(": ") - 1 +
+        SysStringLen(entry->value) + sizeof("\r\n");
 
     list_add_head(&This->reqheaders, &entry->entry);
 

@@ -230,6 +230,36 @@ NTSTATUS WINAPI wow64_NtAreMappedFilesTheSame( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtCreateSectionEx
+ */
+NTSTATUS WINAPI wow64_NtCreateSectionEx( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    const LARGE_INTEGER *size = get_ptr( &args );
+    ULONG protect = get_ulong( &args );
+    ULONG flags = get_ulong( &args );
+    HANDLE file = get_handle( &args );
+    MEM_EXTENDED_PARAMETER32 *params32 = get_ptr( &args );
+    ULONG count = get_ulong( &args );
+
+    MEM_EXTENDED_PARAMETER *params64;
+    struct object_attr64 attr;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    if ((status = mem_extended_parameters_32to64( &params64, params32, &count, FALSE ))) return status;
+
+    *handle_ptr = 0;
+    status = NtCreateSectionEx( &handle, access, objattr_32to64( &attr, attr32 ),
+                                size, protect, flags, file, params64, count );
+    put_handle( handle_ptr, handle );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtFlushInstructionCache
  */
 NTSTATUS WINAPI wow64_NtFlushInstructionCache( UINT *args )

@@ -104,17 +104,20 @@ static int32_t converttoint(double_t);
 /* Evaluate an expression as the specified type. With standard excess
    precision handling a type cast or assignment is enough (with
    -ffloat-store an assignment is required, in old compilers argument
-   passing and return statement may not drop excess precision).  */
+   passing and return statement may not drop excess precision).
+
+   If compiled without -ffloat-store or -fexcess-precision=standard,
+   an extra volatile qualifier here will force limiting the precision.  */
 
 static inline float eval_as_float(float x)
 {
-	float y = x;
+	volatile float y = x;
 	return y;
 }
 
 static inline double eval_as_double(double x)
 {
-	double y = x;
+	volatile double y = x;
 	return y;
 }
 

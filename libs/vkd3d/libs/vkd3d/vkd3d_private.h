@@ -37,7 +37,6 @@
 #include "vkd3d.h"
 #include "vkd3d_shader.h"
 
-#include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -59,12 +58,19 @@
 #define VKD3D_MAX_VK_SYNC_OBJECTS         4u
 #define VKD3D_MAX_DEVICE_BLOCKED_QUEUES  16u
 #define VKD3D_MAX_DESCRIPTOR_SETS        64u
+/* Direct3D 12 binding tier 3 has a limit of "1,000,000+" CBVs, SRVs and UAVs.
+ * I am not sure what the "+" is supposed to mean: it probably hints that
+ * implementations may have an even higher limit, but that's pretty obvious,
+ * that table is for guaranteed minimum limits. */
+#define VKD3D_MAX_DESCRIPTOR_SET_CBVS_SRVS_UAVS 1000000u
 /* D3D12 binding tier 3 has a limit of 2048 samplers. */
 #define VKD3D_MAX_DESCRIPTOR_SET_SAMPLERS 2048u
-/* The main limitation here is the simple descriptor pool recycling scheme
- * requiring each pool to contain all descriptor types used by vkd3d. Limit
- * this number to prevent excessive pool memory use. */
 #define VKD3D_MAX_VIRTUAL_HEAP_DESCRIPTORS_PER_TYPE (16 * 1024u)
+#define VKD3D_INITIAL_DESCRIPTORS_POOL_SIZE 1024u
+
+#define VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT (VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER + 1)
+
+#define VKD3D_VALIDATE_FORCE_ALLOW_DS  0x1u
 
 extern uint64_t object_global_serial_id;
 
@@ -123,6 +129,7 @@ struct vkd3d_vulkan_info
     bool KHR_image_format_list;
     bool KHR_maintenance2;
     bool KHR_maintenance3;
+    bool KHR_portability_subset;
     bool KHR_push_descriptor;
     bool KHR_sampler_mirror_clamp_to_edge;
     bool KHR_timeline_semaphore;
@@ -131,6 +138,7 @@ struct vkd3d_vulkan_info
     bool EXT_calibrated_timestamps;
     bool EXT_conditional_rendering;
     bool EXT_debug_marker;
+    bool EXT_depth_range_unrestricted;
     bool EXT_depth_clip_enable;
     bool EXT_descriptor_indexing;
     bool EXT_fragment_shader_interlock;
@@ -145,6 +153,8 @@ struct vkd3d_vulkan_info
 
     bool rasterization_stream;
     bool transform_feedback_queries;
+    bool geometry_shaders;
+    bool tessellation_shaders;
 
     bool uav_read_without_format;
 
@@ -231,8 +241,6 @@ struct vkd3d_fence_worker
     size_t fence_count;
     struct vkd3d_waiting_fence *fences;
     size_t fences_size;
-
-    void (*wait_for_gpu_fence)(struct vkd3d_fence_worker *worker, const struct vkd3d_waiting_fence *enqueued_fence);
 
     struct vkd3d_queue *queue;
     struct d3d12_device *device;
@@ -526,7 +534,7 @@ struct vkd3d_resource_allocation_info
 };
 
 bool d3d12_resource_is_cpu_accessible(const struct d3d12_resource *resource);
-HRESULT d3d12_resource_validate_desc(const D3D12_RESOURCE_DESC1 *desc, struct d3d12_device *device);
+HRESULT d3d12_resource_validate_desc(const D3D12_RESOURCE_DESC1 *desc, struct d3d12_device *device, uint32_t flags);
 void d3d12_resource_get_tiling(struct d3d12_device *device, const struct d3d12_resource *resource,
         UINT *total_tile_count, D3D12_PACKED_MIP_INFO *packed_mip_info, D3D12_TILE_SHAPE *standard_tile_shape,
         UINT *sub_resource_tiling_count, UINT first_sub_resource_tiling,
@@ -676,7 +684,7 @@ static inline void *d3d12_desc_get_object_ref(const volatile struct d3d12_desc *
     void *view;
 
     /* Some games, e.g. Shadow of the Tomb Raider, GRID 2019, and Horizon Zero Dawn, write descriptors
-     * from multiple threads without syncronisation. This is apparently valid in Windows. */
+     * from multiple threads without synchronisation. This is apparently valid in Windows. */
     for (;;)
     {
         do
@@ -767,16 +775,42 @@ static inline struct d3d12_dsv_desc *d3d12_dsv_desc_from_cpu_handle(D3D12_CPU_DE
 void d3d12_dsv_desc_create_dsv(struct d3d12_dsv_desc *dsv_desc, struct d3d12_device *device,
         struct d3d12_resource *resource, const D3D12_DEPTH_STENCIL_VIEW_DESC *desc);
 
+static inline VkDescriptorType vk_descriptor_type_from_vkd3d_descriptor_type(enum vkd3d_shader_descriptor_type type,
+        bool is_buffer)
+{
+    switch (type)
+    {
+        case VKD3D_SHADER_DESCRIPTOR_TYPE_SRV:
+            return is_buffer ? VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER : VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        case VKD3D_SHADER_DESCRIPTOR_TYPE_UAV:
+            return is_buffer ? VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        case VKD3D_SHADER_DESCRIPTOR_TYPE_CBV:
+            return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        case VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER:
+            return VK_DESCRIPTOR_TYPE_SAMPLER;
+        default:
+            FIXME("Unhandled descriptor range type type %#x.\n", type);
+            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+    }
+}
+
 enum vkd3d_vk_descriptor_set_index
 {
-    VKD3D_SET_INDEX_UNIFORM_BUFFER = 0,
-    VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER = 1,
-    VKD3D_SET_INDEX_SAMPLED_IMAGE = 2,
-    VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER = 3,
-    VKD3D_SET_INDEX_STORAGE_IMAGE = 4,
-    VKD3D_SET_INDEX_SAMPLER = 5,
-    VKD3D_SET_INDEX_UAV_COUNTER = 6,
-    VKD3D_SET_INDEX_COUNT = 7
+    VKD3D_SET_INDEX_SAMPLER,
+    VKD3D_SET_INDEX_UAV_COUNTER,
+    VKD3D_SET_INDEX_MUTABLE,
+
+    /* These are used when mutable descriptors are not available to back
+     * SRV-UAV-CBV descriptor heaps. They must stay at the end of this
+     * enumeration, so that they can be ignored when mutable descriptors are
+     * used. */
+    VKD3D_SET_INDEX_UNIFORM_BUFFER = VKD3D_SET_INDEX_MUTABLE,
+    VKD3D_SET_INDEX_UNIFORM_TEXEL_BUFFER,
+    VKD3D_SET_INDEX_SAMPLED_IMAGE,
+    VKD3D_SET_INDEX_STORAGE_TEXEL_BUFFER,
+    VKD3D_SET_INDEX_STORAGE_IMAGE,
+
+    VKD3D_SET_INDEX_COUNT
 };
 
 extern const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[];
@@ -784,8 +818,8 @@ extern const enum vkd3d_vk_descriptor_set_index vk_descriptor_set_index_table[];
 static inline enum vkd3d_vk_descriptor_set_index vkd3d_vk_descriptor_set_index_from_vk_descriptor_type(
         VkDescriptorType type)
 {
-    assert(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
-    assert(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
+    VKD3D_ASSERT(type <= VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER);
+    VKD3D_ASSERT(vk_descriptor_set_index_table[type] < VKD3D_SET_INDEX_COUNT);
 
     return vk_descriptor_set_index_table[type];
 }
@@ -889,6 +923,8 @@ struct d3d12_root_descriptor_table_range
     unsigned int vk_binding_count;
     uint32_t set;
     uint32_t binding;
+    uint32_t image_set;
+    uint32_t image_binding;
 
     enum vkd3d_shader_descriptor_type type;
     uint32_t descriptor_magic;
@@ -910,6 +946,7 @@ struct d3d12_root_constant
 
 struct d3d12_root_descriptor
 {
+    uint32_t set;
     uint32_t binding;
 };
 
@@ -926,7 +963,9 @@ struct d3d12_root_parameter
 
 struct d3d12_descriptor_set_layout
 {
+    enum vkd3d_shader_descriptor_type descriptor_type;
     VkDescriptorSetLayout vk_layout;
+    unsigned int descriptor_count;
     unsigned int unbounded_offset;
     unsigned int table_index;
 };
@@ -1125,6 +1164,18 @@ struct vkd3d_buffer
     VkDeviceMemory vk_memory;
 };
 
+struct vkd3d_vk_descriptor_pool
+{
+    unsigned int descriptor_count;
+    VkDescriptorPool vk_pool;
+};
+
+struct vkd3d_vk_descriptor_pool_array
+{
+    struct vkd3d_vk_descriptor_pool *pools;
+    size_t capacity, count;
+};
+
 /* ID3D12CommandAllocator */
 struct d3d12_command_allocator
 {
@@ -1136,11 +1187,9 @@ struct d3d12_command_allocator
 
     VkCommandPool vk_command_pool;
 
-    VkDescriptorPool vk_descriptor_pool;
+    VkDescriptorPool vk_descriptor_pools[VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT];
 
-    VkDescriptorPool *free_descriptor_pools;
-    size_t free_descriptor_pools_size;
-    size_t free_descriptor_pool_count;
+    struct vkd3d_vk_descriptor_pool_array free_descriptor_pools[VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT];
 
     VkRenderPass *passes;
     size_t passes_size;
@@ -1150,9 +1199,8 @@ struct d3d12_command_allocator
     size_t framebuffers_size;
     size_t framebuffer_count;
 
-    VkDescriptorPool *descriptor_pools;
-    size_t descriptor_pools_size;
-    size_t descriptor_pool_count;
+    struct vkd3d_vk_descriptor_pool_array descriptor_pools[VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT];
+    unsigned int vk_pool_sizes[VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT];
 
     struct vkd3d_view **views;
     size_t views_size;
@@ -1229,7 +1277,7 @@ enum vkd3d_pipeline_bind_point
 /* ID3D12CommandList */
 struct d3d12_command_list
 {
-    ID3D12GraphicsCommandList5 ID3D12GraphicsCommandList5_iface;
+    ID3D12GraphicsCommandList6 ID3D12GraphicsCommandList6_iface;
     unsigned int refcount;
 
     D3D12_COMMAND_LIST_TYPE type;
@@ -1252,7 +1300,7 @@ struct d3d12_command_list
     VkFormat dsv_format;
 
     bool xfb_enabled;
-
+    bool has_depth_bounds;
     bool is_predicated;
 
     VkFramebuffer current_framebuffer;
@@ -1269,7 +1317,6 @@ struct d3d12_command_list
     VkBuffer so_counter_buffers[D3D12_SO_BUFFER_SLOT_COUNT];
     VkDeviceSize so_counter_buffer_offsets[D3D12_SO_BUFFER_SLOT_COUNT];
 
-    void (*update_descriptors)(struct d3d12_command_list *list, enum vkd3d_pipeline_bind_point bind_point);
     struct d3d12_descriptor_heap *descriptor_heaps[64];
     unsigned int descriptor_heap_count;
 
@@ -1315,6 +1362,7 @@ enum vkd3d_cs_op
 {
     VKD3D_CS_OP_WAIT,
     VKD3D_CS_OP_SIGNAL,
+    VKD3D_CS_OP_SIGNAL_ON_CPU,
     VKD3D_CS_OP_EXECUTE,
     VKD3D_CS_OP_UPDATE_MAPPINGS,
     VKD3D_CS_OP_COPY_MAPPINGS,
@@ -1507,8 +1555,6 @@ struct vkd3d_desc_object_cache
     size_t size;
 };
 
-#define VKD3D_DESCRIPTOR_POOL_COUNT 6
-
 /* ID3D12Device */
 struct d3d12_device
 {
@@ -1527,8 +1573,7 @@ struct d3d12_device
     struct vkd3d_desc_object_cache view_desc_cache;
     struct vkd3d_desc_object_cache cbuffer_desc_cache;
 
-    VkDescriptorPoolSize vk_pool_sizes[VKD3D_DESCRIPTOR_POOL_COUNT];
-    unsigned int vk_pool_count;
+    unsigned int vk_pool_limits[VKD3D_SHADER_DESCRIPTOR_TYPE_COUNT];
     struct vkd3d_vk_descriptor_heap_layout vk_descriptor_heap_layouts[VKD3D_SET_INDEX_COUNT];
     bool use_vk_heaps;
 
@@ -1753,7 +1798,6 @@ static inline void vk_prepend_struct(void *header, void *structure)
 {
     VkBaseOutStructure *vk_header = header, *vk_structure = structure;
 
-    assert(!vk_structure->pNext);
     vk_structure->pNext = vk_header->pNext;
     vk_header->pNext = vk_structure;
 }
@@ -1766,7 +1810,7 @@ static inline void vkd3d_prepend_struct(void *header, void *structure)
         const void *next;
     } *vkd3d_header = header, *vkd3d_structure = structure;
 
-    assert(!vkd3d_structure->next);
+    VKD3D_ASSERT(!vkd3d_structure->next);
     vkd3d_structure->next = vkd3d_header->next;
     vkd3d_header->next = vkd3d_structure;
 }

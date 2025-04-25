@@ -36,17 +36,20 @@ STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
 CAPTION "Joysticks"
 FONT 8, "Ms Shell Dlg"
 {
-    PUSHBUTTON      "&Disable", IDC_BUTTONDISABLE, 200, 20, 60, 15
-    PUSHBUTTON      "&Reset", IDC_BUTTONRESET, 200, 40, 60, 15
-    PUSHBUTTON      "&Enable", IDC_BUTTONENABLE, 200, 190, 60, 15
-    PUSHBUTTON      "&Override", IDC_BUTTONOVERRIDE, 200, 100, 60, 15
-    LTEXT           "Connected", IDC_STATIC, 10, 10, 180, 10
-    LISTBOX         IDC_JOYSTICKLIST, 10, 20, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Connected (xinput device)", IDC_STATIC, 10, 90, 180, 10
-    LISTBOX         IDC_XINPUTLIST, 10, 100, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Disabled", IDC_STATIC, 10, 180, 180, 10
-    LISTBOX         IDC_DISABLEDLIST, 10, 190, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "After disabling or enabling a device, the connected joysticks won't be updated here until you restart this applet.", IDC_STATIC, 10, 270, 200, 25
+    PUSHBUTTON      "&Disable", IDC_BUTTON_DI_DISABLE, 200, 20, 60, 15
+    PUSHBUTTON      "&Reset", IDC_BUTTON_DI_RESET, 200, 40, 60, 15
+    PUSHBUTTON      "&Override", IDC_BUTTON_XI_OVERRIDE, 200, 90, 60, 15
+    PUSHBUTTON      "&Enable", IDC_BUTTON_ENABLE, 200, 160, 60, 15
+    LTEXT           "Connected (DirectInput devices)", IDC_STATIC, 10, 10, 180, 10
+    LISTBOX         IDC_DI_ENABLED_LIST, 10, 20, 180, 60, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+    LTEXT           "Connected (XInput devices)", IDC_STATIC, 10, 80, 180, 10
+    LISTBOX         IDC_XI_ENABLED_LIST, 10, 90, 180, 60, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+    LTEXT           "Disabled", IDC_STATIC, 10, 150, 180, 10
+    LISTBOX         IDC_DISABLED_LIST, 10, 160, 180, 60, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+
+    GROUPBOX        "Advanced settings (restart prefix required to take effect)", IDC_ADVANCED, 10, 220, 300, 70
+    AUTOCHECKBOX    "Enable SDL", IDC_ENABLE_SDL, 20, 235, 100, 10
+    AUTOCHECKBOX    "Disable hidraw", IDC_DISABLE_HIDRAW, 20, 245, 100, 10
 }
 
 IDD_TEST_DI DIALOG 0, 0, 320, 300

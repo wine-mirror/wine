@@ -253,14 +253,14 @@ static INT nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case DESKTOPHORZRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect( 0 );
+            RECT rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
             return rect.right - rect.left;
         }
         return NtGdiGetDeviceCaps( dev->hdc, HORZRES );
     case DESKTOPVERTRES:
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
-            RECT rect = get_virtual_screen_rect( 0 );
+            RECT rect = get_virtual_screen_rect( 0, MDT_DEFAULT );
             return rect.bottom - rect.top;
         }
         return NtGdiGetDeviceCaps( dev->hdc, VERTRES );
@@ -686,7 +686,7 @@ static void nulldrv_NotifyIMEStatus( HWND hwnd, UINT status )
 {
 }
 
-static BOOL nulldrv_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+static BOOL nulldrv_SetIMECompositionRect( HWND hwnd, RECT rect )
 {
     return FALSE;
 }
@@ -753,17 +753,7 @@ static void nulldrv_UpdateClipboard(void)
 static LONG nulldrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                            DWORD flags, LPVOID lparam )
 {
-    return E_NOTIMPL; /* use default implementation */
-}
-
-static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )
-{
-    return FALSE; /* use default implementation */
-}
-
-static INT nulldrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
-{
-    return -1; /* use default implementation */
+    return DISP_CHANGE_SUCCESSFUL;
 }
 
 static UINT nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, void *param )
@@ -834,7 +824,7 @@ static void nulldrv_SetDesktopWindow( HWND hwnd )
 {
 }
 
-static void nulldrv_SetFocus( HWND hwnd )
+static void nulldrv_ActivateWindow( HWND hwnd, HWND previous )
 {
 }
 
@@ -867,12 +857,12 @@ static UINT nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
     return ~0; /* use default implementation */
 }
 
-static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+static LRESULT nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam, const POINT *pos )
 {
     return -1;
 }
 
-static void nulldrv_UpdateLayeredWindow( HWND hwnd, UINT flags )
+static void nulldrv_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
 }
 
@@ -886,7 +876,12 @@ static BOOL nulldrv_WindowPosChanging( HWND hwnd, UINT swp_flags, BOOL shaped, c
     return TRUE;
 }
 
-extern BOOL nulldrv_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
+static BOOL nulldrv_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *style_mask, UINT *ex_style_mask )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd, RECT *rect, HWND *foreground )
 {
     return FALSE;
 }
@@ -896,12 +891,13 @@ static BOOL nulldrv_CreateWindowSurface( HWND hwnd, BOOL layered, const RECT *su
     return FALSE;
 }
 
-static void nulldrv_MoveWindowBits( HWND hwnd, const struct window_rects *new_rects, const RECT *valid_rects )
+static void nulldrv_MoveWindowBits( HWND hwnd, const struct window_rects *old_rects,
+                                    const struct window_rects *new_rects, const RECT *valid_rects )
 {
 }
 
-static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags, const struct window_rects *new_rects,
-                                      struct window_surface *surface )
+static void nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, HWND owner_hint, UINT swp_flags, BOOL fullscreen,
+                                      const struct window_rects *new_rects, struct window_surface *surface )
 {
 }
 
@@ -915,9 +911,9 @@ static UINT nulldrv_VulkanInit( UINT version, void *vulkan_handle, const struct 
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static struct opengl_funcs *nulldrv_wine_get_wgl_driver( UINT version )
+static UINT nulldrv_OpenGLInit( UINT version, struct opengl_funcs **opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
-    return (void *)-1;
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static void nulldrv_ThreadDetach( void )
@@ -1010,7 +1006,7 @@ static BOOL load_desktop_driver( HWND hwnd )
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static const struct user_driver_funcs *load_driver(void)
+static void load_display_driver(void)
 {
     USEROBJECTFLAGS flags;
     HWINSTA winstation;
@@ -1024,9 +1020,18 @@ static const struct user_driver_funcs *load_driver(void)
 
         __wine_set_user_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
     }
+}
 
+static const struct user_driver_funcs *load_driver(void)
+{
+    load_display_driver();
     update_display_cache( FALSE );
     return user_driver;
+}
+
+void init_display_driver(void)
+{
+    if (user_driver == &lazy_load_driver) load_display_driver();
 }
 
 /**********************************************************************
@@ -1104,25 +1109,15 @@ static void loaderdrv_NotifyIMEStatus( HWND hwnd, UINT status )
     return load_driver()->pNotifyIMEStatus( hwnd, status );
 }
 
-static BOOL loaderdrv_SetIMECompositionWindowPos( HWND hwnd, const POINT *point )
+static BOOL loaderdrv_SetIMECompositionRect( HWND hwnd, RECT rect )
 {
-    return load_driver()->pSetIMECompositionWindowPos( hwnd, point );
+    return load_driver()->pSetIMECompositionRect( hwnd, rect );
 }
 
 static LONG loaderdrv_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd,
                                              DWORD flags, LPVOID lparam )
 {
     return load_driver()->pChangeDisplaySettings( displays, primary_name, hwnd, flags, lparam );
-}
-
-static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODEW mode )
-{
-    return load_driver()->pGetCurrentDisplaySettings( name, is_primary, mode );
-}
-
-static INT loaderdrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
-{
-    return load_driver()->pGetDisplayDepth( name, is_primary );
 }
 
 static void loaderdrv_SetCursor( HWND hwnd, HCURSOR cursor )
@@ -1226,9 +1221,9 @@ static void loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
-static void loaderdrv_UpdateLayeredWindow( HWND hwnd, UINT flags )
+static void loaderdrv_UpdateLayeredWindow( HWND hwnd, BYTE alpha, UINT flags )
 {
-    load_driver()->pUpdateLayeredWindow( hwnd, flags );
+    load_driver()->pUpdateLayeredWindow( hwnd, alpha, flags );
 }
 
 static UINT loaderdrv_VulkanInit( UINT version, void *vulkan_handle, const struct vulkan_driver_funcs **driver_funcs )
@@ -1253,7 +1248,7 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_ReleaseKbdTables,
     loaderdrv_ImeProcessKey,
     loaderdrv_NotifyIMEStatus,
-    loaderdrv_SetIMECompositionWindowPos,
+    loaderdrv_SetIMECompositionRect,
     /* cursor/icon functions */
     nulldrv_DestroyCursorIcon,
     loaderdrv_SetCursor,
@@ -1272,8 +1267,6 @@ static const struct user_driver_funcs lazy_load_driver =
     loaderdrv_UpdateClipboard,
     /* display modes */
     loaderdrv_ChangeDisplaySettings,
-    loaderdrv_GetCurrentDisplaySettings,
-    loaderdrv_GetDisplayDepth,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
     loaderdrv_CreateDesktop,
@@ -1287,7 +1280,7 @@ static const struct user_driver_funcs lazy_load_driver =
     nulldrv_ScrollDC,
     nulldrv_SetCapture,
     loaderdrv_SetDesktopWindow,
-    nulldrv_SetFocus,
+    nulldrv_ActivateWindow,
     loaderdrv_SetLayeredWindowAttributes,
     nulldrv_SetParent,
     loaderdrv_SetWindowRgn,
@@ -1300,6 +1293,7 @@ static const struct user_driver_funcs lazy_load_driver =
     nulldrv_WindowMessage,
     nulldrv_WindowPosChanging,
     nulldrv_GetWindowStyleMasks,
+    nulldrv_GetWindowStateUpdates,
     nulldrv_CreateWindowSurface,
     nulldrv_MoveWindowBits,
     nulldrv_WindowPosChanged,
@@ -1308,7 +1302,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* vulkan support */
     loaderdrv_VulkanInit,
     /* opengl support */
-    nulldrv_wine_get_wgl_driver,
+    nulldrv_OpenGLInit,
     /* thread management */
     nulldrv_ThreadDetach,
 };
@@ -1329,8 +1323,16 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
         return;
     }
 
+    if (!funcs)
+    {
+        prev = InterlockedExchangePointer( (void **)&user_driver, (void *)&lazy_load_driver );
+        if (prev != &lazy_load_driver)
+            free( prev );
+        return;
+    }
+
     driver = malloc( sizeof(*driver) );
-    *driver = funcs ? *funcs : null_user_driver;
+    *driver = *funcs;
 
 #define SET_USER_FUNC(name) \
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
@@ -1348,7 +1350,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ReleaseKbdTables);
     SET_USER_FUNC(ImeProcessKey);
     SET_USER_FUNC(NotifyIMEStatus);
-    SET_USER_FUNC(SetIMECompositionWindowPos);
+    SET_USER_FUNC(SetIMECompositionRect);
     SET_USER_FUNC(DestroyCursorIcon);
     SET_USER_FUNC(SetCursor);
     SET_USER_FUNC(GetCursorPos);
@@ -1363,8 +1365,6 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ClipboardWindowProc);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);
-    SET_USER_FUNC(GetCurrentDisplaySettings);
-    SET_USER_FUNC(GetDisplayDepth);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktop);
     SET_USER_FUNC(CreateWindow);
@@ -1377,7 +1377,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(ScrollDC);
     SET_USER_FUNC(SetCapture);
     SET_USER_FUNC(SetDesktopWindow);
-    SET_USER_FUNC(SetFocus);
+    SET_USER_FUNC(ActivateWindow);
     SET_USER_FUNC(SetLayeredWindowAttributes);
     SET_USER_FUNC(SetParent);
     SET_USER_FUNC(SetWindowRgn);
@@ -1390,12 +1390,13 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(WindowMessage);
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(GetWindowStyleMasks);
+    SET_USER_FUNC(GetWindowStateUpdates);
     SET_USER_FUNC(CreateWindowSurface);
     SET_USER_FUNC(MoveWindowBits);
     SET_USER_FUNC(WindowPosChanged);
     SET_USER_FUNC(SystemParametersInfo);
     SET_USER_FUNC(VulkanInit);
-    SET_USER_FUNC(wine_get_wgl_driver);
+    SET_USER_FUNC(OpenGLInit);
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 

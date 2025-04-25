@@ -1,0 +1,146 @@
+/*
+ * Copyright (C) 2024 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.system.idl";
+
+namespace Windows.Security.Authorization.AppCapabilityAccess {
+    typedef enum AppCapabilityAccessStatus AppCapabilityAccessStatus;
+
+    interface IAppCapability;
+    interface IAppCapability2;
+    interface IAppCapabilityAccessChangedEventArgs;
+    interface IAppCapabilityStatics;
+
+    runtimeclass AppCapability;
+    runtimeclass AppCapabilityAccessChangedEventArgs;
+
+    declare {
+        interface Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Foundation.Collections.IKeyValuePair<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Security.Authorization.AppCapabilityAccess.AppCapability *, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessChangedEventArgs *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0)
+    ]
+    enum AppCapabilityAccessStatus
+    {
+        DeniedBySystem     = 0,
+        NotDeclaredByApp   = 1,
+        DeniedByUser       = 2,
+        UserPromptRequired = 3,
+        Allowed            = 4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.Security.Authorization.AppCapabilityAccess.AppCapability),
+        uuid(4c49d915-8a2a-4295-9437-2df7c396aff4)
+    ]
+    interface IAppCapability : IInspectable
+    {
+        [propget] HRESULT CapabilityName([out, retval] HSTRING *value);
+        [propget] HRESULT User([out, retval] Windows.System.User **value);
+        HRESULT RequestAccessAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> **operation);
+        HRESULT CheckAccess([out, retval] Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus *result);
+        [eventadd] HRESULT AccessChanged(
+            [in] Windows.Foundation.TypedEventHandler<Windows.Security.Authorization.AppCapabilityAccess.AppCapability *, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessChangedEventArgs *> *handler,
+            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT AccessChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 15.0),
+        exclusiveto(Windows.Security.Authorization.AppCapabilityAccess.AppCapability),
+        uuid(11c7ccb6-c74f-50a3-b960-88008767d939)
+    ]
+    interface IAppCapability2 : IInspectable
+    {
+        [propget] HRESULT DisplayMessage([out, retval] HSTRING *value);
+        [propput] HRESULT DisplayMessage([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessChangedEventArgs),
+        uuid(0a578d15-bdd7-457e-8cca-6f53bd2e5944)
+    ]
+    interface IAppCapabilityAccessChangedEventArgs : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        exclusiveto(Windows.Security.Authorization.AppCapabilityAccess.AppCapability),
+        uuid(7c353e2a-46ee-44e5-af3d-6ad3fc49bd22)
+    ]
+    interface IAppCapabilityStatics : IInspectable
+    {
+        HRESULT RequestAccessForCapabilitiesAsync(
+            [in] Windows.Foundation.Collections.IIterable<HSTRING> *capability_names,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *> **operation);
+        HRESULT RequestAccessForCapabilitiesForUserAsync(
+            [in] Windows.System.User *user,
+            [in] Windows.Foundation.Collections.IIterable<HSTRING> *capability_names,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Security.Authorization.AppCapabilityAccess.AppCapabilityAccessStatus> *> **operation);
+        HRESULT Create(
+            [in] HSTRING capability_name,
+            [out, retval] Windows.Security.Authorization.AppCapabilityAccess.AppCapability **result);
+        HRESULT CreateWithProcessIdForUser(
+            [in] Windows.System.User *user,
+            [in] HSTRING capability_name,
+            [in] UINT32 pid,
+            [out, retval] Windows.Security.Authorization.AppCapabilityAccess.AppCapability **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile),
+        static(Windows.Security.Authorization.AppCapabilityAccess.IAppCapabilityStatics, Windows.Foundation.UniversalApiContract, 8.0),
+        threading(both)
+    ]
+    runtimeclass AppCapability
+    {
+        [default] interface Windows.Security.Authorization.AppCapabilityAccess.IAppCapability;
+        [contract(Windows.Foundation.UniversalApiContract, 15.0)] interface Windows.Security.Authorization.AppCapabilityAccess.IAppCapability2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 8.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass AppCapabilityAccessChangedEventArgs
+    {
+        [default] interface Windows.Security.Authorization.AppCapabilityAccess.IAppCapabilityAccessChangedEventArgs;
+    }
+}

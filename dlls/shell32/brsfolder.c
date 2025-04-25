@@ -327,7 +327,7 @@ static BOOL GetName(LPSHELLFOLDER lpsf, LPCITEMIDLIST lpi, DWORD dwFlags, LPWSTR
 
 	TRACE("%p %p %lx %p\n", lpsf, lpi, dwFlags, lpFriendlyName);
 	if (SUCCEEDED(IShellFolder_GetDisplayNameOf(lpsf, lpi, dwFlags, &str)))
-          bSuccess = StrRetToStrNW(lpFriendlyName, MAX_PATH, &str, lpi);
+          bSuccess = SUCCEEDED(StrRetToBufW(&str, lpi, lpFriendlyName, MAX_PATH));
 	else
 	  bSuccess = FALSE;
 

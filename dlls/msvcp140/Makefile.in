@@ -13,4 +13,5 @@ SOURCES = \
 	memory.c \
 	misc.c \
 	msvcp_main.c \
-	string.c
+	string.c \
+	version.rc

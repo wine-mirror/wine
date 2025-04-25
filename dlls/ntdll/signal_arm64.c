@@ -311,10 +311,10 @@ __ASM_GLOBAL_FUNC( KiUserExceptionDispatcher,
                    "adrp x16, pWow64PrepareForException\n\t"
                    "ldr x16, [x16, #:lo12:pWow64PrepareForException]\n\t"
                    "cbz x16, 1f\n\t"
-                   "add x0, sp, #0x390\n\t"     /* rec (context + 1) */
+                   "add x0, sp, #0x3b0\n\t"     /* rec */
                    "mov x1, sp\n\t"             /* context */
                    "blr x16\n"
-                   "1:\tadd x0, sp, #0x390\n\t" /* rec (context + 1) */
+                   "1:\tadd x0, sp, #0x3b0\n\t" /* rec */
                    "mov x1, sp\n\t"             /* context */
                    "bl dispatch_exception\n\t"
                    "brk #1" )

@@ -28,6 +28,49 @@
 #include "wincodecsdk.h"
 #include "wine/test.h"
 
+static const GUID *metadata_handlers[] =
+{
+    &CLSID_WICUnknownMetadataReader,
+    &CLSID_WICLSDMetadataReader,
+    &CLSID_WICIMDMetadataReader,
+    &CLSID_WICAPEMetadataReader,
+    &CLSID_WICGifCommentMetadataReader,
+    &CLSID_WICPngTextMetadataReader,
+    &CLSID_WICPngGamaMetadataReader,
+    &CLSID_WICPngChrmMetadataReader,
+    &CLSID_WICPngHistMetadataReader,
+    &CLSID_WICPngTimeMetadataReader,
+    &CLSID_WICIfdMetadataReader,
+    &CLSID_WICGpsMetadataReader,
+    &CLSID_WICExifMetadataReader,
+    &CLSID_WICApp1MetadataReader,
+
+    &CLSID_WICUnknownMetadataWriter,
+    &CLSID_WICIfdMetadataWriter,
+    &CLSID_WICGpsMetadataWriter,
+    &CLSID_WICExifMetadataWriter,
+    &CLSID_WICApp1MetadataWriter,
+};
+
+static void run_child_test(const char *name)
+{
+    char path_name[MAX_PATH];
+    PROCESS_INFORMATION info;
+    STARTUPINFOA startup;
+    char **argv;
+
+    winetest_get_mainargs(&argv);
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "%s info %s", argv[0], name);
+    ok(CreateProcessA( NULL, path_name, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info),
+            "CreateProcess failed.\n" );
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+}
+
 static HRESULT get_component_info(const GUID *clsid, IWICComponentInfo **result)
 {
     IWICImagingFactory *factory;
@@ -493,9 +536,11 @@ static DWORD WINAPI cache_across_threads_test(void *arg)
 
 static void test_reader_info(void)
 {
+    IWICMetadataHandlerInfo *handler_info;
     IWICImagingFactory *factory;
     IWICComponentInfo *info, *info2;
     IWICMetadataReaderInfo *reader_info;
+    IWICMetadataReader *reader;
     HRESULT hr;
     CLSID clsid;
     GUID container_formats[10];
@@ -504,14 +549,33 @@ static void test_reader_info(void)
     HANDLE thread;
     WICMetadataPattern *patterns;
 
-    hr = get_component_info(&CLSID_WICUnknownMetadataReader, &info2);
-    ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
-    IWICComponentInfo_Release(info2);
-
     hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
         &IID_IWICImagingFactory, (void**)&factory);
     ok(hr == S_OK, "CoCreateInstance failed, hr=%lx\n", hr);
-    if (FAILED(hr)) return;
+
+    for (int i = 0; i < ARRAY_SIZE(metadata_handlers); ++i)
+    {
+        hr = IWICImagingFactory_CreateComponentInfo(factory, metadata_handlers[i], &info);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IWICComponentInfo_Release(info);
+
+        hr = CoCreateInstance(metadata_handlers[i], NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICMetadataReader, (void **)&reader);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &handler_info);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IWICMetadataHandlerInfo_GetCLSID(handler_info, &clsid);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&clsid, metadata_handlers[i]), "Unexpected clsid %s.\n", wine_dbgstr_guid(&clsid));
+        IWICMetadataHandlerInfo_Release(handler_info);
+
+        IWICMetadataReader_Release(reader);
+    }
+
+    hr = get_component_info(&CLSID_WICUnknownMetadataReader, &info2);
+    ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
+    IWICComponentInfo_Release(info2);
 
     hr = IWICImagingFactory_CreateComponentInfo(factory, &CLSID_WICUnknownMetadataReader, &info);
     ok(hr == S_OK, "CreateComponentInfo failed, hr=%lx\n", hr);
@@ -676,14 +740,86 @@ static void test_imagingfactory_interfaces(void)
     IWICImagingFactory_Release(factory);
 }
 
+static void test_component_enumerator(void)
+{
+    static const unsigned int types[] =
+    {
+        WICDecoder,
+        WICEncoder,
+        WICPixelFormatConverter,
+        WICMetadataReader,
+        WICPixelFormat,
+    };
+    IWICImagingFactory *factory;
+    IEnumUnknown *enumerator;
+    unsigned int i;
+    IUnknown *item;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(types); ++i)
+    {
+        hr = IWICImagingFactory_CreateComponentEnumerator(factory, types[i], 0, &enumerator);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IEnumUnknown_Next(enumerator, 1, &item, NULL);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        IUnknown_Release(item);
+
+        IEnumUnknown_Release(enumerator);
+    }
+
+    IWICImagingFactory_Release(factory);
+}
+
+static void test_handler_info_cold_cache(void)
+{
+    IWICMetadataHandlerInfo *info;
+    IWICMetadataReader *reader;
+    HRESULT hr;
+
+    for (int i = 0; i < ARRAY_SIZE(metadata_handlers); ++i)
+    {
+        hr = CoCreateInstance(metadata_handlers[i], NULL, CLSCTX_INPROC_SERVER,
+                &IID_IWICMetadataReader, (void **)&reader);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
+        todo_wine
+        ok(hr == WINCODEC_ERR_COMPONENTNOTFOUND, "Unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            IWICMetadataHandlerInfo_Release(info);
+
+        IWICMetadataReader_Release(reader);
+    }
+}
+
 START_TEST(info)
 {
+    char **argv;
+    int argc;
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
+    argc = winetest_get_mainargs(&argv);
+    if (argc >= 3)
+    {
+        if (!strcmp(argv[2], "get_handler_info_cold_cache"))
+            test_handler_info_cold_cache();
+
+        CoUninitialize();
+        return;
+    }
+
+    run_child_test("get_handler_info_cold_cache");
     test_decoder_info();
     test_reader_info();
     test_pixelformat_info();
     test_imagingfactory_interfaces();
+    test_component_enumerator();
 
     CoUninitialize();
 }

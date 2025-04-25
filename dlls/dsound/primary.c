@@ -156,12 +156,12 @@ static HRESULT DSOUND_WaveFormat(DirectSoundDevice *device, IAudioClient *client
         WAVEFORMATEXTENSIBLE *wfe;
 
         /* Convert to WAVEFORMATEXTENSIBLE */
-        w = malloc(sizeof(WAVEFORMATEXTENSIBLE));
-        wfe = (WAVEFORMATEXTENSIBLE*)w;
+        wfe = malloc(sizeof(*wfe));
         if (!wfe)
             return DSERR_OUTOFMEMORY;
 
         wfe->Format = *wi;
+        w = &wfe->Format;
         w->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
         w->cbSize = sizeof(*wfe) - sizeof(*w);
         w->nBlockAlign = w->nChannels * w->wBitsPerSample / 8;

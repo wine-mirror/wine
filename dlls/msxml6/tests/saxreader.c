@@ -46,6 +46,7 @@ static struct class_support class_support[] =
 {
     { &CLSID_MXXMLWriter60, "MXXMLWriter60", &IID_IMXWriter },
     { &CLSID_SAXAttributes60, "SAXAttributes60", &IID_IMXAttributes },
+    { &CLSID_SAXXMLReader60, "SAXXMLReader60", &IID_ISAXXMLReader },
     { NULL }
 };
 
@@ -1927,9 +1928,11 @@ static void test_mxwriter_comment(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXLexicalHandler_comment(vblexical, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXLexicalHandler_comment(lexical, L"comment", 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -2160,9 +2163,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXLexicalHandler_startDTD(vblexical, NULL, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXLexicalHandler_startDTD(lexical, NULL, 0, L"pub", 3, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2229,9 +2234,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_elementDecl(vbdecl, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_elementDecl(decl, L"name", 4, NULL, 0);
     todo_wine
@@ -2312,9 +2319,11 @@ static void test_mxwriter_dtd(void)
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_internalEntityDecl(vbdecl, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_internalEntityDecl(decl, _bstr_("name"), -1, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2338,9 +2347,11 @@ static void test_mxwriter_dtd(void)
     hr = ISAXDeclHandler_externalEntityDecl(decl, NULL, 0, NULL, 0, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     hr = IVBSAXDeclHandler_externalEntityDecl(vbdecl, NULL, NULL, NULL);
     todo_wine
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    }
 
     hr = ISAXDeclHandler_externalEntityDecl(decl, _bstr_("name"), 0, NULL, 0, NULL, 0);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2624,7 +2635,7 @@ static void test_mxattr_clear(void)
 
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, NULL);
     todo_wine
-    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+    ok(hr == E_POINTER || broken(hr == E_INVALIDARG) /* Win7 */, "Unexpected hr %#lx.\n", hr);
 
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
@@ -2641,6 +2652,7 @@ static void test_mxattr_clear(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(len == 1, "got %d\n", len);
 
+    if (0) { /* Win7 crashes with NULL parameter */
     len = -1;
     hr = ISAXAttributes_getQName(saxattr, 0, NULL, &len);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
@@ -2651,6 +2663,7 @@ static void test_mxattr_clear(void)
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
     todo_wine
     ok(!ptr, "Unexpected pointer %p.\n", ptr);
+    }
 
     len = 0;
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
@@ -2671,9 +2684,9 @@ static void test_mxattr_clear(void)
     hr = ISAXAttributes_getQName(saxattr, 0, &ptr, &len);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
     todo_wine
-    ok(!len, "Unexpected length %d.\n", len);
+    ok(!len || broken(len == -1) /* Win7 */, "Unexpected length %d.\n", len);
     todo_wine
-    ok(!ptr, "Unexpected pointer %p.\n", ptr);
+    ok(!ptr || broken(ptr == (void*)0xdeadbeef) /* Win7 */, "Unexpected pointer %p.\n", ptr);
 
     IMXAttributes_Release(mxattr);
     ISAXAttributes_Release(saxattr);
@@ -2830,6 +2843,56 @@ static void test_mxwriter_indent(void)
     free_bstrs();
 }
 
+static void test_saxreader_encoding(void)
+{
+    /* UTF-8 data with UTF-8 BOM and UTF-16 in prolog */
+    static const CHAR UTF8BOMTest[] =
+        "\xEF\xBB\xBF<?xml version = \"1.0\" encoding = \"UTF-16\"?>\n"
+        "<a></a>\n";
+
+    static const CHAR testXmlA[] = "test.xml";
+
+    ISAXXMLReader *reader;
+    VARIANT input;
+    DWORD written;
+    HANDLE file;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_ISAXXMLReader, (void**)&reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    file = CreateFileA(testXmlA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "Could not create file: %lu\n", GetLastError());
+    WriteFile(file, UTF8BOMTest, sizeof(UTF8BOMTest)-1, &written, NULL);
+    CloseHandle(file);
+
+    hr = ISAXXMLReader_parseURL(reader, L"test.xml");
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    DeleteFileA(testXmlA);
+
+    /* try BSTR input with no BOM or '<?xml' instruction */
+    V_VT(&input) = VT_BSTR;
+    V_BSTR(&input) = _bstr_("<element></element>");
+    hr = ISAXXMLReader_parse(reader, input);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    ISAXXMLReader_Release(reader);
+
+    free_bstrs();
+}
+
+static void test_saxreader_dispex(void)
+{
+    IUnknown *unk;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
+}
+
 START_TEST(saxreader)
 {
     HRESULT hr;
@@ -2838,6 +2901,12 @@ START_TEST(saxreader)
     ok(hr == S_OK, "Failed to initialize COM, hr %#lx.\n", hr);
 
     get_class_support_data();
+
+    if (is_class_supported(&CLSID_SAXXMLReader60))
+    {
+        test_saxreader_encoding();
+        test_saxreader_dispex();
+    }
 
     if (is_class_supported(&CLSID_MXXMLWriter60))
     {

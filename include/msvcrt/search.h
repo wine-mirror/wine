@@ -29,6 +29,7 @@ extern "C" {
 _ACRTIMP void* __cdecl _lfind(const void*,const void*,unsigned int*,unsigned int,int (__cdecl *)(const void*,const void*));
 _ACRTIMP void* __cdecl _lsearch(const void*,void*,unsigned int*,unsigned int,int (__cdecl *)(const void*,const void*));
 _ACRTIMP void* __cdecl bsearch(const void*,const void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
+_ACRTIMP void* __cdecl bsearch_s(const void*,const void*,rsize_t,rsize_t,int (__cdecl *)(void*,const void*,const void*),void*);
 _ACRTIMP void  __cdecl qsort(void*,size_t,size_t,int (__cdecl *)(const void*,const void*));
 
 #ifdef __cplusplus

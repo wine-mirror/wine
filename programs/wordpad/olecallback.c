@@ -74,10 +74,9 @@ static HRESULT STDMETHODCALLTYPE RichEditOleCallback_GetNewStorage(
     LPSTORAGE *lplpstg)
 {
     WCHAR name[32];
-    static const WCHAR template[] = {'R','E','O','L','E','_','%','u','\0'};
 
     WINE_TRACE("(%p, %p)\n", This, lplpstg);
-    wsprintfW(name, template, olecallback.item_num++);
+    wsprintfW(name, L"REOLE_%u", olecallback.item_num++);
     return IStorage_CreateStorage(olecallback.stg, name,
                       STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE,
                       0, 0, lplpstg);

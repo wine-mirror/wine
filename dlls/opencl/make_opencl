@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use XML::LibXML;
+use File::Basename;
 
 # Copyright 2021 Zebediah Figura
 #
@@ -269,7 +270,10 @@ else
 
 my $url = "https://raw.githubusercontent.com/KhronosGroup/OpenCL-Docs";
 my $commit = "514965312a65e5d01ae17e23119dc95427b7149e";
--f "cl-$commit.xml" || system "wget", "-O", "cl-$commit.xml", "$url/$commit/xml/cl.xml" || die "cannot download cl.xml";
+my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+system "mkdir", "-p", $cache;
+-f "$cache/cl-$commit.xml" || system "wget", "-q", "-O", "$cache/cl-$commit.xml", "$url/$commit/xml/cl.xml" || die "cannot download cl.xml";
+chdir(dirname($0));
 
 sub generate_spec_entry($$)
 {
@@ -512,7 +516,7 @@ sub parse_file($)
     }
 }
 
-parse_file( "cl-$commit.xml" );
+parse_file( "$cache/cl-$commit.xml" );
 
 # generate the spec file
 open(SPEC, ">$spec_file") or die "cannot create $spec_file";

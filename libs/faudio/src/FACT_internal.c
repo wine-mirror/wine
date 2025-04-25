@@ -930,7 +930,7 @@ void FACT_INTERNAL_DestroySound(FACTSoundInstance *sound)
 	/* TODO: if (sound->parentCue->playingSounds == NULL) */
 	{
 		sound->parentCue->state |= FACT_STATE_STOPPED;
-		sound->parentCue->state &= ~(FACT_STATE_PLAYING | FACT_STATE_STOPPING);
+		sound->parentCue->state &= ~(FACT_STATE_PLAYING | FACT_STATE_PAUSED | FACT_STATE_STOPPING);
 		sound->parentCue->data->instanceCount -= 1;
 
 		FACT_INTERNAL_SendCueNotification(sound->parentCue, NOTIFY_CUESTOP, FACTNOTIFICATIONTYPE_CUESTOP);
@@ -940,12 +940,18 @@ void FACT_INTERNAL_DestroySound(FACTSoundInstance *sound)
 
 void FACT_INTERNAL_BeginFadeOut(FACTSoundInstance *sound, uint16_t fadeOutMS)
 {
+	/* FIXME: Even for 0ms it seems to want to be in STOPPING for one frame.
+	 * Should we still destroy but defer state changes to the next frame?
+	 * -flibit
+	 */
+#if 0
 	if (fadeOutMS == 0)
 	{
 		/* No fade? Screw it, just delete us */
 		FACT_INTERNAL_DestroySound(sound);
 		return;
 	}
+#endif
 
 	sound->fadeType = 2; /* Out */
 	sound->fadeStart = FAudio_timems();
@@ -1767,8 +1773,12 @@ threadstart:
 
 			if (cue->state & FACT_STATE_PAUSED)
 			{
-				cue = cue->next;
-				continue;
+				/* Funky edge case where we need to keep updating even when paused */
+				if (!(cue->state & FACT_STATE_STOPPING))
+				{
+					cue = cue->next;
+					continue;
+				}
 			}
 
 			if (cue->playingSound != NULL)

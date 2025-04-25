@@ -30,8 +30,8 @@ void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
 BOOL __cdecl __uncaught_exception(void);
 
-void* __cdecl operator_new(size_t);
 void __cdecl operator_delete(void*);
+void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
 
 /* basic_string<char, char_traits<char>, allocator<char>> */
 typedef struct
@@ -71,8 +71,8 @@ void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);
 size_t __thiscall MSVCP_basic_string_wchar_length(const basic_string_wchar*);
 
-char* __thiscall MSVCP_allocator_char_allocate(void*, size_t);
 void __thiscall MSVCP_allocator_char_deallocate(void*, char*, size_t);
+char* __thiscall MSVCP_allocator_char_allocate(void*, size_t) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(MSVCP_allocator_char_deallocate, 2);
 size_t __thiscall MSVCP_allocator_char_max_size(const void*);
 wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, size_t);
 void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, size_t);

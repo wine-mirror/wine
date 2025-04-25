@@ -27,7 +27,7 @@
 @ stdcall BCryptHashData(ptr ptr long long) bcrypt.BCryptHashData
 @ stdcall BCryptImportKey(ptr ptr wstr ptr ptr long ptr long long) bcrypt.BCryptImportKey
 @ stdcall BCryptImportKeyPair(ptr ptr wstr ptr ptr long long) bcrypt.BCryptImportKeyPair
-@ stub BCryptKeyDerivation
+@ stdcall BCryptKeyDerivation(ptr ptr ptr long ptr long) bcrypt.BCryptKeyDerivation
 @ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long) bcrypt.BCryptOpenAlgorithmProvider
 @ stub BCryptProcessMultiOperations
 @ stub BCryptRegisterConfigChangeNotify

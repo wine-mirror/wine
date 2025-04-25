@@ -5060,13 +5060,14 @@ HRESULT WINAPI UrlCombineW(const WCHAR *baseW, const WCHAR *relativeW, WCHAR *co
                 process_case = 1;
                 break;
             }
-            if (relativeW[0] == '/' && relativeW[1] == '/')
+            if ((relativeW[0] == '/' || relativeW[0] == '\\') &&
+                    (relativeW[1] == '/' || relativeW[1] == '\\'))
             {
                 /* Relative has location and the rest. */
                 process_case = 3;
                 break;
             }
-            if (*relativeW == '/')
+            if (*relativeW == '/' || *relativeW == '\\')
             {
                 /* Relative is root to location. */
                 process_case = 4;

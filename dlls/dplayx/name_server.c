@@ -41,10 +41,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 /* NS specific structures */
 struct NSCacheData
 {
+  DPQ_ENTRY(NSCacheData) walkNext;
   DPQ_ENTRY(NSCacheData) next;
+
+  LONG ref;
 
   DWORD dwTime; /* Time at which data was last known valid */
   LPDPSESSIONDESC2 data;
+  LPDPSESSIONDESC2 dataA;
 
   LPVOID lpNSAddrHdr;
 
@@ -55,6 +59,7 @@ struct NSCache
 {
   lpNSCacheData present; /* keep track of what is to be looked at when walking */
 
+  DPQ_HEAD(NSCacheData) walkFirst;
   DPQ_HEAD(NSCacheData) first;
 
   BOOL bNsIsLocal;
@@ -64,7 +69,7 @@ struct NSCache
 typedef struct NSCache NSCache, *lpNSCache;
 
 /* Function prototypes */
-static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
+static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData );
 
 /* Name Server functions
  * ---------------------
@@ -85,13 +90,24 @@ static DPQ_DECL_COMPARECB( cbUglyPig, GUID )
 void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr,
                                        DWORD                        dwHdrSize,
                                        LPCDPMSG_ENUMSESSIONSREPLY   lpcMsg,
+                                       DWORD                        msgSize,
                                        LPVOID                       lpNSInfo )
 {
-  DWORD len;
   lpNSCache     lpCache = (lpNSCache)lpNSInfo;
   lpNSCacheData lpCacheNode;
+  DPSESSIONDESC2 dpsd;
+  DWORD maxNameLength;
+  DWORD nameLength;
 
   TRACE( "%p, %p, %p\n", lpcNSAddrHdr, lpcMsg, lpNSInfo );
+
+  if ( msgSize < sizeof( DPMSG_ENUMSESSIONSREPLY ) + sizeof( WCHAR ) )
+    return;
+
+  maxNameLength = (msgSize - sizeof( DPMSG_ENUMSESSIONSREPLY )) / sizeof( WCHAR );
+  nameLength = wcsnlen( (WCHAR *) (lpcMsg + 1), maxNameLength );
+  if ( nameLength == maxNameLength )
+    return;
 
   /* See if we can find this session. If we can, remove it as it's a dup */
   DPQ_REMOVE_ENTRY_CB( lpCache->first, next, data->guidInstance, cbUglyPig,
@@ -101,7 +117,7 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   {
     TRACE( "Duplicate session entry for %s removed - updated version kept\n",
            debugstr_guid( &lpCacheNode->data->guidInstance ) );
-    cbDeleteNSNodeFromHeap( lpCacheNode );
+    cbReleaseNSNode( lpCacheNode );
   }
 
   /* Add this to the list */
@@ -116,7 +132,11 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
   lpCacheNode->lpNSAddrHdr = malloc( dwHdrSize );
   CopyMemory( lpCacheNode->lpNSAddrHdr, lpcNSAddrHdr, dwHdrSize );
 
-  lpCacheNode->data = calloc( 1, sizeof( *(lpCacheNode->data) ) );
+  dpsd = lpcMsg->sd;
+  dpsd.lpszSessionName = (WCHAR *) (lpcMsg + 1);
+  dpsd.lpszPassword = NULL;
+
+  lpCacheNode->data = DP_DuplicateSessionDesc( &dpsd, FALSE, FALSE );
 
   if( lpCacheNode->data == NULL )
   {
@@ -125,57 +145,25 @@ void NS_AddRemoteComputerAsNameServer( LPCVOID                      lpcNSAddrHdr
     return;
   }
 
-  *lpCacheNode->data = lpcMsg->sd;
-  len = WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1, NULL, 0, NULL, NULL );
-  if ((lpCacheNode->data->lpszSessionNameA = malloc( len )))
+  lpCacheNode->dataA = DP_DuplicateSessionDesc( &dpsd, TRUE, FALSE );
+
+  if( lpCacheNode->dataA == NULL )
   {
-      WideCharToMultiByte( CP_ACP, 0, (LPCWSTR)(lpcMsg+1), -1,
-                           lpCacheNode->data->lpszSessionNameA, len, NULL, NULL );
+    ERR( "no memory for SESSIONDESC2\n" );
+    free( lpCacheNode->data );
+    free( lpCacheNode );
+    return;
   }
 
+  lpCacheNode->ref = 1;
   lpCacheNode->dwTime = timeGetTime();
 
   DPQ_INSERT(lpCache->first, lpCacheNode, next );
-
-  lpCache->present = lpCacheNode;
 
   /* Use this message as an opportunity to weed out any old sessions so
    * that we don't enum them again
    */
   NS_PruneSessionCache( lpNSInfo );
-}
-
-LPVOID NS_GetNSAddr( LPVOID lpNSInfo )
-{
-  lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  FIXME( ":quick stub\n" );
-
-  /* Ok. Cheat and don't search for the correct stuff just take the first.
-   * FIXME: In the future how are we to know what is _THE_ enum we used?
-   *        This is going to have to go into dplay somehow. Perhaps it
-   *        comes back with app server id for the join command! Oh... that
-   *        must be it. That would make this method obsolete once that's
-   *        in place.
-   */
-#if 1
-  if ( lpCache->first.lpQHFirst )
-    return lpCache->first.lpQHFirst->lpNSAddrHdr;
-
-  return NULL;
-#else
-  /* FIXME: Should convert over to this */
-  return lpCache->bNsIsLocal ? lpCache->lpLocalAddrHdr
-                             : lpCache->lpRemoteAddrHdr;
-#endif
-}
-
-/* Get the magic number associated with the Name Server */
-DWORD NS_GetNsMagic( LPVOID lpNSInfo )
-{
-  LPDWORD lpHdrInfo = NS_GetNSAddr( lpNSInfo );
-
-  return lpHdrInfo[1];
 }
 
 void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
@@ -192,18 +180,20 @@ void NS_SetLocalAddr( LPVOID lpNSInfo, LPCVOID lpHdr, DWORD dwHdrSize )
  */
 HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
                                         DWORD dwFlags,
+                                        WCHAR *password,
                                         const SPINITDATA *lpSpData )
 
 {
   DPSP_ENUMSESSIONSDATA data;
   LPDPMSG_ENUMSESSIONSREQUEST lpMsg;
+  DWORD passwordSize = 0;
 
   TRACE( "enumerating for guid %s\n", debugstr_guid( lpcGuid ) );
 
-  /* Get the SP to deal with sending the EnumSessions request */
-  FIXME( ": not all data fields are correct\n" );
+  if ( password )
+    passwordSize = (wcslen( password ) + 1) * sizeof( WCHAR );
 
-  data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ); /*FIXME!*/
+  data.dwMessageSize = lpSpData->dwSPHeaderSize + sizeof( *lpMsg ) + passwordSize;
   data.lpMessage = calloc( 1, data.dwMessageSize );
   data.lpISP = lpSpData->lpISP;
   data.bReturnStatus = (dwFlags & DPENUMSESSIONS_RETURNSTATUS) != 0;
@@ -216,20 +206,25 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
   lpMsg->envelope.wCommandId = DPMSGCMD_ENUMSESSIONSREQUEST;
   lpMsg->envelope.wVersion   = DPMSGVER_DP6;
 
-  lpMsg->dwPasswordSize = 0; /* FIXME: If enumerating passwords..? */
+  lpMsg->passwordOffset = password ? sizeof( DPMSG_ENUMSESSIONSREQUEST ) : 0;
   lpMsg->dwFlags        = dwFlags;
 
   lpMsg->guidApplication = *lpcGuid;
+
+  memcpy( lpMsg + 1, password, passwordSize );
 
   return (lpSpData->lpCB->EnumSessions)( &data );
 }
 
 /* Delete a name server node which has been allocated on the heap */
-static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
+static DPQ_DECL_DELETECB( cbReleaseNSNode, lpNSCacheData )
 {
-  /* NOTE: This proc doesn't deal with the walking pointer */
+  LONG ref = InterlockedDecrement( &elem->ref );
 
-  /* FIXME: Memory leak on data (contained ptrs) */
+  if ( ref )
+    return;
+
+  free( elem->dataA );
   free( elem->data );
   free( elem->lpNSAddrHdr );
   free( elem );
@@ -246,10 +241,7 @@ void NS_InvalidateSessionCache( LPVOID lpNSInfo )
     return;
   }
 
-  DPQ_DELETEQ( lpCache->first, next, lpNSCacheData, cbDeleteNSNodeFromHeap );
-
-  /* NULL out the walking pointer */
-  lpCache->present = NULL;
+  DPQ_DELETEQ( lpCache->first, next, lpNSCacheData, cbReleaseNSNode );
 
   lpCache->bNsIsLocal = FALSE;
 
@@ -267,6 +259,7 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
     return FALSE;
   }
 
+  DPQ_INIT(lpCache->walkFirst);
   DPQ_INIT(lpCache->first);
   lpCache->present = NULL;
 
@@ -279,20 +272,30 @@ BOOL NS_InitializeSessionCache( LPVOID* lplpNSInfo )
 void NS_DeleteSessionCache( LPVOID lpNSInfo )
 {
   NS_InvalidateSessionCache( (lpNSCache)lpNSInfo );
+  NS_ResetSessionEnumeration( (lpNSCache)lpNSInfo );
 }
 
 /* Reinitialize the present pointer for this cache */
 void NS_ResetSessionEnumeration( LPVOID lpNSInfo )
 {
-  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->first.lpQHFirst;
+  NSCache *cache = (NSCache *) lpNSInfo;
+  NSCacheData *data;
+
+  DPQ_DELETEQ( cache->walkFirst, walkNext, lpNSCacheData, cbReleaseNSNode );
+
+  for( data = DPQ_FIRST( cache->first ); data; data = DPQ_NEXT( data->next ) )
+  {
+    InterlockedIncrement( &data->ref );
+    DPQ_INSERT( cache->walkFirst, data, walkNext );
+  }
+
+  ((lpNSCache)lpNSInfo)->present = ((lpNSCache)lpNSInfo)->walkFirst.lpQHFirst;
 }
 
-LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
+LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo, void **spMessageHeader, BOOL ansi )
 {
   LPDPSESSIONDESC2 lpSessionDesc;
   lpNSCache lpCache = (lpNSCache)lpNSInfo;
-
-  /* FIXME: The pointers could disappear when walking if a prune happens */
 
   /* Test for end of the list */
   if( lpCache->present == NULL )
@@ -300,10 +303,13 @@ LPDPSESSIONDESC2 NS_WalkSessions( LPVOID lpNSInfo )
     return NULL;
   }
 
-  lpSessionDesc = lpCache->present->data;
+  lpSessionDesc = ansi ? lpCache->present->dataA : lpCache->present->data;
+
+  if( spMessageHeader )
+    *spMessageHeader = lpCache->present->lpNSAddrHdr;
 
   /* Advance tracking pointer */
-  lpCache->present = lpCache->present->next.lpQNext;
+  lpCache->present = lpCache->present->walkNext.lpQNext;
 
   return lpSessionDesc;
 }
@@ -345,7 +351,7 @@ void NS_PruneSessionCache( LPVOID lpNSInfo )
 
     lpFirstData = DPQ_FIRST(lpCache->first);
     DPQ_REMOVE( lpCache->first, DPQ_FIRST(lpCache->first), next );
-    cbDeleteNSNodeFromHeap( lpFirstData );
+    cbReleaseNSNode( lpFirstData );
   }
 
 }

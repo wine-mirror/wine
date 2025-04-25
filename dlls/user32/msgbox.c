@@ -45,7 +45,7 @@ static BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
 {
     struct ThreadWindows *threadWindows = (struct ThreadWindows *)lParam;
 
-    if (!EnableWindow(hwnd, FALSE))
+    if (!NtUserEnableWindow(hwnd, FALSE))
     {
         if(threadWindows->numHandles >= threadWindows->numAllocs)
         {
@@ -333,7 +333,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
    case WM_INITDIALOG:
    {
        LPMSGBOXPARAMSW mbp = (LPMSGBOXPARAMSW)lParam;
-       SetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
+       NtUserSetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
        MSGBOX_OnInit(hwnd, mbp);
        SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", mbp->lpfnMsgBoxCallback);
        break;
@@ -365,7 +365,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
         HELPINFO hi;
 
         memcpy(&hi, (void *)lParam, sizeof(hi));
-        hi.dwContextId = GetWindowContextHelpId(hwnd);
+        hi.dwContextId = NtUserGetWindowContextHelpId(hwnd);
 
         if (callback)
             callback(&hi);
@@ -546,7 +546,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
     if ((msgbox->dwStyle & MB_TASKMODAL) && (msgbox->hwndOwner==NULL))
     {
         for (i = 0; i < threadWindows.numHandles; i++)
-            EnableWindow(threadWindows.handles[i], TRUE);
+            NtUserEnableWindow(threadWindows.handles[i], TRUE);
         HeapFree(GetProcessHeap(), 0, threadWindows.handles);
     }
     return ret;

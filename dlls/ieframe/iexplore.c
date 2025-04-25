@@ -49,11 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(ieframe);
 
 #define WM_UPDATEADDRBAR    (WM_APP+1)
 
-static const WCHAR szIEWinFrame[] = { 'I','E','F','r','a','m','e',0 };
-
 /* Windows uses "Microsoft Internet Explorer" */
-static const WCHAR wszWineInternetExplorer[] =
-        {'W','i','n','e',' ','I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r',0};
+static const WCHAR wszWineInternetExplorer[] = L"Wine Internet Explorer";
 
 static LONG obj_cnt;
 static DWORD dde_inst;
@@ -170,7 +167,6 @@ static void add_fav_to_menu(HMENU favmenu, HMENU menu, LPWSTR title, LPCWSTR url
 
 static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
 {
-    static const WCHAR search[] = {'*',0};
     WCHAR path[MAX_PATH*2];
     WCHAR* filename;
     HANDLE findhandle;
@@ -180,7 +176,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
     HRESULT res;
 
     lstrcpyW(path, dir);
-    PathAppendW(path, search);
+    PathAppendW(path, L"*");
 
     findhandle = FindFirstFileW(path, &finddata);
 
@@ -194,7 +190,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
 
     if(SUCCEEDED(res))
     {
-        filename = path + lstrlenW(path) - lstrlenW(search);
+        filename = path + lstrlenW(path) - strlen("*");
 
         do
         {
@@ -202,11 +198,9 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
 
             if(finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                static const WCHAR ignore1[] = {'.','.',0};
-                static const WCHAR ignore2[] = {'.',0};
                 MENUITEMINFOW item;
 
-                if(!lstrcmpW(filename, ignore1) || !lstrcmpW(filename, ignore2))
+                if(!lstrcmpW(filename, L"..") || !lstrcmpW(filename, L"."))
                     continue;
 
                 item.cbSize = sizeof(item);
@@ -217,11 +211,10 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
                 add_favs_to_menu(favmenu, item.hSubMenu, path);
             } else
             {
-                static const WCHAR urlext[] = {'.','u','r','l',0};
                 WCHAR* fileext;
                 WCHAR* url = NULL;
 
-                if(lstrcmpiW(PathFindExtensionW(filename), urlext))
+                if(lstrcmpiW(PathFindExtensionW(filename), L".url"))
                     continue;
 
                 if(FAILED(IPersistFile_Load(urlfile, path, 0)))
@@ -232,7 +225,7 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
                 if(!url)
                     continue;
 
-                fileext = filename + lstrlenW(filename) - lstrlenW(urlext);
+                fileext = filename + lstrlenW(filename) - lstrlenW(L".url");
                 *fileext = 0;
                 add_fav_to_menu(favmenu, menu, filename, url);
             }
@@ -250,17 +243,12 @@ static void add_favs_to_menu(HMENU favmenu, HMENU menu, LPCWSTR dir)
 
 static void add_tbs_to_menu(HMENU menu)
 {
-    static const WCHAR toolbar_key[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'M','i','c','r','o','s','o','f','t','\\',
-                                        'I','n','t','e','r','n','e','t',' ',
-                                        'E','x','p','l','o','r','e','r','\\',
-                                        'T','o','o','l','b','a','r',0};
+    static const WCHAR toolbar_key[] = L"Software\\Microsoft\\Internet Explorer\\Toolbar";
     HUSKEY toolbar_handle;
 
     if(SHRegOpenUSKeyW(toolbar_key, KEY_READ, NULL, &toolbar_handle, TRUE) == ERROR_SUCCESS)
     {
-        static const WCHAR classes_key[] = {'S','o','f','t','w','a','r','e','\\',
-                                            'C','l','a','s','s','e','s','\\','C','L','S','I','D',0};
+        static const WCHAR classes_key[] = L"Software\\Classes\\CLSID";
         HUSKEY classes_handle;
         WCHAR guid[39];
         DWORD value_len = ARRAY_SIZE(guid);
@@ -713,7 +701,7 @@ void register_iewindow_class(void)
                             GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
     wc.hCursor = LoadCursorW(0, (LPWSTR)IDC_ARROW);
     wc.hbrBackground = 0;
-    wc.lpszClassName = szIEWinFrame;
+    wc.lpszClassName = L"IEFrame";
     wc.lpszMenuName = NULL;
 
     RegisterClassExW(&wc);
@@ -721,14 +709,14 @@ void register_iewindow_class(void)
 
 void unregister_iewindow_class(void)
 {
-    UnregisterClassW(szIEWinFrame, ieframe_instance);
+    UnregisterClassW(L"IEFrame", ieframe_instance);
 }
 
 static void create_frame_hwnd(InternetExplorer *This)
 {
     CreateWindowExW(
             WS_EX_WINDOWEDGE,
-            szIEWinFrame, wszWineInternetExplorer,
+            L"IEFrame", wszWineInternetExplorer,
             WS_CLIPCHILDREN | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
                 | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -1092,20 +1080,17 @@ static void init_dde(void)
 {
     UINT res;
 
-    static const WCHAR iexploreW[] = {'I','E','x','p','l','o','r','e',0};
-    static const WCHAR openurlW[] = {'W','W','W','_','O','p','e','n','U','R','L',0};
-
     res = DdeInitializeW(&dde_inst, dde_proc, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES | CBF_FAIL_POKES, 0);
     if(res != DMLERR_NO_ERROR) {
         WARN("DdeInitialize failed: %u\n", res);
         return;
     }
 
-    ddestr_iexplore = DdeCreateStringHandleW(dde_inst, iexploreW, CP_WINUNICODE);
+    ddestr_iexplore = DdeCreateStringHandleW(dde_inst, L"IExplore", CP_WINUNICODE);
     if(!ddestr_iexplore)
         WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
 
-    ddestr_openurl = DdeCreateStringHandleW(dde_inst, openurlW, CP_WINUNICODE);
+    ddestr_openurl = DdeCreateStringHandleW(dde_inst, L"WWW_OpenURL", CP_WINUNICODE);
     if(!ddestr_openurl)
         WARN("Failed to create string handle: %u\n", DdeGetLastError(dde_inst));
 
@@ -1139,10 +1124,6 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
     ULONG_PTR context_cookie;
     ACTCTXW actctx;
 
-    static const WCHAR embeddingW[] = {'-','e','m','b','e','d','d','i','n','g',0};
-    static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e',0};
-    static const WCHAR startmanagerW[] = {'-','s','t','a','r','t','m','a','n','a','g','e','r',0};
-
     TRACE("%s %d\n", debugstr_w(cmdline), nShowWindow);
 
     CoInitialize(NULL);
@@ -1167,11 +1148,11 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 
         while (cmdline[length] && cmdline[length] != ' ' && cmdline[length] != '\t') length++;
 
-        if (!wcsnicmp(cmdline, embeddingW, length))
+        if (!wcsnicmp(cmdline, L"-embedding", length))
             embedding = TRUE;
-        else if (!wcsnicmp(cmdline, nohomeW, length))
+        else if (!wcsnicmp(cmdline, L"-nohome", length))
             nohome = TRUE;
-        else if (!wcsnicmp(cmdline, startmanagerW, length))
+        else if (!wcsnicmp(cmdline, L"-startmanager", length))
             manager = TRUE;
         else
             break;

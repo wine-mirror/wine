@@ -19,6 +19,7 @@ SOURCES = \
 	pen.c \
 	resource.rc \
 	vertical.sfd \
+	vertical2.sfd \
 	wine_heavy.sfd \
 	wine_langnames.sfd \
 	wine_langnames2.sfd \

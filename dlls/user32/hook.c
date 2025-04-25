@@ -385,15 +385,6 @@ HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid
 
 
 /***********************************************************************
- *		UnhookWindowsHook (USER32.@)
- */
-BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
-{
-    return NtUserUnhookWindowsHook( id, proc );
-}
-
-
-/***********************************************************************
  *           SetWinEventHook                            [USER32.@]
  *
  * Set up an event hook for a set of events.

@@ -1,0 +1,1067 @@
+/*
+ * Copyright (C) 2024 Biswapriyo Nath
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+#ifndef DO_NO_IMPORTS
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.security.enterprisedata.idl";
+import "windows.storage.idl";
+import "windows.storage.streams.idl";
+import "windows.ui.idl";
+#endif
+
+namespace Windows.ApplicationModel.DataTransfer {
+    typedef enum ClipboardHistoryItemsResultStatus ClipboardHistoryItemsResultStatus;
+    typedef enum DataPackageOperation DataPackageOperation;
+    typedef enum SetHistoryItemAsContentStatus SetHistoryItemAsContentStatus;
+    typedef enum ShareUITheme ShareUITheme;
+
+    interface IClipboardContentOptions;
+    interface IClipboardHistoryChangedEventArgs;
+    interface IClipboardHistoryItem;
+    interface IClipboardHistoryItemsResult;
+    interface IClipboardStatics;
+    interface IClipboardStatics2;
+    interface IDataPackage;
+    interface IDataPackage2;
+    interface IDataPackage3;
+    interface IDataPackage4;
+    interface IDataPackagePropertySet;
+    interface IDataPackagePropertySet2;
+    interface IDataPackagePropertySet3;
+    interface IDataPackagePropertySet4;
+    interface IDataPackagePropertySetView;
+    interface IDataPackagePropertySetView2;
+    interface IDataPackagePropertySetView3;
+    interface IDataPackagePropertySetView4;
+    interface IDataPackagePropertySetView5;
+    interface IDataPackageView;
+    interface IDataPackageView2;
+    interface IDataPackageView3;
+    interface IDataPackageView4;
+    interface IDataProviderDeferral;
+    interface IDataProviderRequest;
+    interface IDataRequest;
+    interface IDataRequestDeferral;
+    interface IDataRequestedEventArgs;
+    interface IDataTransferManager;
+    interface IDataTransferManager2;
+    interface IDataTransferManagerStatics;
+    interface IDataTransferManagerStatics2;
+    interface IDataTransferManagerStatics3;
+    interface IHtmlFormatHelperStatics;
+    interface IOperationCompletedEventArgs;
+    interface IOperationCompletedEventArgs2;
+    interface IShareCompletedEventArgs;
+    interface IShareProvider;
+    interface IShareProviderFactory;
+    interface IShareProviderOperation;
+    interface IShareProvidersRequestedEventArgs;
+    interface IShareTargetInfo;
+    interface IShareUIOptions;
+    interface ISharedStorageAccessManagerStatics;
+    interface IStandardDataFormatsStatics;
+    interface IStandardDataFormatsStatics2;
+    interface IStandardDataFormatsStatics3;
+    interface ITargetApplicationChosenEventArgs;
+
+    runtimeclass Clipboard;
+    runtimeclass ClipboardContentOptions;
+    runtimeclass ClipboardHistoryChangedEventArgs;
+    runtimeclass ClipboardHistoryItem;
+    runtimeclass ClipboardHistoryItemsResult;
+    runtimeclass DataPackage;
+    runtimeclass DataPackagePropertySet;
+    runtimeclass DataPackagePropertySetView;
+    runtimeclass DataPackageView;
+    runtimeclass DataProviderDeferral;
+    runtimeclass DataProviderRequest;
+    runtimeclass DataRequest;
+    runtimeclass DataRequestDeferral;
+    runtimeclass DataRequestedEventArgs;
+    runtimeclass DataTransferManager;
+    runtimeclass HtmlFormatHelper;
+    runtimeclass OperationCompletedEventArgs;
+    runtimeclass ShareCompletedEventArgs;
+    runtimeclass ShareProvider;
+    runtimeclass ShareProviderOperation;
+    runtimeclass ShareProvidersRequestedEventArgs;
+    runtimeclass ShareTargetInfo;
+    runtimeclass ShareUIOptions;
+    runtimeclass SharedStorageAccessManager;
+    runtimeclass StandardDataFormats;
+    runtimeclass TargetApplicationChosenEventArgs;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
+        interface Windows.Foundation.Collections.IVector<Windows.ApplicationModel.DataTransfer.ShareProvider *>;
+        interface Windows.Foundation.EventHandler<Windows.ApplicationModel.DataTransfer.ClipboardHistoryChangedEventArgs *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItemsResult *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.ApplicationModel.DataTransfer.DataPackage *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.ApplicationModel.DataTransfer.DataPackageOperation>;
+        interface Windows.Foundation.IAsyncOperation<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItemsResult *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.ApplicationModel.DataTransfer.DataPackage *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.ApplicationModel.DataTransfer.DataPackageOperation>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, Windows.ApplicationModel.DataTransfer.OperationCompletedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, Windows.ApplicationModel.DataTransfer.ShareCompletedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.DataRequestedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.ShareProvidersRequestedEventArgs *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.TargetApplicationChosenEventArgs *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0)
+    ]
+    enum ClipboardHistoryItemsResultStatus
+    {
+        Success                  = 0,
+        AccessDenied             = 1,
+        ClipboardHistoryDisabled = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum DataPackageOperation
+    {
+        None = 0x0,
+        Copy = 0x1,
+        Move = 0x2,
+        Link = 0x4,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0)
+    ]
+    enum SetHistoryItemAsContentStatus
+    {
+        Success      = 0,
+        AccessDenied = 1,
+        ItemDeleted  = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0)
+    ]
+    enum ShareUITheme
+    {
+        Default = 0,
+        Light   = 1,
+        Dark    = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(e7ecd720-f2f4-4a2d-920e-170a2f482a27)
+    ]
+    delegate
+    HRESULT DataProviderHandler([in] Windows.ApplicationModel.DataTransfer.DataProviderRequest *request);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        uuid(e7f9d9ba-e1ba-4e4d-bd65-d43845d3212f)
+    ]
+    delegate
+    HRESULT ShareProviderHandler([in] Windows.ApplicationModel.DataTransfer.ShareProviderOperation *operation);
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ClipboardContentOptions),
+        uuid(e888a98c-ad4b-5447-a056-ab3556276d2b)
+    ]
+    interface IClipboardContentOptions : IInspectable
+    {
+        [propget] HRESULT IsRoamable([out, retval] boolean *value);
+        [propput] HRESULT IsRoamable([in] boolean value);
+        [propget] HRESULT IsAllowedInHistory([out, retval] boolean *value);
+        [propput] HRESULT IsAllowedInHistory([in] boolean value);
+        [propget] HRESULT RoamingFormats([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT HistoryFormats([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ClipboardHistoryChangedEventArgs),
+        uuid(c0be453f-8ea2-53ce-9aba-8d2212573452)
+    ]
+    interface IClipboardHistoryChangedEventArgs : IInspectable
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem),
+        uuid(0173bd8a-afff-5c50-ab92-3d19f481ec58)
+    ]
+    interface IClipboardHistoryItem : IInspectable
+    {
+        [propget] HRESULT Id([out, retval] HSTRING *value);
+        [propget] HRESULT Timestamp([out, retval] Windows.Foundation.DateTime *value);
+        [propget] HRESULT Content([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageView **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ClipboardHistoryItemsResult),
+        uuid(e6dfdee6-0ee2-52e3-852b-f295db65939a)
+    ]
+    interface IClipboardHistoryItemsResult : IInspectable
+    {
+        [propget] HRESULT Status([out, retval] Windows.ApplicationModel.DataTransfer.ClipboardHistoryItemsResultStatus *value);
+        [propget] HRESULT Items([out, retval] Windows.Foundation.Collections.IVectorView<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.Clipboard),
+        uuid(c627e291-34e2-4963-8eed-93cbb0ea3d70)
+    ]
+    interface IClipboardStatics : IInspectable
+    {
+        HRESULT GetContent([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageView **result);
+        HRESULT SetContent([in] Windows.ApplicationModel.DataTransfer.DataPackage *content);
+        HRESULT Flush();
+        HRESULT Clear();
+        [eventadd] HRESULT ContentChanged([in] Windows.Foundation.EventHandler<IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ContentChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.Clipboard),
+        uuid(d2ac1b6a-d29f-554b-b303-f0452345fe02)
+    ]
+    interface IClipboardStatics2 : IInspectable
+    {
+        HRESULT GetHistoryItemsAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.ApplicationModel.DataTransfer.ClipboardHistoryItemsResult *> **operation);
+        HRESULT ClearHistory([out, retval] boolean *result);
+        HRESULT DeleteItemFromHistory([in] Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *item, [out, retval] boolean *result);
+        HRESULT SetHistoryItemAsContent([in] Windows.ApplicationModel.DataTransfer.ClipboardHistoryItem *item, [out, retval] Windows.ApplicationModel.DataTransfer.SetHistoryItemAsContentStatus *result);
+        HRESULT IsHistoryEnabled([out, retval] boolean *result);
+        HRESULT IsRoamingEnabled([out, retval] boolean *result);
+        HRESULT SetContentWithOptions([in] Windows.ApplicationModel.DataTransfer.DataPackage *content, [in] Windows.ApplicationModel.DataTransfer.ClipboardContentOptions *options, [out, retval] boolean *result);
+        [eventadd] HRESULT HistoryChanged([in] Windows.Foundation.EventHandler<Windows.ApplicationModel.DataTransfer.ClipboardHistoryChangedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT HistoryChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT RoamingEnabledChanged([in] Windows.Foundation.EventHandler<IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT RoamingEnabledChanged([in] EventRegistrationToken token);
+        [eventadd] HRESULT HistoryEnabledChanged([in] Windows.Foundation.EventHandler<IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT HistoryEnabledChanged([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackage),
+        uuid(61ebf5c7-efea-4346-9554-981d7e198ffe)
+    ]
+    interface IDataPackage : IInspectable
+    {
+        HRESULT GetView([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageView **result);
+        [propget] HRESULT Properties([out, retval] Windows.ApplicationModel.DataTransfer.DataPackagePropertySet **value);
+        [propget] HRESULT RequestedOperation([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageOperation *value);
+        [propput] HRESULT RequestedOperation([in] Windows.ApplicationModel.DataTransfer.DataPackageOperation value);
+        [eventadd] HRESULT OperationCompleted([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, Windows.ApplicationModel.DataTransfer.OperationCompletedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT OperationCompleted([in] EventRegistrationToken token);
+        [eventadd] HRESULT Destroyed([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT Destroyed([in] EventRegistrationToken token);
+        HRESULT SetData([in] HSTRING format_id, [in] IInspectable *value);
+        HRESULT SetDataProvider([in] HSTRING format_id, [in] Windows.ApplicationModel.DataTransfer.DataProviderHandler *delay_renderer);
+        HRESULT SetText([in] HSTRING value);
+        HRESULT SetUri([in] Windows.Foundation.Uri *value);
+        HRESULT SetHtmlFormat([in] HSTRING value);
+        [propget] HRESULT ResourceMap([out, retval] Windows.Foundation.Collections.IMap<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> **value);
+        HRESULT SetRtf([in] HSTRING value);
+        HRESULT SetBitmap([in] Windows.Storage.Streams.RandomAccessStreamReference *value);
+        [overload("SetStorageItems")] HRESULT SetStorageItemsReadOnly([in] Windows.Foundation.Collections.IIterable<Windows.Storage.IStorageItem *> *value);
+        [overload("SetStorageItems")] HRESULT SetStorageItems([in] Windows.Foundation.Collections.IIterable<Windows.Storage.IStorageItem *> *value, [in] boolean read_only);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackage),
+        uuid(041c1fe9-2409-45e1-a538-4c53eeee04a7)
+    ]
+    interface IDataPackage2 : IInspectable
+    {
+        HRESULT SetApplicationLink([in] Windows.Foundation.Uri *value);
+        HRESULT SetWebLink([in] Windows.Foundation.Uri *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackage),
+        uuid(88f31f5d-787b-4d32-965a-a9838105a056)
+    ]
+    interface IDataPackage3 : IInspectable
+    {
+        [eventadd] HRESULT ShareCompleted([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, Windows.ApplicationModel.DataTransfer.ShareCompletedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShareCompleted([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 10.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackage),
+        uuid(13a24ec8-9382-536f-852a-3045e1b29a3b)
+    ]
+    interface IDataPackage4 : IInspectable
+    {
+        [eventadd] HRESULT ShareCanceled([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataPackage *, IInspectable *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShareCanceled([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySet),
+        uuid(cd1c93eb-4c4c-443a-a8d3-f5c241e91689)
+    ]
+    interface IDataPackagePropertySet : IInspectable
+        requires Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>,
+                 Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propput] HRESULT Title([in] HSTRING value);
+        [propget] HRESULT Description([out, retval] HSTRING *value);
+        [propput] HRESULT Description([in] HSTRING value);
+        [propget] HRESULT Thumbnail([out, retval] Windows.Storage.Streams.IRandomAccessStreamReference **value);
+        [propput] HRESULT Thumbnail([in] Windows.Storage.Streams.IRandomAccessStreamReference *value);
+        [propget] HRESULT FileTypes([out, retval] Windows.Foundation.Collections.IVector<HSTRING> **value);
+        [propget] HRESULT ApplicationName([out, retval] HSTRING *value);
+        [propput] HRESULT ApplicationName([in] HSTRING value);
+        [propget] HRESULT ApplicationListingUri([out, retval] Windows.Foundation.Uri **value);
+        [propput] HRESULT ApplicationListingUri([in] Windows.Foundation.Uri *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySet),
+        uuid(eb505d4a-9800-46aa-b181-7b6f0f2b919a)
+    ]
+    interface IDataPackagePropertySet2 : IInspectable
+    {
+        [propget] HRESULT ContentSourceWebLink([out, retval] Windows.Foundation.Uri **value);
+        [propput] HRESULT ContentSourceWebLink([in] Windows.Foundation.Uri *value);
+        [propget] HRESULT ContentSourceApplicationLink([out, retval] Windows.Foundation.Uri **value);
+        [propput] HRESULT ContentSourceApplicationLink([in] Windows.Foundation.Uri *value);
+        [propget] HRESULT PackageFamilyName([out, retval] HSTRING *value);
+        [propput] HRESULT PackageFamilyName([in] HSTRING value);
+        [propget] HRESULT Square30x30Logo([out, retval] Windows.Storage.Streams.IRandomAccessStreamReference **value);
+        [propput] HRESULT Square30x30Logo([in] Windows.Storage.Streams.IRandomAccessStreamReference *value);
+        [propget] HRESULT LogoBackgroundColor([out, retval] Windows.UI.Color *value);
+        [propput] HRESULT LogoBackgroundColor([in] Windows.UI.Color value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySet),
+        uuid(9e87fd9b-5205-401b-874a-455653bd39e8)
+    ]
+    interface IDataPackagePropertySet3 : IInspectable
+    {
+        [propget] HRESULT EnterpriseId([out, retval] HSTRING *value);
+        [propput] HRESULT EnterpriseId([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySet),
+        uuid(6390ebf5-1739-4c74-b22f-865fab5e8545)
+    ]
+    interface IDataPackagePropertySet4 : IInspectable
+    {
+        [propget] HRESULT ContentSourceUserActivityJson([out, retval] HSTRING *value);
+        [propput] HRESULT ContentSourceUserActivityJson([in] HSTRING value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView),
+        uuid(b94cec01-0c1a-4c57-be55-75d01289735d)
+    ]
+    interface IDataPackagePropertySetView : IInspectable
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propget] HRESULT Description([out, retval] HSTRING *value);
+        [propget] HRESULT Thumbnail([out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+        [propget] HRESULT FileTypes([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **value);
+        [propget] HRESULT ApplicationName([out, retval] HSTRING *value);
+        [propget] HRESULT ApplicationListingUri([out, retval] Windows.Foundation.Uri **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView),
+        uuid(6054509b-8ebe-4feb-9c1e-75e69de54b84)
+    ]
+    interface IDataPackagePropertySetView2 : IInspectable
+    {
+        [propget] HRESULT PackageFamilyName([out, retval] HSTRING *value);
+        [propget] HRESULT ContentSourceWebLink([out, retval] Windows.Foundation.Uri **value);
+        [propget] HRESULT ContentSourceApplicationLink([out, retval] Windows.Foundation.Uri **value);
+        [propget] HRESULT Square30x30Logo([out, retval] Windows.Storage.Streams.IRandomAccessStreamReference **value);
+        [propget] HRESULT LogoBackgroundColor([out, retval] Windows.UI.Color *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView),
+        uuid(db764ce5-d174-495c-84fc-1a51f6ab45d7)
+    ]
+    interface IDataPackagePropertySetView3 : IInspectable
+    {
+        [propget] HRESULT EnterpriseId([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView),
+        uuid(4474c80d-d16f-40ae-9580-6f8562b94235)
+    ]
+    interface IDataPackagePropertySetView4 : IInspectable
+    {
+        [propget] HRESULT ContentSourceUserActivityJson([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView),
+        uuid(6f0a9445-3760-50bb-8523-c4202ded7d78)
+    ]
+    interface IDataPackagePropertySetView5 : IInspectable
+    {
+        [propget] HRESULT IsFromRoamingClipboard([out, retval] boolean *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackageView),
+        uuid(7b840471-5900-4d85-a90b-10cb85fe3552)
+    ]
+    interface IDataPackageView : IInspectable
+    {
+        [propget] HRESULT Properties([out, retval] Windows.ApplicationModel.DataTransfer.DataPackagePropertySetView **value);
+        [propget] HRESULT RequestedOperation([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageOperation *value);
+        HRESULT ReportOperationCompleted([in] Windows.ApplicationModel.DataTransfer.DataPackageOperation value);
+        [propget] HRESULT AvailableFormats([out, retval] Windows.Foundation.Collections.IVectorView<HSTRING> **format_ids);
+        HRESULT Contains([in] HSTRING format_id, [out, retval] boolean *value);
+        HRESULT GetDataAsync([in] HSTRING format_id, [out, retval] Windows.Foundation.IAsyncOperation<IInspectable *> **operation);
+        [overload("GetTextAsync")] HRESULT GetTextAsync([out, retval] Windows.Foundation.IAsyncOperation<HSTRING> **operation);
+        [overload("GetTextAsync")] HRESULT GetCustomTextAsync([in] HSTRING format_id, [out, retval] Windows.Foundation.IAsyncOperation<HSTRING> **operation);
+        HRESULT GetUriAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *> **operation);
+        HRESULT GetHtmlFormatAsync([out, retval] Windows.Foundation.IAsyncOperation<HSTRING> **operation);
+        HRESULT GetResourceMapAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IMapView<HSTRING, Windows.Storage.Streams.RandomAccessStreamReference *> *> **operation);
+        HRESULT GetRtfAsync([out, retval] Windows.Foundation.IAsyncOperation<HSTRING> **operation);
+        HRESULT GetBitmapAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.RandomAccessStreamReference *> **operation);
+        HRESULT GetStorageItemsAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackageView),
+        uuid(40ecba95-2450-4c1d-b6b4-ed45463dee9c)
+    ]
+    interface IDataPackageView2 : IInspectable
+    {
+        HRESULT GetApplicationLinkAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *> **operation);
+        HRESULT GetWebLinkAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Uri *> **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackageView),
+        uuid(d37771a8-ddad-4288-8428-d1cae394128b)
+    ]
+    interface IDataPackageView3 : IInspectable
+    {
+        [overload("RequestAccessAsync")] HRESULT RequestAccessAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Security.EnterpriseData.ProtectionPolicyEvaluationResult> **operation);
+        [overload("RequestAccessAsync")] HRESULT RequestAccessWithEnterpriseIdAsync([in] HSTRING enterprise_id, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Security.EnterpriseData.ProtectionPolicyEvaluationResult> **operation);
+        HRESULT UnlockAndAssumeEnterpriseIdentity([out, retval] Windows.Security.EnterpriseData.ProtectionPolicyEvaluationResult *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataPackageView),
+        uuid(dfe96f1f-e042-4433-a09f-26d6ffda8b85)
+    ]
+    interface IDataPackageView4 : IInspectable
+    {
+        HRESULT SetAcceptedFormatId([in] HSTRING format_id);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataProviderDeferral),
+        uuid(c2cf2373-2d26-43d9-b69d-dcb86d03f6da)
+    ]
+    interface IDataProviderDeferral : IInspectable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataProviderRequest),
+        uuid(ebbc7157-d3c8-47da-acde-f82388d5f716)
+    ]
+    interface IDataProviderRequest : IInspectable
+    {
+        [propget] HRESULT FormatId([out, retval] HSTRING *value);
+        [propget] HRESULT Deadline([out, retval] Windows.Foundation.DateTime *value);
+        HRESULT GetDeferral([out, retval] Windows.ApplicationModel.DataTransfer.DataProviderDeferral **value);
+        HRESULT SetData([in] IInspectable *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataRequest),
+        uuid(4341ae3b-fc12-4e53-8c02-ac714c415a27)
+    ]
+    interface IDataRequest : IInspectable
+    {
+        [propget] HRESULT Data([out, retval] Windows.ApplicationModel.DataTransfer.DataPackage **value);
+        [propput] HRESULT Data([in] Windows.ApplicationModel.DataTransfer.DataPackage *value);
+        [propget] HRESULT Deadline([out, retval] Windows.Foundation.DateTime *value);
+        HRESULT FailWithDisplayText([in] HSTRING value);
+        HRESULT GetDeferral([out, retval] Windows.ApplicationModel.DataTransfer.DataRequestDeferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataRequestDeferral),
+        uuid(6dc4b89f-0386-4263-87c1-ed7dce30890e)
+    ]
+    interface IDataRequestDeferral : IInspectable
+    {
+        HRESULT Complete();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataRequestedEventArgs),
+        uuid(cb8ba807-6ac5-43c9-8ac5-9ba232163182)
+    ]
+    interface IDataRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Request([out, retval] Windows.ApplicationModel.DataTransfer.DataRequest **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataTransferManager),
+        uuid(a5caee9b-8708-49d1-8d36-67d25a8da00c)
+    ]
+    interface IDataTransferManager : IInspectable
+    {
+        [eventadd] HRESULT DataRequested([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.DataRequestedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT DataRequested([in] EventRegistrationToken token);
+        [eventadd] HRESULT TargetApplicationChosen([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.TargetApplicationChosenEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT TargetApplicationChosen([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataTransferManager),
+        uuid(30ae7d71-8ba8-4c02-8e3f-ddb23b388715)
+    ]
+    interface IDataTransferManager2 : IInspectable
+    {
+        [eventadd] HRESULT ShareProvidersRequested([in] Windows.Foundation.TypedEventHandler<Windows.ApplicationModel.DataTransfer.DataTransferManager *, Windows.ApplicationModel.DataTransfer.ShareProvidersRequestedEventArgs *> *handler, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ShareProvidersRequested([in] EventRegistrationToken token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataTransferManager),
+        uuid(a9da01aa-e00e-4cfe-aa44-2dd932dca3d8)
+    ]
+    interface IDataTransferManagerStatics : IInspectable
+    {
+        HRESULT ShowShareUI();
+        HRESULT GetForCurrentView([out, retval] Windows.ApplicationModel.DataTransfer.DataTransferManager **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataTransferManager),
+        uuid(c54ec2ec-9f97-4d63-9868-395e271ad8f5)
+    ]
+    interface IDataTransferManagerStatics2 : IInspectable
+    {
+        HRESULT IsSupported([out, retval] boolean *result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.DataTransferManager),
+        uuid(05845473-6c82-4f5c-ac23-62e458361fac)
+    ]
+    interface IDataTransferManagerStatics3 : IInspectable
+    {
+        [overload("ShowShareUI")] HRESULT ShowShareUIWithOptions([in] Windows.ApplicationModel.DataTransfer.ShareUIOptions *options);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.HtmlFormatHelper),
+        uuid(e22e7749-dd70-446f-aefc-61cee59f655e)
+    ]
+    interface IHtmlFormatHelperStatics : IInspectable
+    {
+        HRESULT GetStaticFragment([in] HSTRING html_format, [out, retval] HSTRING *html_fragment);
+        HRESULT CreateHtmlFormat([in] HSTRING html_fragment, [out, retval] HSTRING *html_format);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.OperationCompletedEventArgs),
+        uuid(e7af329d-051d-4fab-b1a9-47fd77f70a41)
+    ]
+    interface IOperationCompletedEventArgs : IInspectable
+    {
+        [propget] HRESULT Operation([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageOperation *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 2.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.OperationCompletedEventArgs),
+        uuid(858fa073-1e19-4105-b2f7-c8478808d562)
+    ]
+    interface IOperationCompletedEventArgs2 : IInspectable
+    {
+        [propget] HRESULT AcceptedFormatId([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareCompletedEventArgs),
+        uuid(4574c442-f913-4f60-9df7-cc4060ab1916)
+    ]
+    interface IShareCompletedEventArgs : IInspectable
+    {
+        [propget] HRESULT ShareTarget([out, retval] Windows.ApplicationModel.DataTransfer.ShareTargetInfo **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareProvider),
+        uuid(2fabe026-443e-4cda-af25-8d81070efd80)
+    ]
+    interface IShareProvider : IInspectable
+    {
+        [propget] HRESULT Title([out, retval] HSTRING *value);
+        [propget] HRESULT DisplayIcon([out, retval] Windows.Storage.Streams.RandomAccessStreamReference **value);
+        [propget] HRESULT BackgroundColor([out, retval] Windows.UI.Color *value);
+        [propget] HRESULT Tag([out, retval] IInspectable **value);
+        [propput] HRESULT Tag([in] IInspectable *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareProvider),
+        uuid(172a174c-e79e-4f6d-b07d-128f469e0296)
+    ]
+    interface IShareProviderFactory : IInspectable
+    {
+        HRESULT Create([in] HSTRING title, [in] Windows.Storage.Streams.RandomAccessStreamReference *display_icon, [in] Windows.UI.Color background_color, [in] Windows.ApplicationModel.DataTransfer.ShareProviderHandler *handler, [out, retval] Windows.ApplicationModel.DataTransfer.ShareProvider **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareProviderOperation),
+        uuid(19cef937-d435-4179-b6af-14e0492b69f6)
+    ]
+    interface IShareProviderOperation : IInspectable
+    {
+        [propget] HRESULT Data([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageView **value);
+        [propget] HRESULT Provider([out, retval] Windows.ApplicationModel.DataTransfer.ShareProvider **value);
+        HRESULT ReportCompleted();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareProvidersRequestedEventArgs),
+        uuid(f888f356-a3f8-4fce-85e4-8826e63be799)
+    ]
+    interface IShareProvidersRequestedEventArgs : IInspectable
+    {
+        [propget] HRESULT Providers([out, retval] Windows.Foundation.Collections.IVector<Windows.ApplicationModel.DataTransfer.ShareProvider *> **value);
+        [propget] HRESULT Data([out, retval] Windows.ApplicationModel.DataTransfer.DataPackageView **value);
+        HRESULT GetDeferral([out, retval] Windows.Foundation.Deferral **result);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareTargetInfo),
+        uuid(385be607-c6e8-4114-b294-28f3bb6f9904)
+    ]
+    interface IShareTargetInfo : IInspectable
+    {
+        [propget] HRESULT AppUserModelId([out, retval] HSTRING *value);
+        [propget] HRESULT ShareProvider([out, retval] Windows.ApplicationModel.DataTransfer.ShareProvider **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.ShareUIOptions),
+        uuid(72fa8a80-342f-4d90-9551-2ae04e37680c)
+    ]
+    interface IShareUIOptions : IInspectable
+    {
+        [propget] HRESULT Theme([out, retval] Windows.ApplicationModel.DataTransfer.ShareUITheme *value);
+        [propput] HRESULT Theme([in] Windows.ApplicationModel.DataTransfer.ShareUITheme value);
+        [propget] HRESULT SelectionRect([out, retval] Windows.Foundation.IReference<Windows.Foundation.Rect> **value);
+        [propput] HRESULT SelectionRect([in] Windows.Foundation.IReference<Windows.Foundation.Rect> *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.SharedStorageAccessManager),
+        uuid(c6132ada-34b1-4849-bd5f-d09fee3158c5)
+    ]
+    interface ISharedStorageAccessManagerStatics : IInspectable
+    {
+        HRESULT AddFile([in] Windows.Storage.IStorageFile *file, [out, retval] HSTRING *out_token);
+        HRESULT RedeemTokenForFileAsync([in] HSTRING token, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *> **operation);
+        HRESULT RemoveFile([in] HSTRING token);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.StandardDataFormats),
+        uuid(7ed681a1-a880-40c9-b4ed-0bee1e15f549)
+    ]
+    interface IStandardDataFormatsStatics : IInspectable
+    {
+        [propget] HRESULT Text([out, retval] HSTRING *value);
+        [propget] HRESULT Uri([out, retval] HSTRING *value);
+        [propget] HRESULT Html([out, retval] HSTRING *value);
+        [propget] HRESULT Rtf([out, retval] HSTRING *value);
+        [propget] HRESULT Bitmap([out, retval] HSTRING *value);
+        [propget] HRESULT StorageItems([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.StandardDataFormats),
+        uuid(42a254f4-9d76-42e8-861b-47c25dd0cf71)
+    ]
+    interface IStandardDataFormatsStatics2 : IInspectable
+    {
+        [propget] HRESULT WebLink([out, retval] HSTRING *value);
+        [propget] HRESULT ApplicationLink([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 6.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.StandardDataFormats),
+        uuid(3b57b069-01d4-474c-8b5f-bc8e27f38b21)
+    ]
+    interface IStandardDataFormatsStatics3 : IInspectable
+    {
+        [propget] HRESULT UserActivityJsonArray([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.DataTransfer.TargetApplicationChosenEventArgs),
+        uuid(ca6fb8ac-2987-4ee3-9c54-d8afbcb86c1d)
+    ]
+    interface ITargetApplicationChosenEventArgs : IInspectable
+    {
+        [propget] HRESULT ApplicationName([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard),
+        static(Windows.ApplicationModel.DataTransfer.IClipboardStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.DataTransfer.IClipboardStatics2, Windows.Foundation.UniversalApiContract, 7.0),
+        threading(both)
+    ]
+    runtimeclass Clipboard
+    {
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 7.0),
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ClipboardContentOptions
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IClipboardContentOptions;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ClipboardHistoryChangedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IClipboardHistoryChangedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ClipboardHistoryItem
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IClipboardHistoryItem;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 7.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ClipboardHistoryItemsResult
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IClipboardHistoryItemsResult;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass DataPackage
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataPackage;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackage2;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackage3;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackage4;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataPackagePropertySet
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySet;
+        interface Windows.Foundation.Collections.IMap<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySet2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySet3;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySet4;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataPackagePropertySetView
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySetView;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySetView2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySetView3;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySetView4;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackagePropertySetView5;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, IInspectable *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<HSTRING, IInspectable *> *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataPackageView
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataPackageView;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackageView2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackageView3;
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.ApplicationModel.DataTransfer.IDataPackageView4;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataProviderDeferral
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataProviderDeferral;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataProviderRequest
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataProviderRequest;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataRequest
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataRequest;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataRequestDeferral
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataRequestDeferral;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass DataRequestedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(standard),
+        static(Windows.ApplicationModel.DataTransfer.IDataTransferManagerStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.DataTransfer.IDataTransferManagerStatics2, Windows.Foundation.UniversalApiContract, 3.0),
+        static(Windows.ApplicationModel.DataTransfer.IDataTransferManagerStatics3, Windows.Foundation.UniversalApiContract, 5.0),
+        threading(both)
+    ]
+    runtimeclass DataTransferManager
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IDataTransferManager;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.DataTransfer.IDataTransferManager2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.ApplicationModel.DataTransfer.IHtmlFormatHelperStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass HtmlFormatHelper
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass OperationCompletedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IOperationCompletedEventArgs;
+        [contract(Windows.Foundation.UniversalApiContract, 2.0)] interface Windows.ApplicationModel.DataTransfer.IOperationCompletedEventArgs2;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShareCompletedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareCompletedEventArgs;
+    }
+
+    [
+        activatable(Windows.ApplicationModel.DataTransfer.IShareProviderFactory, Windows.Foundation.UniversalApiContract, 4.0),
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShareProvider
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareProvider;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShareProviderOperation
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareProviderOperation;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShareProvidersRequestedEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareProvidersRequestedEventArgs;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass ShareTargetInfo
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareTargetInfo;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 5.0),
+        contract(Windows.Foundation.UniversalApiContract, 5.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ShareUIOptions
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.IShareUIOptions;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.DataTransfer.ISharedStorageAccessManagerStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass SharedStorageAccessManager
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.ApplicationModel.DataTransfer.IStandardDataFormatsStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.DataTransfer.IStandardDataFormatsStatics2, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.ApplicationModel.DataTransfer.IStandardDataFormatsStatics3, Windows.Foundation.UniversalApiContract, 6.0)
+    ]
+    runtimeclass StandardDataFormats
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass TargetApplicationChosenEventArgs
+    {
+        [default] interface Windows.ApplicationModel.DataTransfer.ITargetApplicationChosenEventArgs;
+    }
+}

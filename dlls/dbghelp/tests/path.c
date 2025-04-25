@@ -671,20 +671,22 @@ static BOOL create_test_pdb_ds(const WCHAR* pdb_name, const GUID* guid, DWORD ag
     return TRUE;
 }
 
-static BOOL create_test_dbg(const WCHAR* dbg_name, WORD machine, DWORD timestamp, DWORD size)
+static BOOL create_test_dbg(const WCHAR* dbg_name, WORD machine, DWORD charac, DWORD timestamp, DWORD size, struct debug_directory_blob *blob)
 {
     HANDLE hfile;
 
     /* minimalistic .dbg made of a header and a DEBUG_DIRECTORY without any data */
-    const IMAGE_SEPARATE_DEBUG_HEADER header = {.Signature = 0x4944 /* DI */,
-        .Flags = 0, .Machine = machine, .Characteristics = 0x010E, .TimeDateStamp = timestamp,
+    IMAGE_SEPARATE_DEBUG_HEADER header =
+    {
+        .Signature = 0x4944 /* DI */,
+        .Flags = 0, .Machine = machine, .Characteristics = charac, .TimeDateStamp = timestamp,
         .CheckSum = 0, .ImageBase = 0x00040000, .SizeOfImage = size, .NumberOfSections = 0,
-        .ExportedNamesSize = 0, .DebugDirectorySize = sizeof(IMAGE_DEBUG_DIRECTORY)};
-    const IMAGE_DEBUG_DIRECTORY debug_dir = {.Characteristics = 0, .TimeDateStamp = timestamp + 1,
-                                             .MajorVersion = 0, .MinorVersion = 0, .Type = IMAGE_DEBUG_TYPE_CODEVIEW,
-                                             .SizeOfData = 0, .AddressOfRawData = 0,
-                                             .PointerToRawData = sizeof(header) + header.NumberOfSections * sizeof(IMAGE_SECTION_HEADER) +
-                                             header.DebugDirectorySize};
+        .ExportedNamesSize = 0, .DebugDirectorySize = 0
+    };
+    DWORD where, expected_size;
+
+    if (blob)
+        header.DebugDirectorySize = sizeof(IMAGE_DEBUG_DIRECTORY);
 
     hfile = CreateFileW(dbg_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
     ok(hfile != INVALID_HANDLE_VALUE, "failed to create %ls err %lu\n", dbg_name, GetLastError());
@@ -692,8 +694,18 @@ static BOOL create_test_dbg(const WCHAR* dbg_name, WORD machine, DWORD timestamp
 
     check_write_file(hfile, &header, sizeof(header));
     /* FIXME: 0 sections... as header.NumberOfSections */
-    check_write_file(hfile, &debug_dir, sizeof(debug_dir));
-    ok(SetFilePointer(hfile, 0, NULL, FILE_CURRENT) == debug_dir.PointerToRawData, "mismatch\n");
+    if (blob)
+    {
+        where = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
+        blob->debug_directory.PointerToRawData = (blob->debug_directory.SizeOfData) ?
+            where + sizeof(IMAGE_DEBUG_DIRECTORY) : 0;
+        check_write_file(hfile, &blob->debug_directory, sizeof(IMAGE_DEBUG_DIRECTORY));
+        check_write_file(hfile, blob->content, blob->debug_directory.SizeOfData);
+    }
+    expected_size = sizeof(header) + header.NumberOfSections * sizeof(IMAGE_SECTION_HEADER);
+    if (blob)
+        expected_size += sizeof(IMAGE_DEBUG_DIRECTORY) + blob->debug_directory.SizeOfData;
+    ok(SetFilePointer(hfile, 0, NULL, FILE_CURRENT) == expected_size, "Incorrect file length\n");
 
     CloseHandle(hfile);
     return TRUE;
@@ -725,16 +737,16 @@ static void test_srvgetindexes_pe(void)
         DWORD sig;
         WCHAR pdb_name[16];
         WCHAR dbg_name[16];
-        BOOL in_error;
+        DWORD last_error;
     }
     indexes[] =
     {
         /* error cases */
-/*  0 */{0,                         {-1, -1, -1}, .in_error = TRUE},
-        {IMAGE_FILE_DEBUG_STRIPPED, { 0, -1, -1}, .in_error = TRUE},
-        {IMAGE_FILE_DEBUG_STRIPPED, { 1, -1, -1}, .in_error = TRUE},
-        {IMAGE_FILE_DEBUG_STRIPPED, { 2, -1, -1}, .in_error = TRUE},
-        {IMAGE_FILE_DEBUG_STRIPPED, {-1, -1, -1}, .in_error = TRUE}, /* not 100% logical ! */
+/*  0 */{0,                         {-1, -1, -1}, 0,   &null_guid, 0,                                    .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 0, -1, -1}, 0,   &null_guid, 0,                                    .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 1, -1, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb", .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_DEBUG_STRIPPED, { 2, -1, -1}, 124, &guid1,     0,          .pdb_name = L"pdbds.pdb", .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_DEBUG_STRIPPED, {-1, -1, -1}, 0,   &null_guid, 0,                                    .last_error = ERROR_BAD_EXE_FORMAT}, /* not 100% logical ! */
         /* success */
 /*  5 */{0,                         { 0, -1, -1}, 0,   &null_guid, 0           },
         {0,                         { 1, -1, -1}, 123, &null_guid, 0xaaaabbbb, .pdb_name = L"pdbjg.pdb"},
@@ -796,16 +808,16 @@ static void test_srvgetindexes_pe(void)
             memset(&ssii, 0xa5, sizeof(ssii));
             ssii.sizeofstruct = sizeof(ssii);
             ret = SymSrvGetFileIndexInfoW(filename, &ssii, 0);
-            if (indexes[i].in_error)
+            if (indexes[i].last_error)
             {
                 ok(!ret, "SymSrvGetFileIndexInfo should have failed\n");
-                ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Mismatch in GetLastError: %lu\n", GetLastError());
+                ok(GetLastError() == indexes[i].last_error, "Mismatch in GetLastError: %lu\n", GetLastError());
             }
             else
-            {
                 ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
-
-                ok(ssii.age == indexes[i].age, "Mismatch in age: %lx\n", ssii.age);
+            if (ret || indexes[i].last_error == ERROR_BAD_EXE_FORMAT)
+            {
+                ok(ssii.age == indexes[i].age, "Mismatch in age: %lu\n", ssii.age);
                 ok(IsEqualGUID(&ssii.guid, indexes[i].guid),
                    "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
 
@@ -882,48 +894,69 @@ static void test_srvgetindexes_dbg(void)
     WCHAR filename[128];
     SYMSRV_INDEX_INFOW ssii;
     BOOL ret;
+    struct debug_directory_blob *blob_refs[1];
 
     static struct
     {
         /* input parameters */
-        WORD machine;
-        DWORD timestamp;
-        DWORD imagesize;
+        WORD        machine;
+        DWORD       characteristics;
+        DWORD       timestamp;
+        DWORD       imagesize;
+        int         blob;
+        /* output parameters */
+        DWORD       age;
+        const GUID *guid;
+        WCHAR       pdbname[16];
+        WCHAR       dbgname[16];
+        DWORD       last_error;
     }
     indexes[] =
     {
-        {IMAGE_FILE_MACHINE_I386,  0x1234, 0x00560000},
-        {IMAGE_FILE_MACHINE_AMD64, 0x1235, 0x00570000},
+        {IMAGE_FILE_MACHINE_I386,  0, 0x1234, 0x00560000, -1, 0, &null_guid, .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_MACHINE_AMD64, 0, 0x1235, 0x00570000, -1, 0, &null_guid, .last_error = ERROR_BAD_EXE_FORMAT},
+        {IMAGE_FILE_MACHINE_I386,  0, 0x1234, 0x00560000, 0, 123, &guid1, .pdbname=L"foo.pdb"},
+        {IMAGE_FILE_MACHINE_AMD64, 0, 0x1235, 0x00570000, 0, 123, &guid1, .pdbname=L"foo.pdb"},
     };
+
+    blob_refs[0] = make_pdb_ds_blob(0x1226, &guid1, 123, "foo.pdb");
     for (i = 0; i < ARRAY_SIZE(indexes); i++)
     {
         winetest_push_context("dbg#%02u", i);
 
         /* create dll */
         swprintf(filename, ARRAY_SIZE(filename), L"winetest%02u.dbg", i);
-        ret = create_test_dbg(filename, indexes[i].machine, indexes[i].timestamp, indexes[i].imagesize);
+        ret = create_test_dbg(filename, indexes[i].machine, indexes[i].characteristics,
+                              indexes[i].timestamp, indexes[i].imagesize,
+                              indexes[i].blob == -1 ? NULL : blob_refs[indexes[i].blob]);
         ok(ret, "Couldn't create dbg file %ls\n", filename);
 
         memset(&ssii, 0x45, sizeof(ssii));
         ssii.sizeofstruct = sizeof(ssii);
         ret = SymSrvGetFileIndexInfoW(filename, &ssii, 0);
-        ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
+        if (indexes[i].last_error)
+        {
+            ok(!ret, "SymSrvGetFileIndexInfo should have\n");
+            ok(GetLastError() == ERROR_BAD_EXE_FORMAT, "Unexpected last error: %lu\n", GetLastError());
+        }
+        else
+            ok(ret, "SymSrvGetFileIndexInfo failed: %lu\n", GetLastError());
 
-        ok(ssii.age == 0, "Mismatch in age: %lx\n", ssii.age);
-        ok(!memcmp(&ssii.guid, &null_guid, sizeof(GUID)),
+        ok(ssii.age == indexes[i].age, "Mismatch in age: %lx\n", ssii.age);
+        ok(IsEqualGUID(&ssii.guid, indexes[i].guid),
            "Mismatch in guid: guid=%s\n", wine_dbgstr_guid(&ssii.guid));
-
         ok(ssii.sig == 0, "Mismatch in sig: %lx\n", ssii.sig);
         ok(ssii.size == indexes[i].imagesize, "Mismatch in size: %lx\n", ssii.size);
         ok(!ssii.stripped, "Mismatch in stripped: %x\n", ssii.stripped);
         ok(ssii.timestamp == indexes[i].timestamp, "Mismatch in timestamp: %lx\n", ssii.timestamp);
         ok(!wcscmp(ssii.file, filename), "Mismatch in file: %ls\n", ssii.file);
-        ok(!ssii.pdbfile[0], "Mismatch in pdbfile: %ls\n", ssii.pdbfile);
-        ok(!ssii.dbgfile[0], "Mismatch in dbgfile: %ls\n", ssii.dbgfile);
+        ok(!wcscmp(ssii.pdbfile, indexes[i].pdbname), "Mismatch in pdbfile: %ls\n", ssii.pdbfile);
+        ok(!wcscmp(ssii.dbgfile, indexes[i].dbgname), "Mismatch in dbgfile: %ls\n", ssii.dbgfile);
 
         DeleteFileW(filename);
         winetest_pop_context();
     }
+    for (i = 0; i < ARRAY_SIZE(blob_refs); i++) free(blob_refs[i]);
 }
 
 static void make_path(WCHAR file[MAX_PATH], const WCHAR* topdir, const WCHAR* subdir, const WCHAR* base)
@@ -1533,7 +1566,8 @@ static void test_load_modules_path(void)
                 if (test_files[val].guid)
                     create_test_pdb_ds(filename, test_files[val].guid, test_files[val].age_or_timestamp);
                 else
-                    create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64 /* FIXME */, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000);
+                    /*create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64, 0x10E, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000, blob); */
+                    ok(0, "not supported yet\n");
             }
             else ok(0, "Unrecognized file reference %c\n", *ptr);
         }
@@ -1754,7 +1788,7 @@ static void test_load_modules_details(void)
                 if (test_files[val].guid)
                     create_test_pdb_ds(filename, test_files[val].guid, test_files[val].age_or_timestamp);
                 else
-                    create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64 /* FIXME */, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000);
+                    create_test_dbg(filename, IMAGE_FILE_MACHINE_AMD64 /* FIXME */, 0x10E, test_files[val].age_or_timestamp, 0x40000 * val * 0x20000, NULL);
             }
             else ok(0, "Unrecognized file reference %c\n", *ptr);
         }

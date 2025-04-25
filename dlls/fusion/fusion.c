@@ -108,14 +108,10 @@ static HRESULT get_corversion(LPWSTR version, DWORD size)
 HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
                             PDWORD pcchPath)
 {
-    static const WCHAR assembly[] = {'\\','a','s','s','e','m','b','l','y',0};
-    static const WCHAR gac[] = {'\\','G','A','C',0};
-    static const WCHAR nativeimg[] = {'N','a','t','i','v','e','I','m','a','g','e','s','_',0};
-    static const WCHAR dotnet[] = {'\\','M','i','c','r','o','s','o','f','t','.','N','E','T',0};
 #ifdef _WIN64
-    static const WCHAR zapfmt[] = {'%','s','\\','%','s','\\','%','s','%','s','_','6','4',0};
+    static const WCHAR zapfmt[] = L"%s\\assembly\\NativeImages_%s_64";
 #else
-    static const WCHAR zapfmt[] = {'%','s','\\','%','s','\\','%','s','%','s','_','3','2',0};
+    static const WCHAR zapfmt[] = L"%s\\assembly\\NativeImages_%s_32";
 #endif
     WCHAR path[MAX_PATH], windir[MAX_PATH], version[MAX_PATH];
     DWORD len;
@@ -137,15 +133,15 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
             if (FAILED(hr))
                 return hr;
 
-            len = swprintf(path, ARRAY_SIZE(path), zapfmt, windir, assembly + 1, nativeimg, version);
+            len = swprintf(path, ARRAY_SIZE(path), zapfmt, windir, version);
             break;
         }
         case ASM_CACHE_GAC:
         {
-            lstrcpyW(path + len, assembly);
-            len += ARRAY_SIZE(assembly) - 1;
-            lstrcpyW(path + len, gac);
-            len += ARRAY_SIZE(gac) - 1;
+            lstrcpyW(path + len, L"\\assembly");
+            len += ARRAY_SIZE(L"\\assembly") - 1;
+            lstrcpyW(path + len, L"\\GAC");
+            len += ARRAY_SIZE(L"\\GAC") - 1;
             break;
         }
         case ASM_CACHE_DOWNLOAD:
@@ -154,14 +150,14 @@ HRESULT WINAPI GetCachePath(ASM_CACHE_FLAGS dwCacheFlags, LPWSTR pwzCachePath,
             return E_FAIL;
         }
         case ASM_CACHE_ROOT:
-            lstrcpyW(path + len, assembly);
-            len += ARRAY_SIZE(assembly) - 1;
+            lstrcpyW(path + len, L"\\assembly");
+            len += ARRAY_SIZE(L"\\assembly") - 1;
             break;
         case ASM_CACHE_ROOT_EX:
-            lstrcpyW(path + len, dotnet);
-            len += ARRAY_SIZE(dotnet) - 1;
-            lstrcpyW(path + len, assembly);
-            len += ARRAY_SIZE(assembly) - 1;
+            lstrcpyW(path + len, L"\\Microsoft.NET");
+            len += ARRAY_SIZE(L"\\Microsoft.NET") - 1;
+            lstrcpyW(path + len, L"\\assembly");
+            len += ARRAY_SIZE(L"\\assembly") - 1;
             break;
         default:
             return E_INVALIDARG;

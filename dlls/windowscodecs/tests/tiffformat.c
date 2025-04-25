@@ -75,11 +75,7 @@ static const struct tiff_1bpp_data
     BYTE pixel_data[4];
 } tiff_1bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
     13,
@@ -115,11 +111,7 @@ static const struct tiff_8bpp_alpha
     BYTE pixel_data[8];
 } tiff_8bpp_alpha =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_8bpp_alpha, number_of_entries),
     15,
@@ -158,11 +150,7 @@ static const struct tiff_8bpp_data
     BYTE pixel_data[4];
 } tiff_8bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_8bpp_data, number_of_entries),
     14,
@@ -234,11 +222,7 @@ static struct tiff_resolution_image_data
     BYTE pixel_data[4];
 } tiff_resolution_image_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_resolution_image_data, number_of_entries),
     13,
@@ -275,11 +259,7 @@ static const struct tiff_24bpp_data
     BYTE pixel_data[3];
 } tiff_24bpp_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1bpp_data, number_of_entries),
     13,
@@ -312,14 +292,11 @@ static const struct tiff_4bps_bgra
     struct IFD_entry entry[14];
     ULONG next_IFD;
     struct IFD_rational res;
-    BYTE pixel_data[4];
-} tiff_4bps_bgra =
+    BYTE pixel_data[6];
+} tiff_4bps_bgra[2] =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
+{
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_4bps_bgra, number_of_entries),
     14,
@@ -342,6 +319,32 @@ static const struct tiff_4bps_bgra
     0,
     { 96, 1 },
     { 0x12,0x30, 0x47,0xe0 }
+},
+{
+    'I' | 'I' << 8,
+    42,
+    FIELD_OFFSET(struct tiff_4bps_bgra, number_of_entries),
+    14,
+    {
+        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 5 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 2 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 1 }, /* BITSPERSAMPLE */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION */
+        { 0x106, IFD_SHORT, 1, 2 }, /* PHOTOMETRIC */
+        { 0x111, IFD_LONG, 1, FIELD_OFFSET(struct tiff_4bps_bgra, pixel_data) }, /* STRIPOFFSETS */
+        { 0x115, IFD_SHORT, 1, 4 }, /* SAMPLESPERPIXEL */
+        { 0x116, IFD_LONG, 1, 2 }, /* ROWSPERSTRIP */
+        { 0x117, IFD_LONG, 1, 4 }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_4bps_bgra, res) }, /* XRESOLUTION */
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_4bps_bgra, res) }, /* YRESOLUTION */
+        { 0x11c, IFD_SHORT, 1, 1 }, /* PLANARCONFIGURATION */
+        { 0x128, IFD_SHORT, 1, 2 } /* RESOLUTIONUNIT */
+    },
+    0,
+    { 96, 1 },
+    { 0x12,0x34,0x70, 0xe8,0xf0,0xa0 }
+},
 };
 #include "poppack.h"
 
@@ -519,7 +522,7 @@ static void test_QueryCapability(void)
     ok(hr == WINCODEC_ERR_FRAMEMISSING || broken(hr == E_POINTER) /* XP */, "expected WINCODEC_ERR_FRAMEMISSING, got %#lx\n", hr);
 
     pos.QuadPart = 4;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     capability = 0xdeadbeef;
@@ -538,7 +541,7 @@ static void test_QueryCapability(void)
     IWICBitmapFrameDecode_Release(frame);
 
     pos.QuadPart = 5;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICBitmapDecoder_QueryCapability(decoder, stream, &capability);
@@ -558,7 +561,7 @@ static void test_QueryCapability(void)
         IWICBitmapDecoder_Release(decoder);
 
     pos.QuadPart = 0;
-    hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
+    hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#lx\n", hr);
 
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
@@ -853,11 +856,7 @@ static const struct tiff_1x1_data
     BYTE pixel_data[32];
 } tiff_1x1_data =
 {
-#ifdef WORDS_BIGENDIAN
-    'M' | 'M' << 8,
-#else
     'I' | 'I' << 8,
-#endif
     42,
     FIELD_OFFSET(struct tiff_1x1_data, number_of_entries),
     13,
@@ -1272,11 +1271,22 @@ static void test_tiff_4bps_bgra(void)
     IWICPalette *palette;
     GUID format;
     WICRect rc;
-    BYTE data[24];
-    static const BYTE expected_data[24] = { 0,0,0,0xff, 0xff,0,0,0, 0xff,0,0,0xff,
-                                            0,0xff,0,0, 0xff,0xff,0,0xff, 0xff,0xff,0xff,0 };
+    DWORD data[10];
 
-    hr = create_decoder(&tiff_4bps_bgra, sizeof(tiff_4bps_bgra), &decoder);
+    static const DWORD expected_data_3x2[6] =
+    {
+        0xff000000, 0x000000ff, 0xff0000ff,
+        0x0000ff00, 0xff00ffff, 0x00ffffff,
+    };
+
+    static const DWORD expected_data_5x2[10] =
+    {
+        0xff000000, 0x000000ff, 0xff0000ff, 0x0000ff00, 0xff00ffff,
+        0x00ffffff, 0x00ff0000, 0xffffffff, 0x00000000, 0x00ff00ff,
+    };
+
+    /* 3x2 */
+    hr = create_decoder(&tiff_4bps_bgra[0], sizeof(tiff_4bps_bgra[0]), &decoder);
     ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
     if (hr != S_OK) return;
 
@@ -1314,11 +1324,42 @@ static void test_tiff_4bps_bgra(void)
     rc.Y = 0;
     rc.Width = 3;
     rc.Height = 2;
-    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 12, sizeof(data), data);
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 12, sizeof(data), (BYTE *)data);
     ok(hr == S_OK, "CopyPixels error %#lx\n", hr);
 
-    for (i = 0; i < sizeof(data); i++)
-        ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
+    for (i = 0; i < 6; i++)
+        ok(data[i] == expected_data_3x2[i], "%u: expected %08lx, got %08lx\n", i, expected_data_3x2[i], data[i]);
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+
+    /* 5x2 */
+    hr = create_decoder(&tiff_4bps_bgra[1], sizeof(tiff_4bps_bgra[1]), &decoder);
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "GetFrame error %#lx\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "GetSize error %#lx\n", hr);
+    ok(width == 5, "got %u\n", width);
+    ok(height == 2, "got %u\n", height);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#lx\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+       "got wrong format %s\n", wine_dbgstr_guid(&format));
+
+    memset(data, 0xaa, sizeof(data));
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 5;
+    rc.Height = 2;
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 20, sizeof(data), (BYTE *)data);
+    ok(hr == S_OK, "CopyPixels error %#lx\n", hr);
+
+    for (i = 0; i < 10; i++)
+        ok(data[i] == expected_data_5x2[i], "%u: expected %08lx, got %08lx\n", i, expected_data_5x2[i], data[i]);
 
     IWICBitmapFrameDecode_Release(frame);
     IWICBitmapDecoder_Release(decoder);

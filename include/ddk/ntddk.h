@@ -166,10 +166,36 @@ typedef struct _RTL_SPLAY_LINKS
     struct _RTL_SPLAY_LINKS *RightChild;
 } RTL_SPLAY_LINKS, *PRTL_SPLAY_LINKS;
 
+FORCEINLINE void RtlInitializeSplayLinks(PRTL_SPLAY_LINKS links)
+{
+    links->Parent = links;
+    links->LeftChild = NULL;
+    links->RightChild = NULL;
+}
+
+FORCEINLINE void RtlInsertAsLeftChild(PRTL_SPLAY_LINKS parent, PRTL_SPLAY_LINKS child)
+{
+    parent->LeftChild = child;
+    child->Parent = parent;
+}
+
+FORCEINLINE void RtlInsertAsRightChild(PRTL_SPLAY_LINKS parent, PRTL_SPLAY_LINKS child)
+{
+    parent->RightChild = child;
+    child->Parent = parent;
+}
+
+#define RtlParent(links)       ((PRTL_SPLAY_LINKS)(links)->Parent)
+#define RtlLeftChild(links)    ((PRTL_SPLAY_LINKS)(links)->LeftChild)
+#define RtlRightChild(links)   ((PRTL_SPLAY_LINKS)(links)->RightChild)
+#define RtlIsRoot(links)       (RtlParent(links) == (PRTL_SPLAY_LINKS)(links))
+#define RtlIsLeftChild(links)  (RtlLeftChild(RtlParent(links)) == (PRTL_SPLAY_LINKS)(links))
+#define RtlIsRightChild(links) (RtlRightChild(RtlParent(links)) == (PRTL_SPLAY_LINKS)(links))
+
 struct _RTL_GENERIC_TABLE;
 
 typedef RTL_GENERIC_COMPARE_RESULTS (WINAPI *PRTL_GENERIC_COMPARE_ROUTINE)(struct _RTL_GENERIC_TABLE *, void *, void *);
-typedef void * (__WINE_ALLOC_SIZE(2) WINAPI *PRTL_GENERIC_ALLOCATE_ROUTINE)(struct _RTL_GENERIC_TABLE *, LONG);
+typedef void * (__WINE_ALLOC_SIZE(2) WINAPI *PRTL_GENERIC_ALLOCATE_ROUTINE)(struct _RTL_GENERIC_TABLE *, CLONG);
 typedef void (WINAPI *PRTL_GENERIC_FREE_ROUTINE)(struct _RTL_GENERIC_TABLE *Table, void *);
 
 typedef struct _RTL_GENERIC_TABLE
@@ -274,19 +300,30 @@ NTSTATUS  WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE);
 NTSTATUS  WINAPI PsSetLoadImageNotifyRoutineEx(PLOAD_IMAGE_NOTIFY_ROUTINE,ULONG_PTR);
 LONG      WINAPI RtlCompareString(const STRING*,const STRING*,BOOLEAN);
 void      WINAPI RtlCopyString(STRING*,const STRING*);
+PRTL_SPLAY_LINKS WINAPI RtlDelete(PRTL_SPLAY_LINKS);
+BOOLEAN   WINAPI RtlDeleteElementGenericTable(PRTL_GENERIC_TABLE,PVOID);
+void      WINAPI RtlDeleteNoSplay(PRTL_SPLAY_LINKS,PRTL_SPLAY_LINKS *);
+void *    WINAPI RtlEnumerateGenericTable(PRTL_GENERIC_TABLE,BOOLEAN);
 void *    WINAPI RtlEnumerateGenericTableWithoutSplaying(PRTL_GENERIC_TABLE,PVOID*);
 void *    WINAPI RtlEnumerateGenericTableWithoutSplayingAvl(PRTL_AVL_TABLE,PVOID*);
 BOOLEAN   WINAPI RtlEqualString(const STRING*,const STRING*,BOOLEAN);
 void *    WINAPI RtlGetElementGenericTable(PRTL_GENERIC_TABLE,ULONG);
 void      WINAPI RtlInitializeGenericTable(PRTL_GENERIC_TABLE,PRTL_GENERIC_COMPARE_ROUTINE,PRTL_GENERIC_ALLOCATE_ROUTINE,PRTL_GENERIC_FREE_ROUTINE,void *);
 void      WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE,PRTL_AVL_COMPARE_ROUTINE,PRTL_AVL_ALLOCATE_ROUTINE, PRTL_AVL_FREE_ROUTINE,void *);
+PVOID     WINAPI RtlInsertElementGenericTable(PRTL_GENERIC_TABLE,PVOID,CLONG,PBOOLEAN);
 void      WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE,void *,ULONG,BOOL*);
+BOOLEAN   WINAPI RtlIsGenericTableEmpty(PRTL_GENERIC_TABLE);
 void *    WINAPI RtlLookupElementGenericTable(PRTL_GENERIC_TABLE,void *);
 void *    WINAPI RtlLookupElementGenericTableAvl(PRTL_AVL_TABLE,void *);
 void      WINAPI RtlMapGenericMask(ACCESS_MASK*,const GENERIC_MAPPING*);
 ULONG     WINAPI RtlNumberGenericTableElements(PRTL_GENERIC_TABLE);
 ULONG     WINAPI RtlNumberGenericTableElementsAvl(PRTL_AVL_TABLE);
 BOOLEAN   WINAPI RtlPrefixUnicodeString(const UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
+PRTL_SPLAY_LINKS WINAPI RtlRealPredecessor(PRTL_SPLAY_LINKS);
+PRTL_SPLAY_LINKS WINAPI RtlRealSuccessor(PRTL_SPLAY_LINKS);
+PRTL_SPLAY_LINKS WINAPI RtlSplay(PRTL_SPLAY_LINKS);
+PRTL_SPLAY_LINKS WINAPI RtlSubtreePredecessor(PRTL_SPLAY_LINKS);
+PRTL_SPLAY_LINKS WINAPI RtlSubtreeSuccessor(PRTL_SPLAY_LINKS);
 NTSTATUS  WINAPI RtlUpcaseUnicodeString(UNICODE_STRING*,const UNICODE_STRING*,BOOLEAN);
 char      WINAPI RtlUpperChar(char);
 void      WINAPI RtlUpperString(STRING*,const STRING*);

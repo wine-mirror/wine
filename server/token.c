@@ -285,7 +285,6 @@ int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     dacl = sd_get_dacl( sd, &dummy );
     if (dacl && !acl_is_valid( dacl, sd->dacl_len ))
         return FALSE;
-    offset += sd->dacl_len;
 
     return TRUE;
 }
@@ -319,13 +318,9 @@ struct acl *extract_security_labels( const struct acl *sacl )
 
     label_ace = ace_first( label_acl );
     for (i = 0, ace = ace_first( sacl ); i < sacl->count; i++, ace = ace_next( ace ))
-    {
         if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
-        {
-            memcpy( label_ace, ace, ace->size );
-            label_ace = ace_next( label_ace );
-        }
-    }
+            label_ace = mem_append( label_ace, ace, ace->size );
+
     return label_acl;
 }
 
@@ -379,21 +374,15 @@ struct acl *replace_security_labels( const struct acl *old_sacl, const struct ac
     if (old_sacl)
     {
         for (i = 0, ace = ace_first( old_sacl ); i < old_sacl->count; i++, ace = ace_next( ace ))
-        {
-            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->size );
-            replaced_ace = ace_next( replaced_ace );
-        }
+            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+                replaced_ace = mem_append( replaced_ace, ace, ace->size );
     }
 
     if (new_sacl)
     {
         for (i = 0, ace = ace_first( new_sacl ); i < new_sacl->count; i++, ace = ace_next( ace ))
-        {
-            if (ace->type != SYSTEM_MANDATORY_LABEL_ACE_TYPE) continue;
-            memcpy( replaced_ace, ace, ace->size );
-            replaced_ace = ace_next( replaced_ace );
-        }
+            if (ace->type == SYSTEM_MANDATORY_LABEL_ACE_TYPE)
+                replaced_ace = mem_append( replaced_ace, ace, ace->size );
     }
 
     return replaced_acl;
@@ -928,7 +917,7 @@ static unsigned int token_access_check( struct token *token,
                                  unsigned int desired_access,
                                  struct luid_attr *privs,
                                  unsigned int *priv_count,
-                                 const generic_map_t *mapping,
+                                 const struct generic_map *mapping,
                                  unsigned int *granted_access,
                                  unsigned int *status )
 {
@@ -1096,7 +1085,7 @@ unsigned int token_get_session_id( struct token *token )
 
 int check_object_access(struct token *token, struct object *obj, unsigned int *access)
 {
-    generic_map_t mapping;
+    struct generic_map mapping;
     unsigned int status;
     int res;
 
@@ -1213,8 +1202,10 @@ DECL_HANDLER(create_token)
     token = create_token( req->primary, default_session_id, user, groups, req->group_count,
                           privs, req->priv_count, dacl, NULL, req->primary_group, req->impersonation_level, 0 );
     if (token)
+    {
         reply->token = alloc_handle( current->process, token, req->access, objattr->attributes );
-
+        release_object( token );
+    }
     free( default_dacl );
     free( groups );
 }
@@ -1560,25 +1551,21 @@ DECL_HANDLER(get_token_default_dacl)
 {
     struct token *token;
 
-    reply->acl_len = 0;
+    if (!(token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                  TOKEN_QUERY, &token_ops )))
+        return;
 
-    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
-                                                 TOKEN_QUERY,
-                                                 &token_ops )))
+    if (token->default_dacl)
     {
-        if (token->default_dacl)
-            reply->acl_len = token->default_dacl->size;
-
+        reply->acl_len = token->default_dacl->size;
         if (reply->acl_len <= get_reply_max_size())
         {
             struct acl *acl_reply = set_reply_data_size( reply->acl_len );
-            if (acl_reply)
-                memcpy( acl_reply, token->default_dacl, reply->acl_len );
+            if (acl_reply) memcpy( acl_reply, token->default_dacl, reply->acl_len );
         }
         else set_error( STATUS_BUFFER_TOO_SMALL );
-
-        release_object( token );
     }
+    release_object( token );
 }
 
 DECL_HANDLER(set_token_default_dacl)

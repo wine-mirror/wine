@@ -838,7 +838,7 @@ static LRESULT CALLBACK MMSYSTDRV_Callback3216(struct mmsystdrv_thunk* thunk, HD
         args[2] = LOWORD(dwParam1);
         args[1] = HIWORD(dwParam2);
         args[0] = LOWORD(dwParam2);
-        return WOWCallback16Ex(thunk->callback, WCB16_PASCAL, sizeof(args), args, NULL);
+        return WOWCallback16Ex(thunk->callback, WCB16_PASCAL | WCB16_INTERRUPT, sizeof(args), args, NULL);
     case CALLBACK_EVENT:
         TRACE("Event(%08lx) !\n", thunk->callback);
         SetEvent((HANDLE)thunk->callback);

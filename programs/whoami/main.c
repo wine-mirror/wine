@@ -28,6 +28,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(whoami);
 
+enum format
+{
+    FORMAT_TABLE,
+    FORMAT_LIST,
+    FORMAT_CSV
+};
+
 static int output_write(const WCHAR* str, int len)
 {
     DWORD count;
@@ -212,7 +219,7 @@ static int logon_id(void)
     return 0;
 }
 
-static int user(void)
+static int user(enum format format, BOOL skip_header)
 {
     PSID sid;
     WCHAR *name;
@@ -239,23 +246,47 @@ static int user(void)
         return 1;
     }
 
-    output_write(L"\nUSER INFORMATION\n----------------\n\n", -1);
-    output_write(L"User Name", -1);
-    for (i = 0; i <= max(wcslen(name), wcslen(L"User Name")) - wcslen(L"User Name"); i++)
+    if (format != FORMAT_CSV && !skip_header)
+        output_write(L"\nUSER INFORMATION\n----------------\n\n", -1);
+
+    switch(format)
+    {
+    case FORMAT_LIST:
+        output_write(L"User Name: ", -1);
+        output_write(name, -1);
+        output_write(L"\nSID:       ", -1);
+        output_write(sid_string, -1);
+        output_write(L"\n", -1);
+        break;
+    case FORMAT_CSV:
+        if (!skip_header) output_write(L"\"User Name\",\"SID\"\n", -1);
+        output_write(L"\"", -1);
+        output_write(name, -1);
+        output_write(L"\",\"", -1);
+        output_write(sid_string, -1);
+        output_write(L"\"\n", -1);
+        break;
+    case FORMAT_TABLE:
+        if (!skip_header)
+        {
+            output_write(L"User Name", -1);
+            for (i = 0; i <= max(wcslen(name), wcslen(L"User Name")) - wcslen(L"User Name"); i++)
+                output_write(L" ", 1);
+            output_write(L"SID\n", -1);
+
+            for (i = 0; i < wcslen(name); i++)
+                output_write(L"=", 1);
+            output_write(L" ", 1);
+            for (i = 0; i < wcslen(sid_string); i++)
+                output_write(L"=", 1);
+            output_write(L"\n", 1);
+        }
+
+        output_write(name, -1);
         output_write(L" ", 1);
-    output_write(L"SID\n", -1);
-
-    for (i = 0; i < wcslen(name); i++)
-        output_write(L"=", 1);
-    output_write(L" ", 1);
-    for (i = 0; i < wcslen(sid_string); i++)
-        output_write(L"=", 1);
-    output_write(L"\n", 1);
-
-    output_write(name, -1);
-    output_write(L" ", 1);
-    output_write(sid_string, -1);
-    output_write(L"\n", 1);
+        output_write(sid_string, -1);
+        output_write(L"\n", 1);
+    }
 
     free(name);
     free(sid);
@@ -266,37 +297,107 @@ static int user(void)
 
 int __cdecl wmain(int argc, WCHAR *argv[])
 {
-    if (argv[1] == NULL)
+    enum
     {
+        ARG_UNSET = 0x0,
+        ARG_UPN = 0x1,
+        ARG_FQDN = 0x2,
+        ARG_LOGONID = 0x4,
+        ARG_USER = 0x8,
+        ARG_GROUPS = 0x10,
+        ARG_CLAIMS = 0x20,
+        ARG_PRIV = 0x40,
+        ARG_FO = 0x80,
+        ARG_NH = 0x100,
+        ARG_HELP = 0x200,
+        ARG_ALL = ARG_USER | ARG_GROUPS | ARG_CLAIMS | ARG_PRIV,
+    };
+    DWORD arg = ARG_UNSET, tmp;
+    enum format format = FORMAT_TABLE;
+    int i;
 
-        return simple(NameSamCompatible);
-    }
-    else
+    for (i = 1; i < argc; i++)
     {
-        wcslwr(argv[1]);
+        if (argv[i][0] != '/' && argv[i][0] != '-')
+        {
+            ERR("invalid argument: %s\n", wine_dbgstr_w(argv[i]));
+            return 1;
+        }
 
-        if (!wcscmp(argv[1], L"/upn"))
-        {
-            /* Not implemented as of now, therefore fails */
-            return simple(NameUserPrincipal);
-        }
-        else if (!wcscmp(argv[1], L"/fqdn"))
-        {
-            /* Not implemented as of now, therefore fails */
-            return simple(NameFullyQualifiedDN);
-        }
-        else if (!wcscmp(argv[1], L"/logonid"))
-        {
-            return logon_id();
-        }
-        else if (!wcscmp(argv[1], L"/user"))
-        {
-            return user();
-        }
+        if (!wcsicmp(argv[i] + 1, L"upn")) tmp = ARG_UPN;
+        else if (!wcsicmp(argv[i] + 1, L"fqdn")) tmp = ARG_FQDN;
+        else if (!wcsicmp(argv[i] + 1, L"logonid")) tmp = ARG_LOGONID;
+        else if (!wcsicmp(argv[i] + 1, L"user")) tmp = ARG_USER;
+        else if (!wcsicmp(argv[i] + 1, L"groups")) tmp = ARG_GROUPS;
+        else if (!wcsicmp(argv[i] + 1, L"claims")) tmp = ARG_CLAIMS;
+        else if (!wcsicmp(argv[i] + 1, L"priv")) tmp = ARG_PRIV;
+        else if (!wcsicmp(argv[i] + 1, L"all")) tmp = ARG_ALL;
+        else if (!wcsicmp(argv[i] + 1, L"fo")) tmp = ARG_FO;
+        else if (!wcsicmp(argv[i] + 1, L"nh")) tmp = ARG_NH;
+        else if (!wcsicmp(argv[i] + 1, L"?")) tmp = ARG_HELP;
         else
         {
-            FIXME("stub\n");
-            return 0;
+            ERR("invalid argument: %s\n", wine_dbgstr_w(argv[i]));
+            return 1;
+        }
+
+        if (arg & tmp)
+        {
+            ERR("duplicated options not allowed\n");
+            return 1;
+        }
+        arg |= tmp;
+
+        if (tmp == ARG_FO)
+        {
+            i++;
+            if (i == argc)
+            {
+                ERR("/fo argument expected\n");
+                return 1;
+            }
+
+            if (!wcsicmp(argv[i], L"table")) format = FORMAT_TABLE;
+            else if (!wcsicmp(argv[i], L"list")) format = FORMAT_LIST;
+            else if (!wcsicmp(argv[i], L"csv")) format = FORMAT_CSV;
+            else
+            {
+                ERR("invalid format: %s\n", wine_dbgstr_w(argv[i]));
+                return 1;
+            }
         }
     }
+
+    if (format == FORMAT_LIST && (arg & ARG_NH))
+    {
+        ERR("/nh can't be used with list format\n");
+        return 1;
+    }
+
+    if (((arg & ARG_ALL) && (arg & ~(ARG_ALL | ARG_FO | ARG_NH))) ||
+        (!(arg & ARG_ALL) && (arg & (arg - 1))))
+    {
+        ERR("syntax error\n");
+        return 1;
+    }
+
+    switch(arg)
+    {
+    case ARG_UNSET:
+        return simple(NameSamCompatible);
+    case ARG_UPN:
+        /* Not implemented as of now, therefore fails */
+        return simple(NameUserPrincipal);
+    case ARG_FQDN:
+        /* Not implemented as of now, therefore fails */
+        return simple(NameFullyQualifiedDN);
+    case ARG_LOGONID:
+        return logon_id();
+    }
+
+    if ((arg & ARG_ALL) == ARG_USER)
+        return user(format, arg & ARG_NH);
+
+    FIXME("stub\n");
+    return 1;
 }

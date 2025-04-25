@@ -23,6 +23,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ui);
 
+static EventRegistrationToken dummy_cookie = {.value = 0xdeadbeef};
+
 struct uisettings
 {
     IUISettings IUISettings_iface;
@@ -357,13 +359,14 @@ static HRESULT WINAPI uisettings3_GetColorValue( IUISettings3 *iface, UIColorTyp
 static HRESULT WINAPI uisettings3_add_ColorValuesChanged( IUISettings3 *iface, ITypedEventHandler_UISettings_IInspectable *handler, EventRegistrationToken *cookie )
 {
     FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
-    return E_NOTIMPL;
+    *cookie = dummy_cookie;
+    return S_OK;
 }
 
 static HRESULT WINAPI uisettings3_remove_ColorValuesChanged( IUISettings3 *iface, EventRegistrationToken cookie )
 {
     FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static const struct IUISettings3Vtbl uisettings3_vtbl =

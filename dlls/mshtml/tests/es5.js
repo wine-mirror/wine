@@ -23,6 +23,7 @@ var JS_E_NUMBER_EXPECTED = 0x800a1389;
 var JS_E_FUNCTION_EXPECTED = 0x800a138a;
 var JS_E_DATE_EXPECTED = 0x800a138e;
 var JS_E_OBJECT_EXPECTED = 0x800a138f;
+var JS_E_UNDEFINED_VARIABLE = 0x800a1391;
 var JS_E_BOOLEAN_EXPECTED = 0x800a1392;
 var JS_E_VBARRAY_EXPECTED = 0x800a1395;
 var JS_E_ENUMERATOR_EXPECTED = 0x800a1397;
@@ -473,7 +474,18 @@ sync_test("array_sort", function() {
 });
 
 sync_test("identifier_keywords", function() {
+    function get(let, set) { { get instanceof (Object); } return let + set; }
+    { get /* asdf */: 10 }
+    let /* block label */ : {
+        break let;
+        ok(false, "did not break out of 'let' labelled block statement");
+    }
+    set: var let = get(1, 2);
+    var set = 1234;
     var o = {
+        get: get,
+        set: set,
+        let /* comment */  :  let,
         if: 1,
         default: 2,
         function: 3,
@@ -486,8 +498,8 @@ sync_test("identifier_keywords", function() {
         else: true,
         finally: true,
         for: true,
-        in: true,
-        instanceof: true,
+        set in(x) { },
+        get instanceof() { return 3; },
         new: true,
         return: true,
         switch: true,
@@ -508,6 +520,21 @@ sync_test("identifier_keywords", function() {
     ok(o.if === 1, "o.if = " + o.if);
     ok(ro().default === 2, "ro().default = " + ro().default);
     ok(o.false === true, "o.false = " + o.false);
+    ok(o.get === get, "o.get = " + o.get);
+    ok(o.set === set, "o.set = " + o.set);
+    ok(o.let === let, "o.let = " + o.let);
+    ok(o.instanceof === 3, "o.instanceof = " + o.instanceof);
+    ok(let === 3, "let = " + let);
+    ok(set === 1234, "set = " + set);
+
+    var tmp = false;
+    try {
+        eval('function var() { }');
+    }
+    catch(set) {
+        tmp = true;
+    }
+    ok(tmp === true, "Expected exception for 'function var() { }'");
 });
 
 function test_own_data_prop_desc(obj, prop, expected_writable, expected_enumerable,
@@ -2127,6 +2154,109 @@ sync_test("builtin_context", function() {
     ok(obj.length === 1, "obj.length = " + obj.length);
 });
 
+sync_test("globals override", function() {
+    wineprop = 1337;  /* global */
+    ok(window.hasOwnProperty("wineprop"), "wineprop not a prop of window");
+    ok(window.wineprop === 1337, "window.wineprop = " + window.wineprop);
+    ok(wineprop === 1337, "wineprop = " + wineprop);
+
+    var i, desc, r = Object.defineProperty(window, "wineprop", { value: 42, configurable: true });
+    ok(r === window, "defineProperty(window.wineprop) returned " + r);
+    ok(window.hasOwnProperty("wineprop"), "wineprop not a prop of window after override");
+    ok(window.wineprop === 42, "window.wineprop after override = " + window.wineprop);
+    ok(wineprop === 42, "wineprop after override = " + wineprop);
+
+    r = (delete window.wineprop);
+    ok(r === true, "delete window.wineprop returned " + r);
+    ok(!("wineprop" in window), "wineprop in window after delete");
+
+    /* configurable */
+    var builtins = [
+        "ActiveXObject",
+        "Array",
+        "ArrayBuffer",
+        "Boolean",
+        "CollectGarbage",
+        "DataView",
+        "Date",
+        "decodeURI",
+        "decodeURIComponent",
+        "encodeURI",
+        "encodeURIComponent",
+        "Enumerator",
+        "Error",
+        "escape",
+        "EvalError",
+        "Function",
+        "isFinite",
+        "isNaN",
+        "JSON",
+        "Map",
+        "Math",
+        "Number",
+        "parseFloat",
+        "parseInt",
+        "RangeError",
+        "ReferenceError",
+        "RegExp",
+        "ScriptEngine",
+        "ScriptEngineBuildVersion",
+        "ScriptEngineMajorVersion",
+        "ScriptEngineMinorVersion",
+        "Set",
+        "String",
+        "SyntaxError",
+        "TypeError",
+        "unescape",
+        "URIError",
+        "VBArray",
+        "WeakMap"
+    ];
+    for(i = 0; i < builtins.length; i++) {
+        desc = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(desc !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' returned undefined");
+        ok(desc.configurable === true, builtins[i] + " not configurable");
+        ok(desc.enumerable === false, builtins[i] + " is enumerable");
+        ok(desc.writable === true, builtins[i] + " not writable");
+
+        r = Object.defineProperty(window, builtins[i], { value: 12, configurable: true, writable: true });
+        ok(r === window, "defineProperty('" + builtins[i] + "' returned " + r);
+        r = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(r !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' after override returned undefined");
+        ok(r.value === 12, builtins[i] + " value = " + r.value);
+
+        r = eval(builtins[i]);
+        ok(r === window[builtins[i]], "Global " + builtins[i] + " does not match redefined window." + builtins[i]);
+        r = (delete window[builtins[i]]);
+        ok(r === true, "delete window." + builtins[i] + " returned " + r);
+        ok(!(builtins[i] in window), builtins[i] + " in window after delete");
+        try {
+            eval(builtins[i]);
+            ok(false, "expected exception retrieving global " + builtins[i] + " after delete.");
+        }catch(ex) {
+            r = ex.number >>> 0;
+            ok(r === JS_E_UNDEFINED_VARIABLE, "retrieving global " + builtins[i] + " after delete threw " + r);
+        }
+
+        r = Object.defineProperty(window, builtins[i], desc);
+        ok(r === window, "defineProperty('" + builtins[i] + "' to restore returned " + r);
+    }
+
+    /* non-configurable */
+    builtins = [
+        "undefined",
+        "Infinity",
+        "NaN"
+    ];
+    for(i = 0; i < builtins.length; i++) {
+        desc = Object.getOwnPropertyDescriptor(window, builtins[i]);
+        ok(desc !== undefined, "getOwnPropertyDescriptor('" + builtins[i] + "' returned undefined");
+        ok(desc.configurable === false, builtins[i] + " is configurable");
+        ok(desc.enumerable === false, builtins[i] + " is enumerable");
+        ok(desc.writable === false, builtins[i] + " is writable");
+    }
+});
+
 sync_test("host this", function() {
     var tests = [ undefined, null, external.nullDisp, function() {}, [0], "foobar", true, 42, new Number(42), external.testHostContext(true), window, document ];
     var i, obj = Object.create(Function.prototype);
@@ -2661,6 +2791,20 @@ sync_test("screen", function() {
     ok(Object.isFrozen(o) === false, "Object.isFrozen(o) = " + Object.isFrozen(o));
     ok(Object.isSealed(o) === true, "Object.isSealed(o) = " + Object.isSealed(o));
 
+    ok(!o.hasOwnProperty("width"), 'o.hasOwnProperty("width") = ' + o.hasOwnProperty("width"));
+    ok(Screen.prototype.hasOwnProperty("width"),
+       'Screen.prototype.hasOwnProperty("width") = ' + Screen.prototype.hasOwnProperty("width"));
+
+    var desc = Object.getOwnPropertyDescriptor(Screen.prototype, "width");
+    ok(!("value" in desc), "width prop: value is in desc");
+    ok(!("writable" in desc), "width prop: writable is in desc");
+    ok(desc.enumerable === true, "width prop: enumerable = " + desc.enumerable);
+    ok(desc.configurable === true, "width prop: configurable = " + desc.configurable);
+    ok(Object.getPrototypeOf(desc.get) === Function.prototype, "width prop: get not a function: " + desc.get);
+    ok("set" in desc, "width prop: set is not in desc");
+    ok(desc.set === undefined, "width prop: set not undefined: " + desc.set);
+    ok(desc.get.call(o) === o.width, "width prop: get.call() not same as o.width: " + desc.get.call(o) + ", expected " + o.width);
+
     o.prop2 = 3;
     ok(!("prop2" in o), "o.prop2 = " + o.prop2);
 
@@ -2672,7 +2816,7 @@ sync_test("screen", function() {
 });
 
 sync_test("builtin_func", function() {
-    var o = document.implementation;
+    var o = document.implementation, r;
     var f = o.hasFeature;
 
     ok(f instanceof Function, "f is not an instance of Function");
@@ -2681,15 +2825,29 @@ sync_test("builtin_func", function() {
     ok(f.length === 0, "f.length = " + f.length);
     ok(f.call(o, "test", 1) === false, 'f.call(o, "test", 1) = ' + f.call(o, "test", 1));
     ok("" + f === "\nfunction hasFeature() {\n    [native code]\n}\n", "f = " + f);
+
+    o = document.body;
+    var desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Object.getPrototypeOf(o)), "innerHTML");
+    ok(!("value" in desc), "innerHTML prop: value is in desc");
+    ok(!("writable" in desc), "innerHTML prop: writable is in desc");
+    ok(desc.enumerable === true, "innerHTML prop: enumerable = " + desc.enumerable);
+    ok(desc.configurable === true, "innerHTML prop: configurable = " + desc.configurable);
+    ok(Object.getPrototypeOf(desc.get) === Function.prototype, "innerHTML prop: get not a function: " + desc.get);
+    ok(Object.getPrototypeOf(desc.set) === Function.prototype, "innerHTML prop: set not a function: " + desc.set);
+    r = desc.set.call(o, '<div id="winetest"></div>');
+    ok(r === undefined, "innerHTML prop: setter returned " + r);
+    r = desc.get.call(o);
+    ok(r === '<div id="winetest"></div>', "innerHTML prop: getter returned " + r);
+    ok(r === o.innerHTML, "innerHTML prop: getter not same as o.innerHTML: " + r + ", expected " + o.innerHTML);
 });
 
 async_test("script_global", function() {
     // Created documents share script global, so their objects are instances of Object from
     // the current script context.
     var doc = document.implementation.createHTMLDocument("test");
-    todo_wine.
     ok(doc instanceof Object, "created doc is not an instance of Object");
     ok(doc.implementation instanceof Object, "created doc.implementation is not an instance of Object");
+    ok(doc.implementation instanceof DOMImplementation, "created doc.implementation is not an instance of DOMImplementation");
 
     document.body.innerHTML = "";
     var iframe = document.createElement("iframe");
@@ -2700,10 +2858,32 @@ async_test("script_global", function() {
         var doc = iframe.contentWindow.document;
         ok(!(doc instanceof Object), "doc is an instance of Object");
         ok(!(doc.implementation instanceof Object), "doc.implementation is an instance of Object");
+        ok(!(doc.implementation instanceof DOMImplementation), "doc.implementation is an instance of DOMImplementation");
+        ok(doc.implementation instanceof iframe.contentWindow.DOMImplementation, "doc.implementation is not an instance of iframe's DOMImplementation");
+        ok(Object.getPrototypeOf(doc) !== Object.getPrototypeOf(document), "doc's prototype same as doc prototype");
+        ok(Object.getPrototypeOf(doc) === iframe.contentWindow.HTMLDocument.prototype, "doc's prototype not iframe's HTMLDocument.prototype");
 
         doc = doc.implementation.createHTMLDocument("test");
         ok(!(doc instanceof Object), "created iframe doc is an instance of Object");
         ok(!(doc.implementation instanceof Object), "created iframe doc.implementation is an instance of Object");
+        ok(!(doc.implementation instanceof DOMImplementation), "created iframe doc.implementation is an instance of DOMImplementation");
+        ok(doc.implementation instanceof iframe.contentWindow.DOMImplementation, "created iframe doc.implementation is not an instance of iframe's DOMImplementation");
+        ok(Object.getPrototypeOf(doc) !== Object.getPrototypeOf(document), "created iframe doc's prototype same as doc prototype");
+        ok(Object.getPrototypeOf(doc) === iframe.contentWindow.HTMLDocument.prototype, "created iframe doc's prototype not iframe's HTMLDocument.prototype");
+
+        Object.defineProperty(doc, "winetest", { writable: true, enumerable: true, configurable: true, value: 42 });
+        test_own_data_prop_desc(doc, "winetest", true, true, true);
+
+        ok(Object.isFrozen(doc) === false, "created iframe doc isFrozen is not false");
+        ok(Object.isSealed(doc) === false, "created iframe doc isSealed is not false");
+        Object.freeze(doc);
+        ok(Object.isFrozen(doc) === true, "created iframe doc isFrozen is not true after freezing it");
+        ok(Object.isSealed(doc) === true, "created iframe doc isSealed is not true after freezing it");
+
+        var r = Object.prototype.toString.call(iframe.contentWindow);
+        ok(r === "[object Window]", "iframe's Window toString = " + r);
+        r = Object.prototype.toString.call(iframe.contentWindow.DOMImplementation);
+        ok(r === "[object DOMImplementation]", "iframe's DOMImplementation toString = " + r);
 
         next_test();
     });
@@ -2749,7 +2929,6 @@ sync_test("prototypes", function() {
     test_own_data_prop_desc(window, "DOMImplementation", true, false, true);
     ok(Object.getPrototypeOf(DOMImplementation) === Object.prototype,
        "Object.getPrototypeOf(DOMImplementation) = " + Object.getPrototypeOf(DOMImplementation));
-    todo_wine.
     ok(DOMImplementation == "[object DOMImplementation]", "DOMImplementation = " + DOMImplementation);
 
     var proto = constr.prototype;
@@ -2813,4 +2992,59 @@ sync_test("prototypes", function() {
     ok(document.body instanceof HTMLElement, "body is not an instance of HTMLElement");
     ok(document.body instanceof Element, "body is not an instance of Element");
     ok(document.body instanceof Node, "body is not an instance of Node");
+});
+
+sync_test("prototypes_delete", function() {
+    function check_prop(name) {
+        var orig = Object.getOwnPropertyDescriptor(Element.prototype, name);
+        ok(orig != undefined, "Could not get " + name + " descriptor");
+        var is_func = "value" in orig;
+
+        function check(obj, has_own, has_prop, has_enum, todo_enum) {
+            var r = obj.hasOwnProperty(name);
+            ok(r === has_own, obj + ".hasOwnProperty(" + name + ") returned " + r);
+            r = name in obj;
+            ok(r === has_prop, name + " in " + obj + " returned " + r);
+            r = check_enum(obj, name);
+            todo_wine_if(todo_enum).
+            ok(r === has_enum, "enumerating " + name + " in " + obj + "returned " + r);
+        }
+
+        check(document.body, false, true, true, is_func);
+        check(Element.prototype, true, true, true, is_func);
+        check(Node.prototype, false, false, false);
+
+        delete Element.prototype[name];
+        check(document.body, false, false, false);
+        check(Element.prototype, false, false, false);
+        check(Node.prototype, false, false, false);
+
+        Element.prototype[name] = -2;
+        Node.prototype[name] = -3;
+        ok(document.body[name] === -2, "document.body[" + name + "] = " + Element.prototype[name]);
+
+        check(document.body, false, true, true);
+        check(Element.prototype, true, true, true);
+        check(Node.prototype, true, true, true);
+
+        delete Element.prototype[name];
+        ok(document.body[name] === -3, "document.body[" + name + "] = " + Element.prototype[name]);
+        check(document.body, false, true, true);
+        check(Element.prototype, false, true, true);
+        check(Node.prototype, true, true, true);
+
+        delete Node.prototype[name];
+        check(document.body, false, false, false);
+        check(Element.prototype, false, false, false);
+        check(Node.prototype, false, false, false);
+
+        /* Restore the prop */
+        Object.defineProperty(Element.prototype, name, orig);
+        check(document.body, false, true, true, is_func);
+        check(Element.prototype, true, true, true, is_func);
+        check(Node.prototype, false, false, false);
+    }
+
+    check_prop("scrollLeft"); /* accessor prop */
+    check_prop("getBoundingClientRect"); /* function prop */
 });

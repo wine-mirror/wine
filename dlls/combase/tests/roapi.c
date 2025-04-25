@@ -28,6 +28,32 @@
 
 #include "wine/test.h"
 
+#define EXPECT_REF(obj,ref) _expect_ref((IUnknown*)obj, ref, __LINE__)
+static void _expect_ref(IUnknown* obj, ULONG ref, int line)
+{
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %ld, got %ld\n", ref, rc);
+}
+
+static void flush_events(void)
+{
+    int diff = 200;
+    DWORD time;
+    MSG msg;
+
+    time = GetTickCount() + diff;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+        diff = time - GetTickCount();
+    }
+}
+
 static void load_resource(const WCHAR *filename)
 {
     DWORD written;
@@ -311,6 +337,206 @@ static void test_implicit_mta(void)
     WindowsDeleteString(str);
 }
 
+struct unk_impl
+{
+    IUnknown IUnknown_iface;
+    LONG ref;
+};
+
+static inline struct unk_impl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct unk_impl, IUnknown_iface);
+}
+
+static HRESULT WINAPI unk_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI unk_no_marshal_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_INoMarshal))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI unk_AddRef(IUnknown *iface)
+{
+    struct unk_impl *impl = impl_from_IUnknown(iface);
+    return InterlockedIncrement(&impl->ref);
+}
+
+static ULONG WINAPI unk_Release(IUnknown *iface)
+{
+    struct unk_impl *impl = impl_from_IUnknown(iface);
+    return InterlockedDecrement(&impl->ref);
+}
+
+static const IUnknownVtbl unk_vtbl =
+{
+    unk_QueryInterface,
+    unk_AddRef,
+    unk_Release
+};
+
+static const IUnknownVtbl unk_no_marshal_vtbl =
+{
+    unk_no_marshal_QueryInterface,
+    unk_AddRef,
+    unk_Release
+};
+
+struct test_RoGetAgileReference_thread_param
+{
+    enum AgileReferenceOptions option;
+    RO_INIT_TYPE from_type;
+    RO_INIT_TYPE to_type;
+    IAgileReference *agile_reference;
+    IUnknown *unk_obj;
+};
+
+static DWORD CALLBACK test_RoGetAgileReference_thread_proc(void *arg)
+{
+    struct test_RoGetAgileReference_thread_param *param = (struct test_RoGetAgileReference_thread_param *)arg;
+    IUnknown *unknown;
+    HRESULT hr;
+
+    winetest_push_context("%d %d %d", param->option, param->from_type, param->to_type);
+
+    RoInitialize(param->to_type);
+
+    unknown = NULL;
+    hr = IAgileReference_Resolve(param->agile_reference, &IID_IUnknown, (void **)&unknown);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!!unknown, "Expected pointer not NULL.\n");
+    if (param->from_type == RO_INIT_MULTITHREADED && param->to_type == RO_INIT_MULTITHREADED)
+    {
+        ok(unknown == param->unk_obj, "Expected the same object.\n");
+        todo_wine_if(param->option == AGILEREFERENCE_DEFAULT)
+        EXPECT_REF(param->unk_obj, param->option == AGILEREFERENCE_DEFAULT ? 5 : 6);
+    }
+    else
+    {
+        ok(unknown != param->unk_obj, "Expected a different object pointer.\n");
+        todo_wine_if(param->option == AGILEREFERENCE_DEFAULT)
+        EXPECT_REF(param->unk_obj, param->option == AGILEREFERENCE_DEFAULT ? 4 : 5);
+        EXPECT_REF(unknown, 1);
+    }
+    IUnknown_Release(unknown);
+
+    RoUninitialize();
+    winetest_pop_context();
+    return 0;
+}
+
+static void test_RoGetAgileReference(void)
+{
+    struct test_RoGetAgileReference_thread_param param;
+    struct unk_impl unk_no_marshal_obj = {{&unk_no_marshal_vtbl}, 1};
+    struct unk_impl unk_obj = {{&unk_vtbl}, 1};
+    enum AgileReferenceOptions option;
+    IAgileReference *agile_reference;
+    RO_INIT_TYPE from_type, to_type;
+    IUnknown *unknown, *unknown2;
+    IAgileObject *agile_object;
+    HANDLE thread;
+    HRESULT hr;
+    DWORD ret;
+
+    for (option = AGILEREFERENCE_DEFAULT; option <= AGILEREFERENCE_DELAYEDMARSHAL; option++)
+    {
+        for (from_type = RO_INIT_SINGLETHREADED; from_type <= RO_INIT_MULTITHREADED; from_type++)
+        {
+            winetest_push_context("%d %d", option, from_type);
+
+            hr = RoGetAgileReference(option, &IID_IUnknown, &unk_obj.IUnknown_iface, &agile_reference);
+            ok(hr == CO_E_NOTINITIALIZED, "Got unexpected hr %#lx.\n", hr);
+
+            RoInitialize(from_type);
+
+            agile_reference = NULL;
+            EXPECT_REF(&unk_obj, 1);
+
+            /* Invalid option */
+            hr = RoGetAgileReference(AGILEREFERENCE_DELAYEDMARSHAL + 1, &IID_IUnknown, &unk_obj.IUnknown_iface, &agile_reference);
+            ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+            /* Non-existent interface for the object */
+            hr = RoGetAgileReference(option, &IID_IActivationFactory, &unk_obj.IUnknown_iface, &agile_reference);
+            ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
+
+            /* Objects that implements INoMarshal */
+            hr = RoGetAgileReference(option, &IID_IUnknown, &unk_no_marshal_obj.IUnknown_iface, &agile_reference);
+            ok(hr == CO_E_NOT_SUPPORTED, "Got unexpected hr %#lx.\n", hr);
+
+            /* Create agile reference object */
+            hr = RoGetAgileReference(option, &IID_IUnknown, &unk_obj.IUnknown_iface, &agile_reference);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!!agile_reference, "Got unexpected agile_reference.\n");
+            todo_wine_if(option == AGILEREFERENCE_DEFAULT)
+            EXPECT_REF(&unk_obj, 2);
+
+            /* Check the created agile reference object has IAgileObject */
+            hr = IAgileReference_QueryInterface(agile_reference, &IID_IAgileObject, (void **)&agile_object);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            IAgileObject_Release(agile_object);
+
+            /* Resolve once */
+            unknown = NULL;
+            hr = IAgileReference_Resolve(agile_reference, &IID_IUnknown, (void **)&unknown);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!!unknown, "Expected pointer not NULL.\n");
+            ok(unknown == &unk_obj.IUnknown_iface, "Expected the same object.\n");
+            todo_wine
+            EXPECT_REF(&unk_obj, 3);
+
+            /* Resolve twice */
+            unknown2 = NULL;
+            hr = IAgileReference_Resolve(agile_reference, &IID_IUnknown, (void **)&unknown2);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(!!unknown2, "Expected pointer not NULL.\n");
+            ok(unknown2 == &unk_obj.IUnknown_iface, "Expected the same object.\n");
+            todo_wine
+            EXPECT_REF(&unk_obj, 4);
+
+            /* Resolve in another apartment */
+            for (to_type = RO_INIT_SINGLETHREADED; to_type <= RO_INIT_MULTITHREADED; to_type++)
+            {
+                param.option = option;
+                param.from_type = from_type;
+                param.to_type = to_type;
+                param.agile_reference = agile_reference;
+                param.unk_obj = &unk_obj.IUnknown_iface;
+                thread = CreateThread(NULL, 0, test_RoGetAgileReference_thread_proc, &param, 0, NULL);
+                flush_events();
+                ret = WaitForSingleObject(thread, 100);
+                ok(!ret, "WaitForSingleObject failed, error %ld.\n", GetLastError());
+            }
+
+            IUnknown_Release(unknown2);
+            IUnknown_Release(unknown);
+            IAgileReference_Release(agile_reference);
+            EXPECT_REF(&unk_obj, 1);
+
+            RoUninitialize();
+            winetest_pop_context();
+        }
+    }
+}
+
 START_TEST(roapi)
 {
     BOOL ret;
@@ -319,6 +545,7 @@ START_TEST(roapi)
 
     test_implicit_mta();
     test_ActivationFactories();
+    test_RoGetAgileReference();
 
     SetLastError(0xdeadbeef);
     ret = DeleteFileW(L"wine.combase.test.dll");

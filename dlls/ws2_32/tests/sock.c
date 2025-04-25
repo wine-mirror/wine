@@ -32,6 +32,10 @@
 #include <wsnwlink.h>
 #include <mswsock.h>
 #include <mstcpip.h>
+#include <bthsdpdef.h>
+#include <bluetoothapis.h>
+#include <bthdef.h>
+#include <ws2bth.h>
 #include <stdio.h>
 #include "wine/test.h"
 
@@ -3187,6 +3191,7 @@ static void test_UDP(void)
     struct sock_info peer[NUM_UDP_PEERS];
     char buf[16], sockaddr_buf[1024];
     int ss, i, n_recv, n_sent, ret;
+    struct sockaddr_in6 addr6;
     struct sockaddr_in addr;
     int sock;
     struct send_udp_thread_param udp_thread_param;
@@ -3298,6 +3303,26 @@ static void test_UDP(void)
     CloseHandle( udp_thread_param.start_event );
 
     closesocket(sock);
+
+    /* Test sending to port 0. */
+    sock = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP );
+    ok( sock != INVALID_SOCKET, "got error %u.\n", WSAGetLastError() );
+    memset( &addr, 0, sizeof(addr) );
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+    ret = sendto( sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr, sizeof(addr) );
+    ok( ret == sizeof(buf), "got ret %d, error %u.\n", ret, WSAGetLastError() );
+    closesocket(sock);
+
+    sock = socket( AF_INET6, SOCK_DGRAM, 0 );
+    ok( sock != INVALID_SOCKET, "got error %u.\n", WSAGetLastError() );
+    memset( &addr6, 0, sizeof(addr6) );
+    addr6.sin6_family = AF_INET6;
+    ret = inet_pton( AF_INET6, "::1", &addr6.sin6_addr );
+    ok( ret, "got error %u.\n", WSAGetLastError() );
+    ret = sendto( sock, buf, sizeof(buf), 0, (struct sockaddr *)&addr6, sizeof(addr6) );
+    ok( ret == sizeof(buf), "got ret %d, error %u.\n", ret, WSAGetLastError() );
+    closesocket(sock);
 }
 
 static void test_WSASocket(void)
@@ -3358,8 +3383,7 @@ static void test_WSASocket(void)
     {
         SetLastError( 0xdeadbeef );
         sock = WSASocketA( tests[i].family, tests[i].type, tests[i].protocol, NULL, 0, 0 );
-        todo_wine_if (i == 7)
-            ok(WSAGetLastError() == tests[i].error, "Test %u: got wrong error %u\n", i, WSAGetLastError());
+        ok(WSAGetLastError() == tests[i].error, "Test %u: got wrong error %u\n", i, WSAGetLastError());
         if (tests[i].error)
         {
             ok(sock == INVALID_SOCKET, "Test %u: expected failure\n", i);
@@ -3691,6 +3715,51 @@ static void test_WSASocket(void)
           closesocket(sock);
         }
     }
+
+    /* Bluetooth RFCOMM socket tests */
+    SetLastError(0xdeadbeef);
+    sock = WSASocketA(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM, NULL, 0, 0);
+    if (sock == INVALID_SOCKET)
+    {
+        err = WSAGetLastError();
+        ok(err == WSAEAFNOSUPPORT || err == WSAEPROTONOSUPPORT, "got error %d\n", err);
+        skip("Bluetooth is not supported\n");
+    }
+    else
+    {
+        WSAPROTOCOL_INFOA info;
+        closesocket(sock);
+
+        sock = WSASocketA(0, SOCK_STREAM, BTHPROTO_RFCOMM, NULL, 0, 0 );
+        ok(sock != INVALID_SOCKET, "Failed to create socket: %d\n", WSAGetLastError());
+
+        size = sizeof(socktype);
+        socktype = 0xdead;
+        err = getsockopt(sock, SOL_SOCKET, SO_TYPE, (char *) &socktype, &size);
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(socktype == SOCK_STREAM, "Wrong socket type, expected %d received %d\n",
+           SOCK_STREAM, socktype);
+
+        size = sizeof(WSAPROTOCOL_INFOA);
+        err = getsockopt(sock, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *) &info, &size);
+        ok(!err,"getsockopt failed with %d\n", WSAGetLastError());
+        ok(info.iProtocol == BTHPROTO_RFCOMM, "expected protocol %d, received %d\n",
+           BTHPROTO_RFCOMM, info.iProtocol);
+        ok(info.iAddressFamily == AF_BTH, "expected family %d, received %d\n",
+           AF_IPX, info.iProtocol);
+        ok(info.iSocketType == SOCK_STREAM, "expected type %d, received %d\n",
+           SOCK_DGRAM, info.iSocketType);
+        closesocket(sock);
+
+        /* SOCK_DGRAM is not supported by Bluetooth */
+        SetLastError(0xdeadbeef);
+        ok(WSASocketA(AF_BTH, SOCK_DGRAM, BTHPROTO_RFCOMM, NULL, 0, 0) == INVALID_SOCKET,
+           "WSASocketA should have failed\n");
+        err = WSAGetLastError();
+        ok(err == WSAEAFNOSUPPORT, "Expected 10047, received %d\n", err);
+
+        closesocket(sock);
+    }
 }
 
 static void test_WSADuplicateSocket(void)
@@ -3991,8 +4060,11 @@ static void test_WSAConnectByName(void)
     ret = WSAConnectByNameA(s, "winehq.org", "https", NULL, NULL, NULL, NULL, NULL, NULL);
     err = WSAGetLastError();
     ok(!ret, "WSAConnectByNameA should have failed\n");
-    ok(err == WSAEINVAL || err == WSAEFAULT, "expected error %u (WSAEINVAL) or %u (WSAEFAULT), got %u\n",
-       WSAEINVAL, WSAEFAULT, err); /* WSAEFAULT win10 >= 1809 */
+    ok(err == WSAEINVAL ||
+       err == WSAEFAULT ||   /* win10 >= 1809 */
+       err == WSAEOPNOTSUPP, /* win7, win8, win10 <= 1507 */
+       "expected error %u (WSAEINVAL) or %u (WSAEFAULT) or %u (WSAEOPNOTSUPP), got %u\n",
+       WSAEINVAL, WSAEFAULT, WSAEOPNOTSUPP, err);
     closesocket(s);
 
     /* Passing non-null as the reserved parameter */
@@ -6862,9 +6934,9 @@ static void test_write_events(struct event_test_ctx *ctx)
 
     if (!broken(1))
     {
-        /* Windows will never send less than buffer_size bytes here, but Linux
-         * may do a short write. */
-        while ((ret = send(server, buffer, buffer_size, 0)) > 0);
+        /* Windows will never send less than buffer_size bytes here. */
+        while ((ret = send(server, buffer, buffer_size, 0)) > 0)
+            ok(ret == buffer_size, "got %d.\n", ret);
         ok(ret == -1, "got %d\n", ret);
         ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
@@ -12735,6 +12807,45 @@ static void test_bind(void)
     free(adapters);
 }
 
+static void test_bind_bluetooth(void)
+{
+    SOCKADDR_BTH addr = {0};
+    SOCKET sock, sock2;
+    INT err, ret;
+
+    sock = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+    err = WSAGetLastError();
+    if (sock == INVALID_SOCKET)
+    {
+        ok(err == WSAEAFNOSUPPORT || err == WSAEPROTONOSUPPORT, "got error %d\n", err);
+        skip("Bluetooth is not supported\n");
+        return;
+    }
+
+    addr.addressFamily = AF_BTH;
+    addr.btAddr = 0;
+    addr.port = 200;
+    ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    ok(ret == -1, "expected bind to fail\n");
+    ok(err == WSAEADDRNOTAVAIL || err == WSAENETDOWN, "got error %d\n", err);
+
+    addr.port = 20;
+    ret = bind(sock, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+
+    sock2 = socket(AF_BTH, SOCK_STREAM, BTHPROTO_RFCOMM);
+    ok(sock2 != INVALID_SOCKET, "got error %d\n", WSAGetLastError());
+    addr.port = BT_PORT_ANY;
+    ret = bind(sock2, (struct sockaddr *)&addr, sizeof(addr));
+    err = WSAGetLastError();
+    ok(!ret || err == WSAENETDOWN, "got error %d\n", err);
+
+    closesocket(sock);
+    closesocket(sock2);
+}
+
 /* Test calling methods on a socket which is currently connecting. */
 static void test_connecting_socket(void)
 {
@@ -14242,6 +14353,163 @@ static void test_broadcast(void)
     closesocket(s);
 }
 
+struct test_send_buffering_data
+{
+    int buffer_size;
+    int sent_size;
+    SOCKET server;
+    char *buffer;
+};
+
+static DWORD WINAPI test_send_buffering_thread(void *arg)
+{
+    struct test_send_buffering_data *d = arg;
+    int ret;
+
+    d->sent_size = 0;
+    while ((ret = send(d->server, d->buffer, d->buffer_size, 0)) > 0)
+    {
+        ok(ret == d->buffer_size, "got %d.\n", ret);
+        d->sent_size += ret;
+    }
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u.\n", WSAGetLastError());
+    ok(d->sent_size, "got 0.\n");
+    ret = CancelIoEx((HANDLE)d->server, NULL);
+    ok(!ret && GetLastError() == ERROR_NOT_FOUND, "got ret %d, error %lu.\n", ret, GetLastError());
+    ret = CancelIo((HANDLE)d->server);
+    ok(ret, "got error %lu.\n", GetLastError());
+    shutdown(d->server, SD_BOTH);
+    closesocket(d->server);
+    return 0;
+}
+
+static void test_send_buffering(void)
+{
+    static const char test_data[] = "abcdefg01234567";
+
+    struct test_send_buffering_data d;
+    int ret, recv_size, i;
+    SOCKET client;
+    HANDLE thread;
+
+    d.buffer_size = 1024 * 1024 * 50;
+    d.buffer = malloc(d.buffer_size);
+
+    for (i = 0; i < d.buffer_size; ++i)
+        d.buffer[i] = test_data[i % sizeof(test_data)];
+
+    tcp_socketpair(&client, &d.server);
+    set_blocking(client, FALSE);
+    set_blocking(d.server, FALSE);
+
+    d.sent_size = 0;
+    while ((ret = send(d.server, d.buffer, d.buffer_size, 0)) > 0)
+    {
+        ok(ret == d.buffer_size, "got %d.\n", ret);
+        d.sent_size += ret;
+    }
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u.\n", WSAGetLastError());
+    ok(d.sent_size, "got 0.\n");
+    closesocket(d.server);
+
+    recv_size = 0;
+    while ((ret = recv(client, d.buffer, d.buffer_size, 0)) > 0 || WSAGetLastError() == WSAEWOULDBLOCK)
+    {
+        if (ret < 0)
+            continue;
+        for (i = 0; i < ret; ++i)
+        {
+            if (d.buffer[i] != test_data[(recv_size + i) % sizeof(test_data)])
+                break;
+        }
+        ok(i == ret, "data mismatch.\n");
+        recv_size += ret;
+        ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
+    }
+    ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
+    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    closesocket(client);
+
+    /* Test with the other thread which terminates before the data is actually sent. */
+    for (i = 0; i < d.buffer_size; ++i)
+        d.buffer[i] = test_data[i % sizeof(test_data)];
+
+    tcp_socketpair(&client, &d.server);
+    set_blocking(client, FALSE);
+    set_blocking(d.server, FALSE);
+
+    thread = CreateThread(NULL, 0, test_send_buffering_thread, &d, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+
+    recv_size = 0;
+    while ((ret = recv(client, d.buffer, d.buffer_size, 0)) > 0 || WSAGetLastError() == WSAEWOULDBLOCK)
+    {
+        if (ret < 0)
+            continue;
+        for (i = 0; i < ret; ++i)
+        {
+            if (d.buffer[i] != test_data[(recv_size + i) % sizeof(test_data)])
+                break;
+        }
+        ok(i == ret, "data mismatch.\n");
+        recv_size += ret;
+        ok(recv_size <= d.sent_size, "got ret %d, recv_size %d, sent_size %d.\n", ret, recv_size, d.sent_size);
+    }
+    ok(!ret && !WSAGetLastError(), "got ret %d, error %u.\n", ret, WSAGetLastError());
+    ok(recv_size == d.sent_size, "got %d, expected %d.\n", recv_size, d.sent_size);
+    closesocket(client);
+}
+
+static void test_valid_handle(void)
+{
+    HANDLE duplicated, invalid;
+    SOCKET client, server;
+    char buffer[1];
+    WSABUF wsabuf;
+    DWORD size;
+    int ret;
+
+    /* Unlike WSAGetOverlappedResult(), duplicated handles are allowed. */
+
+    tcp_socketpair(&client, &server);
+    ret = DuplicateHandle(GetCurrentProcess(), (HANDLE)client,
+            GetCurrentProcess(), &duplicated, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "got error %lu\n", GetLastError());
+    invalid = CreateEventA(NULL, TRUE, TRUE, NULL);
+
+    ret = send((SOCKET)duplicated, buffer, 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = sendto((SOCKET)duplicated, buffer, 1, 0, NULL, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    wsabuf.buf = buffer;
+    wsabuf.len = 1;
+
+    ret = WSASend((SOCKET)duplicated, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAEFAULT, "got error %u\n", WSAGetLastError());
+
+    ret = WSASend((SOCKET)duplicated, &wsabuf, 1, &size, 0, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = WSASend((SOCKET)invalid, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got error %u\n", WSAGetLastError());
+
+    ret = WSASend(INVALID_SOCKET, &wsabuf, 1, NULL, 0, NULL, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got error %u\n", WSAGetLastError());
+
+    CloseHandle(invalid);
+    CloseHandle(duplicated);
+    closesocket(client);
+    closesocket(server);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -14314,6 +14582,7 @@ START_TEST( sock )
     test_connect_completion_port();
     test_shutdown_completion_port();
     test_bind();
+    test_bind_bluetooth();
     test_connecting_socket();
     test_WSAGetOverlappedResult();
     test_nonblocking_async_recv();
@@ -14325,6 +14594,8 @@ START_TEST( sock )
     test_connect_udp();
     test_tcp_sendto_recvfrom();
     test_broadcast();
+    test_send_buffering();
+    test_valid_handle();
 
     /* There is apparently an obscure interaction between this test and
      * test_WSAGetOverlappedResult().

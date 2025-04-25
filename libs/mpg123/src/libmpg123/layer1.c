@@ -217,7 +217,7 @@ int INT123_do_layer1(mpg123_handle *fr)
 	real (*fraction)[SBLIMIT] = fr->layer1.fraction; /* fraction[2][SBLIMIT] */
 	int single = fr->single;
 
-	fr->jsbound = (fr->mode == MPG_MD_JOINT_STEREO) ? (fr->mode_ext<<2)+4 : 32;
+	fr->jsbound = (fr->hdr.mode == MPG_MD_JOINT_STEREO) ? (fr->hdr.mode_ext<<2)+4 : 32;
 
 	if(stereo == 1 || single == SINGLE_MIX) /* I don't see mixing handled here */
 	single = SINGLE_LEFT;

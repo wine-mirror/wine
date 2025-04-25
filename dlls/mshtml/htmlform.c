@@ -519,7 +519,7 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 
     if(This->element.node.doc) {
         HTMLDocumentNode *doc = This->element.node.doc;
-        if(doc->window && doc->window->base.outer_window)
+        if(doc->window && !is_detached_window(doc->window))
             this_window = doc->window->base.outer_window;
     }
     if(!this_window) {
@@ -903,14 +903,13 @@ static const event_target_vtbl_t HTMLFormElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLFormElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLFormElement_tid,
     0
 };
 
 dispex_static_data_t HTMLFormElement_dispex = {
-    .id           = PROT_HTMLFormElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLFormElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLFormElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLFormElement_tid,
     .iface_tids   = HTMLFormElement_iface_tids,

@@ -884,10 +884,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 #define PIA page->ImageableArea
 	    if(!PIA) {
  	        PIA = HeapAlloc( PSDRV_Heap, 0, sizeof(*PIA) );
-                push_lc_numeric("C");
-		sscanf(tuple.value, "%f%f%f%f", &PIA->llx, &PIA->lly,
-						&PIA->urx, &PIA->ury);
-                pop_lc_numeric();
+                _sscanf_l(tuple.value, "%f%f%f%f", c_locale, &PIA->llx, &PIA->lly, &PIA->urx, &PIA->ury);
 	    }
 #undef PIA
 	}
@@ -908,9 +905,7 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 #define PD page->PaperDimension
 	    if(!PD) {
  	        PD = HeapAlloc( PSDRV_Heap, 0, sizeof(*PD) );
-                push_lc_numeric("C");
-		sscanf(tuple.value, "%f%f", &PD->x, &PD->y);
-                pop_lc_numeric();
+                _sscanf_l(tuple.value, "%f%f", c_locale, &PD->x, &PD->y);
 	    }
 #undef PD
 	}

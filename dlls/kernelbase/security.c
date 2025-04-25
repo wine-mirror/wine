@@ -148,11 +148,7 @@ static NTSTATUS open_file( LPCWSTR name, DWORD access, HANDLE *file )
     NTSTATUS status;
 
     if ((status = RtlDosPathNameToNtPathName_U_WithStatus( name, &file_nameW, NULL, NULL ))) return status;
-    attr.Length = sizeof(attr);
-    attr.RootDirectory = 0;
-    attr.Attributes = OBJ_CASE_INSENSITIVE;
-    attr.ObjectName = &file_nameW;
-    attr.SecurityDescriptor = NULL;
+    InitializeObjectAttributes( &attr, &file_nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
     status = NtCreateFile( file, access|SYNCHRONIZE, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
                            FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
                            FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
@@ -704,8 +700,8 @@ BOOL WINAPI DuplicateTokenEx( HANDLE token, DWORD access, LPSECURITY_ATTRIBUTES 
 BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
                                  LPVOID info, DWORD len, LPDWORD retlen )
 {
-    TRACE("(%p, %s, %p, %ld, %p):\n",
-          token,
+    TRACE("(%p, %d [%s], %p, %ld, %p):\n",
+          token, class,
           (class == TokenUser) ? "TokenUser" :
           (class == TokenGroups) ? "TokenGroups" :
           (class == TokenPrivileges) ? "TokenPrivileges" :
@@ -721,6 +717,9 @@ BOOL WINAPI GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS class,
           (class == TokenGroupsAndPrivileges) ? "TokenGroupsAndPrivileges" :
           (class == TokenSessionReference) ? "TokenSessionReference" :
           (class == TokenSandBoxInert) ? "TokenSandBoxInert" :
+          (class == TokenElevation) ? "TokenElevation" :
+          (class == TokenElevationType) ? "TokenElevationType" :
+          (class == TokenLinkedToken) ? "TokenLinkedToken" :
           "Unknown",
           info, len, retlen);
 
@@ -1512,4 +1511,50 @@ BOOL WINAPI SetCachedSigningLevel( PHANDLE source, ULONG count, ULONG flags, HAN
 {
     FIXME( "%p %lu %lu %p - stub\n", source, count, flags, file );
     return TRUE;
+}
+
+/******************************************************************************
+ * DeriveCapabilitySidsFromName    (kernelbase.@)
+ */
+BOOL WINAPI DeriveCapabilitySidsFromName( const WCHAR *cap_name, PSID **cap_group_sids, DWORD *cap_group_sid_count,
+                                          PSID **cap_sids, DWORD *cap_sid_count )
+{
+    NTSTATUS status = STATUS_NO_MEMORY;
+    UNICODE_STRING name_us;
+    DWORD size;
+
+    TRACE( "cap_name %s, cap_group_sids %p, cap_group_sid_count %p, cap_sids %p, cap_sid_count %p.\n",
+           debugstr_w(cap_name), cap_group_sids, cap_group_sid_count, cap_sids, cap_sid_count );
+
+    *cap_group_sid_count = 1;
+    *cap_sid_count = 1;
+    *cap_group_sids = NULL;
+    *cap_sids = NULL;
+
+    if (!(*cap_group_sids = RtlAllocateHeap( GetProcessHeap(), 0, *cap_group_sid_count * sizeof(**cap_group_sids) )))
+        goto done;
+    if (!(*cap_sids = RtlAllocateHeap( GetProcessHeap(), 0, *cap_sid_count * sizeof(**cap_sids) )))
+        goto done;
+
+    /* There is no obvious way to query returned subauthority count for RtlDeriveCapabilitySidsFromName,
+     * so let's reserve a bit more. */
+    size = RtlLengthRequiredSid( 16 );
+    if (!(**cap_group_sids = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto done;
+    if (!(**cap_sids = RtlAllocateHeap( GetProcessHeap(), 0, size ))) goto done;
+    RtlInitUnicodeString( &name_us, cap_name );
+    status = RtlDeriveCapabilitySidsFromName( &name_us, **cap_group_sids, **cap_sids );
+
+done:
+    if (!status) return TRUE;
+    if (*cap_group_sids)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, **cap_group_sids );
+        RtlFreeHeap( GetProcessHeap(), 0, *cap_group_sids );
+    }
+    if (*cap_sids)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, **cap_sids );
+        RtlFreeHeap( GetProcessHeap(), 0, *cap_sids );
+    }
+    return set_ntstatus( status );
 }

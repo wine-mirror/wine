@@ -322,7 +322,6 @@ ULONG PerfDataGetProcessorSystemUsage(void)
 
 BOOL PerfDataGetImageName(ULONG Index, LPWSTR lpImageName, int nMaxCount)
 {
-    static const WCHAR proc32W[] = {' ','*','3','2',0};
     BOOL    bSuccessful;
 
     EnterCriticalSection(&PerfDataCriticalSection);
@@ -330,8 +329,8 @@ BOOL PerfDataGetImageName(ULONG Index, LPWSTR lpImageName, int nMaxCount)
     if (Index < ProcessCount) {
         lstrcpynW(lpImageName, pPerfData[Index].ImageName, nMaxCount);
         if (pPerfData[Index].Wow64Process &&
-            nMaxCount - lstrlenW(lpImageName) > 4 /* =lstrlenW(proc32W) */)
-            lstrcatW(lpImageName, proc32W);
+            nMaxCount - lstrlenW(lpImageName) > 4 /* =lstrlenW(L" *32") */)
+            lstrcatW(lpImageName, L" *32");
         bSuccessful = TRUE;
     } else {
         bSuccessful = FALSE;

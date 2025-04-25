@@ -34,6 +34,7 @@
 #include "dbt.h"
 #include "unknwn.h"
 #include "winstring.h"
+#include "cfgmgr32.h"
 
 #include "wine/hid.h"
 
@@ -229,6 +230,7 @@ done:
 
 static int device_change_count;
 static int device_change_expect;
+static int device_change_expect_custom;
 static HWND device_change_hwnd;
 static BOOL device_change_all;
 
@@ -244,6 +246,42 @@ static BOOL all_lower( const WCHAR *str, const WCHAR *end )
     return TRUE;
 }
 
+static const union device_change_event
+{
+    struct
+    {
+        USHORT Version;
+        USHORT Size;
+        GUID Event;
+        FILE_OBJECT *FileObject;
+        LONG NameBufferOffset;
+        UCHAR CustomDataBuffer[256];
+    };
+    TARGET_DEVICE_CUSTOM_NOTIFICATION notif;
+} device_change_events[] =
+{
+    {.Version = 1, .Size = sizeof(TARGET_DEVICE_CUSTOM_NOTIFICATION),
+     .Event = {0x00000001,0xdead,0xbeef}, .NameBufferOffset = -1},
+    {.Version = 1, .Size = offsetof(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof(GUID)]),
+     .Event = {0x00000002,0xdead,0xbeef}, .NameBufferOffset = -1,
+     .CustomDataBuffer = {0x00,0x00,0x00,0x03,0xad,0xde,0xef,0xbe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}},
+    {.Version = 1, .Size = offsetof(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[23 * sizeof(WCHAR)]),
+     .Event = {0x00000003,0xdead,0xbeef}, .NameBufferOffset = 0,
+     .CustomDataBuffer = {'W',0,'i',0,'n',0,'e',0,' ',0,'i',0,'s',0,' ',0,'n',0,'o',0,'t',0,' ',0,
+                          'a',0,'n',0,' ',0,'e',0,'m',0,'u',0,'l',0,'a',0,'t',0,'o',0,'r',0}},
+    {.Version = 1, .Size = offsetof(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[sizeof(GUID) + 23 * sizeof(WCHAR)]),
+     .Event = {0x00000004,0xdead,0xbeef}, .NameBufferOffset = sizeof(GUID),
+     .CustomDataBuffer = {0x00,0x00,0x00,0x03,0xad,0xde,0xef,0xbe,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+                          'W',0,'i',0,'n',0,'e',0,' ',0,'i',0,'s',0,' ',0,'n',0,'o',0,'t',0,' ',0,
+                          'a',0,'n',0,' ',0,'e',0,'m',0,'u',0,'l',0,'a',0,'t',0,'o',0,'r',0}},
+    /* DBT_DEVICEREMOVECOMPLETE event that is sent when device is removed */
+    {.Version = 1, .Size = offsetof(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[0]), .NameBufferOffset = -1},
+};
+static const union device_change_event *device_change_expect_event;
+static HANDLE device_change_expect_handle;
+static HDEVNOTIFY handle_devnotify;
+static HCMNOTIFICATION handle_cmnotify;
+
 static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (msg == WM_DEVICECHANGE)
@@ -252,6 +290,41 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
         DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)lparam;
         const WCHAR *upper_end, *name_end, *expect_prefix;
         GUID expect_guid;
+
+        if (device_change_expect_custom)
+        {
+            todo_wine_if( device_change_expect_custom == 1 )
+            ok( header->dbch_devicetype == DBT_DEVTYP_HANDLE ||
+                broken( device_change_expect_custom == 1 && header->dbch_devicetype == DBT_DEVTYP_DEVICEINTERFACE ), /* w8 32bit */
+                "got type %#lx\n", header->dbch_devicetype);
+            ok( wparam == (device_change_expect_custom > 1 ? DBT_CUSTOMEVENT : DBT_DEVICEREMOVECOMPLETE),
+                "got wparam %#Ix\n", wparam );
+        }
+        if (header->dbch_devicetype == DBT_DEVTYP_HANDLE)
+        {
+            DEV_BROADCAST_HANDLE *handle = (DEV_BROADCAST_HANDLE *)header;
+            UINT size = handle->dbch_size - offsetof(DEV_BROADCAST_HANDLE, dbch_data);
+
+            winetest_push_context( "%Id", device_change_expect_event - device_change_events );
+            ok( !!device_change_expect_event, "unexpected event\n" );
+            ok( device_change_expect_event->Size - offsetof(TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[0]) ==
+                handle->dbch_size - 2 * sizeof(WCHAR) - offsetof(DEV_BROADCAST_HANDLE, dbch_data[0]),
+                "got dbch_size %#lx\n", handle->dbch_size );
+            ok( !handle->dbch_reserved, "got dbch_reserved %lu\n", handle->dbch_reserved );
+            ok( handle->dbch_handle == device_change_expect_handle, "got dbch_handle %p\n", handle->dbch_handle );
+            ok( handle->dbch_hdevnotify == handle_devnotify, "got dbch_hdevnotify %p\n", handle->dbch_hdevnotify );
+            ok( IsEqualGUID( &handle->dbch_eventguid, &device_change_expect_event->Event ),
+                "got dbch_eventguid %s\n", debugstr_guid(&handle->dbch_eventguid) );
+            ok( handle->dbch_nameoffset == device_change_expect_event->NameBufferOffset,
+                "got dbch_nameoffset %ld\n", handle->dbch_nameoffset );
+            ok( !memcmp( handle->dbch_data, device_change_expect_event->CustomDataBuffer, size ),
+                "got unexpected dbch_data\n" );
+            winetest_pop_context();
+
+            device_change_expect_custom--;
+            device_change_expect_event++;
+            return DefWindowProcW( hwnd, msg, wparam, lparam );
+        }
 
         if (device_change_all && (device_change_count == 0 || device_change_count == 3))
         {
@@ -294,6 +367,122 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
+struct cm_notify_callback_data
+{
+    HCMNOTIFICATION hnotify;
+    DWORD device_change_expect;
+    DWORD device_change_expect_custom;
+    BOOL device_change_all;
+
+    DWORD device_change_count;
+    HANDLE device_change_sem;
+
+    BOOL received_deviceremovalcomplete;
+};
+
+static CALLBACK DWORD cm_notify_callback( HCMNOTIFICATION hnotify, void *ctx, CM_NOTIFY_ACTION action,
+                                          CM_NOTIFY_EVENT_DATA *data, DWORD size )
+{
+    struct cm_notify_callback_data *cb_data = ctx;
+
+    switch (action)
+    {
+    case CM_NOTIFY_ACTION_DEVICECUSTOMEVENT:
+    {
+        const union device_change_event *event;
+        SIZE_T idx;
+
+        ok( hnotify == handle_cmnotify, "%p != %p\n", hnotify, handle_cmnotify );
+        ok( !!cb_data->device_change_expect_custom, "unexpected event\n" );
+        idx = (ARRAY_SIZE(device_change_events) + 1) - cb_data->device_change_expect_custom;
+        event = &device_change_events[idx];
+
+        winetest_push_context( "%Id", idx );
+        ok( size == offsetof( CM_NOTIFY_EVENT_DATA, u.DeviceHandle.Data[data->u.DeviceHandle.DataSize] ),
+            "got %#lx\n", size );
+        ok( IsEqualGUID( &data->u.DeviceHandle.EventGuid, &event->Event ), "got DeviceHandle.EventGuid %s\n",
+            debugstr_guid( &data->u.DeviceHandle.EventGuid ) );
+        ok( data->u.DeviceHandle.NameOffset == event->NameBufferOffset, "got DeviceHandle.NameOffset %ld\n",
+            data->u.DeviceHandle.NameOffset );
+        ok( data->u.DeviceHandle.DataSize == event->Size - offsetof( TARGET_DEVICE_CUSTOM_NOTIFICATION, CustomDataBuffer[0] ),
+            "got DeviceHandle.DataSize %ld\n", data->u.DeviceHandle.DataSize );
+        ok( !memcmp( data->u.DeviceHandle.Data, event->CustomDataBuffer, data->u.DeviceHandle.DataSize ),
+            "Unexpected DeviceHandle.Data\n" );
+        winetest_pop_context();
+
+        cb_data->device_change_expect_custom--;
+        cb_data->device_change_count++;
+        ReleaseSemaphore( cb_data->device_change_sem, 1, NULL );
+        break;
+    }
+    case CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE:
+        ok( size == sizeof(*data), "got %#lx\n", size );
+        ok( cb_data->device_change_expect_custom, "Unexpected CM_NOTIFY_ACTION_DEVICEREMOVECOMPLETE\n" );
+        cb_data->received_deviceremovalcomplete = TRUE;
+        cb_data->device_change_count++;
+        ReleaseSemaphore( cb_data->device_change_sem, 1, NULL );
+        break;
+    case CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL:
+    case CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL:
+    {
+        const WCHAR *expect_prefix, *name = data->u.DeviceInterface.SymbolicLink, *upper_end, *name_end;
+        GUID expect_guid;
+
+        ok( hnotify == cb_data->hnotify, "%p != %p\n", hnotify, cb_data->hnotify );
+        ok( size == offsetof( CM_NOTIFY_EVENT_DATA, u.DeviceInterface.SymbolicLink[wcslen( name ) + 1] ), "got %#lx\n", size );
+        if (cb_data->device_change_all && (!cb_data->device_change_count || cb_data->device_change_count == 3))
+        {
+            expect_guid = control_class;
+            expect_prefix = L"\\\\?\\WINETEST#";
+        }
+        else
+        {
+            expect_guid = GUID_DEVINTERFACE_HID;
+            expect_prefix = L"\\\\?\\HID#";
+        }
+
+        winetest_push_context( "%lu", cb_data->device_change_count );
+        ok( IsEqualGUID( &data->u.DeviceInterface.ClassGuid, &expect_guid ), "got u.DeviceInterface.ClassGuid %s\n",
+            debugstr_guid( &data->u.DeviceInterface.ClassGuid ) );
+        ok( !wcsncmp( name, expect_prefix, wcslen( expect_prefix ) ), "got u.DeviceInterface.SymbolicLink %s\n",
+            debugstr_w( name ) );
+        upper_end = wcschr( name + wcslen( expect_prefix ), '#' );
+        name_end = name + wcslen( name ) + 1;
+        ok( !!upper_end, "got u.DeviceInterface.SymbolicLink %s\n", debugstr_w( name ) );
+        ok( all_upper( name, upper_end ), "got u.DeviceInterface.SymbolicLink %s\n", debugstr_w( name ) );
+        ok( all_lower( upper_end, name_end ), "got u.DeviceInterface.SymbolicLink %s\n", debugstr_w( name ) );
+
+        if (cb_data->device_change_count++ >= cb_data->device_change_expect / 2)
+            ok( action == CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL, "got action %d\n", action );
+        else if (cb_data->device_change_expect_custom)
+            ok( action == CM_NOTIFY_ACTION_DEVICEINTERFACEREMOVAL, "got action %d\n", action );
+        else
+            ok( action == CM_NOTIFY_ACTION_DEVICEINTERFACEARRIVAL, "got action %d\n", action );
+
+        winetest_pop_context();
+        ReleaseSemaphore( cb_data->device_change_sem, 1, NULL );
+        break;
+    }
+    default:
+        ok( 0, "Unexpected CM_NOTIFY_ACTION %d\n", action );
+        break;
+    }
+
+    return ERROR_SUCCESS;
+}
+
+static DWORD WINAPI cm_register_notification( PCM_NOTIFY_FILTER filter, void *ctx, PCM_NOTIFY_CALLBACK callback, HCMNOTIFICATION *notify )
+{
+    struct cm_notify_callback_data *cb_data = ctx;
+    ReleaseSemaphore( cb_data->device_change_sem, cb_data->device_change_expect, NULL );
+    return TRUE;
+}
+
+static DWORD WINAPI cm_unregister_notification( HCMNOTIFICATION notify )
+{
+    return TRUE;
+}
+
 static void test_RegisterDeviceNotification(void)
 {
     DEV_BROADCAST_DEVICEINTERFACE_A iface_filter_a =
@@ -302,6 +491,11 @@ static void test_RegisterDeviceNotification(void)
         .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
         .dbcc_classguid = GUID_DEVINTERFACE_HID,
     };
+    DEV_BROADCAST_HANDLE handle_filter_a =
+    {
+        .dbch_size = sizeof(DEV_BROADCAST_HANDLE),
+        .dbch_devicetype = DBT_DEVTYP_HANDLE,
+    };
     WNDCLASSEXW class =
     {
         .cbSize = sizeof(WNDCLASSEXW),
@@ -309,12 +503,51 @@ static void test_RegisterDeviceNotification(void)
         .lpszClassName = L"devnotify",
         .lpfnWndProc = devnotify_wndproc,
     };
+    CM_NOTIFY_FILTER cm_iface_filter =
+    {
+        .cbSize = sizeof(CM_NOTIFY_FILTER),
+        .Flags = 0,
+        .FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE,
+        .Reserved = 0,
+        .u = {.DeviceInterface = {.ClassGuid = GUID_DEVINTERFACE_HID}}
+    };
+    CM_NOTIFY_FILTER cm_all_ifaces_filter =
+    {
+        .cbSize = sizeof(CM_NOTIFY_FILTER),
+        .Flags = CM_NOTIFY_FILTER_FLAG_ALL_INTERFACE_CLASSES,
+        .FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEINTERFACE,
+        .Reserved = 0,
+    };
+    CM_NOTIFY_FILTER cm_handle_filter =
+    {
+        .cbSize = sizeof(CM_NOTIFY_FILTER),
+        .Flags = 0,
+        .FilterType = CM_NOTIFY_FILTER_TYPE_DEVICEHANDLE,
+        .Reserved = 0,
+    };
     char buffer[1024] = {0};
     DEV_BROADCAST_HDR *header = (DEV_BROADCAST_HDR *)buffer;
+
+    DWORD (WINAPI *pCM_Register_Notification)(PCM_NOTIFY_FILTER,PVOID,PCM_NOTIFY_CALLBACK,PHCMNOTIFICATION);
+    DWORD (WINAPI *pCM_Unregister_Notification)(HCMNOTIFICATION);
+    HMODULE cfgmgr32 = LoadLibraryW( L"cfgmgr32" );
+    struct cm_notify_callback_data cm_ctx = {0};
     HANDLE hwnd, thread, stop_event;
     HDEVNOTIFY devnotify;
-    DWORD ret;
+    DWORD i, ret;
     MSG msg;
+
+    if (cfgmgr32)
+    {
+        pCM_Register_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Register_Notification" );
+        pCM_Unregister_Notification = (void *)GetProcAddress( cfgmgr32, "CM_Unregister_Notification" );
+    }
+    else
+    {
+        pCM_Register_Notification = cm_register_notification;
+        pCM_Unregister_Notification = cm_unregister_notification;
+        win_skip( "cfgmgr32 not found, skipping tests\n" );
+    }
 
     RegisterClassExW( &class );
 
@@ -385,6 +618,16 @@ static void test_RegisterDeviceNotification(void)
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
+    cm_ctx.device_change_sem = CreateSemaphoreW( NULL, 0, 2 + ARRAY_SIZE(device_change_events), NULL );
+    ok( !!cm_ctx.device_change_sem, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+
+    cm_ctx.device_change_all = FALSE;
+    cm_ctx.device_change_expect = 2;
+    cm_ctx.device_change_count = 0;
+
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+
     device_change_count = 0;
     device_change_expect = 2;
     device_change_hwnd = hwnd;
@@ -407,6 +650,13 @@ static void test_RegisterDeviceNotification(void)
         }
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
+    for (i = 0; i < cm_ctx.device_change_expect; i++)
+    {
+        ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -414,6 +664,7 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
 
     memcpy( buffer, &iface_filter_a, sizeof(iface_filter_a) );
     strcpy( ((DEV_BROADCAST_DEVICEINTERFACE_A *)buffer)->dbcc_name, "device name" );
@@ -422,6 +673,13 @@ static void test_RegisterDeviceNotification(void)
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
+    cm_ctx.device_change_all = FALSE;
+    cm_ctx.device_change_expect = 2;
+    cm_ctx.device_change_count = 0;
+
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+
     device_change_count = 0;
     device_change_expect = 2;
     device_change_hwnd = hwnd;
@@ -444,6 +702,13 @@ static void test_RegisterDeviceNotification(void)
         }
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
+    for (i = 0; i < cm_ctx.device_change_expect; i++)
+    {
+        ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -451,10 +716,18 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
 
     devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES );
     ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+
+    cm_ctx.device_change_all = TRUE;
+    cm_ctx.device_change_expect = 4;
+    cm_ctx.device_change_count = 0;
+    ret = pCM_Register_Notification( &cm_all_ifaces_filter, &cm_ctx, cm_notify_callback,
+                                    &cm_ctx.hnotify );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
 
     device_change_count = 0;
     device_change_expect = 4;
@@ -478,6 +751,13 @@ static void test_RegisterDeviceNotification(void)
         }
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
+    for (i = 0; i < cm_ctx.device_change_expect; i++)
+    {
+        ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
+    ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+        cm_ctx.device_change_count, cm_ctx.device_change_expect );
 
     ret = WaitForSingleObject( thread, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -485,9 +765,107 @@ static void test_RegisterDeviceNotification(void)
     CloseHandle( stop_event );
 
     UnregisterDeviceNotification( devnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
+
+    devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
+    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+
+    cm_ctx.device_change_all = FALSE;
+    cm_ctx.device_change_expect = 2 + ARRAY_SIZE(device_change_events);
+    cm_ctx.device_change_count = 0;
+    cm_iface_filter.Flags = 0;
+    ret = pCM_Register_Notification( &cm_iface_filter, &cm_ctx, cm_notify_callback, &cm_ctx.hnotify );
+    ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+
+    device_change_count = 0;
+    device_change_expect = 2;
+    device_change_hwnd = hwnd;
+    device_change_all = FALSE;
+    stop_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!stop_event, "CreateEventW failed, error %lu\n", GetLastError() );
+    thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+
+    while (device_change_count < device_change_expect)
+    {
+        ret = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
+        ok( !ret, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+        if (ret) break;
+        while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            ok( msg.message != WM_DEVICECHANGE, "got WM_DEVICECHANGE\n" );
+            DispatchMessageW( &msg );
+        }
+        if (device_change_count == 1 && !device_change_expect_event)
+        {
+            WCHAR device_path[MAX_PATH];
+            HANDLE file;
+            UINT i;
+
+            ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
+            ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+            swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
+            ret = find_hid_device_path( device_path );
+            ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
+
+            file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+            ok( file != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError() );
+
+            handle_filter_a.dbch_handle = file;
+            handle_devnotify = RegisterDeviceNotificationA( hwnd, &handle_filter_a, DEVICE_NOTIFY_WINDOW_HANDLE );
+            ok( !!handle_devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
+
+            cm_handle_filter.u.DeviceHandle.hTarget = file;
+            ret = pCM_Register_Notification( &cm_handle_filter, &cm_ctx, cm_notify_callback, &handle_cmnotify );
+            ok( !ret, "CM_Register_Notification failed, error %lu\n", ret );
+
+            device_change_expect_handle = file;
+            device_change_expect_event = device_change_events;
+            cm_ctx.device_change_expect_custom = ARRAY_SIZE(device_change_events) + 1;
+            for (i = 0; i < ARRAY_SIZE(device_change_events) - 1; i++)
+            {
+                ret = sync_ioctl( file, IOCTL_WINETEST_DEVICE_CHANGE, (BYTE *)&device_change_events[i].notif,
+                                  device_change_events[i].notif.Size, NULL, 0, 5000 );
+                ok( ret, "IOCTL_WINETEST_DEVICE_CHANGE failed, last error %lu\n", GetLastError() );
+                device_change_expect_custom++;
+            }
+            device_change_expect_custom++; /* extra DBT_DEVICEREMOVECOMPLETE event that is sent when device is removed */
+
+            CloseHandle( file );
+        }
+        if (device_change_count == 1 && device_change_expect_custom == 1) SetEvent( stop_event );
+    }
+    for (i = 1; i < cm_ctx.device_change_expect; i++)
+    {
+        ret = WaitForSingleObject( cm_ctx.device_change_sem, 100 );
+        todo_wine_if(i == cm_ctx.device_change_expect - 1)
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
+    todo_wine ok( cm_ctx.device_change_count == cm_ctx.device_change_expect, "%lu != %lu\n",
+                  cm_ctx.device_change_count, cm_ctx.device_change_expect );
+    todo_wine ok( cm_ctx.received_deviceremovalcomplete, "%d != 0\n", cm_ctx.received_deviceremovalcomplete );
+
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    CloseHandle( thread );
+    CloseHandle( stop_event );
+
+    if (handle_devnotify) UnregisterDeviceNotification( handle_devnotify );
+    if (handle_cmnotify) pCM_Unregister_Notification( handle_cmnotify );
+    UnregisterDeviceNotification( devnotify );
+    pCM_Unregister_Notification( cm_ctx.hnotify );
+    device_change_expect_event = NULL;
+    handle_devnotify = 0;
+    CloseHandle( cm_ctx.device_change_sem );
 
     DestroyWindow( hwnd );
     UnregisterClassW( class.lpszClassName, class.hInstance );
+
+    if (cfgmgr32) FreeLibrary( cfgmgr32 );
 }
 
 struct controller_handler

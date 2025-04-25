@@ -36,7 +36,6 @@
 #include <libxml/catalog.h>
 #include <libxml/xmlerror.h>
 #include <libxml/threads.h>
-#include <libxml/globals.h>
 
 #include "private/buf.h"
 #include "private/error.h"

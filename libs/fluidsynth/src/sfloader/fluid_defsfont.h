@@ -66,7 +66,7 @@ struct _fluid_zone_range_t
 };
 
 /* Stored on a preset zone to keep track of the inst zones that could start a voice
- * and their combined preset zone/instument zone ranges */
+ * and their combined preset zone/instrument zone ranges */
 struct _fluid_voice_zone_t
 {
     fluid_inst_zone_t *inst_zone;

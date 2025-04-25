@@ -31,6 +31,7 @@ static inline void* memccpy(void *s1, const void *s2, int c, size_t n) { return 
 _ACRTIMP void*   __cdecl memmove(void*,const void*,size_t);
 
 _ACRTIMP wchar_t* __cdecl _wcsdup(const wchar_t*) __WINE_DEALLOC(free) __WINE_MALLOC;
+_ACRTIMP wchar_t* __cdecl _wcserror(int);
 _ACRTIMP int      __cdecl _wcsicmp(const wchar_t*,const wchar_t*);
 _ACRTIMP int      __cdecl _wcsicmp_l(const wchar_t*,const wchar_t*, _locale_t);
 _ACRTIMP int      __cdecl _wcsicoll(const wchar_t*,const wchar_t*);
@@ -89,5 +90,11 @@ _ACRTIMP wchar_t* __cdecl wcstok(wchar_t*,const wchar_t*);
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __cplusplus
+extern "C++" {
+template <size_t S> inline errno_t wcscat_s(wchar_t (&dst)[S], const wchar_t *arg) throw() { return wcscat_s(dst, S, arg); }
+} /* extern "C++" */
+#endif /* __cplusplus */
 
 #endif /* _WSTRING_DEFINED */

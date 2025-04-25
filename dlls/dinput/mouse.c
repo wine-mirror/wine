@@ -243,7 +243,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
         }
         case WM_MOUSEWHEEL:
             state->lZ += (short)HIWORD( hook->mouseData );
-            queue_event( iface, 2, state->lZ, GetCurrentTime(), seq );
+            queue_event( iface, 2, (short)HIWORD( hook->mouseData ), GetCurrentTime(), seq );
             /* FarCry crashes if it gets a mouse wheel message */
             /* FIXME: should probably filter out other messages too */
             ret = impl->clipped;
@@ -306,20 +306,13 @@ static void warp_check( struct mouse *impl, BOOL force )
 
     if (force || (impl->need_warp && (now - impl->last_warped > interval)))
     {
-        RECT rect, new_rect;
         POINT mapped_center;
+        RECT rect;
 
         impl->last_warped = now;
         impl->need_warp = FALSE;
         if (!GetClientRect( impl->base.win, &rect )) return;
         MapWindowPoints( impl->base.win, 0, (POINT *)&rect, 2 );
-        if (!impl->clipped)
-        {
-            mapped_center.x = (rect.left + rect.right) / 2;
-            mapped_center.y = (rect.top + rect.bottom) / 2;
-            TRACE( "Warping mouse to x %+ld, y %+ld.\n", mapped_center.x, mapped_center.y );
-            SetCursorPos( mapped_center.x, mapped_center.y );
-        }
         if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
         {
             /* make sure we clip even if the window covers the whole screen */
@@ -328,8 +321,14 @@ static void warp_check( struct mouse *impl, BOOL force )
             rect.right = min( rect.right, rect.left + GetSystemMetrics( SM_CXVIRTUALSCREEN ) - 2 );
             rect.bottom = min( rect.bottom, rect.top + GetSystemMetrics( SM_CYVIRTUALSCREEN ) - 2 );
             TRACE("Clipping mouse to %s\n", wine_dbgstr_rect( &rect ));
-            ClipCursor( &rect );
-            impl->clipped = GetClipCursor( &new_rect ) && EqualRect( &rect, &new_rect );
+            impl->clipped = ClipCursor( &rect );
+        }
+        if (!impl->clipped)
+        {
+            mapped_center.x = (rect.left + rect.right) / 2;
+            mapped_center.y = (rect.top + rect.bottom) / 2;
+            TRACE( "Warping mouse to x %+ld, y %+ld.\n", mapped_center.x, mapped_center.y );
+            SetCursorPos( mapped_center.x, mapped_center.y );
         }
     }
 }

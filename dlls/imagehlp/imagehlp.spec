@@ -44,7 +44,7 @@
 @ stdcall -import StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall -import StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall -import SymCleanup(long)
-@ stdcall SymEnumSourceFiles(ptr int64 str ptr ptr) SymEnumSourceFiles
+@ stdcall -import SymEnumSourceFiles(ptr int64 str ptr ptr)
 @ stub SymEnumSym
 @ stdcall -import SymEnumSymbols(ptr int64 str ptr ptr)
 @ stdcall -import SymEnumTypes(ptr int64 ptr ptr)

@@ -3109,6 +3109,34 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         status = GetInquiryData(fd, out_buffer, out_size);
         break;
 
+    case IOCTL_STORAGE_QUERY_PROPERTY:
+    {
+        STORAGE_PROPERTY_QUERY *query = in_buffer;
+
+        if (in_size < sizeof(STORAGE_PROPERTY_QUERY))
+        {
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+
+        switch (query->PropertyId)
+        {
+        case StorageDeviceProperty:
+        {
+            STORAGE_DEVICE_DESCRIPTOR descriptor = { .Version = sizeof(descriptor), .Size = sizeof(descriptor),
+                                                     .DeviceType = FILE_DEVICE_CD_ROM, .RemovableMedia = TRUE };
+            FIXME("Faking StorageDeviceProperty data\n");
+            io->Information = min(sizeof(descriptor), out_size);
+            memcpy(out_buffer, &descriptor, io->Information);
+            status = STATUS_SUCCESS;
+            break;
+        }
+        default:
+            FIXME("Unsupported property %#x\n", query->PropertyId);
+        }
+        break;
+    }
+
     default:
         status = STATUS_NOT_SUPPORTED;
     }

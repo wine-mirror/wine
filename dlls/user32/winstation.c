@@ -30,7 +30,6 @@
 #include "winuser.h"
 #include "winternl.h"
 #include "ddk/wdm.h"
-#include "wine/server.h"
 #include "wine/debug.h"
 #include "user_private.h"
 
@@ -52,6 +51,34 @@ static BOOL CALLBACK enum_names_WtoA( LPWSTR name, LPARAM lparam )
     if (!WideCharToMultiByte( CP_ACP, 0, name, -1, buffer, sizeof(buffer), NULL, NULL ))
         return FALSE;
     return data->func( buffer, data->lparam );
+}
+
+static BOOL enum_names( HWINSTA handle, NAMEENUMPROCW func, LPARAM lparam )
+{
+    struct ntuser_name_list *list;
+    ULONG i, size = offsetof( struct ntuser_name_list, strings[256] );
+    WCHAR *name;
+    NTSTATUS status;
+    BOOL ret = TRUE;
+
+    while (size)
+    {
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size ))) break;
+        if (!(status = NtUserBuildNameList( handle, size, list, &size )))
+        {
+            for (i = 0, name = list->strings; ret && i < list->count; i++, name += wcslen( name ) + 1)
+                ret = func( name, lparam );
+        }
+        HeapFree( GetProcessHeap(), 0, list );
+        if (status != STATUS_BUFFER_TOO_SMALL) break;
+    }
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return ret;
 }
 
 /* return a handle to the directory where window station objects are created */
@@ -194,32 +221,7 @@ BOOL WINAPI EnumWindowStationsA( WINSTAENUMPROCA func, LPARAM lparam )
  */
 BOOL WINAPI EnumWindowStationsW( WINSTAENUMPROCW func, LPARAM lparam )
 {
-    unsigned int index = 0;
-    WCHAR name[MAX_PATH];
-    BOOL ret = TRUE;
-    NTSTATUS status;
-
-    while (ret)
-    {
-        SERVER_START_REQ( enum_winstation )
-        {
-            req->index = index;
-            wine_server_set_reply( req, name, sizeof(name) - sizeof(WCHAR) );
-            status = wine_server_call( req );
-            name[wine_server_reply_size(reply)/sizeof(WCHAR)] = 0;
-            index = reply->next;
-        }
-        SERVER_END_REQ;
-        if (status == STATUS_NO_MORE_ENTRIES)
-            break;
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return FALSE;
-        }
-        ret = func( name, lparam );
-    }
-    return ret;
+    return enum_names( 0, func, lparam );
 }
 
 
@@ -327,36 +329,10 @@ BOOL WINAPI EnumDesktopsA( HWINSTA winsta, DESKTOPENUMPROCA func, LPARAM lparam 
  */
 BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam )
 {
-    unsigned int index = 0;
-    WCHAR name[MAX_PATH];
-    BOOL ret = TRUE;
-    NTSTATUS status;
-
     if (!winsta)
         winsta = NtUserGetProcessWindowStation();
 
-    while (ret)
-    {
-        SERVER_START_REQ( enum_desktop )
-        {
-            req->winstation = wine_server_obj_handle( winsta );
-            req->index      = index;
-            wine_server_set_reply( req, name, sizeof(name) - sizeof(WCHAR) );
-            status = wine_server_call( req );
-            name[wine_server_reply_size(reply)/sizeof(WCHAR)] = 0;
-            index = reply->next;
-        }
-        SERVER_END_REQ;
-        if (status == STATUS_NO_MORE_ENTRIES)
-            break;
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ) );
-            return FALSE;
-        }
-        ret = func(name, lparam);
-    }
-    return ret;
+    return enum_names( winsta, func, lparam );
 }
 
 

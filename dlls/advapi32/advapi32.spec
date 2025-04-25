@@ -577,8 +577,8 @@
 # @ stub PerfRegSetValue
 @ stdcall -import PerfSetCounterRefValue(long ptr long ptr)
 @ stdcall -import PerfSetCounterSetInfo(long ptr long)
-# @ stub PerfSetULongCounterValue
-# @ stub PerfSetULongLongCounterValue
+@ stdcall -import PerfSetULongCounterValue(long ptr long long)
+@ stdcall -import PerfSetULongLongCounterValue(long ptr long int64)
 @ stdcall -import PerfStartProvider(ptr ptr ptr)
 @ stdcall -import PerfStartProviderEx(ptr ptr ptr)
 @ stdcall -import PerfStopProvider(long)
@@ -777,44 +777,44 @@
 @ stdcall StopTraceA(int64 str ptr)
 @ stdcall -import StopTraceW(int64 wstr ptr)
 @ stdcall SynchronizeWindows31FilesAndWindowsNTRegistry(long long long long)
-@ stdcall SystemFunction001(ptr ptr ptr)
-@ stdcall SystemFunction002(ptr ptr ptr)
-@ stdcall SystemFunction003(ptr ptr)
-@ stdcall SystemFunction004(ptr ptr ptr)
-@ stdcall SystemFunction005(ptr ptr ptr)
-@ stdcall SystemFunction006(ptr ptr)
-@ stdcall SystemFunction007(ptr ptr)
-@ stdcall SystemFunction008(ptr ptr ptr)
-@ stdcall SystemFunction009(ptr ptr ptr)
-@ stdcall SystemFunction010(ptr ptr ptr)
-@ stdcall SystemFunction011(ptr ptr ptr) SystemFunction010
-@ stdcall SystemFunction012(ptr ptr ptr)
-@ stdcall SystemFunction013(ptr ptr ptr)
-@ stdcall SystemFunction014(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction015(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction016(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction017(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction018(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction019(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction020(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction021(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction022(ptr ptr ptr) SystemFunction012
-@ stdcall SystemFunction023(ptr ptr ptr) SystemFunction013
-@ stdcall SystemFunction024(ptr ptr ptr)
-@ stdcall SystemFunction025(ptr ptr ptr)
-@ stdcall SystemFunction026(ptr ptr ptr) SystemFunction024
-@ stdcall SystemFunction027(ptr ptr ptr) SystemFunction025
+@ stdcall SystemFunction001(ptr ptr ptr) cryptbase.SystemFunction001
+@ stdcall SystemFunction002(ptr ptr ptr) cryptbase.SystemFunction002
+@ stdcall SystemFunction003(ptr ptr) cryptbase.SystemFunction003
+@ stdcall SystemFunction004(ptr ptr ptr) cryptbase.SystemFunction004
+@ stdcall SystemFunction005(ptr ptr ptr) cryptbase.SystemFunction005
+@ stdcall SystemFunction006(ptr ptr) cryptsp.SystemFunction006
+@ stdcall SystemFunction007(ptr ptr) cryptsp.SystemFunction007
+@ stdcall SystemFunction008(ptr ptr ptr) cryptsp.SystemFunction008
+@ stdcall SystemFunction009(ptr ptr ptr) cryptsp.SystemFunction009
+@ stdcall SystemFunction010(ptr ptr ptr) cryptsp.SystemFunction010
+@ stdcall SystemFunction011(ptr ptr ptr) cryptsp.SystemFunction011
+@ stdcall SystemFunction012(ptr ptr ptr) cryptsp.SystemFunction012
+@ stdcall SystemFunction013(ptr ptr ptr) cryptsp.SystemFunction013
+@ stdcall SystemFunction014(ptr ptr ptr) cryptsp.SystemFunction014
+@ stdcall SystemFunction015(ptr ptr ptr) cryptsp.SystemFunction015
+@ stdcall SystemFunction016(ptr ptr ptr) cryptsp.SystemFunction016
+@ stdcall -import SystemFunction017(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction018(ptr ptr ptr) cryptsp.SystemFunction018
+@ stdcall -import SystemFunction019(ptr ptr ptr) SystemFunction013
+@ stdcall SystemFunction020(ptr ptr ptr) cryptsp.SystemFunction020
+@ stdcall SystemFunction021(ptr ptr ptr) cryptsp.SystemFunction021
+@ stdcall SystemFunction022(ptr ptr ptr) cryptsp.SystemFunction022
+@ stdcall SystemFunction023(ptr ptr ptr) cryptsp.SystemFunction023
+@ stdcall SystemFunction024(ptr ptr ptr) cryptsp.SystemFunction024
+@ stdcall SystemFunction025(ptr ptr ptr) cryptsp.SystemFunction025
+@ stdcall SystemFunction026(ptr ptr ptr) cryptsp.SystemFunction026
+@ stdcall SystemFunction027(ptr ptr ptr) cryptsp.SystemFunction027
 @ stub SystemFunction028
 @ stub SystemFunction029
-@ stdcall SystemFunction030(ptr ptr)
-@ stdcall SystemFunction031(ptr ptr) SystemFunction030
-@ stdcall SystemFunction032(ptr ptr)
+@ stdcall SystemFunction030(ptr ptr) cryptsp.SystemFunction030
+@ stdcall SystemFunction031(ptr ptr) cryptsp.SystemFunction031
+@ stdcall SystemFunction032(ptr ptr) cryptsp.SystemFunction032
 @ stub SystemFunction033
 @ stub SystemFunction034
-@ stdcall SystemFunction035(str)
-@ stdcall SystemFunction036(ptr long) # RtlGenRandom
-@ stdcall SystemFunction040(ptr long long) # RtlEncryptMemory
-@ stdcall SystemFunction041(ptr long long) # RtlDecryptMemory
+@ stdcall SystemFunction035(str) cryptsp.SystemFunction035
+@ stdcall SystemFunction036(ptr long) cryptbase.SystemFunction036
+@ stdcall SystemFunction040(ptr long long) cryptbase.SystemFunction040
+@ stdcall SystemFunction041(ptr long long) cryptbase.SystemFunction041
 @ stdcall TraceEvent(int64 ptr) ntdll.EtwLogTraceEvent
 @ stub TraceEventInstance
 @ varargs TraceMessage(int64 long ptr long) ntdll.EtwTraceMessage

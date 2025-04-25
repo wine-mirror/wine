@@ -23,12 +23,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include <Zydis/Zydis.h>
+#include <capstone/capstone.h>
 
 #include "debugger.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
+
+cs_opt_mem cs_mem =
+{
+    .malloc = malloc,
+    .calloc = calloc,
+    .realloc = realloc,
+    .free = free,
+    .vsnprintf = vsnprintf,
+};
 
 void* be_cpu_linearize(HANDLE hThread, const ADDRESS64* addr)
 {
@@ -592,14 +601,18 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                         for (i = 0; i < min(fcp->Count, count); i++)
                         {
                             sub_type.id = fcp->ChildId[i];
-                            if (!types_get_info(&sub_type, TI_GET_VALUE, &variant)) 
+                            if (!types_get_info(&sub_type, TI_GET_VALUE, &variant))
                                 continue;
                             switch (V_VT(&variant))
                             {
-                            case VT_I1: ok = (val_int == V_I1(&variant)); break;
-                            case VT_I2: ok = (val_int == V_I2(&variant)); break;
-                            case VT_I4: ok = (val_int == V_I4(&variant)); break;
-                            case VT_I8: ok = (val_int == V_I8(&variant)); break;
+                            case VT_I1:  ok = (val_int == V_I1(&variant)); break;
+                            case VT_I2:  ok = (val_int == V_I2(&variant)); break;
+                            case VT_I4:  ok = (val_int == V_I4(&variant)); break;
+                            case VT_I8:  ok = (val_int == V_I8(&variant)); break;
+                            case VT_UI1: ok = (val_int == (dbg_lguint_t)V_UI1(&variant)); break;
+                            case VT_UI2: ok = (val_int == (dbg_lguint_t)V_UI2(&variant)); break;
+                            case VT_UI4: ok = (val_int == (dbg_lguint_t)V_UI4(&variant)); break;
+                            case VT_UI8: ok = (val_int == (dbg_lguint_t)V_UI8(&variant)); break;
                             default: WINE_FIXME("Unsupported variant type (%u)\n", V_VT(&variant));
                             }
                             if (ok && types_get_info(&sub_type, TI_GET_SYMNAME, &ptr) && ptr)
@@ -697,7 +710,7 @@ void print_bare_address(const ADDRESS64* addr)
     }
 }
 
-static void print_address_symbol(const ADDRESS64* addr, BOOL with_line, const char *sep)
+void print_address_symbol(const ADDRESS64* addr, BOOL with_line, const char *sep)
 {
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        si = (SYMBOL_INFO*)buffer;
@@ -751,74 +764,65 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
 
 void memory_disasm_one_x86_insn(ADDRESS64 *addr, int display)
 {
-    ZydisDisassembledInstruction instr = { .runtime_address = addr->Offset };
-    ZydisDecoder decoder;
-    ZydisDecoderContext ctx;
+    static csh handle;
+    cs_insn *insn;
     unsigned char buffer[16];
-    SIZE_T len;
-    int i;
+    SIZE_T count, len;
 
     if (!dbg_curr_process->process_io->read( dbg_curr_process->handle, memory_to_linear_addr(addr),
                                              buffer, sizeof(buffer), &len )) return;
+
+    if (!handle)
+    {
+        cs_option( 0, CS_OPT_MEM, (size_t)&cs_mem );
+        cs_open( CS_ARCH_X86, CS_MODE_32, &handle );
+    }
 
     switch (addr->Mode)
     {
     case AddrModeReal:
     case AddrMode1616:
-        ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16 );
+        cs_option( handle, CS_OPT_MODE, CS_MODE_16 );
         break;
     default:
-        if (ADDRSIZE == 4)
-            ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32 );
-        else
-            ZydisDecoderInit( &decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64 );
+        cs_option( handle, CS_OPT_MODE, ADDRSIZE == 4 ? CS_MODE_32 : CS_MODE_64 );
         break;
     }
-    ZydisDecoderDecodeInstruction( &decoder, &ctx, buffer, len, &instr.info );
-    ZydisDecoderDecodeOperands( &decoder, &ctx, &instr.info,
-                                instr.operands, instr.info.operand_count );
+    cs_option( handle, CS_OPT_SYNTAX, CS_OPT_SYNTAX_ATT );
+    cs_option( handle, CS_OPT_DETAIL, CS_OPT_ON );
+    count = cs_disasm( handle, buffer, len, addr->Offset, 0, &insn );
 
     if (display)
     {
-        ZydisFormatter formatter;
-        ZydisFormatterInit( &formatter, ZYDIS_FORMATTER_STYLE_ATT );
-        ZydisFormatterSetProperty( &formatter, ZYDIS_FORMATTER_PROP_HEX_UPPERCASE, 0 );
-        ZydisFormatterFormatInstruction( &formatter, &instr.info, instr.operands,
-                                         instr.info.operand_count_visible, instr.text,
-                                         sizeof(instr.text), instr.runtime_address, NULL );
-        dbg_printf( "%s", instr.text );
-        for (i = 0; i < instr.info.operand_count_visible; i++)
+        dbg_printf( "%s %s", insn[0].mnemonic, insn[0].op_str );
+
+        if (cs_insn_group( handle, insn, X86_GRP_JUMP ) || cs_insn_group( handle, insn, X86_GRP_CALL ))
         {
             ADDRESS64 a = { .Mode = AddrModeFlat };
-            ZyanU64 addr;
+            int pos = cs_op_index( handle, insn, X86_OP_MEM, 1 );
 
-            if (!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress( &instr.info, &instr.operands[i],
-                                                        instr.runtime_address, &addr )))
-                continue;
-
-            if (instr.info.meta.branch_type == ZYDIS_BRANCH_TYPE_NEAR &&
-                instr.operands[i].type == ZYDIS_OPERAND_TYPE_MEMORY &&
-                instr.operands[i].mem.disp.has_displacement &&
-                instr.operands[i].mem.index == ZYDIS_REGISTER_NONE &&
-                (instr.operands[i].mem.base == ZYDIS_REGISTER_NONE ||
-                 instr.operands[i].mem.base == ZYDIS_REGISTER_EIP ||
-                 instr.operands[i].mem.base == ZYDIS_REGISTER_RIP))
+            if (pos != -1 && insn->detail->x86.operands[pos].mem.index == X86_REG_INVALID &&
+                (insn->detail->x86.operands[pos].mem.base == X86_REG_INVALID ||
+                 insn->detail->x86.operands[pos].mem.base == X86_REG_EIP ||
+                 insn->detail->x86.operands[pos].mem.base == X86_REG_RIP))
             {
                 unsigned char dest[8];
-                if (dbg_read_memory( (void *)(ULONG_PTR)addr, dest, ADDRSIZE ))
+                if (dbg_read_memory( (void *)(ULONG_PTR)X86_REL_ADDR(*insn), dest, ADDRSIZE ))
                 {
                     dbg_printf( " -> " );
                     a.Offset = ADDRSIZE == 4 ? *(DWORD *)dest : *(DWORD64 *)dest;
                     print_address( &a, TRUE );
-                    break;
                 }
             }
-            a.Offset = addr;
-            print_address_symbol( &a, TRUE, instr.info.operand_count_visible > 1 ? " ;" : "" );
-            break;
+            else if ((pos = cs_op_index( handle, insn, X86_OP_IMM, 1 )) != -1)
+            {
+                a.Offset = X86_REL_ADDR(*insn);
+                print_address_symbol( &a, TRUE, "" );
+            }
         }
     }
-    addr->Offset += instr.info.length;
+    addr->Offset += insn[0].size;
+    cs_free( insn, count );
 }
 
 BOOL memory_disasm_one_insn(ADDRESS64* addr)

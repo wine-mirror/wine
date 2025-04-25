@@ -1867,18 +1867,6 @@ int CDECL _get_daylight(int *hours)
 
 #define TIME_UTC 1
 
-struct _timespec32
-{
-    __time32_t tv_sec;
-    LONG tv_nsec;
-};
-
-struct _timespec64
-{
-    __time64_t tv_sec;
-    LONG tv_nsec;
-};
-
 /*********************************************************************
  * _timespec64_get (UCRTBASE.@)
  */

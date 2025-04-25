@@ -226,7 +226,6 @@ void DSOUND_CheckEvent(const IDirectSoundBufferImpl *dsb, DWORD playpos, int len
             TRACE("Signalling %p\n", dsb->notifies[left].hEventNotify);
             SetEvent(dsb->notifies[left].hEventNotify);
         }
-        return;
     }
 
     for(first = 0; first < dsb->nrofnotifies && dsb->notifies[first].dwOffset == DSBPN_OFFSETSTOP; ++first)

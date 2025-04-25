@@ -50,16 +50,11 @@ char* __cdecl _Getdays(void);
 wchar_t* __cdecl _W_Getdays(void);
 char* __cdecl _Getmonths(void);
 wchar_t* __cdecl _W_Getmonths(void);
-void* __cdecl _Gettnames(void);
-unsigned int __cdecl ___lc_codepage_func(void);
 int __cdecl ___lc_collate_cp_func(void);
-const unsigned short* __cdecl __pctype_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, size_t);
 const locale* __cdecl locale_classic(void);
 
-#if _MSVCP_VER >= 110
-wchar_t ** __cdecl ___lc_locale_name_func(void);
-#else
+#if _MSVCP_VER < 110
 LCID* __cdecl ___lc_handle_func(void);
 #endif
 
@@ -3878,7 +3873,7 @@ int __thiscall codecvt_wchar_do_out(const codecvt_wchar *this, _Mbstatet *state,
         case -1:
             return CODECVT_error;
         default:
-            if(size > from_end-*from_next) {
+            if(size > to_end - *to_next) {
                 *state = old_state;
                 return CODECVT_partial;
             }
@@ -4008,6 +4003,22 @@ void __thiscall codecvt_char16__Init(codecvt_char16 *this, const _Locinfo *locin
     FIXME("(%p %p) stub\n", this, locinfo);
 }
 
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
+/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z */
+DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_mode, 16)
+codecvt_char16* __thiscall codecvt_char16_ctor_mode(codecvt_char16 *this, const _Locinfo *locinfo,
+        ULONG max_code, codecvt_convert_mode mode, size_t refs)
+{
+    TRACE("(%p %ld %d %Iu)\n", this, max_code, mode, refs);
+
+    codecvt_base_ctor_refs(&this->base, refs);
+    this->base.facet.vtable = &codecvt_char16_vtable;
+    this->convert_mode = mode;
+    this->max_code = max_code;
+    return this;
+}
+
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@_K@Z */
@@ -4015,39 +4026,28 @@ DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_locinfo, 12)
 codecvt_char16* __thiscall codecvt_char16_ctor_locinfo(codecvt_char16 *this,
         const _Locinfo *locinfo, size_t refs)
 {
-    FIXME("(%p %p %Iu) stub\n", this, locinfo, refs);
-    return NULL;
+    TRACE("(%p %p %Iu)\n", this, locinfo, refs);
+    return codecvt_char16_ctor_mode(this, locinfo, MAX_UCSCHAR, consume_header, refs);
 }
 
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@I@Z */
 /* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@_K@Z */
 DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_refs, 8)
-codecvt_char* __thiscall codecvt_char16_ctor_refs(codecvt_char16 *this, size_t refs)
+codecvt_char16* __thiscall codecvt_char16_ctor_refs(codecvt_char16 *this, size_t refs)
 {
-    FIXME("(%p %Iu) stub\n", this, refs);
-    return NULL;
-}
-
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAA@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QAE@ABV_Locinfo@1@KW4_Codecvt_mode@1@I@Z */
-/* ??0?$codecvt@_SDU_Mbstatet@@@std@@QEAA@AEBV_Locinfo@1@KW4_Codecvt_mode@1@_K@Z */
-DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor_mode, 16)
-codecvt_char16* __thiscall codecvt_char16_ctor_mode(codecvt_char16 *this,
-        ULONG max_code, codecvt_convert_mode mode, size_t refs)
-{
-    FIXME("(%p %ld %d %Iu) stub\n", this, max_code, mode, refs);
-    return NULL;
+    TRACE("(%p %Iu)\n", this, refs);
+    return codecvt_char16_ctor_locinfo(this, NULL, refs);
 }
 
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAAXXZ */
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QAEXXZ */
 /* ??_F?$codecvt@_SDU_Mbstatet@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(codecvt_char16_ctor, 4)
-codecvt_char* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
+codecvt_char16* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return codecvt_char16_ctor_refs(this, 0);
 }
 
 /* ??1?$codecvt@_SDU_Mbstatet@@@std@@MAA@XZ */
@@ -4056,7 +4056,8 @@ codecvt_char* __thiscall codecvt_char16_ctor(codecvt_char16 *this)
 DEFINE_THISCALL_WRAPPER(codecvt_char16_dtor, 4)
 void __thiscall codecvt_char16_dtor(codecvt_char16 *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    codecvt_base_dtor(&this->base);
 }
 
 DEFINE_THISCALL_WRAPPER(codecvt_char16_vector_dtor, 8)
@@ -4121,9 +4122,127 @@ int __thiscall codecvt_char16_do_in(const codecvt_char16 *this, _Mbstatet *state
         const char *from, const char *from_end, const char **from_next,
         char16_t *to, char16_t *to_end, char16_t **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    static const char utf8_length[128] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+        0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xc0-0xcf */
+        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xd0-0xdf */
+        3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, /* 0xe0-0xef */
+        4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+    };
+    /* first byte mask depending on UTF-8 sequence length */
+    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+    unsigned int res, len;
+    unsigned char ch;
+    const char *end;
+    BOOL fourbyte;
+
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    if (this->convert_mode & ~(generate_header | consume_header))
+        FIXME("convert_mode %#x.\n", this->convert_mode);
+
+    *from_next = from;
+    *to_next = to;
+
+    while (*from_next != from_end && *to_next != to_end)
+    {
+        fourbyte = FALSE;
+        ch = **from_next;
+        if ((res = MBSTATET_TO_INT(state)) & ~1)
+        {
+            ch = ch ^ 0x80;
+            if (ch >= 0x40)
+                return CODECVT_error;
+            res |= ch;
+            ++*from_next;
+            MBSTATET_TO_INT(state) = 1;
+        }
+        else if (ch < 0x80)
+        {
+            res = ch;
+            ++*from_next;
+        }
+        else
+        {
+            if (!(len = utf8_length[ch - 0x80]))
+            {
+                ++*from_next;
+                return CODECVT_error;
+            }
+
+            if (from_end - *from_next < min(len, 3))
+                break;
+            ++*from_next;
+            res = ch & utf8_mask[len - 1];
+            end = *from_next + len - 1;
+            switch (len)
+            {
+                case 4:
+                    if ((ch = end[-3] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    fourbyte = TRUE;
+                    /* fallthrough */
+                case 3:
+                    if ((ch = end[-2] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    ++*from_next;
+                    /* fallthrough */
+                case 2:
+                    if (len == 4)
+                        ch = 0;
+                    else if ((ch = end[-1] ^ 0x80) >= 0x40)
+                        return CODECVT_error;
+                    res = (res << 6) | ch;
+                    ++*from_next;
+                    break;
+            }
+        }
+
+        if (res > this->max_code)
+            return CODECVT_error;
+
+        if (fourbyte)
+        {
+            if (res > 0x10000)
+            {
+                res -= 0x10000;
+                MBSTATET_TO_INT(state) = 0xdc00 | (res & 0x3ff);
+                res = 0xd800 | (res >> 10);
+            }
+            else
+            {
+                 MBSTATET_TO_INT(state) = res;
+                 continue;
+            }
+        }
+        if (!MBSTATET_TO_INT(state))
+        {
+            MBSTATET_TO_INT(state) = 1;
+            if (this->convert_mode & consume_header && res == 0xfeff)
+            {
+                if (*from_next == from_end)
+                {
+                    *from_next = from;
+                    break;
+                }
+                continue;
+            }
+        }
+        *(*to_next)++ = res;
+    }
+
+    if (*from_next != from)
+        return CODECVT_ok;
+
+    return CODECVT_partial;
 }
 
 /* ?in@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PBD1AAPBDPA_S3AAPA_S@Z */
@@ -4189,9 +4308,91 @@ int __thiscall codecvt_char16_do_out(const codecvt_char16 *this, _Mbstatet *stat
         const char16_t *from, const char16_t *from_end, const char16_t **from_next,
         char *to, char *to_end, char **to_next)
 {
-    FIXME("(%p %p %p %p %p %p %p %p) stub\n", this, state, from,
+    static const char bom_header[] = { 0xef, 0xbb, 0xbf };
+    unsigned int ch, out_len;
+    BOOL surrogate;
+
+    TRACE("(%p %p %p %p %p %p %p %p)\n", this, state, from,
             from_end, from_next, to, to_end, to_next);
-    return 0;
+
+    if (this->convert_mode & ~(generate_header | consume_header))
+        FIXME("convert_mode %#x.\n", this->convert_mode);
+
+    *from_next = from;
+    *to_next = to;
+
+    while(*from_next != from_end && *to_next != to_end)
+    {
+        surrogate = FALSE;
+
+        if ((ch = MBSTATET_TO_INT(state)) & ~1)
+        {
+            if (!IS_LOW_SURROGATE(**from_next))
+                return CODECVT_error;
+            ch = (ch << 10) + (**from_next & 0x3ff);
+        }
+        else if (IS_HIGH_SURROGATE(**from_next))
+        {
+            surrogate = TRUE;
+            ch = 0x10000 + ((**from_next & 0x3ff) << 10);
+        }
+        else
+        {
+            ch = **from_next;
+        }
+
+        if (ch < 0x80 || surrogate)
+            out_len = 1;
+        else if (ch < 0x800)
+            out_len = 2;
+        else
+            out_len = 3;
+
+        if (this->convert_mode & generate_header && !MBSTATET_TO_INT(state))
+        {
+            if (out_len + sizeof(bom_header) > to_end - *to_next)
+                break;
+            memcpy(*to_next, bom_header, sizeof(bom_header));
+            *to_next += sizeof(bom_header);
+        }
+        else if (out_len > to_end - *to_next)
+            break;
+
+        ++*from_next;
+        if (surrogate)
+        {
+            MBSTATET_TO_INT(state) = ((ch - 0x10000) >> 10) + 0x40;
+            *(*to_next)++ = 0xf0 | (ch >> 18);
+            continue;
+        }
+        if (ch < 0x80)
+        {
+            *(*to_next)++ = ch;
+        }
+        else if (ch < 0x800)
+        {
+            *(*to_next)++ = 0xc0 | (ch >> 6);
+            *(*to_next)++ = 0x80 |  (ch & 0x3f);
+        }
+        else if (ch < 0x10000)
+        {
+            *(*to_next)++ = 0xe0 | (ch >> 12);
+            *(*to_next)++ = 0x80 | ((ch >> 6) & 0x3f);
+            *(*to_next)++ = 0x80 | (ch & 0x3f);
+        }
+        else
+        {
+            *(*to_next)++ = 0x80 | ((ch >> 12) & 0x3f);
+            *(*to_next)++ = 0x80 | ((ch >> 6) & 0x3f);
+            *(*to_next)++ = 0x80 | (ch & 0x3f);
+        }
+        MBSTATET_TO_INT(state) = 1;
+    }
+
+    if (*from_next != from)
+        return CODECVT_ok;
+
+    return CODECVT_partial;
 }
 
 /* ?out@?$codecvt@_SDU_Mbstatet@@@std@@QBAHAAU_Mbstatet@@PB_S1AAPB_SPAD3AAPAD@Z */
@@ -7828,6 +8029,7 @@ static ostreambuf_iterator_char* num_put_char_fput(const num_put *this, ostreamb
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
         num_put_char__Putc(this, &dest, dest, buf, 1);
         buf++;
+        count--;
     }
     if(adjustfield != FMTFLAG_left) {
         num_put_char__Rep(this, ret, dest, fill, pad);
@@ -7913,9 +8115,11 @@ ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostrea
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
         num_put_char__Putc(this, &dest, dest, buf, 1);
         buf++;
+        count--;
     }else if((adjustfield & FMTFLAG_internal) && (buf[1]=='x' || buf[1]=='X')) {
         num_put_char__Putc(this, &dest, dest, buf, 2);
         buf += 2;
+        count -= 2;
     }
     if(adjustfield != FMTFLAG_left) {
         num_put_char__Rep(this, ret, dest, fill, pad);
@@ -8696,6 +8900,7 @@ static ostreambuf_iterator_wchar* num_put__fput(const num_put *this, ostreambuf_
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
         num_put_wchar_wide_put(this, &dest, base, buf, 1);
         buf++;
+        count--;
     }
     if(adjustfield != FMTFLAG_left) {
         num_put_wchar__Rep(this, ret, dest, fill, pad);
@@ -8789,9 +8994,11 @@ static ostreambuf_iterator_wchar* num_put__Iput(const num_put *this, ostreambuf_
     if((adjustfield & FMTFLAG_internal) && (buf[0]=='-' || buf[0]=='+')) {
         num_put_wchar_wide_put(this, &dest, base, buf, 1);
         buf++;
+        count--;
     }else if((adjustfield & FMTFLAG_internal) && (buf[1]=='x' || buf[1]=='X')) {
         num_put_wchar_wide_put(this, &dest, base, buf, 2);
         buf += 2;
+        count -= 2;
     }
     if(adjustfield != FMTFLAG_left) {
         num_put_wchar__Rep(this, ret, dest, fill, pad);
@@ -12798,18 +13005,27 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
     char buffer[MB_LEN_MAX];
     size_t ret = 0;
 
+    if (state) *state = 0;
     src = *pstr;
 
     while (!dst || n > ret)
     {
         int len = _Wcrtomb( buffer, *src, state, NULL );
         if (len <= 0) return -1;
-        if (n < ret + len) break;
-        memcpy( dst + ret, buffer, len );
+        if (dst)
+        {
+            if (n < ret + len) break;
+            memcpy( dst + ret, buffer, len );
+        }
+        if (!buffer[0])
+        {
+            src = NULL;
+            break;
+        }
         ret += len;
-        if (!buffer[0]) break;
         src++;
     }
+    if (dst) *pstr = src;
     return ret;
 }
 #endif

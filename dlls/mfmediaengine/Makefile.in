@@ -5,4 +5,5 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	main.c \
-	mediaengine_classes.idl
+	mediaengine_classes.idl \
+	video_frame_sink.c

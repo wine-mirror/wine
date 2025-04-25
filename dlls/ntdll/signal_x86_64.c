@@ -40,6 +40,14 @@
 #include "ntsyscalls.h"
 
 
+/*******************************************************************
+ *         syscalls
+ */
+#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
+ALL_SYSCALLS64
+#undef SYSCALL_ENTRY
+
+
 /**************************************************************************
  *		__chkstk (NTDLL.@)
  *
@@ -66,18 +74,25 @@ __ASM_GLOBAL_FUNC( invoke_arm64ec_syscall,
                    "pushq %r10\n\t"         /* and return to syscall thunk */
                    "ret" )
 
+/*******************************************************************
+ *		KiUserExceptionDispatcher (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( "EXP+#KiUserExceptionDispatcher",
+                   "cld\n\t"
+                   "mov pWow64PrepareForException(%rip),%rax\n\t"
+                   "test %rax,%rax\n\t"
+                   "jz 1f\n\t"
+                   "subq $0x28,%rsp\n\t"
+                   "leaq 0x30+0x3b0+0x4d0(%rsp),%rcx\n\t" /* rec */
+                   "leaq 0x30(%rsp),%rdx\n\t"             /* context */
+                   "call *%rax\n"
+                   "addq $0x28,%rsp\n"
+                   "1:\tret" )
+
 #else  /* __arm64ec_x64__ */
 
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-/*******************************************************************
- *         syscalls
- */
-#define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
-ALL_SYSCALLS64
-#undef SYSCALL_ENTRY
 
 
 /***********************************************************************
@@ -382,8 +397,7 @@ __ASM_GLOBAL_FUNC( KiUserCallbackDispatcher,
                    "movl 0x28(%rsp),%edx\n\t"  /* len */
                    "movl 0x2c(%rsp),%r8d\n\t"  /* id */
 #ifdef __WINE_PE_BUILD
-                   "movq %gs:0x30,%rax\n\t"     /* NtCurrentTeb() */
-                   "movq 0x60(%rax),%rax\n\t"   /* peb */
+                   "movq %gs:0x60,%rax\n\t"     /* peb */
                    "movq 0x58(%rax),%rax\n\t"   /* peb->KernelCallbackTable */
                    "call *(%rax,%r8,8)\n\t"     /* KernelCallbackTable[id] */
                    ".seh_handler " __ASM_NAME("user_callback_handler") ", @except\n\t"
@@ -803,8 +817,7 @@ __ASM_GLOBAL_FUNC( RtlRaiseException,
                    "movq %rax,0xf8(%rdx)\n\t"   /* context->Rip */
                    "movq %rax,0x10(%rcx)\n\t"   /* rec->ExceptionAddress */
                    "movl $1,%r8d\n\t"
-                   "movq %gs:(0x30),%rax\n\t"   /* Teb */
-                   "movq 0x60(%rax),%rax\n\t"   /* Peb */
+                   "movq %gs:0x60,%rax\n\t"     /* Peb */
                    "cmpb $0,0x02(%rax)\n\t"     /* BeingDebugged */
                    "jne 1f\n\t"
                    "call " __ASM_NAME("dispatch_exception") "\n"
@@ -1047,8 +1060,7 @@ __ASM_GLOBAL_FUNC( DbgUiRemoteBreakin,
                    ".seh_stackalloc 0x28\n\t"
                    ".seh_endprologue\n\t"
                    ".seh_handler DbgUiRemoteBreakin_handler, @except\n\t"
-                   "mov %gs:0x30,%rax\n\t"
-                   "mov 0x60(%rax),%rax\n\t"
+                   "mov %gs:0x60,%rax\n\t"
                    "cmpb $0,2(%rax)\n\t"
                    "je 1f\n\t"
                    "call " __ASM_NAME("DbgBreakPoint") "\n"

@@ -332,7 +332,6 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
 
     ctx.url = NULL;
 
-    /* FIXME: Events are actually sent to the current window on native, even if we're detached. */
     if(!window->base.outer_window)
         goto done;
 
@@ -1274,7 +1273,7 @@ static HRESULT HTMLStorage_get_prop_desc(DispatchEx *dispex, DISPID id, struct p
     desc->name = This->props[id - MSHTML_DISPID_CUSTOM_MIN];
     desc->id = id;
     desc->flags = PROPF_WRITABLE | PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
-    desc->func_iid = 0;
+    desc->iid = 0;
     return S_OK;
 }
 
@@ -1295,7 +1294,7 @@ static const tid_t HTMLStorage_iface_tids[] = {
     0
 };
 dispex_static_data_t Storage_dispex = {
-    .id         = PROT_Storage,
+    .id         = OBJID_Storage,
     .vtbl       = &Storage_dispex_vtbl,
     .disp_tid   = IHTMLStorage_tid,
     .iface_tids = HTMLStorage_iface_tids,

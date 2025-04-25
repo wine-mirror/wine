@@ -37,7 +37,7 @@
 148 stub -noname IEGetDisplayName
 149 stub -noname IEBindToObjectEx
 150 stub -noname _GetStdLocation
-151 stdcall -noname URLSubRegQueryA(str str long ptr long long)
+151 stub -noname URLSubRegQueryA(str str long ptr long long)
 152 stub -noname CShellUIHelper_CreateInstance2
 153 stub -noname IsURLChild
 158 stdcall -noname SHRestricted2A(long str long)
@@ -49,8 +49,8 @@
 164 stdcall -noname ResetProfileSharing(long)
 165 stub -noname URLSubstitution
 167 stub -noname IsIEDefaultBrowser
-169 stdcall -noname ParseURLFromOutsideSourceA(str ptr ptr ptr)
-170 stdcall -noname ParseURLFromOutsideSourceW(wstr ptr ptr ptr)
+169 stub -noname ParseURLFromOutsideSourceA(str ptr ptr ptr)
+170 stub -noname ParseURLFromOutsideSourceW(wstr ptr ptr ptr)
 171 stub -noname _DeletePidlDPA
 172 stub -noname IURLQualify
 173 stub -noname SHIsRestricted

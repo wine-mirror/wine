@@ -832,6 +832,7 @@ static void test_wintrust(void)
     LONG r;
     HRESULT hr;
     WCHAR pathW[MAX_PATH];
+    CRYPT_PROVIDER_DATA *prov_data;
 
     memset(&wtd, 0, sizeof(wtd));
     wtd.cbStruct = sizeof(wtd);
@@ -867,10 +868,30 @@ static void test_wintrust(void)
     ok(r == S_OK, "WinVerifyTrust failed: %08lx\n", r);
     wtd.dwStateAction = WTD_STATEACTION_VERIFY;
     SetLastError(0xdeadbeef);
+    wtd.hWVTStateData = NULL;
     hr = WinVerifyTrustEx(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
     ok(hr == GetLastError(), "expected %08lx, got %08lx\n", GetLastError(), hr);
     ok(hr == TRUST_E_NOSIGNATURE || hr == CRYPT_E_FILE_ERROR,
      "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08lx\n", hr);
+    prov_data = WTHelperProvDataFromStateData(wtd.hWVTStateData);
+    ok(!!prov_data, "got NULL.\n");
+    ok(prov_data->hWndParent == INVALID_HANDLE_VALUE, "got %p.\n", prov_data->hWndParent);
+    wtd.dwStateAction = WTD_STATEACTION_CLOSE;
+    SetLastError(0xdeadbeef);
+    r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);
+    ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %08lx\n", GetLastError());
+    ok(r == S_OK, "WinVerifyTrust failed: %08lx\n", r);
+
+    wtd.dwStateAction = WTD_STATEACTION_VERIFY;
+    SetLastError(0xdeadbeef);
+    wtd.hWVTStateData = NULL;
+    hr = WinVerifyTrustEx(NULL, &generic_action_v2, &wtd);
+    ok(hr == GetLastError(), "expected %08lx, got %08lx\n", GetLastError(), hr);
+    ok(hr == TRUST_E_NOSIGNATURE || hr == CRYPT_E_FILE_ERROR,
+     "expected TRUST_E_NOSIGNATURE or CRYPT_E_FILE_ERROR, got %08lx\n", hr);
+    prov_data = WTHelperProvDataFromStateData(wtd.hWVTStateData);
+    ok(!!prov_data, "got NULL.\n");
+    ok(!prov_data->hWndParent, "got %p.\n", prov_data->hWndParent);
     wtd.dwStateAction = WTD_STATEACTION_CLOSE;
     SetLastError(0xdeadbeef);
     r = WinVerifyTrust(INVALID_HANDLE_VALUE, &generic_action_v2, &wtd);

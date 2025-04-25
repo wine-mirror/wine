@@ -1702,6 +1702,103 @@ static void test_notifications(LPGUID lpGuid)
     IDirectSound_Release(dso);
 }
 
+static void test_notifications_noloop(LPGUID lpGuid)
+{
+    HRESULT rc;
+    IDirectSound *dso;
+    IDirectSoundBuffer *buf;
+    IDirectSoundNotify *buf_notif;
+    DSBUFFERDESC bufdesc;
+    WAVEFORMATEX wfx;
+    DSBPOSITIONNOTIFY notifies[2];
+    HANDLE handles[2];
+    DWORD status, wait;
+
+    rc = DirectSoundCreate(lpGuid, &dso, NULL);
+    ok(rc == DS_OK || rc == DSERR_NODRIVER || rc == DSERR_ALLOCATED,
+           "DirectSoundCreate() failed: %08lx\n", rc);
+    if(rc != DS_OK)
+        return;
+
+    rc = IDirectSound_SetCooperativeLevel(dso, get_hwnd(), DSSCL_PRIORITY);
+    ok(rc == DS_OK, "IDirectSound_SetCooperativeLevel() failed: %08lx\n", rc);
+    if(rc != DS_OK){
+        IDirectSound_Release(dso);
+        return;
+    }
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nChannels = 1;
+    wfx.nSamplesPerSec = 44100;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = wfx.nChannels * wfx.wBitsPerSample / 8;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    wfx.cbSize = 0;
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_GETCURRENTPOSITION2;
+    bufdesc.dwBufferBytes = wfx.nSamplesPerSec * wfx.nBlockAlign / 2; /* 0.5s */
+    bufdesc.lpwfxFormat = &wfx;
+    rc = IDirectSound_CreateSoundBuffer(dso, &bufdesc, &buf, NULL);
+    ok(rc == DS_OK && buf != NULL, "IDirectSound_CreateSoundBuffer() failed "
+           "to create a buffer %08lx\n", rc);
+
+    rc = IDirectSoundBuffer_QueryInterface(buf, &IID_IDirectSoundNotify, (void**)&buf_notif);
+    ok(rc == E_NOINTERFACE, "QueryInterface(IID_IDirectSoundNotify): %08lx\n", rc);
+    IDirectSoundBuffer_Release(buf);
+
+    ZeroMemory(&bufdesc, sizeof(bufdesc));
+    bufdesc.dwSize = sizeof(bufdesc);
+    bufdesc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY;
+    bufdesc.dwBufferBytes = wfx.nSamplesPerSec * wfx.nBlockAlign / 2; /* 0.5s */
+    bufdesc.lpwfxFormat = &wfx;
+    rc = IDirectSound_CreateSoundBuffer(dso, &bufdesc, &buf, NULL);
+    ok(rc == DS_OK && buf != NULL, "IDirectSound_CreateSoundBuffer() failed "
+           "to create a buffer %08lx\n", rc);
+
+    rc = IDirectSoundBuffer_QueryInterface(buf, &IID_IDirectSoundNotify, (void**)&buf_notif);
+    ok(rc == DS_OK, "QueryInterface(IID_IDirectSoundNotify): %08lx\n", rc);
+
+    notifies[0].dwOffset = 0;
+    handles[0] = notifies[0].hEventNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
+    notifies[1].dwOffset = bufdesc.dwBufferBytes - 4;
+    handles[1] = notifies[1].hEventNotify = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    rc = IDirectSoundNotify_SetNotificationPositions(buf_notif, 2, notifies);
+    ok(rc == DS_OK, "SetNotificationPositions: %08lx\n", rc);
+
+    IDirectSoundNotify_Release(buf_notif);
+
+    rc = IDirectSoundBuffer_Play(buf, 0, 0, 0);
+    ok(rc == DS_OK, "Play: %08lx\n", rc);
+
+    wait = WaitForMultipleObjects(2, handles, FALSE, 1000);
+    ok(wait == WAIT_OBJECT_0, "Got unexpected notification order or timeout: %lu\n", wait);
+    rc = IDirectSoundBuffer_GetStatus(buf, &status);
+    ok(rc == DS_OK,"Failed %08lx\n",rc);
+    ok(status == DSBSTATUS_PLAYING,"got %08lx\n", status);
+
+    wait = WaitForMultipleObjects(2, handles, FALSE, 1000);
+    ok(wait == WAIT_OBJECT_0+1, "Got unexpected notification order or timeout: %lu\n", wait);
+    rc = IDirectSoundBuffer_GetStatus(buf, &status);
+    ok(rc == DS_OK,"Failed %08lx\n",rc);
+    ok(status == 0,"got %08lx\n", status);
+
+    rc = IDirectSoundBuffer_Stop(buf);
+    ok(rc == DS_OK, "Stop: %08lx\n", rc);
+
+    rc = IDirectSoundBuffer_GetStatus(buf, &status);
+    ok(rc == DS_OK,"Failed %08lx\n",rc);
+    ok(status == 0,"got %08lx\n", status);
+
+    CloseHandle(notifies[0].hEventNotify);
+    CloseHandle(notifies[1].hEventNotify);
+
+    IDirectSoundBuffer_Release(buf);
+    IDirectSound_Release(dso);
+}
+
 static unsigned int number;
 
 static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
@@ -1733,6 +1830,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_duplicate(lpGuid);
         test_invalid_fmts(lpGuid);
         test_notifications(lpGuid);
+        test_notifications_noloop(lpGuid);
     }
 
     return TRUE;

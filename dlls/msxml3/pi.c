@@ -191,8 +191,7 @@ static HRESULT WINAPI dom_pi_put_nodeValue(
     hr = IXMLDOMProcessingInstruction_get_nodeName(iface, &target);
     if(hr == S_OK)
     {
-        static const WCHAR xmlW[] = {'x','m','l',0};
-        if(!wcscmp(target, xmlW))
+        if(!wcscmp(target, L"xml"))
         {
             SysFreeString(target);
             return E_FAIL;
@@ -420,7 +419,6 @@ static HRESULT WINAPI dom_pi_get_attributes(
     IXMLDOMNamedNodeMap** map)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    static const WCHAR xmlW[] = {'x','m','l',0};
     HRESULT hr;
     BSTR name;
 
@@ -433,7 +431,7 @@ static HRESULT WINAPI dom_pi_get_attributes(
     hr = node_get_nodeName(&This->node, &name);
     if (hr != S_OK) return hr;
 
-    if (!wcscmp(name, xmlW))
+    if (!wcscmp(name, L"xml"))
         *map = create_nodemap(This->node.node, &dom_pi_attr_map);
 
     SysFreeString(name);
@@ -516,12 +514,10 @@ static HRESULT WINAPI dom_pi_get_nodeTypeString(
     BSTR* p)
 {
     dom_pi *This = impl_from_IXMLDOMProcessingInstruction( iface );
-    static const WCHAR processinginstructionW[] =
-        {'p','r','o','c','e','s','s','i','n','g','i','n','s','t','r','u','c','t','i','o','n',0};
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return return_bstr(processinginstructionW, p);
+    return return_bstr(L"processinginstruction", p);
 }
 
 static HRESULT WINAPI dom_pi_get_text(
@@ -734,8 +730,7 @@ static HRESULT WINAPI dom_pi_put_data(
     hr = IXMLDOMProcessingInstruction_get_nodeName(iface, &target);
     if(hr == S_OK)
     {
-        static const WCHAR xmlW[] = {'x','m','l',0};
-        if(!wcscmp(target, xmlW))
+        if(!wcscmp(target, L"xml"))
         {
             SysFreeString(target);
             return E_FAIL;
@@ -749,7 +744,6 @@ static HRESULT WINAPI dom_pi_put_data(
 
 HRESULT dom_pi_put_xml_decl(IXMLDOMNode *node, BSTR data)
 {
-    static const WCHAR xmlW[] = {'x','m','l',0};
     xmlnode *node_obj;
     HRESULT hr;
     BSTR name;
@@ -766,7 +760,7 @@ HRESULT dom_pi_put_xml_decl(IXMLDOMNode *node, BSTR data)
     if (FAILED(hr))
         return hr;
 
-    if (!lstrcmpW(name, xmlW) && !node_obj->node->properties)
+    if (!wcscmp(name, L"xml") && !node_obj->node->properties)
         hr = parse_xml_decl(node_obj->node);
     else
         hr = S_OK;

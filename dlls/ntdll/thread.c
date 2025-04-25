@@ -92,24 +92,30 @@ static int append_output( struct debug_info *info, const char *str, size_t len )
 unsigned char __cdecl __wine_dbg_get_channel_flags( struct __wine_debug_channel *channel )
 {
     int min, max, pos, res;
-    unsigned char default_flags;
+    unsigned char flags;
+
+    if (!(channel->flags & (1 << __WINE_DBCL_INIT))) return channel->flags;
 
     if (!debug_options) init_options();
 
+    flags = debug_options[nb_debug_options].flags;
     min = 0;
     max = nb_debug_options - 1;
     while (min <= max)
     {
         pos = (min + max) / 2;
         res = strcmp( channel->name, debug_options[pos].name );
-        if (!res) return debug_options[pos].flags;
+        if (!res)
+        {
+            flags = debug_options[pos].flags;
+            break;
+        }
         if (res < 0) max = pos - 1;
         else min = pos + 1;
     }
-    /* no option for this channel */
-    default_flags = debug_options[nb_debug_options].flags;
-    if (channel->flags & (1 << __WINE_DBCL_INIT)) channel->flags = default_flags;
-    return default_flags;
+
+    if (!(flags & (1 << __WINE_DBCL_INIT))) channel->flags = flags; /* not dynamically changeable */
+    return flags;
 }
 
 /***********************************************************************
@@ -198,15 +204,8 @@ void set_native_thread_name( DWORD tid, const char *name )
 
     if (tid != -1)
     {
-        OBJECT_ATTRIBUTES attr;
+        OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
         CLIENT_ID cid;
-
-        attr.Length = sizeof(attr);
-        attr.RootDirectory = 0;
-        attr.Attributes = 0;
-        attr.ObjectName = NULL;
-        attr.SecurityDescriptor = NULL;
-        attr.SecurityQualityOfService = NULL;
 
         cid.UniqueProcess = 0;
         cid.UniqueThread = ULongToHandle( tid );
@@ -334,10 +333,9 @@ NTSTATUS WINAPI RtlCreateUserStack( SIZE_T commit, SIZE_T reserve, ULONG zero_bi
                                       &alloc, sizeof(alloc) );
     if (!status)
     {
-        void *addr = alloc.StackBase;
+        void *addr;
         SIZE_T size = page_size;
 
-        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_NOACCESS );
         addr = (char *)alloc.StackBase + page_size;
         NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 0, &size, MEM_COMMIT, PAGE_READWRITE | PAGE_GUARD );
         addr = (char *)alloc.StackBase + 2 * page_size;
@@ -519,10 +517,8 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH RtlFlsAlloc( PFLS_CALLBACK_FUNCTION callback, 
 {
     unsigned int chunk_index, index, i;
     FLS_INFO_CHUNK *chunk;
-    TEB_FLS_DATA *fls;
 
-    if (!(fls = NtCurrentTeb()->FlsSlots)
-            && !(NtCurrentTeb()->FlsSlots = fls = fls_alloc_data()))
+    if (!NtCurrentTeb()->FlsSlots && !(NtCurrentTeb()->FlsSlots = fls_alloc_data()))
         return STATUS_NO_MEMORY;
 
     lock_fls_data();

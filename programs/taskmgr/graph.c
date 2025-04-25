@@ -58,10 +58,6 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
 /* Top bars that are "unused", i.e. are dark green, representing free cpu time */
     int                i;
 
-    static const WCHAR    wszFormatI[] = {'%','d','%','%',0};
-    static const WCHAR    wszFormatII[] = {' ',' ','%','d','%','%',0};
-    static const WCHAR    wszFormatIII[] = {' ','%','d','%','%',0};
-    
     /*
      * Get the client area rectangle
      */
@@ -77,24 +73,8 @@ static void Graph_DrawCpuUsageGraph(HDC hDC, HWND hWnd)
      */
     CpuUsage = PerfDataGetProcessorUsage();
     CpuKernelUsage = PerfDataGetProcessorSystemUsage();
+    swprintf(Text, ARRAY_SIZE(Text), L"%3d%%", (int)CpuUsage);
 
-    /*
-     * Check and see how many digits it will take
-     * so we get the indentation right every time.
-     */
-    if (CpuUsage == 100)
-    {
-        swprintf(Text, ARRAY_SIZE(Text), wszFormatI, (int)CpuUsage);
-    }
-    else if (CpuUsage < 10)
-    {
-        swprintf(Text, ARRAY_SIZE(Text), wszFormatII, (int)CpuUsage);
-    }
-    else
-    {
-        swprintf(Text, ARRAY_SIZE(Text), wszFormatIII, (int)CpuUsage);
-    }
-    
     /*
      * Draw the font text onto the graph
      * The bottom 20 pixels are reserved for the text

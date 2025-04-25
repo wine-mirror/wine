@@ -1,4 +1,5 @@
 MODULE    = d3dcompiler_42.dll
+IMPORTLIB = d3dcompiler_42
 IMPORTS   = wined3d
 EXTRADEFS = -DD3D_COMPILER_VERSION=42
 PARENTSRC = ../d3dcompiler_43

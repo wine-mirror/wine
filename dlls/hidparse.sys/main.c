@@ -796,3 +796,8 @@ void WINAPI HidP_FreeCollectionDescription( HIDP_DEVICE_DESC *device_desc )
     ExFreePool( device_desc->CollectionDesc );
     ExFreePool( device_desc->ReportIDs );
 }
+
+NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
+{
+    return STATUS_SUCCESS;
+}

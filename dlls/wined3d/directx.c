@@ -480,10 +480,34 @@ static const struct wined3d_gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2070,    "NVIDIA GeForce RTX 2070",          DRIVER_NVIDIA_KEPLER,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2080,    "NVIDIA GeForce RTX 2080",          DRIVER_NVIDIA_KEPLER,  8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX2080TI,  "NVIDIA GeForce RTX 2080 Ti",       DRIVER_NVIDIA_KEPLER,  11264},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3050,    "NVIDIA GeForce RTX 3050",          DRIVER_NVIDIA_KEPLER,  6144},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3060,    "NVIDIA GeForce RTX 3060",          DRIVER_NVIDIA_KEPLER,  8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3060_LHR, "NVIDIA GeForce RTX 3060 (Low Hash Rate)", DRIVER_NVIDIA_KEPLER, 8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3060TI_GA103, "NVIDIA GeForce RTX 3060 Ti (GA103)", DRIVER_NVIDIA_KEPLER, 8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3060TI_GA104, "NVIDIA GeForce RTX 3060 Ti (GA104)", DRIVER_NVIDIA_KEPLER, 8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3060TI_GA104_LHR, "NVIDIA GeForce RTX 3060 Ti (GA104, Low Hash Rate)", DRIVER_NVIDIA_KEPLER, 8192},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3070,    "NVIDIA GeForce RTX 3070",          DRIVER_NVIDIA_KEPLER,  8192},
-    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3080,    "NVIDIA GeForce RTX 3080",          DRIVER_NVIDIA_KEPLER,  10240},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3070_LHR, "NVIDIA GeForce RTX 3070 (Low Hash Rate)", DRIVER_NVIDIA_KEPLER, 8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3070_MOBILE, "NVIDIA GeForce RTX 3070 (mobile)", DRIVER_NVIDIA_KEPLER, 8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3070TI,  "NVIDIA GeForce RTX 3070 Ti",       DRIVER_NVIDIA_KEPLER,  8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3080_10GB, "NVIDIA GeForce RTX 3080 10GB",   DRIVER_NVIDIA_KEPLER,  10240},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3080_10GB_LHR, "NVIDIA GeForce RTX 3080 10GB (Low Hash Rate)", DRIVER_NVIDIA_KEPLER, 10240},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3080_12GB, "NVIDIA GeForce RTX 3080 12GB",   DRIVER_NVIDIA_KEPLER,  10240},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3080TI,  "NVIDIA GeForce RTX 3080 Ti",       DRIVER_NVIDIA_KEPLER,  12288},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3090,    "NVIDIA GeForce RTX 3090",          DRIVER_NVIDIA_KEPLER,  24576},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX3090TI,  "NVIDIA GeForce RTX 3090 Ti",       DRIVER_NVIDIA_KEPLER,  24576},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_TESLA_T4,           "NVIDIA Tesla T4",                  DRIVER_NVIDIA_KEPLER,  16384},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_AMPERE_A10,         "NVIDIA Ampere A10",                DRIVER_NVIDIA_KEPLER,  24576},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4060,    "NVIDIA GeForce RTX 4060",          DRIVER_NVIDIA_KEPLER,  8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4060TI8G, "NVIDIA GeForce RTX 4060 Ti 8GB",  DRIVER_NVIDIA_KEPLER,  8192},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4060TI16G, "NVIDIA GeForce RTX 4060 Ti 16GB", DRIVER_NVIDIA_KEPLER, 16384},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4070,    "NVIDIA GeForce RTX 4070",          DRIVER_NVIDIA_KEPLER,  12288},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4070SUPER, "NVIDIA GeForce RTX 4070 SUPER",  DRIVER_NVIDIA_KEPLER,  12288},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4070TI,  "NVIDIA GeForce RTX 4070 Ti",       DRIVER_NVIDIA_KEPLER,  12288},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4070TISUPER, "NVIDIA GeForce RTX 4070 Ti SUPER", DRIVER_NVIDIA_KEPLER, 16384},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4080,    "NVIDIA GeForce RTX 4080",          DRIVER_NVIDIA_KEPLER,  16384},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4080SUPER, "NVIDIA GeForce RTX 4080 SUPER",  DRIVER_NVIDIA_KEPLER,  16384},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_RTX4090,    "NVIDIA GeForce RTX 4090",          DRIVER_NVIDIA_KEPLER,  24576},
 
     /* AMD cards */
     {HW_VENDOR_AMD,        CARD_AMD_RAGE_128PRO,           "ATI Rage Fury",                    DRIVER_AMD_RAGE_128PRO,  16  },
@@ -2742,6 +2766,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
     caps->shader_double_precision = d3d_info->shader_double_precision;
     caps->viewport_array_index_any_shader = d3d_info->viewport_array_index_any_shader;
     caps->stencil_export = d3d_info->stencil_export;
+    caps->simple_instancing = d3d_info->simple_instancing;
 
     caps->max_feature_level = d3d_info->feature_level;
 
@@ -2799,56 +2824,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_VDECL,                                         {STATE_VDECL, state_nop}},
     {STATE_RASTERIZER,                                    {STATE_VDECL}},
     {STATE_SCISSORRECT,                                   {STATE_VDECL}},
-
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT00),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT01),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT10),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_MAT11),    {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(0, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(1, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(2, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(3, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(4, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(5, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(6, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LSCALE),   {STATE_VDECL}},
-    {STATE_TEXTURESTAGE(7, WINED3D_TSS_BUMPENV_LOFFSET),  {STATE_VDECL}},
-
     {STATE_VIEWPORT,                                      {STATE_VDECL}},
     {STATE_INDEXBUFFER,                                   {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_LINEPATTERN),                {STATE_VDECL}},
@@ -3235,6 +3210,21 @@ static void adapter_no3d_destroy_unordered_access_view(struct wined3d_unordered_
     TRACE("view %p.\n", view);
 }
 
+static HRESULT adapter_no3d_create_video_decoder_output_view(const struct wined3d_view_desc *desc,
+        struct wined3d_texture *texture, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_decoder_output_view **view)
+{
+    TRACE("desc %s, texture %p, parent %p, parent_ops %p, view %p.\n",
+            wined3d_debug_view_desc(desc, &texture->resource), texture, parent, parent_ops, view);
+
+    return E_NOTIMPL;
+}
+
+static void adapter_no3d_destroy_video_decoder_output_view(struct wined3d_decoder_output_view *view)
+{
+    TRACE("view %p.\n", view);
+}
+
 static HRESULT adapter_no3d_create_sampler(struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_sampler **sampler)
 {
@@ -3315,6 +3305,8 @@ static const struct wined3d_adapter_ops wined3d_adapter_no3d_ops =
     .adapter_destroy_shader_resource_view = adapter_no3d_destroy_shader_resource_view,
     .adapter_create_unordered_access_view = adapter_no3d_create_unordered_access_view,
     .adapter_destroy_unordered_access_view = adapter_no3d_destroy_unordered_access_view,
+    .adapter_create_video_decoder_output_view = adapter_no3d_create_video_decoder_output_view,
+    .adapter_destroy_video_decoder_output_view = adapter_no3d_destroy_video_decoder_output_view,
     .adapter_create_sampler = adapter_no3d_create_sampler,
     .adapter_destroy_sampler = adapter_no3d_destroy_sampler,
     .adapter_create_query = adapter_no3d_create_query,
@@ -3378,6 +3370,7 @@ static struct wined3d_adapter *wined3d_adapter_no3d_create(unsigned int ordinal,
     adapter->fragment_pipe = &none_fragment_pipe;
     adapter->misc_state_template = misc_state_template_no3d;
     adapter->shader_backend = &none_shader_backend;
+    adapter->decoder_ops = &wined3d_null_decoder_ops;
 
     wined3d_adapter_no3d_init_d3d_info(adapter, wined3d_creation_flags);
 

@@ -940,8 +940,13 @@ static HRESULT d3d10_effect_preshader_eval(struct d3d10_effect_preshader *p)
     for (i = 0; i < p->vars_count; ++i)
     {
         struct d3d10_ctab_var *v = &p->vars[i];
-        memcpy(dst + v->offset, v->v->buffer->u.buffer.local_buffer + v->v->buffer_offset,
-                v->length * sizeof(*dst));
+        size_t size;
+
+        /* Constant table variables are allocated at register granularity.
+           Corresponding constant buffer variables does not share same alignment,
+           overall buffer size alignment to 16 bytes also does not help. */
+        size = min(v->length * sizeof(*dst), v->v->type->size_unpacked);
+        memcpy(dst + v->offset, v->v->buffer->u.buffer.local_buffer + v->v->buffer_offset, size);
     }
 
     instr_count = *ip++;
@@ -1537,9 +1542,9 @@ static struct d3d10_effect_variable * d3d10_effect_get_variable_by_name(
         }
     }
 
-    for (i = 0; i < effect->local_variable_count; ++i)
+    for (i = 0; i < effect->object_count; ++i)
     {
-        struct d3d10_effect_variable *v = &effect->local_variables[i];
+        struct d3d10_effect_variable *v = &effect->object_variables[i];
         if (v->name && !strcmp(v->name, name))
             return v;
     }
@@ -4108,9 +4113,9 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, size_t 
         return E_OUTOFMEMORY;
     }
 
-    if (!(e->local_variables = calloc(e->local_variable_count, sizeof(*e->local_variables))))
+    if (!(e->object_variables = calloc(e->object_count, sizeof(*e->object_variables))))
     {
-        ERR("Failed to allocate local variable memory.\n");
+        ERR("Failed to allocate object variables memory.\n");
         return E_OUTOFMEMORY;
     }
 
@@ -4167,9 +4172,9 @@ static HRESULT parse_fx10_body(struct d3d10_effect *e, const char *data, size_t 
             return hr;
     }
 
-    for (i = 0; i < e->local_variable_count; ++i)
+    for (i = 0; i < e->object_count; ++i)
     {
-        struct d3d10_effect_variable *v = &e->local_variables[i];
+        struct d3d10_effect_variable *v = &e->object_variables[i];
 
         v->effect = e;
         v->ID3D10EffectVariable_iface.lpVtbl = &d3d10_effect_variable_vtbl;
@@ -4245,11 +4250,11 @@ static HRESULT parse_fx10(struct d3d10_effect *e, const char *data, size_t data_
     e->local_buffer_count = read_u32(&ptr);
     TRACE("Local buffer count: %u.\n", e->local_buffer_count);
 
-    e->variable_count = read_u32(&ptr);
-    TRACE("Variable count: %u.\n", e->variable_count);
+    e->numeric_variable_count = read_u32(&ptr);
+    TRACE("Numeric variable count: %u.\n", e->numeric_variable_count);
 
-    e->local_variable_count = read_u32(&ptr);
-    TRACE("Object count: %u.\n", e->local_variable_count);
+    e->object_count = read_u32(&ptr);
+    TRACE("Object count: %u.\n", e->object_count);
 
     e->shared_buffer_count = read_u32(&ptr);
     TRACE("Pool buffer count: %u.\n", e->shared_buffer_count);
@@ -4577,13 +4582,13 @@ static ULONG STDMETHODCALLTYPE d3d10_effect_Release(ID3D10Effect *iface)
             free(effect->techniques);
         }
 
-        if (effect->local_variables)
+        if (effect->object_variables)
         {
-            for (i = 0; i < effect->local_variable_count; ++i)
+            for (i = 0; i < effect->object_count; ++i)
             {
-                d3d10_effect_variable_destroy(&effect->local_variables[i]);
+                d3d10_effect_variable_destroy(&effect->object_variables[i]);
             }
-            free(effect->local_variables);
+            free(effect->object_variables);
         }
 
         if (effect->local_buffers)
@@ -4656,16 +4661,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_GetDevice(ID3D10Effect *iface, ID3
 
 static void d3d10_effect_get_desc(const struct d3d10_effect *effect, D3D10_EFFECT_DESC *desc)
 {
-    unsigned int i;
-
     desc->IsChildEffect = !!effect->pool;
     desc->ConstantBuffers = effect->local_buffer_count;
     desc->SharedConstantBuffers = 0;
-    desc->GlobalVariables = effect->local_variable_count;
-    for (i = 0; i < effect->local_buffer_count; ++i)
-    {
-        desc->GlobalVariables += effect->local_buffers[i].type->member_count;
-    }
+    desc->GlobalVariables = effect->object_count + effect->numeric_variable_count;
     desc->SharedGlobalVariables = 0;
     desc->Techniques = effect->technique_count;
 }
@@ -4758,9 +4757,9 @@ static struct d3d10_effect_variable * d3d10_effect_get_variable_by_index(
         index -= v->type->member_count;
     }
 
-    if (index < effect->local_variable_count)
-        return &effect->local_variables[index];
-    index -= effect->local_variable_count;
+    if (index < effect->object_count)
+        return &effect->object_variables[index];
+    index -= effect->object_count;
 
     return effect->pool ? d3d10_effect_get_variable_by_index(effect->pool, index) : NULL;
 }
@@ -4827,9 +4826,9 @@ static struct d3d10_effect_variable * d3d10_effect_get_variable_by_semantic(
         }
     }
 
-    for (i = 0; i < effect->local_variable_count; ++i)
+    for (i = 0; i < effect->object_count; ++i)
     {
-        struct d3d10_effect_variable *v = &effect->local_variables[i];
+        struct d3d10_effect_variable *v = &effect->object_variables[i];
 
         if (v->semantic && !stricmp(v->semantic, semantic))
             return v;

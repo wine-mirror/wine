@@ -1296,18 +1296,6 @@ static HRESULT WINAPI dwritefactory_CreateNumberSubstitution(IDWriteFactory7 *if
     return create_numbersubstitution(method, locale, ignore_user_override, substitution);
 }
 
-static inline void dwrite_matrix_multiply(DWRITE_MATRIX *a, const DWRITE_MATRIX *b)
-{
-    DWRITE_MATRIX tmp = *a;
-
-    a->m11 = tmp.m11 * b->m11 + tmp.m12 * b->m21;
-    a->m12 = tmp.m11 * b->m12 + tmp.m12 * b->m22;
-    a->m21 = tmp.m21 * b->m11 + tmp.m22 * b->m21;
-    a->m22 = tmp.m21 * b->m12 + tmp.m22 * b->m22;
-    a->dx = tmp.dx * b->m11 + tmp.dy * b->m21 + b->dx;
-    a->dy = tmp.dy * b->m12 + tmp.dy * b->m22 + b->dx;
-}
-
 static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory7 *iface, DWRITE_GLYPH_RUN const *run,
     FLOAT ppdip, DWRITE_MATRIX const* transform, DWRITE_RENDERING_MODE rendering_mode,
     DWRITE_MEASURING_MODE measuring_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **analysis)

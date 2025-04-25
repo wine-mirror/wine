@@ -307,6 +307,7 @@ static void assign_action(HWND dialog)
         lpdiaf->rgoAction[old_action].dwObjID = 0;
         lpdiaf->rgoAction[old_action].guidInstance = GUID_NULL;
         lpdiaf->rgoAction[old_action].dwHow = DIAH_UNMAPPED;
+        lpdiaf->rgoAction[old_action].dwFlags = 0;
     }
 
     /* Find if action text is already set for other object and unset it */
@@ -321,6 +322,7 @@ static void assign_action(HWND dialog)
     lpdiaf->rgoAction[action].dwObjID = type;
     lpdiaf->rgoAction[action].guidInstance = device->ddi.guidInstance;
     lpdiaf->rgoAction[action].dwHow = DIAH_USERCONFIG;
+    lpdiaf->rgoAction[action].dwFlags |= DIA_APPMAPPED;
 
     /* Set new action in the list */
     lv_set_action(dialog, obj, action, lpdiaf);
@@ -334,6 +336,7 @@ static void copy_actions(LPDIACTIONFORMATW to, LPDIACTIONFORMATW from)
         to->rgoAction[i].guidInstance = from->rgoAction[i].guidInstance;
         to->rgoAction[i].dwObjID = from->rgoAction[i].dwObjID;
         to->rgoAction[i].dwHow = from->rgoAction[i].dwHow;
+        to->rgoAction[i].dwFlags = from->rgoAction[i].dwFlags;
         to->rgoAction[i].lptszActionName = from->rgoAction[i].lptszActionName;
     }
 }

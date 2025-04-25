@@ -568,18 +568,6 @@ out:
     if (hbm) DeleteObject(hbm);
 }
 
-static GLuint64 create_dummy_bindless_handle(const struct wined3d_gl_info *gl_info, GLuint texture)
-{
-    GLuint64 handle;
-
-    if (!texture || !gl_info->supported[ARB_BINDLESS_TEXTURE])
-        return 0;
-
-    handle = GL_EXTCALL(glGetTextureHandleARB(texture));
-    GL_EXTCALL(glMakeTextureHandleResidentARB(handle));
-    return handle;
-}
-
 /* Context activation is done by the caller. */
 static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *device_gl,
         struct wined3d_context_gl *context_gl)
@@ -701,18 +689,6 @@ static void wined3d_device_gl_create_dummy_textures(struct wined3d_device_gl *de
         }
     }
 
-    textures->bindless.tex_1d = create_dummy_bindless_handle(gl_info, textures->tex_1d);
-    textures->bindless.tex_2d = create_dummy_bindless_handle(gl_info, textures->tex_2d);
-    textures->bindless.tex_rect = create_dummy_bindless_handle(gl_info, textures->tex_rect);
-    textures->bindless.tex_3d = create_dummy_bindless_handle(gl_info, textures->tex_3d);
-    textures->bindless.tex_cube = create_dummy_bindless_handle(gl_info, textures->tex_cube);
-    textures->bindless.tex_cube_array = create_dummy_bindless_handle(gl_info, textures->tex_cube_array);
-    textures->bindless.tex_1d_array = create_dummy_bindless_handle(gl_info, textures->tex_1d_array);
-    textures->bindless.tex_2d_array = create_dummy_bindless_handle(gl_info, textures->tex_2d_array);
-    textures->bindless.tex_buffer = create_dummy_bindless_handle(gl_info, textures->tex_buffer);
-    textures->bindless.tex_2d_ms = create_dummy_bindless_handle(gl_info, textures->tex_2d_ms);
-    textures->bindless.tex_2d_ms_array = create_dummy_bindless_handle(gl_info, textures->tex_2d_ms_array);
-
     checkGLcall("create dummy textures");
 
     wined3d_context_gl_bind_dummy_textures(context_gl);
@@ -830,7 +806,7 @@ static bool wined3d_null_image_vk_init(struct wined3d_image_vk *image, struct wi
 
     if (!wined3d_context_vk_create_image(context_vk, type,
             VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_FORMAT_R8G8B8A8_UNORM,
-            1, 1, 1, sample_count, 1, layer_count, flags, image))
+            1, 1, 1, sample_count, 1, layer_count, flags, NULL, image))
     {
         return false;
     }
@@ -1667,6 +1643,22 @@ static void device_free_depth_stencil_state(struct wine_rb_entry *entry, void *c
     wined3d_depth_stencil_state_decref(state);
 }
 
+static void device_free_ffp_vertex_shader(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_ffp_vs *vs = WINE_RB_ENTRY_VALUE(entry, struct wined3d_ffp_vs, entry);
+
+    wined3d_shader_decref(vs->shader);
+    free(vs);
+}
+
+static void device_free_ffp_pixel_shader(struct wine_rb_entry *entry, void *context)
+{
+    struct wined3d_ffp_ps *ps = WINE_RB_ENTRY_VALUE(entry, struct wined3d_ffp_ps, entry);
+
+    wined3d_shader_decref(ps->shader);
+    free(ps);
+}
+
 void wined3d_device_uninit_3d(struct wined3d_device *device)
 {
     struct wined3d_state *state = device->cs->c.state;
@@ -1714,6 +1706,8 @@ void wined3d_device_uninit_3d(struct wined3d_device *device)
     wine_rb_destroy(&device->rasterizer_states, device_free_rasterizer_state, NULL);
     wine_rb_destroy(&device->blend_states, device_free_blend_state, NULL);
     wine_rb_destroy(&device->depth_stencil_states, device_free_depth_stencil_state, NULL);
+    wine_rb_destroy(&device->ffp_vertex_shaders, device_free_ffp_vertex_shader, NULL);
+    wine_rb_destroy(&device->ffp_pixel_shaders, device_free_ffp_pixel_shader, NULL);
 
     LIST_FOR_EACH_ENTRY_SAFE(resource, cursor, &device->resources, struct wined3d_resource, resource_list_entry)
     {
@@ -4409,6 +4403,12 @@ void CDECL wined3d_device_context_update_sub_resource(struct wined3d_device_cont
         WARN("Invalid box %s specified.\n", debug_box(box));
         return;
     }
+    else if ((resource->format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+            && ((box->left & 1) || (box->right & 1) || (box->top & 1) || (box->bottom & 1)))
+    {
+        WARN("Invalid box %s for planar resource.\n", debug_box(box));
+        return;
+    }
 
     wined3d_device_context_lock(context);
     wined3d_device_context_emit_update_sub_resource(context, resource,
@@ -4573,6 +4573,7 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
         struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, unsigned int flags)
 {
+    const struct wined3d_format *format = resource->format;
     struct wined3d_sub_resource_desc desc;
     struct wined3d_box b;
     HRESULT hr;
@@ -4622,6 +4623,12 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
 
     wined3d_device_context_lock(context);
     hr = wined3d_device_context_emit_map(context, resource, sub_resource_idx, map_desc, box, flags);
+    if (format->attrs & WINED3D_FORMAT_ATTR_PLANAR)
+    {
+        unsigned int height = box->bottom - box->top;
+        map_desc->slice_pitch = map_desc->row_pitch * height
+                + (map_desc->row_pitch * 2 / format->uv_width * height / format->uv_height);
+    }
     wined3d_device_context_unlock(context);
     return hr;
 }
@@ -5515,6 +5522,8 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
     wine_rb_init(&device->rasterizer_states, wined3d_rasterizer_state_compare);
     wine_rb_init(&device->blend_states, wined3d_blend_state_compare);
     wine_rb_init(&device->depth_stencil_states, wined3d_depth_stencil_state_compare);
+    wine_rb_init(&device->ffp_vertex_shaders, wined3d_ffp_vertex_program_key_compare);
+    wine_rb_init(&device->ffp_pixel_shaders, wined3d_ffp_frag_program_key_compare);
 
     if (vertex_pipeline->vp_states && fragment_pipeline->states
             && FAILED(hr = compile_state_table(device->state_table, device->multistate_funcs,
@@ -5527,6 +5536,8 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
         wine_rb_destroy(&device->blend_states, NULL, NULL);
         wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
         wine_rb_destroy(&device->so_descs, NULL, NULL);
+        wine_rb_destroy(&device->ffp_vertex_shaders, NULL, NULL);
+        wine_rb_destroy(&device->ffp_pixel_shaders, NULL, NULL);
         wined3d_decref(device->wined3d);
         return hr;
     }
@@ -5554,6 +5565,8 @@ err:
     wine_rb_destroy(&device->blend_states, NULL, NULL);
     wine_rb_destroy(&device->depth_stencil_states, NULL, NULL);
     wine_rb_destroy(&device->so_descs, NULL, NULL);
+    wine_rb_destroy(&device->ffp_vertex_shaders, NULL, NULL);
+    wine_rb_destroy(&device->ffp_pixel_shaders, NULL, NULL);
     wined3d_decref(device->wined3d);
     return hr;
 }
@@ -5622,4 +5635,31 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
         return CallWindowProcW(proc, window, message, wparam, lparam);
     else
         return CallWindowProcA(proc, window, message, wparam, lparam);
+}
+
+unsigned int CDECL wined3d_device_get_video_decode_profile_count(struct wined3d_device *device)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("device %p.\n", device);
+
+    device->adapter->decoder_ops->get_profiles(device->adapter, &count, profiles);
+    return count;
+}
+
+HRESULT CDECL wined3d_device_get_video_decode_profile(struct wined3d_device *device, unsigned int idx, GUID *profile)
+{
+    GUID profiles[WINED3D_DECODER_MAX_PROFILE_COUNT];
+    unsigned int count;
+
+    TRACE("device %p, idx %u.\n", device, idx);
+
+    device->adapter->decoder_ops->get_profiles(device->adapter, &count, profiles);
+
+    if (idx >= count)
+        return E_INVALIDARG;
+
+    *profile = profiles[idx];
+    return S_OK;
 }

@@ -240,7 +240,6 @@ static HRESULT WINAPI xmlelem_setAttribute(IXMLElement *iface, BSTR strPropertyN
 static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR name,
     VARIANT *value)
 {
-    static const WCHAR xmllangW[] = { 'x','m','l',':','l','a','n','g',0 };
     xmlelem *This = impl_from_IXMLElement(iface);
     xmlChar *val = NULL;
 
@@ -256,7 +255,7 @@ static HRESULT WINAPI xmlelem_getAttribute(IXMLElement *iface, BSTR name,
         return E_INVALIDARG;
 
     /* case for xml:lang attribute */
-    if (!lstrcmpiW(name, xmllangW))
+    if (!lstrcmpiW(name, L"xml:lang"))
     {
         xmlNsPtr ns;
         ns = xmlSearchNs(This->node->doc, This->node, (xmlChar*)"xml");

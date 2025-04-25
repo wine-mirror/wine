@@ -471,7 +471,7 @@ NTSTATUS WINAPI wow64_NtQueryInformationToken( UINT *args )
         if (!status)
         {
             dacl32->DefaultDacl = dacl->DefaultDacl ? PtrToUlong( dacl32 + 1 ) : 0;
-            memcpy( dacl32 + 1, dacl->DefaultDacl, ret_size - sizeof(*dacl) );
+            if (dacl->DefaultDacl) memcpy( dacl32 + 1, dacl->DefaultDacl, ret_size - sizeof(*dacl) );
         }
         if (retlen) *retlen = ret_size + sizeof(*dacl32) - sizeof(*dacl);
         return status;

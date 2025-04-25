@@ -25,21 +25,21 @@ use Digest::SHA;
 use Encode;
 use Time::Local qw(timegm_modern);
 
-my $UNIVERSION = "15.1.0";
-my $CLDRVERSION = "45";
+my $UNIVERSION = "16.0.0";
+my $CLDRVERSION = "46";
 my $ISO639VERSION = "20230123";
-my $TZVERSION = "2024a";
+my $TZVERSION = "2025a";
 
 my %data_files =
 (
  ucd       => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip", name => "UCD-$UNIVERSION.zip",
-                sha  => "cb1c663d053926500cd501229736045752713a066bd75802098598b7a7056177" },
+                sha  => "c86dd81f2b14a43b0cc064aa5f89aa7241386801e35c59c7984e579832634eb2" },
  unihan    => { url  => "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip", name => "Unihan-$UNIVERSION.zip",
-                sha  => "a0226610e324bcf784ac380e11f4cbf533ee1e6b3d028b0991bf8c0dc3f85853" },
+                sha  => "b8f000df69de7828d21326a2ffea462b04bc7560022989f7cc704f10521ef3e0" },
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
-                sha  => "402cbd285f1f952fcd0834b63541d54f69d3d8f1b8f8599bf71a1a14935f82c4" },
+                sha  => "6db2ef4ed35f3b3de74ebc2e00404a9607f76d499f576b8d4043cf14f1ed175c" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "29f4dafa918017e74cb84edf19fb707894cbce1cf7da1dd89fff24c107a66ecb" },
+                sha  => "716d0fc10a6469f7b808e55671ab98640c387e43bae152382e725462e366ccb2" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -55,7 +55,11 @@ my %data_files =
  jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT",
                 sha  => "477820bb3055bbcc90880d788cd95607d221dc94457bae249231adecf13c12e6" },
  tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz",
-                sha  => "0d0434459acbd2059a7a8da1f3304a84a86591f6ed69c6248fffa502b6edffe3" },
+                sha  => "4d5fcbc72c7c450ebfe0b659bd0f1c02fbf52fd7f517a9ea13fe71c21eb5f0d0" },
+ glyphs    => { url  => "https://github.com/adobe-type-tools/agl-aglfn/raw/4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6/glyphlist.txt",
+                sha  => "a3b2f61ced9f3644cc0d4ecde5c59df34ca286c689d9484a43a710a81c466789" },
+ psfonts   => { url  => "https://mirrors.ctan.org/fonts/adobe/afm/Adobe-Core35_AFMs-229.tar.gz",
+                sha  => "034ed3025cff4c48bbefae90f9eff7dc6237dd384443c594c017b571e49d0649" },
 );
 
 
@@ -213,6 +217,7 @@ my %indic_types =
     "Syllable_Modifier" => 0x0021,
     "Consonant_Killer" => 0x0022,
     "Consonant_Initial_Postfixed" => 0x0023,
+    "Reordering_Killer" => 0x0024,
 );
 
 my %matra_types =
@@ -332,6 +337,7 @@ my %categories =
 # a few characters need additional categories that cannot be determined automatically
 my %special_categories =
 (
+    "alpha"  => [ 0xe31, 0xe34..0xe3a, 0xe47..0xe4e, 0x1885..0x1886 ],
     "xdigit" => [ ord('0')..ord('9'),ord('A')..ord('F'),ord('a')..ord('f'),
                   0xff10..0xff19, 0xff21..0xff26, 0xff41..0xff46 ],
     "space"  => [ 0x09..0x0d, 0x85 ],
@@ -983,6 +989,12 @@ my @locales =
  { name => "ka", lcid => 0x00000037, group => 16 },
  { name => "ka-GE", lcid => 0x00000437 },
  { name => "ka-GE_modern", lcid => 0x00010437, alias => "ka-GE" },
+ { name => "kaa" },
+ { name => "kaa-Cyrl" },
+ { name => "kaa-Cyrl-UZ" },
+ { name => "kaa-Latn" },
+ { name => "kaa-Latn-UZ" },
+ { name => "kaa-UZ", alias => "kaa-Cyrl-UZ" },
  { name => "kab", sopentypelang => "KAB0" },
  { name => "kab-DZ" },
  { name => "kam", sopentypelang => "KMB" },
@@ -998,8 +1010,10 @@ my @locales =
  { name => "ki" },
  { name => "ki-KE" },
  { name => "kk", lcid => 0x0000003f, group => 5, sabbrevlangname => "KKZ" },
- { name => "kk-Cyrl", alias => "kk" },
- { name => "kk-Cyrl-KZ", alias => "kk-KZ" },
+ { name => "kk-Arab" },
+ { name => "kk-Arab-CN" },
+ { name => "kk-Cyrl" },
+ { name => "kk-Cyrl-KZ" },
  { name => "kk-KZ", lcid => 0x0000043f },
  { name => "kkj" },
  { name => "kkj-CM" },
@@ -1015,7 +1029,11 @@ my @locales =
  { name => "ko-KP", oemcp => 65001 },
  { name => "ko-KR", lcid => 0x00000412 },
  { name => "kok", lcid => 0x00000057, slist => ",", group => 15, sabbrevlangname => "KNK" },
- { name => "kok-IN", lcid => 0x00000457 },
+ { name => "kok-Deva" },
+ { name => "kok-Deva-IN", lcid => 0x00000457 },
+ { name => "kok-Latn" },
+ { name => "kok-Latn-IN" },
+ { name => "kok-IN", alias => "kok-Deva-IN" },
  { name => "kr", lcid => 0x00000071, sortlocale => "kr-Latn-NG", oemcp => 850, dir => "exemplars", sabbrevlangname => "ZZZ", sopentypelang => "KNR" },
  { name => "kr-Latn", file => "kr", dir => "exemplars" },
  { name => "kr-Latn-NG", lcid => 0x00000471, file => "kr", dir => "exemplars" },
@@ -1053,6 +1071,8 @@ my @locales =
  { name => "lg-UG" },
  { name => "lkt" },
  { name => "lkt-US" },
+ { name => "lld" },
+ { name => "lld-IT" },
  { name => "ln" },
  { name => "ln-AO" },
  { name => "ln-CD" },
@@ -1065,6 +1085,8 @@ my @locales =
  { name => "lrc-IR" },
  { name => "lt", lcid => 0x00000027, oemcp => 775, group => 3, sabbrevlangname => "LTH", sopentypelang => "LTH" },
  { name => "lt-LT", lcid => 0x00000427 },
+ { name => "ltg" },
+ { name => "ltg-LV" },
  { name => "lu" },
  { name => "lu-CD" },
  { name => "luo" },
@@ -1088,6 +1110,8 @@ my @locales =
  { name => "mgh-MZ" },
  { name => "mgo" },
  { name => "mgo-CM" },
+ { name => "mhn" },
+ { name => "mhn-IT" },
  { name => "mi", lcid => 0x00000081, slist => "," },
  { name => "mi-Latn", alias => "mi" },
  { name => "mi-Latn-NZ", alias => "mi-NZ" },
@@ -1502,6 +1526,7 @@ my @locales =
  { name => "yue-Hans" },
  { name => "yue-Hans-CN" },
  { name => "yue-Hant" },
+ { name => "yue-Hant-CN" },
  { name => "yue-Hant-HK" },
  { name => "zgh" },
  { name => "zgh-MA", alias => "zgh-Tfng-MA" },
@@ -1519,6 +1544,7 @@ my @locales =
  { name => "zh-Hans-CN-u-co-stroke", alias => "zh-CN_stroke" },
  { name => "zh-Hans-HK", slist => ";", nativedigits => "" },
  { name => "zh-Hans-MO", slist => ";", nativedigits => "" },
+ { name => "zh-Hans-MY", slist => ";", nativedigits => "" },
  { name => "zh-Hans-SG", alias => "zh-SG" },
  { name => "zh-Hans-SG-u-co-phonebk", alias => "zh-SG_phoneb" },
  { name => "zh-Hans-SG-u-co-stroke", alias => "zh-SG_stroke" },
@@ -1528,9 +1554,12 @@ my @locales =
  { name => "zh-Hant-MO", alias => "zh-MO" },
  { name => "zh-Hant-MO-u-co-stroke", alias => "zh-MO_stroke" },
  { name => "zh-Hant-MO-u-co-unihan", alias => "zh-MO_radstr" },
+ { name => "zh-Hant-MY" },
  { name => "zh-Hant-TW", alias => "zh-TW" },
  { name => "zh-Hant-TW-u-co-phonetic", alias => "zh-TW_pronun" },
  { name => "zh-Hant-TW-u-co-unihan", alias => "zh-TW_radstr" },
+ { name => "zh-Latn" },
+ { name => "zh-Latn-CN" },
  { name => "zh-HK", lcid => 0x00000c04, file => "zh_Hant_HK", sparent => "zh-Hant", sabbrevlangname => "ZHH" },
  { name => "zh-HK_radstr", lcid => 0x00040c04, alias => "zh-HK" },
  { name => "zh-MO", lcid => 0x00001404, file => "zh_Hant_MO", sparent => "zh-Hant", sabbrevlangname => "ZHM", sopentypelang => "ZHT" },
@@ -1932,25 +1961,37 @@ sub to_utf16(@)
 }
 
 ################################################################
+# download all data files into the cache
+sub download_data_files()
+{
+    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
+
+    foreach my $id (keys %data_files)
+    {
+        my $data = $data_files{$id};
+        my $url = $data->{url};
+        my $filename = "$cache/" . ($data->{name} || ($url =~ s/.*\/([^\/]+)$/$1/r));
+
+        unless (-f $filename)
+        {
+            print "Fetching $url...\n";
+            system "mkdir", "-p", $cache;
+            !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
+        }
+        my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
+        die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
+        $data->{filename} = $filename;
+    }
+}
+
+
+################################################################
 # fetch a unicode.org file and open it
 sub open_data_file($@)
 {
     my ($id, $name) = @_;
-    my $data = $data_files{$id};
-    my $cache = ($ENV{XDG_CACHE_HOME} || "$ENV{HOME}/.cache") . "/wine";
-    local *FILE;
-
-    my $url = $data->{url};
-    my $filename = "$cache/" . ($data->{name} || ($url =~ s/.*\/([^\/]+)$/$1/r));
-    unless (-f $filename)
-    {
-        print "Fetching $url...\n";
-        system "mkdir", "-p", $cache;
-        !system "wget", "-q", "-O", $filename, $url or die "cannot fetch $url";
-    }
-
-    my $sha = Digest::SHA->new( "sha256" )->addfile( $filename )->hexdigest;
-    die "invalid checksum $sha for $filename" unless $sha eq $data->{sha};
+    my $url = $data_files{$id}->{url};
+    my $filename = $data_files{$id}->{filename};
 
     if ($filename =~ /\.zip$/)
     {
@@ -4735,10 +4776,10 @@ sub build_locale_data()
 
         # numbers
 
-        my $sdecimal = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/decimal" );
+        my $sdecimal = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/decimal[not(\@alt)]" );
         my $slist = locale_entry( $loc, "slist", ";" );
         my $smondecimalsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyDecimal" ) || $sdecimal;
-        my $sthousand = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/group" );
+        my $sthousand = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/group[not(\@alt)]" );
         $sthousand =~ s/\x{202f}/\x{00a0}/;
         my $smonthousandsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyGroup" ) || $sthousand;
         my $spositivesign = "";
@@ -5430,7 +5471,7 @@ sub parse_transition_date($$@)
                    Jul => 7, Aug => 8, Sep => 9, Oct => 10, Nov => 11, Dec => 12 );
     my %days = ( Sun => 0, Mon => 1, Tue => 2, Wed => 3, Thu => 4, Fri => 5, Sat => 6 );
 
-    my $mon = $in ? $months{$in} : 1;
+    my $mon = $in ? $months{substr($in,0,3)} : 1;
     my ($week, $dow, $flag, $time, $sec);
     my $first = month_first_dow( $year, $mon );
 
@@ -5812,6 +5853,293 @@ sub dump_registry_script($%)
 }
 
 
+sub is_win_ansi($)
+{
+    my $c = shift;
+    return 1 if $c >= 0x0020 && $c <= 0x007e;
+    return 1 if $c >= 0x00a0 && $c <= 0x00ff;
+    return 1 if $c >= 0x0152 && $c <= 0x0153;
+    return 1 if $c >= 0x0160 && $c <= 0x0161;
+    return 1 if $c >= 0x017d && $c <= 0x017e;
+    return 1 if $c >= 0x2013 && $c <= 0x2014;
+    return 1 if $c >= 0x2018 && $c <= 0x201a;
+    return 1 if $c >= 0x201c && $c <= 0x201e;
+    return 1 if $c >= 0x2020 && $c <= 0x2022;
+    return 1 if $c >= 0x2039 && $c <= 0x203a;
+    return 1 if $c == 0x0178;
+    return 1 if $c == 0x0192;
+    return 1 if $c == 0x02c6;
+    return 1 if $c == 0x02c9;
+    return 1 if $c == 0x02dc;
+    return 1 if $c == 0x03bc;
+    return 1 if $c == 0x2026;
+    return 1 if $c == 0x2030;
+    return 1 if $c == 0x20ac;
+    return 1 if $c == 0x2122;
+    return 1 if $c == 0x2219;
+    return 0;
+}
+
+################################################################
+# build the PostScript font metrics
+sub dump_psfonts($)
+{
+    my $dir = shift;
+
+    my @psfonts =
+    (
+     "Courier",
+     "Courier-Bold",
+     "Courier-BoldOblique",
+     "Courier-Oblique",
+     "Helvetica",
+     "Helvetica-Bold",
+     "Helvetica-BoldOblique",
+     "Helvetica-Narrow",
+     "Helvetica-NarrowBold",
+     "Helvetica-NarrowBoldOblique",
+     "Helvetica-NarrowOblique",
+     "Helvetica-Oblique",
+     "ITCAvantGarde-Book",
+     "ITCAvantGarde-BookOblique",
+     "ITCAvantGarde-Demi",
+     "ITCAvantGarde-DemiOblique",
+     "ITCBookman-Demi",
+     "ITCBookman-DemiItalic",
+     "ITCBookman-Light",
+     "ITCBookman-LightItalic",
+     "ITCZapfChancery-MediumItalic",
+     "NewCenturySchlbk-Bold",
+     "NewCenturySchlbk-BoldItalic",
+     "NewCenturySchlbk-Italic",
+     "NewCenturySchlbk-Roman",
+     "Palatino-Bold",
+     "Palatino-BoldItalic",
+     "Palatino-Italic",
+     "Palatino-Roman",
+     "Symbol",
+     "Times-Bold",
+     "Times-BoldItalic",
+     "Times-Italic",
+     "Times-Roman",
+     "ZapfDingbats",
+    );
+
+    my %fonts;
+    my %glyphs;
+    my %glyph_values;
+
+    my $FILE = open_data_file( "glyphs" );
+    while (<$FILE>)
+    {
+        chomp;
+        s/\r$//;
+        next if /^$/;
+        next if /^#/;
+        if (/([A-Za-z0-9_]+);([0-9A-F]+)/)
+        {
+            $glyph_values{$2} ||= $1;
+            $glyphs{$1} ||= hex $2;
+            next;
+        }
+        die "unrecognized line $_";
+    }
+
+    my $filename = "$dir/glyphs.c";
+    printf "Building %s\n", $filename;
+    my $count = scalar keys %glyphs;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "/* Adobe Glyph List, generated from $current_data_file */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"psdrv.h\"\n\n";
+    print OUTPUT "const INT PSDRV_AGLbyNameSize = $count;\n\n";
+    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyName[$count] =\n{\n";
+    map { printf OUTPUT "    { 0x%04x, \"$_\" },\n", $glyphs{$_}; } sort keys %glyphs;
+    print OUTPUT "};\n\n";
+
+    $count = scalar keys %glyph_values;
+    print OUTPUT "const INT PSDRV_AGLbyUVSize = $count;\n\n";
+    print OUTPUT "const UNICODEGLYPH PSDRV_AGLbyUV[$count] =\n{\n";
+    map { printf OUTPUT "    { 0x%04x, \"%s\" },\n", hex $_, $glyph_values{$_}; } sort keys %glyph_values;
+    print OUTPUT "};\n";
+    close OUTPUT;
+    save_file($filename);
+
+    foreach my $file (@psfonts)
+    {
+        my $FILE = open_data_file( "psfonts", "Adobe-Core35_AFMs-229/$file.afm" );
+        my %font;
+        while (<$FILE>)
+        {
+            chomp;
+            last if /^StartFontMetrics\s/;
+            die "unrecognized line $_";
+        }
+        while (<$FILE>)
+        {
+            chomp;
+            last if /^StartCharMetrics\s/;
+            next if /^Comment\s/;
+            if (/^([A-Za-z]+)\s+(.*)/)
+            {
+                $font{$1} = $2;
+                next;
+            }
+            die "unrecognized line $_";
+        }
+        $font{chars} = [ ];
+        my $ascender = 0;
+        my $descender = 0;
+        while (<$FILE>)
+        {
+            chomp;
+            last if /^EndCharMetrics$/;
+            my @fields = split /\s*;\s*/;
+            my %char;
+            foreach my $f (@fields)
+            {
+                if ($f =~ /^C\s+(-?\d+)/)
+                {
+                    $char{C} = $1;
+                }
+                elsif ($f =~ /^WX\s+(\d+)/)
+                {
+                    $char{WX} = $1;
+                }
+                elsif ($f =~ /^N\s+([A-Za-z0-9_]+)/)
+                {
+                    $char{N} = $1;
+                    if ($font{EncodingScheme} eq "FontSpecific")
+                    {
+                        if ($char{C} == -1)
+                        {
+                            %char = ();
+                            last;
+                        }
+                        $char{UV} = 0xf000 + $char{C};
+                    }
+                    elsif (defined $glyphs{$1})
+                    {
+                        $char{UV} = $glyphs{$1};
+                    }
+                    else
+                    {
+                        %char = ();
+                        last;
+                    }
+                }
+                elsif ($f =~ /^B\s+(.*)/)
+                {
+                    next if $font{EncodingScheme} eq "FontSpecific";
+                    next unless is_win_ansi( $char{C} );
+                    my @bbox = split /\s+/, $1;
+                    $ascender = $bbox[3] if $bbox[3] > $ascender;
+                    $descender = $bbox[1] if $bbox[1] < $descender;
+                }
+                elsif ($f =~ /^L\s+/)
+                {
+                    next;
+                }
+                else { die "unrecognized field $f"; }
+            }
+            push @{$font{chars}}, \%char if %char;
+        }
+        close $FILE;
+
+        $font{FamilyName} .= " Narrow" if $font{FullName} =~ / Narrow/;
+        my @bbox = split /\s+/, $font{FontBBox};
+        $ascender ||= $bbox[3];
+        $descender ||= $bbox[1];
+        my $linegap = 1150 - ($ascender - $descender);
+        $font{FontBBox} = \@bbox;
+        $font{usUnitsPerEm} = 1000;
+        $font{sAscender} = $ascender;
+        $font{sDescender} = $descender;
+        $font{sLineGap} = $linegap > 0 ? $linegap : 0;
+        $font{usWinAscent} = $ascender;
+        $font{usWinDescent} = -$descender;
+
+        if ($font{EncodingScheme} eq "FontSpecific")
+        {
+            my $width = 0;
+            foreach my $m (@{$font{chars}})
+            {
+                $width += $m->{WX};
+            }
+            $font{sAvgCharWidth} = $width / scalar @{$font{chars}};
+        }
+        else
+        {
+            my @weights;
+            $weights[ord(' ')] = 166;
+            @weights[ord('a')..ord('z')] = ( 64, 14, 27,  35, 100, 20, 14, 42, 63, 3, 6, 35, 20, 56, 56, 17, 4, 49, 56, 71, 31, 10, 18, 3, 18, 2 );
+            my $width = 0;
+            foreach my $m (@{$font{chars}})
+            {
+                next unless defined $weights[$m->{UV}];
+                $width += $weights[$m->{UV}] * $m->{WX};
+            }
+            $font{sAvgCharWidth} = ($width + 500) / 1000;
+        }
+        (my $varname = $font{FontName}) =~ s/-/_/g;
+        $fonts{$varname} = \%font;
+    }
+
+    $filename = "$dir/corefonts.c";
+    printf "Building %s\n", $filename;
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT "/* Adobe Core Fonts, generated from $data_files{psfonts}->{url} */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"psdrv.h\"\n\n";
+
+    foreach my $name (sort keys %fonts)
+    {
+        my $count = scalar @{$fonts{$name}->{chars}};
+        printf OUTPUT "static const AFMMETRICS metrics_%s[%u] =\n{\n", $name, $count;
+        foreach my $m (sort { $a->{UV} <=> $b->{UV} } @{$fonts{$name}->{chars}})
+        {
+            printf OUTPUT "    { 0x%04x, %4u },\n", $m->{UV}, $m->{WX};
+        }
+        print OUTPUT  "};\n\n";
+    }
+
+    foreach my $name (sort keys %fonts)
+    {
+        my %weights = ( Bold => "FW_BOLD",
+                        Book => "FW_NORMAL",
+                        Demi => "FW_BOLD",
+                        Light => "FW_NORMAL",
+                        Roman => "FW_NORMAL",
+                        Medium => "FW_NORMAL",
+            );
+        printf OUTPUT "static const AFM font_%s =\n{\n", $name;
+        printf OUTPUT "    .FontName = \"%s\",\n", $fonts{$name}->{FontName};
+        printf OUTPUT "    .FamilyName = L\"%s\",\n", $fonts{$name}->{FamilyName};
+        printf OUTPUT "    .EncodingScheme = L\"%s\",\n", $fonts{$name}->{EncodingScheme};
+        printf OUTPUT "    .Weight = %s,\n", $weights{$fonts{$name}->{Weight}};
+        printf OUTPUT "    .ItalicAngle = %s,\n", $fonts{$name}->{ItalicAngle};
+        printf OUTPUT "    .IsFixedPitch = %s,\n", uc $fonts{$name}->{IsFixedPitch};
+        printf OUTPUT "    .FontBBox = { %d, %d, %d, %d },\n", @{$fonts{$name}->{FontBBox}}[0..3];
+        printf OUTPUT "    .WinMetrics.usUnitsPerEm = %d,\n", $fonts{$name}->{usUnitsPerEm};
+        printf OUTPUT "    .WinMetrics.sAscender = %d,\n", $fonts{$name}->{sAscender};
+        printf OUTPUT "    .WinMetrics.sDescender = %d,\n", $fonts{$name}->{sDescender};
+        printf OUTPUT "    .WinMetrics.sLineGap = %d,\n", $fonts{$name}->{sLineGap};
+        printf OUTPUT "    .WinMetrics.sAvgCharWidth = %d,\n", $fonts{$name}->{sAvgCharWidth};
+        printf OUTPUT "    .WinMetrics.usWinAscent = %d,\n", $fonts{$name}->{usWinAscent};
+        printf OUTPUT "    .WinMetrics.usWinDescent = %d,\n", $fonts{$name}->{usWinDescent};
+        printf OUTPUT "    .NumofMetrics = %s,\n", $count;
+        printf OUTPUT "    .Metrics = metrics_%s\n", $name;
+        print OUTPUT  "};\n\n";
+    }
+
+    print OUTPUT "const AFM * const PSDRV_BuiltinAFMs[] =\n{\n";
+    map { print OUTPUT  "    &font_$_,\n"; } sort keys %fonts;
+    print OUTPUT  "    NULL\n};\n";
+    close OUTPUT;
+    save_file($filename);
+}
+
+
 ################################################################
 # save a file if modified
 sub save_file($)
@@ -5832,6 +6160,7 @@ sub save_file($)
 # main routine
 
 chdir ".." if -f "./make_unicode";
+download_data_files();
 load_data();
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
@@ -5848,6 +6177,7 @@ dump_scripts( "dlls/dwrite/scripts" );
 dump_indic( "dlls/gdi32/uniscribe/indicsyllable.c" );
 dump_vertical( "dlls/win32u/vertical.c", 1 );
 dump_vertical( "dlls/wineps.drv/vertical.c", 0 );
+dump_psfonts( "dlls/wineps.drv" );
 dump_intl_nls("nls/l_intl.nls");
 dump_norm_table( "nls/normnfc.nls" );
 dump_norm_table( "nls/normnfd.nls" );

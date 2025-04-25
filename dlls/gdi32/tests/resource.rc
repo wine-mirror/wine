@@ -29,6 +29,9 @@ wine_vdmx.ttf RCDATA wine_vdmx.ttf
 /* @makedep: vertical.ttf */
 vertical.ttf RCDATA vertical.ttf
 
+/* @makedep: vertical2.ttf */
+vertical2.ttf RCDATA vertical2.ttf
+
 /* @makedep: wine_longname.ttf */
 wine_longname.ttf RCDATA wine_longname.ttf
 

@@ -115,7 +115,6 @@ struct sc_lock
     struct scmdatabase *db;
 };
 
-static const WCHAR emptyW[] = {0};
 static PTP_CLEANUP_GROUP cleanup_group;
 HANDLE exit_event;
 
@@ -164,7 +163,7 @@ static void CALLBACK shutdown_callback(TP_CALLBACK_INSTANCE *instance, void *con
     result = WaitForSingleObject(process->control_mutex, 30000);
     if (result == WAIT_OBJECT_0)
     {
-        process_send_control(process, FALSE, emptyW, SERVICE_CONTROL_STOP, NULL, 0, &result);
+        process_send_control(process, FALSE, L"", SERVICE_CONTROL_STOP, NULL, 0, &result);
         ReleaseMutex(process->control_mutex);
     }
 
@@ -975,6 +974,18 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
         save_service_config( service->service_entry );
         service_unlock( service->service_entry );
         break;
+    case SERVICE_CONFIG_DELAYED_AUTO_START_INFO:
+        WINE_TRACE( "SERVICE_CONFIG_DELAYED_AUTO_START_INFO: fDelayedAutostart %d\n",
+                    config.delayedstart->fDelayedAutostart);
+
+        if (config.delayedstart->fDelayedAutostart && config.delayedstart->fDelayedAutostart != 1)
+            return ERROR_INVALID_PARAMETER;
+
+        service_lock( service->service_entry );
+        service->service_entry->delayed_autostart = config.delayedstart->fDelayedAutostart;
+        save_service_config( service->service_entry );
+        service_unlock( service->service_entry );
+        break;
     default:
         WINE_FIXME("level %lu not implemented\n", config.dwInfoLevel);
         err = ERROR_INVALID_LEVEL;
@@ -1031,6 +1042,18 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         if (size >= *needed)
             ((LPSERVICE_PRESHUTDOWN_INFO)buffer)->dwPreshutdownTimeout =
                 service->service_entry->preshutdown_timeout;
+        else err = ERROR_INSUFFICIENT_BUFFER;
+
+        service_unlock(service->service_entry);
+        break;
+
+    case SERVICE_CONFIG_DELAYED_AUTO_START_INFO:
+        service_lock(service->service_entry);
+
+        *needed = sizeof(SERVICE_DELAYED_AUTO_START_INFO);
+        if (size >= *needed)
+            ((SERVICE_DELAYED_AUTO_START_INFO *)buffer)->fDelayedAutostart =
+                service->service_entry->delayed_autostart;
         else err = ERROR_INSUFFICIENT_BUFFER;
 
         service_unlock(service->service_entry);
@@ -1203,7 +1226,7 @@ BOOL process_send_control(struct process_entry *process, BOOL shared_process, co
         control |= SERVICE_CONTROL_FORWARD_FLAG;
         data = (BYTE *)name;
         data_size = (lstrlenW(name) + 1) * sizeof(WCHAR);
-        name = emptyW;
+        name = L"";
     }
 
     /* calculate how much space we need to send the startup info */

@@ -175,6 +175,7 @@ typedef struct _WER_EXCEPTION_INFORMATION
 
 HRESULT WINAPI WerAddExcludedApplication(PCWSTR, BOOL);
 HRESULT WINAPI WerGetFlags(HANDLE process, DWORD *flags);
+HRESULT WINAPI WerRegisterCustomMetadata(PCWSTR key, PCWSTR value);
 HRESULT WINAPI WerRegisterFile(PCWSTR file, WER_REGISTER_FILE_TYPE regfiletype, DWORD flags);
 HRESULT WINAPI WerRegisterMemoryBlock(void *block, DWORD size);
 HRESULT WINAPI WerRegisterRuntimeExceptionModule(PCWSTR callbackdll, void *context);
@@ -186,6 +187,7 @@ HRESULT WINAPI WerReportSetParameter(HREPORT, DWORD, PCWSTR, PCWSTR);
 HRESULT WINAPI WerReportSetUIOption(HREPORT, WER_REPORT_UI, PCWSTR);
 HRESULT WINAPI WerReportSubmit(HREPORT, WER_CONSENT, DWORD, PWER_SUBMIT_RESULT);
 HRESULT WINAPI WerSetFlags(DWORD flags);
+HRESULT WINAPI WerUnregisterCustomMetadata(PCWSTR key);
 HRESULT WINAPI WerUnregisterFile(PCWSTR file);
 HRESULT WINAPI WerUnregisterMemoryBlock(void *block);
 HRESULT WINAPI WerUnregisterRuntimeExceptionModule(PCWSTR callbackdll, void *context);

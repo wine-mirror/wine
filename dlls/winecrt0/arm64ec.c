@@ -31,9 +31,6 @@ void *__os_arm64x_dispatch_ret = 0;
 void *__os_arm64x_get_x64_information = 0;
 void *__os_arm64x_set_x64_information = 0;
 
-void *__os_arm64x_helper0 = 0;
-void *__os_arm64x_helper1 = 0;
-void *__os_arm64x_helper2 = 0;
 void *__os_arm64x_helper3 = 0;
 void *__os_arm64x_helper4 = 0;
 void *__os_arm64x_helper5 = 0;
@@ -76,7 +73,7 @@ asm( "\t.section .rdata,\"dr\"\n"
      "\t.globl __chpe_metadata\n"
      "\t.balign 4\n"
      "__chpe_metadata:\n"
-     "\t.word 1\n"
+     "\t.word 2\n"
      "\t.rva __hybrid_code_map\n"
      "\t.word __hybrid_code_map_count\n"
      "\t.rva __x64_code_ranges_to_entry_points\n"
@@ -96,9 +93,9 @@ asm( "\t.section .rdata,\"dr\"\n"
      "\t.word __arm64x_extra_rfe_table_size\n"
      "\t.rva __os_arm64x_dispatch_fptr\n"
      "\t.rva __hybrid_auxiliary_iat_copy\n"
-     "\t.rva __os_arm64x_helper0\n"
-     "\t.rva __os_arm64x_helper1\n"
-     "\t.rva __os_arm64x_helper2\n"
+     "\t.rva __hybrid_auxiliary_delayload_iat\n"
+     "\t.rva __hybrid_auxiliary_delayload_iat_copy\n"
+     "\t.word __hybrid_image_info_bitfield\n"
      "\t.rva __os_arm64x_helper3\n"
      "\t.rva __os_arm64x_helper4\n"
      "\t.rva __os_arm64x_helper5\n"

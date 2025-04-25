@@ -97,9 +97,9 @@ static void WIN87_Init( CONTEXT *context )
 }
 
 /***********************************************************************
- *		_fpMath (WIN87EM.1)
+ *		__fpMath (WIN87EM.1)
  */
-void WINAPI _fpMath( CONTEXT *context )
+void WINAPI __fpMath( CONTEXT *context )
 {
     TRACE("(cs:eip=%04lx:%04lx es=%04lx bx=%04lx ax=%04lx dx=%04lx)\n",
           context->SegCs, context->Eip, context->SegEs, context->Ebx,

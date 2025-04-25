@@ -165,7 +165,7 @@ extern MSXML_VERSION xmldoc_version( xmlDocPtr doc );
 extern HRESULT XMLElement_create( xmlNodePtr node, LPVOID *ppObj, BOOL own );
 
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap);
-extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err);
+extern void wineXmlCallbackError(char const* caller, const xmlError* err);
 
 #define LIBXML2_LOG_CALLBACK WINAPIV __WINE_PRINTF_ATTR(2,3)
 

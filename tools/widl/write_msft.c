@@ -2741,7 +2741,7 @@ static void save_all_changes(msft_typelib_t *typelib)
 
         expr_t *expr = get_attrp( typelib->typelib->attrs, ATTR_ID );
         if (expr)
-            sprintf( typelib_id, "#%d", expr->cval );
+            snprintf( typelib_id, sizeof(typelib_id), "#%d", expr->cval );
         add_output_to_resources( "TYPELIB", typelib_id );
         if (strendswith( typelib_name, "_t.res" ))  /* add typelib registration */
             output_typelib_regscript( typelib->typelib );
@@ -2817,7 +2817,7 @@ int create_msft_typelib(typelib_t *typelib)
      * - a string representation of those
      */
     cur_time = 2147483647;
-    sprintf(info_string, "Created by WIDL version %s at %s", PACKAGE_VERSION, asctime(gmtime(&cur_time)));
+    snprintf(info_string, sizeof(info_string), "Created by WIDL version %s at %s", PACKAGE_VERSION, asctime(gmtime(&cur_time)));
     set_custdata(msft, &midl_info_guid, VT_BSTR, info_string, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);

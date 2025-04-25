@@ -1,0 +1,6 @@
+MODULE  = windows.system.profile.systemid.dll
+IMPORTS = combase
+
+SOURCES = \
+	classes.idl \
+	main.c

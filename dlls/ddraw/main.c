@@ -37,7 +37,7 @@ static HINSTANCE instance;
 /* value of ForceRefreshRate */
 DWORD force_refresh_rate = 0;
 
-static struct ddraw_handle_table global_handle_table;
+struct ddraw_handle_table global_handle_table;
 
 /* Structure for converting DirectDrawEnumerateA to DirectDrawEnumerateExA */
 struct callback_info

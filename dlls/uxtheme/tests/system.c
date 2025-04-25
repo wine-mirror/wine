@@ -2765,6 +2765,38 @@ static void test_ShouldAppsUseDarkMode(void)
     ok(result == !light_theme, "Expected value %d, got %d\n", !light_theme, result);
 }
 
+static void test_DrawThemeEdge(void)
+{
+    HTHEME htheme;
+    HRESULT hr;
+    HWND hwnd;
+    RECT rect;
+    HDC hdc;
+
+    hwnd = CreateWindowA(WC_STATICA, "", WS_POPUP, 0, 0, 1, 1, 0, 0, 0, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed, error %#lx.\n", GetLastError());
+    htheme = OpenThemeData(hwnd, L"Button");
+    if (!htheme)
+    {
+        skip("Theming is inactive.\n");
+        DestroyWindow(hwnd);
+        return;
+    }
+
+    hdc = GetDC(hwnd);
+
+    /* Test BF_ADJUST with NULL content rect pointer */
+    hr = DrawThemeEdge(htheme, hdc, BP_PUSHBUTTON, PBS_NORMAL, &rect, BF_ADJUST, BF_RIGHT, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = DrawThemeEdge(htheme, hdc, BP_PUSHBUTTON, PBS_NORMAL, &rect, BF_DIAGONAL | BF_ADJUST, BF_RIGHT, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ReleaseDC(hwnd, hdc);
+    CloseThemeData(htheme);
+    DestroyWindow(hwnd);
+}
+
 START_TEST(system)
 {
     ULONG_PTR ctx_cookie;
@@ -2793,6 +2825,7 @@ START_TEST(system)
     test_theme(FALSE);
     test_ShouldSystemUseDarkMode();
     test_ShouldAppsUseDarkMode();
+    test_DrawThemeEdge();
 
     if (load_v6_module(&ctx_cookie, &ctx))
     {

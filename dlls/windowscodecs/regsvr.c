@@ -127,6 +127,23 @@ struct regsvr_metadatareader
 static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list);
 static HRESULT unregister_metadatareaders(struct regsvr_metadatareader const *list);
 
+struct regsvr_metadatawriter
+{
+    CLSID const *clsid;         /* NULL for end of list */
+    LPCSTR author;
+    LPCSTR friendlyname;
+    LPCSTR version;
+    LPCSTR specversion;
+    GUID const *vendor;
+    GUID const *metadata_format;
+    DWORD requires_fullstream;
+    DWORD supports_padding;
+    DWORD requires_fixedsize;
+};
+
+static HRESULT register_metadatawriters(struct regsvr_metadatawriter const *list);
+static HRESULT unregister_metadatawriters(struct regsvr_metadatawriter const *list);
+
 struct regsvr_pixelformat
 {
     CLSID const *clsid;         /* NULL for end of list */
@@ -764,7 +781,6 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
 			      KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
 
-	StringFromGUID2(list->clsid, buf, 39);
 	res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
 			      KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
 	if (res == ERROR_SUCCESS) {
@@ -811,8 +827,8 @@ static HRESULT register_metadatareaders(struct regsvr_metadatareader const *list
 
         if (list->specversion) {
 	    res = RegSetValueExA(clsid_key, specversion_valuename, 0, REG_SZ,
-                                 (const BYTE*)list->version,
-				 strlen(list->version) + 1);
+                                 (const BYTE*)list->specversion,
+				 strlen(list->specversion) + 1);
 	    if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
 
@@ -926,6 +942,169 @@ static HRESULT unregister_metadatareaders(struct regsvr_metadatareader const *li
 	res = RegDeleteTreeW(instance_key, buf);
 	if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
 	if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(readers_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+static HRESULT register_metadatawriters(struct regsvr_metadatawriter const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY readers_key;
+    HKEY instance_key;
+
+    res = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, NULL, 0,
+            KEY_READ | KEY_WRITE, NULL, &coclass_key, NULL);
+    if (res == ERROR_SUCCESS)
+    {
+        StringFromGUID2(&CATID_WICMetadataWriter, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0, KEY_READ | KEY_WRITE, NULL, &readers_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(readers_key, instance_keyname, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list)
+    {
+        HKEY clsid_key;
+        HKEY instance_clsid_key;
+
+        StringFromGUID2(list->clsid, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+                KEY_READ | KEY_WRITE, NULL, &clsid_key, NULL);
+        if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+        res = RegCreateKeyExW(instance_key, buf, 0, NULL, 0,
+                KEY_READ | KEY_WRITE, NULL, &instance_clsid_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegSetValueExW(instance_clsid_key, clsid_valuename, 0, REG_SZ,
+                                 (const BYTE*)buf, 78);
+            RegCloseKey(instance_clsid_key);
+        }
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        if (list->author)
+        {
+            res = RegSetValueExA(clsid_key, author_valuename, 0, REG_SZ,
+                    (const BYTE *)list->author, strlen(list->author) + 1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->friendlyname)
+        {
+            res = RegSetValueExA(clsid_key, friendlyname_valuename, 0, REG_SZ,
+                    (const BYTE *)list->friendlyname, strlen(list->friendlyname) + 1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->vendor)
+        {
+            StringFromGUID2(list->vendor, buf, 39);
+            res = RegSetValueExW(clsid_key, vendor_valuename, 0, REG_SZ, (const BYTE *)buf, 78);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->metadata_format)
+        {
+            StringFromGUID2(list->metadata_format, buf, 39);
+            res = RegSetValueExW(clsid_key, metadataformat_valuename, 0, REG_SZ,
+                    (const BYTE *)buf, 78);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->version)
+        {
+            res = RegSetValueExA(clsid_key, version_valuename, 0, REG_SZ,
+                    (const BYTE *)list->version, strlen(list->version) + 1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        if (list->specversion)
+        {
+            res = RegSetValueExA(clsid_key, specversion_valuename, 0, REG_SZ,
+                    (const BYTE *)list->specversion, strlen(list->specversion) + 1);
+            if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+        res = RegSetValueExA(clsid_key, requiresfullstream_valuename, 0, REG_DWORD,
+                             (const BYTE*)&list->requires_fullstream, 4);
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        res = RegSetValueExA(clsid_key, supportspadding_valuename, 0, REG_DWORD,
+                             (const BYTE*)&list->supports_padding, 4);
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+
+        if (list->requires_fixedsize)
+        {
+            res = RegSetValueExA(clsid_key, requiresfixedsize_valuename, 0, REG_DWORD,
+                    (const BYTE *)&list->requires_fixedsize, 4);
+        if (res != ERROR_SUCCESS) goto error_close_clsid_key;
+        }
+
+    error_close_clsid_key:
+        RegCloseKey(clsid_key);
+    }
+
+error_close_coclass_key:
+    RegCloseKey(instance_key);
+    RegCloseKey(readers_key);
+    RegCloseKey(coclass_key);
+error_return:
+    return res != ERROR_SUCCESS ? HRESULT_FROM_WIN32(res) : S_OK;
+}
+
+static HRESULT unregister_metadatawriters(struct regsvr_metadatawriter const *list)
+{
+    LONG res = ERROR_SUCCESS;
+    HKEY coclass_key;
+    WCHAR buf[39];
+    HKEY readers_key;
+    HKEY instance_key;
+
+    res = RegOpenKeyExW(HKEY_CLASSES_ROOT, clsid_keyname, 0, KEY_READ | KEY_WRITE, &coclass_key);
+    if (res == ERROR_FILE_NOT_FOUND) return S_OK;
+
+    if (res == ERROR_SUCCESS)
+    {
+        StringFromGUID2(&CATID_WICMetadataWriter, buf, 39);
+        res = RegCreateKeyExW(coclass_key, buf, 0, NULL, 0,
+                KEY_READ | KEY_WRITE, NULL, &readers_key, NULL);
+        if (res == ERROR_SUCCESS)
+        {
+            res = RegCreateKeyExW(readers_key, instance_keyname, 0, NULL, 0,
+                    KEY_READ | KEY_WRITE, NULL, &instance_key, NULL);
+            if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+        }
+        if (res != ERROR_SUCCESS)
+            RegCloseKey(coclass_key);
+    }
+    if (res != ERROR_SUCCESS) goto error_return;
+
+    for (; res == ERROR_SUCCESS && list->clsid; ++list)
+    {
+        StringFromGUID2(list->clsid, buf, 39);
+
+        res = RegDeleteTreeW(coclass_key, buf);
+        if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+        if (res != ERROR_SUCCESS) goto error_close_coclass_key;
+
+        res = RegDeleteTreeW(instance_key, buf);
+        if (res == ERROR_FILE_NOT_FOUND) res = ERROR_SUCCESS;
+        if (res != ERROR_SUCCESS) goto error_close_coclass_key;
     }
 
 error_close_coclass_key:
@@ -1287,36 +1466,6 @@ static struct decoder_pattern const tiff_patterns[] = {
     {0}
 };
 
-static const BYTE tga_footer_magic[18] = "TRUEVISION-XFILE.";
-
-static const BYTE tga_indexed_magic[18] = {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0};
-static const BYTE tga_indexed_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0xff,0xcf};
-
-static const BYTE tga_truecolor_magic[18] = {0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-static const BYTE tga_truecolor_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0x87,0xc0};
-
-static const BYTE tga_grayscale_magic[18] = {0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,8,0};
-static const BYTE tga_grayscale_mask[18] = {0,0xff,0xf7,0,0,0,0,0,0,0,0,0,0,0,0,0,0xff,0xcf};
-
-static GUID const * const tga_formats[] = {
-    &GUID_WICPixelFormat8bppGray,
-    &GUID_WICPixelFormat8bppIndexed,
-    &GUID_WICPixelFormat16bppGray,
-    &GUID_WICPixelFormat16bppBGR555,
-    &GUID_WICPixelFormat24bppBGR,
-    &GUID_WICPixelFormat32bppBGRA,
-    &GUID_WICPixelFormat32bppPBGRA,
-    NULL
-};
-
-static struct decoder_pattern const tga_patterns[] = {
-    {18,18,tga_footer_magic,mask_all,1},
-    {18,0,tga_indexed_magic,tga_indexed_mask,0},
-    {18,0,tga_truecolor_magic,tga_truecolor_mask,0},
-    {18,0,tga_grayscale_magic,tga_grayscale_mask,0},
-    {0}
-};
-
 static struct regsvr_decoder const decoder_list[] = {
     {   &CLSID_WICBmpDecoder,
 	"The Wine Project",
@@ -1405,17 +1554,6 @@ static struct regsvr_decoder const decoder_list[] = {
 	".tif;.tiff",
 	tiff_decode_formats,
 	tiff_patterns
-    },
-    {   &CLSID_WineTgaDecoder,
-	"The Wine Project",
-	"TGA Decoder",
-	"1.0.0.0",
-	&GUID_VendorWine,
-	&GUID_WineContainerFormatTga,
-	"image/x-targa",
-	".tga;.tpic",
-	tga_formats,
-	tga_patterns
     },
     { NULL }			/* list terminator */
 };
@@ -1545,6 +1683,7 @@ static GUID const * const converter_formats[] = {
     &GUID_WICPixelFormat48bppRGB,
     &GUID_WICPixelFormat64bppRGBA,
     &GUID_WICPixelFormat32bppCMYK,
+    &GUID_WICPixelFormat128bppRGBFloat,
     NULL
 };
 
@@ -1570,6 +1709,30 @@ static const struct metadata_pattern ifd_metadata_pattern[] = {
 static const struct reader_containers ifd_containers[] = {
     {
         &GUID_ContainerFormatTiff,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
+static const struct reader_containers gps_containers[] = {
+    {
+        &GUID_MetadataFormatIfd,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
+static const struct reader_containers exif_containers[] = {
+    {
+        &GUID_MetadataFormatIfd,
+        ifd_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
+static const struct reader_containers app1_containers[] = {
+    {
+        &GUID_ContainerFormatJpeg,
         ifd_metadata_pattern
     },
     { NULL } /* list terminator */
@@ -1646,6 +1809,21 @@ static const struct reader_containers pngtime_containers[] = {
     {
         &GUID_ContainerFormatPng,
         pngtime_metadata_pattern
+    },
+    { NULL } /* list terminator */
+};
+
+static const BYTE bKGD[] = "bKGD";
+
+static const struct metadata_pattern pngbkgd_metadata_pattern[] = {
+    { 4, 4, bKGD, mask_all, 4 },
+    { 0 }
+};
+
+static const struct reader_containers pngbkgd_containers[] = {
+    {
+        &GUID_ContainerFormatPng,
+        pngbkgd_metadata_pattern
     },
     { NULL } /* list terminator */
 };
@@ -1745,6 +1923,36 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         1, 1, 0,
         ifd_containers
     },
+    {   &CLSID_WICGpsMetadataReader,
+        "The Wine Project",
+        "Gps Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatGps,
+        1, 1, 0,
+        gps_containers
+    },
+    {   &CLSID_WICExifMetadataReader,
+        "The Wine Project",
+        "Exif Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatExif,
+        1, 1, 0,
+        exif_containers
+    },
+    {   &CLSID_WICApp1MetadataReader,
+        "The Wine Project",
+        "App1 Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatApp1,
+        1, 1, 0,
+        app1_containers
+    },
     {   &CLSID_WICPngChrmMetadataReader,
         "The Wine Project",
         "Chunk cHRM Reader",
@@ -1794,6 +2002,16 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         &GUID_MetadataFormatChunktIME,
         0, 0, 0,
         pngtime_containers
+    },
+    {   &CLSID_WICPngBkgdMetadataReader,
+        "The Wine Project",
+        "Chunk bKGD Reader",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunkbKGD,
+        0, 0, 0,
+        pngbkgd_containers
     },
     {   &CLSID_WICLSDMetadataReader,
         "The Wine Project",
@@ -1846,6 +2064,74 @@ static struct regsvr_metadatareader const metadatareader_list[] = {
         gif_comment_containers
     },
     { NULL }			/* list terminator */
+};
+
+static struct regsvr_metadatawriter const metadatawriters_list[] =
+{
+    {
+        &CLSID_WICUnknownMetadataWriter,
+        "The Wine Project",
+        "Unknown Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatUnknown,
+    },
+    {
+        &CLSID_WICGpsMetadataWriter,
+        "The Wine Project",
+        "Gps Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatGps,
+    },
+    {
+        &CLSID_WICExifMetadataWriter,
+        "The Wine Project",
+        "Exif Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatExif,
+    },
+    {
+        &CLSID_WICIfdMetadataWriter,
+        "The Wine Project",
+        "Ifd Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatIfd,
+    },
+    {
+        &CLSID_WICApp1MetadataWriter,
+        "The Wine Project",
+        "App1 Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatApp1,
+    },
+    {
+        &CLSID_WICPngBkgdMetadataWriter,
+        "The Wine Project",
+        "Png bKGD Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunkbKGD,
+    },
+    {
+        &CLSID_WICPngTimeMetadataWriter,
+        "The Wine Project",
+        "Png tIME Metadata Writer",
+        "1.0.0.0",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_MetadataFormatChunktIME,
+    },
+    { NULL } /* list terminator */
 };
 
 static BYTE const channel_mask_1bit[] = { 0x01 };
@@ -2219,6 +2505,17 @@ static struct regsvr_pixelformat const pixelformat_list[] = {
         WICPixelFormatNumericRepresentationFloat,
         1
     },
+    {   &GUID_WICPixelFormat128bppRGBFloat,
+        "The Wine Project",
+        "128bpp RGBFloat",
+        NULL, /* no version */
+        &GUID_VendorMicrosoft,
+        128, /* bitsperpixel */
+        3, /* channel count */
+        channel_masks_128bit,
+        WICPixelFormatNumericRepresentationFloat,
+        0
+    },
     { NULL }			/* list terminator */
 };
 
@@ -2341,6 +2638,8 @@ HRESULT WINAPI DllRegisterServer(void)
     if (SUCCEEDED(hr))
         hr = register_metadatareaders(metadatareader_list);
     if (SUCCEEDED(hr))
+        hr = register_metadatawriters(metadatawriters_list);
+    if (SUCCEEDED(hr))
         hr = register_pixelformats(pixelformat_list);
     return hr;
 }
@@ -2362,6 +2661,8 @@ HRESULT WINAPI DllUnregisterServer(void)
         hr = unregister_converters(converter_list);
     if (SUCCEEDED(hr))
         hr = unregister_metadatareaders(metadatareader_list);
+    if (SUCCEEDED(hr))
+        hr = unregister_metadatawriters(metadatawriters_list);
     if (SUCCEEDED(hr))
         hr = unregister_pixelformats(pixelformat_list);
     return hr;

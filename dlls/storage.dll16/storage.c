@@ -341,7 +341,7 @@ STORAGE_get_big_block(stream_access16 *str,int n,BYTE *block)
     assert(n>=-1);
     if (str->hf) {
 	if ((SetFilePointer( str->hf, (n+1)*BIGSIZE, NULL,
-			     SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
+			     FILE_BEGIN ) == INVALID_SET_FILE_POINTER) && GetLastError())
 	{
             WARN("(%p,%d,%p), seek failed (%ld)\n",str->hf, n, block, GetLastError());
 	    return FALSE;
@@ -422,7 +422,7 @@ STORAGE_put_big_block(stream_access16 *str,int n,BYTE *block)
     assert(n>=-1);
     if (str->hf) {
 	if ((SetFilePointer( str->hf, (n+1)*BIGSIZE, NULL,
-			     SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
+			     FILE_BEGIN ) == INVALID_SET_FILE_POINTER) && GetLastError())
 	{
             WARN("seek failed (%ld)\n",GetLastError());
 	    return FALSE;
@@ -738,7 +738,7 @@ STORAGE_init_storage(stream_access16 *str) {
         DWORD result;
 
 	if (str->hf)
-	    SetFilePointer( str->hf, 0, NULL, SEEK_SET );
+	    SetFilePointer( str->hf, 0, NULL, FILE_BEGIN );
 	/* block -1 is the storage header */
 	sth = (struct storage_header*)block;
 	memcpy(sth->magic,STORAGE_magic,8);

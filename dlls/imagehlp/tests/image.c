@@ -64,20 +64,24 @@ static char *load_resource(const char *name)
 #define RVA_IDATA 0x3000
 #define FILE_TOTAL 0x600
 #define RVA_TOTAL 0x4000
+
 #include <pshpack1.h>
-struct Imports {
+struct imports
+{
     IMAGE_IMPORT_DESCRIPTOR descriptors[2];
     IMAGE_THUNK_DATA32 original_thunks[2];
     IMAGE_THUNK_DATA32 thunks[2];
-    struct __IMPORT_BY_NAME {
+    struct
+    {
         WORD hint;
         char funcname[0x20];
     } ibn;
     char dllname[0x10];
 };
-#define EXIT_PROCESS (VA_START+RVA_IDATA+FIELD_OFFSET(struct Imports, thunks))
+#define EXIT_PROCESS (VA_START + RVA_IDATA + FIELD_OFFSET(struct imports, thunks))
 
-static struct _PeImage {
+static struct image
+{
     IMAGE_DOS_HEADER dos_header;
     char __alignment1[FILE_PE_START - sizeof(IMAGE_DOS_HEADER)];
     IMAGE_NT_HEADERS32 nt_headers;
@@ -85,9 +89,11 @@ static struct _PeImage {
     char __alignment2[FILE_TEXT - FILE_PE_START - sizeof(IMAGE_NT_HEADERS32) -
         NUM_SECTIONS * sizeof(IMAGE_SECTION_HEADER)];
     unsigned char text_section[FILE_IDATA-FILE_TEXT];
-    struct Imports idata_section;
-    char __alignment3[FILE_TOTAL-FILE_IDATA-sizeof(struct Imports)];
-} bin = {
+    struct imports idata_section;
+    char __alignment3[FILE_TOTAL-FILE_IDATA-sizeof(struct imports)];
+}
+bin =
+{
     /* dos header */
     {IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, 0, 0, {0}, FILE_PE_START},
     /* alignment before PE header */
@@ -104,7 +110,7 @@ static struct _PeImage {
             RVA_TOTAL, FILE_TEXT, 0, IMAGE_SUBSYSTEM_WINDOWS_GUI, 0,
             0x200000, 0x1000, 0x100000, 0x1000, 0, 0x10,
             {{0, 0},
-             {RVA_IDATA, sizeof(struct Imports)}
+             {RVA_IDATA, sizeof(struct imports)}
             }
         }
     },
@@ -114,7 +120,7 @@ static struct _PeImage {
             0, 0, 0, 0, IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ},
         {".bss", {0x400}, RVA_BSS, 0, 0, 0, 0, 0, 0,
             IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE},
-        {".idata", {sizeof(struct Imports)}, RVA_IDATA, FILE_TOTAL-FILE_IDATA, FILE_IDATA, 0,
+        {".idata", {sizeof(struct imports)}, RVA_IDATA, FILE_TOTAL-FILE_IDATA, FILE_IDATA, 0,
             0, 0, 0, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE}
     },
     /* alignment before first section */
@@ -129,15 +135,89 @@ static struct _PeImage {
     /* .idata section */
     {
         {
-            {{RVA_IDATA + FIELD_OFFSET(struct Imports, original_thunks)}, 0, 0,
-            RVA_IDATA + FIELD_OFFSET(struct Imports, dllname),
-            RVA_IDATA + FIELD_OFFSET(struct Imports, thunks)
+            {{RVA_IDATA + FIELD_OFFSET(struct imports, original_thunks)}, 0, 0,
+            RVA_IDATA + FIELD_OFFSET(struct imports, dllname),
+            RVA_IDATA + FIELD_OFFSET(struct imports, thunks)
             },
             {{0}, 0, 0, 0, 0}
         },
-        {{{RVA_IDATA+FIELD_OFFSET(struct Imports, ibn)}}, {{0}}},
-        {{{RVA_IDATA+FIELD_OFFSET(struct Imports, ibn)}}, {{0}}},
+        {{{RVA_IDATA+FIELD_OFFSET(struct imports, ibn)}}, {{0}}},
+        {{{RVA_IDATA+FIELD_OFFSET(struct imports, ibn)}}, {{0}}},
         {0,"ExitProcess"},
+        "KERNEL32.DLL"
+    },
+    /* final alignment */
+    {0}
+};
+
+struct imports64
+{
+    IMAGE_IMPORT_DESCRIPTOR descriptors[2];
+    IMAGE_THUNK_DATA64 original_thunks[2];
+    IMAGE_THUNK_DATA64 thunks[2];
+    struct
+    {
+        WORD hint;
+        char funcname[0x20];
+    } ibn;
+    char dllname[0x10];
+};
+
+static struct image64
+{
+    IMAGE_DOS_HEADER dos_header;
+    char __alignment1[FILE_PE_START - sizeof(IMAGE_DOS_HEADER)];
+    IMAGE_NT_HEADERS64 nt_headers;
+    IMAGE_SECTION_HEADER sections[2];
+    char __alignment2[FILE_TEXT - FILE_PE_START - sizeof(IMAGE_NT_HEADERS64) - 2 * sizeof(IMAGE_SECTION_HEADER)];
+    unsigned char text_section[FILE_IDATA - FILE_TEXT];
+    struct imports64 idata_section;
+    char __alignment3[FILE_TOTAL - FILE_IDATA - sizeof(struct imports64)];
+}
+bin64 =
+{
+    /* dos header */
+    { IMAGE_DOS_SIGNATURE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, {0}, 0, 0, {0}, FILE_PE_START },
+    /* alignment before PE header */
+    {0},
+    /* nt headers */
+    {
+        IMAGE_NT_SIGNATURE,
+        /* basic headers - 2 sections, no symbols, EXE file */
+        {IMAGE_FILE_MACHINE_AMD64, 2, 0, 0, 0, sizeof(IMAGE_OPTIONAL_HEADER64),
+         IMAGE_FILE_EXECUTABLE_IMAGE},
+        /* optional header */
+        {
+            IMAGE_NT_OPTIONAL_HDR64_MAGIC, 6, 0, FILE_IDATA - FILE_TEXT,
+            FILE_TOTAL - FILE_IDATA + FILE_IDATA - FILE_TEXT, 0x400,
+            RVA_TEXT, RVA_TEXT, VA_START, 0x1000, 0x200, 4, 0, 1, 0, 5, 2, 0,
+            RVA_TOTAL, FILE_TEXT, 0, IMAGE_SUBSYSTEM_WINDOWS_GUI, 0,
+            0x200000, 0x1000, 0x100000, 0x1000, 0, 0x10,
+            {{0, 0}, {RVA_IDATA, sizeof(struct imports64)}}
+        }
+    },
+    /* sections */
+    {
+        { ".text", {0x100}, RVA_TEXT, FILE_IDATA - FILE_TEXT, FILE_TEXT,
+          0, 0, 0, 0, IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ },
+        { ".idata", {sizeof(struct imports64)}, RVA_IDATA, FILE_TOTAL - FILE_IDATA, FILE_IDATA, 0,
+          0, 0, 0, IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE }
+    },
+    /* alignment before first section */
+    {0},
+    /* .text section */
+    {
+        0x90
+    },
+    /* .idata section */
+    {
+        { {{RVA_IDATA + FIELD_OFFSET(struct imports64, original_thunks)}, 0, 0,
+            RVA_IDATA + FIELD_OFFSET(struct imports64, dllname),
+            RVA_IDATA + FIELD_OFFSET(struct imports64, thunks)},
+          {{0}, 0, 0, 0, 0} },
+        { {{RVA_IDATA + FIELD_OFFSET(struct imports64, ibn)}}, {{0}} },
+        { {{RVA_IDATA + FIELD_OFFSET(struct imports64, ibn)}}, {{0}} },
+        { 0, "ExitProcess" },
         "KERNEL32.DLL"
     },
     /* final alignment */
@@ -235,10 +315,10 @@ static const struct expected_blob b1[] = {
     {FILE_IDATA-FILE_TEXT, &bin.text_section},
     {sizeof(bin.idata_section.descriptors[0].OriginalFirstThunk),
         &bin.idata_section.descriptors[0].OriginalFirstThunk},
-    {FIELD_OFFSET(struct Imports, thunks)-
-        (FIELD_OFFSET(struct Imports, descriptors)+FIELD_OFFSET(IMAGE_IMPORT_DESCRIPTOR, Name)),
+    {FIELD_OFFSET(struct imports, thunks)-
+        (FIELD_OFFSET(struct imports, descriptors)+FIELD_OFFSET(IMAGE_IMPORT_DESCRIPTOR, Name)),
         &bin.idata_section.descriptors[0].Name},
-    {FILE_TOTAL-FILE_IDATA-FIELD_OFFSET(struct Imports, ibn),
+    {FILE_TOTAL-FILE_IDATA-FIELD_OFFSET(struct imports, ibn),
         &bin.idata_section.ibn}
 };
 static const struct expected_update_accum a1 = { ARRAY_SIZE(b1), b1, TRUE };
@@ -252,6 +332,31 @@ static const struct expected_blob b2[] = {
     {FILE_TOTAL-FILE_IDATA, &bin.idata_section}
 };
 static const struct expected_update_accum a2 = { ARRAY_SIZE(b2), b2, FALSE };
+
+static const struct expected_blob b3[] = {
+    {FILE_PE_START,  &bin64},
+    /* with zeroed Checksum/SizeOfInitializedData/SizeOfImage fields */
+    {sizeof(bin64.nt_headers), &bin64.nt_headers},
+    {sizeof(bin64.sections),  &bin64.sections},
+    {FILE_IDATA - FILE_TEXT, &bin64.text_section},
+    {sizeof(bin64.idata_section.descriptors[0].OriginalFirstThunk),
+     &bin64.idata_section.descriptors[0].OriginalFirstThunk},
+    {FIELD_OFFSET(struct imports64, thunks) -
+     (FIELD_OFFSET(struct imports64, descriptors) + FIELD_OFFSET(IMAGE_IMPORT_DESCRIPTOR, Name)),
+     &bin64.idata_section.descriptors[0].Name},
+    {FILE_TOTAL - FILE_IDATA - FIELD_OFFSET(struct imports64, ibn), &bin64.idata_section.ibn}
+};
+static const struct expected_update_accum a3 = { ARRAY_SIZE(b3), b3, TRUE };
+
+static const struct expected_blob b4[] = {
+    {FILE_PE_START,  &bin64},
+    /* with zeroed Checksum/SizeOfInitializedData/SizeOfImage fields */
+    {sizeof(bin64.nt_headers), &bin64.nt_headers},
+    {sizeof(bin64.sections),  &bin64.sections},
+    {FILE_IDATA - FILE_TEXT, &bin64.text_section},
+    {FILE_TOTAL - FILE_IDATA, &bin64.idata_section}
+};
+static const struct expected_update_accum a4 = { ARRAY_SIZE(b4), b4, FALSE };
 
 /* Creates a test file and returns a handle to it.  The file's path is returned
  * in temp_file, which must be at least MAX_PATH characters in length.
@@ -270,26 +375,20 @@ static HANDLE create_temp_file(char *temp_file)
     return file;
 }
 
-static void update_checksum(void)
+static DWORD compute_checksum(const WORD *image, DWORD image_size)
 {
-    WORD const * ptr;
-    DWORD size;
-    DWORD sum = 0;
+    const WORD *ptr = image;
+    DWORD size, sum = 0;
 
-    bin.nt_headers.OptionalHeader.CheckSum = 0;
-
-    for(ptr = (WORD const *)&bin, size = (sizeof(bin)+1)/sizeof(WORD); size > 0; ptr++, size--)
+    for (size = (image_size + 1) / sizeof(WORD); size > 0; ptr++, size--)
     {
         sum += *ptr;
-        if (HIWORD(sum) != 0)
-        {
-            sum = LOWORD(sum) + HIWORD(sum);
-        }
+        if (HIWORD(sum)) sum = LOWORD(sum) + HIWORD(sum);
     }
     sum = (WORD)(LOWORD(sum) + HIWORD(sum));
-    sum += sizeof(bin);
+    sum += image_size;
 
-    bin.nt_headers.OptionalHeader.CheckSum = sum;
+    return sum;
 }
 
 static void test_get_digest_stream(void)
@@ -297,7 +396,7 @@ static void test_get_digest_stream(void)
     BOOL ret;
     HANDLE file;
     char temp_file[MAX_PATH];
-    DWORD count;
+    DWORD count, checksum;
     struct update_accum accum = { 0, NULL };
 
     SetLastError(0xdeadbeef);
@@ -326,7 +425,10 @@ static void test_get_digest_stream(void)
     /* Finally, with a valid executable in the file, it succeeds.  Note that
      * the file pointer need not be positioned at the beginning.
      */
-    update_checksum();
+    bin.nt_headers.OptionalHeader.CheckSum = 0;
+    checksum = compute_checksum((const WORD *)&bin, sizeof(bin));
+    bin.nt_headers.OptionalHeader.CheckSum = checksum;
+
     WriteFile(file, &bin, sizeof(bin), &count, NULL);
     FlushFileBuffers(file);
 
@@ -343,6 +445,36 @@ static void test_get_digest_stream(void)
      accumulating_stream_output, &accum);
     ok(ret, "ImageGetDigestStream failed: %ld\n", GetLastError());
     check_updates("flags = CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO", &a2, &accum);
+    free_updates(&accum);
+    CloseHandle(file);
+    DeleteFileA(temp_file);
+
+    file = create_temp_file(temp_file);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        skip("couldn't create temp file\n");
+        return;
+    }
+
+    bin64.nt_headers.OptionalHeader.CheckSum = 0;
+    checksum = compute_checksum((const WORD *)&bin64, sizeof(bin64));
+    bin64.nt_headers.OptionalHeader.CheckSum = checksum;
+
+    WriteFile(file, &bin64, sizeof(bin64), &count, NULL);
+    FlushFileBuffers(file);
+
+    bin64.nt_headers.OptionalHeader.CheckSum = 0;
+    bin64.nt_headers.OptionalHeader.SizeOfInitializedData = 0;
+    bin64.nt_headers.OptionalHeader.SizeOfImage = 0;
+
+    ret = ImageGetDigestStream(file, 0, accumulating_stream_output, &accum);
+    ok(ret, "ImageGetDigestStream failed: %lu\n", GetLastError());
+    check_updates("flags = 0", &a3, &accum);
+    free_updates(&accum);
+    ret = ImageGetDigestStream(file, CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO,
+                               accumulating_stream_output, &accum);
+    ok(ret, "ImageGetDigestStream failed: %lu\n", GetLastError());
+    check_updates("flags = CERT_PE_IMAGE_DIGEST_ALL_IMPORT_INFO", &a4, &accum);
     free_updates(&accum);
     CloseHandle(file);
     DeleteFileA(temp_file);

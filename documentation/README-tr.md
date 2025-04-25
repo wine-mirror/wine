@@ -32,11 +32,11 @@ zengin bilgi arşivini tarayabilirsiniz.
 Wine'ı derlemek ve çalıştırmak için, aşağıdakilerden en az birine sahip
 olmanız gerekir:
 
-- Linux 2.0.36 veya sonrası
+- Linux 2.6.22 veya sonrası
 - FreeBSD 12.4 veya sonrası
 - Solaris x86 9 veya sonrası
 - NetBSD-current
-- macOS 10.8 veya sonrası
+- macOS 10.12 veya sonrası
 
 Wine çalışmak için çekirdek düzeyinde iş parçacığı desteğine ihtiyaç
 duyduğundan sadece yukarıda söz edilen işletim sistemleri
@@ -78,13 +78,9 @@ de gelecekte desteklenebilir.
 **Seçeneğe bağlı destek kitaplıkları**:
   Yapılandırılırken, eğer seçeneğe bağlı paketler bulunamadıysa, bildirim
   alacaksınız. Yüklemeniz gereken paketler hakkında ipuçları için,
-  https://wiki.winehq.org/Recommended_Packages adresini ziyaret ediniz.
+  https://gitlab.winehq.org/wine/wine/-/wikis/Building-Wine adresini ziyaret ediniz.
   64 bit üzerinde, eğer Wine'yi 32 bit (varsayılan) olarak derleyecekseniz,
-  bazı kitaplıklarin 32 bit sürümlerinin yüklü olduğundan emin olunuz;
-  ayrıntılar için https://wiki.winehq.org/WineOn64bit adresini ziyaret
-  ediniz. Eğer gerçek bir 64 bit Wine kurulumu (veya 32-64 bit karışık)
-  isterseniz, bilgi için https://wiki.winehq.org/Wine64 adresini ziyaret
-  ediniz.
+  bazı kitaplıklarin 32 bit sürümlerinin yüklü olduğundan emin olunuz.
 
 ## DERLEME
 
@@ -148,15 +144,16 @@ bildirirken eklemelisiniz.
 	başlangıç noktasıdır.
 
 - **SSS** Wine hakkında sıkça sorulan sorulara buradan ulaşabilirsiniz:
-              https://www.winehq.org/FAQ
+              https://gitlab.winehq.org/wine/wine/-/wikis/FAQ
 
-- **Wiki**: https://wiki.winehq.org
+- **Wiki**: https://gitlab.winehq.org/wine/wine/-/wikis/
 
 - **Gitlab**: https://gitlab.winehq.org
 
 - **E-posta listeleri**:
 	Wine geliştiricileri için birtakım e-posta listeleri bulunmaktadır.
-	Daha fazla bilgi için https://www.winehq.org/forums adresine gidiniz.
+	Daha fazla bilgi için https://gitlab.winehq.org/wine/wine/-/wikis/Forums
+    adresine gidiniz.
 
 - **Hatalar**:
 	Karşılaştığınız hataları https://bugs.winehq.org adresinden Wine

@@ -441,6 +441,7 @@ START_TEST(negotiate)
     ok( info->wVersion == 1, "got %u\n", info->wVersion );
     ok( info->wRPCID == RPC_C_AUTHN_GSS_NEGOTIATE, "got %u\n", info->wRPCID );
     ok( !lstrcmpA( info->Name, "Negotiate" ), "got %s\n", info->Name );
+    ok( info->cbMaxToken == 48256 || broken(info->cbMaxToken == 12256) /* Win7 */, "got %lu\n", info->cbMaxToken );
     FreeContextBuffer( info );
 
     test_authentication();

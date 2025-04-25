@@ -38,8 +38,11 @@ static RETURN_CODE WCMD_batch_main_loop(void)
             context->skip_rest = TRUE;
             break;
         case RPL_SUCCESS:
-            return_code = node_execute(node);
-            node_dispose_tree(node);
+            if (node)
+            {
+                return_code = node_execute(node);
+                node_dispose_tree(node);
+            }
             break;
         case RPL_SYNTAXERROR:
             return_code = RETURN_CODE_SYNTAX_ERROR;
@@ -90,7 +93,9 @@ RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
     free(context);
     context = prev_context;
 
-    return return_code;
+    if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
+        errorlevel = return_code;
+    return errorlevel;
 }
 
 /*******************************************************************
@@ -222,7 +227,16 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
   /* We can't use the native f* functions because of the filename syntax differences
      between DOS and Unix. Also need to lose the LF (or CRLF) from the line. */
 
-  if (!ReadConsoleW(h, buf, noChars, &charsRead, NULL)) {
+  if (VerifyConsoleIoHandle(h) && ReadConsoleW(h, buf, noChars, &charsRead, NULL) && charsRead) {
+      if (!charsRead) return NULL;
+
+      /* Find first EOL */
+      for (i = 0; i < charsRead; i++) {
+          if (buf[i] == '\n' || buf[i] == '\r')
+              break;
+      }
+  }
+  else {
       LARGE_INTEGER filepos;
       char *bufA;
       UINT cp;
@@ -253,15 +267,6 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 
       i = MultiByteToWideChar(cp, 0, bufA, p - bufA, buf, noChars);
       free(bufA);
-  }
-  else {
-      if (!charsRead) return NULL;
-
-      /* Find first EOL */
-      for (i = 0; i < charsRead; i++) {
-          if (buf[i] == '\n' || buf[i] == '\r')
-              break;
-      }
   }
 
   /* Truncate at EOL (or end of buffer) */
@@ -307,11 +312,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
  */
 void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 {
-
-#define NUMMODIFIERS 11
-  static const WCHAR validmodifiers[NUMMODIFIERS] = {
-        '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
-  };
+  static const WCHAR *validmodifiers = L"~fdpnxsatz$";
 
   WIN32_FILE_ATTRIBUTE_DATA fileInfo;
   WCHAR  outputparam[MAXSTRING];
@@ -321,41 +322,17 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
   WCHAR  *filepart       = NULL;
   WCHAR  *pos            = *start+1;
   WCHAR  *firstModifier  = pos;
-  WCHAR  *lastModifier   = NULL;
+  WCHAR  *lastModifier   = pos++;
   int   modifierLen     = 0;
-  BOOL  finished        = FALSE;
-  int   i               = 0;
   BOOL  exists          = TRUE;
   BOOL  skipFileParsing = FALSE;
   BOOL  doneModifier    = FALSE;
 
   /* Search forwards until find invalid character modifier */
-  while (!finished) {
-
-    /* Work on the previous character */
-    if (lastModifier != NULL) {
-
-      for (i=0; i<NUMMODIFIERS; i++) {
-        if (validmodifiers[i] == *lastModifier) {
-
-          /* Special case '$' to skip until : found */
-          if (*lastModifier == '$') {
-            while (*pos != ':' && *pos) pos++;
-            if (*pos == 0x00) return; /* Invalid syntax */
-            pos++;                    /* Skip ':'       */
-          }
-          break;
-        }
-      }
-
-      if (i==NUMMODIFIERS) {
-        finished = TRUE;
-      }
-    }
-
-    /* Save this one away */
-    if (!finished) {
-      lastModifier = pos;
+  for (; wcschr(validmodifiers, towlower(*lastModifier)); lastModifier = pos++) {
+    /* Special case '$' to skip until : found */
+    if (*lastModifier == L'$') {
+      if (!(pos = wcschr(pos, L':'))) return; /* Invalid syntax */
       pos++;
     }
   }
@@ -369,15 +346,17 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
       break;
 
     } else {
-      int foridx = for_var_char_to_index(*lastModifier);
       /* Its a valid parameter identifier - OK */
-      if ((foridx >= 0) && (forloopcontext->variable[foridx] != NULL)) break;
+      if (for_var_is_valid(*lastModifier) && forloopcontext->variable[*lastModifier] != NULL) break;
 
       /* Its not a valid parameter identifier - step backwards */
       lastModifier--;
     }
   }
   if (lastModifier == firstModifier) return; /* Invalid syntax */
+  /* put all modifiers in lowercase */
+  for (pos = firstModifier; pos < lastModifier && *pos != L'$'; pos++)
+      *pos = towlower(*pos);
 
   /* So now, firstModifier points to beginning of modifiers, lastModifier
      points to the variable just after the modifiers. Process modifiers
@@ -397,9 +376,8 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
                             *lastModifier-'0' + context -> shift_count[*lastModifier-'0'],
                             NULL, FALSE, TRUE));
   } else {
-    int foridx = for_var_char_to_index(*lastModifier);
-    if (foridx != -1)
-        lstrcpyW(outputparam, forloopcontext->variable[foridx]);
+    if (for_var_is_valid(*lastModifier))
+        lstrcpyW(outputparam, forloopcontext->variable[*lastModifier]);
   }
 
   /* 1. Handle '~' : Strip surrounding quotes */
@@ -639,7 +617,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
             return_code = errorlevel = NO_ERROR;
         else
         {
-            WCMD_run_program(buffer, TRUE);
+            WCMD_call_command(buffer);
             /* If the thing we try to run does not exist, call returns 1 */
             if (errorlevel == RETURN_CODE_CANT_LAUNCH)
                 errorlevel = ERROR_INVALID_FUNCTION;

@@ -2482,14 +2482,12 @@ BOOL WINAPI IsOS(DWORD feature)
     case OS_SMALLBUSINESSSERVER:
         ISOS_RETURN(platform == VER_PLATFORM_WIN32_NT);
     case OS_TABLETPC:
-        FIXME("(OS_TABLETPC) What should we return here?\n");
-        return FALSE;
+        ISOS_RETURN(GetSystemMetrics(SM_TABLETPC));
     case OS_SERVERADMINUI:
         FIXME("(OS_SERVERADMINUI) What should we return here?\n");
         return FALSE;
     case OS_MEDIACENTER:
-        FIXME("(OS_MEDIACENTER) What should we return here?\n");
-        return FALSE;
+        ISOS_RETURN(GetSystemMetrics(SM_MEDIACENTER));
     case OS_APPLIANCE:
         FIXME("(OS_APPLIANCE) What should we return here?\n");
         return FALSE;

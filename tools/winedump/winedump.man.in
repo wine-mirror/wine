@@ -1,6 +1,6 @@
 .TH WINEDUMP 1 "October 2005" "@PACKAGE_STRING@" "Wine Developers Manual"
 .SH NAME
-winedump \- A Wine DLL tool
+winedump \- Wine DLL tool
 .SH SYNOPSIS
 .BR "winedump " [ "-h " "| "
 .BI "sym " sym
@@ -12,10 +12,10 @@ winedump \- A Wine DLL tool
 .SH DESCRIPTION
 .B winedump
 is a Wine tool which aims to help:
-.nf
-A: Reimplementing a Win32 DLL for use within Wine, or
-.nf
-B: Compiling a Win32 application with Winelib that uses x86 DLLs
+
+- A: Reimplementing a Win32 DLL for use within Wine, or
+.br
+- B: Compiling a Win32 application with Winelib that uses x86 DLLs
 .PP
 For both tasks in order to be able to link to the Win functions some
 glue code is needed.  This 'glue' comes in the form of a \fI.spec\fR file.
@@ -54,12 +54,10 @@ Used to demangle C++ symbols.
 .SH OPTIONS
 Mode options depend on the mode given as the first argument.
 .PP
-.B Help mode:
-.nf
+.SS Help mode
 No options are used.
 The program prints the help info and then exits.
-.PP
-.B Dump mode:
+.SS Dump mode
 .IP \fIfile\fR
 Dumps the contents of \fIfile\fR. Various file formats are supported
 (PE, NE, LE, Minidumps, .lnk).
@@ -85,8 +83,7 @@ a lot of output will be produced.
 .IP \fB-G\fR
 Dumps contents of debug section if any (for now, only stabs
 information is supported).
-.PP
-.B Spec mode:
+.SS Spec mode
 .IP \fIdll\fR
 Use \fIdll\fR for input file and generate implementation code.
 .IP "\fB-I \fIdir\fR"
@@ -176,35 +173,29 @@ the name of each function as it is processed, and a status
 indication of whether it was processed OK.  With \fB-v\fR given, a
 lot of information is dumped while \fBwinedump\fR works: this is
 intended to help debug any problems.
-.PP
-.B Sym mode:
+.SS Sym mode
 .IP \fIsym\fR
 Demangles C++ symbol \fIsym\fR and then exits.
 .SH FILES
-.I function_grep.pl
-.RS
+.IP function_grep.pl
 Perl script used to retrieve a function prototype.
-.RE
 .PP
 Files output in
 .BR spec " mode"
 for
 .IR foo.dll :
-.nf
-.I foo.spec
+.IP foo.spec
 .RS
 This is the \fI.spec\fR file.
 .RE
-.I foo_dll.h
-.nf
-.I foo_main.c
+.IP foo_dll.h,\ foo_main.c
 .RS
 These are the source code files containing the minimum set
 of code to build a stub DLL. The C file contains one
 function, \fIFOO_Init\fR, which does nothing (but must be
 present).
 .RE
-.I Makefile.in
+.IP Makefile.in
 .RS
 This is a template for \fBconfigure\fR to produce a makefile. It
 is designed for a DLL that will be inserted into the Wine
@@ -219,7 +210,7 @@ Bugs can be reported on the
 .UE .
 .SH AUTHORS
 Jon P. Griffiths <jon_p_griffiths at yahoo dot com>
-.nf
+.br
 Michael Stefaniuc <mstefani at redhat dot com>
 .SH AVAILABILITY
 .B winedump

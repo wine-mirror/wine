@@ -39,7 +39,7 @@ static inline BOOL SHELL_OsIsUnicode(void)
 /* Tests for My Computer */
 static void test_parse_for_my_computer(void)
 {
-    WCHAR path[] = { '\\','\\','?','\\','C',':','\\',0 };
+    WCHAR path[] = L"\\\\?\\C:\\";
     IShellFolder *mycomp, *sf;
     WCHAR *drive = path + 4;
     ITEMIDLIST *pidl;
@@ -107,13 +107,8 @@ done:
 /* Tests for My Network Places */
 static void test_parse_for_entire_network(void)
 {
-    static WCHAR my_network_places_path[] = {
-        ':',':','{','2','0','8','D','2','C','6','0','-','3','A','E','A','-',
-                    '1','0','6','9','-','A','2','D','7','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
-    static WCHAR entire_network_path[] = {
-        ':',':','{','2','0','8','D','2','C','6','0','-','3','A','E','A','-',
-                    '1','0','6','9','-','A','2','D','7','-','0','8','0','0','2','B','3','0','3','0','9','D',
-                '}','\\','E','n','t','i','r','e','N','e','t','w','o','r','k',0 };
+    static WCHAR my_network_places_path[] = L"::{208D2C60-3AEA-1069-A2D7-08002B30309D}";
+    static WCHAR entire_network_path[] = L"::{208D2C60-3AEA-1069-A2D7-08002B30309D}\\EntireNetwork";
     IShellFolder *psfDesktop;
     HRESULT hr;
     DWORD eaten = 0xdeadbeef;
@@ -168,9 +163,8 @@ static void test_parse_for_entire_network(void)
 static void test_parse_for_control_panel(void)
 {
     /* path of My Computer\Control Panel */
-    static WCHAR control_panel_path[] = {
-        ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}','\\',
-        ':',':','{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
+    static WCHAR control_panel_path[] =
+        L"::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{21EC2020-3AEA-1069-A2DD-08002B30309D}";
     IShellFolder *psfDesktop;
     HRESULT hr;
     DWORD eaten = 0xdeadbeef;
@@ -306,11 +300,10 @@ static void test_desktop_folder(void)
 
 static void test_desktop_displaynameof(void)
 {
-    static WCHAR MyComputer[]  = { ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
-    static WCHAR MyDocuments[] = { ':',':','{','4','5','0','D','8','F','B','A','-','A','D','2','5','-','1','1','D','0','-','9','8','A','8','-','0','8','0','0','3','6','1','B','1','1','0','3','}', 0 };
-    static WCHAR RecycleBin[]  = { ':',':','{','6','4','5','F','F','0','4','0','-','5','0','8','1','-','1','0','1','B','-','9','F','0','8','-','0','0','A','A','0','0','2','F','9','5','4','E','}', 0 };
-    static WCHAR ControlPanel[]= { ':',':','{','2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}','\\',
-                                   ':',':','{','2','1','E','C','2','0','2','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','D','-','0','8','0','0','2','B','3','0','3','0','9','D','}', 0 };
+    static WCHAR MyComputer[]  = L"::{20D04FE0-3AEA-1069-A2D8-08002B30309D}";
+    static WCHAR MyDocuments[] = L"::{450D8FBA-AD25-11D0-98A8-0800361B1103}";
+    static WCHAR RecycleBin[]  = L"::{645FF040-5081-101B-9F08-00AA002F954E}";
+    static WCHAR ControlPanel[]= L"::{20D04FE0-3AEA-1069-A2D8-08002B30309D}\\::{21EC2020-3AEA-1069-A2DD-08002B30309D}";
     static WCHAR *folders[] = { MyComputer, MyDocuments, RecycleBin, ControlPanel };
     IShellFolder *desktop;
     ITEMIDLIST *pidl;

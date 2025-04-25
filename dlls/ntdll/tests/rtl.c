@@ -1,6 +1,7 @@
 /* Unit test suite for Rtl* API functions
  *
  * Copyright 2003 Thomas Mertes
+ * Copyright 2025 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +37,7 @@
 #include "ddk/ntifs.h"
 #include "wine/test.h"
 #include "wine/asm.h"
+#include "wine/rbtree.h"
 
 #ifndef __WINE_WINTERNL_H
 
@@ -56,6 +58,8 @@ typedef struct _RTL_HANDLE_TABLE
 } RTL_HANDLE_TABLE;
 
 #endif
+
+static BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 /* avoid #include <winsock2.h> */
 #undef htons
@@ -85,6 +89,11 @@ __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
+static PRTL_SPLAY_LINKS (WINAPI *pRtlDelete)(PRTL_SPLAY_LINKS);
+static void      (WINAPI  *pRtlDeleteNoSplay)(PRTL_SPLAY_LINKS, PRTL_SPLAY_LINKS *);
+static BOOLEAN   (WINAPI  *pRtlDeleteElementGenericTable)(PRTL_GENERIC_TABLE,PVOID);
+static void *    (WINAPI  *pRtlEnumerateGenericTable)(PRTL_GENERIC_TABLE, BOOLEAN);
+static void *    (WINAPI  *pRtlEnumerateGenericTableWithoutSplaying)(PRTL_GENERIC_TABLE, PVOID *);
 static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
 static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
 static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
@@ -92,8 +101,10 @@ static VOID      (WINAPI  *pRtlZeroMemory)(LPVOID,SIZE_T);
 static USHORT    (FASTCALL *pRtlUshortByteSwap)(USHORT source);
 static ULONG     (FASTCALL *pRtlUlongByteSwap)(ULONG source);
 static ULONGLONG (FASTCALL *pRtlUlonglongByteSwap)(ULONGLONG source);
+static void *    (WINAPI *pRtlGetElementGenericTable)(PRTL_GENERIC_TABLE, ULONG);
 static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
+static PVOID     (WINAPI *pRtlInsertElementGenericTable)(PRTL_GENERIC_TABLE, PVOID, CLONG, PBOOLEAN);
 static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, LPSTR, PULONG);
 static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressExA)(PCSTR, BOOLEAN, IN_ADDR *, PUSHORT);
 static NTSTATUS  (WINAPI *pRtlIpv6AddressToStringExA)(struct in6_addr *, ULONG, USHORT, PCHAR, PULONG);
@@ -101,12 +112,34 @@ static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExA)(PCSTR, struct in6_addr *, 
 static NTSTATUS  (WINAPI *pRtlIpv6StringToAddressExW)(PCWSTR, struct in6_addr *, PULONG, PUSHORT);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(CRITICAL_SECTION *);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(CRITICAL_SECTION *);
+static BOOLEAN   (WINAPI *pRtlIsGenericTableEmpty)(PRTL_GENERIC_TABLE);
 static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, ULONG, ULONG);
+static void      (WINAPI *pRtlInitializeGenericTable)(RTL_GENERIC_TABLE *, PRTL_GENERIC_COMPARE_ROUTINE,
+                                                      PRTL_GENERIC_ALLOCATE_ROUTINE, PRTL_GENERIC_FREE_ROUTINE,
+                                                      void *);
 static void *    (WINAPI *pRtlFindExportedRoutineByName)(HMODULE,const char *);
+static void *    (WINAPI *pRtlLookupElementGenericTable)(PRTL_GENERIC_TABLE, void *);
+static ULONG     (WINAPI *pRtlNumberGenericTableElements)(PRTL_GENERIC_TABLE);
 static NTSTATUS  (WINAPI *pLdrEnumerateLoadedModules)(void *, void *, void *);
 static NTSTATUS  (WINAPI *pLdrRegisterDllNotification)(ULONG, PLDR_DLL_NOTIFICATION_FUNCTION, void *, void **);
 static NTSTATUS  (WINAPI *pLdrUnregisterDllNotification)(void *);
 static VOID      (WINAPI *pRtlGetDeviceFamilyInfoEnum)(ULONGLONG *,DWORD *,DWORD *);
+static void      (WINAPI *pRtlRbInsertNodeEx)(RTL_RB_TREE *, RTL_BALANCED_NODE *, BOOLEAN, RTL_BALANCED_NODE *);
+static void      (WINAPI *pRtlRbRemoveNode)(RTL_RB_TREE *, RTL_BALANCED_NODE *);
+static DWORD     (WINAPI *pRtlConvertDeviceFamilyInfoToString)(DWORD *, DWORD *, WCHAR *, WCHAR *);
+static NTSTATUS  (WINAPI *pRtlDeriveCapabilitySidsFromName)(UNICODE_STRING *, PSID, PSID);
+static NTSTATUS  (WINAPI *pRtlInitializeNtUserPfn)( const UINT64 *client_procsA, ULONG procsA_size,
+                                                    const UINT64 *client_procsW, ULONG procsW_size,
+                                                    const void *client_workers, ULONG workers_size );
+static PRTL_SPLAY_LINKS (WINAPI *pRtlRealPredecessor)(PRTL_SPLAY_LINKS);
+static PRTL_SPLAY_LINKS (WINAPI *pRtlRealSuccessor)(PRTL_SPLAY_LINKS);
+static NTSTATUS  (WINAPI *pRtlRetrieveNtUserPfn)( const UINT64 **client_procsA,
+                                                  const UINT64 **client_procsW,
+                                                  const UINT64 **client_workers );
+static NTSTATUS  (WINAPI *pRtlResetNtUserPfn)(void);
+static PRTL_SPLAY_LINKS (WINAPI *pRtlSubtreePredecessor)(PRTL_SPLAY_LINKS);
+static PRTL_SPLAY_LINKS (WINAPI *pRtlSubtreeSuccessor)(PRTL_SPLAY_LINKS);
+static PRTL_SPLAY_LINKS (WINAPI *pRtlSplay)(PRTL_SPLAY_LINKS);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -129,6 +162,11 @@ static void InitFunctionPtrs(void)
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed\n");
     if (hntdll) {
+        pRtlDelete = (void *)GetProcAddress(hntdll, "RtlDelete");
+        pRtlDeleteElementGenericTable = (void *)GetProcAddress(hntdll, "RtlDeleteElementGenericTable");
+        pRtlDeleteNoSplay = (void *)GetProcAddress(hntdll, "RtlDeleteNoSplay");
+        pRtlEnumerateGenericTable = (void *)GetProcAddress(hntdll, "RtlEnumerateGenericTable");
+        pRtlEnumerateGenericTableWithoutSplaying = (void *)GetProcAddress(hntdll, "RtlEnumerateGenericTableWithoutSplaying");
 	pRtlMoveMemory = (void *)GetProcAddress(hntdll, "RtlMoveMemory");
 	pRtlFillMemory = (void *)GetProcAddress(hntdll, "RtlFillMemory");
 	pRtlFillMemoryUlong = (void *)GetProcAddress(hntdll, "RtlFillMemoryUlong");
@@ -136,8 +174,10 @@ static void InitFunctionPtrs(void)
         pRtlUshortByteSwap = (void *)GetProcAddress(hntdll, "RtlUshortByteSwap");
         pRtlUlongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlongByteSwap");
         pRtlUlonglongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlonglongByteSwap");
+        pRtlGetElementGenericTable = (void *)GetProcAddress(hntdll, "RtlGetElementGenericTable");
         pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
+        pRtlInsertElementGenericTable = (void *)GetProcAddress(hntdll, "RtlInsertElementGenericTable");
         pRtlIpv4AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv4AddressToStringExA");
         pRtlIpv4StringToAddressExA = (void *)GetProcAddress(hntdll, "RtlIpv4StringToAddressExA");
         pRtlIpv6AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv6AddressToStringExA");
@@ -145,12 +185,28 @@ static void InitFunctionPtrs(void)
         pRtlIpv6StringToAddressExW = (void *)GetProcAddress(hntdll, "RtlIpv6StringToAddressExW");
         pRtlIsCriticalSectionLocked = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLocked");
         pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
+        pRtlIsGenericTableEmpty = (void *)GetProcAddress(hntdll, "RtlIsGenericTableEmpty");
         pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
+        pRtlInitializeGenericTable = (void *)GetProcAddress(hntdll, "RtlInitializeGenericTable");
         pRtlFindExportedRoutineByName = (void *)GetProcAddress(hntdll, "RtlFindExportedRoutineByName");
+        pRtlLookupElementGenericTable = (void *)GetProcAddress(hntdll, "RtlLookupElementGenericTable");
+        pRtlNumberGenericTableElements = (void *)GetProcAddress(hntdll, "RtlNumberGenericTableElements");
         pLdrEnumerateLoadedModules = (void *)GetProcAddress(hntdll, "LdrEnumerateLoadedModules");
         pLdrRegisterDllNotification = (void *)GetProcAddress(hntdll, "LdrRegisterDllNotification");
         pLdrUnregisterDllNotification = (void *)GetProcAddress(hntdll, "LdrUnregisterDllNotification");
+        pRtlDeriveCapabilitySidsFromName = (void *)GetProcAddress(hntdll, "RtlDeriveCapabilitySidsFromName");
         pRtlGetDeviceFamilyInfoEnum = (void *)GetProcAddress(hntdll, "RtlGetDeviceFamilyInfoEnum");
+        pRtlRbInsertNodeEx = (void *)GetProcAddress(hntdll, "RtlRbInsertNodeEx");
+        pRtlRbRemoveNode = (void *)GetProcAddress(hntdll, "RtlRbRemoveNode");
+        pRtlConvertDeviceFamilyInfoToString = (void *)GetProcAddress(hntdll, "RtlConvertDeviceFamilyInfoToString");
+        pRtlInitializeNtUserPfn = (void *)GetProcAddress(hntdll, "RtlInitializeNtUserPfn");
+        pRtlRealPredecessor = (void *)GetProcAddress(hntdll, "RtlRealPredecessor");
+        pRtlRealSuccessor = (void *)GetProcAddress(hntdll, "RtlRealSuccessor");
+        pRtlRetrieveNtUserPfn = (void *)GetProcAddress(hntdll, "RtlRetrieveNtUserPfn");
+        pRtlResetNtUserPfn = (void *)GetProcAddress(hntdll, "RtlResetNtUserPfn");
+        pRtlSubtreePredecessor = (void *)GetProcAddress(hntdll, "RtlSubtreePredecessor");
+        pRtlSubtreeSuccessor = (void *)GetProcAddress(hntdll, "RtlSubtreeSuccessor");
+        pRtlSplay = (void *)GetProcAddress(hntdll, "RtlSplay");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -3784,6 +3840,1614 @@ static void test_RtlGetDeviceFamilyInfoEnum(void)
     trace( "UAP version is %#I64x, device family is %lu, form factor is %lu\n", version, family, form );
 }
 
+struct test_rb_tree_entry
+{
+    int value;
+    struct rb_entry wine_rb_entry;
+    RTL_BALANCED_NODE rtl_entry;
+};
+
+static int test_rb_tree_entry_compare( const void *key, const struct wine_rb_entry *entry )
+{
+    const struct test_rb_tree_entry *t = WINE_RB_ENTRY_VALUE(entry, struct test_rb_tree_entry, wine_rb_entry);
+    const int *value = key;
+
+    return *value - t->value;
+}
+
+static int test_rtl_rb_tree_entry_compare( const void *key, const RTL_BALANCED_NODE *entry )
+{
+    const struct test_rb_tree_entry *t = CONTAINING_RECORD(entry, struct test_rb_tree_entry, rtl_entry);
+    const int *value = key;
+
+    return *value - t->value;
+}
+
+static int rtl_rb_tree_put( RTL_RB_TREE *tree, const void *key, RTL_BALANCED_NODE *entry,
+                            int (*compare_func)( const void *key, const RTL_BALANCED_NODE *entry ))
+{
+    RTL_BALANCED_NODE *parent = tree->root;
+    BOOLEAN right = 0;
+    int c;
+
+    while (parent)
+    {
+        if (!(c = compare_func( key, parent ))) return -1;
+        right = c > 0;
+        if (!parent->Children[right]) break;
+        parent = parent->Children[right];
+    }
+    pRtlRbInsertNodeEx( tree, parent, right, entry );
+    return 0;
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_from_wine_rb( struct rb_entry *entry )
+{
+    if (!entry) return NULL;
+    return CONTAINING_RECORD(entry, struct test_rb_tree_entry, wine_rb_entry);
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_from_rtl_rb( RTL_BALANCED_NODE *entry )
+{
+    if (!entry) return NULL;
+    return CONTAINING_RECORD(entry, struct test_rb_tree_entry, rtl_entry);
+}
+
+static struct test_rb_tree_entry *test_rb_tree_entry_rtl_parent( struct test_rb_tree_entry *node )
+{
+    return test_rb_tree_entry_from_rtl_rb( (void *)(node->rtl_entry.ParentValue
+                                           & ~(ULONG_PTR)RTL_BALANCED_NODE_RESERVED_PARENT_MASK) );
+}
+
+static void test_rb_tree(void)
+{
+    static int test_values[] = { 44, 51, 6, 66, 69, 20, 87, 80, 72, 86, 90, 16, 54, 61, 62, 14, 27, 39, 42, 41 };
+    static const unsigned int count = ARRAY_SIZE(test_values);
+
+    struct test_rb_tree_entry *nodes, *parent, *parent2;
+    RTL_BALANCED_NODE *prev_min_entry = NULL;
+    int ret, is_red, min_val;
+    struct rb_tree wine_tree;
+    RTL_RB_TREE rtl_tree;
+    unsigned int i;
+
+    if (!pRtlRbInsertNodeEx)
+    {
+        win_skip( "RtlRbInsertNodeEx is not present.\n" );
+        return;
+    }
+
+    memset( &rtl_tree, 0, sizeof(rtl_tree) );
+    nodes = malloc( count * sizeof(*nodes) );
+    memset( nodes, 0xcc, count * sizeof(*nodes) );
+
+    min_val = test_values[0];
+    rb_init( &wine_tree, test_rb_tree_entry_compare );
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context( "i %u", i );
+        nodes[i].value = test_values[i];
+        ret = rb_put( &wine_tree, &nodes[i].value, &nodes[i].wine_rb_entry );
+        ok( !ret, "got %d.\n", ret );
+        parent = test_rb_tree_entry_from_wine_rb( nodes[i].wine_rb_entry.parent );
+        ret = rtl_rb_tree_put( &rtl_tree, &nodes[i].value, &nodes[i].rtl_entry, test_rtl_rb_tree_entry_compare );
+        ok( !ret, "got %d.\n", ret );
+        parent2 = test_rb_tree_entry_rtl_parent( &nodes[i] );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        is_red = nodes[i].rtl_entry.ParentValue & RTL_BALANCED_NODE_RESERVED_PARENT_MASK;
+        ok( is_red == rb_is_red( &nodes[i].wine_rb_entry ), "got %d, expected %d.\n", is_red,
+            rb_is_red( &nodes[i].wine_rb_entry ));
+
+        parent = test_rb_tree_entry_from_wine_rb( wine_tree.root );
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.root );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        if (nodes[i].value <= min_val)
+        {
+            min_val = nodes[i].value;
+            prev_min_entry = &nodes[i].rtl_entry;
+        }
+        ok( rtl_tree.min == prev_min_entry, "unexpected min tree entry.\n" );
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        struct test_rb_tree_entry *node;
+
+        winetest_push_context( "i %u", i );
+        rb_remove( &wine_tree, &nodes[i].wine_rb_entry );
+        pRtlRbRemoveNode( &rtl_tree, &nodes[i].rtl_entry );
+
+        parent = test_rb_tree_entry_from_wine_rb( wine_tree.root );
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.root );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+
+        parent = test_rb_tree_entry_from_wine_rb( rb_head( wine_tree.root ));
+        parent2 = test_rb_tree_entry_from_rtl_rb( rtl_tree.min );
+        ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+
+        RB_FOR_EACH_ENTRY(node, &wine_tree, struct test_rb_tree_entry, wine_rb_entry)
+        {
+            is_red = node->rtl_entry.ParentValue & RTL_BALANCED_NODE_RESERVED_PARENT_MASK;
+            ok( is_red == rb_is_red( &node->wine_rb_entry ), "got %d, expected %d.\n", is_red, rb_is_red( &node->wine_rb_entry ));
+            parent = test_rb_tree_entry_from_wine_rb( node->wine_rb_entry.parent );
+            parent2 = test_rb_tree_entry_rtl_parent( node );
+            ok( parent == parent2, "got %p, %p.\n", parent, parent2 );
+        }
+        winetest_pop_context();
+    }
+    ok( !rtl_tree.root, "got %p.\n", rtl_tree.root );
+    ok( !rtl_tree.min, "got %p.\n", rtl_tree.min );
+    free(nodes);
+}
+
+static void test_RtlConvertDeviceFamilyInfoToString(void)
+{
+    DWORD device_family_size, device_form_size, ret;
+    WCHAR device_family[16], device_form[16];
+
+    if (!pRtlConvertDeviceFamilyInfoToString)
+    {
+        win_skip("RtlConvertDeviceFamilyInfoToString is unavailable.\n" );
+        return;
+    }
+
+    if (0) /* Crash on Windows */
+    {
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, NULL, NULL, NULL);
+    ok(ret == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", ret);
+
+    device_family_size = 0;
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, NULL, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+
+    device_form_size = 0;
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, NULL, device_family, NULL);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+    ok(!wcscmp(device_family, L"Windows.Desktop"), "Got unexpected %s.\n", wine_dbgstr_w(device_family));
+
+    ret = pRtlConvertDeviceFamilyInfoToString(NULL, &device_form_size, NULL, device_form);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+    ok(!wcscmp(device_form, L"Unknown"), "Got unexpected %s.\n", wine_dbgstr_w(device_form));
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx.\n", ret);
+    }
+
+    device_family_size = wcslen(L"Windows.Desktop") * sizeof(WCHAR);
+    device_form_size = wcslen(L"Unknown") * sizeof(WCHAR);
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, NULL, NULL);
+    ok(ret == STATUS_BUFFER_TOO_SMALL, "Got unexpected status %#lx.\n", ret);
+    ok(device_family_size == (wcslen(L"Windows.Desktop") + 1) * sizeof(WCHAR),
+       "Got unexpected %#lx.\n", device_family_size);
+    ok(device_form_size == (wcslen(L"Unknown") + 1) * sizeof(WCHAR), "Got unexpected %#lx.\n",
+       device_form_size);
+
+    ret = pRtlConvertDeviceFamilyInfoToString(&device_family_size, &device_form_size, device_family, device_form);
+    ok(ret == STATUS_SUCCESS, "Got unexpected status %#lx.\n", ret);
+    ok(!wcscmp(device_family, L"Windows.Desktop"), "Got unexpected %s.\n", wine_dbgstr_w(device_family));
+    ok(!wcscmp(device_form, L"Unknown"), "Got unexpected %s.\n", wine_dbgstr_w(device_form));
+}
+
+static void test_user_procs(void)
+{
+    UINT64 ptrs[32], dummy[32] = { 0 };
+    NTSTATUS status;
+    const UINT64 *ptr_A, *ptr_W, *ptr_workers;
+    ULONG size_A, size_W, size_workers;
+
+    if (!pRtlRetrieveNtUserPfn || !pRtlInitializeNtUserPfn)
+    {
+        win_skip( "user procs not supported\n" );
+        return;
+    }
+
+    status = pRtlRetrieveNtUserPfn( &ptr_A, &ptr_W, &ptr_workers );
+    ok( !status || broken(!is_win64 && status == STATUS_INVALID_PARAMETER), /* <= win8 32-bit */
+        "RtlRetrieveNtUserPfn failed %lx\n", status );
+    if (status) return;
+
+    /* assume that the tables are consecutive */
+    size_A = (ptr_W - ptr_A) * sizeof(UINT64);
+    size_W = (ptr_workers - ptr_W) * sizeof(UINT64);
+    ok( size_A > 0x80 && size_A < 0x100, "unexpected size for %p %p %p\n", ptr_A, ptr_W, ptr_workers );
+    ok( size_W == size_A, "unexpected size for %p %p %p\n", ptr_A, ptr_W, ptr_workers );
+    memcpy( ptrs, ptr_A, size_A );
+
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, 0 );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+
+    if (!pRtlResetNtUserPfn)
+    {
+        win_skip( "RtlResetNtUserPfn not supported\n" );
+        return;
+    }
+
+    status = pRtlResetNtUserPfn();
+    ok( !status, "RtlResetNtUserPfn failed %lx\n", status );
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by reset\n" );
+
+    /* can't do anything after reset except set them again */
+    status = pRtlResetNtUserPfn();
+    ok( status == STATUS_INVALID_PARAMETER, "RtlResetNtUserPfn failed %lx\n", status );
+    status = pRtlRetrieveNtUserPfn( &ptr_A, &ptr_W, &ptr_workers );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlRetrieveNtUserPfn failed %lx\n", status );
+
+    for (size_workers = 0x100; size_workers > 0; size_workers--)
+    {
+        status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+        if (!status) break;
+        ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+    }
+    trace( "got sizes %lx %lx %lx\n", size_A, size_W, size_workers );
+    if (!size_workers) return;  /* something went wrong */
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by init\n" );
+
+    /* can't set twice without a reset */
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+    ok( status == STATUS_INVALID_PARAMETER, "RtlInitializeNtUserPfn failed %lx\n", status );
+    status = pRtlResetNtUserPfn();
+    ok( !status, "RtlResetNtUserPfn failed %lx\n", status );
+    status = pRtlInitializeNtUserPfn( dummy, size_A, dummy + 1, size_W, dummy + 2, size_workers );
+    ok( !status, "RtlInitializeNtUserPfn failed %lx\n", status );
+    ok( !memcmp( ptrs, ptr_A, size_A ), "pointers changed by init\n" );
+}
+
+struct splay_index
+{
+    int parent_index;
+    int left_index;
+    int right_index;
+};
+
+static void init_splay_indices(RTL_SPLAY_LINKS *links, unsigned int links_count,
+                               const struct splay_index *indices, unsigned int index_count)
+{
+    const struct splay_index *index;
+    unsigned int i;
+
+    for (i = 0; i < links_count; i++)
+        RtlInitializeSplayLinks(&links[i]);
+    for (i = 0; i < index_count; i++)
+    {
+        index = &indices[i];
+        if (index->left_index != -1)
+            RtlInsertAsLeftChild(&links[index->parent_index], &links[index->left_index]);
+        if (index->right_index != -1)
+            RtlInsertAsRightChild(&links[index->parent_index], &links[index->right_index]);
+    }
+}
+
+#define expect_splay_indices(a, b, c, d) _expect_splay_indices(__LINE__, a, b, c, d)
+static void _expect_splay_indices(int line, RTL_SPLAY_LINKS *links, RTL_SPLAY_LINKS *root,
+                                  const struct splay_index *indices, unsigned int index_count)
+{
+    const struct splay_index *index;
+    unsigned int i;
+
+    ok_(__FILE__, line)(RtlIsRoot(root), "Got unexpected root node %d.\n", root ? (int)(root - links) : -1);
+    ok_(__FILE__, line)(root == &links[indices[0].parent_index], "Expected root %d, got %d.\n",
+                        indices[0].parent_index, root ? (int)(root - links) : -1);
+
+    for (i = 0; i < index_count; i++)
+    {
+        winetest_push_context("%d", i);
+
+        index = &indices[i];
+        if (index->left_index != -1)
+        {
+            ok_(__FILE__, line)(links[index->parent_index].LeftChild == &links[index->left_index],
+                                "Node %d got unexpected left child %d.\n", index->parent_index,
+                                links[index->parent_index].LeftChild ?
+                                (int)(links[index->parent_index].LeftChild - links) : -1);
+            ok_(__FILE__, line)(links[index->left_index].Parent == &links[index->parent_index],
+                                "Node %d got unexpected parent %d.\n", index->left_index,
+                                (int)(links[index->left_index].Parent - links));
+        }
+        else
+        {
+            ok_(__FILE__, line)(!links[index->parent_index].LeftChild,
+                                "Node %d shouldn't have left child %d.\n",
+                                index->parent_index, (int)(links[index->parent_index].LeftChild - links));
+        }
+
+        if (index->right_index != -1)
+        {
+            ok_(__FILE__, line)(links[index->parent_index].RightChild == &links[index->right_index],
+                                "Node %d got unexpected right child %d.\n", index->parent_index,
+                                links[index->parent_index].RightChild ?
+                                (int)(links[index->parent_index].RightChild - links) : -1);
+            ok_(__FILE__, line)(links[index->right_index].Parent == &links[index->parent_index],
+                                "Node %d got unexpected parent %d.\n", index->right_index,
+                                (int)(links[index->right_index].Parent - links));
+        }
+        else
+        {
+            ok_(__FILE__, line)(!links[index->parent_index].RightChild,
+                                "Node %d shouldn't have right child %d.\n",
+                                index->parent_index, (int)(links[index->parent_index].RightChild - links));
+        }
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlSubtreePredecessor(void)
+{
+    /*       3
+     *     /   \
+     *    1     5
+     *   / \   / \
+     *  0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+    };
+    static const int expected_predecessors[] = {-1, 0, -1, 2, -1, 4, -1};
+    RTL_SPLAY_LINKS links[7], *predecessor;
+    unsigned int i;
+
+    if (!pRtlSubtreePredecessor)
+    {
+        win_skip("RtlSubtreePredecessor is unavailable.\n");
+        return;
+    }
+
+    init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+    for (i = 0; i < ARRAY_SIZE(expected_predecessors); i++)
+    {
+        winetest_push_context("%d", i);
+
+        predecessor = pRtlSubtreePredecessor(&links[i]);
+        if (expected_predecessors[i] == -1)
+            ok(!predecessor, "Expected NULL, got unexpected %d.\n", (int)(predecessor - links));
+        else
+            ok(predecessor == &links[expected_predecessors[i]], "Expected %d, got unexpected %d.\n",
+               expected_predecessors[i], (int)(predecessor ? predecessor - links : -1));
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlSubtreeSuccessor(void)
+{
+    /*       3
+     *     /   \
+     *    1     5
+     *   / \   / \
+     *  0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+    };
+    static const int expected_successors[] = {-1, 2, -1, 4, -1, 6, -1};
+    RTL_SPLAY_LINKS links[7], *successor;
+    unsigned int i;
+
+    if (!pRtlSubtreeSuccessor)
+    {
+        win_skip("RtlSubtreeSuccessor is unavailable.\n");
+        return;
+    }
+
+    init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+    for (i = 0; i < ARRAY_SIZE(expected_successors); i++)
+    {
+        winetest_push_context("%d", i);
+
+        successor = pRtlSubtreeSuccessor(&links[i]);
+        if (expected_successors[i] == -1)
+            ok(!successor, "Expected NULL, got unexpected %d.\n", (int)(successor - links));
+        else
+            ok(successor == &links[expected_successors[i]], "Expected %d, got unexpected %d.\n",
+               expected_successors[i], (int)(successor ? successor - links : -1));
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlRealPredecessor(void)
+{
+    /*       3
+     *     /   \
+     *    1     5
+     *   / \   / \
+     *  0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+    };
+    static const int expected_predecessors[] = {-1, 0, 1, 2, 3, 4, 5};
+    RTL_SPLAY_LINKS links[7], *predecessor;
+    unsigned int i;
+
+    if (!pRtlRealPredecessor)
+    {
+        win_skip("RtlRealPredecessor is unavailable.\n");
+        return;
+    }
+
+    init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+    for (i = 0; i < ARRAY_SIZE(expected_predecessors); i++)
+    {
+        winetest_push_context("%d", i);
+
+        predecessor = pRtlRealPredecessor(&links[i]);
+        if (expected_predecessors[i] == -1)
+            ok(!predecessor, "Expected NULL, got unexpected %d.\n", (int)(predecessor - links));
+        else
+            ok(predecessor == &links[expected_predecessors[i]], "Expected %d, got unexpected %d.\n",
+               expected_predecessors[i], (int)(predecessor ? predecessor - links : -1));
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlRealSuccessor(void)
+{
+    /*       3
+     *     /   \
+     *    1     5
+     *   / \   / \
+     *  0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+    };
+    static const int expected_successors[] = {1, 2, 3, 4, 5, 6, -1};
+    RTL_SPLAY_LINKS links[7], *successor;
+    unsigned int i;
+
+    if (!pRtlRealSuccessor)
+    {
+        win_skip("RtlRealSuccessor is unavailable.\n");
+        return;
+    }
+
+    init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+    for (i = 0; i < ARRAY_SIZE(expected_successors); i++)
+    {
+        winetest_push_context("%d", i);
+
+        successor = pRtlRealSuccessor(&links[i]);
+        if (expected_successors[i] == -1)
+            ok(!successor, "Expected NULL, got unexpected %d.\n", (int)(successor - links));
+        else
+            ok(successor == &links[expected_successors[i]], "Expected %d, got unexpected %d.\n",
+               expected_successors[i], (int)(successor ? successor - links : -1));
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlSplay(void)
+{
+    /*      3
+     *    /   \
+     *   1     5
+     *  / \   / \
+     * 0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      0
+     *       \
+     *        1
+     *         \
+     *          3
+     *         / \
+     *        2   5
+     *           / \
+     *          4   6
+     */
+    static const struct splay_index splay0[] =
+    {
+        {0, -1, 1},
+        {1, -1, 3},
+        {3, 2, 5},
+        {5, 4, 6},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      1
+     *     / \
+     *    0   3
+     *       / \
+     *      2   5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index splay1[] =
+    {
+        {1, 0, 3},
+        {3, 2, 5},
+        {5, 4, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      2
+     *     / \
+     *    1   3
+     *   /     \
+     *  0       5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index splay2[] =
+    {
+        {2, 1, 3},
+        {1, 0, -1},
+        {3, -1, 5},
+        {5, 4, 6},
+        {0, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      3
+     *    /   \
+     *   1     5
+     *  / \   / \
+     * 0   2 4   6
+     */
+    static const struct splay_index splay3[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*       4
+     *      / \
+     *     3   5
+     *    /     \
+     *   1       6
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index splay4[] =
+    {
+        {4, 3, 5},
+        {3, 1, -1},
+        {5, -1, 6},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {6, -1, -1},
+    };
+    /*       5
+     *      / \
+     *     3   6
+     *    / \
+     *   1   4
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index splay5[] =
+    {
+        {5, 3, 6},
+        {3, 1, 4},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*         6
+     *        /
+     *       5
+     *      /
+     *     3
+     *    / \
+     *   1   4
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index splay6[] =
+    {
+        {6, 5, -1},
+        {5, 3, -1},
+        {3, 1, 4},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+    };
+    RTL_SPLAY_LINKS links[7], *root;
+    static const struct
+    {
+        const struct splay_index *indices;
+        unsigned int indices_count;
+    }
+    expected_indices[] =
+    {
+        {splay0, ARRAY_SIZE(splay0)},
+        {splay1, ARRAY_SIZE(splay1)},
+        {splay2, ARRAY_SIZE(splay2)},
+        {splay3, ARRAY_SIZE(splay3)},
+        {splay4, ARRAY_SIZE(splay4)},
+        {splay5, ARRAY_SIZE(splay5)},
+        {splay6, ARRAY_SIZE(splay6)},
+    };
+    unsigned int i;
+
+    if (!pRtlSplay)
+    {
+        win_skip("RtlSplay is unavailable.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(expected_indices); i++)
+    {
+        winetest_push_context("%d", i);
+
+        init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+        root = pRtlSplay(&links[i]);
+        expect_splay_indices(links, root, expected_indices[i].indices, expected_indices[i].indices_count);
+
+        winetest_pop_context();
+    }
+}
+
+static void test_RtlDeleteNoSplay(void)
+{
+    /*      3
+     *    /   \
+     *   1     5
+     *  / \   / \
+     * 0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      3
+     *    /   \
+     *   1     5
+     *    \   / \
+     *     2 4   6
+     */
+    static const struct splay_index delete0[] =
+    {
+        {3, 1, 5},
+        {1, -1, 2},
+        {5, 4, 6},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      3
+     *    /   \
+     *   0     5
+     *    \   / \
+     *     2 4   6
+     */
+    static const struct splay_index delete1[] =
+    {
+        {3, 0, 5},
+        {0, -1, 2},
+        {5, 4, 6},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      3
+     *     / \
+     *    1   5
+     *   /   / \
+     *  0   4   6
+     */
+    static const struct splay_index delete2[] =
+    {
+        {3, 1, 5},
+        {1, 0, -1},
+        {5, 4, 6},
+        {0, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      2
+     *     / \
+     *    1   5
+     *   /   / \
+     *  0   4   6
+     */
+    static const struct splay_index delete3[] =
+    {
+        {2, 1, 5},
+        {1, 0, -1},
+        {5, 4, 6},
+        {0, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*     3
+     *    / \
+     *   1   5
+     *  / \   \
+     * 0   2   6
+     */
+    static const struct splay_index delete4[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, -1, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {6, -1, -1},
+    };
+    /*     3
+     *    / \
+     *   1   4
+     *  / \   \
+     * 0   2   6
+     */
+    static const struct splay_index delete5[] =
+    {
+        {3, 1, 4},
+        {1, 0, 2},
+        {4, -1, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {6, -1, -1},
+    };
+    /*      3
+     *    /   \
+     *   1     5
+     *  / \   /
+     * 0   2 4
+     */
+    static const struct splay_index delete6[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, -1},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+    };
+    RTL_SPLAY_LINKS links[7], *root;
+    static const struct
+    {
+        const struct splay_index *indices;
+        unsigned int index_count;
+    }
+    expected_indices[] =
+    {
+        {delete0, ARRAY_SIZE(delete0)},
+        {delete1, ARRAY_SIZE(delete1)},
+        {delete2, ARRAY_SIZE(delete2)},
+        {delete3, ARRAY_SIZE(delete3)},
+        {delete4, ARRAY_SIZE(delete4)},
+        {delete5, ARRAY_SIZE(delete5)},
+        {delete6, ARRAY_SIZE(delete6)},
+    };
+    unsigned int i;
+
+    if (!pRtlDeleteNoSplay)
+    {
+        win_skip("RtlDeleteNoSplay is unavailable.\n");
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(expected_indices); i++)
+    {
+        winetest_push_context("%d", i);
+
+        init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+        root = &links[expected_indices[i].indices[0].parent_index];
+        pRtlDeleteNoSplay(&links[i], &root);
+        expect_splay_indices(links, root, expected_indices[i].indices, expected_indices[i].index_count);
+
+        winetest_pop_context();
+    }
+
+    /* Test that root should be NULL when the splay tree is empty */
+    RtlInitializeSplayLinks(&links[0]);
+    pRtlDeleteNoSplay(&links[0], &root);
+    ok(root == NULL, "Got unexpected root.\n");
+}
+
+static void test_RtlDelete(void)
+{
+    /*      3
+     *    /   \
+     *   1     5
+     *  / \   / \
+     * 0   2 4   6
+     */
+    static const struct splay_index splay_indices[] =
+    {
+        {3, 1, 5},
+        {1, 0, 2},
+        {5, 4, 6},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      1
+     *       \
+     *        3
+     *       / \
+     *      2   5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index delete0[] =
+    {
+        {1, -1, 3},
+        {3, 2, 5},
+        {5, 4, 6},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      0
+     *       \
+     *        3
+     *       / \
+     *      2   5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index delete1[] =
+    {
+        {0, -1, 3},
+        {3, 2, 5},
+        {5, 4, 6},
+        {2, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      1
+     *     / \
+     *    0   3
+     *         \
+     *          5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index delete2[] =
+    {
+        {1, 0, 3},
+        {3, -1, 5},
+        {5, 4, 6},
+        {0, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*      1
+     *     / \
+     *    0   2
+     *         \
+     *          5
+     *         / \
+     *        4   6
+     */
+    static const struct splay_index delete3[] =
+    {
+        {1, 0, 2},
+        {2, -1, 5},
+        {5, 4, 6},
+        {0, -1, -1},
+        {4, -1, -1},
+        {6, -1, -1},
+    };
+    /*       5
+     *      / \
+     *     3   6
+     *    /
+     *   1
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index delete4[] =
+    {
+        {5, 3, 6},
+        {3, 1, -1},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {6, -1, -1},
+    };
+    /*       4
+     *      / \
+     *     3   6
+     *    /
+     *   1
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index delete5[] =
+    {
+        {4, 3, 6},
+        {3, 1, -1},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {6, -1, -1},
+    };
+    /*       5
+     *      /
+     *     3
+     *    / \
+     *   1   4
+     *  / \
+     * 0   2
+     */
+    static const struct splay_index delete6[] =
+    {
+        {5, 3, -1},
+        {3, 1, 4},
+        {1, 0, 2},
+        {0, -1, -1},
+        {2, -1, -1},
+        {4, -1, -1},
+    };
+    RTL_SPLAY_LINKS links[7], *root;
+    static const struct
+    {
+        const struct splay_index *indices;
+        unsigned int index_count;
+    }
+    expected_indices[] =
+    {
+        {delete0, ARRAY_SIZE(delete0)},
+        {delete1, ARRAY_SIZE(delete1)},
+        {delete2, ARRAY_SIZE(delete2)},
+        {delete3, ARRAY_SIZE(delete3)},
+        {delete4, ARRAY_SIZE(delete4)},
+        {delete5, ARRAY_SIZE(delete5)},
+        {delete6, ARRAY_SIZE(delete6)},
+    };
+    unsigned int i;
+
+    if (!pRtlDelete)
+    {
+        win_skip("RtlDelete is unavailable.\n");
+        return;
+    }
+    for (i = 0; i < ARRAY_SIZE(expected_indices); i++)
+    {
+        winetest_push_context("%d", i);
+
+        init_splay_indices(links, ARRAY_SIZE(links), splay_indices, ARRAY_SIZE(splay_indices));
+
+        root = pRtlDelete(&links[i]);
+        expect_splay_indices(links, root, expected_indices[i].indices, expected_indices[i].index_count);
+
+        winetest_pop_context();
+    }
+
+    /* Test that root should be NULL when the splay tree is empty */
+    RtlInitializeSplayLinks(&links[0]);
+    root = pRtlDelete(&links[0]);
+    ok(root == NULL, "Got unexpected root.\n");
+}
+
+/* data is a place holder to align stored data on a 8 byte boundary */
+struct rtl_generic_table_entry
+{
+    RTL_SPLAY_LINKS splay_links;
+    LIST_ENTRY list_entry;
+    LONGLONG data;
+};
+
+static void *get_data_from_list_entry(LIST_ENTRY *list_entry)
+{
+    return (unsigned char *)list_entry + FIELD_OFFSET(struct rtl_generic_table_entry, data)
+        - FIELD_OFFSET(struct rtl_generic_table_entry, list_entry);
+}
+
+static RTL_SPLAY_LINKS *get_splay_links_from_data(void *data)
+{
+    return (RTL_SPLAY_LINKS *)((unsigned char *)data - FIELD_OFFSET(struct rtl_generic_table_entry, data));
+}
+
+static LIST_ENTRY *get_list_entry_from_data(void *data)
+{
+    return (LIST_ENTRY *)((unsigned char *)data - FIELD_OFFSET(struct rtl_generic_table_entry, data)
+        + FIELD_OFFSET(struct rtl_generic_table_entry, list_entry));
+}
+
+static RTL_GENERIC_COMPARE_RESULTS WINAPI generic_compare_proc(RTL_GENERIC_TABLE *table, void *p1, void *p2)
+{
+    int *value1 = p1, *value2 = p2;
+
+    if (*value1 < *value2)
+        return GenericLessThan;
+    else if (*value1 > *value2)
+        return GenericGreaterThan;
+    else
+        return GenericEqual;
+}
+
+static void * WINAPI generic_allocate_proc(RTL_GENERIC_TABLE *table, CLONG size)
+{
+    CLONG *last_allocated = table->TableContext;
+
+    if (last_allocated)
+        *last_allocated = size;
+    return malloc(size);
+}
+
+static void WINAPI generic_free_proc(RTL_GENERIC_TABLE *table, void *ptr)
+{
+    free(ptr);
+}
+
+static void test_RtlInitializeGenericTable(void)
+{
+    RTL_GENERIC_TABLE table;
+
+    if (!pRtlInitializeGenericTable)
+    {
+        win_skip("RtlInitializeGenericTable is unavailable.\n");
+        return;
+    }
+
+    memset(&table, 0xff, sizeof(table));
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc,
+                               generic_free_proc, (void *)0xdeadbeef);
+    ok(!table.TableRoot, "Got unexpected TableRoot.\n");
+    ok(table.InsertOrderList.Flink == &table.InsertOrderList, "Got unexpected InsertOrderList.Flink.\n");
+    ok(table.InsertOrderList.Blink == &table.InsertOrderList, "Got unexpected InsertOrderList.Blink.\n");
+    ok(table.OrderedPointer == &table.InsertOrderList, "Got unexpected OrderedPointer.\n");
+    ok(!table.NumberGenericTableElements, "Got unexpected NumberGenericTableElements.\n");
+    ok(!table.WhichOrderedElement, "Got unexpected WhichOrderedElement.\n");
+    ok(table.CompareRoutine == generic_compare_proc, "Got unexpected CompareRoutine.\n");
+    ok(table.AllocateRoutine == generic_allocate_proc, "Got unexpected AllocateRoutine.\n");
+    ok(table.FreeRoutine == generic_free_proc, "Got unexpected FreeRoutine.\n");
+    ok(table.TableContext == (void *)0xdeadbeef, "Got unexpected TableContext.\n");
+}
+
+static void test_RtlNumberGenericTableElements(void)
+{
+    RTL_GENERIC_TABLE table;
+    ULONG count;
+
+    if (!pRtlNumberGenericTableElements)
+    {
+        win_skip("RtlNumberGenericTableElements is unavailable.\n");
+        return;
+    }
+
+    table.NumberGenericTableElements = 0xdeadbeef;
+    count = pRtlNumberGenericTableElements(&table);
+    ok(count == table.NumberGenericTableElements, "Got unexpected count.\n");
+}
+
+static void test_RtlIsGenericTableEmpty(void)
+{
+    RTL_GENERIC_TABLE table;
+    BOOLEAN empty;
+
+    if (!pRtlIsGenericTableEmpty)
+    {
+        win_skip("RtlIsGenericTableEmpty is unavailable.\n");
+        return;
+    }
+
+    /* Test that RtlIsGenericTableEmpty() uses TableRoot to check if a generic table is empty */
+    table.TableRoot = NULL;
+    table.NumberGenericTableElements = 1;
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(empty, "Expected empty.\n");
+
+    table.TableRoot = (RTL_SPLAY_LINKS *)1;
+    table.NumberGenericTableElements = 0;
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(!empty, "Expected not empty.\n");
+}
+
+static void test_RtlInsertElementGenericTable(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    int i, value, *ret, *first_ret = NULL, *last_ret = NULL;
+    ULONG count, size, last_allocated;
+    BOOLEAN new_element, success;
+    RTL_GENERIC_TABLE table;
+    LIST_ENTRY *entry;
+
+    if (!pRtlInsertElementGenericTable)
+    {
+        win_skip("RtlInsertElementGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc,
+                               generic_free_proc, (void *)&last_allocated);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+        ok(table.TableRoot == get_splay_links_from_data(ret), "Got unexpected TableRoot.\n");
+
+        if (i == 0)
+            first_ret = ret;
+        if (i == ARRAY_SIZE(elements) - 1)
+            last_ret = ret;
+    }
+
+    count = pRtlNumberGenericTableElements(&table);
+    ok(count == ARRAY_SIZE(elements), "Got unexpected count %ld.\n", count);
+
+    /* Test that the allocated memory includes a RTL_SPLAY_LINKS and a LIST_ENTRY header. The data
+     * is aligned on a 8 byte boundary */
+    size = FIELD_OFFSET(struct rtl_generic_table_entry, data) + sizeof(value);
+    ok(last_allocated == size, "Expected %lu, got %lu.\n", size, last_allocated);
+
+    /* Check that InsertOrderList points to a doubly linked list of elements in insertion order */
+    ok(table.InsertOrderList.Flink == get_list_entry_from_data(first_ret), "Got unexpected Flink.\n");
+    ok(table.InsertOrderList.Blink == get_list_entry_from_data(last_ret), "Got unexpected Blink.\n");
+    for (i = 0, entry = table.InsertOrderList.Flink; entry->Flink != table.InsertOrderList.Flink;
+         i++, entry = entry->Flink)
+    {
+        ret = (int *)get_data_from_list_entry(entry);
+        ok(*ret == elements[i], "Got unexpected pointer, value %d.\n", *ret);
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+    for (i = ARRAY_SIZE(elements) - 1, entry = table.InsertOrderList.Blink;
+         entry->Blink != table.InsertOrderList.Blink; i--, entry = entry->Blink)
+    {
+        ret = (int *)get_data_from_list_entry(entry);
+        ok(*ret == elements[i], "Got unexpected pointer, value %d.\n", *ret);
+    }
+    ok(i == -1, "Got unexpected index %d.\n", i);
+
+    /* Insert the same element again */
+    ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+    ok(ret && *ret == value, "Got unexpected pointer.\n");
+    ok(!new_element, "Expected old element.\n");
+
+    count = pRtlNumberGenericTableElements(&table);
+    ok(count == ARRAY_SIZE(elements), "Got unexpected count %ld.\n", count);
+
+    /* Insert a new element with new_element pointer being NULL */
+    value = 0;
+    ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), NULL);
+    ok(ret && ret != &value && *ret == 0, "Got unexpected pointer.\n");
+
+    count = pRtlNumberGenericTableElements(&table);
+    ok(count == ARRAY_SIZE(elements) + 1, "Got unexpected count %ld.\n", count);
+
+    success = pRtlDeleteElementGenericTable(&table, &value);
+    ok(success, "RtlDeleteElementGenericTable failed.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+    }
+}
+
+static void test_RtlDeleteElementGenericTable(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    BOOLEAN success, new_element, empty;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+
+    if (!pRtlDeleteElementGenericTable)
+    {
+        win_skip("RtlDeleteElementGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    success = pRtlDeleteElementGenericTable(&table, NULL);
+    ok(!success, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+        ok(table.NumberGenericTableElements == ARRAY_SIZE(elements) - i - 1,
+           "Got unexpected NumberGenericTableElements %lu.\n", table.NumberGenericTableElements);
+    }
+
+    empty = pRtlIsGenericTableEmpty(&table);
+    ok(empty, "Expected empty.\n");
+
+    /* Delete non-existent element */
+    value = elements[0];
+    success = pRtlDeleteElementGenericTable(&table, &value);
+    ok(!success, "RtlDeleteElementGenericTable succeeded.\n");
+}
+
+static void test_RtlLookupElementGenericTable(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    BOOLEAN new_element, success;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+
+    if (!pRtlLookupElementGenericTable)
+    {
+        win_skip("RtlLookupElementGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    ret = pRtlLookupElementGenericTable(&table, NULL);
+    ok(!ret, "Got unexpected pointer.\n");
+
+    value = 1;
+    ret = pRtlLookupElementGenericTable(&table, &value);
+    ok(!ret, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlLookupElementGenericTable(&table, &value);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(table.TableRoot == get_splay_links_from_data(ret), "Got unexpected TableRoot.\n");
+    }
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+    }
+}
+
+static void test_RtlEnumerateGenericTableWithoutSplaying(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    static const int expected_elements[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    RTL_SPLAY_LINKS *old_table_root;
+    BOOLEAN new_element, success;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+    void *restart_key;
+
+    if (!pRtlEnumerateGenericTableWithoutSplaying)
+    {
+        win_skip("RtlEnumerateGenericTableWithoutSplaying is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    /* Test that restart key is a pointer to RTL_SPLAY_LINKS pointing to returned element */
+    restart_key = NULL;
+    ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key);
+    ok(ret && *ret == expected_elements[0], "Expected %d at %d, got %d.\n",
+       expected_elements[0], 0, ret ? *ret : -1);
+    ok(restart_key == get_splay_links_from_data(ret), "Got unexpected restart key %p.\n", restart_key);
+
+    /* Test enumeration */
+    old_table_root = table.TableRoot;
+    restart_key = NULL;
+    for (i = 0, ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key); ret != NULL;
+         ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n",
+           expected_elements[i], i, ret ? *ret : -1);
+        ok(table.TableRoot == old_table_root, "Got unexpected TableRoot.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    /* Test restarting enumeration */
+    restart_key = NULL;
+    for (i = 0, ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key); ret != NULL;
+         ret = pRtlEnumerateGenericTableWithoutSplaying(&table, &restart_key), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n",
+           expected_elements[i], i, ret ? *ret : -1);
+        ok(table.TableRoot == old_table_root, "Got unexpected TableRoot.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable %d failed.\n", elements[i]);
+    }
+}
+
+static void test_RtlEnumerateGenericTable(void)
+{
+    static const int elements[] = {1, 9, 5, 4, 7, 2, 3, 8, 6};
+    static const int expected_elements[] = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+    int i, j, value, *ret, *first_ret = NULL, *last_ret = NULL;
+    BOOLEAN success, new_element;
+    RTL_GENERIC_TABLE table;
+    LIST_ENTRY *entry;
+
+    if (!pRtlEnumerateGenericTable)
+    {
+        win_skip("RtlEnumerateGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    ret = pRtlEnumerateGenericTable(&table, TRUE);
+    ok(!ret, "Got unexpected pointer.\n");
+
+    ret = pRtlEnumerateGenericTable(&table, FALSE);
+    ok(!ret, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+
+        if (i == 0)
+            first_ret = ret;
+        if (i == ARRAY_SIZE(elements) - 1)
+            last_ret = ret;
+    }
+
+    /* Test enumeration */
+    for (i = 0, ret = pRtlEnumerateGenericTable(&table, TRUE); ret != NULL;
+         ret = pRtlEnumerateGenericTable(&table, FALSE), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n",
+           expected_elements[i], i, ret ? *ret : -1);
+        ok(table.TableRoot == get_splay_links_from_data(ret), "Got unexpected TableRoot.\n");
+
+        /* Test that RtlEnumerateGenericTable() doesn't touch WhichOrderedElement, OrderedPointer and
+         * InsertOrderList. Additional tests show that RtlEnumerateGenericTable() uses TableRoot
+         * to keep track of enumeration status. This also means that if other functions that change
+         * TableRoot get used during enumerations, RtlEnumerateGenericTable() won't be able to find
+         * the correct next element, which is also the case on Windows */
+        ok(table.WhichOrderedElement == 0, "Got unexpected WhichOrderedElement.\n");
+        ok(table.OrderedPointer == &table.InsertOrderList, "Got unexpected OrderedPointer.\n");
+        ok(table.InsertOrderList.Flink == get_list_entry_from_data(first_ret), "Got unexpected Flink.\n");
+        ok(table.InsertOrderList.Blink == get_list_entry_from_data(last_ret), "Got unexpected Blink.\n");
+        for (j = 0, entry = table.InsertOrderList.Flink; entry->Flink != table.InsertOrderList.Flink;
+             j++, entry = entry->Flink)
+        {
+            ret = (int *)get_data_from_list_entry(entry);
+            ok(*ret == elements[j], "Got unexpected pointer, value %d.\n", *ret);
+        }
+        ok(table.TableContext == NULL, "Got unexpected TableContext.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    /* Test restarting enumeration */
+    for (i = 0, ret = pRtlEnumerateGenericTable(&table, TRUE); ret != NULL;
+         ret = pRtlEnumerateGenericTable(&table, FALSE), i++)
+    {
+        ok(ret && *ret == expected_elements[i], "Expected %d at %d, got %d.\n", expected_elements[i],
+           i, ret ? *ret : -1);
+        ok(table.TableRoot == get_splay_links_from_data(ret), "Got unexpected TableRoot.\n");
+    }
+    ok(i == ARRAY_SIZE(elements), "Got unexpected index %d.\n", i);
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+    }
+}
+
+static void test_RtlGetElementGenericTable(void)
+{
+    static const int elements[] = {9, 1, 5, 4, 15, 11, 2, 3, 8, 6, 0, 10, 13, 14, 7, 12};
+    RTL_SPLAY_LINKS *old_table_root;
+    BOOLEAN success, new_element;
+    RTL_GENERIC_TABLE table;
+    int i, value, *ret;
+
+    if (!pRtlGetElementGenericTable)
+    {
+        win_skip("RtlGetElementGenericTable is unavailable.\n");
+        return;
+    }
+
+    pRtlInitializeGenericTable(&table, generic_compare_proc, generic_allocate_proc, generic_free_proc, NULL);
+
+    ret = pRtlGetElementGenericTable(&table, 0);
+    ok(!ret, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+        ok(ret && *ret == value, "Got unexpected pointer.\n");
+        ok(new_element, "Expected new element.\n");
+    }
+
+    /* Test that RtlGetElementGenericTable() changes WhichOrderedElement and OrderedPointer, but not TableRoot */
+    old_table_root = table.TableRoot;
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        ret = pRtlGetElementGenericTable(&table, i);
+        ok(ret && *ret == elements[i], "Got unexpected pointer.\n");
+        ok(table.WhichOrderedElement == i + 1, "Got unexpected WhichOrderedElement %lu.\n",
+           table.WhichOrderedElement);
+        ok(table.OrderedPointer == get_list_entry_from_data(ret), "Got unexpected OrderedPointer.\n");
+        ok(table.TableRoot == old_table_root, "Got unexpected TableRoot.\n");
+    }
+
+    /* RtlInsertElementGenericTable() shouldn't touch WhichOrderedElement */
+    value = 20;
+    ret = pRtlInsertElementGenericTable(&table, &value, sizeof(value), &new_element);
+    ok(ret && *ret == 20, "Got unexpected pointer.\n");
+    ok(new_element, "Expected new element.\n");
+    ok(table.WhichOrderedElement == ARRAY_SIZE(elements), "Got unexpected WhichOrderedElement %lu.\n",
+       table.WhichOrderedElement);
+
+    /* RtlGetElementGenericTable() updates WhichOrderedElement. WhichOrderedElement points to the
+     * result element but its index starts from 1 instead of 0 */
+    ret = pRtlGetElementGenericTable(&table, 1);
+    ok(ret && *ret == elements[1], "Got unexpected pointer.\n");
+    ok(table.WhichOrderedElement == 2, "Got unexpected WhichOrderedElement %lu.\n",
+       table.WhichOrderedElement);
+    ok(table.OrderedPointer == get_list_entry_from_data(ret), "Got unexpected OrderedPointer.\n");
+
+    /* RtlDeleteElementGenericTable() should reset WhichOrderedElement and OrderedPointer */
+    value = 20;
+    success = pRtlDeleteElementGenericTable(&table, &value);
+    ok(success, "RtlDeleteElementGenericTable failed.\n");
+    ok(table.WhichOrderedElement == 0, "Got unexpected WhichOrderedElement %lu.\n", table.WhichOrderedElement);
+    ok(table.OrderedPointer == &table.InsertOrderList, "Got unexpected OrderedPointer.\n");
+
+    /* Out of order RtlGetElementGenericTable() calls */
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        ret = pRtlGetElementGenericTable(&table, elements[i]);
+        ok(ret && *ret == elements[elements[i]], "Expected %d got %d at %d.\n",
+           elements[elements[i]], *ret,  elements[i]);
+        ok(table.WhichOrderedElement == elements[i] + 1, "Got unexpected WhichOrderedElement %lu.\n",
+           table.WhichOrderedElement);
+        ok(table.OrderedPointer == get_list_entry_from_data(ret), "Got unexpected OrderedPointer.\n");
+    }
+
+    /* Out of range RtlGetElementGenericTable() call */
+    ret = pRtlGetElementGenericTable(&table, ARRAY_SIZE(elements));
+    ok(!ret, "Got unexpected pointer.\n");
+
+    for (i = 0; i < ARRAY_SIZE(elements); i++)
+    {
+        value = elements[i];
+        success = pRtlDeleteElementGenericTable(&table, &value);
+        ok(success, "RtlDeleteElementGenericTable failed.\n");
+    }
+}
+
+static void test_RtlDeriveCapabilitySidsFromName(void)
+{
+    static const SID_IDENTIFIER_AUTHORITY app_authority = { SECURITY_APP_PACKAGE_AUTHORITY };
+    static SID_IDENTIFIER_AUTHORITY nt_authority = { SECURITY_NT_AUTHORITY };
+    struct
+    {
+        const WCHAR *name;
+        DWORD hash[8];
+    }
+    tests[] =
+    {
+        { NULL,    { 0x42c4b0e3, 0x141cfc98, 0xc8f4fb9a, 0x24b96f99, 0xe441ae27, 0x4c939b64, 0x1b9995a4, 0x55b85278, }},
+        { L"__AB", { 0xddd798eb, 0x367bd9d0, 0x1c9e610a, 0x0c43dc7e, 0xe91d8625, 0x395e7cf8, 0xe6e7c3d2, 0x2661e620 }},
+        { L"__ab", { 0xddd798eb, 0x367bd9d0, 0x1c9e610a, 0x0c43dc7e, 0xe91d8625, 0x395e7cf8, 0xe6e7c3d2, 0x2661e620 }},
+        { L"0123456789012345678901234567890123456789",
+                   { 0x3c45e3e6, 0xa598e751, 0x2eb11e4c, 0x04e073fd, 0xb7c331a3, 0x07b1214d, 0xd8dee260, 0xa0966ecf }},
+    };
+    UNICODE_STRING cap_name;
+    SID *group_sid, *sid;
+    unsigned int i, size;
+    NTSTATUS status;
+
+    if (!pRtlDeriveCapabilitySidsFromName)
+    {
+        win_skip( "RtlDeriveCapabilitySidsFromName is not available.\n" );
+        return;
+    }
+
+    size = RtlLengthRequiredSid( 10 );
+    sid = malloc( size );
+    group_sid = malloc( size );
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context( "%s", debugstr_w(tests[i].name) );
+        memset( sid, 0, size );
+        memset( group_sid, 0, size );
+        RtlInitUnicodeString( &cap_name, tests[i].name );
+        status = pRtlDeriveCapabilitySidsFromName( &cap_name, group_sid, sid );
+        ok( !status, "got %#lx.\n", status );
+
+        ok( sid->Revision == SID_REVISION, "got %u.\n", sid->Revision );
+        ok( !memcmp( &sid->IdentifierAuthority, &app_authority, sizeof(app_authority) ), "mismatch.\n" );
+        ok( sid->SubAuthorityCount == 10, "got %u.\n", sid->SubAuthorityCount );
+        ok ( sid->SubAuthority[0] == SECURITY_BATCH_RID, "got %lu.\n", sid->SubAuthority[0] );
+        ok ( sid->SubAuthority[1] == SECURITY_CAPABILITY_APP_RID, "got %lu.\n", sid->SubAuthority[1] );
+        ok( !memcmp( sid->SubAuthority + 2, tests[i].hash, sizeof(tests[i].hash) ), "mismatch.\n" );
+
+        ok( group_sid->Revision == SID_REVISION, "got %u.\n", group_sid->Revision );
+        ok( !memcmp( &group_sid->IdentifierAuthority, &nt_authority, sizeof(nt_authority) ), "mismatch.\n" );
+        ok( group_sid->SubAuthorityCount == 9, "got %u.\n", group_sid->SubAuthorityCount );
+        ok ( group_sid->SubAuthority[0] == SECURITY_BUILTIN_DOMAIN_RID, "got %lu.\n", group_sid->SubAuthority[0] );
+        ok( !memcmp( group_sid->SubAuthority + 1, tests[i].hash, sizeof(tests[i].hash) ), "mismatch.\n" );
+        winetest_pop_context();
+    }
+
+    free( sid );
+    free( group_sid );
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -3833,4 +5497,24 @@ START_TEST(rtl)
     test_RtlValidSecurityDescriptor();
     test_RtlFindExportedRoutineByName();
     test_RtlGetDeviceFamilyInfoEnum();
+    test_RtlConvertDeviceFamilyInfoToString();
+    test_rb_tree();
+    test_user_procs();
+    test_RtlSubtreePredecessor();
+    test_RtlSubtreeSuccessor();
+    test_RtlRealPredecessor();
+    test_RtlRealSuccessor();
+    test_RtlSplay();
+    test_RtlDeleteNoSplay();
+    test_RtlDelete();
+    test_RtlInitializeGenericTable();
+    test_RtlNumberGenericTableElements();
+    test_RtlIsGenericTableEmpty();
+    test_RtlInsertElementGenericTable();
+    test_RtlDeleteElementGenericTable();
+    test_RtlLookupElementGenericTable();
+    test_RtlEnumerateGenericTableWithoutSplaying();
+    test_RtlEnumerateGenericTable();
+    test_RtlGetElementGenericTable();
+    test_RtlDeriveCapabilitySidsFromName();
 }

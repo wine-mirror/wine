@@ -146,7 +146,7 @@ void locale_init(void)
     if (!RtlQueryActivationContextApplicationSettings( 0, NULL, L"http://schemas.microsoft.com/SMI/2019/WindowsSettings",
                                                        L"activeCodePage", locale, ARRAY_SIZE(locale), NULL ))
     {
-        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale_table, locale );
+        const NLS_LOCALE_LCNAME_INDEX *entry;
 
         if (!wcsicmp( locale, L"utf-8" ))
         {

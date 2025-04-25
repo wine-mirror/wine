@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -154,7 +155,7 @@ static void HTMLStyleSheetRule_destructor(DispatchEx *dispex)
 }
 
 dispex_static_data_t CSSRule_dispex = {
-    .id = PROT_CSSRule,
+    .id = OBJID_CSSRule,
 };
 
 static const dispex_static_data_vtbl_t CSSStyleRule_dispex_vtbl = {
@@ -169,8 +170,8 @@ static const tid_t CSSStyleRule_iface_tids[] = {
     0
 };
 dispex_static_data_t CSSStyleRule_dispex = {
-    .id           = PROT_CSSStyleRule,
-    .prototype_id = PROT_CSSRule,
+    .id           = OBJID_CSSStyleRule,
+    .prototype_id = OBJID_CSSRule,
     .vtbl         = &CSSStyleRule_dispex_vtbl,
     .disp_tid     = DispHTMLStyleSheetRule_tid,
     .iface_tids   = CSSStyleRule_iface_tids,
@@ -372,7 +373,7 @@ static const tid_t MSCSSRuleList_iface_tids[] = {
     0
 };
 dispex_static_data_t MSCSSRuleList_dispex = {
-    .id         = PROT_MSCSSRuleList,
+    .id         = OBJID_MSCSSRuleList,
     .vtbl       = &MSCSSRuleList_dispex_vtbl,
     .disp_tid   = DispHTMLStyleSheetRulesCollection_tid,
     .iface_tids = MSCSSRuleList_iface_tids,
@@ -734,7 +735,7 @@ static const tid_t StyleSheetList_iface_tids[] = {
     0
 };
 dispex_static_data_t StyleSheetList_dispex = {
-    .id         = PROT_StyleSheetList,
+    .id         = OBJID_StyleSheetList,
     .vtbl       = &StyleSheetList_dispex_vtbl,
     .disp_tid   = DispHTMLStyleSheetsCollection_tid,
     .iface_tids = StyleSheetList_iface_tids,
@@ -1199,6 +1200,25 @@ static void HTMLStyleSheet_destructor(DispatchEx *dispex)
     free(This);
 }
 
+static void StyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const DISPID stylesheet_dispids[] = {
+        DISPID_IHTMLSTYLESHEET_PARENTSTYLESHEET,
+        DISPID_IHTMLSTYLESHEET_DISABLED,
+        DISPID_UNKNOWN
+    };
+    static const DISPID stylesheet4_dispids[] = {
+        DISPID_IHTMLSTYLESHEET4_IE9_TYPE,
+        DISPID_IHTMLSTYLESHEET4_IE9_HREF,
+        DISPID_IHTMLSTYLESHEET4_IE9_TITLE,
+        DISPID_IHTMLSTYLESHEET4_OWNERNODE,
+        DISPID_IHTMLSTYLESHEET4_IE9_MEDIA,
+        DISPID_UNKNOWN
+    };
+    dispex_info_add_dispids(info, IHTMLStyleSheet4_tid, stylesheet4_dispids);
+    dispex_info_add_dispids(info, IHTMLStyleSheet_tid, stylesheet_dispids);
+}
+
 static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
 {
     if(mode >= COMPAT_MODE_IE9)
@@ -1206,7 +1226,8 @@ static void HTMLStyleSheet_init_dispex_info(dispex_data_t *info, compat_mode_t m
 }
 
 dispex_static_data_t StyleSheet_dispex = {
-    .id = PROT_StyleSheet,
+    .id           = OBJID_StyleSheet,
+    .init_info    = StyleSheet_init_dispex_info,
 };
 
 static const dispex_static_data_vtbl_t CSSStyleSheet_dispex_vtbl = {
@@ -1221,8 +1242,8 @@ static const tid_t CSSStyleSheet_iface_tids[] = {
     0
 };
 dispex_static_data_t CSSStyleSheet_dispex = {
-    .id           = PROT_CSSStyleSheet,
-    .prototype_id = PROT_StyleSheet,
+    .id           = OBJID_CSSStyleSheet,
+    .prototype_id = OBJID_StyleSheet,
     .vtbl         = &CSSStyleSheet_dispex_vtbl,
     .disp_tid     = DispHTMLStyleSheet_tid,
     .iface_tids   = CSSStyleSheet_iface_tids,

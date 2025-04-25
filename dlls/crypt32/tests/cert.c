@@ -275,10 +275,12 @@ static void testAddCert(void)
             CertFreeCertificateContext(context);
         }
 
-        CertCloseStore(collection, 0);
+        ret = CertCloseStore(collection, CERT_CLOSE_STORE_CHECK_FLAG);
+        ok(ret, "got error %#lx.\n", GetLastError());
     }
 
-    CertCloseStore(store, 0);
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
 }
 
 static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
@@ -4416,9 +4418,8 @@ static void testKeyProvInfo(void)
 
     ret = CertDeleteCertificateFromStore(cert);
     ok(ret, "CertDeleteCertificateFromStore error %#lx\n", GetLastError());
-
-    CertFreeCertificateContext(cert);
-    CertCloseStore(store, 0);
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
 }
 
 static void test_VerifySignature(void)
@@ -4518,7 +4519,6 @@ START_TEST(cert)
     testGetIssuerCert();
     testLinkCert();
     testKeyProvInfo();
-
     testCryptHashCert();
     testCryptHashCert2();
     testCertSigs();

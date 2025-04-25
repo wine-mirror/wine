@@ -114,7 +114,7 @@ static int coff_add_file(struct CoffFileSet* coff_files, struct module* module,
     file = coff_files->files + coff_files->nfiles;
     file->startaddr = 0xffffffff;
     file->endaddr   = 0;
-    file->compiland = symt_new_compiland(module, source_new(module, NULL, filename));
+    file->compiland = symt_new_compiland(module, filename);
     file->linetab_offset = -1;
     file->linecnt = 0;
     file->entries = NULL;
@@ -161,7 +161,6 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
     int		       		        linetab_indx;
     const char*                         nampnt;
     int		       		        naux;
-    BOOL                                ret = FALSE;
     ULONG64                             addr;
 
     TRACE("Processing COFF symbols...\n");
@@ -219,8 +218,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
                  */
                 const char* fn;
 
-                fn = source_get(msc_dbg->module,
-                                coff_files.files[curr_file_idx].compiland->source);
+                fn = coff_files.files[curr_file_idx].compiland->filename;
 
                 TRACE("Duplicating sect from %s: %lx %x %x %d %d\n",
                       fn, aux->Section.Length,
@@ -242,7 +240,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             else
 	    {
                 TRACE("New text sect from %s: %lx %x %x %d %d\n",
-                      source_get(msc_dbg->module, coff_files.files[curr_file_idx].compiland->source),
+                      coff_files.files[curr_file_idx].compiland->filename,
                       aux->Section.Length,
                       aux->Section.NumberOfRelocations,
                       aux->Section.NumberOfLinenumbers,
@@ -281,12 +279,12 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
 
             /* FIXME: was adding symbol to this_file ??? */
             coff_add_symbol(&coff_files.files[curr_file_idx],
-                            &symt_new_function(msc_dbg->module, 
-                                               coff_files.files[curr_file_idx].compiland, 
+                            &symt_new_function(msc_dbg->module,
+                                               coff_files.files[curr_file_idx].compiland,
                                                nampnt,
                                                msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
                                                0 /* FIXME */,
-                                               NULL /* FIXME */)->symt);
+                                               0 /* FIXME */, 0)->symt);
             continue;
 	}
 
@@ -317,15 +315,15 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             if (j < coff_files.nfiles)
             {
                 coff_add_symbol(&coff_files.files[j],
-                                &symt_new_function(msc_dbg->module, compiland, nampnt, 
+                                &symt_new_function(msc_dbg->module, compiland, nampnt,
                                                    msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
-                                                   0 /* FIXME */, NULL /* FIXME */)->symt);
-            } 
-            else 
+                                                   0 /* FIXME */, 0 /* FIXME */, 0)->symt);
+            }
+            else
             {
-                symt_new_function(msc_dbg->module, NULL, nampnt, 
+                symt_new_function(msc_dbg->module, NULL, nampnt,
                                   msc_dbg->module->module.BaseOfImage + base + coff_sym->Value,
-                                  0 /* FIXME */, NULL /* FIXME */);
+                                  0 /* FIXME */, 0 /* FIXME */, 0);
             }
             i += naux;
             continue;
@@ -354,7 +352,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             loc.reg = 0;
             loc.offset = msc_dbg->module->module.BaseOfImage + base + coff_sym->Value;
             symt_new_global_variable(msc_dbg->module, NULL, nampnt, TRUE /* FIXME */,
-                                     loc, 0 /* FIXME */, NULL /* FIXME */);
+                                     loc, 0 /* FIXME */, 0 /* FIXME */);
             i += naux;
             continue;
 	}
@@ -378,7 +376,8 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
         i += naux;
     }
 
-    if (coff_files.files != NULL)
+    if (coff_files.files == NULL) return FALSE;
+    if (SymGetOptions() & SYMOPT_LOAD_LINES)
     {
         /*
          * OK, we now should have a list of files, and we should have a list
@@ -420,7 +419,7 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
                             {
                                 symt_add_func_line(msc_dbg->module,
                                                    (struct symt_function*)coff_files.files[j].entries[l+1],
-                                                   coff_files.files[j].compiland->source,
+                                                   source_new(msc_dbg->module, NULL, coff_files.files[j].compiland->filename),
                                                    linepnt->Linenumber,
                                                    msc_dbg->module->module.BaseOfImage + linepnt->Type.VirtualAddress);
                             }
@@ -436,15 +435,13 @@ BOOL coff_process_info(const struct msc_debug_info* msc_dbg)
             HeapFree(GetProcessHeap(), 0, coff_files.files[j].entries);
 	}
         HeapFree(GetProcessHeap(), 0, coff_files.files);
-        msc_dbg->module->module.SymType = SymCoff;
-        /* FIXME: we could have a finer grain here */
-        msc_dbg->module->module.LineNumbers = TRUE;
-        msc_dbg->module->module.GlobalSymbols = TRUE;
-        msc_dbg->module->module.TypeInfo = FALSE;
-        msc_dbg->module->module.SourceIndexed = TRUE;
-        msc_dbg->module->module.Publics = TRUE;
-        ret = TRUE;
     }
+    msc_dbg->module->module.SymType = SymCoff;
 
-    return ret;
+    msc_dbg->module->module.LineNumbers = !!(SymGetOptions() & SYMOPT_LOAD_LINES);
+    msc_dbg->module->module.GlobalSymbols = TRUE;
+    msc_dbg->module->module.TypeInfo = FALSE;
+    msc_dbg->module->module.SourceIndexed = TRUE;
+    msc_dbg->module->module.Publics = TRUE;
+    return TRUE;
 }

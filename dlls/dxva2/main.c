@@ -28,6 +28,7 @@
 #include "highlevelmonitorconfigurationapi.h"
 #include "initguid.h"
 #include "dxva2api.h"
+#include "dxvahd.h"
 
 #include "wine/debug.h"
 
@@ -1360,4 +1361,13 @@ BOOL WINAPI SetVCPFeature( HMONITOR monitor, BYTE vcpCode, DWORD value )
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+
+HRESULT WINAPI DXVAHD_CreateDevice(IDirect3DDevice9Ex *d3d9_device, const DXVAHD_CONTENT_DESC *desc,
+        DXVAHD_DEVICE_USAGE usage, PDXVAHDSW_Plugin plugin, IDXVAHD_Device **device)
+{
+    FIXME("d3d9_device %p, desc %p, usage %u, plugin %p, device %p, stub!\n", d3d9_device, desc, usage, plugin, device);
+
+    return E_NOTIMPL;
 }

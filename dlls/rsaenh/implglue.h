@@ -30,13 +30,13 @@
 #define RSAENH_MAX_HASH_SIZE        104
 
 typedef union tagKEY_CONTEXT {
-    rc2_key rc2;
-    des_key des;
-    des3_key des3;
-    aes_key aes;
-    prng_state rc4;
+    symmetric_key key;
+    prng_state prng;
     rsa_key rsa;
 } KEY_CONTEXT;
+
+extern prng_state prng;
+extern int wprng;
 
 BOOL init_hash_impl(ALG_ID aiAlgid, BCRYPT_HASH_HANDLE *hash_handle);
 BOOL update_hash_impl(BCRYPT_HASH_HANDLE hash_handle, const BYTE *pbData, DWORD dwDataLen);
@@ -52,7 +52,9 @@ BOOL duplicate_key_impl(ALG_ID aiAlgid, const KEY_CONTEXT *pSrcKeyContext,
 
 /* dwKeySpec is optional for symmetric key algorithms */
 BOOL encrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
-                        BYTE *pbOut, DWORD enc);
+                        BYTE *pbOut);
+BOOL decrypt_block_impl(ALG_ID aiAlgid, DWORD dwKeySpec, KEY_CONTEXT *pKeyContext, const BYTE *pbIn,
+                        BYTE *pbOut);
 BOOL encrypt_stream_impl(ALG_ID aiAlgid, KEY_CONTEXT *pKeyContext, BYTE *pbInOut, DWORD dwLen);
 
 BOOL export_public_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
@@ -63,7 +65,5 @@ BOOL export_private_key_impl(BYTE *pbDest, const KEY_CONTEXT *pKeyContext, DWORD
                              DWORD *pdwPubExp);
 BOOL import_private_key_impl(const BYTE* pbSrc, KEY_CONTEXT *pKeyContext, DWORD dwKeyLen,
                              DWORD dwDataLen, DWORD dwPubExp);
-
-BOOL gen_rand_impl(BYTE *pbBuffer, DWORD dwLen);
 
 #endif /* __WINE_IMPLGLUE_H */

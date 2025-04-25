@@ -3253,7 +3253,7 @@ static void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
   StorageUtl_WriteDWord(
     buffer,
       OFFSET_PS_MTIMEHIGH,
-      newData->ctime.dwHighDateTime);
+      newData->mtime.dwHighDateTime);
 
   StorageUtl_WriteDWord(
     buffer,

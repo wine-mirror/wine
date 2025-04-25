@@ -130,6 +130,7 @@ struct async_send_ioctl
     unsigned int sent_len;
     unsigned int count;
     unsigned int iov_cursor;
+    int fd;
     struct iovec iov[1];
 };
 
@@ -983,6 +984,14 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
             ERR( "failed to convert address\n" );
             return STATUS_ACCESS_VIOLATION;
         }
+        if (sock_type == SOCK_DGRAM && ((unix_addr.addr.sa_family == AF_INET && !unix_addr.in.sin_port)
+            || (unix_addr.addr.sa_family == AF_INET6 && !unix_addr.in6.sin6_port)))
+        {
+            /* Sending to port 0 succeeds on Windows. Use 'discard' service instead so sendmsg() works on Unix
+             * while still goes through other parameters validation. */
+            WARN( "Trying to use destination port 0, substituing 9.\n" );
+            unix_addr.in.sin_port = htons( 9 );
+        }
 
 #if defined(HAS_IPX) && defined(SOL_IPX)
         if (async->addr->sa_family == WS_AF_IPX)
@@ -1052,7 +1061,8 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, unsigned int *status )
 
     if (*status == STATUS_ALERTED)
     {
-        if ((*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
+        needs_close = FALSE;
+        if ((fd = async->fd) == -1 && (*status = server_get_unix_fd( async->io.handle, 0, &fd, &needs_close, NULL, NULL )))
             return TRUE;
 
         *status = try_send( fd, async );
@@ -1064,6 +1074,7 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, unsigned int *status )
             return FALSE;
     }
     *info = async->sent_len;
+    if (async->fd != -1) close( async->fd );
     release_fileio( &async->io );
     return TRUE;
 }
@@ -1094,7 +1105,7 @@ static void sock_save_icmp_id( struct async_send_ioctl *async )
 }
 
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                           IO_STATUS_BLOCK *io, int fd, struct async_send_ioctl *async, int force_async )
+                           IO_STATUS_BLOCK *io, int fd, struct async_send_ioctl *async, unsigned int server_flags )
 {
     HANDLE wait_handle;
     BOOL nonblocking;
@@ -1103,7 +1114,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
     SERVER_START_REQ( send_socket )
     {
-        req->force_async = force_async;
+        req->flags = server_flags;
         req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -1121,21 +1132,80 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (status == STATUS_ALERTED)
     {
         status = try_send( fd, async );
-        if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
+        if (status == STATUS_DEVICE_NOT_READY && ((server_flags & SERVER_SOCKET_IO_FORCE_ASYNC) || !nonblocking))
             status = STATUS_PENDING;
 
         /* If we had a short write and the socket is nonblocking (and we are
          * not trying to force the operation to be asynchronous), return
-         * success.  Windows actually refuses to send any data in this case,
-         * and returns EWOULDBLOCK, but we have no way of doing that. */
-        if (status == STATUS_DEVICE_NOT_READY && async->sent_len)
-            status = STATUS_SUCCESS;
+         * success, pretened we've written everything to the socket and queue writing
+         * remaining data. Windows never reports partial write in this case and queues
+         * virtually unlimited amount of data for background write in this case. */
+        if (status == STATUS_DEVICE_NOT_READY && async->sent_len && async->iov_cursor < async->count)
+        {
+            struct iovec *iov = async->iov + async->iov_cursor;
+            SIZE_T data_size, async_size, addr_size;
+            struct async_send_ioctl *rem_async;
+            unsigned int i, iov_count;
+            IO_STATUS_BLOCK *rem_io;
+            char *p;
+
+            TRACE( "Short write, queueing remaining data.\n" );
+            data_size = 0;
+            iov_count = async->count - async->iov_cursor;
+            for (i = 0; i < iov_count; ++i)
+                data_size += iov[i].iov_len;
+
+            addr_size = max( 0, async->addr_len );
+            async_size = offsetof( struct async_send_ioctl, iov[1] ) + data_size + addr_size
+                         + sizeof(IO_STATUS_BLOCK) + sizeof(IO_STATUS_BLOCK32);
+            if (!(rem_async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
+            {
+                status = STATUS_NO_MEMORY;
+            }
+            else
+            {
+                /* Use a local copy of socket fd so the async send works after socket handle is closed. */
+                rem_async->fd = dup( fd );
+                rem_async->count = 1;
+                p = (char *)rem_async + offsetof( struct async_send_ioctl, iov[1] );
+                rem_async->iov[0].iov_base = p;
+                rem_async->iov[0].iov_len = data_size;
+                for (i = 0; i < iov_count; ++i)
+                {
+                    memcpy( p, iov[i].iov_base, iov[i].iov_len );
+                    p += iov[i].iov_len;
+                }
+                rem_async->unix_flags = async->unix_flags;
+                memcpy( p, async->addr, addr_size );
+                rem_async->addr = (const struct WS_sockaddr *)p;
+                p += addr_size;
+                rem_async->addr_len = async->addr_len;
+                rem_async->iov_cursor = 0;
+                rem_async->sent_len = 0;
+                rem_io = (IO_STATUS_BLOCK *)p;
+                p += sizeof(IO_STATUS_BLOCK);
+                rem_io->Pointer = p;
+                p += sizeof(IO_STATUS_BLOCK32);
+                status = sock_send( handle, NULL, NULL, NULL, rem_io, fd, rem_async,
+                                    SERVER_SOCKET_IO_FORCE_ASYNC | SERVER_SOCKET_IO_SYSTEM );
+                if (status == STATUS_PENDING) status = STATUS_SUCCESS;
+                if (!status)
+                {
+                    async->sent_len += data_size;
+                    async->iov_cursor = async->count;
+                }
+                else ERR( "Remaining write queue failed, status %#x.\n", status );
+            }
+        }
 
         set_async_direct_result( &wait_handle, options, io, status, async->sent_len, FALSE );
     }
 
     if (status != STATUS_PENDING)
+    {
+        if (async->fd != -1) close( async->fd );
         release_fileio( &async->io );
+    }
 
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
@@ -1175,13 +1245,14 @@ static NTSTATUS sock_ioctl_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
             async->iov[i].iov_len = buffers[i].len;
         }
     }
+    async->fd = -1;
     async->unix_flags = unix_flags;
     async->addr = addr;
     async->addr_len = addr_len;
     async->iov_cursor = 0;
     async->sent_len = 0;
 
-    return sock_send( handle, event, apc, apc_user, io, fd, async, force_async );
+    return sock_send( handle, event, apc, apc_user, io, fd, async, force_async ? SERVER_SOCKET_IO_FORCE_ASYNC : 0 );
 }
 
 
@@ -1194,6 +1265,7 @@ NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
         return STATUS_NO_MEMORY;
 
+    async->fd = -1;
     async->count = 1;
     async->iov[0].iov_base = (void *)buffer;
     async->iov[0].iov_len = length;
@@ -1203,7 +1275,7 @@ NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
     async->iov_cursor = 0;
     async->sent_len = 0;
 
-    return sock_send( handle, event, apc, apc_user, io, fd, async, 1 );
+    return sock_send( handle, event, apc, apc_user, io, fd, async, SERVER_SOCKET_IO_FORCE_ASYNC );
 }
 
 
@@ -1367,7 +1439,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
 
     SERVER_START_REQ( send_socket )
     {
-        req->force_async = 1;
+        req->flags = SERVER_SOCKET_IO_FORCE_ASYNC;
         req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
@@ -1683,12 +1755,16 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_COMPLETE_ASYNC:
         {
+            enum server_fd_type type;
+
             if (in_size != sizeof(NTSTATUS))
                 return STATUS_BUFFER_TOO_SMALL;
 
-            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
+            if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, &type, &options )))
                 return status;
             if (needs_close) close( fd );
+            if (type != FD_TYPE_SOCKET)
+                return STATUS_INVALID_DEVICE_REQUEST;
 
             status = *(NTSTATUS *)in_buffer;
             file_complete_async( handle, options, event, apc, apc_user, io, status, 0 );
@@ -1697,7 +1773,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_FIONREAD:
         {
-            int value, ret;
+            int value;
 
             if (out_size < sizeof(int))
             {
@@ -1723,7 +1799,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
 #endif
 
-            if ((ret = ioctl( fd, FIONREAD, &value )) < 0)
+            if (ioctl( fd, FIONREAD, &value ) < 0)
             {
                 status = sock_errno_to_status( errno );
                 break;
@@ -1736,7 +1812,8 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
 
         case IOCTL_AFD_WINE_SIOCATMARK:
         {
-            int value, ret;
+            int value
+                ;
             socklen_t len = sizeof(value);
 
             if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, &options )))
@@ -1760,7 +1837,7 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
             }
             else
             {
-                if ((ret = ioctl( fd, SIOCATMARK, &value )) < 0)
+                if (ioctl( fd, SIOCATMARK, &value ) < 0)
                 {
                     status = sock_errno_to_status( errno );
                     break;

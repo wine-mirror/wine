@@ -679,12 +679,11 @@ static const event_target_vtbl_t HTMLObjectElement_event_target_vtbl = {
 static const tid_t HTMLObjectElement_iface_tids[] = {
     IHTMLObjectElement2_tid,
     IHTMLObjectElement_tid,
-    HTMLELEMENT_TIDS,
     0
 };
 dispex_static_data_t HTMLObjectElement_dispex = {
-    .id           = PROT_HTMLObjectElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLObjectElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLObjectElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLObjectElement_tid,
     .iface_tids   = HTMLObjectElement_iface_tids,
@@ -884,13 +883,12 @@ static const event_target_vtbl_t HTMLEmbedElement_event_target_vtbl = {
 };
 
 static const tid_t HTMLEmbedElement_iface_tids[] = {
-    HTMLELEMENT_TIDS,
     IHTMLEmbedElement_tid,
     0
 };
 dispex_static_data_t HTMLEmbedElement_dispex = {
-    .id           = PROT_HTMLEmbedElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLEmbedElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLEmbedElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLEmbed_tid,
     .iface_tids   = HTMLEmbedElement_iface_tids,

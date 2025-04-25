@@ -179,10 +179,10 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
     return status;
 }
 
-static const shared_object_t *find_shared_session_object( obj_locator_t locator )
+static const shared_object_t *find_shared_session_object( struct obj_locator locator )
 {
+    struct session_block *block = NULL;
     const shared_object_t *object;
-    struct session_block *block;
     NTSTATUS status;
 
     if (locator.id && !(status = find_shared_session_block( locator.offset, sizeof(*object), &block )))
@@ -204,7 +204,7 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
 
     if (!(object = data->shared_desktop))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_thread_desktop )
         {
@@ -239,7 +239,7 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
 
     if (!(object = data->shared_queue))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_msg_queue )
         {
@@ -272,7 +272,7 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
 
     if (!(object = cache->object))
     {
-        obj_locator_t locator;
+        struct obj_locator locator;
 
         SERVER_START_REQ( get_thread_input )
         {
@@ -433,6 +433,8 @@ BOOL WINAPI NtUserSetProcessWindowStation( HWINSTA handle )
         ret = !wine_server_call_err( req );
     }
     SERVER_END_REQ;
+
+    reset_monitor_update_serial();
     return ret;
 }
 
@@ -486,11 +488,15 @@ HDESK WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *dev
 HDESK WINAPI NtUserOpenDesktop( OBJECT_ATTRIBUTES *attr, DWORD flags, ACCESS_MASK access )
 {
     HANDLE ret = 0;
+
+    access |= DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS;
+
     if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR))
     {
         RtlSetLastWin32Error( ERROR_FILENAME_EXCED_RANGE );
         return 0;
     }
+
     SERVER_START_REQ( open_desktop )
     {
         req->winsta     = wine_server_obj_handle( attr->RootDirectory );
@@ -541,7 +547,7 @@ HDESK WINAPI NtUserGetThreadDesktop( DWORD thread )
 BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
 {
     BOOL ret, was_virtual_desktop = is_virtual_desktop();
-    obj_locator_t locator;
+    struct obj_locator locator;
 
     SERVER_START_REQ( set_thread_desktop )
     {
@@ -573,6 +579,8 @@ HDESK WINAPI NtUserOpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK acce
 
     TRACE( "(%x,%i,%x)\n", (int)flags, inherit, (int)access );
 
+    access |= DESKTOP_READOBJECTS | DESKTOP_WRITEOBJECTS;
+
     if (flags)
         FIXME( "partial stub flags %08x\n", (int)flags );
 
@@ -601,6 +609,43 @@ BOOL WINAPI NtUserSwitchDesktop( HDESK desktop )
 
     return TRUE;
 }
+
+/******************************************************************************
+ *              NtUserBuildNameList   (win32u.@)
+ */
+NTSTATUS WINAPI NtUserBuildNameList( HWINSTA handle, ULONG size, struct ntuser_name_list *list,
+                                     ULONG *ret_size )
+{
+    const ULONG header_size = offsetof( struct ntuser_name_list, strings[1] ); /* header + final null */
+    WCHAR *buffer;
+    NTSTATUS status;
+    ULONG count, result, total;
+
+    if (size <= header_size) return STATUS_INVALID_HANDLE;
+    if (!(buffer = malloc( size - header_size ))) return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( enum_winstation )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        wine_server_set_reply( req, buffer, size - header_size );
+        status = wine_server_call( req );
+        result = wine_server_reply_size( reply );
+        total  = reply->total;
+        count  = reply->count;
+    }
+    SERVER_END_REQ;
+
+    if (!status || status == STATUS_BUFFER_TOO_SMALL)
+    {
+        list->size = header_size + result;
+        list->count = count;
+        memcpy( list->strings, buffer, result );
+        list->strings[result / sizeof(WCHAR)] = 0;
+        *ret_size = header_size + total;
+    }
+    return status;
+}
+
 
 /***********************************************************************
  *           NtUserGetObjectInformation   (win32u.@)
@@ -765,8 +810,7 @@ HWND get_desktop_window(void)
         static const WCHAR system_dir[] = {'C',':','\\','w','i','n','d','o','w','s','\\',
             's','y','s','t','e','m','3','2','\\',0};
         RTL_USER_PROCESS_PARAMETERS params = { sizeof(params), sizeof(params) };
-        ULONG_PTR buffer[offsetof( PS_ATTRIBUTE_LIST, Attributes[2] ) / sizeof(ULONG_PTR)];
-        PS_ATTRIBUTE_LIST *ps_attr = (PS_ATTRIBUTE_LIST *)buffer;
+        PS_ATTRIBUTE_LIST ps_attr;
         PS_CREATE_INFO create_info;
         WCHAR desktop[MAX_PATH];
         PEB *peb = NtCurrentTeb()->Peb;
@@ -799,30 +843,24 @@ HWND get_desktop_window(void)
         RtlInitUnicodeString( &params.WindowTitle, appnameW + 4 );
         RtlInitUnicodeString( &params.Desktop, desktop );
 
-        ps_attr->Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
-        ps_attr->Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
-        ps_attr->Attributes[0].ValuePtr     = (WCHAR *)appnameW;
-        ps_attr->Attributes[0].ReturnLength = NULL;
-
-        ps_attr->Attributes[1].Attribute    = PS_ATTRIBUTE_TOKEN;
-        ps_attr->Attributes[1].Size         = sizeof(HANDLE);
-        ps_attr->Attributes[1].ValuePtr     = GetCurrentThreadEffectiveToken();
-        ps_attr->Attributes[1].ReturnLength = NULL;
-
-        ps_attr->TotalLength = offsetof( PS_ATTRIBUTE_LIST, Attributes[2] );
+        ps_attr.TotalLength = sizeof(ps_attr);
+        ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
+        ps_attr.Attributes[0].Size         = sizeof(appnameW) - sizeof(WCHAR);
+        ps_attr.Attributes[0].ValuePtr     = (WCHAR *)appnameW;
+        ps_attr.Attributes[0].ReturnLength = NULL;
 
         if (NtCurrentTeb64() && !NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR])
         {
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = TRUE;
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, ps_attr );
+                                          &create_info, &ps_attr );
             NtCurrentTeb64()->TlsSlots[WOW64_TLS_FILESYSREDIR] = FALSE;
         }
         else
             status = NtCreateUserProcess( &process, &thread, PROCESS_ALL_ACCESS, THREAD_ALL_ACCESS,
                                           NULL, NULL, 0, THREAD_CREATE_FLAGS_CREATE_SUSPENDED, &params,
-                                          &create_info, ps_attr );
+                                          &create_info, &ps_attr );
         if (!status)
         {
             NtResumeThread( thread, NULL );

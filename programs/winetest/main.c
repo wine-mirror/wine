@@ -68,6 +68,8 @@ static char build_id[64];
 static BOOL is_wow64;
 static int failures;
 static int quiet_mode;
+static HANDLE logfile;
+static HANDLE junit;
 
 /* filters for running only specific tests */
 static char **filters;
@@ -516,8 +518,8 @@ static void print_version (void)
         xprintf ("    Description=%s\n", description );
     if (url)
         xprintf ("    URL=%s\n", url );
-    xprintf ("    dwMajorVersion=%u\n    dwMinorVersion=%u\n"
-             "    dwBuildNumber=%u\n    PlatformId=%u\n    szCSDVersion=%s\n",
+    xprintf ("    dwMajorVersion=%lu\n    dwMinorVersion=%lu\n"
+             "    dwBuildNumber=%lu\n    PlatformId=%lu\n    szCSDVersion=%s\n",
              ver.dwMajorVersion, ver.dwMinorVersion, ver.dwBuildNumber,
              ver.dwPlatformId, ver.szCSDVersion);
 
@@ -547,7 +549,7 @@ static void print_version (void)
         DWORD prodtype = 0;
 
         pGetProductInfo(ver.dwMajorVersion, ver.dwMinorVersion, ver.wServicePackMajor, ver.wServicePackMinor, &prodtype);
-        xprintf("    dwProductInfo=%u\n", prodtype);
+        xprintf("    dwProductInfo=%lu\n", prodtype);
     }
 }
 
@@ -558,9 +560,9 @@ static void print_language(void)
     LANGID (WINAPI *pGetUserDefaultUILanguage)(void);
     LANGID (WINAPI *pGetThreadUILanguage)(void);
 
-    xprintf ("    SystemDefaultLCID=%04x\n", GetSystemDefaultLCID());
-    xprintf ("    UserDefaultLCID=%04x\n", GetUserDefaultLCID());
-    xprintf ("    ThreadLocale=%04x\n", GetThreadLocale());
+    xprintf ("    SystemDefaultLCID=%04lx\n", GetSystemDefaultLCID());
+    xprintf ("    UserDefaultLCID=%04lx\n", GetUserDefaultLCID());
+    xprintf ("    ThreadLocale=%04lx\n", GetThreadLocale());
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
     pGetSystemPreferredUILanguages = (void*)GetProcAddress(hkernel32, "GetSystemPreferredUILanguages");
@@ -584,7 +586,7 @@ static void print_language(void)
     if (pGetThreadUILanguage)
         xprintf ("    ThreadUILanguage=%04x\n", pGetThreadUILanguage());
     xprintf ("    KeyboardLayout=%p\n", GetKeyboardLayout(0));
-    xprintf ("    Country=%d\n", GetUserGeoID(GEOCLASS_NATION));
+    xprintf ("    Country=%ld\n", GetUserGeoID(GEOCLASS_NATION));
     xprintf ("    ACP=%d\n", GetACP());
 }
 
@@ -669,7 +671,7 @@ extract_test (struct wine_test *test, const char *dir, LPSTR res_name)
     if (!code) report (R_FATAL, "Can't find test resource %s: %d",
                        res_name, GetLastError ());
     test->name = xstrdup( res_name );
-    test->exename = strmake (NULL, "%s\\%s", dir, test->name);
+    test->exename = strmake("%s\\%s", dir, test->name);
     exepos = strstr (test->name, testexe);
     if (!exepos) report (R_FATAL, "Not an .exe file: %s", test->name);
     *exepos = 0;
@@ -719,7 +721,7 @@ static DWORD wait_process( HANDLE process, DWORD timeout )
 
 static void append_path( const char *path)
 {
-    char *newpath = strmake( NULL, "%s;%s", curpath, path );
+    char *newpath = strmake( "%s;%s", curpath, path );
     SetEnvironmentVariableA("PATH", newpath);
     free(newpath);
 }
@@ -825,7 +827,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     subfile = create_temp_file( subname );
     if (subfile == INVALID_HANDLE_VALUE) return GetLastError();
 
-    cmd = strmake (NULL, "%s --list", test->exename);
+    cmd = strmake("%s --list", test->exename);
     if (test->maindllpath) {
         /* We need to add the path (to the main dll) to PATH */
         append_path(test->maindllpath);
@@ -869,6 +871,184 @@ get_subtests (const char *tempdir, struct wine_test *test, LPSTR res_name)
     return 0;
 }
 
+static char *xmlescape( const char *src, const char *end, int comment )
+{
+    char *dst = calloc( 1, (end - src) * 6 + 1 ), *tmp;
+
+    while (end > src && (end[-1] == '\r' || end[-1] == '\n')) end--;
+    for (tmp = dst; tmp && src < end; src++)
+    {
+        if (comment && *src == '-') tmp += sprintf( tmp, "&#45;" );
+        else if (comment) *tmp++ = *src;
+        else if (*src == '&') tmp += sprintf( tmp, "&amp;" );
+        else if (*src == '"') tmp += sprintf( tmp, "&quot;" );
+        else if (*src == '<') tmp += sprintf( tmp, "&lt;" );
+        else if (*src == '>') tmp += sprintf( tmp, "&gt;" );
+        else if (*src < ' ' && *src != '\t' && *src != '\r' && *src != '\n')
+        {
+            char *esc = strmake( "\\x%02x", *src );
+            tmp += sprintf( tmp, "%s", esc );
+            free( esc );
+        }
+        else *tmp++ = *src;
+    }
+
+    return dst;
+}
+
+static void report_test_start( struct wine_test *test, const char *subtest, const char *file )
+{
+    report( R_STEP, "Running: %s:%s", test->name, subtest );
+    xprintf( "%s:%s start %s\n", test->name, subtest, file );
+}
+
+/* filter out color escapes and null characters from test output data */
+static void *filter_data( const char *data, DWORD size, DWORD *output_size )
+{
+    DWORD i, j, eol, ignore = 0;
+    char *ret;
+
+    if (!(ret = malloc( size + 1 ))) return NULL;
+    for (i = j = 0, eol = -1; i < size; i++)
+    {
+        if (data[i] == '\x1b' && data[i + 1] == '[')
+        {
+            while (data[i] && data[i] != 'm') i++;
+            eol = i;
+        }
+        else if (data[i]) ret[j++] = data[i];
+        if (!strncmp( data + i, " Test succeeded", 15 )) ignore += i + 15 - eol;
+        if (data[i] == '\n') eol = i;
+    }
+    ret[j] = 0;
+    *output_size = j - ignore;
+
+    return ret;
+}
+
+static void report_test_done( struct wine_test *test, const char *subtest, const char *file, DWORD pid, DWORD ticks,
+                              HANDLE out_file, UINT status, const char *data, DWORD size )
+{
+    char *filtered_data;
+    DWORD output_size;
+
+    if (!(filtered_data = filter_data( data, size, &output_size ))) return;
+
+    if (quiet_mode <= 1 || status || output_size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
+    xprintf( "%s:%s:%04lx done (%d) in %lds %luB\n", test->name, subtest, pid, status, ticks / 1000, size );
+    if (output_size > MAX_OUTPUT_SIZE) xprintf( "%s:%s:%04lx The test prints too much data (%lu bytes)\n", test->name, subtest, pid, size );
+
+    if (filtered_data && junit)
+    {
+        int total = 0, fail_total = 0, skip_total = 0, failures = 0;
+        const char *next, *line, *ptr, *dir = strrchr( file, '/' );
+        float time, last_time = 0;
+
+        for (line = next = filtered_data; *line; line = next)
+        {
+            int count, todo_count, flaky_count, fail_count, skip_count;
+
+            if ((next = strchr( next, '\n' ))) next += 1;
+            else next = line + strlen( line );
+            if (!(ptr = strchr( line, ' ' ))) continue;
+
+            if (sscanf( ptr, " %d tests executed (%d marked as todo, %d as flaky, %d failur%*[^)]), %d skipped.",
+                        &count, &todo_count, &flaky_count, &fail_count, &skip_count ) == 5)
+            {
+                total += count;
+                fail_total += fail_count;
+                skip_total += skip_count;
+            }
+        }
+
+        output( junit, "  <testsuite name=\"%s:%s\" file=\"%s\" time=\"%f\" tests=\"%d\" failures=\"%d\" skipped=\"%d\">\n",
+                test->name, subtest, file, ticks / 1000.0, total, fail_total, skip_total );
+
+        for (line = next = filtered_data; *line; line = next)
+        {
+            struct { const char *pattern; int length; int error; } patterns[] =
+            {
+                #define X(x, y) {.pattern = x, .length = strlen(x), .error = y}
+                X("Tests skipped: ", -1),
+                X("Test failed: ", 1),
+                X("Test succeeded inside todo block: ", 1),
+                X("Test succeeded inside flaky todo block: ", 1),
+                #undef X
+            };
+            char src[256], *name, *message;
+            int i, n, len;
+
+            if ((next = strchr( next, '\n' ))) next += 1;
+            else next = line + strlen( line );
+
+            if ((len = sscanf( line, "%255[^:\n]:%d:%f", src, &n, &time )) != 2 && len != 3) continue;
+            if (len == 2) time = last_time;
+
+            if (!(ptr = strchr( line, ' ' ))) continue;
+            ptr++;
+
+            message = xmlescape( ptr, next, 0 );
+            name = strmake( "%s:%d %s", src, n, message );
+            for (i = 0; i < ARRAY_SIZE(patterns); i++)
+            {
+                if (!strncmp( ptr, patterns[i].pattern, patterns[i].length ))
+                {
+                    output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s %s\" file=\"%.*s%s#L%d\" assertions=\"1\" time=\"%f\">",
+                             test->name, subtest, test->name, subtest, name, (int)(dir - file + 1), file, src, n, time - last_time );
+                    if (patterns[i].error == -1) output( junit, "<system-out>%s</system-out><skipped/>", message );
+                    else if (patterns[i].error == 1) output( junit, "<system-out>%s</system-out><failure/>", message );
+                    output( junit, "</testcase>\n" );
+
+                    if (patterns[i].error == 1) failures++;
+                    last_time = time;
+                    break;
+                }
+            }
+            free( name );
+            free( message );
+        }
+
+        if (total > fail_total + skip_total)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%d succeeding tests\" file=\"%s\" assertions=\"%d\" time=\"%f\"/>\n",
+                     test->name, subtest, total - fail_total - skip_total, file, total - fail_total - skip_total, ticks / 1000.0 - last_time );
+        }
+
+        if (status == WAIT_TIMEOUT)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s timeout\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test timeout after %f seconds</system-out><failure/>", ticks / 1000.0 );
+            output( junit, "</testcase>\n" );
+        }
+        else if (status != failures)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s status %d\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, status, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test exited with status %d</system-out><failure/>", status );
+            output( junit, "</testcase>\n" );
+        }
+        if (output_size > MAX_OUTPUT_SIZE)
+        {
+            output( junit, "    <testcase classname=\"%s:%s\" name=\"%s:%s output overflow\" file=\"%s\" assertions=\"%d\" time=\"%f\">",
+                     test->name, subtest, test->name, subtest, file, total, ticks / 1000.0 );
+            output( junit, "<system-out>Test prints too much data (%lukB > %ukB)</system-out><failure/>",
+                    size / 1024, MAX_OUTPUT_SIZE / 1024 );
+            output( junit, "</testcase>\n" );
+        }
+
+        output( junit, "  </testsuite>\n" );
+    }
+
+    free( filtered_data );
+}
+
+static void report_test_skip( struct wine_test *test, const char *subtest, const char *file )
+{
+    report( R_STEP, "Skipping: %s:%s", test->name, subtest );
+    xprintf( "%s:%s skipped %s\n", test->name, subtest, file );
+}
+
 static void
 run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const char *tempdir)
 {
@@ -877,43 +1057,30 @@ run_test (struct wine_test* test, const char* subtest, HANDLE out_file, const ch
 
     if (test_filtered_out( test->name, subtest ))
     {
-        report (R_STEP, "Skipping: %s:%s", test->name, subtest);
-        xprintf ("%s:%s skipped %s\n", test->name, subtest, file);
+        report_test_skip( test, subtest, file );
         nr_of_skips++;
     }
     else
     {
+        char *data, tmpname[MAX_PATH];
+        HANDLE tmpfile = create_temp_file( tmpname );
         int status;
         DWORD pid, size, start = GetTickCount();
-        char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
-        report (R_STEP, "Running: %s:%s", test->name, subtest);
-        xprintf ("%s:%s start %s\n", test->name, subtest, file);
+        char *cmd = strmake("%s %s", test->exename, subtest);
+
+        report_test_start( test, subtest, file );
         /* Flush to disk so we know which test caused Windows to crash if it does */
         FlushFileBuffers(out_file);
-        if (quiet_mode > 1)
-        {
-            char *data, tmpname[MAX_PATH];
-            HANDLE tmpfile = create_temp_file( tmpname );
-            status = run_ex (cmd, tmpfile, tempdir, 120000, FALSE, &pid);
-            data = flush_temp_file( tmpname, tmpfile, &size );
-            if (status || size > MAX_OUTPUT_SIZE) WriteFile( out_file, data, size, &size, NULL );
-            free( data );
-        }
-        else
-        {
-            DWORD start_size = GetFileSize( out_file, NULL );
-            status = run_ex (cmd, out_file, tempdir, 120000, FALSE, &pid);
-            size = GetFileSize( out_file, NULL ) - start_size;
-        }
-        if (status == -2) status = -GetLastError();
+
+        status = run_ex( cmd, tmpfile, tempdir, 120000, FALSE, &pid );
+        if (status == -2 && GetLastError()) status = -GetLastError();
         free(cmd);
-        xprintf ("%s:%s:%04x done (%d) in %ds %uB\n", test->name, subtest, pid, status, (GetTickCount()-start)/1000, size);
-        if (size > MAX_OUTPUT_SIZE)
-        {
-            xprintf ("%s:%s:%04x The test prints too much data (%u bytes)\n", test->name, subtest, pid, size);
-            failures++;
-        }
-        else if (status) failures++;
+
+        data = flush_temp_file( tmpname, tmpfile, &size );
+        report_test_done( test, subtest, file, pid, GetTickCount() - start, out_file, status, data, size );
+        free( data );
+
+        if (status || size > MAX_OUTPUT_SIZE) failures++;
     }
     if (failures) report (R_STATUS, "Running tests - %u failures", failures);
 }
@@ -1102,7 +1269,7 @@ extract_test_proc (HMODULE hModule, LPCSTR lpszType, LPSTR lpszName, LONG_PTR lP
             xprintf ("    %s=dll is missing the requested side-by-side version\n", dllname);
             break;
         default:
-            xprintf ("    %s=load error %u\n", dllname, err);
+            xprintf ("    %s=load error %lu\n", dllname, err);
             break;
         }
     }
@@ -1175,6 +1342,11 @@ run_tests (char *logname, char *outdir)
 
     report (R_DIR, "%s", tempdir);
 
+    if (junit)
+    {
+        output( junit, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" );
+        output( junit, "<testsuites>\n" );
+    }
     xprintf ("Version 4\n");
     xprintf ("Tests from build %s\n", build_id[0] ? build_id : "-" );
     xprintf ("Archive: -\n");  /* no longer used */
@@ -1191,7 +1363,7 @@ run_tests (char *logname, char *outdir)
             nextline = strsize?eol+1:NULL;
             if (eol > strres && *(eol-1) == '\r') eol--;
         }
-        xprintf ("    %.*s\n", eol-strres, strres);
+        xprintf ("    %.*s\n", (int)(eol-strres), strres);
         strres = nextline;
     }
     xprintf ("Operating system version:\n");
@@ -1260,6 +1432,11 @@ run_tests (char *logname, char *outdir)
         }
     }
     report (R_DELTA, 0, "Running: Done");
+    if (junit)
+    {
+        output( junit, "</testsuites>\n" );
+        CloseHandle( junit );
+    }
 
     report (R_STATUS, "Cleaning up - %u failures", failures);
     if (strcmp(logname, "-") != 0) CloseHandle( logfile );
@@ -1340,6 +1517,7 @@ usage (void)
 " -n        exclude the specified tests\n"
 " -p        shutdown when the tests are done\n"
 " -q        quiet mode, no output at all\n"
+" -J FILE   output junit XML report into FILE\n"
 " -o FILE   put report into FILE, do not submit\n"
 " -s FILE   submit FILE, do not run tests\n"
 " -S URL    URL to submit the results to\n"
@@ -1351,9 +1529,9 @@ usage (void)
 int __cdecl main( int argc, char *argv[] )
 {
     BOOL (WINAPI *pIsWow64Process)(HANDLE hProcess, PBOOL Wow64Process);
-    char *logname = NULL, *outdir = NULL;
+    char *logname = NULL, *outdir = NULL, *path = NULL;
     const char *extract = NULL;
-    const char *cp, *submit = NULL, *submiturl = NULL;
+    const char *cp, *submit = NULL, *submiturl = NULL, *job_name;
     int reset_env = 1;
     int poweroff = 0;
     int interactive = 1;
@@ -1366,6 +1544,12 @@ int __cdecl main( int argc, char *argv[] )
 
     pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),"IsWow64Process");
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
+    if ((job_name = getenv( "CI_JOB_NAME" )))
+    {
+        tag = strmake( "gitlab-%s", job_name );
+        url = getenv( "CI_JOB_URL" );
+    }
 
     for (i = 1; i < argc && argv[i]; i++)
     {
@@ -1398,6 +1582,14 @@ int __cdecl main( int argc, char *argv[] )
                 usage();
                 exit( 2 );
             }
+            break;
+        case 'J':
+            if (!(path = argv[++i]))
+            {
+                usage();
+                exit( 2 );
+            }
+            junit = create_output_file( path );
             break;
         case 'm':
             if (!(email = argv[++i]))
@@ -1447,12 +1639,6 @@ int __cdecl main( int argc, char *argv[] )
             if (strlen (tag) > MAXTAGLEN)
                 report (R_FATAL, "tag is too long (maximum %d characters)",
                         MAXTAGLEN);
-            cp = findbadtagchar (tag);
-            if (cp) {
-                report (R_ERROR, "invalid char in tag: %c", *cp);
-                usage ();
-                exit (2);
-            }
             break;
         case 'u':
             if (!(url = argv[++i]))
@@ -1516,11 +1702,22 @@ int __cdecl main( int argc, char *argv[] )
             SetEnvironmentVariableA( "WINETEST_INTERACTIVE", "0" );
             SetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", "0" );
         }
+        if (junit)
+        {
+            SetEnvironmentVariableA( "WINETEST_TIME", "1" );
+        }
 
         if (nb_filters && !exclude_tests)
         {
             run_tests( logname, outdir );
             exit( failures ? 3 : 0 );
+        }
+
+        if (tag && (cp = findbadtagchar(tag)))
+        {
+            report (R_ERROR, "invalid char in tag: %c", *cp);
+            usage ();
+            exit (2);
         }
 
         while (!tag) {

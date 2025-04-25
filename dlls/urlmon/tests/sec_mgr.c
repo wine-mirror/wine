@@ -83,36 +83,29 @@ static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST, DWORD)
 static HRESULT (WINAPI *pCoInternetIsFeatureEnabledForUrl)(INTERNETFEATURELIST, DWORD, LPCWSTR, IInternetSecurityManager*);
 static HRESULT (WINAPI *pCoInternetIsFeatureZoneElevationEnabled)(LPCWSTR, LPCWSTR, IInternetSecurityManager*, DWORD);
 
-static const WCHAR url1[] = {'r','e','s',':','/','/','m','s','h','t','m','l','.','d','l','l',
-        '/','b','l','a','n','k','.','h','t','m',0};
-static const WCHAR url2[] = {'i','n','d','e','x','.','h','t','m',0};
-static const WCHAR url3[] = {'f','i','l','e',':','/','/','c',':','\\','I','n','d','e','x','.','h','t','m',0};
-static const WCHAR url4[] = {'f','i','l','e',':','s','o','m','e','%','2','0','f','i','l','e',
-        '%','2','e','j','p','g',0};
-static const WCHAR url5[] = {'h','t','t','p',':','/','/','w','w','w','.','z','o','n','e','3',
-        '.','w','i','n','e','t','e','s','t',0};
-static const WCHAR url6[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
-static const WCHAR url7[] = {'f','t','p',':','/','/','z','o','n','e','3',
-        '.','w','i','n','e','t','e','s','t','/','f','i','l','e','.','t','e','s','t',0};
-static const WCHAR url8[] = {'t','e','s','t',':','1','2','3','a','b','c',0};
-static const WCHAR url9[] = {'h','t','t','p',':','/','/','w','w','w','.','z','o','n','e','3',
-        '.','w','i','n','e','t','e','s','t', '/','s','i','t','e','/','a','b','o','u','t',0};
-static const WCHAR url10[] = {'f','i','l','e',':','/','/','s','o','m','e','%','2','0','f','i','l','e',
-        '.','j','p','g',0};
-static const WCHAR url11[] = {'f','i','l','e',':','/','/','c',':','/','I','n','d','e','x','.','h','t','m',0};
-static const WCHAR url12[] = {'f','i','l','e',':','/','/','/','c',':','/','I','n','d','e','x','.','h','t','m',0};
-static const WCHAR url13[] = {'h','t','t','p',':','g','o','o','g','l','e','.','c','o','m',0};
-static const WCHAR url14[] = {'z','i','p',':','t','e','s','t','i','n','g','.','c','o','m','/','t','e','s','t','i','n','g',0};
-static const WCHAR url15[] = {'h','t','t','p',':','/','/','g','o','o','g','l','e','.','c','o','m','.','u','k',0};
-static const WCHAR url16[] = {'f','i','l','e',':','/','/','/','c',':',0};
-static const WCHAR url17[] = {'f','i','l','e',':','/','/','/','c',':','c','\\',0};
-static const WCHAR url18[] = {'c',':','\\','t','e','s','t','.','h','t','m',0};
+static const WCHAR url1[] = L"res://mshtml.dll/blank.htm";
+static const WCHAR url2[] = L"index.htm";
+static const WCHAR url3[] = L"file://c:\\Index.htm";
+static const WCHAR url4[] = L"file:some%20file%2e.jpg";
+static const WCHAR url5[] = L"http://www.zone3.winetest";
+static const WCHAR url6[] = L"about:blank";
+static const WCHAR url7[] = L"ftp://zone3.winetest/file.test";
+static const WCHAR url8[] = L"test:123abc";
+static const WCHAR url9[] = L"http://www.zone3.winetest/site/about";
+static const WCHAR url10[] = L"file://some%20file.jpg";
+static const WCHAR url11[] = L"file://c:/Index.htm";
+static const WCHAR url12[] = L"file:///c:/Index.htm";
+static const WCHAR url13[] = L"http:google.com";
+static const WCHAR url14[] = L"zip:testing.com/testing";
+static const WCHAR url15[] = L"http://google.com.uk";
+static const WCHAR url16[] = L"file:///c:";
+static const WCHAR url17[] = L"file:///c:c\\";
+static const WCHAR url18[] = L"c:\\test.htm";
 
-static const WCHAR winetestW[] = {'w','i','n','e','t','e','s','t',0};
-static const WCHAR security_urlW[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g',0};
-static const WCHAR security_url2W[] = {'w','i','n','e','t','e','s','t',':','t','e','s','t','i','n','g','2',0};
-static const WCHAR security_expectedW[] = {'w','i','n','e','t','e','s','t',':','z','i','p',0};
-static const WCHAR winetest_to_httpW[] = {'w','i','n','e','t','e','s','t',':','h',0};
+static const WCHAR security_urlW[] = L"winetest:testing";
+static const WCHAR security_url2W[] = L"winetest:testing2";
+static const WCHAR security_expectedW[] = L"winetest:zip";
+static const WCHAR winetest_to_httpW[] = L"winetest:h";
 
 static const char *szZoneMapDomainsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\ZoneMap\\Domains";
 static const char *szInternetSettingsKey = "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings";
@@ -666,8 +659,7 @@ static void test_zone_domain_cache(void)
     IInternetSecurityManager *secmgr = NULL;
     HKEY domains, domain;
 
-    static const WCHAR testing_domain_urlW[] = {'h','t','t','p',':','/','/','t','e','s','t','i','n','g','.',
-            'd','o','m','a','i','n','/',0};
+    static const WCHAR testing_domain_urlW[] = L"http://testing.domain/";
 
     res = RegOpenKeyA(HKEY_CURRENT_USER, szZoneMapDomainsKey, &domains);
     ok(res == ERROR_SUCCESS, "RegOpenKey failed: %ld\n", res);
@@ -902,8 +894,7 @@ static void test_zone_domain_mappings(void)
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szZoneMapDomainsKey, &domains);
     if(res == ERROR_SUCCESS) {
-        static const WCHAR local_machineW[] = {'h','t','t','p',':','/','/','t','e','s','t','.','l','o','c','a','l',
-                '.','m','a','c','h','i','n','e','/',0};
+        static const WCHAR local_machineW[] = L"http://test.local.machine/";
 
         hres = IInternetSecurityManager_MapUrlToZone(secmgr, local_machineW, &zone, 0);
         ok(hres == S_OK, "MapUrlToZone failed: %08lx\n", hres);
@@ -1157,10 +1148,13 @@ cleanup:
 static void test_GetZoneAttributes(void)
 {
     IInternetZoneManager *zonemgr = NULL;
-    CHAR buffer [sizeof(ZONEATTRIBUTES) + 32];
+    char zone_key_name[MAX_PATH], buffer[sizeof(ZONEATTRIBUTES) + 32];
+    WCHAR name[MAX_ZONE_PATH], desc[MAX_ZONE_DESCRIPTION];
     ZONEATTRIBUTES* pZA = (ZONEATTRIBUTES*) buffer;
+    HKEY zone_key;
+    DWORD size, i;
+    LSTATUS res;
     HRESULT hr;
-    DWORD i;
 
     trace("testing GetZoneAttributes...\n");
 
@@ -1171,9 +1165,39 @@ static void test_GetZoneAttributes(void)
 
     /* native urlmon has Zone "0" up to Zone "4" since IE4 */
     for (i = 0; i < 5; i++) {
+        winetest_push_context("Zone %ld", i);
+
+        sprintf(zone_key_name, "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\%ld", i);
+        res = RegOpenKeyExA(HKEY_CURRENT_USER, zone_key_name, 0, KEY_ALL_ACCESS, &zone_key);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        size = sizeof(name);
+        res = RegQueryValueExW(zone_key, L"DisplayName", 0, NULL, (BYTE*)name, &size);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"DisplayName", 0, REG_SZ, (BYTE*)L"Foobar", sizeof(L"Foobar"));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        size = sizeof(desc);
+        res = RegQueryValueExW(zone_key, L"Description", 0, NULL, (BYTE*)desc, &size);
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"Description", 0, REG_SZ, (BYTE*)L"Foobar", sizeof(L"Foobar"));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
         memset(buffer, -1, sizeof(buffer));
         hr = IInternetZoneManager_GetZoneAttributes(zonemgr, i, pZA);
-        ok(hr == S_OK, "#%ld: got 0x%lx (expected S_OK)\n", i, hr);
+        ok(hr == S_OK, "got 0x%lx (expected S_OK)\n", res);
+
+        ok(wcscmp(pZA->szDisplayName, L"Foobar"), "got \"Foobar\", expected localized name\n");
+        ok(wcscmp(pZA->szDescription, L"Foobar"), "got \"Foobar\", expected localized description\n");
+
+        res = RegSetValueExW(zone_key, L"DisplayName", 0, REG_SZ, (BYTE*)name, (wcslen(name) + 1) * sizeof(WCHAR));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+        res = RegSetValueExW(zone_key, L"Description", 0, REG_SZ, (BYTE*)desc, (wcslen(desc) + 1) * sizeof(WCHAR));
+        ok(res == ERROR_SUCCESS, "got %ld (expected ERROR_SUCCESS)\n", res);
+
+        RegCloseKey(zone_key);
+
+        winetest_pop_context();
     }
 
     /* IE8 no longer set cbSize */
@@ -1319,9 +1343,8 @@ static void test_InternetSecurityMarshalling(void)
 
 static void test_InternetGetSecurityUrl(void)
 {
-    const WCHAR url5_out[] = {'h','t','t','p',':','w','w','w','.','z','o','n','e','3',
-                              '.','w','i','n','e','t','e','s','t',0};
-    const WCHAR url7_out[] = {'f','t','p',':','z','o','n','e','3','.','w','i','n','e','t','e','s','t',0};
+    const WCHAR url5_out[] = L"http:www.zone3.winetest";
+    const WCHAR url7_out[] = L"ftp:zone3.winetest";
 
     const WCHAR *in[] = {url2, url3, url4, url5, url7, url8, url9, url10};
     const WCHAR *out_default[] = {url2, url3, url4, url5_out, url7_out, url8, url5_out, url10};
@@ -1539,7 +1562,7 @@ static void register_protocols(void)
         return;
 
     hres = IInternetSession_RegisterNameSpace(session, &protocol_cf, &IID_NULL,
-            winetestW, 0, NULL, 0);
+            L"winetest", 0, NULL, 0);
     ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
 
     IInternetSession_Release(session);
@@ -1554,7 +1577,7 @@ static void unregister_protocols(void) {
     if(FAILED(hr))
         return;
 
-    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, winetestW);
+    hr = IInternetSession_UnregisterNameSpace(session, &protocol_cf, L"winetest");
     ok(hr == S_OK, "UnregisterNameSpace failed: 0x%08lx\n", hr);
 
     IInternetSession_Release(session);
@@ -1757,7 +1780,7 @@ static void test_SecurityManagerEx2(void)
     IInternetSecurityManagerEx2 *sec_mgr2;
     IUri *uri = NULL;
 
-    static const WCHAR domainW[] = {'c','o','m','.','u','k',0};
+    static const WCHAR domainW[] = L"com.uk";
 
     if(!pCreateUri) {
         win_skip("Skipping SecurityManagerEx2, IE is too old\n");

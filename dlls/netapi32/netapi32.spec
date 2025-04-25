@@ -9,7 +9,8 @@
 @ stdcall DsGetDcNameA(str str ptr str long ptr)
 @ stdcall DsGetDcNameW(wstr wstr ptr wstr long ptr)
 @ stub DsGetDcNext
-@ stub DsGetDcOpen
+@ stdcall DsGetDcOpenA(str long str ptr str long ptr)
+@ stdcall DsGetDcOpenW(wstr long wstr ptr wstr long ptr)
 @ stub DsGetDcSiteCoverage
 @ stub DsGetForestTrustInformationW
 @ stdcall DsGetSiteNameA(str ptr)
@@ -93,6 +94,7 @@
 @ stub NetFileClose
 @ stdcall NetFileEnum(wstr wstr wstr long ptr long ptr ptr ptr)
 @ stub NetFileGetInfo
+@ stdcall NetFreeAadJoinInformation(ptr)
 @ stdcall NetGetAadJoinInformation(wstr ptr)
 @ stdcall NetGetAnyDCName(wstr wstr ptr)
 @ stdcall NetGetDCName(wstr wstr ptr)

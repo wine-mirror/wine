@@ -296,6 +296,8 @@ static void test_get_profiles_dir(void)
      */
     ok(profiles_len - 1 == r, "expected %ld, got %d\n", profiles_len - 1, r);
     ok(!strcmp(buf, profiles_dir), "expected %s, got %s\n", profiles_dir, buf);
+    ok(strlen(buf) + 1 == cch, "String length is %Iu, but cch is %lu\n", strlen(buf), cch);
+    ok(strlen(buf) + 1 == r, "String length is %Iu, but returned count is %u\n", strlen(buf), r);
 
     HeapFree(GetProcessHeap(), 0, buf);
     HeapFree(GetProcessHeap(), 0, profiles_dir);

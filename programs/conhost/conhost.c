@@ -2694,7 +2694,17 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             if (!(info = alloc_ioctl_buffer( sizeof(*info )))) return STATUS_NO_MEMORY;
             info->input_cp    = console->input_cp;
             info->output_cp   = console->output_cp;
-            info->input_count = console->record_count;
+            return STATUS_SUCCESS;
+        }
+
+    case IOCTL_CONDRV_GET_INPUT_COUNT:
+        {
+            DWORD *count;
+            TRACE( "get input count\n" );
+            if (in_size || *out_size != sizeof(*count)) return STATUS_INVALID_PARAMETER;
+            ensure_tty_input_thread( console );
+            if (!(count = alloc_ioctl_buffer( sizeof(*count )))) return STATUS_NO_MEMORY;
+            *count = console->record_count;
             return STATUS_SUCCESS;
         }
 

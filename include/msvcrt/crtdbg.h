@@ -87,7 +87,7 @@ extern int _crtBreakAlloc;
 extern int _crtDbgFlag;
 
 _ACRTIMP int   __cdecl _CrtCheckMemory(void);
-_ACRTIMP int   WINAPIV _CrtDbgReport(int reportType, const char *filename, int linenumber,
+_ACRTIMP int   __cdecl _CrtDbgReport(int reportType, const char *filename, int linenumber,
                                      const char *moduleName, const char *format, ...) __WINE_CRT_PRINTF_ATTR(5, 6);
 _ACRTIMP int   __cdecl _CrtDumpMemoryLeaks(void);
 _ACRTIMP int   __cdecl _CrtSetBreakAlloc(int);

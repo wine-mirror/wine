@@ -440,6 +440,8 @@ ZONES_TRUSTED="Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones
 ZONES_INTERNET="Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\3"
 ZONES_UNTRUSTED="Software\Microsoft\Windows\CurrentVersion\Internet Settings\Zones\4"
 
+;; The English zone names and descriptions should be identical to the ones in urlmon.rc
+
 NAME_LOCAL="My Computer"
 DESC_LOCAL="Your computer"
 ZICON_LOCAL="explorer.exe#0100"

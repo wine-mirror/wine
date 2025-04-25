@@ -142,7 +142,7 @@ new_fluid_midi_file(const char *buffer, size_t length)
     FLUID_MEMSET(mf, 0, sizeof(fluid_midi_file));
 
     mf->c = -1;
-    mf->running_status = -1;
+    mf->running_status = 0;
 
     mf->buffer = buffer;
     mf->buf_len = (int)length;
@@ -357,8 +357,13 @@ fluid_midi_file_read_mthd(fluid_midi_file *mf)
     }
 
     mf->type = mthd[9];
-    mf->ntracks = (unsigned) mthd[11];
-    mf->ntracks += (unsigned int)(mthd[10]) << 16;
+    if(!(mf->type == 0 || mf->type == 1))
+    {
+        FLUID_LOG(FLUID_ERR,
+                  "Sorry, but MIDI Format %d is not supported by this player", mf->type);
+        return FLUID_FAILED;
+    }
+    mf->ntracks = (signed)((unsigned)(mthd[10]) << 8 | (unsigned) mthd[11]);
 
     if((signed char)mthd[12] < 0)
     {
@@ -632,6 +637,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     /* read the delta-time of the event */
     if(fluid_midi_file_read_varlen(mf) != FLUID_OK)
     {
+        FLUID_LOG(FLUID_DBG, "Reading delta-time failed unexpectedly (track=%d)", track->num);
         return FLUID_FAILED;
     }
 
@@ -651,7 +657,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     {
         if((mf->running_status & 0x80) == 0)
         {
-            FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status");
+            FLUID_LOG(FLUID_ERR, "Undefined status and invalid running status (0x%X, 0x%X)", status, mf->running_status);
             return FLUID_FAILED;
         }
 
@@ -660,14 +666,12 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     }
 
     /* check what message we have */
-
-    mf->running_status = status;
-
-    if(status == MIDI_SYSEX)    /* system exclusif */
+    if(status == MIDI_SYSEX)    /* system exclusive */
     {
         /* read the length of the message */
         if(fluid_midi_file_read_varlen(mf) != FLUID_OK)
         {
+            FLUID_LOG(FLUID_DBG, "Failed to read length of SYSEX msg (track=%d)", track->num);
             return FLUID_FAILED;
         }
 
@@ -686,6 +690,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
             /* read the data of the message */
             if(fluid_midi_file_read(mf, metadata, mf->varlen) != FLUID_OK)
             {
+                FLUID_LOG(FLUID_DBG, "Failed to read data of SYSEX msg (track=%d)", track->num);
                 FLUID_FREE(metadata);
                 return FLUID_FAILED;
             }
@@ -733,6 +738,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
         /* get the length of the data part */
         if(fluid_midi_file_read_varlen(mf) != FLUID_OK)
         {
+            FLUID_LOG(FLUID_DBG, "Failed to read length of META msg (track=%d)", track->num);
             return FLUID_FAILED;
         }
 
@@ -765,6 +771,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
                     FLUID_FREE(dyn_buf);
                 }
 
+                FLUID_LOG(FLUID_DBG, "Failed to read meta msg (track=%d)", track->num);
                 return FLUID_FAILED;
             }
         }
@@ -932,6 +939,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
             break;
 
         default:
+            FLUID_LOG(FLUID_INFO, "Ignoring unrecognized meta event type 0x%X", type);
             break;
         }
 
@@ -946,7 +954,8 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
     }
     else     /* channel messages */
     {
-
+        // remember current status (not applicable to SYSEX and META events!)
+        mf->running_status = status;
         type = status & 0xf0;
         channel = status & 0x0f;
 
@@ -1015,7 +1024,7 @@ fluid_midi_file_read_event(fluid_midi_file *mf, fluid_track_t *track)
 
         default:
             /* Can't possibly happen !? */
-            FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event");
+            FLUID_LOG(FLUID_ERR, "Unrecognized MIDI event 0x%X", status);
             return FLUID_FAILED;
         }
 
@@ -1058,7 +1067,7 @@ fluid_midi_file_get_division(fluid_midi_file *midifile)
  * @return New MIDI event structure or NULL when out of memory.
  */
 fluid_midi_event_t *
-new_fluid_midi_event()
+new_fluid_midi_event(void)
 {
     fluid_midi_event_t *evt;
     evt = FLUID_NEW(fluid_midi_event_t);
@@ -2692,7 +2701,7 @@ int fluid_player_get_midi_tempo(fluid_player_t *player)
  * new_fluid_midi_parser
  */
 fluid_midi_parser_t *
-new_fluid_midi_parser()
+new_fluid_midi_parser(void)
 {
     fluid_midi_parser_t *parser;
     parser = FLUID_NEW(fluid_midi_parser_t);

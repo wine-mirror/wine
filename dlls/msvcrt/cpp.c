@@ -895,7 +895,7 @@ void WINAPI _CxxThrowException( void *object, const cxx_exception_type *type )
     args[1] = (ULONG_PTR)object;
     args[2] = (ULONG_PTR)type;
     if (CXX_EXCEPTION_PARAMS == 4) args[3] = rtti_rva_base( type );
-    RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, CXX_EXCEPTION_PARAMS, args );
+    for (;;) RaiseException( CXX_EXCEPTION, EXCEPTION_NONCONTINUABLE, CXX_EXCEPTION_PARAMS, args );
 }
 
 #if _MSVCR_VER >= 80

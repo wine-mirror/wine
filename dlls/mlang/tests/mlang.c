@@ -2720,6 +2720,8 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     HRESULT ret;
     HDC hdc;
     WCHAR ch;
+    UINT charset;
+    FONTSIGNATURE fs;
 
     hdc = GetDC(NULL);
     codepages = FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC | FS_GREEK | FS_TURKISH |
@@ -2781,6 +2783,13 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     ret = IMLangFontLink2_MapFont(font_link2, hdc, codepages, 0, &new_font);
     ok(ret == S_OK && new_font == last_font, "IMLangFontLink2_MapFont: expected S_OK/%p, got %08lx/%p\n", last_font, ret, new_font);
 
+    /* check that the returned font can directly handle the codepage (instead of relying on a child font) */
+    ret = IMLangFontLink2_MapFont(font_link2, hdc, FS_JISJAPAN, 0, &new_font);
+    old_font = SelectObject(hdc, new_font);
+    charset = GetTextCharsetInfo(hdc, &fs, 0);
+    SelectObject(hdc, old_font);
+    ok(ret == S_OK && charset == SHIFTJIS_CHARSET && !!(fs.fsCsb[0] & FS_JISJAPAN), "IMLangFontLink2_MapFont: expected S_OK/%u/1, got %08lx/%u/0\n", SHIFTJIS_CHARSET, ret, charset);
+
     ret = IMLangFontLink2_ReleaseFont(font_link2, NULL);
     ok(ret == E_FAIL, "IMLangFontLink2_ReleaseFont: expected E_FAIL, got %08lx\n", ret);
     ret = IMLangFontLink2_ReleaseFont(font_link2, new_font);
@@ -2799,6 +2808,27 @@ static void test_MapFont(IMLangFontLink *font_link, IMLangFontLink2 *font_link2)
     IMLangFontLink_GetFontCodePages(font_link, hdc, font1, &font_codepages);
     ok((codepages & (~font_codepages)) != 0 && (codepages & font_codepages) != 0,
        "code pages of font is incorrect\n");
+
+    font_codepages = 1;
+    ret = IMLangFontLink_GetFontCodePages(font_link, NULL, font1, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+    font_codepages = 2;
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, NULL, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+
+    font_codepages = 3;
+    ret = IMLangFontLink_GetFontCodePages(font_link, (void*)0xabc, font1, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+    font_codepages = 4;
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, (void*)0x123456, &font_codepages);
+    ok(ret == E_FAIL && !font_codepages, "expected E_FAIL, but got: %lx, font_codepages:%lx \n",
+            ret, font_codepages);
+
+    ret = IMLangFontLink_GetFontCodePages(font_link, hdc, font1, NULL);
+    ok(ret == S_OK, "expected S_OK, but got: %lx\n", ret);
 
     IMLangFontLink_ResetFontMapping(font_link);
     IMLangFontLink2_ResetFontMapping(font_link2);

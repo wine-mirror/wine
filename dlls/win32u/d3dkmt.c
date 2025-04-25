@@ -29,8 +29,6 @@
 #include "ntgdi_private.h"
 #include "win32u_private.h"
 #include "ntuser_private.h"
-#include "wine/vulkan.h"
-#include "wine/vulkan_driver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
@@ -89,14 +87,14 @@ static void d3dkmt_init_vulkan(void)
         return;
     }
 
-    p_vkCreateInstance = p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
+    p_vkCreateInstance = (PFN_vkCreateInstance)p_vkGetInstanceProcAddr( NULL, "vkCreateInstance" );
     if ((vr = p_vkCreateInstance( &create_info, NULL, &d3dkmt_vk_instance )))
     {
         WARN( "Failed to create a Vulkan instance, vr %d.\n", vr );
         return;
     }
 
-    p_vkDestroyInstance = p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
+    p_vkDestroyInstance = (PFN_vkDestroyInstance)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, "vkDestroyInstance" );
 #define LOAD_VK_FUNC( f )                                                                      \
     if (!(p##f = (void *)p_vkGetInstanceProcAddr( d3dkmt_vk_instance, #f )))                   \
     {                                                                                          \
@@ -335,10 +333,39 @@ NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc )
  */
 NTSTATUS WINAPI NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc )
 {
-    if (!desc) return STATUS_INVALID_PARAMETER;
+    TRACE( "(%p).\n", desc );
 
-    FIXME( "desc %p, type %d stub\n", desc, desc->Type );
-    return STATUS_NOT_IMPLEMENTED;
+    if (!desc || !desc->hAdapter || !desc->pPrivateDriverData)
+        return STATUS_INVALID_PARAMETER;
+
+    switch (desc->Type)
+    {
+    case KMTQAITYPE_CHECKDRIVERUPDATESTATUS:
+    {
+        BOOL *value = desc->pPrivateDriverData;
+
+        if (desc->PrivateDriverDataSize < sizeof(*value))
+            return STATUS_INVALID_PARAMETER;
+
+        *value = FALSE;
+        return STATUS_SUCCESS;
+    }
+    case KMTQAITYPE_DRIVERVERSION:
+    {
+        D3DKMT_DRIVERVERSION *value = desc->pPrivateDriverData;
+
+        if (desc->PrivateDriverDataSize < sizeof(*value))
+            return STATUS_INVALID_PARAMETER;
+
+        *value = KMT_DRIVERVERSION_WDDM_1_3;
+        return STATUS_SUCCESS;
+    }
+    default:
+    {
+        FIXME( "type %d not handled.\n", desc->Type );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    }
 }
 
 /******************************************************************************
@@ -559,38 +586,70 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
     return STATUS_SUCCESS;
 }
 
+struct vk_physdev_info
+{
+    VkPhysicalDeviceProperties2 properties2;
+    VkPhysicalDeviceIDProperties id;
+    VkPhysicalDeviceMemoryProperties mem_properties;
+};
+
+static int compare_vulkan_physical_devices( const void *v1, const void *v2 )
+{
+    static const int device_type_rank[6] = { 100, 1, 0, 2, 3, 200 };
+    const struct vk_physdev_info *d1 = v1, *d2 = v2;
+    int rank1, rank2;
+
+    rank1 = device_type_rank[ min( d1->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    rank2 = device_type_rank[ min( d2->properties2.properties.deviceType, ARRAY_SIZE(device_type_rank) - 1) ];
+    if (rank1 != rank2) return rank1 - rank2;
+
+    return memcmp( &d1->id.deviceUUID, &d2->id.deviceUUID, sizeof(d1->id.deviceUUID) );
+}
+
 BOOL get_vulkan_gpus( struct list *gpus )
 {
+    struct vk_physdev_info *devinfo;
     VkPhysicalDevice *devices;
     UINT i, j, count;
 
     if (!d3dkmt_use_vulkan()) return FALSE;
     if (!(count = get_vulkan_physical_devices( &devices ))) return FALSE;
 
+    if (!(devinfo = calloc( count, sizeof(*devinfo) )))
+    {
+        free( devices );
+        return FALSE;
+    }
     for (i = 0; i < count; ++i)
     {
-        VkPhysicalDeviceIDProperties id = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES};
-        VkPhysicalDeviceProperties2 properties2 = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &id};
-        VkPhysicalDeviceMemoryProperties mem_properties;
+        devinfo[i].id.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+        devinfo[i].properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        devinfo[i].properties2.pNext = &devinfo[i].id;
+        pvkGetPhysicalDeviceProperties2KHR( devices[i], &devinfo[i].properties2 );
+        pvkGetPhysicalDeviceMemoryProperties( devices[i], &devinfo[i].mem_properties );
+    }
+    qsort( devinfo, count, sizeof(*devinfo), compare_vulkan_physical_devices );
+
+    for (i = 0; i < count; ++i)
+    {
         struct vulkan_gpu *gpu;
 
         if (!(gpu = calloc( 1, sizeof(*gpu) ))) break;
-        pvkGetPhysicalDeviceProperties2KHR( devices[i], &properties2 );
-        memcpy( &gpu->uuid, id.deviceUUID, sizeof(gpu->uuid) );
-        gpu->name = strdup( properties2.properties.deviceName );
-        gpu->pci_id.vendor = properties2.properties.vendorID;
-        gpu->pci_id.device = properties2.properties.deviceID;
+        memcpy( &gpu->uuid, devinfo[i].id.deviceUUID, sizeof(gpu->uuid) );
+        gpu->name = strdup( devinfo[i].properties2.properties.deviceName );
+        gpu->pci_id.vendor = devinfo[i].properties2.properties.vendorID;
+        gpu->pci_id.device = devinfo[i].properties2.properties.deviceID;
 
-        pvkGetPhysicalDeviceMemoryProperties( devices[i], &mem_properties );
-        for (j = 0; j < mem_properties.memoryHeapCount; j++)
+        for (j = 0; j < devinfo[i].mem_properties.memoryHeapCount; j++)
         {
-            if (mem_properties.memoryHeaps[j].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
-                gpu->memory += mem_properties.memoryHeaps[j].size;
+            if (devinfo[i].mem_properties.memoryHeaps[j].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                gpu->memory += devinfo[i].mem_properties.memoryHeaps[j].size;
         }
 
         list_add_tail( gpus, &gpu->entry );
     }
 
+    free( devinfo );
     free( devices );
     return TRUE;
 }
@@ -599,4 +658,214 @@ void free_vulkan_gpu( struct vulkan_gpu *gpu )
 {
     free( gpu->name );
     free( gpu );
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIShareObjects    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr,
+                                        UINT access, HANDLE *handle )
+{
+    FIXME( "count %u, handles %p, attr %p, access %#x, handle %p stub!\n", count, handles, attr, access, handle );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDICreateAllocation2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDICreateAllocation    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIDestroyAllocation2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIDestroyAllocation    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenResource    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenResource2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenResourceFromNtHandle    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIQueryResourceInfo    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIQueryResourceInfoFromNtHandle    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *           NtGdiDdDDICreateKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDICreateKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIDestroyKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenKeyedMutex2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex2( D3DKMT_OPENKEYEDMUTEX2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenKeyedMutex    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex( D3DKMT_OPENKEYEDMUTEX *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenKeyedMutexFromNtHandle    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ *           NtGdiDdDDICreateSynchronizationObject2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDICreateSynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectFromNtHandle2    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectFromNtHandle    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSyncObjectNtHandleFromName    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIOpenSynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIDestroySynchronizationObject    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params )
+{
+    FIXME( "params %p stub!\n", params );
+    return STATUS_NOT_IMPLEMENTED;
 }

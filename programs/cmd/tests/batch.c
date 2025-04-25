@@ -74,17 +74,21 @@ static const char* convert_input_data(const char *data, DWORD size, DWORD *new_s
     return new_data;
 }
 
-static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
+static BOOL run_cmd(const char *res_name, const char *cmd_data, DWORD cmd_size)
 {
     SECURITY_ATTRIBUTES sa = {sizeof(sa), 0, TRUE};
-    char command[] = "test.cmd";
+    char command_cmd[] = "test.cmd", command_bat[] = "test.bat";
+    char *command;
     STARTUPINFOA si = {sizeof(si)};
     PROCESS_INFORMATION pi;
     HANDLE file,fileerr;
     DWORD size;
     BOOL bres;
 
-    file = CreateFileA("test.cmd", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+    command = (strlen(res_name) >= 4 && !stricmp(res_name + strlen(res_name) - 4, ".cmd")) ?
+        command_cmd : command_bat;
+
+    file = CreateFileA(command, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
             FILE_ATTRIBUTE_NORMAL, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed\n");
     if(file == INVALID_HANDLE_VALUE)
@@ -123,7 +127,7 @@ static BOOL run_cmd(const char *cmd_data, DWORD cmd_size)
     CloseHandle(pi.hProcess);
     CloseHandle(file);
     CloseHandle(fileerr);
-    DeleteFileA("test.cmd");
+    DeleteFileA(command);
     return TRUE;
 }
 
@@ -131,8 +135,21 @@ static DWORD map_file(const char *file_name, const char **ret)
 {
     HANDLE file, map;
     DWORD size;
+    unsigned retries;
 
-    file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+    /* Even if .cmd/.bat wait on child process succeeded, there are cases where the
+     * output file is not closed yet (on Windows) (seems to only happen with .bat input files).
+     * So retry a couple of times before failing.
+     * Note: using file share option works at once, but we cannot be sure all
+     * output has been flushed.
+     */
+    for (retries = 0; retries < 50; retries++)
+    {
+        file = CreateFileA(file_name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+        if (file != INVALID_HANDLE_VALUE || GetLastError() != ERROR_SHARING_VIOLATION)
+            break;
+        Sleep(1);
+    }
     ok(file != INVALID_HANDLE_VALUE, "CreateFile failed: %08lx\n", GetLastError());
     if(file == INVALID_HANDLE_VALUE)
         return 0;
@@ -358,7 +375,7 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
     ok(out_ptr >= out_data+out_size, "too long output, got additional %s\n", out_ptr);
 }
 
-static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data, DWORD exp_size)
+static void run_test(const char *res_name, const char *cmd_data, DWORD cmd_size, const char *exp_data, DWORD exp_size)
 {
     const char *out_data, *actual_cmd_data;
     DWORD out_size, actual_cmd_size;
@@ -367,7 +384,7 @@ static void run_test(const char *cmd_data, DWORD cmd_size, const char *exp_data,
     if(!actual_cmd_size || !actual_cmd_data)
         goto cleanup;
 
-    if(!run_cmd(actual_cmd_data, actual_cmd_size))
+    if(!run_cmd(res_name, actual_cmd_data, actual_cmd_size))
         goto cleanup;
 
     out_size = map_file("test.out", &out_data);
@@ -402,7 +419,7 @@ static void run_from_file(const char *file_name)
         return;
     }
 
-    run_test(test_data, test_size, out_data, out_size);
+    run_test(file_name, test_data, test_size, out_data, out_size);
 
     UnmapViewOfFile(test_data);
     UnmapViewOfFile(out_data);
@@ -445,7 +462,7 @@ static BOOL WINAPI test_enum_proc(HMODULE module, LPCSTR type, LPSTR name, LONG_
     if(!out_size)
         return TRUE;
 
-    run_test(cmd_data, cmd_size, out_data, out_size);
+    run_test(name, cmd_data, cmd_size, out_data, out_size);
     return TRUE;
 }
 

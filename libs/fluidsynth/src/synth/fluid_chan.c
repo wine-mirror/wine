@@ -128,7 +128,12 @@ fluid_channel_init_ctrl(fluid_channel_t *chan, int is_all_ctrl_off)
     for(i = 0; i < GEN_LAST; i++)
     {
         chan->gen[i] = 0.0f;
+        chan->override_gen_default[i].flags = GEN_UNUSED;
+        chan->override_gen_default[i].val = 0.0f;
     }
+    // Not all MIDIs initialize the IIR filter coefficient, e.g. Uplift.mid.
+    // A default value is not documented, hence I'm assuming zero here.
+    chan->awe32_filter_coeff = 0;
 
     if(is_all_ctrl_off)
     {
@@ -729,4 +734,21 @@ void fluid_channel_cc_breath_note_on_off(fluid_channel_t *chan, int value)
     }
 
     chan->previous_cc_breath = value;
+}
+
+int fluid_channel_get_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t* val)
+{
+    if(chan->override_gen_default[gen].flags != GEN_UNUSED)
+    {
+        *val = chan->override_gen_default[gen].val;
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void fluid_channel_set_override_gen_default(fluid_channel_t *chan, int gen, fluid_real_t val)
+{
+    chan->override_gen_default[gen].flags = GEN_SET;
+    chan->override_gen_default[gen].val = val;
 }

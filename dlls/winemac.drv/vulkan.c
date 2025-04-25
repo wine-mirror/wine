@@ -36,9 +36,6 @@
 #include "macdrv.h"
 #include "wine/debug.h"
 
-#define VK_NO_PROTOTYPES
-#define WINE_VK_HOST
-
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
@@ -91,7 +88,7 @@ static void wine_vk_surface_destroy(struct wine_vk_surface *surface)
     free(surface);
 }
 
-static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkSurfaceKHR *surface, void **private)
+static VkResult macdrv_vulkan_surface_create(HWND hwnd, const struct vulkan_instance *instance, VkSurfaceKHR *surface, void **private)
 {
     VkResult res;
     struct wine_vk_surface *mac_surface;
@@ -138,7 +135,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
         create_info_host.flags = 0; /* reserved */
         create_info_host.pLayer = macdrv_view_get_metal_layer(mac_surface->view);
 
-        res = pvkCreateMetalSurfaceEXT(instance, &create_info_host, NULL /* allocator */, surface);
+        res = pvkCreateMetalSurfaceEXT(instance->host.instance, &create_info_host, NULL /* allocator */, surface);
     }
     else
     {
@@ -148,7 +145,7 @@ static VkResult macdrv_vulkan_surface_create(HWND hwnd, VkInstance instance, VkS
         create_info_host.flags = 0; /* reserved */
         create_info_host.pView = macdrv_view_get_metal_layer(mac_surface->view);
 
-        res = pvkCreateMacOSSurfaceMVK(instance, &create_info_host, NULL /* allocator */, surface);
+        res = pvkCreateMacOSSurfaceMVK(instance->host.instance, &create_info_host, NULL /* allocator */, surface);
     }
     if (res != VK_SUCCESS)
     {
@@ -182,7 +179,11 @@ static void macdrv_vulkan_surface_detach(HWND hwnd, void *private)
 {
 }
 
-static void macdrv_vulkan_surface_presented(HWND hwnd, VkResult result)
+static void macdrv_vulkan_surface_update(HWND hwnd, void *private)
+{
+}
+
+static void macdrv_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
 {
 }
 
@@ -204,6 +205,7 @@ static const struct vulkan_driver_funcs macdrv_vulkan_driver_funcs =
     .p_vulkan_surface_create = macdrv_vulkan_surface_create,
     .p_vulkan_surface_destroy = macdrv_vulkan_surface_destroy,
     .p_vulkan_surface_detach = macdrv_vulkan_surface_detach,
+    .p_vulkan_surface_update = macdrv_vulkan_surface_update,
     .p_vulkan_surface_presented = macdrv_vulkan_surface_presented,
 
     .p_vkGetPhysicalDeviceWin32PresentationSupportKHR = macdrv_vkGetPhysicalDeviceWin32PresentationSupportKHR,

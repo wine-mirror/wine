@@ -1116,9 +1116,11 @@ static void test_InternetTimeToSystemTime(void)
     test_data[] =
     {
         { "Fri, 07 Jan 2005 12:06:35 GMT", &expect1, TRUE },
+        { "Fri, 07 Jan 2005 12:06:35 UTC", &expect1, TRUE },
         { " fri, 7 jan 2005 12 06 35",     &expect1, TRUE },
         { "Fri, 07-01-2005 12:06:35",      &expect1, TRUE },
         { "5, 07-01-2005 12:06:35 GMT",    &expect1, TRUE },
+        { "5, 07-01-2005 12:06:35 UTC",    &expect1, TRUE },
         { "5, 07-01-2005 12:06:35 GMT;",   &expect1, TRUE },
         { "5, 07-01-2005 12:06:35 GMT123", &expect1, TRUE },
         { "2, 11 01 2022 11 13 05",        &expect2, TRUE },
@@ -1126,6 +1128,9 @@ static void test_InternetTimeToSystemTime(void)
         { "2, 11*01/2022 11+13=05",        &expect2, TRUE },
         { "2, 11-Jan-2022 11:13:05",       &expect2, TRUE },
         { "Fr",                            NULL,     FALSE },
+        { "Fri Jan 7 12:06:35 2005",       &expect1, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 2005 GMT",   &expect1, TRUE, TRUE },
+        { "Fri Jan 7 12:06:35 2005 UTC",   &expect1, TRUE, TRUE },
     };
 
     ret = pInternetTimeToSystemTimeA(NULL, NULL, 0);

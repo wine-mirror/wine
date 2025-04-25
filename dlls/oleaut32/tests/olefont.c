@@ -1224,6 +1224,7 @@ static void test_OleCreateFontIndirect(void)
     IUnknown *unk, *unk2;
     IFont *font;
     HRESULT hr;
+    WCHAR str_empty[] = {0};
 
     fontdesc.cbSizeofstruct = sizeof(fontdesc);
     fontdesc.lpstrName = arial_font;
@@ -1252,6 +1253,22 @@ static void test_OleCreateFontIndirect(void)
     fontdesc.cbSizeofstruct = 0;
     hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
     EXPECT_HR(hr, S_OK);
+    IFont_Release(font);
+
+    /* Test NULL name */
+    fontdesc.cbSizeofstruct = sizeof(fontdesc);
+    fontdesc.lpstrName = NULL;
+    font = (IFont*)0xdeadbeef;
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, CTL_E_INVALIDPROPERTYVALUE);
+    ok(font == 0, "Got %p\n", font);
+
+    /* Test empty Name */
+    fontdesc.lpstrName = str_empty;
+    font = NULL;
+    hr = pOleCreateFontIndirect(&fontdesc, &IID_IFont, (void**)&font);
+    EXPECT_HR(hr, S_OK);
+    ok(font != 0, "Got NULL font\n");
     IFont_Release(font);
 
     hr = OleInitialize(NULL);

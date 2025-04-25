@@ -96,6 +96,33 @@ enum frame_state_flags
 	,FRAME_DECODER_LIVE  = 0x8  /**<     1000 Decoder can be used. */
 };
 
+// separate frame header structure for safe decoding of headers without
+// modifying the main frame struct before we are sure that we can read a
+// frame into it
+struct frame_header
+{
+	int lay;
+	// lots of flags that could share storage, should reform that
+	int lsf; /* 0: MPEG 1.0; 1: MPEG 2.0/2.5 -- both used as bool and array index! */
+	int mpeg25;
+	int error_protection;
+	int bitrate_index;
+	int sampling_frequency;
+	int padding;
+	int extension;
+	int mode;
+	int mode_ext;
+	int copyright;
+	int original;
+	int emphasis;
+	// Even 16 bit int is enough for MAXFRAMESIZE
+	int framesize; /* computed framesize */
+	int freeformat;
+	int freeformat_framesize;
+	// Derived from header and checked against the above.
+	int ssize;
+};
+
 /* There is a lot to condense here... many ints can be merged as flags; though the main space is still consumed by buffers. */
 struct mpg123_handle_struct
 {
@@ -197,26 +224,12 @@ struct mpg123_handle_struct
 	int single;
 	int II_sblimit;
 	int down_sample_sblimit;
-	int lsf; /* 0: MPEG 1.0; 1: MPEG 2.0/2.5 -- both used as bool and array index! */
 	/* Many flags in disguise as integers... wasting bytes. */
-	int mpeg25;
 	int down_sample;
 	int header_change;
-	int lay;
+	struct frame_header hdr;
 	long spf; /* cached count of samples per frame */
 	int (*do_layer)(mpg123_handle *);
-	int error_protection;
-	int bitrate_index;
-	int sampling_frequency;
-	int padding;
-	int extension;
-	int mode;
-	int mode_ext;
-	int copyright;
-	int original;
-	int emphasis;
-	int framesize; /* computed framesize */
-	int freesize;  /* free format frame size */
 	enum mpg123_vbr vbr; /* 1 if variable bitrate was detected */
 	int64_t num; /* frame offset ... */
 	int64_t input_offset; /* byte offset of this frame in input stream */
@@ -225,8 +238,6 @@ struct mpg123_handle_struct
 	int state_flags;
 	char silent_resync; /* Do not complain for the next n resyncs. */
 	unsigned char* xing_toc; /* The seek TOC from Xing header. */
-	int freeformat;
-	long freeformat_framesize;
 
 	/* bitstream info; bsi */
 	int bitindex;
@@ -253,7 +264,6 @@ struct mpg123_handle_struct
 	double mean_framesize;
 	int64_t mean_frames;
 	int fsizeold;
-	int ssize;
 	unsigned int bitreservoir;
 	unsigned char bsspace[2][MAXFRAMESIZE+512+4]; /* MAXFRAMESIZE */
 	unsigned char *bsbuf;

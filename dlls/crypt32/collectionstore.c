@@ -265,7 +265,7 @@ static BOOL Collection_deleteCert(WINECRYPT_CERTSTORE *store, context_t *context
     TRACE("(%p, %p)\n", store, cert);
 
     linked = (cert_t*)context->linked;
-    return CertDeleteCertificateFromStore(&linked->ctx);
+    return CRYPT_DeleteCertificateFromStore(&linked->ctx);
 }
 
 static BOOL Collection_addCRL(WINECRYPT_CERTSTORE *store, context_t *crl,

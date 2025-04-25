@@ -84,7 +84,7 @@
 @ stub pcap_sendqueue_transmit
 @ cdecl pcap_set_buffer_size(ptr long)
 @ cdecl pcap_set_datalink(ptr long)
-@ stub pcap_set_immediate_mode
+@ cdecl pcap_set_immediate_mode(ptr long)
 @ cdecl pcap_set_promisc(ptr long)
 @ cdecl pcap_set_rfmon(ptr long)
 @ cdecl pcap_set_snaplen(ptr long)

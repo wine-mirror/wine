@@ -28,15 +28,6 @@
 
 #define	DEFAULT_SPLIT_POS	300
 
-static const WCHAR registry_key[] = { 'S','o','f','t','w','a','r','e','\\',
-                                      'W','i','n','e','\\',
-                                      'W','i','n','e','F','i','l','e','\0'};
-static const WCHAR reg_start_x[] = { 's','t','a','r','t','X','\0'};
-static const WCHAR reg_start_y[] = { 's','t','a','r','t','Y','\0'};
-static const WCHAR reg_width[] = { 'w','i','d','t','h','\0'};
-static const WCHAR reg_height[] = { 'h','e','i','g','h','t','\0'};
-static const WCHAR reg_logfont[] = { 'l','o','g','f','o','n','t','\0'};
-
 enum ENTRY_TYPE {
 	ET_WINDOWS,
 	ET_SHELL
@@ -139,16 +130,6 @@ WINEFILE_GLOBALS Globals;
 
 static int last_split;
 
-/* some common string constants */
-static const WCHAR sEmpty[] = {'\0'};
-static const WCHAR sSpace[] = {' ', '\0'};
-static const WCHAR sNumFmt[] = {'%','d','\0'};
-static const WCHAR sQMarks[] = {'?','?','?','\0'};
-
-/* window class names */
-static const WCHAR sWINEFILEFRAME[] = {'W','F','S','_','F','r','a','m','e','\0'};
-static const WCHAR sWINEFILETREE[] = {'W','F','S','_','T','r','e','e','\0'};
-
 static void format_longlong(LPWSTR ret, ULONGLONG val)
 {
     WCHAR buffer[65], *p = &buffer[64];
@@ -240,7 +221,7 @@ static inline void choose_font(HWND hwnd)
                 DeleteObject(Globals.hfont);
                 Globals.hfont = CreateFontIndirectW(&lFont);
                 hFontOld = SelectObject(hdc, Globals.hfont);
-                GetTextExtentPoint32W(hdc, sSpace, 1, &Globals.spaceSize);
+                GetTextExtentPoint32W(hdc, L" ", 1, &Globals.spaceSize);
 
                 /* change font in all open child windows */
                 for(childWnd=GetWindow(Globals.hmdiclient,GW_CHILD); childWnd; childWnd=GetNextWindow(childWnd,GW_HWNDNEXT)) {
@@ -880,12 +861,12 @@ static int __cdecl compareExt(const void* arg1, const void* arg2)
 	if (ext1)
 		ext1++;
 	else
-		ext1 = sEmpty;
+		ext1 = L"";
 
 	if (ext2)
 		ext2++;
 	else
-		ext2 = sEmpty;
+		ext2 = L"";
 
 	cmp = lstrcmpiW(ext1, ext2);
 	if (cmp)
@@ -1023,8 +1004,6 @@ static void read_directory(Entry* dir, LPCWSTR path, SORT_ORDER sortOrder, HWND 
 
 static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv, SORT_ORDER sortOrder, HWND hwnd)
 {
-	static const WCHAR sBackslash[] = {'\\', '\0'};
-
 	if (pidl)
 	{
 		 /* read shell namespace tree */
@@ -1041,7 +1020,7 @@ static Entry* read_tree(Root* root, LPCWSTR path, LPITEMIDLIST pidl, LPWSTR drv,
 	 /* read WIN32 file system tree */
        root->drive_type = GetDriveTypeW(path);
 
-	lstrcatW(drv, sBackslash);
+	lstrcatW(drv, L"\\");
 	GetVolumeInformationW(drv, root->volname, _MAX_FNAME, 0, 0, &root->fs_flags, root->fs, _MAX_DIR);
 
 	lstrcpyW(root->path, drv);
@@ -1065,8 +1044,6 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 {
 	WCHAR drv[_MAX_DRIVE+1], dir[_MAX_DIR], name[_MAX_FNAME], ext[_MAX_EXT];
 	WCHAR dir_path[MAX_PATH];
-	static const WCHAR sAsterics[] = {'*', '\0'};
-	static const WCHAR sTitleFmt[] = {'%','s',' ','-',' ','%','s','\0'};
 
 	ChildWnd* child = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
 	Root* root = &child->root;
@@ -1108,7 +1085,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 		_wsplitpath(child->path, drv, dir, name, ext);
 	}
 
-	lstrcpyW(child->filter_pattern, sAsterics);
+	lstrcpyW(child->filter_pattern, L"*");
 	child->filter_flags = TF_ALL;
 
 	root->entry.level = 0;
@@ -1120,7 +1097,7 @@ static ChildWnd* alloc_child_window(LPCWSTR path, LPITEMIDLIST pidl, HWND hwnd)
 	if (root->entry.etype == ET_SHELL)
 		load_string(root->entry.data.cFileName, ARRAY_SIZE(root->entry.data.cFileName), IDS_DESKTOP);
 	else
-		wsprintfW(root->entry.data.cFileName, sTitleFmt, drv, root->fs);
+		wsprintfW(root->entry.data.cFileName, L"%s - %s", drv, root->fs);
 
 	root->entry.data.dwFileAttributes = FILE_ATTRIBUTE_DIRECTORY;
 
@@ -1211,30 +1188,29 @@ static windowOptions load_registry_settings(void)
 	windowOptions opts;
 	LOGFONTW logfont;
 
-        RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
-                       0, KEY_QUERY_VALUE, &hKey );
+        RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\WineFile", 0, KEY_QUERY_VALUE, &hKey );
 
         size = sizeof(opts.start_x);
-        if( RegQueryValueExW( hKey, reg_start_x, NULL, &type,
+        if( RegQueryValueExW( hKey, L"startX", NULL, &type,
                               (LPBYTE) &opts.start_x, &size ) != ERROR_SUCCESS )
 		opts.start_x = CW_USEDEFAULT;
 
         size = sizeof(opts.start_y);
-        if( RegQueryValueExW( hKey, reg_start_y, NULL, &type,
+        if( RegQueryValueExW( hKey, L"startY", NULL, &type,
                               (LPBYTE) &opts.start_y, &size ) != ERROR_SUCCESS )
 		opts.start_y = CW_USEDEFAULT;
 
         size = sizeof(opts.width);
-        if( RegQueryValueExW( hKey, reg_width, NULL, &type,
+        if( RegQueryValueExW( hKey, L"width", NULL, &type,
                               (LPBYTE) &opts.width, &size ) != ERROR_SUCCESS )
 		opts.width = CW_USEDEFAULT;
 
         size = sizeof(opts.height);
-        if( RegQueryValueExW( hKey, reg_height, NULL, &type,
+        if( RegQueryValueExW( hKey, L"height", NULL, &type,
                               (LPBYTE) &opts.height, &size ) != ERROR_SUCCESS )
 		opts.height = CW_USEDEFAULT;
 	size=sizeof(logfont);
-	if( RegQueryValueExW( hKey, reg_logfont, NULL, &type,
+	if( RegQueryValueExW( hKey, L"logfont", NULL, &type,
                               (LPBYTE) &logfont, &size ) != ERROR_SUCCESS )
 		GetObjectW(GetStockObject(DEFAULT_GUI_FONT),sizeof(logfont),&logfont);
 
@@ -1256,29 +1232,24 @@ static void save_registry_settings(void)
 	width = wi.rcWindow.right - wi.rcWindow.left;
 	height = wi.rcWindow.bottom - wi.rcWindow.top;
 
-	if ( RegOpenKeyExW( HKEY_CURRENT_USER, registry_key,
-                            0, KEY_SET_VALUE, &hKey ) != ERROR_SUCCESS )
-	{
-		/* Unable to save registry settings - try to create key */
-                if ( RegCreateKeyExW( HKEY_CURRENT_USER, registry_key,
-                                      0, NULL, REG_OPTION_NON_VOLATILE,
-                                      KEY_SET_VALUE, NULL, &hKey, NULL ) != ERROR_SUCCESS )
-		{
-			/* FIXME: Cannot create key */
-			return;
-		}
+        if ( RegCreateKeyExW( HKEY_CURRENT_USER, L"Software\\Wine\\WineFile",
+                              0, NULL, REG_OPTION_NON_VOLATILE,
+                              KEY_SET_VALUE, NULL, &hKey, NULL ) != ERROR_SUCCESS )
+        {
+            /* FIXME: Cannot create key */
+            return;
 	}
 	/* Save all of the settings */
-        RegSetValueExW( hKey, reg_start_x, 0, REG_DWORD,
+        RegSetValueExW( hKey, L"startX", 0, REG_DWORD,
                         (LPBYTE) &wi.rcWindow.left, sizeof(DWORD) );
-        RegSetValueExW( hKey, reg_start_y, 0, REG_DWORD,
+        RegSetValueExW( hKey, L"startY", 0, REG_DWORD,
                         (LPBYTE) &wi.rcWindow.top, sizeof(DWORD) );
-        RegSetValueExW( hKey, reg_width, 0, REG_DWORD,
+        RegSetValueExW( hKey, L"width", 0, REG_DWORD,
                         (LPBYTE) &width, sizeof(DWORD) );
-        RegSetValueExW( hKey, reg_height, 0, REG_DWORD,
+        RegSetValueExW( hKey, L"height", 0, REG_DWORD,
                         (LPBYTE) &height, sizeof(DWORD) );
         GetObjectW(Globals.hfont, sizeof(logfont), &logfont);
-        RegSetValueExW( hKey, reg_logfont, 0, REG_BINARY,
+        RegSetValueExW( hKey, L"logfont", 0, REG_BINARY,
                         (LPBYTE)&logfont, sizeof(LOGFONTW) );
 
 	/* TODO: Save more settings here (List vs. Detailed View, etc.) */
@@ -1361,7 +1332,7 @@ static HWND create_child_window(ChildWnd* child)
 	MDICREATESTRUCTW mcs;
 	int idx;
 
-	mcs.szClass = sWINEFILETREE;
+	mcs.szClass = L"WFS_Tree";
 	mcs.szTitle = child->path;
 	mcs.hOwner  = Globals.hInstance;
 	mcs.x       = child->pos.rcNormalPosition.left;
@@ -1395,9 +1366,8 @@ static HWND create_child_window(ChildWnd* child)
 
 static void WineFile_OnRun( HWND hwnd )
 {
-	static const WCHAR shell32_dll[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
         void (WINAPI *pRunFileDlgAW )(HWND, HICON, LPWSTR, LPWSTR, LPWSTR, DWORD);
-	HMODULE hshell = GetModuleHandleW( shell32_dll );
+	HMODULE hshell = GetModuleHandleW( L"shell32.dll" );
 	HICON hIcon = LoadIconW(Globals.hInstance, MAKEINTRESOURCEW(IDI_WINEFILE));
 
 	pRunFileDlgAW = (void*)GetProcAddress(hshell, (LPCSTR)61);
@@ -1530,11 +1500,6 @@ static void PropDlg_DisplayValue(HWND hlbox, HWND hedit)
 
 static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR strFilename)
 {
-        static const WCHAR sBackSlash[] = {'\\','\0'};
-        static const WCHAR sTranslation[] = {'\\','V','a','r','F','i','l','e','I','n','f','o','\\','T','r','a','n','s','l','a','t','i','o','n','\0'};
-        static const WCHAR sStringFileInfo[] = {'\\','S','t','r','i','n','g','F','i','l','e','I','n','f','o','\\',
-										'%','0','4','x','%','0','4','x','\\','%','s','\0'};
-        static const WCHAR sFmt[] = {'%','d','.','%','d','.','%','d','.','%','d','\0'};
 	DWORD dwVersionDataLen = GetFileVersionInfoSizeW(strFilename, NULL);
 
 	if (dwVersionDataLen) {
@@ -1544,12 +1509,12 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 			LPVOID pVal;
 			UINT nValLen;
 
-			if (VerQueryValueW(dlg->pVersionData, sBackSlash, &pVal, &nValLen)) {
+			if (VerQueryValueW(dlg->pVersionData, L"\\", &pVal, &nValLen)) {
 				if (nValLen == sizeof(VS_FIXEDFILEINFO)) {
 					VS_FIXEDFILEINFO* pFixedFileInfo = (VS_FIXEDFILEINFO*)pVal;
                                         WCHAR buffer[BUFFER_LEN];
 
-                                        swprintf(buffer, ARRAY_SIZE(buffer), sFmt,
+                                        swprintf(buffer, ARRAY_SIZE(buffer), L"%d.%d.%d.%d",
                                                  HIWORD(pFixedFileInfo->dwFileVersionMS), LOWORD(pFixedFileInfo->dwFileVersionMS),
                                                  HIWORD(pFixedFileInfo->dwFileVersionLS), LOWORD(pFixedFileInfo->dwFileVersionLS));
 
@@ -1558,7 +1523,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 			}
 
 			/* Read the list of languages and code pages. */
-			if (VerQueryValueW(dlg->pVersionData, sTranslation, &pVal, &nValLen)) {
+			if (VerQueryValueW(dlg->pVersionData, L"\\VarFileInfo\\Translation", &pVal, &nValLen)) {
 				struct LANGANDCODEPAGE* pTranslate = (struct LANGANDCODEPAGE*)pVal;
 				struct LANGANDCODEPAGE* pEnd = (struct LANGANDCODEPAGE*)((LPBYTE)pVal+nValLen);
 
@@ -1576,7 +1541,7 @@ static void CheckForFileInfo(struct PropertiesDialog* dlg, HWND hwnd, LPCWSTR st
 
 						LPCSTR pInfoString = *p;
 						MultiByteToWideChar(CP_ACP, 0, pInfoString, -1, infoStr, 100);
-						wsprintfW(subblock, sStringFileInfo, pTranslate->wLanguage, pTranslate->wCodePage, infoStr);
+						wsprintfW(subblock, L"\\StringFileInfo\\%04x%04x\\%s", pTranslate->wLanguage, pTranslate->wCodePage, infoStr);
 
 						/* Retrieve file description for language and code page */
 						if (VerQueryValueW(dlg->pVersionData, subblock, (PVOID)&pTxt, &nValLen)) {
@@ -1600,7 +1565,6 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 
 	switch(nmsg) {
 		case WM_INITDIALOG: {
-			static const WCHAR sByteFmt[] = {'%','s',' ','B','y','t','e','s','\0'};
 			WCHAR b1[BUFFER_LEN], b2[BUFFER_LEN];
 			LPWIN32_FIND_DATAW pWFD;
 
@@ -1615,7 +1579,7 @@ static INT_PTR CALLBACK PropertiesDialogDlgProc(HWND hwnd, UINT nmsg, WPARAM wpa
 			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_LASTCHANGE), b1);
 
                         format_longlong( b1, ((ULONGLONG)pWFD->nFileSizeHigh << 32) | pWFD->nFileSizeLow );
-			wsprintfW(b2, sByteFmt, b1);
+			wsprintfW(b2, L"%s Bytes", b1);
 			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_SIZE), b2);
 
 			SetWindowTextW(GetDlgItem(hwnd, IDC_STATIC_PROP_FILENAME), pWFD->cFileName);
@@ -2112,18 +2076,17 @@ static HWND create_header(HWND parent, Pane* pane, UINT id)
 
 static void init_output(HWND hwnd)
 {
-	static const WCHAR s1000[] = {'1','0','0','0','\0'};
 	WCHAR b[16];
 	HFONT old_font;
 	HDC hdc = GetDC(hwnd);
 
-	if (GetNumberFormatW(LOCALE_USER_DEFAULT, 0, s1000, 0, b, 16) > 4)
+	if (GetNumberFormatW(LOCALE_USER_DEFAULT, 0, L"1000", 0, b, 16) > 4)
 		Globals.num_sep = b[1];
 	else
 		Globals.num_sep = '.';
 
 	old_font = SelectObject(hdc, Globals.hfont);
-	GetTextExtentPoint32W(hdc, sSpace, 1, &Globals.spaceSize);
+	GetTextExtentPoint32W(hdc, L" ", 1, &Globals.spaceSize);
 	SelectObject(hdc, old_font);
 	ReleaseDC(hwnd, hdc);
 }
@@ -2401,7 +2364,7 @@ static void set_space_status(void)
 		FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 				RS(fmt,IDS_FREE_SPACE_FMT), 0, 0, buffer, ARRAY_SIZE(buffer), (va_list *)args);
 	} else
-		lstrcpyW(buffer, sQMarks);
+		lstrcpyW(buffer, L"???");
 
 	SendMessageW(Globals.hstatusbar, SB_SETTEXTW, 0, (LPARAM)buffer);
 }
@@ -2411,12 +2374,10 @@ static WNDPROC g_orgTreeWndProc;
 
 static void create_tree_window(HWND parent, Pane* pane, UINT id, UINT id_header, LPCWSTR pattern, int filter_flags)
 {
-	static const WCHAR sListBox[] = {'L','i','s','t','B','o','x','\0'};
-
         static BOOL s_init = FALSE;
 	Entry* entry = pane->root;
 
-	pane->hwnd = CreateWindowW(sListBox, sEmpty, WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
+	pane->hwnd = CreateWindowW(L"ListBox", L"", WS_CHILD|WS_VISIBLE|WS_HSCROLL|WS_VSCROLL|
                                   LBS_DISABLENOSCROLL|LBS_NOINTEGRALHEIGHT|LBS_OWNERDRAWFIXED|LBS_NOTIFY,
                                   0, 0, 0, 0, parent, (HMENU)ULongToHandle(id), Globals.hInstance, 0);
 
@@ -2460,7 +2421,7 @@ static void format_date(const FILETIME* ft, WCHAR* buffer, int visible_cols)
 		return;
 
 	if (!FileTimeToLocalFileTime(ft, &lft))
-		{err: lstrcpyW(buffer,sQMarks); return;}
+		{err: lstrcpyW(buffer,L"???"); return;}
 
 	if (!FileTimeToSystemTime(&lft, &systime))
 		goto err;
@@ -2565,28 +2526,11 @@ static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCWSTR str
 
 static BOOL is_exe_file(LPCWSTR ext)
 {
-	static const WCHAR executable_extensions[][4] = {
-		{'C','O','M','\0'},
-		{'E','X','E','\0'},
-		{'B','A','T','\0'},
-		{'C','M','D','\0'},
-		{'C','M','M','\0'},
-		{'B','T','M','\0'},
-		{'A','W','K','\0'},
-		{'\0'}
-	};
-
-	WCHAR ext_buffer[_MAX_EXT];
-	const WCHAR (*p)[4];
-	LPCWSTR s;
-	LPWSTR d;
-
-	for(s=ext+1,d=ext_buffer; (*d=tolower(*s)); s++)
-		d++;
-
-	for(p=executable_extensions; (*p)[0]; p++)
-		if (!lstrcmpiW(ext_buffer, *p))
-			return TRUE;
+	static const WCHAR *executable_extensions[] = { L".COM", L".EXE", L".BAT", L".CMD",
+                                                        L".CMM", L".BTM", L".AWK" };
+        unsigned int i;
+	for (i = 0; i < ARRAY_SIZE(executable_extensions); i++)
+		if (!lstrcmpiW(ext, executable_extensions[i])) return TRUE;
 
 	return FALSE;
 }
@@ -2604,7 +2548,7 @@ static enum FILE_TYPE get_file_type(LPCWSTR filename)
 {
 	LPCWSTR ext = wcsrchr(filename, '.');
 	if (!ext)
-		ext = sEmpty;
+		ext = L"";
 
 	if (is_exe_file(ext))
 		return FT_EXECUTABLE;
@@ -2812,14 +2756,11 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 	if (entry->bhfi_valid) {
 		if (visible_cols & COL_INDEX) {
-                        static const WCHAR fmtlow[] = {'%','X',0};
-                        static const WCHAR fmthigh[] = {'%','X','%','0','8','X',0};
-
                         if (entry->bhfi.nFileIndexHigh)
-                            wsprintfW(buffer, fmthigh,
+                            wsprintfW(buffer, L"%X%08X",
                                      entry->bhfi.nFileIndexHigh, entry->bhfi.nFileIndexLow );
                         else
-                            wsprintfW(buffer, fmtlow, entry->bhfi.nFileIndexLow );
+                            wsprintfW(buffer, L"%X", entry->bhfi.nFileIndexLow );
 
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_RIGHT);
@@ -2830,7 +2771,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 		}
 
 		if (visible_cols & COL_LINKS) {
-			wsprintfW(buffer, sNumFmt, entry->bhfi.nNumberOfLinks);
+			wsprintfW(buffer, L"%d", entry->bhfi.nNumberOfLinks);
 
 			if (calcWidthCol == -1)
 				output_text(pane, dis, col, buffer, DT_CENTER);
@@ -2844,8 +2785,7 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 
 	/* show file attributes */
 	if (visible_cols & COL_ATTRIBUTES) {
-		static const WCHAR s11Tabs[] = {' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\t',' ','\0'};
-		lstrcpyW(buffer, s11Tabs);
+		lstrcpyW(buffer, L" \t \t \t \t \t \t \t \t \t \t \t ");
 
 		if (attrs & FILE_ATTRIBUTE_NORMAL)					buffer[ 0] = 'N';
 		else {
@@ -3406,11 +3346,9 @@ static BOOL prompt_target(Pane* pane, LPWSTR source, LPWSTR target)
 	/* If the target already exists as directory, create a new target below this. */
 	if (is_directory(path)) {
 		WCHAR fname[_MAX_FNAME], ext[_MAX_EXT];
-		static const WCHAR sAppend[] = {'%','s','/','%','s','%','s','\0'};
 
 		_wsplitpath(source, NULL, NULL, fname, ext);
-
-		wsprintfW(target, sAppend, path, fname, ext);
+		wsprintfW(target, L"%s/%s%s", path, fname, ext);
 	}
 
 	return TRUE;
@@ -3863,8 +3801,6 @@ static LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM 
 
 static void InitInstance(HINSTANCE hinstance)
 {
-	static const WCHAR sFont[] = {'M','i','c','r','o','s','o','f','t',' ','S','a','n','s',' ','S','e','r','i','f','\0'};
-
 	WNDCLASSEXW wcFrame;
 	WNDCLASSW wcChild;
 	int col;
@@ -3893,7 +3829,7 @@ static void InitInstance(HINSTANCE hinstance)
 	wcFrame.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 	wcFrame.hbrBackground = 0;
 	wcFrame.lpszMenuName  = 0;
-	wcFrame.lpszClassName = sWINEFILEFRAME;
+	wcFrame.lpszClassName = L"WFS_Frame";
 	wcFrame.hIconSm       = LoadImageW(hinstance, MAKEINTRESOURCEW(IDI_WINEFILE), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED);
 
 	Globals.hframeClass = RegisterClassExW(&wcFrame);
@@ -3910,14 +3846,14 @@ static void InitInstance(HINSTANCE hinstance)
 	wcChild.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 	wcChild.hbrBackground = 0;
 	wcChild.lpszMenuName  = 0;
-	wcChild.lpszClassName = sWINEFILETREE;
+	wcChild.lpszClassName = L"WFS_Tree";
 
 	RegisterClassW(&wcChild);
 
 
 	Globals.haccel = LoadAcceleratorsW(hinstance, MAKEINTRESOURCEW(IDA_WINEFILE));
 
-	Globals.hfont = CreateFontW(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, sFont);
+	Globals.hfont = CreateFontW(-MulDiv(8,GetDeviceCaps(hdc,LOGPIXELSY),72), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"Microsoft Sans Serif");
 
 	ReleaseDC(0, hdc);
 
@@ -3945,8 +3881,6 @@ static void InitInstance(HINSTANCE hinstance)
 
 static BOOL show_frame(HWND hwndParent, int cmdshow, LPWSTR path)
 {
-	static const WCHAR sMDICLIENT[] = {'M','D','I','C','L','I','E','N','T','\0'};
-
 	WCHAR buffer[MAX_PATH], b1[BUFFER_LEN];
 	ChildWnd* child;
 	HMENU hMenuFrame, hMenuWindow;
@@ -3975,7 +3909,7 @@ static BOOL show_frame(HWND hwndParent, int cmdshow, LPWSTR path)
 					hwndParent, Globals.hMenuFrame, Globals.hInstance, 0/*lpParam*/);
 
 
-	Globals.hmdiclient = CreateWindowExW(0, sMDICLIENT, NULL,
+	Globals.hmdiclient = CreateWindowExW(0, L"MDICLIENT", NULL,
 					WS_CHILD|WS_CLIPCHILDREN|WS_VSCROLL|WS_HSCROLL|WS_VISIBLE|WS_BORDER,
 					0, 0, 0, 0,
 					Globals.hMainWnd, 0, Globals.hInstance, &ccs);

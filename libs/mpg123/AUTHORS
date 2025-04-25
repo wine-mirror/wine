@@ -30,6 +30,7 @@ The creator: Michael Hipp (email: hippm@informatik.uni-tuebingen.de - please bot
 
 Contributions/ideas Thomas Orgis era (includes backports from mhipp trunk):
 
+Bill Roberts <bill.roberts@arm.com>: PAC/BTI for aarch64
 Dave Yeo <dave.r.yeo@gmail.com>: continued OS/2 fixing
 madebr and manx: github mirror and CI
 Vitaly Kirsanov <krokoziabla@gmail.com>: ports/cmake (optional CMake build)

@@ -370,6 +370,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     struct input_thread_state state = {.running = TRUE};
     struct dinput_device *device;
     HANDLE start_event = params;
+    HMODULE this_module = NULL;
     DWORD ret;
     MSG msg;
 
@@ -377,6 +378,10 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
     di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
     input_thread_state = &state;
+
+    if (!GetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (void *)dinput_thread_proc, &this_module ))
+        ERR( "Failed to get a handle of dinput to keep it alive: %lu", GetLastError() );
+
     SetEvent( start_event );
 
     while (state.running && (ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
@@ -417,6 +422,8 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
     DestroyWindow( di_em_win );
     di_em_win = NULL;
+
+    if (this_module != NULL) FreeLibraryAndExitThread( this_module, 0 );
     return 0;
 }
 

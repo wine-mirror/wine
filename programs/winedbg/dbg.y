@@ -140,7 +140,7 @@ command:
     | tSYMBOLFILE pathname     	{ symbol_read_symtable($2, 0); }
     | tSYMBOLFILE pathname expr_rvalue { symbol_read_symtable($2, $3); }
     | tWHATIS expr_lvalue       { dbg_printf("type = "); types_print_type(&$2.type, FALSE, NULL); dbg_printf("\n"); }
-    | tATTACH tNUM     		{ dbg_attach_debuggee($2); dbg_active_wait_for_first_exception(); }
+    | tATTACH tNUM              { if (dbg_attach_debuggee($2)) dbg_active_wait_for_first_exception(); }
     | tATTACH pathname          { minidump_reload($2); }
     | tDETACH                   { dbg_curr_process->process_io->close_process(dbg_curr_process, FALSE); }
     | tTHREAD tNUM              { dbg_set_curr_thread($2); }

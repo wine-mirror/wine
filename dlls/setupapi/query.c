@@ -34,35 +34,23 @@
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 #ifdef __i386__
-static const WCHAR source_disks_names_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','x','8','6',0};
-static const WCHAR source_disks_files_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','x','8','6',0};
+static const WCHAR source_disks_names_platform[] = L"SourceDisksNames.x86";
+static const WCHAR source_disks_files_platform[] = L"SourceDisksFiles.x86";
 #elif defined(__x86_64__)
-static const WCHAR source_disks_names_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','m','d','6','4',0};
-static const WCHAR source_disks_files_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','m','d','6','4',0};
+static const WCHAR source_disks_names_platform[] = L"SourceDisksNames.amd64";
+static const WCHAR source_disks_files_platform[] = L"SourceDisksFiles.amd64";
 #elif defined(__arm__)
-static const WCHAR source_disks_names_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','r','m',0};
-static const WCHAR source_disks_files_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','r','m',0};
+static const WCHAR source_disks_names_platform[] = L"SourceDisksNames.arm";
+static const WCHAR source_disks_files_platform[] = L"SourceDisksFiles.arm";
 #elif defined(__aarch64__)
-static const WCHAR source_disks_names_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s','.','a','r','m','6','4',0};
-static const WCHAR source_disks_files_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s','.','a','r','m','6','4',0};
+static const WCHAR source_disks_names_platform[] = L"SourceDisksNames.arm64";
+static const WCHAR source_disks_files_platform[] = L"SourceDisksFiles.arm64";
 #else  /* FIXME: other platforms */
-static const WCHAR source_disks_names_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s',0};
-static const WCHAR source_disks_files_platform[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s',0};
+static const WCHAR source_disks_names_platform[] = L"SourceDisksNames";
+static const WCHAR source_disks_files_platform[] = L"SourceDisksFiles";
 #endif
-static const WCHAR source_disks_names[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','N','a','m','e','s',0};
-static const WCHAR source_disks_files[] =
-    {'S','o','u','r','c','e','D','i','s','k','s','F','i','l','e','s',0};
+static const WCHAR source_disks_names[] = L"SourceDisksNames";
+static const WCHAR source_disks_files[] = L"SourceDisksFiles";
 
 /* fills the PSP_INF_INFORMATION struct fill_info is TRUE
  * always returns the required size of the information
@@ -96,13 +84,10 @@ static HINF search_for_inf(LPCVOID InfSpec, DWORD SearchControl)
     HINF hInf = INVALID_HANDLE_VALUE;
     WCHAR inf_path[MAX_PATH];
 
-    static const WCHAR infW[] = {'\\','i','n','f','\\',0};
-    static const WCHAR system32W[] = {'\\','s','y','s','t','e','m','3','2','\\',0};
-
     if (SearchControl == INFINFO_REVERSE_DEFAULT_SEARCH)
     {
         GetWindowsDirectoryW(inf_path, MAX_PATH);
-        lstrcatW(inf_path, system32W);
+        lstrcatW(inf_path, L"\\system32\\");
         lstrcatW(inf_path, InfSpec);
 
         hInf = SetupOpenInfFileW(inf_path, NULL,
@@ -111,7 +96,7 @@ static HINF search_for_inf(LPCVOID InfSpec, DWORD SearchControl)
             return hInf;
 
         GetWindowsDirectoryW(inf_path, MAX_PATH);
-        lstrcpyW(inf_path, infW);
+        lstrcpyW(inf_path, L"\\inf\\");
         lstrcatW(inf_path, InfSpec);
 
         return SetupOpenInfFileW(inf_path, NULL,
@@ -485,13 +470,12 @@ BOOL WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info,
 {
     INFCONTEXT ctx;
     WCHAR source_id_str[11];
-    static const WCHAR fmt[] = {'%','d',0};
     DWORD index;
 
     TRACE("%p, %d, %d, %p, %ld, %p\n", hinf, source_id, info, buffer, buffer_size,
           required_size);
 
-    swprintf( source_id_str, ARRAY_SIZE(source_id_str), fmt, source_id );
+    swprintf( source_id_str, ARRAY_SIZE(source_id_str), L"%d", source_id );
 
     if (!SetupFindFirstLineW( hinf, source_disks_names_platform, source_id_str, &ctx ) &&
         !SetupFindFirstLineW( hinf, source_disks_names, source_id_str, &ctx ))
@@ -578,11 +562,6 @@ BOOL WINAPI SetupGetTargetPathA( HINF hinf, PINFCONTEXT context, PCSTR section, 
 BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section, PWSTR buffer,
                                  DWORD buffer_size, PDWORD required_size )
 {
-    static const WCHAR destination_dirs[] =
-        {'D','e','s','t','i','n','a','t','i','o','n','D','i','r','s',0};
-    static const WCHAR default_dest_dir[]  =
-        {'D','e','f','a','u','l','t','D','e','s','t','D','i','r',0};
-
     INFCONTEXT ctx;
     WCHAR *dir, systemdir[MAX_PATH];
     unsigned int size;
@@ -591,11 +570,11 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
     TRACE("%p, %p, %s, %p, 0x%08lx, %p\n", hinf, context, debugstr_w(section), buffer,
           buffer_size, required_size);
 
-    if (context) ret = SetupFindFirstLineW( hinf, destination_dirs, NULL, context );
+    if (context) ret = SetupFindFirstLineW( hinf, L"DestinationDirs", NULL, context );
     else if (section)
     {
-        if (!(ret = SetupFindFirstLineW( hinf, destination_dirs, section, &ctx )))
-            ret = SetupFindFirstLineW( hinf, destination_dirs, default_dest_dir, &ctx );
+        if (!(ret = SetupFindFirstLineW( hinf, L"DestinationDirs", section, &ctx )))
+            ret = SetupFindFirstLineW( hinf, L"DestinationDirs", L"DefaultDestDir", &ctx );
     }
     if (!ret || !(dir = PARSER_get_dest_dir( context ? context : &ctx )))
     {
@@ -666,8 +645,6 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
     LPCWSTR inf_name;
     LPCWSTR inf_path;
     HINF hinf;
-    static const WCHAR wszVersion[] = { 'V','e','r','s','i','o','n',0 };
-    static const WCHAR wszCatalogFile[] = { 'C','a','t','a','l','o','g','F','i','l','e',0 };
 
     FIXME("(%p, %d, %p, %p): semi-stub\n", InfInformation, InfIndex,
         AlternativePlatformInfo, OriginalFileInfo);
@@ -687,7 +664,7 @@ BOOL WINAPI SetupQueryInfOriginalFileInformationW(
     hinf = SetupOpenInfFileW(inf_path, NULL, INF_STYLE_WIN4, NULL);
     if (hinf == INVALID_HANDLE_VALUE) return FALSE;
 
-    if (!SetupGetLineTextW(NULL, hinf, wszVersion, wszCatalogFile,
+    if (!SetupGetLineTextW(NULL, hinf, L"Version", L"CatalogFile",
                            OriginalFileInfo->OriginalCatalogName,
                            ARRAY_SIZE(OriginalFileInfo->OriginalCatalogName), NULL))
     {

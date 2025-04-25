@@ -165,13 +165,6 @@ static const IAssemblyEnumVtbl AssemblyEnumVtbl = {
 static void build_file_mask(IAssemblyName *name, int depth, const WCHAR *path,
                             const WCHAR *prefix, WCHAR *buf)
 {
-    static const WCHAR star[] = {'*',0};
-    static const WCHAR ss_fmt[] = {'%','s','\\','%','s',0};
-    static const WCHAR sss_fmt[] = {'%','s','\\','%','s','_','_','%','s',0};
-    static const WCHAR ssss_fmt[] = {'%','s','\\','%','s','%','s','_','_','%','s',0};
-    static const WCHAR ver_fmt[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
-    static const WCHAR star_fmt[] = {'%','s','\\','*',0};
-    static const WCHAR star_prefix_fmt[] = {'%','s','\\','%','s','*',0};
     WCHAR disp[MAX_PATH], version[24]; /* strlen("65535") * 4 + 3 + 1 */
     LPCWSTR verptr, pubkeyptr;
     HRESULT hr;
@@ -183,9 +176,9 @@ static void build_file_mask(IAssemblyName *name, int depth, const WCHAR *path,
     if (!name)
     {
         if (prefix && depth == 1)
-            swprintf(buf, MAX_PATH, star_prefix_fmt, path, prefix);
+            swprintf(buf, MAX_PATH, L"%s\\%s*", path, prefix);
         else
-            swprintf(buf, MAX_PATH, star_fmt, path);
+            swprintf(buf, MAX_PATH, L"%s\\*", path);
         return;
     }
     if (depth == 0)
@@ -194,9 +187,9 @@ static void build_file_mask(IAssemblyName *name, int depth, const WCHAR *path,
         *disp = '\0';
         hr = IAssemblyName_GetName(name, &size, disp);
         if (SUCCEEDED(hr))
-            swprintf(buf, MAX_PATH, ss_fmt, path, disp);
+            swprintf(buf, MAX_PATH, L"%s\\%s", path, disp);
         else
-            swprintf(buf, MAX_PATH, ss_fmt, path, star);
+            swprintf(buf, MAX_PATH, L"%s\\*", path);
     }
     else if (depth == 1)
     {
@@ -212,17 +205,17 @@ static void build_file_mask(IAssemblyName *name, int depth, const WCHAR *path,
         revision_size = sizeof(revision);
         IAssemblyName_GetProperty(name, ASM_NAME_REVISION_NUMBER, &revision, &revision_size);
 
-        if (!major_size || !minor_size || !build_size || !revision_size) verptr = star;
+        if (!major_size || !minor_size || !build_size || !revision_size) verptr = L"*";
         else
         {
-            swprintf(version, ARRAY_SIZE(version), ver_fmt, major, minor, build, revision);
+            swprintf(version, ARRAY_SIZE(version), L"%u.%u.%u.%u", major, minor, build, revision);
             verptr = version;
         }
 
         size = sizeof(token);
         IAssemblyName_GetProperty(name, ASM_NAME_PUBLIC_KEY_TOKEN, token, &size);
 
-        if (!size) pubkeyptr = star;
+        if (!size) pubkeyptr = L"*";
         else
         {
             token_to_str(token, token_str);
@@ -230,9 +223,9 @@ static void build_file_mask(IAssemblyName *name, int depth, const WCHAR *path,
         }
 
         if (prefix)
-            swprintf(buf, MAX_PATH, ssss_fmt, path, prefix, verptr, pubkeyptr);
+            swprintf(buf, MAX_PATH, L"%s\\%s%s__%s", path, prefix, verptr, pubkeyptr);
         else
-            swprintf(buf, MAX_PATH, sss_fmt, path, verptr, pubkeyptr);
+            swprintf(buf, MAX_PATH, L"%s\\%s__%s", path, verptr, pubkeyptr);
     }
 }
 
@@ -299,14 +292,6 @@ static void insert_assembly(struct list *assemblies, ASMNAME *to_insert)
 static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                                    int depth, const WCHAR *prefix, LPWSTR path)
 {
-    static const WCHAR dot[] = {'.',0};
-    static const WCHAR dotdot[] = {'.','.',0};
-    static const WCHAR dblunder[] = {'_','_',0};
-    static const WCHAR path_fmt[] = {'%','s','\\','%','s','\\','%','s','.','d','l','l',0};
-    static const WCHAR name_fmt[] = {'%','s',',',' ','V','e','r','s','i','o','n','=','%','s',',',' ',
-        'C','u','l','t','u','r','e','=','n','e','u','t','r','a','l',',',' ',
-        'P','u','b','l','i','c','K','e','y','T','o','k','e','n','=','%','s',0};
-    static const WCHAR ss_fmt[] = {'%','s','\\','%','s',0};
     WIN32_FIND_DATAW ffd;
     WCHAR buf[MAX_PATH], disp[MAX_PATH], asmpath[MAX_PATH], *ptr;
     static WCHAR parent[MAX_PATH];
@@ -321,7 +306,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
 
     do
     {
-        if (!lstrcmpW(ffd.cFileName, dot) || !lstrcmpW(ffd.cFileName, dotdot))
+        if (!lstrcmpW(ffd.cFileName, L".") || !lstrcmpW(ffd.cFileName, L".."))
             continue;
 
         if (depth == 0)
@@ -337,8 +322,8 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
         {
             const WCHAR *token, *version = ffd.cFileName;
 
-            swprintf(asmpath, ARRAY_SIZE(asmpath), path_fmt, path, ffd.cFileName, parent);
-            ptr = wcsstr(ffd.cFileName, dblunder);
+            swprintf(asmpath, ARRAY_SIZE(asmpath), L"%s\\%s\\%s.dll", path, ffd.cFileName, parent);
+            ptr = wcsstr(ffd.cFileName, L"__");
             *ptr = '\0';
             token = ptr + 2;
 
@@ -349,7 +334,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                     !wcsnicmp(ffd.cFileName, prefix, prefix_len))
                     version += prefix_len;
             }
-            swprintf(disp, ARRAY_SIZE(disp), name_fmt, parent, version, token);
+            swprintf(disp, ARRAY_SIZE(disp), L"%s, Version=%s, Culture=neutral, PublicKeyToken=%s", parent, version, token);
 
             if (!(asmname = malloc(sizeof(*asmname))))
             {
@@ -377,7 +362,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
             continue;
         }
 
-        swprintf(buf, ARRAY_SIZE(buf), ss_fmt, path, ffd.cFileName);
+        swprintf(buf, ARRAY_SIZE(buf), L"%s\\%s", path, ffd.cFileName);
         hr = enum_gac_assemblies(assemblies, name, depth + 1, prefix, buf);
         if (FAILED(hr))
             break;
@@ -389,11 +374,6 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
 
 static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
 {
-    static const WCHAR gac[] = {'\\','G','A','C',0};
-    static const WCHAR gac_32[] = {'\\','G','A','C','_','3','2',0};
-    static const WCHAR gac_64[] = {'\\','G','A','C','_','6','4',0};
-    static const WCHAR gac_msil[] = {'\\','G','A','C','_','M','S','I','L',0};
-    static const WCHAR v40[] = {'v','4','.','0','_',0};
     WCHAR path[MAX_PATH], buf[MAX_PATH];
     SYSTEM_INFO info;
     HRESULT hr;
@@ -408,18 +388,18 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     GetNativeSystemInfo(&info);
     if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        lstrcpyW(path + size - 1, gac_64);
-        hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, v40, path);
+        lstrcpyW(path + size - 1, L"\\GAC_64");
+        hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, L"v4.0_", path);
         if (FAILED(hr))
             return hr;
     }
-    lstrcpyW(path + size - 1, gac_32);
-    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, v40, path);
+    lstrcpyW(path + size - 1, L"\\GAC_32");
+    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, L"v4.0_", path);
     if (FAILED(hr))
         return hr;
 
-    lstrcpyW(path + size - 1, gac_msil);
-    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, v40, path);
+    lstrcpyW(path + size - 1, L"\\GAC_MSIL");
+    hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, L"v4.0_", path);
     if (FAILED(hr))
         return hr;
 
@@ -431,22 +411,22 @@ static HRESULT enumerate_gac(IAssemblyEnumImpl *asmenum, IAssemblyName *pName)
     lstrcpyW(path, buf);
     if (info.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
     {
-        lstrcpyW(path + size - 1, gac_64);
+        lstrcpyW(path + size - 1, L"\\GAC_64");
         hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, NULL, path);
         if (FAILED(hr))
             return hr;
     }
-    lstrcpyW(path + size - 1, gac_32);
+    lstrcpyW(path + size - 1, L"\\GAC_32");
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, NULL, path);
     if (FAILED(hr))
         return hr;
 
-    lstrcpyW(path + size - 1, gac_msil);
+    lstrcpyW(path + size - 1, L"\\GAC_MSIL");
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, NULL, path);
     if (FAILED(hr))
         return hr;
 
-    lstrcpyW(path + size - 1, gac);
+    lstrcpyW(path + size - 1, L"\\GAC");
     hr = enum_gac_assemblies(&asmenum->assemblies, pName, 0, NULL, path);
     if (FAILED(hr))
         return hr;

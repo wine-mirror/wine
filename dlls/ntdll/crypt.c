@@ -93,9 +93,6 @@ static void SHA1Transform(ULONG State[5], UCHAR Buffer[64])
    State[2] += c;
    State[3] += d;
    State[4] += e;
-
-   /* Wipe variables */
-   a = b = c = d = e = 0;
 }
 
 

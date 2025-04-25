@@ -1924,6 +1924,104 @@ static void test_GetExtendedTcpTable(void)
     free( table_module );
 }
 
+/* Test that the TCP_TABLE_OWNER_PID_ALL table contains an entry for a socket
+   we make, and associates it with our process. */
+static void test_GetExtendedTcpTable_owner( int family )
+{
+    SOCKET sock;
+    int port;
+    DWORD i, ret;
+    void *raw_table = NULL;
+
+    winetest_push_context( "%s", family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    sock = socket( family, SOCK_STREAM, IPPROTO_TCP );
+    ok( sock != INVALID_SOCKET, "socket error %d\n", WSAGetLastError() );
+
+    if (family == AF_INET)
+    {
+        struct sockaddr_in addr = { 0 };
+        int addr_len = sizeof(addr);
+
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
+        addr.sin_port = 0;
+
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
+
+        port = addr.sin_port;
+    }
+    else
+    {
+        struct sockaddr_in6 addr = { 0 };
+        int addr_len = sizeof(addr);
+
+        addr.sin6_family = AF_INET6;
+        addr.sin6_addr = in6addr_loopback;
+        addr.sin6_port = 0;
+
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
+
+        port = addr.sin6_port;
+    }
+
+    listen( sock, 1 );
+
+    ret = get_extended_tcp_table( family, TCP_TABLE_OWNER_PID_ALL, &raw_table );
+    if (ret != ERROR_SUCCESS)
+    {
+        skip( "error %lu getting TCP table\n", ret );
+        goto done;
+    }
+
+    if (family == AF_INET)
+    {
+        MIB_TCPTABLE_OWNER_PID *table = raw_table;
+        BOOL found_it = FALSE;
+        for (i = 0; i < table->dwNumEntries; i++)
+        {
+            MIB_TCPROW_OWNER_PID *row = &table->table[i];
+            if (row->dwLocalPort == port && row->dwLocalAddr == htonl( INADDR_LOOPBACK ))
+            {
+                ok( row->dwState == MIB_TCP_STATE_LISTEN, "unexpected socket state %ld\n", row->dwState );
+                ok( row->dwOwningPid == GetCurrentProcessId(), "unexpected socket owner %04lx\n", row->dwOwningPid );
+                found_it = TRUE;
+                break;
+            }
+        }
+        ok( found_it, "no table entry for socket\n" );
+    }
+    else
+    {
+        MIB_TCP6TABLE_OWNER_PID *table = raw_table;
+        BOOL found_it = FALSE;
+        for (i = 0; i < table->dwNumEntries; i++)
+        {
+            MIB_TCP6ROW_OWNER_PID *row = &table->table[i];
+            if (row->dwLocalPort == port && IN6_IS_ADDR_LOOPBACK( (IN6_ADDR*)&row->ucLocalAddr ))
+            {
+                ok( row->dwState == MIB_TCP_STATE_LISTEN, "unexpected socket state %ld\n", row->dwState );
+                ok( row->dwOwningPid == GetCurrentProcessId(), "unexpected socket owner %04lx\n", row->dwOwningPid );
+                found_it = TRUE;
+                break;
+            }
+        }
+        ok( found_it, "no table entry for socket\n" );
+    }
+
+done:
+    closesocket( sock );
+    free( raw_table );
+
+    winetest_pop_context();
+}
+
 static void test_AllocateAndGetTcpExTableFromStack(void)
 {
     DWORD ret;
@@ -2017,6 +2115,100 @@ static void test_GetExtendedUdpTable(void)
     ret = get_extended_udp_table( AF_INET, UDP_TABLE_OWNER_MODULE, (void **)&table_module );
     ok( ret == ERROR_SUCCESS, "got %lu\n", ret );
     free( table_module );
+}
+
+/* Test that the UDP_TABLE_OWNER_PID table contains an entry for a socket we
+   make, and associates it with our process. */
+static void test_GetExtendedUdpTable_owner( int family )
+{
+    SOCKET sock;
+    int port;
+    DWORD i, ret;
+    void *raw_table = NULL;
+
+    winetest_push_context( "%s", family == AF_INET ? "AF_INET" : "AF_INET6" );
+
+    sock = socket( family, SOCK_DGRAM, IPPROTO_UDP );
+    ok( sock != INVALID_SOCKET, "socket error %d\n", WSAGetLastError() );
+
+    if (family == AF_INET)
+    {
+        struct sockaddr_in addr = { 0 };
+        int addr_len = sizeof(addr);
+
+        addr.sin_family = AF_INET;
+        addr.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
+        addr.sin_port = 0;
+
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
+
+        port = addr.sin_port;
+    }
+    else
+    {
+        struct sockaddr_in6 addr = { 0 };
+        int addr_len = sizeof(addr);
+
+        addr.sin6_family = AF_INET6;
+        addr.sin6_addr = in6addr_loopback;
+        addr.sin6_port = 0;
+
+        ret = bind( sock, (struct sockaddr *)&addr, addr_len );
+        ok( !ret, "bind error %d\n", WSAGetLastError() );
+        ret = getsockname( sock, (struct sockaddr *)&addr, &addr_len );
+        ok( !ret, "getsockname error %d\n", WSAGetLastError() );
+
+        port = addr.sin6_port;
+    }
+
+    ret = get_extended_udp_table( family, UDP_TABLE_OWNER_PID, &raw_table );
+    if (ret != ERROR_SUCCESS)
+    {
+        skip( "error %lu getting UDP table\n", ret );
+        goto done;
+    }
+
+    if (family == AF_INET)
+    {
+        MIB_UDPTABLE_OWNER_PID *table = raw_table;
+        BOOL found_it = FALSE;
+        for (i = 0; i < table->dwNumEntries; i++)
+        {
+            MIB_UDPROW_OWNER_PID *row = &table->table[i];
+            if (row->dwLocalPort == port && row->dwLocalAddr == htonl( INADDR_LOOPBACK ))
+            {
+                ok( row->dwOwningPid == GetCurrentProcessId(), "unexpected socket owner %04lx\n", row->dwOwningPid );
+                found_it = TRUE;
+                break;
+            }
+        }
+        ok( found_it, "no table entry for socket\n" );
+    }
+    else
+    {
+        MIB_UDP6TABLE_OWNER_PID *table = raw_table;
+        BOOL found_it = FALSE;
+        for (i = 0; i < table->dwNumEntries; i++)
+        {
+            MIB_UDP6ROW_OWNER_PID *row = &table->table[i];
+            if (row->dwLocalPort == port && IN6_IS_ADDR_LOOPBACK( (IN6_ADDR*)&row->ucLocalAddr ))
+            {
+                ok( row->dwOwningPid == GetCurrentProcessId(), "unexpected socket owner %04lx\n", row->dwOwningPid );
+                found_it = TRUE;
+                break;
+            }
+        }
+        ok( found_it, "no table entry for socket\n" );
+    }
+
+done:
+    closesocket( sock );
+    free( raw_table );
+
+    winetest_pop_context();
 }
 
 static void test_CreateSortedAddressPairs(void)
@@ -2916,6 +3108,8 @@ static void test_compartments(void)
 
 START_TEST(iphlpapi)
 {
+  WSADATA wsa_data;
+  WSAStartup(MAKEWORD(2, 2), &wsa_data);
 
   loadIPHlpApi();
   if (hLibrary) {
@@ -2932,7 +3126,11 @@ START_TEST(iphlpapi)
     testWin2KFunctions();
     test_GetAdaptersAddresses();
     test_GetExtendedTcpTable();
+    test_GetExtendedTcpTable_owner(AF_INET);
+    test_GetExtendedTcpTable_owner(AF_INET6);
     test_GetExtendedUdpTable();
+    test_GetExtendedUdpTable_owner(AF_INET);
+    test_GetExtendedUdpTable_owner(AF_INET6);
     test_AllocateAndGetTcpExTableFromStack();
     test_CreateSortedAddressPairs();
     test_interface_identifier_conversion();
@@ -2951,4 +3149,6 @@ START_TEST(iphlpapi)
     test_compartments();
     freeIPHlpApi();
   }
+
+  WSACleanup();
 }

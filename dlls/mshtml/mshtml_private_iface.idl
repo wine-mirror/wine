@@ -113,7 +113,6 @@ interface IWineMSHTMLMediaQueryList : IDispatch
     HRESULT removeListener([in] VARIANT *listener);
 }
 
-const long DISPID_IWINEHTMLWINDOWPRIVATE_MUTATIONOBSERVER = 55;
 [
     odl,
     oleautomation,
@@ -154,12 +153,71 @@ interface IWineHTMLWindowCompatPrivate : IDispatch
     oleautomation,
     dual,
     hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eea)
+]
+interface IWineHTMLDOMNodePrivate : IDispatch
+{
+    [id(DISPID_IHTMLELEMENT6_IE9_HASATTRIBUTES)]
+    HRESULT hasAttributes([retval, out] VARIANT_BOOL *p);
+    [id(DISPID_IHTMLELEMENT4_NORMALIZE)]
+    HRESULT normalize();
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eeb)
+]
+interface IWineHTMLCharacterData : IDispatch
+{
+    [propput, id(32)]
+    HRESULT data([in] BSTR v);
+    [propget, id(32)]
+    HRESULT data([out, retval] BSTR *p);
+    [propget, id(33)]
+    HRESULT length([out, retval] LONG *p);
+    [id(34)]
+    HRESULT substringData([in] LONG offset, [in] LONG count, [out, retval] BSTR *p);
+    [id(35)]
+    HRESULT appendData([in] BSTR string);
+    [id(36)]
+    HRESULT insertData([in] LONG offset, [in] BSTR string);
+    [id(37)]
+    HRESULT deleteData([in] LONG offset, [in] LONG count);
+    [id(38)]
+    HRESULT replaceData([in] LONG offset, [in] LONG count, [in] BSTR string);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
     uuid(465908fd-f394-489f-b7a3-4c00fbbe9eec)
 ]
 interface IWineHTMLElementPrivate : IDispatch
 {
     [propget, id(1)]
     HRESULT classList([retval, out] IDispatch **class_list);
+}
+
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(465908fd-f394-489f-b7a3-4c00fbbe9eed)
+]
+interface IWineCSSProperties : IDispatch
+{
+    [id(DISPID_IHTMLSTYLE_SETATTRIBUTE)]
+    HRESULT setAttribute([in] BSTR name, [in] VARIANT value, [defaultvalue(1), in] LONG flags);
+    [id(DISPID_IHTMLSTYLE_GETATTRIBUTE)]
+    HRESULT getAttribute([in] BSTR name, [defaultvalue(0), in] LONG flags, [out, retval] VARIANT *p);
+    [id(DISPID_IHTMLSTYLE_REMOVEATTRIBUTE)]
+    HRESULT removeAttribute([in] BSTR name, [defaultvalue(1), in] LONG flags, [out, retval] VARIANT_BOOL *p);
 }
 
 [

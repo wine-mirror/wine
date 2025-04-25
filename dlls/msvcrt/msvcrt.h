@@ -53,6 +53,7 @@ typedef struct _iobuf
 #endif
 
 #include <errno.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stdint.h>
 #define _NO_CRT_STDIO_INLINE
@@ -62,6 +63,7 @@ typedef struct _iobuf
 
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #undef strncpy
 #undef wcsncpy
 
@@ -248,11 +250,11 @@ extern unsigned int MSVCRT__commode;
 /* FIXME: This should be declared in new.h but it's not an extern "C" so
  * it would not be much use anyway. Even for Winelib applications.
  */
-void* __cdecl operator_new(size_t);
 void __cdecl operator_delete(void*);
+void* __cdecl operator_new(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
 int __cdecl _set_new_mode(int mode);
 
-typedef void* (__cdecl *malloc_func_t)(size_t);
+typedef void* (__cdecl __WINE_ALLOC_SIZE(1) *malloc_func_t)(size_t);
 typedef void  (__cdecl *free_func_t)(void*);
 
 /* Setup and teardown multi threaded locks */
@@ -410,5 +412,47 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 #define COOPERATIVE_WAIT_TIMEOUT     ~0
 
 #define INHERIT_THREAD_PRIORITY 0xF000
+
+static inline UINT get_aw_cp(void)
+{
+#if _MSVCR_VER>=140
+    if (___lc_codepage_func() == CP_UTF8) return CP_UTF8;
+#endif
+    return CP_ACP;
+}
+
+static inline int convert_acp_utf8_to_wcs(const char *str, wchar_t *wstr, int len)
+{
+    return MultiByteToWideChar(get_aw_cp(), MB_PRECOMPOSED, str, -1, wstr, len);
+}
+
+static inline int convert_wcs_to_acp_utf8(const wchar_t *wstr, char *str, int len)
+{
+    return WideCharToMultiByte(get_aw_cp(), 0, wstr, -1, str, len, NULL, NULL);
+}
+
+static inline wchar_t* wstrdupa_utf8(const char *str)
+{
+    int len = convert_acp_utf8_to_wcs(str, NULL, 0);
+    wchar_t *wstr;
+
+    if (!len) return NULL;
+    wstr = malloc(len * sizeof(wchar_t));
+    if (!wstr) return NULL;
+    convert_acp_utf8_to_wcs(str, wstr, len);
+    return wstr;
+}
+
+static inline char* astrdupw_utf8(const wchar_t *wstr)
+{
+    int len = convert_wcs_to_acp_utf8(wstr, NULL, 0);
+    char *str;
+
+    if (!len) return NULL;
+    str = malloc(len * sizeof(char));
+    if (!str) return NULL;
+    convert_wcs_to_acp_utf8(wstr, str, len);
+    return str;
+}
 
 #endif /* __WINE_MSVCRT_H */

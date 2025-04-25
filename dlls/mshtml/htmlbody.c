@@ -888,14 +888,13 @@ static const event_target_vtbl_t HTMLBodyElement_event_target_vtbl = {
 static const tid_t HTMLBodyElement_iface_tids[] = {
     IHTMLBodyElement_tid,
     IHTMLBodyElement2_tid,
-    HTMLELEMENT_TIDS,
     IHTMLTextContainer_tid,
     0
 };
 
 dispex_static_data_t HTMLBodyElement_dispex = {
-    .id           = PROT_HTMLBodyElement,
-    .prototype_id = PROT_HTMLElement,
+    .id           = OBJID_HTMLBodyElement,
+    .prototype_id = OBJID_HTMLElement,
     .vtbl         = &HTMLBodyElement_event_target_vtbl.dispex_vtbl,
     .disp_tid     = DispHTMLBody_tid,
     .iface_tids   = HTMLBodyElement_iface_tids,

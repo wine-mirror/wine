@@ -48,6 +48,8 @@ IDispatch *script_parse_event(HTMLInnerWindow*,LPCWSTR);
 HRESULT exec_script(HTMLInnerWindow*,const WCHAR*,const WCHAR*,VARIANT*);
 void update_browser_script_mode(GeckoBrowser*,IUri*);
 BOOL find_global_prop(HTMLInnerWindow*,const WCHAR*,DWORD,ScriptHost**,DISPID*);
+HRESULT global_prop_still_exists(HTMLInnerWindow*,global_prop_t*);
 IDispatch *get_script_disp(ScriptHost*);
+IWineJSDispatch *get_script_jsdisp(ScriptHost*);
 IActiveScriptSite *get_first_script_site(HTMLInnerWindow*);
 void initialize_script_global(HTMLInnerWindow*);

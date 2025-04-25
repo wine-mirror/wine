@@ -123,7 +123,7 @@ static void timer_callback( void *private )
     /* queue an APC */
     if (timer->thread)
     {
-        apc_call_t data;
+        union apc_call data;
 
         assert (timer->callback);
         memset( &data, 0, sizeof(data) );
@@ -237,7 +237,11 @@ DECL_HANDLER(create_timer)
 
     if ((timer = create_timer( root, &name, objattr->attributes, req->manual, sd )))
     {
-        reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
+        if (get_error() == STATUS_OBJECT_NAME_EXISTS)
+            reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
+        else
+            reply->handle = alloc_handle_no_access_check( current->process, timer,
+                                                          req->access, objattr->attributes );
         release_object( timer );
     }
 

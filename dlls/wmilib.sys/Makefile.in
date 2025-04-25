@@ -1,0 +1,8 @@
+MODULE    = wmilib.sys
+IMPORTS   = hal ntoskrnl
+
+EXTRADLLFLAGS = -Wl,--subsystem,native
+
+SOURCES = \
+	main.c \
+	wmilib.sys.spec

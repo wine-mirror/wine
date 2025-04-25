@@ -116,8 +116,7 @@ static void check_service_definition_(const char *file, unsigned line, char cons
 
     ret = QueryServiceConfig2A(svc, SERVICE_CONFIG_DELAYED_AUTO_START_INFO, (LPBYTE)&delayed_auto_info,
                                sizeof(delayed_auto_info), &needed);
-    todo_wine lok(!!ret, "QueryServiceConfig2A(SERVICE_CONFIG_DELAYED_AUTO_START_INFO) failed: %ld\n",
-                  GetLastError());
+    lok(!!ret, "QueryServiceConfig2A(SERVICE_CONFIG_DELAYED_AUTO_START_INFO) failed: %ld\n", GetLastError());
 
 #define check_str(a, b, msg) lok((a) && (b) && (a) != (b) && !strcmp((a), (b)), msg ": %s != %s\n", \
                                  debugstr_a((a)), debugstr_a((b)))
@@ -156,8 +155,6 @@ static void delete_service_(const char *file, unsigned line, const char *name, D
     strcat(command, name);
     bret = run_sc_exe_(file, line, command, &r);
     lok(bret, "run_sc_exe failed\n");
-    if (expected_status != SC_EXIT_SUCCESS && !strcmp(winetest_platform, "wine"))
-        expected_status = 1;
     todo_wine_if(broken) lok(r == expected_status, "got exit code %ld, expected %ld\n", r, expected_status);
 }
 
@@ -214,11 +211,11 @@ static void test_create_service(BOOL elevated)
     /* too few parameters */
 
     run_sc_exe("sc create", &r);
-    todo_wine check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
+    check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
     delete_test_service(FALSE, FALSE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME, &r);
-    todo_wine check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
+    check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
     delete_test_service(FALSE, FALSE);
 
     /* binpath= */
@@ -231,7 +228,7 @@ static void test_create_service(BOOL elevated)
     /* existing service */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" start= auto", &r);
-    todo_wine check_exit_code(SC_EXIT_SERVICE_EXISTS);
+    check_exit_code(SC_EXIT_SERVICE_EXISTS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "", NULL,
                        BROKEN_DISPLAY_NAME);
     delete_test_service(TRUE, FALSE);

@@ -147,6 +147,9 @@ static struct winstation *create_winstation( struct object *root, const struct u
             winstation->input_desktop = NULL;
             winstation->clipboard = NULL;
             winstation->atom_table = NULL;
+            winstation->monitors = NULL;
+            winstation->monitor_count = 0;
+            winstation->monitor_serial = 1;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
             if (!(winstation->desktop_names = create_namespace( 7 )))
@@ -203,6 +206,7 @@ static void winstation_destroy( struct object *obj )
     if (winstation->clipboard) release_object( winstation->clipboard );
     if (winstation->atom_table) release_object( winstation->atom_table );
     free( winstation->desktop_names );
+    free( winstation->monitors );
 }
 
 /* retrieve the process window station, checking the handle access rights */
@@ -285,6 +289,10 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             desktop->winstation = (struct winstation *)grab_object( winstation );
             desktop->top_window = NULL;
             desktop->msg_window = NULL;
+            desktop->shell_window = NULL;
+            desktop->shell_listview = NULL;
+            desktop->progman_window = NULL;
+            desktop->taskman_window = NULL;
             desktop->global_hooks = NULL;
             desktop->close_timeout = NULL;
             desktop->foreground_input = NULL;
@@ -315,6 +323,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                 shared->cursor.clip.right = 0;
                 shared->cursor.clip.bottom = 0;
                 memset( (void *)shared->keystate, 0, sizeof(shared->keystate) );
+                shared->monitor_serial = winstation->monitor_serial;
             }
             SHARED_WRITE_END;
         }
@@ -632,6 +641,42 @@ DECL_HANDLER(close_winstation)
 }
 
 
+/* set the process current window station monitors */
+DECL_HANDLER(set_winstation_monitors)
+{
+    struct winstation *winstation;
+    struct desktop *desktop;
+    unsigned int size = get_req_data_size();
+
+    if (!(winstation = (struct winstation *)get_handle_obj( current->process, current->process->winstation,
+                                                           0, &winstation_ops )))
+        return;
+
+    if (req->increment || winstation->monitor_count != size / sizeof(*winstation->monitors) ||
+        !winstation->monitors || memcmp( winstation->monitors, get_req_data(), size ))
+        winstation->monitor_serial++;
+
+    free( winstation->monitors );
+    winstation->monitors = NULL;
+    winstation->monitor_count = 0;
+
+    LIST_FOR_EACH_ENTRY(desktop, &winstation->desktops, struct desktop, entry)
+    {
+        SHARED_WRITE_BEGIN( desktop->shared, desktop_shm_t )
+        {
+            shared->monitor_serial = winstation->monitor_serial;
+        }
+        SHARED_WRITE_END;
+    }
+
+    if (size && (winstation->monitors = memdup( get_req_data(), size )))
+        winstation->monitor_count = size / sizeof(*winstation->monitors);
+
+    reply->serial = winstation->monitor_serial;
+    release_object( winstation );
+}
+
+
 /* get the process current window station */
 DECL_HANDLER(get_process_winstation)
 {
@@ -879,9 +924,9 @@ DECL_HANDLER(set_user_object_info)
         len = winstation_len + desktop_len + sizeof(WCHAR);
         if ((full_name = mem_alloc( len )))
         {
-            memcpy( full_name, winstation_name, winstation_len );
-            full_name[winstation_len / sizeof(WCHAR)] = '\\';
-            memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, desktop_name, desktop_len );
+            WCHAR *ptr = mem_append( full_name, winstation_name, winstation_len );
+            *ptr++ = '\\';
+            mem_append( ptr, desktop_name, desktop_len );
             set_reply_data_ptr( full_name, min( len, get_reply_max_size() ));
         }
     }
@@ -894,56 +939,68 @@ DECL_HANDLER(set_user_object_info)
 }
 
 
-/* enumerate window stations */
+/* enumerate window stations and desktops */
 DECL_HANDLER(enum_winstation)
 {
-    unsigned int index = 0;
-    struct winstation *winsta;
-    const WCHAR *name;
-    data_size_t len;
-
-    LIST_FOR_EACH_ENTRY( winsta, &winstation_list, struct winstation, entry )
-    {
-        unsigned int access = WINSTA_ENUMERATE;
-        if (req->index > index++) continue;
-        if (!check_object_access( NULL, &winsta->obj, &access )) continue;
-        clear_error();
-        reply->next = index;
-        if ((name = get_object_name( &winsta->obj, &len )))
-            set_reply_data( name, min( len, get_reply_max_size() ));
-        return;
-    }
-    set_error( STATUS_NO_MORE_ENTRIES );
-}
-
-
-/* enumerate desktops */
-DECL_HANDLER(enum_desktop)
-{
+    data_size_t size = get_reply_max_size() / sizeof(WCHAR) * sizeof(WCHAR);
+    struct object_name *name;
     struct winstation *winstation;
-    struct desktop *desktop;
-    unsigned int index = 0;
-    const WCHAR *name;
-    data_size_t len;
+    WCHAR *data = NULL, *ptr;
 
-    if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->winstation,
-                                                            WINSTA_ENUMDESKTOPS, &winstation_ops )))
-        return;
+    if (size && !(data = mem_alloc( size ))) return;
+    ptr = data;
 
-    LIST_FOR_EACH_ENTRY( desktop, &winstation->desktops, struct desktop, entry )
+    if (req->handle)
     {
-        unsigned int access = DESKTOP_ENUMERATE;
-        if (req->index > index++) continue;
-        if (!desktop->obj.name) continue;
-        if (!check_object_access( NULL, &desktop->obj, &access )) continue;
-        if ((name = get_object_name( &desktop->obj, &len )))
-            set_reply_data( name, min( len, get_reply_max_size() ));
+        struct desktop *desktop;
+
+        if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->handle,
+                                                                WINSTA_ENUMDESKTOPS, &winstation_ops )))
+        {
+            free( data );
+            return;
+        }
+
+        LIST_FOR_EACH_ENTRY( desktop, &winstation->desktops, struct desktop, entry )
+        {
+            unsigned int access = DESKTOP_ENUMERATE;
+            if (!(name = desktop->obj.name)) continue;
+            if (!check_object_access( NULL, &desktop->obj, &access )) continue;
+            reply->count++;
+            reply->total += name->len + sizeof(WCHAR);
+            if (reply->total <= size)
+            {
+                ptr = mem_append( ptr, name->name, name->len );
+                *ptr++ = 0;
+            }
+        }
         release_object( winstation );
-        clear_error();
-        reply->next = index;
-        return;
+    }
+    else
+    {
+        LIST_FOR_EACH_ENTRY( winstation, &winstation_list, struct winstation, entry )
+        {
+            unsigned int access = WINSTA_ENUMERATE;
+            if (!(name = winstation->obj.name)) continue;
+            if (!check_object_access( NULL, &winstation->obj, &access )) continue;
+            reply->count++;
+            reply->total += name->len + sizeof(WCHAR);
+            if (reply->total <= size)
+            {
+                ptr = mem_append( ptr, name->name, name->len );
+                *ptr++ = 0;
+            }
+        }
     }
 
-    release_object( winstation );
-    set_error( STATUS_NO_MORE_ENTRIES );
+    if (reply->total <= size)
+    {
+        set_reply_data_ptr( data, reply->total );
+        clear_error();
+    }
+    else
+    {
+        set_reply_data_ptr( data, (ptr - data) * sizeof(WCHAR) );
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    }
 }

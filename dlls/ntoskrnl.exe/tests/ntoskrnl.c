@@ -54,10 +54,7 @@ static HANDLE device;
 
 static struct test_data *test_data;
 
-static BOOL (WINAPI *pRtlDosPathNameToNtPathName_U)(const WCHAR *, UNICODE_STRING *, WCHAR **, CURDIR *);
-static BOOL (WINAPI *pRtlFreeUnicodeString)(UNICODE_STRING *);
 static BOOL (WINAPI *pCancelIoEx)(HANDLE, OVERLAPPED *);
-static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
 static BOOL (WINAPI *pSetFileCompletionNotificationModes)(HANDLE, UCHAR);
 
 static void load_resource(const WCHAR *name, WCHAR *filename)
@@ -1888,10 +1885,7 @@ START_TEST(ntoskrnl)
     HANDLE mapping;
     DWORD written;
 
-    pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlDosPathNameToNtPathName_U");
-    pRtlFreeUnicodeString = (void *)GetProcAddress(GetModuleHandleA("ntdll"), "RtlFreeUnicodeString");
     pCancelIoEx = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "CancelIoEx");
-    pIsWow64Process = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "IsWow64Process");
     pSetFileCompletionNotificationModes = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"),
                                                                  "SetFileCompletionNotificationModes");
 

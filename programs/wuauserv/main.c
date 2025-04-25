@@ -26,7 +26,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wuauserv);
 
-static WCHAR wuauservW[] = {'w','u','a','u','s','e','r','v',0};
+static WCHAR wuauservW[] = L"wuauserv";
 
 static SERVICE_STATUS_HANDLE service_handle;
 static HANDLE stop_event;

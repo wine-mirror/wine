@@ -115,7 +115,7 @@ TW_UINT16 sane_option_probe_resolution(const char *option_name, struct option_de
     return sane_find_option(option_name, TYPE_INT, opt);
 }
 
-static TW_UINT32 sane_categorize_value(const WCHAR* value, const WCHAR* const* filter[], char* categories, int buf_len)
+static void sane_categorize_value(const WCHAR* value, const WCHAR* const* filter[], char* categories, int buf_len)
 {
     TW_UINT32 i, j;
     for(i=0; filter[i]; ++i)
@@ -127,13 +127,12 @@ static TW_UINT32 sane_categorize_value(const WCHAR* value, const WCHAR* const* f
                 if (!wcscmp(value, filter[i][j]))
                 {
                     wcstombs(categories, value, buf_len);
-                    return i;
+                    return;
                 }
             }
         }
         categories += buf_len;
     }
-    return 0;
 }
 
 TW_UINT16 sane_option_probe_str(const char* option_name, const WCHAR* const* filter[], char* opt_values, int buf_len)

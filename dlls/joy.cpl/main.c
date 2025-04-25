@@ -30,6 +30,10 @@
 #include <dinput.h>
 #include <cpl.h>
 #include "ole2.h"
+#include "dbt.h"
+
+#include "initguid.h"
+#include "ddk/hidclass.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -56,6 +60,7 @@ static CRITICAL_SECTION_DEBUG joy_cs_debug =
 static CRITICAL_SECTION joy_cs = { &joy_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list devices = LIST_INIT( devices );
+static HDEVNOTIFY devnotify;
 
 /*********************************************************************
  *  DllMain
@@ -119,6 +124,13 @@ static BOOL get_app_key(HKEY *defkey, HKEY *appkey)
     return *defkey || *appkey;
 }
 
+static BOOL get_advanced_key(HKEY *key)
+{
+    /* Registry key can be found in HKLM\System\CurrentControlSet\Services\WineBus */
+    return !RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\WineBus", 0, NULL, 0,
+                KEY_SET_VALUE | KEY_READ, NULL, key, NULL);
+}
+
 /******************************************************************************
  * set_config_key [internal]
  * Writes a string value to a registry key, deletes the key if value == NULL
@@ -167,6 +179,25 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
     if (appkey) RegCloseKey(appkey);
 }
 
+static void set_advanced_option( const WCHAR *option, DWORD value )
+{
+    HKEY hkey;
+    if (!get_advanced_key( &hkey )) return;
+    RegSetValueExW( hkey, option, 0, REG_DWORD, (BYTE *)&value, sizeof(value) );
+    RegCloseKey( hkey );
+}
+
+static DWORD get_advanced_option( const WCHAR *option, DWORD default_value )
+{
+    DWORD value, size;
+    HKEY hkey;
+    if (!get_advanced_key( &hkey )) return default_value;
+    if (RegGetValueW( hkey, NULL, option, RRF_RT_REG_DWORD, NULL, (BYTE *)&value, &size ))
+        value = default_value;
+    RegCloseKey( hkey );
+    return value;
+}
+
 static void refresh_joystick_list( HWND hwnd )
 {
     IDirectInput8W *dinput;
@@ -182,9 +213,9 @@ static void refresh_joystick_list( HWND hwnd )
     IDirectInput8_EnumDevices( dinput, DI8DEVCLASS_GAMECTRL, enum_devices, dinput, DIEDFL_ATTACHEDONLY );
     IDirectInput8_Release( dinput );
 
-    SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_RESETCONTENT, 0, 0);
-    SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
-    SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_RESETCONTENT, 0, 0);
+    SendDlgItemMessageW(hwnd, IDC_DI_ENABLED_LIST, LB_RESETCONTENT, 0, 0);
+    SendDlgItemMessageW(hwnd, IDC_XI_ENABLED_LIST, LB_RESETCONTENT, 0, 0);
+    SendDlgItemMessageW(hwnd, IDC_DISABLED_LIST, LB_RESETCONTENT, 0, 0);
 
     LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
     {
@@ -202,8 +233,8 @@ static void refresh_joystick_list( HWND hwnd )
         if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
         if (FAILED(IDirectInputDevice8_GetProperty( entry->device, DIPROP_GUIDANDPATH, &prop.diph ))) continue;
 
-        if (wcsstr( prop.wszPath, L"&ig_" )) SendDlgItemMessageW( hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
-        else SendDlgItemMessageW( hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+        if (wcsstr( prop.wszPath, L"&ig_" )) SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+        else SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 
     /* Search for disabled joysticks */
@@ -218,7 +249,7 @@ static void refresh_joystick_list( HWND hwnd )
         status = RegEnumValueW(hkey, i, buf_name, &name_len, NULL, NULL, (BYTE*) buf_data, &data_len);
 
         if (status == ERROR_SUCCESS && !wcscmp(L"disabled", buf_data))
-            SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_ADDSTRING, 0, (LPARAM) buf_name);
+            SendDlgItemMessageW(hwnd, IDC_DISABLED_LIST, LB_ADDSTRING, 0, (LPARAM) buf_name);
     }
 
     if (hkey) RegCloseKey(hkey);
@@ -247,112 +278,131 @@ static void override_joystick(WCHAR *joy_name, BOOL override)
 static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     WCHAR instance_name[MAX_PATH] = {0};
+    DEV_BROADCAST_DEVICEINTERFACE_W filter =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_W),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+        .dbcc_classguid = GUID_DEVINTERFACE_HID,
+    };
     int sel;
 
     TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
     switch (msg)
     {
-        case WM_INITDIALOG:
+    case WM_INITDIALOG:
+    {
+        BOOL enable_sdl, disable_hidraw;
+
+        refresh_joystick_list( hwnd );
+
+        EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_ENABLE ), FALSE );
+        EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), FALSE );
+        EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), FALSE );
+        EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), FALSE );
+
+        enable_sdl = get_advanced_option( L"Enable SDL", TRUE );
+        SendMessageW( GetDlgItem( hwnd, IDC_ENABLE_SDL ), BM_SETCHECK, enable_sdl, 0 );
+        disable_hidraw = get_advanced_option( L"DisableHidraw", FALSE );
+        SendMessageW( GetDlgItem( hwnd, IDC_DISABLE_HIDRAW ), BM_SETCHECK, disable_hidraw, 0 );
+
+        devnotify = RegisterDeviceNotificationW( hwnd, &filter, DEVICE_NOTIFY_WINDOW_HANDLE );
+        return TRUE;
+    }
+
+    case WM_DEVICECHANGE:
+        refresh_joystick_list( hwnd );
+        return TRUE;
+
+    case WM_COMMAND:
+        switch (LOWORD(wparam))
         {
-            refresh_joystick_list( hwnd );
+        case IDC_BUTTON_DI_DISABLE:
+            if ((sel = SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_GETCURSEL, 0, 0 )) >= 0)
+                SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_GETTEXT, sel, (LPARAM)instance_name );
+            if ((sel = SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_GETCURSEL, 0, 0 )) >= 0)
+                SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_GETTEXT, sel, (LPARAM)instance_name );
 
-            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
-            EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
+            if (instance_name[0])
+            {
+                enable_joystick( instance_name, FALSE );
+                refresh_joystick_list( hwnd );
+            }
+            break;
 
-            return TRUE;
+        case IDC_BUTTON_ENABLE:
+            if ((sel = SendDlgItemMessageW( hwnd, IDC_DISABLED_LIST, LB_GETCURSEL, 0, 0 )) >= 0)
+                SendDlgItemMessageW( hwnd, IDC_DISABLED_LIST, LB_GETTEXT, sel, (LPARAM)instance_name );
+
+            if (instance_name[0])
+            {
+                enable_joystick( instance_name, TRUE );
+                refresh_joystick_list( hwnd );
+            }
+            break;
+
+        case IDC_BUTTON_DI_RESET:
+            if ((sel = SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_GETCURSEL, 0, 0 )) >= 0)
+            {
+                SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_GETTEXT, sel, (LPARAM)instance_name );
+                override_joystick( instance_name, FALSE );
+                refresh_joystick_list( hwnd );
+            }
+            break;
+
+        case IDC_BUTTON_XI_OVERRIDE:
+            if ((sel = SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_GETCURSEL, 0, 0 )) >= 0)
+            {
+                SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_GETTEXT, sel, (LPARAM)instance_name );
+                override_joystick( instance_name, TRUE );
+                refresh_joystick_list( hwnd );
+            }
+            break;
+
+        case IDC_DI_ENABLED_LIST:
+            SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_SETCURSEL, -1, 0 );
+            SendDlgItemMessageW( hwnd, IDC_DISABLED_LIST, LB_SETCURSEL, -1, 0 );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_ENABLE ), FALSE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), TRUE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), TRUE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), FALSE );
+            break;
+
+        case IDC_XI_ENABLED_LIST:
+            SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_SETCURSEL, -1, 0 );
+            SendDlgItemMessageW( hwnd, IDC_DISABLED_LIST, LB_SETCURSEL, -1, 0 );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_ENABLE ), FALSE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), TRUE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), FALSE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), TRUE );
+            break;
+
+        case IDC_DISABLED_LIST:
+            SendDlgItemMessageW( hwnd, IDC_DI_ENABLED_LIST, LB_SETCURSEL, -1, 0 );
+            SendDlgItemMessageW( hwnd, IDC_XI_ENABLED_LIST, LB_SETCURSEL, -1, 0 );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_ENABLE ), TRUE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_DISABLE ), FALSE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_DI_RESET ), FALSE );
+            EnableWindow( GetDlgItem( hwnd, IDC_BUTTON_XI_OVERRIDE ), FALSE );
+            break;
+
+        case IDC_ENABLE_SDL:
+            sel = SendMessageW( GetDlgItem( hwnd, IDC_ENABLE_SDL ), BM_GETCHECK, 0, 0 );
+            set_advanced_option( L"Enable SDL", sel );
+            break;
+
+        case IDC_DISABLE_HIDRAW:
+            sel = SendMessageW( GetDlgItem( hwnd, IDC_DISABLE_HIDRAW ), BM_GETCHECK, 0, 0 );
+            set_advanced_option( L"DisableHidraw", sel );
+            break;
         }
 
-        case WM_COMMAND:
+        return TRUE;
 
-            switch (LOWORD(wparam))
-            {
-                case IDC_BUTTONDISABLE:
-                {
-                    if ((sel = SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETCURSEL, 0, 0)) >= 0)
-                        SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
-                    if ((sel = SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETCURSEL, 0, 0)) >= 0)
-                        SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
+    case WM_NOTIFY:
+        return TRUE;
 
-                    if (instance_name[0])
-                    {
-                        enable_joystick(instance_name, FALSE);
-                        refresh_joystick_list( hwnd );
-                    }
-                }
-                break;
-
-                case IDC_BUTTONENABLE:
-                {
-                    if ((sel = SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_GETCURSEL, 0, 0)) >= 0)
-                        SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
-
-                    if (instance_name[0])
-                    {
-                        enable_joystick(instance_name, TRUE);
-                        refresh_joystick_list( hwnd );
-                    }
-                }
-                break;
-
-                case IDC_BUTTONRESET:
-                {
-                    if ((sel = SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETCURSEL, 0, 0)) >= 0)
-                    {
-                        SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
-                        override_joystick(instance_name, FALSE);
-                        refresh_joystick_list( hwnd );
-                    }
-                }
-                break;
-
-                case IDC_BUTTONOVERRIDE:
-                {
-                    if ((sel = SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETCURSEL, 0, 0)) >= 0)
-                    {
-                        SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
-                        override_joystick(instance_name, TRUE);
-                        refresh_joystick_list( hwnd );
-                    }
-                }
-                break;
-
-                case IDC_JOYSTICKLIST:
-                    SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_SETCURSEL, -1, 0);
-                    SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_SETCURSEL, -1, 0);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), TRUE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), TRUE);
-                break;
-
-                case IDC_XINPUTLIST:
-                    SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_SETCURSEL, -1, 0);
-                    SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_SETCURSEL, -1, 0);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), TRUE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), TRUE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
-                break;
-
-                case IDC_DISABLEDLIST:
-                    SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_SETCURSEL, -1, 0);
-                    SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_SETCURSEL, -1, 0);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), TRUE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONOVERRIDE), FALSE);
-                    EnableWindow(GetDlgItem(hwnd, IDC_BUTTONRESET), FALSE);
-                break;
-            }
-
-            return TRUE;
-
-        case WM_NOTIFY:
-            return TRUE;
-
-        default:
-            break;
+    default:
+        break;
     }
     return FALSE;
 }

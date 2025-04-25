@@ -47,6 +47,7 @@
 #include <AudioToolbox/AudioFormat.h>
 #include <AudioToolbox/AudioConverter.h>
 #include <AudioUnit/AudioUnit.h>
+#include <os/lock.h>
 
 #undef LoadResource
 #undef CompareString
@@ -71,15 +72,6 @@
 
 #if !defined(MAC_OS_VERSION_12_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_12_0
 #define kAudioObjectPropertyElementMain kAudioObjectPropertyElementMaster
-#endif
-
-#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_12
-#include <os/lock.h>
-#else
-#include <libkern/OSAtomic.h>
-typedef OSSpinLock                  os_unfair_lock;
-#define os_unfair_lock_lock(lock)   OSSpinLockLock(lock)
-#define os_unfair_lock_unlock(lock) OSSpinLockUnlock(lock)
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
@@ -1849,8 +1841,10 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     unix_set_volumes,
     unix_set_event_handle,
     unix_not_implemented,
+    unix_not_implemented,
     unix_is_started,
     unix_get_prop_value,
+    unix_not_implemented,
     unix_midi_init,
     unix_midi_release,
     unix_midi_out_message,
@@ -2305,8 +2299,10 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     unix_wow64_set_volumes,
     unix_wow64_set_event_handle,
     unix_not_implemented,
+    unix_not_implemented,
     unix_is_started,
     unix_wow64_get_prop_value,
+    unix_not_implemented,
     unix_wow64_midi_init,
     unix_midi_release,
     unix_wow64_midi_out_message,

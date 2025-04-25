@@ -164,6 +164,7 @@ static void test_AnalyticsVersionInfo(void)
     WindowsDeleteString( str );
     WindowsDeleteString( expect_str );
 
+    size = sizeof(revision);
     if (RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"UBR",
                       RRF_RT_REG_DWORD, NULL, &revision, &size ))
         revision = 0;

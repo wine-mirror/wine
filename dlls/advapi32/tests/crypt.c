@@ -478,6 +478,44 @@ static void test_incorrect_api_usage(void)
     ok (!result && GetLastError() == ERROR_INVALID_PARAMETER, "%ld\n", GetLastError());
 }
 
+static void test_garbage_data(void)
+{
+    struct KeyBlob
+    {
+        BLOBHEADER header;
+        DWORD key_size;
+        BYTE key_data[2048];
+    } key_blob;
+
+    BOOL result;
+    HCRYPTPROV hProv;
+    HCRYPTKEY hkey = 0;
+
+    /* When verifying logins in "Marvel Heroes", the application passes garbage data
+     * in a reserved field that should always be 0 (according to documentation).
+     *
+     * This doesn't lead to any error on Windows.
+     */
+
+    result = CryptAcquireContextA(&hProv, 0, 0, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);
+    ok (result, "%08lx\n", GetLastError());
+
+    key_blob.header.bType = PLAINTEXTKEYBLOB;
+    key_blob.header.bVersion = CUR_BLOB_VERSION;
+    key_blob.header.reserved = 29806; /* Not allowed, but accepted? */
+    key_blob.header.aiKeyAlg = CALG_AES_128;
+    key_blob.key_size = 16;
+
+    result = CryptImportKey(hProv, (BYTE *)&key_blob, sizeof(BLOBHEADER) + sizeof(DWORD) + key_blob.key_size, 0, 0, &hkey);
+    ok(result, "CryptImportKey failed: %08lx\n", GetLastError());
+
+    CryptDestroyKey(hkey);
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "got %lu\n", GetLastError());
+
+}
+
 static const BYTE privKey[] = {
  0x07, 0x02, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x52, 0x53, 0x41, 0x32, 0x00,
  0x02, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x79, 0x10, 0x1c, 0xd0, 0x6b, 0x10,
@@ -1293,6 +1331,7 @@ START_TEST(crypt)
     test_CryptReleaseContext();
     test_acquire_context();
     test_incorrect_api_usage();
+    test_garbage_data();
     test_verify_sig();
     test_machine_guid();
     test_container_sd();

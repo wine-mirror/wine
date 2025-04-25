@@ -2570,6 +2570,131 @@ static void test_incombinedregion(void)
     }
 }
 
+static void test_rounding(void)
+{
+    GpRegion *region;
+    GpMatrix *matrix;
+    GpBitmap *bitmap;
+    GpGraphics *graphics;
+    GpBrush *brush;
+    GpStatus status;
+    UINT count=80085;
+    INT icount;
+    GpRectF scans[2];
+    HRGN hrgn;
+    int i, x, y, min_x, min_y, max_x, max_y;
+    ARGB color;
+    static const struct {
+        GpRectF region_rect;
+        GpRectF scan_rect;
+        RECT hrgn_rect;
+        GpRect fill_rect;
+    } td[] = {
+        {
+            { 1.1, 2.1, 3.85, 4.85 },
+            { 2, 3, 3, 4 },
+            { 2, 3, 5, 7 },
+            { 2, 3, 3, 4 }
+        },
+        {
+            { 1, 1, 1.5, 1.5 },
+            { 1, 1, 2, 2 },
+            { 1, 1, 3, 3 },
+            { 1, 1, 2, 2 }
+        },
+        {
+            { 1.01, 1.01, 1.5, 1.5 },
+            { 1, 1, 2, 2 },
+            { 1, 1, 3, 3 },
+            { 1, 1, 2, 2 }
+        },
+        {
+            { 1.5, 1.5, 1.5, 1.5 },
+            { 2, 2, 1, 1 },
+            { 2, 2, 3, 3 },
+            { 2, 2, 1, 1 }
+        }
+    };
+
+    status = GdipCreateRegion(&region);
+    expect(Ok, status);
+
+    status = GdipCreateMatrix(&matrix);
+    expect(Ok, status);
+
+    status = GdipCreateBitmapFromScan0(10, 10, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, status);
+
+    status = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, status);
+
+    status = GdipCreateSolidFill(0xffffffff, (GpSolidFill**)&brush);
+    expect(Ok, status);
+
+    for (i = 0; i < ARRAY_SIZE(td); i++)
+    {
+        winetest_push_context("%i", i);
+
+        status = GdipCombineRegionRect(region, &td[i].region_rect, CombineModeReplace);
+        expect(Ok, status);
+
+        status = GdipGetRegionScansCount(region, &count, matrix);
+        expect(Ok, status);
+        expect(1, count);
+
+        status = GdipGetRegionScans(region, scans, &icount, matrix);
+        expect(Ok, status);
+        expect(1, icount);
+        expectf(td[i].scan_rect.X, scans[0].X);
+        expectf(td[i].scan_rect.Y, scans[0].Y);
+        expectf(td[i].scan_rect.Width, scans[0].Width);
+        expectf(td[i].scan_rect.Height, scans[0].Height);
+
+        status = GdipGetRegionHRgn(region, NULL, &hrgn);
+        expect(Ok, status);
+
+        verify_region(hrgn, &td[i].hrgn_rect);
+
+        DeleteObject(hrgn);
+
+        status = GdipGraphicsClear(graphics, 0);
+        expect(Ok, status);
+
+        status = GdipFillRegion(graphics, brush, region);
+        expect(Ok, status);
+
+        min_x = min_y = 10;
+        max_x = max_y = -1;
+
+        for (x = 0; x < 10; x++)
+            for (y = 0; y < 10; y++)
+            {
+                status = GdipBitmapGetPixel(bitmap, x, y, &color);
+                expect(Ok, status);
+
+                if (color) {
+                    min_x = min(min_x, x);
+                    min_y = min(min_y, y);
+                    max_x = max(min_x, x);
+                    max_y = max(min_y, y);
+                }
+            }
+
+        expect(td[i].fill_rect.X, min_x);
+        expect(td[i].fill_rect.Y, min_y);
+        expect(td[i].fill_rect.Width, max_x - min_x + 1);
+        expect(td[i].fill_rect.Height, max_y - min_y + 1);
+
+        winetest_pop_context();
+    }
+
+    GdipDeleteBrush(brush);
+    GdipDeleteGraphics(graphics);
+    GdipDisposeImage((GpImage*)bitmap);
+    GdipDeleteRegion(region);
+    GdipDeleteMatrix(matrix);
+}
+
 START_TEST(region)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -2605,6 +2730,7 @@ START_TEST(region)
     test_excludeinfinite();
     test_GdipCreateRegionRgnData();
     test_incombinedregion();
+    test_rounding();
 
     GdiplusShutdown(gdiplusToken);
 }

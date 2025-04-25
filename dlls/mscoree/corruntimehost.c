@@ -1816,7 +1816,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
 
             lstrcpyW(filename, codebase + offset);
 
-            file = CreateFileW(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+            file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
         }
 
         if (file != INVALID_HANDLE_VALUE)

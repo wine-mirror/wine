@@ -127,7 +127,7 @@ static void concat_W( WCHAR *buffer, const WCHAR *src1, const WCHAR *src2, const
         if (src2) while (*src2 == '\\') src2++;
     }
 
-    if (src2)
+    if (src2 && *src2)
     {
         lstrcpyW( buffer, src2 );
         buffer += lstrlenW(buffer );

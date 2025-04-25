@@ -3506,6 +3506,8 @@ static void checkChainStatus(PCCERT_CHAIN_CONTEXT chain,
     }
 }
 
+/* Tuesday, May 1, 2007 */
+static SYSTEMTIME may2007 = { 2007, 5, 2, 1, 0, 0, 0, 0 };
 /* Wednesday, Oct 1, 2007 */
 static SYSTEMTIME oct2007 = { 2007, 10, 1, 1, 0, 0, 0, 0 };
 /* Wednesday, Oct 28, 2009 */
@@ -4566,12 +4568,9 @@ static void testGetCertChain(void)
     for(i=0; i < simple_chain->cElement; i++) {
         chain_elem = simple_chain->rgpElement[i];
         ok(chain_elem->cbSize == sizeof(*chain_elem), "chain_elem->cbSize = %lu\n", chain_elem->cbSize);
-        if (!i)
+        if (!i || i == 1)
             ok(chain_elem->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER,
                "chain_elem->TrustStatus.dwErrorStatus = %lx\n", chain_elem->TrustStatus.dwErrorStatus);
-        else if (i == 1)
-            todo_wine ok(!chain_elem->TrustStatus.dwErrorStatus, "chain_elem->TrustStatus.dwErrorStatus = %lx\n",
-                         chain_elem->TrustStatus.dwErrorStatus);
         else
             ok(!chain_elem->TrustStatus.dwErrorStatus, "chain_elem->TrustStatus.dwErrorStatus = %lx\n",
                chain_elem->TrustStatus.dwErrorStatus);
@@ -5379,10 +5378,205 @@ static void testVerifyCertChainPolicy(void)
     check_msroot_policy();
 }
 
+static void test_VerifyCertChainPolicy_flags(void)
+{
+    static const struct
+    {
+        DWORD trust_status;
+        unsigned int index;
+        DWORD policy_flags;
+        DWORD ssl_policy_flags;
+        DWORD expected_error;
+    }
+    tests[] =
+    {
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 0, 0, 0, CRYPT_E_REVOCATION_OFFLINE },
+        /* CERT_TRUST_REVOCATION_STATUS_UNKNOWN is only checked on the end certificate. */
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 1, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 2, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 0, CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG, 0, 0 },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 0, CERT_CHAIN_POLICY_IGNORE_CTL_SIGNER_REV_UNKNOWN_FLAG, 0, CRYPT_E_REVOCATION_OFFLINE },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 0, CERT_CHAIN_POLICY_IGNORE_CA_REV_UNKNOWN_FLAG, 0, CRYPT_E_REVOCATION_OFFLINE },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN | CERT_TRUST_IS_OFFLINE_REVOCATION, 0, CERT_CHAIN_POLICY_IGNORE_ROOT_REV_UNKNOWN_FLAG, 0, CRYPT_E_REVOCATION_OFFLINE },
+        /* CERT_TRUST_IS_OFFLINE_REVOCATION is ignored. */
+        { CERT_TRUST_IS_OFFLINE_REVOCATION, 0, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_IS_OFFLINE_REVOCATION, 1, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_IS_OFFLINE_REVOCATION, 2, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN, 0, 0, 0, CRYPT_E_REVOCATION_OFFLINE },
+        /* CERT_TRUST_REVOCATION_STATUS_UNKNOWN is only checked on the end certificate. */
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN, 1, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN, 2, 0, 0, ERROR_SUCCESS },
+        { CERT_TRUST_REVOCATION_STATUS_UNKNOWN, 0, CERT_CHAIN_POLICY_IGNORE_END_REV_UNKNOWN_FLAG, 0, 0 },
+
+        { CERT_TRUST_IS_REVOKED, 0, 0, 0, CRYPT_E_REVOKED },
+        { CERT_TRUST_IS_REVOKED, 1, 0, 0, CRYPT_E_REVOKED },
+        { CERT_TRUST_IS_REVOKED, 2, 0, 0, CRYPT_E_REVOKED },
+
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, 0, 0, CERT_E_WRONG_USAGE },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 1, 0, 0, CERT_E_WRONG_USAGE },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 2, 0, 0, CERT_E_WRONG_USAGE },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, 0, SECURITY_FLAG_IGNORE_WRONG_USAGE, ERROR_SUCCESS },
+        { CERT_TRUST_IS_NOT_VALID_FOR_USAGE, 0, CERT_CHAIN_POLICY_IGNORE_WRONG_USAGE_FLAG, 0, ERROR_SUCCESS },
+
+        { CERT_TRUST_IS_SELF_SIGNED, 0, 0, 0, TRUST_E_CERT_SIGNATURE },
+        { CERT_TRUST_IS_SELF_SIGNED, 1, 0, 0, TRUST_E_CERT_SIGNATURE },
+        { CERT_TRUST_IS_SELF_SIGNED, 2, 0, 0, TRUST_E_CERT_SIGNATURE },
+        { CERT_TRUST_IS_SELF_SIGNED, 2, 0, SECURITY_FLAG_IGNORE_UNKNOWN_CA, TRUST_E_CERT_SIGNATURE },
+        { CERT_TRUST_IS_SELF_SIGNED, 2, CERT_CHAIN_POLICY_ALLOW_UNKNOWN_CA_FLAG, 0, TRUST_E_CERT_SIGNATURE },
+    };
+
+    BOOL ret;
+    PCCERT_CONTEXT cert;
+    CERT_CHAIN_PARA para = { 0 };
+    PCCERT_CHAIN_CONTEXT chain;
+    FILETIME fileTime;
+    HCERTSTORE store;
+    static char one_two_three[] = "1.2.3";
+    LPSTR oids[1];
+    SSL_EXTRA_CERT_CHAIN_POLICY_PARA ssl_para;
+    CERT_CHAIN_POLICY_PARA policy_para;
+    CERT_CHAIN_POLICY_STATUS status;
+    CERT_REVOCATION_INFO rev_info[3];
+    unsigned int i;
+
+    store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, geotrust_global_ca,
+                                     sizeof(geotrust_global_ca), CERT_STORE_ADD_ALWAYS, NULL);
+    CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, google_internet_authority,
+                                     sizeof(google_internet_authority), CERT_STORE_ADD_ALWAYS, NULL);
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, google_com, sizeof(google_com));
+    SystemTimeToFileTime(&oct2009, &fileTime);
+    memset(&para, 0, sizeof(para));
+    para.cbSize = sizeof(para);
+    oids[0] = one_two_three;
+    para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
+    para.RequestedUsage.Usage.rgpszUsageIdentifier = oids;
+    para.RequestedUsage.Usage.cUsageIdentifier = 1;
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(chain->cChain == 1, "got %lu.\n", chain->cChain);
+    ok(chain->rgpChain[0]->cElement == 3, "got %lu.\n", chain->rgpChain[0]->cElement);
+
+    memset(&policy_para, 0, sizeof(policy_para));
+    policy_para.cbSize = sizeof(policy_para);
+    memset(&ssl_para, 0, sizeof(ssl_para));
+    ssl_para.cbSize = sizeof(ssl_para);
+    ssl_para.dwAuthType = AUTHTYPE_SERVER;
+    ssl_para.pwszServerName = (WCHAR *)L"www.google.com";
+    policy_para.pvExtraPolicyPara = &ssl_para;
+    status.cbSize = sizeof(status);
+
+    for (i = 0; i < chain->rgpChain[0]->cElement; ++i)
+    {
+        chain->rgpChain[0]->rgpElement[i]->TrustStatus.dwErrorStatus = 0;
+        memset(&rev_info[i], 0, sizeof(rev_info[i]));
+        rev_info[i].cbSize = sizeof(rev_info);
+        chain->rgpChain[0]->rgpElement[i]->pRevocationInfo = &rev_info[i];
+    }
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        *(DWORD *)&chain->TrustStatus.dwErrorStatus = tests[i].trust_status;
+        chain->rgpChain[0]->TrustStatus.dwErrorStatus = chain->TrustStatus.dwErrorStatus;
+        chain->rgpChain[0]->rgpElement[tests[i].index]->TrustStatus.dwErrorStatus = chain->TrustStatus.dwErrorStatus;
+        policy_para.dwFlags = tests[i].policy_flags;
+        ssl_para.cbSize = sizeof(ssl_para);
+        ssl_para.fdwChecks = tests[i].ssl_policy_flags;
+        policy_para.pvExtraPolicyPara = &ssl_para;
+        ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_SSL, chain, &policy_para, &status);
+        ok(ret, "got error %#lx.\n", GetLastError());
+        ok(status.dwError == tests[i].expected_error, "got %#lx, expected %#lx.\n", status.dwError, tests[i].expected_error);
+        if (status.dwError)
+        {
+            ok(!status.lChainIndex, "got %ld.\n", status.lChainIndex);
+            ok(status.lElementIndex == tests[i].index, "got %ld.\n", status.lElementIndex);
+        }
+        else
+        {
+            ok(status.lChainIndex == -1, "got %ld.\n", status.lChainIndex);
+            ok(status.lElementIndex == -1, "got %ld.\n", status.lElementIndex);
+        }
+        chain->rgpChain[0]->rgpElement[tests[i].index]->TrustStatus.dwErrorStatus = 0;
+        winetest_pop_context();
+    }
+    for (i = 0; i < chain->rgpChain[0]->cElement; ++i)
+        chain->rgpChain[0]->rgpElement[i]->pRevocationInfo = NULL;
+
+    CertFreeCertificateChain(chain);
+    CertFreeCertificateContext(cert);
+    CertCloseStore(store, 0);
+}
+
+static void test_chain_engine_cache_update(void)
+{
+    CERT_CHAIN_PARA para = { 0 };
+    PCCERT_CHAIN_CONTEXT chain;
+    PCCERT_CONTEXT cert, cert2;
+    FILETIME filetime;
+    HCERTSTORE store, store2;
+    BOOL ret;
+
+    cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert, sizeof(selfSignedCert));
+    ok(!!cert, "got NULL.\n");
+
+    SystemTimeToFileTime(&may2007, &filetime);
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_IS_UNTRUSTED_ROOT, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    store2 = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store2, "got NULL.\n");
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store, "got NULL.\n");
+    ret = CertAddCertificateContextToStore(store, cert, CERT_STORE_ADD_ALWAYS, NULL);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    cert2 = CertFindCertificateInStore(store2, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL);
+    ok(!cert2, "got NULL.\n");
+    CertFreeCertificateContext(cert2);
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    todo_wine ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    ret = CertCloseStore(store2, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    ret = CertGetCertificateChain(HCCE_CURRENT_USER, cert, &filetime, NULL, &para, CERT_CHAIN_REVOCATION_CHECK_CACHE_ONLY, NULL, &chain);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ok(!chain->TrustStatus.dwErrorStatus, "got %#lx.\n", chain->TrustStatus.dwErrorStatus);
+    CertFreeCertificateChain(chain);
+
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM_W, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"Root");
+    ok(!!store, "got NULL.\n");
+    cert2 = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0, CERT_FIND_EXISTING, cert, NULL);
+    ok(!!cert2, "got NULL.\n");
+    ret = CertDeleteCertificateFromStore(cert2);
+    ok(ret, "got error %#lx.\n", GetLastError());
+    ret = CertCloseStore(store, CERT_CLOSE_STORE_CHECK_FLAG);
+    ok(ret, "got error %#lx.\n", GetLastError());
+
+    CertFreeCertificateContext(cert);
+}
+
 START_TEST(chain)
 {
     testCreateCertChainEngine();
     testVerifyCertChainPolicy();
     testGetCertChain();
     test_CERT_CHAIN_PARA_cbSize();
+    test_VerifyCertChainPolicy_flags();
+    if (winetest_interactive)
+    {
+        /* This test will pop up user confirmation dialogs on Windows. */
+        test_chain_engine_cache_update();
+    }
 }

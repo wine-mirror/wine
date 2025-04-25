@@ -37,7 +37,7 @@ bool ios_base_Sync = FALSE;
 
 typedef struct {
     streamoff off;
-    __int64 DECLSPEC_ALIGN(8) pos;
+    INT64 pos;
     int state;
 } fpos_int;
 
@@ -279,7 +279,7 @@ typedef struct {
     char *seekhigh;
     streamsize minsize;
     int strmode;
-    void* (__cdecl *palloc)(size_t);
+    void* (__cdecl __WINE_ALLOC_SIZE(1) *palloc)(size_t);
     void (__cdecl *pfree)(void*);
 } strstreambuf;
 

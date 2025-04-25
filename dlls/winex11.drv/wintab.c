@@ -236,7 +236,7 @@ typedef struct tagWTI_DEVICES_INFO
 #define CSR_TYPE_OTHER      0x000
 
 typedef struct tagWTPACKET {
-        HCTX pkContext;
+        UINT pkContext;
         UINT pkStatus;
         LONG pkTime;
         WTPKT pkChanged;

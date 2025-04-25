@@ -24,8 +24,10 @@
 
 #include "ntuser.h"
 #include "shellapi.h"
+#include "shlobj.h"
 #include "wine/list.h"
 #include "wine/vulkan.h"
+#include "wine/vulkan_driver.h"
 
 
 #define WM_POPUPSYSTEMMENU  0x0313
@@ -107,7 +109,7 @@ struct user_thread_info
     struct ntuser_thread_info     client_info;            /* Data shared with client */
     HANDLE                        server_queue;           /* Handle to server-side queue */
     DWORD                         last_getmsg_time;       /* Get/PeekMessage last request time */
-    DWORD                         last_driver_time;       /* Get/PeekMessage driver event time */
+    LONGLONG                      last_driver_time;       /* Get/PeekMessage driver event time */
     WORD                          hook_call_depth;        /* Number of recursively called hook procs */
     WORD                          hook_unicode;           /* Is current hook unicode? */
     HHOOK                         hook;                   /* Current hook */
@@ -133,28 +135,6 @@ struct hook_extra_info
 {
     HHOOK handle;
     LPARAM lparam;
-};
-
-enum builtin_winprocs
-{
-    /* dual A/W procs */
-    WINPROC_BUTTON = 0,
-    WINPROC_COMBO,
-    WINPROC_DEFWND,
-    WINPROC_DIALOG,
-    WINPROC_EDIT,
-    WINPROC_LISTBOX,
-    WINPROC_MDICLIENT,
-    WINPROC_SCROLLBAR,
-    WINPROC_STATIC,
-    WINPROC_IME,
-    /* unicode-only procs */
-    WINPROC_DESKTOP,
-    WINPROC_ICONTITLE,
-    WINPROC_MENU,
-    WINPROC_MESSAGE,
-    NB_BUILTIN_WINPROCS,
-    NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
 };
 
 /* FIXME: make it private to scroll.c */
@@ -216,12 +196,15 @@ extern void register_desktop_class(void);
 extern LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPARAM lparam,
                                 struct ime_driver_call_params *params );
 
+/* clipboard.c */
+extern LRESULT drag_drop_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
+
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon );
 
 /* dce.c */
 extern void free_dce( struct dce *dce, HWND hwnd );
-extern void invalidate_dce( WND *win, const RECT *extra_rect );
+extern void invalidate_dce( WND *win, const RECT *old_rect );
 
 /* message.c */
 struct peek_message_filter
@@ -240,8 +223,8 @@ extern int peek_message( MSG *msg, const struct peek_message_filter *filter );
 extern LRESULT system_tray_call( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, void *data );
 
 /* vulkan.c */
-extern void *(*p_vkGetDeviceProcAddr)(VkDevice, const char *);
-extern void *(*p_vkGetInstanceProcAddr)(VkInstance, const char *);
+extern PFN_vkGetDeviceProcAddr p_vkGetDeviceProcAddr;
+extern PFN_vkGetInstanceProcAddr p_vkGetInstanceProcAddr;
 
 extern BOOL vulkan_init(void);
 extern void vulkan_detach_surfaces( struct list *surfaces );

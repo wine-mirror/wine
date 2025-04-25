@@ -131,50 +131,6 @@ DWORD WINAPI CM_Get_Device_ID_ExW(
 }
 
 /***********************************************************************
- *             CM_Get_Device_ID_ListA  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_ListA(
-    PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
-{
-    FIXME("%s %p %ld 0x%08lx: stub\n", debugstr_a(pszFilter), Buffer, BufferLen, ulFlags);
-
-    if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
- *             CM_Get_Device_ID_ListW  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_ListW(
-    PCWSTR pszFilter, PWCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
-{
-    FIXME("%s %p %ld 0x%08lx: stub\n", debugstr_w(pszFilter), Buffer, BufferLen, ulFlags);
-
-    if (BufferLen >= 2) Buffer[0] = Buffer[1] = 0;
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
- *             CM_Get_Device_ID_List_SizeA  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_List_SizeA( PULONG  pulLen, PCSTR  pszFilter, ULONG  ulFlags )
-{
-    FIXME("%p %s 0x%08lx: stub\n", pulLen, debugstr_a(pszFilter), ulFlags);
-
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
- *             CM_Get_Device_ID_List_SizeW  (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_ID_List_SizeW( PULONG  pulLen, PCWSTR  pszFilter, ULONG  ulFlags )
-{
-    FIXME("%p %s 0x%08lx: stub\n", pulLen, debugstr_w(pszFilter), ulFlags);
-
-    return CR_SUCCESS;
-}
-
-/***********************************************************************
  *              CM_Get_Parent (SETUPAPI.@)
  */
 DWORD WINAPI CM_Get_Parent(PDEVINST pdnDevInst, DEVINST dnDevInst, ULONG ulFlags)
@@ -309,86 +265,6 @@ BOOL WINAPI SetupDiGetClassImageIndex(PSP_CLASSIMAGELIST_DATA ClassImageListData
 {
     FIXME("%p %p %p\n", ClassImageListData, class, index);
     return FALSE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNodeA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags)
-{
-    FIXME("%p %s 0x%08lx: stub\n", pdnDevInst, debugstr_a(pDeviceID), ulFlags);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNodeW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNodeW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, ULONG ulFlags)
-{
-    FIXME("%p %s 0x%08lx: stub\n", pdnDevInst, debugstr_w(pDeviceID), ulFlags);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNode_ExA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNode_ExA(PDEVINST pdnDevInst, DEVINSTID_A pDeviceID, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("%p %s 0x%08lx %p: stub\n", pdnDevInst, debugstr_a(pDeviceID), ulFlags, hMachine);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Locate_DevNode_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Locate_DevNode_ExW(PDEVINST pdnDevInst, DEVINSTID_W pDeviceID, ULONG ulFlags, HMACHINE hMachine)
-{
-    FIXME("%p %s 0x%08lx %p: stub\n", pdnDevInst, debugstr_w(pDeviceID), ulFlags, hMachine);
-
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_Device_Interface_List_SizeA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeA(PULONG len, LPGUID class, DEVINSTID_A id,
-                                                    ULONG flags)
-{
-    FIXME("%p %p %s 0x%08lx: stub\n", len, class, debugstr_a(id), flags);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_Device_Interface_List_SizeW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_SizeW(PULONG len, LPGUID class, DEVINSTID_W id,
-                                                    ULONG flags)
-{
-    FIXME("%p %p %s 0x%08lx: stub\n", len, class, debugstr_w(id), flags);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_Device_Interface_List_Size_ExA (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExA(PULONG len, LPGUID class, DEVINSTID_A id,
-                                                       ULONG flags, HMACHINE machine)
-{
-    FIXME("%p %p %s 0x%08lx %p: stub\n", len, class, debugstr_a(id), flags, machine);
-    return CR_FAILURE;
-}
-
-/***********************************************************************
- *      CM_Get_Device_Interface_List_Size_ExW (SETUPAPI.@)
- */
-CONFIGRET WINAPI CM_Get_Device_Interface_List_Size_ExW(PULONG len, LPGUID class, DEVINSTID_W id,
-                                                       ULONG flags, HMACHINE machine)
-{
-    FIXME("%p %p %s 0x%08lx %p: stub\n", len, class, debugstr_w(id), flags, machine);
-    return CR_FAILURE;
 }
 
 /***********************************************************************

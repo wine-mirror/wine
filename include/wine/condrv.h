@@ -45,6 +45,7 @@
 #define IOCTL_CONDRV_GET_WINDOW            CTL_CODE(FILE_DEVICE_CONSOLE, 22, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_CONDRV_GET_PROCESS_LIST      CTL_CODE(FILE_DEVICE_CONSOLE, 23, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_CONDRV_READ_CONSOLE_CONTROL  CTL_CODE(FILE_DEVICE_CONSOLE, 24, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_CONDRV_GET_INPUT_COUNT       CTL_CODE(FILE_DEVICE_CONSOLE, 25, METHOD_BUFFERED, FILE_READ_ACCESS)
 
 /* console output ioctls */
 #define IOCTL_CONDRV_WRITE_CONSOLE         CTL_CODE(FILE_DEVICE_CONSOLE, 30, METHOD_BUFFERED, FILE_WRITE_ACCESS)
@@ -89,7 +90,6 @@ struct condrv_input_info
 {
     unsigned int  input_cp;       /* console input codepage */
     unsigned int  output_cp;      /* console output codepage */
-    unsigned int  input_count;    /* number of available input records */
 };
 
 /* IOCTL_CONDRV_SET_INPUT_INFO params */

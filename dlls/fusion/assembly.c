@@ -761,8 +761,6 @@ HRESULT assembly_get_path(const ASSEMBLY *assembly, LPWSTR *path)
 
 HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version)
 {
-    static const WCHAR format[] = {'%','u','.','%','u','.','%','u','.','%','u',0};
-
     ASSEMBLYTABLE *asmtbl;
     LONG offset;
 
@@ -779,8 +777,8 @@ HRESULT assembly_get_version(ASSEMBLY *assembly, LPWSTR *version)
     if (!(*version = malloc(24 * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
-    swprintf(*version, 24, format, asmtbl->MajorVersion, asmtbl->MinorVersion,
-             asmtbl->BuildNumber, asmtbl->RevisionNumber);
+    swprintf(*version, 24, L"%u.%u.%u.%u", asmtbl->MajorVersion,
+             asmtbl->MinorVersion, asmtbl->BuildNumber, asmtbl->RevisionNumber);
 
     return S_OK;
 }

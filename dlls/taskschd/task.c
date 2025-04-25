@@ -39,6 +39,7 @@ typedef struct {
     LONG ref;
     short interval;
     WCHAR *start_boundary;
+    WCHAR *end_boundary;
     BOOL enabled;
 } DailyTrigger;
 
@@ -92,6 +93,7 @@ static ULONG WINAPI DailyTrigger_Release(IDailyTrigger *iface)
     {
         TRACE("destroying %p\n", iface);
         free(This->start_boundary);
+        free(This->end_boundary);
         free(This);
     }
 
@@ -209,15 +211,29 @@ static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR 
 static HRESULT WINAPI DailyTrigger_get_EndBoundary(IDailyTrigger *iface, BSTR *end)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%p)\n", This, end);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, end);
+
+    if (!end) return E_POINTER;
+
+    if (!This->end_boundary) *end = NULL;
+    else if (!(*end = SysAllocString(This->end_boundary))) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_put_EndBoundary(IDailyTrigger *iface, BSTR end)
 {
     DailyTrigger *This = impl_from_IDailyTrigger(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(end));
-    return E_NOTIMPL;
+    WCHAR *str = NULL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(end));
+
+    if (end && !(str = wcsdup(end))) return E_OUTOFMEMORY;
+    free(This->end_boundary);
+    This->end_boundary = str;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI DailyTrigger_get_Enabled(IDailyTrigger *iface, VARIANT_BOOL *enabled)
@@ -318,6 +334,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
     daily_trigger->ref = 1;
     daily_trigger->interval = 1;
     daily_trigger->start_boundary = NULL;
+    daily_trigger->end_boundary = NULL;
     daily_trigger->enabled = TRUE;
 
     *trigger = (ITrigger*)&daily_trigger->IDailyTrigger_iface;

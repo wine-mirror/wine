@@ -40,6 +40,47 @@ enum seq_index
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
+static void CALLBACK msg_winevent_proc(HWINEVENTHOOK hevent,
+                                       DWORD event,
+                                       HWND hwnd,
+                                       LONG object_id,
+                                       LONG child_id,
+                                       DWORD thread_id,
+                                       DWORD event_time)
+{
+    struct message msg = {0};
+    char class_name[256];
+
+    /* ignore window and other system events */
+    if (object_id != OBJID_CLIENT) return;
+
+    /* ignore events not from a listbox control */
+    if (!GetClassNameA(hwnd, class_name, ARRAY_SIZE(class_name)) ||
+        strcmp(class_name, WC_LISTBOXA) != 0)
+        return;
+
+    msg.message = event;
+    msg.flags = winevent_hook|wparam|lparam;
+    msg.wParam = object_id;
+    msg.lParam = child_id;
+    add_message(sequences, LB_SEQ_INDEX, &msg);
+}
+
+static void init_winevent_hook(void) {
+    hwineventhook = SetWinEventHook(EVENT_MIN, EVENT_MAX, GetModuleHandleA(0), msg_winevent_proc,
+                                    0, GetCurrentThreadId(), WINEVENT_INCONTEXT);
+    if (!hwineventhook)
+        win_skip( "no win event hook support\n" );
+}
+
+static void uninit_winevent_hook(void) {
+    if (!hwineventhook)
+        return;
+
+    UnhookWinEvent(hwineventhook);
+    hwineventhook = 0;
+}
+
 /* encoded MEASUREITEMSTRUCT into a WPARAM */
 typedef struct
 {
@@ -74,6 +115,22 @@ static unsigned hash_Ly(const char *str)
         hash = hash * 1664525u + (unsigned char)(*str) + 1013904223u;
 
     return hash;
+}
+
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
 }
 
 static const char * const strings[4] = {
@@ -129,6 +186,19 @@ static LRESULT WINAPI listbox_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, L
 
 static HWND create_listbox(DWORD add_style, HWND parent)
 {
+    static const struct message addstring_seq[] =
+    {
+        { LB_ADDSTRING, sent },
+        { WM_GETMINMAXINFO, sent|defwinproc|optional },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 2 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 3 },
+        { LB_ADDSTRING, sent },
+        { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CLIENT, 4 },
+        { 0 }
+    };
     INT_PTR ctl_id = 0;
     WNDPROC oldproc;
     HWND handle;
@@ -140,13 +210,15 @@ static HWND create_listbox(DWORD add_style, HWND parent)
         parent, (HMENU)ctl_id, NULL, 0);
     ok(handle != NULL, "Failed to create listbox window.\n");
 
+    oldproc = (WNDPROC)SetWindowLongPtrA(handle, GWLP_WNDPROC, (LONG_PTR)listbox_wnd_proc);
+    SetWindowLongPtrA(handle, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    flush_sequence(sequences, LB_SEQ_INDEX);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[0]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[1]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[2]);
     SendMessageA(handle, LB_ADDSTRING, 0, (LPARAM) strings[3]);
-
-    oldproc = (WNDPROC)SetWindowLongPtrA(handle, GWLP_WNDPROC, (LONG_PTR)listbox_wnd_proc);
-    SetWindowLongPtrA(handle, GWLP_USERDATA, (LONG_PTR)oldproc);
+    ok_sequence(sequences, LB_SEQ_INDEX, addstring_seq, "addstring_seq", FALSE);
 
     return handle;
 }
@@ -211,9 +283,13 @@ static void run_test(DWORD style, const struct listbox_test test)
     static const struct message delete_seq[] =
     {
         { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
         { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
         { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
         { LB_DELETESTRING, sent|wparam|lparam, 0, 0 },
+        { EVENT_OBJECT_DESTROY, winevent_hook|wparam|lparam, OBJID_CLIENT, 1 },
         { LB_RESETCONTENT, sent|wparam|lparam|defwinproc, 0, 0 },
         { 0 }
     };
@@ -585,6 +661,12 @@ static void test_ownerdraw(void)
 
 static void test_LB_SELITEMRANGE(void)
 {
+    static const struct message selitemrange_seq[] =
+    {
+        { LB_SELITEMRANGE, sent },
+        { EVENT_OBJECT_SELECTIONWITHIN, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+        { 0 }
+    };
     static const struct listbox_stat test_nosel = { 0, LB_ERR, 0, 0 };
     static const struct listbox_stat test_1 = { 0, LB_ERR, 0, 2 };
     static const struct listbox_stat test_2 = { 0, LB_ERR, 0, 3 };
@@ -626,8 +708,11 @@ static void test_LB_SELITEMRANGE(void)
     listbox_query(hLB, &answer);
     listbox_test_query(test_nosel, answer);
 
+    flush_sequence(sequences, LB_SEQ_INDEX);
     ret = SendMessageA(hLB, LB_SELITEMRANGE, TRUE, MAKELPARAM(2, 10));
     ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
+    ok_sequence(sequences, LB_SEQ_INDEX, selitemrange_seq, "selitemrange_seq", FALSE);
+
     listbox_query(hLB, &answer);
     listbox_test_query(test_1, answer);
 
@@ -735,6 +820,40 @@ static void test_LB_SETCURSEL(void)
     ok(ret == -1, "Unexpected anchor index %d.\n", ret);
 
     DestroyWindow(hLB);
+
+    /* LBS_NOSEL */
+    hLB = create_listbox(LBS_NOSEL, 0);
+    ok(hLB != NULL, "Failed to create ListBox window.\n");
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == -1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 0, 0);
+    ok(!ret, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
+    todo_wine
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 2, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == 2, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 3, 0);
+    todo_wine
+    ok(ret == 3, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETSEL, 3, 0);
+    ok(ret == 1, "Unexpected return value %d.\n", ret);
+
+    ret = SendMessageA(hLB, LB_GETCURSEL, 0, 0);
+    ok(ret == 3, "Unexpected return value %d.\n", ret);
+
+    DestroyWindow(hLB);
+
+    DestroyWindow(parent);
 }
 
 static void test_LB_SETSEL(void)
@@ -2484,6 +2603,7 @@ static void test_WM_MEASUREITEM(void)
 
     data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
     ok(data == (LRESULT)strings[0], "data = %08Ix, expected %p\n", data, strings[0]);
+    DestroyWindow(listbox);
     DestroyWindow(parent);
 
     parent = create_parent();
@@ -2491,6 +2611,8 @@ static void test_WM_MEASUREITEM(void)
 
     data = SendMessageA(listbox, LB_GETITEMDATA, 0, 0);
     ok(!data, "data = %08Ix\n", data);
+    DestroyWindow(listbox);
+    DestroyWindow(parent);
 
     /* LBS_HASSTRINGS */
     parent = create_parent();
@@ -2752,6 +2874,91 @@ static void test_LB_FINDSTRING(void)
     DestroyWindow( listbox );
 }
 
+#define ok_selected_value(list, selected) \
+        _ok_selected_value(list, selected, __LINE__)
+static void _ok_selected_value(HWND list, const char *selected, int line)
+{
+    char buffer[20] = {0};
+    int index = SendMessageA(list, LB_GETCURSEL, 0, 0);
+    SendMessageA(list, LB_GETTEXT, index, (LPARAM)buffer);
+    ok_(__FILE__, line)(!strcmp(buffer, selected), "Got %s\n", buffer);
+}
+
+static void test_keypresses(void)
+{
+    HWND list;
+    int i;
+    const char *strings_to_add[] = {
+        "b_eta", "a_lpha", "be_ta", "al_pha", "beta", "alpha", "gamma", "epsilon", "le"
+    };
+
+    /* Test with an unsorted list */
+
+    list = CreateWindowA(WC_LISTBOXA, "TestList", (LBS_STANDARD & ~LBS_SORT), 0, 0, 100, 100, NULL, NULL, NULL, 0);
+    ok(list != NULL, "Failed to create listbox window.\n");
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(list, LB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'a', 0);
+    ok_selected_value(list, "a_lpha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'l', 0);
+    ok_selected_value(list, "le");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'p', 0);
+    ok_selected_value(list, "le");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    ok_selected_value(list, "b_eta");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'e', 0);
+    ok_selected_value(list, "epsilon");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'t', 0);
+    ok_selected_value(list, "epsilon");
+
+    DestroyWindow(list);
+
+    /* Test with a sorted list */
+
+    list = CreateWindowA(WC_LISTBOXA, "TestList", LBS_STANDARD, 0, 0, 100, 100, NULL, NULL, NULL, 0);
+
+    for (i = 0; i < ARRAY_SIZE(strings_to_add); i++)
+    {
+        SendMessageA(list, LB_ADDSTRING, 0, (LPARAM)strings_to_add[i]);
+    }
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'a', 0);
+    todo_wine
+    ok_selected_value(list, "a_lpha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'l', 0);
+    todo_wine
+    ok_selected_value(list, "al_pha");
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'p', 0);
+    todo_wine
+    ok_selected_value(list, "alpha");
+
+    /* Windows needs a certain time to pass until it starts a new search */
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    todo_wine
+    ok_selected_value(list, "alpha");
+
+    Sleep(2100);
+    flush_events();
+
+    SendMessageA(list, WM_CHAR, (WPARAM)'b', 0);
+    todo_wine
+    ok_selected_value(list, "b_eta");
+
+    DestroyWindow(list);
+}
+
 START_TEST(listbox)
 {
     ULONG_PTR ctx_cookie;
@@ -2761,6 +2968,8 @@ START_TEST(listbox)
         return;
 
     init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    init_winevent_hook();
 
     test_listbox();
     test_item_height();
@@ -2782,6 +2991,9 @@ START_TEST(listbox)
     test_LB_SETSEL();
     test_LBS_NODATA();
     test_LB_FINDSTRING();
+    test_keypresses();
+
+    uninit_winevent_hook();
 
     unload_v6_module(ctx_cookie, hCtx);
 }

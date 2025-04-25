@@ -140,13 +140,6 @@ coclass WICDdsEncoder { interface IWICBitmapEncoder; }
 coclass WICDefaultFormatConverter { interface IWICFormatConverter; }
 
 [
-    helpstring("WIC TGA Decoder"),
-    threading(both),
-    uuid(b11fc79a-67cc-43e6-a9ce-e3d54945d304)
-]
-coclass WineTgaDecoder { interface IWICBitmapDecoder; }
-
-[
     helpstring("WIC Unknown Metadata Reader"),
     threading(both),
     uuid(699745c2-5066-4b82-a8e3-d40478dbec8c)
@@ -154,11 +147,67 @@ coclass WineTgaDecoder { interface IWICBitmapDecoder; }
 coclass WICUnknownMetadataReader { interface IWICMetadataReader; }
 
 [
+    helpstring("WIC Unknown Metadata Writer"),
+    threading(both),
+    uuid(a09cca86-27ba-4f39-9053-121fa4dc08fc)
+]
+coclass WICUnknownMetadataWriter { interface IWICMetadataWriter; }
+
+[
     helpstring("WIC Ifd Metadata Reader"),
     threading(both),
     uuid(8f914656-9d0a-4eb2-9019-0bf96d8a9ee6)
 ]
-coclass WICIfdMetadataReader { interface IWICIfdMetadataReader; }
+coclass WICIfdMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Ifd Metadata Writer"),
+    threading(both),
+    uuid(b1ebfc28-c9bd-47a2-8d33-b948769777a7)
+]
+coclass WICIfdMetadataWriter { interface IWICMetadataWriter; }
+
+[
+    helpstring("WIC Gps Metadata Reader"),
+    threading(both),
+    uuid(3697790b-223b-484e-9925-c4869218f17a)
+]
+coclass WICGpsMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Gps Metadata Writer"),
+    threading(both),
+    uuid(cb8c13e4-62b5-4c96-a48b-6ba6ace39c76)
+]
+coclass WICGpsMetadataWriter { interface IWICMetadataWriter; }
+
+[
+    helpstring("WIC Exif Metadata Reader"),
+    threading(both),
+    uuid(d9403860-297f-4a49-bf9b-77898150a442)
+]
+coclass WICExifMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Exif Metadata Writer"),
+    threading(both),
+    uuid(c9a14cda-c339-460b-9078-d4debcfabe91)
+]
+coclass WICExifMetadataWriter { interface IWICMetadataWriter; }
+
+[
+    helpstring("WIC App1 Metadata Reader"),
+    threading(both),
+    uuid(dde33513-774e-4bcd-ae79-02f4adfe62fc)
+]
+coclass WICApp1MetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC App1 Metadata Writer"),
+    threading(both),
+    uuid(ee366069-1832-420f-b381-0479ad066f19)
+]
+coclass WICApp1MetadataWriter { interface IWICMetadataWriter; }
 
 [
     helpstring("WIC Png cHRM Metadata Reader"),
@@ -195,6 +244,27 @@ coclass WICPngTextMetadataReader { interface IWICMetadataReader; }
     uuid(d94edf02-efe5-4f0d-85c8-f5a68b3000b1)
 ]
 coclass WICPngTimeMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Png tIME Metadata Writer"),
+    threading(both),
+    uuid(1ab78400-b5a3-4d91-8ace-33fcd1499be6)
+]
+coclass WICPngTimeMetadataWriter { interface IWICMetadataWriter; }
+
+[
+    helpstring("WIC Png bKGD Metadata Reader"),
+    threading(both),
+    uuid(0ce7a4a6-03e8-4a60-9d15-282ef32ee7da)
+]
+coclass WICPngBkgdMetadataReader { interface IWICMetadataReader; }
+
+[
+    helpstring("WIC Png bKGD Metadata Writer"),
+    threading(both),
+    uuid(68e3f2fd-31ae-4441-bb6a-fd7047525f90)
+]
+coclass WICPngBkgdMetadataWriter { interface IWICMetadataWriter; }
 
 [
     helpstring("WIC LSD Metadata Reader"),

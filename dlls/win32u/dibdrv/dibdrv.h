@@ -289,15 +289,3 @@ static inline const RGBQUAD *get_dib_color_table( const dib_info *dib )
 {
     return dib->color_table ? dib->color_table : get_default_color_table( dib->bit_count );
 }
-
-struct osmesa_funcs
-{
-    void (*get_gl_funcs)( struct opengl_funcs *funcs );
-    struct wgl_context * (*create_context)( HDC hdc, const PIXELFORMATDESCRIPTOR *descr );
-    BOOL (*delete_context)( struct wgl_context *context );
-    PROC (*get_proc_address)( const char *proc );
-    BOOL (*make_current)( struct wgl_context *context, void *bits,
-                          int width, int height, int bpp, int stride );
-};
-
-extern const struct osmesa_funcs *init_opengl_lib(void);

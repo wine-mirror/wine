@@ -24,6 +24,7 @@
 #define COBJMACROS
 #define OEMRESOURCE
 #include <windows.h>
+#include <winternl.h>
 #include <rpc.h>
 #include <shlobj.h>
 #include <shellapi.h>
@@ -39,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 #define DESKTOP_CLASS_ATOM ((LPCWSTR)MAKEINTATOM(32769))
 #define DESKTOP_ALL_ACCESS 0x01ff
 
-static const WCHAR default_driver[] = {'m','a','c',',','x','1','1',0};
+static const WCHAR default_driver[] = L"mac,x11,wayland";
 
 static BOOL using_root = TRUE;
 
@@ -841,7 +842,7 @@ static LRESULT WINAPI desktop_wnd_proc( HWND hwnd, UINT message, WPARAM wp, LPAR
             BeginPaint( hwnd, &ps );
             if (!using_root)
             {
-                if (ps.fErase) PaintDesktop( ps.hdc );
+                PaintDesktop( ps.hdc );
                 draw_launchers( ps.hdc, ps.rcPaint );
             }
             EndPaint( hwnd, &ps );
@@ -931,6 +932,22 @@ static BOOL get_default_enable_shell( const WCHAR *name )
     return result;
 }
 
+static BOOL get_default_enable_launchers(void)
+{
+    BOOL result;
+    DWORD size = sizeof(result);
+
+    if (!RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoDesktop", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return !result;
+
+    if (!RegGetValueW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoDesktop", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return !result;
+
+    return TRUE;
+}
+
 static BOOL get_default_show_systray( const WCHAR *name )
 {
     HKEY hkey;
@@ -958,6 +975,22 @@ static BOOL get_default_show_systray( const WCHAR *name )
     /* Default on */
     if (!found) result = TRUE;
     return result;
+}
+
+static BOOL get_no_tray_items_display(void)
+{
+    BOOL result;
+    DWORD size = sizeof(result);
+
+    if (!RegGetValueW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoTrayItemsDisplay", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return result;
+
+    if (!RegGetValueW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer",
+                       L"NoTrayItemsDisplay", RRF_RT_REG_DWORD, NULL, &result, &size ))
+        return result;
+
+    return FALSE;
 }
 
 static void load_graphics_driver( const WCHAR *driver, GUID *guid )
@@ -1133,6 +1166,33 @@ static inline BOOL is_whitespace(WCHAR c)
     return c == ' ' || c == '\t';
 }
 
+/* Set the shell window if appropriate for the current desktop. We should set
+   the shell window on the "Default" desktop on a visible window station, but
+   not for other desktops. */
+static void set_shell_window( HWND hwnd )
+{
+    HWINSTA winsta;
+    USEROBJECTFLAGS flags;
+    HDESK desk;
+    WCHAR desk_name[MAX_PATH];
+
+    if (!(winsta = GetProcessWindowStation()) ||
+        !GetUserObjectInformationW( winsta, UOI_FLAGS, &flags, sizeof(flags), NULL ) ||
+        !(flags.dwFlags & WSF_VISIBLE))
+    {
+        return;
+    }
+
+    if (!(desk = GetThreadDesktop( GetCurrentThreadId() )) ||
+        !GetUserObjectInformationW( desk, UOI_NAME, desk_name, ARRAY_SIZE( desk_name ), NULL ) ||
+        wcscmp( desk_name, L"Default" ))
+    {
+        return;
+    }
+
+    SetShellWindow( hwnd );
+}
+
 /* main desktop management function */
 void manage_desktop( WCHAR *arg )
 {
@@ -1144,11 +1204,12 @@ void manage_desktop( WCHAR *arg )
     WCHAR *cmdline = NULL, *driver = NULL;
     WCHAR *p = arg;
     const WCHAR *name = NULL;
-    BOOL enable_shell = FALSE, show_systray = TRUE;
+    BOOL enable_shell, enable_launchers, show_systray, no_tray_items;
     void (WINAPI *pShellDDEInit)( BOOL ) = NULL;
     HMODULE shell32;
     HANDLE thread;
     DWORD id;
+    NTSTATUS status;
 
     /* get the rest of the command line (if any) */
     while (*p && !is_whitespace(*p)) p++;
@@ -1178,8 +1239,10 @@ void manage_desktop( WCHAR *arg )
         if (!get_default_desktop_size( name, &width, &height )) width = height = 0;
     }
 
-    if (name) enable_shell = get_default_enable_shell( name );
+    enable_shell = name ? get_default_enable_shell( name ) : FALSE;
+    enable_launchers = get_default_enable_launchers();
     show_systray = get_default_show_systray( name );
+    no_tray_items = get_no_tray_items_display();
 
     UuidCreate( &guid );
     TRACE( "display guid %s\n", debugstr_guid(&guid) );
@@ -1198,6 +1261,10 @@ void manage_desktop( WCHAR *arg )
         }
         SetThreadDesktop( desktop );
     }
+
+    /* the desktop process should always have an admin token */
+    status = NtSetInformationProcess( GetCurrentProcess(), ProcessWineGrantAdminToken, NULL, 0 );
+    if (status) WARN( "couldn't set admin token for desktop, error %08lx\n", status );
 
     /* create the desktop window */
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
@@ -1223,8 +1290,8 @@ void manage_desktop( WCHAR *arg )
         initialize_display_settings( width, height );
         initialize_appbar();
 
-        initialize_systray( using_root, enable_shell, show_systray );
-        if (!using_root) initialize_launchers( hwnd );
+        initialize_systray( using_root, enable_shell, show_systray, no_tray_items );
+        if (!using_root && enable_launchers) initialize_launchers( hwnd );
 
         if ((shell32 = LoadLibraryW( L"shell32.dll" )) &&
             (pShellDDEInit = (void *)GetProcAddress( shell32, (LPCSTR)188)))
@@ -1251,6 +1318,10 @@ void manage_desktop( WCHAR *arg )
 
     desktopshellbrowserwindow_init();
     shellwindows_init();
+
+    /* Ideally we would set the window of an IShellView here, but we never
+       actually create one, so the desktop window itself will have to do. */
+    set_shell_window( hwnd );
 
     /* run the desktop message loop */
     if (hwnd)

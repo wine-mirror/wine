@@ -34,11 +34,6 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
-#include "wingdi.h"
-#include "ole2.h"
-#include "devpkey.h"
-#include "mmdeviceapi.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
 /* each known type of driver has an instance of this structure */
@@ -486,64 +481,9 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
  */
 static void MMDRV_Init(void)
 {
-    IMMDeviceEnumerator *devenum;
-    IMMDevice *device;
-    IPropertyStore *ps;
-    PROPVARIANT pv;
-    DWORD size;
-    char *drvA;
-    HRESULT init_hr, hr;
-
-    TRACE("()\n");
-
-    init_hr = CoInitialize(NULL);
-
-    hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
-            CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&devenum);
-    if(FAILED(hr)){
-        ERR("CoCreateInstance failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
-    IMMDeviceEnumerator_Release(devenum);
-    if(FAILED(hr)){
-        ERR("GetDevice failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
-    if(FAILED(hr)){
-        ERR("OpenPropertyStore failed: %08lx\n", hr);
-        IMMDevice_Release(device);
-        goto exit;
-    }
-
-    hr = IPropertyStore_GetValue(ps,
-            (const PROPERTYKEY *)&DEVPKEY_Device_Driver, &pv);
-    IPropertyStore_Release(ps);
-    IMMDevice_Release(device);
-    if(FAILED(hr)){
-        ERR("GetValue failed: %08lx\n", hr);
-        goto exit;
-    }
-
-    size = WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1,
-            NULL, 0, NULL, NULL);
-    drvA = malloc(size);
-    WideCharToMultiByte(CP_ACP, 0, pv.pwszVal, -1, drvA, size, NULL, NULL);
-
-    MMDRV_Install(drvA, drvA, FALSE);
-
-    free(drvA);
-    PropVariantClear(&pv);
-
+    MMDRV_Install("mmdevapi", "mmdevapi.dll", FALSE);
     MMDRV_Install("wavemapper", "msacm32.drv", TRUE);
     MMDRV_Install("midimapper", "midimap.dll", TRUE);
-
-exit:
-    if(SUCCEEDED(init_hr))
-        CoUninitialize();
 }
 
 /******************************************************************

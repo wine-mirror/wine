@@ -67,7 +67,7 @@ static inline struct user_handle *alloc_user_entry(void)
         struct user_handle *new_handles;
         /* grow array by 50% (but at minimum 32 entries) */
         int growth = max( 32, allocated_handles / 2 );
-        int new_size = min( allocated_handles + growth, (LAST_USER_HANDLE-FIRST_USER_HANDLE+1) >> 1 );
+        int new_size = min( allocated_handles + growth, MAX_USER_HANDLES );
         if (new_size <= allocated_handles) return NULL;
         if (!(new_handles = realloc( handles, new_size * sizeof(*handles) )))
             return NULL;

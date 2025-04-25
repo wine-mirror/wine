@@ -123,7 +123,7 @@ static void value_free( struct value val )
     struct value value;
     LPWSTR identifier;
     INT operator;
-    BOOL bool;
+    BOOL boolean;
 }
 
 %token COND_SPACE
@@ -137,7 +137,7 @@ static void value_free( struct value val )
 
 %nonassoc COND_ERROR
 
-%type <bool> expression boolean_term boolean_factor
+%type <boolean> expression boolean_term boolean_factor
 %type <value> value
 %type <identifier> identifier
 %type <operator> operator
@@ -154,6 +154,7 @@ condition:
         {
             COND_input* cond = (COND_input*) info;
             cond->result = MSICONDITION_NONE;
+            (void)cond_nerrs; /* avoid unused variable warning */
         }
     ;
 

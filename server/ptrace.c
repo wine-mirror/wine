@@ -101,6 +101,30 @@ static inline int ptrace(int req, ...) { errno = EPERM; return -1; /*FAIL*/ }
 #define __WALL 0
 #endif
 
+static const char *get_signal_name( int sig )
+{
+    static char buffer[20];
+    switch (sig)
+    {
+#define X(x) case x: return #x
+    X(SIGABRT);
+    X(SIGBUS);
+    X(SIGFPE);
+    X(SIGILL);
+    X(SIGINT);
+    X(SIGQUIT);
+    X(SIGSEGV);
+    X(SIGSTOP);
+    X(SIGTRAP);
+    X(SIGUSR1);
+    X(SIGUSR2);
+#undef X
+    default:
+        sprintf( buffer, "signal=%d", sig );
+        return buffer;
+    }
+}
+
 /* handle a status returned by waitpid */
 static int handle_child_status( struct thread *thread, int pid, int status, int want_sig )
 {
@@ -108,7 +132,7 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
     {
         int sig = WSTOPSIG(status);
         if (debug_level && thread)
-            fprintf( stderr, "%04x: *signal* signal=%d\n", thread->id, sig );
+            fprintf( stderr, "%04x: *signal* %s\n", thread->id, get_signal_name( sig ));
         if (sig != want_sig)
         {
             /* ignore other signals for now */
@@ -123,8 +147,8 @@ static int handle_child_status( struct thread *thread, int pid, int status, int 
         if (debug_level)
         {
             if (WIFSIGNALED(status))
-                fprintf( stderr, "%04x: *exited* signal=%d\n",
-                         thread->id, WTERMSIG(status) );
+                fprintf( stderr, "%04x: *exited* %s\n",
+                         thread->id, get_signal_name( WTERMSIG(status) ));
             else
                 fprintf( stderr, "%04x: *exited* status=%d\n",
                          thread->id, WEXITSTATUS(status) );
@@ -251,7 +275,7 @@ int send_thread_signal( struct thread *thread, int sig )
         }
     }
     if (debug_level && ret != -1)
-        fprintf( stderr, "%04x: *sent signal* signal=%d\n", thread->id, sig );
+        fprintf( stderr, "%04x: *sent signal* %s\n", thread->id, get_signal_name( sig ));
     return (ret != -1);
 }
 
@@ -382,8 +406,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         if (len > 1)
         {
             if (read_thread_long( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, (char *)&data + first_offset, sizeof(long) - first_offset );
-            dest += sizeof(long) - first_offset;
+            dest = mem_append( dest, (char *)&data + first_offset, sizeof(long) - first_offset );
             first_offset = 0;
             len--;
         }
@@ -391,8 +414,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
         while (len > 1)
         {
             if (read_thread_long( thread, addr++, &data ) == -1) goto done;
-            memcpy( dest, &data, sizeof(long) );
-            dest += sizeof(long);
+            dest = mem_append( dest, &data, sizeof(long) );
             len--;
         }
 
@@ -410,7 +432,7 @@ int read_process_memory( struct process *process, client_ptr_t ptr, data_size_t 
 /* len is the total size (in longs) */
 static int check_process_write_access( struct thread *thread, long *addr, data_size_t len )
 {
-    int page = get_page_size() / sizeof(long);
+    size_t page = get_page_size() / sizeof(long);
 
     for (;;)
     {
@@ -560,7 +582,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
     int i, pid = get_ptrace_tid(thread);
     long data[8];
@@ -616,7 +638,7 @@ done:
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid( thread );
 
@@ -683,7 +705,7 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
@@ -725,7 +747,7 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
 }
 
 /* set the thread x86 registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
     int pid = get_ptrace_tid(thread);
     struct dbreg dbregs;
@@ -781,12 +803,12 @@ void init_thread_context( struct thread *thread )
 }
 
 /* retrieve the thread x86 registers */
-void get_thread_context( struct thread *thread, context_t *context, unsigned int flags )
+void get_thread_context( struct thread *thread, struct context_data *context, unsigned int flags )
 {
 }
 
 /* set the thread x86 debug registers */
-void set_thread_context( struct thread *thread, const context_t *context, unsigned int flags )
+void set_thread_context( struct thread *thread, const struct context_data *context, unsigned int flags )
 {
 }
 

@@ -470,12 +470,35 @@ sync_test("style_properties", function() {
     try {
         current_style.zIndex = 1;
         ok(false, "expected exception");
-    }catch(e) {}
+    }catch(e) {
+        todo_wine.
+        ok(e.name === "NoModificationAllowedError", "setting current_style.zIndex threw " + e.name);
+    }
 
     try {
         computed_style.zIndex = 1;
         ok(false, "expected exception");
-    }catch(e) {}
+    }catch(e) {
+        todo_wine.
+        ok(e.name === "NoModificationAllowedError", "setting computed_style.zIndex threw " + e.name);
+    }
+
+    /* prop not found in any IHTMLCurrentStyle* interfaces, but exposed from common CSSStyleDeclarationPrototype */
+    try {
+        current_style.perspective = 1;
+        ok(false, "expected exception");
+    }catch(e) {
+        todo_wine.
+        ok(e.name === "NoModificationAllowedError", "setting current_style.perspective threw " + e.name);
+    }
+
+    try {
+        computed_style.perspective = 1;
+        ok(false, "expected exception");
+    }catch(e) {
+        todo_wine.
+        ok(e.name === "NoModificationAllowedError", "setting computed_style.perspective threw " + e.name);
+    }
 
     elem = elem.nextSibling;
     computed_style = window.getComputedStyle(elem);
@@ -572,6 +595,7 @@ sync_test("storage", function() {
 
     sessionStorage.setItem("foobar", 42);
     ok("foobar" in sessionStorage, "foobar not in sessionStorage");
+    ok(sessionStorage.hasOwnProperty("foobar"), "foobar not prop of sessionStorage");
     item = sessionStorage.getItem("foobar");
     ok(item === "42", "'foobar' item = " + item);
     item = sessionStorage["foobar"];
@@ -582,6 +606,7 @@ sync_test("storage", function() {
 
     sessionStorage["barfoo"] = true;
     ok("barfoo" in sessionStorage, "barfoo not in sessionStorage");
+    ok(sessionStorage.hasOwnProperty("barfoo"), "barfoo not prop of sessionStorage");
     item = sessionStorage["barfoo"];
     ok(item === "true", "[barfoo] item = " + item);
     item = sessionStorage.getItem("barfoo");

@@ -275,10 +275,11 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         .serialnumber = {'0','0','0','0',0},
     };
     struct iohid_device *impl;
+    USAGE_AND_PAGE usages;
     CFStringRef str;
 
-    desc.usages.UsagePage = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsagePageKey)));
-    desc.usages.Usage = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsageKey)));
+    usages.UsagePage = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsagePageKey)));
+    usages.Usage = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDPrimaryUsageKey)));
 
     desc.vid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDVendorIDKey)));
     desc.pid = CFNumberToDWORD(IOHIDDeviceGetProperty(IOHIDDevice, CFSTR(kIOHIDProductIDKey)));
@@ -289,8 +290,8 @@ static void handle_DeviceMatchingCallback(void *context, IOReturn result, void *
         desc.is_bluetooth = !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothValue), 0) ||
                             !CFStringCompare(str, CFSTR(kIOHIDTransportBluetoothLowEnergyValue), 0);
 
-    if (desc.usages.UsagePage != HID_USAGE_PAGE_GENERIC ||
-        !(desc.usages.Usage == HID_USAGE_GENERIC_JOYSTICK || desc.usages.Usage == HID_USAGE_GENERIC_GAMEPAD))
+    if (usages.UsagePage != HID_USAGE_PAGE_GENERIC ||
+        !(usages.Usage == HID_USAGE_GENERIC_JOYSTICK || usages.Usage == HID_USAGE_GENERIC_GAMEPAD))
     {
         /* winebus isn't currently meant to handle anything but these, and
          * opening keyboards, mice, or the Touch Bar on older MacBooks triggers

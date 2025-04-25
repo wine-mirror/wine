@@ -446,7 +446,7 @@ static void set_document_mode(HTMLDocumentNode *doc, compat_mode_t document_mode
 
     TRACE("%p: %d\n", doc, document_mode);
 
-    max_compat_mode = doc->window && doc->window->base.outer_window
+    max_compat_mode = doc->window && !is_detached_window(doc->window)
         ? get_max_compat_mode(doc->window->base.outer_window->uri)
         : COMPAT_MODE_IE11;
     if(max_compat_mode < document_mode) {
@@ -685,8 +685,12 @@ static nsrefcnt NSAPI nsRunnable_Release(nsIRunnable *iface)
 static nsresult NSAPI nsRunnable_Run(nsIRunnable *iface)
 {
     nsRunnable *This = impl_from_nsIRunnable(iface);
+    nsresult nsres;
 
-    return This->proc(This->doc, This->arg1, This->arg2);
+    block_task_processing();
+    nsres = This->proc(This->doc, This->arg1, This->arg2);
+    unblock_task_processing();
+    return nsres;
 }
 
 static const nsIRunnableVtbl nsRunnableVtbl = {
@@ -1208,7 +1212,7 @@ static const tid_t mutation_observer_iface_tids[] = {
     0
 };
 dispex_static_data_t MutationObserver_dispex = {
-    .id               = PROT_MutationObserver,
+    .id               = OBJID_MutationObserver,
     .init_constructor = create_mutation_observer_ctor,
     .vtbl             = &mutation_observer_dispex_vtbl,
     .disp_tid         = IWineMSHTMLMutationObserver_tid,
@@ -1307,7 +1311,7 @@ static const dispex_static_data_vtbl_t mutation_observer_ctor_dispex_vtbl = {
 
 static dispex_static_data_t mutation_observer_ctor_dispex = {
     .name           = "Function",
-    .constructor_id = PROT_MutationObserver,
+    .constructor_id = OBJID_MutationObserver,
     .vtbl           = &mutation_observer_ctor_dispex_vtbl,
 };
 

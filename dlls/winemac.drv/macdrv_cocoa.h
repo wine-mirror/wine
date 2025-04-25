@@ -365,7 +365,8 @@ typedef struct macdrv_event {
         struct {
             void           *himc;
             CFStringRef     text;       /* new text or NULL if just completing existing text */
-            unsigned int    cursor_pos;
+            unsigned int    cursor_begin;
+            unsigned int    cursor_end;
             unsigned int    complete;   /* is completing text? */
         }                                           im_set_text;
         struct {
@@ -440,9 +441,10 @@ typedef struct macdrv_event {
 } macdrv_event;
 
 enum {
-    QUERY_DRAG_DROP,
-    QUERY_DRAG_EXITED,
-    QUERY_DRAG_OPERATION,
+    QUERY_DRAG_DROP_ENTER,
+    QUERY_DRAG_DROP_LEAVE,
+    QUERY_DRAG_DROP_DRAG,
+    QUERY_DRAG_DROP_DROP,
     QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
     QUERY_RESIZE_SIZE,
@@ -461,16 +463,9 @@ typedef struct macdrv_query {
         struct {
             int                 x;
             int                 y;
-            uint32_t            op;
+            uint32_t            ops;
             CFTypeRef           pasteboard;
         }                                           drag_drop;
-        struct {
-            int                 x;
-            int                 y;
-            uint32_t            offered_ops;
-            uint32_t            accepted_op;
-            CFTypeRef           pasteboard;
-        }                                           drag_operation;
         struct {
             void   *himc;
             CFRange range;
@@ -574,8 +569,8 @@ extern void macdrv_view_release_metal_view(macdrv_metal_view v);
 extern int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2]);
 extern void macdrv_set_view_backing_size(macdrv_view v, const int backing_size[2]);
 extern uint32_t macdrv_window_background_color(void);
-extern void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
-                                         void* data, int* done);
+extern void macdrv_send_keydown_to_input_source(unsigned int flags, int repeat, int keyc,
+                                                void* data, int* done);
 extern int macdrv_is_any_wine_window_visible(void);
 
 

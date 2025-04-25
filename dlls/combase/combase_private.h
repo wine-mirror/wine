@@ -97,6 +97,7 @@ struct tlsdata
 };
 
 extern HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data);
+extern BOOL WINAPI InternalIsProcessInitialized(void);
 
 static inline HRESULT com_get_tlsdata(struct tlsdata **data)
 {

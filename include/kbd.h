@@ -343,4 +343,19 @@ typedef struct tagKbdLayer
 #error "Unsupported KBD_TYPE"
 #endif
 
+#define VK_DBE_ALPHANUMERIC             0x0f0
+#define VK_DBE_KATAKANA                 0x0f1
+#define VK_DBE_HIRAGANA                 0x0f2
+#define VK_DBE_SBCSCHAR                 0x0f3
+#define VK_DBE_DBCSCHAR                 0x0f4
+#define VK_DBE_ROMAN                    0x0f5
+#define VK_DBE_NOROMAN                  0x0f6
+#define VK_DBE_ENTERWORDREGISTERMODE    0x0f7
+#define VK_DBE_ENTERIMECONFIGMODE       0x0f8
+#define VK_DBE_FLUSHSTRING              0x0f9
+#define VK_DBE_CODEINPUT                0x0fa
+#define VK_DBE_NOCODEINPUT              0x0fb
+#define VK_DBE_DETERMINESTRING          0x0fc
+#define VK_DBE_ENTERDLGCONVERSIONMODE   0x0fd
+
 #endif /* __WINE_KBD_H */

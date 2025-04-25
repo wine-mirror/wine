@@ -30,20 +30,431 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-typedef struct {
+struct object_enumerator
+{
+    IEnumUnknown IEnumUnknown_iface;
+    LONG refcount;
+
+    IUnknown **objects;
+    unsigned int count;
+    unsigned int position;
+};
+
+static inline struct object_enumerator *impl_from_IEnumUnknown(IEnumUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, struct object_enumerator, IEnumUnknown_iface);
+}
+
+static HRESULT WINAPI object_enumerator_QueryInterface(IEnumUnknown *iface, REFIID riid, void **obj)
+{
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IEnumUnknown) ||
+            IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        IEnumUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI object_enumerator_AddRef(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&enumerator->refcount);
+
+    TRACE("%p refcount %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI object_enumerator_Release(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG refcount = InterlockedDecrement(&enumerator->refcount);
+    unsigned int i;
+
+    TRACE("%p refcount %lu.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        for (i = 0; i < enumerator->count; ++i)
+            IUnknown_Release(enumerator->objects[i]);
+        free(enumerator->objects);
+        free(enumerator);
+    }
+
+    return refcount;
+}
+
+static HRESULT WINAPI object_enumerator_Next(IEnumUnknown *iface, ULONG count, IUnknown **ret, ULONG *fetched)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    ULONG tmp;
+
+    TRACE("%p, %lu, %p, %p.\n", iface, count, ret, fetched);
+
+    if (!fetched) fetched = &tmp;
+
+    *fetched = 0;
+
+    while (enumerator->position < enumerator->count && *fetched < count)
+    {
+        *ret = enumerator->objects[enumerator->position++];
+        IUnknown_AddRef(*ret);
+
+        *fetched = *fetched + 1;
+        ret++;
+    }
+
+    return *fetched == count ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI object_enumerator_Skip(IEnumUnknown *iface, ULONG count)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+    HRESULT hr;
+
+    TRACE("%p, %lu.\n", iface, count);
+
+    hr = (count > enumerator->count || enumerator->position > enumerator->count - count) ? S_FALSE : S_OK;
+
+    count = min(count, enumerator->count - enumerator->position);
+    enumerator->position += count;
+
+    return hr;
+}
+
+static HRESULT WINAPI object_enumerator_Reset(IEnumUnknown *iface)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+
+    TRACE("%p.\n", iface);
+
+    enumerator->position = 0;
+    return S_OK;
+}
+
+static HRESULT create_object_enumerator(IUnknown **objects, unsigned int position,
+        unsigned int count, IEnumUnknown **ret);
+
+static HRESULT WINAPI object_enumerator_Clone(IEnumUnknown *iface, IEnumUnknown **ret)
+{
+    struct object_enumerator *enumerator = impl_from_IEnumUnknown(iface);
+
+    TRACE("%p, %p.\n", iface, ret);
+
+    if (!ret)
+        return E_INVALIDARG;
+
+    return create_object_enumerator(enumerator->objects, enumerator->position, enumerator->count, ret);
+}
+
+static const IEnumUnknownVtbl object_enumerator_vtbl =
+{
+    object_enumerator_QueryInterface,
+    object_enumerator_AddRef,
+    object_enumerator_Release,
+    object_enumerator_Next,
+    object_enumerator_Skip,
+    object_enumerator_Reset,
+    object_enumerator_Clone,
+};
+
+static HRESULT create_object_enumerator(IUnknown **objects, unsigned int position,
+        unsigned int count, IEnumUnknown **ret)
+{
+    struct object_enumerator *object;
+    unsigned int i;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->IEnumUnknown_iface.lpVtbl = &object_enumerator_vtbl;
+    object->refcount = 1;
+    if (!(object->objects = calloc(count, sizeof(*object->objects))))
+    {
+        free(object);
+        return E_OUTOFMEMORY;
+    }
+    object->position = position;
+    object->count = count;
+
+    for (i = 0; i < count; ++i)
+    {
+        object->objects[i] = objects[i];
+        IUnknown_AddRef(object->objects[i]);
+    }
+
+    *ret = &object->IEnumUnknown_iface;
+
+    return S_OK;
+}
+
+typedef struct CommonDecoder CommonDecoder;
+
+struct metadata_block_reader
+{
+    BOOL metadata_initialized;
+    UINT metadata_count;
+    struct decoder_block *metadata_blocks;
+    IWICMetadataReader **readers;
+    UINT frame;
+    CommonDecoder *decoder;
+};
+
+typedef struct CommonDecoder {
     IWICBitmapDecoder IWICBitmapDecoder_iface;
+    IWICMetadataBlockReader IWICMetadataBlockReader_iface;
     LONG ref;
     CRITICAL_SECTION lock; /* must be held when stream or decoder is accessed */
     IStream *stream;
+    UINT frame;
     struct decoder *decoder;
     struct decoder_info decoder_info;
     struct decoder_stat file_info;
+    struct metadata_block_reader block_reader;
     WICDecodeOptions cache_options;
 } CommonDecoder;
+
+static void metadata_block_reader_initialize(struct metadata_block_reader *block_reader, CommonDecoder *decoder, UINT frame)
+{
+    memset(block_reader, 0, sizeof(*block_reader));
+    block_reader->decoder = decoder;
+    block_reader->frame = frame;
+}
+
+static void metadata_block_reader_cleanup(struct metadata_block_reader *block_reader)
+{
+    UINT i;
+
+    for (i = 0; i < block_reader->metadata_count && block_reader->readers; ++i)
+    {
+        if (block_reader->readers[i])
+            IWICMetadataReader_Release(block_reader->readers[i]);
+    }
+    free(block_reader->readers);
+    free(block_reader->metadata_blocks);
+    memset(block_reader, 0, sizeof(*block_reader));
+}
+
+static HRESULT metadata_block_reader_initialize_metadata(struct metadata_block_reader *block_reader)
+{
+    HRESULT hr = S_OK;
+
+    if (block_reader->metadata_initialized)
+        return S_OK;
+
+    EnterCriticalSection(&block_reader->decoder->lock);
+
+    if (!block_reader->metadata_initialized)
+    {
+        hr = decoder_get_metadata_blocks(block_reader->decoder->decoder, block_reader->frame,
+                &block_reader->metadata_count, &block_reader->metadata_blocks);
+        if (SUCCEEDED(hr))
+            block_reader->metadata_initialized = TRUE;
+
+        if (SUCCEEDED(hr))
+        {
+            block_reader->readers = calloc(block_reader->metadata_count, sizeof(*block_reader->readers));
+            if (!block_reader->readers)
+            {
+                metadata_block_reader_cleanup(block_reader);
+                hr = E_OUTOFMEMORY;
+            }
+        }
+    }
+
+    LeaveCriticalSection(&block_reader->decoder->lock);
+
+    return hr;
+}
+
+static HRESULT metadata_block_reader_get_container_format(struct metadata_block_reader *block_reader, GUID *format)
+{
+    if (!format) return E_INVALIDARG;
+    *format = block_reader->decoder->decoder_info.block_format;
+    return S_OK;
+}
+
+static HRESULT metadata_block_reader_get_count(struct metadata_block_reader *block_reader, UINT *count)
+{
+    HRESULT hr;
+
+    if (!count) return E_INVALIDARG;
+
+    hr = metadata_block_reader_initialize_metadata(block_reader);
+    if (SUCCEEDED(hr))
+        *count = block_reader->metadata_count;
+
+    return hr;
+}
+
+static HRESULT metadata_block_reader_get_reader(struct metadata_block_reader *block_reader,
+        UINT index, IWICMetadataReader **ret_reader)
+{
+    IWICComponentFactory *factory = NULL;
+    IWICMetadataReader *reader;
+    IWICStream *stream;
+    HRESULT hr;
+
+    if (!ret_reader)
+        return E_INVALIDARG;
+
+    *ret_reader = NULL;
+
+    hr = metadata_block_reader_initialize_metadata(block_reader);
+
+    if (SUCCEEDED(hr) && index >= block_reader->metadata_count)
+        hr = E_INVALIDARG;
+
+    if (SUCCEEDED(hr) && block_reader->readers[index])
+    {
+        *ret_reader = block_reader->readers[index];
+        IWICMetadataReader_AddRef(*ret_reader);
+        return S_OK;
+    }
+
+    if (SUCCEEDED(hr))
+        hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
+
+    if (SUCCEEDED(hr))
+        hr = IWICComponentFactory_CreateStream(factory, &stream);
+
+    if (SUCCEEDED(hr))
+    {
+        if (block_reader->metadata_blocks[index].options & DECODER_BLOCK_FULL_STREAM)
+        {
+            LARGE_INTEGER offset;
+            offset.QuadPart = block_reader->metadata_blocks[index].offset;
+
+            hr = IWICStream_InitializeFromIStream(stream, block_reader->decoder->stream);
+
+            if (SUCCEEDED(hr))
+                hr = IWICStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
+        }
+        else if (block_reader->metadata_blocks[index].options & DECODER_BLOCK_OFFSET_IS_PTR)
+        {
+            BYTE *data = (BYTE *)(ULONG_PTR)block_reader->metadata_blocks[index].offset;
+            UINT size = block_reader->metadata_blocks[index].length;
+
+            hr = IWICStream_InitializeFromMemory(stream, data, size);
+        }
+        else
+        {
+            ULARGE_INTEGER offset, length;
+
+            offset.QuadPart = block_reader->metadata_blocks[index].offset;
+            length.QuadPart = block_reader->metadata_blocks[index].length;
+
+            hr = IWICStream_InitializeFromIStreamRegion(stream, block_reader->decoder->stream,
+                offset, length);
+        }
+
+        if (block_reader->metadata_blocks[index].options & DECODER_BLOCK_READER_CLSID)
+        {
+            IWICPersistStream *persist;
+            if (SUCCEEDED(hr))
+            {
+                hr = create_instance(&block_reader->metadata_blocks[index].reader_clsid,
+                    &IID_IWICMetadataReader, (void**)&reader);
+            }
+
+            if (SUCCEEDED(hr))
+            {
+                hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
+
+                if (SUCCEEDED(hr))
+                {
+                    hr = IWICPersistStream_LoadEx(persist, (IStream*)stream, NULL,
+                        block_reader->metadata_blocks[index].options & DECODER_BLOCK_OPTION_MASK);
+
+                    IWICPersistStream_Release(persist);
+                }
+
+                if (FAILED(hr))
+                {
+                    IWICMetadataReader_Release(reader);
+                    reader = NULL;
+                }
+            }
+        }
+        else
+        {
+            hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
+                &block_reader->decoder->decoder_info.block_format, NULL,
+                block_reader->metadata_blocks[index].options & DECODER_BLOCK_OPTION_MASK,
+                (IStream *)stream, &reader);
+        }
+
+        IWICStream_Release(stream);
+    }
+
+    if (factory) IWICComponentFactory_Release(factory);
+
+    if (SUCCEEDED(hr))
+    {
+        if (InterlockedCompareExchangePointer((void **)&block_reader->readers[index], reader, NULL))
+            IWICMetadataReader_Release(reader);
+
+        *ret_reader = block_reader->readers[index];
+        IWICMetadataReader_AddRef(*ret_reader);
+    }
+
+    return hr;
+}
+
+static HRESULT metadata_block_reader_get_enumerator(struct metadata_block_reader *block_reader,
+        IEnumUnknown **enumerator)
+{
+    IUnknown **objects;
+    HRESULT hr = S_OK;
+    UINT count, i;
+
+    if (!enumerator)
+        return E_INVALIDARG;
+
+    *enumerator = NULL;
+
+    if (FAILED(hr = metadata_block_reader_initialize_metadata(block_reader)))
+        return hr;
+
+    count = block_reader->metadata_count;
+
+    if (!(objects = calloc(count, sizeof(*objects))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0; i < count; ++i)
+    {
+        hr = metadata_block_reader_get_reader(block_reader, i, (IWICMetadataReader **)&objects[i]);
+        if (FAILED(hr))
+            break;
+    }
+
+    if (SUCCEEDED(hr))
+        hr = create_object_enumerator(objects, 0, count, enumerator);
+
+    for (i = 0; i < count; ++i)
+    {
+        if (objects[i])
+            IUnknown_Release(objects[i]);
+    }
+    free(objects);
+
+    return hr;
+}
 
 static inline CommonDecoder *impl_from_IWICBitmapDecoder(IWICBitmapDecoder *iface)
 {
     return CONTAINING_RECORD(iface, CommonDecoder, IWICBitmapDecoder_iface);
+}
+
+static inline CommonDecoder *impl_decoder_from_IWICMetadataBlockReader(IWICMetadataBlockReader *iface)
+{
+    return CONTAINING_RECORD(iface, CommonDecoder, IWICMetadataBlockReader_iface);
 }
 
 static HRESULT WINAPI CommonDecoder_QueryInterface(IWICBitmapDecoder *iface, REFIID iid,
@@ -57,6 +468,10 @@ static HRESULT WINAPI CommonDecoder_QueryInterface(IWICBitmapDecoder *iface, REF
     if (IsEqualIID(&IID_IUnknown, iid) || IsEqualIID(&IID_IWICBitmapDecoder, iid))
     {
         *ppv = &This->IWICBitmapDecoder_iface;
+    }
+    else if (This->file_info.flags & DECODER_FLAGS_METADATA_AT_DECODER && IsEqualIID(&IID_IWICMetadataBlockReader, iid))
+    {
+        *ppv = &This->IWICMetadataBlockReader_iface;
     }
     else
     {
@@ -91,6 +506,7 @@ static ULONG WINAPI CommonDecoder_Release(IWICBitmapDecoder *iface)
             IStream_Release(This->stream);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
+        metadata_block_reader_cleanup(&This->block_reader);
         decoder_destroy(This->decoder);
         free(This);
     }
@@ -163,16 +579,55 @@ static HRESULT WINAPI CommonDecoder_GetDecoderInfo(IWICBitmapDecoder *iface,
 static HRESULT WINAPI CommonDecoder_CopyPalette(IWICBitmapDecoder *iface,
     IWICPalette *palette)
 {
+    CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
+    WICColor colors[256];
+    UINT num_colors;
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", iface, palette);
-    return WINCODEC_ERR_PALETTEUNAVAILABLE;
+
+    if (FAILED(hr = decoder_get_decoder_palette(This->decoder, This->frame, colors, &num_colors)))
+        return hr;
+
+    if (num_colors)
+    {
+        hr = IWICPalette_InitializeCustom(palette, colors, num_colors);
+    }
+    else
+    {
+        hr = WINCODEC_ERR_PALETTEUNAVAILABLE;
+    }
+
+    return hr;
+}
+
+static HRESULT common_decoder_create_query_reader(IWICMetadataBlockReader *block_reader, IWICMetadataQueryReader **query_reader)
+{
+    IWICComponentFactory *factory;
+    HRESULT hr;
+
+    hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void **)&factory);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, block_reader, query_reader);
+        IWICComponentFactory_Release(factory);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI CommonDecoder_GetMetadataQueryReader(IWICBitmapDecoder *iface,
     IWICMetadataQueryReader **reader)
 {
+    CommonDecoder *This = impl_from_IWICBitmapDecoder(iface);
+
     TRACE("(%p,%p)\n", iface, reader);
 
     if (!reader) return E_INVALIDARG;
+
+    if (This->file_info.flags & DECODER_FLAGS_METADATA_AT_DECODER)
+        return common_decoder_create_query_reader(&This->IWICMetadataBlockReader_iface, reader);
 
     *reader = NULL;
     return WINCODEC_ERR_UNSUPPORTEDOPERATION;
@@ -241,6 +696,71 @@ static const IWICBitmapDecoderVtbl CommonDecoder_Vtbl = {
     CommonDecoder_GetFrame
 };
 
+static HRESULT WINAPI CommonDecoder_Block_QueryInterface(IWICMetadataBlockReader *iface, REFIID iid,
+    void **ppv)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapDecoder_QueryInterface(&decoder->IWICBitmapDecoder_iface, iid, ppv);
+}
+
+static ULONG WINAPI CommonDecoder_Block_AddRef(IWICMetadataBlockReader *iface)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapDecoder_AddRef(&decoder->IWICBitmapDecoder_iface);
+}
+
+static ULONG WINAPI CommonDecoder_Block_Release(IWICMetadataBlockReader *iface)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+    return IWICBitmapDecoder_Release(&decoder->IWICBitmapDecoder_iface);
+}
+
+static HRESULT WINAPI CommonDecoder_Block_GetContainerFormat(IWICMetadataBlockReader *iface, GUID *format)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+    return metadata_block_reader_get_container_format(&decoder->block_reader, format);
+}
+
+static HRESULT WINAPI CommonDecoder_Block_GetCount(IWICMetadataBlockReader *iface, UINT *count)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%p\n", iface, count);
+
+    return metadata_block_reader_get_count(&decoder->block_reader, count);
+}
+
+static HRESULT WINAPI CommonDecoder_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
+        UINT index, IWICMetadataReader **reader)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%d,%p\n", iface, index, reader);
+
+    return metadata_block_reader_get_reader(&decoder->block_reader, index, reader);
+}
+
+static HRESULT WINAPI CommonDecoder_Block_GetEnumerator(IWICMetadataBlockReader *iface,
+        IEnumUnknown **enumerator)
+{
+    CommonDecoder *decoder = impl_decoder_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%p\n", iface, enumerator);
+
+    return metadata_block_reader_get_enumerator(&decoder->block_reader, enumerator);
+}
+
+static const IWICMetadataBlockReaderVtbl CommonDecoder_BlockVtbl =
+{
+    CommonDecoder_Block_QueryInterface,
+    CommonDecoder_Block_AddRef,
+    CommonDecoder_Block_Release,
+    CommonDecoder_Block_GetContainerFormat,
+    CommonDecoder_Block_GetCount,
+    CommonDecoder_Block_GetReaderByIndex,
+    CommonDecoder_Block_GetEnumerator,
+};
+
 typedef struct {
     IWICBitmapFrameDecode IWICBitmapFrameDecode_iface;
     IWICMetadataBlockReader IWICMetadataBlockReader_iface;
@@ -248,9 +768,7 @@ typedef struct {
     CommonDecoder *parent;
     DWORD frame;
     struct decoder_frame decoder_frame;
-    BOOL metadata_initialized;
-    UINT metadata_count;
-    struct decoder_block* metadata_blocks;
+    struct metadata_block_reader block_reader;
 } CommonDecoderFrame;
 
 static inline CommonDecoderFrame *impl_from_IWICBitmapFrameDecode(IWICBitmapFrameDecode *iface)
@@ -310,7 +828,7 @@ static ULONG WINAPI CommonDecoderFrame_Release(IWICBitmapFrameDecode *iface)
     if (ref == 0)
     {
         IWICBitmapDecoder_Release(&This->parent->IWICBitmapDecoder_iface);
-        free(This->metadata_blocks);
+        metadata_block_reader_cleanup(&This->block_reader);
         free(This);
     }
 
@@ -432,8 +950,6 @@ static HRESULT WINAPI CommonDecoderFrame_GetMetadataQueryReader(IWICBitmapFrameD
     IWICMetadataQueryReader **ppIMetadataQueryReader)
 {
     CommonDecoderFrame *This = impl_from_IWICBitmapFrameDecode(iface);
-    IWICComponentFactory* factory;
-    HRESULT hr;
 
     TRACE("(%p,%p)\n", iface, ppIMetadataQueryReader);
 
@@ -443,18 +959,7 @@ static HRESULT WINAPI CommonDecoderFrame_GetMetadataQueryReader(IWICBitmapFrameD
     if (!(This->parent->file_info.flags & WICBitmapDecoderCapabilityCanEnumerateMetadata))
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
 
-    hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
-
-    if (SUCCEEDED(hr))
-    {
-        hr = IWICComponentFactory_CreateQueryReaderFromBlockReader(factory, &This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
-        IWICComponentFactory_Release(factory);
-    }
-
-    if (FAILED(hr))
-        *ppIMetadataQueryReader = NULL;
-
-    return hr;
+    return common_decoder_create_query_reader(&This->IWICMetadataBlockReader_iface, ppIMetadataQueryReader);
 }
 
 static HRESULT WINAPI CommonDecoderFrame_GetColorContexts(IWICBitmapFrameDecode *iface,
@@ -559,148 +1064,37 @@ static HRESULT WINAPI CommonDecoderFrame_Block_GetContainerFormat(IWICMetadataBl
     GUID *pguidContainerFormat)
 {
     CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
-    if (!pguidContainerFormat) return E_INVALIDARG;
-    *pguidContainerFormat = This->parent->decoder_info.block_format;
-    return S_OK;
-}
-
-static HRESULT CommonDecoderFrame_InitializeMetadata(CommonDecoderFrame *This)
-{
-    HRESULT hr=S_OK;
-
-    if (This->metadata_initialized)
-        return S_OK;
-
-    EnterCriticalSection(&This->parent->lock);
-
-    if (!This->metadata_initialized)
-    {
-        hr = decoder_get_metadata_blocks(This->parent->decoder, This->frame, &This->metadata_count, &This->metadata_blocks);
-        if (SUCCEEDED(hr))
-            This->metadata_initialized = TRUE;
-    }
-
-    LeaveCriticalSection(&This->parent->lock);
-
-    return hr;
+    return metadata_block_reader_get_container_format(&This->block_reader, pguidContainerFormat);
 }
 
 static HRESULT WINAPI CommonDecoderFrame_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *pcCount)
 {
     CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
-    HRESULT hr;
 
     TRACE("%p,%p\n", iface, pcCount);
 
-    if (!pcCount) return E_INVALIDARG;
-
-    hr = CommonDecoderFrame_InitializeMetadata(This);
-    if (SUCCEEDED(hr))
-        *pcCount = This->metadata_count;
-
-    return hr;
+    return metadata_block_reader_get_count(&This->block_reader, pcCount);
 }
 
 static HRESULT WINAPI CommonDecoderFrame_Block_GetReaderByIndex(IWICMetadataBlockReader *iface,
     UINT nIndex, IWICMetadataReader **ppIMetadataReader)
 {
     CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
-    HRESULT hr;
-    IWICComponentFactory* factory = NULL;
-    IWICStream* stream;
 
     TRACE("%p,%d,%p\n", iface, nIndex, ppIMetadataReader);
 
-    if (!ppIMetadataReader)
-        return E_INVALIDARG;
-
-    hr = CommonDecoderFrame_InitializeMetadata(This);
-
-    if (SUCCEEDED(hr) && nIndex >= This->metadata_count)
-        hr = E_INVALIDARG;
-
-    if (SUCCEEDED(hr))
-        hr = create_instance(&CLSID_WICImagingFactory, &IID_IWICComponentFactory, (void**)&factory);
-
-    if (SUCCEEDED(hr))
-        hr = IWICComponentFactory_CreateStream(factory, &stream);
-
-    if (SUCCEEDED(hr))
-    {
-        if (This->metadata_blocks[nIndex].options & DECODER_BLOCK_FULL_STREAM)
-        {
-            LARGE_INTEGER offset;
-            offset.QuadPart = This->metadata_blocks[nIndex].offset;
-
-            hr = IWICStream_InitializeFromIStream(stream, This->parent->stream);
-
-            if (SUCCEEDED(hr))
-                hr = IWICStream_Seek(stream, offset, STREAM_SEEK_SET, NULL);
-        }
-        else
-        {
-            ULARGE_INTEGER offset, length;
-
-            offset.QuadPart = This->metadata_blocks[nIndex].offset;
-            length.QuadPart = This->metadata_blocks[nIndex].length;
-
-            hr = IWICStream_InitializeFromIStreamRegion(stream, This->parent->stream,
-                offset, length);
-        }
-
-        if (This->metadata_blocks[nIndex].options & DECODER_BLOCK_READER_CLSID)
-        {
-            IWICMetadataReader *reader;
-            IWICPersistStream *persist;
-            if (SUCCEEDED(hr))
-            {
-                hr = create_instance(&This->metadata_blocks[nIndex].reader_clsid,
-                    &IID_IWICMetadataReader, (void**)&reader);
-            }
-
-            if (SUCCEEDED(hr))
-            {
-                hr = IWICMetadataReader_QueryInterface(reader, &IID_IWICPersistStream, (void**)&persist);
-
-                if (SUCCEEDED(hr))
-                {
-                    hr = IWICPersistStream_LoadEx(persist, (IStream*)stream, NULL,
-                        This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK);
-
-                    IWICPersistStream_Release(persist);
-                }
-
-                if (SUCCEEDED(hr))
-                    *ppIMetadataReader = reader;
-                else
-                    IWICMetadataReader_Release(reader);
-            }
-        }
-        else
-        {
-            hr = IWICComponentFactory_CreateMetadataReaderFromContainer(factory,
-                &This->parent->decoder_info.block_format, NULL,
-                This->metadata_blocks[nIndex].options & DECODER_BLOCK_OPTION_MASK,
-                (IStream*)stream, ppIMetadataReader);
-        }
-
-        IWICStream_Release(stream);
-    }
-
-    if (factory) IWICComponentFactory_Release(factory);
-
-    if (FAILED(hr))
-        *ppIMetadataReader = NULL;
-
-    return S_OK;
+    return metadata_block_reader_get_reader(&This->block_reader, nIndex, ppIMetadataReader);
 }
 
 static HRESULT WINAPI CommonDecoderFrame_Block_GetEnumerator(IWICMetadataBlockReader *iface,
-    IEnumUnknown **ppIEnumMetadata)
+        IEnumUnknown **enumerator)
 {
-    FIXME("%p,%p\n", iface, ppIEnumMetadata);
-    return E_NOTIMPL;
+    CommonDecoderFrame *This = impl_from_IWICMetadataBlockReader(iface);
+
+    TRACE("%p,%p\n", iface, enumerator);
+
+    return metadata_block_reader_get_enumerator(&This->block_reader, enumerator);
 }
 
 static const IWICMetadataBlockReaderVtbl CommonDecoderFrame_BlockVtbl = {
@@ -744,14 +1138,15 @@ static HRESULT WINAPI CommonDecoder_GetFrame(IWICBitmapDecoder *iface,
         result->ref = 1;
         result->parent = This;
         result->frame = index;
-        result->metadata_initialized = FALSE;
-        result->metadata_count = 0;
-        result->metadata_blocks = NULL;
+        metadata_block_reader_initialize(&result->block_reader, This, index);
 
         hr = decoder_get_frame_info(This->decoder, index, &result->decoder_frame);
 
         if (SUCCEEDED(hr) && This->cache_options == WICDecodeMetadataCacheOnLoad)
-            hr = CommonDecoderFrame_InitializeMetadata(result);
+            hr = metadata_block_reader_initialize_metadata(&result->block_reader);
+
+        if (SUCCEEDED(hr))
+            This->frame = result->frame;
 
         if (FAILED(hr))
             free(result);
@@ -785,18 +1180,18 @@ HRESULT CommonDecoder_CreateInstance(struct decoder *decoder,
 
     TRACE("(%s,%s,%p)\n", debugstr_guid(&decoder_info->clsid), debugstr_guid(iid), ppv);
 
-    This = malloc(sizeof(*This));
-    if (!This)
+    if (!(This = calloc(1, sizeof(*This))))
     {
         decoder_destroy(decoder);
         return E_OUTOFMEMORY;
     }
 
     This->IWICBitmapDecoder_iface.lpVtbl = &CommonDecoder_Vtbl;
+    This->IWICMetadataBlockReader_iface.lpVtbl = &CommonDecoder_BlockVtbl;
     This->ref = 1;
-    This->stream = NULL;
     This->decoder = decoder;
     This->decoder_info = *decoder_info;
+    metadata_block_reader_initialize(&This->block_reader, This, ~0u);
     InitializeCriticalSectionEx(&This->lock, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": CommonDecoder.lock");
 

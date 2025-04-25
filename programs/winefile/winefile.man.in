@@ -9,9 +9,9 @@ is the Wine file manager, with a similar design to early Microsoft Windows explo
 .SH USAGE
 You can pass winefile either a Unix or Win32 path, for example:
 
-.RB "Using a Unix path:  " "winefile /mnt/hda1"
+.RB "- Using a Unix path:  " "winefile /mnt/hda1"
 
-.RB "Using a Win32 path: " "winefile C:\(rs\(rswindows\(rs\(rs\"
+.RB "- Using a Win32 path: " "winefile C:\(rs\(rswindows\(rs\(rs\ "
 
 .SH BUGS
 Bugs can be reported on the

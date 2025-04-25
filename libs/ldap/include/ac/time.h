@@ -2,7 +2,7 @@
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2022 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,13 +27,6 @@
 # endif
 #else
 # include <time.h>
-#endif
-
-#if defined(_WIN32) && !defined(HAVE_CLOCK_GETTIME)
-	struct timespec {
-		time_t	tv_sec;
-		int 	tv_nsec;
-	};
 #endif
 
 #endif /* _AC_TIME_H */

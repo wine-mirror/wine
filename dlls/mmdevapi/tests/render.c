@@ -135,7 +135,9 @@ static void test_audioclient(void)
     IAudioClient *ac;
     IAudioClient2 *ac2;
     IAudioClient3 *ac3;
+    IAudioClock *acl;
     IUnknown *unk;
+    IAudioClockAdjustment *aca;
     HRESULT hr;
     ULONG ref;
     WAVEFORMATEX *pwfx, *pwfx2;
@@ -201,6 +203,18 @@ static void test_audioclient(void)
     if (unk)
     {
         ref = IUnknown_Release(unk);
+        ok(ref == 1, "Released count is %lu\n", ref);
+    }
+    hr = IAudioClient_QueryInterface(ac, &IID_IAudioClock, (void**)&acl);
+    ok(hr == E_NOINTERFACE, "QueryInterface(IID_IAudioClock) returned %08lx\n", hr);
+
+    hr = IAudioClient_QueryInterface(ac, &IID_IAudioClockAdjustment, (void**)&aca);
+    ok(hr == S_OK, "QueryInterface(IID_IAudioClockAdjustment) returned %08lx\n", hr);
+    if (aca)
+    {
+        hr = IAudioClockAdjustment_QueryInterface(aca, &IID_IAudioClock, (void**)&acl);
+        ok(hr == E_NOINTERFACE, "QueryInterface(IID_IAudioClock) returned %08lx\n", hr);
+        ref = IAudioClockAdjustment_Release(aca);
         ok(ref == 1, "Released count is %lu\n", ref);
     }
 
@@ -598,8 +612,9 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
 
 static void test_references(void)
 {
-    IAudioClient *ac;
+    IAudioClient *ac, *ac2;
     IAudioRenderClient *rc;
+    IAudioClockAdjustment *aca;
     ISimpleAudioVolume *sav;
     IAudioStreamVolume *asv;
     IAudioClock *acl;
@@ -639,6 +654,58 @@ static void test_references(void)
 
     ref = IAudioRenderClient_Release(rc);
     ok(ref == 0, "RenderClient_Release gave wrong refcount: %lu\n", ref);
+
+    /* IAudioClockAdjustment */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
+
+    CoTaskMemFree(pwfx);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClockAdjustment, (void**)&aca);
+    todo_wine ok(hr == E_INVALIDARG, "IAudioClient_GetService(IID_IAudioClockAdjustment) returned %08lx\n", hr);
+
+    if (hr == S_OK) {
+        ref = IAudioClockAdjustment_Release(aca);
+        ok(ref == 1, "AudioClockAdjustment_Release gave wrong refcount: %lu\n", ref);
+    }
+
+    ref = IAudioClient_Release(ac);
+    ok(ref == 0, "Client_Release gave wrong refcount: %lu\n", ref);
+
+    /* IAudioClockAdjustment */
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_RATEADJUST, 5000000,
+            0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
+
+    CoTaskMemFree(pwfx);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClockAdjustment, (void**)&aca);
+    ok(hr == S_OK, "IAudioClient_GetService(IID_IAudioClockAdjustment) returned %08lx\n", hr);
+    ref = IAudioClockAdjustment_Release(aca);
+    ok(ref == 1, "AudioClockAdjustment_Release gave wrong refcount: %lu\n", ref);
+
+    ref = IAudioClient_Release(ac);
+    ok(ref == 0, "Client_Release gave wrong refcount: %lu\n", ref);
+
 
     /* ISimpleAudioVolume */
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
@@ -691,6 +758,9 @@ static void test_references(void)
     IAudioClock_AddRef(acl);
     ref = IAudioClock_Release(acl);
     ok(ref != 0, "AudioClock_Release gave wrong refcount: %lu\n", ref);
+
+    hr = IAudioClock_QueryInterface(acl, &IID_IAudioClient, (void**)&ac2);
+    ok(hr == E_NOINTERFACE, "QueryInterface(IID_IAudioClient) returned %08lx\n", hr);
 
     ref = IAudioClient_Release(ac);
     ok(ref != 0, "Client_Release gave wrong refcount: %lu\n", ref);
@@ -2603,6 +2673,71 @@ static void test_endpointvolume(void)
     IAudioEndpointVolume_Release(aev);
 }
 
+static void test_audio_clock_adjustment(void)
+{
+    HRESULT hr;
+    IAudioClient *ac;
+    IAudioClockAdjustment *aca;
+    UINT bufsize, expected_bufsize;
+    WAVEFORMATEX *pwfx;
+    HANDLE event;
+
+    const REFERENCE_TIME buffer_duration = 500000;
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&ac);
+    ok(hr == S_OK, "Activation failed with %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetMixFormat(ac, &pwfx);
+    ok(hr == S_OK, "GetMixFormat failed: %08lx\n", hr);
+
+    expected_bufsize = (buffer_duration / 10000000.) * pwfx->nSamplesPerSec;
+
+    hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_RATEADJUST, buffer_duration, 0, pwfx, NULL);
+    ok(hr == S_OK, "Initialize failed: %08lx\n", hr);
+    if(hr != S_OK)
+        return;
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    hr = IAudioClient_GetService(ac, &IID_IAudioClockAdjustment, (void**)&aca);
+    ok(hr == S_OK, "IAudioClient_GetService(IID_IAudioClockAdjustment) returned %08lx\n", hr);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed\n");
+
+    hr = IAudioClient_SetEventHandle(ac, event);
+    ok(hr == S_OK, "SetEventHandle failed: %08lx\n", hr);
+
+    hr = IAudioClient_Start(ac);
+    ok(hr == S_OK, "Start failed: %08lx\n", hr);
+
+    hr = IAudioClockAdjustment_SetSampleRate(aca, 48000.00f);
+    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+
+    /* Wait for frame processing */
+    WaitForSingleObject(event, 1000);
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    hr = IAudioClockAdjustment_SetSampleRate(aca, 44100.00f);
+    ok(hr == S_OK, "SetSampleRate failed: %08lx\n", hr);
+
+    /* Wait for frame processing */
+    WaitForSingleObject(event, 1000);
+
+    hr = IAudioClient_GetBufferSize(ac, &bufsize);
+    ok(bufsize == expected_bufsize, "unexpected bufsize %d expected %d\n", bufsize, expected_bufsize);
+
+    IAudioClockAdjustment_Release(aca);
+    IAudioClient_Release(ac);
+}
+
 START_TEST(render)
 {
     HRESULT hr;
@@ -2649,6 +2784,7 @@ START_TEST(render)
     test_session_creation();
     test_worst_case();
     test_endpointvolume();
+    test_audio_clock_adjustment();
 
     IMMDevice_Release(dev);
 

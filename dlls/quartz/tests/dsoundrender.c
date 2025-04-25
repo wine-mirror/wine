@@ -595,6 +595,7 @@ struct testfilter
 {
     struct strmbase_filter filter;
     struct strmbase_source source;
+    IMediaSeeking IMediaSeeking_iface;
 };
 
 static inline struct testfilter *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -625,8 +626,17 @@ static const struct strmbase_filter_ops testfilter_ops =
 
 static HRESULT testsource_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
 {
+    struct testfilter *filter = impl_from_strmbase_filter(iface->filter);
+
     ok(!IsEqualGUID(iid, &IID_IQualityControl), "Unexpected query for IQualityControl.\n");
-    return E_NOINTERFACE;
+
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT WINAPI testsource_DecideAllocator(struct strmbase_source *iface,
@@ -642,11 +652,163 @@ static const struct strmbase_source_ops testsource_ops =
     .pfnDecideAllocator = testsource_DecideAllocator,
 };
 
+static struct testfilter *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, struct testfilter, IMediaSeeking_iface);
+}
+
+static HRESULT WINAPI testseek_QueryInterface(IMediaSeeking *iface, REFIID iid, void **out)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI testseek_AddRef(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI testseek_Release(IMediaSeeking *iface)
+{
+    struct testfilter *filter = impl_from_IMediaSeeking(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static HRESULT WINAPI testseek_GetCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_CheckCapabilities(IMediaSeeking *iface, DWORD *caps)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsFormatSupported(IMediaSeeking *iface, const GUID *format)
+{
+    if (winetest_debug > 1) trace("IsFormatSupported(%s)\n", debugstr_guid(format));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_QueryPreferredFormat(IMediaSeeking *iface, GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetTimeFormat(IMediaSeeking *iface, GUID *format)
+{
+    if (winetest_debug > 1) trace("GetTimeFormat()\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_IsUsingTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetTimeFormat(IMediaSeeking *iface, const GUID *format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetDuration(IMediaSeeking *iface, LONGLONG *duration)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetStopPosition(IMediaSeeking *iface, LONGLONG *stop)
+{
+    if (winetest_debug > 1) trace("GetStopPosition()\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetCurrentPosition(IMediaSeeking *iface, LONGLONG *current)
+{
+    if (winetest_debug > 1) trace("GetCurrentPosition()\n");
+    return 0xdeadbeef;
+}
+
+static HRESULT WINAPI testseek_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *target,
+        const GUID *target_format, LONGLONG source, const GUID *source_format)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetPositions(IMediaSeeking *iface, LONGLONG *current,
+        DWORD current_flags, LONGLONG *stop, DWORD stop_flags)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPositions(IMediaSeeking *iface, LONGLONG *current, LONGLONG *stop)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetAvailable(IMediaSeeking *iface, LONGLONG *earliest, LONGLONG *latest)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_SetRate(IMediaSeeking *iface, double rate)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetRate(IMediaSeeking *iface, double *rate)
+{
+    if (winetest_debug > 1) trace("GetRate()\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI testseek_GetPreroll(IMediaSeeking *iface, LONGLONG *preroll)
+{
+    ok(0, "Unexpected call.\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSeekingVtbl testseek_vtbl =
+{
+    testseek_QueryInterface,
+    testseek_AddRef,
+    testseek_Release,
+    testseek_GetCapabilities,
+    testseek_CheckCapabilities,
+    testseek_IsFormatSupported,
+    testseek_QueryPreferredFormat,
+    testseek_GetTimeFormat,
+    testseek_IsUsingTimeFormat,
+    testseek_SetTimeFormat,
+    testseek_GetDuration,
+    testseek_GetStopPosition,
+    testseek_GetCurrentPosition,
+    testseek_ConvertTimeFormat,
+    testseek_SetPositions,
+    testseek_GetPositions,
+    testseek_GetAvailable,
+    testseek_SetRate,
+    testseek_GetRate,
+    testseek_GetPreroll,
+};
+
 static void testfilter_init(struct testfilter *filter)
 {
     static const GUID clsid = {0xabacab};
     strmbase_filter_init(&filter->filter, NULL, &clsid, &testfilter_ops);
     strmbase_source_init(&filter->source, &filter->filter, L"", &testsource_ops);
+    filter->IMediaSeeking_iface.lpVtbl = &testseek_vtbl;
 }
 
 static void test_allocator(IMemInputPin *input)
@@ -744,6 +906,9 @@ static HRESULT send_frame(IMemInputPin *sink)
     hr = IMediaSample_SetTime(sample, &start_time, &end_time);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    hr = IMediaSample_SetPreroll(sample, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     params->sink = sink;
     params->sample = sample;
     thread = CreateThread(NULL, 0, frame_thread, params, 0, NULL);
@@ -756,9 +921,10 @@ static HRESULT send_frame(IMemInputPin *sink)
     return ret;
 }
 
-static void test_filter_state(IMemInputPin *input, IMediaControl *control)
+static void test_filter_state(IMemInputPin *input, IMediaSeeking *seeking, IMediaControl *control)
 {
     OAFilterState state;
+    LONGLONG time;
     HRESULT hr;
 
     hr = send_frame(input);
@@ -781,7 +947,7 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -799,7 +965,7 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
     ok(hr == VFW_S_STATE_INTERMEDIATE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -815,6 +981,9 @@ static void test_filter_state(IMemInputPin *input, IMediaControl *control)
 
     hr = send_frame(input);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -851,7 +1020,7 @@ static void test_flushing(IPin *pin, IMemInputPin *input, IMediaControl *control
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_GetState(control, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -910,10 +1079,11 @@ static unsigned int check_ec_complete(IMediaEvent *eventsrc, DWORD timeout)
     return ret;
 }
 
-static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
+static void test_eos(IPin *pin, IMemInputPin *input, IMediaSeeking *seeking, IMediaControl *control)
 {
     IMediaEvent *eventsrc;
     OAFilterState state;
+    LONGLONG time;
     HRESULT hr;
     BOOL ret;
 
@@ -951,7 +1121,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Run(control);
@@ -965,6 +1135,9 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     todo_wine ok(!ret, "Got unexpected EC_COMPLETE.\n");
     ret = check_ec_complete(eventsrc, 2000);
     todo_wine ok(ret == 1, "Expected EC_COMPLETE.\n");
+
+    hr = IMediaSeeking_GetCurrentPosition(seeking, &time);
+    ok(hr == 0xdeadbeef, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -995,7 +1168,7 @@ static void test_eos(IPin *pin, IMemInputPin *input, IMediaControl *control)
     hr = IMediaControl_Pause(control);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = send_frame(input);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_GetState(control, 1000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Run(control);
@@ -1051,6 +1224,7 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_dsound_render();
     struct testfilter source;
     IMemAllocator *allocator;
+    IMediaSeeking *seeking;
     IMediaControl *control;
     IFilterGraph2 *graph;
     IMemInputPin *input;
@@ -1067,6 +1241,7 @@ static void test_connect_pin(void)
     IFilterGraph2_QueryInterface(graph, &IID_IMediaControl, (void **)&control);
 
     IBaseFilter_FindPin(filter, sink_id, &pin);
+    IBaseFilter_QueryInterface(filter, &IID_IMediaSeeking, (void **)&seeking);
 
     peer = (IPin *)0xdeadbeef;
     hr = IPin_ConnectedTo(pin, &peer);
@@ -1120,9 +1295,9 @@ static void test_connect_pin(void)
     hr = IMemInputPin_ReceiveCanBlock(input);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    test_filter_state(input, control);
+    test_filter_state(input, seeking, control);
     test_flushing(pin, input, control);
-    test_eos(pin, input, control);
+    test_eos(pin, input, seeking, control);
 
     hr = IFilterGraph2_Disconnect(graph, pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1146,6 +1321,7 @@ static void test_connect_pin(void)
     IMediaControl_Release(control);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    IMediaSeeking_Release(seeking);
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
     ref = IBaseFilter_Release(&source.filter.IBaseFilter_iface);

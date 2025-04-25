@@ -821,13 +821,21 @@ static HRESULT create_signature_table( IEnumWbemClassObject *iter, enum wbm_name
     hr = create_signature_columns_and_data( iter, &num_cols, &columns, &row );
     if (hr != S_OK) return hr;
 
-    if (!(table = create_table( name, num_cols, columns, 1, 1, row, NULL )))
+    if (!(table = alloc_table()))
     {
         free_columns( columns, num_cols );
         free( row );
         return E_OUTOFMEMORY;
     }
-    if (!add_table( ns, table )) free_table( table ); /* already exists */
+
+    table->name               = wcsdup( name );
+    table->num_cols           = num_cols;
+    table->columns            = columns;
+    table->num_rows           = 1;
+    table->num_rows_allocated = 1;
+    table->data               = row;
+    table->flags              = TABLE_FLAG_DYNAMIC;
+    if (!add_table( ns, table )) release_table( table ); /* already exists */
     return S_OK;
 }
 

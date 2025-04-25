@@ -70,7 +70,6 @@ static const IMMEndpointVtbl MMEndpointVtbl;
 
 static MMDevEnumImpl enumerator;
 static struct list device_list = LIST_INIT(device_list);
-static IMMDevice info_device;
 
 typedef struct MMDevColImpl
 {
@@ -132,6 +131,113 @@ static inline IDeviceTopologyImpl *impl_from_IDeviceTopology(IDeviceTopology *if
 }
 
 static const WCHAR propkey_formatW[] = L"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X},%d";
+
+struct device
+{
+    struct list entry;
+    GUID        guid;
+    EDataFlow   flow;
+    char        name[];
+};
+
+static struct list devices_cache = LIST_INIT( devices_cache );
+
+static void add_device_to_cache( const GUID *guid, const char *name, EDataFlow flow )
+{
+    struct device *dev;
+
+    if (!(dev = malloc( offsetof( struct device, name[strlen(name) + 1] )))) return;
+    dev->guid = *guid;
+    dev->flow = flow;
+    strcpy( dev->name, name );
+    list_add_tail( &devices_cache, &dev->entry );
+}
+
+static struct device *find_device_in_cache( const GUID *guid )
+{
+    struct device *dev;
+
+    LIST_FOR_EACH_ENTRY( dev, &devices_cache, struct device, entry )
+        if (IsEqualGUID( guid, &dev->guid )) return dev;
+    return NULL;
+}
+
+BOOL get_device_name_from_guid( const GUID *guid, char **name, EDataFlow *flow )
+{
+    struct device *dev;
+    WCHAR key_name[MAX_PATH];
+    DWORD index = 0;
+    HKEY key;
+
+    if ((dev = find_device_in_cache( guid )))
+    {
+        *name = strdup(dev->name);
+        *flow = dev->flow;
+        return TRUE;
+    }
+
+    swprintf( key_name, ARRAY_SIZE(key_name), L"Software\\Wine\\Drivers\\%s\\devices", drvs.module_name );
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, key_name, 0, KEY_READ | KEY_WOW64_64KEY, &key )) return FALSE;
+
+    for (;;)
+    {
+        DWORD size, type;
+        LSTATUS status;
+        GUID reg_guid;
+        HKEY dev_key;
+
+        size = ARRAY_SIZE(key_name);
+        if (RegEnumKeyExW( key, index++, key_name, &size, NULL, NULL, NULL, NULL )) break;
+        if (RegOpenKeyExW( key, key_name, 0, KEY_READ | KEY_WOW64_64KEY, &dev_key )) continue;
+        size = sizeof(reg_guid);
+        status = RegQueryValueExW( dev_key, L"guid", 0, &type, (BYTE *)&reg_guid, &size );
+        RegCloseKey(dev_key);
+        if (status || type != REG_BINARY || size != sizeof(reg_guid)) continue;
+        if (!IsEqualGUID( &reg_guid, guid )) continue;
+        if (key_name[0] == '0') *flow = eRender;
+        else if (key_name[0] == '1') *flow = eCapture;
+        else continue;
+
+        RegCloseKey( key );
+        TRACE( "Found matching device key %s for %s\n", wine_dbgstr_w(key_name), debugstr_guid(guid) );
+        size = WideCharToMultiByte( CP_UNIXCP, 0, key_name + 2, -1, NULL, 0, NULL, NULL );
+        if (!(*name = malloc( size ))) return FALSE;
+        WideCharToMultiByte( CP_UNIXCP, 0, key_name + 2, -1, *name, size, NULL, NULL );
+        add_device_to_cache( guid, *name, *flow );
+        return TRUE;
+    }
+    RegCloseKey( key );
+    WARN( "No matching device in registry for %s\n", debugstr_guid(guid) );
+    return FALSE;
+}
+
+static void get_device_guid( EDataFlow flow, const char *dev_name, GUID *guid )
+{
+    WCHAR name[512];
+    DWORD type, size = sizeof(*guid);
+    HKEY key;
+    LSTATUS status;
+    int len;
+
+    len = swprintf( name, ARRAY_SIZE(name), L"Software\\Wine\\Drivers\\%s\\devices\\%u,",
+                    drvs.module_name, flow == eCapture );
+    MultiByteToWideChar( CP_UNIXCP, 0, dev_name, -1, name + len, ARRAY_SIZE(name) - len );
+    status = RegCreateKeyExW( HKEY_CURRENT_USER, name, 0, NULL, 0,
+                              KEY_READ | KEY_WRITE | KEY_WOW64_64KEY, NULL, &key, NULL);
+    if (status)
+    {
+        ERR( "Failed to create key %s: %lu\n", debugstr_w(name), status );
+        return;
+    }
+    status = RegQueryValueExW( key, L"guid", 0, &type, (BYTE *)guid, &size );
+    if (status != ERROR_SUCCESS || type != REG_BINARY || size != sizeof(*guid))
+    {
+        CoCreateGuid( guid );
+        RegSetValueExW( key, L"guid", 0, REG_BINARY, (BYTE *)guid, sizeof(*guid) );
+    }
+    RegCloseKey( key );
+    if (!find_device_in_cache( guid )) add_device_to_cache( guid, dev_name, flow );
+}
 
 static HRESULT MMDevPropStore_OpenPropKey(const GUID *guid, DWORD flow, HKEY *propkey)
 {
@@ -269,7 +375,7 @@ static HRESULT set_driver_prop_value(GUID *id, const EDataFlow flow, const PROPE
 
     TRACE("%s, (%s,%lu)\n", wine_dbgstr_guid(id), wine_dbgstr_guid(&prop->fmtid), prop->pid);
 
-    if (!drvs.pget_device_name_from_guid(id, &dev_name, &params.flow))
+    if (!get_device_name_from_guid(id, &dev_name, &params.flow))
         return E_FAIL;
 
     params.device      = dev_name;
@@ -565,7 +671,7 @@ HRESULT load_driver_devices(EDataFlow flow)
         const WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
         const char *dev_name = (char *)params.endpoints + params.endpoints[i].device;
 
-        drvs.pget_device_guid(flow, dev_name, &guid);
+        get_device_guid( flow, dev_name, &guid );
 
         dev = MMDevice_Create(name, &guid, flow, DEVICE_STATE_ACTIVE, params.default_idx == i);
         set_format(dev);
@@ -956,11 +1062,14 @@ HRESULT MMDevEnum_Create(REFIID riid, void **ppv)
 void MMDevEnum_Free(void)
 {
     MMDevice *device, *next;
+    struct device *dev, *dev_next;
+
     LIST_FOR_EACH_ENTRY_SAFE(device, next, &device_list, MMDevice, entry)
         MMDevice_Destroy(device);
     RegCloseKey(key_render);
     RegCloseKey(key_capture);
-    key_render = key_capture = NULL;
+    LIST_FOR_EACH_ENTRY_SAFE(dev, dev_next, &devices_cache, struct device, entry)
+        free( dev );
 }
 
 static HRESULT WINAPI MMDevEnum_QueryInterface(IMMDeviceEnumerator *iface, REFIID riid, void **ppv)
@@ -1104,11 +1213,6 @@ static HRESULT WINAPI MMDevEnum_GetDevice(IMMDeviceEnumerator *iface, const WCHA
 
     if(!name || !device)
         return E_POINTER;
-
-    if(!lstrcmpW(name, L"Wine info device")){
-        *device = &info_device;
-        return S_OK;
-    }
 
     LIST_FOR_EACH_ENTRY(impl, &device_list, MMDevice, entry)
     {
@@ -1613,87 +1717,6 @@ static const IPropertyBagVtbl PB_Vtbl =
     PB_Release,
     PB_Read,
     PB_Write
-};
-
-static ULONG WINAPI info_device_ps_AddRef(IPropertyStore *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI info_device_ps_Release(IPropertyStore *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI info_device_ps_GetValue(IPropertyStore *iface,
-        REFPROPERTYKEY key, PROPVARIANT *pv)
-{
-    TRACE("(static)->(\"%s,%lu\", %p)\n", debugstr_guid(&key->fmtid), key ? key->pid : 0, pv);
-
-    if (!key || !pv)
-        return E_POINTER;
-
-    if (IsEqualPropertyKey(*key, DEVPKEY_Device_Driver))
-    {
-        INT size = (lstrlenW(drvs.module_name) + 1) * sizeof(WCHAR);
-        pv->vt = VT_LPWSTR;
-        pv->pwszVal = CoTaskMemAlloc(size);
-        if (!pv->pwszVal)
-            return E_OUTOFMEMORY;
-        memcpy(pv->pwszVal, drvs.module_name, size);
-        return S_OK;
-    }
-
-    return E_INVALIDARG;
-}
-
-static const IPropertyStoreVtbl info_device_ps_Vtbl =
-{
-    NULL,
-    info_device_ps_AddRef,
-    info_device_ps_Release,
-    NULL,
-    NULL,
-    info_device_ps_GetValue,
-    NULL,
-    NULL
-};
-
-static IPropertyStore info_device_ps = {
-    &info_device_ps_Vtbl
-};
-
-static ULONG WINAPI info_device_AddRef(IMMDevice *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI info_device_Release(IMMDevice *iface)
-{
-    return 1;
-}
-
-static HRESULT WINAPI info_device_OpenPropertyStore(IMMDevice *iface,
-        DWORD access, IPropertyStore **ppv)
-{
-    TRACE("(static)->(%lx, %p)\n", access, ppv);
-    *ppv = &info_device_ps;
-    return S_OK;
-}
-
-static const IMMDeviceVtbl info_device_Vtbl =
-{
-    NULL,
-    info_device_AddRef,
-    info_device_Release,
-    NULL,
-    info_device_OpenPropertyStore,
-    NULL,
-    NULL
-};
-
-static IMMDevice info_device = {
-    &info_device_Vtbl
 };
 
 static HRESULT WINAPI Connector_QueryInterface(IConnector *iface, REFIID riid, void **ppv)

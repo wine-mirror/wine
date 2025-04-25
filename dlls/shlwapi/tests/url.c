@@ -205,6 +205,7 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"http://www.winehq.org/tests/../tests", "tests4", 0, "http://www.winehq.org/tests4"},
     {"http://www.winehq.org/tests/../tests/", "tests5", 0, "http://www.winehq.org/tests/tests5"},
     {"http://www.winehq.org/tests/../tests/", "/tests6/..", 0, "http://www.winehq.org/"},
+    {"http://www.winehq.org/tests/../tests/", "\\tests6\\..", 0, "http://www.winehq.org/"},
     {"http://www.winehq.org/tests/../tests/..", "tests7/..", 0, "http://www.winehq.org/"},
     {"http://www.winehq.org/tests/?query=x&return=y", "tests8", 0, "http://www.winehq.org/tests/tests8"},
     {"http://www.winehq.org/tests/#example", "tests9", 0, "http://www.winehq.org/tests/tests9"},
@@ -234,6 +235,8 @@ static const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"Foo:/today/", "fOo:calendar", 0, "foo:/today/calendar"},
     {"mk:@MSITStore:dir/test.chm::dir/index.html", "image.jpg", 0, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
     {"mk:@MSITStore:dir/test.chm::dir/dir2/index.html", "../image.jpg", 0, "mk:@MSITStore:dir/test.chm::dir/image.jpg"},
+    {"c:\\test\\", "//share/file.txt", 0, "file://share/file.txt"},
+    {"c:\\test\\", "\\\\share\\file.txt", 0, "file://share/file.txt"},
     /* UrlCombine case 2 tests.  Schemes do not match */
     {"outbind://xxxxxxxxx", "http://wine1/dir", 0, "http://wine1/dir"},
     {"xxxx://xxxxxxxxx", "http://wine2/dir", 0, "http://wine2/dir"},

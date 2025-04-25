@@ -829,13 +829,19 @@ int CDECL wmemcpy_s(wchar_t *dest, size_t numberOfElements,
 
 BOOL msvcrt_init_heap(void)
 {
+#if _MSVCR_VER <= 100
     heap = HeapCreate(0, 0, 0);
+#else
+    heap = GetProcessHeap();
+#endif
     return heap != NULL;
 }
 
 void msvcrt_destroy_heap(void)
 {
+#if _MSVCR_VER <= 100
     HeapDestroy(heap);
+#endif
     if(sb_heap)
         HeapDestroy(sb_heap);
 }

@@ -1,6 +1,7 @@
 @ stdcall CapabilitiesRequestAndCapabilitiesReply(ptr ptr long)
 @ stdcall DXVA2CreateDirect3DDeviceManager9(ptr ptr)
 @ stdcall DXVA2CreateVideoService(ptr ptr ptr)
+@ stdcall DXVAHD_CreateDevice(ptr ptr long ptr ptr)
 @ stdcall DegaussMonitor(ptr)
 @ stdcall DestroyPhysicalMonitor(ptr)
 @ stdcall DestroyPhysicalMonitors(long ptr)

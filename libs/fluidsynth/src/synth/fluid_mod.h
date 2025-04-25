@@ -34,6 +34,7 @@ struct _fluid_mod_t
     unsigned char flags1;         /**< Source controller 1 flags */
     unsigned char src2;           /**< Source controller 2 */
     unsigned char flags2;         /**< Source controller 2 flags */
+    unsigned char trans;          /**< Output transform flag */
     double amount;                /**< Multiplier amount */
     /* The 'next' field allows to link modulators into a list.  It is
      * not used in fluid_voice.c, there each voice allocates memory for a
@@ -45,6 +46,8 @@ struct _fluid_mod_t
 
 fluid_real_t fluid_mod_get_value(fluid_mod_t *mod, fluid_voice_t *voice);
 int fluid_mod_check_sources(const fluid_mod_t *mod, char *name);
+fluid_real_t fluid_mod_transform_source_value(fluid_real_t val, unsigned char mod_flags, const fluid_real_t range);
+
 
 #ifdef DEBUG
 void fluid_dump_modulator(fluid_mod_t *mod);

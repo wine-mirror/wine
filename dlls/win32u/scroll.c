@@ -584,7 +584,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
             prev_pt = pt;
             break;
         case WM_LBUTTONUP:
-            release_capture();
+            NtUserReleaseCapture();
             g_tracking_info.hit_test = hittest = SCROLL_NOWHERE;
             if (hwnd == get_focus()) NtUserShowCaret( hwnd );
             break;
@@ -671,7 +671,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
 
     case WM_LBUTTONUP:
         hittest = SCROLL_NOWHERE;
-        release_capture();
+        NtUserReleaseCapture();
         /* if scrollbar has focus, show back caret */
         if (hwnd == get_focus()) NtUserShowCaret( hwnd );
         break;
@@ -849,7 +849,7 @@ void track_scroll_bar( HWND hwnd, int scrollbar, POINT pt )
         }
         if (!is_window( hwnd ))
         {
-            release_capture();
+            NtUserReleaseCapture();
             break;
         }
     } while (msg.message != WM_LBUTTONUP && get_capture() == hwnd);
@@ -999,7 +999,7 @@ static int set_scroll_info( HWND hwnd, int bar, const SCROLLINFO *info, BOOL red
             (new_flags == ESB_ENABLE_BOTH || new_flags == ESB_DISABLE_BOTH))
         {
             release_scroll_info_ptr( scroll );
-            enable_window( hwnd, new_flags == ESB_ENABLE_BOTH );
+            NtUserEnableWindow( hwnd, new_flags == ESB_ENABLE_BOTH );
             if (!(scroll = get_scroll_info_ptr( hwnd, bar, FALSE ))) return 0;
         }
 
@@ -1319,12 +1319,12 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             if (!vertical)
             {
                 NtUserCreateCaret( hwnd, (HBITMAP)1, thumb_size - 2, rect.bottom - rect.top - 2 );
-                set_caret_pos( thumb_pos + 1, rect.top + 1 );
+                NtUserSetCaretPos( thumb_pos + 1, rect.top + 1 );
             }
             else
             {
                 NtUserCreateCaret( hwnd, (HBITMAP)1, rect.right - rect.left - 2, thumb_size - 2 );
-                set_caret_pos( rect.top + 1, thumb_pos + 1 );
+                NtUserSetCaretPos( rect.top + 1, thumb_pos + 1 );
             }
             NtUserShowCaret( hwnd );
         }
@@ -1347,7 +1347,7 @@ LRESULT scroll_bar_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
             }
             NtUserHideCaret( hwnd );
             NtUserInvalidateRect( hwnd, &rect, 0 );
-            destroy_caret();
+            NtUserDestroyCaret();
         }
         return 0;
 

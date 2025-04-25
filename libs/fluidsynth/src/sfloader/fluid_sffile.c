@@ -2500,6 +2500,12 @@ static int fluid_sffile_read_vorbis(SFData *sf, unsigned int start_byte, unsigne
         goto error_exit;
     }
 
+    // Avoid clipping for loud samples, see
+    // https://github.com/FluidSynth/fluidsynth/issues/1380
+    // and
+    // https://github.com/libsndfile/libsndfile/issues/194
+    sf_command(sndfile, SFC_SET_SCALE_FLOAT_INT_READ, NULL, SF_TRUE);
+
     /* Automatically decompresses the Ogg Vorbis data to 16-bit PCM */
     if(sf_readf_short(sndfile, wav_data, sfinfo.frames) < sfinfo.frames)
     {

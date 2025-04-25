@@ -32,6 +32,7 @@ static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const OBJECT_AT
 static NTSTATUS (WINAPI *pNtCreateKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, ULONG );
 static NTSTATUS (WINAPI *pNtCreateMutant)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, BOOLEAN );
 static NTSTATUS (WINAPI *pNtCreateSemaphore)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *, LONG, LONG );
+static NTSTATUS (WINAPI *pNtDelayExecution)( BOOLEAN, const LARGE_INTEGER * );
 static NTSTATUS (WINAPI *pNtOpenEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES * );
 static NTSTATUS (WINAPI *pNtOpenKeyedEvent)( HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES * );
 static NTSTATUS (WINAPI *pNtPulseEvent)( HANDLE, LONG * );
@@ -158,12 +159,7 @@ static DWORD WINAPI keyed_event_thread( void *arg )
     UNICODE_STRING str;
     ULONG_PTR i;
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &str;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtOpenKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr );
@@ -207,12 +203,7 @@ static void test_keyed_events(void)
         return;
     }
 
-    attr.Length                   = sizeof(attr);
-    attr.RootDirectory            = 0;
-    attr.ObjectName               = &str;
-    attr.Attributes               = 0;
-    attr.SecurityDescriptor       = NULL;
-    attr.SecurityQualityOfService = NULL;
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS | SYNCHRONIZE, &attr, 0 );
@@ -837,6 +828,297 @@ static void test_tid_alert( char **argv )
     CloseHandle( pi.hThread );
 }
 
+struct test_completion_port_scheduling_param
+{
+    HANDLE ready, test_ready;
+    HANDLE port;
+    int index;
+};
+
+static DWORD WINAPI test_completion_port_scheduling_thread(void *param)
+{
+    struct test_completion_port_scheduling_param *p = param;
+    FILE_IO_COMPLETION_INFORMATION info;
+    OVERLAPPED_ENTRY overlapped_entry;
+    OVERLAPPED *overlapped;
+    IO_STATUS_BLOCK iosb;
+    ULONG_PTR key, value;
+    NTSTATUS status;
+    DWORD ret, err;
+    ULONG count;
+    BOOL bret;
+
+    /* both threads are woken when comleption added. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    ret = WaitForSingleObject( p->port, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+
+    /* if a thread is waiting for completion which is added threads which wait on port handle are not woken. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    if (p->index)
+    {
+        bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+        ok( bret, "got error %lu.\n", GetLastError() );
+    }
+    else
+    {
+        ret = WaitForSingleObject( p->port, 100 );
+        ok( ret == WAIT_TIMEOUT || broken( !ret ) /* before Win10 1607 */, "got %#lx.\n", ret );
+    }
+    SetEvent( p->test_ready );
+
+    /* Two threads in GetQueuedCompletionStatus, the second is supposed to start first. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( key == 3 + p->index || broken( p->index && key == 5 ) /* before Win10 */, "got %Iu, expected %u.\n", key, 3 + p->index );
+    SetEvent( p->test_ready );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ret = WaitForSingleObject( p->port, INFINITE );
+    if (ret == WAIT_FAILED)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    status = NtRemoveIoCompletion( p->port, &key, &value, &iosb, NULL );
+    if (status == STATUS_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( status == STATUS_ABANDONED_WAIT_0, "got %#lx.\n", status );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    count = 0xdeadbeef;
+    status = NtRemoveIoCompletionEx( p->port, &info, 1, &count, NULL, FALSE );
+    ok( count <= 1, "Got unexpected count %lu.\n", count );
+    if (status == STATUS_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( status == STATUS_ABANDONED_WAIT_0, "got %#lx.\n", status );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    err = GetLastError();
+    ok( !bret, "got %d.\n", bret );
+    if (err == ERROR_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( err == ERROR_ABANDONED_WAIT_0, "got error %#lx.\n", err );
+
+    /* Port is being closed. */
+    ret = WaitForSingleObject( p->ready, INFINITE );
+    ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+    SetEvent( p->test_ready );
+    bret = GetQueuedCompletionStatusEx( p->port, &overlapped_entry, 1, &count, INFINITE, TRUE );
+    err = GetLastError();
+    ok( !bret, "got %d.\n", bret );
+    if (err == ERROR_INVALID_HANDLE)
+        skip( "Handle closed before wait started.\n" );
+    else
+        ok( err == ERROR_ABANDONED_WAIT_0, "got error %#lx.\n", err );
+
+    return 0;
+}
+
+static void test_completion_port_scheduling(void)
+{
+    struct test_completion_port_scheduling_param p[2];
+    HANDLE threads[2], port;
+    OVERLAPPED *overlapped;
+    unsigned int i, j;
+    DWORD ret, count;
+    NTSTATUS status;
+    ULONG_PTR key;
+    BOOL bret;
+
+    for (i = 0; i < 2; ++i)
+    {
+        p[i].index = 0;
+        p[i].ready = CreateEventA(NULL, FALSE, FALSE, NULL);
+        p[i].test_ready = CreateEventA(NULL, FALSE, FALSE, NULL);
+        threads[i] = CreateThread( NULL, 0, test_completion_port_scheduling_thread, &p[i], 0, NULL );
+        ok( !!threads[i], "got error %lu.\n", GetLastError() );
+    }
+
+    status = NtCreateIoCompletion( &port, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+    ok( !status, "got %#lx.\n", status );
+    /* Waking multiple threads directly waiting on port */
+    for (i = 0; i < 2; ++i)
+    {
+        p[i].index = i;
+        p[i].port = port;
+        SetEvent( p[i].ready );
+    }
+    PostQueuedCompletionStatus( port, 0, 1, NULL );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+    bret = GetQueuedCompletionStatus( port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+
+    /* One thread is waiting on port, another in GetQueuedCompletionStatus(). */
+    SetEvent( p[1].ready );
+    Sleep( 40 );
+    SetEvent( p[0].ready );
+    Sleep( 10 );
+    PostQueuedCompletionStatus( port, 0, 2, NULL );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+
+    /* Both threads are waiting in GetQueuedCompletionStatus, LIFO wake up order. */
+    SetEvent( p[1].ready );
+    Sleep( 40 );
+    SetEvent( p[0].ready );
+    Sleep( 20 );
+    PostQueuedCompletionStatus( port, 0, 3, NULL );
+    PostQueuedCompletionStatus( port, 0, 4, NULL );
+    PostQueuedCompletionStatus( port, 0, 5, NULL );
+    bret = GetQueuedCompletionStatus( p->port, &count, &key, &overlapped, INFINITE );
+    ok( bret, "got error %lu.\n", GetLastError() );
+    ok( key == 5 || broken( key == 4 ) /* before Win10 */, "got %Iu, expected 5.\n", key );
+
+    /* Close port handle while threads are waiting on it directly. */
+    for (i = 0; i < 2; ++i) SetEvent( p[i].ready );
+    Sleep( 20 );
+    NtClose( port );
+    for (i = 0; i < 2; ++i) WaitForSingleObject( p[i].test_ready, INFINITE );
+
+    /* Test signaling on port close. */
+    for (i = 0; i < 4; ++i)
+    {
+        status = NtCreateIoCompletion( &port, IO_COMPLETION_ALL_ACCESS, NULL, 0 );
+        ok( !status, "got %#lx.\n", status );
+        for (j = 0; j < 2; ++j)
+        {
+            p[j].port = port;
+            ret = SignalObjectAndWait( p[j].ready, p[j].test_ready,
+                                       INFINITE, FALSE );
+            ok( ret == WAIT_OBJECT_0, "got %#lx.\n", ret );
+        }
+        Sleep( 20 );
+        status = NtClose( port );
+        ok( !status, "got %#lx.\n", status );
+    }
+
+    WaitForMultipleObjects( 2, threads, TRUE, INFINITE );
+    for (i = 0; i < 2; ++i)
+    {
+        CloseHandle( threads[i] );
+        CloseHandle( p[i].ready );
+        CloseHandle( p[i].test_ready );
+    }
+}
+
+/* An overview of possible combinations and return values:
+ * - Non-alertable, zero timeout: STATUS_SUCCESS or STATUS_NO_YIELD_PERFORMED
+ * - Non-alertable, non-zero timeout: STATUS_SUCCESS
+ * - Alertable, zero timeout: STATUS_SUCCESS, STATUS_NO_YIELD_PERFORMED, or STATUS_USER_APC
+ * - Alertable, non-zero timeout: STATUS_SUCCESS or STATUS_USER_APC
+ * - Sleep/SleepEx don't modify LastError, no matter what
+ */
+
+static VOID CALLBACK apc_proc( ULONG_PTR param )
+{
+    InterlockedIncrement( (LONG *)param );
+}
+
+static void test_delayexecution(void)
+{
+    static const struct
+    {
+        BOOLEAN alertable;
+        LONGLONG timeout;
+        BOOLEAN queue_apc;
+        const char *desc;
+    } tests[] =
+    {
+        { FALSE, 0,      FALSE, "non-alertable yield" },
+        { FALSE, -10000, FALSE, "non-alertable sleep" },
+        { TRUE,  0,      FALSE, "alertable yield" },
+        { TRUE,  -10000, FALSE, "alertable sleep" },
+        { TRUE,  0,      TRUE,  "alertable yield with APC" },
+        { TRUE,  -10000, TRUE,  "alertable sleep with APC" },
+    };
+    unsigned int i;
+    LARGE_INTEGER timeout;
+    ULONG apc_count;
+    NTSTATUS status;
+    DWORD ret;
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%s", tests[i].desc);
+        timeout.QuadPart = tests[i].timeout;
+
+        apc_count = 0;
+        if (tests[i].queue_apc)
+            QueueUserAPC( apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+
+        /* test NtDelayExecution */
+        SetLastError( 0xdeadbeef );
+        status = pNtDelayExecution( tests[i].alertable, &timeout );
+        ok( GetLastError() == 0xdeadbeef, "got error %#lx.\n", GetLastError() );
+
+        if (tests[i].alertable && tests[i].queue_apc)
+        {
+            ok( status == STATUS_USER_APC, "got status %#lx.\n", status );
+            ok( apc_count, "got 0.\n" );
+        }
+        else
+        {
+            ok( status == STATUS_SUCCESS || (!tests[i].timeout && status == STATUS_NO_YIELD_PERFORMED),
+                "got status %#lx.\n", status );
+        }
+
+        if (tests[i].queue_apc) /* don't leave leftover APCs */
+            SleepEx( 0, TRUE );
+
+        /* test SleepEx */
+        apc_count = 0;
+        if (tests[i].queue_apc)
+            QueueUserAPC( apc_proc, GetCurrentThread(), (ULONG_PTR)&apc_count );
+
+        SetLastError( 0xdeadbeef );
+        ret = SleepEx( timeout.QuadPart ? (-timeout.QuadPart / 10000) : 0, tests[i].alertable );
+        ok( GetLastError() == 0xdeadbeef, "got error %#lx.\n", GetLastError() );
+
+        if (tests[i].alertable && tests[i].queue_apc)
+        {
+            ok( ret == WAIT_IO_COMPLETION, "got %lu.\n", ret );
+            ok( apc_count, "got 0.\n" );
+        }
+        else
+        {
+            ok( !ret, "got %lu.\n", ret );
+        }
+
+        if (tests[i].queue_apc)
+            SleepEx( 0, TRUE );
+
+        /* test Sleep (non-alertable only) */
+        if (!tests[i].alertable)
+        {
+            SetLastError( 0xdeadbeef );
+            Sleep( timeout.QuadPart ? (-timeout.QuadPart / 10000) : 0 );
+            ok( GetLastError() == 0xdeadbeef, "got error %#lx.\n", GetLastError() );
+        }
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(sync)
 {
     HMODULE module = GetModuleHandleA("ntdll.dll");
@@ -853,6 +1135,7 @@ START_TEST(sync)
     pNtCreateKeyedEvent             = (void *)GetProcAddress(module, "NtCreateKeyedEvent");
     pNtCreateMutant                 = (void *)GetProcAddress(module, "NtCreateMutant");
     pNtCreateSemaphore              = (void *)GetProcAddress(module, "NtCreateSemaphore");
+    pNtDelayExecution               = (void *)GetProcAddress(module, "NtDelayExecution");
     pNtOpenEvent                    = (void *)GetProcAddress(module, "NtOpenEvent");
     pNtOpenKeyedEvent               = (void *)GetProcAddress(module, "NtOpenKeyedEvent");
     pNtPulseEvent                   = (void *)GetProcAddress(module, "NtPulseEvent");
@@ -884,4 +1167,6 @@ START_TEST(sync)
     test_keyed_events();
     test_resource();
     test_tid_alert( argv );
+    test_completion_port_scheduling();
+    test_delayexecution();
 }

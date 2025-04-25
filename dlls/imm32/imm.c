@@ -948,6 +948,7 @@ static HWND get_ime_ui_window(void)
     {
         imc->ui_hwnd = CreateWindowExW( WS_EX_TOOLWINDOW, ime->ui_class, NULL, WS_POPUP, 0, 0, 1, 1,
                                         ImmGetDefaultIMEWnd( 0 ), 0, ime->module, 0 );
+        SetWindowPos( imc->ui_hwnd, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE );
         SetWindowLongPtrW( imc->ui_hwnd, IMMGWL_IMC, (LONG_PTR)NtUserGetWindowInputContext( GetFocus() ) );
     }
     return imc->ui_hwnd;
@@ -1858,7 +1859,7 @@ BOOL WINAPI ImmGetConversionStatus( HIMC himc, DWORD *conversion, DWORD *sentenc
  */
 HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
-    return NtUserGetDefaultImeWindow(hWnd);
+    return NtUserQueryWindow( hWnd, WindowDefaultImeWindow );
 }
 
 /***********************************************************************
@@ -2637,7 +2638,7 @@ BOOL WINAPI ImmSetCompositionStringW(
 BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 {
     INPUTCONTEXT *ctx;
-    POINT point;
+    RECT rect;
 
     TRACE( "himc %p, composition %s\n", himc, debugstr_composition( composition ) );
 
@@ -2652,17 +2653,10 @@ BOOL WINAPI ImmSetCompositionWindow( HIMC himc, COMPOSITIONFORM *composition )
 
     if (composition->dwStyle & (CFS_RECT | CFS_POINT | CFS_FORCE_POSITION))
     {
-        if (composition->dwStyle & CFS_RECT)
-        {
-            point.x = composition->rcArea.left;
-            point.y = composition->rcArea.top;
-        }
-        else
-        {
-            point = composition->ptCurrentPos;
-        }
-
-        NtUserCallTwoParam( (ULONG_PTR)ctx->hWnd, (ULONG_PTR)&point, NtUserCallTwoParam_SetIMECompositionWindowPos );
+        if (composition->dwStyle & CFS_RECT) rect = composition->rcArea;
+        else SetRect( &rect, composition->ptCurrentPos.x, composition->ptCurrentPos.y,
+                      composition->ptCurrentPos.x + 1, composition->ptCurrentPos.y + 1 );
+        NtUserCallTwoParam( (ULONG_PTR)ctx->hWnd, (ULONG_PTR)&rect, NtUserCallTwoParam_SetIMECompositionRect );
     }
 
     ImmUnlockIMC( himc );
@@ -3347,4 +3341,24 @@ BOOL WINAPI CtfImmIsCiceroEnabled(void)
     FIXME("(): stub\n");
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
+}
+
+/***********************************************************************
+ *      CtfImmHideToolbarWnd (IMM32.@)
+ */
+DWORD WINAPI CtfImmHideToolbarWnd(void)
+{
+    FIXME("(): stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}
+
+/***********************************************************************
+ *      CtfImmRestoreToolbarWnd (IMM32.@)
+ */
+DWORD WINAPI CtfImmRestoreToolbarWnd(DWORD unknown)
+{
+    FIXME("%lx: stub\n", unknown);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
 }

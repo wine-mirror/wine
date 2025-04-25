@@ -68,7 +68,7 @@ typedef enum {
     FLAGS_stdio      = 0x4000
 } ios_flags;
 
-void* __cdecl operator_new(SIZE_T);
 void __cdecl operator_delete(void*);
+void* __cdecl operator_new(SIZE_T) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(operator_delete) __WINE_MALLOC;
 
 void init_exception(void*);

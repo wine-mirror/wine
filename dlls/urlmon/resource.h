@@ -24,3 +24,14 @@
 #define IDS_AXINSTALL_FAILURE       1100
 #define IDS_AXINSTALL_INSTALLN      1101
 #define IDS_AXINSTALL_INSTALL       1102
+
+#define IDS_SEC_ZONE0_NAME          2000
+#define IDS_SEC_ZONE1_NAME          2001
+#define IDS_SEC_ZONE2_NAME          2002
+#define IDS_SEC_ZONE3_NAME          2003
+#define IDS_SEC_ZONE4_NAME          2004
+#define IDS_SEC_ZONE0_DESC          2100
+#define IDS_SEC_ZONE1_DESC          2101
+#define IDS_SEC_ZONE2_DESC          2102
+#define IDS_SEC_ZONE3_DESC          2103
+#define IDS_SEC_ZONE4_DESC          2104

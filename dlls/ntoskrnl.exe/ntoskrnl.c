@@ -506,7 +506,7 @@ static NTSTATUS WINAPI dispatch_irp_completion( DEVICE_OBJECT *device, IRP *irp,
 
 struct dispatch_context
 {
-    irp_params_t params;
+    union irp_params params;
     HANDLE handle;
     struct irp_data *irp_data;
     ULONG  in_size;
@@ -2122,7 +2122,7 @@ BOOLEAN WINAPI IoCancelIrp( IRP *irp )
     irp->Cancel = TRUE;
     if (!(cancel_routine = IoSetCancelRoutine( irp, NULL )))
     {
-        IoReleaseCancelSpinLock( irp->CancelIrql );
+        IoReleaseCancelSpinLock( irql );
         return FALSE;
     }
 
@@ -2951,6 +2951,18 @@ PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes
 VOID WINAPI MmLockPagableSectionByHandle(PVOID ImageSectionHandle)
 {
     FIXME("stub %p\n", ImageSectionHandle);
+}
+
+/***********************************************************************
+ *           MmMapLockedPages   (NTOSKRNL.EXE.@)
+ */
+PVOID WINAPI MmMapLockedPages( MDL *mdl, KPROCESSOR_MODE mode )
+{
+    TRACE( "%p %u\n", mdl, mode );
+
+    mdl->MdlFlags |= MDL_MAPPED_TO_SYSTEM_VA;
+    mdl->MappedSystemVa = (char *)mdl->StartVa + mdl->ByteOffset;
+    return mdl->MappedSystemVa;
 }
 
 /***********************************************************************
@@ -3915,6 +3927,16 @@ static void WINAPI ldr_notify_callback(ULONG reason, LDR_DLL_NOTIFICATION_DATA *
     }
 }
 
+static WCHAR *get_windir_path( const WCHAR *path )
+{
+    WCHAR buffer[MAX_PATH];
+    int len = GetWindowsDirectoryW( buffer, MAX_PATH );
+    int len2 = wcslen( path );
+    WCHAR *ret = HeapAlloc( GetProcessHeap(), 0, (len + len2 + 2) * sizeof(WCHAR) );
+    swprintf( ret, len + len2 + 2, L"%s\\%s", buffer, path );
+    return ret;
+}
+
 /* load the .sys module for a device driver */
 static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyname )
 {
@@ -3954,14 +3976,13 @@ static HMODULE load_driver( const WCHAR *driver_name, const UNICODE_STRING *keyn
 
         if (!wcsnicmp( path, systemrootW, 12 ))
         {
-            WCHAR buffer[MAX_PATH];
-
-            GetWindowsDirectoryW(buffer, MAX_PATH);
-
-            str = HeapAlloc(GetProcessHeap(), 0, (size -11 + lstrlenW(buffer))
-                                                        * sizeof(WCHAR));
-            lstrcpyW(str, buffer);
-            lstrcatW(str, path + 11);
+            str = get_windir_path( path + 12 );
+            HeapFree( GetProcessHeap(), 0, path );
+            path = str;
+        }
+        else if (RtlDetermineDosPathNameType_U( path ) == RtlPathTypeRelative)
+        {
+            str = get_windir_path( path );
             HeapFree( GetProcessHeap(), 0, path );
             path = str;
         }

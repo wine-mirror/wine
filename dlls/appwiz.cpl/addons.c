@@ -56,10 +56,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(appwizcpl);
 #define GECKO_SHA "???"
 #endif
 
-#define MONO_VERSION "9.3.0"
+#define MONO_VERSION "10.0.0"
 #if defined(__i386__) || defined(__x86_64__)
 #define MONO_ARCH "x86"
-#define MONO_SHA "6ca2c0aed096ff9ec20faf5eb76c6b7d7de82d9a8875ac7dd9f0793bf9c3fd30"
+#define MONO_SHA "dbaca73e5d09f7a3a7c157ad04289af9ca47c3ced7012d46544a607046902b87"
 #else
 #define MONO_ARCH ""
 #define MONO_SHA "???"
@@ -317,15 +317,18 @@ static enum install_res install_from_default_dir(void)
 
 static WCHAR *get_cache_file_name(BOOL ensure_exists)
 {
-    const char *xdg_dir;
+    const WCHAR *xdg_dir;
     const WCHAR *home_dir;
-    WCHAR *cache_dir, *ret;
+    WCHAR *cache_dir=NULL, *ret;
     size_t len, size;
 
-    xdg_dir = getenv( "XDG_CACHE_HOME" );
-    if (xdg_dir && *xdg_dir && p_wine_get_dos_file_name)
+    xdg_dir = _wgetenv( L"XDG_CACHE_HOME" );
+    if (xdg_dir && *xdg_dir)
     {
-        if (!(cache_dir = p_wine_get_dos_file_name( xdg_dir ))) return NULL;
+        if (!(cache_dir = HeapAlloc( GetProcessHeap(), 0, wcslen(xdg_dir) * sizeof(WCHAR) + sizeof(L"\\\\?\\unix") ))) return NULL;
+        lstrcpyW( cache_dir, L"\\\\?\\unix" );
+        lstrcatW( cache_dir, xdg_dir );
+        TRACE("cache dir %s\n", debugstr_w(cache_dir));
     }
     else if ((home_dir = _wgetenv( L"WINEHOMEDIR" )))
     {
@@ -609,7 +612,7 @@ static void append_url_params( WCHAR *url )
     len += MultiByteToWideChar(CP_ACP, 0, addon->version, -1, url+len, size/sizeof(WCHAR)-len)-1;
     lstrcpyW(url+len, L"&winev=");
     len += lstrlenW(L"&winev=");
-    MultiByteToWideChar(CP_ACP, 0, p_wine_get_version() ? p_wine_get_version() : 0, -1, url+len, size/sizeof(WCHAR)-len);
+    MultiByteToWideChar(CP_ACP, 0, p_wine_get_version ? p_wine_get_version() : 0, -1, url+len, size/sizeof(WCHAR)-len);
 }
 
 static LPWSTR get_url(void)

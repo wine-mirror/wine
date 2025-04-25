@@ -137,12 +137,12 @@ write them to \fIfile\fR.
 .PP
 .SH DEBUG
 Debug level \fIn\fR is a bitmask with the following meaning:
-    * 0x01 Tell which resource is parsed (verbose mode)
-    * 0x02 Dump internal structures
-    * 0x04 Create a parser trace (yydebug=1)
-    * 0x08 Preprocessor messages
-    * 0x10 Preprocessor lex messages
-    * 0x20 Preprocessor yacc trace
+  - 0x01 Tell which resource is parsed (verbose mode)
+  - 0x02 Dump internal structures
+  - 0x04 Create a parser trace (yydebug=1)
+  - 0x08 Preprocessor messages
+  - 0x10 Preprocessor lex messages
+  - 0x20 Preprocessor yacc trace
 .SH BUGS
 Bugs can be reported on the
 .UR https://bugs.winehq.org

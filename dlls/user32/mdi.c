@@ -686,7 +686,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
     }
     HeapFree( GetProcessHeap(), 0, win_array );
 
-    if (has_icons) ArrangeIconicWindows( client );
+    if (has_icons) NtUserArrangeIconicWindows( client );
     return 0;
 }
 
@@ -773,7 +773,7 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
         }
     }
     HeapFree( GetProcessHeap(), 0, win_array );
-    if (has_icons) ArrangeIconicWindows( client );
+    if (has_icons) NtUserArrangeIconicWindows( client );
 }
 
 /* ----------------------- Frame window ---------------------------- */
@@ -856,7 +856,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     NtUserSetMenuDefaultItem(hSysPopup, SC_CLOSE, FALSE);
 
     /* redraw menu */
-    DrawMenuBar(frame);
+    NtUserDrawMenuBar(frame);
 
     return TRUE;
 }
@@ -910,7 +910,7 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
     /* minimize */
     NtUserDeleteMenu( menu, SC_MINIMIZE, MF_BYCOMMAND );
 
-    DrawMenuBar(frame);
+    NtUserDrawMenuBar(frame);
 
     return TRUE;
 }
@@ -1090,7 +1090,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
       case WM_MDIICONARRANGE:
 	ci->mdiFlags |= MDIF_NEEDUPDATE;
-        ArrangeIconicWindows( hwnd );
+        NtUserArrangeIconicWindows( hwnd );
 	ci->sbRecalc = SB_BOTH+1;
         SendMessageW( hwnd, WM_MDICALCCHILDSCROLL, 0, 0 );
         return 0;

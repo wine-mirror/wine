@@ -35,22 +35,6 @@ AS_VAR_IF([ac_cv_prog_$1],[],
      AC_CHECK_PROG([$1],[$2],[$2],[$3],[$4])])],
 [AS_VAR_COPY([$1],[ac_cv_prog_$1])])])
 
-dnl WINE_HEADER_MAJOR()
-dnl
-dnl Same as AC_HEADER_MAJOR but fixed to handle the glibc 2.25 sys/types.h breakage
-dnl
-AC_DEFUN([WINE_HEADER_MAJOR],
-[AC_CHECK_HEADER(sys/mkdev.h,
-		[AC_DEFINE(MAJOR_IN_MKDEV, 1,
-			   [Define to 1 if `major', `minor', and `makedev' are
-			    declared in <mkdev.h>.])])
-if test $ac_cv_header_sys_mkdev_h = no; then
-  AC_CHECK_HEADER(sys/sysmacros.h,
-		  [AC_DEFINE(MAJOR_IN_SYSMACROS, 1,
-			     [Define to 1 if `major', `minor', and `makedev'
-			      are declared in <sysmacros.h>.])])
-fi])
-
 dnl **** Initialize the programs used by other checks ****
 dnl
 dnl Usage: WINE_PATH_SONAME_TOOLS
@@ -165,14 +149,16 @@ dnl
 AC_DEFUN([WINE_EXTLIB_FLAGS],
 [AS_VAR_PUSHDEF([ac_cflags],[[$1]_PE_CFLAGS])dnl
 AS_VAR_PUSHDEF([ac_libs],[[$1]_PE_LIBS])dnl
+AS_VAR_PUSHDEF([ac_enable],[enable_[$2]])dnl
 AC_ARG_VAR(ac_cflags, [C compiler flags for the PE $2, overriding the bundled version])dnl
 AC_ARG_VAR(ac_libs, [Linker flags for the PE $2, overriding the bundled version])dnl
 AS_VAR_IF([ac_libs],[],
   [ac_libs=$3
-   AS_VAR_IF([ac_cflags],[],[ac_cflags=$4],[enable_$2=no])],
-  [enable_$2=no])
+   AS_VAR_IF([ac_cflags],[],[ac_cflags=$4],[ac_enable=no])],
+  [ac_enable=no])
 AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 cflags: $ac_cflags"]) >&AS_MESSAGE_LOG_FD
 AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 libs: $ac_libs"]) >&AS_MESSAGE_LOG_FD
+AS_VAR_POPDEF([ac_enable])dnl
 AS_VAR_POPDEF([ac_libs])dnl
 AS_VAR_POPDEF([ac_cflags])])dnl
 
@@ -214,6 +200,10 @@ ac_wine_try_cflags_saved_exeext=$ac_exeext
 CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $1"
 ac_exeext=".exe"
 AC_LINK_IFELSE([AC_LANG_SOURCE([[void *__os_arm64x_dispatch_ret = 0;
+const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
+#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
+#error Too old clang version
+#endif
 int __cdecl mainCRTStartup(void) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved
@@ -266,13 +256,10 @@ dnl
 AC_DEFUN([WINE_CHECK_DEFINE],
 [AS_VAR_PUSHDEF([ac_var],[ac_cv_cpp_def_$1])dnl
 AC_CACHE_CHECK([whether we need to define $1],ac_var,
-    AC_EGREP_CPP(yes,[#ifndef $1
-yes
-#endif],
-    [AS_VAR_SET(ac_var,yes)],[AS_VAR_SET(ac_var,no)]))
-AS_VAR_IF([ac_var],[yes],
-      [CFLAGS="$CFLAGS -D$1"
-  LINTFLAGS="$LINTFLAGS -D$1"])dnl
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#ifdef $1
+#error no
+#endif])],[AS_VAR_SET([ac_var],[yes])],[AS_VAR_SET([ac_var],[no])]))
+AS_VAR_IF([ac_var],[yes],[EXTRACFLAGS="$EXTRACFLAGS -D$1"])dnl
 AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check for functions with some extra libraries ****
@@ -290,7 +277,8 @@ dnl
 dnl Usage: AC_REQUIRE([WINE_CONFIG_HELPERS])
 dnl
 AC_DEFUN([WINE_CONFIG_HELPERS],
-[AS_VAR_SET([wine_rules],["all:"])
+[AS_VAR_SET([wine_rules],["all:
+	@echo 'Wine build complete.'"])
 AC_SUBST(SUBDIRS,"")
 AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
@@ -317,15 +305,6 @@ wine_fn_config_makefile ()
           programs/*,*\ arm64ec\ *) AS_VAR_APPEND([arm64ec_DISABLED_SUBDIRS],[" $[1]"]) ;;
         esac ;;
     esac
-}
-
-wine_fn_config_symlink ()
-{
-    ac_links=$[@]
-    AS_VAR_APPEND([wine_rules],["
-$ac_links:
-	@./config.status \$[@]"])
-    for f in $ac_links; do AS_VAR_APPEND([CONFIGURE_TARGETS],[" $f"]); done
 }])
 
 dnl **** Define helper function to append a rule to a makefile command list ****
@@ -335,26 +314,15 @@ dnl
 AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])AS_VAR_APPEND([wine_rules],["
 $1"])])
 
-dnl **** Create symlinks from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_SYMLINK(target,src,enable)
-dnl
-AC_DEFUN([WINE_CONFIG_SYMLINK],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-m4_ifval([$3],[if test $3; then
-])AC_CONFIG_LINKS([$1:$2])dnl
-wine_fn_config_symlink[ $1]m4_ifval([$3],[
-fi])[]dnl
-])])
-
 dnl **** Create a makefile from config.status ****
 dnl
-dnl Usage: WINE_CONFIG_MAKEFILE(file,enable,condition)
+dnl Usage: WINE_CONFIG_MAKEFILE(file)
 dnl
 AC_DEFUN([WINE_CONFIG_MAKEFILE],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-AS_VAR_PUSHDEF([ac_enable],m4_default([$2],[enable_]m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1])))dnl
+AS_VAR_PUSHDEF([ac_enable],[enable_]m4_bpatsubst(m4_bpatsubst([$1],[.*/\([^/]*\)$],[\1]),[.*\.\(.*16\|vxd\)$],[win16]))dnl
 m4_append_uniq([_AC_USER_OPTS],ac_enable,[
 ])dnl
-m4_ifval([$3],[$3 || ])wine_fn_config_makefile [$1] ac_enable[]dnl
+m4_if(m4_bregexp([$1],[^tools]),[-1],[],[test "x$enable_tools" = xno || ])wine_fn_config_makefile [$1] ac_enable[]dnl
 AS_VAR_POPDEF([ac_enable])])
 
 dnl **** Append a file to the .gitignore list ****

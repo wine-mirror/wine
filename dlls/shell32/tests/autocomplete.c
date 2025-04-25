@@ -236,7 +236,7 @@ static void createMainWnd(void)
 }
 
 static WNDPROC HijackerWndProc_prev;
-static const WCHAR HijackerWndProc_txt[] = {'H','i','j','a','c','k','e','d',0};
+static const WCHAR HijackerWndProc_txt[] = L"Hijacked";
 static LRESULT CALLBACK HijackerWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -496,11 +496,11 @@ static void check_dropdown_(const char *file, UINT line, IAutoCompleteDropDown *
 static void test_aclist_expand(HWND hwnd_edit, void *enumerator, IAutoCompleteDropDown *acdropdown)
 {
     struct string_enumerator *obj = (struct string_enumerator*)enumerator;
-    static WCHAR str1[] = {'t','e','s','t',0};
-    static WCHAR str1a[] = {'t','e','s','t','\\',0};
-    static WCHAR str2[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a',0};
-    static WCHAR str2a[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\',0};
-    static WCHAR str2b[] = {'t','e','s','t','\\','f','o','o','\\','b','a','r','\\','b','a','z','_','b','b','q','\\',0};
+    static WCHAR str1[] = L"test";
+    static WCHAR str1a[] = L"test\\";
+    static WCHAR str2[] = L"test\\foo\\bar\\ba";
+    static WCHAR str2a[] = L"test\\foo\\bar\\";
+    static WCHAR str2b[] = L"test\\foo\\bar\\baz_bbq\\";
     HRESULT hr;
     obj->num_resets = 0;
 
@@ -564,21 +564,20 @@ static void test_aclist_expand(HWND hwnd_edit, void *enumerator, IAutoCompleteDr
 
 static void test_prefix_filtering(HWND hwnd_edit)
 {
-    static WCHAR htt[]  = {'h','t','t',0};
-    static WCHAR www[]  = {'w','w','w','.',0};
-    static WCHAR str0[] = {'w','w','w','.','a','x',0};
-    static WCHAR str1[] = {'h','t','t','p','s',':','/','/','w','w','w','.','a','c',0};
-    static WCHAR str2[] = {'a','a',0};
-    static WCHAR str3[] = {'a','b',0};
-    static WCHAR str4[] = {'h','t','t','p',':','/','/','a','0',0};
-    static WCHAR str5[] = {'h','t','t','p','s',':','/','/','h','t','a',0};
-    static WCHAR str6[] = {'h','f','o','o',0};
-    static WCHAR str7[] = {'h','t','t','p',':','/','/','w','w','w','.','a','d','d',0};
-    static WCHAR str8[] = {'w','w','w','.','w','w','w','.','?',0};
-    static WCHAR str9[] = {'h','t','t','p',':','/','/','a','b','c','.','a','a','.','c','o','m',0};
-    static WCHAR str10[]= {'f','t','p',':','/','/','a','b','c',0};
-    static WCHAR str11[]= {'f','i','l','e',':','/','/','a','a',0};
-    static WCHAR str12[]= {'f','t','p',':','/','/','w','w','w','.','a','a',0};
+    static WCHAR www[]  = L"www.";
+    static WCHAR str0[] = L"www.ax";
+    static WCHAR str1[] = L"https://www.ac";
+    static WCHAR str2[] = L"aa";
+    static WCHAR str3[] = L"ab";
+    static WCHAR str4[] = L"http://a0";
+    static WCHAR str5[] = L"https://hta";
+    static WCHAR str6[] = L"hfoo";
+    static WCHAR str7[] = L"http://www.add";
+    static WCHAR str8[] = L"www.www.?";
+    static WCHAR str9[] = L"http://abc.aa.com";
+    static WCHAR str10[]= L"ftp://abc";
+    static WCHAR str11[]= L"file://aa";
+    static WCHAR str12[]= L"ftp://www.aa";
     static WCHAR *suggestions[] = { str0, str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, str11, str12 };
     static WCHAR *sorted1[] = { str4, str2, str3, str9, str1, str7, str0 };
     static WCHAR *sorted2[] = { str3, str9 };
@@ -654,7 +653,7 @@ static void test_prefix_filtering(HWND hwnd_edit)
     check_dropdown(acdropdown, hwnd_edit, sorted5, ARRAY_SIZE(sorted5));
     SendMessageW(hwnd_edit, WM_CHAR, 't', 1);
     SendMessageW(hwnd_edit, WM_GETTEXT, ARRAY_SIZE(buffer), (LPARAM)buffer);
-    ok(lstrcmpW(htt, buffer) == 0, "Expected %s, got %s\n", wine_dbgstr_w(htt), wine_dbgstr_w(buffer));
+    ok(lstrcmpW(L"htt", buffer) == 0, "Expected L\"htt\", got %s\n", wine_dbgstr_w(buffer));
     check_dropdown(acdropdown, hwnd_edit, NULL, 0);
     SendMessageW(hwnd_edit, WM_CHAR, 'p', 1);
     SendMessageW(hwnd_edit, WM_CHAR, ':', 1);
@@ -690,11 +689,11 @@ static void test_prefix_filtering(HWND hwnd_edit)
 
 static void test_custom_source(void)
 {
-    static WCHAR str_alpha[] = {'t','e','s','t','1',0};
-    static WCHAR str_alpha2[] = {'t','e','s','t','2',0};
-    static WCHAR str_beta[] = {'a','u','t','o',' ','c','o','m','p','l','e','t','e',0};
-    static WCHAR str_au[] = {'a','u',0};
-    static WCHAR str_aut[] = {'a','u','t',0};
+    static WCHAR str_alpha[] = L"test1";
+    static WCHAR str_alpha2[] = L"test2";
+    static WCHAR str_beta[] = L"auto complete";
+    static WCHAR str_au[] = L"au";
+    static WCHAR str_aut[] = L"aut";
     static WCHAR *suggestions[] = { str_alpha, str_alpha2, str_beta };
     struct string_enumerator *obj;
     IUnknown *enumerator;

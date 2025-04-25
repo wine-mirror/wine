@@ -178,6 +178,9 @@ static void convert_to_bstr( VARIANT *v )
     BSTR out = NULL;
     VARTYPE vt;
 
+    /* treat VT_I4 values as unsigned */
+    if (V_VT(v) == VT_I4) V_VT(v) = VT_UI4;
+
     if (SUCCEEDED(VariantChangeType( v, v, 0, VT_BSTR ))) return;
     vt = V_VT(v);
     if (vt == (VT_ARRAY | VT_BSTR))

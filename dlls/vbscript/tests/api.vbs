@@ -22,6 +22,45 @@ Dim x
 Class EmptyClass
 End Class
 
+' Returns the amount of dimensions of an array.
+' Returns 0 when it is not an array
+Function GetDimensions(arr)
+    Dim dimension, upperBound
+    On error resume next
+    For dimension = 1 to 255
+        upperBound = ubound(arr, dimension)
+        If err.Number <> 0 Then Exit for
+    Next
+    On error goto 0
+    GetDimensions = dimension-1
+End Function
+
+' Helper function to print a variable
+Function ToString(x)
+    If IsEmpty(x) Then
+        ToString = "Empty"
+    ElseIf IsNull(x) Then
+        ToString = "Null"
+    ElseIf IsObject(x) Then
+        ToString = "Object"
+    ElseIf IsArray(x) Then
+        Dim i, arrStr
+        arrStr = "Array("
+        If GetDimensions(x) = 1 Then
+            For i = LBound(x) To UBound(x)
+                arrStr = arrStr & ToString(x(i))
+                If i < UBound(x) Then arrStr = arrStr & ", "
+            Next
+        Else
+           arrStr = arrStr & "...multidim..."
+        End If
+        arrStr = arrStr & ")"
+        ToString = arrStr
+    Else
+        ToString = CStr(x)
+    End If
+End Function
+
 Call ok(vbSunday = 1, "vbSunday = " & vbSunday)
 Call ok(getVT(vbSunday) = "VT_I2", "getVT(vbSunday) = " & getVT(vbSunday))
 Call ok(vbMonday = 2, "vbMonday = " & vbMonday)
@@ -632,6 +671,25 @@ Sub TestMid2(str, start, ex)
     Call ok(x = ex, "Mid(" & str & ", " & start & ") = " & x & " expected " & ex)
 End Sub
 
+Sub TestMidNull(str, start, len)
+    x = Mid(str, start, len)
+    Call ok(IsNull(x), "Mid(" & str & ", " & start & ", " & len & ") = " & x & " expected Null")
+End Sub
+
+Sub TestMidNull2(str, start)
+    x = Mid(str, start)
+    Call ok(IsNull(x), "Mid(" & str & ", " & start & ") = " & x & " expected Null")
+End Sub
+
+Sub TestMidError(str, start, len, number)
+    On Error Resume Next
+    Call Mid(str, start, len)
+    Dim err_num: err_num = Err.number
+    Call Err.clear()
+    On Error GoTo 0
+    Call ok(err_num = number, "Mid(" & str & ", " & start & ", " & len & ") " & " expected Err.number = " & number)
+End Sub
+
 TestMid "test", 2, 2, "es"
 TestMid "test", 2, 4, "est"
 TestMid "test", 1, 2, "te"
@@ -645,52 +703,26 @@ TestMid2 "test", 2, "est"
 TestMid2 "test", 4, "t"
 TestMid2 "test", 5, ""
 TestMid2 1234, 5, ""
+TestMid empty, 5, 2, ""
+TestMid2 empty, 5, ""
 
-sub TestMidError()
-    on error resume next
-    call Err.clear()
-    call Mid("test", "a", 1)
-    call ok(Err.number = 13, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", "a", null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", "a", empty)
-    call ok(Err.number = 13, "Err.number = " & Err.number)
-    call Mid("test", 0, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(null, -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", 0, null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", -1, null)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", null, 2)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", null, -1)
-    call ok(Err.number = 94, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(null, -1, -1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", empty, 1)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid("test", 0, empty)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-    call Err.clear()
-    call Mid(empty, 0, 0)
-    call ok(Err.number = 5, "Err.number = " & Err.number)
-end sub
-call TestMidError()
+TestMidNull null, 5, 2
+TestMidNull2 null, 5
+
+TestMidError "test", "a", 1, 13
+TestMidError "test", "a", null, 94
+TestMidError "test", "a", empty, 13
+TestMidError "test", 0, 3, 5
+TestMidError "test", 0, -1, 5
+TestMidError "test", -1, -1, 5
+TestMidError "test", 0, null, 94
+TestMidError "test", -1, null, 94
+TestMidError "test", null, 2, 94
+TestMidError "test", null, -1, 94
+TestMidError null, -1, -1, 5
+TestMidError "test", empty, 1, 5
+TestMidError "test", 0, empty, 5
+TestMidError empty, 0, 0, 5
 
 Sub TestUCase(str, ex)
     x = UCase(str)
@@ -719,6 +751,63 @@ if isEnglishLang then TestLCase true, "true"
 TestLCase 0.123, doubleAsString(0.123)
 TestLCase Empty, ""
 Call ok(getVT(LCase(Null)) = "VT_NULL", "getVT(LCase(Null)) = " & getVT(LCase(Null)))
+
+' Join
+
+Sub TestJoin(arg, ex)
+    x = Join(arg)
+    Call ok(x = ex, "Join(" & ToString(arg) & ") = " & x & " expected " & ex)
+End Sub
+
+Sub TestJoin2(arg1, arg2, ex)
+    x = Join(arg1, arg2)
+    Call ok(x = ex, "Join(" & ToString(arg1) & "," & arg2 & ") = " & x & " expected " & ex)
+End Sub
+
+Sub TestJoinError(arg, num)
+    On Error Resume Next
+    Call Join(arg)
+    Dim err_num: err_num = Err.number
+    Call Err.clear()
+    On Error GoTo 0
+    Call ok(err_num = num, "Join(" & ToString(arg) & ") expected Err.number = " & num & " got " & err_num)
+End Sub
+
+TestJoin Array(), ""
+TestJoin Array("a", "b", "c"), "a b c"
+TestJoin Array("a", "b", "c", 1, 2, 3), "a b c 1 2 3"
+TestJoin Array(1, Empty), "1 "
+
+TestJoin2 Array(), "", ""
+TestJoin2 Array("a"), "-", "a"
+TestJoin2 Array("a", "b"), "-", "a-b"
+TestJoin2 Array("a", "b", "c"), "", "abc"
+TestJoin2 Array("a", "b", "c"), "123", "a123b123c"
+TestJoin2 Array(1, "Hello"), "-", "1-Hello"
+TestJoin2 Array("a", "b", "c"), Empty, "abc"
+
+TestJoinError Null , 94
+TestJoinError Empty, 13
+TestJoinError 1, 13
+TestJoinError "test", 13
+TestJoinError 1.2, 13
+TestJoinError New EmptyClass, 438
+TestJoinError Array(1, Null), 13
+TestJoinError Array(Array(1, 2), Array(3, 4)), 13
+Dim multidim(2, 2)
+TestJoinError multidim, 13
+
+On Error Resume Next
+Call Join(Array(), Null)
+Call ok(Err.number = 94, "Join(Array(), Null) expected Err.number = 94 got " & Err.number)
+Call Err.clear
+On Error GoTo 0
+
+On Error Resume Next
+Call Join(Array(), "a", "b")
+Call ok(Err.number = 450, "Join(Array(), ""a"", ""b"") expected Err.number = 450 got " & Err.number)
+Call Err.clear
+On Error GoTo 0
 
 x=Split("abc")
 Call ok(x(0) = "abc", "Split(""abc"")(0)=" & x(0))

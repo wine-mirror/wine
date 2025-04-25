@@ -1286,6 +1286,7 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
             return FALSE;
         }
 
+        wined3d_release_dc(context_gl->window, context_gl->dc);
         if (!(context_gl->dc = wined3d_device_gl_get_backup_dc(device_gl)))
         {
             wined3d_context_gl_set_current(NULL);
@@ -2222,6 +2223,19 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
 
     if (gl_info->supported[ARB_POINT_SPRITE])
     {
+        /* The actual effect of D3DRS_POINTSPRITEENABLE is more accurately
+         * congruent to GL_COORD_REPLACE_ARB. GL_POINT_SPRITE_ARB, when
+         * disabled, affects point rasterization (which we do not want),
+         * implicitly disables GL_COORD_REPLACE_ARB, and causes gl_PointCoord
+         * to return an undefined value.
+         *
+         * We implement D3DRS_POINTSPRITEENABLE by altering the shader to read
+         * from gl_PointCoord or from the actual texcoord, so we do not need
+         * GL_COORD_REPLACE_ARB, nor do we need to dynamically toggle
+         * GL_POINT_SPRITE_ARB. */
+
+        gl_info->gl_ops.gl.p_glEnable(GL_POINT_SPRITE_ARB);
+
         for (i = 0; i < gl_info->limits.ffp_textures; ++i)
         {
             wined3d_context_gl_active_texture(context_gl, gl_info, i);
@@ -2549,37 +2563,6 @@ void wined3d_context_gl_bind_texture(struct wined3d_context_gl *context_gl, GLen
     }
 
     checkGLcall("bind texture");
-}
-
-GLuint64 wined3d_device_gl_get_dummy_bindless_handle(const struct wined3d_device_gl *device_gl,
-        enum wined3d_shader_resource_type type)
-{
-    switch (type)
-    {
-        case WINED3D_SHADER_RESOURCE_BUFFER:
-            return device_gl->dummy_textures.bindless.tex_buffer;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
-            return device_gl->dummy_textures.bindless.tex_1d;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
-            return device_gl->dummy_textures.bindless.tex_2d;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
-            return device_gl->dummy_textures.bindless.tex_3d;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
-            return device_gl->dummy_textures.bindless.tex_cube;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY:
-            return device_gl->dummy_textures.bindless.tex_1d_array;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY:
-            return device_gl->dummy_textures.bindless.tex_2d_array;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_CUBEARRAY:
-            return device_gl->dummy_textures.bindless.tex_cube_array;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_2DMS:
-            return device_gl->dummy_textures.bindless.tex_2d_ms;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY:
-            return device_gl->dummy_textures.bindless.tex_2d_ms_array;
-        default:
-            FIXME("Unhandled resource type %#x.\n", type);
-            return 0;
-    }
 }
 
 static void wined3d_context_gl_poll_fences(struct wined3d_context_gl *context_gl)
@@ -3209,7 +3192,7 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_ALPHATESTENABLE));
+        context_invalidate_state(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
     }
     gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
     gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -3220,11 +3203,6 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
     gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
     gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST);
     context_invalidate_state(context, STATE_DEPTH_STENCIL);
-    if (gl_info->supported[ARB_POINT_SPRITE])
-    {
-        gl_info->gl_ops.gl.p_glDisable(GL_POINT_SPRITE_ARB);
-        context_invalidate_state(context, STATE_RENDER(WINED3D_RS_POINTSPRITEENABLE));
-    }
     if (gl_info->supported[ARB_FRAMEBUFFER_SRGB])
     {
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
@@ -3802,9 +3780,6 @@ static void wined3d_context_gl_bind_shader_resources(struct wined3d_context_gl *
         return;
     }
 
-    if (gl_info->supported[ARB_BINDLESS_TEXTURE])
-        return;
-
     tex_unit_map = wined3d_context_gl_get_tex_unit_mapping(context_gl,
             &shader->reg_maps.shader_version, &base, &count);
 
@@ -4166,6 +4141,7 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     {
         for (i = 0; i < WINED3D_SHADER_TYPE_GRAPHICS_COUNT; ++i)
             wined3d_context_gl_bind_shader_resources(context_gl, state, i);
+        context->update_shader_resource_bindings = 0;
         if (gl_info->limits.combined_samplers == gl_info->limits.graphics_samplers)
             context->update_compute_shader_resource_bindings = 1;
     }
@@ -4184,7 +4160,6 @@ static BOOL context_apply_draw_state(struct wined3d_context *context,
     device->shader_backend->shader_apply_draw_state(device->shader_priv, context, state);
     context->shader_update_mask &= 1u << WINED3D_SHADER_TYPE_COMPUTE;
     context->constant_update_mask = 0;
-    context->update_shader_resource_bindings = 0;
 
     context->last_was_blit = FALSE;
     context->last_was_ffp_blit = FALSE;
@@ -4221,6 +4196,7 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
     if (context_gl->c.update_compute_shader_resource_bindings)
     {
         wined3d_context_gl_bind_shader_resources(context_gl, state, WINED3D_SHADER_TYPE_COMPUTE);
+        context_gl->c.update_compute_shader_resource_bindings = 0;
         if (gl_info->limits.combined_samplers == gl_info->limits.graphics_samplers)
             context_gl->c.update_shader_resource_bindings = 1;
     }
@@ -4247,7 +4223,6 @@ static void wined3d_context_gl_apply_compute_state(struct wined3d_context_gl *co
     context_gl->c.last_was_blit = FALSE;
     context_gl->c.last_was_ffp_blit = FALSE;
     context_gl->c.shader_update_mask &= ~(1u << WINED3D_SHADER_TYPE_COMPUTE);
-    context_gl->c.update_compute_shader_resource_bindings = 0;
 }
 
 void wined3d_context_gl_end_transform_feedback(struct wined3d_context_gl *context_gl)
@@ -4355,7 +4330,6 @@ struct wined3d_context *wined3d_context_gl_acquire(const struct wined3d_device *
     if (!texture)
     {
         if (current_context
-                && current_context->c.current_rt.texture
                 && current_context->c.device == device)
         {
             texture = current_context->c.current_rt.texture;

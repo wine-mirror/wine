@@ -22,46 +22,40 @@
 #pragma makedep register
 
 [
-    helpstring("AVI Splitter"),
     threading(both),
-    uuid(1b544c20-fd0b-11ce-8c63-00aa0044b51e)
+    uuid(272bfbfb-50d0-4078-b600-1e959c301337)
 ]
-coclass AviSplitter {}
+coclass wg_avi_splitter {}
 
 [
-    helpstring("MPEG Audio Decoder"),
     threading(both),
-    uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
+    uuid(c9f285f8-4380-4121-971f-49a95316c27b)
 ]
-coclass CMpegAudioCodec {}
+coclass wg_mpeg_audio_decoder {}
 
 [
-    helpstring("MPEG Video Decoder"),
     threading(both),
-    uuid(feb50740-7bef-11ce-9bd9-0000e202599c)
+    uuid(5ed2e5f6-bf3e-4180-83a4-4847cc5b4ea3)
 ]
-coclass CMpegVideoCodec {}
+coclass wg_mpeg_video_decoder {}
 
 [
-    helpstring("MPEG Layer-3 Decoder"),
     threading(both),
-    uuid(38be3000-dbf4-11d0-860e-00a024cfef6d)
+    uuid(84cd8e3e-b221-434a-8882-9d6c8df490e1)
 ]
-coclass mpeg_layer3_decoder {}
+coclass wg_mp3_decoder {}
 
 [
-    helpstring("MPEG-I Stream Splitter"),
     threading(both),
-    uuid(336475d0-942a-11ce-a870-00aa002feab5)
+    uuid(a8edbf98-2442-42c5-85a1-ab05a580df53)
 ]
-coclass MPEG1Splitter {}
+coclass wg_mpeg1_splitter {}
 
 [
-    helpstring("Wave Parser"),
     threading(both),
-    uuid(d51bd5a1-7548-11cf-a520-0080c77ef58a)
+    uuid(3f839ec7-5ea6-49e1-80c2-1ea300f8b0e0)
 ]
-coclass WAVEParser {}
+coclass wg_wave_parser {}
 
 [
     helpstring("GStreamer parser using decodebin"),
@@ -72,9 +66,9 @@ coclass decodebin_parser {}
 
 [
     threading(both),
-    uuid(88753b26-5b24-49bd-b2e7-0c445c78c982)
+    uuid(d527607f-89cb-4e94-9571-bcfe62175613)
 ]
-coclass VideoProcessorMFT {}
+coclass wg_video_processor {}
 
 [
     helpstring("Generic Decodebin Byte Stream Handler"),
@@ -85,55 +79,54 @@ coclass GStreamerByteStreamHandler {}
 
 [
     threading(both),
-    uuid(2eeb4adf-4578-4d10-bca7-bb955f56320a)
+    uuid(5b4d4e54-0620-4cf9-94ae-7823965c28b6)
 ]
-coclass CWMADecMediaObject {};
+coclass wg_wma_decoder {};
 
 [
     threading(both),
-    uuid(32d186a7-218f-4c75-8876-dd77273a8999)
+    uuid(e7889a8a-2083-4844-8370-5ee349b14503)
 ]
-coclass CMSAACDecMFT {}
+coclass wg_aac_decoder {}
 
 [
     threading(both),
-    uuid(82d353df-90bd-4382-8bc2-3f6192b76e34)
+    uuid(62ee5ddb-4f52-48e2-8928-787b0253a0bc)
 ]
-coclass CWMVDecMediaObject {}
+coclass wg_wmv_decoder {}
 
 [
     threading(both),
-    uuid(62ce7e72-4c71-4d20-b15d-452831a87d9d)
+    uuid(1f1e273d-12c0-4b3a-8e9b-1933c2498aea)
 ]
-coclass CMSH264DecoderMFT {}
+coclass wg_h264_decoder {}
 
 [
     threading(both),
-    uuid(6ca50344-051a-4ded-9779-a43305165e35)
+    uuid(6c34de69-4670-46cd-8cb4-1f2fa1dffb65)
 ]
-coclass CMSH264EncoderMFT {}
+coclass wg_h264_encoder {}
 
 [
     threading(both),
-    uuid(f447b69e-1884-4a7e-8055-346f74d6edb3)
+    uuid(92f35e78-15a5-486b-888e-575f99651ce2)
 ]
-coclass CResamplerMediaObject {}
+coclass wg_resampler {}
 
 [
     threading(both),
-    uuid(98230571-0087-4204-b020-3282538e57d3)
+    uuid(f47e2da5-e370-47b7-903a-078ddd45a5cc)
 ]
-coclass CColorConvertDMO {}
+coclass wg_color_converter {}
 
 [
     threading(both),
-    uuid(11275a82-5e5a-47fd-a01c-3683c12fb196)
+    uuid(1f302877-aaab-40a3-b9e0-9f48daf35bc8)
 ]
-coclass MFMP3SinkClassFactory {}
+coclass wg_mp3_sink_factory {}
 
 [
-    helpstring("MF MPEG4 Sink Class Factory"),
     threading(both),
-    uuid(a22c4fc7-6e91-4e1d-89e9-53b2667b72ba)
+    uuid(5d5407d9-c6ca-4770-a7cc-27c0cb8a7627)
 ]
-coclass MFMPEG4SinkClassFactory {}
+coclass wg_mpeg4_sink_factory {}

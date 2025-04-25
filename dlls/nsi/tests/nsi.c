@@ -1073,11 +1073,16 @@ void test_change_notifications(void)
     ok( !bret && GetLastError() == ERROR_IO_INCOMPLETE, "got bret %d, err %lu.\n", bret, GetLastError() );
     ret = NsiCancelChangeNotification( &ovr2 );
     ok( !ret, "got %lu.\n", ret );
-    bret = GetOverlappedResult( handle, &ovr, &bytes, TRUE );
+    bret = GetOverlappedResult( handle, &ovr2, &bytes, TRUE );
     ok( !bret && GetLastError() == ERROR_OPERATION_ABORTED, "got bret %d, err %lu.\n", bret, GetLastError() );
 
     ret = NsiRequestChangeNotification( 0, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &ovr, &handle );
     todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %lu.\n", ret );
+    if (ret == ERROR_IO_PENDING)
+    {
+        NsiCancelChangeNotification( &ovr );
+        GetOverlappedResult( handle, &ovr, &bytes, TRUE );
+    }
 
     ret = NsiRequestChangeNotification( 0, &NPI_MS_IPV4_MODULEID, NSI_IP_FORWARD_TABLE, &ovr, &handle );
     ok( ret == ERROR_IO_PENDING, "got %lu.\n", ret );

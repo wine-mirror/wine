@@ -59,6 +59,8 @@ static INT (WINAPI *pGetDateFormatEx)(LPCWSTR, DWORD, const SYSTEMTIME *, LPCWST
 static BOOL (WINAPI *pEnumSystemLanguageGroupsA)(LANGUAGEGROUP_ENUMPROCA, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROCA, LGRPID, DWORD, LONG_PTR);
 static BOOL (WINAPI *pEnumUILanguagesA)(UILANGUAGE_ENUMPROCA, DWORD, LONG_PTR);
+static BOOL (WINAPI *pEnumSystemLocalesA)(LOCALE_ENUMPROCA, DWORD);
+static BOOL (WINAPI *pEnumSystemLocalesW)(LOCALE_ENUMPROCW, DWORD);
 static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPVOID);
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
@@ -122,6 +124,8 @@ static void InitFunctionPointers(void)
   X(LCMapStringEx);
   X(IsValidLanguageGroup);
   X(EnumUILanguagesA);
+  X(EnumSystemLocalesA);
+  X(EnumSystemLocalesW);
   X(EnumSystemLocalesEx);
   X(IdnToNameprepUnicode);
   X(IdnToAscii);
@@ -2966,8 +2970,8 @@ static void test_LocaleNameToLCID(void)
     buffer[0] = 0;
     SetLastError(0xdeadbeef);
     lcid = LocaleNameToLCID(LOCALE_NAME_SYSTEM_DEFAULT, 0);
-    ok(lcid == GetSystemDefaultLCID(),
-       "Expected lcid == %08lx, got %08lx, error %ld\n", GetSystemDefaultLCID(), lcid, GetLastError());
+    expect = GetSystemDefaultLCID();
+    ok(lcid == expect, "Expected lcid == %08lx, got %08lx, error %ld\n", expect, lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
     ok(ret > 0, "Expected ret > 0, got %d, error %ld\n", ret, GetLastError());
     trace("%08lx, %s\n", lcid, wine_dbgstr_w(buffer));
@@ -4131,6 +4135,7 @@ static void test_FoldStringW(void)
       { 0x104a0, 0, 9 },                  /* Osmanya */
       { 0x10a40, 1, 4, TRUE /*win10*/ },  /* Kharoshthi */
       { 0x10d30, 0, 9, TRUE /*win10*/ },  /* Hanifi Rohingya */
+      { 0x10d40, 0, 9, TRUE /*win10*/ },  /* Garay */
       { 0x10e60, 1, 9, TRUE /*win10*/ },  /* Rumi */
       { 0x11052, 1, 9, TRUE /*win10*/ },  /* Brahmi Number */
       { 0x11066, 0, 9, TRUE /*win10*/ },  /* Brahmi Digit */
@@ -4142,16 +4147,22 @@ static void test_FoldStringW(void)
       { 0x114d0, 0, 9, TRUE /*win10*/ },  /* Tirhuta */
       { 0x11650, 0, 9, TRUE /*win10*/ },  /* Modi */
       { 0x116c0, 0, 9, TRUE /*win10*/ },  /* Takri */
+      { 0x116d0, 0, 9, TRUE /*win10*/ },  /* Myanmar Pa-O */
+      { 0x116da, 0, 9, TRUE /*win10*/ },  /* Myanmar Eastern Pwo */
       { 0x11730, 0, 9, TRUE /*win10*/ },  /* Ahom */
       { 0x118e0, 0, 9, TRUE /*win10*/ },  /* Warang */
       { 0x11950, 0, 9, TRUE /*win10*/ },  /* Dives Akuru */
+      { 0x11bf0, 0, 9, TRUE /*win10*/ },  /* Sunuwar */
       { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
       { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
       { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
       { 0x11f50, 0, 9, TRUE /*win10*/ },  /* Kawi */
+      { 0x16130, 0, 9, TRUE /*win10*/ },  /* Gurung Khema */
       { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */
       { 0x16ac0, 0, 9, TRUE /*win10*/ },  /* Tangsa */
       { 0x16b50, 0, 9, TRUE /*win10*/ },  /* Pahawh Hmong */
+      { 0x16d70, 0, 9, TRUE /*win10*/ },  /* Kirat Rai */
+      { 0x1ccf0, 0, 9, TRUE /*win10*/ },  /* Outlined digits */
       { 0x1d7ce, 0, 9 },                  /* Mathematical Bold */
       { 0x1d7d8, 0, 9 },                  /* Mathematical Double Struck */
       { 0x1d7e2, 0, 9 },                  /* Mathematical Sans Serif */
@@ -4160,6 +4171,7 @@ static void test_FoldStringW(void)
       { 0x1e140, 0, 9, TRUE /*win10*/ },  /* Nyiakeng Puachue Hmong */
       { 0x1e2f0, 0, 9, TRUE /*win10*/ },  /* Wancho */
       { 0x1e4f0, 0, 9, TRUE /*win10*/ },  /* Nag Mundari */
+      { 0x1e5f1, 0, 9, TRUE /*win10*/ },  /* Ol Onal */
       { 0x1e950, 0, 9, TRUE /*win10*/ },  /* Adlam */
       { 0x1f100, 0, 0, TRUE /*win10*/ },  /* Full Stop */
       { 0x1f101, 0, 9, TRUE /*win10*/ },  /* Comma */
@@ -4461,6 +4473,183 @@ static void test_EnumSystemLanguageGroupsA(void)
 
   pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_INSTALLED, 0);
   pEnumSystemLanguageGroupsA(langgrp_procA, LGRPID_SUPPORTED, 0);
+}
+
+static LONG default_seen;
+static LONG alternate_seen;
+
+static BOOL CALLBACK test_EnumSystemLocalesA_callback(LPSTR str)
+{
+    LCID lcid;
+    WORD sortid;
+
+    if (sscanf(str, "%lx", &lcid) != 1)
+    {
+        ok(FALSE, "EnumSystemLocalesA callback received unparsable LCID string \"%s\"\n", str);
+        return FALSE;
+    }
+
+    sortid = SORTIDFROMLCID(lcid);
+    if (sortid == SORT_DEFAULT)
+    {
+        default_seen++;
+    }
+    else
+    {
+        alternate_seen++;
+    }
+
+    return TRUE;
+}
+
+static BOOL CALLBACK test_EnumSystemLocalesW_callback(LPWSTR str)
+{
+    LCID lcid;
+    WORD sortid;
+
+    if (swscanf(str, L"%lx", &lcid) != 1)
+    {
+        ok(FALSE, "unparsable LCID string %s\n", debugstr_w(str));
+        return FALSE;
+    }
+
+    sortid = SORTIDFROMLCID(lcid);
+    if (sortid == SORT_DEFAULT)
+    {
+        default_seen++;
+    }
+    else
+    {
+        alternate_seen++;
+    }
+
+    return TRUE;
+}
+
+static void test_EnumSystemLocalesA(void)
+{
+    if (!pEnumSystemLocalesA)
+    {
+        win_skip("EnumSystemLocalesA not available");
+        return;
+    }
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, 0);
+    ok(default_seen, "EnumSystemLocalesA(..., 0) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., 0) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_INSTALLED);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_INSTALLED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., LCID_INSTALLED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_SUPPORTED);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_ALTERNATE_SORTS);
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+    ok(!default_seen, "EnumSystemLocalesA(..., LCID_ALTERNATE_SORTS) returned %ld locales "
+            "with default sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_INSTALLED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesA(test_EnumSystemLocalesA_callback, LCID_SUPPORTED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesA(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+}
+
+static void test_EnumSystemLocalesW(void)
+{
+    if (!pEnumSystemLocalesW)
+    {
+        win_skip("EnumSystemLocalesW not available");
+        return;
+    }
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, 0);
+    ok(default_seen, "EnumSystemLocalesW(..., 0) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., 0) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_INSTALLED);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_INSTALLED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., LCID_INSTALLED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_SUPPORTED);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(!alternate_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED) returned %ld locales "
+            "with alternate sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_ALTERNATE_SORTS);
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+    ok(!default_seen, "EnumSystemLocalesW(..., LCID_ALTERNATE_SORTS) returned %ld locales "
+            "with default sort order, expected 0\n", alternate_seen);
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_INSTALLED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_INSTALLED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
+
+    default_seen = 0;
+    alternate_seen = 0;
+
+    pEnumSystemLocalesW(test_EnumSystemLocalesW_callback, LCID_SUPPORTED | LCID_ALTERNATE_SORTS);
+    ok(default_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with default sort order, expected > 0\n");
+    ok(alternate_seen, "EnumSystemLocalesW(..., LCID_SUPPORTED | LCID_ALTERNATE_SORTS) returned 0 locales "
+            "with alternate sort order, expected > 0\n");
 }
 
 static BOOL CALLBACK enum_func( LPWSTR name, DWORD flags, LPARAM lparam )
@@ -5182,6 +5371,9 @@ static void test_GetStringTypeW(void)
                   0x206a, 0x206b, 0x206c, 0x206d, 0x206e, 0x206f, 0xfeff,
                   0xfff9, 0xfffa, 0xfffb};
     static const WCHAR space_special[] = {0x09, 0x0d, 0x85};
+    static const WCHAR alpha_thai[] = {0xe31, 0xe34, 0xe35, 0xe36, 0xe37, 0xe38, 0xe39, 0xe3a,
+                                       0xe47, 0xe48, 0xe49, 0xe4a, 0xe4b, 0xe4c, 0xe4d, 0xe4e,
+                                       0x1885, 0x1886};
 
     WORD types[20];
     WCHAR ch[2];
@@ -5259,6 +5451,12 @@ static void test_GetStringTypeW(void)
     for (i = 0; i < 3; i++)
         ok(types[i] & C1_SPACE || broken(types[i] == C1_CNTRL) || broken(types[i] == 0), "incorrect types returned for %x -> (%x does not have %x)\n",space_special[i], types[i], C1_SPACE );
 
+    /* alpha is set for certain Thai and Mongolian */
+    memset(types, 0, sizeof(types));
+    GetStringTypeW(CT_CTYPE1, alpha_thai, 18, types);
+    for (i = 0; i < 18; i++)
+        ok(types[i] == (C1_ALPHA|C1_DEFINED), "incorrect types returned for %x -> (%x does not have %x)\n",alpha_thai[i], types[i], (C1_ALPHA|C1_DEFINED));
+
     /* surrogate pairs */
     ch[0] = 0xd800;
     memset(types, 0, sizeof(types));
@@ -5295,6 +5493,15 @@ static void test_GetStringTypeW(void)
     }
 }
 
+/* Up to Windows 10 1607 */
+static int is_codepoint_2066_broken(void)
+{
+    WCHAR buf[10];
+    int len = ARRAY_SIZE(buf);
+    pRtlNormalizeString( 13, L"\x2066", 1, buf, &len );
+    return buf[0] != 0;
+}
+
 static void test_IdnToNameprepUnicode(void)
 {
     struct {
@@ -5318,7 +5525,7 @@ static void test_IdnToNameprepUnicode(void)
         { 3, L"a-a", IDN_USE_STD3_ASCII_RULES, 3, 3, L"a-a" },
         { 3, L"aa-", IDN_USE_STD3_ASCII_RULES, 0, 0, L"aa-" },
         { -1, L"T\xdf\x130\x143\x37a\x6a\x30c \xaa", 0, 12, 12, L"tssi\x307\x144 \x3b9\x1f0 a" },
-        { 11, L"t\xad\x34f\x1806\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
+        { 11, L"t\xad\x34f\x2066\x180b\x180c\x180d\x200b\x200c\x200d", 0, 0, 2, L"t",
           STATUS_NO_UNICODE_TRANSLATION },
         /* 10 */
         { 2, {0x3b0}, 0, 2, 2, {0x3b0} },
@@ -5408,7 +5615,10 @@ static void test_IdnToNameprepUnicode(void)
             status = pRtlNormalizeString( 13, test_data[i].in, test_data[i].in_len, buf, &len );
             ok( status == test_data[i].status || broken(status == test_data[i].broken_status),
                 "%ld: failed %lx\n", i, status );
-            if (!status) ok( !wcsnicmp(test_data[i].out, buf, len), "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, len));
+            if (!status)
+                ok( !wcsnicmp(test_data[i].out, buf, len) ||
+                    broken(buf[1] == L'\x2066' && is_codepoint_2066_broken()),
+                    "%ld: buf = %s\n", i, wine_dbgstr_wn(buf, len));
         }
     }
 }
@@ -7200,7 +7410,7 @@ static void test_NormalizeString(void)
             memset(dst, 0xcc, sizeof(dst));
             dstlen = pNormalizeString( norm_forms[i], ptest->str, lstrlenW(ptest->str), dst, dstlen );
             ok(dstlen == lstrlenW( ptest->expected[i] ), "%s:%d: Copied length differed: was %d, should be %d\n",
-               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( dst ));
+               wine_dbgstr_w(ptest->str), i, dstlen, lstrlenW( ptest->expected[i] ));
             str_cmp = wcsncmp( ptest->expected[i], dst, dstlen );
             ok( str_cmp == 0, "%s:%d: string incorrect got %s expect %s\n", wine_dbgstr_w(ptest->str), i,
                 wine_dbgstr_w(dst), wine_dbgstr_w(ptest->expected[i]) );
@@ -8503,6 +8713,8 @@ START_TEST(locale)
   test_FoldStringW();
   test_ConvertDefaultLocale();
   test_EnumSystemLanguageGroupsA();
+  test_EnumSystemLocalesA();
+  test_EnumSystemLocalesW();
   test_EnumSystemLocalesEx();
   test_EnumLanguageGroupLocalesA();
   test_SetLocaleInfo();

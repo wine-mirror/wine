@@ -387,7 +387,7 @@ BOOL pe_unlock_region(struct module *module, const BYTE* region)
     return TRUE;
 }
 
-static void pe_module_remove(struct process* pcs, struct module_format* modfmt)
+static void pe_module_remove(struct module_format* modfmt)
 {
     image_unmap_file(&modfmt->u.pe_info->fmap);
     HeapFree(GetProcessHeap(), 0, modfmt);
@@ -441,7 +441,7 @@ static BOOL pe_locate_with_coff_symbol_table(struct module* module)
                     !strcmp(sym->hash_elt.name, name))
                 {
                     TRACE("Changing absolute address for %d.%s: %Ix -> %I64x\n",
-                          isym->SectionNumber, name, sym->u.var.offset,
+                          isym->SectionNumber, debugstr_a(name), sym->u.var.offset,
                           module->module.BaseOfImage +
                           fmap->u.pe.sect[isym->SectionNumber - 1].shdr.VirtualAddress +
                           isym->Value);
@@ -503,7 +503,7 @@ static BOOL pe_load_coff_symbol_table(struct module* module)
             if (name[0] == '_') name++;
 
             if (!compiland && lastfilename)
-                compiland = symt_new_compiland(module, source_new(module, NULL, lastfilename));
+                compiland = symt_new_compiland(module, lastfilename);
 
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
                 symt_new_public(module, compiland, name, FALSE,
@@ -656,8 +656,8 @@ static BOOL pe_load_msc_debug_info(const struct process* pcs, struct module* mod
         if (nDbg != 1 || dbg->Type != IMAGE_DEBUG_TYPE_MISC ||
             misc->DataType != IMAGE_DEBUG_MISC_EXENAME)
         {
-            ERR("-Debug info stripped, but no .DBG file in module %s\n",
-                debugstr_w(module->modulename));
+            WARN("-Debug info stripped, but no .DBG file in module %s\n",
+                 debugstr_w(module->modulename));
         }
         else
         {
@@ -802,6 +802,12 @@ static BOOL search_builtin_pe(void *param, HANDLE handle, const WCHAR *path)
     return TRUE;
 }
 
+static const struct module_format_vtable pe_module_format_vtable =
+{
+    pe_module_remove,
+    NULL,
+};
+
 /******************************************************************
  *		pe_load_native_module
  *
@@ -877,8 +883,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             {
                 module->real_path = real_path ? pool_wcsdup(&module->pool, real_path) : NULL;
                 modfmt->module = module;
-                modfmt->remove = pe_module_remove;
-                modfmt->loc_compute = NULL;
+                modfmt->vtable = &pe_module_format_vtable;
                 module->format_info[DFI_PE] = modfmt;
                 module->reloc_delta = base - PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
             }
@@ -1019,7 +1024,7 @@ DWORD pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
     if (!(nthdr = RtlImageNtHeader(image))) return ERROR_BAD_FORMAT;
 
     dbg = RtlImageDirectoryEntryToData(image, FALSE, IMAGE_DIRECTORY_ENTRY_DEBUG, &dirsize);
-    if (!dbg || dirsize < sizeof(dbg)) return ERROR_BAD_EXE_FORMAT;
+    if (!dbg) dirsize = 0;
 
     /* fill in information from NT header */
     info->timestamp = nthdr->FileHeader.TimeDateStamp;
@@ -1035,4 +1040,28 @@ DWORD pe_get_file_indexinfo(void* image, DWORD size, SYMSRV_INDEX_INFOW* info)
         info->size = nthdr32->OptionalHeader.SizeOfImage;
     }
     return msc_get_file_indexinfo(image, dbg, dirsize / sizeof(*dbg), info);
+}
+
+/* check if image contains a debug entry that contains a gcc/mingw - clang build-id information */
+BOOL pe_has_buildid_debug(struct image_file_map *fmap, GUID *guid)
+{
+    BOOL ret = FALSE;
+
+    if (fmap->modtype == DMT_PE)
+    {
+        SYMSRV_INDEX_INFOW info = {.sizeofstruct = sizeof(info)};
+        const void *image = pe_map_full(fmap, NULL);
+
+        if (image)
+        {
+            DWORD retval = pe_get_file_indexinfo((void*)image, GetFileSize(fmap->u.pe.hMap, NULL), &info);
+            if ((retval == ERROR_SUCCESS || retval == ERROR_BAD_EXE_FORMAT) && info.age && !info.pdbfile[0])
+            {
+                *guid = info.guid;
+                ret = TRUE;
+            }
+            pe_unmap_full(fmap);
+        }
+    }
+    return ret;
 }

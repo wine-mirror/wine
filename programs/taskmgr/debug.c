@@ -49,13 +49,6 @@ void ProcessPage_OnDebug(void)
     WCHAR    wszUnable2Debug[255];
     WCHAR    wszWarnMsg[255];
 
-    static const WCHAR    wszSubKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                         'M','i','c','r','o','s','o','f','t','\\',
-                                         'W','i','n','d','o','w','s',' ','N','T','\\',
-                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                         'A','e','D','e','b','u','g',0};
-    static const WCHAR    wszDebugger[] = {'D','e','b','u','g','g','e','r',0};
-
     LoadStringW(hInst, IDS_WARNING_TITLE, wszWarnTitle, ARRAY_SIZE(wszWarnTitle));
     LoadStringW(hInst, IDS_DEBUG_UNABLE2DEBUG, wszUnable2Debug, ARRAY_SIZE(wszUnable2Debug));
     LoadStringW(hInst, IDS_DEBUG_MESSAGE, wszWarnMsg, ARRAY_SIZE(wszWarnMsg));
@@ -86,7 +79,8 @@ void ProcessPage_OnDebug(void)
         return;
     }
 
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, wszSubKey, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug",
+                      0, KEY_READ, &hKey) != ERROR_SUCCESS)
     {
         GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);
@@ -94,7 +88,7 @@ void ProcessPage_OnDebug(void)
     }
 
     dwDebuggerSize = 260;
-    if (RegQueryValueExW(hKey, wszDebugger, NULL, NULL, (LPBYTE)wstrDebugger, &dwDebuggerSize) != ERROR_SUCCESS)
+    if (RegQueryValueExW(hKey, L"Debugger", NULL, NULL, (LPBYTE)wstrDebugger, &dwDebuggerSize) != ERROR_SUCCESS)
     {
         GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText, wszUnable2Debug, MB_OK|MB_ICONSTOP);

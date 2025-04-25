@@ -161,7 +161,55 @@ void release_display_dc( HDC hdc )
  */
 void SYSPARAMS_Init(void)
 {
+    WCHAR buffer[256];
+    DWORD option;
+
     system_dpi = NtUserGetSystemDpiForProcess( NULL );
+
+    if (!LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
+                                            L"dpiAwareness", REG_DWORD, &option, sizeof(option), NULL ))
+    {
+        TRACE( "got option %lx\n", option );
+        if (option <= 2)
+        {
+            SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)option );
+            return;
+        }
+    }
+
+    if (QueryActCtxSettingsW( 0, NULL, L"http://schemas.microsoft.com/SMI/2016/WindowsSettings",
+                              L"dpiAwareness", buffer, ARRAY_SIZE(buffer), NULL ))
+    {
+        static const WCHAR * const types[] = { L"unaware", L"system", L"permonitor", L"permonitorv2" };
+        WCHAR *p, *start, *end;
+        ULONG_PTR i;
+
+        TRACE( "got dpiAwareness=%s\n", debugstr_w(buffer) );
+        for (start = buffer; *start; start = end)
+        {
+            start += wcsspn( start, L" \t\r\n" );
+            if (!(end = wcschr( start, ',' ))) end = start + lstrlenW(start);
+            else *end++ = 0;
+            if ((p = wcspbrk( start, L" \t\r\n" ))) *p = 0;
+            for (i = 0; i < ARRAY_SIZE(types); i++)
+            {
+                if (wcsicmp( start, types[i] )) continue;
+                SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
+                return;
+            }
+        }
+    }
+    else if (QueryActCtxSettingsW( 0, NULL, L"http://schemas.microsoft.com/SMI/2005/WindowsSettings",
+                                   L"dpiAware", buffer, ARRAY_SIZE(buffer), NULL ))
+    {
+        TRACE( "got dpiAware=%s\n", debugstr_w(buffer) );
+        if (!wcsicmp( buffer, L"true" ))
+            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
+        else if (!wcsicmp( buffer, L"true/pm" ) || !wcsicmp( buffer, L"per monitor" ))
+            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+        else
+            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
+    }
 }
 
 static BOOL update_desktop_wallpaper(void)
@@ -1016,6 +1064,15 @@ LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
 }
 
 /***********************************************************************
+ *              DisplayConfigSetDeviceInfo (USER32.@)
+ */
+LONG WINAPI DisplayConfigSetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEADER *packet )
+{
+    FIXME( "stub!\n" );
+    return RtlNtStatusToDosError( STATUS_NOT_IMPLEMENTED );
+}
+
+/***********************************************************************
  *              SetDisplayConfig (USER32.@)
  */
 LONG WINAPI SetDisplayConfig(UINT32 path_info_count, DISPLAYCONFIG_PATH_INFO *path_info, UINT32 mode_info_count,
@@ -1034,7 +1091,7 @@ LONG WINAPI SetDisplayConfig(UINT32 path_info_count, DISPLAYCONFIG_PATH_INFO *pa
 BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( RECT *rect, DWORD style, BOOL menu )
 {
     TRACE( "(%s) %08lx %d\n", wine_dbgstr_rect( rect ), style, menu );
-    return NtUserAdjustWindowRect( rect, style, menu, 0, system_dpi );
+    return NtUserAdjustWindowRect( rect, style, menu, 0, GetDpiForSystem() );
 }
 
 
@@ -1044,7 +1101,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRect( RECT *rect, DWORD style, BOOL me
 BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( RECT *rect, DWORD style, BOOL menu, DWORD ex_style )
 {
     TRACE( "(%s) %08lx %d %08lx\n", wine_dbgstr_rect( rect ), style, menu, ex_style );
-    return NtUserAdjustWindowRect( rect, style, menu, ex_style, system_dpi );
+    return NtUserAdjustWindowRect( rect, style, menu, ex_style, GetDpiForSystem() );
 }
 
 

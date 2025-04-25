@@ -230,13 +230,6 @@ typedef struct
 
 typedef struct
 {
-    ULONG Version;
-    ULONG Reserved;
-    ULONG Callback;
-} PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION32;
-
-typedef struct
-{
     ULONG ReserveSize;
     ULONG ZeroBits;
     ULONG StackBase;

@@ -38,19 +38,11 @@
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
 #include <libxml/xmlerror.h>
-#include <libxml/globals.h>
 
 #ifdef LIBXML_XPTR_ENABLED
 
 /* Add support of the xmlns() xpointer scheme to initialize the namespaces */
 #define XPTR_XMLNS_SCHEME
-
-/* #define DEBUG_RANGES */
-#ifdef DEBUG_RANGES
-#ifdef LIBXML_DEBUG_ENABLED
-#include <libxml/debugXML.h>
-#endif
-#endif
 
 #include "private/error.h"
 
@@ -705,10 +697,6 @@ xmlXPtrLocationSetDel(xmlLocationSetPtr cur, xmlXPathObjectPtr val) {
         if (cur->locTab[i] == val) break;
 
     if (i >= cur->locNr) {
-#ifdef DEBUG
-        xmlGenericError(xmlGenericErrorContext,
-	        "xmlXPtrLocationSetDel: Range wasn't found in RangeList\n");
-#endif
         return;
     }
     cur->locNr--;
@@ -1248,7 +1236,6 @@ xmlXPtrEvalXPointer(xmlXPathParserContextPtr ctxt) {
 	ctxt->valueNr = 0;
 	ctxt->valueMax = 10;
 	ctxt->value = NULL;
-	ctxt->valueFrame = 0;
     }
     SKIP_BLANKS;
     if (CUR == '/') {
@@ -2425,13 +2412,6 @@ xmlXPtrMatchString(const xmlChar *string, xmlNodePtr start, int startindex,
 	    if (len >= pos + stringlen) {
 		match = (!xmlStrncmp(&cur->content[pos], string, stringlen));
 		if (match) {
-#ifdef DEBUG_RANGES
-		    xmlGenericError(xmlGenericErrorContext,
-			    "found range %d bytes at index %d of ->",
-			    stringlen, pos + 1);
-		    xmlDebugDumpString(stdout, cur->content);
-		    xmlGenericError(xmlGenericErrorContext, "\n");
-#endif
 		    *end = cur;
 		    *endindex = pos + stringlen;
 		    return(1);
@@ -2442,13 +2422,6 @@ xmlXPtrMatchString(const xmlChar *string, xmlNodePtr start, int startindex,
                 int sub = len - pos;
 		match = (!xmlStrncmp(&cur->content[pos], string, sub));
 		if (match) {
-#ifdef DEBUG_RANGES
-		    xmlGenericError(xmlGenericErrorContext,
-			    "found subrange %d bytes at index %d of ->",
-			    sub, pos + 1);
-		    xmlDebugDumpString(stdout, cur->content);
-		    xmlGenericError(xmlGenericErrorContext, "\n");
-#endif
                     string = &string[sub];
 		    stringlen -= sub;
 		} else {
@@ -2508,13 +2481,6 @@ xmlXPtrSearchString(const xmlChar *string, xmlNodePtr *start, int *startindex,
 		    str = xmlStrchr(&cur->content[pos], first);
 		    if (str != NULL) {
 			pos = (str - (xmlChar *)(cur->content));
-#ifdef DEBUG_RANGES
-			xmlGenericError(xmlGenericErrorContext,
-				"found '%c' at index %d of ->",
-				first, pos + 1);
-			xmlDebugDumpString(stdout, cur->content);
-			xmlGenericError(xmlGenericErrorContext, "\n");
-#endif
 			if (xmlXPtrMatchString(string, cur, pos + 1,
 					       end, endindex)) {
 			    *start = cur;
@@ -2531,13 +2497,6 @@ xmlXPtrSearchString(const xmlChar *string, xmlNodePtr *start, int *startindex,
 		     * character of the string-value and after the final
 		     * character.
 		     */
-#ifdef DEBUG_RANGES
-		    xmlGenericError(xmlGenericErrorContext,
-			    "found '' at index %d of ->",
-			    pos + 1);
-		    xmlDebugDumpString(stdout, cur->content);
-		    xmlGenericError(xmlGenericErrorContext, "\n");
-#endif
 		    *start = cur;
 		    *startindex = pos + 1;
 		    *end = cur;
@@ -2787,25 +2746,12 @@ xmlXPtrStringRangeFunction(xmlXPathParserContextPtr ctxt, int nargs) {
      * the list of location set corresponding to that search
      */
     for (i = 0;i < oldset->locNr;i++) {
-#ifdef DEBUG_RANGES
-	xmlXPathDebugDumpObject(stdout, oldset->locTab[i], 0);
-#endif
 
 	xmlXPtrGetStartPoint(oldset->locTab[i], &start, &startindex);
 	xmlXPtrGetEndPoint(oldset->locTab[i], &end, &endindex);
 	xmlXPtrAdvanceChar(&start, &startindex, 0);
 	xmlXPtrGetLastChar(&end, &endindex);
 
-#ifdef DEBUG_RANGES
-	xmlGenericError(xmlGenericErrorContext,
-		"from index %d of ->", startindex);
-	xmlDebugDumpString(stdout, start->content);
-	xmlGenericError(xmlGenericErrorContext, "\n");
-	xmlGenericError(xmlGenericErrorContext,
-		"to index %d of ->", endindex);
-	xmlDebugDumpString(stdout, end->content);
-	xmlGenericError(xmlGenericErrorContext, "\n");
-#endif
 	do {
             fend = end;
             fendindex = endindex;
@@ -2971,4 +2917,3 @@ xmlXPtrEvalRangePredicate(xmlXPathParserContextPtr ctxt) {
 #endif /* LIBXML_XPTR_LOCS_ENABLED */
 
 #endif
-

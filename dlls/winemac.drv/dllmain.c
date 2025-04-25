@@ -399,9 +399,6 @@ static BOOL process_attach(void)
     params.strings = strings;
     params.app_icon_callback = (UINT_PTR)macdrv_app_icon;
     params.app_quit_request_callback = (UINT_PTR)macdrv_app_quit_request;
-    params.dnd_query_drag_callback = (UINT_PTR)macdrv_dnd_query_drag;
-    params.dnd_query_drop_callback = (UINT_PTR)macdrv_dnd_query_drop;
-    params.dnd_query_exited_callback = (UINT_PTR)macdrv_dnd_query_exited;
 
     if (MACDRV_CALL(init, &params)) return FALSE;
 

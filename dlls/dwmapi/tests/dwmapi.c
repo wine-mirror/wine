@@ -140,9 +140,40 @@ cleanup:
     DestroyWindow(hwnd);
 }
 
+static void WINAPI apc_func(ULONG_PTR apc_count)
+{
+    ++*(unsigned int *)apc_count;
+}
+
+static void test_DwmFlush(void)
+{
+    unsigned int apc_count;
+    BOOL enabled = FALSE;
+    HRESULT hr;
+    BOOL ret;
+
+    hr = DwmIsCompositionEnabled(&enabled);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (!enabled)
+    {
+        skip("DWM is disabled.\n");
+        return;
+    }
+    ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
+    apc_count = 0;
+    hr = DwmFlush();
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!apc_count, "got apc_count %d.\n", apc_count);
+    SleepEx(0, TRUE);
+    ok(apc_count == 1, "got apc_count %d.\n", apc_count);
+}
+
 START_TEST(dwmapi)
 {
     test_DwmIsCompositionEnabled();
     test_DwmGetCompositionTimingInfo();
     test_DWMWA_EXTENDED_FRAME_BOUNDS();
+    test_DwmFlush();
 }

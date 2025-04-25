@@ -58,6 +58,9 @@ struct catadmin
     DWORD magic;
     WCHAR path[MAX_PATH];
     HANDLE find;
+    ALG_ID alg;
+    const WCHAR *providerName;
+    DWORD providerType;
 };
 
 struct catinfo
@@ -98,6 +101,29 @@ static HCATINFO create_catinfo(const WCHAR *filename)
 BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
                                         const GUID *sys, DWORD dwFlags)
 {
+    TRACE("%p %s %lx\n", catAdmin, debugstr_guid(sys), dwFlags);
+    return CryptCATAdminAcquireContext2(catAdmin, sys, NULL, NULL, dwFlags);
+}
+
+/***********************************************************************
+ *             CryptCATAdminAcquireContext2 (WINTRUST.@)
+ * Get a catalog administrator context handle.
+ *
+ * PARAMS
+ *   catAdmin  [O] Pointer to the context handle.
+ *   sys       [I] Pointer to a GUID for the needed subsystem.
+ *   algorithm [I] String of hashing algorithm to use for catalog (SHA1/SHA256).
+ *   policy    [I] Pointer to policy structure for checking strong signatures.
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. catAdmin contains the context handle.
+ *   Failure: FALSE.
+ *
+ */
+BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
+                                         const CERT_STRONG_SIGN_PARA *policy, DWORD dwFlags)
+{
     static const WCHAR catroot[] =
         {'\\','c','a','t','r','o','o','t',0};
     static const WCHAR fmt[] =
@@ -110,19 +136,48 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 
     WCHAR catroot_dir[MAX_PATH];
     struct catadmin *ca;
+    ALG_ID alg;
+    const WCHAR *providerName;
+    DWORD providerType;
 
-    TRACE("%p %s %lx\n", catAdmin, debugstr_guid(sys), dwFlags);
+    TRACE("%p %s %s %p %lx\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, dwFlags);
 
     if (!catAdmin || dwFlags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+
+    if (policy != NULL)
+        FIXME("strong policy parameter is unimplemented\n");
+
+    if (algorithm == NULL || wcscmp(algorithm, BCRYPT_SHA1_ALGORITHM) == 0)
+    {
+        alg = CALG_SHA1;
+        providerName = MS_DEF_PROV_W;
+        providerType = PROV_RSA_FULL;
+    }
+    else if (wcscmp(algorithm, BCRYPT_SHA256_ALGORITHM) == 0)
+    {
+        alg = CALG_SHA_256;
+        providerName = MS_ENH_RSA_AES_PROV_W;
+        providerType = PROV_RSA_AES;
+    }
+    else
+    {
+        SetLastError(NTE_BAD_ALGID);
+        return FALSE;
+    }
+
     if (!(ca = malloc(sizeof(*ca))))
     {
         SetLastError(ERROR_OUTOFMEMORY);
         return FALSE;
     }
+
+    ca->alg = alg;
+    ca->providerName = providerName;
+    ca->providerType = providerType;
 
     GetSystemDirectoryW(catroot_dir, MAX_PATH);
     lstrcatW(catroot_dir, catroot);
@@ -144,17 +199,6 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 
     *catAdmin = ca;
     return TRUE;
-}
-
-/***********************************************************************
- *             CryptCATAdminAcquireContext2 (WINTRUST.@)
- */
-BOOL WINAPI CryptCATAdminAcquireContext2(HCATADMIN *catAdmin, const GUID *sys, const WCHAR *algorithm,
-                                         const CERT_STRONG_SIGN_PARA *policy, DWORD flags)
-{
-    FIXME("%p %s %s %p %lx stub\n", catAdmin, debugstr_guid(sys), debugstr_w(algorithm), policy, flags);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
 }
 
 /***********************************************************************
@@ -288,28 +332,50 @@ done:
     return ret;
 }
 
-/***********************************************************************
- *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
- */
-BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BYTE *pbHash, DWORD dwFlags)
+static BOOL catadmin_calc_hash_from_filehandle(HCATADMIN catAdmin, HANDLE hFile, DWORD *pcbHash,
+                                               BYTE *pbHash, DWORD dwFlags)
 {
     BOOL ret = FALSE;
-
-    TRACE("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    struct catadmin *ca = catAdmin;
+    ALG_ID alg = CALG_SHA1;
+    const WCHAR *providerName = MS_DEF_PROV_W;
+    DWORD providerType = PROV_RSA_FULL;
+    DWORD hashLength;
 
     if (!hFile || !pcbHash || dwFlags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
-    if (*pcbHash < 20)
+
+    if (ca)
     {
-        *pcbHash = 20;
+        alg = ca->alg;
+        providerName = ca->providerName;
+        providerType = ca->providerType;
+    }
+
+    switch (alg)
+    {
+        case CALG_SHA1:
+            hashLength = 20;
+            break;
+        case CALG_SHA_256:
+            hashLength = 32;
+            break;
+        default:
+            FIXME("unsupported algorithm %x\n", alg);
+            return FALSE;
+    }
+
+    if (*pcbHash < hashLength)
+    {
+        *pcbHash = hashLength;
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return TRUE;
     }
 
-    *pcbHash = 20;
+    *pcbHash = hashLength;
     if (pbHash)
     {
         HCRYPTPROV prov;
@@ -322,13 +388,13 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BY
             SetLastError(ERROR_OUTOFMEMORY);
             return FALSE;
         }
-        ret = CryptAcquireContextW(&prov, NULL, MS_DEF_PROV_W, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+        ret = CryptAcquireContextW(&prov, NULL, providerName, providerType, CRYPT_VERIFYCONTEXT);
         if (!ret)
         {
             free(buffer);
             return FALSE;
         }
-        ret = CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash);
+        ret = CryptCreateHash(prov, alg, 0, 0, &hash);
         if (!ret)
         {
             free(buffer);
@@ -351,6 +417,48 @@ BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BY
     }
     return ret;
 }
+
+/***********************************************************************
+ *             CryptCATAdminCalcHashFromFileHandle (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE hFile, DWORD *pcbHash, BYTE *pbHash, DWORD dwFlags)
+{
+    TRACE("%p %p %p %lx\n", hFile, pcbHash, pbHash, dwFlags);
+    return catadmin_calc_hash_from_filehandle(NULL, hFile, pcbHash, pbHash, dwFlags);
+}
+
+/***********************************************************************
+ *    CryptCATAdminCalcHashFromFileHandle2 (WINTRUST.@)
+ *
+ * Calculate hash for a specific file using a catalog administrator context.
+ *
+ * PARAMS
+ *   catAdmin  [I] Catalog administrator context handle.
+ *   hFile     [I] Handle for the file to hash.
+ *   pcbHash   [I] Pointer to the length of the hash.
+ *   pbHash    [O] Pointer to the buffer that will store that hash
+ *   dwFlags   [I] Reserved.
+ *
+ * RETURNS
+ *   Success: TRUE. If pcbHash is too small, LastError will be set to ERROR_INSUFFICIENT_BUFFER.
+ *                  pbHash contains the computed hash, if supplied.
+ *   Failure: FALSE.
+ *
+ */
+BOOL WINAPI CryptCATAdminCalcHashFromFileHandle2(HCATADMIN catAdmin, HANDLE hFile,  DWORD *pcbHash,
+                                                 BYTE *pbHash, DWORD dwFlags)
+{
+    TRACE("%p %p %p %p %lx\n", catAdmin, hFile, pcbHash, pbHash, dwFlags);
+
+    if (!catAdmin || ((struct catadmin *)catAdmin)->magic != CATADMIN_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    return catadmin_calc_hash_from_filehandle(catAdmin, hFile, pcbHash, pbHash, dwFlags);
+}
+
 
 /***********************************************************************
  *             CryptCATAdminEnumCatalogFromHash (WINTRUST.@)
@@ -1340,17 +1448,17 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
           pcbSignedDataMsg, pbSignedDataMsg);
 
     /* get basic offset & size info */
-    base_offset = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
+    base_offset = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, FILE_CURRENT);
 
-    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_END) == INVALID_SET_FILE_POINTER)
+    if (SetFilePointer(pSubjectInfo->hFile, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
     {
         TRACE("seek error\n");
         return FALSE;
     }
 
-    cabsize = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, SEEK_CUR);
+    cabsize = SetFilePointer(pSubjectInfo->hFile, 0L, NULL, FILE_CURRENT);
     if ((cabsize == -1) || (base_offset == -1) ||
-     (SetFilePointer(pSubjectInfo->hFile, 0, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER))
+     (SetFilePointer(pSubjectInfo->hFile, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER))
     {
         TRACE("seek error\n");
         return FALSE;
@@ -1434,7 +1542,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
         return FALSE;
     }
 
-    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
     if (!pbSignedDataMsg)
     {
         *pcbSignedDataMsg = cert_size;
@@ -1446,7 +1554,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
-    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, SEEK_SET) == INVALID_SET_FILE_POINTER)
+    if (SetFilePointer(pSubjectInfo->hFile, cert_offset, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
     {
         ERR("couldn't seek to cert location\n");
         return FALSE;
@@ -1455,7 +1563,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
      NULL) || dwRead != cert_size)
     {
         ERR("couldn't read cert\n");
-        SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+        SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
         return FALSE;
     }
     /* The encoding of the files I've seen appears to be in ASN.1
@@ -1464,7 +1572,7 @@ static BOOL WINTRUST_GetSignedMsgFromCabFile(SIP_SUBJECTINFO *pSubjectInfo,
      */
     *pdwEncodingType = X509_ASN_ENCODING | PKCS_7_ASN_ENCODING;
     /* Restore base offset */
-    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, SEEK_SET);
+    SetFilePointer(pSubjectInfo->hFile, base_offset, NULL, FILE_BEGIN);
     return TRUE;
 }
 

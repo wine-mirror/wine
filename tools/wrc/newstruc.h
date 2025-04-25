@@ -38,7 +38,6 @@ accelerator_t *new_accelerator(void);
 event_t *new_event(void);
 raw_data_t *new_raw_data(void);
 lvc_t *new_lvc(void);
-res_count_t *new_res_count(void);
 string_t *new_string(void);
 toolbar_item_t *new_toolbar_item(void);
 ani_any_t *new_ani_any(void);

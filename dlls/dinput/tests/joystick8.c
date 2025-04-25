@@ -2660,7 +2660,13 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
 
-    dataformat.dwNumObjs = 4;
+
+    dataformat.dwNumObjs = 1;
+    dataformat.dwDataSize = 8;
+    objdataformat[0].pguid = NULL;
+    objdataformat[0].dwOfs = 0;
+    objdataformat[0].dwType = DIDFT_ABSAXIS | DIDFT_MAKEINSTANCE( 6 );
+    objdataformat[0].dwFlags = 0;
     hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
     ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
     hr = IDirectInputDevice8_Acquire( device );
@@ -2674,6 +2680,70 @@ static void test_simple_joystick( DWORD version )
         res = WaitForSingleObject( event, 100 );
     }
     todo_wine
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 5000 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    memset( buffer, 0xcd, sizeof(buffer) );
+    hr = IDirectInputDevice8_GetDeviceState( device, dataformat.dwDataSize, buffer );
+    ok( hr == DI_OK, "GetDeviceState returned: %#lx\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
+    ok( ((UINT *)buffer)[0] != 0, "got %#x\n", ((UINT *)buffer)[0] );
+    ok( ((UINT *)buffer)[1] == 0, "got %#x\n", ((UINT *)buffer)[1] );
+    ok( ((UINT *)buffer)[2] == 0xcdcdcdcd, "got %#x\n", ((UINT *)buffer)[2] );
+
+
+    dataformat.dwDataSize = 128;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
+
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    send_hid_input( file, &injected_input[3], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 5000 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
+    ResetEvent( event );
+
+    memset( buffer, 0xcd, sizeof(buffer) );
+    hr = IDirectInputDevice8_GetDeviceState( device, dataformat.dwDataSize, buffer );
+    ok( hr == DI_OK, "GetDeviceState returned: %#lx\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
+    ok( ((UINT *)buffer)[0] != 0, "got %#x\n", ((UINT *)buffer)[0] );
+    ok( ((UINT *)buffer)[1] != 0, "got %#x\n", ((UINT *)buffer)[1] );
+    ok( ((UINT *)buffer)[2] != 0, "got %#x\n", ((UINT *)buffer)[2] );
+
+    objdataformat[0].dwType = DIDFT_AXIS | DIDFT_MAKEINSTANCE( 0 );
+
+
+    dataformat.dwNumObjs = 4;
+    hr = IDirectInputDevice8_SetDataFormat( device, &dataformat );
+    ok( hr == DI_OK, "SetDataFormat returned: %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
+
+    send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        send_hid_input( file, &injected_input[4], sizeof(*injected_input) );
+        res = WaitForSingleObject( event, 100 );
+    }
     ok( res == WAIT_OBJECT_0, "WaitForSingleObject failed\n" );
     ResetEvent( event );
 

@@ -444,7 +444,7 @@ static struct list pp_includelogiclist = LIST_INIT( pp_includelogiclist );
 <pp_def>{cident}		ppy_lval.cptr = xstrdup(ppy_text); yy_pp_state(pp_define); return tDEFINE;
 <pp_def>{ws}+			;
 <pp_def>\\\r?\n			newline(0);
-<pp_def>(\\\r?)|(\n)|(.)	perror("Identifier expected");
+<pp_def>(\\\r?)|(\n)|(.)	ppy_error("Identifier expected");
 
 	/*
 	 * Scan the substitution of a define
@@ -907,12 +907,12 @@ static void expand_special(pp_entry_t *ppp)
 	if(!strcmp(ppp->ident, "__LINE__"))
 	{
 		buf = xrealloc(buf, 32);
-		sprintf(buf, "%d", pp_status.line_number);
+		snprintf(buf, 32, "%d", pp_status.line_number);
 	}
 	else if(!strcmp(ppp->ident, "__FILE__"))
 	{
 		buf = xrealloc(buf, strlen(pp_status.input) + 3);
-		sprintf(buf, "\"%s\"", pp_status.input);
+		snprintf(buf, strlen(pp_status.input) + 3, "\"%s\"", pp_status.input);
 	}
 
 	if(pp_flex_debug)

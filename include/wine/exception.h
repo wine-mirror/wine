@@ -251,11 +251,11 @@ typedef struct __tagWINE_FRAME
 
 static inline EXCEPTION_REGISTRATION_RECORD *__wine_push_frame( EXCEPTION_REGISTRATION_RECORD *frame )
 {
-#if defined(__GNUC__) && defined(__i386__)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
     EXCEPTION_REGISTRATION_RECORD *prev;
-    __asm__ __volatile__(".byte 0x64\n\tmovl (0),%0"
+    __asm__ __volatile__("movl %%fs:0,%0"
                          "\n\tmovl %0,(%1)"
-                         "\n\t.byte 0x64\n\tmovl %1,(0)"
+                         "\n\tmovl %1,%%fs:0"
                          : "=&r" (prev) : "r" (frame) : "memory" );
     return prev;
 #else
@@ -268,8 +268,8 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_push_frame( EXCEPTION_REGIST
 
 static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTRATION_RECORD *frame )
 {
-#if defined(__GNUC__) && defined(__i386__)
-    __asm__ __volatile__(".byte 0x64\n\tmovl %0,(0)"
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
+    __asm__ __volatile__("movl %0,%%fs:0"
                          : : "r" (frame->Prev) : "memory" );
     return frame->Prev;
 
@@ -282,9 +282,9 @@ static inline EXCEPTION_REGISTRATION_RECORD *__wine_pop_frame( EXCEPTION_REGISTR
 
 static inline EXCEPTION_REGISTRATION_RECORD *__wine_get_frame(void)
 {
-#if defined(__GNUC__) && defined(__i386__)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__i386__)
     EXCEPTION_REGISTRATION_RECORD *ret;
-    __asm__ __volatile__(".byte 0x64\n\tmovl (0),%0" : "=r" (ret) );
+    __asm__ __volatile__("movl %%fs:0,%0" : "=r" (ret) );
     return ret;
 #else
     NT_TIB *teb = (NT_TIB *)NtCurrentTeb();

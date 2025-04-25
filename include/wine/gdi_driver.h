@@ -59,7 +59,7 @@ static inline const char *debugstr_window_rects( const struct window_rects *rect
 }
 
 /* convert a visible rect to the corresponding window rect, using the window_rects offsets */
-static inline RECT window_rect_from_visible( struct window_rects *rects, RECT visible_rect )
+static inline RECT window_rect_from_visible( const struct window_rects *rects, RECT visible_rect )
 {
     RECT rect = visible_rect;
 
@@ -219,7 +219,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 96
+#define WINE_GDI_DRIVER_VERSION 104
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -312,7 +312,7 @@ struct gdi_monitor
 struct gdi_device_manager
 {
     void (*add_gpu)( const char *name, const struct pci_id *pci_id, const GUID *vulkan_uuid, void *param );
-    void (*add_source)( const char *name, UINT state_flags, void *param );
+    void (*add_source)( const char *name, UINT state_flags, UINT dpi, void *param );
     void (*add_monitor)( const struct gdi_monitor *monitor, void *param );
     void (*add_modes)( const DEVMODEW *current, UINT modes_count, const DEVMODEW *modes, void *param );
 };
@@ -320,6 +320,7 @@ struct gdi_device_manager
 #define WINE_DM_UNSUPPORTED 0x80000000
 
 struct vulkan_driver_funcs;
+struct opengl_driver_funcs;
 
 struct user_driver_funcs
 {
@@ -340,7 +341,7 @@ struct user_driver_funcs
     /* IME functions */
     UINT    (*pImeProcessKey)(HIMC,UINT,UINT,const BYTE*);
     void    (*pNotifyIMEStatus)(HWND,UINT);
-    BOOL    (*pSetIMECompositionWindowPos)(HWND, const POINT *);
+    BOOL    (*pSetIMECompositionRect)(HWND,RECT);
     /* cursor/icon functions */
     void    (*pDestroyCursorIcon)(HCURSOR);
     void    (*pSetCursor)(HWND,HCURSOR);
@@ -359,8 +360,6 @@ struct user_driver_funcs
     void    (*pUpdateClipboard)(void);
     /* display modes */
     LONG    (*pChangeDisplaySettings)(LPDEVMODEW,LPCWSTR,HWND,DWORD,LPVOID);
-    BOOL    (*pGetCurrentDisplaySettings)(LPCWSTR,BOOL,LPDEVMODEW);
-    INT     (*pGetDisplayDepth)(LPCWSTR,BOOL);
     UINT    (*pUpdateDisplayDevices)(const struct gdi_device_manager *,void*);
     /* windowing functions */
     BOOL    (*pCreateDesktop)(const WCHAR *,UINT,UINT);
@@ -374,7 +373,7 @@ struct user_driver_funcs
     BOOL    (*pScrollDC)(HDC,INT,INT,HRGN);
     void    (*pSetCapture)(HWND,UINT);
     void    (*pSetDesktopWindow)(HWND);
-    void    (*pSetFocus)(HWND);
+    void    (*pActivateWindow)(HWND,HWND);
     void    (*pSetLayeredWindowAttributes)(HWND,COLORREF,BYTE,DWORD);
     void    (*pSetParent)(HWND,HWND,HWND);
     void    (*pSetWindowRgn)(HWND,HRGN,BOOL);
@@ -382,27 +381,25 @@ struct user_driver_funcs
     void    (*pSetWindowStyle)(HWND,INT,STYLESTRUCT*);
     void    (*pSetWindowText)(HWND,LPCWSTR);
     UINT    (*pShowWindow)(HWND,INT,RECT*,UINT);
-    LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM);
-    void    (*pUpdateLayeredWindow)(HWND,UINT);
+    LRESULT (*pSysCommand)(HWND,WPARAM,LPARAM,const POINT*);
+    void    (*pUpdateLayeredWindow)(HWND,BYTE,UINT);
     LRESULT (*pWindowMessage)(HWND,UINT,WPARAM,LPARAM);
     BOOL    (*pWindowPosChanging)(HWND,UINT,BOOL,const struct window_rects *);
     BOOL    (*pGetWindowStyleMasks)(HWND,UINT,UINT,UINT*,UINT*);
+    BOOL    (*pGetWindowStateUpdates)(HWND,UINT*,UINT*,RECT*,HWND*);
     BOOL    (*pCreateWindowSurface)(HWND,BOOL,const RECT *,struct window_surface**);
-    void    (*pMoveWindowBits)(HWND,const struct window_rects *,const RECT *);
-    void    (*pWindowPosChanged)(HWND,HWND,UINT,const struct window_rects*,struct window_surface*);
+    void    (*pMoveWindowBits)(HWND,const struct window_rects *,const struct window_rects *,const RECT *);
+    void    (*pWindowPosChanged)(HWND,HWND,HWND,UINT,BOOL,const struct window_rects*,struct window_surface*);
     /* system parameters */
     BOOL    (*pSystemParametersInfo)(UINT,UINT,void*,UINT);
     /* vulkan support */
     UINT    (*pVulkanInit)(UINT,void *,const struct vulkan_driver_funcs **);
     /* opengl support */
-    struct opengl_funcs * (*pwine_get_wgl_driver)(UINT);
+    UINT    (*pOpenGLInit)(UINT,struct opengl_funcs **,const struct opengl_driver_funcs **);
     /* thread management */
     void    (*pThreadDetach)(void);
 };
 
 W32KAPI void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
-
-W32KAPI BOOL win32u_set_window_pixel_format( HWND hwnd, int format, BOOL internal );
-W32KAPI int win32u_get_window_pixel_format( HWND hwnd );
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */

@@ -149,6 +149,9 @@ WORD   WINAPI WOWHandle16(HANDLE,WOW_HANDLE_TYPE);
 
 /* Wine extensions: call register function, context ptr is passed in the return value LPDWORD */
 #define WCB16_REGS       2
+/* Wine extension: simulate a hardware interrupt by running the callback without waiting for the
+ * current task to yield */
+#define WCB16_INTERRUPT  4
 
 DWORD WINAPI WOWCallback16(DWORD,DWORD);
 BOOL  WINAPI WOWCallback16Ex(DWORD,DWORD,DWORD,LPVOID,LPDWORD);

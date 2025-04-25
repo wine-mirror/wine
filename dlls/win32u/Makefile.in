@@ -2,7 +2,7 @@ EXTRADEFS = -D_WIN32U_
 MODULE    = win32u.dll
 UNIXLIB   = win32u.so
 IMPORTLIB = win32u
-IMPORTS   = ntdll winecrt0
+IMPORTS   = ntdll
 UNIX_CFLAGS  = $(FREETYPE_CFLAGS) $(FONTCONFIG_CFLAGS)
 UNIX_LIBS    = $(CARBON_LIBS) $(APPKIT_LIBS) $(PTHREAD_LIBS) -lm
 
@@ -25,7 +25,6 @@ SOURCES = \
 	dibdrv/dc.c \
 	dibdrv/graphics.c \
 	dibdrv/objects.c \
-	dibdrv/opengl.c \
 	dibdrv/primitives.c \
 	driver.c \
 	emfdrv.c \
@@ -39,6 +38,7 @@ SOURCES = \
 	mapping.c \
 	menu.c \
 	message.c \
+	opengl.c \
 	opentype.c \
 	painting.c \
 	palette.c \

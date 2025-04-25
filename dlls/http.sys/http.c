@@ -267,8 +267,8 @@ static void parse_header(const char *name, int *name_len, const char **value, in
     while (*p == ' ' || *p == '\t') ++p;
     *value = p;
     while (isprint(*p) || *p == '\t') ++p;
-    while (isspace(*p)) --p; /* strip trailing LWS */
-    *value_len = p - *value + 1;
+    while (p > *value && isspace(p[-1])) --p; /* strip trailing LWS */
+    *value_len = p - *value;
 }
 
 #define http_unknown_header http_unknown_header_64

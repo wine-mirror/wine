@@ -575,15 +575,19 @@ uuid(30572f99-dac6-41db-a16e-0486307e606a)
 ]
 interface IDWriteFactory1 : IDWriteFactory
 {
-    HRESULT GetEudcFontCollection(IDWriteFontCollection **collection,
-                                  [defaultvalue(FALSE)] BOOL check_for_updates);
-    HRESULT CreateCustomRenderingParams(FLOAT gamma,
-                                        FLOAT enhcontrast,
-                                        FLOAT enhcontrast_grayscale,
-                                        FLOAT cleartype_level,
-                                        DWRITE_PIXEL_GEOMETRY geometry,
-                                        DWRITE_RENDERING_MODE mode,
-                                        IDWriteRenderingParams1** params);
+    HRESULT GetEudcFontCollection(
+        [out] IDWriteFontCollection **collection,
+        [in, defaultvalue(FALSE)] BOOL check_for_updates
+    );
+    HRESULT CreateCustomRenderingParams(
+        [in] FLOAT gamma,
+        [in] FLOAT enhcontrast,
+        [in] FLOAT enhcontrast_grayscale,
+        [in] FLOAT cleartype_level,
+        [in] DWRITE_PIXEL_GEOMETRY geometry,
+        [in] DWRITE_RENDERING_MODE mode,
+        [out] IDWriteRenderingParams1 **params
+    );
 }
 
 [
@@ -593,45 +597,61 @@ uuid(a71efdb4-9fdb-4838-ad90-cfc3be8c3daf)
 ]
 interface IDWriteFontFace1 : IDWriteFontFace
 {
-    void GetMetrics(DWRITE_FONT_METRICS1 *metrics);
-    HRESULT GetGdiCompatibleMetrics(FLOAT em_size,
-                                    FLOAT pixels_per_dip,
-                                    const DWRITE_MATRIX *transform,
-                                    DWRITE_FONT_METRICS1 *metrics);
-    void GetCaretMetrics(DWRITE_CARET_METRICS *metrics);
-    HRESULT GetUnicodeRanges(UINT32 max_count,
-                             DWRITE_UNICODE_RANGE *ranges,
-                             UINT32 *count);
+    void GetMetrics(
+        [out] DWRITE_FONT_METRICS1 *metrics
+    );
+    HRESULT GetGdiCompatibleMetrics(
+        [in] FLOAT em_size,
+        [in] FLOAT pixels_per_dip,
+        [in] const DWRITE_MATRIX *transform,
+        [out] DWRITE_FONT_METRICS1 *metrics
+    );
+    void GetCaretMetrics(
+        [out] DWRITE_CARET_METRICS *metrics
+    );
+    HRESULT GetUnicodeRanges(
+        [in] UINT32 max_count,
+        [out] DWRITE_UNICODE_RANGE *ranges,
+        [out] UINT32 *count
+    );
     BOOL IsMonospacedFont();
-    HRESULT GetDesignGlyphAdvances(UINT32 glyph_count,
-                                   UINT16 const *indices,
-                                   INT32 *advances,
-                                   [defaultvalue(FALSE)] BOOL is_sideways);
-    HRESULT GetGdiCompatibleGlyphAdvances(FLOAT em_size,
-                                          FLOAT pixels_per_dip,
-                                          const DWRITE_MATRIX *transform,
-                                          BOOL use_gdi_natural,
-                                          BOOL is_sideways,
-                                          UINT32 glyph_count,
-                                          const UINT16 *indices,
-                                          INT32 *advances);
-
-    HRESULT GetKerningPairAdjustments(UINT32 glyph_count,
-                                      const UINT16 *indices,
-                                      INT32 *adjustments);
+    HRESULT GetDesignGlyphAdvances(
+        [in] UINT32 glyph_count,
+        [in] UINT16 const *indices,
+        [out] INT32 *advances,
+        [in, defaultvalue(FALSE)] BOOL is_sideways
+    );
+    HRESULT GetGdiCompatibleGlyphAdvances(
+        [in] FLOAT em_size,
+        [in] FLOAT pixels_per_dip,
+        [in] const DWRITE_MATRIX *transform,
+        [in] BOOL use_gdi_natural,
+        [in] BOOL is_sideways,
+        [in] UINT32 glyph_count,
+        [in] const UINT16 *indices,
+        [out] INT32 *advances
+    );
+    HRESULT GetKerningPairAdjustments(
+        [in] UINT32 glyph_count,
+        [in] const UINT16 *indices,
+        [out] INT32 *adjustments
+    );
     BOOL HasKerningPairs();
-    HRESULT GetRecommendedRenderingMode(FLOAT font_emsize,
-                                        FLOAT dpiX,
-                                        FLOAT dpiY,
-                                        const DWRITE_MATRIX *transform,
-                                        BOOL is_sideways,
-                                        DWRITE_OUTLINE_THRESHOLD threshold,
-                                        DWRITE_MEASURING_MODE measuring_mode,
-                                        DWRITE_RENDERING_MODE *rendering_mode);
-
-    HRESULT GetVerticalGlyphVariants(UINT32 glyph_count,
-                                     const UINT16 *nominal_indices,
-                                     UINT16 *vertical_indices);
+    HRESULT GetRecommendedRenderingMode(
+        [in] FLOAT font_emsize,
+        [in] FLOAT dpiX,
+        [in] FLOAT dpiY,
+        [in] const DWRITE_MATRIX *transform,
+        [in] BOOL is_sideways,
+        [in] DWRITE_OUTLINE_THRESHOLD threshold,
+        [in] DWRITE_MEASURING_MODE measuring_mode,
+        [out] DWRITE_RENDERING_MODE *rendering_mode
+    );
+    HRESULT GetVerticalGlyphVariants(
+        [in] UINT32 glyph_count,
+        [in] const UINT16 *nominal_indices,
+        [out] UINT16 *vertical_indices
+    );
     BOOL HasVerticalGlyphVariants();
 }
 
@@ -642,11 +662,17 @@ uuid(acd16696-8c14-4f5d-877e-fe3fc1d32738)
 ]
 interface IDWriteFont1 : IDWriteFont
 {
-    void GetMetrics(DWRITE_FONT_METRICS1 *metrics);
-    void GetPanose(DWRITE_PANOSE *panose);
-    HRESULT GetUnicodeRanges(UINT32 max_count,
-                             DWRITE_UNICODE_RANGE *ranges,
-                             UINT32 *count);
+    void GetMetrics(
+        [out] DWRITE_FONT_METRICS1 *metrics
+    );
+    void GetPanose(
+        [out] DWRITE_PANOSE *panose
+    );
+    HRESULT GetUnicodeRanges(
+        [in] UINT32 max_count,
+        [out] DWRITE_UNICODE_RANGE *ranges,
+        [out] UINT32 *count
+    );
     BOOL IsMonospacedFont();
 }
 
@@ -667,83 +693,91 @@ uuid(80dad800-e21f-4e83-96ce-bfcce500db7c)
 ]
 interface IDWriteTextAnalyzer1 : IDWriteTextAnalyzer
 {
-    HRESULT ApplyCharacterSpacing(FLOAT leading_spacing,
-                                  FLOAT trailing_spacing,
-                                  FLOAT min_advance_width,
-                                  UINT32 len,
-                                  UINT32 glyph_count,
-                                  UINT16 const *clustermap,
-                                  FLOAT const *advances,
-                                  DWRITE_GLYPH_OFFSET const *offsets,
-                                  DWRITE_SHAPING_GLYPH_PROPERTIES const *props,
-                                  FLOAT *modified_advances,
-                                  DWRITE_GLYPH_OFFSET *modified_offsets);
-    HRESULT GetBaseline(IDWriteFontFace *face,
-                        DWRITE_BASELINE baseline,
-                        BOOL vertical,
-                        BOOL is_simulation_allowed,
-                        DWRITE_SCRIPT_ANALYSIS sa,
-                        const WCHAR *localeName,
-                        INT32 *baseline_coord,
-                        BOOL *exists);
-
+    HRESULT ApplyCharacterSpacing(
+        [in] FLOAT leading_spacing,
+        [in] FLOAT trailing_spacing,
+        [in] FLOAT min_advance_width,
+        [in] UINT32 len,
+        [in] UINT32 glyph_count,
+        [in] UINT16 const *clustermap,
+        [in] FLOAT const *advances,
+        [in] DWRITE_GLYPH_OFFSET const *offsets,
+        [in] DWRITE_SHAPING_GLYPH_PROPERTIES const *props,
+        [out] FLOAT *modified_advances,
+        [out] DWRITE_GLYPH_OFFSET *modified_offsets
+    );
+    HRESULT GetBaseline(
+        [in] IDWriteFontFace *face,
+        [in] DWRITE_BASELINE baseline,
+        [in] BOOL vertical,
+        [in] BOOL is_simulation_allowed,
+        [in] DWRITE_SCRIPT_ANALYSIS sa,
+        [in] const WCHAR *localeName,
+        [out] INT32 *baseline_coord,
+        [out] BOOL *exists
+    );
     HRESULT AnalyzeVerticalGlyphOrientation(
-        IDWriteTextAnalysisSource1* source,
-        UINT32 text_pos,
-        UINT32 len,
-        IDWriteTextAnalysisSink1 *sink);
-
+        [in] IDWriteTextAnalysisSource1 *source,
+        [in] UINT32 text_pos,
+        [in] UINT32 len,
+        [out] IDWriteTextAnalysisSink1 *sink
+    );
     HRESULT GetGlyphOrientationTransform(
-        DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-        BOOL is_sideways,
-        DWRITE_MATRIX *transform);
-
-    HRESULT GetScriptProperties(DWRITE_SCRIPT_ANALYSIS sa, DWRITE_SCRIPT_PROPERTIES *props);
-
-    HRESULT GetTextComplexity(const WCHAR *text,
-                              UINT32 len,
-                              IDWriteFontFace *face,
-                              BOOL *is_simple,
-                              UINT32 *len_read,
-                              UINT16 *indices);
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] BOOL is_sideways,
+        [out] DWRITE_MATRIX *transform
+    );
+    HRESULT GetScriptProperties(
+        [in] DWRITE_SCRIPT_ANALYSIS sa,
+        [out] DWRITE_SCRIPT_PROPERTIES *props
+    );
+    HRESULT GetTextComplexity(
+        [in] const WCHAR *text,
+        [in] UINT32 len,
+        [in] IDWriteFontFace *face,
+        [out] BOOL *is_simple,
+        [out] UINT32 *len_read,
+        [out] UINT16 *indices
+    );
     HRESULT GetJustificationOpportunities(
-        IDWriteFontFace *face,
-        FLOAT font_em_size,
-        DWRITE_SCRIPT_ANALYSIS sa,
-        UINT32 length,
-        UINT32 glyph_count,
-        const WCHAR *text,
-        const UINT16 *clustermap,
-        const DWRITE_SHAPING_GLYPH_PROPERTIES *prop,
-        DWRITE_JUSTIFICATION_OPPORTUNITY *jo);
-
+        [in] IDWriteFontFace *face,
+        [in] FLOAT font_em_size,
+        [in] DWRITE_SCRIPT_ANALYSIS sa,
+        [in] UINT32 length,
+        [in] UINT32 glyph_count,
+        [in] const WCHAR *text,
+        [in] const UINT16 *clustermap,
+        [in] const DWRITE_SHAPING_GLYPH_PROPERTIES *prop,
+        [out] DWRITE_JUSTIFICATION_OPPORTUNITY *jo
+    );
     HRESULT JustifyGlyphAdvances(
-        FLOAT width,
-        UINT32 glyph_count,
-        const DWRITE_JUSTIFICATION_OPPORTUNITY *jo,
-        const FLOAT *advances,
-        const DWRITE_GLYPH_OFFSET *offsets,
-        FLOAT *justifiedadvances,
-        DWRITE_GLYPH_OFFSET *justifiedoffsets);
-
+        [in] FLOAT width,
+        [in] UINT32 glyph_count,
+        [in] const DWRITE_JUSTIFICATION_OPPORTUNITY *jo,
+        [in] const FLOAT *advances,
+        [in] const DWRITE_GLYPH_OFFSET *offsets,
+        [out] FLOAT *justifiedadvances,
+        [out] DWRITE_GLYPH_OFFSET *justifiedoffsets
+    );
     HRESULT GetJustifiedGlyphs(
-        IDWriteFontFace *face,
-        FLOAT font_em_size,
-        DWRITE_SCRIPT_ANALYSIS sa,
-        UINT32 length,
-        UINT32 glyph_count,
-        UINT32 max_glyphcount,
-        const UINT16 *clustermap,
-        const UINT16 *indices,
-        const FLOAT *advances,
-        const FLOAT *justifiedadvances,
-        const DWRITE_GLYPH_OFFSET *justifiedoffsets,
-        const DWRITE_SHAPING_GLYPH_PROPERTIES *prop,
-        UINT32 *actual_count,
-        UINT16 *modified_clustermap,
-        UINT16 *modified_indices,
-        FLOAT *modified_advances,
-        DWRITE_GLYPH_OFFSET *modified_offsets);
+        [in] IDWriteFontFace *face,
+        [in] FLOAT font_em_size,
+        [in] DWRITE_SCRIPT_ANALYSIS sa,
+        [in] UINT32 length,
+        [in] UINT32 glyph_count,
+        [in] UINT32 max_glyphcount,
+        [in] const UINT16 *clustermap,
+        [in] const UINT16 *indices,
+        [in] const FLOAT *advances,
+        [in] const FLOAT *justifiedadvances,
+        [in] const DWRITE_GLYPH_OFFSET *justifiedoffsets,
+        [in] const DWRITE_SHAPING_GLYPH_PROPERTIES *prop,
+        [out] UINT32 *actual_count,
+        [out] UINT16 *modified_clustermap,
+        [out] UINT16 *modified_indices,
+        [out] FLOAT *modified_advances,
+        [out] DWRITE_GLYPH_OFFSET *modified_offsets
+    );
 }
 
 [
@@ -754,10 +788,11 @@ uuid(639cfad8-0fb4-4b21-a58a-067920120009)
 interface IDWriteTextAnalysisSource1 : IDWriteTextAnalysisSource
 {
     HRESULT GetVerticalGlyphOrientation(
-        UINT32 pos,
-        UINT32 *length,
-        DWRITE_VERTICAL_GLYPH_ORIENTATION *orientation,
-        UINT8 *bidi_level);
+        [in] UINT32 pos,
+        [out] UINT32 *length,
+        [out] DWRITE_VERTICAL_GLYPH_ORIENTATION *orientation,
+        [out] UINT8 *bidi_level
+    );
 }
 
 [
@@ -768,12 +803,13 @@ uuid(b0d941a0-85e7-4d8b-9fd3-5ced9934482a)
 interface IDWriteTextAnalysisSink1 : IDWriteTextAnalysisSink
 {
     HRESULT SetGlyphOrientation(
-        UINT32 pos,
-        UINT32 length,
-        DWRITE_GLYPH_ORIENTATION_ANGLE angle,
-        UINT8 adjusted_bidilevel,
-        BOOL is_sideways,
-        BOOL is_rtl);
+        [in] UINT32 pos,
+        [in] UINT32 length,
+        [in] DWRITE_GLYPH_ORIENTATION_ANGLE angle,
+        [in] UINT8 adjusted_bidilevel,
+        [in] BOOL is_sideways,
+        [in] BOOL is_rtl
+    );
 }
 
 [
@@ -784,26 +820,27 @@ uuid(9064d822-80a7-465c-a986-df65f78b8feb)
 interface IDWriteTextLayout1 : IDWriteTextLayout
 {
     HRESULT SetPairKerning(
-        BOOL is_pairkerning_enabled,
-        DWRITE_TEXT_RANGE range);
+        [in] BOOL is_pairkerning_enabled,
+        [in] DWRITE_TEXT_RANGE range);
 
     HRESULT GetPairKerning(
-        UINT32 position,
-        BOOL *is_pairkerning_enabled,
-        DWRITE_TEXT_RANGE *range);
+        [in] UINT32 position,
+        [out] BOOL *is_pairkerning_enabled,
+        [out] DWRITE_TEXT_RANGE *range);
 
     HRESULT SetCharacterSpacing(
-        FLOAT leading_spacing,
-        FLOAT trailing_spacing,
-        FLOAT minimum_advance_width,
-        DWRITE_TEXT_RANGE range);
+        [in] FLOAT leading_spacing,
+        [in] FLOAT trailing_spacing,
+        [in] FLOAT minimum_advance_width,
+        [in] DWRITE_TEXT_RANGE range);
 
     HRESULT GetCharacterSpacing(
-        UINT32 position,
-        FLOAT* leading_spacing,
-        FLOAT* trailing_spacing,
-        FLOAT* minimum_advance_width,
-        [defaultvalue(NULL)] DWRITE_TEXT_RANGE *range);
+        [in] UINT32 position,
+        [out] FLOAT *leading_spacing,
+        [out] FLOAT *trailing_spacing,
+        [out] FLOAT *minimum_advance_width,
+        [out, defaultvalue(NULL)] DWRITE_TEXT_RANGE *range
+    );
 }
 
 typedef enum DWRITE_TEXT_ANTIALIAS_MODE
@@ -820,5 +857,7 @@ uuid(791e8298-3ef3-4230-9880-c9bdecc42064)
 interface IDWriteBitmapRenderTarget1 : IDWriteBitmapRenderTarget
 {
     DWRITE_TEXT_ANTIALIAS_MODE GetTextAntialiasMode();
-    HRESULT SetTextAntialiasMode(DWRITE_TEXT_ANTIALIAS_MODE mode);
+    HRESULT SetTextAntialiasMode(
+        [in] DWRITE_TEXT_ANTIALIAS_MODE mode
+    );
 }

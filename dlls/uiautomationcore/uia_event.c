@@ -993,6 +993,17 @@ BOOL uia_clientside_event_start_event_thread(struct uia_event *event)
     return event->u.clientside.event_thread_started;
 }
 
+static void uia_event_clear_advisers(struct uia_event *event)
+{
+    int i;
+
+    for (i = 0; i < event->event_advisers_count; i++)
+        IWineUiaEventAdviser_Release(event->event_advisers[i]);
+    free(event->event_advisers);
+    event->event_advisers = NULL;
+    event->event_advisers_count = event->event_advisers_arr_size = 0;
+}
+
 /*
  * IWineUiaEvent interface.
  */
@@ -1030,8 +1041,6 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
     TRACE("%p, refcount %ld\n", event, ref);
     if (!ref)
     {
-        int i;
-
         /*
          * If this event has an event_map_entry, it should've been released
          * before hitting a reference count of 0.
@@ -1057,9 +1066,7 @@ static ULONG WINAPI uia_event_Release(IWineUiaEvent *iface)
             uia_stop_event_thread();
         }
 
-        for (i = 0; i < event->event_advisers_count; i++)
-            IWineUiaEventAdviser_Release(event->event_advisers[i]);
-        free(event->event_advisers);
+        uia_event_clear_advisers(event);
         free(event);
     }
 
@@ -1102,10 +1109,7 @@ static HRESULT WINAPI uia_event_advise_events(IWineUiaEvent *iface, BOOL advise_
         uia_event_map_entry_release(event->event_map_entry);
         event->event_map_entry = NULL;
 
-        for (i = 0; i < event->event_advisers_count; i++)
-            IWineUiaEventAdviser_Release(event->event_advisers[i]);
-        free(event->event_advisers);
-        event->event_advisers_count = event->event_advisers_arr_size = 0;
+        uia_event_clear_advisers(event);
     }
 
     return S_OK;

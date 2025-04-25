@@ -182,7 +182,7 @@ static inline void remove_name( struct strarray *table, unsigned int idx )
 /* locate a name in a (sorted) list */
 static inline const char *find_name( const char *name, struct strarray table )
 {
-    return strarray_bsearch( &table, name, name_cmp );
+    return strarray_bsearch( table, name, name_cmp );
 }
 
 /* sort a name table */
@@ -208,16 +208,18 @@ static const char valid_chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRS
 /* encode a dll name into a linker-compatible name */
 static char *encode_dll_name( const char *name )
 {
-    char *p, *ret;
+    char *p, *ret, *ret_end;
     int len = strlen(name);
 
     if (strendswith( name, ".dll" )) len -= 4;
     if (strspn( name, valid_chars ) >= len) return strmake( "%.*s", len, name );
 
     ret = p = xmalloc( len * 4 + 1 );
+    ret_end = ret + (len * 4 + 1);
     for ( ; len > 0; len--, name++)
     {
-        if (!strchr( valid_chars, *name )) p += sprintf( p, "$x%02x", *name );
+        if (!strchr( valid_chars, *name ))
+            p += snprintf( p, ret_end - p, "$x%02x", *name );
         else *p++ = *name;
     }
     *p = 0;
@@ -296,128 +298,21 @@ static struct import *find_import_dll( const char *name )
     return NULL;
 }
 
-/* open the .so library for a given dll in a specified path */
-static char *try_library_path( const char *path, const char *name )
+/* build the dll exported name from the import lib name */
+static char *get_dll_name( const char *name )
 {
-    char *buffer;
-    int fd;
+    char *ret = xmalloc( strlen(name) + 5 );
 
-    buffer = strmake( "%s/lib%s.def", path, name );
-
-    /* check if the file exists */
-    if ((fd = open( buffer, O_RDONLY )) != -1)
-    {
-        close( fd );
-        return buffer;
-    }
-    free( buffer );
-    return NULL;
-}
-
-/* find the .def import library for a given dll */
-static char *find_library( const char *name )
-{
-    char *fullname;
-    unsigned int i;
-
-    for (i = 0; i < lib_path.count; i++)
-    {
-        if ((fullname = try_library_path( lib_path.str[i], name ))) return fullname;
-    }
-    fatal_error( "could not open .def file for %s\n", name );
-    return NULL;
-}
-
-/* read in the list of exported symbols of an import library */
-static DLLSPEC *read_import_lib( struct import *imp )
-{
-    FILE *f;
-    int i;
-    struct stat stat;
-    struct import *prev_imp;
-    DLLSPEC *spec = alloc_dll_spec();
-
-    f = open_input_file( NULL, imp->full_name );
-    fstat( fileno(f), &stat );
-    imp->dev = stat.st_dev;
-    imp->ino = stat.st_ino;
-    if (!parse_def_file( f, spec )) exit( 1 );
-    close_input_file( f );
-
-    /* check if we already imported that library from a different file */
-    if ((prev_imp = find_import_dll( spec->file_name )))
-    {
-        if (prev_imp->dev != imp->dev || prev_imp->ino != imp->ino)
-            fatal_error( "%s and %s have the same export name '%s'\n",
-                         prev_imp->full_name, imp->full_name, spec->file_name );
-        free_dll_spec( spec );
-        return NULL;  /* the same file was already loaded, ignore this one */
-    }
-
-    if (spec->exports.nb_entry_points)
-    {
-        imp->exports = xmalloc( spec->exports.nb_entry_points * sizeof(*imp->exports) );
-        for (i = 0; i < spec->exports.nb_entry_points; i++)
-            imp->exports[imp->nb_exports++] = spec->exports.entry_points[i];
-        qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
-    }
-    return spec;
-}
-
-/* build the dll exported name from the import lib name or path */
-static char *get_dll_name( const char *name, const char *filename )
-{
-    char *ret;
-
-    if (filename)
-    {
-        const char *basename = get_basename( filename );
-        if (!strncmp( basename, "lib", 3 )) basename += 3;
-        ret = xmalloc( strlen(basename) + 5 );
-        strcpy( ret, basename );
-        if (strendswith( ret, ".def" )) ret[strlen(ret)-4] = 0;
-    }
-    else
-    {
-        ret = xmalloc( strlen(name) + 5 );
-        strcpy( ret, name );
-    }
+    strcpy( ret, name );
     if (!strchr( ret, '.' )) strcat( ret, ".dll" );
     return ret;
-}
-
-/* add a dll to the list of imports */
-void add_import_dll( const char *name, const char *filename )
-{
-    DLLSPEC *spec;
-    char *dll_name = get_dll_name( name, filename );
-    struct import *imp = xmalloc( sizeof(*imp) );
-
-    memset( imp, 0, sizeof(*imp) );
-
-    if (filename) imp->full_name = xstrdup( filename );
-    else imp->full_name = find_library( name );
-
-    if (!(spec = read_import_lib( imp )))
-    {
-        free_imports( imp );
-        return;
-    }
-
-    imp->dll_name = spec->file_name ? spec->file_name : dll_name;
-    imp->c_name = make_c_identifier( imp->dll_name );
-
-    if (is_delayed_import( imp->dll_name ))
-        list_add_tail( &dll_delayed, &imp->entry );
-    else
-        list_add_tail( &dll_imports, &imp->entry );
 }
 
 /* add a library to the list of delayed imports */
 void add_delayed_import( const char *name )
 {
     struct import *imp;
-    char *fullname = get_dll_name( name, NULL );
+    char *fullname = get_dll_name( name );
 
     strarray_add( &delayed_imports, fullname );
     if ((imp = find_import_dll( fullname )))
@@ -552,7 +447,7 @@ static void check_undefined_forwards( DLLSPEC *spec )
         p = strrchr( link_name, '.' );
         *p = 0;
         api_name = p + 1;
-        dll_name = get_dll_name( link_name, NULL );
+        dll_name = get_dll_name( link_name );
 
         if ((imp = find_import_dll( dll_name )))
         {
@@ -1436,6 +1331,16 @@ static void build_dlltool_import_lib( const char *lib_name, DLLSPEC *spec, struc
     if (files.count) output_static_lib( output_file_name, files, 0 );
 }
 
+static void output_import_section( int index, int is_delay )
+{
+    if (!is_delay)
+        output( "\n\t.section .idata$%d\n", index );
+    else if (index == 5)
+        output( "\n\t.section .data$didat%d\n", index );
+    else
+        output( "\n\t.section .rdata$didat%d\n", index );
+}
+
 /* create a Windows-style import library */
 static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struct strarray files )
 {
@@ -1559,20 +1464,20 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output( "\t.long 0\n" );                         /* UnloadInformationTableRVA */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
 
-        output( "\n\t.section .idata$5\n" );
+        output_import_section( 5, is_delay );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* FirstThunk tail */
         output( ".L__wine_import_addrs:\n" );
 
-        output( "\n\t.section .idata$4\n" );
+        output_import_section( 4, is_delay );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* OriginalFirstThunk tail */
         output( ".L__wine_import_names:\n" );
 
         /* required to avoid internal linker errors with some binutils versions */
-        output( "\n\t.section .idata$2\n" );
+        output_import_section( 2, is_delay );
     }
     else
     {
-        output( "\n\t.section .idata$2\n" );
+        output_import_section( 2, is_delay );
         output( "%s\n", asm_globl( import_desc ) );
         output_rva( ".L__wine_import_names" );           /* OriginalFirstThunk */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
@@ -1580,10 +1485,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output_rva( "%s", asm_name( import_name ) );     /* Name */
         output_rva( ".L__wine_import_addrs" );           /* FirstThunk */
 
-        output( "\n\t.section .idata$4\n" );
+        output_import_section( 4, is_delay );
         output( ".L__wine_import_names:\n" );            /* OriginalFirstThunk head */
 
-        output( "\n\t.section .idata$5\n" );
+        output_import_section( 5, is_delay );
         output( ".L__wine_import_addrs:\n" );            /* FirstThunk head */
     }
 
@@ -1594,11 +1499,11 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
     new_output_as_file();
 
-    output( "\n\t.section .idata$4\n" );
+    output_import_section( 4, is_delay );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* OriginalFirstThunk tail */
-    output( "\n\t.section .idata$5\n" );
+    output_import_section( 5, is_delay );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* FirstThunk tail */
-    output( "\n\t.section .idata$7\n" );
+    output_import_section( 7, is_delay );
     output( "%s\n", asm_globl( import_name ) );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
 
@@ -1689,10 +1594,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 break;
             }
 
-            output( "\n\t.section .idata$4\n" );
+            output_import_section( 4, is_delay );
             output_thunk_rva( by_name ? -1 : odp->ordinal, ".L__wine_import_name" );
 
-            output( "\n\t.section .idata$5\n" );
+            output_import_section( 5, is_delay );
             output( "%s\n", asm_globl( imp_name ) );
             if (is_delay)
                 output( "\t%s .L__wine_delay_import\n", get_asm_ptr_keyword() );
@@ -1701,14 +1606,14 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
             if (by_name)
             {
-                output( "\n\t.section .idata$6\n" );
+                output_import_section( 6, is_delay );
                 output( ".L__wine_import_name:\n" );
                 output( "\t.short %d\n", odp->hint );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), name );
             }
 
             /* reference head object to always pull its sections */
-            output( "\n\t.section .idata$7\n" );
+            output_import_section( 7, is_delay );
             output_rva( "%s", asm_name( import_desc ) );
 
             free( imp_name );

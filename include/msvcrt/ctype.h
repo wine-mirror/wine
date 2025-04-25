@@ -25,6 +25,10 @@ _ACRTIMP int __cdecl __toascii(int);
 _ACRTIMP int __cdecl _isblank_l(int,_locale_t);
 _ACRTIMP int __cdecl _isctype(int,int);
 _ACRTIMP int __cdecl _isctype_l(int,int,_locale_t);
+_ACRTIMP int __cdecl _islower_l(int,_locale_t);
+_ACRTIMP int __cdecl _isupper_l(int,_locale_t);
+_ACRTIMP int __cdecl _isdigit_l(int,_locale_t);
+_ACRTIMP int __cdecl _isxdigit_l(int,_locale_t);
 _ACRTIMP int __cdecl _tolower(int);
 _ACRTIMP int __cdecl _tolower_l(int,_locale_t);
 _ACRTIMP int __cdecl _toupper(int);
@@ -45,6 +49,13 @@ _ACRTIMP int __cdecl isupper(int);
 _ACRTIMP int __cdecl isxdigit(int);
 _ACRTIMP int __cdecl tolower(int);
 _ACRTIMP int __cdecl toupper(int);
+
+#ifndef MB_CUR_MAX
+_ACRTIMP int             __cdecl ___mb_cur_max_func(void);
+_ACRTIMP int             __cdecl ___mb_cur_max_l_func(_locale_t);
+#define __mb_cur_max             ___mb_cur_max_func()
+#define MB_CUR_MAX               ___mb_cur_max_func()
+#endif /* MB_CUR_MAX */
 
 #ifdef __cplusplus
 }

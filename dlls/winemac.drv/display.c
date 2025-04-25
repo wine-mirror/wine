@@ -809,6 +809,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     free_display_mode_descriptor(desc);
     CFRelease(display_modes);
     macdrv_free_displays(macdrv_displays);
+    macdrv_reset_device_metrics();
 
     return ret;
 }
@@ -909,57 +910,6 @@ static void display_get_current_mode(struct macdrv_display *display, DEVMODEW *d
     }
 
     CFRelease(display_mode);
-}
-
-/***********************************************************************
- *              GetCurrentDisplaySettings  (MACDRV.@)
- *
- */
-BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMODEW devmode)
-{
-    struct macdrv_display *displays = NULL;
-    int num_displays, display_idx;
-    WCHAR *end;
-
-    TRACE("%s, %u, %p + %hu\n", debugstr_w(devname), is_primary, devmode, devmode->dmSize);
-
-    init_original_display_mode();
-
-    if (macdrv_get_displays(&displays, &num_displays))
-        return FALSE;
-
-    display_idx = wcstol(devname + 11, &end, 10) - 1;
-    if (display_idx >= num_displays)
-    {
-        macdrv_free_displays(displays);
-        return FALSE;
-    }
-
-    display_get_current_mode(&displays[display_idx], devmode);
-    macdrv_free_displays(displays);
-
-    TRACE("current mode -- %dx%d-%dx%dx%dbpp @%d Hz",
-          (int)devmode->dmPosition.x, (int)devmode->dmPosition.y,
-          (int)devmode->dmPelsWidth, (int)devmode->dmPelsHeight, (int)devmode->dmBitsPerPel,
-          (int)devmode->dmDisplayFrequency);
-    if (devmode->dmDisplayOrientation)
-        TRACE(" rotated %u degrees", (unsigned int)devmode->dmDisplayOrientation * 90);
-    if (devmode->dmDisplayFixedOutput == DMDFO_STRETCH)
-        TRACE(" stretched");
-    if (devmode->dmDisplayFlags & DM_INTERLACED)
-        TRACE(" interlaced");
-    TRACE("\n");
-
-    return TRUE;
-}
-
-/***********************************************************************
- *              GetDisplayDepth  (MACDRV.@)
- *
- */
-INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary)
-{
-    return get_default_bpp();
 }
 
 /***********************************************************************
@@ -1156,10 +1106,11 @@ UINT macdrv_UpdateDisplayDevices(const struct gdi_device_manager *device_manager
         for (adapter = adapters; adapter < adapters + adapter_count; adapter++)
         {
             DEVMODEW current_mode = { .dmSize = sizeof(current_mode) };
+            UINT dpi = NtUserGetSystemDpiForProcess( NULL );
             char buffer[32];
 
             sprintf( buffer, "%04x", adapter->id );
-            device_manager->add_source( buffer, adapter->state_flags, param );
+            device_manager->add_source( buffer, adapter->state_flags, dpi, param );
 
             if (macdrv_get_monitors(adapter->id, &monitors, &monitor_count)) break;
             TRACE("adapter: %#x, monitor count: %d\n", adapter->id, monitor_count);

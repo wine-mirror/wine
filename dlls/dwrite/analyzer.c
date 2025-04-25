@@ -287,7 +287,7 @@ system_fallback_config[] =
     { "1A00-1A1F",              L"Noto Sans Buginese" },
     { "1A20-1AAF",              L"Noto Sans Tai Tham" },
     { "1B00-1B7F",              L"Noto Sans Balinese" },
-    { "1B80-1BBF, 1CC0-1CCF",   L"Noto Sans Sundanes" },
+    { "1B80-1BBF, 1CC0-1CCF",   L"Noto Sans Sundanese" },
     { "1BC0-1BFF",              L"Noto Sans Batak" },
     { "1C00-1C4F",              L"Noto Sans Lepcha" },
     { "1C50-1C7F",              L"Noto Sans Ol Chiki" },
@@ -1855,7 +1855,7 @@ static inline UINT32 get_cluster_length(UINT16 const *clustermap, UINT32 start, 
     UINT16 g = clustermap[start];
     UINT32 length = 1;
 
-    while (start < text_len && clustermap[++start] == g)
+    while (start < (text_len - 1) && clustermap[++start] == g)
         length++;
     return length;
 }

@@ -218,6 +218,8 @@ struct font_enum_entry
 
 /* flag for NtGdiGetRandomRgn to respect LAYOUT_RTL */
 #define NTGDI_RGN_MIRROR_RTL   0x80000000
+/* internal flag to get region in monitor raw DPI */
+#define NTGDI_RGN_MONITOR_DPI  0x40000000
 
 #endif /* __WINESRC__ */
 
@@ -245,6 +247,45 @@ struct font_fileinfo
     LARGE_INTEGER size;
     WCHAR path[1];
 };
+
+#pragma pack(push,1)
+struct fontdir
+{
+    WORD   num_of_resources;
+    WORD   res_id;
+    WORD   dfVersion;
+    DWORD  dfSize;
+    CHAR   dfCopyright[60];
+    WORD   dfType;
+    WORD   dfPoints;
+    WORD   dfVertRes;
+    WORD   dfHorizRes;
+    WORD   dfAscent;
+    WORD   dfInternalLeading;
+    WORD   dfExternalLeading;
+    BYTE   dfItalic;
+    BYTE   dfUnderline;
+    BYTE   dfStrikeOut;
+    WORD   dfWeight;
+    BYTE   dfCharSet;
+    WORD   dfPixWidth;
+    WORD   dfPixHeight;
+    BYTE   dfPitchAndFamily;
+    WORD   dfAvgWidth;
+    WORD   dfMaxWidth;
+    BYTE   dfFirstChar;
+    BYTE   dfLastChar;
+    BYTE   dfDefaultChar;
+    BYTE   dfBreakChar;
+    WORD   dfWidthBytes;
+    DWORD  dfDevice;
+    DWORD  dfFace;
+    DWORD  dfReserved;
+    CHAR   szDeviceName;
+    CHAR   szFaceName[0x85];
+};
+C_ASSERT( sizeof(struct fontdir) == 251 );
+#pragma pack(pop)
 
 
 W32KAPI INT      WINAPI NtGdiAbortDoc( HDC hdc );
@@ -386,6 +427,7 @@ W32KAPI DWORD    WINAPI NtGdiInitSpool(void);
 W32KAPI INT      WINAPI NtGdiIntersectClipRect( HDC hdc, INT left, INT top, INT right, INT bottom );
 W32KAPI BOOL     WINAPI NtGdiInvertRgn( HDC hdc, HRGN hrgn );
 W32KAPI BOOL     WINAPI NtGdiLineTo( HDC hdc, INT x, INT y );
+W32KAPI ULONG    WINAPI NtGdiMakeFontDir( DWORD embed, BYTE *buffer, UINT size, const WCHAR *path, UINT len );
 W32KAPI BOOL     WINAPI NtGdiMaskBlt( HDC hdc, INT x_dst, INT y_dst, INT width_dst, INT height_dst,
                                       HDC hdc_src, INT x_src, INT y_src, HBITMAP mask,
                                       INT x_mask, INT y_mask, DWORD rop, DWORD bk_color );
@@ -474,26 +516,48 @@ W32KAPI BOOL     WINAPI NtGdiWidenPath( HDC hdc );
 
 W32KAPI NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateAllocation( D3DKMT_CREATEALLOCATION *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateAllocation2( D3DKMT_CREATEALLOCATION *params );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateDevice( D3DKMT_CREATEDEVICE *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex( D3DKMT_CREATEKEYEDMUTEX *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateKeyedMutex2( D3DKMT_CREATEKEYEDMUTEX2 *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject( D3DKMT_CREATESYNCHRONIZATIONOBJECT *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDICreateSynchronizationObject2( D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation( const D3DKMT_DESTROYALLOCATION *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroyAllocation2( const D3DKMT_DESTROYALLOCATION2 *params );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroyDCFromMemory( const D3DKMT_DESTROYDCFROMMEMORY *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroyDevice( const D3DKMT_DESTROYDEVICE *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroyKeyedMutex( const D3DKMT_DESTROYKEYEDMUTEX *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIDestroySynchronizationObject( const D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIEnumAdapters( D3DKMT_ENUMADAPTERS *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIEnumAdapters2( D3DKMT_ENUMADAPTERS2 *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc );
-W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromHdc( D3DKMT_OPENADAPTERFROMHDC *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex( D3DKMT_OPENKEYEDMUTEX *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutex2( D3DKMT_OPENKEYEDMUTEX2 *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenKeyedMutexFromNtHandle( D3DKMT_OPENKEYEDMUTEXFROMNTHANDLE *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenResource( D3DKMT_OPENRESOURCE *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenResource2( D3DKMT_OPENRESOURCE *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenResourceFromNtHandle( D3DKMT_OPENRESOURCEFROMNTHANDLE *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenSynchronizationObject( D3DKMT_OPENSYNCHRONIZATIONOBJECT *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectFromNtHandle2( D3DKMT_OPENSYNCOBJECTFROMNTHANDLE2 *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIOpenSyncObjectNtHandleFromName( D3DKMT_OPENSYNCOBJECTNTHANDLEFROMNAME *params );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIQueryAdapterInfo( D3DKMT_QUERYADAPTERINFO *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfo( D3DKMT_QUERYRESOURCEINFO *params );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIQueryResourceInfoFromNtHandle( D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *params );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDISetQueuedLimit( D3DKMT_SETQUEUEDLIMIT *desc );
 W32KAPI NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc );
+W32KAPI NTSTATUS WINAPI NtGdiDdDDIShareObjects( UINT count, const D3DKMT_HANDLE *handles, OBJECT_ATTRIBUTES *attr, UINT access, HANDLE *handle );
 
 /* Wine extensions */
 W32KAPI const struct vulkan_funcs * __wine_get_vulkan_driver(UINT version);
 W32KAPI const struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version );
 W32KAPI BOOL WINAPI __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCHAR *filename );
-W32KAPI BOOL WINAPI __wine_get_file_outline_text_metric( const WCHAR *path, TEXTMETRICW *otm,
-                                                         UINT *em_square, WCHAR *face_name );
 
 #endif /* _NTGDI_ */

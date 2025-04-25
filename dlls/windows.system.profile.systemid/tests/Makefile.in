@@ -1,0 +1,5 @@
+TESTDLL = windows.system.profile.systemid.dll
+IMPORTS = combase
+
+SOURCES = \
+	systemid.c

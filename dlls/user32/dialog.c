@@ -21,6 +21,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "user_private.h"
 #include "controls.h"
 #include "wine/debug.h"
@@ -596,7 +599,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         if (IsWindowEnabled( owner ))
         {
             disabled_owner = owner;
-            EnableWindow( disabled_owner, FALSE );
+            NtUserEnableWindow( disabled_owner, FALSE );
         }
     }
 
@@ -638,7 +641,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     {
         if (hUserFont) DeleteObject( hUserFont );
         if (hMenu) NtUserDestroyMenu( hMenu );
-        if (disabled_owner) EnableWindow( disabled_owner, TRUE );
+        if (disabled_owner) NtUserEnableWindow( disabled_owner, TRUE );
         return 0;
     }
 
@@ -653,7 +656,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     dlgInfo->yBaseUnit   = yBaseUnit;
     dlgInfo->flags       = flags;
 
-    if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
+    if (template.helpId) NtUserSetWindowContextHelpId( hwnd, template.helpId );
 
     if (unicode) SetWindowLongPtrW( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
     else SetWindowLongPtrA( hwnd, DWLP_DLGPROC, (ULONG_PTR)dlgProc );
@@ -700,11 +703,12 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
         if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
         {
-           NtUserShowWindow( hwnd, SW_SHOWNORMAL );   /* SW_SHOW doesn't always work */
+            NtUserShowWindow( hwnd, SW_SHOWNORMAL ); /* SW_SHOW doesn't always work */
+            UpdateWindow( hwnd );
         }
         return hwnd;
     }
-    if (disabled_owner) EnableWindow( disabled_owner, TRUE );
+    if (disabled_owner) NtUserEnableWindow( disabled_owner, TRUE );
     if (IsWindow(hwnd)) NtUserDestroyWindow( hwnd );
     return 0;
 }
@@ -804,7 +808,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 
             if (msg.message == WM_QUIT)
             {
-                PostQuitMessage( msg.wParam );
+                NtUserPostQuitMessage( msg.wParam );
                 if (!IsWindow( hwnd )) return 0;
                 break;
             }
@@ -920,7 +924,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 
     owner = (HWND)GetWindowLongPtrA( hwnd, GWLP_HWNDPARENT );
     if (owner)
-        EnableWindow( owner, TRUE );
+        NtUserEnableWindow( owner, TRUE );
 
     /* Windows sets the focus to the dialog itself in EndDialog */
 
@@ -937,7 +941,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     {
         /* If this dialog was given an owner then set the focus to that owner. */
         if (owner)
-            SetForegroundWindow( owner );
+            NtUserSetForegroundWindow( owner );
         else
             NtUserActivateOtherWindow( hwnd );
     }
@@ -1120,26 +1124,23 @@ static void DIALOG_FixChildrenOnChangeFocus (HWND hwndDlg, HWND hwndNext)
  * RETURNS
  *  The HWND for a Child ID.
  */
-static HWND DIALOG_IdToHwnd( HWND hwndDlg, INT id )
+static HWND DIALOG_IdToHwnd( HWND hwnd, INT id, BOOL recurse )
 {
-    int i;
-    HWND *list = WIN_ListChildren( hwndDlg );
-    HWND ret = 0;
+    HWND ret, *list;
+    ULONG i, size = 128;
+    NTSTATUS status;
 
-    if (!list) return 0;
-
-    for (i = 0; list[i]; i++)
+    for (;;)
     {
-        if (GetWindowLongPtrW( list[i], GWLP_ID ) == id)
-        {
-            ret = list[i];
-            break;
-        }
-
-        /* Recurse into every child */
-        if ((ret = DIALOG_IdToHwnd( list[i], id ))) break;
+        if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return 0;
+        status = NtUserBuildHwndList( 0, hwnd, recurse, FALSE, 0, size, list, &size );
+        if (!status) break;
+        HeapFree( GetProcessHeap(), 0, list );
+        if (status != STATUS_BUFFER_TOO_SMALL) return 0;
     }
-
+    list[size - 1] = 0;
+    for (i = 0; list[i]; i++) if (GetWindowLongPtrW( list[i], GWLP_ID ) == id) break;
+    ret = list[i];
     HeapFree( GetProcessHeap(), 0, list );
     return ret;
 }
@@ -1258,7 +1259,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
                 }
                 else if (DC_HASDEFID == HIWORD(dw = SendMessageW (hwndDlg, DM_GETDEFID, 0, 0)))
                 {
-                    HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw));
+                    HWND hwndDef = DIALOG_IdToHwnd(hwndDlg, LOWORD(dw), TRUE);
                     if (!hwndDef || IsWindowEnabled(hwndDef))
                         SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ), (LPARAM)hwndDef);
                 }
@@ -1309,16 +1310,10 @@ INT WINAPI GetDlgCtrlID( HWND hwnd )
  */
 HWND WINAPI GetDlgItem( HWND hwndDlg, INT id )
 {
-    int i;
-    HWND *list = WIN_ListChildren( hwndDlg );
-    HWND ret = 0;
+    HWND hwnd = GetWindow( hwndDlg, GW_CHILD );
 
-    if (!list) return 0;
-
-    for (i = 0; list[i]; i++) if (GetWindowLongPtrW( list[i], GWLP_ID ) == id) break;
-    ret = list[i];
-    HeapFree( GetProcessHeap(), 0, list );
-    return ret;
+    if (hwnd) hwnd = DIALOG_IdToHwnd( hwnd, id, FALSE );
+    return hwnd;
 }
 
 

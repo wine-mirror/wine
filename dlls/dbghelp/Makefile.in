@@ -19,6 +19,7 @@ SOURCES = \
 	module.c \
 	msc.c \
 	path.c \
+	pdb.c \
 	pe_module.c \
 	source.c \
 	stabs.c \

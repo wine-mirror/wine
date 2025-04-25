@@ -799,93 +799,56 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
 struct font_chooser
 {
     struct console *console;
-    int             pass;
-    unsigned int    font_height;
-    unsigned int    font_width;
-    BOOL            done;
+    unsigned int    weight;
+    LOGFONTW        lf;
 };
 
-/* check if the font described in tm is usable as a font for the renderer */
-static BOOL validate_font_metric( struct console *console, const TEXTMETRICW *tm,
-                                  DWORD type, int pass )
+/* check if the font family described in lf and tm is usable as a font for the renderer */
+static BOOL validate_font( struct console *console, const LOGFONTW *lf,
+                           const TEXTMETRICW *tm, DWORD type, int *weight )
 {
-    switch (pass) /* we get increasingly lenient in later passes */
-    {
-    case 0:
-        if (type & RASTER_FONTTYPE) return FALSE;
-        /* fall through */
-    case 1:
-        if (type & RASTER_FONTTYPE)
-        {
-            if (tm->tmMaxCharWidth * (console->active->win.right - console->active->win.left + 1)
-                >= GetSystemMetrics(SM_CXSCREEN))
-                return FALSE;
-            if (tm->tmHeight * (console->active->win.bottom - console->active->win.top + 1)
-                >= GetSystemMetrics(SM_CYSCREEN))
-                return FALSE;
-        }
-        /* fall through */
-    case 2:
-        if (tm->tmCharSet != DEFAULT_CHARSET && tm->tmCharSet != console->window->ui_charset)
-            return FALSE;
-        /* fall through */
-    case 3:
-        if (tm->tmItalic || tm->tmUnderlined || tm->tmStruckOut) return FALSE;
-        break;
-    }
-    return TRUE;
-}
+    int w = 0x1;
 
-/* check if the font family described in lf is usable as a font for the renderer */
-static BOOL validate_font( struct console *console, const LOGFONTW *lf, int pass )
-{
-    switch (pass) /* we get increasingly lenient in later passes */
+    if (!tm) w |= 0x6;
+    else if (!(type & RASTER_FONTTYPE))
     {
-    case 0:
-    case 1:
-    case 2:
-        if (lf->lfCharSet != DEFAULT_CHARSET && lf->lfCharSet != console->window->ui_charset)
-            return FALSE;
-        /* fall through */
-    case 3:
-        if ((lf->lfPitchAndFamily & 3) != FIXED_PITCH) return FALSE;
-        /* fall through */
-    case 4:
-        if (lf->lfFaceName[0] == '@') return FALSE;
-        break;
+        w |= 0x2;
+        if (tm->tmMaxCharWidth * (console->active->win.right - console->active->win.left + 1)
+                < GetSystemMetrics(SM_CXSCREEN)
+                && tm->tmHeight * (console->active->win.bottom - console->active->win.top + 1)
+                < GetSystemMetrics(SM_CYSCREEN))
+            w |= 0x4;
     }
-    return TRUE;
+    if ((lf->lfPitchAndFamily & 3) == FIXED_PITCH
+            && (!tm || (!tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut)))
+        w |= 0x8;
+    if (lf->lfCharSet == console->window->ui_charset
+            && (!tm || tm->tmCharSet == console->window->ui_charset))
+        w |= 0x10;
+    if (lf->lfFaceName[0] != '@')
+        w |= 0x20;
+
+    if (weight) *weight = w;
+    return w == 0x3f;
 }
 
 static int CALLBACK enum_first_font_proc( const LOGFONTW *lf, const TEXTMETRICW *tm,
                                           DWORD font_type, LPARAM lparam )
 {
     struct font_chooser *fc = (struct font_chooser *)lparam;
-    LOGFONTW mlf;
-
-    if (font_type != TRUETYPE_FONTTYPE) return 1;
+    int weight;
+    BOOL ret;
 
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
-
-    if (!validate_font( fc->console, lf, fc->pass ))
-        return 1;
-
     TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
 
-    if (!validate_font_metric( fc->console, tm, font_type, fc->pass ))
-        return 1;
-
-    /* set default font size */
-    mlf = *lf;
-    mlf.lfHeight = fc->font_height;
-    mlf.lfWidth = fc->font_width;
-
-    if (!set_console_font( fc->console, &mlf ))
-        return 1;
-
-    fc->done = TRUE;
-
-    return 0;
+    ret = validate_font( fc->console, lf, tm, font_type, &weight );
+    if (weight > fc->weight)
+    {
+        fc->weight = weight;
+        fc->lf = *lf;
+    }
+    return !ret;
 }
 
 static void set_first_font( struct console *console, struct console_config *config )
@@ -899,18 +862,14 @@ static void set_first_font( struct console *console, struct console_config *conf
     lf.lfCharSet = DEFAULT_CHARSET;
     lf.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
 
+    memset( &fc, 0, sizeof(fc) );
     fc.console = console;
-    fc.font_height = config->cell_height;
-    fc.font_width = config->cell_width;
-    fc.done = FALSE;
 
-    for (fc.pass = 0; fc.pass <= 5; fc.pass++)
-    {
-        EnumFontFamiliesExW( console->window->mem_dc, &lf, enum_first_font_proc, (LPARAM)&fc, 0);
-        if (fc.done) break;
-    }
+    EnumFontFamiliesExW( console->window->mem_dc, &lf, enum_first_font_proc, (LPARAM)&fc, 0);
 
-    if (fc.pass > 5)
+    fc.lf.lfHeight = config->cell_height;
+    fc.lf.lfWidth = config->cell_width;
+    if (!fc.weight || !set_console_font( console, &fc.lf ))
         ERR("Unable to find a valid console font\n");
 
     /* Update active configuration */
@@ -1602,11 +1561,9 @@ static int CALLBACK enum_list_font_proc( const LOGFONTW *lf, const TEXTMETRICW *
 {
     struct dialog_info *di = (struct dialog_info *)lparam;
 
-    if (font_type != TRUETYPE_FONTTYPE) return 1;
-
     TRACE( "%s\n", debugstr_logfont( lf, font_type ));
 
-    if (validate_font( di->console, lf, 0 ))
+    if (validate_font( di->console, lf, NULL, 0, NULL ))
         SendDlgItemMessageW( di->dialog, IDC_FNT_LIST_FONT, LB_ADDSTRING, 0, (LPARAM)lf->lfFaceName );
 
     return 1;

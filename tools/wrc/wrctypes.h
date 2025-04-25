@@ -576,22 +576,6 @@ typedef struct resource {
 	unsigned int	memopt;
 } resource_t;
 
-/* Resource count */
-typedef struct res32_count {
-	int			count;
-	resource_t		**rsc;
-} res32_count_t;
-
-typedef struct res_count {
-	name_id_t		type;
-	int			count;		/* win16 mode */
-	resource_t		**rscarray;
-	int			count32;
-	res32_count_t		*rsc32array;	/* win32 mode */
-	int			n_id_entries;
-	int			n_name_entries;
-} res_count_t;
-
 typedef struct style_pair {
     	style_t			*style;
 	style_t			*exstyle;

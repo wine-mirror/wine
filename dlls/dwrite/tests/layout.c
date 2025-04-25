@@ -1077,6 +1077,20 @@ static const IDWriteTextRendererVtbl testrenderervtbl = {
 static IDWriteTextRenderer testrenderer = { &testrenderervtbl };
 
 /* test IDWriteInlineObject */
+struct test_inline_obj
+{
+    IDWriteInlineObject IDWriteInlineObject_iface;
+    LONG refcount;
+
+    DWRITE_INLINE_OBJECT_METRICS metrics;
+    DWRITE_OVERHANG_METRICS overhangs;
+};
+
+static inline struct test_inline_obj *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
+{
+    return CONTAINING_RECORD(iface, struct test_inline_obj, IDWriteInlineObject_iface);
+}
+
 static HRESULT WINAPI testinlineobj_QI(IDWriteInlineObject *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IDWriteInlineObject) || IsEqualIID(riid, &IID_IUnknown)) {
@@ -1091,12 +1105,19 @@ static HRESULT WINAPI testinlineobj_QI(IDWriteInlineObject *iface, REFIID riid, 
 
 static ULONG WINAPI testinlineobj_AddRef(IDWriteInlineObject *iface)
 {
-    return 2;
+    struct test_inline_obj *obj = impl_from_IDWriteInlineObject(iface);
+    return InterlockedIncrement(&obj->refcount);
 }
 
 static ULONG WINAPI testinlineobj_Release(IDWriteInlineObject *iface)
 {
-    return 1;
+    struct test_inline_obj *obj = impl_from_IDWriteInlineObject(iface);
+    ULONG refcount = InterlockedDecrement(&obj->refcount);
+
+    if (!refcount)
+        free(obj);
+
+    return refcount;
 }
 
 static HRESULT WINAPI testinlineobj_Draw(IDWriteInlineObject *iface,
@@ -1133,7 +1154,7 @@ static HRESULT WINAPI testinlineobj2_GetBreakConditions(IDWriteInlineObject *ifa
     return S_OK;
 }
 
-static IDWriteInlineObjectVtbl testinlineobjvtbl = {
+static const IDWriteInlineObjectVtbl testinlineobjvtbl = {
     testinlineobj_QI,
     testinlineobj_AddRef,
     testinlineobj_Release,
@@ -1143,7 +1164,8 @@ static IDWriteInlineObjectVtbl testinlineobjvtbl = {
     testinlineobj_GetBreakConditions
 };
 
-static IDWriteInlineObjectVtbl testinlineobjvtbl2 = {
+static const IDWriteInlineObjectVtbl testinlineobjvtbl2 =
+{
     testinlineobj_QI,
     testinlineobj_AddRef,
     testinlineobj_Release,
@@ -1153,20 +1175,14 @@ static IDWriteInlineObjectVtbl testinlineobjvtbl2 = {
     testinlineobj2_GetBreakConditions
 };
 
-static IDWriteInlineObject testinlineobj = { &testinlineobjvtbl };
-static IDWriteInlineObject testinlineobj2 = { &testinlineobjvtbl };
-static IDWriteInlineObject testinlineobj3 = { &testinlineobjvtbl2 };
-
-struct test_inline_obj
+static struct test_inline_obj *create_test_inline_object(const IDWriteInlineObjectVtbl *vtable)
 {
-    IDWriteInlineObject IDWriteInlineObject_iface;
-    DWRITE_INLINE_OBJECT_METRICS metrics;
-    DWRITE_OVERHANG_METRICS overhangs;
-};
+    struct test_inline_obj *object = calloc(1, sizeof(*object));
 
-static inline struct test_inline_obj *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
-{
-    return CONTAINING_RECORD(iface, struct test_inline_obj, IDWriteInlineObject_iface);
+    object->IDWriteInlineObject_iface.lpVtbl = vtable;
+    object->refcount = 1;
+
+    return object;
 }
 
 static HRESULT WINAPI testinlineobj3_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
@@ -1193,14 +1209,6 @@ static const IDWriteInlineObjectVtbl testinlineobjvtbl3 = {
     testinlineobj3_GetOverhangMetrics,
     testinlineobj_GetBreakConditions,
 };
-
-static void test_inline_obj_init(struct test_inline_obj *obj, const DWRITE_INLINE_OBJECT_METRICS *metrics,
-        const DWRITE_OVERHANG_METRICS *overhangs)
-{
-    obj->IDWriteInlineObject_iface.lpVtbl = &testinlineobjvtbl3;
-    obj->metrics = *metrics;
-    obj->overhangs = *overhangs;
-}
 
 struct test_effect
 {
@@ -2408,6 +2416,8 @@ static void test_GetClusterMetrics(void)
         'g',0x0085,'h',0x2028,'i',0x2029,0xad,0xa,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
+
+    struct test_inline_obj *testinlineobj, *testinlineobj2, *testinlineobj3;
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
     DWRITE_CLUSTER_METRICS metrics[22];
     DWRITE_TEXT_METRICS text_metrics;
@@ -2422,6 +2432,13 @@ static void test_GetClusterMetrics(void)
     UINT32 count, i;
     FLOAT width;
     HRESULT hr;
+
+    testinlineobj = create_test_inline_object(&testinlineobjvtbl);
+    ok(!!testinlineobj, "Failed to create test inline object.\n");
+    testinlineobj2 = create_test_inline_object(&testinlineobjvtbl);
+    ok(!!testinlineobj2, "Failed to create test inline object.\n");
+    testinlineobj3 = create_test_inline_object(&testinlineobjvtbl2);
+    ok(!!testinlineobj3, "Failed to create test inline object.\n");
 
     factory = create_factory();
 
@@ -2579,7 +2596,7 @@ static void test_GetClusterMetrics(void)
 
     range.startPosition = 0;
     range.length = 4;
-    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj, range);
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj->IDWriteInlineObject_iface, range);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = 0;
@@ -2600,7 +2617,7 @@ static void test_GetClusterMetrics(void)
     /* now set two inline object for [0,1] and [2,3], both fail to report break conditions */
     range.startPosition = 2;
     range.length = 2;
-    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj2, range);
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj2->IDWriteInlineObject_iface, range);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = 0;
@@ -2658,8 +2675,7 @@ static void test_GetClusterMetrics(void)
     ok(hr == S_OK, "Failed to create text layout, hr %#lx.\n", hr);
 
     range.startPosition = 0;
-    range.length = ~0u;
-    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3, range);
+    hr = IDWriteTextLayout_SetInlineObject(layout, &testinlineobj3->IDWriteInlineObject_iface, range);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     count = 0;
@@ -2862,6 +2878,9 @@ static void test_GetClusterMetrics(void)
 
     IDWriteTextLayout_Release(layout);
 
+    IDWriteInlineObject_Release(&testinlineobj->IDWriteInlineObject_iface);
+    IDWriteInlineObject_Release(&testinlineobj2->IDWriteInlineObject_iface);
+    IDWriteInlineObject_Release(&testinlineobj3->IDWriteInlineObject_iface);
     IDWriteInlineObject_Release(trimm);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
@@ -6234,11 +6253,15 @@ static void test_GetOverhangMetrics(void)
         { 16.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 0.0f, -3.0f, 4.0f }, { -1.0f, 4.0f, -3.0f, 0.0f } },
         { 15.0f, { 10.0f, 50.0f, 20.0f }, { -1.0f, 10.0f, 3.0f, -4.0f }, { -1.0f, 15.0f, 3.0f, -9.0f } },
     };
+    struct test_inline_obj *inline_obj;
     IDWriteFactory *factory;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     HRESULT hr;
     UINT32 i;
+
+    inline_obj = create_test_inline_object(&testinlineobjvtbl3);
+    ok(!!inline_obj, "Failed to create test inline object.\n");
 
     factory = create_factory();
 
@@ -6254,9 +6277,9 @@ static void test_GetOverhangMetrics(void)
         DWRITE_OVERHANG_METRICS overhang_metrics;
         DWRITE_TEXT_RANGE range = { 0, 1 };
         DWRITE_TEXT_METRICS metrics;
-        struct test_inline_obj obj;
 
-        test_inline_obj_init(&obj, &test->metrics, &test->overhang_metrics);
+        inline_obj->metrics = test->metrics;
+        inline_obj->overhangs = test->overhang_metrics;
 
         hr = IDWriteTextLayout_SetLineSpacing(layout, DWRITE_LINE_SPACING_METHOD_UNIFORM, test->metrics.height * 2.0f,
                 test->uniform_baseline);
@@ -6265,7 +6288,7 @@ static void test_GetOverhangMetrics(void)
         hr = IDWriteTextLayout_SetInlineObject(layout, NULL, range);
         ok(hr == S_OK, "Failed to reset inline object, hr %#lx.\n", hr);
 
-        hr = IDWriteTextLayout_SetInlineObject(layout, &obj.IDWriteInlineObject_iface, range);
+        hr = IDWriteTextLayout_SetInlineObject(layout, &inline_obj->IDWriteInlineObject_iface, range);
         ok(hr == S_OK, "Failed to set inline object, hr %#lx.\n", hr);
 
         hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
@@ -6285,6 +6308,7 @@ static void test_GetOverhangMetrics(void)
                 overhang_metrics.right, overhang_metrics.bottom);
     }
 
+    IDWriteInlineObject_Release(&inline_obj->IDWriteInlineObject_iface);
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);

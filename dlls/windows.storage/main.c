@@ -1,6 +1,6 @@
-/* WinRT Windows.Storage.ApplicationData Implementation
+/* WinRT Windows.Storage Implementation
  *
- * Copyright (C) 2023 Mohamad Al-Jaf
+ * Copyright (C) 2025 Mohamad Al-Jaf
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,9 +20,7 @@
 #include "initguid.h"
 #include "private.h"
 
-#include "wine/debug.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(data);
+WINE_DEFAULT_DEBUG_CHANNEL(storage);
 
 HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID riid, void **out )
 {
@@ -43,6 +41,9 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
     if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_DataReader ))
         IActivationFactory_QueryInterface( datareader_factory, &IID_IActivationFactory, (void **)factory );
+
+    if (!wcscmp( buffer, RuntimeClass_Windows_Storage_Streams_RandomAccessStreamReference ))
+        IActivationFactory_QueryInterface( random_access_stream_reference_factory, &IID_IActivationFactory, (void **)factory );
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;

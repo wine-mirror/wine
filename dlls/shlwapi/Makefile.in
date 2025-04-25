@@ -18,5 +18,4 @@ SOURCES = \
 	stopwatch.c \
 	string.c \
 	thread.c \
-	url.c \
-	wsprintf.c
+	url.c

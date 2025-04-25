@@ -327,20 +327,36 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     MUSIC_TIME music_length = 0;
     DMUS_IO_SEQ_ITEM *seq_items = NULL;
     struct midi_seqtrack_item *item;
+    DMUS_OBJECTDESC default_desc =
+    {
+        .dwSize = sizeof(DMUS_OBJECTDESC),
+        .dwValidData = DMUS_OBJ_OBJECT | DMUS_OBJ_CLASS,
+        .guidClass = CLSID_DirectMusicCollection,
+        .guidObject = GUID_DefaultGMCollection,
+    };
+    IDirectMusicObject *collection = NULL;
 
     TRACE("(%p, %p): semi-stub\n", parser, segment);
+    if (FAILED(hr = stream_get_object(parser->stream, &default_desc, &IID_IDirectMusicCollection,
+            (void **)&collection)))
+        WARN("Failed to load default collection from loader, hr %#lx\n", hr);
 
     for (i = 0;; i++)
     {
-        BYTE magic[4] = {0}, last_status = 0;
+        BYTE magic[4], last_status = 0;
         DWORD length_be;
         ULONG length;
         ULONG read = 0;
         struct midi_event event = {0};
 
         TRACE("Start parsing track %u\n", i);
-        if ((hr = IStream_Read(parser->stream, magic, sizeof(magic), &read)) != S_OK) break;
-        if (read < sizeof(magic)) break;
+        hr = IStream_Read(parser->stream, magic, sizeof(magic), &read);
+        if (read < sizeof(magic))
+        {
+            if (hr == E_FAIL) hr = S_OK;
+            break;
+        }
+        if (FAILED(hr)) break;
         if (memcmp(magic, "MTrk", 4) != 0) break;
 
         if ((hr = IStream_Read(parser->stream, &length_be, sizeof(length_be), &read)) != S_OK)
@@ -399,6 +415,7 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
     qsort(seq_items, parser->seqtrack_items_count, sizeof(DMUS_IO_SEQ_ITEM), midi_seqtrack_item_compare);
 
     music_length = (ULONGLONG)music_length * DMUS_PPQ / parser->division + 1;
+    if (collection) IDirectMusicTrack_SetParam(parser->bandtrack, &GUID_ConnectToDLSCollection, 0, collection);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_SetLength(segment, music_length);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->bandtrack, 0xffff);
     if (SUCCEEDED(hr)) hr = IDirectMusicSegment8_InsertTrack(segment, parser->chordtrack, 0xffff);

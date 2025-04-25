@@ -284,7 +284,7 @@ static void test_wshshell(void)
     str = SysAllocString(L"\"cmd.exe \" /c rd /s /q c:\\nosuchdir");
     hr = IWshShell3_Run(sh3, str, &arg, &arg2, &retval);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(retval == ERROR_FILE_NOT_FOUND, "Unexpected retval %d.\n", retval);
+    todo_wine ok(retval == ERROR_FILE_NOT_FOUND, "Unexpected retval %d.\n", retval);
     SysFreeString(str);
 
     GetSystemDirectoryW(path, ARRAY_SIZE(path));

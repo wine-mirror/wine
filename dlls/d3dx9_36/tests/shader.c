@@ -18,6 +18,8 @@
  */
 
 #define COBJMACROS
+#include <stdbool.h>
+#include <stdint.h>
 #include "wine/test.h"
 #include "d3dx9.h"
 
@@ -69,23 +71,6 @@ static const DWORD shader_with_invalid_ctab[] = {
     0x0005fffe, FCC_CTAB,                                                   /* CTAB comment                 */
                 0x0000001c, 0x000000a9, 0xfffe0300,
                 0x00000000, 0x00000000,
-    0x0000ffff};                                                            /* END                          */
-
-static const DWORD shader_with_ctab_constants[] = {
-    0xfffe0300,                                                             /* vs_3_0                       */
-    0x002efffe, FCC_CTAB,                                                   /* CTAB comment                 */
-    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
-    0x0000009c,
-    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc              */
-    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc              */
-    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc              */
-    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string       */
-    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
-    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string       */
-    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc     */
-    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string       */
-    0x335f7376, 0xab00305f,                                                 /* Target name string           */
-    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
     0x0000ffff};                                                            /* END                          */
 
 static const DWORD ctab_basic[] = {
@@ -281,24 +266,198 @@ static const D3DXCONSTANT_DESC ctab_samplers_expected[] = {
     {"sampler2",   D3DXRS_SAMPLER, 3, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER3D, 1, 1, 1, 0, 4,  NULL},
     {"notsampler", D3DXRS_FLOAT4,  2, 1, D3DXPC_VECTOR, D3DXPT_FLOAT,     1, 4, 1, 0, 16, NULL}};
 
-static const DWORD fx_shader_with_ctab[] =
+struct d3d9_test_context
 {
-    0x46580200,                                                             /* FX20                     */
-    0x002efffe, FCC_CTAB,                                                   /* CTAB comment             */
-    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                   */
-    0x0000009c,
-    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc          */
-    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc          */
-    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc          */
-    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string   */
-    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc     */
-    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string   */
-    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc */
-    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string   */
-    0x335f7376, 0xab00305f,                                                 /* Target name string       */
-    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
-    0x0000ffff                                                              /* END                      */
+    HWND window;
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *backbuffer;
 };
+
+static HWND create_window(void)
+{
+    HWND hwnd;
+    RECT rect;
+
+    SetRect(&rect, 0, 0, 640, 480);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW | WS_VISIBLE, FALSE);
+    hwnd = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, rect.right - rect.left, rect.bottom - rect.top, 0, 0, 0, 0);
+    return hwnd;
+}
+
+static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
+{
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice9 *device;
+
+    present_parameters.Windowed = windowed;
+    present_parameters.hDeviceWindow = device_window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.EnableAutoDepthStencil = TRUE;
+    present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
+
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
+
+    return NULL;
+}
+
+static bool init_test_context(struct d3d9_test_context *context)
+{
+    HRESULT hr;
+
+    memset(context, 0, sizeof(*context));
+
+    context->window = create_window();
+    if (!(context->d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D object.\n");
+        DestroyWindow(context->window);
+        return false;
+    }
+    if (!(context->device = create_device(context->d3d, context->window, context->window, TRUE)))
+    {
+        skip("Failed to create a D3D device.\n");
+        IDirect3D9_Release(context->d3d);
+        DestroyWindow(context->window);
+        return false;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTarget(context->device, 0, &context->backbuffer);
+    ok(hr == S_OK, "Failed to get backbuffer, hr %#lx.\n", hr);
+
+    return true;
+}
+
+#define release_test_context(a) release_test_context_(__LINE__, a)
+static void release_test_context_(unsigned int line, struct d3d9_test_context *context)
+{
+    ULONG refcount;
+
+    IDirect3DSurface9_Release(context->backbuffer);
+    refcount = IDirect3DDevice9_Release(context->device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3D9_Release(context->d3d);
+    ok(!refcount, "D3D object has %lu references left.\n", refcount);
+    DestroyWindow(context->window);
+}
+
+struct vec3
+{
+    float x, y, z;
+};
+
+static void draw_quad(struct d3d9_test_context *context)
+{
+    IDirect3DDevice9 *device = context->device;
+    HRESULT hr;
+
+    static const struct
+    {
+        struct vec3 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}},
+    };
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad, sizeof(*quad));
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+}
+
+struct surface_readback
+{
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT locked_rect;
+};
+
+static uint32_t get_readback_color(struct surface_readback *rb, uint32_t x, uint32_t y)
+{
+    return rb->locked_rect.pBits
+            ? ((uint32_t *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(uint32_t) + x] : 0xdeadbeef;
+}
+
+static void release_surface_readback(struct surface_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->surface)
+        return;
+    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface9_UnlockRect(rb->surface)))
+        trace("Can't unlock the readback surface, hr %#lx.\n", hr);
+    IDirect3DSurface9_Release(rb->surface);
+}
+
+static void get_surface_readback(IDirect3DDevice9 *device, IDirect3DSurface9 *surface, struct surface_readback *rb)
+{
+    D3DSURFACE_DESC desc;
+    HRESULT hr;
+
+    hr = IDirect3DSurface9_GetDesc(surface, &desc);
+    if (FAILED(hr))
+    {
+        trace("Failed to get surface description, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, desc.Width, desc.Height, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM,
+            &rb->surface, NULL);
+    if (FAILED(hr))
+    {
+        trace("Can't create the readback surface, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = D3DXLoadSurfaceFromSurface(rb->surface, NULL, NULL, surface, NULL, NULL, D3DX_FILTER_NONE, 0);
+    if (FAILED(hr))
+    {
+        trace("Can't load the readback surface, hr %#lx.\n", hr);
+        goto exit;
+    }
+
+    hr = IDirect3DSurface9_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+        trace("Can't lock the readback surface, hr %#lx.\n", hr);
+
+exit:
+    if (FAILED(hr))
+    {
+        if (rb->surface)
+            IDirect3DSurface9_Release(rb->surface);
+        rb->surface = NULL;
+    }
+}
+
+static bool compare_uint(unsigned int x, unsigned int y, unsigned int max_diff)
+{
+    unsigned int diff = x > y ? x - y : y - x;
+
+    return diff <= max_diff;
+}
+
+static bool color_match(uint32_t c1, uint32_t c2, unsigned int max_diff)
+{
+    return compare_uint(c1 & 0xff, c2 & 0xff, max_diff)
+            && compare_uint((c1 >> 8) & 0xff, (c2 >> 8) & 0xff, max_diff)
+            && compare_uint((c1 >> 16) & 0xff, (c2 >> 16) & 0xff, max_diff)
+            && compare_uint((c1 >> 24) & 0xff, (c2 >> 24) & 0xff, max_diff);
+}
 
 static void test_get_shader_size(void)
 {
@@ -401,6 +560,43 @@ static void test_find_shader_comment(void)
     ok(data == simple_7fff + 3, "Got result %p, expected %p\n", data, simple_7fff + 3);
     ok(size == 4, "Got result %u, expected 4\n", size);
 }
+
+#if D3DX_SDK_VERSION >= 36
+static const DWORD shader_with_ctab_constants[] = {
+    0xfffe0300,                                                             /* vs_3_0                       */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment                 */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                       */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc              */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc              */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc              */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string       */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string       */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string       */
+    0x335f7376, 0xab00305f,                                                 /* Target name string           */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string          */
+    0x0000ffff};                                                            /* END                          */
+
+static const DWORD fx_shader_with_ctab[] =
+{
+    0x46580200,                                                             /* FX20                     */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment             */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                   */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc          */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc          */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc          */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string   */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string   */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string   */
+    0x335f7376, 0xab00305f,                                                 /* Target name string       */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
+    0x0000ffff                                                              /* END                      */
+};
 
 static void test_get_shader_constant_table_ex(void)
 {
@@ -589,6 +785,7 @@ static void test_get_shader_constant_table_ex(void)
     ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
 }
+#endif
 
 static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
         const D3DXCONSTANT_DESC *expecteds, UINT count)
@@ -6597,6 +6794,7 @@ static void test_shader_semantics(void)
     }
 }
 
+#if D3DX_SDK_VERSION <= 41
 static void test_fragment_linker(void)
 {
     ID3DXFragmentLinker *linker;
@@ -6633,6 +6831,46 @@ static void test_fragment_linker(void)
     ok(!!linker, "Unexpected linker %p.\n", linker);
     linker->lpVtbl->Release(linker);
 
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    refcount = IDirect3D9_Release(d3d);
+    ok(!refcount, "The D3D object has %lu references left.\n", refcount);
+    DestroyWindow(window);
+}
+#endif
+
+#if (D3DX_SDK_VERSION >= 36 && D3DX_SDK_VERSION <= 41)
+static void test_fragment_linker_ex(void)
+{
+    ID3DXFragmentLinker *linker;
+    D3DPRESENT_PARAMETERS d3dpp;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D object.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_MIXED_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create a D3D device, hr %#lx.\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
     hr = D3DXCreateFragmentLinkerEx(device, 1024, 0, &linker);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!linker, "Unexpected linker %p.\n", linker);
@@ -6644,13 +6882,90 @@ static void test_fragment_linker(void)
     ok(!refcount, "The D3D object has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
+#endif
+
+static void test_hlsl_double(void)
+{
+    static const char vs_hlsl[] =
+            "float4 main(in float4 pos : POSITION) : POSITION\n"
+            "{\n"
+            "    return pos;\n"
+            "}\n";
+    static const char ps_hlsl[] =
+            "float func(float x){return 0.1;}\n"
+            "float func(half x){return 0.2;}\n"
+            "float func(double x){return 0.3;}\n"
+            "\n"
+            "float4 main(uniform double u) : COLOR\n"
+            "{\n"
+            "    return func(u);\n"
+            "}\n";
+    ID3DXBuffer *vs_bytecode, *ps_bytecode, *errors;
+    struct d3d9_test_context context;
+    struct surface_readback rb;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
+    uint32_t color;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+
+    hr = D3DXCompileShader(vs_hlsl, sizeof(vs_hlsl), NULL, NULL, "main", "vs_2_0", 0, &vs_bytecode, &errors, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = D3DXCompileShader(ps_hlsl, sizeof(ps_hlsl), NULL, NULL, "main", "ps_2_0", 0, &ps_bytecode, &errors, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexShader(context.device, ID3DXBuffer_GetBufferPointer(vs_bytecode), &vs);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetVertexShader(context.device, vs);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_CreatePixelShader(context.device, ID3DXBuffer_GetBufferPointer(ps_bytecode), &ps);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetPixelShader(context.device, ps);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    draw_quad(&context);
+
+    get_surface_readback(context.device, context.backbuffer, &rb);
+    color = get_readback_color(&rb, 320, 240);
+    ok(color_match(color, 0x4c4c4c4c, 0), "Unexpected color %#x.\n", color);
+    release_surface_readback(&rb);
+    IDirect3DPixelShader9_Release(ps);
+    IDirect3DVertexShader9_Release(vs);
+    release_test_context(&context);
+}
+
+static void test_implicit_truncation_warning(void)
+{
+    static const char hlsl[] =
+            "float4 main(in float4 pos : POSITION) : POSITION\n"
+            "{\n"
+            "    float2 x = pos;\n"
+            "    return pos;\n"
+            "}\n";
+    ID3DXBuffer *bytecode, *errors;
+    HRESULT hr;
+
+    hr = D3DXCompileShader(hlsl, sizeof(hlsl), NULL, NULL, "main", "vs_2_0", 0, &bytecode, &errors, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    if (D3DX_SDK_VERSION < 42)
+        ok(!errors, "Expected no errors.\n");
+    else
+        ok(!!errors, "Expected errors.\n");
+    if (errors)
+        ID3DXBuffer_Release(errors);
+    ID3DXBuffer_Release(bytecode);
+}
 
 START_TEST(shader)
 {
     test_get_shader_size();
     test_get_shader_version();
     test_find_shader_comment();
+#if D3DX_SDK_VERSION >= 36
     test_get_shader_constant_table_ex();
+#endif
     test_constant_tables();
     test_setting_constants();
     test_get_sampler_index();
@@ -6659,5 +6974,12 @@ START_TEST(shader)
     test_registerset();
     test_registerset_defaults();
     test_shader_semantics();
+#if D3DX_SDK_VERSION <= 41
     test_fragment_linker();
+#endif
+#if (D3DX_SDK_VERSION >= 36 && D3DX_SDK_VERSION <= 41)
+    test_fragment_linker_ex();
+#endif
+    test_hlsl_double();
+    test_implicit_truncation_warning();
 }

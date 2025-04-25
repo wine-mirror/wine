@@ -497,22 +497,19 @@ static void test_trig(void)
         return;
 
     ps_code = compile_shader(ps_source, "ps_4_0");
-    if (ps_code)
+    draw_quad(&test_context, ps_code);
+    init_readback(&test_context, &rb);
+
+    for (i = 0; i < 640; i += 20)
     {
-        draw_quad(&test_context, ps_code);
-        init_readback(&test_context, &rb);
-
-        for (i = 0; i < 640; i += 20)
-        {
-            v = get_readback_vec4(&rb, i, 0);
-            ok(compare_vec4(v, sinf(i), cosf(i), 0.0f, 0.0f, 16384),
-                    "Test %u: Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
-                    i, v->x, v->y, v->z, v->w, sinf(i), cos(i), 0.0f, 0.0f);
-        }
-
-        release_readback(&test_context, &rb);
-        ID3D10Blob_Release(ps_code);
+        v = get_readback_vec4(&rb, i, 0);
+        ok(compare_vec4(v, sinf(i), cosf(i), 0.0f, 0.0f, 16384),
+                "Test %u: Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                i, v->x, v->y, v->z, v->w, sinf(i), cos(i), 0.0f, 0.0f);
     }
+
+    release_readback(&test_context, &rb);
+    ID3D10Blob_Release(ps_code);
     release_test_context(&test_context);
 }
 
@@ -617,16 +614,13 @@ static void test_sampling(void)
 
         ID3D11DeviceContext_ClearRenderTargetView(test_context.immediate_context, test_context.rtv, red);
         ps_code = compile_shader_flags(tests[i], "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
-        if (ps_code)
-        {
-            draw_quad(&test_context, ps_code);
+        draw_quad(&test_context, ps_code);
 
-            v = get_color_vec4(&test_context, 0, 0);
-            ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 0),
-                    "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
+        v = get_color_vec4(&test_context, 0, 0);
+        ok(compare_vec4(&v, 0.25f, 0.0f, 0.25f, 0.0f, 0),
+                "Got unexpected value {%.8e, %.8e, %.8e, %.8e}.\n", v.x, v.y, v.z, v.w);
 
-            ID3D10Blob_Release(ps_code);
-        }
+        ID3D10Blob_Release(ps_code);
 
         winetest_pop_context();
     }
@@ -821,9 +815,6 @@ static void test_reflection(void)
     };
 
     code = compile_shader(vs_source, "vs_5_0");
-    if (!code)
-        return;
-
     hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -902,8 +893,6 @@ static void test_reflection(void)
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     code = compile_shader_flags(ps_source, "ps_4_0", D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY);
-    if (!code)
-        return;
     hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
             &IID_ID3D11ShaderReflection, (void **)&reflection);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -935,16 +924,24 @@ static void check_parameter_desc(const D3D11_SIGNATURE_PARAMETER_DESC *desc,
         const D3D11_SIGNATURE_PARAMETER_DESC *expect)
 {
     todo_wine_if(strcmp(desc->SemanticName, expect->SemanticName))
-        ok(!strcmp(desc->SemanticName, expect->SemanticName), "Got name %s.\n", debugstr_a(desc->SemanticName));
-    ok(desc->SemanticIndex == expect->SemanticIndex, "Got index %u.\n", desc->SemanticIndex);
-    ok(desc->Register == expect->Register, "Got register %u.\n", desc->Register);
+        ok(!strcmp(desc->SemanticName, expect->SemanticName), "Got name %s, expected %s.\n",
+                debugstr_a(desc->SemanticName), debugstr_a(expect->SemanticName));
+    ok(desc->SemanticIndex == expect->SemanticIndex, "Got index %u, expected %u.\n",
+            desc->SemanticIndex, expect->SemanticIndex);
+    ok(desc->Register == expect->Register, "Got register %u, expected %u.\n",
+            desc->Register, expect->Register);
     todo_wine_if(desc->SystemValueType != expect->SystemValueType)
-        ok(desc->SystemValueType == expect->SystemValueType, "Got sysval %u.\n", desc->SystemValueType);
-    ok(desc->ComponentType == expect->ComponentType, "Got data type %u.\n", desc->ComponentType);
-    ok(desc->Mask == expect->Mask, "Got mask %#x.\n", desc->Mask);
+        ok(desc->SystemValueType == expect->SystemValueType, "Got sysval %u, expected %u.\n",
+                desc->SystemValueType, expect->SystemValueType);
+    ok(desc->ComponentType == expect->ComponentType, "Got data type %u, expected %u.\n",
+            desc->ComponentType, expect->ComponentType);
+    ok(desc->Mask == expect->Mask, "Got mask %#x, expected %#x.\n", desc->Mask, expect->Mask);
     todo_wine_if(desc->ReadWriteMask != expect->ReadWriteMask)
-        ok(desc->ReadWriteMask == expect->ReadWriteMask, "Got used mask %#x.\n", desc->ReadWriteMask);
-    ok(desc->Stream == expect->Stream, "Got stream %u.\n", desc->Stream);
+        ok(desc->ReadWriteMask == expect->ReadWriteMask
+                || broken(expect->ReadWriteMask == 0x5 && (desc->ReadWriteMask == 0 || desc->ReadWriteMask == 0x7)),
+                "Got used mask %#x, expected %#x.\n",
+                desc->ReadWriteMask, expect->ReadWriteMask);
+    ok(desc->Stream == expect->Stream, "Got stream %u, expected %u.\n", desc->Stream, expect->Stream);
 }
 
 static void test_semantic_reflection(void)

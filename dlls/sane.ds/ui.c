@@ -475,8 +475,6 @@ BOOL DoScannerUI(void)
     LPWSTR szCaption;
     DWORD len;
 
-    hdc = GetDC(0);
-
     memset(psp,0,sizeof(psp));
     rc = sane_option_get_value( 0, &optcount );
     if (rc != TWCC_SUCCESS)
@@ -484,6 +482,8 @@ BOOL DoScannerUI(void)
         ERR("Unable to read number of options\n");
         return FALSE;
     }
+
+    hdc = CreateCompatibleDC(0);
 
     while (index < optcount)
     {
@@ -539,7 +539,9 @@ BOOL DoScannerUI(void)
         free((LPBYTE)psp[index].pszTitle);
     }
     free(szCaption);
-    
+
+    DeleteDC(hdc);
+
     if (psrc == IDOK)
         return TRUE;
     else

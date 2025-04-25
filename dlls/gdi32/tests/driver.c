@@ -51,6 +51,7 @@ static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromDeviceName)(D3DKMT_OPENADAPTERFRO
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
 static NTSTATUS (WINAPI *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
+static NTSTATUS (WINAPI *pD3DKMTQueryAdapterInfo)(D3DKMT_QUERYADAPTERINFO *);
 static NTSTATUS (WINAPI *pD3DKMTQueryVideoMemoryInfo)(D3DKMT_QUERYVIDEOMEMORYINFO *);
 static HRESULT  (WINAPI *pDwmEnableComposition)(UINT);
 
@@ -1120,6 +1121,101 @@ static void test_gpu_device_properties(void)
     winetest_pop_context();
 }
 
+static void test_D3DKMTQueryAdapterInfo(void)
+{
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
+    D3DKMT_QUERYADAPTERINFO query_adapter_info;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    unsigned char buffer[1024];
+    NTSTATUS status;
+    unsigned int i;
+    BOOL ret;
+
+    static const struct
+    {
+        KMTQUERYADAPTERINFOTYPE type;
+        UINT size;
+    }
+    tests[] =
+    {
+        {KMTQAITYPE_CHECKDRIVERUPDATESTATUS, sizeof(BOOL)},
+        {KMTQAITYPE_DRIVERVERSION, sizeof(D3DKMT_DRIVERVERSION)},
+    };
+
+    if (!pD3DKMTQueryAdapterInfo)
+    {
+        win_skip("D3DKMTQueryAdapterInfo() is unavailable.\n");
+        return;
+    }
+
+    ret = get_primary_adapter_name(open_adapter_desc.DeviceName);
+    ok(ret, "Failed to get primary adapter name.\n");
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_desc);
+    if (status == STATUS_PROCEDURE_NOT_FOUND)
+    {
+        win_skip("D3DKMTOpenAdapterFromGdiDisplayName() is not supported.\n");
+        return;
+    }
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("type %d", tests[i].type);
+
+        /* NULL buffer */
+        query_adapter_info.hAdapter = open_adapter_desc.hAdapter;
+        query_adapter_info.Type = tests[i].type;
+        query_adapter_info.pPrivateDriverData = NULL;
+        query_adapter_info.PrivateDriverDataSize = tests[i].size;
+        status = pD3DKMTQueryAdapterInfo(&query_adapter_info);
+        ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+
+        /* Insufficient buffer size */
+        query_adapter_info.pPrivateDriverData = buffer;
+        query_adapter_info.PrivateDriverDataSize = tests[i].size - 1;
+        status = pD3DKMTQueryAdapterInfo(&query_adapter_info);
+        ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+
+        /* Normal */
+        query_adapter_info.pPrivateDriverData = buffer;
+        query_adapter_info.PrivateDriverDataSize = tests[i].size;
+        status = pD3DKMTQueryAdapterInfo(&query_adapter_info);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+        if (status != STATUS_SUCCESS)
+        {
+            winetest_pop_context();
+            continue;
+        }
+
+        switch (tests[i].type)
+        {
+        case KMTQAITYPE_CHECKDRIVERUPDATESTATUS:
+        {
+            BOOL *value = query_adapter_info.pPrivateDriverData;
+            ok(*value == FALSE, "Expected %d, got %d.\n", FALSE, *value);
+            break;
+        }
+        case KMTQAITYPE_DRIVERVERSION:
+        {
+            D3DKMT_DRIVERVERSION *value = query_adapter_info.pPrivateDriverData;
+            ok(*value >= KMT_DRIVERVERSION_WDDM_1_3, "Expected %d >= %d.\n", *value,
+               KMT_DRIVERVERSION_WDDM_1_3);
+            break;
+        }
+        default:
+        {
+            ok(0, "Type %d is not handled.\n", tests[i].type);
+        }
+        }
+
+        winetest_pop_context();
+    }
+
+    close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -1135,6 +1231,7 @@ START_TEST(driver)
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
     pD3DKMTSetVidPnSourceOwner = (void *)GetProcAddress(gdi32, "D3DKMTSetVidPnSourceOwner");
+    pD3DKMTQueryAdapterInfo = (void *)GetProcAddress(gdi32, "D3DKMTQueryAdapterInfo");
     pD3DKMTQueryVideoMemoryInfo = (void *)GetProcAddress(gdi32, "D3DKMTQueryVideoMemoryInfo");
 
     if (dwmapi)
@@ -1150,6 +1247,7 @@ START_TEST(driver)
     test_D3DKMTSetVidPnSourceOwner();
     test_D3DKMTCheckOcclusion();
     test_D3DKMTOpenAdapterFromDeviceName();
+    test_D3DKMTQueryAdapterInfo();
     test_D3DKMTQueryVideoMemoryInfo();
     test_gpu_device_properties();
 

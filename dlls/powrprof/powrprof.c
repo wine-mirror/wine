@@ -27,6 +27,7 @@
 #include "winnt.h"
 #include "winreg.h"
 #include "winternl.h"
+#include "powersetting.h"
 #include "powrprof.h"
 #include "wine/debug.h"
 
@@ -360,6 +361,12 @@ DWORD WINAPI PowerWriteACValueIndex(HKEY key, const GUID *scheme, const GUID *su
 {
    FIXME("(%p,%s,%s,%s,0x%08lx) stub!\n", key, debugstr_guid(scheme), debugstr_guid(subgroup), debugstr_guid(setting), index);
    return ERROR_SUCCESS;
+}
+
+HRESULT WINAPI PowerRegisterForEffectivePowerModeNotifications(ULONG version, EFFECTIVE_POWER_MODE_CALLBACK *callback, void *context, void **handle)
+{
+    FIXME("(%lu,%p,%p,%p) stub!\n", version, callback, context, handle);
+    return E_NOTIMPL;
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

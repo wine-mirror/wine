@@ -1658,6 +1658,9 @@ typedef const CERT_CRL_CONTEXT_PAIR *PCCERT_CRL_CONTEXT_PAIR;
 #define CRYPT_OID_INFO_ALGID_KEY 3
 #define CRYPT_OID_INFO_SIGN_KEY  4
 
+#define CRYPT_OID_INFO_PUBKEY_ENCRYPT_KEY_FLAG 0x40000000
+#define CRYPT_OID_INFO_PUBKEY_SIGN_KEY_FLAG    0x80000000
+
 /* Algorithm IDs */
 
 #define GET_ALG_CLASS(x)                (x & (7 << 13))
@@ -3902,7 +3905,7 @@ typedef struct _CMSG_CMS_RECIPIENT_INFO {
 #define CMSG_KEY_AGREE_VERSION          CMSG_ENVELOPED_RECIPIENT_V3
 #define CMSG_MAIL_LIST_VERSION          CMSG_ENVELOPED_RECIPIENT_V4
 
-typedef void * (WINAPI *PFN_CMSG_ALLOC)(size_t cb);
+typedef void * (__WINE_ALLOC_SIZE(1) WINAPI *PFN_CMSG_ALLOC)(size_t cb);
 typedef void   (WINAPI *PFN_CMSG_FREE)(void *pv);
 
 typedef struct _CMSG_CONTENT_ENCRYPT_INFO {

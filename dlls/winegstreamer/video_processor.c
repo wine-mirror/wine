@@ -30,6 +30,8 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 extern GUID MFVideoFormat_ABGR32;
 
+static const GUID MF_XVP_PLAYBACK_MODE = { 0x3c5d293f, 0xad67, 0x4e29, { 0xaf, 0x12, 0xcf, 0x3e, 0x23, 0x8a, 0xcc, 0xe9 } };
+
 static const GUID *const input_types[] =
 {
     &MFVideoFormat_IYUV,
@@ -696,6 +698,7 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
     MFT_OUTPUT_STREAM_INFO info;
     IMFSample *output_sample;
     HRESULT hr;
+    BOOL playback_mode, provide_samples;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
 
@@ -709,7 +712,12 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
     if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
         return hr;
 
-    if (impl->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    if (FAILED(IMFAttributes_GetUINT32(impl->attributes, &MF_XVP_PLAYBACK_MODE, (UINT32 *) &playback_mode)))
+        playback_mode = FALSE;
+
+    provide_samples = (impl->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES) && !playback_mode;
+
+    if (provide_samples)
     {
         if (FAILED(hr = video_processor_init_allocator(impl)))
             return hr;
@@ -727,7 +735,7 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         goto done;
     wg_sample_queue_flush(impl->wg_sample_queue, false);
 
-    if (impl->output_info.dwFlags & MFT_OUTPUT_STREAM_PROVIDES_SAMPLES)
+    if (provide_samples)
     {
         samples->pSample = output_sample;
         IMFSample_AddRef(output_sample);

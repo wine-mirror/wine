@@ -1810,3 +1810,16 @@ HRESULT __RPC_STUB ITransactionObject_GetTransactionObject_Stub(ITransactionObje
     FIXME("(%p)->(%ld, %p, %p): stub\n", This, level, transaction, info);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IRowsetIdentity_IsSameRow_Proxy(IRowsetIdentity* This, HROW hThisRow, HROW hThatRow)
+{
+    FIXME("(%p)->(%Id, %Id): stub\n", This, hThisRow, hThatRow);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IRowsetIdentity_IsSameRow_Stub(IRowsetIdentity* This, HROW hThisRow,
+    HROW hThatRow, IErrorInfo **error_info)
+{
+    FIXME("(%p)->(%Id, %Id, %p): stub\n", This, hThisRow, hThatRow, error_info);
+    return E_NOTIMPL;
+}

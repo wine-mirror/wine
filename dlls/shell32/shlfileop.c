@@ -54,8 +54,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 #define FO_MASK         0xF
 
-#define DE_SAMEFILE      0x71
-#define DE_DESTSAMETREE  0x7D
+#define DE_SAMEFILE        0x71
+#define DE_MANYSRC1DEST    0x72
+#define DE_DIFFDIR         0x73
+#define DE_ROOTDIR         0x74
+#define DE_OPCANCELLED     0x75
+#define DE_DESTSUBTREE     0x76
+#define DE_ACCESSDENIEDSRC 0x78
+#define DE_PATHTOODEEP     0x79
+#define DE_MANYDEST        0x7A
+#define DE_INVALIDFILES    0x7C
+#define DE_DESTSAMETREE    0x7D
+#define DE_FLDDESTISFILE   0x7E
+#define DE_FILEDESTISFLD   0x80
 
 static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
 static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
@@ -932,28 +943,43 @@ static inline void grow_list(FILE_LIST *list)
     list->num_alloc *= 2;
 }
 
-/* adds a file to the FILE_ENTRY struct
- */
-static void add_file_to_entry(FILE_ENTRY *feFile, LPCWSTR szFile)
+static void add_file_entry(FILE_LIST *file_list, DWORD index,
+        const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
 {
-    DWORD dwLen = lstrlenW(szFile) + 1;
-    LPCWSTR ptr;
+    size_t file_name_len = wcslen(file_name) + 1;
+    FILE_ENTRY *file_entry;
+    const WCHAR *ptr;
 
-    feFile->szFullPath = malloc(dwLen * sizeof(WCHAR));
-    lstrcpyW(feFile->szFullPath, szFile);
+    if (index >= file_list->num_alloc)
+        grow_list(file_list);
+    file_entry = &file_list->feFiles[index];
 
-    ptr = StrRChrW(szFile, NULL, '\\');
+    file_entry->szFullPath = malloc(file_name_len * sizeof(WCHAR));
+    wcscpy(file_entry->szFullPath, file_name);
+
+    ptr = wcsrchr(file_name, '\\');
     if (ptr)
     {
-        dwLen = ptr - szFile + 1;
-        feFile->szDirectory = malloc(dwLen * sizeof(WCHAR));
-        lstrcpynW(feFile->szDirectory, szFile, dwLen);
+        file_name_len = ptr - file_name + 1;
+        file_entry->szDirectory = malloc(file_name_len * sizeof(WCHAR));
+        lstrcpynW(file_entry->szDirectory, file_name, file_name_len);
 
-        dwLen = lstrlenW(feFile->szFullPath) - dwLen + 1;
-        feFile->szFilename = malloc(dwLen * sizeof(WCHAR));
-        lstrcpyW(feFile->szFilename, ptr + 1); /* skip over backslash */
+        file_name_len = wcslen(file_entry->szFullPath) - file_name_len + 1;
+        file_entry->szFilename = malloc(file_name_len * sizeof(WCHAR));
+        lstrcpyW(file_entry->szFilename, ptr + 1); /* Skip over backslash. */
     }
-    feFile->bFromWildcard = FALSE;
+
+    file_entry->attributes = attributes;
+    file_entry->bFromRelative = from_relative;
+    file_entry->bFromWildcard = from_wildcard;
+    file_entry->bExists = (attributes != INVALID_FILE_ATTRIBUTES);
+
+    if (IsAttribDir(attributes))
+        file_list->bAnyDirectories = TRUE;
+    if (from_wildcard)
+        file_list->bAnyFromWildcard = TRUE;
+    if (!file_entry->bExists)
+        file_list->bAnyDontExist = TRUE;
 }
 
 static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
@@ -974,11 +1000,10 @@ static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
     return szFullPath;
 }
 
-static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwListIndex)
+static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwListIndex, BOOL from_relative)
 {
     WIN32_FIND_DATAW wfd;
     HANDLE hFile = FindFirstFileW(szFile, &wfd);
-    FILE_ENTRY *file;
     LPWSTR szFullPath;
     BOOL res;
 
@@ -987,13 +1012,8 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
     for (res = TRUE; res; res = FindNextFileW(hFile, &wfd))
     {
         if (IsDotDir(wfd.cFileName)) continue;
-        if (*pdwListIndex >= flList->num_alloc) grow_list( flList );
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        file = &flList->feFiles[(*pdwListIndex)++];
-        add_file_to_entry(file, szFullPath);
-        file->bFromWildcard = TRUE;
-        file->attributes = wfd.dwFileAttributes;
-        if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
+        add_file_entry(flList, (*pdwListIndex)++, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
         free(szFullPath);
     }
 
@@ -1001,7 +1021,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
 }
 
 /* takes the null-separated file list and fills out the FILE_LIST */
-static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
+static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wildcard)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
@@ -1025,38 +1045,30 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles)
 
     while (*ptr)
     {
-        if (i >= flList->num_alloc) grow_list( flList );
+        BOOL from_relative = PathIsRelativeW(ptr), from_wildcard = !!wcspbrk(ptr, L"*?");
 
         /* change relative to absolute path */
-        if (PathIsRelativeW(ptr))
+        if (from_relative)
         {
             GetCurrentDirectoryW(MAX_PATH, szCurFile);
             PathCombineW(szCurFile, szCurFile, ptr);
-            flList->feFiles[i].bFromRelative = TRUE;
         }
         else
         {
             lstrcpyW(szCurFile, ptr);
-            flList->feFiles[i].bFromRelative = FALSE;
         }
 
         for (p = szCurFile; *p; p++) if (*p == '/') *p = '\\';
 
         /* parse wildcard files if they are in the filename */
-        if (StrPBrkW(szCurFile, L"*?"))
+        if (from_wildcard && parse_wildcard)
         {
-            parse_wildcard_files(flList, szCurFile, &i);
-            flList->bAnyFromWildcard = TRUE;
+            parse_wildcard_files(flList, szCurFile, &i, from_relative);
             i--;
         }
         else
         {
-            FILE_ENTRY *file = &flList->feFiles[i];
-            add_file_to_entry(file, szCurFile);
-            file->attributes = GetFileAttributesW( file->szFullPath );
-            file->bExists = (file->attributes != INVALID_FILE_ATTRIBUTES);
-            if (!file->bExists) flList->bAnyDontExist = TRUE;
-            if (IsAttribDir(file->attributes)) flList->bAnyDirectories = TRUE;
+            add_file_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
         }
 
         /* advance to the next string */
@@ -1195,7 +1207,7 @@ static int copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *fl
 
         destroy_file_list(flTo);
         ZeroMemory(flTo, sizeof(FILE_LIST));
-        parse_file_list(flTo, curdir);
+        parse_file_list(flTo, curdir, FALSE);
         fileDest = &flTo->feFiles[0];
     }
 
@@ -1514,30 +1526,33 @@ static int move_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const
     return ERROR_SUCCESS;
 }
 
-/* the FO_RENAME files */
-static int rename_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom, const FILE_LIST *flTo)
+/* The FO_RENAME operation of SHFileOperation. */
+static DWORD rename_files(SHFILEOPSTRUCTW *op, const FILE_LIST *from, const FILE_LIST *to)
 {
-    const FILE_ENTRY *feFrom;
-    const FILE_ENTRY *feTo;
+    const FILE_ENTRY *entry_from, *entry_to;
 
-    if (flFrom->dwNumFiles != 1)
-        return ERROR_GEN_FAILURE;
+    if (from->dwNumFiles != 1)
+        return DE_MANYSRC1DEST;
 
-    if (flTo->dwNumFiles != 1)
-        return ERROR_CANCELLED;
+    entry_from = &from->feFiles[0];
+    if (entry_from->bFromWildcard)
+        return DE_MANYSRC1DEST;
+    if (!entry_from->bExists)
+        return ERROR_FILE_NOT_FOUND;
 
-    feFrom = &flFrom->feFiles[0];
-    feTo= &flTo->feFiles[0];
+    if (!to->dwNumFiles)
+        return DE_DIFFDIR;
+    entry_to = &to->feFiles[0];
+    if (entry_to->bFromWildcard)
+        return ERROR_INVALID_NAME;
 
-    /* fail if destination doesn't exist */
-    if (!feFrom->bExists)
-        return ERROR_SHELL_INTERNAL_FILE_NOT_FOUND;
+    if (wcscmp(entry_from->szDirectory, entry_to->szDirectory) != 0)
+        return DE_DIFFDIR;
 
-    /* fail if destination already exists */
-    if (feTo->bExists)
-        return ERROR_ALREADY_EXISTS;
+    if (entry_to->bExists && IsAttribDir(entry_from->attributes) != IsAttribDir(entry_to->attributes))
+        return IsAttribDir(entry_to->attributes) ? DE_FILEDESTISFLD : DE_FLDDESTISFILE;
 
-    return SHNotifyMoveFileW(feFrom->szFullPath, feTo->szFullPath);
+    return SHNotifyMoveFileW(entry_from->szFullPath, entry_to->szFullPath);
 }
 
 /* alert the user if an unsupported flag is used */
@@ -1570,11 +1585,11 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     ZeroMemory(&flFrom, sizeof(FILE_LIST));
     ZeroMemory(&flTo, sizeof(FILE_LIST));
 
-    if ((ret = parse_file_list(&flFrom, lpFileOp->pFrom)))
+    if ((ret = parse_file_list(&flFrom, lpFileOp->pFrom, lpFileOp->wFunc != FO_RENAME)))
         return ret;
 
     if (lpFileOp->wFunc != FO_DELETE)
-        parse_file_list(&flTo, lpFileOp->pTo);
+        parse_file_list(&flTo, lpFileOp->pTo, FALSE);
 
     ZeroMemory(&op, sizeof(op));
     op.req = lpFileOp;

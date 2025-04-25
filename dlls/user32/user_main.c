@@ -35,71 +35,6 @@ HMODULE user32_module = 0;
 extern void WDML_NotifyThreadDetach(void);
 
 
-/***********************************************************************
- *             UserRealizePalette (USER32.@)
- */
-UINT WINAPI UserRealizePalette( HDC hdc )
-{
-    return NtUserRealizePalette( hdc );
-}
-
-
-/***********************************************************************
- *           dpiaware_init
- *
- * Initialize the DPI awareness style.
- */
-static void dpiaware_init(void)
-{
-    WCHAR buffer[256];
-    DWORD option;
-
-    if (!LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
-                                            L"dpiAwareness", REG_DWORD, &option, sizeof(option), NULL ))
-    {
-        TRACE( "got option %lx\n", option );
-        if (option <= 2)
-        {
-            SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)option );
-            return;
-        }
-    }
-
-    if (QueryActCtxSettingsW( 0, NULL, L"http://schemas.microsoft.com/SMI/2016/WindowsSettings",
-                              L"dpiAwareness", buffer, ARRAY_SIZE(buffer), NULL ))
-    {
-        static const WCHAR * const types[] = { L"unaware", L"system", L"permonitor", L"permonitorv2" };
-        WCHAR *p, *start, *end;
-        ULONG_PTR i;
-
-        TRACE( "got dpiAwareness=%s\n", debugstr_w(buffer) );
-        for (start = buffer; *start; start = end)
-        {
-            start += wcsspn( start, L" \t\r\n" );
-            if (!(end = wcschr( start, ',' ))) end = start + lstrlenW(start);
-            else *end++ = 0;
-            if ((p = wcspbrk( start, L" \t\r\n" ))) *p = 0;
-            for (i = 0; i < ARRAY_SIZE(types); i++)
-            {
-                if (wcsicmp( start, types[i] )) continue;
-                SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~i );
-                return;
-            }
-        }
-    }
-    else if (QueryActCtxSettingsW( 0, NULL, L"http://schemas.microsoft.com/SMI/2005/WindowsSettings",
-                                   L"dpiAware", buffer, ARRAY_SIZE(buffer), NULL ))
-    {
-        TRACE( "got dpiAware=%s\n", debugstr_w(buffer) );
-        if (!wcsicmp( buffer, L"true" ))
-            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_SYSTEM_AWARE );
-        else if (!wcsicmp( buffer, L"true/pm" ) || !wcsicmp( buffer, L"per monitor" ))
-            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-        else
-            SetProcessDpiAwarenessContext( DPI_AWARENESS_CONTEXT_UNAWARE );
-    }
-}
-
 static NTSTATUS WINAPI User32CopyImage( void *args, ULONG size )
 {
     const struct copy_image_params *params = args;
@@ -182,7 +117,7 @@ static NTSTATUS WINAPI User32PostDDEMessage( void *args, ULONG size )
 {
     const struct post_dde_message_params *params = args;
     return post_dde_message( params->hwnd, params->msg, params->wparam, params->lparam,
-                             params->dest_tid, params->type );
+                             params->dest_tid );
 }
 
 static NTSTATUS WINAPI User32RenderSsynthesizedFormat( void *args, ULONG size )
@@ -222,6 +157,39 @@ static NTSTATUS WINAPI User32CallDispatchCallback( void *args, ULONG size )
     return callback( params, size );
 }
 
+static NTSTATUS WINAPI User32DragDropEnter( void *args, ULONG size )
+{
+    if (!drag_drop_enter( size, args )) return STATUS_UNSUCCESSFUL;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI User32DragDropLeave( void *args, ULONG size )
+{
+    drag_drop_leave();
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI User32DragDropDrag( void *args, ULONG size )
+{
+    const struct drag_drop_drag_params *params = args;
+    UINT effect = drag_drop_drag( params->hwnd, params->point, params->effect );
+    return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
+}
+
+static NTSTATUS WINAPI User32DragDropDrop( void *args, ULONG size )
+{
+    const struct drag_drop_drop_params *params = args;
+    UINT effect = drag_drop_drop( params->hwnd );
+    return NtCallbackReturn( &effect, sizeof(effect), STATUS_SUCCESS );
+}
+
+static NTSTATUS WINAPI User32DragDropPost( void *args, ULONG size )
+{
+    const struct drag_drop_post_params *params = args;
+    drag_drop_post( params->hwnd, params->drop_size, (DROPFILES *)&params->drop );
+    return STATUS_SUCCESS;
+}
+
 static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
 {
     User32CallDispatchCallback,
@@ -244,6 +212,11 @@ static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
     User32PostDDEMessage,
     User32RenderSsynthesizedFormat,
     User32UnpackDDEMessage,
+    User32DragDropEnter,
+    User32DragDropLeave,
+    User32DragDropDrag,
+    User32DragDropDrop,
+    User32DragDropPost,
 };
 
 
@@ -253,11 +226,10 @@ static KERNEL_CALLBACK_PROC kernel_callback_table[NtUserCallCount] =
 static BOOL process_attach(void)
 {
     NtCurrentTeb()->Peb->KernelCallbackTable = kernel_callback_table;
+    RegisterWaitForInputIdle( WaitForInputIdle );
 
     winproc_init();
-    dpiaware_init();
     SYSPARAMS_Init();
-
     return TRUE;
 }
 

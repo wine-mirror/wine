@@ -50,27 +50,20 @@ static HGLOBAL devNames;
 static RECT margins;
 static previewinfo preview;
 
-extern const WCHAR wszPreviewWndClass[];
-
-static const WCHAR var_pagemargin[] = {'P','a','g','e','M','a','r','g','i','n',0};
-static const WCHAR var_previewpages[] = {'P','r','e','v','i','e','w','P','a','g','e','s',0};
-
 static LPWSTR get_print_file_filter(HWND hMainWnd)
 {
     static WCHAR wszPrintFilter[MAX_STRING_LEN*2+6+4+1];
-    const WCHAR files_prn[] = {'*','.','P','R','N',0};
-    const WCHAR files_all[] = {'*','.','*','\0'};
     LPWSTR p;
     HINSTANCE hInstance = GetModuleHandleW(0);
 
     p = wszPrintFilter;
     LoadStringW(hInstance, STRING_PRINTER_FILES_PRN, p, MAX_STRING_LEN);
     p += lstrlenW(p) + 1;
-    lstrcpyW(p, files_prn);
+    lstrcpyW(p, L"*.PRN");
     p += lstrlenW(p) + 1;
     LoadStringW(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
     p += lstrlenW(p) + 1;
-    lstrcpyW(p, files_all);
+    lstrcpyW(p, L"*.*");
     p += lstrlenW(p) + 1;
     *p = 0;
 
@@ -79,21 +72,21 @@ static LPWSTR get_print_file_filter(HWND hMainWnd)
 
 void registry_set_pagemargins(HKEY hKey)
 {
-    RegSetValueExW(hKey, var_pagemargin, 0, REG_BINARY, (LPBYTE)&margins, sizeof(RECT));
+    RegSetValueExW(hKey, L"PageMargin", 0, REG_BINARY, (LPBYTE)&margins, sizeof(RECT));
 }
 
 void registry_read_pagemargins(HKEY hKey)
 {
     DWORD size = sizeof(RECT);
 
-    if(!hKey || RegQueryValueExW(hKey, var_pagemargin, 0, NULL, (LPBYTE)&margins,
+    if(!hKey || RegQueryValueExW(hKey, L"PageMargin", 0, NULL, (LPBYTE)&margins,
                      &size) != ERROR_SUCCESS || size != sizeof(RECT))
         SetRect(&margins, 1757, 1417, 1757, 1417);
 }
 
 void registry_set_previewpages(HKEY hKey)
 {
-    RegSetValueExW(hKey, var_previewpages, 0, REG_DWORD,
+    RegSetValueExW(hKey, L"PreviewPages", 0, REG_DWORD,
                    (LPBYTE)&preview.pages_shown, sizeof(DWORD));
 }
 
@@ -101,7 +94,7 @@ void registry_read_previewpages(HKEY hKey)
 {
     DWORD size = sizeof(DWORD);
     if(!hKey ||
-       RegQueryValueExW(hKey, var_previewpages, 0, NULL,
+       RegQueryValueExW(hKey, L"PreviewPages", 0, NULL,
                         (LPBYTE)&preview.pages_shown, &size) != ERROR_SUCCESS ||
        size != sizeof(DWORD))
     {
@@ -238,8 +231,7 @@ void target_device(HWND hMainWnd, DWORD wordWrap)
 static LPWSTR dialog_print_to_file(HWND hMainWnd)
 {
     OPENFILENAMEW ofn;
-    static WCHAR file[MAX_PATH] = {'O','U','T','P','U','T','.','P','R','N',0};
-    static const WCHAR defExt[] = {'P','R','N',0};
+    static WCHAR file[MAX_PATH] = L"OUTPUT.PRN";
     static LPWSTR file_filter;
 
     if(!file_filter)
@@ -253,7 +245,7 @@ static LPWSTR dialog_print_to_file(HWND hMainWnd)
     ofn.lpstrFilter = file_filter;
     ofn.lpstrFile = file;
     ofn.nMaxFile = MAX_PATH;
-    ofn.lpstrDefExt = defExt;
+    ofn.lpstrDefExt = L"PRN";
 
     if(GetSaveFileNameW(&ofn))
         return file;
@@ -305,7 +297,6 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, LONG 
         int CmPixels;
         int QuarterCmPixels;
         HFONT hFont;
-        WCHAR FontName[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
 
         if(hdc)
         {
@@ -322,7 +313,7 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, LONG 
         SelectObject(hdc, hBitmap);
         FillRect(hdc, drawRect, GetStockObject(WHITE_BRUSH));
 
-        hFont = CreateFontW(10, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, FontName);
+        hFont = CreateFontW(10, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, L"MS Sans Serif");
 
         SelectObject(hdc, hFont);
         SetBkMode(hdc, TRANSPARENT);
@@ -332,7 +323,6 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, LONG 
         for(i = 1, x = EditLeftmost; x < (drawRect->right - EditLeftmost + 1); i ++)
         {
             WCHAR str[3];
-            WCHAR format[] = {'%','d',0};
             int x2 = x;
 
             x2 += QuarterCmPixels;
@@ -360,7 +350,7 @@ static void add_ruler_units(HDC hdcRuler, RECT* drawRect, BOOL NewMetrics, LONG 
             if(x > RulerTextEnd)
                 break;
 
-            wsprintfW(str, format, i);
+            wsprintfW(str, L"%d", i);
             TextOutW(hdc, x, 5, str, lstrlenW(str));
         }
         DeleteObject(hFont);
@@ -738,7 +728,7 @@ void init_preview(HWND hMainWnd, LPWSTR wszFileName)
     preview.zoomlevel = 0;
     preview_bar_show(hMainWnd, TRUE);
 
-    CreateWindowExW(0, wszPreviewWndClass, NULL,
+    CreateWindowExW(0, L"PrtPreview", NULL,
             WS_VISIBLE | WS_CHILD | WS_VSCROLL | WS_HSCROLL,
             0, 0, 200, 10, hMainWnd, (HMENU)IDC_PREVIEW, hInstance, NULL);
 }
@@ -898,13 +888,11 @@ static void update_preview_statusbar(HWND hMainWnd)
     p = wstr;
     if (preview.pages_shown < 2 || is_last_preview_page(preview.page))
     {
-        static const WCHAR fmt[] = {' ','%','d','\0'};
         p += LoadStringW(hInst, STRING_PREVIEW_PAGE, wstr, MAX_STRING_LEN);
-        wsprintfW(p, fmt, preview.page);
+        wsprintfW(p, L" %d", preview.page);
     } else {
-        static const WCHAR fmt[] = {' ','%','d','-','%','d','\0'};
         p += LoadStringW(hInst, STRING_PREVIEW_PAGES, wstr, MAX_STRING_LEN);
-        wsprintfW(p, fmt, preview.page, preview.page + 1);
+        wsprintfW(p, L" %d-%d", preview.page, preview.page + 1);
     }
     SetWindowTextW(hStatusbar, wstr);
 }

@@ -707,7 +707,7 @@ static HRESULT stringify_array(stringify_ctx_t *ctx, jsdisp_t *obj)
             }
         }
 
-        _itow(i, name, ARRAY_SIZE(name));
+        _itow_s(i, name, ARRAY_SIZE(name), 10);
         hres = stringify(ctx, obj, name);
         if(FAILED(hres))
             return hres;

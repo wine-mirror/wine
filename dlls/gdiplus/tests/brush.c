@@ -635,7 +635,6 @@ static void test_transform(void)
     }
 
     GdipDeleteMatrix(m);
-    GdipDeleteGraphics(graphics);
     ReleaseDC(0, hdc);
 }
 
@@ -1664,8 +1663,12 @@ static void test_pathgradientblend(void)
         expectf(positions[i], res_positions[i]);
     }
 
+    res_factors[5] = 123.0f;
+    res_positions[5] = 456.0f;
     status = GdipGetPathGradientBlend(brush, res_factors, res_positions, 6);
     expect(Ok, status);
+    ok(res_factors[5] == 123.0f, "Unexpected value %f.\n", res_factors[5]);
+    ok(res_positions[5] == 456.0f, "Unexpected value %f.\n", res_positions[5]);
 
     status = GdipSetPathGradientBlend(brush, factors, positions, 1);
     expect(Ok, status);

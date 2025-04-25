@@ -434,7 +434,7 @@ static LRESULT handle_set_cursor( HWND hwnd, WPARAM wparam, LPARAM lparam )
             WORD msg = HIWORD( lparam );
             if (msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN ||
                 msg == WM_RBUTTONDOWN || msg == WM_XBUTTONDOWN)
-                message_beep( 0 );
+                NtUserMessageBeep( 0 );
         }
         break;
 
@@ -471,7 +471,7 @@ static LRESULT handle_set_cursor( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
 static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
 
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
@@ -670,7 +670,6 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     UINT style = get_window_long( hwnd, GWL_STYLE );
     POINT capture_point, pt;
     MINMAXINFO minmax;
-    HMONITOR mon = 0;
     HWND parent;
     UINT dpi;
     HDC hdc;
@@ -723,8 +722,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     else
     {
         parent = 0;
-        mouse_rect = get_virtual_screen_rect( get_thread_dpi() );
-        mon = monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, dpi );
+        mouse_rect = get_virtual_screen_rect( get_thread_dpi(), MDT_DEFAULT );
     }
 
     if (on_left_border( hittest ))
@@ -819,20 +817,15 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
 
         if (!parent)
         {
-            HMONITOR newmon;
             MONITORINFO info;
+            RECT rect;
 
-            if ((newmon = monitor_from_point( pt, MONITOR_DEFAULTTONULL, get_thread_dpi() )))
-                mon = newmon;
-
-            info.cbSize = sizeof(info);
-            if (mon && get_monitor_info( mon, &info, get_thread_dpi() ))
-            {
-                pt.x = max( pt.x, info.rcWork.left );
-                pt.x = min( pt.x, info.rcWork.right - 1 );
-                pt.y = max( pt.y, info.rcWork.top );
-                pt.y = min( pt.y, info.rcWork.bottom - 1 );
-            }
+            SetRect( &rect, pt.x, pt.y, pt.x, pt.y );
+            info = monitor_info_from_rect( rect, get_thread_dpi() );
+            pt.x = max( pt.x, info.rcWork.left );
+            pt.x = min( pt.x, info.rcWork.right - 1 );
+            pt.y = max( pt.y, info.rcWork.top );
+            pt.y = min( pt.y, info.rcWork.bottom - 1 );
         }
 
         dx = pt.x - capture_point.x;
@@ -954,6 +947,9 @@ static void track_nc_scroll_bar( HWND hwnd, WPARAM wparam, POINT pt )
 
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
+    POINT pos;
+    RECT rect;
+
     TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, (long)wparam, lparam );
 
     if (!is_window_enabled( hwnd )) return 0;
@@ -961,7 +957,15 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, 0 ))
         return 0;
 
-    if (!user_driver->pSysCommand( hwnd, wparam, lparam ))
+    pos.x = (short)LOWORD( NtUserGetThreadInfo()->message_pos );
+    pos.y = (short)HIWORD( NtUserGetThreadInfo()->message_pos );
+    NtUserLogicalToPerMonitorDPIPhysicalPoint( hwnd, &pos );
+    SetRect( &rect, pos.x, pos.y, pos.x, pos.y );
+    rect = map_rect_virt_to_raw( rect, 0 );
+    pos.x = rect.left;
+    pos.y = rect.top;
+
+    if (!user_driver->pSysCommand( hwnd, wparam, lparam, &pos ))
         return 0;
 
     switch (wparam & 0xfff0)
@@ -972,12 +976,12 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         break;
 
     case SC_MINIMIZE:
-        show_owned_popups( hwnd, FALSE );
+        NtUserShowOwnedPopups( hwnd, FALSE );
         NtUserShowWindow( hwnd, SW_MINIMIZE );
         break;
 
     case SC_MAXIMIZE:
-        if (is_iconic(hwnd)) show_owned_popups( hwnd, TRUE );
+        if (is_iconic(hwnd)) NtUserShowOwnedPopups( hwnd, TRUE );
         NtUserShowWindow( hwnd, SW_MAXIMIZE );
         break;
 
@@ -1003,7 +1007,7 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         break;
 
     case SC_RESTORE:
-        if (is_iconic( hwnd )) show_owned_popups( hwnd, TRUE );
+        if (is_iconic( hwnd )) NtUserShowOwnedPopups( hwnd, TRUE );
         NtUserShowWindow( hwnd, SW_RESTORE );
         break;
 
@@ -1846,8 +1850,8 @@ static LRESULT handle_nc_activate( HWND hwnd, WPARAM wparam, LPARAM lparam )
 static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
 {
     RECT rect = { 0, 0, 0, 0 };
-    LONG style = get_window_long( hwnd, GWL_STYLE );
-    LONG ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
 
     if (!win_rect) return;
 
@@ -2119,7 +2123,7 @@ static void track_min_max_box( HWND hwnd, WORD wparam )
 
     if (pressed) paint_button( hwnd, hdc, FALSE, FALSE );
 
-    release_capture();
+    NtUserReleaseCapture();
     NtUserReleaseDC( hwnd, hdc );
 
     /* If the minimize or maximize items of the sysmenu are not there
@@ -2167,14 +2171,14 @@ static void track_close_button( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     if (pressed) draw_close_button( hwnd, hdc, FALSE, FALSE );
 
-    release_capture();
+    NtUserReleaseCapture();
     NtUserReleaseDC( hwnd, hdc );
     if (pressed) send_message( hwnd, WM_SYSCOMMAND, SC_CLOSE, lparam );
 }
 
 static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
 
     switch (wparam)  /* Hit test */
     {
@@ -2263,7 +2267,7 @@ static LRESULT handle_nc_rbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
                 break;
             }
         }
-        release_capture();
+        NtUserReleaseCapture();
         if (hittest == HTCAPTION || hittest == HTSYSMENU)
             send_message( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM( msg.pt.x, msg.pt.y ));
         break;
@@ -2368,7 +2372,7 @@ static LRESULT handle_nc_mouse_move( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
 static LRESULT handle_nc_mouse_leave( HWND hwnd )
 {
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
     POINT pt = {0, 0};
 
     TRACE( "hwnd=%p\n", hwnd );
@@ -2599,11 +2603,13 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_CANCELMODE:
         menu_sys_key = 0;
         end_menu( hwnd );
-        if (get_capture() == hwnd) release_capture();
+        if (get_capture() == hwnd) NtUserReleaseCapture();
         break;
 
     case WM_SETTEXT:
         result = set_window_text( hwnd, (void *)lparam, ansi );
+        if (result)
+            NtUserNotifyWinEvent( EVENT_OBJECT_NAMECHANGE, hwnd, OBJID_WINDOW, CHILDID_SELF );
         if (result && (get_window_long( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
             handle_nc_paint( hwnd , (HRGN)1 );  /* repaint caption */
         break;
@@ -2683,7 +2689,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SHOWWINDOW:
         {
-            LONG style = get_window_long( hwnd, GWL_STYLE );
+            DWORD style = get_window_long( hwnd, GWL_STYLE );
             WND *win;
             if (!lparam) break; /* sent from ShowWindow */
             if ((style & WS_VISIBLE) && wparam) break;
@@ -2791,7 +2797,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                 send_message( hwnd, WM_SYSCOMMAND, SC_KEYMENU, wch );
         }
         else if (wparam != '\x1b')  /* Ctrl-Esc */
-            message_beep(0);
+            NtUserMessageBeep(0);
         break;
 
     case WM_KEYF1:
@@ -2815,7 +2821,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
                 hi.iContextType = HELPINFO_WINDOW;
                 hi.hItemHandle = hwnd;
                 hi.iCtrlId = get_window_long_ptr( hwnd, GWLP_ID, FALSE );
-                hi.dwContextId = get_window_context_help_id( hwnd );
+                hi.dwContextId = NtUserGetWindowContextHelpId( hwnd );
             }
             send_message( hwnd, WM_HELP, 0, (LPARAM)&hi );
             break;
@@ -2914,7 +2920,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_INPUTLANGCHANGE:
         {
             struct user_thread_info *info = get_user_thread_info();
-            HWND *win_array = list_window_children( 0, hwnd, NULL, 0 );
+            HWND *win_array = list_window_children( hwnd );
             int count = 0;
             info->kbd_layout = (HKL)lparam;
 
@@ -2943,7 +2949,17 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     return result;
 }
 
-LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+static void update_children_window_state( HWND hwnd )
+{
+    HWND *children;
+    int i;
+
+    if (!(children = list_window_children( hwnd ))) return;
+    for (i = 0; children[i]; i++) update_window_state( children[i] );
+    free( children );
+}
+
+LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     static const WCHAR wine_display_device_guidW[] =
         {'_','_','w','i','n','e','_','d','i','s','p','l','a','y','_','d','e','v','i','c','e',
@@ -2979,7 +2995,7 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     {
         static RECT virtual_rect = {INT_MIN,INT_MIN,INT_MAX,INT_MAX};
 
-        RECT new_rect = NtUserGetVirtualScreenRect(), old_rect = virtual_rect;
+        RECT new_rect = get_virtual_screen_rect( 0, MDT_DEFAULT ), old_rect = virtual_rect;
         UINT context, flags = 0;
 
         if (EqualRect( &new_rect, &old_rect )) return TRUE;
@@ -2999,15 +3015,16 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
                             flags | SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         NtUserSetThreadDpiAwarenessContext( context );
 
-        return send_message_timeout( HWND_BROADCAST, WM_WINE_DESKTOP_RESIZED, old_rect.left,
-                                     old_rect.top, SMTO_ABORTIFHUNG, 2000, FALSE );
+        update_children_window_state( hwnd );
+
+        return 0;
     }
     default:
         if (msg >= WM_USER && hwnd == get_desktop_window())
             return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
     }
 
-    return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
+    return default_window_proc( hwnd, msg, wparam, lparam, ansi );
 }
 
 /***********************************************************************

@@ -33,6 +33,7 @@ STRINGTABLE
     IDS_NO_PROPERTY         "Object doesn't support this property or method"
     IDS_UNSUPPORTED_ACTION  "Object doesn't support this action"
     IDS_ARG_NOT_OPT         "Argument not optional"
+    IDS_OBJECT_NOT_COLLECTION "Object not a collection"
     IDS_SYNTAX_ERROR        "Syntax error"
     IDS_SEMICOLON           "Expected ';'"
     IDS_LBRACKET            "Expected '('"

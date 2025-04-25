@@ -24,6 +24,8 @@
 #include <stdio.h>
 
 #include "urlmon_main.h"
+#include "resource.h"
+
 #include "winreg.h"
 #include "wininet.h"
 
@@ -1390,8 +1392,20 @@ static HRESULT WINAPI ZoneMgrImpl_GetZoneAttributes(IInternetZoneManagerEx2* ifa
     if (FAILED(hr))
         TRACE("Zone %ld not in HKLM\n", dwZone);
 
-    get_string_from_reg(hcu, hklm, L"DisplayName", pZoneAttributes->szDisplayName, MAX_ZONE_PATH);
-    get_string_from_reg(hcu, hklm, L"Description", pZoneAttributes->szDescription, MAX_ZONE_DESCRIPTION);
+    if (dwZone < 5) {
+        /* For the standard zones (0-4), ignore the name and description in the registry and return
+         * a name and description in the user's own language. */
+        LoadStringW(urlmon_instance, IDS_SEC_ZONE0_NAME + dwZone,
+                    pZoneAttributes->szDisplayName, ARRAY_SIZE(pZoneAttributes->szDisplayName));
+        LoadStringW(urlmon_instance, IDS_SEC_ZONE0_DESC + dwZone,
+                    pZoneAttributes->szDescription, ARRAY_SIZE(pZoneAttributes->szDescription));
+    } else {
+        get_string_from_reg(hcu, hklm, L"DisplayName",
+                            pZoneAttributes->szDisplayName, ARRAY_SIZE(pZoneAttributes->szDisplayName));
+        get_string_from_reg(hcu, hklm, L"Description",
+                            pZoneAttributes->szDescription, ARRAY_SIZE(pZoneAttributes->szDescription));
+    }
+
     get_string_from_reg(hcu, hklm, L"Icon", pZoneAttributes->szIconPath, MAX_ZONE_PATH);
     get_dword_from_reg(hcu, hklm, L"MinLevel", &pZoneAttributes->dwTemplateMinLevel);
     get_dword_from_reg(hcu, hklm, L"CurrentLevel", &pZoneAttributes->dwTemplateCurrentLevel);

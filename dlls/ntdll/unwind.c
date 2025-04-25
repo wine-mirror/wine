@@ -267,16 +267,8 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionTable( ULONG_PTR pc, ULONG_PTR *base, 
 #ifdef __arm64ec__
     if (RtlIsEcCode( pc ))
     {
-        IMAGE_LOAD_CONFIG_DIRECTORY *cfg;
-        IMAGE_ARM64EC_METADATA *metadata;
-        ULONG size;
-
-        if (!(cfg = RtlImageDirectoryEntryToData( module->DllBase, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size )))
-            return NULL;
-        size = min( size, cfg->Size );
-        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY, CHPEMetadataPointer )) return NULL;
-        metadata = (IMAGE_ARM64EC_METADATA *)cfg->CHPEMetadataPointer;
+        IMAGE_ARM64EC_METADATA *metadata = arm64ec_get_module_metadata( module->DllBase );
+        if (!metadata) return NULL;
         *len = metadata->ExtraRFETableSize;
         return (RUNTIME_FUNCTION *)(*base + metadata->ExtraRFETable);
     }

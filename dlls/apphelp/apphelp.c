@@ -102,3 +102,24 @@ void WINAPI SdbGetAppPatchDir(HSDB hsdb, WCHAR *path, DWORD size)
     FIXME("stub: %p %p %ld\n", hsdb, path, size);
     if (size && path) *path = 0;
 }
+
+BOOL WINAPI SetPermLayerState( PCWSTR path, PCWSTR layers, DWORD flags, BOOL machine, BOOL state)
+{
+    FIXME("stub: %s %s %ld %d %d\n", debugstr_w(path), debugstr_w(layers), flags, machine, state);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
+
+BOOL WINAPI SdbSetPermLayerKeys( PCWSTR path, PCWSTR layers, BOOL machine )
+{
+    FIXME("stub: %s %s %d\n", debugstr_w(path), debugstr_w(layers), machine);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}
+
+BOOL WINAPI SdbGetPermLayerKeys( PCWSTR path, PWSTR layers, PDWORD size, DWORD flags )
+{
+    FIXME("stub: %s %p %p %ld\n", debugstr_w(path), layers, size, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return TRUE;
+}

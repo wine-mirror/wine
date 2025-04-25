@@ -329,6 +329,8 @@ static ULONG WINAPI d3d_device_inner_Release(IUnknown *iface)
          * the device from it before so it doesn't try to save / restore state on the teared down device. */
         if (This->ddraw)
         {
+            if (This->ddraw->device_last_applied_state == This)
+                This->ddraw->device_last_applied_state = NULL;
             list_remove(&This->ddraw_entry);
             This->ddraw = NULL;
         }
@@ -562,24 +564,33 @@ static HRESULT WINAPI d3d_device1_GetCaps(IDirect3DDevice *iface,
 static HRESULT WINAPI d3d_device2_SwapTextureHandles(IDirect3DDevice2 *iface,
         IDirect3DTexture2 *tex1, IDirect3DTexture2 *tex2)
 {
-    struct d3d_device *device = impl_from_IDirect3DDevice2(iface);
     struct ddraw_surface *surf1 = unsafe_impl_from_IDirect3DTexture2(tex1);
     struct ddraw_surface *surf2 = unsafe_impl_from_IDirect3DTexture2(tex2);
-    DWORD h1, h2;
+    DWORD h1, h2, h;
+    HRESULT hr;
 
     TRACE("iface %p, tex1 %p, tex2 %p.\n", iface, tex1, tex2);
+
+    if (!surf1->Handle || !surf2->Handle)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = IDirect3DDevice2_GetRenderState(iface, D3DRENDERSTATE_TEXTUREHANDLE, &h)))
+        return hr;
 
     wined3d_mutex_lock();
 
     h1 = surf1->Handle - 1;
     h2 = surf2->Handle - 1;
-    device->handle_table.entries[h1].object = surf2;
-    device->handle_table.entries[h2].object = surf1;
+    global_handle_table.entries[h1].object = surf2;
+    global_handle_table.entries[h2].object = surf1;
     surf2->Handle = h1 + 1;
     surf1->Handle = h2 + 1;
 
     wined3d_mutex_unlock();
 
+    if ((h == surf1->Handle || h == surf2->Handle)
+            && FAILED(hr = IDirect3DDevice2_SetRenderState(iface, D3DRENDERSTATE_TEXTUREHANDLE, h)))
+        return hr;
     return D3D_OK;
 }
 
@@ -3401,6 +3412,7 @@ static void d3d_device_sync_rendertarget(struct d3d_device *device)
     dsv = device->target_ds ? ddraw_surface_get_rendertarget_view(device->target_ds) : NULL;
     if (FAILED(wined3d_device_context_set_depth_stencil_view(device->immediate_context, dsv)))
         ERR("wined3d_device_context_set_depth_stencil_view failed.\n");
+    wined3d_stateblock_depth_buffer_changed(device->state);
 
     if (device->hardware_device)
         return;
@@ -3439,6 +3451,20 @@ void d3d_device_sync_surfaces(struct d3d_device *device)
     }
 }
 
+void d3d_device_apply_state(struct d3d_device *device, BOOL clear_state)
+{
+    if (device->ddraw && device->ddraw->device_last_applied_state != device)
+    {
+        wined3d_stateblock_primary_dirtify_all_states(device->wined3d_device, device->state);
+        device->ddraw->device_last_applied_state = device;
+    }
+    if (clear_state)
+        wined3d_stateblock_apply_clear_state(device->state, device->wined3d_device);
+    else
+        wined3d_device_apply_stateblock(device->wined3d_device, device->state);
+    d3d_device_sync_surfaces(device);
+}
+
 static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
         D3DPRIMITIVETYPE primitive_type, DWORD fvf, void *vertices,
         DWORD vertex_count, DWORD flags)
@@ -3473,8 +3499,7 @@ static HRESULT d3d_device7_DrawPrimitive(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw(device->immediate_context, vb_pos / stride, vertex_count, 0, 0);
 
 done:
@@ -3626,8 +3651,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitive(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw_indexed(device->immediate_context, (int)(vb_pos / stride) - min_index,
             ib_pos / sizeof(*indices), index_count, 0, 0);
 
@@ -3938,8 +3962,7 @@ static HRESULT d3d_device7_DrawPrimitiveStrided(IDirect3DDevice7 *iface, D3DPRIM
 
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw(device->immediate_context, vb_pos / dst_stride, vertex_count, 0, 0);
 
 done:
@@ -4044,8 +4067,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveStrided(IDirect3DDevice7 *iface,
     wined3d_stateblock_set_vertex_declaration(device->state, ddraw_find_decl(device->ddraw, fvf));
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw_indexed(device->immediate_context,
             vb_pos / vtx_dst_stride, ib_pos / sizeof(WORD), index_count, 0, 0);
 
@@ -4171,8 +4193,7 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
     /* Now draw the primitives */
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw(device->immediate_context, start_vertex, vertex_count, 0, 0);
 
     wined3d_mutex_unlock();
@@ -4308,8 +4329,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     wined3d_device_context_set_primitive_type(device->immediate_context,
             wined3d_primitive_type_from_ddraw(primitive_type), 0);
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_surfaces(device);
+    d3d_device_apply_state(device, FALSE);
     wined3d_device_context_draw_indexed(device->immediate_context, start_vertex,
             ib_pos / sizeof(WORD), index_count, 0, 0);
 
@@ -5173,8 +5193,7 @@ static HRESULT d3d_device7_Clear(IDirect3DDevice7 *iface, DWORD count,
     }
 
     wined3d_mutex_lock();
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    d3d_device_sync_rendertarget(device);
+    d3d_device_apply_state(device, TRUE);
     hr = wined3d_device_clear(device->wined3d_device, count, (RECT *)rects, flags, &c, z, stencil);
     wined3d_mutex_unlock();
 
@@ -6811,6 +6830,7 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     {
         TRACE("Setting wined3d depth stencil to NULL\n");
         wined3d_device_context_set_depth_stencil_view(device->immediate_context, NULL);
+        wined3d_stateblock_depth_buffer_changed(device->state);
         device->target_ds = NULL;
         return WINED3D_ZB_FALSE;
     }
@@ -6818,6 +6838,7 @@ enum wined3d_depth_buffer_type d3d_device_update_depth_stencil(struct d3d_device
     device->target_ds = impl_from_IDirectDrawSurface7(depthStencil);
     wined3d_device_context_set_depth_stencil_view(device->immediate_context,
             ddraw_surface_get_rendertarget_view(device->target_ds));
+    wined3d_stateblock_depth_buffer_changed(device->state);
 
     IDirectDrawSurface7_Release(depthStencil);
     return WINED3D_ZB_TRUE;

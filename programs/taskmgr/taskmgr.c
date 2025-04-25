@@ -317,10 +317,6 @@ static void LoadSettings(void)
     int     i;
     DWORD   dwSize;
 
-   static const WCHAR    wszSubKey[] = {'S','o','f','t','w','a','r','e','\\',
-                                        'W','i','n','e','\\','T','a','s','k','M','a','n','a','g','e','r',0};
-   static const WCHAR    wszPreferences[] = {'P','r','e','f','e','r','e','n','c','e','s',0};
-
     /* Window size & position settings */
     TaskManagerSettings.Maximized = FALSE;
     TaskManagerSettings.Left = 0;
@@ -411,11 +407,11 @@ static void LoadSettings(void)
 
     /* Open the key */
     /* @@ Wine registry key: HKCU\Software\Wine\TaskManager */
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, wszSubKey, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Wine\\TaskManager", 0, KEY_READ, &hKey) != ERROR_SUCCESS)
         return;
     /* Read the settings */
     dwSize = sizeof(TASKMANAGER_SETTINGS);
-    RegQueryValueExW(hKey, wszPreferences, NULL, NULL, (LPBYTE)&TaskManagerSettings, &dwSize);
+    RegQueryValueExW(hKey, L"Preferences", NULL, NULL, (LPBYTE)&TaskManagerSettings, &dwSize);
 
     /* Close the key */
     RegCloseKey(hKey);
@@ -425,17 +421,14 @@ static void SaveSettings(void)
 {
     HKEY hKey;
 
-    static const WCHAR wszSubKey3[] = {'S','o','f','t','w','a','r','e','\\',
-                                       'W','i','n','e','\\','T','a','s','k','M','a','n','a','g','e','r',0};
-    static const WCHAR wszPreferences[] = {'P','r','e','f','e','r','e','n','c','e','s',0};
-
     /* Open (or create) the key */
 
     /* @@ Wine registry key: HKCU\Software\Wine\TaskManager */
-    if (RegCreateKeyExW(HKEY_CURRENT_USER, wszSubKey3, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
+    if (RegCreateKeyExW(HKEY_CURRENT_USER, L"Software\\Wine\\TaskManager", 0, NULL,
+                        REG_OPTION_NON_VOLATILE, KEY_WRITE, NULL, &hKey, NULL) != ERROR_SUCCESS)
         return;
     /* Save the settings */
-    RegSetValueExW(hKey, wszPreferences, 0, REG_BINARY, (LPBYTE)&TaskManagerSettings, sizeof(TASKMANAGER_SETTINGS));
+    RegSetValueExW(hKey, L"Preferences", 0, REG_BINARY, (LPBYTE)&TaskManagerSettings, sizeof(TASKMANAGER_SETTINGS));
     /* Close the key */
     RegCloseKey(hKey);
 }
@@ -683,7 +676,6 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
 {
     DWORD  dwRet;
     LPWSTR lpwszTemp = NULL;
-    static const WCHAR    wszFormat[] = {'%','s',' ','(','%','u',')',0};
 
     dwRet = FormatMessageW( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |FORMAT_MESSAGE_ARGUMENT_ARRAY,
                            NULL,
@@ -698,7 +690,7 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
         lpwszBuf[0] = '\0';
     } else {
         lpwszTemp[lstrlenW(lpwszTemp)-2] = '\0';  /* remove cr and newline character */
-        swprintf(lpwszBuf, dwSize, wszFormat, lpwszTemp, GetLastError());
+        swprintf(lpwszBuf, dwSize, L"%s (%u)", lpwszTemp, GetLastError());
     }
     if (lpwszTemp) {
         LocalFree(lpwszTemp);
@@ -710,7 +702,6 @@ LPWSTR GetLastErrorText(LPWSTR lpwszBuf, DWORD dwSize)
 static INT_PTR CALLBACK
 TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR wszTaskmgr[] = {'t','a','s','k','m','g','r',0};
     HDC             hdc;
     PAINTSTRUCT     ps;
     LPRECT          pRC;
@@ -846,7 +837,7 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
             ProcessPage_OnDebugChannels();
             break;
         case ID_HELP_TOPICS:
-            WinHelpW(hDlg, wszTaskmgr, HELP_FINDER, 0);
+            WinHelpW(hDlg, L"taskmgr", HELP_FINDER, 0);
             break;
         case ID_HELP_ABOUT:
             OnAbout();
@@ -1015,10 +1006,9 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
     /* Get a token for this process.  */
     if (OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        static const WCHAR SeDebugPrivilegeW[] = {'S','e','D','e','b','u','g','P','r','i','v','i','l','e','g','e',0};
 
         /* Get the LUID for the debug privilege.  */
-        LookupPrivilegeValueW(NULL, SeDebugPrivilegeW, &tkp.Privileges[0].Luid);
+        LookupPrivilegeValueW(NULL, L"SeDebugPrivilege", &tkp.Privileges[0].Luid);
 
         tkp.PrivilegeCount = 1;  /* one privilege to set */
         tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED; 

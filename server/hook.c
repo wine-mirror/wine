@@ -389,14 +389,13 @@ void remove_thread_hooks( struct thread *thread )
 
     if (!global_hooks) return;
 
-    /* only low-level keyboard/mouse global hooks can be owned by a thread */
-    for (index = WH_KEYBOARD_LL - WH_MINHOOK; index <= WH_MOUSE_LL - WH_MINHOOK; index++)
+    for (index = 0; index < NB_HOOKS; index++)
     {
         struct hook *hook = get_first_hook( global_hooks, index );
         while (hook)
         {
             struct hook *next = HOOK_ENTRY( list_next( &global_hooks->hooks[index], &hook->chain ) );
-            if (hook->thread == thread) remove_hook( hook );
+            if (hook->thread == thread || hook->owner == thread) remove_hook( hook );
             hook = next;
         }
     }
