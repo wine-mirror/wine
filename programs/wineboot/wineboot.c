@@ -520,7 +520,7 @@ static void create_user_shared_data(void)
     UnmapViewOfFile( data );
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct smbios_prologue
 {
     BYTE  calling_method;
@@ -642,7 +642,7 @@ struct smbios_wine_core_id_regs_arm64
     } regs[];
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
 
