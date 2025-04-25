@@ -3173,28 +3173,28 @@ static void test_metadata_gif(void)
     {
         static const struct
         {
-            const char *query;
+            const WCHAR *query;
             HRESULT hr;
             UINT vt;
         } decoder_data[] =
         {
-            { "/logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
-            { "/[0]logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
-            { "/logscrdesc/\\Signature", S_OK, VT_UI1 | VT_VECTOR },
-            { "/Logscrdesc/\\signature", S_OK, VT_UI1 | VT_VECTOR },
-            { "/logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/[0]logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/[0]logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/appext/Application", S_OK, VT_UI1 | VT_VECTOR },
-            { "/appext/{STR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/appext/{WSTR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
-            { "/LogSCRdesC", S_OK, VT_UNKNOWN },
-            { "/[0]LogSCRdesC", S_OK, VT_UNKNOWN },
-            { "/appEXT", S_OK, VT_UNKNOWN },
-            { "/[0]appEXT", S_OK, VT_UNKNOWN },
-            { "grctlext", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
-            { "/imgdesc", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+            { L"/logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/[0]logscrdesc/Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/logscrdesc/\\Signature", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/Logscrdesc/\\signature", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/[0]logscrdesc/{str=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/[0]logscrdesc/{wstr=signature}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/appext/Application", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/appext/{STR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/appext/{WSTR=APPlication}", S_OK, VT_UI1 | VT_VECTOR },
+            { L"/LogSCRdesC", S_OK, VT_UNKNOWN },
+            { L"/[0]LogSCRdesC", S_OK, VT_UNKNOWN },
+            { L"/appEXT", S_OK, VT_UNKNOWN },
+            { L"/[0]appEXT", S_OK, VT_UNKNOWN },
+            { L"grctlext", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
+            { L"/imgdesc", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
         };
         WCHAR name[256];
         UINT len, i, j;
@@ -3215,18 +3215,14 @@ static void test_metadata_gif(void)
 
         for (i = 0; i < ARRAY_SIZE(decoder_data); i++)
         {
-            WCHAR queryW[256];
+            winetest_push_context("%s", wine_dbgstr_w(decoder_data[i].query));
 
-            if (winetest_debug > 1)
-                trace("query: %s\n", decoder_data[i].query);
-            MultiByteToWideChar(CP_ACP, 0, decoder_data[i].query, -1, queryW, 256);
-
-            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, NULL);
-            ok(hr == decoder_data[i].hr, "GetMetadataByName(%s) returned %#lx, expected %#lx\n", wine_dbgstr_w(queryW), hr, decoder_data[i].hr);
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, decoder_data[i].query, NULL);
+            ok(hr == decoder_data[i].hr, "Unexpected hr %#lx.\n", hr);
 
             PropVariantInit(&value);
-            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
-            ok(hr == decoder_data[i].hr, "GetMetadataByName(%s) returned %#lx, expected %#lx\n", wine_dbgstr_w(queryW), hr, decoder_data[i].hr);
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, decoder_data[i].query, &value);
+            ok(hr == decoder_data[i].hr, "Unexpected hr %#lx.\n", hr);
             ok(value.vt == decoder_data[i].vt, "expected %#x, got %#x\n", decoder_data[i].vt, value.vt);
             if (hr == S_OK && value.vt == VT_UNKNOWN)
             {
@@ -3237,20 +3233,16 @@ static void test_metadata_gif(void)
                 len = 0xdeadbeef;
                 hr = IWICMetadataQueryReader_GetLocation(meta_reader, 256, name, &len);
                 ok(hr == S_OK, "GetLocation error %#lx\n", hr);
-                ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
-                ok(!lstrcmpW(name, queryW), "expected %s, got %s\n", wine_dbgstr_w(queryW), wine_dbgstr_w(name));
+                ok(len == lstrlenW(decoder_data[i].query) + 1, "expected %u, got %u\n", lstrlenW(decoder_data[i].query) + 1, len);
+                ok(!lstrcmpW(name, decoder_data[i].query), "expected %s, got %s\n", wine_dbgstr_w(decoder_data[i].query), wine_dbgstr_w(name));
 
                 for (j = 0; j < ARRAY_SIZE(decoder_data); j++)
                 {
-                    MultiByteToWideChar(CP_ACP, 0, decoder_data[j].query, -1, queryW, 256);
-
-                    if (CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, queryW, len-1, name, len-1) == CSTR_EQUAL && decoder_data[j].query[len - 1] != 0)
+                    if (CompareStringW(LOCALE_NEUTRAL, NORM_IGNORECASE, decoder_data[j].query, len-1, name, len-1) == CSTR_EQUAL && decoder_data[j].query[len - 1] != 0)
                     {
-                        if (winetest_debug > 1)
-                            trace("query: %s\n", wine_dbgstr_w(queryW + len - 1));
                         PropVariantClear(&value);
-                        hr = IWICMetadataQueryReader_GetMetadataByName(meta_reader, queryW + len - 1, &value);
-                        ok(hr == decoder_data[j].hr, "GetMetadataByName(%s) returned %#lx, expected %#lx\n", wine_dbgstr_w(queryW + len - 1), hr, decoder_data[j].hr);
+                        hr = IWICMetadataQueryReader_GetMetadataByName(meta_reader, decoder_data[j].query + len - 1, &value);
+                        ok(hr == S_OK, "GetLocation error %#lx\n", hr);
                         ok(value.vt == decoder_data[j].vt, "expected %#x, got %#x\n", decoder_data[j].vt, value.vt);
                     }
                 }
@@ -3259,6 +3251,8 @@ static void test_metadata_gif(void)
             }
 
             PropVariantClear(&value);
+
+            winetest_pop_context();
         }
 
         IWICMetadataQueryReader_Release(queryreader);
@@ -3271,31 +3265,31 @@ static void test_metadata_gif(void)
     {
         static const struct
         {
-            const char *query;
+            const WCHAR *query;
             HRESULT hr;
             UINT vt;
         } frame_data[] =
         {
-            { "/grctlext/Delay", S_OK, VT_UI2 },
-            { "/[0]grctlext/Delay", S_OK, VT_UI2 },
-            { "/grctlext/{str=delay}", S_OK, VT_UI2 },
-            { "/[0]grctlext/{str=delay}", S_OK, VT_UI2 },
-            { "/grctlext/{wstr=delay}", S_OK, VT_UI2 },
-            { "/[0]grctlext/{wstr=delay}", S_OK, VT_UI2 },
-            { "/imgdesc/InterlaceFlag", S_OK, VT_BOOL },
-            { "/imgdesc/{STR=interlaceFLAG}", S_OK, VT_BOOL },
-            { "/imgdesc/{WSTR=interlaceFLAG}", S_OK, VT_BOOL },
-            { "/grctlext", S_OK, VT_UNKNOWN },
-            { "/[0]grctlext", S_OK, VT_UNKNOWN },
-            { "/imgdesc", S_OK, VT_UNKNOWN },
-            { "/[0]imgdesc", S_OK, VT_UNKNOWN },
-            { "/LogSCRdesC", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
-            { "/appEXT", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
-            { "/grctlext/{\\str=delay}", WINCODEC_ERR_WRONGSTATE, 0 },
-            { "/grctlext/{str=\\delay}", S_OK, VT_UI2 },
-            { "grctlext/Delay", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
+            { L"/grctlext/Delay", S_OK, VT_UI2 },
+            { L"/[0]grctlext/Delay", S_OK, VT_UI2 },
+            { L"/grctlext/{str=delay}", S_OK, VT_UI2 },
+            { L"/[0]grctlext/{str=delay}", S_OK, VT_UI2 },
+            { L"/grctlext/{wstr=delay}", S_OK, VT_UI2 },
+            { L"/[0]grctlext/{wstr=delay}", S_OK, VT_UI2 },
+            { L"/imgdesc/InterlaceFlag", S_OK, VT_BOOL },
+            { L"/imgdesc/{STR=interlaceFLAG}", S_OK, VT_BOOL },
+            { L"/imgdesc/{WSTR=interlaceFLAG}", S_OK, VT_BOOL },
+            { L"/grctlext", S_OK, VT_UNKNOWN },
+            { L"/[0]grctlext", S_OK, VT_UNKNOWN },
+            { L"/imgdesc", S_OK, VT_UNKNOWN },
+            { L"/[0]imgdesc", S_OK, VT_UNKNOWN },
+            { L"/LogSCRdesC", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+            { L"/appEXT", WINCODEC_ERR_PROPERTYNOTFOUND, 0 },
+            { L"/grctlext/{\\str=delay}", WINCODEC_ERR_WRONGSTATE, 0 },
+            { L"/grctlext/{str=\\delay}", S_OK, VT_UI2 },
+            { L"grctlext/Delay", WINCODEC_ERR_PROPERTYNOTSUPPORTED, 0 },
         };
-        static const WCHAR guidW[] = {'/','{','g','u','i','d','=','\\',0};
+        static const WCHAR guidW[] = L"/{guid=\\";
         WCHAR name[256], queryW[256];
         UINT len, i;
         PROPVARIANT value;
@@ -3315,12 +3309,11 @@ static void test_metadata_gif(void)
 
         for (i = 0; i < ARRAY_SIZE(frame_data); i++)
         {
-            if (winetest_debug > 1)
-                trace("query: %s\n", frame_data[i].query);
-            MultiByteToWideChar(CP_ACP, 0, frame_data[i].query, -1, queryW, 256);
+            winetest_push_context("%s", wine_dbgstr_w(frame_data[i].query));
+
             PropVariantInit(&value);
-            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, queryW, &value);
-            ok(hr == frame_data[i].hr, "GetMetadataByName(%s) returned %#lx, expected %#lx\n", wine_dbgstr_w(queryW), hr, frame_data[i].hr);
+            hr = IWICMetadataQueryReader_GetMetadataByName(queryreader, frame_data[i].query, &value);
+            ok(hr == frame_data[i].hr, "Unexpected hr %#lx.\n", hr);
             ok(value.vt == frame_data[i].vt, "expected %#x, got %#x\n", frame_data[i].vt, value.vt);
             if (hr == S_OK && value.vt == VT_UNKNOWN)
             {
@@ -3331,13 +3324,15 @@ static void test_metadata_gif(void)
                 len = 0xdeadbeef;
                 hr = IWICMetadataQueryReader_GetLocation(meta_reader, 256, name, &len);
                 ok(hr == S_OK, "GetLocation error %#lx\n", hr);
-                ok(len == lstrlenW(queryW) + 1, "expected %u, got %u\n", lstrlenW(queryW) + 1, len);
-                ok(!lstrcmpW(name, queryW), "expected %s, got %s\n", wine_dbgstr_w(queryW), wine_dbgstr_w(name));
+                ok(len == lstrlenW(frame_data[i].query) + 1, "expected %u, got %u\n", lstrlenW(frame_data[i].query) + 1, len);
+                ok(!lstrcmpW(name, frame_data[i].query), "expected %s, got %s\n", wine_dbgstr_w(frame_data[i].query), wine_dbgstr_w(name));
 
                 IWICMetadataQueryReader_Release(meta_reader);
             }
 
             PropVariantClear(&value);
+
+            winetest_pop_context();
         }
 
         name[0] = 0;
