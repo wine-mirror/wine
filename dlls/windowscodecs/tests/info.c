@@ -348,6 +348,11 @@ static void test_encoder_info(void)
             L"image/png",
             L".png"
         },
+        {
+            &CLSID_WICJpegEncoder,
+            L"image/jpeg,image/jpe,image/jpg",
+            L".jpeg,.jpe,.jpg,.jfif,.exif",
+        },
     };
     IWICBitmapEncoderInfo *encoder_info, *encoder_info2;
     IWICComponentInfo *info;

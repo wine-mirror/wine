@@ -1626,14 +1626,14 @@ static struct regsvr_encoder const encoder_list[] = {
 	gif_formats
     },
     {   &CLSID_WICJpegEncoder,
-	"The Wine Project",
-	"JPEG Encoder",
-	"1.0.0.0",
-	&GUID_VendorMicrosoft,
-	&GUID_ContainerFormatJpeg,
-	"image/jpeg",
-	".jpg;.jpeg;.jfif",
-	jpeg_formats
+        "The Wine Project",
+        "JPEG Encoder",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_ContainerFormatJpeg,
+        "image/jpeg,image/jpe,image/jpg",
+        ".jpeg,.jpe,.jpg,.jfif,.exif",
+        jpeg_formats
     },
     {   &CLSID_WICPngEncoder,
 	"The Wine Project",
