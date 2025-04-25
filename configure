@@ -8323,46 +8323,6 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-packed-not-aligned"
 fi }
-    { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wpragma-pack" | sed "$as_sed_sh"`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wpragma-pack" >&5
-printf %s "checking whether $CC supports -Wpragma-pack... " >&6; }
-if eval test \${$as_ac_var+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpragma-pack"
-ac_exeext=".exe"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-void *__os_arm64x_dispatch_ret = 0;
-const unsigned int _load_config_used[0x50] = { sizeof(_load_config_used) };
-#if defined(__clang_major__) && defined(MIN_CLANG_VERSION) && __clang_major__ < MIN_CLANG_VERSION
-#error Too old clang version
-#endif
-int __cdecl mainCRTStartup(void) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  eval "$as_ac_var=yes"
-else case e in #(
-  e) eval "$as_ac_var=no" ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-ac_exeext=$ac_wine_try_cflags_saved_exeext ;;
-esac
-fi
-eval ac_res=\$$as_ac_var
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-if eval test \"x\$"$as_ac_var"\" = x"yes"
-then :
-  as_fn_append ${wine_arch}_EXTRACFLAGS " -Wno-pragma-pack"
-fi }
     { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-Wmicrosoft-enum-forward-reference" | sed "$as_sed_sh"`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -Wmicrosoft-enum-forward-reference" >&5
 printf %s "checking whether $CC supports -Wmicrosoft-enum-forward-reference... " >&6; }
@@ -20259,36 +20219,6 @@ printf "%s\n" "$ac_cv_cflags__Wpointer_arith" >&6; }
 if test "x$ac_cv_cflags__Wpointer_arith" = xyes
 then :
   EXTRACFLAGS="$EXTRACFLAGS -Wpointer-arith"
-fi
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wpragma-pack" >&5
-printf %s "checking whether the compiler supports -Wpragma-pack... " >&6; }
-if test ${ac_cv_cflags__Wpragma_pack+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wpragma-pack"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wpragma_pack=yes
-else case e in #(
-  e) ac_cv_cflags__Wpragma_pack=no ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved ;;
-esac
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wpragma_pack" >&5
-printf "%s\n" "$ac_cv_cflags__Wpragma_pack" >&6; }
-if test "x$ac_cv_cflags__Wpragma_pack" = xyes
-then :
-  EXTRACFLAGS="$EXTRACFLAGS -Wno-pragma-pack"
 fi
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wshift-overflow=2" >&5
 printf %s "checking whether the compiler supports -Wshift-overflow=2... " >&6; }
