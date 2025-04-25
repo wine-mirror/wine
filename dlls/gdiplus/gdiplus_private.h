@@ -149,6 +149,8 @@ extern GpStatus trace_path(GpGraphics *graphics, GpPath *path);
 typedef struct region_element region_element;
 extern void delete_element(region_element *element);
 
+extern GpStatus get_region_hrgn(struct region_element *element, const RECT *bounds, HRGN *hrgn);
+
 extern GpStatus get_hatch_data(GpHatchStyle hatchstyle, const unsigned char **result);
 
 static inline INT gdip_round(REAL x)

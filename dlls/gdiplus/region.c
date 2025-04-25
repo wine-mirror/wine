@@ -1229,7 +1229,7 @@ static GpStatus get_path_hrgn(GpPath *path, const RECT *bounds, HRGN *hrgn)
     return stat;
 }
 
-static GpStatus get_region_hrgn(struct region_element *element, const RECT *bounds, HRGN *hrgn)
+GpStatus get_region_hrgn(struct region_element *element, const RECT *bounds, HRGN *hrgn)
 {
     switch (element->type)
     {

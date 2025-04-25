@@ -412,14 +412,73 @@ static void gdi_alpha_blend(GpGraphics *graphics, INT dst_x, INT dst_y, INT dst_
     gdi_dc_release(graphics, dst_hdc);
 }
 
+static GpStatus get_graphics_device_bounds(GpGraphics* graphics, GpRectF* rect)
+{
+    RECT wnd_rect;
+    GpStatus stat=Ok;
+    GpUnit unit;
+
+    if(graphics->hwnd) {
+        if(!GetClientRect(graphics->hwnd, &wnd_rect))
+            return GenericError;
+
+        rect->X = wnd_rect.left;
+        rect->Y = wnd_rect.top;
+        rect->Width = wnd_rect.right - wnd_rect.left;
+        rect->Height = wnd_rect.bottom - wnd_rect.top;
+    }else if (graphics->image){
+        stat = GdipGetImageBounds(graphics->image, rect, &unit);
+        if (stat == Ok && unit != UnitPixel)
+            FIXME("need to convert from unit %i\n", unit);
+    }else if (GetObjectType(graphics->hdc) == OBJ_MEMDC){
+        HBITMAP hbmp;
+        BITMAP bmp;
+
+        rect->X = 0;
+        rect->Y = 0;
+
+        hbmp = GetCurrentObject(graphics->hdc, OBJ_BITMAP);
+        if (hbmp && GetObjectW(hbmp, sizeof(bmp), &bmp))
+        {
+            rect->Width = bmp.bmWidth;
+            rect->Height = bmp.bmHeight;
+        }
+        else
+        {
+            /* FIXME: ??? */
+            rect->Width = 1;
+            rect->Height = 1;
+        }
+    }else{
+        rect->X = 0;
+        rect->Y = 0;
+        rect->Width = GetDeviceCaps(graphics->hdc, HORZRES);
+        rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
+    }
+
+    return stat;
+}
+
 static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
 {
     GpRegion *rgn;
     GpMatrix transform;
     GpStatus stat;
+    GpRectF bounds;
+    RECT gdi_bounds;
     BOOL identity;
 
-    stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &transform);
+    stat = get_graphics_device_bounds(graphics, &bounds);
+
+    if (stat == Ok)
+    {
+        gdi_bounds.left = floorf(bounds.X);
+        gdi_bounds.top = floorf(bounds.Y);
+        gdi_bounds.right = ceilf(bounds.X + bounds.Width);
+        gdi_bounds.bottom = ceilf(bounds.Y + bounds.Height);
+
+        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &transform);
+    }
 
     if (stat == Ok)
         stat = GdipIsMatrixIdentity(&transform, &identity);
@@ -433,7 +492,7 @@ static GpStatus get_clip_hrgn(GpGraphics *graphics, HRGN *hrgn)
             stat = GdipTransformRegion(rgn, &transform);
 
         if (stat == Ok)
-            stat = GdipGetRegionHRgn(rgn, NULL, hrgn);
+            stat = get_region_hrgn(&rgn->node, &gdi_bounds, hrgn);
 
         GdipDeleteRegion(rgn);
     }
@@ -2231,53 +2290,6 @@ static GpStatus restore_container(GpGraphics* graphics,
     graphics->origin_y = container->origin_y;
 
     return Ok;
-}
-
-static GpStatus get_graphics_device_bounds(GpGraphics* graphics, GpRectF* rect)
-{
-    RECT wnd_rect;
-    GpStatus stat=Ok;
-    GpUnit unit;
-
-    if(graphics->hwnd) {
-        if(!GetClientRect(graphics->hwnd, &wnd_rect))
-            return GenericError;
-
-        rect->X = wnd_rect.left;
-        rect->Y = wnd_rect.top;
-        rect->Width = wnd_rect.right - wnd_rect.left;
-        rect->Height = wnd_rect.bottom - wnd_rect.top;
-    }else if (graphics->image){
-        stat = GdipGetImageBounds(graphics->image, rect, &unit);
-        if (stat == Ok && unit != UnitPixel)
-            FIXME("need to convert from unit %i\n", unit);
-    }else if (GetObjectType(graphics->hdc) == OBJ_MEMDC){
-        HBITMAP hbmp;
-        BITMAP bmp;
-
-        rect->X = 0;
-        rect->Y = 0;
-
-        hbmp = GetCurrentObject(graphics->hdc, OBJ_BITMAP);
-        if (hbmp && GetObjectW(hbmp, sizeof(bmp), &bmp))
-        {
-            rect->Width = bmp.bmWidth;
-            rect->Height = bmp.bmHeight;
-        }
-        else
-        {
-            /* FIXME: ??? */
-            rect->Width = 1;
-            rect->Height = 1;
-        }
-    }else{
-        rect->X = 0;
-        rect->Y = 0;
-        rect->Width = GetDeviceCaps(graphics->hdc, HORZRES);
-        rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
-    }
-
-    return stat;
 }
 
 static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
