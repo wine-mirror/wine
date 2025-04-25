@@ -982,14 +982,14 @@ static void file_entry_destroy(FILE_ENTRY *file_entry)
         free(file_entry->szFullPath);
 }
 
-static void file_list_add_entry(FILE_LIST *file_list, DWORD index,
+static void file_list_add_entry(FILE_LIST *file_list,
         const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
 {
     FILE_ENTRY *file_entry;
 
-    if (index >= file_list->num_alloc)
+    if (file_list->dwNumFiles >= file_list->num_alloc)
         grow_list(file_list);
-    file_entry = &file_list->feFiles[index];
+    file_entry = &file_list->feFiles[file_list->dwNumFiles++];
 
     file_entry_init(file_entry, file_name, attributes, from_relative, from_wildcard);
 
@@ -1031,7 +1031,7 @@ static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
     return szFullPath;
 }
 
-static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwListIndex, BOOL from_relative)
+static void parse_wildcard_files(FILE_LIST *file_list, LPCWSTR szFile, BOOL from_relative)
 {
     WIN32_FIND_DATAW wfd;
     HANDLE hFile = FindFirstFileW(szFile, &wfd);
@@ -1044,7 +1044,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
     {
         if (IsDotDir(wfd.cFileName)) continue;
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        file_list_add_entry(flList, (*pdwListIndex)++, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
+        file_list_add_entry(file_list, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
         free(szFullPath);
     }
 
@@ -1057,7 +1057,6 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
     WCHAR *p;
-    DWORD i = 0;
 
     if (!szFiles)
         return ERROR_INVALID_PARAMETER;
@@ -1093,20 +1092,13 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
 
         /* parse wildcard files if they are in the filename */
         if (from_wildcard && parse_wildcard)
-        {
-            parse_wildcard_files(flList, szCurFile, &i, from_relative);
-            i--;
-        }
+            parse_wildcard_files(flList, szCurFile, from_relative);
         else
-        {
-            file_list_add_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
-        }
+            file_list_add_entry(flList, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
 
         /* advance to the next string */
         ptr += lstrlenW(ptr) + 1;
-        i++;
     }
-    flList->dwNumFiles = i;
 
     return S_OK;
 }
