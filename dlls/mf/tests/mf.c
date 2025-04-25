@@ -6878,7 +6878,6 @@ static void test_media_session_Start(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         hr = wait_media_event(session, callback, MESessionStarted, 5000, &propvar);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine_if(initial_state == SOURCE_PAUSED)
         compare_object_states(&actual_object_state_record, &expected_object_state_records[initial_state]);
 
         hr = IMFMediaSession_Stop(session);
@@ -7958,9 +7957,7 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_media_sink_GetPresentationClock);
     todo_wine
     CHECK_CALLED(test_media_sink_GetStreamSinkCount);
-    todo_wine
     CHECK_CALLED(test_stream_sink_Flush);
-    todo_wine
     CHECK_CALLED(test_transform_ProcessMessage_FLUSH);
 
     todo_wine
@@ -8021,13 +8018,9 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_media_sink_GetPresentationClock);
     todo_wine
     CHECK_CALLED(test_media_sink_GetStreamSinkCount);
-    todo_wine
     CHECK_CALLED(test_stream_sink_Flush);
-    todo_wine
     CHECK_CALLED(test_transform_ProcessMessage_FLUSH);
-    todo_wine
     CHECK_CALLED(test_transform_ProcessOutput);
-    todo_wine
     CHECK_CALLED(test_media_stream_RequestSample);
 
     todo_wine
