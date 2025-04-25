@@ -11,7 +11,7 @@
 #include <corecrt.h>
 #include <sys/types.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef _DEV_T_DEFINED
 # ifdef _CRTDLL
@@ -222,6 +222,6 @@ static inline int umask(int fd) { return _umask(fd); }
 #define _UMASK_DEFINED
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_SYS_STAT_H */

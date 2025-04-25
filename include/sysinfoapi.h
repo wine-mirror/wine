@@ -46,7 +46,7 @@ typedef struct _SYSTEM_INFO
     WORD	wProcessorRevision;
 } SYSTEM_INFO, *LPSYSTEM_INFO;
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 typedef struct tagMEMORYSTATUSEX {
   DWORD dwLength;
   DWORD dwMemoryLoad;
@@ -58,7 +58,7 @@ typedef struct tagMEMORYSTATUSEX {
   DWORDLONG DECLSPEC_ALIGN(8) ullAvailVirtual;
   DWORDLONG DECLSPEC_ALIGN(8) ullAvailExtendedVirtual;
 } MEMORYSTATUSEX, *LPMEMORYSTATUSEX;
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef enum _COMPUTER_NAME_FORMAT
 {

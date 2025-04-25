@@ -22,7 +22,7 @@
 #include <wincrypt.h>
 
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 typedef struct WINTRUST_FILE_INFO_
 {
@@ -427,7 +427,7 @@ typedef struct _CRYPT_PROVUI_FUNCS {
     PFN_PROVUI_CALL pfnOnAdvancedClickDefault;
 } CRYPT_PROVUI_FUNCS, *PCRYPT_PROVUI_FUNCS;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define WVT_OFFSETOF(t,f)     ((ULONG)(offsetof(t, f)))
 #define WVT_ISINSTRUCT(t,s,f) (WVT_OFFSETOF(t,f) + sizeof(((t*)0)->f) <= (s))

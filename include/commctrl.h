@@ -2293,7 +2293,7 @@ static const WCHAR WC_PAGESCROLLERW[] = { 'S','y','s','P','a','g','e','r',0 };
 #define PGN_CALCSIZE            (PGN_FIRST-2)
 #define PGN_HOTITEMCHANGE       (PGN_FIRST-3)
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -2306,7 +2306,7 @@ typedef struct
     INT  iScroll;
 } NMPGSCROLL, *LPNMPGSCROLL;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct
 {
@@ -2830,14 +2830,14 @@ typedef struct tagNMTVASYNCDRAW
     int iRetImageIndex;
 } NMTVASYNCDRAW;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagTVKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTVKEYDOWN, *LPNMTVKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define TV_KEYDOWN      NMTVKEYDOWN
 
@@ -3692,14 +3692,14 @@ typedef struct tagLVDISPINFOW
 #define LV_DISPINFOA	NMLVDISPINFOA
 #define LV_DISPINFOW	NMLVDISPINFOW
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagLVKEYDOWN
 {
   NMHDR hdr;
   WORD  wVKey;
   UINT flags;
 } NMLVKEYDOWN, *LPNMLVKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define LV_KEYDOWN     NMLVKEYDOWN
 
@@ -4447,14 +4447,14 @@ typedef struct tagTCITEMW
 #define TCN_GETOBJECT           (TCN_FIRST - 3)
 #define TCN_FOCUSCHANGE         (TCN_FIRST - 4)
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct tagTCKEYDOWN
 {
     NMHDR hdr;
     WORD wVKey;
     UINT flags;
 } NMTCKEYDOWN;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define TC_KEYDOWN              NMTCKEYDOWN
 
@@ -5451,7 +5451,7 @@ static const WCHAR WC_SCROLLBARW[] = { 'S','c','r','o','l','l','B','a','r',0 };
 
 #ifndef NOTASKDIALOG
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 enum _TASKDIALOG_FLAGS
 {
@@ -5588,7 +5588,7 @@ WINCOMMCTRLAPI HRESULT WINAPI TaskDialog(HWND owner, HINSTANCE hinst, const WCHA
         const WCHAR *content, TASKDIALOG_COMMON_BUTTON_FLAGS common_buttons, const WCHAR *icon, int *button);
 WINCOMMCTRLAPI HRESULT WINAPI TaskDialogIndirect(const TASKDIALOGCONFIG *, int *, int *, BOOL *);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* NOTASKDIALOG */
 

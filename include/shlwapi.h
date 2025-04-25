@@ -29,7 +29,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef WINSHLWAPI
 #ifndef _SHLWAPI_
@@ -1210,7 +1210,7 @@ WINSHLWAPI HRESULT WINAPI SHGetViewStatePropertyBag(PCIDLIST_ABSOLUTE pidl, PCWS
 
 WINSHLWAPI BOOL WINAPI SHIsLowMemoryMachine(DWORD type);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 WINSHLWAPI HANDLE WINAPI SHAllocShared(const void *data, DWORD size, DWORD pid);
 WINSHLWAPI BOOL WINAPI SHFreeShared(HANDLE handle, DWORD pid);

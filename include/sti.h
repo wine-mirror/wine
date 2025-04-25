@@ -23,7 +23,7 @@
 /* #include <stireg.h> */
 /* #include <stierr.h> */
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifdef __cplusplus
 extern "C" {
@@ -176,6 +176,6 @@ DECLARE_INTERFACE_(IStillImageW, IUnknown)
 };
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_STI_H */

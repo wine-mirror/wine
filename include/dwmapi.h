@@ -32,7 +32,7 @@ extern "C" {
 DECLARE_HANDLE(HTHUMBNAIL);
 typedef HTHUMBNAIL *PHTHUMBNAIL;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 static const UINT c_DwmMaxQueuedBuffers = 8;
 static const UINT c_DwmMaxMonitors = 16;
@@ -197,7 +197,7 @@ typedef struct _DWM_PRESENT_PARAMETERS {
     DWM_SOURCE_FRAME_SAMPLING eSampling;
 } DWM_PRESENT_PARAMETERS;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 DWMAPI DwmAttachMilContent(HWND);
 DWMAPI_(BOOL) DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);

@@ -25,7 +25,7 @@
 #include <wine/windef16.h>
 #include <mmddk.h>
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef UINT16	MMVERSION16;
 typedef UINT16	MCIDEVICEID16;
@@ -808,6 +808,6 @@ typedef struct {
     SEGPTR  lpstrText;
 } MCI_DGV_WINDOW_PARMS16, *LPMCI_DGV_WINDOW_PARMS16;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif  /* __WINE_WINE_MMSYSTEM16_H */

@@ -22,7 +22,7 @@
 #include <wine/wingdi16.h> /* wingdi.h needed for COLORREF */
 #include <winuser.h> /* winuser.h needed for MSGBOXCALLBACK */
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct tagCOMSTAT16
 {
@@ -556,7 +556,7 @@ typedef struct tagCOPYDATASTRUCT16 {
 #define DRAG_PRINT 0x544E5250
 #define DRAG_FILE  0x454C4946
 
-#include <poppack.h>
+#pragma pack(pop)
 
 /* WM_COMMNOTIFY flags */
 #define CN_RECEIVE	0x0001

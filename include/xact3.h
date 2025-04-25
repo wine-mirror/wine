@@ -330,7 +330,7 @@ static const XACTNOTIFICATIONTYPE XACTNOTIFICATIONTYPE_WAVEBANKSTREAMING_INVALID
 
 static const BYTE XACT_FLAG_NOTIFICATION_PERSIST = 0x01;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct XACT_NOTIFICATION_DESCRIPTION
 {
@@ -425,7 +425,7 @@ typedef void (__stdcall *XACT_NOTIFICATION_CALLBACK)(
     const XACT_NOTIFICATION *pNotification
 );
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct XACT_WAVE_PROPERTIES
 {

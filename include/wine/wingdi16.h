@@ -25,7 +25,7 @@
 #include <wingdi.h>
 #include <wine/winbase16.h>
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef HANDLE16 HPQ16;
 typedef HANDLE16 HPJOB16;
@@ -356,7 +356,7 @@ typedef struct _DRAWPATRECT16
     WORD	wPattern;
 } DRAWPATRECT16, *PDRAWPATRECT16;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 
 INT16       WINAPI AbortDoc16(HDC16);

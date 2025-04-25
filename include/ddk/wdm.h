@@ -1012,7 +1012,7 @@ typedef NTSTATUS (WINAPI *PIO_COMPLETION_ROUTINE)(
 #define SL_INVOKE_ON_ERROR              0x80
 
 #if !defined(_WIN64)
-#include <pshpack4.h>
+#pragma pack(push,4)
 #endif
 typedef struct _IO_STACK_LOCATION {
   UCHAR  MajorFunction;
@@ -1155,7 +1155,7 @@ typedef struct _IO_STACK_LOCATION {
   PVOID  Context;
 } IO_STACK_LOCATION, *PIO_STACK_LOCATION;
 #if !defined(_WIN64)
-#include <poppack.h>
+#pragma pack(pop)
 #endif
 
 /* MDL definitions */

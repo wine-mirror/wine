@@ -20,7 +20,7 @@
 #define __WINE_NTQUERY_H__
 
 #include "stgprop.h"
-#include <pshpack4.h>
+#pragma pack(push,4)
 
 typedef struct _CI_STATE
 {
@@ -41,7 +41,7 @@ typedef struct _CI_STATE
     DWORD dwPropCacheSize;
 } CI_STATE;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #ifdef __cplusplus
 extern "C" {

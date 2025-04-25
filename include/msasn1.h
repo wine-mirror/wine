@@ -19,7 +19,7 @@
 #ifndef __MS_ASN1_H__
 #define __MS_ASN1_H__
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifdef __cplusplus
 extern "C" {
@@ -367,6 +367,6 @@ void         WINAPI ASN1ztcharstring_free(ASN1charstring_t*);
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __MS_ASN1_H__ */

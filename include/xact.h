@@ -369,7 +369,7 @@ static const BYTE XACT_FLAG_NOTIFICATION_PERSIST = 0x01;
 #define WAVE_FORMAT_EXTENSIBLE 0xfffe
 #endif
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 #ifndef _WAVEFORMATEX_
 #define _WAVEFORMATEX_
@@ -496,7 +496,7 @@ typedef struct XACT_NOTIFICATION
 } XACT_NOTIFICATION, *LPXACT_NOTIFICATION;
 typedef const XACT_NOTIFICATION *LPCXACT_NOTIFICATION;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct XACT_WAVE_PROPERTIES
 {

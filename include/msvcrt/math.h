@@ -11,7 +11,7 @@
 
 #include <corecrt.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifdef __cplusplus
 extern "C" {
@@ -401,7 +401,7 @@ static inline int __signbit(double x)
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #if !defined(__STRICT_ANSI__) || defined(_POSIX_C_SOURCE) || defined(_POSIX_SOURCE) || defined(_XOPEN_SOURCE) || defined(_GNU_SOURCE) || defined(_BSD_SOURCE) || defined(_USE_MATH_DEFINES)
 #ifndef _MATH_DEFINES_DEFINED

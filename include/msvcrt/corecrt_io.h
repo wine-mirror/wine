@@ -8,7 +8,7 @@
 
 #include <corecrt_wio.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #if defined(_USE_32BIT_TIME_T)
 # define _finddata_t     _finddata32_t
@@ -150,6 +150,6 @@ _ACRTIMP int      __cdecl rename(const char*,const char*);
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* _IO_DEFINED */

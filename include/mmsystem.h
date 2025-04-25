@@ -56,7 +56,7 @@ typedef HMIXEROBJ *LPHMIXEROBJ;
 typedef HWAVEIN *LPHWAVEIN;
 typedef HWAVEOUT *LPHWAVEOUT;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 
@@ -2512,7 +2512,7 @@ DECL_WINELIB_TYPE_AW(LPMCI_OVLY_LOAD_PARMS)
 #define SC_SCREENSAVE 0xf140
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #ifdef __cplusplus
 }

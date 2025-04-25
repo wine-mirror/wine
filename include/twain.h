@@ -58,7 +58,7 @@
 #include "winbase.h"
 
 /* The Twain structures must be packed on 2 byte alignment */
-#include "pshpack2.h"
+#pragma pack(push,2)
 
 #undef FAR
 #define FAR
@@ -1868,6 +1868,6 @@ typedef struct {
 } TW_ENTRYPOINT;
 
 /* The Twain structures must be packed on 2 byte alignment */
-#include "poppack.h"
+#pragma pack(pop)
 
 #endif  /* TWAIN */

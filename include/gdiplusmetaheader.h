@@ -38,7 +38,7 @@ typedef struct
     SIZEL   szlMillimeters;
 } ENHMETAHEADER3;
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 
 typedef struct
 {
@@ -58,7 +58,7 @@ typedef struct
     INT16      Checksum;
 } WmfPlaceableFileHeader;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define GDIP_EMFPLUSFLAGS_DISPLAY       0x00000001
 

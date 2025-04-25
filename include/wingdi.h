@@ -1837,7 +1837,7 @@ typedef struct tagRGBTRIPLE {
   BYTE rgbtRed;
 } RGBTRIPLE;
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct
 {
     WORD    bfType;
@@ -1846,7 +1846,7 @@ typedef struct
     WORD    bfReserved2;
     DWORD   bfOffBits;
 } BITMAPFILEHEADER, *PBITMAPFILEHEADER, *LPBITMAPFILEHEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define MAKEPOINTS(l)  (*((POINTS *)&(l)))
 
@@ -2032,7 +2032,7 @@ typedef struct _BLENDFUNCTION
 
 
 /* Metafile header structure */
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct
 {
     WORD       mtType;
@@ -2043,7 +2043,7 @@ typedef struct
     DWORD      mtMaxRecord;
     WORD       mtNoParameters;
 } METAHEADER, *PMETAHEADER, *LPMETAHEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
 /* Metafile typical record structure */
 typedef struct

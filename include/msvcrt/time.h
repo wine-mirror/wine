@@ -22,7 +22,7 @@
 
 #include <corecrt_wtime.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef _CLOCK_T_DEFINED
 typedef __msvcrt_long clock_t;
@@ -137,6 +137,6 @@ static inline time_t time(time_t *t) { return _time32(t); }
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_TIME_H */

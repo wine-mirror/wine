@@ -23,7 +23,7 @@
 #endif
 
 #ifdef __RPC_WIN64__
-# include <pshpack8.h>
+# pragma pack(push,8)
 #endif
 
 typedef struct tagRPC_ERROR_ENUM_HANDLE
@@ -162,7 +162,7 @@ typedef struct _RPC_ASYNC_STATE
 #define RpcAsyncGetCallHandle(async) (((PRPC_ASYNC_STATE)async)->RuntimeInfo)
 
 #ifdef __RPC_WIN64__
-# include <poppack.h>
+# pragma pack(pop)
 #endif
 
 #ifdef __cplusplus

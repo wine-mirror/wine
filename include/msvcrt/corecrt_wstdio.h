@@ -18,11 +18,11 @@
 extern "C" {
 #endif
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifndef _FILE_DEFINED
 #define _FILE_DEFINED
-#include <pshpack8.h>
+#pragma pack(push,8)
 typedef struct _iobuf
 {
 #ifdef _UCRT
@@ -38,7 +38,7 @@ typedef struct _iobuf
   char* _tmpfname;
 #endif
 } FILE;
-#include <poppack.h>
+#pragma pack(pop)
 #endif  /* _FILE_DEFINED */
 
 #ifndef WEOF
@@ -412,6 +412,6 @@ _ACRTIMP int __cdecl wscanf_s(const wchar_t*,...);
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* _WSTDIO_DEFINED */

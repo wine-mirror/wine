@@ -2145,7 +2145,7 @@ DECL_WINELIB_TYPE_AW(LPMONITORINFOEX)
 
 typedef BOOL  (CALLBACK *MONITORENUMPROC)(HMONITOR,HDC,LPRECT,LPARAM);
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 
 typedef struct tagDLGTEMPLATE
 {
@@ -2183,7 +2183,7 @@ typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEA;
 typedef DLGITEMTEMPLATE *LPDLGITEMTEMPLATEW;
 DECL_WINELIB_TYPE_AW(LPDLGITEMTEMPLATE)
 
-#include <poppack.h>
+#pragma pack(pop)
 
   /* CBT hook values */
 #define HCBT_MOVESIZE	    0

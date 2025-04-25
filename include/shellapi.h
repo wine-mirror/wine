@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 #ifndef _WIN64
-#include <pshpack1.h>
+#pragma pack(push,1)
 #endif
 
 DECLARE_HANDLE(HDROP);
@@ -706,7 +706,7 @@ WINSHELLAPI HRESULT     WINAPI SHGetPropertyStoreForWindow(HWND,REFIID,void **);
 #endif /* defined(__cplusplus) */
 
 #ifndef _WIN64
-#include <poppack.h>
+#pragma pack(pop)
 #endif
 
 #endif /* __WINE_SHELLAPI_H */

@@ -67,7 +67,7 @@
 #define PERF_DETAIL_EXPERT      300
 #define PERF_DETAIL_WIZARD      400
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 /* Performance data structure header
  * returned in answer to HKEY_PERFORMANCE_DATA request
@@ -191,7 +191,7 @@ typedef struct _PERF_COUNTER_BLOCK
 #define PERF_COUNTER_COUNTER (PERF_SIZE_DWORD | PERF_TYPE_COUNTER | PERF_COUNTER_RATE | \
                               PERF_TIMER_TICK | PERF_DELTA_COUNTER | PERF_DISPLAY_PER_SEC)
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef DWORD (APIENTRY PM_OPEN_PROC)(LPWSTR);
 typedef DWORD (APIENTRY PM_COLLECT_PROC)(LPWSTR,LPVOID *,LPDWORD,LPDWORD);

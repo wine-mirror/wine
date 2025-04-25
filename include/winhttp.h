@@ -20,9 +20,9 @@
 #define __WINE_WINHTTP_H
 
 #ifdef _WIN64
-#include <pshpack8.h>
+#pragma pack(push,8)
 #else
-#include <pshpack4.h>
+#pragma pack(push,4)
 #endif
 
 #ifdef _WINHTTP_INTERNAL_
@@ -928,6 +928,6 @@ WINHTTPAPI DWORD       WINAPI WinHttpWriteProxySettings(HINTERNET,BOOL,WINHTTP_P
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif  /* __WINE_WINHTTP_H */

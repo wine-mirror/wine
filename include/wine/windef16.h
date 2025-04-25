@@ -116,7 +116,7 @@ typedef HANDLE16 HGDIOBJ16;
 typedef HANDLE16 HGLOBAL16;
 typedef HANDLE16 HLOCAL16;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 /* The SIZE structure */
 
@@ -144,7 +144,7 @@ typedef struct
     INT16  bottom;
 } RECT16, *LPRECT16;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 /* Callback function pointers types */
 

@@ -26,7 +26,7 @@ extern "C" {
 #endif /* defined(__cplusplus) */
 
 #ifndef _WIN64
-#include <pshpack4.h>
+#pragma pack(push,4)
 #endif
 
 #ifndef INCLUDED_TYPES_FCI_FDI
@@ -262,7 +262,7 @@ typedef INT_PTR (__cdecl *PFNFDINOTIFY)(FDINOTIFICATIONTYPE fdint,
 					   PFDINOTIFICATION pfdin)
 
 #ifndef _WIN64
-#include <pshpack1.h>
+#pragma pack(push,1)
 #endif
 
 typedef struct {
@@ -271,7 +271,7 @@ typedef struct {
 } FDISPILLFILE, *PFDISPILLFILE;
 
 #ifndef _WIN64
-#include <poppack.h>
+#pragma pack(pop)
 #endif
 
 #define cpuUNKNOWN (-1)  /* FDI does detection */
@@ -291,7 +291,7 @@ BOOL __cdecl FDITruncateCabinet(HFDI, char *, USHORT);
 /**********************************************************************/
 
 #ifndef _WIN64
-#include <poppack.h>
+#pragma pack(pop)
 #endif
 
 #ifdef __cplusplus

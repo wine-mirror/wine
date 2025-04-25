@@ -39,7 +39,7 @@ DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x
 
 #define WINEBTH_AUTH_DEVICE_PATH L"\\??\\WINEBTHAUTH"
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 #define LOCAL_RADIO_DISCOVERABLE 0x0001
 #define LOCAL_RADIO_CONNECTABLE  0x0002
@@ -68,6 +68,6 @@ struct winebth_radio_send_auth_response_params
     unsigned int authenticated : 1;
 };
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINEBTH_H__ */

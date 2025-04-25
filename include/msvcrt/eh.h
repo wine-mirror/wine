@@ -26,7 +26,7 @@
 #error "eh.h is meant only for C++ applications"
 #endif
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 struct _EXCEPTION_POINTERS;
 
@@ -43,6 +43,6 @@ _ACRTIMP _se_translator_function __cdecl set_se_translator(_se_translator_functi
 _ACRTIMP DECLSPEC_NORETURN void __cdecl terminate(void);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl unexpected(void);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_EH_H */

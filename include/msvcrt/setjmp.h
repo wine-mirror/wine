@@ -22,7 +22,7 @@
 
 #include <corecrt.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifdef __i386__
 
@@ -180,6 +180,6 @@ _ACRTIMP int __cdecl __attribute__((__nothrow__,__returns_twice__)) _setjmpex(jm
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_SETJMP_H */

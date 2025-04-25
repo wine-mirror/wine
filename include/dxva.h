@@ -118,7 +118,7 @@ DEFINE_GUID(DXVA_NoEncrypt, 0x1b81bed0, 0xa0c7,0x11d3, 0xb9,0x84,0x00,0xc0,0x4f,
 #define DXVA_FILM_GRAIN_SYNTHESIS_FUNCTION      6
 #define DXVA_STATUS_REPORTING_FUNCTION          7
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct _DXVA_PicEntry_H264
 {
@@ -964,7 +964,7 @@ typedef struct _DXVA_Status_AV1 {
     USHORT NumMbsAffected;
 } DXVA_Status_AV1, *LPDXVA_Status_AV1;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef enum _DXVA_VideoChromaSubsampling
 {

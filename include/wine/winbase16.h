@@ -26,7 +26,7 @@
 #include <winternl.h>
 #include <wine/windef16.h>
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 /* Process database (i.e. a normal DOS PSP) */
 typedef struct
@@ -313,7 +313,7 @@ typedef struct
 #define NE_RSCTYPE_GROUP_ICON         0x800e
 #define NE_RSCTYPE_SCALABLE_FONTPATH  0x80cc   /* Resource found in .fot files */
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define __AHSHIFT  3  /* don't change! */
 #define __AHINCR   (1 << __AHSHIFT)

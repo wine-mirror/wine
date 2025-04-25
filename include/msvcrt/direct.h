@@ -10,7 +10,7 @@
 
 #include <corecrt_wdirect.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,6 +45,6 @@ static inline char* getcwd(char * buf, int size) { return _getcwd(buf, size); }
 static inline int mkdir(const char* newdir) { return _mkdir(newdir); }
 static inline int rmdir(const char* dir) { return _rmdir(dir); }
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* __WINE_DIRECT_H */

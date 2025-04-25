@@ -8,7 +8,7 @@
 
 #include <corecrt.h>
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 
 typedef __msvcrt_ulong _fsize_t;
 
@@ -108,6 +108,6 @@ _ACRTIMP int      __cdecl _wunlink(const wchar_t*);
 }
 #endif
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif /* _WIO_DEFINED */

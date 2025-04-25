@@ -96,7 +96,7 @@
  * types, they are not completely linked together.
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /* ======================================== *
  *             Internal types
@@ -2666,7 +2666,7 @@ typedef struct
     unsigned num_sections;
 } DBI_PUBLIC_HEADER;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 /* ===================================================
  * The old CodeView stuff (for NB09 and NB11)

@@ -1273,7 +1273,7 @@ typedef struct _EVENTLOG_FULL_INFORMATION {
 #define STREAM_CONTAINS_PROPERTIES 4
 #define STREAM_SPARSE_ATTRIBUTE    8
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 typedef struct _WIN32_STREAM_ID {
 	DWORD   dwStreamId;
 	DWORD   dwStreamAttributes;
@@ -1281,7 +1281,7 @@ typedef struct _WIN32_STREAM_ID {
 	DWORD   dwStreamNameSize;
 	WCHAR   cStreamName[ANYSIZE_ARRAY];
 } WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
-#include <poppack.h>
+#pragma pack(pop)
 
 
 /* GetBinaryType return values.

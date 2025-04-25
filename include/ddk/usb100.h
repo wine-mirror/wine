@@ -28,7 +28,7 @@
 #define USB_CONFIG_POWER_DESCRIPTOR_TYPE          0x07
 #define USB_INTERFACE_POWER_DESCRIPTOR_TYPE       0x08
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct _USB_DEVICE_DESCRIPTOR {
     UCHAR bLength;
@@ -113,6 +113,6 @@ typedef struct _USB_HUB_DESCRIPTOR {
 } USB_HUB_DESCRIPTOR;
 typedef struct _USB_HUB_DESCRIPTOR *PUSB_HUB_DESCRIPTOR;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #endif

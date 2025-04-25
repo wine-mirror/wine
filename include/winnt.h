@@ -1144,7 +1144,7 @@ typedef struct _I386_FLOATING_SAVE_AREA
 
 #define I386_MAXIMUM_SUPPORTED_EXTENSION     512
 
-#include "pshpack4.h"
+#pragma pack(push,4)
 typedef struct _I386_CONTEXT
 {
     DWORD   ContextFlags;  /* 000 */
@@ -1184,7 +1184,7 @@ typedef struct _I386_CONTEXT
 
     BYTE    ExtendedRegisters[I386_MAXIMUM_SUPPORTED_EXTENSION];  /* 0xcc */
 } I386_CONTEXT, WOW64_CONTEXT, *PWOW64_CONTEXT;
-#include "poppack.h"
+#pragma pack(pop)
 
 #define CONTEXT_i386      0x00010000
 #define CONTEXT_i486      0x00010000
@@ -2565,7 +2565,7 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
  * File formats definitions
  */
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct _IMAGE_DOS_HEADER {
     WORD  e_magic;      /* 00: MZ Header signature */
     WORD  e_cblp;       /* 02: Bytes on last page of file */
@@ -2587,7 +2587,7 @@ typedef struct _IMAGE_DOS_HEADER {
     WORD  e_res2[10];   /* 28: Reserved words */
     DWORD e_lfanew;     /* 3c: Offset to extended header */
 } IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
 #define IMAGE_DOS_SIGNATURE    0x5A4D     /* MZ   */
 #define IMAGE_OS2_SIGNATURE    0x454E     /* NE   */
@@ -2600,7 +2600,7 @@ typedef struct _IMAGE_DOS_HEADER {
  * This is the Windows executable (NE) header.
  * the name IMAGE_OS2_HEADER is misleading, but in the SDK this way.
  */
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct
 {
     WORD  ne_magic;             /* 00 NE signature 'NE' */
@@ -2634,9 +2634,9 @@ typedef struct
     WORD  ne_swaparea;          /* 3c Reserved by Microsoft */
     WORD  ne_expver;            /* 3e Expected Windows version number */
 } IMAGE_OS2_HEADER, *PIMAGE_OS2_HEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_magic;
   BYTE  e32_border;
@@ -2690,7 +2690,7 @@ typedef struct _IMAGE_VXD_HEADER {
   WORD  e32_devid;
   WORD  e32_ddkver;
 } IMAGE_VXD_HEADER, *PIMAGE_VXD_HEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
 /* These defines describe the meanings of the bits in the Characteristics
    field */
@@ -3034,7 +3034,7 @@ typedef struct _IMAGE_SECTION_HEADER {
 #define IMAGE_SCN_MEM_READ			0x40000000
 #define IMAGE_SCN_MEM_WRITE			0x80000000
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 
 typedef struct _IMAGE_SYMBOL {
     union {
@@ -3103,7 +3103,7 @@ typedef IMAGE_AUX_SYMBOL *PIMAGE_AUX_SYMBOL;
 
 #define IMAGE_SIZEOF_AUX_SYMBOL 18
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define IMAGE_SYM_UNDEFINED           (SHORT)0
 #define IMAGE_SYM_ABSOLUTE            (SHORT)-1
@@ -3227,7 +3227,7 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 	char	Name[1];
 } IMAGE_IMPORT_BY_NAME,*PIMAGE_IMPORT_BY_NAME;
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 /* Import thunk */
 typedef struct _IMAGE_THUNK_DATA64 {
 	union {
@@ -3237,7 +3237,7 @@ typedef struct _IMAGE_THUNK_DATA64 {
 		ULONGLONG AddressOfData;
 	} u1;
 } IMAGE_THUNK_DATA64,*PIMAGE_THUNK_DATA64;
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct _IMAGE_THUNK_DATA32 {
 	union {
@@ -3311,7 +3311,7 @@ typedef struct _IMAGE_BASE_RELOCATION
 	/* WORD	TypeOffset[1]; */
 } IMAGE_BASE_RELOCATION,*PIMAGE_BASE_RELOCATION;
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 
 typedef struct _IMAGE_RELOCATION
 {
@@ -3323,7 +3323,7 @@ typedef struct _IMAGE_RELOCATION
     WORD    Type;
 } IMAGE_RELOCATION, *PIMAGE_RELOCATION;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define IMAGE_SIZEOF_RELOCATION 10
 
@@ -3956,7 +3956,7 @@ typedef struct _IMAGE_DYNAMIC_RELOCATION_TABLE
     DWORD     Size;
 } IMAGE_DYNAMIC_RELOCATION_TABLE, *PIMAGE_DYNAMIC_RELOCATION_TABLE;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct _IMAGE_DYNAMIC_RELOCATION32
 {
@@ -3988,7 +3988,7 @@ typedef struct _IMAGE_DYNAMIC_RELOCATION64_V2
     DWORD     Flags;
 } IMAGE_DYNAMIC_RELOCATION64_V2, *PIMAGE_DYNAMIC_RELOCATION64_V2;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #ifdef _WIN64
 typedef IMAGE_DYNAMIC_RELOCATION64     IMAGE_DYNAMIC_RELOCATION;
@@ -4879,12 +4879,12 @@ typedef struct _LUID {
     LONG HighPart;
 } LUID, *PLUID;
 
-#include <pshpack4.h>
+#pragma pack(push,4)
 typedef struct _LUID_AND_ATTRIBUTES {
   LUID   Luid;
   DWORD  Attributes;
 } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
-#include <poppack.h>
+#pragma pack(pop)
 
 /*
  * PRIVILEGE_SET
@@ -4981,7 +4981,7 @@ typedef struct _SECURITY_QUALITY_OF_SERVICE {
  * TOKEN_STATISTICS
  */
 
-#include <pshpack4.h>
+#pragma pack(push,4)
 typedef struct _TOKEN_STATISTICS {
   LUID  TokenId;
   LUID  AuthenticationId;
@@ -4994,7 +4994,7 @@ typedef struct _TOKEN_STATISTICS {
   DWORD PrivilegeCount;
   LUID  ModifiedId;
 } TOKEN_STATISTICS;
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct _TOKEN_GROUPS_AND_PRIVILEGES {
   DWORD                 SidCount;
@@ -6219,7 +6219,7 @@ NTSYSAPI DWORD WINAPI RtlRunOnceBeginInitialize(PRTL_RUN_ONCE, DWORD, PVOID*);
 NTSYSAPI DWORD WINAPI RtlRunOnceComplete(PRTL_RUN_ONCE, DWORD, PVOID);
 NTSYSAPI WORD WINAPI RtlCaptureStackBackTrace(DWORD,DWORD,void**,DWORD*);
 
-#include <pshpack8.h>
+#pragma pack(push,8)
 typedef struct _IO_COUNTERS {
     ULONGLONG DECLSPEC_ALIGN(8) ReadOperationCount;
     ULONGLONG DECLSPEC_ALIGN(8) WriteOperationCount;
@@ -6228,7 +6228,7 @@ typedef struct _IO_COUNTERS {
     ULONGLONG DECLSPEC_ALIGN(8) WriteTransferCount;
     ULONGLONG DECLSPEC_ALIGN(8) OtherTransferCount;
 } IO_COUNTERS, *PIO_COUNTERS;
-#include <poppack.h>
+#pragma pack(pop)
 
 typedef struct {
 	DWORD dwOSVersionInfoSize;
