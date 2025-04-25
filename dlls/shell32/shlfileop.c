@@ -943,16 +943,11 @@ static inline void grow_list(FILE_LIST *list)
     list->num_alloc *= 2;
 }
 
-static void add_file_entry(FILE_LIST *file_list, DWORD index,
+static void file_entry_init(FILE_ENTRY *file_entry,
         const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
 {
     size_t file_name_len = wcslen(file_name) + 1;
-    FILE_ENTRY *file_entry;
     const WCHAR *ptr;
-
-    if (index >= file_list->num_alloc)
-        grow_list(file_list);
-    file_entry = &file_list->feFiles[index];
 
     file_entry->szFullPath = malloc(file_name_len * sizeof(WCHAR));
     wcscpy(file_entry->szFullPath, file_name);
@@ -973,6 +968,30 @@ static void add_file_entry(FILE_LIST *file_list, DWORD index,
     file_entry->bFromRelative = from_relative;
     file_entry->bFromWildcard = from_wildcard;
     file_entry->bExists = (attributes != INVALID_FILE_ATTRIBUTES);
+}
+
+static void file_entry_destroy(FILE_ENTRY *file_entry)
+{
+    if (!file_entry)
+        return;
+    if (file_entry->szDirectory)
+        free(file_entry->szDirectory);
+    if(file_entry->szFilename)
+        free(file_entry->szFilename);
+    if (file_entry->szFullPath)
+        free(file_entry->szFullPath);
+}
+
+static void file_list_add_entry(FILE_LIST *file_list, DWORD index,
+        const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
+{
+    FILE_ENTRY *file_entry;
+
+    if (index >= file_list->num_alloc)
+        grow_list(file_list);
+    file_entry = &file_list->feFiles[index];
+
+    file_entry_init(file_entry, file_name, attributes, from_relative, from_wildcard);
 
     if (IsAttribDir(attributes))
         file_list->bAnyDirectories = TRUE;
@@ -980,6 +999,18 @@ static void add_file_entry(FILE_LIST *file_list, DWORD index,
         file_list->bAnyFromWildcard = TRUE;
     if (!file_entry->bExists)
         file_list->bAnyDontExist = TRUE;
+}
+
+static void file_list_destroy(FILE_LIST *flList)
+{
+    DWORD i;
+
+    if (!flList || !flList->feFiles)
+        return;
+
+    for (i = 0; i < flList->dwNumFiles; i++)
+        file_entry_destroy(&flList->feFiles[i]);
+    free(flList->feFiles);
 }
 
 static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
@@ -1013,7 +1044,7 @@ static void parse_wildcard_files(FILE_LIST *flList, LPCWSTR szFile, LPDWORD pdwL
     {
         if (IsDotDir(wfd.cFileName)) continue;
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        add_file_entry(flList, (*pdwListIndex)++, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
+        file_list_add_entry(flList, (*pdwListIndex)++, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
         free(szFullPath);
     }
 
@@ -1068,7 +1099,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
         }
         else
         {
-            add_file_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
+            file_list_add_entry(flList, i, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
         }
 
         /* advance to the next string */
@@ -1078,24 +1109,6 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
     flList->dwNumFiles = i;
 
     return S_OK;
-}
-
-/* free the FILE_LIST */
-static void destroy_file_list(FILE_LIST *flList)
-{
-    DWORD i;
-
-    if (!flList || !flList->feFiles)
-        return;
-
-    for (i = 0; i < flList->dwNumFiles; i++)
-    {
-        free(flList->feFiles[i].szDirectory);
-        free(flList->feFiles[i].szFilename);
-        free(flList->feFiles[i].szFullPath);
-    }
-
-    free(flList->feFiles);
 }
 
 static void copy_dir_to_dir(FILE_OPERATION *op, const FILE_ENTRY *feFrom, LPCWSTR szDestPath)
@@ -1205,7 +1218,7 @@ static int copy_files(FILE_OPERATION *op, const FILE_LIST *flFrom, FILE_LIST *fl
         GetCurrentDirectoryW(MAX_PATH, curdir);
         curdir[lstrlenW(curdir)+1] = 0;
 
-        destroy_file_list(flTo);
+        file_list_destroy(flTo);
         ZeroMemory(flTo, sizeof(FILE_LIST));
         parse_file_list(flTo, curdir, FALSE);
         fileDest = &flTo->feFiles[0];
@@ -1616,10 +1629,10 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
             break;
     }
 
-    destroy_file_list(&flFrom);
+    file_list_destroy(&flFrom);
 
     if (lpFileOp->wFunc != FO_DELETE)
-        destroy_file_list(&flTo);
+        file_list_destroy(&flTo);
 
     if (ret == ERROR_CANCELLED)
         lpFileOp->fAnyOperationsAborted = TRUE;
