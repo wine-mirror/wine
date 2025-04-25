@@ -3454,6 +3454,498 @@ static const struct ID2D1GdiInteropRenderTargetVtbl d2d_gdi_interop_render_targe
     d2d_gdi_interop_render_target_ReleaseDC,
 };
 
+
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_outline[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_curve_outline[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_triangle[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const D3D11_INPUT_ELEMENT_DESC shape_il_desc_curve[] =
+{
+    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
+};
+static const char shape_vs_code_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "/* The lines PₚᵣₑᵥP₀ and P₀Pₙₑₓₜ, both offset by ±½w, intersect each other at:\n"
+    " *\n"
+    " *   Pᵢ = P₀ ± w · ½q⃑ᵢ.\n"
+    " *\n"
+    " * Where:\n"
+    " *\n"
+    " *   q⃑ᵢ = q̂ₚᵣₑᵥ⊥ + tan(½θ) · -q̂ₚᵣₑᵥ\n"
+    " *   θ  = ∠PₚᵣₑᵥP₀Pₙₑₓₜ\n"
+    " *   q⃑ₚᵣₑᵥ = P₀ - Pₚᵣₑᵥ */\n"
+    "void main(float2 position : POSITION, float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i;\n"
+    "    float2x2 geom;\n"
+    "    float l;\n"
+    "\n"
+    "    o.stroke_transform = float2x2(transform_rtx.xy, transform_rty.xy) * stroke_width * 0.5f;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    /* tan(½θ) = sin(θ) / (1 + cos(θ))\n"
+    "     *         = (q̂ₚᵣₑᵥ⊥ · q̂ₙₑₓₜ) / (1 + (q̂ₚᵣₑᵥ · q̂ₙₑₓₜ)) */\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "\n"
+    "    o.b = float4(0.0, 0.0, 0.0, 0.0);\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+/*     ⎡p0.x p0.y 1⎤
+ * A = ⎢p1.x p1.y 1⎥
+ *     ⎣p2.x p2.y 1⎦
+ *
+ *     ⎡0 0⎤
+ * B = ⎢½ 0⎥
+ *     ⎣1 1⎦
+ *
+ * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
+ *      ⎣p2.x-p0.x p2.y-p0.y⎦
+ *
+ * B' = ⎡½ 0⎤
+ *      ⎣1 1⎦
+ *
+ * A'T = B'
+ * T = A'⁻¹B'
+ */
+static const char shape_vs_code_bezier_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
+    "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i, p;\n"
+    "    float2x2 geom, rt;\n"
+    "    float l;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
+    "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
+    "\n"
+    "    p = mul(geom, position);\n"
+    "    p0 = mul(geom, p0);\n"
+    "    p1 = mul(geom, p1);\n"
+    "    p2 = mul(geom, p2);\n"
+    "\n"
+    "    p -= p0;\n"
+    "    p1 -= p0;\n"
+    "    p2 -= p0;\n"
+    "\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "    p += 0.5f * stroke_width * q_i;\n"
+    "\n"
+    "    v_p = mul(rt, p2);\n"
+    "    v_p = normalize(float2(-v_p.y, v_p.x));\n"
+    "    if (abs(dot(mul(rt, p1), v_p)) < 1.0f)\n"
+    "    {\n"
+    "        o.b.xzw = float3(0.0f, 0.0f, 0.0f);\n"
+    "        o.b.y = dot(mul(rt, p), v_p);\n"
+    "    }\n"
+    "    else\n"
+    "    {\n"
+    "        o.b.zw = sign(dot(mul(rt, p1), v_p)) * v_p;\n"
+    "        v_p = -float2(-p.y, p.x) / dot(float2(-p1.y, p1.x), p2);\n"
+    "        o.b.x = dot(v_p, p1 - 0.5f * p2);\n"
+    "        o.b.y = dot(v_p, p1);\n"
+    "    }\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+/*     ⎡p0.x p0.y 1⎤
+ * A = ⎢p1.x p1.y 1⎥
+ *     ⎣p2.x p2.y 1⎦
+ *
+ *     ⎡1 0⎤
+ * B = ⎢1 1⎥
+ *     ⎣0 1⎦
+ *
+ * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
+ *      ⎣p2.x-p0.x p2.y-p0.y⎦
+ *
+ * B' = ⎡ 0 1⎤
+ *      ⎣-1 1⎦
+ *
+ * A'T = B'
+ * T = A'⁻¹B' = (B'⁻¹A')⁻¹
+ */
+static const char shape_vs_code_arc_outline[] =
+    "float3x2 transform_geometry;\n"
+    "float stroke_width;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
+    "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
+    "{\n"
+    "    float2 q_prev, q_next, v_p, q_i, p;\n"
+    "    float2x2 geom, rt, p_inv;\n"
+    "    float l;\n"
+    "    float a;\n"
+    "    float2 bc;\n"
+    "\n"
+    "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
+    "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
+    "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
+    "\n"
+    "    p = mul(geom, position);\n"
+    "    p0 = mul(geom, p0);\n"
+    "    p1 = mul(geom, p1);\n"
+    "    p2 = mul(geom, p2);\n"
+    "\n"
+    "    p -= p0;\n"
+    "    p1 -= p0;\n"
+    "    p2 -= p0;\n"
+    "\n"
+    "    q_prev = normalize(mul(geom, prev));\n"
+    "    q_next = normalize(mul(geom, next));\n"
+    "\n"
+    "    v_p = float2(-q_prev.y, q_prev.x);\n"
+    "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
+    "    q_i = l * q_prev + v_p;\n"
+    "    p += 0.5f * stroke_width * q_i;\n"
+    "\n"
+    "    p_inv = float2x2(p1.y, -p1.x, p2.y - p1.y, p1.x - p2.x) / (p1.x * p2.y - p2.x * p1.y);\n"
+    "    o.b.xy = mul(p_inv, p) + float2(1.0f, 0.0f);\n"
+    "    o.b.zw = 0.0f;\n"
+    "\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_vs_code_triangle[] =
+    "float3x2 transform_geometry;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, out struct output o)\n"
+    "{\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
+    "    o.b = float4(1.0, 0.0, 1.0, 1.0);\n"
+    "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_vs_code_curve[] =
+    "float3x2 transform_geometry;\n"
+    "float4 transform_rtx;\n"
+    "float4 transform_rty;\n"
+    "\n"
+    "struct output\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "    float4 position : SV_POSITION;\n"
+    "};\n"
+    "\n"
+    "void main(float2 position : POSITION, float3 texcoord : TEXCOORD0, out struct output o)\n"
+    "{\n"
+    "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
+    "    o.b = float4(texcoord, 1.0);\n"
+    "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
+    "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
+    "            * float2(transform_rtx.w, transform_rty.w);\n"
+    "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
+    "}\n";
+static const char shape_ps_code[] =
+    "#define BRUSH_TYPE_SOLID    0\n"
+    "#define BRUSH_TYPE_LINEAR   1\n"
+    "#define BRUSH_TYPE_RADIAL   2\n"
+    "#define BRUSH_TYPE_BITMAP   3\n"
+    "#define BRUSH_TYPE_COUNT    4\n"
+    "\n"
+    "bool outline;\n"
+    "bool is_arc;\n"
+    "struct brush\n"
+    "{\n"
+    "    uint type;\n"
+    "    float opacity;\n"
+    "    float4 data[3];\n"
+    "} colour_brush, opacity_brush;\n"
+    "\n"
+    "SamplerState s0, s1;\n"
+    "Texture2D t0, t1;\n"
+    "Buffer<float4> b0, b1;\n"
+    "\n"
+    "struct input\n"
+    "{\n"
+    "    float2 p : WORLD_POSITION;\n"
+    "    float4 b : BEZIER;\n"
+    "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
+    "};\n"
+    "\n"
+    "float4 sample_gradient(Buffer<float4> gradient, uint stop_count, float position)\n"
+    "{\n"
+    "    float4 c_low, c_high;\n"
+    "    float p_low, p_high;\n"
+    "    uint i;\n"
+    "\n"
+    "    p_low = gradient.Load(0).x;\n"
+    "    c_low = gradient.Load(1);\n"
+    "    c_high = c_low;\n"
+    "\n"
+    "    if (position < p_low)\n"
+    "        return c_low;\n"
+    "\n"
+    "    [loop]\n"
+    "    for (i = 1; i < stop_count; ++i)\n"
+    "    {\n"
+    "        p_high = gradient.Load(i * 2).x;\n"
+    "        c_high = gradient.Load(i * 2 + 1);\n"
+    "\n"
+    "        if (position >= p_low && position <= p_high)\n"
+    "            return lerp(c_low, c_high, (position - p_low) / (p_high - p_low));\n"
+    "\n"
+    "        p_low = p_high;\n"
+    "        c_low = c_high;\n"
+    "    }\n"
+    "\n"
+    "    return c_high;\n"
+    "}\n"
+    "\n"
+    "float4 brush_linear(struct brush brush, Buffer<float4> gradient, float2 position)\n"
+    "{\n"
+    "    float2 start, end, v_p, v_q;\n"
+    "    uint stop_count;\n"
+    "    float p;\n"
+    "\n"
+    "    start = brush.data[0].xy;\n"
+    "    end = brush.data[0].zw;\n"
+    "    stop_count = asuint(brush.data[1].x);\n"
+    "\n"
+    "    v_p = position - start;\n"
+    "    v_q = end - start;\n"
+    "    p = dot(v_q, v_p) / dot(v_q, v_q);\n"
+    "\n"
+    "    return sample_gradient(gradient, stop_count, p);\n"
+    "}\n"
+    "\n"
+    "float4 brush_radial(struct brush brush, Buffer<float4> gradient, float2 position)\n"
+    "{\n"
+    "    float2 centre, offset, ra, rb, v_p, v_q, r;\n"
+    "    float b, c, l, t;\n"
+    "    uint stop_count;\n"
+    "\n"
+    "    centre = brush.data[0].xy;\n"
+    "    offset = brush.data[0].zw;\n"
+    "    ra = brush.data[1].xy;\n"
+    "    rb = brush.data[1].zw;\n"
+    "    stop_count = asuint(brush.data[2].x);\n"
+    "\n"
+    "    /* Project onto ra, rb. */\n"
+    "    r = float2(dot(ra, ra), dot(rb, rb));\n"
+    "    v_p = position - (centre + offset);\n"
+    "    v_p = float2(dot(v_p, ra), dot(v_p, rb)) / r;\n"
+    "    v_q = float2(dot(offset, ra), dot(offset, rb)) / r;\n"
+    "\n"
+    "    /* ‖t·p̂ + q⃑‖ = 1\n"
+    "     * (t·p̂ + q⃑) · (t·p̂ + q⃑) = 1\n"
+    "     * t² + 2·(p̂·q⃑)·t + (q⃑·q⃑) = 1\n"
+    "     *\n"
+    "     * b = p̂·q⃑\n"
+    "     * c = q⃑·q⃑ - 1\n"
+    "     * t = -b + √(b² - c) */\n"
+    "    l = length(v_p);\n"
+    "    b = dot(v_p, v_q) / l;\n"
+    "    c = dot(v_q, v_q) - 1.0;\n"
+    "    t = -b + sqrt(b * b - c);\n"
+    "\n"
+    "    return sample_gradient(gradient, stop_count, l / t);\n"
+    "}\n"
+    "\n"
+    "float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)\n"
+    "{\n"
+    "    float3 transform[2];\n"
+    "    bool ignore_alpha;\n"
+    "    float2 texcoord;\n"
+    "    float4 colour;\n"
+    "\n"
+    "    transform[0] = brush.data[0].xyz;\n"
+    "    transform[1] = brush.data[1].xyz;\n"
+    "    ignore_alpha = asuint(brush.data[1].w);\n"
+    "\n"
+    "    texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;\n"
+    "    texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;\n"
+    "    colour = t.Sample(s, texcoord);\n"
+    "    if (ignore_alpha)\n"
+    "        colour.a = 1.0;\n"
+    "    return colour;\n"
+    "}\n"
+    "\n"
+    "float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, Buffer<float4> b, float2 position)\n"
+    "{\n"
+    "    if (brush.type == BRUSH_TYPE_SOLID)\n"
+    "        return brush.data[0] * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_LINEAR)\n"
+    "        return brush_linear(brush, b, position) * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_RADIAL)\n"
+    "        return brush_radial(brush, b, position) * brush.opacity;\n"
+    "    if (brush.type == BRUSH_TYPE_BITMAP)\n"
+    "        return brush_bitmap(brush, t, s, position) * brush.opacity;\n"
+    "    return float4(0.0, 0.0, 0.0, brush.opacity);\n"
+    "}\n"
+    "\n"
+    "float4 main(struct input i) : SV_Target\n"
+    "{\n"
+    "    float4 colour;\n"
+    "\n"
+    "    colour = sample_brush(colour_brush, t0, s0, b0, i.p);\n"
+    "    if (opacity_brush.type < BRUSH_TYPE_COUNT)\n"
+    "        colour *= sample_brush(opacity_brush, t1, s1, b1, i.p).a;\n"
+    "\n"
+    "    if (outline)\n"
+    "    {\n"
+    "        float2 du, dv, df;\n"
+    "        float4 uv;\n"
+    "\n"
+    "        /* Evaluate the implicit form of the curve (u² - v = 0\n"
+    "         * for Béziers, u² + v² - 1 = 0 for arcs) in texture\n"
+    "         * space, using the screen-space partial derivatives\n"
+    "         * to convert the calculated distance to object space.\n"
+    "         *\n"
+    "         * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖\n"
+    "         *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)\n"
+    "         *\n"
+    "         * For Béziers:\n"
+    "         * f(x, y) = u(x, y)² - v(x, y)\n"
+    "         * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x\n"
+    "         * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y\n"
+    "         *\n"
+    "         * For arcs:\n"
+    "         * f(x, y) = u(x, y)² + v(x, y)² - 1\n"
+    "         * ∂f/∂x = 2u · ∂u/∂x + 2v · ∂v/∂x\n"
+    "         * ∂f/∂y = 2u · ∂u/∂y + 2v · ∂v/∂y */\n"
+    "        uv = i.b;\n"
+    "        du = float2(ddx(uv.x), ddy(uv.x));\n"
+    "        dv = float2(ddx(uv.y), ddy(uv.y));\n"
+    "\n"
+    "        if (!is_arc)\n"
+    "        {\n"
+    "            df = 2.0f * uv.x * du - dv;\n"
+    "\n"
+    "            clip(dot(df, uv.zw));\n"
+    "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x - uv.y));\n"
+    "        }\n"
+    "        else\n"
+    "        {\n"
+    "            df = 2.0f * uv.x * du + 2.0f * uv.y * dv;\n"
+    "\n"
+    "            clip(dot(df, uv.zw));\n"
+    "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x + uv.y * uv.y - 1.0f));\n"
+    "        }\n"
+    "    }\n"
+    "    else\n"
+    "    {\n"
+    "        /* Evaluate the implicit form of the curve in texture space.\n"
+    "         * \"i.b.z\" determines which side of the curve is shaded. */\n"
+    "        if (!is_arc)\n"
+    "        {\n"
+    "            clip((i.b.x * i.b.x - i.b.y) * i.b.z);\n"
+    "        }\n"
+    "        else\n"
+    "        {\n"
+    "            clip((i.b.x * i.b.x + i.b.y * i.b.y - 1.0) * i.b.z);\n"
+    "        }\n"
+    "    }\n"
+    "\n"
+    "    return colour;\n"
+    "}\n";
+static const struct shape_info
+{
+    enum d2d_shape_type shape_type;
+    const D3D11_INPUT_ELEMENT_DESC *il_desc;
+    unsigned int il_element_count;
+    const char *name;
+    const char *vs_code;
+    size_t vs_code_size;
+}
+shape_info[] =
+{
+    {D2D_SHAPE_TYPE_OUTLINE,        shape_il_desc_outline,        ARRAY_SIZE(shape_il_desc_outline),
+     "outline",                     shape_vs_code_outline,        sizeof(shape_vs_code_outline) - 1},
+    {D2D_SHAPE_TYPE_BEZIER_OUTLINE, shape_il_desc_curve_outline,  ARRAY_SIZE(shape_il_desc_curve_outline),
+     "bezier_outline",              shape_vs_code_bezier_outline, sizeof(shape_vs_code_bezier_outline) - 1},
+    {D2D_SHAPE_TYPE_ARC_OUTLINE,    shape_il_desc_curve_outline,  ARRAY_SIZE(shape_il_desc_curve_outline),
+     "arc_outline",                 shape_vs_code_arc_outline,    sizeof(shape_vs_code_arc_outline) - 1},
+    {D2D_SHAPE_TYPE_TRIANGLE,       shape_il_desc_triangle,       ARRAY_SIZE(shape_il_desc_triangle),
+     "triangle",                    shape_vs_code_triangle,       sizeof(shape_vs_code_triangle) - 1},
+    {D2D_SHAPE_TYPE_CURVE,          shape_il_desc_curve,          ARRAY_SIZE(shape_il_desc_curve),
+     "curve",                       shape_vs_code_curve,          sizeof(shape_vs_code_curve) - 1},
+};
+
 static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         struct d2d_device *device, IUnknown *outer_unknown, const struct d2d_device_context_ops *ops)
 {
@@ -3462,500 +3954,10 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     D3D11_RASTERIZER_DESC rs_desc;
     D3D11_BUFFER_DESC buffer_desc;
     struct d2d_factory *factory;
-    ID3D10Blob *compiled;
+    ID3D10Blob *precompiled;
     unsigned int i;
     HRESULT hr;
 
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_outline[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve_outline[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 1, DXGI_FORMAT_R32G32_FLOAT, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"P", 2, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"PREV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 32, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"NEXT", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 40, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_triangle[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const D3D11_INPUT_ELEMENT_DESC il_desc_curve[] =
-    {
-        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TEXCOORD", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0},
-    };
-    static const char vs_code_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "/* The lines PₚᵣₑᵥP₀ and P₀Pₙₑₓₜ, both offset by ±½w, intersect each other at:\n"
-        " *\n"
-        " *   Pᵢ = P₀ ± w · ½q⃑ᵢ.\n"
-        " *\n"
-        " * Where:\n"
-        " *\n"
-        " *   q⃑ᵢ = q̂ₚᵣₑᵥ⊥ + tan(½θ) · -q̂ₚᵣₑᵥ\n"
-        " *   θ  = ∠PₚᵣₑᵥP₀Pₙₑₓₜ\n"
-        " *   q⃑ₚᵣₑᵥ = P₀ - Pₚᵣₑᵥ */\n"
-        "void main(float2 position : POSITION, float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i;\n"
-        "    float2x2 geom;\n"
-        "    float l;\n"
-        "\n"
-        "    o.stroke_transform = float2x2(transform_rtx.xy, transform_rty.xy) * stroke_width * 0.5f;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    /* tan(½θ) = sin(θ) / (1 + cos(θ))\n"
-        "     *         = (q̂ₚᵣₑᵥ⊥ · q̂ₙₑₓₜ) / (1 + (q̂ₚᵣₑᵥ · q̂ₙₑₓₜ)) */\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "\n"
-        "    o.b = float4(0.0, 0.0, 0.0, 0.0);\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + stroke_width * 0.5f * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    /*     ⎡p0.x p0.y 1⎤
-     * A = ⎢p1.x p1.y 1⎥
-     *     ⎣p2.x p2.y 1⎦
-     *
-     *     ⎡0 0⎤
-     * B = ⎢½ 0⎥
-     *     ⎣1 1⎦
-     *
-     * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
-     *      ⎣p2.x-p0.x p2.y-p0.y⎦
-     *
-     * B' = ⎡½ 0⎤
-     *      ⎣1 1⎦
-     *
-     * A'T = B'
-     * T = A'⁻¹B'
-     */
-    static const char vs_code_bezier_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
-        "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i, p;\n"
-        "    float2x2 geom, rt;\n"
-        "    float l;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
-        "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
-        "\n"
-        "    p = mul(geom, position);\n"
-        "    p0 = mul(geom, p0);\n"
-        "    p1 = mul(geom, p1);\n"
-        "    p2 = mul(geom, p2);\n"
-        "\n"
-        "    p -= p0;\n"
-        "    p1 -= p0;\n"
-        "    p2 -= p0;\n"
-        "\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "    p += 0.5f * stroke_width * q_i;\n"
-        "\n"
-        "    v_p = mul(rt, p2);\n"
-        "    v_p = normalize(float2(-v_p.y, v_p.x));\n"
-        "    if (abs(dot(mul(rt, p1), v_p)) < 1.0f)\n"
-        "    {\n"
-        "        o.b.xzw = float3(0.0f, 0.0f, 0.0f);\n"
-        "        o.b.y = dot(mul(rt, p), v_p);\n"
-        "    }\n"
-        "    else\n"
-        "    {\n"
-        "        o.b.zw = sign(dot(mul(rt, p1), v_p)) * v_p;\n"
-        "        v_p = -float2(-p.y, p.x) / dot(float2(-p1.y, p1.x), p2);\n"
-        "        o.b.x = dot(v_p, p1 - 0.5f * p2);\n"
-        "        o.b.y = dot(v_p, p1);\n"
-        "    }\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    /*     ⎡p0.x p0.y 1⎤
-     * A = ⎢p1.x p1.y 1⎥
-     *     ⎣p2.x p2.y 1⎦
-     *
-     *     ⎡1 0⎤
-     * B = ⎢1 1⎥
-     *     ⎣0 1⎦
-     *
-     * A' = ⎡p1.x-p0.x p1.y-p0.y⎤
-     *      ⎣p2.x-p0.x p2.y-p0.y⎦
-     *
-     * B' = ⎡ 0 1⎤
-     *      ⎣-1 1⎦
-     *
-     * A'T = B'
-     * T = A'⁻¹B' = (B'⁻¹A')⁻¹
-     */
-    static const char vs_code_arc_outline[] =
-        "float3x2 transform_geometry;\n"
-        "float stroke_width;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float2 p0 : P0, float2 p1 : P1, float2 p2 : P2,\n"
-        "        float2 prev : PREV, float2 next : NEXT, out struct output o)\n"
-        "{\n"
-        "    float2 q_prev, q_next, v_p, q_i, p;\n"
-        "    float2x2 geom, rt, p_inv;\n"
-        "    float l;\n"
-        "    float a;\n"
-        "    float2 bc;\n"
-        "\n"
-        "    geom = float2x2(transform_geometry._11_21, transform_geometry._12_22);\n"
-        "    rt = float2x2(transform_rtx.xy, transform_rty.xy);\n"
-        "    o.stroke_transform = rt * stroke_width * 0.5f;\n"
-        "\n"
-        "    p = mul(geom, position);\n"
-        "    p0 = mul(geom, p0);\n"
-        "    p1 = mul(geom, p1);\n"
-        "    p2 = mul(geom, p2);\n"
-        "\n"
-        "    p -= p0;\n"
-        "    p1 -= p0;\n"
-        "    p2 -= p0;\n"
-        "\n"
-        "    q_prev = normalize(mul(geom, prev));\n"
-        "    q_next = normalize(mul(geom, next));\n"
-        "\n"
-        "    v_p = float2(-q_prev.y, q_prev.x);\n"
-        "    l = -dot(v_p, q_next) / (1.0f + dot(q_prev, q_next));\n"
-        "    q_i = l * q_prev + v_p;\n"
-        "    p += 0.5f * stroke_width * q_i;\n"
-        "\n"
-        "    p_inv = float2x2(p1.y, -p1.x, p2.y - p1.y, p1.x - p2.x) / (p1.x * p2.y - p2.x * p1.y);\n"
-        "    o.b.xy = mul(p_inv, p) + float2(1.0f, 0.0f);\n"
-        "    o.b.zw = 0.0f;\n"
-        "\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry) + 0.5f * stroke_width * q_i;\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char vs_code_triangle[] =
-        "float3x2 transform_geometry;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, out struct output o)\n"
-        "{\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
-        "    o.b = float4(1.0, 0.0, 1.0, 1.0);\n"
-        "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char vs_code_curve[] =
-        "float3x2 transform_geometry;\n"
-        "float4 transform_rtx;\n"
-        "float4 transform_rty;\n"
-        "\n"
-        "struct output\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "    float4 position : SV_POSITION;\n"
-        "};\n"
-        "\n"
-        "void main(float2 position : POSITION, float3 texcoord : TEXCOORD0, out struct output o)\n"
-        "{\n"
-        "    o.p = mul(float3(position, 1.0f), transform_geometry);\n"
-        "    o.b = float4(texcoord, 1.0);\n"
-        "    o.stroke_transform = float2x2(1.0, 0.0, 0.0, 1.0);\n"
-        "    position = mul(float2x3(transform_rtx.xyz, transform_rty.xyz), float3(o.p, 1.0f))\n"
-        "            * float2(transform_rtx.w, transform_rty.w);\n"
-        "    o.position = float4(position + float2(-1.0f, 1.0f), 0.0f, 1.0f);\n"
-        "}\n";
-    static const char ps_code[] =
-        "#define BRUSH_TYPE_SOLID    0\n"
-        "#define BRUSH_TYPE_LINEAR   1\n"
-        "#define BRUSH_TYPE_RADIAL   2\n"
-        "#define BRUSH_TYPE_BITMAP   3\n"
-        "#define BRUSH_TYPE_COUNT    4\n"
-        "\n"
-        "bool outline;\n"
-        "bool is_arc;\n"
-        "struct brush\n"
-        "{\n"
-        "    uint type;\n"
-        "    float opacity;\n"
-        "    float4 data[3];\n"
-        "} colour_brush, opacity_brush;\n"
-        "\n"
-        "SamplerState s0, s1;\n"
-        "Texture2D t0, t1;\n"
-        "Buffer<float4> b0, b1;\n"
-        "\n"
-        "struct input\n"
-        "{\n"
-        "    float2 p : WORLD_POSITION;\n"
-        "    float4 b : BEZIER;\n"
-        "    nointerpolation float2x2 stroke_transform : STROKE_TRANSFORM;\n"
-        "};\n"
-        "\n"
-        "float4 sample_gradient(Buffer<float4> gradient, uint stop_count, float position)\n"
-        "{\n"
-        "    float4 c_low, c_high;\n"
-        "    float p_low, p_high;\n"
-        "    uint i;\n"
-        "\n"
-        "    p_low = gradient.Load(0).x;\n"
-        "    c_low = gradient.Load(1);\n"
-        "    c_high = c_low;\n"
-        "\n"
-        "    if (position < p_low)\n"
-        "        return c_low;\n"
-        "\n"
-        "    [loop]\n"
-        "    for (i = 1; i < stop_count; ++i)\n"
-        "    {\n"
-        "        p_high = gradient.Load(i * 2).x;\n"
-        "        c_high = gradient.Load(i * 2 + 1);\n"
-        "\n"
-        "        if (position >= p_low && position <= p_high)\n"
-        "            return lerp(c_low, c_high, (position - p_low) / (p_high - p_low));\n"
-        "\n"
-        "        p_low = p_high;\n"
-        "        c_low = c_high;\n"
-        "    }\n"
-        "\n"
-        "    return c_high;\n"
-        "}\n"
-        "\n"
-        "float4 brush_linear(struct brush brush, Buffer<float4> gradient, float2 position)\n"
-        "{\n"
-        "    float2 start, end, v_p, v_q;\n"
-        "    uint stop_count;\n"
-        "    float p;\n"
-        "\n"
-        "    start = brush.data[0].xy;\n"
-        "    end = brush.data[0].zw;\n"
-        "    stop_count = asuint(brush.data[1].x);\n"
-        "\n"
-        "    v_p = position - start;\n"
-        "    v_q = end - start;\n"
-        "    p = dot(v_q, v_p) / dot(v_q, v_q);\n"
-        "\n"
-        "    return sample_gradient(gradient, stop_count, p);\n"
-        "}\n"
-        "\n"
-        "float4 brush_radial(struct brush brush, Buffer<float4> gradient, float2 position)\n"
-        "{\n"
-        "    float2 centre, offset, ra, rb, v_p, v_q, r;\n"
-        "    float b, c, l, t;\n"
-        "    uint stop_count;\n"
-        "\n"
-        "    centre = brush.data[0].xy;\n"
-        "    offset = brush.data[0].zw;\n"
-        "    ra = brush.data[1].xy;\n"
-        "    rb = brush.data[1].zw;\n"
-        "    stop_count = asuint(brush.data[2].x);\n"
-        "\n"
-        "    /* Project onto ra, rb. */\n"
-        "    r = float2(dot(ra, ra), dot(rb, rb));\n"
-        "    v_p = position - (centre + offset);\n"
-        "    v_p = float2(dot(v_p, ra), dot(v_p, rb)) / r;\n"
-        "    v_q = float2(dot(offset, ra), dot(offset, rb)) / r;\n"
-        "\n"
-        "    /* ‖t·p̂ + q⃑‖ = 1\n"
-        "     * (t·p̂ + q⃑) · (t·p̂ + q⃑) = 1\n"
-        "     * t² + 2·(p̂·q⃑)·t + (q⃑·q⃑) = 1\n"
-        "     *\n"
-        "     * b = p̂·q⃑\n"
-        "     * c = q⃑·q⃑ - 1\n"
-        "     * t = -b + √(b² - c) */\n"
-        "    l = length(v_p);\n"
-        "    b = dot(v_p, v_q) / l;\n"
-        "    c = dot(v_q, v_q) - 1.0;\n"
-        "    t = -b + sqrt(b * b - c);\n"
-        "\n"
-        "    return sample_gradient(gradient, stop_count, l / t);\n"
-        "}\n"
-        "\n"
-        "float4 brush_bitmap(struct brush brush, Texture2D t, SamplerState s, float2 position)\n"
-        "{\n"
-        "    float3 transform[2];\n"
-        "    bool ignore_alpha;\n"
-        "    float2 texcoord;\n"
-        "    float4 colour;\n"
-        "\n"
-        "    transform[0] = brush.data[0].xyz;\n"
-        "    transform[1] = brush.data[1].xyz;\n"
-        "    ignore_alpha = asuint(brush.data[1].w);\n"
-        "\n"
-        "    texcoord.x = dot(position.xy, transform[0].xy) + transform[0].z;\n"
-        "    texcoord.y = dot(position.xy, transform[1].xy) + transform[1].z;\n"
-        "    colour = t.Sample(s, texcoord);\n"
-        "    if (ignore_alpha)\n"
-        "        colour.a = 1.0;\n"
-        "    return colour;\n"
-        "}\n"
-        "\n"
-        "float4 sample_brush(struct brush brush, Texture2D t, SamplerState s, Buffer<float4> b, float2 position)\n"
-        "{\n"
-        "    if (brush.type == BRUSH_TYPE_SOLID)\n"
-        "        return brush.data[0] * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_LINEAR)\n"
-        "        return brush_linear(brush, b, position) * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_RADIAL)\n"
-        "        return brush_radial(brush, b, position) * brush.opacity;\n"
-        "    if (brush.type == BRUSH_TYPE_BITMAP)\n"
-        "        return brush_bitmap(brush, t, s, position) * brush.opacity;\n"
-        "    return float4(0.0, 0.0, 0.0, brush.opacity);\n"
-        "}\n"
-        "\n"
-        "float4 main(struct input i) : SV_Target\n"
-        "{\n"
-        "    float4 colour;\n"
-        "\n"
-        "    colour = sample_brush(colour_brush, t0, s0, b0, i.p);\n"
-        "    if (opacity_brush.type < BRUSH_TYPE_COUNT)\n"
-        "        colour *= sample_brush(opacity_brush, t1, s1, b1, i.p).a;\n"
-        "\n"
-        "    if (outline)\n"
-        "    {\n"
-        "        float2 du, dv, df;\n"
-        "        float4 uv;\n"
-        "\n"
-        "        /* Evaluate the implicit form of the curve (u² - v = 0\n"
-        "         * for Béziers, u² + v² - 1 = 0 for arcs) in texture\n"
-        "         * space, using the screen-space partial derivatives\n"
-        "         * to convert the calculated distance to object space.\n"
-        "         *\n"
-        "         * d(x, y) = |f(x, y)| / ‖∇f(x, y)‖\n"
-        "         *         = |f(x, y)| / √((∂f/∂x)² + (∂f/∂y)²)\n"
-        "         *\n"
-        "         * For Béziers:\n"
-        "         * f(x, y) = u(x, y)² - v(x, y)\n"
-        "         * ∂f/∂x = 2u · ∂u/∂x - ∂v/∂x\n"
-        "         * ∂f/∂y = 2u · ∂u/∂y - ∂v/∂y\n"
-        "         *\n"
-        "         * For arcs:\n"
-        "         * f(x, y) = u(x, y)² + v(x, y)² - 1\n"
-        "         * ∂f/∂x = 2u · ∂u/∂x + 2v · ∂v/∂x\n"
-        "         * ∂f/∂y = 2u · ∂u/∂y + 2v · ∂v/∂y */\n"
-        "        uv = i.b;\n"
-        "        du = float2(ddx(uv.x), ddy(uv.x));\n"
-        "        dv = float2(ddx(uv.y), ddy(uv.y));\n"
-        "\n"
-        "        if (!is_arc)\n"
-        "        {\n"
-        "            df = 2.0f * uv.x * du - dv;\n"
-        "\n"
-        "            clip(dot(df, uv.zw));\n"
-        "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x - uv.y));\n"
-        "        }\n"
-        "        else\n"
-        "        {\n"
-        "            df = 2.0f * uv.x * du + 2.0f * uv.y * dv;\n"
-        "\n"
-        "            clip(dot(df, uv.zw));\n"
-        "            clip(length(mul(i.stroke_transform, df)) - abs(uv.x * uv.x + uv.y * uv.y - 1.0f));\n"
-        "        }\n"
-        "    }\n"
-        "    else\n"
-        "    {\n"
-        "        /* Evaluate the implicit form of the curve in texture space.\n"
-        "         * \"i.b.z\" determines which side of the curve is shaded. */\n"
-        "        if (!is_arc)\n"
-        "        {\n"
-        "            clip((i.b.x * i.b.x - i.b.y) * i.b.z);\n"
-        "        }\n"
-        "        else\n"
-        "        {\n"
-        "            clip((i.b.x * i.b.x + i.b.y * i.b.y - 1.0) * i.b.z);\n"
-        "        }\n"
-        "    }\n"
-        "\n"
-        "    return colour;\n"
-        "}\n";
-    static const struct shape_info
-    {
-        enum d2d_shape_type shape_type;
-        const D3D11_INPUT_ELEMENT_DESC *il_desc;
-        unsigned int il_element_count;
-        const char *name;
-        const char *vs_code;
-        size_t vs_code_size;
-    }
-    shape_info[] =
-    {
-        {D2D_SHAPE_TYPE_OUTLINE,        il_desc_outline,        ARRAY_SIZE(il_desc_outline),
-         "outline",                     vs_code_outline,        sizeof(vs_code_outline) - 1},
-        {D2D_SHAPE_TYPE_BEZIER_OUTLINE, il_desc_curve_outline,  ARRAY_SIZE(il_desc_curve_outline),
-         "bezier_outline",              vs_code_bezier_outline, sizeof(vs_code_bezier_outline) - 1},
-        {D2D_SHAPE_TYPE_ARC_OUTLINE,    il_desc_curve_outline,  ARRAY_SIZE(il_desc_curve_outline),
-         "arc_outline",                 vs_code_arc_outline,    sizeof(vs_code_arc_outline) - 1},
-        {D2D_SHAPE_TYPE_TRIANGLE,       il_desc_triangle,       ARRAY_SIZE(il_desc_triangle),
-         "triangle",                    vs_code_triangle,       sizeof(vs_code_triangle) - 1},
-        {D2D_SHAPE_TYPE_CURVE,          il_desc_curve,          ARRAY_SIZE(il_desc_curve),
-         "curve",                       vs_code_curve,          sizeof(vs_code_curve) - 1},
-    };
     static const struct
     {
         float x, y;
@@ -4005,32 +4007,23 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
     {
         const struct shape_info *si = &shape_info[i];
 
-        if (FAILED(hr = D3DCompile(si->vs_code, si->vs_code_size, si->name, NULL, NULL,
-                "main", "vs_4_0", 0, 0, &compiled, NULL)))
-        {
-            WARN("Failed to compile shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            goto err;
-        }
-
+        assert(device->precompiled_shape_vs[i]);
+        precompiled = device->precompiled_shape_vs[i];
         if (FAILED(hr = ID3D11Device1_CreateInputLayout(render_target->d3d_device, si->il_desc, si->il_element_count,
-                ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+                ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
                 &render_target->shape_resources[si->shape_type].il)))
         {
             WARN("Failed to create input layout for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            ID3D10Blob_Release(compiled);
             goto err;
         }
 
         if (FAILED(hr = ID3D11Device1_CreateVertexShader(render_target->d3d_device,
-                ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+                ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
                 NULL, &render_target->shape_resources[si->shape_type].vs)))
         {
             WARN("Failed to create vertex shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
-            ID3D10Blob_Release(compiled);
             goto err;
         }
-
-        ID3D10Blob_Release(compiled);
     }
 
     buffer_desc.ByteWidth = sizeof(struct d2d_vs_cb);
@@ -4046,22 +4039,15 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
         goto err;
     }
 
-    if (FAILED(hr = D3DCompile(ps_code, sizeof(ps_code) - 1, "ps", NULL, NULL, "main", "ps_4_0", 0, 0, &compiled, NULL)))
-    {
-        WARN("Failed to compile the pixel shader, hr %#lx.\n", hr);
-        goto err;
-    }
-
+    assert(device->precompiled_shape_ps);
+    precompiled = device->precompiled_shape_ps;
     if (FAILED(hr = ID3D11Device1_CreatePixelShader(render_target->d3d_device,
-            ID3D10Blob_GetBufferPointer(compiled), ID3D10Blob_GetBufferSize(compiled),
+            ID3D10Blob_GetBufferPointer(precompiled), ID3D10Blob_GetBufferSize(precompiled),
             NULL, &render_target->ps)))
     {
         WARN("Failed to create pixel shader, hr %#lx.\n", hr);
-        ID3D10Blob_Release(compiled);
         goto err;
     }
-
-    ID3D10Blob_Release(compiled);
 
     buffer_desc.ByteWidth = sizeof(struct d2d_ps_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -4304,6 +4290,13 @@ static ULONG WINAPI d2d_device_Release(ID2D1Device6 *iface)
         IDXGIDevice_Release(device->dxgi_device);
         ID2D1Factory1_Release(device->factory);
         d2d_device_indexed_objects_clear(&device->shaders);
+        for (unsigned int i = 0; i < D2D_SHAPE_TYPE_COUNT; ++i)
+        {
+            if (device->precompiled_shape_vs[i])
+                ID3D10Blob_Release(device->precompiled_shape_vs[i]);
+        }
+        if (device->precompiled_shape_ps)
+            ID3D10Blob_Release(device->precompiled_shape_ps);
         free(device);
     }
 
@@ -4528,9 +4521,12 @@ struct d2d_device *unsafe_impl_from_ID2D1Device(ID2D1Device1 *iface)
     return CONTAINING_RECORD(iface, struct d2d_device, ID2D1Device6_iface);
 }
 
-void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+HRESULT d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
     bool allow_get_dxgi_device)
 {
+    HRESULT hr;
+    ID3D10Blob *compiled;
+
     device->ID2D1Device6_iface.lpVtbl = &d2d_device_vtbl;
     device->refcount = 1;
     device->factory = factory;
@@ -4538,6 +4534,29 @@ void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDev
     device->dxgi_device = dxgi_device;
     IDXGIDevice_AddRef(device->dxgi_device);
     device->allow_get_dxgi_device = allow_get_dxgi_device;
+
+    for (unsigned int i = 0; i < ARRAY_SIZE(shape_info); ++i)
+    {
+        const struct shape_info *si = &shape_info[i];
+
+        if (FAILED(hr = D3DCompile(si->vs_code, si->vs_code_size, si->name, NULL, NULL,
+                "main", "vs_4_0", 0, 0, &compiled, NULL)))
+        {
+            WARN("Failed to compile shader for shape type %#x, hr %#lx.\n", si->shape_type, hr);
+            return hr;
+        }
+        device->precompiled_shape_vs[i] = compiled;
+    }
+
+    if (FAILED(hr = D3DCompile(shape_ps_code, sizeof(shape_ps_code) - 1, "ps", NULL, NULL,
+            "main", "ps_4_0", 0, 0, &compiled, NULL)))
+    {
+        WARN("Failed to compile the pixel shader, hr %#lx.\n", hr);
+        return hr;
+    }
+    device->precompiled_shape_ps = compiled;
+
+    return S_OK;
 }
 
 HRESULT d2d_device_add_indexed_object(struct d2d_indexed_objects *objects,

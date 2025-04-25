@@ -522,7 +522,11 @@ HRESULT d2d_factory_create_device(ID2D1Factory1 *factory, IDXGIDevice *dxgi_devi
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_device_init(object, factory, dxgi_device, allow_get_dxgi_device);
+    if (FAILED(hr = d2d_device_init(object, factory, dxgi_device, allow_get_dxgi_device)))
+    {
+        ID2D1Device6_Release(&object->ID2D1Device6_iface);
+        return hr;
+    }
 
     TRACE("Create device %p.\n", object);
 

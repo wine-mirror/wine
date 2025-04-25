@@ -615,6 +615,9 @@ struct d2d_device
     IDXGIDevice *dxgi_device;
     bool allow_get_dxgi_device;
 
+    ID3D10Blob *precompiled_shape_vs[D2D_SHAPE_TYPE_COUNT];
+    ID3D10Blob *precompiled_shape_ps;
+
     struct d2d_indexed_objects shaders;
 };
 
@@ -715,7 +718,7 @@ void d2d_factory_register_effect(struct d2d_factory *factory,
         struct d2d_effect_registration *effect);
 HRESULT d2d_effect_property_get_uint32_value(const struct d2d_effect_properties *properties,
         const struct d2d_effect_property *prop, UINT32 *value);
-void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
+HRESULT d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device,
         bool allow_get_dxgi_device);
 
 struct d2d_transform
