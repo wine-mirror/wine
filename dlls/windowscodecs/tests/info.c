@@ -353,6 +353,11 @@ static void test_encoder_info(void)
             L"image/jpeg,image/jpe,image/jpg",
             L".jpeg,.jpe,.jpg,.jfif,.exif",
         },
+        {
+            &CLSID_WICTiffEncoder,
+            L"image/tiff,image/tif",
+            L".tiff,.tif",
+        },
     };
     IWICBitmapEncoderInfo *encoder_info, *encoder_info2;
     IWICComponentInfo *info;

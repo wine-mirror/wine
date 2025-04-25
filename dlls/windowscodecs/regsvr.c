@@ -1646,14 +1646,14 @@ static struct regsvr_encoder const encoder_list[] = {
 	png_encode_formats
     },
     {   &CLSID_WICTiffEncoder,
-	"The Wine Project",
-	"TIFF Encoder",
-	"1.0.0.0",
-	&GUID_VendorMicrosoft,
-	&GUID_ContainerFormatTiff,
-	"image/tiff",
-	".tif;.tiff",
-	tiff_encode_formats
+        "The Wine Project",
+        "TIFF Encoder",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_ContainerFormatTiff,
+        "image/tiff,image/tif",
+        ".tiff,.tif",
+        tiff_encode_formats
     },
     { NULL }			/* list terminator */
 };
