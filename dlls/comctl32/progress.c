@@ -520,6 +520,7 @@ static UINT PROGRESS_SetPos (PROGRESS_INFO *infoPtr, INT pos)
 	    TRACE("PBM_SETPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
             PROGRESS_Invalidate( infoPtr, oldVal, infoPtr->CurVal );
             UpdateWindow( infoPtr->Self );
+            NotifyWinEvent( EVENT_OBJECT_VALUECHANGE, infoPtr->Self, OBJID_CLIENT, 0 );
         }
         return oldVal;
     }

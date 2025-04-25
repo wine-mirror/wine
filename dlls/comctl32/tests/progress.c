@@ -443,6 +443,62 @@ void test_bar_states(void)
     DestroyWindow(progress_bar);
 }
 
+static const struct message step_seq[] =
+{
+    {PBM_SETRANGE, sent},
+    {PBM_SETPOS, sent},
+    {EVENT_OBJECT_VALUECHANGE, winevent_hook, OBJID_CLIENT, 0},
+    {PBM_SETPOS, sent},
+    {PBM_SETSTEP, sent},
+    {0}
+};
+
+static LRESULT WINAPI test_pbm_step_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
+{
+    static int defwndproc_counter = 0;
+    struct message msg = {0};
+    LRESULT ret;
+
+    if (message == PBM_SETSTEP
+        || message == PBM_SETRANGE
+        || message == PBM_SETPOS)
+    {
+        msg.message = message;
+        msg.flags = sent | wparam | lparam;
+        if (defwndproc_counter)
+            msg.flags |= defwinproc;
+        msg.wParam = wp;
+        msg.lParam = lp;
+        add_message(sequences, CHILD_SEQ_INDEX, &msg);
+    }
+
+    ++defwndproc_counter;
+    ret = CallWindowProcA(old_proc, hwnd, message, wp, lp);
+    --defwndproc_counter;
+    return ret;
+}
+
+void test_step_messages(void)
+{
+    HWND progress_bar;
+
+    progress_bar = create_progress(0);
+
+    old_proc = (WNDPROC)SetWindowLongPtrA(progress_bar, GWLP_WNDPROC, (LONG_PTR)test_pbm_step_proc);
+
+    flush_events();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    SendMessageA(progress_bar, PBM_SETRANGE, 0, MAKELPARAM(0, 100));
+    SendMessageA(progress_bar, PBM_SETPOS, 10, 0);
+    SendMessageA(progress_bar, PBM_SETPOS, 10, 0);
+    SendMessageA(progress_bar, PBM_SETSTEP, 20, 0);
+
+    ok_sequence(sequences, CHILD_SEQ_INDEX, step_seq, "step_seq", FALSE);
+
+    DestroyWindow(progress_bar);
+}
+
 static void init_functions(void)
 {
     HMODULE hComCtl32 = LoadLibraryA("comctl32.dll");
@@ -479,6 +535,7 @@ START_TEST(progress)
     test_setcolors();
     test_PBM_STEPIT();
     test_bar_states();
+    test_step_messages();
 
     uninit_winevent_hook();
 
