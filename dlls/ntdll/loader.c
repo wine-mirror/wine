@@ -387,7 +387,7 @@ static void WINAPI stub_entry_point( const char *dll, const char *name, void *re
 }
 
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 #ifdef __i386__
 struct stub
 {
@@ -434,7 +434,7 @@ struct stub
     BYTE jmpq_rax[2];      /* jmp %rax */
 };
 #endif
-#include "poppack.h"
+#pragma pack(pop)
 
 /*************************************************************************
  *		allocate_stub

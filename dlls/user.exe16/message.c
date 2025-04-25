@@ -99,7 +99,7 @@ static LRESULT call_window_proc_callback( HWND hwnd, UINT msg, WPARAM wp, LPARAM
  * Support for window procedure thunks
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct
 {
     WORD        popl_eax;        /* popl  %eax (return address) */
@@ -109,7 +109,7 @@ typedef struct
     BYTE        ljmp;            /* ljmp relay*/
     FARPROC16   relay;           /* __wine_call_wndproc */
 } WINPROC_THUNK;
-#include "poppack.h"
+#pragma pack(pop)
 
 #define WINPROC_HANDLE (~0u >> 16)
 #define MAX_WINPROCS32 4096
@@ -320,7 +320,7 @@ static LRESULT call_dialog_proc_Ato16( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp
 
 #define MAX_THUNKS 32
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 static struct word_break_thunk
 {
     BYTE                popl_eax;       /* popl  %eax (return address) */
@@ -330,7 +330,7 @@ static struct word_break_thunk
     BYTE                jmp;            /* ljmp call_word_break_proc16 */
     DWORD               callback;
 } *word_break_thunks;
-#include <poppack.h>
+#pragma pack(pop)
 
 /**********************************************************************
  *           call_word_break_proc16

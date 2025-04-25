@@ -44,7 +44,7 @@ static inline struct gif_decoder *impl_from_decoder(struct decoder *iface)
     return CONTAINING_RECORD(iface, struct gif_decoder, decoder);
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 struct logical_screen_descriptor
 {
@@ -76,7 +76,7 @@ struct image_descriptor
      */
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static HRESULT load_LSD_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
@@ -243,7 +243,7 @@ HRESULT IMDReader_CreateInstance(REFIID iid, void **ppv)
 
 static HRESULT load_GCE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#include "pshpack1.h"
+#pragma pack(push,1)
     struct graphic_control_extension
     {
         BYTE packed;
@@ -255,7 +255,7 @@ static HRESULT load_GCE_metadata(MetadataHandler *handler, IStream *stream, cons
          USHORT delay;
          BYTE transparent_color_index;
     } gce_data;
-#include "poppack.h"
+#pragma pack(pop)
     HRESULT hr;
     ULONG bytesread, i;
     MetadataItem *result;
@@ -318,7 +318,7 @@ HRESULT GCEReader_CreateInstance(REFIID iid, void **ppv)
 
 static HRESULT load_APE_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#include "pshpack1.h"
+#pragma pack(push,1)
     struct application_extension
     {
         BYTE extension_introducer;
@@ -326,7 +326,7 @@ static HRESULT load_APE_metadata(MetadataHandler *handler, IStream *stream, cons
         BYTE block_size;
         BYTE application[11];
     } ape_data;
-#include "poppack.h"
+#pragma pack(pop)
     HRESULT hr;
     ULONG bytesread, data_size, i;
     MetadataItem *result;
@@ -442,13 +442,13 @@ static HRESULT create_gifcomment_item(char *data, MetadataItem **item)
 
 static HRESULT load_GifComment_metadata(MetadataHandler *handler, IStream *stream, const GUID *vendor, DWORD options)
 {
-#include "pshpack1.h"
+#pragma pack(push,1)
     struct gif_extension
     {
         BYTE extension_introducer;
         BYTE extension_label;
     } ext_data;
-#include "poppack.h"
+#pragma pack(pop)
     HRESULT hr;
     ULONG bytesread, data_size;
     MetadataItem *result;

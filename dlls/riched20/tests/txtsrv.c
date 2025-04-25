@@ -529,7 +529,7 @@ static ITextHostVtbl itextHostVtbl = {
 
 static void *wrapperCodeMem = NULL;
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /* Code structure for x86 byte code */
 typedef struct
@@ -551,7 +551,7 @@ typedef struct
     int  vtablefunc_offset;
 } STDCALL_TO_THISCALL_THUNK;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static void setup_thiscall_wrappers(void)
 {

@@ -1545,7 +1545,7 @@ void WINAPI C16ThkSL01(CONTEXT *context)
  * 16<->32 Thunklet/Callback API:
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct _THUNKLET
 {
     BYTE        prefix_target;
@@ -1563,7 +1563,7 @@ typedef struct _THUNKLET
     HINSTANCE16 owner;
     struct _THUNKLET *next;
 } THUNKLET;
-#include "poppack.h"
+#pragma pack(pop)
 
 #define THUNKLET_TYPE_LS  1
 #define THUNKLET_TYPE_SL  2

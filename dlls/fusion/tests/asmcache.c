@@ -42,7 +42,7 @@ typedef struct
     WORD Streams;
 } METADATAHDR;
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -192,7 +192,7 @@ typedef struct
     BYTE Data[168];
 } RESOURCE;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 static struct _tagASSEMBLY
 {

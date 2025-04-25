@@ -1103,7 +1103,7 @@ static void get_utf8_args(int *argc, char ***argv)
 
 # define CAN_FIXUP_VTABLE 1
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 struct vtable_fixup_thunk
 {
@@ -1142,13 +1142,13 @@ static const struct vtable_fixup_thunk thunk_template = {
     NULL
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #elif __x86_64__ /* !__i386__ */
 
 # define CAN_FIXUP_VTABLE 1
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 struct vtable_fixup_thunk
 {
@@ -1210,7 +1210,7 @@ static const struct vtable_fixup_thunk thunk_template = {
     {0x48,0x8B,0x00,0xFF,0xE0}
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #else /* !__i386__ && !__x86_64__ */
 

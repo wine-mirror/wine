@@ -38,7 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(task);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 struct thunk
 {
@@ -58,7 +58,7 @@ typedef struct
     struct thunk thunks[1];
 } THUNKS;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 

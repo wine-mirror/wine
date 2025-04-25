@@ -58,7 +58,7 @@ static BOOL INT21_RenameFile( CONTEXT *context );
 WINE_DEFAULT_DEBUG_CHANNEL(int21);
 
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /*
  * Extended Drive Parameter Block.
@@ -196,7 +196,7 @@ typedef struct
     DWORD  filesize;             /* 1c file size */
 } DOS_DIRENTRY_LAYOUT;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 /* dos file attributes */
 #define FA_NORMAL    0x00        /* Normal file, no attributes */

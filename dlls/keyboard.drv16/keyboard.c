@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct _KBINFO
 {
     BYTE Begin_First_Range;
@@ -46,7 +46,7 @@ typedef struct _KBINFO
     BYTE End_Second_Range;
     WORD StateSize;
 } KBINFO, *LPKBINFO;
-#include "poppack.h"
+#pragma pack(pop)
 
 static FARPROC16 DefKeybEventProc;
 static LPBYTE pKeyStateTable;

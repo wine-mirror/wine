@@ -62,7 +62,7 @@ DEFINE_GUID( SHELL32_AdvtShortcutComponent,
 
 /* link file formats */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct _LINK_HEADER
 {
@@ -111,7 +111,7 @@ typedef struct volume_info_t
     WCHAR label[12];  /* assume 8.3 */
 } volume_info;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 /* IShellLink Implementation */
 

@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct thunk_32to64
 {
     BYTE  ljmp;   /* jump far, absolute indirect */
@@ -45,7 +45,7 @@ struct thunk_opcodes
     struct thunk_32to64 syscall_thunk;
     struct thunk_32to64 unix_thunk;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static BYTE DECLSPEC_ALIGN(4096) code_buffer[0x1000];
 

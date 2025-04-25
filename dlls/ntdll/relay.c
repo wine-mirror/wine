@@ -934,7 +934,7 @@ void RELAY_SetupDLL( HMODULE module )
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef	struct
 {
@@ -974,7 +974,7 @@ typedef struct tagSNOOP_RETURNENTRIES {
 	struct tagSNOOP_RETURNENTRIES	*next;
 } SNOOP_RETURNENTRIES;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 extern void WINAPI SNOOP_Entry(void);
 extern void WINAPI SNOOP_Return(void);

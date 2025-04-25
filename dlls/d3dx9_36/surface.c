@@ -87,7 +87,7 @@ static const GUID *wic_guid_from_d3dx_pixel_format_id(enum d3dx_pixel_format_id 
 #define TGA_IMAGE_RIGHTTOLEFT 0x10
 #define TGA_IMAGE_TOPTOBOTTOM 0x20
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct tga_header
 {
     uint8_t  id_length;
@@ -103,7 +103,7 @@ struct tga_header
     uint8_t  depth;
     uint8_t  image_descriptor;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 HRESULT lock_surface(IDirect3DSurface9 *surface, const RECT *surface_rect, D3DLOCKED_RECT *lock,
         IDirect3DSurface9 **temp_surface, BOOL write)

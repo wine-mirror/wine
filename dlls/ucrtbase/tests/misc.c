@@ -1608,7 +1608,7 @@ static void test_fopen_exclusive( void )
 }
 
 #if defined(__i386__)
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct rewind_thunk {
     BYTE push_esp[4]; /* push [esp+0x4] */
     BYTE call_rewind; /* call */
@@ -1616,7 +1616,7 @@ struct rewind_thunk {
     BYTE pop_eax; /* pop eax */
     BYTE ret; /* ret */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static FILE * (CDECL *test_rewind_wrapper)(FILE *fp);
 

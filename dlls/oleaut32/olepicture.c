@@ -63,7 +63,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(olepicture);
 #define BITMAP_FORMAT_PNG   0x5089
 #define BITMAP_FORMAT_APM   0xcdd7
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /* Header for Aldus Placable Metafiles - a standard metafile follows */
 typedef struct _APM_HEADER
@@ -98,7 +98,7 @@ typedef struct
     CURSORICONFILEDIRENTRY  idEntries[1];
 } CURSORICONFILEDIR;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 typedef struct
 {

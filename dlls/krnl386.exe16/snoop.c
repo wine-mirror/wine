@@ -32,7 +32,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(snoop);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef	struct tagSNOOP16_FUN {
 	/* code part */
@@ -70,7 +70,7 @@ typedef struct tagSNOOP16_RETURNENTRIES {
 	struct tagSNOOP16_RETURNENTRIES	*next;
 } SNOOP16_RETURNENTRIES;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static	SNOOP16_DLL		*firstdll = NULL;
 static	SNOOP16_RETURNENTRIES 	*firstrets = NULL;

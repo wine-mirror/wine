@@ -4166,7 +4166,7 @@ static void test_image_properties(void)
 #define IFD_FLOAT     11
 #define IFD_DOUBLE    12
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct IFD_entry
 {
     SHORT id;
@@ -4258,7 +4258,7 @@ static const struct tiff_data
     { { 0x01020304, 0x05060708 }, { 0x10203040, 0x50607080 }, { 0x11223344, 0x55667788 } },
     { 0x11, 0x22, 0x33, 0 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_tiff_properties(void)
 {
@@ -6456,7 +6456,7 @@ static void test_graphics_clear(void)
     GdipDisposeImage((GpImage *)bitmap);
 }
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 static const struct tiff_1x1_data
 {
     USHORT byte_order;
@@ -6499,7 +6499,7 @@ static const struct tiff_1x1_data
     { 8,8,8,0 },
     { 1,0,2,3,4,5,6,7,8,9,0,1,2,3,4,5 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_tiff_color_formats(void)
 {

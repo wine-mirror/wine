@@ -69,7 +69,7 @@ static NTSTATUS (WINAPI *pNtTestAlert)(void);
 
 #ifdef __i386__
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct fastcall_thunk
 {
     BYTE pop_edx;   /* popl %edx            (ret addr) */
@@ -78,7 +78,7 @@ struct fastcall_thunk
     BYTE xchg[3];   /* xchgl (%esp),%edx    (param 2) */
     WORD jmp_eax;   /* jmp  *%eax */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void * (WINAPI *call_fastcall_func4)(void *func, const void *a, const void *b, const void *c, const void *d);
 
@@ -1770,13 +1770,13 @@ static CONDITION_VARIABLE aligned_cv;
 static CRITICAL_SECTION condvar_crit;
 static SRWLOCK condvar_srwlock;
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 static struct
 {
     char c;
     CONDITION_VARIABLE cv;
 } unaligned_cv;
-#include "poppack.h"
+#pragma pack(pop)
 
 /* Sequence of wake/sleep to check boundary conditions:
  * 0: init
@@ -2006,13 +2006,13 @@ static struct
 } srwlock_base_errors;
 
 #if defined(__i386__) || defined(__x86_64__)
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct
 {
     char c;
     SRWLOCK lock;
 } unaligned_srwlock;
-#include "poppack.h"
+#pragma pack(pop)
 #endif
 
 /* Sequence of acquire/release to check boundary conditions:

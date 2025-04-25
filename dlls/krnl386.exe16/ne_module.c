@@ -42,7 +42,7 @@ WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct _GPHANDLERDEF
 {
     WORD selector;
@@ -50,7 +50,7 @@ typedef struct _GPHANDLERDEF
     WORD rangeEnd;
     WORD handler;
 } GPHANDLERDEF;
-#include "poppack.h"
+#pragma pack(pop)
 
 /*
  * Segment table entry

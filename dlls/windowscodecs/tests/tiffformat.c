@@ -48,7 +48,7 @@ static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 #define IFD_FLOAT 11
 #define IFD_DOUBLE 12
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct IFD_entry
 {
     SHORT id;
@@ -346,7 +346,7 @@ static const struct tiff_4bps_bgra
     { 0x12,0x34,0x70, 0xe8,0xf0,0xa0 }
 },
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static IWICImagingFactory *factory;
 
@@ -841,7 +841,7 @@ static void test_tiff_24bpp(void)
     IWICBitmapDecoder_Release(decoder);
 }
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 static const struct tiff_1x1_data
 {
     USHORT byte_order;
@@ -881,7 +881,7 @@ static const struct tiff_1x1_data
     { 8,8,8,0 },
     { 1,0,2,3,4,5,6,7,8,9,0,1,2,3,4,5 }
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static UINT width_bytes(UINT width, UINT bpp)
 {

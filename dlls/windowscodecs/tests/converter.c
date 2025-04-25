@@ -1483,7 +1483,7 @@ static void check_png_format(IStream *stream, const WICPixelFormatGUID *format)
 
 static void check_gif_format(IStream *stream, const WICPixelFormatGUID *format)
 {
-#include "pshpack1.h"
+#pragma pack(push,1)
     struct logical_screen_descriptor
     {
         char signature[6];
@@ -1498,7 +1498,7 @@ static void check_gif_format(IStream *stream, const WICPixelFormatGUID *format)
         BYTE background_color_index;
         BYTE pixel_aspect_ratio;
     } lsd;
-#include "poppack.h"
+#pragma pack(pop)
     UINT color_resolution;
     HRESULT hr;
 

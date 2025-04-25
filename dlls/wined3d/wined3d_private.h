@@ -178,7 +178,7 @@ enum complex_fixup
     COMPLEX_FIXUP_YUV  = 6,
 };
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 struct color_fixup_desc
 {
     unsigned short x_sign_fixup : 1;
@@ -190,7 +190,7 @@ struct color_fixup_desc
     unsigned short w_sign_fixup : 1;
     unsigned short w_source : 3;
 };
-#include <poppack.h>
+#pragma pack(pop)
 
 struct fragment_caps
 {

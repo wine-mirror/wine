@@ -26,7 +26,7 @@
 #include "winternl.h"
 #include "wine/asm.h"
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /* In-memory module structure. See 'Windows Internals' p. 219 */
 typedef struct _NE_MODULE
@@ -154,7 +154,7 @@ extern void __wine_call_from_16_regs(void);
 
 extern THHOOK *pThhook;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #define NE_SEG_TABLE(pModule) \
     ((SEGTABLEENTRY *)((char *)(pModule) + (pModule)->ne_segtab))

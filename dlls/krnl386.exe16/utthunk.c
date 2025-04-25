@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -53,7 +53,7 @@ typedef struct
 
 } UT32THUNK;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 typedef struct _UTINFO
 {

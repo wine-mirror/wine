@@ -100,7 +100,7 @@ extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPA
 extern void SPY_ExitMessage( INT iFlag, HWND hwnd, UINT msg,
                              LRESULT lReturn, WPARAM wParam, LPARAM lParam );
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -154,7 +154,7 @@ typedef struct
     CURSORICONFILEDIRENTRY  idEntries[1];
 } CURSORICONFILEDIR;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 extern int bitmap_info_size( const BITMAPINFO * info, WORD coloruse );
 extern BOOL get_icon_size( HICON handle, SIZE *size );

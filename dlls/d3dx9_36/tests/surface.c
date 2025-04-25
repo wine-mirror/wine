@@ -494,7 +494,7 @@ static void test_dds_header_handling(void)
 #define IMAGE_RIGHTTOLEFT 0x10
 #define IMAGE_TOPTOBOTTOM 0x20
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct tga_header
 {
     uint8_t  id_length;
@@ -517,7 +517,7 @@ struct tga_footer
     uint32_t developer_directory_offset;
     uint8_t magic[18];
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static const struct tga_footer default_tga_footer = {
     0, 0,

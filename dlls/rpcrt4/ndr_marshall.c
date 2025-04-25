@@ -2744,7 +2744,7 @@ ULONG WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 
 /* Complex types */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct
 {
     unsigned char type;
@@ -2752,7 +2752,7 @@ typedef struct
     ULONG low_value;
     ULONG high_value;
 } NDR_RANGE;
-#include "poppack.h"
+#pragma pack(pop)
 
 static ULONG EmbeddedComplexSize(MIDL_STUB_MESSAGE *pStubMsg,
                                  PFORMAT_STRING pFormat)
@@ -4677,7 +4677,7 @@ void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, LO
      is to raise an exception */
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct _NDR_CSTRUCT_FORMAT
 {
     unsigned char type;
@@ -4685,7 +4685,7 @@ typedef struct _NDR_CSTRUCT_FORMAT
     unsigned short memory_size;
     short offset_to_array_description;
 } NDR_CSTRUCT_FORMAT, NDR_CVSTRUCT_FORMAT;
-#include "poppack.h"
+#pragma pack(pop)
 
 /***********************************************************************
  *           NdrConformantStructMarshall [RPCRT4.@]
@@ -5140,7 +5140,7 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
     EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct
 {
     unsigned char type;
@@ -5154,7 +5154,7 @@ typedef struct
     unsigned char alignment;
     ULONG total_size;
 } NDR_LGFARRAY_FORMAT;
-#include "poppack.h"
+#pragma pack(pop)
 
 /***********************************************************************
  *           NdrFixedArrayMarshall [RPCRT4.@]

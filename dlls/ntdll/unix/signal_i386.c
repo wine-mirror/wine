@@ -1305,7 +1305,7 @@ static inline BOOL check_invalid_gs( ucontext_t *sigcontext, CONTEXT *context )
 }
 
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 union atl_thunk
 {
     struct
@@ -1347,7 +1347,7 @@ union atl_thunk
         WORD  inst2;
     } t5;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 /**********************************************************************
  *		check_atl_thunk

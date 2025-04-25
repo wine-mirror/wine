@@ -64,7 +64,7 @@ static BOOL CALLBACK get_process_windows(HWND hwnd, LPARAM lp)
     return TRUE;
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -86,7 +86,7 @@ typedef struct
     GRPICONDIRENTRY idEntries[1];
 } GRPICONDIR;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static void quit_reply(int reply)
 {

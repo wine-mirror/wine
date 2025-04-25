@@ -3706,7 +3706,7 @@ static void child_process(const char *dll_name, DWORD target_offset)
 static void test_ExitProcess(void)
 {
 #if defined(__i386__) || defined(__x86_64__) || defined(__aarch64__)
-#include "pshpack1.h"
+#pragma pack(push,1)
 #ifdef __x86_64__
     static struct section_data
     {
@@ -3729,7 +3729,7 @@ static void test_ExitProcess(void)
         void *target;
     } section_data = { 0x58000040, 0xd61f0000, dll_entry_point };
 #endif
-#include "poppack.h"
+#pragma pack(pop)
     DWORD dummy, file_align;
     HANDLE file, thread, process, hmap, hmap_dup;
     char temp_path[MAX_PATH], dll_name[MAX_PATH], cmdline[MAX_PATH * 2];

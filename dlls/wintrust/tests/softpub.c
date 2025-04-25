@@ -656,7 +656,7 @@ static void test_provider_funcs(void)
 #define RVA_IDATA 0x3000
 #define FILE_TOTAL 0x600
 #define RVA_TOTAL 0x4000
-#include <pshpack1.h>
+#pragma pack(push,1)
 struct Imports {
     IMAGE_IMPORT_DESCRIPTOR descriptors[2];
     IMAGE_THUNK_DATA32 original_thunks[2];
@@ -735,7 +735,7 @@ static struct _PeImage {
     /* final alignment */
     {0}
 };
-#include <poppack.h>
+#pragma pack(pop)
 
 static void test_sip_create_indirect_data(void)
 {

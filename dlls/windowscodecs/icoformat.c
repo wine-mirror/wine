@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct {
     BYTE bWidth;
@@ -51,7 +51,7 @@ typedef struct
     WORD idCount;
 } ICONHEADER;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 typedef struct {
     IWICBitmapDecoder IWICBitmapDecoder_iface;

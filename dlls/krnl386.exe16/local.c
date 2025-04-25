@@ -87,7 +87,7 @@ typedef struct
 
 #define MOVEABLE_PREFIX sizeof(HLOCAL16)
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -137,7 +137,7 @@ typedef struct
     DWORD dwNextAlt;             /* 1A */
 } LOCAL32ENTRY;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #define LOCAL_HEAP_MAGIC  0x484c  /* 'LH' */
 
@@ -160,7 +160,7 @@ typedef struct
 #define HTABLE_PAGESIZE  0x1000
 #define HTABLE_NPAGES    (HTABLE_SIZE / HTABLE_PAGESIZE)
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct _LOCAL32HEADER
 {
     WORD     freeListFirst[HTABLE_NPAGES];
@@ -181,7 +181,7 @@ typedef struct _LOCAL32HEADER
     HANDLE heap;
 
 } LOCAL32HEADER;
-#include "poppack.h"
+#pragma pack(pop)
 
 #define LOCAL32_MAGIC    ((DWORD)('L' | ('H'<<8) | ('3'<<16) | ('2'<<24)))
 

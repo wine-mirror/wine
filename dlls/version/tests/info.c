@@ -573,7 +573,7 @@ static void test_VerQueryValueA(void)
 }
 
 /* taken from fusionpriv.h */
-    #include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct
 {
     WORD wLength;
@@ -620,7 +620,7 @@ typedef struct rsrc_section_t
     WCHAR ProductVersion_val[8];
 } rsrc_section_t;
 
-#include <poppack.h>
+#pragma pack(pop)
 
 #define    RT_VERSION_DW       16
 static const rsrc_section_t rsrc_section =

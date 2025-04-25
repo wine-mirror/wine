@@ -24,7 +24,7 @@
 
 #include "wine/debug.h"
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 /* SoundFont 2.04 data structures, from http://www.synthfont.com/sfspec24.pdf */
 
@@ -301,7 +301,7 @@ struct sf_sample /* <shdr-rec> */
 
 C_ASSERT(sizeof(struct sf_sample) == 46);
 
-#include <poppack.h>
+#pragma pack(pop)
 
 struct soundfont
 {

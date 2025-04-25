@@ -65,7 +65,7 @@ static char *load_resource(const char *name)
 #define FILE_TOTAL 0x600
 #define RVA_TOTAL 0x4000
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 struct imports
 {
     IMAGE_IMPORT_DESCRIPTOR descriptors[2];
@@ -223,7 +223,7 @@ bin64 =
     /* final alignment */
     {0}
 };
-#include <poppack.h>
+#pragma pack(pop)
 
 struct blob
 {

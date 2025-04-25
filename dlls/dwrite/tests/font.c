@@ -123,7 +123,7 @@ static BOOL (WINAPI *pGetFontRealizationInfo)(HDC hdc, void *);
 static const WCHAR test_fontfile[] = L"wine_test_font.ttf";
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
-#include "pshpack2.h"
+#pragma pack(push,2)
 typedef struct
 {
     USHORT majorVersion;
@@ -448,7 +448,7 @@ enum opentype_cmap_table_format
     OPENTYPE_CMAP_TABLE_SEGMENTED_COVERAGE = 12,
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static void *create_factory_iid(REFIID riid)
 {

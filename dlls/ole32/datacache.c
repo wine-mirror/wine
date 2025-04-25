@@ -565,7 +565,7 @@ static HRESULT synthesize_emf( HMETAFILEPICT data, STGMEDIUM *med )
     GlobalUnlock( data );
     return hr;
 }
-#include <pshpack2.h>
+#pragma pack(push,2)
 struct meta_placeable
 {
     DWORD key;
@@ -575,7 +575,7 @@ struct meta_placeable
     DWORD reserved;
     WORD checksum;
 };
-#include <poppack.h>
+#pragma pack(pop)
 
 static HRESULT load_mf_pict( DataCacheEntry *cache_entry, IStream *stm )
 {

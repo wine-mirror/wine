@@ -25,7 +25,7 @@
 #include "windef.h"
 #include "winbase.h"
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 /* Target status codes */
 #define STATUS_GOOD             0x00
@@ -71,6 +71,6 @@
 
 #define SENSE_BUFFER(prb) (&prb->CDBByte[prb->SRB_CDBLen])
 
-#include "poppack.h"
+#pragma pack(pop)
 
 #endif

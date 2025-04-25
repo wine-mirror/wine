@@ -2601,7 +2601,7 @@ HANDLE WINAPI AddFontMemResourceEx( void *ptr, DWORD size, void *dv, DWORD *coun
 static const char dos_string[0x40] = "This is a TrueType resource file";
 static const char FONTRES[] = {'F','O','N','T','R','E','S',':'};
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 
 struct ne_typeinfo
 {
@@ -2630,7 +2630,7 @@ struct rsrc_tab
     BYTE fontdir_res_name[8];
 };
 
-#include <poppack.h>
+#pragma pack(pop)
 
 static BOOL create_fot( const WCHAR *resource, const WCHAR *font_file, const struct fontdir *fontdir )
 {

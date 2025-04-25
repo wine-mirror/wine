@@ -453,7 +453,7 @@ static void WINAPI PMemoryAllocator_Free(PMemoryAllocator *_this, void *pv)
 
 #ifdef __i386__
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 typedef struct
 {
     BYTE pop_eax;  /* popl  %eax  */
@@ -462,7 +462,7 @@ typedef struct
     BYTE jmp_func; /* jmp   $func */
     DWORD func;
 } THISCALL_TO_STDCALL_THUNK;
-#include "poppack.h"
+#pragma pack(pop)
 
 static THISCALL_TO_STDCALL_THUNK *wrapperCodeMem = NULL;
 

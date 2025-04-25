@@ -551,7 +551,7 @@ static const struct column col_winsat[] =
     { L"WinSPRLevel",           CIM_REAL32 },
 };
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct record_associator
 {
     const WCHAR *assocclass;
@@ -1054,7 +1054,7 @@ struct record_winsat
     UINT32       winsatassessmentstate;
     FLOAT        winsprlevel;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static const struct record_associator data_associator[] =
 {
@@ -1231,7 +1231,7 @@ static BOOL resize_table( struct table *table, UINT row_count, UINT row_size )
     return TRUE;
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct smbios_prologue
 {
     BYTE  calling_method;
@@ -1334,7 +1334,7 @@ struct smbios_processor
     WORD                 core_enabled2;
     WORD                 thread_count2;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 #define RSMB (('R' << 24) | ('S' << 16) | ('M' << 8) | 'B')
 

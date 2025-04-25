@@ -131,7 +131,7 @@ enum opentype_cmap_table_encoding
 };
 
 /* PANOSE is 10 bytes in size, need to pack the structure properly */
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct tt_head
 {
     USHORT majorVersion;
@@ -841,7 +841,7 @@ struct kern_subtable_header
     uint16_t coverage;
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 enum TT_NAME_WINDOWS_ENCODING_ID
 {
@@ -1415,7 +1415,7 @@ static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
-#include "pshpack1.h"
+#pragma pack(push,1)
     /* Specified in Adobe TechNote #5178 */
     struct pfm_header {
         WORD  dfVersion;
@@ -1424,7 +1424,7 @@ static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *fo
         DWORD dfDevice;
         char  data1[12];
     };
-#include "poppack.h"
+#pragma pack(pop)
     struct type1_header {
         WORD tag;
         char data[14];

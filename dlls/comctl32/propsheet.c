@@ -68,7 +68,7 @@
 /******************************************************************************
  * Data structures
  */
-#include "pshpack2.h"
+#pragma pack(push,2)
 
 typedef struct
 {
@@ -90,7 +90,7 @@ typedef struct
   short cy;
   DWORD id;
 } MyDLGITEMTEMPLATEEX;
-#include "poppack.h"
+#pragma pack(pop)
 
 struct _PSP
 {

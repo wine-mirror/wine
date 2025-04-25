@@ -128,7 +128,7 @@ struct hid_report_descriptor
     BYTE next_report_id[3];
 };
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct hid_haptics_feature
 {
     WORD waveform;
@@ -143,7 +143,7 @@ struct hid_haptics_features
     struct hid_haptics_feature left;
     struct hid_haptics_feature right;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 struct hid_haptics
 {

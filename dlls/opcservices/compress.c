@@ -31,7 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msopc);
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 struct local_file_header
 {
     DWORD signature;
@@ -85,7 +85,7 @@ struct central_directory_end
     DWORD directory_offset;
     WORD comment_length;
 };
-#include <poppack.h>
+#pragma pack(pop)
 
 #define CENTRAL_DIR_SIGNATURE 0x02014b50
 #define LOCAL_HEADER_SIGNATURE 0x04034b50

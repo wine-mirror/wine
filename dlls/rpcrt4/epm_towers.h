@@ -48,7 +48,7 @@
 #define EPM_PROTOCOL_UNIX_DS  		0x20 /* Unix domain socket */
 #define EPM_PROTOCOL_NULL			0x21
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -83,4 +83,4 @@ typedef struct
     u_int16 count_rhs;
 } twr_empty_floor_t;
 
-#include <poppack.h>
+#pragma pack(pop)

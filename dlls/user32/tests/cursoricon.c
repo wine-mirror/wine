@@ -31,7 +31,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -291,7 +291,7 @@ riff_cursor3_seq_t empty_anicursor3_seq = {
     }
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static char **test_argv;
 static int test_argc;

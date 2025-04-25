@@ -1562,7 +1562,7 @@ static void test_FolderShortcut(void) {
     IPersistFolder3_Release(pPersistFolder3);
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct FileStructA {
     BYTE  type;
     BYTE  dummy;
@@ -1586,7 +1586,7 @@ struct FileStructW {
     WORD  cbOffset;     /* FileStructW's offset from the beginning of the SHITMEID. 
                          * SHITEMID->cb == uOffset + cbLen */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_ITEMIDLIST_format(void) {
     WCHAR wszPersonal[MAX_PATH];

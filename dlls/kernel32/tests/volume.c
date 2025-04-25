@@ -30,24 +30,24 @@
 #include "ddk/mountmgr.h"
 #include "wine/test.h"
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 struct COMPLETE_DVD_LAYER_DESCRIPTOR
 {
     DVD_DESCRIPTOR_HEADER Header;
     DVD_LAYER_DESCRIPTOR Descriptor;
     UCHAR Padding;
 };
-#include <poppack.h>
+#pragma pack(pop)
 C_ASSERT(sizeof(struct COMPLETE_DVD_LAYER_DESCRIPTOR) == 22);
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR
 {
     DVD_DESCRIPTOR_HEADER Header;
     DVD_MANUFACTURER_DESCRIPTOR Descriptor;
     UCHAR Padding;
 };
-#include <poppack.h>
+#pragma pack(pop)
 C_ASSERT(sizeof(struct COMPLETE_DVD_MANUFACTURER_DESCRIPTOR) == 2053);
 
 static HINSTANCE hdll;

@@ -343,7 +343,7 @@ BOOL hid_device_add_axes(struct unix_device *iface, BYTE count, USAGE usage_page
     return TRUE;
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct hid_haptics_intensity
 {
     UINT16 rumble_intensity;
@@ -351,7 +351,7 @@ struct hid_haptics_intensity
     UINT16 left_intensity;
     UINT16 right_intensity;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 BOOL hid_device_add_haptics(struct unix_device *iface)
 {
@@ -455,7 +455,7 @@ BOOL hid_device_add_haptics(struct unix_device *iface)
     return TRUE;
 }
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct pid_device_control
 {
     BYTE control_index;
@@ -554,7 +554,7 @@ struct pid_effect_state
     BYTE flags;
     BYTE index;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static BOOL hid_descriptor_add_axes_enable(struct unix_device *iface, USHORT axes_count)
 {

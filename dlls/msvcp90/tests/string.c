@@ -110,7 +110,7 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
 /* Emulate a __thiscall */
 #ifdef __i386__
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct thiscall_thunk
 {
     BYTE pop_eax;    /* popl  %eax (ret addr) */
@@ -119,7 +119,7 @@ struct thiscall_thunk
     BYTE push_eax;   /* pushl %eax */
     WORD jmp_edx;    /* jmp  *%edx */
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
 static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );

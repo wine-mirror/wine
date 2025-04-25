@@ -2508,7 +2508,7 @@ done:
 static NTSTATUS read_directory_data_getattrlist( struct dir_data *data, const char *unix_name )
 {
     struct attrlist attrlist;
-#include "pshpack4.h"
+#pragma pack(push,4)
     struct
     {
         u_int32_t length;
@@ -2516,7 +2516,7 @@ static NTSTATUS read_directory_data_getattrlist( struct dir_data *data, const ch
         fsobj_type_t type;
         char name[NAME_MAX * 3 + 1];
     } buffer;
-#include "poppack.h"
+#pragma pack(pop)
 
     memset( &attrlist, 0, sizeof(attrlist) );
     attrlist.bitmapcount = ATTR_BIT_MAP_COUNT;

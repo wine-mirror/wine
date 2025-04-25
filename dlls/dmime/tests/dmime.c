@@ -1681,7 +1681,7 @@ static void test_midi(void)
     DMUS_MIDI_PMSG *midi;
     DMUS_PATCH_PMSG *patch;
     DMUS_TEMPO_PARAM tempo_param;
-#include <pshpack1.h>
+#pragma pack(push,1)
     struct
     {
         char magic[4];
@@ -1701,7 +1701,7 @@ static void test_midi(void)
     {
         .magic = "MTrk",
     };
-#include <poppack.h>
+#pragma pack(pop)
     load_resource(L"test.mid", test_mid);
     /* This is a MIDI file with wrong track length. */
     load_resource(L"bogus.mid", bogus_mid);

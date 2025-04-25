@@ -296,7 +296,7 @@ enum ifd_entry_type
     IFD_IFD = 13,
 };
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct IFD_entry
 {
     SHORT id;
@@ -367,7 +367,7 @@ static const struct ifd_data
     { (FLOAT)1234.5678, (FLOAT)8765.4321 },
     { { 0x01020304, 0x05060708 }, { 0x10203040, 0x50607080 }, { 0x11223344, 0x55667788 } },
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static const char metadata_unknown[] = "lalala";
 
@@ -2161,7 +2161,7 @@ static void test_ifd_content(IWICMetadataReader *reader)
 
 static void test_metadata_Ifd(void)
 {
-#include "pshpack2.h"
+#pragma pack(push,2)
     static const struct ifd0_data
     {
         USHORT count;
@@ -2178,7 +2178,7 @@ static void test_metadata_Ifd(void)
             { 0x8825, IFD_LONG, 1, 0 },
         },
     };
-#include "poppack.h"
+#pragma pack(pop)
 
     IWICMetadataReader *reader;
     IWICMetadataWriter *writer;
@@ -5525,7 +5525,7 @@ if (SUCCEEDED(hr))
     IStream_Release(stream);
 }
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 static const struct app1_data
 {
     BYTE exif_header[6];
@@ -5578,7 +5578,7 @@ app1_data =
     },
     0,
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 static void test_metadata_App1(void)
 {

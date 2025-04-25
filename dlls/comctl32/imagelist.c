@@ -84,7 +84,7 @@ struct _IMAGELIST
 #define IMAGELIST_MAGIC 0x53414D58
 
 /* Header used by ImageList_Read() and ImageList_Write() */
-#include "pshpack2.h"
+#pragma pack(push,2)
 typedef struct _ILHEAD
 {
     USHORT	usMagic;
@@ -98,7 +98,7 @@ typedef struct _ILHEAD
     WORD	flags;
     SHORT	ovls[4];
 } ILHEAD;
-#include "poppack.h"
+#pragma pack(pop)
 
 /* internal image list data used for Drag & Drop operations */
 typedef struct

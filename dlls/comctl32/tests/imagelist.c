@@ -43,7 +43,7 @@
 
 #define IMAGELIST_MAGIC (('L' << 8) | 'I')
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 /* Header used by ImageList_Read() and ImageList_Write() */
 typedef struct _ILHEAD
 {
@@ -58,7 +58,7 @@ typedef struct _ILHEAD
     WORD	flags;
     SHORT	ovls[4];
 } ILHEAD;
-#include "poppack.h"
+#pragma pack(pop)
 
 static HIMAGELIST (WINAPI *pImageList_Create)(int, int, UINT, int, int);
 static BOOL (WINAPI *pImageList_Destroy)(HIMAGELIST);

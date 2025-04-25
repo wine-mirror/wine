@@ -80,7 +80,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 struct smbios_prologue
 {
@@ -223,7 +223,7 @@ struct smbios_wine_core_id_regs_arm64
     } regs[];
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 enum smbios_type
 {

@@ -52,7 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
-#include "pshpack2.h"
+#pragma pack(push,2)
 struct ttc_header_v1
 {
     CHAR TTCTag[4];
@@ -158,7 +158,7 @@ struct tt_head
     SHORT index_format;
     SHORT glyphdata_format;
 };
-#include "poppack.h"
+#pragma pack(pop)
 
 enum OPENTYPE_PLATFORM_ID
 {

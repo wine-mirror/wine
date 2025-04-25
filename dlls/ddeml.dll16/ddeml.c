@@ -154,7 +154,7 @@ static HDDEDATA	CALLBACK WDML_InvokeCallback16(DWORD pfn16, UINT uType, UINT uFm
  * WDML_InvokeCallback16.
  * The code below is mainly to create the thunks themselves
  */
-#include "pshpack1.h"
+#pragma pack(push,1)
 static struct ddeml_thunk
 {
     BYTE        popl_eax;        /* popl  %eax (return address) */
@@ -165,7 +165,7 @@ static struct ddeml_thunk
     DWORD       callback;
     DWORD       instId;          /* instance ID */
 } *DDEML16_Thunks;
-#include "poppack.h"
+#pragma pack(pop)
 
 static CRITICAL_SECTION ddeml_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
