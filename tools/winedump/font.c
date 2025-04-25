@@ -31,7 +31,7 @@
 
 #include "winedump.h"
 
-#include <pshpack1.h>
+#pragma pack(push,1)
 typedef struct
 {
     INT16 dfType;
@@ -77,7 +77,7 @@ typedef struct
     char dfCopyright[60];	/* Copyright notice */
     FONTINFO16 fi;		/* FONTINFO structure */
 } WINFNT;
-#include <poppack.h>
+#pragma pack(pop)
 
 /* FIXME: recognize and dump also NE/PE wrapped fonts */
 

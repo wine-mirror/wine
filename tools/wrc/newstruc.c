@@ -35,7 +35,7 @@
 
 #include "wingdi.h"	/* for BITMAPINFOHEADER */
 
-#include <pshpack2.h>
+#pragma pack(push,2)
 typedef struct
 {
     unsigned int   biSize;
@@ -44,7 +44,7 @@ typedef struct
     unsigned short biPlanes;
     unsigned short biBitCount;
 } BITMAPOS2HEADER;
-#include <poppack.h>
+#pragma pack(pop)
 
 /* New instances for all types of structures */
 /* Very inefficient (in size), but very functional :-]

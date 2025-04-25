@@ -282,7 +282,7 @@ typedef struct {
  *
  */
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct {
 /*00*/	unsigned int   SLTG_magic;	/* 0x47544c53  == "SLTG" */
@@ -579,7 +579,7 @@ WORD offset from start of block to SAFEARRAY
 WORD typeofarray
 */
 
-#include "poppack.h"
+#pragma pack(pop)
 
 /*---------------------------END--------------------------------------------*/
 #endif

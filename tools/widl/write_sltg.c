@@ -85,7 +85,7 @@ struct sltg_hrefmap
     int *href;
 };
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 struct sltg_typeinfo_header
 {
     short magic;
@@ -221,7 +221,7 @@ struct sltg_impl_info
     short pos;
 };
 
-#include "poppack.h"
+#pragma pack(pop)
 
 static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type);
 static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *type);

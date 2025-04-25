@@ -42,7 +42,7 @@
 #include "basetsd.h"
 #include "../tools.h"
 
-#include "pshpack1.h"
+#pragma pack(push,1)
 
 typedef struct
 {
@@ -137,7 +137,7 @@ typedef struct
 } FT_Version_t;
 static FT_Version_t FT_Version;
 
-#include "poppack.h"
+#pragma pack(pop)
 
 unsigned char *output_buffer = NULL;
 size_t output_buffer_pos = 0;
