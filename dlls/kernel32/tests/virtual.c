@@ -4624,7 +4624,7 @@ static DWORD CALLBACK sbtest_thread_proc( void *arg )
     return 0;
 }
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
 
 #pragma intrinsic(_ReadWriteBarrier)
 void _ReadWriteBarrier(void);
@@ -4635,14 +4635,14 @@ static void WINAPI compiler_barrier(void)
     _ReadWriteBarrier();
 }
 
-#else  /* _MSC_VER */
+#else  /* defined(_MSC_VER) && !defined(__clang__) */
 
 static void WINAPI compiler_barrier(void)
 {
     __asm__ __volatile__("" ::: "memory");
 }
 
-#endif  /* _MSC_VER */
+#endif  /* defined(_MSC_VER) && !defined(__clang__) */
 
 static LONG store_buffer_litmus_test( void (*WINAPI barrier0)(void), void (*WINAPI barrier1)(void) )
 {
