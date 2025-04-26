@@ -1641,23 +1641,24 @@ static HRESULT uia_provider_get_special_prop_val(struct uia_provider *prov,
         static const WCHAR *provider_origin = L" (unmanaged:uiautomationcore.dll)";
         static const WCHAR *default_desc = L"Unidentified provider";
         BSTR prov_desc_str;
+        const WCHAR *str;
         VARIANT v;
 
         hr = uia_provider_get_elem_prop_val(prov, prop_info, &v);
         if (FAILED(hr))
             return hr;
 
-        if (V_VT(&v) == VT_BSTR)
-            prov_desc_str = SysAllocStringLen(V_BSTR(&v), lstrlenW(V_BSTR(&v)) + lstrlenW(provider_origin));
-        else
-            prov_desc_str = SysAllocStringLen(default_desc, lstrlenW(default_desc) + lstrlenW(provider_origin));
+        str = V_VT(&v) == VT_BSTR ? V_BSTR(&v) : default_desc;
+        prov_desc_str = SysAllocStringLen(NULL, lstrlenW(str) + lstrlenW(provider_origin));
 
         VariantClear(&v);
         if (!prov_desc_str)
             return E_OUTOFMEMORY;
 
         /* Append the name of the executable our provider comes from. */
-        wsprintfW(&prov_desc_str[lstrlenW(prov_desc_str)], L"%s", provider_origin);
+        wcscpy(prov_desc_str, str);
+        wcscat(prov_desc_str, provider_origin);
+
         V_VT(ret_val) = VT_BSTR;
         V_BSTR(ret_val) = prov_desc_str;
         break;
