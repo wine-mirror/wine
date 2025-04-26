@@ -2333,9 +2333,9 @@ if (!strcmp(winetest_platform, "windows")) /* FIXME: enable once implemented in 
 {
     test_encoder(&testdata_32bppBGR, &CLSID_WICPngEncoder,
                  &testdata_24bppBGR, &CLSID_WICPngDecoder, "PNG encoder 32bppBGR");
+}
     test_encoder(&testdata_64bppRGBA, &CLSID_WICPngEncoder,
                  &testdata_64bppRGBA, &CLSID_WICPngDecoder, "PNG encoder 64bppRGBA");
-}
 
     test_encoder(&testdata_BlackWhite, &CLSID_WICBmpEncoder,
                  &testdata_1bppIndexed, &CLSID_WICBmpDecoder, "BMP encoder BlackWhite");

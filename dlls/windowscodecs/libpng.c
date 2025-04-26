@@ -645,10 +645,6 @@ static HRESULT CDECL png_encoder_create_frame(struct encoder *encoder, const str
             return E_OUTOFMEMORY;
     }
 
-    /* Tell PNG we need to byte swap if writing a >8-bpp image */
-    if (This->format->bit_depth > 8)
-        png_set_swap(This->png_ptr);
-
     png_set_IHDR(This->png_ptr, This->info_ptr, encoder_frame->width, encoder_frame->height,
         This->format->bit_depth, This->format->color_type,
         encoder_frame->interlace ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE,
@@ -688,6 +684,9 @@ static HRESULT CDECL png_encoder_create_frame(struct encoder *encoder, const str
     }
 
     png_write_info(This->png_ptr, This->info_ptr);
+
+    if (This->format->bit_depth > 8)
+        png_set_swap(This->png_ptr);
 
     if (This->format->remove_filler)
         png_set_filler(This->png_ptr, 0, PNG_FILLER_AFTER);
