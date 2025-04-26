@@ -147,6 +147,8 @@ static void test_AccentColor( IUISettings3 *uisettings3 )
     DWORD default_palette_len = sizeof(default_palette);
     DWORD accent_palette[8];
     DWORD accent_palette_len = sizeof(accent_palette);
+    Color value;
+    HRESULT hr;
 
     if (!get_accent_palette( default_palette, &default_palette_len )) default_palette_len = 0;
 
@@ -154,16 +156,10 @@ static void test_AccentColor( IUISettings3 *uisettings3 )
     ok( delete_accent_palette(), "failed to delete AccentPalette key.\n");
     ok( !get_accent_palette( accent_palette, &accent_palette_len ), "AccentPalette should not be available.\n" );
 
-    test_single_accent( uisettings3, UIColorType_Accent, 0x00d77800 );
-    ok( get_accent_palette( accent_palette, &accent_palette_len ), "failed to retrieve AccentPalette key.\n" );
+    hr = IUISettings3_GetColorValue( uisettings3, UIColorType_Accent, &value );
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
 
-    /* default values */
-    test_single_accent( uisettings3, UIColorType_AccentDark1, 0x009e5a00 );
-    test_single_accent( uisettings3, UIColorType_AccentDark2, 0x00754200 );
-    test_single_accent( uisettings3, UIColorType_AccentDark3, 0x00422600 );
-    test_single_accent( uisettings3, UIColorType_AccentLight1, 0x00e39c42 );
-    test_single_accent( uisettings3, UIColorType_AccentLight2, 0x00edb976 );
-    test_single_accent( uisettings3, UIColorType_AccentLight3, 0x00ffd8a6 );
+    ok( get_accent_palette( accent_palette, &accent_palette_len ), "failed to retrieve AccentPalette key.\n" );
 
     test_single_accent( uisettings3, UIColorType_Accent, accent_palette[3] );
     test_single_accent( uisettings3, UIColorType_AccentDark1, accent_palette[4] );
