@@ -40,11 +40,11 @@ msgstr ""
 msgid "Permissions for %1"
 msgstr "Prístup zamietnutý.\n"
 
-#: dlls/appwiz.cpl/appwiz.rc:59
+#: dlls/appwiz.cpl/appwiz.rc:60
 msgid "Install/Uninstall"
 msgstr "Inštalovať/Odinštalovať"
 
-#: dlls/appwiz.cpl/appwiz.rc:62
+#: dlls/appwiz.cpl/appwiz.rc:63
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
@@ -52,11 +52,11 @@ msgstr ""
 "K inštalácii nového programu z diskety, CD-ROM mechaniky alebo pevného "
 "disku, kliknite na Inštalovať."
 
-#: dlls/appwiz.cpl/appwiz.rc:63
+#: dlls/appwiz.cpl/appwiz.rc:64
 msgid "&Install..."
 msgstr "&Inštalovať..."
 
-#: dlls/appwiz.cpl/appwiz.rc:66
+#: dlls/appwiz.cpl/appwiz.rc:67
 #, fuzzy
 #| msgid ""
 #| "The following software can be automatically removed. To remove a program "
@@ -71,27 +71,27 @@ msgstr ""
 "programu alebo k modifukácii jeho inštalovaných súčastí, zvoľte možnosť zo "
 "zoznamu a kliknite Zmeniť/Odstrániť."
 
-#: dlls/appwiz.cpl/appwiz.rc:68
+#: dlls/appwiz.cpl/appwiz.rc:69
 msgid "&Support Information"
 msgstr "&Informácie o podpore"
 
-#: dlls/appwiz.cpl/appwiz.rc:69 programs/regedit/regedit.rc:136
+#: dlls/appwiz.cpl/appwiz.rc:70 programs/regedit/regedit.rc:136
 #: programs/regedit/regedit.rc:237
 msgid "&Modify..."
 msgstr "&Zmeniť..."
 
-#: dlls/appwiz.cpl/appwiz.rc:70 dlls/appwiz.cpl/appwiz.rc:45
+#: dlls/appwiz.cpl/appwiz.rc:71 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
 #: programs/winecfg/winecfg.rc:205 programs/winecfg/winecfg.rc:242
 #: programs/wordpad/wordpad.rc:256
 msgid "&Remove"
 msgstr "&Odstrániť"
 
-#: dlls/appwiz.cpl/appwiz.rc:76
+#: dlls/appwiz.cpl/appwiz.rc:77
 msgid "Support Information"
 msgstr "Informácie o podpore"
 
-#: dlls/appwiz.cpl/appwiz.rc:79 dlls/avifil32/avifil32.rc:54
+#: dlls/appwiz.cpl/appwiz.rc:80 dlls/avifil32/avifil32.rc:54
 #: dlls/comctl32/comctl32.rc:71 dlls/comctl32/comctl32.rc:55
 #: dlls/comdlg32/comdlg32.rc:233 dlls/comdlg32/comdlg32.rc:263
 #: dlls/comdlg32/comdlg32.rc:307 dlls/comdlg32/comdlg32.rc:390
@@ -128,49 +128,49 @@ msgstr "Informácie o podpore"
 msgid "OK"
 msgstr "OK"
 
-#: dlls/appwiz.cpl/appwiz.rc:80
+#: dlls/appwiz.cpl/appwiz.rc:81
 msgid "The following information can be used to get technical support for %s:"
 msgstr ""
 "Nasledujúca informácia môže byť použitá na získanie technickej podpory pre "
 "%s:"
 
-#: dlls/appwiz.cpl/appwiz.rc:81
+#: dlls/appwiz.cpl/appwiz.rc:82
 msgid "Publisher:"
 msgstr "Vydavateľ:"
 
-#: dlls/appwiz.cpl/appwiz.rc:82 programs/winefile/winefile.rc:165
+#: dlls/appwiz.cpl/appwiz.rc:83 programs/winefile/winefile.rc:165
 msgid "Version:"
 msgstr "Verzia:"
 
-#: dlls/appwiz.cpl/appwiz.rc:83
+#: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Contact:"
 msgstr "Kontakt:"
 
-#: dlls/appwiz.cpl/appwiz.rc:84
+#: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Support Information:"
 msgstr "Informácie o podpore:"
 
-#: dlls/appwiz.cpl/appwiz.rc:85
+#: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Support Telephone:"
 msgstr "Telefonická podpora:"
 
-#: dlls/appwiz.cpl/appwiz.rc:86
+#: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Readme:"
 msgstr "Čítaj ma:"
 
-#: dlls/appwiz.cpl/appwiz.rc:87
+#: dlls/appwiz.cpl/appwiz.rc:88
 msgid "Product Updates:"
 msgstr "Aktualizácie produktu:"
 
-#: dlls/appwiz.cpl/appwiz.rc:88
+#: dlls/appwiz.cpl/appwiz.rc:89
 msgid "Comments:"
 msgstr "Komentáre:"
 
-#: dlls/appwiz.cpl/appwiz.rc:101
+#: dlls/appwiz.cpl/appwiz.rc:102
 msgid "Wine Gecko Installer"
 msgstr "Wine Gecko inštalátor"
 
-#: dlls/appwiz.cpl/appwiz.rc:104
+#: dlls/appwiz.cpl/appwiz.rc:105
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -188,11 +188,11 @@ msgstr ""
 "href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
 "gitlab.winehq.org/wine/wine/-/wikis/Gecko</a> pre bližšie informácie."
 
-#: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
+#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
 msgid "&Install"
 msgstr "&Inštalovať"
 
-#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
+#: dlls/appwiz.cpl/appwiz.rc:112 dlls/appwiz.cpl/appwiz.rc:127
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
 #: dlls/comctl32/comctl32.rc:72 dlls/comctl32/comctl32.rc:87
 #: dlls/comctl32/comctl32.rc:56 dlls/comdlg32/comdlg32.rc:172
@@ -235,13 +235,13 @@ msgstr "&Inštalovať"
 msgid "Cancel"
 msgstr "Zrušiť"
 
-#: dlls/appwiz.cpl/appwiz.rc:116
+#: dlls/appwiz.cpl/appwiz.rc:117
 #, fuzzy
 #| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
 msgstr "Wine Gecko inštalátor"
 
-#: dlls/appwiz.cpl/appwiz.rc:119
+#: dlls/appwiz.cpl/appwiz.rc:120
 #, fuzzy
 #| msgid ""
 #| "Wine could not find a Gecko package which is needed for applications "
@@ -350,6 +350,12 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
+
+#: dlls/appwiz.cpl/appwiz.rc:55
+#, fuzzy
+#| msgid "Downloading..."
+msgid "Download failed."
+msgstr "Sťahujem..."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"

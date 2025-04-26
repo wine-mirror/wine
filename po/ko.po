@@ -34,11 +34,11 @@ msgstr "거부"
 msgid "Permissions for %1"
 msgstr "%1에 대한 사용권한"
 
-#: dlls/appwiz.cpl/appwiz.rc:59
+#: dlls/appwiz.cpl/appwiz.rc:60
 msgid "Install/Uninstall"
 msgstr "설치/제거"
 
-#: dlls/appwiz.cpl/appwiz.rc:62
+#: dlls/appwiz.cpl/appwiz.rc:63
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
@@ -46,11 +46,11 @@ msgstr ""
 "플로피 디스크, 시디롬 드라이브, 또는 하드디스크 드라이브에서 새 프로그램을 설"
 "치하려면 [설치]를 클릭하세요."
 
-#: dlls/appwiz.cpl/appwiz.rc:63
+#: dlls/appwiz.cpl/appwiz.rc:64
 msgid "&Install..."
 msgstr "설치(&I)..."
 
-#: dlls/appwiz.cpl/appwiz.rc:66
+#: dlls/appwiz.cpl/appwiz.rc:67
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
@@ -59,27 +59,27 @@ msgstr ""
 "다음 소프트웨어는 자동으로 제거됩니다. 프로그램을 제거하거나 설치된 구성 요소"
 "를 수정하려면, 목록에서 선택한 후 [수정] 또는 [제거]를 클릭하세요."
 
-#: dlls/appwiz.cpl/appwiz.rc:68
+#: dlls/appwiz.cpl/appwiz.rc:69
 msgid "&Support Information"
 msgstr "지원 정보(&S)"
 
-#: dlls/appwiz.cpl/appwiz.rc:69 programs/regedit/regedit.rc:136
+#: dlls/appwiz.cpl/appwiz.rc:70 programs/regedit/regedit.rc:136
 #: programs/regedit/regedit.rc:237
 msgid "&Modify..."
 msgstr "수정(&M)..."
 
-#: dlls/appwiz.cpl/appwiz.rc:70 dlls/appwiz.cpl/appwiz.rc:45
+#: dlls/appwiz.cpl/appwiz.rc:71 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
 #: programs/winecfg/winecfg.rc:205 programs/winecfg/winecfg.rc:242
 #: programs/wordpad/wordpad.rc:256
 msgid "&Remove"
 msgstr "제거(&R)"
 
-#: dlls/appwiz.cpl/appwiz.rc:76
+#: dlls/appwiz.cpl/appwiz.rc:77
 msgid "Support Information"
 msgstr "지원 정보"
 
-#: dlls/appwiz.cpl/appwiz.rc:79 dlls/avifil32/avifil32.rc:54
+#: dlls/appwiz.cpl/appwiz.rc:80 dlls/avifil32/avifil32.rc:54
 #: dlls/comctl32/comctl32.rc:71 dlls/comctl32/comctl32.rc:55
 #: dlls/comdlg32/comdlg32.rc:233 dlls/comdlg32/comdlg32.rc:263
 #: dlls/comdlg32/comdlg32.rc:307 dlls/comdlg32/comdlg32.rc:390
@@ -116,47 +116,47 @@ msgstr "지원 정보"
 msgid "OK"
 msgstr "확인"
 
-#: dlls/appwiz.cpl/appwiz.rc:80
+#: dlls/appwiz.cpl/appwiz.rc:81
 msgid "The following information can be used to get technical support for %s:"
 msgstr "이 정보는 %s을(를) 위한 기술 지원을 받는 데 사용될 수 있습니다:"
 
-#: dlls/appwiz.cpl/appwiz.rc:81
+#: dlls/appwiz.cpl/appwiz.rc:82
 msgid "Publisher:"
 msgstr "제조업체:"
 
-#: dlls/appwiz.cpl/appwiz.rc:82 programs/winefile/winefile.rc:165
+#: dlls/appwiz.cpl/appwiz.rc:83 programs/winefile/winefile.rc:165
 msgid "Version:"
 msgstr "버전:"
 
-#: dlls/appwiz.cpl/appwiz.rc:83
+#: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Contact:"
 msgstr "연락처:"
 
-#: dlls/appwiz.cpl/appwiz.rc:84
+#: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Support Information:"
 msgstr "지원 정보:"
 
-#: dlls/appwiz.cpl/appwiz.rc:85
+#: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Support Telephone:"
 msgstr "지원 전화:"
 
-#: dlls/appwiz.cpl/appwiz.rc:86
+#: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Readme:"
 msgstr "주의사항:"
 
-#: dlls/appwiz.cpl/appwiz.rc:87
+#: dlls/appwiz.cpl/appwiz.rc:88
 msgid "Product Updates:"
 msgstr "제품 업데이트:"
 
-#: dlls/appwiz.cpl/appwiz.rc:88
+#: dlls/appwiz.cpl/appwiz.rc:89
 msgid "Comments:"
 msgstr "설명:"
 
-#: dlls/appwiz.cpl/appwiz.rc:101
+#: dlls/appwiz.cpl/appwiz.rc:102
 msgid "Wine Gecko Installer"
 msgstr "Wine Gecko 설치 관리자"
 
-#: dlls/appwiz.cpl/appwiz.rc:104
+#: dlls/appwiz.cpl/appwiz.rc:105
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -174,11 +174,11 @@ msgstr ""
 "href=\"https://gitlab.winehq.org/wine/wine/-/wikis/Gecko\">https://"
 "gitlab.winehq.org/wine/wine/-/wikis/Gecko</a>를 보세요."
 
-#: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
+#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
 msgid "&Install"
 msgstr "설치(&I)"
 
-#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
+#: dlls/appwiz.cpl/appwiz.rc:112 dlls/appwiz.cpl/appwiz.rc:127
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
 #: dlls/comctl32/comctl32.rc:72 dlls/comctl32/comctl32.rc:87
 #: dlls/comctl32/comctl32.rc:56 dlls/comdlg32/comdlg32.rc:172
@@ -221,11 +221,11 @@ msgstr "설치(&I)"
 msgid "Cancel"
 msgstr "취소"
 
-#: dlls/appwiz.cpl/appwiz.rc:116
+#: dlls/appwiz.cpl/appwiz.rc:117
 msgid "Wine Mono Installer"
 msgstr "Wine Mono 설치 관리자"
 
-#: dlls/appwiz.cpl/appwiz.rc:119
+#: dlls/appwiz.cpl/appwiz.rc:120
 msgid ""
 "Wine could not find a wine-mono package which is needed for .NET "
 "applications to work correctly. Wine can automatically download and install "
@@ -324,6 +324,12 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr "현재 제거/수정 프로세스가 완료될 때까지 기다려 주세요."
+
+#: dlls/appwiz.cpl/appwiz.rc:55
+#, fuzzy
+#| msgid "Downloading..."
+msgid "Download failed."
+msgstr "다운로드 중..."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"

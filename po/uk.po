@@ -34,11 +34,11 @@ msgstr "Відмовити"
 msgid "Permissions for %1"
 msgstr "Дозволи для %1"
 
-#: dlls/appwiz.cpl/appwiz.rc:59
+#: dlls/appwiz.cpl/appwiz.rc:60
 msgid "Install/Uninstall"
 msgstr "Встановлення/Видалення"
 
-#: dlls/appwiz.cpl/appwiz.rc:62
+#: dlls/appwiz.cpl/appwiz.rc:63
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
@@ -46,11 +46,11 @@ msgstr ""
 "Щоб встановити нову програму з дискети, CD-ROM, чи жорсткого диску, "
 "натисніть Встановити."
 
-#: dlls/appwiz.cpl/appwiz.rc:63
+#: dlls/appwiz.cpl/appwiz.rc:64
 msgid "&Install..."
 msgstr "&Встановити..."
 
-#: dlls/appwiz.cpl/appwiz.rc:66
+#: dlls/appwiz.cpl/appwiz.rc:67
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
@@ -59,27 +59,27 @@ msgstr ""
 "Дане ПЗ може бути видалене автоматично. Щоб видалити програму чи змінити її "
 "склад, виберіть її зі списку та натисніть Змінити/Видалити."
 
-#: dlls/appwiz.cpl/appwiz.rc:68
+#: dlls/appwiz.cpl/appwiz.rc:69
 msgid "&Support Information"
 msgstr "&Дані підтримки"
 
-#: dlls/appwiz.cpl/appwiz.rc:69 programs/regedit/regedit.rc:136
+#: dlls/appwiz.cpl/appwiz.rc:70 programs/regedit/regedit.rc:136
 #: programs/regedit/regedit.rc:237
 msgid "&Modify..."
 msgstr "&Змінити..."
 
-#: dlls/appwiz.cpl/appwiz.rc:70 dlls/appwiz.cpl/appwiz.rc:45
+#: dlls/appwiz.cpl/appwiz.rc:71 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
 #: programs/winecfg/winecfg.rc:205 programs/winecfg/winecfg.rc:242
 #: programs/wordpad/wordpad.rc:256
 msgid "&Remove"
 msgstr "&Видалити"
 
-#: dlls/appwiz.cpl/appwiz.rc:76
+#: dlls/appwiz.cpl/appwiz.rc:77
 msgid "Support Information"
 msgstr "Дані підтримки"
 
-#: dlls/appwiz.cpl/appwiz.rc:79 dlls/avifil32/avifil32.rc:54
+#: dlls/appwiz.cpl/appwiz.rc:80 dlls/avifil32/avifil32.rc:54
 #: dlls/comctl32/comctl32.rc:71 dlls/comctl32/comctl32.rc:55
 #: dlls/comdlg32/comdlg32.rc:233 dlls/comdlg32/comdlg32.rc:263
 #: dlls/comdlg32/comdlg32.rc:307 dlls/comdlg32/comdlg32.rc:390
@@ -116,47 +116,47 @@ msgstr "Дані підтримки"
 msgid "OK"
 msgstr "OK"
 
-#: dlls/appwiz.cpl/appwiz.rc:80
+#: dlls/appwiz.cpl/appwiz.rc:81
 msgid "The following information can be used to get technical support for %s:"
 msgstr "Ці дані можуть бути використані для отримання тех. підтримки для %s:"
 
-#: dlls/appwiz.cpl/appwiz.rc:81
+#: dlls/appwiz.cpl/appwiz.rc:82
 msgid "Publisher:"
 msgstr "Видавець:"
 
-#: dlls/appwiz.cpl/appwiz.rc:82 programs/winefile/winefile.rc:165
+#: dlls/appwiz.cpl/appwiz.rc:83 programs/winefile/winefile.rc:165
 msgid "Version:"
 msgstr "Версія:"
 
-#: dlls/appwiz.cpl/appwiz.rc:83
+#: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Contact:"
 msgstr "Контактна особа:"
 
-#: dlls/appwiz.cpl/appwiz.rc:84
+#: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Support Information:"
 msgstr "Дані підтримки:"
 
-#: dlls/appwiz.cpl/appwiz.rc:85
+#: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Support Telephone:"
 msgstr "Телефон підтримки:"
 
-#: dlls/appwiz.cpl/appwiz.rc:86
+#: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Readme:"
 msgstr "Файл Readme:"
 
-#: dlls/appwiz.cpl/appwiz.rc:87
+#: dlls/appwiz.cpl/appwiz.rc:88
 msgid "Product Updates:"
 msgstr "Оновлення:"
 
-#: dlls/appwiz.cpl/appwiz.rc:88
+#: dlls/appwiz.cpl/appwiz.rc:89
 msgid "Comments:"
 msgstr "Коментарі:"
 
-#: dlls/appwiz.cpl/appwiz.rc:101
+#: dlls/appwiz.cpl/appwiz.rc:102
 msgid "Wine Gecko Installer"
 msgstr "Встановлювач Wine Gecko"
 
-#: dlls/appwiz.cpl/appwiz.rc:104
+#: dlls/appwiz.cpl/appwiz.rc:105
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
 "embedding HTML to work correctly. Wine can automatically download and "
@@ -174,11 +174,11 @@ msgstr ""
 "читайте <a href=\"https://gitlab.winehq.org/wine/wine/-/wikis/"
 "Gecko\">https://gitlab.winehq.org/wine/wine/-/wikis/Gecko</a>."
 
-#: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
+#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
 msgid "&Install"
 msgstr "&Встановити"
 
-#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
+#: dlls/appwiz.cpl/appwiz.rc:112 dlls/appwiz.cpl/appwiz.rc:127
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
 #: dlls/comctl32/comctl32.rc:72 dlls/comctl32/comctl32.rc:87
 #: dlls/comctl32/comctl32.rc:56 dlls/comdlg32/comdlg32.rc:172
@@ -221,11 +221,11 @@ msgstr "&Встановити"
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: dlls/appwiz.cpl/appwiz.rc:116
+#: dlls/appwiz.cpl/appwiz.rc:117
 msgid "Wine Mono Installer"
 msgstr "Встановлювач Wine Mono"
 
-#: dlls/appwiz.cpl/appwiz.rc:119
+#: dlls/appwiz.cpl/appwiz.rc:120
 msgid ""
 "Wine could not find a wine-mono package which is needed for .NET "
 "applications to work correctly. Wine can automatically download and install "
@@ -323,6 +323,12 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
+
+#: dlls/appwiz.cpl/appwiz.rc:55
+#, fuzzy
+#| msgid "Downloading..."
+msgid "Download failed."
+msgstr "Завантаження..."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"

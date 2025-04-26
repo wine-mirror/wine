@@ -73,3 +73,4 @@
 #define IDS_INSTALLING         15
 #define IDS_INVALID_SHA        16
 #define IDS_WAIT_COMPLETE      17
+#define IDS_DOWNLOAD_FAILED    18

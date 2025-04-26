@@ -40,11 +40,11 @@ msgstr ""
 msgid "Permissions for %1"
 msgstr "Својства за %s"
 
-#: dlls/appwiz.cpl/appwiz.rc:59
+#: dlls/appwiz.cpl/appwiz.rc:60
 msgid "Install/Uninstall"
 msgstr "Инсталирај/уклони"
 
-#: dlls/appwiz.cpl/appwiz.rc:62
+#: dlls/appwiz.cpl/appwiz.rc:63
 msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
@@ -52,11 +52,11 @@ msgstr ""
 "Да бисте инсталирали нови програм са дискете, диска или тврдог диска, "
 "кликните на дугме „Инсталирај...“."
 
-#: dlls/appwiz.cpl/appwiz.rc:63
+#: dlls/appwiz.cpl/appwiz.rc:64
 msgid "&Install..."
 msgstr "&Инсталирај..."
 
-#: dlls/appwiz.cpl/appwiz.rc:66
+#: dlls/appwiz.cpl/appwiz.rc:67
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
@@ -65,28 +65,28 @@ msgstr ""
 "Програм се може аутоматски уклонити. Да уклоните програм или да измените "
 "инсталационе делове, изаберите са списка и кликните на дугме „Измени/уклони“."
 
-#: dlls/appwiz.cpl/appwiz.rc:68
+#: dlls/appwiz.cpl/appwiz.rc:69
 #, fuzzy
 msgid "&Support Information"
 msgstr "Подршка"
 
-#: dlls/appwiz.cpl/appwiz.rc:69 programs/regedit/regedit.rc:136
+#: dlls/appwiz.cpl/appwiz.rc:70 programs/regedit/regedit.rc:136
 #: programs/regedit/regedit.rc:237
 msgid "&Modify..."
 msgstr "&Измени..."
 
-#: dlls/appwiz.cpl/appwiz.rc:70 dlls/appwiz.cpl/appwiz.rc:45
+#: dlls/appwiz.cpl/appwiz.rc:71 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
 #: programs/winecfg/winecfg.rc:205 programs/winecfg/winecfg.rc:242
 #: programs/wordpad/wordpad.rc:256
 msgid "&Remove"
 msgstr "&Уклони"
 
-#: dlls/appwiz.cpl/appwiz.rc:76
+#: dlls/appwiz.cpl/appwiz.rc:77
 msgid "Support Information"
 msgstr "Подршка"
 
-#: dlls/appwiz.cpl/appwiz.rc:79 dlls/avifil32/avifil32.rc:54
+#: dlls/appwiz.cpl/appwiz.rc:80 dlls/avifil32/avifil32.rc:54
 #: dlls/comctl32/comctl32.rc:71 dlls/comctl32/comctl32.rc:55
 #: dlls/comdlg32/comdlg32.rc:233 dlls/comdlg32/comdlg32.rc:263
 #: dlls/comdlg32/comdlg32.rc:307 dlls/comdlg32/comdlg32.rc:390
@@ -123,47 +123,47 @@ msgstr "Подршка"
 msgid "OK"
 msgstr "У реду"
 
-#: dlls/appwiz.cpl/appwiz.rc:80
+#: dlls/appwiz.cpl/appwiz.rc:81
 msgid "The following information can be used to get technical support for %s:"
 msgstr "Следећи подаци се могу користити за добијање техничке подршке за %s:"
 
-#: dlls/appwiz.cpl/appwiz.rc:81
+#: dlls/appwiz.cpl/appwiz.rc:82
 msgid "Publisher:"
 msgstr "Издавач:"
 
-#: dlls/appwiz.cpl/appwiz.rc:82 programs/winefile/winefile.rc:165
+#: dlls/appwiz.cpl/appwiz.rc:83 programs/winefile/winefile.rc:165
 msgid "Version:"
 msgstr "Издање:"
 
-#: dlls/appwiz.cpl/appwiz.rc:83
+#: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Contact:"
 msgstr "Контакт:"
 
-#: dlls/appwiz.cpl/appwiz.rc:84
+#: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Support Information:"
 msgstr "Подршка:"
 
-#: dlls/appwiz.cpl/appwiz.rc:85
+#: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Support Telephone:"
 msgstr "Телефон за подршку:"
 
-#: dlls/appwiz.cpl/appwiz.rc:86
+#: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Readme:"
 msgstr "Прочитај ме:"
 
-#: dlls/appwiz.cpl/appwiz.rc:87
+#: dlls/appwiz.cpl/appwiz.rc:88
 msgid "Product Updates:"
 msgstr "Доградње:"
 
-#: dlls/appwiz.cpl/appwiz.rc:88
+#: dlls/appwiz.cpl/appwiz.rc:89
 msgid "Comments:"
 msgstr "Коментари:"
 
-#: dlls/appwiz.cpl/appwiz.rc:101
+#: dlls/appwiz.cpl/appwiz.rc:102
 msgid "Wine Gecko Installer"
 msgstr "Wine Gecko инсталациони програм"
 
-#: dlls/appwiz.cpl/appwiz.rc:104
+#: dlls/appwiz.cpl/appwiz.rc:105
 #, fuzzy
 msgid ""
 "Wine could not find a Gecko package which is needed for applications "
@@ -181,11 +181,11 @@ msgstr ""
 "Напомена: препоручујемо Вам да користите расподељене пакете. Погледајте "
 "https://gitlab.winehq.org/wine/wine/-/wikis/Gecko за више информација."
 
-#: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
+#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
 msgid "&Install"
 msgstr "&Инсталирај"
 
-#: dlls/appwiz.cpl/appwiz.rc:111 dlls/appwiz.cpl/appwiz.rc:126
+#: dlls/appwiz.cpl/appwiz.rc:112 dlls/appwiz.cpl/appwiz.rc:127
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
 #: dlls/comctl32/comctl32.rc:72 dlls/comctl32/comctl32.rc:87
 #: dlls/comctl32/comctl32.rc:56 dlls/comdlg32/comdlg32.rc:172
@@ -228,13 +228,13 @@ msgstr "&Инсталирај"
 msgid "Cancel"
 msgstr "Откажи"
 
-#: dlls/appwiz.cpl/appwiz.rc:116
+#: dlls/appwiz.cpl/appwiz.rc:117
 #, fuzzy
 #| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
 msgstr "Wine Gecko инсталациони програм"
 
-#: dlls/appwiz.cpl/appwiz.rc:119
+#: dlls/appwiz.cpl/appwiz.rc:120
 #, fuzzy
 msgid ""
 "Wine could not find a wine-mono package which is needed for .NET "
@@ -336,6 +336,12 @@ msgstr ""
 #: dlls/appwiz.cpl/appwiz.rc:47
 msgid "Please wait until the current uninstall/modify process is complete."
 msgstr ""
+
+#: dlls/appwiz.cpl/appwiz.rc:55
+#, fuzzy
+#| msgid "Downloading..."
+msgid "Download failed."
+msgstr "Преузимање..."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"

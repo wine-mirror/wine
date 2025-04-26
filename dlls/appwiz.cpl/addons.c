@@ -459,6 +459,8 @@ static HRESULT WINAPI InstallCallback_OnProgress(IBindStatusCallback *iface, ULO
 static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
         HRESULT hresult, LPCWSTR szError)
 {
+    WCHAR message[256];
+
     if(dwl_binding) {
         IBinding_Release(dwl_binding);
         dwl_binding = NULL;
@@ -467,6 +469,12 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
     if(FAILED(hresult)) {
         if(hresult == E_ABORT)
             TRACE("Binding aborted\n");
+        else if (hresult == INET_E_DOWNLOAD_FAILURE)
+        {
+            if(LoadStringW(hInst, IDS_DOWNLOAD_FAILED, message, ARRAY_SIZE(message)))
+                MessageBoxW(install_dialog, message, NULL, MB_ICONERROR);
+            EndDialog(install_dialog, IDCANCEL);
+        }
         else
             ERR("Binding failed %08lx\n", hresult);
         return S_OK;
@@ -491,8 +499,6 @@ static HRESULT WINAPI InstallCallback_OnStopBinding(IBindStatusCallback *iface,
             free(cache_file_name);
         }
     }else {
-        WCHAR message[256];
-
         if(LoadStringW(hInst, IDS_INVALID_SHA, message, ARRAY_SIZE(message)))
             MessageBoxW(NULL, message, NULL, MB_ICONERROR);
     }
