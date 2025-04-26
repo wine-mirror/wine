@@ -4718,10 +4718,18 @@ static void test_FlushProcessWriteBuffers(void)
         return;
     }
 
-    reorderings = store_buffer_litmus_test( compiler_barrier, compiler_barrier );
+    /* NOTE: Avoid passing the loop count directly as a parameter to ensure
+     * NOTE: that each test is independent of the differing loop count.
+     */
+
+    reorderings = 0;
+    for (i = 0; i < 1; i++)
+        reorderings += store_buffer_litmus_test( compiler_barrier, compiler_barrier );
     ok( reorderings, "expected write-read reordering with compiler barrier only (got %ld reorderings)\n", reorderings );
 
-    reorderings = store_buffer_litmus_test( compiler_barrier, pFlushProcessWriteBuffers );
+    reorderings = 0;
+    for (i = 0; i < 1; i++)
+        reorderings += store_buffer_litmus_test( compiler_barrier, pFlushProcessWriteBuffers );
     ok( !reorderings, "expected sequential consistency with FlushProcessWriteBuffers (got %ld reorderings)\n", reorderings );
 }
 
