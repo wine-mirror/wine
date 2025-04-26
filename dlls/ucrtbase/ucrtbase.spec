@@ -2218,7 +2218,7 @@
 @ stub ccosl
 @ cdecl ceil(double)
 @ cdecl -arch=!i386 ceilf(float)
-@ stub cexp
+@ cdecl -norelay cexp(int128)
 @ stub cexpf
 @ stub cexpl
 @ cdecl cimag(int128)
