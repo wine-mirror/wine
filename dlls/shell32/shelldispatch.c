@@ -412,7 +412,8 @@ static ULONG WINAPI FolderItemVerbsImpl_Release(FolderItemVerbs *iface)
 
     if (!ref)
     {
-        IContextMenu_Release(This->contextmenu);
+        if (This->contextmenu)
+            IContextMenu_Release(This->contextmenu);
         DestroyMenu(This->hMenu);
         free(This);
     }
@@ -581,14 +582,14 @@ static FolderItemVerbsVtbl folderitemverbsvtbl = {
 static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
 {
     FolderItemVerbsImpl *This;
-    IShellFolder *folder;
+    LPITEMIDLIST pidl = NULL;
+    IShellFolder *folder = NULL;
     LPCITEMIDLIST child;
-    LPITEMIDLIST pidl;
     HRESULT hr;
 
     *verbs = NULL;
 
-    This = malloc(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -597,21 +598,22 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
 
     /* build context menu for this path */
     hr = SHParseDisplayName(path, NULL, &pidl, 0, NULL);
-    if (FAILED(hr))
-        goto failed;
 
-    hr = SHBindToParent(pidl, &IID_IShellFolder, (void**)&folder, &child);
+    if (SUCCEEDED(hr))
+        hr = SHBindToParent(pidl, &IID_IShellFolder, (void**)&folder, &child);
+
     CoTaskMemFree(pidl);
-    if (FAILED(hr))
-        goto failed;
 
-    hr = IShellFolder_GetUIObjectOf(folder, NULL, 1, &child, &IID_IContextMenu, NULL, (void**)&This->contextmenu);
-    IShellFolder_Release(folder);
-    if (FAILED(hr))
-        goto failed;
+    if (SUCCEEDED(hr))
+        hr = IShellFolder_GetUIObjectOf(folder, NULL, 1, &child, &IID_IContextMenu, NULL, (void**)&This->contextmenu);
+
+    if (folder)
+        IShellFolder_Release(folder);
 
     This->hMenu = CreatePopupMenu();
-    hr = IContextMenu_QueryContextMenu(This->contextmenu, This->hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, CMF_NORMAL);
+    if (SUCCEEDED(hr))
+        hr = IContextMenu_QueryContextMenu(This->contextmenu, This->hMenu, 0, FCIDM_SHVIEWFIRST, FCIDM_SHVIEWLAST, CMF_NORMAL);
+
     if (FAILED(hr))
     {
         FolderItemVerbs_Release(&This->FolderItemVerbs_iface);
@@ -621,10 +623,6 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     This->count = GetMenuItemCount(This->hMenu);
     *verbs = &This->FolderItemVerbs_iface;
     return S_OK;
-
-failed:
-    free(This);
-    return hr;
 }
 
 static HRESULT WINAPI ShellLinkObject_QueryInterface(IShellLinkDual2 *iface, REFIID riid,
