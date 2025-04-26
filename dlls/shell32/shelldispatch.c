@@ -602,13 +602,12 @@ static HRESULT FolderItemVerbs_Constructor(BSTR path, FolderItemVerbs **verbs)
     if (SUCCEEDED(hr))
         hr = SHBindToParent(pidl, &IID_IShellFolder, (void**)&folder, &child);
 
-    CoTaskMemFree(pidl);
-
     if (SUCCEEDED(hr))
         hr = IShellFolder_GetUIObjectOf(folder, NULL, 1, &child, &IID_IContextMenu, NULL, (void**)&This->contextmenu);
 
     if (folder)
         IShellFolder_Release(folder);
+    CoTaskMemFree(pidl);
 
     This->hMenu = CreatePopupMenu();
     if (SUCCEEDED(hr))
