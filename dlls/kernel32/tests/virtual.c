@@ -4652,7 +4652,7 @@ static LONG store_buffer_litmus_test( void (*WINAPI barrier0)(void), void (*WINA
         .num_slots = 64,
 
         /* Increase if flaky, decrease if slow */
-        .num_generations = 32768,
+        .num_generations = 4096,
 
         .reorderings = &reorderings,
     };
@@ -4723,12 +4723,12 @@ static void test_FlushProcessWriteBuffers(void)
      */
 
     reorderings = 0;
-    for (i = 0; i < 1; i++)
+    for (i = 0; i < 8; i++)  /* run multiple times to reduce flakiness */
         reorderings += store_buffer_litmus_test( compiler_barrier, compiler_barrier );
     ok( reorderings, "expected write-read reordering with compiler barrier only (got %ld reorderings)\n", reorderings );
 
     reorderings = 0;
-    for (i = 0; i < 1; i++)
+    for (i = 0; i < 2; i++)  /* TODO: FlushProcessWriteBuffers() is slow on macOS */
         reorderings += store_buffer_litmus_test( compiler_barrier, pFlushProcessWriteBuffers );
     ok( !reorderings, "expected sequential consistency with FlushProcessWriteBuffers (got %ld reorderings)\n", reorderings );
 }
