@@ -666,6 +666,12 @@ static const WORD bits_64bppRGBA_2[] = {
 static const struct bitmap_data testdata_64bppRGBA_2 = {
     &GUID_WICPixelFormat64bppRGBA, 64, (BYTE*)bits_64bppRGBA_2, 3, 2, 96.0, 96.0};
 
+static const float bits_96bppRGBFloat[] = {
+    0.0f,0.0f,0.0f, 0.0f,1.0f,0.0f, 0.214039f,0.214053f,0.214039f,
+    1.0f,1.0f,1.0f, 0.000012f,0.000012f,0.000012f, 0.0f,0.0f,0.000012f};
+static const struct bitmap_data testdata_96bppRGBFloat = {
+    &GUID_WICPixelFormat96bppRGBFloat, 96, (const BYTE *)bits_96bppRGBFloat, 3, 2, 96.0, 96.0};
+
 static const float bits_128bppRGBFloat[] = {
     0.0f,0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f,1.0f, 0.214039f,0.214053f,0.214039f,1.0f,
     1.0f,1.0f,1.0f,1.0f, 0.000012f,0.000012f,0.000012f,1.0f, 0.0f,0.0f,0.000012f,1.0f,};
@@ -823,7 +829,7 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(96bppRGBFloat), TRUE, TRUE, 35, TRUE},
         {WIC_PIXEL_FORMAT(128bppRGBAFloat), TRUE, TRUE, 33},
         {WIC_PIXEL_FORMAT(128bppPRGBAFloat), TRUE, TRUE, 35},
-        {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 34},
+        {WIC_PIXEL_FORMAT(128bppRGBFloat), TRUE, TRUE, 33},
 
         {WIC_PIXEL_FORMAT(32bppCMYK)},
 
@@ -2333,6 +2339,7 @@ START_TEST(converter)
     test_conversion(&testdata_48bppRGB, &testdata_128bppRGBFloat, "48bppRGB -> 128bppRGBFloat", FALSE);
     test_conversion(&testdata_24bppBGR_2, &testdata_128bppRGBAFloat, "24bppBGR -> 128bppRGBAFloat", FALSE);
     test_conversion(&testdata_32bppBGRA_2, &testdata_128bppRGBAFloat_2, "32bppBGRA -> 128bppRGBAFloat", FALSE);
+    test_conversion(&testdata_96bppRGBFloat, &testdata_128bppRGBFloat, "96bppRGBFloat -> 128bppRGBFloat", FALSE);
     test_conversion(&testdata_128bppRGBAFloat_2, &testdata_32bppBGRA_2, "128bppRGBAFloat -> 32bppBGRA", FALSE);
 
     test_invalid_conversion();

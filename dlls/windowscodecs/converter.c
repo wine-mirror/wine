@@ -1890,6 +1890,49 @@ static HRESULT copypixels_to_128bppRGBFloat(struct FormatConverter *This, const 
         free(srcdata);
         return S_OK;
     }
+    case format_96bppRGBFloat:
+    {
+        UINT srcstride, srcdatasize;
+        const float *srcpixel;
+        const BYTE *srcrow;
+        float *dstpixel;
+        BYTE *srcdata;
+        BYTE *dstrow;
+        INT x, y;
+
+        if (!prc)
+            return S_OK;
+
+        srcstride = 12 * prc->Width;
+        srcdatasize = srcstride * prc->Height;
+
+        srcdata = malloc(srcdatasize);
+        if (!srcdata) return E_OUTOFMEMORY;
+
+        hr = IWICBitmapSource_CopyPixels(This->source, prc, srcstride, srcdatasize, srcdata);
+        if (SUCCEEDED(hr))
+        {
+            srcrow = srcdata;
+            dstrow = pbBuffer;
+            for (y = 0; y < prc->Height; y++)
+            {
+                srcpixel = (const float *)srcrow;
+                dstpixel = (float *)dstrow;
+                for (x = 0; x < prc->Width; x++)
+                {
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = *srcpixel++;
+                    *dstpixel++ = 1.0f;
+                }
+                srcrow += srcstride;
+                dstrow += cbStride;
+            }
+        }
+
+        free(srcdata);
+        return S_OK;
+    }
     default:
         FIXME("Unimplemented conversion path %d.\n", source_format);
         return WINCODEC_ERR_UNSUPPORTEDOPERATION;
