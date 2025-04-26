@@ -10,6 +10,7 @@
 typedef float float_t;
 typedef double double_t;
 
+typedef double matherr_t(int, const char *, double, double, double);
 hidden double math_error(int type, const char *name, double arg1, double arg2, double retval);
 
 #if LDBL_MANT_DIG == 53 && LDBL_MAX_EXP == 1024

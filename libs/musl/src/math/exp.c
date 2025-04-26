@@ -28,7 +28,7 @@
    a double.  (int32_t)KI is the k used in the argument reduction and exponent
    adjustment of scale, positive k here means the result may overflow and
    negative k means the result may underflow.  */
-static inline double specialcase(double x, double_t tmp, uint64_t sbits, uint64_t ki)
+static inline double specialcase(double x, double_t tmp, uint64_t sbits, uint64_t ki, matherr_t matherr)
 {
 	double_t scale, y;
 
@@ -38,7 +38,7 @@ static inline double specialcase(double x, double_t tmp, uint64_t sbits, uint64_
 		scale = asdouble(sbits);
 		y = 0x1p1009 * (scale + scale * tmp);
 		if (isinf(y))
-			return math_error(_OVERFLOW, "exp", x, 0, y);
+			return matherr(_OVERFLOW, "exp", x, 0, y);
 		return eval_as_double(y);
 	}
 	/* k < 0, need special care in the subnormal range.  */
@@ -61,7 +61,7 @@ static inline double specialcase(double x, double_t tmp, uint64_t sbits, uint64_
 		/* The underflow exception needs to be signaled explicitly.  */
 		fp_force_eval(fp_barrier(0x1p-1022) * 0x1p-1022);
 		y = 0x1p-1022 * y;
-		return math_error(_UNDERFLOW, "exp", x, 0, y);
+		return matherr(_UNDERFLOW, "exp", x, 0, y);
 	}
 	y = 0x1p-1022 * y;
 	return eval_as_double(y);
@@ -73,7 +73,7 @@ static inline uint32_t top12(double x)
 	return asuint64(x) >> 52;
 }
 
-double __cdecl exp(double x)
+double __cdecl __exp(double x, matherr_t matherr)
 {
 	uint32_t abstop;
 	uint64_t ki, idx, top, sbits;
@@ -91,9 +91,9 @@ double __cdecl exp(double x)
 			if (abstop >= top12(INFINITY))
 				return 1.0 + x;
 			if (asuint64(x) >> 63)
-				return math_error(_UNDERFLOW, "exp", x, 0, fp_barrier(DBL_MIN) * DBL_MIN);
+				return matherr(_UNDERFLOW, "exp", x, 0, fp_barrier(DBL_MIN) * DBL_MIN);
 			else
-				return math_error(_OVERFLOW, "exp", x, 0, fp_barrier(DBL_MAX) * DBL_MAX);
+				return matherr(_OVERFLOW, "exp", x, 0, fp_barrier(DBL_MAX) * DBL_MAX);
 		}
 		/* Large x is special cased below.  */
 		abstop = 0;
@@ -118,9 +118,14 @@ double __cdecl exp(double x)
 	/* Worst case error is less than 0.5+1.11/N+(abs poly error * 2^53) ulp.  */
 	tmp = tail + r + r2 * (C2 + r * C3) + r2 * r2 * (C4 + r * C5);
 	if (predict_false(abstop == 0))
-		return specialcase(x, tmp, sbits, ki);
+		return specialcase(x, tmp, sbits, ki, matherr);
 	scale = asdouble(sbits);
 	/* Note: tmp == 0 or |tmp| > 2^-200 and scale > 2^-739, so there
 	   is no spurious underflow here even without fma.  */
 	return eval_as_double(scale + scale * tmp);
+}
+
+double __cdecl exp(double x)
+{
+    return __exp(x, math_error);
 }
