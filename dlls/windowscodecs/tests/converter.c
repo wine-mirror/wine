@@ -672,6 +672,18 @@ static const float bits_96bppRGBFloat[] = {
 static const struct bitmap_data testdata_96bppRGBFloat = {
     &GUID_WICPixelFormat96bppRGBFloat, 96, (const BYTE *)bits_96bppRGBFloat, 3, 2, 96.0, 96.0};
 
+static const float bits_96bppRGBFloat_2[] = {
+    0.0f,0.0f,0.0f, 0.0f,1.0f,0.0f, 1.0f,0.0f,0.0f,
+    0.0f,0.0f,1.0f, 0.0f,0.205079f,0.0f, 0.205079f,0.0f,0.0f};
+static const struct bitmap_data testdata_96bppRGBFloat_2 = {
+    &GUID_WICPixelFormat96bppRGBFloat, 96, (const BYTE *)bits_96bppRGBFloat_2, 3, 2, 96.0, 96.0};
+
+static const BYTE bits_32bppBGRA_3[] = {
+    0,0,0,255, 0,255,0,255, 0,0,255,255,
+    255,0,0,255, 0,125,0,255, 0,0,125,255};
+static const struct bitmap_data testdata_32bppBGRA_3 = {
+    &GUID_WICPixelFormat32bppBGRA, 32, bits_32bppBGRA_3, 3, 2, 96.0, 96.0};
+
 static const float bits_128bppRGBFloat[] = {
     0.0f,0.0f,0.0f,1.0f, 0.0f,1.0f,0.0f,1.0f, 0.214039f,0.214053f,0.214039f,1.0f,
     1.0f,1.0f,1.0f,1.0f, 0.000012f,0.000012f,0.000012f,1.0f, 0.0f,0.0f,0.000012f,1.0f,};
@@ -805,13 +817,13 @@ static void test_can_convert(void)
         {WIC_PIXEL_FORMAT(16bppBGRA5551), TRUE, TRUE, 33, TRUE},
         {WIC_PIXEL_FORMAT(24bppBGR), TRUE, TRUE, 27},
         {WIC_PIXEL_FORMAT(24bppRGB), TRUE, TRUE, 30},
-        {WIC_PIXEL_FORMAT(32bppBGR), TRUE, TRUE, 14},
-        {WIC_PIXEL_FORMAT(32bppBGRA), TRUE, TRUE, 14},
-        {WIC_PIXEL_FORMAT(32bppPBGRA), TRUE, TRUE, 14},
-        {WIC_PIXEL_FORMAT(32bppRGB), TRUE, TRUE, 12, TRUE},
-        {WIC_PIXEL_FORMAT(32bppRGBA), TRUE, TRUE, 12, TRUE},
-        {WIC_PIXEL_FORMAT(32bppPRGBA), TRUE, TRUE, 12, TRUE},
-        {WIC_PIXEL_FORMAT(32bppGrayFloat), TRUE, TRUE, 13},
+        {WIC_PIXEL_FORMAT(32bppBGR), TRUE, TRUE, 13},
+        {WIC_PIXEL_FORMAT(32bppBGRA), TRUE, TRUE, 13},
+        {WIC_PIXEL_FORMAT(32bppPBGRA), TRUE, TRUE, 13},
+        {WIC_PIXEL_FORMAT(32bppRGB), TRUE, TRUE, 11, TRUE},
+        {WIC_PIXEL_FORMAT(32bppRGBA), TRUE, TRUE, 11, TRUE},
+        {WIC_PIXEL_FORMAT(32bppPRGBA), TRUE, TRUE, 11, TRUE},
+        {WIC_PIXEL_FORMAT(32bppGrayFloat), TRUE, TRUE, 12},
 
         {WIC_PIXEL_FORMAT(48bppRGB), TRUE, TRUE, 35},
         {WIC_PIXEL_FORMAT(48bppBGR), TRUE, TRUE, 35, TRUE},
@@ -2340,6 +2352,7 @@ START_TEST(converter)
     test_conversion(&testdata_24bppBGR_2, &testdata_128bppRGBAFloat, "24bppBGR -> 128bppRGBAFloat", FALSE);
     test_conversion(&testdata_32bppBGRA_2, &testdata_128bppRGBAFloat_2, "32bppBGRA -> 128bppRGBAFloat", FALSE);
     test_conversion(&testdata_96bppRGBFloat, &testdata_128bppRGBFloat, "96bppRGBFloat -> 128bppRGBFloat", FALSE);
+    test_conversion(&testdata_96bppRGBFloat_2, &testdata_32bppBGRA_3, "96bppRGBFloat -> 32bppBGRA", FALSE);
     test_conversion(&testdata_128bppRGBAFloat_2, &testdata_32bppBGRA_2, "128bppRGBAFloat -> 32bppBGRA", FALSE);
 
     test_invalid_conversion();
