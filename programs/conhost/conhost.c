@@ -943,6 +943,13 @@ static void edit_line_kill_prefix( struct console *console )
     }
 }
 
+static void edit_line_clear( struct console *console )
+{
+    struct edit_line *ctx = &console->edit_line;
+    edit_line_delete( console, 0, ctx->len );
+    ctx->cursor = 0;
+}
+
 static void edit_line_kill_marked_zone( struct console *console )
 {
     struct edit_line *ctx = &console->edit_line;
@@ -1138,6 +1145,7 @@ static const struct edit_line_key_entry win32_std_key_map[] =
     { VK_DOWN,   edit_line_move_to_next_hist },
     { VK_INSERT, edit_line_toggle_insert     },
     { VK_F8,     edit_line_find_in_history   },
+    { VK_ESCAPE, edit_line_clear             },
     { 0 }
 };
 
