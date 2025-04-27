@@ -659,10 +659,7 @@ static HRESULT CDECL tiff_decoder_get_decoder_palette(struct decoder *iface, UIN
 static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UINT tile_y)
 {
     tsize_t ret;
-    int swap_bytes;
     tiff_decode_info *info = &This->cached_decode_info;
-
-    swap_bytes = TIFFIsByteSwapped(This->tiff);
 
     if (info->tiled)
         ret = TIFFReadEncodedTile(This->tiff, tile_x + tile_y * info->tiles_across, This->cached_tile, info->tile_size);
@@ -871,34 +868,6 @@ static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UI
 
             reverse_bgr8(sample_count, This->cached_tile, info->tile_width,
                 info->tile_height, info->tile_width * sample_count);
-        }
-    }
-
-    if (swap_bytes && info->bps > 8)
-    {
-        UINT row, i, samples_per_row;
-        BYTE *sample, temp;
-
-        samples_per_row = info->tile_width * info->samples;
-
-        switch(info->bps)
-        {
-        case 16:
-            for (row=0; row<info->tile_height; row++)
-            {
-                sample = This->cached_tile + row * info->tile_stride;
-                for (i=0; i<samples_per_row; i++)
-                {
-                    temp = sample[1];
-                    sample[1] = sample[0];
-                    sample[0] = temp;
-                    sample += 2;
-                }
-            }
-            break;
-        default:
-            ERR("unhandled bps for byte swap %u\n", info->bps);
-            return E_FAIL;
         }
     }
 

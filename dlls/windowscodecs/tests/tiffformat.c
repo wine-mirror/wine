@@ -1562,7 +1562,6 @@ static void test_tiff_16bpp(void)
     data = 0xfefefefe;
     hr = IWICBitmapFrameDecode_CopyPixels(frame, &rc, 4, sizeof(data), (BYTE *)&data);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
     ok(data == 0xfefe1234, "Unexpected data %#lx.\n", data);
 
     IWICBitmapFrameDecode_Release(frame);
