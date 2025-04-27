@@ -1476,7 +1476,8 @@ static BOOL map_to_ctrlevent( struct console *console, const INPUT_RECORD *recor
 {
     if (record->EventType == KEY_EVENT)
     {
-        if (record->Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
+        if ((console->mode & ENABLE_PROCESSED_INPUT) &&
+            record->Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
             !(record->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
         {
             *event = CTRL_C_EVENT;
@@ -1498,6 +1499,8 @@ static BOOL map_to_ctrlevent( struct console *console, const INPUT_RECORD *recor
 NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
                               unsigned int count, BOOL flush )
 {
+    unsigned int i;
+
     TRACE( "%u\n", count );
 
     if (!count) return STATUS_SUCCESS;
@@ -1510,35 +1513,27 @@ NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *recor
         console->record_size = console->record_size * 2 + count;
     }
 
-    if (console->mode & ENABLE_PROCESSED_INPUT)
+    for (i = 0; i < count; i++)
     {
-        unsigned int i;
-        for (i = 0; i < count; i++)
+        unsigned int event;
+
+        if (map_to_ctrlevent( console, &records[i], &event ))
         {
-            unsigned int event;
-
-            if (map_to_ctrlevent( console, &records[i], &event ))
+            if (records[i].Event.KeyEvent.bKeyDown)
             {
-                if (records[i].Event.KeyEvent.bKeyDown)
-                {
-                    struct condrv_ctrl_event ctrl_event;
-                    IO_STATUS_BLOCK io;
+                struct condrv_ctrl_event ctrl_event;
+                IO_STATUS_BLOCK io;
 
-                    ctrl_event.event = event;
-                    ctrl_event.group_id = 0;
-                    NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_CTRL_EVENT,
-                                           &ctrl_event, sizeof(ctrl_event), NULL, 0 );
-                }
+                ctrl_event.event = event;
+                ctrl_event.group_id = 0;
+                NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_CTRL_EVENT,
+                                       &ctrl_event, sizeof(ctrl_event), NULL, 0 );
             }
-            else
-                console->records[console->record_count++] = records[i];
         }
+        else
+            console->records[console->record_count++] = records[i];
     }
-    else
-    {
-        memcpy( console->records + console->record_count, records, count * sizeof(INPUT_RECORD) );
-        console->record_count += count;
-    }
+
     return flush ? process_console_input( console ) : STATUS_SUCCESS;
 }
 
