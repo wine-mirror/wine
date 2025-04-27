@@ -1768,7 +1768,7 @@ static DWORD WINAPI tty_input( void *param )
             switch (ch)
             {
             case 3: /* end of text */
-                if (console->is_unix && (console->mode & ENABLE_PROCESSED_INPUT))
+                if (console->is_unix)
                 {
                     key_press( console, ch, 'C', LEFT_CTRL_PRESSED );
                     break;
