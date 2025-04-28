@@ -280,7 +280,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
         if (!NtUserGetClipboardFormatName(format->format_id, buffer, ARRAY_SIZE(buffer)))
         {
             WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id),
-                 (unsigned int)RtlGetLastWin32Error());
+                 RtlGetLastWin32Error());
             free(format);
             return NULL;
         }
@@ -1436,7 +1436,7 @@ static void update_clipboard(void)
     static BOOL updating;
 
     TRACE("is_clipboard_owner %d last_clipboard_update %u now %u\n",
-          is_clipboard_owner, last_clipboard_update, (unsigned int)NtGetTickCount());
+          is_clipboard_owner, last_clipboard_update, NtGetTickCount());
 
     if (updating) return;
     updating = TRUE;

@@ -274,7 +274,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     CFArrayRef frames;
 
     TRACE("hdc %p icon->hbmMask %p icon->xHotspot %d icon->yHotspot %d width %d height %d\n",
-          hdc, icon->hbmMask, (int)icon->xHotspot, (int)icon->yHotspot, width, height);
+          hdc, icon->hbmMask, icon->xHotspot, icon->yHotspot, width, height);
 
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = width;
@@ -484,7 +484,7 @@ static CFDictionaryRef create_cursor_frame(HDC hdc, const ICONINFOEXW *iinfo, HA
 
     TRACE("hdc %p iinfo->xHotspot %d iinfo->yHotspot %d icon %p hbmColor %p color_bits %p color_size %d"
           " hbmMask %p mask_bits %p mask_size %d width %d height %d istep %d\n",
-          hdc, (int)iinfo->xHotspot, (int)iinfo->yHotspot, icon, hbmColor, color_bits, color_size,
+          hdc, iinfo->xHotspot, iinfo->yHotspot, icon, hbmColor, color_bits, color_size,
           hbmMask, mask_bits, mask_size, width, height, istep);
 
     frame = CFDictionaryCreateMutable(NULL, 0, &kCFCopyStringDictionaryKeyCallBacks,
@@ -631,7 +631,7 @@ cleanup:
         frames = NULL;
     }
     else
-        TRACE("returning cursor with %d frames\n", (int)nFrames);
+        TRACE("returning cursor with %d frames\n", nFrames);
     /* Cleanup all of the resources used to obtain the frame data */
     if (hbmColor) NtGdiDeleteObjectApp(hbmColor);
     if (hbmMask) NtGdiDeleteObjectApp(hbmMask);
@@ -693,7 +693,7 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
     ret = macdrv_get_cursor_position(&pt);
     if (ret)
     {
-        TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, (int)pos->x, (int)pos->y);
+        TRACE("pointer at (%g,%g) server pos %d,%d\n", pt.x, pt.y, pos->x, pos->y);
         pos->x = floor(pt.x);
         pos->y = floor(pt.y);
     }
@@ -959,6 +959,6 @@ void macdrv_release_capture(HWND hwnd, const macdrv_event *event)
     {
         NtUserReleaseCapture();
         if (!NtUserPostMessage(capture, WM_CANCELMODE, 0, 0))
-            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", (unsigned int)RtlGetLastWin32Error());
+            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", RtlGetLastWin32Error());
     }
 }

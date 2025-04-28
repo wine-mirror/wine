@@ -553,7 +553,7 @@ BOOL macdrv_ProcessEvents(DWORD mask)
     struct macdrv_thread_data *data = macdrv_thread_data();
     macdrv_event_mask event_mask = get_event_mask(mask);
 
-    TRACE("mask %x\n", (unsigned int)mask);
+    TRACE("mask %x\n", mask);
 
     if (!data) return FALSE;
 

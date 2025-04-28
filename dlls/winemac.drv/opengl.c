@@ -2115,7 +2115,7 @@ static void macdrv_glFlush(void)
         const pixel_format *pf = &pixel_formats[context->format - 1];
         unsigned int now = NtGetTickCount();
 
-        TRACE("double buffer %d last flush time %d now %d\n", (int)pf->double_buffer,
+        TRACE("double buffer %d last flush time %d now %d\n", pf->double_buffer,
               context->last_flush_time, now);
         if (pglFlushRenderAPPLE && !pf->double_buffer && (now - context->last_flush_time) < 17)
         {

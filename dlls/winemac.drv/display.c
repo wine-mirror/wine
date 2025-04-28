@@ -753,7 +753,7 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
     struct display_mode_descriptor *desc;
     CGDisplayModeRef best_display_mode;
 
-    TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, (unsigned int)flags, lpvoid);
+    TRACE("%p %s %p 0x%08x %p\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid);
 
     init_original_display_mode();
 
@@ -785,18 +785,18 @@ LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWN
         }
 
         if (mode->dmBitsPerPel != bpp)
-            TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, (int)mode->dmBitsPerPel);
+            TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, mode->dmBitsPerPel);
 
-        TRACE("looking for %dx%dx%dbpp @%d Hz", (int)mode->dmPelsWidth, (int)mode->dmPelsHeight,
-              bpp, (int)mode->dmDisplayFrequency);
+        TRACE("looking for %dx%dx%dbpp @%d Hz", mode->dmPelsWidth, mode->dmPelsHeight,
+              bpp, mode->dmDisplayFrequency);
         TRACE(" %sstretched", mode->dmDisplayFixedOutput == DMDFO_STRETCH ? "" : "un");
         TRACE(" %sinterlaced", mode->dmDisplayFlags & DM_INTERLACED ? "" : "non-");
         TRACE("\n");
 
         if (!(best_display_mode = find_best_display_mode(mode, display_modes, bpp, desc)))
         {
-            ERR("No matching mode found %ux%ux%d @%u!\n", (unsigned int)mode->dmPelsWidth, (unsigned int)mode->dmPelsHeight,
-                bpp, (unsigned int)mode->dmDisplayFrequency);
+            ERR("No matching mode found %ux%ux%d @%u!\n", mode->dmPelsWidth, mode->dmPelsHeight,
+                bpp, mode->dmDisplayFrequency);
             ret = DISP_CHANGE_BADMODE;
         }
         else if (!macdrv_set_display_mode(&macdrv_displays[0], best_display_mode))

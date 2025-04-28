@@ -134,12 +134,12 @@ HKEY open_hkcu_key(const char *name)
 
         sid = ((TOKEN_USER *)sid_data)->User.Sid;
         len = snprintf(buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
-                      (unsigned int)MAKELONG(MAKEWORD(sid->IdentifierAuthority.Value[5],
-                                                      sid->IdentifierAuthority.Value[4]),
-                                             MAKEWORD(sid->IdentifierAuthority.Value[3],
-                                                      sid->IdentifierAuthority.Value[2])));
+                        MAKELONG(MAKEWORD(sid->IdentifierAuthority.Value[5],
+                                           sid->IdentifierAuthority.Value[4]),
+                                  MAKEWORD(sid->IdentifierAuthority.Value[3],
+                                            sid->IdentifierAuthority.Value[2])));
         for (i = 0; i < sid->SubAuthorityCount; i++)
-            len += snprintf(buffer + len, sizeof(buffer) - len, "-%u", (unsigned int)sid->SubAuthority[i]);
+            len += snprintf(buffer + len, sizeof(buffer) - len, "-%u", sid->SubAuthority[i]);
 
         ascii_to_unicode(bufferW, buffer, len);
         hkcu = reg_open_key(NULL, bufferW, len * sizeof(WCHAR));
