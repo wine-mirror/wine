@@ -1,5 +1,5 @@
 TESTDLL = coremessaging.dll
-IMPORTS = combase
+IMPORTS = combase coremessaging user32
 
 SOURCES = \
 	coremessaging.c

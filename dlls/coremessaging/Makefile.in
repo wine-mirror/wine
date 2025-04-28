@@ -1,5 +1,6 @@
-MODULE  = coremessaging.dll
-IMPORTS = combase
+MODULE    = coremessaging.dll
+IMPORTS   = combase
+IMPORTLIB = coremessaging
 
 SOURCES = \
 	classes.idl \
