@@ -457,16 +457,16 @@ static int process_events( DWORD mask )
 
                 if (event->data.motion.input.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
                     TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
-                           (int)event->data.motion.input.mi.dx, (int)event->data.motion.input.mi.dy,
-                           event->data.motion.hwnd, (int)event->data.motion.input.mi.dwFlags );
+                           event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.mi.dwFlags );
                 else if (event->data.motion.input.mi.dwFlags & (MOUSEEVENTF_LEFTUP|MOUSEEVENTF_RIGHTUP|MOUSEEVENTF_MIDDLEUP))
                     TRACE( "BUTTONUP pos %d,%d hwnd %p flags %x\n",
-                           (int)event->data.motion.input.mi.dx, (int)event->data.motion.input.mi.dy,
-                           event->data.motion.hwnd, (int)event->data.motion.input.mi.dwFlags );
+                           event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.mi.dwFlags );
                 else
                     TRACE( "MOUSEMOVE pos %d,%d hwnd %p flags %x\n",
-                           (int)event->data.motion.input.mi.dx, (int)event->data.motion.input.mi.dy,
-                           event->data.motion.hwnd, (int)event->data.motion.input.mi.dwFlags );
+                           event->data.motion.input.mi.dx, event->data.motion.input.mi.dy,
+                           event->data.motion.hwnd, event->data.motion.input.mi.dwFlags );
                 if (!capture && (event->data.motion.input.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
                 {
                     RECT rect;

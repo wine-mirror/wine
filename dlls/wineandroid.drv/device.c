@@ -1144,7 +1144,7 @@ NTSTATUS android_dispatch_ioctl( void *arg )
     }
     else
     {
-        FIXME( "ioctl %x not supported\n", (int)irpsp->Parameters.DeviceIoControl.IoControlCode );
+        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
     }
     return STATUS_SUCCESS;
