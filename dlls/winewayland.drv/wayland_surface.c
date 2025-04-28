@@ -817,7 +817,7 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
                              NULL, &section_size, PAGE_READWRITE, SEC_COMMIT, 0);
     if (status)
     {
-        ERR("Failed to create SHM section status=0x%lx\n", (long)status);
+        ERR("Failed to create SHM section status=0x%x\n", status);
         goto err;
     }
 
@@ -827,14 +827,14 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
     if (status)
     {
         shm_buffer->map_data = NULL;
-        ERR("Failed to create map SHM handle status=0x%lx\n", (long)status);
+        ERR("Failed to create map SHM handle status=0x%x\n", status);
         goto err;
     }
 
     status = wine_server_handle_to_fd(handle, FILE_READ_DATA, &fd, NULL);
     if (status)
     {
-        ERR("Failed to get fd from SHM handle status=0x%lx\n", (long)status);
+        ERR("Failed to get fd from SHM handle status=0x%x\n", status);
         goto err;
     }
 

@@ -158,7 +158,7 @@ static void wayland_win_data_get_config(struct wayland_win_data *data,
     conf->client_rect = data->rects.client;
     style = NtUserGetWindowLongW(data->hwnd, GWL_STYLE);
 
-    TRACE("window=%s style=%#lx\n", wine_dbgstr_rect(&conf->rect), (long)style);
+    TRACE("window=%s style=%#x\n", wine_dbgstr_rect(&conf->rect), style);
 
     /* The fullscreen state is implied by the window position and style. */
     if (data->is_fullscreen)

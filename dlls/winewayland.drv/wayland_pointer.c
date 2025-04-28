@@ -87,7 +87,7 @@ static void pointer_handle_motion_internal(wl_fixed_t sx, wl_fixed_t sy)
 
     TRACE("hwnd=%p wayland_xy=%.2f,%.2f screen_xy=%d,%d\n",
           hwnd, wl_fixed_to_double(sx), wl_fixed_to_double(sy),
-          (int)screen.x, (int)screen.y);
+          screen.x, screen.y);
 
     NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
@@ -308,7 +308,7 @@ static void relative_pointer_v1_relative_motion(void *private,
 
     TRACE("hwnd=%p wayland_dxdy=%.2f,%.2f accum_dxdy=%d,%d\n",
           hwnd, wl_fixed_to_double(dx), wl_fixed_to_double(dy),
-          (int)input.mi.dx, (int)input.mi.dy);
+          input.mi.dx, input.mi.dy);
 
     NtUserSendHardwareInput(hwnd, 0, &input, 0);
 }
@@ -762,9 +762,9 @@ static void wayland_pointer_update_constraint(struct wl_surface *wl_surface,
 
         TRACE("Confining to hwnd=%p wayland=%d,%d+%d,%d\n",
               pointer->constraint_hwnd,
-              (int)confine_rect->left, (int)confine_rect->top,
-              (int)(confine_rect->right - confine_rect->left),
-              (int)(confine_rect->bottom - confine_rect->top));
+              confine_rect->left, confine_rect->top,
+              confine_rect->right - confine_rect->left,
+              confine_rect->bottom - confine_rect->top);
 
         wl_region_destroy(region);
     }
@@ -906,7 +906,7 @@ BOOL WAYLAND_ClipCursor(const RECT *clip, BOOL reset)
         wl_surface_commit(wl_surface);
         wayland_win_data_release(data);
         TRACE("position hint hwnd=%p wayland_xy=%d,%d screen_xy=%d,%d\n",
-                hwnd, warp_x, warp_y, (int)cursor_pos.x, (int)cursor_pos.y);
+                hwnd, warp_x, warp_y, cursor_pos.x, cursor_pos.y);
         pthread_mutex_lock(&pointer->mutex);
     }
 
