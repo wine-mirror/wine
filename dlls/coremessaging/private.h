@@ -38,6 +38,10 @@
 #define WIDL_using_Windows_System
 #include "windows.system.h"
 
+#include "async_private.h"
+
+HRESULT async_action_create( IUnknown *invoker, async_operation_callback callback, IAsyncAction **out );
+
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \
@@ -75,5 +79,7 @@
     }
 #define DEFINE_IINSPECTABLE( pfx, iface_type, impl_type, base_iface )                              \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
+#define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
+    DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface )
 
 #endif

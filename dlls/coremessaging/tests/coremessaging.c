@@ -263,9 +263,8 @@ static void check_create_dispatcher_queue_controller_( unsigned int line, DWORD 
     options.apartmentType = apartment_type;
 
     hr = CreateDispatcherQueueController( options, &dispatcher_queue_controller );
-    todo_wine
     ok_(__FILE__, line)( hr == expected_hr, "got CreateDispatcherQueueController hr %#lx.\n", hr );
-    if (FAILED(hr)) return;
+    if (hr == E_INVALIDARG) return;
 
     hr = IDispatcherQueueController_get_DispatcherQueue( dispatcher_queue_controller, &dispatcher_queue );
     todo_wine
@@ -356,10 +355,8 @@ static void test_CreateDispatcherQueueController(void)
     HRESULT hr;
 
     hr = CreateDispatcherQueueController( options, NULL );
-    todo_wine
     ok( hr == E_POINTER || hr == 0x80000005 /* win10 22h2 */, "got hr %#lx.\n", hr );
     hr = CreateDispatcherQueueController( options, &dispatcher_queue_controller );
-    todo_wine
     ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
     ok( dispatcher_queue_controller == (void *)0xdeadbeef, "got dispatcher_queue_controller %p.\n", dispatcher_queue_controller );
 

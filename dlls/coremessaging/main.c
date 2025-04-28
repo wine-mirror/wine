@@ -116,6 +116,110 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+struct dispatcher_queue_controller
+{
+    IDispatcherQueueController IDispatcherQueueController_iface;
+    LONG ref;
+};
+
+static inline struct dispatcher_queue_controller *impl_from_IDispatcherQueueController( IDispatcherQueueController *iface )
+{
+    return CONTAINING_RECORD( iface, struct dispatcher_queue_controller, IDispatcherQueueController_iface );
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_QueryInterface( IDispatcherQueueController *iface, REFIID iid, void **out )
+{
+    struct dispatcher_queue_controller *impl = impl_from_IDispatcherQueueController( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IDispatcherQueueController ))
+    {
+        *out = &impl->IDispatcherQueueController_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI dispatcher_queue_controller_AddRef( IDispatcherQueueController *iface )
+{
+    struct dispatcher_queue_controller *impl = impl_from_IDispatcherQueueController( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing ref to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI dispatcher_queue_controller_Release( IDispatcherQueueController *iface )
+{
+    struct dispatcher_queue_controller *impl = impl_from_IDispatcherQueueController( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing ref to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_GetIids( IDispatcherQueueController *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_GetRuntimeClassName( IDispatcherQueueController *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_GetTrustLevel( IDispatcherQueueController *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_get_DispatcherQueue( IDispatcherQueueController *iface, IDispatcherQueue **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT shutdown_queue_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI dispatcher_queue_controller_ShutdownQueueAsync( IDispatcherQueueController *iface, IAsyncAction **operation )
+{
+    FIXME( "iface %p, operation %p stub!\n", iface, operation );
+
+    if (!operation) return E_POINTER;
+    *operation = NULL;
+
+    return async_action_create( NULL, shutdown_queue_async, operation );
+}
+
+static const struct IDispatcherQueueControllerVtbl dispatcher_queue_controller_vtbl =
+{
+    dispatcher_queue_controller_QueryInterface,
+    dispatcher_queue_controller_AddRef,
+    dispatcher_queue_controller_Release,
+    /* IInspectable methods */
+    dispatcher_queue_controller_GetIids,
+    dispatcher_queue_controller_GetRuntimeClassName,
+    dispatcher_queue_controller_GetTrustLevel,
+    /* IDispatcherQueueController methods */
+    dispatcher_queue_controller_get_DispatcherQueue,
+    dispatcher_queue_controller_ShutdownQueueAsync,
+};
+
 DEFINE_IINSPECTABLE( dispatcher_queue_controller_statics, IDispatcherQueueControllerStatics, struct dispatcher_queue_controller_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI dispatcher_queue_controller_statics_CreateOnDedicatedThread( IDispatcherQueueControllerStatics *iface, IDispatcherQueueController **result )
@@ -163,7 +267,20 @@ HRESULT WINAPI DllGetActivationFactory( HSTRING classid, IActivationFactory **fa
 
 HRESULT WINAPI CreateDispatcherQueueController( DispatcherQueueOptions options, PDISPATCHERQUEUECONTROLLER *queue_controller )
 {
-    FIXME( "options.dwSize = %lu, options.threadType = %d, options.apartmentType = %d, queue_controller %p stub!\n",
+    struct dispatcher_queue_controller *impl;
+
+    FIXME( "options.dwSize = %lu, options.threadType = %d, options.apartmentType = %d, queue_controller %p semi-stub!\n",
             options.dwSize, options.threadType, options.apartmentType, queue_controller );
-    return E_NOTIMPL;
+
+    if (!queue_controller) return E_POINTER;
+    if (options.dwSize != sizeof( DispatcherQueueOptions )) return E_INVALIDARG;
+    if (options.threadType != DQTYPE_THREAD_DEDICATED && options.threadType != DQTYPE_THREAD_CURRENT) return E_INVALIDARG;
+    if (!(impl = calloc( 1, sizeof( *impl ) ))) return E_OUTOFMEMORY;
+
+    impl->IDispatcherQueueController_iface.lpVtbl = &dispatcher_queue_controller_vtbl;
+    impl->ref = 1;
+
+    *queue_controller = &impl->IDispatcherQueueController_iface;
+    TRACE( "created IDispatcherQueueController %p.\n", *queue_controller );
+    return S_OK;
 }
