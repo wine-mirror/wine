@@ -502,7 +502,7 @@ static BOOL DC_DeleteObject( HGDIOBJ handle )
     if (!(dc = get_dc_ptr( handle ))) return FALSE;
     if (dc->refcount != 1)
     {
-        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, (int)dc->refcount );
+        FIXME( "not deleting busy DC %p refcount %u\n", dc->hSelf, dc->refcount );
         release_dc_ptr( dc );
         return FALSE;
     }
@@ -710,7 +710,7 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     if (is_display)
         funcs = get_display_driver();
     else if (type != WINE_GDI_DRIVER_VERSION)
-        ERR( "version mismatch: %u\n", (unsigned int)type );
+        ERR( "version mismatch: %u\n", type );
     else
         funcs = hspool;
     if (!funcs)
@@ -1143,7 +1143,7 @@ BOOL WINAPI NtGdiGetTransform( HDC hdc, DWORD which, XFORM *xform )
         break;
 
     default:
-        FIXME("Unknown code %x\n", (int)which);
+        FIXME("Unknown code %x\n", which);
         ret = FALSE;
     }
 
@@ -1450,7 +1450,7 @@ DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
         release_dc_ptr( dc );
     }
 
-    TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, (int)layout);
+    TRACE("hdc : %p, old layout : %08x, new layout : %08x\n", hdc, old_layout, layout);
 
     return old_layout;
 }

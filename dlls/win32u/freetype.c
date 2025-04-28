@@ -1325,9 +1325,9 @@ static int add_unix_face( const char *unix_name, const WCHAR *file, void *data_p
                         unix_face->font_version, flags, unix_face->scalable ? NULL : &unix_face->size );
 
     TRACE("fsCsb = %08x %08x/%08x %08x %08x %08x\n",
-          (int)unix_face->fs.fsCsb[0], (int)unix_face->fs.fsCsb[1],
-          (int)unix_face->fs.fsUsb[0], (int)unix_face->fs.fsUsb[1],
-          (int)unix_face->fs.fsUsb[2], (int)unix_face->fs.fsUsb[3]);
+          unix_face->fs.fsCsb[0], unix_face->fs.fsCsb[1],
+          unix_face->fs.fsUsb[0], unix_face->fs.fsUsb[1],
+          unix_face->fs.fsUsb[2], unix_face->fs.fsUsb[3]);
 
     if (num_faces) *num_faces = unix_face->num_faces;
     unix_face_destroy( unix_face );
@@ -2446,7 +2446,7 @@ static BOOL freetype_load_font( struct gdi_font *font )
         /* load the VDMX table if we have one */
         font->ppem = load_VDMX( font, font->lf.lfHeight );
         if (font->ppem == 0) font->ppem = calc_ppem_for_height( ft_face, font->lf.lfHeight );
-        TRACE( "height %d => ppem %d\n", (int)font->lf.lfHeight, font->ppem );
+        TRACE( "height %d => ppem %d\n", font->lf.lfHeight, font->ppem );
         height = font->ppem;
         font->ttc_item_offset = get_ttc_offset( ft_face, font->face_index );
         font->otm.otmEMSquare = ft_face->units_per_EM;
@@ -2492,7 +2492,7 @@ static UINT freetype_get_aa_flags( struct gdi_font *font, UINT aa_flags, BOOL an
             if (get_gasp_flags( font, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
             {
                 TRACE( "font %s %d aa disabled by GASP\n",
-                       debugstr_w(font->lf.lfFaceName), (int)font->lf.lfHeight );
+                       debugstr_w(font->lf.lfFaceName), font->lf.lfHeight );
                 aa_flags = GGO_BITMAP;
             }
         }

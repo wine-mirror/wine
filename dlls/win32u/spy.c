@@ -2345,13 +2345,13 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPPOINT point = (LPPOINT) sp_e->lParam;
                 if (point) {
-                    TRACE("lParam point x=%d, y=%d\n", (int)point->x, (int)point->y);
+                    TRACE("lParam point x=%d, y=%d\n", point->x, point->y);
                 }
                 break;
             }
         case SBM_SETRANGE:
             if (!enter && (sp_e->msgnum == SBM_SETRANGE)) break;
-            TRACE("min=%d max=%d\n", (INT)sp_e->wParam, (INT)sp_e->lParam);
+            TRACE("min=%d max=%ld\n", (int)sp_e->wParam, sp_e->lParam);
             break;
         case SBM_GETRANGE:
             if ((enter && (sp_e->msgnum == SBM_GETRANGE)) ||
@@ -2371,14 +2371,14 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             if (enter && sp_e->lParam)
             {
                 CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
-                TRACE("CHARRANGE: cpMin=%d cpMax=%d\n", (int)cr->cpMin, (int)cr->cpMax);
+                TRACE("CHARRANGE: cpMin=%d cpMax=%d\n", cr->cpMin, cr->cpMax);
             }
             break;
         case EM_SETCHARFORMAT:
             if (enter && sp_e->lParam)
             {
                 CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
-                TRACE("CHARFORMAT: dwMask=0x%08x dwEffects=", (int)cf->dwMask);
+                TRACE("CHARFORMAT: dwMask=0x%08x dwEffects=", cf->dwMask);
                 if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
                     TRACE(" CFE_BOLD");
                 if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
@@ -2393,11 +2393,11 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     TRACE(" CFE_UNDERLINE");
                 TRACE("\n");
                 if (cf->dwMask & CFM_SIZE)
-                    TRACE("yHeight=%d\n", (int)cf->yHeight);
+                    TRACE("yHeight=%d\n", cf->yHeight);
                 if (cf->dwMask & CFM_OFFSET)
-                    TRACE("yOffset=%d\n", (int)cf->yOffset);
+                    TRACE("yOffset=%d\n", cf->yOffset);
                 if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
-                    TRACE("crTextColor=%x\n", (int)cf->crTextColor);
+                    TRACE("crTextColor=%x\n", cf->crTextColor);
                 TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
                 /* FIXME: we should try to be a bit more intelligent about
                  * whether this is in ANSI or Unicode (it could be either) */
@@ -2442,7 +2442,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
                   unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
                   unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
-                  (int)cs->dwExStyle, (int)cs->style, cs->x, cs->y, cs->cx, cs->cy,
+                  cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
                   cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
             break;
         }
@@ -2466,7 +2466,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
                 TRACE("STYLESTRUCT: StyleOld=0x%08x, StyleNew=0x%08x\n",
-                      (int)ss->styleOld, (int)ss->styleNew);
+                      ss->styleOld, ss->styleNew);
             }
             break;
         case WM_NCCALCSIZE:
@@ -2516,7 +2516,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     }
                     if (dumplen > 0) {
                         q = (UINT *)(pnmh + 1);
-                        SPY_DumpMem ("NM extra", q, (INT)dumplen);
+                        SPY_DumpMem ("NM extra", q, dumplen);
                     }
                 }
                 else
@@ -2625,7 +2625,7 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
             DWORD tid = get_window_thread( hWnd, NULL );
 
             if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
-            else snprintf( taskName, sizeof(taskName), "tid %04x", (int)GetCurrentThreadId() );
+            else snprintf( taskName, sizeof(taskName), "tid %04x", GetCurrentThreadId() );
 
             TRACE("%*s(%p) %-16s [%04x] %s sent from %s wp=%08lx lp=%08lx\n",
                   indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,

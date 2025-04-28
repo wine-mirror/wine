@@ -678,7 +678,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
     for (i = 0; i < device_count; ++i)
     {
         TRACE( "device %u: page %#x, usage %#x, flags %#x, target %p.\n", i, devices[i].usUsagePage,
-               devices[i].usUsage, (int)devices[i].dwFlags, devices[i].hwndTarget );
+               devices[i].usUsage, devices[i].dwFlags, devices[i].hwndTarget );
 
         if ((devices[i].dwFlags & RIDEV_INPUTSINK) && !devices[i].hwndTarget)
         {
@@ -693,7 +693,7 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
         }
 
         if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
-            FIXME( "Unhandled flags %#x for device %u.\n", (int)devices[i].dwFlags, i );
+            FIXME( "Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i );
     }
 
     pthread_mutex_lock( &rawinput_mutex );

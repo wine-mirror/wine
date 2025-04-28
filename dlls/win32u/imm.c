@@ -188,7 +188,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
     WND *win;
     UINT ret = AICR_OK;
 
-    TRACE( "%p %p %x\n", hwnd, ctx, (int)flags );
+    TRACE( "%p %p %x\n", hwnd, ctx, flags );
 
     switch (flags)
     {
@@ -198,7 +198,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
         break;
 
     default:
-        FIXME( "unknown flags 0x%x\n", (int)flags );
+        FIXME( "unknown flags 0x%x\n", flags );
         return AICR_FAILED;
     }
 
@@ -675,7 +675,7 @@ LRESULT ime_driver_call( HWND hwnd, enum wine_ime_call call, WPARAM wparam, LPAR
             res = TRUE;
         }
 
-        TRACE( "processing scan %#x, vkey %#x -> %u\n", LOWORD(wparam), HIWORD(lparam), (UINT)res );
+        TRACE( "processing scan %#x, vkey %#x -> %lu\n", LOWORD(wparam), HIWORD(lparam), res );
         return res;
     }
     case WINE_IME_TO_ASCII_EX:

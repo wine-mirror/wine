@@ -612,7 +612,7 @@ static struct cached_font *add_cached_font( DC *dc, HFONT hfont, UINT aa_flags )
 done:
     list_add_head( &font_cache, &ptr->entry );
     pthread_mutex_unlock( &font_cache_lock );
-    TRACE( "%d %s -> %p\n", (int)ptr->lf.lfHeight, debugstr_w(ptr->lf.lfFaceName), ptr );
+    TRACE( "%d %s -> %p\n", ptr->lf.lfHeight, debugstr_w(ptr->lf.lfFaceName), ptr );
     return ptr;
 }
 
@@ -1185,7 +1185,7 @@ BOOL dibdrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     DWORD and = 0, xor = 0;
     BOOL ret = TRUE;
 
-    TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, (int)rop);
+    TRACE("(%p, %d, %d, %d, %d, %06x)\n", dev, dst->x, dst->y, dst->width, dst->height, rop);
 
     add_clipped_bounds( pdev, &dst->visrect, 0 );
     if (!get_clipped_rects( &pdev->dib, &dst->visrect, pdev->clip, &clipped_rects )) return TRUE;

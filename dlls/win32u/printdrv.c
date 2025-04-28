@@ -45,7 +45,7 @@ DWORD WINAPI NtGdiGetSpoolMessage( void *ptr1, DWORD data2, void *ptr3, DWORD da
 {
     LARGE_INTEGER time;
 
-    TRACE( "(%p 0x%x %p 0x%x) stub\n", ptr1, (int)data2, ptr3, (int)data4 );
+    TRACE( "(%p 0x%x %p 0x%x) stub\n", ptr1, data2, ptr3, data4 );
 
     /* avoid 100% cpu usage with spoolsv.exe from w2k
       (spoolsv.exe from xp does Sleep 1000/1500/2000 in a loop) */
@@ -73,7 +73,7 @@ INT WINAPI NtGdiStartDoc( HDC hdc, const DOCINFOW *doc, BOOL *banding, INT job )
 
     TRACE("DocName %s, Output %s, Datatype %s, fwType %#x\n",
           debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
-          debugstr_w(doc->lpszDatatype), (int)doc->fwType);
+          debugstr_w(doc->lpszDatatype), doc->fwType);
 
     if (dc)
     {

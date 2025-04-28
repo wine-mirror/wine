@@ -270,8 +270,8 @@ HBRUSH WINAPI NtGdiCreateDIBBrush( const void *data, UINT coloruse, UINT size,
     if (!data)
         return NULL;
 
-    TRACE( "%p %dx%d %dbpp\n", info, (int)info->bmiHeader.biWidth,
-           (int)info->bmiHeader.biHeight,  (int)info->bmiHeader.biBitCount );
+    TRACE( "%p %dx%d %dbpp\n", info, info->bmiHeader.biWidth,
+           info->bmiHeader.biHeight,  info->bmiHeader.biBitCount );
 
     logbrush.lbStyle = BS_DIBPATTERNPT;
     logbrush.lbColor = coloruse;

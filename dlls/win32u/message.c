@@ -2942,8 +2942,8 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
                 hook.time        = info.msg.time;
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling keyboard LL hook vk %x scan %x flags %x time %u info %lx\n",
-                       (int)hook.vkCode, (int)hook.scanCode, (int)hook.flags,
-                       (int)hook.time, (long)hook.dwExtraInfo );
+                       hook.vkCode, hook.scanCode, hook.flags,
+                       hook.time, hook.dwExtraInfo );
                 result = call_hooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam,
                                      (LPARAM)&hook, sizeof(hook) );
             }
@@ -2957,8 +2957,8 @@ int peek_message( MSG *msg, const struct peek_message_filter *filter )
                 hook.time        = info.msg.time;
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling mouse LL hook pos %d,%d data %x flags %x time %u info %lx\n",
-                       (int)hook.pt.x, (int)hook.pt.y, (int)hook.mouseData, (int)hook.flags,
-                       (int)hook.time, (long)hook.dwExtraInfo );
+                       hook.pt.x, hook.pt.y, hook.mouseData, hook.flags,
+                       hook.time, hook.dwExtraInfo );
                 result = call_hooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam,
                                      (LPARAM)&hook, sizeof(hook) );
             }
@@ -3984,8 +3984,7 @@ static LRESULT call_messageAtoW( winproc_callback_t callback, HWND hwnd, UINT ms
 {
     LRESULT ret = 0;
 
-    TRACE( "(hwnd=%p,msg=%s,wp=%#lx,lp=%#lx)\n", hwnd, debugstr_msg_name( msg, hwnd ),
-           (long)wparam, (long)lparam );
+    TRACE( "(hwnd=%p,msg=%s,wp=%#lx,lp=%#lx)\n", hwnd, debugstr_msg_name( msg, hwnd ), (long)wparam, lparam );
 
     switch(msg)
     {
@@ -4572,7 +4571,7 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         return post_dde_message_call( hwnd, msg, wparam, lparam, result_info );
 
     default:
-        FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, (int)type, ansi );
+        FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, type, ansi );
     }
     return 0;
 }

@@ -686,7 +686,7 @@ void handle_scroll_event( HWND hwnd, int bar, UINT msg, POINT pt )
     }
 
     TRACE( "Event: hwnd=%p bar=%d msg=%s pt=%d,%d hit=%d\n",
-           hwnd, bar, debugstr_msg_name( msg, hwnd ), (int)pt.x, (int)pt.y, hittest );
+           hwnd, bar, debugstr_msg_name( msg, hwnd ), pt.x, pt.y, hittest );
 
     switch (g_tracking_info.hit_test)
     {
@@ -1460,7 +1460,7 @@ BOOL WINAPI NtUserShowScrollBar( HWND hwnd, INT bar, BOOL show )
  */
 BOOL WINAPI NtUserGetScrollBarInfo( HWND hwnd, LONG id, SCROLLBARINFO *info )
 {
-    TRACE( "hwnd=%p id=%d info=%p\n", hwnd, (int)id, info );
+    TRACE( "hwnd=%p id=%d info=%p\n", hwnd, id, info );
 
     /* Refer OBJID_CLIENT requests to the window */
     if (id == OBJID_CLIENT)

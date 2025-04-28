@@ -616,7 +616,7 @@ BOOL WINAPI NtGdiUpdateColors( HDC hDC )
  */
 BOOL WINAPI NtGdiSetMagicColors( HDC hdc, DWORD magic, ULONG index )
 {
-    FIXME( "(%p 0x%08x 0x%08x): stub\n", hdc, (int)magic, (int)index );
+    FIXME( "(%p 0x%08x 0x%08x): stub\n", hdc, magic, index );
     return TRUE;
 }
 
@@ -641,7 +641,7 @@ LONG WINAPI NtGdiDoPalette( HGDIOBJ handle, WORD start, WORD count, void *entrie
     case NtGdiGetDIBColorTable:
         return get_dib_dc_color_table( handle, start, count, entries );
     default:
-        WARN( "invalid func %u\n", (int)func );
+        WARN( "invalid func %u\n", func );
         return 0;
     }
 }

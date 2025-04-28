@@ -250,7 +250,7 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
         WARN( "Vulkan is unavailable.\n" );
     else if (!get_vulkan_uuid_from_luid( &desc->AdapterLuid, &uuid ))
         WARN( "Failed to find Vulkan device with LUID %08x:%08x.\n",
-              (int)desc->AdapterLuid.HighPart, (int)desc->AdapterLuid.LowPart );
+              desc->AdapterLuid.HighPart, desc->AdapterLuid.LowPart );
     else if (!(adapter->vk_device = get_vulkan_physical_device( &uuid )))
         WARN( "Failed to find vulkan device with GUID %s\n", debugstr_guid( &uuid ) );
 

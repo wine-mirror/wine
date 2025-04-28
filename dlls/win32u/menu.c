@@ -1434,7 +1434,7 @@ BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
 {
     struct menu *menu;
 
-    TRACE( "(%p 0x%08x)\n", handle, (int)id );
+    TRACE( "(%p 0x%08x)\n", handle, id );
 
     if (!(menu = grab_menu_ptr( handle ))) return FALSE;
     menu->dwContextHelpID = id;
@@ -2045,8 +2045,8 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
         else
             item->rect.bottom += mis.itemHeight;
 
-        TRACE( "id=%04lx size=%dx%d\n", (long)item->wID, (int)(item->rect.right - item->rect.left),
-               (int)(item->rect.bottom - item->rect.top) );
+        TRACE( "id=%04lx size=%dx%d\n", (long)item->wID, item->rect.right - item->rect.left,
+               item->rect.bottom - item->rect.top );
         return;
     }
 
@@ -2346,7 +2346,7 @@ static void draw_bitmap_item( HWND hwnd, HDC hdc, struct menu_item *item, const 
             LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL, 0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0,
                                  {'M','a','r','l','e','t','t'}};
             logfont.lfHeight =  min( h, w) - 5 ;
-            TRACE( " height %d rect %s\n", (int)logfont.lfHeight, wine_dbgstr_rect( rect ));
+            TRACE( " height %d rect %s\n", logfont.lfHeight, wine_dbgstr_rect( rect ));
             hfont = NtGdiHfontCreate( &logfont, sizeof(logfont), 0, 0, NULL );
             prev_font = NtGdiSelectFont( hdc, hfont );
             NtGdiExtTextOutW( hdc, rect->left, rect->top + 2, 0, NULL, &bmchr, 1, NULL, 0 );
@@ -4583,7 +4583,7 @@ BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *in
     struct menu *menu;
     ATOM class_atom;
 
-    TRACE( "(%p,0x%08x,0x%08x,%p)\n", hwnd, (int)id, (int)item, info );
+    TRACE( "(%p,0x%08x,0x%08x,%p)\n", hwnd, id, item, info );
 
     switch (id)
     {

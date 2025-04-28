@@ -280,7 +280,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     if (!bmp) return 0;
 
     if (count < 0) {
-	WARN("(%d): Negative number of bytes passed???\n", (int)count );
+	WARN("(%d): Negative number of bytes passed???\n", count );
 	count = -count;
     }
 
@@ -311,7 +311,7 @@ LONG WINAPI NtGdiSetBitmapBits(
     }
 
     TRACE("(%p, %d, %p) %dx%d %d bpp fetched height: %d\n",
-          hbitmap, (int)count, bits, bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
+          hbitmap, count, bits, bmp->dib.dsBm.bmWidth, bmp->dib.dsBm.bmHeight,
           bmp->dib.dsBm.bmBitsPixel, src.height );
 
     if (src_stride == dst_stride)

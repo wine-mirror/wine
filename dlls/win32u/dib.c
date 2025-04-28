@@ -181,7 +181,7 @@ static BOOL bitmapinfoheader_from_user_bitmapinfo( BITMAPINFOHEADER *dst, const 
     }
     else
     {
-        WARN( "(%u): unknown/wrong size for header\n", (int)info->biSize );
+        WARN( "(%u): unknown/wrong size for header\n", info->biSize );
         return FALSE;
     }
 
@@ -493,7 +493,7 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     RECT rect;
 
     TRACE("%d %d %d %d <- %d %d %d %d rop %08x\n", xDst, yDst, widthDst, heightDst,
-          xSrc, ySrc, widthSrc, heightSrc, (int)rop);
+          xSrc, ySrc, widthSrc, heightSrc, rop);
 
     src_bits.ptr = (void*)bits;
     src_bits.is_copy = FALSE;
@@ -1442,7 +1442,7 @@ HBITMAP WINAPI NtGdiCreateDIBitmapInternal( HDC hdc, INT width, INT height, DWOR
     height = abs( height );
 
     TRACE( "hdc=%p, init=%u, bits=%p, data=%p, coloruse=%u (bitmap: width=%d, height=%d)\n",
-           hdc, (int)init, bits, data, coloruse, width, height );
+           hdc, init, bits, data, coloruse, width, height );
 
     if (hdc == NULL)
         handle = NtGdiCreateBitmap( width, height, 1, 1, NULL );
@@ -1490,10 +1490,10 @@ HBITMAP WINAPI NtGdiCreateDIBSection( HDC hdc, HANDLE section, DWORD offset, con
     if (!(bmp = calloc( 1, sizeof(*bmp) ))) return 0;
 
     TRACE("format (%d,%d), planes %d, bpp %d, %s, size %d %s\n",
-          (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight,
+          info->bmiHeader.biWidth, info->bmiHeader.biHeight,
           info->bmiHeader.biPlanes, info->bmiHeader.biBitCount,
           info->bmiHeader.biCompression == BI_BITFIELDS? "BI_BITFIELDS" : "BI_RGB",
-          (int)info->bmiHeader.biSizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
+          info->bmiHeader.biSizeImage, usage == DIB_PAL_COLORS? "PAL" : "RGB");
 
     bmp->dib.dsBm.bmType       = 0;
     bmp->dib.dsBm.bmWidth      = info->bmiHeader.biWidth;

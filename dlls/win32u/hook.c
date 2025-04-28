@@ -139,7 +139,7 @@ HHOOK WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, DWO
     }
     SERVER_END_REQ;
 
-    TRACE( "%s %p %x -> %p\n", debugstr_hook_id(id), proc, (int)tid, handle );
+    TRACE( "%s %p %x -> %p\n", debugstr_hook_id(id), proc, tid, handle );
     return handle;
 }
 
@@ -217,7 +217,7 @@ static LRESULT call_hook( struct win_hook_params *info, const WCHAR *module, siz
         h_extra.lparam = info->lparam;
 
         TRACE( "calling hook in thread %04x %s code %x wp %lx lp %lx\n",
-               (int)info->tid, hook_names[info->id-WH_MINHOOK],
+               info->tid, hook_names[info->id-WH_MINHOOK],
                info->code, (long)info->wparam, info->lparam );
 
         switch(info->id)
@@ -562,7 +562,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
     ULONG ret_len;
     BOOL ret;
 
-    TRACE( "%04x, %p, %d, %d\n", (int)event, hwnd, (int)object_id, (int)child_id );
+    TRACE( "%04x, %p, %d, %d\n", event, hwnd, object_id, child_id );
 
     user_check_not_lock();
 
@@ -606,7 +606,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
     do
     {
         TRACE( "calling WH_WINEVENT hook %p event %x hwnd %p %x %x module %s\n",
-               info.proc, (int)event, hwnd, (int)object_id, (int)child_id, debugstr_w(info.module) );
+               info.proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
 
         info.time = NtGetTickCount();
         KeUserModeCallback( NtUserCallWinEventHook, &info,

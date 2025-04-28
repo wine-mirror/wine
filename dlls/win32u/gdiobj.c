@@ -747,7 +747,7 @@ HGDIOBJ alloc_gdi_handle( struct gdi_obj_header *obj, DWORD type, const struct g
     ret = entry_to_handle( entry );
     pthread_mutex_unlock( &gdi_lock );
     TRACE( "allocated %s %p %u/%u\n", gdi_obj_type(type), ret,
-           (int)InterlockedIncrement( &debug_count ), GDI_MAX_HANDLE_COUNT );
+           InterlockedIncrement( &debug_count ), GDI_MAX_HANDLE_COUNT );
     return ret;
 }
 
@@ -766,7 +766,7 @@ void *free_gdi_handle( HGDIOBJ handle )
     if ((entry = handle_entry( handle )))
     {
         TRACE( "freed %s %p %u/%u\n", gdi_obj_type( entry->ExtType << NTGDI_HANDLE_TYPE_SHIFT ),
-               handle, (int)InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
+               handle, InterlockedDecrement( &debug_count ) + 1, GDI_MAX_HANDLE_COUNT );
         object = entry_obj( entry );
         entry->Type = 0;
         entry->Object = (UINT_PTR)next_free;
