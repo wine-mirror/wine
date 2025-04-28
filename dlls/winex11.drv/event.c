@@ -745,7 +745,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
                         NtUserSetActiveWindow( hwnd );
                         break;
                     default:
-                        WARN( "unknown WM_MOUSEACTIVATE code %d\n", (int) ma );
+                        WARN( "unknown WM_MOUSEACTIVATE code %ld\n", ma );
                         break;
                 }
             }
@@ -767,7 +767,7 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         TRACE( "window %p/%lx WM_TAKE_FOCUS serial %lu, event_time %ld, foreground %p\n", hwnd, event->window,
                event->serial, event_time, foreground );
         TRACE( "  enabled %u, visible %u, style %#x, focus %p, active %p, last %p\n",
-                NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ),
+                NtUserIsWindowEnabled( hwnd ), NtUserIsWindowVisible( hwnd ), NtUserGetWindowLongW( hwnd, GWL_STYLE ),
                 get_focus(), get_active_window(), last_focus );
 
         if (can_activate_window(hwnd))
@@ -1577,7 +1577,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     effect = drag_drop_drag( hwnd, point, effect );
 
     TRACE( "actionRequested(%ld) chosen(0x%x) at x(%d),y(%d)\n",
-           event->data.l[4], effect, (int)point.x, (int)point.y );
+           event->data.l[4], effect, point.x, point.y );
 
     /*
      * Let source know if we're accepting the drop by

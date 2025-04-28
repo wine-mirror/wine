@@ -1387,7 +1387,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
 
     if (keyboard_grabbed)
     {
-        WARN( "refusing to warp to %u, %u\n", (int)pos.x, (int)pos.y );
+        WARN( "refusing to warp to %u, %u\n", pos.x, pos.y );
         return FALSE;
     }
 
@@ -1396,7 +1396,7 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
                       PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                       GrabModeAsync, GrabModeAsync, None, None, CurrentTime ) != GrabSuccess)
     {
-        WARN( "refusing to warp pointer to %u, %u without exclusive grab\n", (int)pos.x, (int)pos.y );
+        WARN( "refusing to warp pointer to %u, %u without exclusive grab\n", pos.x, pos.y );
         return FALSE;
     }
 
@@ -1703,7 +1703,7 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
     input->mi.dy = round( y->value );
 
     TRACE( "event %f,%f value %f,%f input %d,%d\n", x_value, y_value, x->value, y->value,
-           (int)input->mi.dx, (int)input->mi.dy );
+           input->mi.dx, input->mi.dy );
 
     x->value -= input->mi.dx;
     y->value -= input->mi.dy;
@@ -1763,15 +1763,15 @@ static BOOL X11DRV_TouchEvent( HWND hwnd, XGenericEventCookie *xev )
     case XI_TouchBegin:
         input.hi.uMsg = WM_POINTERDOWN;
         flags |= POINTER_MESSAGE_FLAG_NEW;
-        TRACE("XI_TouchBegin detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        TRACE("XI_TouchBegin detail %u pos %dx%d, flags %#x\n", event->detail, pos.x, pos.y, flags);
         break;
     case XI_TouchEnd:
         input.hi.uMsg = WM_POINTERUP;
-        TRACE("XI_TouchEnd detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        TRACE("XI_TouchEnd detail %u pos %dx%d, flags %#x\n", event->detail, pos.x, pos.y, flags);
         break;
     case XI_TouchUpdate:
         input.hi.uMsg = WM_POINTERUPDATE;
-        TRACE("XI_TouchUpdate detail %u pos %dx%d, flags %#x\n", event->detail, (int)pos.x, (int)pos.y, flags);
+        TRACE("XI_TouchUpdate detail %u pos %dx%d, flags %#x\n", event->detail, pos.x, pos.y, flags);
         break;
     }
 

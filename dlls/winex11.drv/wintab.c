@@ -843,7 +843,7 @@ static int cursor_from_device(DWORD deviceid, LPWTI_CURSORS_INFO *cursorp)
             return i;
         }
 
-    ERR("Could not map device id %d to a cursor\n", (int) deviceid);
+    ERR("Could not map device id %d to a cursor\n",  deviceid);
     return -1;
 }
 

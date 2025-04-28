@@ -231,9 +231,9 @@ static LONG apply_display_settings( DEVMODEW *displays, x11drv_settings_id *ids,
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
               "depth:%ubits orientation:%#x.\n", settings_handler.name,
               wine_dbgstr_w(mode->dmDeviceName),
-              (int)full_mode->dmPosition.x, (int)full_mode->dmPosition.y, (int)full_mode->dmPelsWidth,
-              (int)full_mode->dmPelsHeight, (int)full_mode->dmDisplayFrequency,
-              (int)full_mode->dmBitsPerPel, (int)full_mode->dmDisplayOrientation);
+              full_mode->dmPosition.x, full_mode->dmPosition.y, full_mode->dmPelsWidth,
+              full_mode->dmPelsHeight, full_mode->dmDisplayFrequency,
+              full_mode->dmBitsPerPel, full_mode->dmDisplayOrientation);
 
         ret = settings_handler.set_current_mode(*id, full_mode);
         free_full_mode(full_mode);

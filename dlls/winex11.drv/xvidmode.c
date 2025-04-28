@@ -228,7 +228,7 @@ static LONG xf86vm_set_current_mode(x11drv_settings_id id, const DEVMODEW *mode)
 
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
         WARN("Cannot change screen bit depth from %dbits to %dbits!\n",
-             screen_bpp, (int)mode->dmBitsPerPel);
+             screen_bpp, mode->dmBitsPerPel);
 
     assert(mode->dmDriverExtra == sizeof(XF86VidModeModeInfo *));
     memcpy(&xf86vm_mode, (BYTE *)mode + sizeof(*mode), sizeof(xf86vm_mode));
