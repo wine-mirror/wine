@@ -728,7 +728,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
 
         for (f = 0; f < ARRAY_SIZE(formats); f++) {
           for (tag = 0; tag < ARRAY_SIZE(format_tags); tag++) {
-            WAVEFORMATEXTENSIBLE wfxe;
+            WAVEFORMATEXTENSIBLE *wfxe;
 
             /* if float, we only want to test 32-bit */
             if ((format_tags[tag] == WAVE_FORMAT_IEEE_FLOAT) && (formats[f][1] != 32))
@@ -770,13 +770,14 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 IDirectSoundBuffer_Release(secondary);
             secondary = NULL;
 
-            bufdesc.lpwfxFormat=(WAVEFORMATEX*)&wfxe;
-            wfxe.Format = wfx;
-            wfxe.Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-            wfxe.SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
-            wfxe.Format.cbSize = 1;
-            wfxe.Samples.wValidBitsPerSample = wfx.wBitsPerSample;
-            wfxe.dwChannelMask = (wfx.nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO);
+            wfxe = calloc(1, sizeof(wfx) + sizeof(*wfxe) + 1);
+            bufdesc.lpwfxFormat = (WAVEFORMATEX*)wfxe;
+            wfxe->Format = wfx;
+            wfxe->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+            wfxe->SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
+            wfxe->Format.cbSize = 1;
+            wfxe->Samples.wValidBitsPerSample = wfx.wBitsPerSample;
+            wfxe->dwChannelMask = (wfx.nChannels == 1 ? KSAUDIO_SPEAKER_MONO : KSAUDIO_SPEAKER_STEREO);
 
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DSERR_INVALIDPARAM && !secondary,
@@ -788,7 +789,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
+            wfxe->Format.cbSize = sizeof(*wfxe) - sizeof(wfx) + 1;
 
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */ || rc==DSERR_INVALIDPARAM) && !secondary)
@@ -801,8 +802,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
-            wfxe.SubFormat = GUID_NULL;
+            wfxe->Format.cbSize = sizeof(*wfxe) - sizeof(wfx);
+            wfxe->SubFormat = GUID_NULL;
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok((rc==DSERR_INVALIDPARAM || rc==DSERR_INVALIDCALL) && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08lx %p\n",
@@ -813,7 +814,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.Format.cbSize = sizeof(wfxe);
+            wfxe->Format.cbSize = sizeof(*wfxe);
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL || rc==DSERR_INVALIDPARAM) && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08lx %p\n",
@@ -824,7 +825,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
+            wfxe->SubFormat = (format_tags[tag] == WAVE_FORMAT_PCM ? KSDATAFORMAT_SUBTYPE_PCM : KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08lx %p\n",
@@ -835,7 +836,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.Format.cbSize = sizeof(wfxe) + 1;
+            wfxe->Format.cbSize = sizeof(*wfxe) + 1;
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */ || rc==DSERR_INVALIDPARAM) && !secondary)
                 || rc==DS_OK /* driver dependent? */,
@@ -847,8 +848,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 secondary=NULL;
             }
 
-            wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx);
-            ++wfxe.Samples.wValidBitsPerSample;
+            wfxe->Format.cbSize = sizeof(*wfxe) - sizeof(wfx);
+            ++wfxe->Samples.wValidBitsPerSample;
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DSERR_INVALIDPARAM && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08lx %p\n",
@@ -858,9 +859,9 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 IDirectSoundBuffer_Release(secondary);
                 secondary=NULL;
             }
-            --wfxe.Samples.wValidBitsPerSample;
+            --wfxe->Samples.wValidBitsPerSample;
 
-            wfxe.Samples.wValidBitsPerSample = 0;
+            wfxe->Samples.wValidBitsPerSample = 0;
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08lx %p\n",
@@ -870,7 +871,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 IDirectSoundBuffer_Release(secondary);
                 secondary=NULL;
             }
-            wfxe.Samples.wValidBitsPerSample = wfxe.Format.wBitsPerSample;
+            wfxe->Samples.wValidBitsPerSample = wfxe->Format.wBitsPerSample;
 
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
             ok(rc==DS_OK && secondary!=NULL,
@@ -891,6 +892,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
                    "should have 0\n",ref);
             }
+
+            free(wfxe);
           }
         }
 EXIT1:
