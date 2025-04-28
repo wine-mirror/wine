@@ -776,18 +776,18 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
 
     if (!is_inside_syscall( context )) return FALSE;
 
-    TRACE( "code=%lx flags=%lx addr=%p pc=%08lx\n",
+    TRACE( "code=%x flags=%x addr=%p pc=%08x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (DWORD)PC_sig(context) );
     for (i = 0; i < rec->NumberParameters; i++)
         TRACE( " info[%d]=%08lx\n", i, rec->ExceptionInformation[i] );
 
-    TRACE( " r0=%08lx r1=%08lx r2=%08lx r3=%08lx r4=%08lx r5=%08lx\n",
+    TRACE( " r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x\n",
            (DWORD)REGn_sig(0, context), (DWORD)REGn_sig(1, context), (DWORD)REGn_sig(2, context),
            (DWORD)REGn_sig(3, context), (DWORD)REGn_sig(4, context), (DWORD)REGn_sig(5, context) );
-    TRACE( " r6=%08lx r7=%08lx r8=%08lx r9=%08lx r10=%08lx r11=%08lx\n",
+    TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
            (DWORD)REGn_sig(6, context), (DWORD)REGn_sig(7, context), (DWORD)REGn_sig(8, context),
            (DWORD)REGn_sig(9, context), (DWORD)REGn_sig(10, context), (DWORD)FP_sig(context) );
-    TRACE( " r12=%08lx sp=%08lx lr=%08lx pc=%08lx cpsr=%08lx\n",
+    TRACE( " r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
            (DWORD)IP_sig(context), (DWORD)SP_sig(context), (DWORD)LR_sig(context),
            (DWORD)PC_sig(context), (DWORD)CPSR_sig(context) );
 
@@ -801,7 +801,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     }
     else
     {
-        TRACE( "returning to user mode ip=%08x ret=%08lx\n", frame->pc, rec->ExceptionCode );
+        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->pc, rec->ExceptionCode );
         REGn_sig(0, context) = (DWORD)frame;
         REGn_sig(1, context) = rec->ExceptionCode;
         PC_sig(context)      = (DWORD)__wine_syscall_dispatcher_return;

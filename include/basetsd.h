@@ -160,7 +160,7 @@ typedef unsigned int UHALF_PTR, *PUHALF_PTR;
 
 #if !defined(__midl) && !defined(__WIDL__)
 
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) && !defined(WINE_UNIX_LIB)
 
 static inline unsigned long HandleToULong(const void *h)
 {
@@ -206,7 +206,7 @@ static inline int PtrToLong(const void *p)
 }
 
 
-#endif /* !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) */
+#endif /* !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) && !defined(WINE_UNIX_LIB) */
 
 static inline void *ULongToHandle(ULONG32 ul)
 {

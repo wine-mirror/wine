@@ -30,7 +30,7 @@ typedef struct
 #else
 typedef struct _GUID
 {
-#ifndef __LP64__
+#if !defined(__LP64__) && !defined(WINE_UNIX_LIB)
     unsigned long  Data1;
 #else
     unsigned int   Data1;

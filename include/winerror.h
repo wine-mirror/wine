@@ -199,7 +199,7 @@
 #define __HRESULT_FROM_WIN32(x)   ((HRESULT)(x) > 0 ? ((HRESULT) (((x) & 0x0000FFFF) | (FACILITY_WIN32 << 16) | 0x80000000)) : (HRESULT)(x) )
 #ifndef _HRESULT_DEFINED
 #define _HRESULT_DEFINED
-#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES)
+#if !defined(__LP64__) && !defined(WINE_NO_LONG_TYPES) && !defined(WINE_UNIX_LIB)
 typedef long HRESULT;
 #else
 typedef int HRESULT;
