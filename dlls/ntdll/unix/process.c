@@ -739,13 +739,13 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
 
     if (thread_flags & THREAD_CREATE_FLAGS_HIDE_FROM_DEBUGGER)
     {
-        WARN( "Invalid thread flags %#x.\n", (int)thread_flags );
+        WARN( "Invalid thread flags %#x.\n", thread_flags );
 
         return STATUS_INVALID_PARAMETER;
     }
 
     if (thread_flags & ~THREAD_CREATE_FLAGS_CREATE_SUSPENDED)
-        FIXME( "Unsupported thread flags %#x.\n", (int)thread_flags );
+        FIXME( "Unsupported thread flags %#x.\n", thread_flags );
 
     for (i = 0; i < attr_count; i++)
     {
@@ -937,7 +937,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
     }
 
     TRACE( "%s pid %04x tid %04x handles %p/%p\n", debugstr_us(&path),
-           (int)HandleToULong(id.UniqueProcess), (int)HandleToULong(id.UniqueThread),
+           HandleToULong(id.UniqueProcess), HandleToULong(id.UniqueThread),
            process_handle, thread_handle );
 
     /* update output attributes */
@@ -1118,7 +1118,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
     unsigned int ret = STATUS_SUCCESS;
     ULONG len = 0;
 
-    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, (int)size, ret_len );
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, size, ret_len );
 
     switch (class)
     {
@@ -1384,7 +1384,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             else if (!handle) ret = STATUS_INVALID_HANDLE;
             else
             {
-                FIXME( "ProcessHandleCount (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+                FIXME( "ProcessHandleCount (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
                 memset(info, 0, 4);
                 len = 4;
             }
@@ -1398,7 +1398,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         break;
 
     case ProcessHandleTable:
-        FIXME( "ProcessHandleTable (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+        FIXME( "ProcessHandleTable (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
         len = 0;
         break;
 
@@ -1519,7 +1519,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         break;
 
     case ProcessCookie:
-        FIXME( "ProcessCookie (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+        FIXME( "ProcessCookie (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
         if (handle == NtCurrentProcess())
         {
             len = sizeof(ULONG);
@@ -1560,7 +1560,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
             {
                 PROCESS_CYCLE_TIME_INFORMATION cycles;
 
-                FIXME( "ProcessCycleTime (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+                FIXME( "ProcessCycleTime (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
                 cycles.AccumulatedCycles = 0;
                 cycles.CurrentCycleCount = 0;
 
@@ -1588,7 +1588,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         {
             QUOTA_LIMITS qlimits;
 
-            FIXME( "ProcessQuotaLimits (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+            FIXME( "ProcessQuotaLimits (%p,%p,0x%08x,%p) stub\n", handle, info, size, ret_len );
 
             len = sizeof(QUOTA_LIMITS);
             if (size == len)
@@ -1615,7 +1615,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
 
     default:
         FIXME("(%p,info_class=%d,%p,0x%08x,%p) Unknown information class\n",
-              handle, class, info, (int)size, ret_len );
+              handle, class, info, size, ret_len );
         ret = STATUS_INVALID_INFO_CLASS;
         break;
     }
@@ -1635,7 +1635,7 @@ NTSTATUS WINAPI NtWow64QueryInformationProcess64( HANDLE handle, PROCESSINFOCLAS
     NTSTATUS ret;
     ULONG len = 0;
 
-    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, (int)size, ret_len );
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, size, ret_len );
 
     switch (class)
     {
@@ -1858,7 +1858,7 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
         return STATUS_SUCCESS;
 
     default:
-        FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, (int)size );
+        FIXME( "(%p,0x%08x,%p,0x%08x) stub\n", handle, class, info, size );
         ret = STATUS_NOT_IMPLEMENTED;
         break;
     }
@@ -1933,7 +1933,7 @@ NTSTATUS WINAPI NtGetNextProcess( HANDLE process, ACCESS_MASK access, ULONG attr
     unsigned int ret;
 
     TRACE( "process %p, access %#x, attributes %#x, flags %#x, handle %p.\n",
-           process, (int)access, (int)attributes, (int)flags, handle );
+           process, access, attributes, flags, handle );
 
     SERVER_START_REQ( get_next_process )
     {

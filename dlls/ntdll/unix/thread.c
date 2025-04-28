@@ -1292,7 +1292,7 @@ NTSTATUS WINAPI NtCreateThread( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRI
                                 BOOLEAN suspended )
 {
     FIXME( "%p %d %p %p %p %p %p %d, stub!\n",
-           handle, (int)access, attr, process, id, ctx, teb, suspended );
+           handle, access, attr, process, id, ctx, teb, suspended );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -1317,7 +1317,7 @@ NTSTATUS WINAPI NtCreateThreadEx( HANDLE *handle, ACCESS_MASK access, OBJECT_ATT
     unsigned int status;
 
     if (flags & ~supported_flags)
-        FIXME( "Unsupported flags %#x.\n", (int)flags );
+        FIXME( "Unsupported flags %#x.\n", flags );
 
     if (zero_bits > 21 && zero_bits < 32) return STATUS_INVALID_PARAMETER_3;
 #ifndef _WIN64
@@ -1583,7 +1583,7 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
         ERR_(seh)("Process attempted to continue execution after noncontinuable exception.\n");
     else
         ERR_(seh)("Unhandled exception code %x flags %x addr %p\n",
-                  (int)rec->ExceptionCode, (int)rec->ExceptionFlags, rec->ExceptionAddress );
+                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
 
     NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     return STATUS_SUCCESS;
@@ -2041,7 +2041,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
 {
     unsigned int status;
 
-    TRACE("(%p,%d,%p,%x,%p)\n", handle, class, data, (int)length, ret_len);
+    TRACE("(%p,%d,%p,%x,%p)\n", handle, class, data, length, ret_len);
 
     switch (class)
     {
@@ -2341,7 +2341,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
 {
     unsigned int status;
 
-    TRACE("(%p,%d,%p,%x)\n", handle, class, data, (int)length);
+    TRACE("(%p,%d,%p,%x)\n", handle, class, data, length);
 
     switch (class)
     {
@@ -2488,7 +2488,7 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (handle == GetCurrentThread() || (!status && (HandleToULong(tbi.ClientId.UniqueThread) == GetCurrentThreadId())))
             WARN_(threadname)( "Thread renamed to %s\n", debugstr_us(&info->ThreadName) );
         else if (!status)
-            WARN_(threadname)( "Thread ID %04x renamed to %s\n", (int)HandleToULong( tbi.ClientId.UniqueThread ), debugstr_us(&info->ThreadName) );
+            WARN_(threadname)( "Thread ID %04x renamed to %s\n", HandleToULong( tbi.ClientId.UniqueThread ), debugstr_us(&info->ThreadName) );
         else
             WARN_(threadname)( "Thread handle %p renamed to %s\n", handle, debugstr_us(&info->ThreadName) );
 
@@ -2609,7 +2609,7 @@ ULONG WINAPI NtGetCurrentProcessorNumber(void)
                 {
                     if (thread_mask != processor_mask)
                         FIXME( "need multicore support (%d processors)\n",
-                               (int)peb->NumberOfProcessors );
+                               peb->NumberOfProcessors );
                     return processor;
                 }
             }
@@ -2630,7 +2630,7 @@ NTSTATUS WINAPI NtGetNextThread( HANDLE process, HANDLE thread, ACCESS_MASK acce
     unsigned int ret;
 
     TRACE( "process %p, thread %p, access %#x, attributes %#x, flags %#x, handle %p.\n",
-            process, thread, (int)access, (int)attributes, (int)flags, handle );
+            process, thread, access, attributes, flags, handle );
 
     SERVER_START_REQ( get_next_thread )
     {

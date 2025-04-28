@@ -2791,7 +2791,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
 
     TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
-          (int)length, info_class, single_entry, debugstr_us(mask),
+          length, info_class, single_entry, debugstr_us(mask),
           restart_scan);
 
     if (event || apc_routine)
@@ -4139,9 +4139,9 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
 
     TRACE( "handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
            "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
-           handle, (int)access, debugstr_us(attr->ObjectName), (int)attr->Attributes,
+           handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
            attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
-           (int)attributes, (int)sharing, (int)disposition, (int)options, ea_buffer, (int)ea_length );
+           attributes, sharing, disposition, options, ea_buffer, ea_length );
 
     *handle = 0;
     if (!attr || !attr->ObjectName) return STATUS_INVALID_PARAMETER;
@@ -4252,7 +4252,7 @@ NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRI
     struct object_attributes *objattr;
 
     TRACE( "%p %08x %p %p %08x %08x %08x %p\n",
-           handle, (int)access, attr, io, (int)options, (int)quota, (int)msg_size, timeout );
+           handle, access, attr, io, options, quota, msg_size, timeout );
 
     *handle = 0;
     if (!attr) return STATUS_INVALID_PARAMETER;
@@ -4291,9 +4291,9 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
     if (!attr) return STATUS_INVALID_PARAMETER;
 
     TRACE( "(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
-           handle, (int)access, debugstr_us(attr->ObjectName), io, (int)sharing, (int)dispo,
-           (int)options, (int)pipe_type, (int)read_mode, (int)completion_mode, (int)max_inst,
-           (int)inbound_quota, (int)outbound_quota, timeout );
+           handle, access, debugstr_us(attr->ObjectName), io, sharing, dispo,
+           options, pipe_type, read_mode, completion_mode, max_inst,
+           inbound_quota, outbound_quota, timeout );
 
     /* assume we only get relative timeout */
     if (timeout && timeout->QuadPart > 0) FIXME( "Wrong time %s\n", wine_dbgstr_longlong(timeout->QuadPart) );
@@ -4521,7 +4521,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     unsigned int options;
     unsigned int status;
 
-    TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, (int)len, class);
+    TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
     io->Information = 0;
 
@@ -4724,7 +4724,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     int fd, needs_close;
     unsigned int status = STATUS_SUCCESS;
 
-    TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, (int)len, class );
+    TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class );
 
     switch (class)
     {
@@ -5585,7 +5585,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
     BOOL send_completion = FALSE, async_read, timeout_init_done = FALSE;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)\n",
-           handle, event, apc, apc_user, io, buffer, (int)length, offset, key );
+           handle, event, apc, apc_user, io, buffer, length, offset, key );
 
     if (!io) return STATUS_ACCESS_VIOLATION;
 
@@ -5786,7 +5786,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     BOOL send_completion = FALSE;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
-           file, event, apc, apc_user, io, segments, (int)length, offset, key );
+           file, event, apc, apc_user, io, segments, length, offset, key );
 
     if (!io) return STATUS_ACCESS_VIOLATION;
 
@@ -5865,7 +5865,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
     LARGE_INTEGER offset_eof;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)\n",
-           handle, event, apc, apc_user, io, buffer, (int)length, offset, key );
+           handle, event, apc, apc_user, io, buffer, length, offset, key );
 
     if (!io) return STATUS_ACCESS_VIOLATION;
 
@@ -6085,7 +6085,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     enum server_fd_type type;
 
     TRACE( "(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
-           file, event, apc, apc_user, io, segments, (int)length, offset, key );
+           file, event, apc, apc_user, io, segments, length, offset, key );
 
     if (length % page_size) return STATUS_INVALID_PARAMETER;
     if (!io) return STATUS_ACCESS_VIOLATION;
@@ -6161,8 +6161,8 @@ NTSTATUS WINAPI NtDeviceIoControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUT
     NTSTATUS status = STATUS_NOT_SUPPORTED;
 
     TRACE( "(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
-           handle, event, apc, apc_context, io, (int)code,
-           in_buffer, (int)in_size, out_buffer, (int)out_size );
+           handle, event, apc, apc_context, io, code,
+           in_buffer, in_size, out_buffer, out_size );
 
     /* some broken applications call this frequently with INVALID_HANDLE_VALUE,
      * and run slowly if we make a server call every time */
@@ -6249,8 +6249,8 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
     NTSTATUS status;
 
     TRACE( "(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
-           handle, event, apc, apc_context, io, (int)code,
-           in_buffer, (int)in_size, out_buffer, (int)out_size );
+           handle, event, apc, apc_context, io, code,
+           in_buffer, in_size, out_buffer, out_size );
 
     if (!io) return STATUS_INVALID_PARAMETER;
 
@@ -6278,7 +6278,7 @@ NTSTATUS WINAPI NtFsControlFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE ap
     case FSCTL_LOCK_VOLUME:
     case FSCTL_UNLOCK_VOLUME:
         FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
-              (int)code, (int)code >> 16, ((int)code >> 14) & 3, ((int)code >> 2) & 0xfff, (int)code & 3);
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         status = STATUS_SUCCESS;
         break;
 
@@ -6368,10 +6368,10 @@ NTSTATUS WINAPI NtFlushBuffersFileEx( HANDLE handle, ULONG flags, void *params, 
     enum server_fd_type type;
     int fd, needs_close;
 
-    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, (int)flags, params, (int)size, io );
+    TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, flags, params, size, io );
 
-    if (flags) FIXME( "flags 0x%08x ignored\n", (int)flags );
-    if (params || size) FIXME( "params %p/0x%08x ignored\n", params, (int)size );
+    if (flags) FIXME( "flags 0x%08x ignored\n", flags );
+    if (params || size) FIXME( "params %p/0x%08x ignored\n", params, size );
 
     if (!io || !virtual_check_buffer_for_write( io, sizeof(*io) )) return STATUS_ACCESS_VIOLATION;
 
@@ -6675,7 +6675,7 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
     ULONG size = max( 4096, buffer_size );
 
     TRACE( "%p %p %p %p %p %p %u %u %d\n",
-           handle, event, apc, apc_context, iosb, buffer, (int)buffer_size, (int)filter, subtree );
+           handle, event, apc, apc_context, iosb, buffer, buffer_size, filter, subtree );
 
     if (!iosb) return STATUS_ACCESS_VIOLATION;
     if (filter == 0 || (filter & ~FILE_NOTIFY_ALL)) return STATUS_INVALID_PARAMETER;
@@ -7164,7 +7164,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
 NTSTATUS WINAPI NtSetVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io, void *info,
                                             ULONG length, FS_INFORMATION_CLASS class )
 {
-    FIXME( "(%p,%p,%p,0x%08x,0x%08x) stub\n", handle, io, info, (int)length, class );
+    FIXME( "(%p,%p,%p,0x%08x,0x%08x) stub\n", handle, io, info, length, class );
     return STATUS_SUCCESS;
 }
 
@@ -7180,7 +7180,7 @@ NTSTATUS WINAPI NtQueryEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
     NTSTATUS status;
 
     FIXME( "(%p,%p,%p,%d,%d,%p,%d,%p,%d) semi-stub\n",
-           handle, io, buffer, (int)length, single_entry, list, (int)list_len, index, restart );
+           handle, io, buffer, length, single_entry, list, list_len, index, restart );
 
     if ((status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
         return status;
@@ -7198,7 +7198,7 @@ NTSTATUS WINAPI NtQueryEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer,
  */
 NTSTATUS WINAPI NtSetEaFile( HANDLE handle, IO_STATUS_BLOCK *io, void *buffer, ULONG length )
 {
-    FIXME( "(%p,%p,%p,%d) stub\n", handle, io, buffer, (int)length );
+    FIXME( "(%p,%p,%p,%d) stub\n", handle, io, buffer, length );
     return STATUS_ACCESS_DENIED;
 }
 
@@ -7235,7 +7235,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
 {
     unsigned int status;
 
-    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", handle, info_class, ptr, (int)len, used_len);
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", handle, info_class, ptr, len, used_len);
 
     if (used_len) *used_len = 0;
 
@@ -7434,7 +7434,7 @@ NTSTATUS WINAPI NtSetInformationObject( HANDLE handle, OBJECT_INFORMATION_CLASS 
 {
     unsigned int status;
 
-    TRACE("(%p,0x%08x,%p,0x%08x)\n", handle, info_class, ptr, (int)len);
+    TRACE("(%p,0x%08x,%p,0x%08x)\n", handle, info_class, ptr, len);
 
     switch (info_class)
     {

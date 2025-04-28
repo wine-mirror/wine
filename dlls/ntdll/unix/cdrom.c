@@ -203,7 +203,7 @@ static const char *iocodex(DWORD code)
    for(i=0; i<ARRAY_SIZE(iocodextable); i++)
       if (code==iocodextable[i].code)
 	 return iocodextable[i].codex;
-   snprintf(buffer, sizeof(buffer), "IOCTL_CODE_%x", (int)code);
+   snprintf(buffer, sizeof(buffer), "IOCTL_CODE_%x", code);
    return buffer;
 }
 
@@ -1456,7 +1456,7 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
 #endif
 
     TRACE("RAW_READ_INFO: DiskOffset=%s SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
-          wine_dbgstr_longlong(raw->DiskOffset.QuadPart), (int)raw->SectorCount, (int)raw->TrackMode, buffer, (int)len, sz);
+          wine_dbgstr_longlong(raw->DiskOffset.QuadPart), raw->SectorCount, raw->TrackMode, buffer, len, sz);
 
     if (len < raw->SectorCount * 2352) return STATUS_BUFFER_TOO_SMALL;
 
@@ -2205,8 +2205,8 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 	auth_info.type = DVD_LU_SEND_TITLE_KEY;
 	auth_info.lstk.agid = (int)key->SessionId;
 	auth_info.lstk.lba = (int)(key->Parameters.TitleOffset.QuadPart>>11);
-	TRACE("DvdTitleKey session %d Quadpart 0x%08lx offset 0x%08x\n",
-	      (int)key->SessionId, (long)key->Parameters.TitleOffset.QuadPart,
+	TRACE("DvdTitleKey session %d Quadpart %s offset 0x%08x\n",
+	      key->SessionId, wine_dbgstr_longlong(key->Parameters.TitleOffset.QuadPart),
 	      auth_info.lstk.lba);
 	ret = CDROM_GetStatusCode(ioctl( fd, DVD_AUTH, &auth_info ));
 	if (ret == STATUS_SUCCESS)
@@ -3048,11 +3048,11 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         else if (out_size < sz) status = STATUS_BUFFER_TOO_SMALL;
         else
         {
-            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
-                  (int)*(DVD_SESSION_ID *)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0,
+                  *(DVD_SESSION_ID *)out_buffer);
             status = DVD_StartSession(fd, in_buffer, out_buffer);
-            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
-                  (int)*(DVD_SESSION_ID *)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0,
+                  *(DVD_SESSION_ID *)out_buffer);
         }
         break;
     case IOCTL_DVD_END_SESSION:

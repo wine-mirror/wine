@@ -611,13 +611,13 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
                  "hardware. I hope you know what you are doing.  Any disruption Wine\n"
                  "has caused to your linux system can be undone with setserial\n"
                  "(see man setserial). If you have incapacitated a Hayes type modem,\n"
-                 "reset it and it will probably recover.\n", (int)sbr->BaudRate, arby);
+                 "reset it and it will probably recover.\n", sbr->BaudRate, arby);
             ioctl(fd, TIOCSSERIAL, &nuts);
             cfsetospeed( &port, B38400 );
         }
         break;
 #else     /* Don't have linux/serial.h or lack TIOCSSERIAL */
-        ERR("baudrate %d\n", (int)sbr->BaudRate);
+        ERR("baudrate %d\n", sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
     }
@@ -858,7 +858,7 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
 
 static NTSTATUS set_queue_size(int fd, const SERIAL_QUEUE_SIZE* sqs)
 {
-    FIXME("insize %d outsize %d unimplemented stub\n", (int)sqs->InSize, (int)sqs->OutSize);
+    FIXME("insize %d outsize %d unimplemented stub\n", sqs->InSize, sqs->OutSize);
     return STATUS_SUCCESS;
 }
 
@@ -1100,7 +1100,7 @@ static BOOL async_wait_proc( void *user, ULONG_PTR *info, unsigned int *status )
             DWORD events = check_events( fd, commio->evtmask,
                                          &new_irq_info, &commio->irq_info,
                                          new_mstat, commio->mstat, commio->pending_write );
-            TRACE("events %#x\n", (int)events);
+            TRACE("events %#x\n", events);
             if (events)
             {
                 *commio->events = events;
