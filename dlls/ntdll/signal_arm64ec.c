@@ -1244,7 +1244,7 @@ static void dispatch_syscall( ARM64_NT_CONTEXT *context )
         context->X4 = context->Pc;  /* and save return address to syscall thunk */
         context->Pc = (ULONG_PTR)invoke_arm64ec_syscall;
     }
-    else context->X8 = STATUS_INVALID_PARAMETER;  /* set return value in rax */
+    else context->X8 = STATUS_INVALID_SYSTEM_SERVICE;  /* set return value in rax */
 
     /* return to x64 code so that the syscall entry thunk is invoked properly */
     dispatch_emulation( context );

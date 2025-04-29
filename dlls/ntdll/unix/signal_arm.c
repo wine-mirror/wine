@@ -1245,7 +1245,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n"
 
-                   "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
+                   "5:\tmovw r0, #0x001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movt r0, #0xc000\n\t"
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 

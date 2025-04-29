@@ -2972,7 +2972,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    /* pop rbp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
-                   "5:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
+                   "5:\tmovl $0xc000001c,%eax\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movq %rsp,%rcx\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 

@@ -2214,6 +2214,53 @@ static void test_syscalls(void)
     UnmapViewOfFile( ptr );
 }
 
+static void test_invalid_syscalls(void)
+{
+    HMODULE module = GetModuleHandleW( L"ntdll.dll" );
+    NTSTATUS (WINAPI *pNtImpersonateAnonymousToken)( HANDLE thread );
+    NTSTATUS status;
+    DWORD prot, i;
+    LONG old_id, new_id, *id;
+
+    /* grab a syscall that's unlikely to be used while we are testing */
+    pNtImpersonateAnonymousToken = (void *)GetProcAddress( module, "NtImpersonateAnonymousToken" );
+    if (!pNtImpersonateAnonymousToken)
+    {
+        win_skip( "NtImpersonateAnonymousToken not supported\n" );
+        return;
+    }
+    status = pNtImpersonateAnonymousToken( 0 );
+    ok( status == STATUS_INVALID_HANDLE || status == STATUS_NOT_IMPLEMENTED, "wrong status %lx\n", status );
+    VirtualProtect( pNtImpersonateAnonymousToken, 32, PAGE_EXECUTE_READWRITE, &prot );
+    for (i = 0; i < 4; i++)
+    {
+        new_id = 0x666 | (i << 12);
+        winetest_push_context( "%04lx", new_id );
+#ifdef __i386__
+        id = (LONG *)((BYTE *)pNtImpersonateAnonymousToken + 1);
+        new_id = (*id & ~0xffff) | new_id;
+#elif defined __x86_64__
+        id = (LONG *)pNtImpersonateAnonymousToken + 1;
+        new_id = (*id & ~0xffff) | new_id;
+#elif defined __aarch64__
+        id = (LONG *)pNtImpersonateAnonymousToken;
+        new_id = (*id & ~(0xffff << 5)) | (new_id << 5);
+#elif defined __arm__
+        id = (LONG *)(((ULONG_PTR)pNtImpersonateAnonymousToken & ~1) + 2);
+        new_id = 0x0c00f240 | ((new_id & 0xff) << 16) | ((new_id & 0xf00) << 20) | (new_id >> 12); /* movw ip, #0xnnn */
+#endif
+        old_id = *id;
+        *id = new_id;
+        NtFlushInstructionCache( GetCurrentProcess(), pNtImpersonateAnonymousToken, 32 );
+        status = pNtImpersonateAnonymousToken( 0 );
+        ok( status == STATUS_INVALID_SYSTEM_SERVICE, "wrong status %lx\n", status );
+        *id = old_id;
+        NtFlushInstructionCache( GetCurrentProcess(), pNtImpersonateAnonymousToken, 32 );
+        winetest_pop_context();
+    }
+    VirtualProtect( pNtImpersonateAnonymousToken, 32, prot, &prot );
+}
+
 static void test_NtFreeVirtualMemory(void)
 {
     void *addr1, *addr;
@@ -3051,6 +3098,7 @@ START_TEST(virtual)
     test_prefetch();
     test_user_shared_data();
     test_syscalls();
+    test_invalid_syscalls();
     test_query_region_information();
     test_query_image_information();
     test_exec_memory_writes();
