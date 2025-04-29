@@ -27,6 +27,7 @@
 
 #include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -140,7 +141,7 @@ static inline char *xstrdup( const char *str )
     return strcpy( xmalloc( strlen(str)+1 ), str );
 }
 
-static inline int strendswith( const char *str, const char *end )
+static inline bool strendswith( const char *str, const char *end )
 {
     int l = strlen( str );
     int m = strlen( end );
@@ -196,12 +197,12 @@ static inline void strarray_addall( struct strarray *array, struct strarray adde
     for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
 }
 
-static inline int strarray_exists( struct strarray array, const char *str )
+static inline bool strarray_exists( struct strarray array, const char *str )
 {
     unsigned int i;
 
-    for (i = 0; i < array.count; i++) if (!strcmp( array.str[i], str )) return 1;
-    return 0;
+    for (i = 0; i < array.count; i++) if (!strcmp( array.str[i], str )) return true;
+    return false;
 }
 
 static inline void strarray_add_uniq( struct strarray *array, const char *str )
@@ -551,7 +552,7 @@ static inline void set_target_ptr_size( struct target *target, unsigned int size
 }
 
 
-static inline int is_pe_target( struct target target )
+static inline bool is_pe_target( struct target target )
 {
     return (target.platform == PLATFORM_WINDOWS ||
             target.platform == PLATFORM_MINGW ||
@@ -631,7 +632,7 @@ static inline const char *get_arch_dir( struct target target )
     return strmake( "/%s-%s", cpu_names[target.cpu], is_pe_target( target ) ? "windows" : "unix" );
 }
 
-static inline int parse_target( const char *name, struct target *target )
+static inline bool parse_target( const char *name, struct target *target )
 {
     int res;
     char *p, *spec = xstrdup( name );
@@ -646,7 +647,7 @@ static inline int parse_target( const char *name, struct target *target )
         if ((res = get_cpu_from_name( spec )) == -1)
         {
             free( spec );
-            return 0;
+            return false;
         }
         target->cpu = res;
     }
@@ -658,7 +659,7 @@ static inline int parse_target( const char *name, struct target *target )
     else
     {
         free( spec );
-        return 0;
+        return false;
     }
 
     /* get the OS part */
@@ -676,7 +677,7 @@ static inline int parse_target( const char *name, struct target *target )
     }
 
     free( spec );
-    return 1;
+    return true;
 }
 
 
@@ -855,7 +856,7 @@ static inline void flush_output_buffer( const char *name )
 struct long_option
 {
     const char *name;
-    int has_arg;
+    bool has_arg;
     int val;
 };
 
