@@ -314,13 +314,12 @@ static HRESULT create_decoder(const void *image_data, UINT image_size, IWICBitma
 
 static WCHAR *save_profile( BYTE *buffer, UINT size )
 {
-    static const WCHAR tstW[] = {'t','s','t',0};
     WCHAR path[MAX_PATH], filename[MAX_PATH], *ret;
     HANDLE handle;
     DWORD count;
 
     GetTempPathW(MAX_PATH, path);
-    GetTempFileNameW(path, tstW, 0, filename);
+    GetTempFileNameW(path, L"tst", 0, filename);
 
     handle = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if (handle == INVALID_HANDLE_VALUE) return NULL;

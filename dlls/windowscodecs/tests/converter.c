@@ -1033,42 +1033,30 @@ typedef struct property_opt_test_data
     BOOL skippable;
 } property_opt_test_data;
 
-static const WCHAR wszTiffCompressionMethod[] = {'T','i','f','f','C','o','m','p','r','e','s','s','i','o','n','M','e','t','h','o','d',0};
-static const WCHAR wszCompressionQuality[] = {'C','o','m','p','r','e','s','s','i','o','n','Q','u','a','l','i','t','y',0};
-static const WCHAR wszInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
-static const WCHAR wszFilterOption[] = {'F','i','l','t','e','r','O','p','t','i','o','n',0};
-static const WCHAR wszImageQuality[] = {'I','m','a','g','e','Q','u','a','l','i','t','y',0};
-static const WCHAR wszBitmapTransform[] = {'B','i','t','m','a','p','T','r','a','n','s','f','o','r','m',0};
-static const WCHAR wszLuminance[] = {'L','u','m','i','n','a','n','c','e',0};
-static const WCHAR wszChrominance[] = {'C','h','r','o','m','i','n','a','n','c','e',0};
-static const WCHAR wszJpegYCrCbSubsampling[] = {'J','p','e','g','Y','C','r','C','b','S','u','b','s','a','m','p','l','i','n','g',0};
-static const WCHAR wszSuppressApp0[] = {'S','u','p','p','r','e','s','s','A','p','p','0',0};
-static const WCHAR wszEnableV5Header32bppBGRA[] = {'E','n','a','b','l','e','V','5','H','e','a','d','e','r','3','2','b','p','p','B','G','R','A',0};
-
 static const struct property_opt_test_data testdata_tiff_props[] = {
-    { wszTiffCompressionMethod, VT_UI1,         VT_UI1,  WICTiffCompressionDontCare },
-    { wszCompressionQuality,    VT_R4,          VT_EMPTY },
+    { L"TiffCompressionMethod", VT_UI1,         VT_UI1,  WICTiffCompressionDontCare },
+    { L"CompressionQuality",    VT_R4,          VT_EMPTY },
     { NULL }
 };
 
 static const struct property_opt_test_data testdata_png_props[] = {
-    { wszInterlaceOption, VT_BOOL, VT_BOOL, 0 },
-    { wszFilterOption,    VT_UI1,  VT_UI1, WICPngFilterUnspecified, 0.0f, TRUE /* not supported on XP/2k3 */},
+    { L"InterlaceOption", VT_BOOL, VT_BOOL, 0 },
+    { L"FilterOption",    VT_UI1,  VT_UI1, WICPngFilterUnspecified, 0.0f, TRUE /* not supported on XP/2k3 */},
     { NULL }
 };
 
 static const struct property_opt_test_data testdata_jpeg_props[] = {
-    { wszImageQuality,         VT_R4,           VT_EMPTY },
-    { wszBitmapTransform,      VT_UI1,          VT_UI1, WICBitmapTransformRotate0 },
-    { wszLuminance,            VT_I4|VT_ARRAY,  VT_EMPTY },
-    { wszChrominance,          VT_I4|VT_ARRAY,  VT_EMPTY },
-    { wszJpegYCrCbSubsampling, VT_UI1,          VT_UI1, WICJpegYCrCbSubsamplingDefault, 0.0f, TRUE }, /* not supported on XP/2k3 */
-    { wszSuppressApp0,         VT_BOOL,         VT_BOOL, FALSE },
+    { L"ImageQuality",         VT_R4,           VT_EMPTY },
+    { L"BitmapTransform",      VT_UI1,          VT_UI1, WICBitmapTransformRotate0 },
+    { L"Luminance",            VT_I4|VT_ARRAY,  VT_EMPTY },
+    { L"Chrominance",          VT_I4|VT_ARRAY,  VT_EMPTY },
+    { L"JpegYCrCbSubsampling", VT_UI1,          VT_UI1, WICJpegYCrCbSubsamplingDefault, 0.0f, TRUE }, /* not supported on XP/2k3 */
+    { L"SuppressApp0",         VT_BOOL,         VT_BOOL, FALSE },
     { NULL }
 };
 
 static const struct property_opt_test_data testdata_bmp_props[] = {
-    { wszEnableV5Header32bppBGRA, VT_BOOL, VT_BOOL, VARIANT_FALSE, 0.0f, TRUE }, /* Supported since Win7 */
+    { L"EnableV5Header32bppBGRA", VT_BOOL, VT_BOOL, VARIANT_FALSE, 0.0f, TRUE }, /* Supported since Win7 */
     { NULL }
 };
 
@@ -2081,7 +2069,7 @@ static const struct bitmap_data *single_frame[2] = {
     NULL};
 
 static const struct setting png_interlace_settings[] = {
-    {wszInterlaceOption, PROPBAG2_TYPE_DATA, VT_BOOL, (void*)VARIANT_TRUE},
+    {L"InterlaceOption", PROPBAG2_TYPE_DATA, VT_BOOL, (void*)VARIANT_TRUE},
     {NULL}
 };
 
