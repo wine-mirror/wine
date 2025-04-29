@@ -218,15 +218,6 @@ static struct opengl_funcs *osmesa_get_wgl_driver( const struct opengl_driver_fu
     LOAD_FUNCPTR(OSMesaPixelStore);
 #undef LOAD_FUNCPTR
 
-#define USE_GL_FUNC(func) \
-        if (!(osmesa_opengl_funcs.p_##func = pOSMesaGetProcAddress( #func ))) \
-        { \
-            ERR( "%s not found in %s, disabling.\n", #func, SONAME_LIBOSMESA ); \
-            goto failed; \
-        }
-    ALL_GL_FUNCS
-#undef USE_GL_FUNC
-
     *driver_funcs = &osmesa_driver_funcs;
     return &osmesa_opengl_funcs;
 
@@ -1178,11 +1169,25 @@ static BOOL win32u_wglSetPbufferAttribARB( struct wgl_pbuffer *pbuffer, const in
                                                      pbuffer->cube_face, max( pbuffer->mipmap_level, 0 ) );
 }
 
+static void init_opengl_funcs( struct opengl_funcs *funcs, const struct opengl_driver_funcs *driver_funcs )
+{
+#define USE_GL_FUNC(func) \
+    if (!funcs->p_##func && !(funcs->p_##func = driver_funcs->p_get_proc_address( #func ))) \
+    { \
+        WARN( "%s not found for memory DCs.\n", #func ); \
+        funcs->p_##func = default_funcs->p_##func; \
+    }
+    ALL_GL_FUNCS
+#undef USE_GL_FUNC
+}
+
 static void memory_funcs_init(void)
 {
     memory_funcs = osmesa_get_wgl_driver( &memory_driver_funcs );
     if (memory_funcs && !(memory_formats_count = memory_driver_funcs->p_init_pixel_formats( &memory_onscreen_count ))) memory_funcs = NULL;
     if (!memory_funcs) return;
+
+    init_opengl_funcs( memory_funcs, memory_driver_funcs );
 
     memory_funcs->p_wglGetProcAddress = win32u_memory_wglGetProcAddress;
     memory_funcs->p_get_pixel_formats = win32u_memory_get_pixel_formats;
@@ -1209,6 +1214,8 @@ static void display_funcs_init(void)
     }
     if (display_funcs && !(display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count ))) display_funcs = NULL;
     if (!display_funcs) return;
+
+    init_opengl_funcs( display_funcs, display_driver_funcs );
 
     display_funcs->p_wglGetProcAddress = win32u_display_wglGetProcAddress;
     display_funcs->p_get_pixel_formats = win32u_display_get_pixel_formats;
