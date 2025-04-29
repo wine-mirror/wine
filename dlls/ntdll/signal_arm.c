@@ -54,7 +54,7 @@ typedef union _DISPATCHER_CONTEXT_NONVOLREG_ARM
  *         syscalls
  */
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name, args )
-ALL_SYSCALLS32
+ALL_SYSCALLS
 DEFINE_SYSCALL_HELPER32()
 #undef SYSCALL_ENTRY
 

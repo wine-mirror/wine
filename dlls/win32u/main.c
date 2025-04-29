@@ -40,7 +40,7 @@ void *__wine_syscall_dispatcher = NULL;
 enum syscall_ids
 {
 #define SYSCALL_ENTRY(id,name,args) __id_##name = id,
-ALL_SYSCALLS64
+ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 };
 
@@ -2464,12 +2464,11 @@ BOOL SYSCALL_API __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *siz
 
 #ifdef _WIN64
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
-ALL_SYSCALLS64
 #else
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name, args )
 DEFINE_SYSCALL_HELPER32()
-ALL_SYSCALLS32
 #endif
+ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 
 #endif /*  __arm64ec__ */

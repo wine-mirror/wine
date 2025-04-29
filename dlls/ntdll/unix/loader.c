@@ -114,22 +114,14 @@ SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 static void * const syscalls[] =
 {
 #define SYSCALL_ENTRY(id,name,args) name,
-#ifdef _WIN64
-    ALL_SYSCALLS64
-#else
-    ALL_SYSCALLS32
-#endif
+    ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 };
 
 static BYTE syscall_args[ARRAY_SIZE(syscalls)] =
 {
 #define SYSCALL_ENTRY(id,name,args) args,
-#ifdef _WIN64
-    ALL_SYSCALLS64
-#else
-    ALL_SYSCALLS32
-#endif
+    ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 };
 

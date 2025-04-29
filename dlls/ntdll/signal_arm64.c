@@ -45,7 +45,7 @@ WINE_DECLARE_DEBUG_CHANNEL(relay);
  *         syscalls
  */
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name )
-ALL_SYSCALLS64
+ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 
 

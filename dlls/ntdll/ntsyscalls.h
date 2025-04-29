@@ -252,7 +252,8 @@
     SYSCALL_ENTRY( 0x00f8, wine_nt_to_unix_file_name, 16 ) \
     SYSCALL_ENTRY( 0x00f9, wine_unix_to_nt_file_name, 12 )
 
-#define ALL_SYSCALLS64 \
+#ifdef _WIN64
+#define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x0000, NtAcceptConnectPort, 48 ) \
     SYSCALL_ENTRY( 0x0001, NtAccessCheck, 64 ) \
     SYSCALL_ENTRY( 0x0002, NtAccessCheckAndAuditAlarm, 88 ) \
@@ -497,3 +498,7 @@
     SYSCALL_ENTRY( 0x00f1, NtYieldExecution, 0 ) \
     SYSCALL_ENTRY( 0x00f2, wine_nt_to_unix_file_name, 32 ) \
     SYSCALL_ENTRY( 0x00f3, wine_unix_to_nt_file_name, 24 )
+
+#else
+#define ALL_SYSCALLS ALL_SYSCALLS32
+#endif

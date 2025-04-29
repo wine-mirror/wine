@@ -325,7 +325,7 @@ void arm64ec_update_hybrid_metadata( void *module, IMAGE_NT_HEADERS *nt,
 enum syscall_ids
 {
 #define SYSCALL_ENTRY(id,name,args) __id_##name = id,
-ALL_SYSCALLS64
+ALL_SYSCALLS
 #undef SYSCALL_ENTRY
     __nb_syscalls
 };
@@ -874,7 +874,7 @@ asm( ".section .rdata, \"dr\"\n\t"
      ".globl arm64ec_syscalls\n"
      "arm64ec_syscalls:\n\t"
 #define SYSCALL_ENTRY(id,name,args) ".quad \"#" #name "$hp_target\"\n\t"
-     ALL_SYSCALLS64
+     ALL_SYSCALLS
 #undef SYSCALL_ENTRY
      ".text" );
 

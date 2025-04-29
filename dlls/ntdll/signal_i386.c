@@ -77,7 +77,7 @@ extern DWORD EXC_CallHandler( EXCEPTION_RECORD *record, EXCEPTION_REGISTRATION_R
 enum syscall_ids
 {
 #define SYSCALL_ENTRY(id,name,args) __id_##name = id,
-ALL_SYSCALLS32
+ALL_SYSCALLS
 #undef SYSCALL_ENTRY
 };
 
@@ -100,7 +100,7 @@ void NtQueryInformationProcess_wrapper(void)
  *         syscalls
  */
 #define SYSCALL_ENTRY(id,name,args) __ASM_SYSCALL_FUNC( id, name, args )
-ALL_SYSCALLS32
+ALL_SYSCALLS
 DEFINE_SYSCALL_HELPER32()
 #undef SYSCALL_ENTRY
 
