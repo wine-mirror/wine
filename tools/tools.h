@@ -277,8 +277,9 @@ static inline void strarray_trace( struct strarray args )
     {
         if (strpbrk( args.str[i], " \t\n\r")) printf( "\"%s\"", args.str[i] );
         else printf( "%s", args.str[i] );
-        putchar( i < args.count - 1 ? ' ' : '\n' );
+        if (i < args.count - 1) putchar( ' ' );
     }
+    putchar( '\n' );
 }
 
 static inline int strarray_spawn( struct strarray args )
