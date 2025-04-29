@@ -2826,6 +2826,11 @@ static void check_all_user_types(const statement_list_t *stmts)
              !is_local(stmt->u.type->attrs))
     {
       const statement_t *stmt_func;
+      const type_t *type = stmt->u.type;
+      if (type->details.iface && type->details.iface->inherit && !type_is_complete(type->details.iface->inherit))
+          error_at(&type->where, "interface %s can't inherit from incomplete interface %s\n",
+                   type->name, type->details.iface->inherit->name);
+
       STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(stmt->u.type)) {
         const var_t *func = stmt_func->u.var;
         if (type_function_get_args(func->declspec.type))
