@@ -85,6 +85,7 @@ struct thread_wait
 struct thread_apc
 {
     struct object       obj;      /* object header */
+    struct event_sync  *sync;     /* sync object for wait/signal */
     struct list         entry;    /* queue linked list */
     struct thread      *caller;   /* thread that queued this apc */
     struct object      *owner;    /* object that queued this apc */
@@ -94,7 +95,7 @@ struct thread_apc
 };
 
 static void dump_thread_apc( struct object *obj, int verbose );
-static int thread_apc_signaled( struct object *obj, struct wait_queue_entry *entry );
+static struct object *thread_apc_get_sync( struct object *obj );
 static void thread_apc_destroy( struct object *obj );
 static void clear_apc_queue( struct list *queue );
 
@@ -103,13 +104,13 @@ static const struct object_ops thread_apc_ops =
     sizeof(struct thread_apc),  /* size */
     &no_type,                   /* type */
     dump_thread_apc,            /* dump */
-    add_queue,                  /* add_queue */
-    remove_queue,               /* remove_queue */
-    thread_apc_signaled,        /* signaled */
-    no_satisfied,               /* satisfied */
+    NULL,                       /* add_queue */
+    NULL,                       /* remove_queue */
+    NULL,                       /* signaled */
+    NULL,                       /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
-    default_get_sync,           /* get_sync */
+    thread_apc_get_sync,        /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -658,10 +659,11 @@ static void dump_thread_apc( struct object *obj, int verbose )
     fprintf( stderr, "APC owner=%p type=%u\n", apc->owner, apc->call.type );
 }
 
-static int thread_apc_signaled( struct object *obj, struct wait_queue_entry *entry )
+static struct object *thread_apc_get_sync( struct object *obj )
 {
     struct thread_apc *apc = (struct thread_apc *)obj;
-    return apc->executed;
+    assert( obj->ops == &thread_apc_ops );
+    return grab_object( apc->sync );
 }
 
 static void thread_apc_destroy( struct object *obj )
@@ -677,6 +679,7 @@ static void thread_apc_destroy( struct object *obj )
             async_set_result( apc->owner, apc->call.async_io.status, 0 );
         release_object( apc->owner );
     }
+    if (apc->sync) release_object( apc->sync );
 }
 
 /* queue an async procedure call */
@@ -686,6 +689,7 @@ static struct thread_apc *create_apc( struct object *owner, const union apc_call
 
     if ((apc = alloc_object( &thread_apc_ops )))
     {
+        apc->sync        = NULL;
         if (call_data) apc->call = *call_data;
         else apc->call.type = APC_NONE;
         apc->caller      = NULL;
@@ -693,6 +697,12 @@ static struct thread_apc *create_apc( struct object *owner, const union apc_call
         apc->executed    = 0;
         apc->result.type = APC_NONE;
         if (owner) grab_object( owner );
+
+        if (!(apc->sync = create_event_sync( 1, 0 )))
+        {
+            release_object( apc );
+            return NULL;
+        }
     }
     return apc;
 }
@@ -1425,7 +1435,7 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_ty
         if (apc->owner != owner) continue;
         list_remove( &apc->entry );
         apc->executed = 1;
-        wake_up( &apc->obj, 0 );
+        signal_sync( apc->sync );
         release_object( apc );
         return;
     }
@@ -1455,7 +1465,7 @@ static void clear_apc_queue( struct list *queue )
         struct thread_apc *apc = LIST_ENTRY( ptr, struct thread_apc, entry );
         list_remove( &apc->entry );
         apc->executed = 1;
-        wake_up( &apc->obj, 0 );
+        signal_sync( apc->sync );
         release_object( apc );
     }
 }
@@ -1915,7 +1925,7 @@ DECL_HANDLER(select)
             apc->result.create_thread.handle = handle;
             clear_error();  /* ignore errors from the above calls */
         }
-        wake_up( &apc->obj, 0 );
+        signal_sync( apc->sync );
         close_handle( current->process, req->prev_apc );
         release_object( apc );
     }
@@ -1938,7 +1948,7 @@ DECL_HANDLER(select)
         else
         {
             apc->executed = 1;
-            wake_up( &apc->obj, 0 );
+            signal_sync( apc->sync );
         }
         release_object( apc );
     }
