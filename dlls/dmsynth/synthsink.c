@@ -91,7 +91,7 @@ static HRESULT synth_sink_write_data(struct synth_sink *sink, IDirectSoundBuffer
 
         if (FAILED(hr = IDirectSoundBuffer_GetCurrentPosition(buffer, &play_pos, &write_pos))) return hr;
 
-        if (current_pos - play_pos <= write_pos - play_pos)
+        if (current_pos - play_pos < write_pos - play_pos)
         {
             ERR("Underrun detected, sink %p, play pos %#lx, write pos %#lx, current pos %#lx!\n",
                     buffer, play_pos, write_pos, current_pos);
