@@ -2459,7 +2459,7 @@ static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format
             get_relevant_argb_components(ck_conv_info, src_ptr, channels);
             ck_pixel = make_argb_color(ck_conv_info, channels);
             if (ck_pixel == color_key)
-                val &= ~conv_info->destmask[0];
+                val = 0;
         }
         memcpy(dst_ptr, &val, dst_fmt->bytes_per_pixel);
     }
@@ -2476,7 +2476,7 @@ static void convert_argb_pixel(const uint8_t *src_ptr, const struct pixel_format
 
             format_from_d3dx_color(ck_format, &tmp, (BYTE *)&ck_pixel);
             if (ck_pixel == color_key)
-                tmp.value.w = 0.0f;
+                tmp.value.x = tmp.value.y = tmp.value.z = tmp.value.w = 0.0f;
         }
 
         color = tmp;

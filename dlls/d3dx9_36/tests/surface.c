@@ -2319,6 +2319,7 @@ static void test_color_key(void)
         D3DCOLOR color_key;
         const void *expected_dst_data_32;
         BOOL todo;
+        BOOL todo_32;
     } tests[] =
     {
         /* Color key with alpha channel unset. */
@@ -2329,20 +2330,16 @@ static void test_color_key(void)
         /* Same color key as before except the alpha channel is set. */
         {
             D3DFMT_R8G8B8, r8g8b8_4_4, r8g8b8_4_4_expected, 0xff008080,
-            .todo = TRUE
         },
         /* Color key on a palette. */
         {
             D3DFMT_P8, p8_4_4, p8_4_4_expected, 0xf0c0c000,
-            .todo = TRUE
         },
         {
             D3DFMT_A8P8, a8p8_4_4, a8p8_4_4_expected, 0x10c0c000,
-            .todo = TRUE
         },
         {
             D3DFMT_A32B32G32R32F, a32r32g32b32_4_4, a32r32g32b32_4_4_expected, 0xffff0000,
-            .todo = TRUE
         },
         /* 5. */
         /*
@@ -2364,7 +2361,6 @@ static void test_color_key(void)
         /* Alpha channel factors into the color key check. */
         {
             D3DFMT_A8R8G8B8, a8r8g8b8_4_4, a8r8g8b8_4_4_expected, 0x8000ff00,
-            .todo = TRUE
         },
         {
             D3DFMT_A8R8G8B8, a8r8g8b8_4_4, a8r8g8b8_4_4, 0x0000ff00,
@@ -2409,7 +2405,7 @@ static void test_color_key(void)
          */
         {
             D3DFMT_DXT5, dxt5_4_4, dxt5_4_4_expected_ck, 0xffff0000, dxt5_4_4_expected_no_ck,
-            .todo = TRUE
+            .todo_32 = TRUE
         },
         /*
          * Test premultiplied alpha handling with a color key - color key applies
@@ -2486,7 +2482,8 @@ static void test_color_key(void)
         }
         IDirect3DSurface9_UnlockRect(surf);
 
-        todo_wine_if(tests[i].todo) ok(!mismatch_count, "Unexpected number of mismatched pixels %u.\n", mismatch_count);
+        todo_wine_if(tests[i].todo || (sizeof(void *) == 4 && tests[i].todo_32)) ok(!mismatch_count,
+                    "Unexpected number of mismatched pixels %u.\n", mismatch_count);
         winetest_pop_context();
     }
 
