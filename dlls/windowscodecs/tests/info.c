@@ -134,7 +134,6 @@ static void test_decoder_info(void)
             &CLSID_WICJpegDecoder,
             L"image/jpeg,image/jpe,image/jpg",
             L".jpeg,.jpe,.jpg,.jfif,.exif",
-            1
         },
         {
             &CLSID_WICPngDecoder,
