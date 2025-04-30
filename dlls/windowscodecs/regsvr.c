@@ -1545,15 +1545,15 @@ static struct regsvr_decoder const decoder_list[] = {
 	png_patterns
     },
     {   &CLSID_WICTiffDecoder,
-	"The Wine Project",
-	"TIFF Decoder",
-	"1.0.0.0",
-	&GUID_VendorMicrosoft,
-	&GUID_ContainerFormatTiff,
-	"image/tiff",
-	".tif;.tiff",
-	tiff_decode_formats,
-	tiff_patterns
+        "The Wine Project",
+        "TIFF Decoder",
+        "1.0.0.0",
+        &GUID_VendorMicrosoft,
+        &GUID_ContainerFormatTiff,
+        "image/tiff,image/tif",
+        ".tiff,.tif",
+        tiff_decode_formats,
+        tiff_patterns
     },
     { NULL }			/* list terminator */
 };
