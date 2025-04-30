@@ -360,6 +360,51 @@ static const struct tiff_24bpp_data
     { 0x11, 0x22, 0x33 }
 };
 
+static const struct tiff_24bpp_separate_planes_data
+{
+    USHORT byte_order;
+    USHORT version;
+    ULONG  dir_offset;
+    USHORT number_of_entries;
+    struct IFD_entry entry[14];
+    ULONG next_IFD;
+    struct IFD_rational res;
+    ULONG strip_offsets[3];
+    ULONG strip_byte_counts[3];
+    BYTE pixel_data[12];
+} tiff_24bpp_separate_planes_data =
+{
+    'I' | 'I' << 8,
+    42,
+    FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, number_of_entries),
+    14,
+    {
+        { 0xff, IFD_SHORT, 1, 0 }, /* SUBFILETYPE */
+        { 0x100, IFD_LONG, 1, 4 }, /* IMAGEWIDTH */
+        { 0x101, IFD_LONG, 1, 1 }, /* IMAGELENGTH */
+        { 0x102, IFD_SHORT, 1, 8 }, /* BITSPERSAMPLE */
+        { 0x103, IFD_SHORT, 1, 1 }, /* COMPRESSION: XP doesn't accept IFD_LONG here */
+        { 0x106, IFD_SHORT, 1, 2 }, /* PHOTOMETRIC */
+        { 0x111, IFD_LONG, 3, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, strip_offsets) }, /* STRIPOFFSETS */
+        { 0x115, IFD_SHORT, 1, 3 }, /* SAMPLESPERPIXEL */
+        { 0x116, IFD_LONG, 1, 1 }, /* ROWSPERSTRIP */
+        { 0x117, IFD_LONG, 3, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, strip_byte_counts) }, /* STRIPBYTECOUNT */
+        { 0x11a, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, res) }, /* XRESOLUTION */
+        { 0x11b, IFD_RATIONAL, 1, FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, res) }, /* YRESOLUTION */
+        { 0x11c, IFD_SHORT, 1, 2 }, /* PLANARCONFIGURATION */
+        { 0x128, IFD_SHORT, 1, 2 }, /* RESOLUTIONUNIT */
+    },
+    0,
+    { 900, 3 },
+    {
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data),
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data) + 4,
+        FIELD_OFFSET(struct tiff_24bpp_separate_planes_data, pixel_data) + 8,
+    },
+    { 24, 24, 24 },
+    { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc }
+};
+
 static const struct tiff_4bps_bgra
 {
     USHORT byte_order;
@@ -1569,6 +1614,54 @@ static void test_tiff_16bpp(void)
     free(tiff_be);
 }
 
+static void test_tiff_24bpp_separate_planes(void)
+{
+    static const BYTE expected_data[] = { 0x99,0x55,0x11, 0xaa,0x66,0x22, 0xbb,0x77,0x33, 0xcc,0x88,0x44 };
+    UINT count, width, height, i;
+    IWICBitmapFrameDecode *frame;
+    IWICBitmapDecoder *decoder;
+    double dpi_x, dpi_y;
+    BYTE data[3*4];
+    GUID format;
+    HRESULT hr;
+
+    hr = create_decoder(&tiff_24bpp_separate_planes_data, sizeof(tiff_24bpp_separate_planes_data), &decoder);
+    todo_wine
+    ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
+    if (FAILED(hr)) return;
+    ok(decoder != NULL, "Failed to load TIFF image data\n");
+
+    hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    hr = IWICBitmapDecoder_GetFrame(decoder, 0, &frame);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IWICBitmapFrameDecode_GetSize(frame, &width, &height);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(width == 4, "got %u\n", width);
+    ok(height == 1, "got %u\n", height);
+
+    hr = IWICBitmapFrameDecode_GetResolution(frame, &dpi_x, &dpi_y);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(dpi_x == 300.0, "got %f\n", dpi_x);
+    ok(dpi_y == 300.0, "got %f\n", dpi_y);
+
+    hr = IWICBitmapFrameDecode_GetPixelFormat(frame, &format);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat24bppBGR), "Unexpected format %s.\n", wine_dbgstr_guid(&format));
+
+    memset(data, 0xfe, sizeof(data));
+    hr = IWICBitmapFrameDecode_CopyPixels(frame, NULL, 12, sizeof(data), data);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    for (i = 0; i < sizeof(data); i++)
+        ok(data[i] == expected_data[i], "%u: expected %02x, got %02x\n", i, expected_data[i], data[i]);
+
+    IWICBitmapFrameDecode_Release(frame);
+    IWICBitmapDecoder_Release(decoder);
+}
+
 START_TEST(tiffformat)
 {
     HRESULT hr;
@@ -1589,6 +1682,7 @@ START_TEST(tiffformat)
     test_tiff_resolution();
     test_tiff_24bpp();
     test_tiff_16bpp();
+    test_tiff_24bpp_separate_planes();
 
     IWICImagingFactory_Release(factory);
     CoUninitialize();
