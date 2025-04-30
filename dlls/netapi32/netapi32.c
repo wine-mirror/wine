@@ -273,13 +273,13 @@ NET_API_STATUS WINAPI NetStatisticsGet(LMSTR server, LMSTR service,
     switch (level)
     {
         case 0:
-            if (!wcscmp( service, L"Lanman Workstation" ))
+            if (!wcscmp( service, L"LanmanWorkstation" ))
             {
                 /* Fill the struct STAT_WORKSTATION_0 properly */
                 memset(&stat->workst, 0, sizeof(stat->workst));
                 res = NERR_Success;
             }
-            else if (!wcscmp( service, L"Lanman Server" ))
+            else if (!wcscmp( service, L"LanmanServer" ))
             {
                 /* Fill the struct STAT_SERVER_0 properly */
                 memset(&stat->server, 0, sizeof(stat->server));
