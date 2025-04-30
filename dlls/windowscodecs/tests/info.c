@@ -129,7 +129,6 @@ static void test_decoder_info(void)
             &CLSID_WICIcoDecoder,
             L"image/ico,image/x-icon",
             L".ico,.icon",
-            1
         },
         {
             &CLSID_WICJpegDecoder,
