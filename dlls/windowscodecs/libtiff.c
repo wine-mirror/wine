@@ -152,6 +152,7 @@ typedef struct {
     UINT tile_size;
     int tiled;
     UINT tiles_across;
+    UINT tiles_along;
 } tiff_decode_info;
 
 struct tiff_decoder
@@ -204,16 +205,11 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     decode_info->samples = samples;
 
     if (samples == 1)
-        planar = 1;
+        planar = PLANARCONFIG_CONTIG;
     else
     {
         ret = TIFFGetField(tiff, TIFFTAG_PLANARCONFIG, &planar);
-        if (!ret) planar = 1;
-        if (planar != 1)
-        {
-            FIXME("unhandled planar configuration %u\n", planar);
-            return E_FAIL;
-        }
+        if (!ret) planar = PLANARCONFIG_CONTIG;
     }
     decode_info->planar = planar;
 
@@ -475,6 +471,7 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
         decode_info->tile_stride = ((decode_info->frame.bpp * decode_info->tile_width + 7)/8);
         decode_info->tile_size = decode_info->tile_height * decode_info->tile_stride;
         decode_info->tiles_across = (decode_info->frame.width + decode_info->tile_width - 1) / decode_info->tile_width;
+        decode_info->tiles_along = (decode_info->frame.height + decode_info->tile_height - 1) / decode_info->tile_height;
     }
     else if ((ret = TIFFGetField(tiff, TIFFTAG_ROWSPERSTRIP, &decode_info->tile_height)))
     {
@@ -656,18 +653,114 @@ static HRESULT CDECL tiff_decoder_get_decoder_palette(struct decoder *iface, UIN
     return WINCODEC_ERR_PALETTEUNAVAILABLE;
 }
 
-static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UINT tile_y)
+static HRESULT tiff_read_tile(struct tiff_decoder *decoder, UINT tile_x, UINT tile_y, UINT s, void *buffer,
+        size_t size, size_t *out_length)
 {
+    tiff_decode_info *info = &decoder->cached_decode_info;
+    unsigned int index;
     tsize_t ret;
-    tiff_decode_info *info = &This->cached_decode_info;
+
+    *out_length = 0;
 
     if (info->tiled)
-        ret = TIFFReadEncodedTile(This->tiff, tile_x + tile_y * info->tiles_across, This->cached_tile, info->tile_size);
+    {
+        index = tile_x + tile_y * info->tiles_across + info->tiles_across * info->tiles_along * s;
+        ret = TIFFReadEncodedTile(decoder->tiff, index, buffer, size);
+    }
     else
-        ret = TIFFReadEncodedStrip(This->tiff, tile_y, This->cached_tile, info->tile_size);
+    {
+        index = TIFFComputeStrip(decoder->tiff, tile_y * info->tile_height, s);
+        ret = TIFFReadEncodedStrip(decoder->tiff, index, buffer, size);
+    }
 
     if (ret == -1)
         return E_FAIL;
+
+    *out_length = ret;
+    return S_OK;
+}
+
+static HRESULT tiff_decoder_copy_planes(struct tiff_decoder *decoder, const uint8_t *srcdata)
+{
+    tiff_decode_info *info = &decoder->cached_decode_info;
+    size_t sample_size, width_bytes;
+    const uint8_t *src;
+    uint8_t *dst;
+
+    if (info->bps % 8)
+    {
+        FIXME("Separate sample planes for %ubps are not supported.\n", info->bps);
+        return E_NOTIMPL;
+    }
+
+    sample_size = info->bps / 8;
+    width_bytes = info->tile_width * sample_size;
+
+    for (int y = 0; y < info->tile_height; y++)
+    {
+        dst = decoder->cached_tile + y * width_bytes * info->samples;
+
+        for (int x = 0; x < info->tile_width; x++)
+        {
+            for (int s = 0; s < info->samples; s++)
+            {
+                src = srcdata + (y + s * info->tile_height) * width_bytes + x * sample_size;
+
+                if (info->bps == 8)
+                    *dst = *src;
+                else if (info->bps == 16)
+                    *(uint16_t *)dst = *(uint16_t *)src;
+                else if (info->bps == 32)
+                    *(uint32_t *)dst = *(uint32_t *)src;
+                else if (info->bps == 64)
+                    *(uint64_t *)dst = *(uint64_t *)src;
+                else
+                    memcpy(dst, src, sample_size);
+
+                dst += sample_size;
+            }
+        }
+    }
+
+    return S_OK;
+}
+
+static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UINT tile_y)
+{
+    tiff_decode_info *info = &This->cached_decode_info;
+    HRESULT hr = S_OK;
+    size_t len;
+
+    if (info->planar == PLANARCONFIG_CONTIG)
+    {
+        hr = tiff_read_tile(This, tile_x, tile_y, 0, This->cached_tile, info->tile_size, &len);
+    }
+    else
+    {
+        size_t offset = 0, size = info->samples * info->tile_size;
+        uint8_t *buffer;
+
+        /* Read separate planes one by one, and put them together in contiguous form. */
+        if (!(buffer = malloc(size)))
+            return E_OUTOFMEMORY;
+
+        for (int s = 0; s < info->samples; ++s)
+        {
+            hr = tiff_read_tile(This, tile_x, tile_y, s, buffer + offset, size, &len);
+            if (FAILED(hr)) break;
+
+            offset += len;
+            size -= len;
+        }
+
+        if (SUCCEEDED(hr))
+            hr = tiff_decoder_copy_planes(This, buffer);
+
+        free(buffer);
+    }
+
+    if (FAILED(hr))
+        return hr;
 
     /* 3bps RGB */
     if (info->source_bpp == 3 && info->samples == 3 && info->frame.bpp == 24)

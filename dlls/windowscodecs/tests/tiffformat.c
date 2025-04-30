@@ -1626,9 +1626,7 @@ static void test_tiff_24bpp_separate_planes(void)
     HRESULT hr;
 
     hr = create_decoder(&tiff_24bpp_separate_planes_data, sizeof(tiff_24bpp_separate_planes_data), &decoder);
-    todo_wine
     ok(hr == S_OK, "Failed to load TIFF image data %#lx\n", hr);
-    if (FAILED(hr)) return;
     ok(decoder != NULL, "Failed to load TIFF image data\n");
 
     hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
