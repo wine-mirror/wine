@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-02-20 20:37+0100\n"
+"PO-Revision-Date: 2025-05-01 04:15+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
 "|| n%100>=20) ? 1 : 2);\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.6\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -339,10 +339,8 @@ msgstr ""
 "zakończony."
 
 #: dlls/appwiz.cpl/appwiz.rc:55
-#, fuzzy
-#| msgid "Downloading..."
 msgid "Download failed."
-msgstr "Pobieranie..."
+msgstr "Pobieranie się nie powiodło."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
@@ -9619,7 +9617,7 @@ msgstr "TRWA SKANOWANIE... Proszę czekać"
 #: dlls/sane.ds/sane.rc:31
 msgctxt "unit: pixels"
 msgid "px"
-msgstr "piks."
+msgstr "px"
 
 #: dlls/sane.ds/sane.rc:32
 msgctxt "unit: bits"
