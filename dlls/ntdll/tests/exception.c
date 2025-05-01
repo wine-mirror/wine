@@ -2400,7 +2400,6 @@ static void test_instrumentation_callback(void)
 
     unsigned int instrumentation_call_count;
     NTSTATUS status;
-
     PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION info;
 
     memcpy( code_mem, instrumentation_callback, sizeof(instrumentation_callback) );
@@ -5736,6 +5735,41 @@ static void test_instrumentation_callback(void)
         0x41, 0xff, 0xe2,                   /* jmp *r10 */
     };
 
+    static const BYTE call_func_nt_flag[] =
+    {
+        0x56,                                           /* push %rsi */
+        0x57,                                           /* push %rdi */
+        0x48, 0x89, 0xce,                               /* mov %rcx,%rsi */
+        0x48, 0x89, 0xd7,                               /* mov %rdx,%rdi */
+
+        0x9c,                                           /* pushfq */
+        0x9c,                                           /* pushfq */
+        0x48, 0x81, 0x0c, 0x24, 0x00, 0x40, 0x00, 0x00, /* orq $0x4000,(%rsp) */
+        0x9d,                                           /* popfq */
+
+        0x41, 0xff, 0xd0,                               /* call *%r8 */
+
+        0x4c, 0x89, 0x1e,                               /* mov %r11,(%rsi) */
+        0x9c,                                           /* pushfq */
+        0x5a,                                           /* popq %rdx */
+        0x9d,                                           /* popfq */
+        0x48, 0x89, 0x17,                               /* mov %rdx,(%rdi) */
+        0x5f,                                           /* pop %rdi */
+        0x5e,                                           /* pop %rsi */
+        0xc3,                                           /* ret */
+    };
+
+    static const BYTE call_NtSetContextThread_nt_flag[] =
+    {
+        0x9c,                                           /* pushfq */
+        0x48, 0x81, 0x0c, 0x24, 0x00, 0x40, 0x00, 0x00, /* orq $0x4000,(%rsp) */
+        0x9d,                                           /* popfq */
+        0x41, 0xff, 0xd0,                               /* call *%r8 */
+        0xc3,                                           /* ret */
+    };
+
+    NTSTATUS (WINAPI *func_NtSetContextThread_nt_flag)(HANDLE, CONTEXT *, void *func);
+    NTSTATUS (WINAPI *func_nt_flag)(UINT64 *ret_r11, UINT64 *ret_rflags, void *func);
     struct instrumentation_callback_data curr_data, data;
     PROCESS_INSTRUMENTATION_CALLBACK_INFORMATION info;
     HMODULE ntdll = GetModuleHandleA( "ntdll.dll" );
@@ -5743,6 +5777,7 @@ static void test_instrumentation_callback(void)
     EXCEPTION_RECORD record;
     void *vectored_handler;
     unsigned int i, count;
+    ULONG64 r11, rflags;
     NTSTATUS status;
     HANDLE thread;
     CONTEXT ctx;
@@ -5750,6 +5785,17 @@ static void test_instrumentation_callback(void)
     LONG pass;
 
     if (is_arm64ec) return;
+
+    func_nt_flag = (void *)((char *)code_mem + 512);
+    memcpy( func_nt_flag, call_func_nt_flag, sizeof(call_func_nt_flag) );
+
+    func_NtSetContextThread_nt_flag = (void *)((char *)code_mem + 1024);
+    memcpy( func_NtSetContextThread_nt_flag, call_NtSetContextThread_nt_flag, sizeof(call_NtSetContextThread_nt_flag) );
+
+    status = func_nt_flag( &r11, &rflags, NtFlushProcessWriteBuffers );
+    ok( !status, "got %#lx.\n", status );
+    ok( r11 & 0x4000, "got %#I64x.\n", r11 );
+    ok( rflags & 0x4000, "got %#I64x.\n", rflags );
 
     memcpy( code_mem, instrumentation_callback, sizeof(instrumentation_callback) );
     *(void **)((char *)code_mem + 4) = &curr_data.call_count;
@@ -5789,6 +5835,14 @@ static void test_instrumentation_callback(void)
     data = curr_data;
     ok( status == STATUS_SUCCESS, "got %#lx.\n", status );
     ok( data.call_count == 1, "got %u.\n", data.call_count );
+
+    init_instrumentation_data( &curr_data );
+    status = func_nt_flag( &r11, &rflags, NtFlushProcessWriteBuffers );
+    data = curr_data;
+    ok( !status, "got %#lx.\n", status );
+    ok( data.call_count == 1, "got %u.\n", data.call_count );
+    ok( r11 & 0x4000, "got %#I64x.\n", r11 );
+    ok( rflags & 0x4000, "got %#I64x.\n", rflags );
 
     vectored_handler = AddVectoredExceptionHandler( TRUE, test_instrumentation_callback_handler );
     ok( !!vectored_handler, "failed.\n" );
@@ -5835,8 +5889,16 @@ static void test_instrumentation_callback(void)
         ok( data.call_count == 1, "got %u.\n", data.call_count );
         ok( data.call_data[0].r10 == (void *)ctx.Rip, "got %p, expected %p.\n", data.call_data[0].r10, (void *)ctx.Rip );
         init_instrumentation_data( &curr_data );
+        func_NtSetContextThread_nt_flag( GetCurrentThread(), &ctx, NtSetContextThread );
+        ok( 0, "Shouldn't be reached.\n" );
     }
-    ok( pass == 5, "got %ld.\n", pass );
+    else if (pass == 6)
+    {
+        data = curr_data;
+        pRtlCaptureContext( &ctx );
+        ok( !(ctx.EFlags & 0x4000), "got %#lx.\n", ctx.EFlags );
+    }
+    ok( pass == 6, "got %ld.\n", pass );
     RemoveVectoredExceptionHandler( vectored_handler );
 
     apc_count = 0;
