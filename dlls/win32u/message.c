@@ -420,11 +420,14 @@ static LRESULT dispatch_win_proc_params( struct win_proc_params *params, size_t 
     LRESULT result = 0;
     void *ret_ptr;
     ULONG ret_len;
+    NTSTATUS status;
 
     if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return 0;
     thread_info->recursion_count++;
-    KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
+    status = KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
     thread_info->recursion_count--;
+
+    if (status) return result;
 
     if (ret_len >= sizeof(result))
     {
