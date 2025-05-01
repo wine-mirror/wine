@@ -111,6 +111,5 @@ enum ntlm_funcs
     unix_chat,
     unix_cleanup,
     unix_fork,
-    unix_check_version,
     unix_funcs_count,
 };

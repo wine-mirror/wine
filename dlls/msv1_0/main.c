@@ -43,11 +43,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 static ULONG ntlm_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
-static NTSTATUS ntlm_check_version(void)
-{
-    return WINE_UNIX_CALL( unix_check_version, NULL );
-}
-
 static void ntlm_cleanup( struct ntlm_ctx *ctx )
 {
     WINE_UNIX_CALL( unix_cleanup, ctx );
@@ -113,12 +108,6 @@ static NTSTATUS NTAPI ntlm_LsaApInitializePackage( ULONG package_id, LSA_DISPATC
     TRACE( "%#lx, %p, %s, %s, %p\n", package_id, dispatch, debugstr_as(database), debugstr_as(confidentiality),
            package_name );
 
-    if (ntlm_check_version())
-    {
-        ERR( "no NTLM support, expect problems\n" );
-        return STATUS_UNSUCCESSFUL;
-    }
-
     if (!(str = dispatch->AllocateLsaHeap( sizeof(*str) + sizeof("NTLM" )))) return STATUS_NO_MEMORY;
     ptr = (char *)(str + 1);
     memcpy( ptr, "NTLM", sizeof("NTLM") );
@@ -135,12 +124,6 @@ static NTSTATUS NTAPI ntlm_SpInitialize( ULONG_PTR package_id, SECPKG_PARAMETERS
                                          LSA_SECPKG_FUNCTION_TABLE *lsa_function_table )
 {
     TRACE( "%#Ix, %p, %p\n", package_id, params, lsa_function_table );
-
-    if (ntlm_check_version())
-    {
-        ERR( "no NTLM support, expect problems\n" );
-        return STATUS_UNSUCCESSFUL;
-    }
     return STATUS_SUCCESS;
 }
 

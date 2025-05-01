@@ -47,7 +47,6 @@
   extern char **environ;
 #endif
 
-WINE_DEFAULT_DEBUG_CHANNEL(ntlm);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define INITIAL_BUFFER_SIZE 200
@@ -164,7 +163,8 @@ static NTSTATUS ntlm_fork( void *args )
     const struct fork_params *params = args;
     struct ntlm_ctx *ctx = params->ctx;
     posix_spawn_file_actions_t file_actions;
-    int pipe_in[2], pipe_out[2];
+    int pipe_in[2], pipe_out[2], err;
+    NTSTATUS status = STATUS_SUCCESS;
 
 #ifdef HAVE_PIPE2
     if (pipe2( pipe_in, O_CLOEXEC ) < 0)
@@ -198,10 +198,14 @@ static NTSTATUS ntlm_fork( void *args )
     posix_spawn_file_actions_addclose( &file_actions, pipe_in[0] );
     posix_spawn_file_actions_addclose( &file_actions, pipe_in[1] );
 
-    if (posix_spawnp( &ctx->pid, params->argv[0], &file_actions, NULL, params->argv, environ ))
+    if ((err = posix_spawnp( &ctx->pid, params->argv[0], &file_actions, NULL, params->argv, environ )))
     {
         ctx->pid = -1;
         write( pipe_in[1], "BH\n", 3 );
+        ERR_(winediag)( "Can't start ntlm_auth (%s). "
+                        "Usually you can find it in the winbind package of your distribution.\n",
+                        strerror(err) );
+        status = STATUS_UNSUCCESSFUL;
     }
 
     ctx->pipe_in = pipe_in[0];
@@ -211,37 +215,6 @@ static NTSTATUS ntlm_fork( void *args )
 
     posix_spawn_file_actions_destroy( &file_actions );
 
-    return SEC_E_OK;
-}
-
-static NTSTATUS ntlm_check_version( void *args )
-{
-    struct ntlm_ctx ctx = { 0 };
-    char *argv[3], buf[80];
-    NTSTATUS status = STATUS_DLL_NOT_FOUND;
-    struct fork_params params = { &ctx, argv };
-    int len;
-
-    ctx.mode = MODE_CLIENT;
-    argv[0] = (char *)"ntlm_auth";
-    argv[1] = (char *)"--version";
-    argv[2] = NULL;
-    if (ntlm_fork( &params ) != SEC_E_OK) return status;
-
-    if ((len = read( ctx.pipe_in, buf, sizeof(buf) - 1 )) > 8)
-    {
-        char *newline;
-
-        if ((newline = memchr( buf, '\n', len ))) *newline = 0;
-        else buf[len] = 0;
-
-        TRACE( "detected ntlm_auth version %s\n", debugstr_a(buf) );
-        status = STATUS_SUCCESS;
-    }
-
-    if (status) ERR_(winediag)( "ntlm_auth was not found. Make sure that ntlm_auth >= 3.0.25 is in your path. "
-                                "Usually, you can find it in the winbind package of your distribution.\n" );
-    ntlm_cleanup( &ctx );
     return status;
 }
 
@@ -250,7 +223,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     ntlm_chat,
     ntlm_cleanup,
     ntlm_fork,
-    ntlm_check_version,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
@@ -310,7 +282,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_ntlm_chat,
     ntlm_cleanup,
     wow64_ntlm_fork,
-    ntlm_check_version,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_wow64_funcs) == unix_funcs_count );
