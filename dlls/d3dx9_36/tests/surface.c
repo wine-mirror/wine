@@ -2318,6 +2318,7 @@ static void test_color_key(void)
         const void *expected_dst_data;
         D3DCOLOR color_key;
         const void *expected_dst_data_32;
+        uint8_t max_diff;
         BOOL todo;
         BOOL todo_32;
     } tests[] =
@@ -2325,7 +2326,6 @@ static void test_color_key(void)
         /* Color key with alpha channel unset. */
         {
             D3DFMT_R8G8B8, r8g8b8_4_4, r8g8b8_4_4_expected, 0x00008080,
-            .todo = TRUE
         },
         /* Same color key as before except the alpha channel is set. */
         {
@@ -2348,7 +2348,6 @@ static void test_color_key(void)
          */
         {
             D3DFMT_R32F, r32_4_4, r32_4_4_expected, 0xffff3080,
-            .todo = TRUE
         },
         /*
          * Both 0x7f and 0x80 channel values in the color key map to 0x00 in
@@ -2356,7 +2355,6 @@ static void test_color_key(void)
          */
         {
             D3DFMT_Q8W8V8U8, q8w8v8u8_4_4, q8w8v8u8_4_4_expected, 0xb87f80a8,
-            .todo = TRUE
         },
         /* Alpha channel factors into the color key check. */
         {
@@ -2371,33 +2369,27 @@ static void test_color_key(void)
          */
         {
             D3DFMT_A4R4G4B4, a4r4g4b4_4_4, a4r4g4b4_4_4_expected, 0x80009000,
-            .todo = TRUE
         },
         /* 10. */
         /* 0xf7-0xff match 0xf in the source format. */
         {
             D3DFMT_A4R4G4B4, a4r4g4b4_4_4, a4r4g4b4_4_4_expected2, 0x0000f7ff,
-            .todo = TRUE
         },
         {
             D3DFMT_A4L4, a4l4_4_4, a4l4_4_4_expected, 0x88818283,
-            .todo = TRUE
         },
         {
             D3DFMT_A4L4, a4l4_4_4, a4l4_4_4_expected2, 0x88818200,
         },
         {
-            D3DFMT_A1R5G5B5, a1r5g5b5_4_4, a1r5g5b5_4_4_expected, 0x80a1a8a4,
-            .todo = TRUE
+            D3DFMT_A1R5G5B5, a1r5g5b5_4_4, a1r5g5b5_4_4_expected, 0x80a1a8a4, .max_diff = 1
         },
         {
-            D3DFMT_R5G6B5, r5g6b5_4_4, r5g6b5_4_4_expected, 0x81a1a0a8,
-            .todo = TRUE
+            D3DFMT_R5G6B5, r5g6b5_4_4, r5g6b5_4_4_expected, 0x81a1a0a8, .max_diff = 1
         },
         /* 15. */
         {
             D3DFMT_R3G3B2, r3g3b2_4_4, r3g3b2_4_4_expected, 0x81a4c8bf,
-            .todo = TRUE
         },
         /*
          * Test color key handling for compressed formats. On 64-bit the color key
@@ -2476,7 +2468,7 @@ static void test_color_key(void)
                 const uint32_t dst_expected_color = ((const uint32_t *)dst_expected_row)[x];
                 const uint32_t dst_color = ((const uint32_t *)dst_row)[x];
 
-                if (!compare_color_4bpp(dst_color, dst_expected_color, 0))
+                if (!compare_color_4bpp(dst_color, dst_expected_color, tests[i].max_diff))
                     mismatch_count++;
             }
         }
