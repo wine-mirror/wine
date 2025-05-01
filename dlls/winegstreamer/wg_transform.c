@@ -129,9 +129,6 @@ static void align_video_info_planes(MFVideoInfo *video_info, gsize plane_align,
     }
 
     align->stride_align[0] = plane_align;
-    align->stride_align[1] = plane_align;
-    align->stride_align[2] = plane_align;
-    align->stride_align[3] = plane_align;
 
     gst_video_info_align(info, align);
 
