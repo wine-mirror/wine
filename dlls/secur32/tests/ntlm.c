@@ -849,10 +849,10 @@ static void testAuth(ULONG data_rep, BOOL fake)
     ok( sec_status == SEC_E_OK, "QueryContextAttributesA returned %08lx\n", sec_status );
     if (fake)
     {
-        ok( !strcmp(key.sSignatureAlgorithmName, "RSADSI RC4-CRC32") ||
+        todo_wine ok( broken(!strcmp(key.sSignatureAlgorithmName, "RSADSI RC4-CRC32")) ||
                 !strcmp(key.sSignatureAlgorithmName, "HMAC-MD5"), "got '%s'\n", key.sSignatureAlgorithmName );
         ok( !strcmp(key.sEncryptAlgorithmName, "RSADSI RC4"), "got '%s'\n", key.sEncryptAlgorithmName );
-        ok( key.SignatureAlgorithm == 0xffffff7c || key.SignatureAlgorithm == 0xffffff76,
+        todo_wine ok( broken(key.SignatureAlgorithm == 0xffffff7c) || key.SignatureAlgorithm == 0xffffff76,
                 "got %#lx\n", key.SignatureAlgorithm );
     }
     else
