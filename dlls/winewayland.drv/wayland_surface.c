@@ -802,6 +802,7 @@ struct wayland_shm_buffer *wayland_shm_buffer_create(int width, int height,
     shm_buffer->ref = 1;
     shm_buffer->width = width;
     shm_buffer->height = height;
+    shm_buffer->format = format;
     shm_buffer->map_size = size;
 
     shm_buffer->damage_region = NtGdiCreateRectRgn(0, 0, width, height);

@@ -246,6 +246,7 @@ struct wayland_shm_buffer
     struct wl_list link;
     struct wl_buffer *wl_buffer;
     int width, height;
+    uint32_t format;
     void *map_data;
     size_t map_size;
     BOOL busy;
