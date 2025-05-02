@@ -1048,6 +1048,126 @@ static NTSTATUS wow64_server_getinfo( void *args )
     return status;
 }
 
+struct share_info_2_32
+{
+    PTR32        shi2_netname;
+    unsigned int shi2_type;
+    PTR32        shi2_remark;
+    unsigned int shi2_permissions;
+    unsigned int shi2_max_uses;
+    unsigned int shi2_current_uses;
+    PTR32        shi2_path;
+    PTR32        shi2_passwd;
+};
+
+struct share_info
+{
+    union
+    {
+        struct share_info_2 si2;
+        struct share_info_502 si502;
+    };
+    struct security_descriptor sd;
+    struct acl sacl;
+    struct acl dacl;
+};
+
+struct acl_32
+{
+    enum acl_revision revision;
+    unsigned short size;
+    unsigned int   num_aces;
+    PTR32          aces;
+};
+
+static void create_acl64( const struct acl_32 *acl32, struct acl *acl )
+{
+    acl->revision = acl32->revision;
+    acl->size = acl32->size;
+    acl->num_aces = acl32->num_aces;
+    acl->aces = ULongToPtr( acl32->aces );
+}
+
+struct security_descriptor_32
+{
+    enum security_descriptor_revision revision;
+    unsigned short type;
+    PTR32          owner_sid;
+    PTR32          group_sid;
+    PTR32          sacl;
+    PTR32          dacl;
+};
+
+static void create_security_descriptor64( const struct security_descriptor_32 *sd32,
+        struct share_info *si )
+{
+    struct security_descriptor *sd = &si->sd;
+
+    sd->revision = sd32->revision;
+    sd->type = sd32->type;
+    sd->owner_sid = ULongToPtr( sd32->owner_sid );
+    sd->group_sid = ULongToPtr( sd32->group_sid );
+    create_acl64( ULongToPtr(sd32->sacl), &si->sacl );
+    sd->sacl = &si->sacl;
+    create_acl64( ULongToPtr(sd32->dacl), &si->dacl );
+    sd->dacl = &si->dacl;
+}
+
+struct share_info_502_32
+{
+    PTR32        shi502_netname;
+    unsigned int shi502_type;
+    PTR32        shi502_remark;
+    unsigned int shi502_permissions;
+    unsigned int shi502_max_uses;
+    unsigned int shi502_current_uses;
+    PTR32        shi502_path;
+    PTR32        shi502_passwd;
+    unsigned int shi502_reserved;
+    PTR32        shi502_security_descriptor;
+};
+
+static NTSTATUS create_share_info64( unsigned int level, void *buffer, struct share_info *si )
+{
+    switch (level)
+    {
+    case 2:
+    {
+        struct share_info_2_32 *si32 = buffer;
+
+        si->si2.shi2_netname = ULongToPtr( si32->shi2_netname );
+        si->si2.shi2_type = si32->shi2_type;
+        si->si2.shi2_remark = ULongToPtr( si32->shi2_remark );
+        si->si2.shi2_permissions = si32->shi2_permissions;
+        si->si2.shi2_max_uses = si32->shi2_max_uses;
+        si->si2.shi2_current_uses = si32->shi2_current_uses;
+        si->si2.shi2_path = ULongToPtr( si32->shi2_path );
+        si->si2.shi2_passwd = ULongToPtr( si32->shi2_passwd );
+        return STATUS_SUCCESS;
+    }
+    case 502:
+    {
+        struct share_info_502_32 *si32 = buffer;
+
+        si->si502.shi502_netname = ULongToPtr( si32->shi502_netname );
+        si->si502.shi502_type = si32->shi502_type;
+        si->si502.shi502_remark = ULongToPtr( si32->shi502_remark );
+        si->si502.shi502_permissions = si32->shi502_permissions;
+        si->si502.shi502_max_uses = si32->shi502_max_uses;
+        si->si502.shi502_current_uses = si32->shi502_current_uses;
+        si->si502.shi502_path = ULongToPtr( si32->shi502_path );
+        si->si502.shi502_passwd = ULongToPtr( si32->shi502_passwd );
+        si->si502.shi502_reserved = si32->shi502_reserved;
+        create_security_descriptor64( ULongToPtr(si32->shi502_security_descriptor), si );
+        si->si502.shi502_security_descriptor = &si->sd;
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
 static NTSTATUS wow64_share_add( void *args )
 {
     struct
@@ -1058,15 +1178,19 @@ static NTSTATUS wow64_share_add( void *args )
         PTR32 err;
     } const *params32 = args;
 
+    struct share_info si;
     struct share_add_params params =
     {
         ULongToPtr(params32->server),
         params32->level,
-        ULongToPtr(params32->info),
+        (BYTE *)&si,
         ULongToPtr(params32->err)
     };
+    NTSTATUS status;
 
-    return share_add( &params );
+    status = create_share_info64( params.level, ULongToPtr(params32->info), &si );
+    if (!status) status = share_add( &params );
+    return status;
 }
 
 static NTSTATUS wow64_share_del( void *args )
