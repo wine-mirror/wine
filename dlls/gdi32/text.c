@@ -780,10 +780,11 @@ static void text_metric_ex_WtoA(const NEWTEXTMETRICEXW *tmW, NEWTEXTMETRICEXA *t
 
 static void logfont_AtoW( const LOGFONTA *fontA, LPLOGFONTW fontW )
 {
+    int len = MultiByteToWideChar( CP_ACP, 0, fontA->lfFaceName,
+                                   strnlen( fontA->lfFaceName, LF_FACESIZE ),
+                                   fontW->lfFaceName, LF_FACESIZE );
+    fontW->lfFaceName[min( len, LF_FACESIZE - 1 )] = 0;
     memcpy( fontW, fontA, sizeof(LOGFONTA) - LF_FACESIZE );
-    MultiByteToWideChar( CP_ACP, 0, fontA->lfFaceName, strnlen( fontA->lfFaceName, LF_FACESIZE ),
-                         fontW->lfFaceName, LF_FACESIZE );
-    fontW->lfFaceName[LF_FACESIZE - 1] = 0;
 }
 
 static void logfont_WtoA( const LOGFONTW *fontW, LPLOGFONTA fontA )
