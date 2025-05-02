@@ -3146,6 +3146,13 @@ sync_test("__proto__", function() {
         ok(e.number === 0xa13b6 - 0x80000000 && e.name === "TypeError",
             "changing __proto__ on non-extensible object threw exception " + e.number + " (" + e.name + ")");
     }
+
+    obj = document.createElement("img");
+    obj.__proto__ = ctor.prototype;
+    document.body.setAttribute.call(obj, "height", "101");
+    r = document.body.getAttribute.call(obj, "height");
+    ok(r === "101", "getAttribute(height) = " + r);
+    ok(!("getAttribute" in obj), "getAttribute exposed in obj");
 });
 
 sync_test("__defineGetter__", function() {
@@ -3765,6 +3772,13 @@ sync_test("prototypes", function() {
     check(Attr.prototype, Node.prototype, "attr prototype");
     check(document.createDocumentFragment(), DocumentFragment.prototype, "fragment");
     check(DocumentFragment.prototype, Node.prototype, "fragment prototype");
+
+    try {
+        HTMLAreaElement.prototype.toString.call(document.createElement("a"));
+        ok(false, "Area element's toString on Anchor element didn't fail");
+    } catch(e) {
+        ok(e.number == 0xffff - 0x80000000, "Area element's toString on Anchor element threw exception " + e.number);
+    }
 });
 
 sync_test("prototype props", function() {

@@ -67,6 +67,8 @@ typedef struct {
     func_arg_info_t *arg_info;
 } func_info_t;
 
+#define CALLFUNC_USE_TID 0x80000000u
+
 struct dispex_data_t {
     const dispex_static_data_vtbl_t *vtbl;
     dispex_static_data_t *desc;
@@ -1076,7 +1078,7 @@ static HRESULT function_apply(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARI
         }
     }
 
-    hres = IWineJSDispatchHost_CallFunction(this_iface, func->info->id, func->info->tid, DISPATCH_METHOD, &params, res, ei, caller);
+    hres = IWineJSDispatchHost_CallFunction(this_iface, func->info->id, func->info->tid | CALLFUNC_USE_TID, DISPATCH_METHOD, &params, res, ei, caller);
 
 fail:
     while(argc--)
@@ -1103,7 +1105,7 @@ static HRESULT function_call(func_disp_t *func, DISPPARAMS *dp, LCID lcid, VARIA
     if(FAILED(hres))
         return CTL_E_ILLEGALFUNCTIONCALL;
 
-    hres = IWineJSDispatchHost_CallFunction(this_iface, func->info->id, func->info->tid, DISPATCH_METHOD, &params, res, ei, caller);
+    hres = IWineJSDispatchHost_CallFunction(this_iface, func->info->id, func->info->tid | CALLFUNC_USE_TID, DISPATCH_METHOD, &params, res, ei, caller);
     IWineJSDispatchHost_Release(this_iface);
     return (hres == E_UNEXPECTED) ? CTL_E_ILLEGALFUNCTIONCALL : hres;
 }
@@ -2614,13 +2616,13 @@ static HRESULT get_host_property_descriptor(DispatchEx *This, DISPID id, struct 
         desc->flags = PROPF_CONFIGURABLE;
         desc->name = func->name;
         if(func->func_disp_idx >= 0) {
-            desc->iid = func->tid;
+            desc->iid = This->info->desc->id;
             desc->flags |= PROPF_METHOD | PROPF_WRITABLE;
         }else {
             if(func->func_disp_idx == -1)
                 desc->flags |= PROPF_ENUMERABLE;
             if(This->info->is_prototype) {
-                desc->iid = func->tid;
+                desc->iid = This->info->desc->id;
                 if(func->put_vtbl_off)
                     desc->flags |= PROPF_WRITABLE;
             }else {
@@ -2731,7 +2733,7 @@ static HRESULT WINAPI JSDispatchHost_CallFunction(IWineJSDispatchHost *iface, DI
     TRACE("%s (%p)->(%lx %x %lx %p %p %p %p)\n", This->info->name, This, id, iid, flags, dp, ret, ei, caller);
 
     hres = get_builtin_func(This->info, id, &func);
-    if(FAILED(hres) || func->tid != iid)
+    if(FAILED(hres) || (iid != func->prototype_id && iid != (func->tid | CALLFUNC_USE_TID)))
         return E_UNEXPECTED;
 
     switch(flags) {
