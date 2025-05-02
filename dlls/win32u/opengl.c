@@ -436,6 +436,11 @@ static BOOL nulldrv_set_pixel_format( HWND hwnd, int old_format, int new_format,
     return TRUE;
 }
 
+static BOOL nulldrv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
+{
+    return FALSE;
+}
+
 static BOOL nulldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
                                     GLint max_level, GLsizei *width, GLsizei *height, void **private )
 {
@@ -477,6 +482,11 @@ static BOOL nulldrv_context_share( void *src_private, void *dst_private )
     return FALSE;
 }
 
+static BOOL nulldrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
+{
+    return FALSE;
+}
+
 static BOOL nulldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
 {
     return FALSE;
@@ -489,6 +499,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_describe_pixel_format = nulldrv_describe_pixel_format,
     .p_init_wgl_extensions = nulldrv_init_wgl_extensions,
     .p_set_pixel_format = nulldrv_set_pixel_format,
+    .p_swap_buffers = nulldrv_swap_buffers,
     .p_pbuffer_create = nulldrv_pbuffer_create,
     .p_pbuffer_destroy = nulldrv_pbuffer_destroy,
     .p_pbuffer_updated = nulldrv_pbuffer_updated,
@@ -497,6 +508,7 @@ static const struct opengl_driver_funcs nulldrv_funcs =
     .p_context_destroy = nulldrv_context_destroy,
     .p_context_copy = nulldrv_context_copy,
     .p_context_share = nulldrv_context_share,
+    .p_context_flush = nulldrv_context_flush,
     .p_context_make_current = nulldrv_context_make_current,
 };
 
@@ -1364,6 +1376,12 @@ static void display_funcs_init(void)
     display_funcs->p_wglShareLists = win32u_wglShareLists;
     display_funcs->p_wglMakeCurrent = win32u_wglMakeCurrent;
 
+    display_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
+    p_display_glFinish = display_funcs->p_glFinish;
+    display_funcs->p_glFinish = win32u_glFinish;
+    p_display_glFlush = display_funcs->p_glFlush;
+    display_funcs->p_glFlush = win32u_glFlush;
+
     register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_ARB_extensions_string" );
     display_funcs->p_wglGetExtensionsStringARB = win32u_wglGetExtensionsStringARB;
 
@@ -1402,19 +1420,10 @@ static void display_funcs_init(void)
     display_funcs->p_wglReleaseTexImageARB  = win32u_wglReleaseTexImageARB;
     display_funcs->p_wglSetPbufferAttribARB = win32u_wglSetPbufferAttribARB;
 
-    if (display_driver_funcs->p_swap_buffers)
-    {
-        display_funcs->p_wglSwapBuffers = win32u_wglSwapBuffers;
-        p_display_glFinish = display_funcs->p_glFinish;
-        display_funcs->p_glFinish = win32u_glFinish;
-        p_display_glFlush = display_funcs->p_glFlush;
-        display_funcs->p_glFlush = win32u_glFlush;
-
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control" );
-        register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
-        display_funcs->p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
-        display_funcs->p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
-    }
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control" );
+    register_extension( wgl_extensions, ARRAY_SIZE(wgl_extensions), "WGL_EXT_swap_control_tear" );
+    display_funcs->p_wglSwapIntervalEXT = win32u_wglSwapIntervalEXT;
+    display_funcs->p_wglGetSwapIntervalEXT = win32u_wglGetSwapIntervalEXT;
 }
 
 static const struct opengl_funcs *get_dc_funcs( HDC hdc, const struct opengl_funcs *null_funcs )
