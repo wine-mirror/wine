@@ -127,7 +127,8 @@ struct server_challenge
         offsetof(struct server_challenge, name),
         NTLMSSP_NEGOTIATE_UNICODE | NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_NTLM |
             NTLMSSP_NEGOTIATE_ALWAYS_SIGN | NTLMSSP_TARGET_TYPE_SERVER |
-            NTLMSSP_NEGOTIATE_TARGET_INFO | NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_56,
+            NTLMSSP_NEGOTIATE_EXTENDED_SESSIONSECURITY | NTLMSSP_NEGOTIATE_TARGET_INFO |
+            NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_56,
         { 0xb5, 0x60, 0x8e, 0x95, 0xb5, 0x3c, 0xee, 0x03 },
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
         sizeof(server_challenge.info), sizeof(server_challenge.info),
@@ -848,9 +849,11 @@ static void testAuth(ULONG data_rep, BOOL fake)
     ok( sec_status == SEC_E_OK, "QueryContextAttributesA returned %08lx\n", sec_status );
     if (fake)
     {
-        ok( !strcmp(key.sSignatureAlgorithmName, "RSADSI RC4-CRC32"), "got '%s'\n", key.sSignatureAlgorithmName );
+        ok( !strcmp(key.sSignatureAlgorithmName, "RSADSI RC4-CRC32") ||
+                !strcmp(key.sSignatureAlgorithmName, "HMAC-MD5"), "got '%s'\n", key.sSignatureAlgorithmName );
         ok( !strcmp(key.sEncryptAlgorithmName, "RSADSI RC4"), "got '%s'\n", key.sEncryptAlgorithmName );
-        ok( key.SignatureAlgorithm == 0xffffff7c, "got %#lx\n", key.SignatureAlgorithm );
+        ok( key.SignatureAlgorithm == 0xffffff7c || key.SignatureAlgorithm == 0xffffff76,
+                "got %#lx\n", key.SignatureAlgorithm );
     }
     else
     {
