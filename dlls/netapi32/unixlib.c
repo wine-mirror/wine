@@ -1212,6 +1212,37 @@ static NTSTATUS wow64_share_del( void *args )
     return share_del( &params );
 }
 
+struct wksta_info_100_32
+{
+    unsigned int wki100_platform_id;
+    PTR32        wki100_computername;
+    PTR32        wki100_langroup;
+    unsigned int wki100_ver_major;
+    unsigned int wki100_ver_minor;
+};
+
+static NTSTATUS create_wksta_info32( DWORD level, void *buffer )
+{
+    switch (level)
+    {
+    case 100:
+    {
+        struct wksta_info_100_32 *wi32 = buffer;
+        struct wksta_info_100 *wi = buffer;
+
+        wi32->wki100_platform_id = wi->wki100_platform_id;
+        wi32->wki100_computername = PtrToUlong( wi->wki100_computername );
+        wi32->wki100_langroup = PtrToUlong( wi->wki100_langroup );
+        wi32->wki100_ver_major = wi->wki100_ver_major;
+        wi32->wki100_ver_minor = wi->wki100_ver_minor;
+        return ERROR_SUCCESS;
+    }
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
 static NTSTATUS wow64_wksta_getinfo( void *args )
 {
     struct
@@ -1229,8 +1260,11 @@ static NTSTATUS wow64_wksta_getinfo( void *args )
         ULongToPtr(params32->buffer),
         ULongToPtr(params32->size)
     };
+    NTSTATUS status;
 
-    return wksta_getinfo( &params );
+    status = wksta_getinfo( &params );
+    if (!status) status = create_wksta_info32( params.level, params.buffer );
+    return status;
 }
 
 static NTSTATUS wow64_change_password( void *args )
