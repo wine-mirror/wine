@@ -180,6 +180,7 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
 
     TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
 
+    if (!bufptr) return ERROR_INVALID_PARAMETER;
     if (!local)
     {
         if (samba_init())
@@ -199,7 +200,6 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
         FIXME( "remote computers not supported\n" );
         return ERROR_INVALID_LEVEL;
     }
-    if (!bufptr) return ERROR_INVALID_PARAMETER;
 
     switch (level)
     {
@@ -914,6 +914,7 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
 
     TRACE("%s %ld %p\n", debugstr_w( servername ), level, bufptr );
 
+    if (!bufptr) return ERROR_INVALID_PARAMETER;
     if (!local)
     {
         if (samba_init())
@@ -933,7 +934,6 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
         FIXME( "remote computers not supported\n" );
         return ERROR_INVALID_LEVEL;
     }
-    if (!bufptr) return ERROR_INVALID_PARAMETER;
 
     switch (level)
     {
