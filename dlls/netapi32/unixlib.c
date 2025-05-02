@@ -991,6 +991,39 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 typedef ULONG PTR32;
 
+struct server_info_101_32
+{
+    unsigned int sv101_platform_id;
+    PTR32        sv101_name;
+    unsigned int sv101_version_major;
+    unsigned int sv101_version_minor;
+    unsigned int sv101_type;
+    PTR32        sv101_comment;
+};
+
+static NTSTATUS create_server_info32( unsigned int level, void *buffer )
+{
+    switch (level)
+    {
+    case 101:
+    {
+        struct server_info_101_32 *si32 = (struct server_info_101_32 *)buffer;
+        struct server_info_101 *si = (struct server_info_101 *)buffer;
+
+        si32->sv101_platform_id = si->sv101_platform_id;
+        si32->sv101_name = PtrToUlong( si->sv101_name );
+        si32->sv101_version_major = si->sv101_version_major;
+        si32->sv101_version_minor = si->sv101_version_minor;
+        si32->sv101_type = si->sv101_type;
+        si32->sv101_comment = PtrToUlong( si->sv101_comment );
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
 static NTSTATUS wow64_server_getinfo( void *args )
 {
     struct
@@ -1008,8 +1041,11 @@ static NTSTATUS wow64_server_getinfo( void *args )
         ULongToPtr(params32->buffer),
         ULongToPtr(params32->size)
     };
+    NTSTATUS status;
 
-    return server_getinfo( &params );
+    status = server_getinfo( &params );
+    if (!status) status = create_server_info32( params.level, params.buffer );
+    return status;
 }
 
 static NTSTATUS wow64_share_add( void *args )
