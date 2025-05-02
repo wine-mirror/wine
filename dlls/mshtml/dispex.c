@@ -55,7 +55,7 @@ typedef struct {
     tid_t tid;
     BSTR name;
     dispex_hook_invoke_t hook;
-    BOOLEAN on_prototype;
+    object_id_t prototype_id;
     SHORT call_vtbl_off;
     SHORT put_vtbl_off;
     SHORT get_vtbl_off;
@@ -517,31 +517,32 @@ static int __cdecl func_name_cmp(const void *p1, const void *p2)
     return wcsicmp((*(func_info_t* const*)p1)->name, (*(func_info_t* const*)p2)->name);
 }
 
-static BOOL find_prototype_member(const dispex_data_t *info, DISPID id)
+static object_id_t find_prototype_member(const dispex_data_t *info, DISPID id)
 {
     compat_mode_t compat_mode = info->compat_mode;
+    object_id_t ret = OBJID_NONE;
 
     if(compat_mode < COMPAT_MODE_IE9)
-        return FALSE;
+        return ret;
 
     if(!info->is_prototype) {
         if(!info->desc->id)
-            return FALSE;
+            return ret;
         info = info->desc->prototype_info[compat_mode - COMPAT_MODE_IE9];
     }else {
         if(!info->desc->prototype_id)
-            return FALSE;
+            return ret;
         info = object_descriptors[info->desc->prototype_id]->prototype_info[compat_mode - COMPAT_MODE_IE9];
     }
 
     for(;;) {
         if(bsearch(&id, info->funcs, info->func_cnt, sizeof(info->funcs[0]), dispid_cmp))
-            return TRUE;
+            ret = info->desc->id;
         if(!info->desc->prototype_id)
             break;
         info = object_descriptors[info->desc->prototype_id]->prototype_info[compat_mode - COMPAT_MODE_IE9];
     }
-    return FALSE;
+    return ret;
 }
 
 static const char *object_names[] = {
@@ -616,11 +617,11 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
 
     data->name_table = malloc(data->func_cnt * sizeof(func_info_t*));
     for(i=0; i < data->func_cnt; i++) {
+        data->funcs[i].prototype_id = find_prototype_member(data, data->funcs[i].id);
+
         /* Don't expose properties that are exposed by object's prototype */
-        if(find_prototype_member(data, data->funcs[i].id)) {
-            data->funcs[i].on_prototype = TRUE;
+        if(data->funcs[i].prototype_id != OBJID_NONE)
             continue;
-        }
         data->name_table[data->name_cnt++] = data->funcs+i;
     }
     qsort(data->name_table, data->name_cnt, sizeof(func_info_t*), func_name_cmp);
@@ -2531,7 +2532,7 @@ HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, D
         }
 
         while(func < dispex->info->funcs + dispex->info->func_cnt) {
-            if(enum_all_own_props ? (!func->on_prototype) : (func->func_disp_idx == -1)) {
+            if(enum_all_own_props ? (func->prototype_id == OBJID_NONE) : (func->func_disp_idx == -1)) {
                 *ret = func->id;
                 return S_OK;
             }
