@@ -67,6 +67,8 @@ __ASM_GLOBAL_IMPORT(powf)
 #if _MSVCR_VER < 120
 double exp2(double x) { return pow(2.0, x); }
 float exp2f(float x) { return powf(2.0f, x); }
+float truncf(float x) { return x > 0.0 ? floor(x) : ceil(x); }
 __ASM_GLOBAL_IMPORT(exp2)
 __ASM_GLOBAL_IMPORT(exp2f)
+__ASM_GLOBAL_IMPORT(truncf)
 #endif
