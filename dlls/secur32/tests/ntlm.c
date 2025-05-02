@@ -113,49 +113,25 @@ struct ntlm_server_challenge
     unsigned int target_info_off;
 };
 
-struct network_challenge
+struct server_challenge
 {
     struct ntlm_server_challenge challenge;
     WCHAR name[8];
     WCHAR info[42];
 
-} network_challenge =
+} server_challenge =
 {
     {
         "NTLMSSP", 2,
-        sizeof(network_challenge.name), sizeof(network_challenge.name),
-        offsetof(struct network_challenge, name),
-        NTLMSSP_NEGOTIATE_UNICODE | NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_NTLM |
-            NTLMSSP_NEGOTIATE_ALWAYS_SIGN | NTLMSSP_TARGET_TYPE_SERVER |
-            NTLMSSP_NEGOTIATE_TARGET_INFO | NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_56,
-        { 0xe9, 0x58, 0x7f, 0x14, 0xa2, 0x86, 0x3b, 0x63 },
-        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-        sizeof(network_challenge.info), sizeof(network_challenge.info),
-        offsetof(struct network_challenge, info)
-    },
-    L"CASINO01",
-    L"\002\020CASINO01\001\020CASINO01\004\020casino01\003\020casino01\0"
-};
-
-struct native_challenge
-{
-    struct ntlm_server_challenge challenge;
-    WCHAR name[8];
-    WCHAR info[42];
-
-} native_challenge =
-{
-    {
-        "NTLMSSP", 2,
-        sizeof(native_challenge.name), sizeof(native_challenge.name),
-        offsetof(struct native_challenge, name),
+        sizeof(server_challenge.name), sizeof(server_challenge.name),
+        offsetof(struct server_challenge, name),
         NTLMSSP_NEGOTIATE_UNICODE | NTLMSSP_REQUEST_TARGET | NTLMSSP_NEGOTIATE_NTLM |
             NTLMSSP_NEGOTIATE_ALWAYS_SIGN | NTLMSSP_TARGET_TYPE_SERVER |
             NTLMSSP_NEGOTIATE_TARGET_INFO | NTLMSSP_NEGOTIATE_128 | NTLMSSP_NEGOTIATE_56,
         { 0xb5, 0x60, 0x8e, 0x95, 0xb5, 0x3c, 0xee, 0x03 },
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-        sizeof(native_challenge.info), sizeof(native_challenge.info),
-        offsetof(struct native_challenge, info)
+        sizeof(server_challenge.info), sizeof(server_challenge.info),
+        offsetof(struct server_challenge, info)
     },
     L"CASINO01",
     L"\002\020CASINO01\001\020CASINO01\004\020casino01\003\020casino01\0"
@@ -522,19 +498,9 @@ static SECURITY_STATUS runFakeServer(SspiData *sspi_data, BOOL first, ULONG data
         return SEC_E_OK;
     }
     
-    if(data_rep == SECURITY_NATIVE_DREP)
-    {
-        sspi_data->out_buf->pBuffers[0].cbBuffer = sizeof(native_challenge);
-        memcpy(sspi_data->out_buf->pBuffers[0].pvBuffer, &native_challenge,
-                sspi_data->out_buf->pBuffers[0].cbBuffer);
-    }
-    else
-    {
-        sspi_data->out_buf->pBuffers[0].cbBuffer = sizeof(network_challenge);
-        memcpy(sspi_data->out_buf->pBuffers[0].pvBuffer, &network_challenge,
-                sspi_data->out_buf->pBuffers[0].cbBuffer);
-    }
-
+    sspi_data->out_buf->pBuffers[0].cbBuffer = sizeof(server_challenge);
+    memcpy(sspi_data->out_buf->pBuffers[0].pvBuffer, &server_challenge,
+            sspi_data->out_buf->pBuffers[0].cbBuffer);
     return SEC_I_CONTINUE_NEEDED;
 }
 
