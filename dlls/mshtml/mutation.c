@@ -1243,10 +1243,6 @@ static HRESULT create_mutation_observer(DispatchEx *owner, IDispatch *callback,
     return S_OK;
 }
 
-struct mutation_observer_ctor {
-    DispatchEx dispex;
-};
-
 static HRESULT mutation_observer_ctor_value(DispatchEx *dispex, LCID lcid,
         WORD flags, DISPPARAMS *params, VARIANT *res, EXCEPINFO *ei,
         IServiceProvider *caller)
