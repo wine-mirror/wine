@@ -36,6 +36,7 @@
 #include <winioctl.h>
 #include <bthioctl.h>
 #include <ddk/wdm.h>
+#include <ddk/bthguid.h>
 
 #include <wine/winebth.h>
 #include <wine/debug.h>
@@ -90,10 +91,28 @@ struct bluetooth_remote_device
 {
     struct list entry;
 
+    DEVICE_OBJECT *device_obj;
+    struct bluetooth_radio *radio; /* The radio associated with this remote device. */
     winebluetooth_device_t device;
     CRITICAL_SECTION props_cs;
     winebluetooth_device_props_mask_t props_mask; /* Guarded by props_cs */
     struct winebluetooth_device_properties props; /* Guarded by props_cs */
+    BOOL removed;
+};
+
+enum bluetooth_pdo_ext_type
+{
+    BLUETOOTH_PDO_EXT_RADIO,
+    BLUETOOTH_PDO_EXT_REMOTE_DEVICE,
+};
+
+struct bluetooth_pdo_ext
+{
+    enum bluetooth_pdo_ext_type type;
+    union {
+        struct bluetooth_radio radio;
+        struct bluetooth_remote_device remote_device;
+    };
 };
 
 static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
@@ -118,19 +137,26 @@ static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
-static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
+static NTSTATUS bluetooth_remote_device_dispatch( DEVICE_OBJECT *device, struct bluetooth_remote_device *ext, IRP *irp )
 {
-    struct bluetooth_radio *ext = (struct bluetooth_radio *)device->DeviceExtension;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
+    NTSTATUS status = irp->IoStatus.Status;
+
+    FIXME( "device=%p, ext=%p, irp=%p, code=%#lx: stub!\n", device, ext, irp, code );
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return status;
+}
+
+static NTSTATUS bluetooth_radio_dispatch( DEVICE_OBJECT *device, struct bluetooth_radio *ext, IRP *irp )
+{
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     ULONG insize = stack->Parameters.DeviceIoControl.InputBufferLength;
     ULONG outsize = stack->Parameters.DeviceIoControl.OutputBufferLength;
     NTSTATUS status = irp->IoStatus.Status;
 
-    TRACE( "device %p irp %p code %#lx\n", device, irp, code );
-
-    if (device == device_auth)
-        return dispatch_auth( device, irp );
+    TRACE( "device=%p, ext=%p, irp=%p code=%#lx\n", device, ext, irp, code );
 
     switch (code)
     {
@@ -421,6 +447,24 @@ static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
+static NTSTATUS WINAPI dispatch_bluetooth( DEVICE_OBJECT *device, IRP *irp )
+{
+    struct bluetooth_pdo_ext *ext = device->DeviceExtension;
+    TRACE( "(%p, %p)\n", device, irp );
+
+    if (device == device_auth)
+        return dispatch_auth( device, irp );
+
+    switch (ext->type)
+    {
+    case BLUETOOTH_PDO_EXT_RADIO:
+        return bluetooth_radio_dispatch( device, &ext->radio, irp );
+    case BLUETOOTH_PDO_EXT_REMOTE_DEVICE:
+        return bluetooth_remote_device_dispatch( device, &ext->remote_device, irp );
+    DEFAULT_UNREACHABLE;
+    }
+}
+
 void WINAPIV append_id( struct string_buffer *buffer, const WCHAR *format, ... )
 {
     va_list args;
@@ -492,7 +536,7 @@ static NTSTATUS radio_get_hw_name_w( winebluetooth_radio_t radio, WCHAR **name )
 }
 static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added event )
 {
-    struct bluetooth_radio *device;
+    struct bluetooth_pdo_ext *ext;
     DEVICE_OBJECT *device_obj;
     UNICODE_STRING string;
     NTSTATUS status;
@@ -511,7 +555,7 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
     }
 
     RtlInitUnicodeString( &string, name );
-    status = IoCreateDevice( driver_obj, sizeof( *device ), &string, FILE_DEVICE_BLUETOOTH, 0,
+    status = IoCreateDevice( driver_obj, sizeof( *ext ), &string, FILE_DEVICE_BLUETOOTH, 0,
                              FALSE, &device_obj );
     if (status)
     {
@@ -519,21 +563,22 @@ static void add_bluetooth_radio( struct winebluetooth_watcher_event_radio_added 
         return;
     }
 
-    device = device_obj->DeviceExtension;
-    device->device_obj = device_obj;
-    device->radio = event.radio;
-    device->removed = FALSE;
-    device->hw_name = hw_name;
-    device->props = event.props;
-    device->props_mask = event.props_mask;
-    list_init( &device->remote_devices );
+    ext = device_obj->DeviceExtension;
+    ext->type = BLUETOOTH_PDO_EXT_RADIO;
+    ext->radio.device_obj = device_obj;
+    ext->radio.radio = event.radio;
+    ext->radio.removed = FALSE;
+    ext->radio.hw_name = hw_name;
+    ext->radio.props = event.props;
+    ext->radio.props_mask = event.props_mask;
+    list_init( &ext->radio.remote_devices );
 
-    InitializeCriticalSection( &device->props_cs );
-    InitializeCriticalSection( &device->remote_devices_cs );
-    InitializeListHead( &device->irp_list );
+    InitializeCriticalSection( &ext->radio.props_cs );
+    InitializeCriticalSection( &ext->radio.remote_devices_cs );
+    InitializeListHead( &ext->radio.irp_list );
 
     EnterCriticalSection( &device_list_cs );
-    list_add_tail( &device_list, &device->entry );
+    list_add_tail( &device_list, &ext->radio.entry );
     LeaveCriticalSection( &device_list_cs );
 
     IoInvalidateDeviceRelations( bus_pdo, BusRelations );
@@ -645,34 +690,47 @@ static void bluetooth_radio_add_remote_device( struct winebluetooth_watcher_even
     {
         if (winebluetooth_radio_equal( event.radio, radio->radio ))
         {
-            struct bluetooth_remote_device *remote_device;
+            struct bluetooth_pdo_ext *ext;
+            DEVICE_OBJECT *device_obj;
+            NTSTATUS status;
 
-            remote_device = calloc( 1, sizeof( *remote_device ) );
-            if (!remote_device)
+            status = IoCreateDevice( driver_obj, sizeof( *ext ), NULL, FILE_DEVICE_BLUETOOTH,
+                                     FILE_AUTOGENERATED_DEVICE_NAME, FALSE, &device_obj );
+            if (status)
             {
+                ERR( "Failed to create remote device, status %#lx\n", status );
                 winebluetooth_device_free( event.device );
                 break;
             }
 
-            InitializeCriticalSection( &remote_device->props_cs );
-            remote_device->device = event.device;
-            remote_device->props_mask = event.known_props_mask;
-            remote_device->props = event.props;
+            ext = device_obj->DeviceExtension;
+            ext->type = BLUETOOTH_PDO_EXT_REMOTE_DEVICE;
+            ext->remote_device.radio = radio;
+
+            ext->remote_device.device_obj = device_obj;
+            InitializeCriticalSection( &ext->remote_device.props_cs );
+            ext->remote_device.device = event.device;
+            ext->remote_device.props_mask = event.known_props_mask;
+            ext->remote_device.props = event.props;
+            ext->remote_device.removed = FALSE;
+
 
             if (!event.init_entry)
             {
                 BTH_DEVICE_INFO device_info = {0};
-                winebluetooth_device_properties_to_info( remote_device->props_mask, &remote_device->props, &device_info );
+                winebluetooth_device_properties_to_info( ext->remote_device.props_mask, &ext->remote_device.props, &device_info );
                 bluetooth_radio_report_radio_in_range_event( radio->device_obj, 0, &device_info );
             }
 
             EnterCriticalSection( &radio->remote_devices_cs );
-            list_add_tail( &radio->remote_devices, &remote_device->entry );
+            list_add_tail( &radio->remote_devices, &ext->remote_device.entry );
             LeaveCriticalSection( &radio->remote_devices_cs );
+            IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
             break;
         }
     }
     LeaveCriticalSection( &device_list_cs );
+
     winebluetooth_radio_free( event.radio );
 }
 
@@ -690,8 +748,18 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
         {
             if (winebluetooth_device_equal( event.device, device->device ))
             {
+                BOOL has_addr;
+
+                TRACE( "Removing bluetooth remote device %p\n", (void *)device->device.handle );
+
+                device->removed = TRUE;
                 list_remove( &device->entry );
-                if (device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS)
+
+                EnterCriticalSection( &device->props_cs );
+                has_addr = device->props_mask & WINEBLUETOOTH_DEVICE_PROPERTY_ADDRESS;
+                LeaveCriticalSection( &device->props_cs );
+
+                if (has_addr)
                 {
                     TARGET_DEVICE_CUSTOM_NOTIFICATION *notification;
                     BLUETOOTH_ADDRESS *addr;
@@ -715,12 +783,9 @@ static void bluetooth_radio_remove_remote_device( struct winebluetooth_watcher_e
                         ExFreePool( notification );
                     }
                 }
-                winebluetooth_device_free( device->device );
-                DeleteCriticalSection( &device->props_cs );
-                free( device );
-
                 LeaveCriticalSection( &radio->remote_devices_cs );
                 LeaveCriticalSection( &device_list_cs );
+                IoInvalidateDeviceRelations( radio->device_obj, BusRelations );
                 winebluetooth_device_free( event.device );
                 return;
             }
@@ -998,7 +1063,44 @@ static NTSTATUS WINAPI fdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
     return IoCallDriver( bus_pdo, irp );
 }
 
-static NTSTATUS query_id(const struct bluetooth_radio *ext, IRP *irp, BUS_QUERY_ID_TYPE type )
+static NTSTATUS remote_device_query_id( struct bluetooth_remote_device *ext, IRP *irp, BUS_QUERY_ID_TYPE type )
+{
+    struct string_buffer buf = {0};
+
+    TRACE( "(%p, %p, %s)\n", ext, irp, debugstr_BUS_QUERY_ID_TYPE( type ) );
+    switch (type)
+    {
+    case BusQueryDeviceID:
+        append_id( &buf, L"WINEBTH\\DEVICE" );
+        break;
+    case BusQueryInstanceID:
+    {
+        BLUETOOTH_ADDRESS addr;
+
+        EnterCriticalSection( &ext->props_cs );
+        addr = ext->props.address;
+        LeaveCriticalSection( &ext->props_cs );
+
+        append_id( &buf, L"%s&%02X%02X%02X%02X%02X%02X", ext->radio->hw_name, addr.rgBytes[0], addr.rgBytes[1],
+                   addr.rgBytes[2], addr.rgBytes[3], addr.rgBytes[4], addr.rgBytes[5] );
+        break;
+    }
+    case BusQueryHardwareIDs:
+    case BusQueryCompatibleIDs:
+        append_id( &buf, L"" );
+        break;
+    default:
+        return irp->IoStatus.Status;
+    }
+
+    if (!buf.string)
+        return STATUS_NO_MEMORY;
+
+    irp->IoStatus.Information = (ULONG_PTR)buf.string;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS radio_query_id( const struct bluetooth_radio *ext, IRP *irp, BUS_QUERY_ID_TYPE type )
 {
     struct string_buffer buf = {0};
 
@@ -1071,17 +1173,117 @@ static void remove_pending_irps( struct bluetooth_radio *radio )
     }
 }
 
-static NTSTATUS WINAPI pdo_pnp( DEVICE_OBJECT *device_obj, IRP *irp )
+static NTSTATUS WINAPI remote_device_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetooth_remote_device *ext, IRP *irp )
 {
-    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
-    struct bluetooth_radio *device = device_obj->DeviceExtension;
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     NTSTATUS ret = irp->IoStatus.Status;
 
-    TRACE( "device_obj %p, irp %p, minor function %s\n", device_obj, irp, debugstr_minor_function_code( stack->MinorFunction ) );
+    TRACE( "device_obj=%p, ext=%p, irp=%p, minor function=%s\n", device_obj, ext, irp,
+           debugstr_minor_function_code( stack->MinorFunction ) );
+
     switch (stack->MinorFunction)
     {
+    case IRP_MN_QUERY_ID:
+        ret = remote_device_query_id( ext, irp, stack->Parameters.QueryId.IdType );
+        break;
+    case IRP_MN_QUERY_CAPABILITIES:
+    {
+        DEVICE_CAPABILITIES *caps = stack->Parameters.DeviceCapabilities.Capabilities;
+        caps->Removable = TRUE;
+        caps->SurpriseRemovalOK = TRUE;
+        caps->RawDeviceOK = TRUE;
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    case IRP_MN_START_DEVICE:
+    {
+        WCHAR addr_str[13];
+        BLUETOOTH_ADDRESS addr;
+
+        EnterCriticalSection( &ext->props_cs );
+        addr = ext->props.address;
+        LeaveCriticalSection( &ext->props_cs );
+        swprintf( addr_str, ARRAY_SIZE( addr_str ), L"%02x%02x%02x%02x%02x%02x", addr.rgBytes[0], addr.rgBytes[1],
+                  addr.rgBytes[2], addr.rgBytes[3], addr.rgBytes[4], addr.rgBytes[5] );
+        IoSetDevicePropertyData( device_obj, &DEVPKEY_Bluetooth_DeviceAddress, LOCALE_NEUTRAL, 0, DEVPROP_TYPE_STRING,
+                                 sizeof( addr_str ), addr_str );
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    case IRP_MN_REMOVE_DEVICE:
+    {
+        assert( ext->removed );
+        DeleteCriticalSection( &ext->props_cs );
+        winebluetooth_device_free( ext->device );
+        IoDeleteDevice( ext->device_obj );
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    case IRP_MN_SURPRISE_REMOVAL:
+    {
+        EnterCriticalSection( &ext->radio->remote_devices_cs );
+        if (!ext->removed)
+        {
+            ext->removed = TRUE;
+            list_remove( &ext->entry );
+        }
+        LeaveCriticalSection( &ext->radio->remote_devices_cs );
+        ret = STATUS_SUCCESS;
+        break;
+    }
+    default:
+        FIXME( "Unhandled minor function %#x.\n", stack->MinorFunction );
+    }
+
+    irp->IoStatus.Status = ret;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return ret;
+}
+
+static NTSTATUS WINAPI radio_pdo_pnp( DEVICE_OBJECT *device_obj, struct bluetooth_radio *device, IRP *irp )
+{
+    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
+    NTSTATUS ret = irp->IoStatus.Status;
+
+    TRACE( "device_obj %p, device %p, irp %p, minor function %s\n", device_obj, device, irp,
+           debugstr_minor_function_code( stack->MinorFunction ) );
+    switch (stack->MinorFunction)
+    {
+        case IRP_MN_QUERY_DEVICE_RELATIONS:
+        {
+            struct bluetooth_remote_device *remote_device;
+            DEVICE_RELATIONS *devices;
+            SIZE_T i = 0;
+
+            if (stack->Parameters.QueryDeviceRelations.Type != BusRelations)
+            {
+                FIXME( "Unhandled Device Relation %x\n", stack->Parameters.QueryDeviceRelations.Type );
+                break;
+            }
+
+            EnterCriticalSection( &device->remote_devices_cs );
+            devices = ExAllocatePool( PagedPool,
+                                      offsetof( DEVICE_RELATIONS, Objects[list_count( &device->remote_devices )] ) );
+            if (!devices)
+            {
+                LeaveCriticalSection( &device->remote_devices_cs );
+                irp->IoStatus.Status = STATUS_NO_MEMORY;
+                break;
+            }
+            LIST_FOR_EACH_ENTRY( remote_device, &device->remote_devices, struct bluetooth_remote_device, entry )
+            {
+                devices->Objects[i++] = remote_device->device_obj;
+                call_fastcall_func1( ObfReferenceObject, remote_device->device_obj );
+            }
+            LeaveCriticalSection( &device->remote_devices_cs );
+
+            devices->Count = i;
+            irp->IoStatus.Information = (ULONG_PTR)devices;
+            ret = STATUS_SUCCESS;
+            break;
+        }
         case IRP_MN_QUERY_ID:
-            ret = query_id( device, irp, stack->Parameters.QueryId.IdType );
+            ret = radio_query_id( device, irp, stack->Parameters.QueryId.IdType );
             break;
         case IRP_MN_QUERY_CAPABILITIES:
         {
@@ -1178,11 +1380,22 @@ static NTSTATUS auth_pnp( DEVICE_OBJECT *device, IRP *irp )
 
 static NTSTATUS WINAPI bluetooth_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
+    struct bluetooth_pdo_ext *ext;
+
     if (device == bus_fdo)
         return fdo_pnp( device, irp );
     else if (device == device_auth)
         return auth_pnp( device, irp );
-    return pdo_pnp( device, irp );
+
+    ext = device->DeviceExtension;
+    switch (ext->type)
+    {
+    case BLUETOOTH_PDO_EXT_RADIO:
+        return radio_pdo_pnp( device, &ext->radio, irp );
+    case BLUETOOTH_PDO_EXT_REMOTE_DEVICE:
+        return remote_device_pdo_pnp( device, &ext->remote_device, irp );
+    DEFAULT_UNREACHABLE;
+    }
 }
 
 static NTSTATUS WINAPI driver_add_device( DRIVER_OBJECT *driver, DEVICE_OBJECT *pdo )
