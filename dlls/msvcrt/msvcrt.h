@@ -79,8 +79,6 @@ void __cdecl terminate(void);
 
 typedef void (__cdecl *MSVCRT_security_error_handler)(int, void *);
 
-typedef struct {ULONG x80[3];} MSVCRT__LDOUBLE; /* Intel 80 bit FP format has sizeof() 12 */
-
 typedef struct __lc_time_data {
     union {
         const char *str[43];
