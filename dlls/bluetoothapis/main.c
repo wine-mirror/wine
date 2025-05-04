@@ -35,6 +35,7 @@
 
 #include "initguid.h"
 #include "bluetoothapis.h"
+#include "bthledef.h"
 #include "bthdef.h"
 #include "bthioctl.h"
 #include "wine/winebth.h"

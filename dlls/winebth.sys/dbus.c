@@ -45,6 +45,7 @@
 #include <winbase.h>
 #include <bthsdpdef.h>
 #include <bluetoothapis.h>
+#include <bthledef.h>
 #include <bthdef.h>
 #include <wine/winebth.h>
 

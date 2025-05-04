@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <assert.h>
 
 #include <ntstatus.h>
@@ -153,13 +154,79 @@ static NTSTATUS WINAPI dispatch_auth( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
+static void uuid_to_le( const GUID *uuid, BTH_LE_UUID *le_uuid )
+{
+    if (uuid->Data1 <= UINT16_MAX && uuid->Data2 == BTH_LE_ATT_BLUETOOTH_BASE_GUID.Data2
+        && uuid->Data3 == BTH_LE_ATT_BLUETOOTH_BASE_GUID.Data3
+        && !memcmp( uuid->Data4, BTH_LE_ATT_BLUETOOTH_BASE_GUID.Data4, sizeof( uuid->Data4 ) ))
+    {
+        le_uuid->IsShortUuid = TRUE;
+        le_uuid->Value.ShortUuid = uuid->Data1;
+    }
+    else
+    {
+        le_uuid->IsShortUuid = FALSE;
+        le_uuid->Value.LongUuid = *uuid;
+    }
+}
+
 static NTSTATUS bluetooth_remote_device_dispatch( DEVICE_OBJECT *device, struct bluetooth_remote_device *ext, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
+    ULONG outsize = stack->Parameters.DeviceIoControl.OutputBufferLength;
     ULONG code = stack->Parameters.DeviceIoControl.IoControlCode;
     NTSTATUS status = irp->IoStatus.Status;
 
-    FIXME( "device=%p, ext=%p, irp=%p, code=%#lx: stub!\n", device, ext, irp, code );
+    TRACE( "device=%p, ext=%p, irp=%p, code=%#lx\n", device, ext, irp, code );
+
+    switch (code)
+    {
+    case IOCTL_WINEBTH_LE_DEVICE_GET_GATT_SERVICES:
+    {
+        const SIZE_T min_size = offsetof( struct winebth_le_device_get_gatt_services_params, services[0] );
+        struct winebth_le_device_get_gatt_services_params *services = irp->AssociatedIrp.SystemBuffer;
+        struct bluetooth_gatt_service *svc;
+        SIZE_T rem;
+
+        if (!services || outsize < min_size)
+        {
+            status = STATUS_INVALID_USER_BUFFER;
+            break;
+        }
+
+        rem = (outsize - min_size)/sizeof( *services->services );
+        status = STATUS_SUCCESS;
+        services->count = 0;
+
+        EnterCriticalSection( &ext->props_cs );
+        LIST_FOR_EACH_ENTRY( svc, &ext->gatt_services, struct bluetooth_gatt_service, entry )
+        {
+            if (!svc->primary)
+                continue;
+            services->count++;
+            if (rem)
+            {
+                BTH_LE_GATT_SERVICE *info;
+
+                info = &services->services[services->count - 1];
+                memset( info, 0, sizeof( *info ) );
+                uuid_to_le( &svc->uuid, &info->ServiceUuid );
+                info->AttributeHandle = svc->handle;
+                rem--;
+            }
+        }
+        LeaveCriticalSection( &ext->props_cs );
+
+        irp->IoStatus.Information = offsetof( struct winebth_le_device_get_gatt_services_params, services[services->count] );
+        if (services->count > rem)
+            status = STATUS_MORE_ENTRIES;
+        break;
+    }
+    default:
+        FIXME( "Unimplemented IOCTL code: %#lx\n", code );
+    }
+
+    irp->IoStatus.Status = status;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return status;
 }

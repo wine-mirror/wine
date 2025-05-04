@@ -36,6 +36,9 @@
 #define IOCTL_WINEBTH_RADIO_START_AUTH         CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xaa, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_WINEBTH_RADIO_REMOVE_DEVICE      CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xab, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
+/* Get all primary GATT services for the LE device. */
+#define IOCTL_WINEBTH_LE_DEVICE_GET_GATT_SERVICES CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xc0, METHOD_BUFFERED, FILE_ANY_ACCESS)
+
 DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,
              0xd5, 0x5e, 0xa1, 0x26, 0xe8 );
 
@@ -73,6 +76,12 @@ struct winebth_radio_send_auth_response_params
 struct winebth_radio_start_auth_params
 {
     BTH_ADDR address;
+};
+
+struct winebth_le_device_get_gatt_services_params
+{
+    ULONG count;
+    BTH_LE_GATT_SERVICE services[0];
 };
 
 #pragma pack(pop)

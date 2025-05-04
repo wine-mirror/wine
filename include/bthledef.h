@@ -17,5 +17,23 @@
  */
 #ifndef __BTHLEDEFS_H
 #define __BTHLEDEFS_H
+
+typedef struct _BTH_LE_UUID
+{
+    BOOLEAN IsShortUuid;
+    union
+    {
+        USHORT ShortUuid;
+        GUID LongUuid;
+    } Value;
+} BTH_LE_UUID, *PBTH_LE_UUID;
+
+typedef struct _BTH_LE_GATT_SERVICE
+{
+    BTH_LE_UUID ServiceUuid;
+    USHORT AttributeHandle;
+} BTH_LE_GATT_SERVICE, *PBTH_LE_GATT_SERVICE;
+
 DEFINE_GUID( GUID_BLUETOOTHLE_DEVICE_INTERFACE, 0x781aee18, 0x7733, 0x4ce4, 0xad, 0xd0, 0x91, 0xf4, 0x1c, 0x67, 0xb5, 0x92 );
+DEFINE_GUID( BTH_LE_ATT_BLUETOOTH_BASE_GUID, 0, 0, 0x1000, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb );
 #endif
