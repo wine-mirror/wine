@@ -248,6 +248,13 @@ static NTSTATUS bluetooth_device_start_pairing( void *args )
     return bluez_device_start_pairing( dbus_connection, bluetooth_watcher, params->device, params->irp );
 }
 
+static NTSTATUS bluetooth_gatt_service_free( void *args )
+{
+    struct bluetooth_gatt_service_free_params *params = args;
+    unix_name_free( params->service );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS bluetooth_get_event( void *args )
 {
     struct bluetooth_get_event_params *params = args;
@@ -274,6 +281,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
 
     bluetooth_auth_agent_enable_incoming,
     bluetooth_auth_send_response,
+
+    bluetooth_gatt_service_free,
 
     bluetooth_get_event,
 };

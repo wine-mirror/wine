@@ -187,6 +187,11 @@ struct winebluetooth_device_properties
     UINT32 class;
 };
 
+typedef struct
+{
+    UINT_PTR handle;
+} winebluetooth_gatt_service_t;
+
 NTSTATUS winebluetooth_radio_get_unique_name( winebluetooth_radio_t radio, char *name,
                                               SIZE_T *size );
 void winebluetooth_radio_free( winebluetooth_radio_t radio );
@@ -215,6 +220,9 @@ NTSTATUS winebluetooth_device_disconnect( winebluetooth_device_t device );
 NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETOOTH_AUTHENTICATION_METHOD method,
                                            UINT32 numeric_or_passkey, BOOL negative, BOOL *authenticated );
 NTSTATUS winebluetooth_device_start_pairing( winebluetooth_device_t device, IRP *irp );
+
+void winebluetooth_gatt_service_free( winebluetooth_gatt_service_t service );
+
 enum winebluetooth_watcher_event_type
 {
     BLUETOOTH_WATCHER_EVENT_TYPE_RADIO_ADDED,
@@ -224,6 +232,7 @@ enum winebluetooth_watcher_event_type
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_REMOVED,
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_PROPERTIES_CHANGED,
     BLUETOOTH_WATCHER_EVENT_TYPE_PAIRING_FINISHED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_ADDED,
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -271,6 +280,16 @@ struct winebluetooth_watcher_event_pairing_finished
     NTSTATUS result;
 };
 
+struct winebluetooth_watcher_event_gatt_service_added
+{
+    winebluetooth_device_t device;
+    winebluetooth_gatt_service_t service;
+
+    UINT16 attr_handle;
+    BOOL is_primary;
+    GUID uuid;
+};
+
 union winebluetooth_watcher_event_data
 {
     struct winebluetooth_watcher_event_radio_added radio_added;
@@ -280,6 +299,7 @@ union winebluetooth_watcher_event_data
     struct winebluetooth_watcher_event_device_removed device_removed;
     struct winebluetooth_watcher_event_device_props_changed device_props_changed;
     struct winebluetooth_watcher_event_pairing_finished pairing_finished;
+    struct winebluetooth_watcher_event_gatt_service_added gatt_service_added;
 };
 
 struct winebluetooth_watcher_event
