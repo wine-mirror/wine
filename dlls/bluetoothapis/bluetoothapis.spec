@@ -39,7 +39,7 @@
 @ stub BluetoothGATTGetDescriptorValue
 @ stub BluetoothGATTGetDescriptors
 @ stub BluetoothGATTGetIncludedServices
-@ stub BluetoothGATTGetServices
+@ stdcall BluetoothGATTGetServices(ptr long ptr ptr long)
 @ stub BluetoothGATTRegisterEvent
 @ stub BluetoothGATTSetCharacteristicValue
 @ stub BluetoothGATTSetDescriptorValue

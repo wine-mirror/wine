@@ -6,5 +6,6 @@ EXTRADLLFLAGS = -Wb,--prefer-native
 
 SOURCES = \
 	bluetoothapis.rc \
+	gatt.c \
 	main.c \
 	sdp.c
