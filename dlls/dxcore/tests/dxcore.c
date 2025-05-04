@@ -49,20 +49,16 @@ static void test_DXCoreCreateAdapterFactory(void)
 
     if (0) /* Crashes on w1064v1909 */
     {
-        todo_wine
         hr = pDXCoreCreateAdapterFactory(NULL, NULL);
         ok(hr == E_POINTER, "got hr %#lx.\n", hr);
     }
     hr = pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, NULL);
-    todo_wine
     ok(hr == E_POINTER || broken(hr == E_NOINTERFACE) /* w1064v1909 */, "got hr %#lx.\n", hr);
     hr = pDXCoreCreateAdapterFactory(&DXCORE_ADAPTER_ATTRIBUTE_D3D11_GRAPHICS, (void **)&factory);
     ok(hr == E_NOINTERFACE, "got hr %#lx.\n", hr);
-    todo_wine
     ok(factory == NULL || broken(factory == (void *)0xdeadbeef) /* w1064v1909 */, "got factory %p.\n", factory);
 
     hr = pDXCoreCreateAdapterFactory(&IID_IDXCoreAdapterFactory, (void **)&factory);
-    todo_wine
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* w1064v1909 */, "got hr %#lx.\n", hr);
     if (FAILED(hr))
         return;
