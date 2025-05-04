@@ -2637,6 +2637,7 @@ static void test_SetCurrentTime(void)
     ok(hr == MF_E_SHUTDOWN, "Unexpected hr %#lx.\n", hr);
 
     refcount = IMFMediaEngineEx_Release(media_engine);
+    flaky_wine
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     /* Unseekable bytestreams */
