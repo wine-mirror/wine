@@ -1025,6 +1025,7 @@ static SQLRETURN col_attribute_win32_a( struct statement *stmt, SQLUSMALLINT col
             field_id = SQL_COLUMN_NAME;
             break;
 
+        case SQL_COLUMN_NAME:
         case SQL_COLUMN_TYPE:
         case SQL_COLUMN_DISPLAY_SIZE:
         case SQL_MAX_COLUMNS_IN_TABLE:
@@ -6252,6 +6253,7 @@ static SQLRETURN col_attribute_win32_w( struct statement *stmt, SQLUSMALLINT col
             field_id = SQL_COLUMN_NAME;
             break;
 
+        case SQL_COLUMN_NAME:
         case SQL_COLUMN_TYPE:
         case SQL_COLUMN_DISPLAY_SIZE:
         case SQL_MAX_COLUMNS_IN_TABLE:
