@@ -22379,6 +22379,7 @@ wine_fn_config_makefile dlls/dwrite enable_dwrite
 wine_fn_config_makefile dlls/dwrite/tests enable_tests
 wine_fn_config_makefile dlls/dx8vb enable_dx8vb
 wine_fn_config_makefile dlls/dxcore enable_dxcore
+wine_fn_config_makefile dlls/dxcore/tests enable_tests
 wine_fn_config_makefile dlls/dxdiagn enable_dxdiagn
 wine_fn_config_makefile dlls/dxdiagn/tests enable_tests
 wine_fn_config_makefile dlls/dxgi enable_dxgi
