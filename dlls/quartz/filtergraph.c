@@ -2382,7 +2382,11 @@ static HRESULT WINAPI MediaSeeking_GetCurrentPosition(IMediaSeeking *iface, LONG
         REFERENCE_TIME time;
         IReferenceClock_GetTime(graph->refClock, &time);
         if (time)
+        {
             ret += time - graph->stream_start;
+            if (ret > graph->stream_stop)
+                ret = graph->stream_stop;
+        }
     }
 
     LeaveCriticalSection(&graph->cs);
