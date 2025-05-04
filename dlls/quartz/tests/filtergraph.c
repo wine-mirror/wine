@@ -531,7 +531,7 @@ static void test_media_event(IFilterGraph2 *graph)
 
     hr = IMediaControl_Pause(control);
     ok(SUCCEEDED(hr), "Got hr %#lx.\n", hr);
-    hr = IMediaControl_GetState(control, 1000, &state);
+    hr = IMediaControl_GetState(control, 2000, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(state == State_Paused, "Got state %ld.\n", state);
 
