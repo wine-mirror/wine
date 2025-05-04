@@ -3973,7 +3973,7 @@ static BOOL pdb_process_internal(const struct process *pcs,
             file = (BYTE*)((DWORD_PTR)(file_name + strlen(file_name) + 1 + 3) & ~3);
         }
         /* Load the global variables and constants (if not yet loaded) and public information */
-        if (globalimage)
+        if (globalimage && !pdb_file->pdb_reader)
         {
             const BYTE* data;
             unsigned global_size = pdb_get_stream_size(pdb_file, symbols.gsym_stream);
