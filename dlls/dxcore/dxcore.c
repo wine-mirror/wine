@@ -21,10 +21,118 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "dxcore.h"
+#include "wine/wined3d.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxcore);
+
+struct dxcore_adapter_list
+{
+    IDXCoreAdapterList IDXCoreAdapterList_iface;
+    LONG refcount;
+};
+
+static inline struct dxcore_adapter_list *impl_from_IDXCoreAdapterList(IDXCoreAdapterList *iface)
+{
+    return CONTAINING_RECORD(iface, struct dxcore_adapter_list, IDXCoreAdapterList_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE dxcore_adapter_list_QueryInterface(IDXCoreAdapterList *iface, REFIID riid, void **out)
+{
+    struct dxcore_adapter_list *list = impl_from_IDXCoreAdapterList(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IDXCoreAdapterList)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &list->IDXCoreAdapterList_iface;
+        IUnknown_AddRef((IUnknown *)*out);
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE dxcore_adapter_list_AddRef(IDXCoreAdapterList *iface)
+{
+    struct dxcore_adapter_list *list = impl_from_IDXCoreAdapterList(iface);
+    ULONG refcount = InterlockedIncrement(&list->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE dxcore_adapter_list_Release(IDXCoreAdapterList *iface)
+{
+    struct dxcore_adapter_list *list = impl_from_IDXCoreAdapterList(iface);
+    ULONG refcount = InterlockedDecrement(&list->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(list);
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE dxcore_adapter_list_GetAdapter(IDXCoreAdapterList *iface, uint32_t index,
+        REFIID riid, void **out)
+{
+    FIXME("iface %p, index %u, riid %s, out %p stub!\n", iface, index, debugstr_guid(riid), out);
+    return E_NOTIMPL;
+}
+
+static uint32_t STDMETHODCALLTYPE dxcore_adapter_list_GetAdapterCount(IDXCoreAdapterList *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return 0;
+}
+
+static BOOL STDMETHODCALLTYPE dxcore_adapter_list_IsStale(IDXCoreAdapterList *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return FALSE;
+}
+
+static HRESULT STDMETHODCALLTYPE dxcore_adapter_list_GetFactory(IDXCoreAdapterList *iface, REFIID riid, void **out)
+{
+    FIXME("iface %p, riid %s, out %p stub!\n", iface, debugstr_guid(riid), out);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxcore_adapter_list_Sort(IDXCoreAdapterList *iface, uint32_t num_preferences,
+        const DXCoreAdapterPreference *preferences)
+{
+    FIXME("iface %p, num_preferences %u, preferences %p stub!\n", iface, num_preferences, preferences);
+    return E_NOTIMPL;
+}
+
+static BOOL STDMETHODCALLTYPE dxcore_adapter_list_IsAdapterPreferenceSupported(IDXCoreAdapterList *iface,
+        DXCoreAdapterPreference preference)
+{
+    FIXME("iface %p, preference %u stub!\n", iface, preference);
+    return FALSE;
+}
+
+static const struct IDXCoreAdapterListVtbl dxcore_adapter_list_vtbl =
+{
+    /* IUnknown methods */
+    dxcore_adapter_list_QueryInterface,
+    dxcore_adapter_list_AddRef,
+    dxcore_adapter_list_Release,
+    /* IDXCoreAdapterList methods */
+    dxcore_adapter_list_GetAdapter,
+    dxcore_adapter_list_GetAdapterCount,
+    dxcore_adapter_list_IsStale,
+    dxcore_adapter_list_GetFactory,
+    dxcore_adapter_list_Sort,
+    dxcore_adapter_list_IsAdapterPreferenceSupported,
+};
 
 struct dxcore_adapter_factory
 {
@@ -82,9 +190,30 @@ static ULONG STDMETHODCALLTYPE dxcore_adapter_factory_Release(IDXCoreAdapterFact
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_CreateAdapterList(IDXCoreAdapterFactory *iface, uint32_t num_attributes,
         const GUID *filter_attributes, REFIID riid, void **out)
 {
-    FIXME("iface %p, num_attributes %u, filter_attributes %p, riid %s, out %p stub!\n", iface, num_attributes, filter_attributes,
+    struct dxcore_adapter_list *list;
+    HRESULT hr;
+
+    FIXME("iface %p, num_attributes %u, filter_attributes %p, riid %s, out %p semi-stub!\n", iface, num_attributes, filter_attributes,
             debugstr_guid(riid), out);
-    return E_NOTIMPL;
+
+    if (!out)
+        return E_POINTER;
+
+    *out = NULL;
+
+    if (!num_attributes || !filter_attributes)
+        return E_INVALIDARG;
+
+    if (!(list = calloc(1, sizeof(*list))))
+        return E_OUTOFMEMORY;
+
+    list->IDXCoreAdapterList_iface.lpVtbl = &dxcore_adapter_list_vtbl;
+    list->refcount = 1;
+
+    hr = IDXCoreAdapterList_QueryInterface(&list->IDXCoreAdapterList_iface, riid, out);
+    IDXCoreAdapterList_Release(&list->IDXCoreAdapterList_iface);
+    TRACE("created IDXCoreAdapterList %p.\n", *out);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_GetAdapterByLuid(IDXCoreAdapterFactory *iface, REFLUID adapter_luid,

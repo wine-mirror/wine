@@ -76,30 +76,20 @@ static void test_DXCoreCreateAdapterFactory(void)
     check_interface(factory, &IID_IDXCoreAdapterList, FALSE);
 
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 0, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterList, (void **)&list);
-    todo_wine
     ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
-    todo_wine
     ok(list == NULL, "got list %p.\n", list);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterFactory, (void **)&list);
-    todo_wine
     ok(hr == E_NOINTERFACE, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, NULL, &IID_IDXCoreAdapterFactory, (void **)&list);
-    todo_wine
     ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterFactory, NULL);
-    todo_wine
     ok(hr == E_POINTER, "got hr %#lx.\n", hr);
 
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterList, (void **)&list);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapterFactory_CreateAdapterList(factory, 1, &DXCORE_ADAPTER_ATTRIBUTE_D3D12_GRAPHICS, &IID_IDXCoreAdapterList, (void **)&list2);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    todo_wine
     ok(list != list2, "got same list %p, list2 %p.\n", list, list);
-    if (SUCCEEDED(hr))
-    {
     refcount = IDXCoreAdapterList_Release(list2);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
 
@@ -109,7 +99,6 @@ static void test_DXCoreCreateAdapterFactory(void)
 
     refcount = IDXCoreAdapterList_Release(list);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
-    }
     refcount = IDXCoreAdapterFactory_Release(factory);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
 }
