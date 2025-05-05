@@ -39,8 +39,8 @@ static const struct
 } wic_pixel_formats[] =
 {
     { &GUID_WICPixelFormat8bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
-    { &GUID_WICPixelFormat1bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
-    { &GUID_WICPixelFormat4bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
+    { &GUID_WICPixelFormat1bppIndexed, D3DX_PIXEL_FORMAT_P1_UINT },
+    { &GUID_WICPixelFormat4bppIndexed, D3DX_PIXEL_FORMAT_P4_UINT },
     { &GUID_WICPixelFormat8bppGray,    D3DX_PIXEL_FORMAT_L8_UNORM },
     { &GUID_WICPixelFormat16bppBGR555, D3DX_PIXEL_FORMAT_B5G5R5X1_UNORM },
     { &GUID_WICPixelFormat16bppBGR565, D3DX_PIXEL_FORMAT_B5G6R5_UNORM },
@@ -1240,7 +1240,7 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
             goto exit;
 
         colors = malloc(nb_colors * sizeof(colors[0]));
-        palette = malloc(nb_colors * sizeof(palette[0]));
+        palette = malloc(256 * sizeof(palette[0]));
         if (!colors || !palette)
         {
             hr = E_OUTOFMEMORY;
@@ -1259,6 +1259,8 @@ static HRESULT d3dx_image_wic_frame_decode(struct d3dx_image *image,
             palette[i].peBlue  = colors[i] & 0xff;
             palette[i].peFlags = (colors[i] >> 24) & 0xff; /* peFlags is the alpha component in DX8 and higher */
         }
+        if (nb_colors < 256)
+            memset(&palette[nb_colors], 0xff, sizeof(*palette) * (256 - nb_colors));
     }
 
     image->image_buf = image->pixels = buffer;
@@ -1717,6 +1719,11 @@ void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     info->MipLevels = image->mip_levels;
     switch (image->format)
     {
+        case D3DX_PIXEL_FORMAT_P1_UINT:
+        case D3DX_PIXEL_FORMAT_P4_UINT:
+            info->Format = D3DFMT_P8;
+            break;
+
         case D3DX_PIXEL_FORMAT_R16G16B16_UNORM:
             info->Format = D3DFMT_A16B16G16R16;
             break;
@@ -2765,6 +2772,72 @@ exit:
     return S_OK;
 }
 
+static HRESULT d3dx_pixels_unpack_index(struct d3dx_pixels *pixels, const struct pixel_format_desc *desc,
+        void **out_memory, uint32_t *out_row_pitch, uint32_t *out_slice_pitch, const struct pixel_format_desc **out_desc)
+{
+    uint32_t x, y, z, unpacked_slice_pitch, unpacked_row_pitch;
+    const struct pixel_format_desc *unpacked_desc = NULL;
+    const struct volume *size = &pixels->size;
+    uint8_t *unpacked_mem;
+    uint8_t mask, shift;
+
+    switch (desc->format)
+    {
+        case D3DX_PIXEL_FORMAT_P1_UINT:
+        case D3DX_PIXEL_FORMAT_P4_UINT:
+            unpacked_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_P8_UINT);
+            break;
+
+        default:
+            FIXME("Unexpected format %u.\n", desc->format);
+            return E_NOTIMPL;
+    }
+
+    unpacked_row_pitch = size->width * unpacked_desc->bytes_per_pixel;
+    unpacked_slice_pitch = unpacked_row_pitch * size->height;
+    if (!(unpacked_mem = malloc(size->depth * unpacked_slice_pitch)))
+        return E_OUTOFMEMORY;
+
+    shift = 8 / desc->block_width;
+    mask = (1u << shift) - 1;
+
+    TRACE("Unpacking pixels.\n");
+    for (z = 0; z < size->depth; ++z)
+    {
+        const uint8_t *slice_data = (const uint8_t *)pixels->data + (pixels->slice_pitch * z);
+
+        for (y = 0; y < size->height; ++y)
+        {
+            uint8_t *ptr = &unpacked_mem[(z * unpacked_slice_pitch) + (y * unpacked_row_pitch)];
+            const uint8_t *row_data = slice_data + (pixels->row_pitch * y);
+
+            for (x = 0; x < size->width; x += desc->block_width)
+            {
+                const uint8_t packed_data = *row_data;
+                unsigned int i;
+
+                for (i = 0; i < desc->block_width; ++i)
+                {
+                    const uint8_t cur_shift = ((desc->block_width - 1) - i) * shift;
+
+                    if (x + i >= size->width)
+                        break;
+                    ptr[i] = (packed_data >> cur_shift) & mask;
+                }
+                ptr += unpacked_desc->bytes_per_pixel * desc->block_width;
+                row_data++;
+            }
+        }
+    }
+
+    *out_memory = unpacked_mem;
+    *out_row_pitch = unpacked_row_pitch;
+    *out_slice_pitch = unpacked_slice_pitch;
+    *out_desc = unpacked_desc;
+
+    return S_OK;
+}
+
 HRESULT d3dx_pixels_init(const void *data, uint32_t row_pitch, uint32_t slice_pitch,
         const PALETTEENTRY *palette, enum d3dx_pixel_format_id format, uint32_t left, uint32_t top, uint32_t right,
         uint32_t bottom, uint32_t front, uint32_t back, struct d3dx_pixels *pixels)
@@ -2864,6 +2937,29 @@ HRESULT d3dx_load_pixels_from_pixels(struct d3dx_pixels *dst_pixels,
     {
         FIXME("Unsupported format conversion %#x -> %#x.\n", src_desc->format, dst_desc->format);
         return E_NOTIMPL;
+    }
+
+    if (is_index_format(src_desc) && (src_desc->block_width > 1))
+    {
+        uint32_t unpacked_row_pitch, unpacked_slice_pitch;
+        const struct pixel_format_desc *unpacked_desc;
+        void *unpacked_mem = NULL;
+
+        hr = d3dx_pixels_unpack_index(src_pixels, src_desc, &unpacked_mem, &unpacked_row_pitch,
+                &unpacked_slice_pitch, &unpacked_desc);
+        if (SUCCEEDED(hr))
+        {
+            struct d3dx_pixels unpacked_pixels;
+
+            d3dx_pixels_init(unpacked_mem, unpacked_row_pitch, unpacked_slice_pitch, src_pixels->palette,
+                    unpacked_desc->format, 0, 0, src_pixels->size.width, src_pixels->size.height,
+                    0, src_pixels->size.depth, &unpacked_pixels);
+
+            hr = d3dx_load_pixels_from_pixels(dst_pixels, dst_desc, &unpacked_pixels, unpacked_desc,
+                    filter_flags, color_key);
+        }
+        free(unpacked_mem);
+        goto exit;
     }
 
     /*
