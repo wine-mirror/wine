@@ -1033,6 +1033,7 @@ struct test_callback
     HANDLE event;
     IMFMediaEvent *media_event;
     BOOL check_media_event;
+    BOOL timed_out;
 };
 
 static struct test_callback *impl_from_IMFAsyncCallback(IMFAsyncCallback *iface)
@@ -1136,8 +1137,8 @@ static IMFAsyncCallback *create_test_callback(BOOL check_media_event)
     return &callback->IMFAsyncCallback_iface;
 }
 
-#define wait_media_event(a, b, c, d, e) wait_media_event_(__LINE__, a, b, c, d, e)
-static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCallback *callback,
+#define gen_wait_media_event(a, b, c, d, e) gen_wait_media_event_(__LINE__, a, b, c, d, e)
+static HRESULT gen_wait_media_event_(int line, IMFMediaEventGenerator *event_generator, IMFAsyncCallback *callback,
         MediaEventType expect_type, DWORD timeout, PROPVARIANT *value)
 {
     struct test_callback *impl = impl_from_IMFAsyncCallback(callback);
@@ -1148,10 +1149,58 @@ static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCal
 
     do
     {
-        hr = IMFMediaSession_BeginGetEvent(session, &impl->IMFAsyncCallback_iface, (IUnknown *)session);
-        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
+        ok_(__FILE__, line)(hr == S_OK || (impl->timed_out && (hr == MF_E_MULTIPLE_SUBSCRIBERS || hr == MF_S_MULTIPLE_BEGIN)), "Unexpected hr %#lx.\n", hr);
         ret = WaitForSingleObject(impl->event, timeout);
+        impl->timed_out = FALSE;
         ok_(__FILE__, line)(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %lu\n", ret);
+        hr = IMFMediaEvent_GetType(impl->media_event, &type);
+        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    } while (type != expect_type);
+
+    ok_(__FILE__, line)(type == expect_type, "got type %lu\n", type);
+
+    hr = IMFMediaEvent_GetExtendedType(impl->media_event, &guid);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line)(IsEqualGUID(&guid, &GUID_NULL), "got extended type %s\n", debugstr_guid(&guid));
+
+    hr = IMFMediaEvent_GetValue(impl->media_event, value);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaEvent_GetStatus(impl->media_event, &status);
+    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    return status;
+}
+
+#define wait_media_event(a, b, c, d, e) wait_media_event_(__LINE__, a, b, c, d, e)
+static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCallback *callback,
+        MediaEventType expect_type, DWORD timeout, PROPVARIANT *value)
+{
+    return gen_wait_media_event_(line, (IMFMediaEventGenerator*) session, callback, expect_type, timeout, value);
+}
+
+#define gen_wait_media_event_until_blocking(a, b, c, d, e) gen_wait_media_event_until_blocking_(__LINE__, a, b, c, d, e)
+static HRESULT gen_wait_media_event_until_blocking_(int line, IMFMediaEventGenerator *event_generator, IMFAsyncCallback *callback,
+                                 MediaEventType expect_type, DWORD timeout, PROPVARIANT *value)
+{
+    struct test_callback *impl = impl_from_IMFAsyncCallback(callback);
+    MediaEventType type;
+    HRESULT hr, status;
+    DWORD ret;
+    GUID guid;
+
+    do
+    {
+        hr = IMFMediaEventGenerator_BeginGetEvent(event_generator, &impl->IMFAsyncCallback_iface, (IUnknown *)event_generator);
+        ok_(__FILE__, line)(hr == S_OK || (impl->timed_out && (hr == MF_E_MULTIPLE_SUBSCRIBERS || hr == MF_S_MULTIPLE_BEGIN)), "Unexpected hr %#lx.\n", hr);
+        ret = WaitForSingleObject(impl->event, timeout);
+        if (ret == WAIT_TIMEOUT)
+        {
+            impl->timed_out = TRUE;
+            return WAIT_TIMEOUT;
+        }
+        impl->timed_out = FALSE;
         hr = IMFMediaEvent_GetType(impl->media_event, &type);
         ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     } while (type != expect_type);
@@ -1175,35 +1224,7 @@ static HRESULT wait_media_event_(int line, IMFMediaSession *session, IMFAsyncCal
 static HRESULT wait_media_event_until_blocking_(int line, IMFMediaSession *session, IMFAsyncCallback *callback,
                                  MediaEventType expect_type, DWORD timeout, PROPVARIANT *value)
 {
-    struct test_callback *impl = impl_from_IMFAsyncCallback(callback);
-    MediaEventType type;
-    HRESULT hr, status;
-    DWORD ret;
-    GUID guid;
-
-    do
-    {
-        hr = IMFMediaSession_BeginGetEvent(session, &impl->IMFAsyncCallback_iface, (IUnknown *)session);
-        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ret = WaitForSingleObject(impl->event, timeout);
-        if (ret == WAIT_TIMEOUT) return WAIT_TIMEOUT;
-        hr = IMFMediaEvent_GetType(impl->media_event, &type);
-        ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    } while (type != expect_type);
-
-    ok_(__FILE__, line)(type == expect_type, "got type %lu\n", type);
-
-    hr = IMFMediaEvent_GetExtendedType(impl->media_event, &guid);
-    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok_(__FILE__, line)(IsEqualGUID(&guid, &GUID_NULL), "got extended type %s\n", debugstr_guid(&guid));
-
-    hr = IMFMediaEvent_GetValue(impl->media_event, value);
-    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFMediaEvent_GetStatus(impl->media_event, &status);
-    ok_(__FILE__, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-
-    return status;
+    return gen_wait_media_event_until_blocking_(line, (IMFMediaEventGenerator*) session, callback, expect_type, timeout, value);
 }
 
 static IMFMediaSource *create_media_source(const WCHAR *name, const WCHAR *mime)
@@ -4407,21 +4428,27 @@ static void test_sar(void)
 
     IMFPresentationClock *present_clock, *present_clock2;
     IMFMediaType *mediatype, *mediatype2, *mediatype3;
+    UINT32 channel_count, rate, bytes_per_second;
     IMFClockStateSink *state_sink, *state_sink2;
     IMFMediaTypeHandler *handler, *handler2;
     IMFPresentationTimeSource *time_source;
     IMFSimpleAudioVolume *simple_volume;
     IMFAudioStreamVolume *stream_volume;
+    IMFAsyncCallback *callback;
     IMFMediaSink *sink, *sink2;
     IMFStreamSink *stream_sink;
-    UINT32 channel_count, rate;
     IMFAttributes *attributes;
+    IMFMediaBuffer *buffer;
     DWORD id, flags, count;
     IMFActivate *activate;
+    IMFMediaEvent *event;
     MFCLOCK_STATE state;
+    PROPVARIANT propvar;
+    IMFSample *sample;
     IMFClock *clock;
     IUnknown *unk;
     HRESULT hr;
+    BYTE *buff;
     GUID guid;
     BOOL mute;
     LONG ref;
@@ -4643,6 +4670,7 @@ if (SUCCEEDED(hr))
     hr = IMFMediaTypeHandler_GetCurrentMediaType(handler, &mediatype);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(mediatype == mediatype2, "Unexpected instance.\n");
+    IMFMediaType_GetUINT32(mediatype, &MF_MT_AUDIO_AVG_BYTES_PER_SECOND, &bytes_per_second);
     IMFMediaType_Release(mediatype);
 
     IMFMediaType_Release(mediatype2);
@@ -4683,6 +4711,117 @@ if (SUCCEEDED(hr))
 
     hr = IMFClockStateSink_OnClockStop(state_sink, 0);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    callback = create_test_callback(TRUE);
+
+    /* Flush events */
+    while (SUCCEEDED(IMFStreamSink_GetEvent(stream_sink, MF_EVENT_FLAG_NO_WAIT, &event)))
+        IMFMediaEvent_Release(event);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    propvar.vt = VT_EMPTY;
+    hr = gen_wait_media_event((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateMemoryBuffer(bytes_per_second, &buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_Lock(buffer, &buff, NULL, NULL);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    memset(buff, 0, bytes_per_second);
+    hr = IMFMediaBuffer_Unlock(buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFMediaBuffer_SetCurrentLength(buffer, bytes_per_second);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_ProcessSample(stream_sink, sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    hr = gen_wait_media_event((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = MFCreateSample(&sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IMFSample_AddBuffer(sample, buffer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFMediaBuffer_Release(buffer);
+
+    hr = IMFSample_SetSampleTime(sample, 10000000);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_ProcessSample(stream_sink, sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IMFSample_Release(sample);
+
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkPaused, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_Flush(stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* confirm no new sample is requested after a flush */
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    todo_wine
+    ok(hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 123456);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* they are only requested after a call to OnClockStart */
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    todo_wine
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* but if the original requests aren't satisfied ... */
+    hr = IMFClockStateSink_OnClockPause(state_sink, 0);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkPaused, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFStreamSink_Flush(stream_sink);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* ... there is still no new sample request after a flush ... */
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    ok(hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFClockStateSink_OnClockStart(state_sink, 0, 654321);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkStarted, 1000, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* ... and still none after a call to OnClockStart. The client must keep track of these pending requests. */
+    hr = gen_wait_media_event_until_blocking((IMFMediaEventGenerator*)stream_sink, callback, MEStreamSinkRequestSample, 1000, &propvar);
+    ok(hr == WAIT_TIMEOUT, "Unexpected hr %#lx.\n", hr);
+
+    IMFAsyncCallback_Release(callback);
 
     IMFClockStateSink_Release(state_sink);
 
