@@ -576,6 +576,16 @@ int async_waiting( struct async_queue *queue )
     return !async->terminated;
 }
 
+static struct async *find_async_from_user( struct process *process, client_ptr_t user )
+{
+    struct async *async;
+
+    LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
+        if (async->data.user == user) return async;
+
+    return NULL;
+}
+
 static int cancel_async( struct process *process, struct object *obj, struct thread *thread, client_ptr_t iosb )
 {
     struct async *async;
@@ -830,17 +840,10 @@ DECL_HANDLER(cancel_async)
 /* get async result from associated iosb */
 DECL_HANDLER(get_async_result)
 {
-    struct iosb *iosb = NULL;
+    struct iosb *iosb;
     struct async *async;
 
-    LIST_FOR_EACH_ENTRY( async, &current->process->asyncs, struct async, process_entry )
-        if (async->data.user == req->user_arg)
-        {
-            iosb = async->iosb;
-            break;
-        }
-
-    if (!iosb)
+    if (!(async = find_async_from_user( current->process, req->user_arg )) || !(iosb = async->iosb))
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
