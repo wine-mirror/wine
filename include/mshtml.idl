@@ -16226,6 +16226,70 @@ methods:
     void setSelectionRange([in] long start, [in] long end);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f2bc-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLOptionButtonElement : IDispatch
+{
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_VALUE), displaybind, bindable]
+    HRESULT value([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_TYPE)]
+    HRESULT type([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_NAME), displaybind, bindable]
+    HRESULT name([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_NAME), displaybind, bindable]
+    HRESULT name([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_CHECKED), bindable]
+    HRESULT checked([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_CHECKED), bindable]
+    HRESULT checked([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DEFAULTCHECKED), bindable]
+    HRESULT defaultChecked([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DEFAULTCHECKED), bindable]
+    HRESULT defaultChecked([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_ONCHANGE), displaybind, bindable]
+    HRESULT onchange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_ONCHANGE), displaybind, bindable]
+    HRESULT onchange([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_DISABLED), displaybind, bindable]
+    HRESULT disabled([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_STATUS)]
+    HRESULT status([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_STATUS)]
+    HRESULT status([retval, out] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLOPTIONBUTTONELEMENT_INDETERMINATE), bindable]
+    HRESULT indeterminate([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_INDETERMINATE), bindable]
+    HRESULT indeterminate([retval, out] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IHTMLOPTIONBUTTONELEMENT_FORM)]
+    HRESULT form([retval, out] IHTMLFormElement* *p);
+};
+
+
 /*****************************************************************************
  *    HTMLInputElement coclass
  */
@@ -16249,7 +16313,7 @@ coclass HTMLInputElement
  /* interface IHTMLInputHiddenElement; */
  /* interface IHTMLInputButtonElement; */
  /* interface IHTMLInputFileElement; */
- /* interface IHTMLOptionButtonElement; */
+    interface IHTMLOptionButtonElement;
  /* interface IHTMLInputImage; */
  /* interface IHTMLInputElement3; */
  /* interface IHTMLInputRangeElement; */
