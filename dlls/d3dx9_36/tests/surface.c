@@ -3780,20 +3780,17 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* 2bpp. */
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, png_2_2_2bpp_indexed, sizeof(png_2_2_2bpp_indexed), &rect,
             D3DX_FILTER_NONE, 0, &info);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        check_image_info(&info, 2, 2, 1, 1, D3DFMT_P8, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    check_image_info(&info, 2, 2, 1, 1, D3DFMT_P8, D3DRTYPE_TEXTURE, D3DXIFF_PNG, FALSE);
 
-        hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
-        check_pixel_4bpp(&lockrect, 0, 0, 0xffff0000);
-        check_pixel_4bpp(&lockrect, 1, 0, 0xff00ff00);
-        check_pixel_4bpp(&lockrect, 0, 1, 0xff0000ff);
-        check_pixel_4bpp(&lockrect, 1, 1, 0xffffffff);
-        hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
-    }
+    hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
+    ok(hr == D3D_OK, "Failed to lock surface, hr %#lx.\n", hr);
+    check_pixel_4bpp(&lockrect, 0, 0, 0xffff0000);
+    check_pixel_4bpp(&lockrect, 1, 0, 0xff00ff00);
+    check_pixel_4bpp(&lockrect, 0, 1, 0xff0000ff);
+    check_pixel_4bpp(&lockrect, 1, 1, 0xffffffff);
+    hr = IDirect3DSurface9_UnlockRect(surf);
+    ok(hr == D3D_OK, "Failed to unlock surface, hr %#lx.\n", hr);
 
     /* 4bpp. */
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, png_2_2_4bpp_indexed, sizeof(png_2_2_4bpp_indexed), &rect,

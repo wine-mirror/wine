@@ -40,6 +40,7 @@ static const struct
 {
     { &GUID_WICPixelFormat8bppIndexed, D3DX_PIXEL_FORMAT_P8_UINT },
     { &GUID_WICPixelFormat1bppIndexed, D3DX_PIXEL_FORMAT_P1_UINT },
+    { &GUID_WICPixelFormat2bppIndexed, D3DX_PIXEL_FORMAT_P2_UINT },
     { &GUID_WICPixelFormat4bppIndexed, D3DX_PIXEL_FORMAT_P4_UINT },
     { &GUID_WICPixelFormat8bppGray,    D3DX_PIXEL_FORMAT_L8_UNORM },
     { &GUID_WICPixelFormat16bppBGR555, D3DX_PIXEL_FORMAT_B5G5R5X1_UNORM },
@@ -1331,11 +1332,20 @@ static HRESULT d3dx_initialize_image_from_wic(const void *src_data, uint32_t src
         goto exit;
 
     image->format = d3dx_pixel_format_id_from_wic_pixel_format(&pixel_format);
-    if (image->format == D3DX_PIXEL_FORMAT_COUNT)
+    switch (image->format)
     {
-        WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
-        hr = D3DXERR_INVALIDDATA;
-        goto exit;
+        case D3DX_PIXEL_FORMAT_P2_UINT:
+            if (image->image_file_format != D3DXIFF_BMP)
+                break;
+            /* Fall through. */
+
+        case D3DX_PIXEL_FORMAT_COUNT:
+            WARN("Unsupported pixel format %s.\n", debugstr_guid(&pixel_format));
+            hr = D3DXERR_INVALIDDATA;
+            goto exit;
+
+        default:
+            break;
     }
 
     if (image_is_argb(bitmap_frame, image))
@@ -1720,6 +1730,7 @@ void d3dximage_info_from_d3dx_image(D3DXIMAGE_INFO *info, struct d3dx_image *ima
     switch (image->format)
     {
         case D3DX_PIXEL_FORMAT_P1_UINT:
+        case D3DX_PIXEL_FORMAT_P2_UINT:
         case D3DX_PIXEL_FORMAT_P4_UINT:
             info->Format = D3DFMT_P8;
             break;
@@ -2784,6 +2795,7 @@ static HRESULT d3dx_pixels_unpack_index(struct d3dx_pixels *pixels, const struct
     switch (desc->format)
     {
         case D3DX_PIXEL_FORMAT_P1_UINT:
+        case D3DX_PIXEL_FORMAT_P2_UINT:
         case D3DX_PIXEL_FORMAT_P4_UINT:
             unpacked_desc = get_d3dx_pixel_format_info(D3DX_PIXEL_FORMAT_P8_UINT);
             break;
