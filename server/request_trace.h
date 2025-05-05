@@ -3028,7 +3028,8 @@ static void dump_get_token_info_reply( const struct get_token_info_reply *req )
     fprintf( stderr, ", session_id=%08x", req->session_id );
     fprintf( stderr, ", primary=%d", req->primary );
     fprintf( stderr, ", impersonation_level=%d", req->impersonation_level );
-    fprintf( stderr, ", elevation=%d", req->elevation );
+    fprintf( stderr, ", elevation_type=%d", req->elevation_type );
+    fprintf( stderr, ", is_elevated=%d", req->is_elevated );
     fprintf( stderr, ", group_count=%d", req->group_count );
     fprintf( stderr, ", privilege_count=%d", req->privilege_count );
 }

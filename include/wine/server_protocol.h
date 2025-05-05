@@ -5369,9 +5369,11 @@ struct get_token_info_reply
     unsigned int   session_id;
     int            primary;
     int            impersonation_level;
-    int            elevation;
+    int            elevation_type;
+    int            is_elevated;
     int            group_count;
     int            privilege_count;
+    char __pad_52[4];
 };
 
 
@@ -6799,6 +6801,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 864
+#define SERVER_PROTOCOL_VERSION 865
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
