@@ -190,10 +190,10 @@ NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bu
 
             for (;;)
             {
-                if (!(params.buffer = malloc( size ))) return ERROR_OUTOFMEMORY;
+                if ((ret = NetApiBufferAllocate( size, &params.buffer ))) return ret;
                 ret = SAMBA_CALL( server_getinfo, &params );
                 if (!ret) *bufptr = params.buffer;
-                else free( params.buffer );
+                else NetApiBufferFree( params.buffer );
                 if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
             }
         }
@@ -924,10 +924,10 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
 
             for (;;)
             {
-                if (!(params.buffer = malloc( size ))) return ERROR_OUTOFMEMORY;
+                if ((ret = NetApiBufferAllocate( size, &params.buffer ))) return ret;
                 ret = SAMBA_CALL( wksta_getinfo, &params );
                 if (!ret) *bufptr = params.buffer;
-                else free( params.buffer );
+                else NetApiBufferFree( params.buffer );
                 if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
             }
         }
