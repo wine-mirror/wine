@@ -475,7 +475,7 @@ static void test_DeviceInformation( void )
         hr = IDeviceWatcher_Start( device_watcher );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
-        todo_wine ok( added_handler.devices_added > 0, "devices_added should be greater than 0\n" );
+        ok( added_handler.devices_added > 0, "devices_added should be greater than 0" );
         hr = IDeviceWatcher_get_Status( device_watcher, &status );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         ok( status == DeviceWatcherStatus_EnumerationCompleted, "got status %u\n", status );

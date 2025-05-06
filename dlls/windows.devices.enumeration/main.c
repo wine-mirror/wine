@@ -83,6 +83,7 @@ struct device_watcher
     IDeviceWatcher IDeviceWatcher_iface;
     LONG ref;
 
+    struct list added_handlers;
     struct list enumerated_handlers;
     struct list stopped_handlers;
     HSTRING filter;
@@ -132,6 +133,7 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
 
     if (!ref)
     {
+        typed_event_handlers_clear( &impl->added_handlers );
         typed_event_handlers_clear( &impl->enumerated_handlers );
         typed_event_handlers_clear( &impl->stopped_handlers );
         WindowsDeleteString( impl->filter );
@@ -164,14 +166,16 @@ static HRESULT WINAPI device_watcher_GetTrustLevel( IDeviceWatcher *iface, Trust
 static HRESULT WINAPI device_watcher_add_Added( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_DeviceInformation *handler,
                                                 EventRegistrationToken *token )
 {
-    FIXME( "iface %p, handler %p, token %p stub!\n", iface, handler, token );
-    return S_OK;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    TRACE( "iface %p, handler %p, token %p\n", iface, handler, token );
+    return typed_event_handlers_append( &impl->added_handlers, (ITypedEventHandler_IInspectable_IInspectable *)handler, token );
 }
 
 static HRESULT WINAPI device_watcher_remove_Added( IDeviceWatcher *iface, EventRegistrationToken token )
 {
-    FIXME( "iface %p, token %#I64x stub!\n", iface, token.value );
-    return E_NOTIMPL;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return typed_event_handlers_remove( &impl->added_handlers, &token );
 }
 
 static HRESULT WINAPI device_watcher_add_Updated( IDeviceWatcher *iface, ITypedEventHandler_DeviceWatcher_DeviceInformationUpdate *handler,
@@ -242,13 +246,24 @@ static HRESULT WINAPI device_watcher_get_Status( IDeviceWatcher *iface, DeviceWa
     return S_OK;
 }
 
+static HRESULT add_device_information( IDeviceInformation *info, void *invoker )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
+    typed_event_handlers_notify( &impl->added_handlers, (IInspectable *)invoker, (IInspectable *)info );
+    return S_OK;
+}
+
 static HRESULT device_watcher_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
     DeviceWatcherStatus status;
+    HRESULT hr;
+
+    hr = enum_device_information( add_device_information, invoker );
 
     EnterCriticalSection( &impl->cs );
-    if (impl->status == DeviceWatcherStatus_Stopping) status = DeviceWatcherStatus_Stopped;
+    if (FAILED(hr)) status = DeviceWatcherStatus_Aborted;
+    else if (impl->status == DeviceWatcherStatus_Stopping) status = DeviceWatcherStatus_Stopped;
     else status = DeviceWatcherStatus_EnumerationCompleted;
     impl->status = status;
     LeaveCriticalSection( &impl->cs );
@@ -377,6 +392,7 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
         return hr;
     }
 
+    list_init( &impl->added_handlers );
     list_init( &impl->enumerated_handlers );
     list_init( &impl->stopped_handlers );
 
