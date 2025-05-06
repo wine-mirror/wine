@@ -15718,12 +15718,15 @@ static void test_get_dxgi_device(BOOL d3d11)
 static void test_no_target(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    ID2D1SolidColorBrush *brush;
     ID2D1DeviceContext *context;
     D2D1_MATRIX_3X2_F matrix;
     IDXGIDevice *dxgi_device;
     ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
+    D2D1_COLOR_F color;
     D2D1_SIZE_U size;
+    D2D1_RECT_F rect;
     D2D1_TAG t1, t2;
     HRESULT hr;
 
@@ -15786,6 +15789,27 @@ static void test_no_target(BOOL d3d11)
     ok(t1 == 0x20 && t2 == 0x20, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
 
     ID2D1Bitmap1_Release(bitmap);
+
+    /* DrawRectangle method */
+    set_color(&color, 0.0f, 0.0f, 0.0f, 0.0f);
+    hr = ID2D1DeviceContext_CreateSolidColorBrush(context, &color, NULL, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_rect(&rect, 0.0f, 0.0f, 1.0f, 1.0f);
+
+    ID2D1DeviceContext_BeginDraw(context);
+
+    ID2D1DeviceContext_SetTags(context, 0x30, 0x10);
+    ID2D1DeviceContext_DrawRectangle(context, &rect, (ID2D1Brush *)brush, 1.0f, NULL);
+
+    ID2D1DeviceContext_SetTags(context, 0x30, 0x20);
+    ID2D1DeviceContext_DrawRectangle(context, &rect, (ID2D1Brush *)brush, 1.0f, NULL);
+
+    hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(t1 == 0x30 && t2 == 0x10, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    ID2D1SolidColorBrush_Release(brush);
 
     ID2D1DeviceContext_Release(context);
     ID2D1Device_Release(device);
