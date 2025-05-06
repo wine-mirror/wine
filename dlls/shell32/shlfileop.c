@@ -1185,6 +1185,10 @@ static DWORD do_copy(FILE_OPERATION *op, const FILE_ENTRY *from, const FILE_ENTR
             return target_is_dir ? DE_FILEDESTISFLD : DE_FLDDESTISFILE;
         if (wcscmp(target, from->szFullPath) == 0)
             return target_is_dir ? DE_DESTSAMETREE : DE_SAMEFILE;
+        if (!(op->req->fFlags & FOF_NOCONFIRMATION)
+                && !SHELL_ConfirmDialogW(op->req->hwnd, target_is_dir ? ASK_OVERWRITE_FOLDER : ASK_OVERWRITE_FILE,
+                        PathFindFileNameW(target), op))
+            return DE_OPCANCELLED;
     }
     if (PathIsPrefixW(from->szFullPath, to->szFullPath))
         return DE_DESTSUBTREE;
