@@ -1124,6 +1124,8 @@ static const builtin_info_t HostConstructor_info = {
     .release     = HostConstructor_release,
     .call        = Function_value,
     .destructor  = Function_destructor,
+    .props_cnt   = ARRAY_SIZE(HostFunction_props),
+    .props       = HostFunction_props,
     .gc_traverse = Function_gc_traverse,
     .lookup_prop = HostConstructor_lookup_prop,
 };

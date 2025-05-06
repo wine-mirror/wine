@@ -4028,6 +4028,11 @@ sync_test("constructors", function() {
         ok(window.hasOwnProperty(r), r + " not prop of window");
         ok(!(r in Window.prototype), r + " is a prop of window's prototype");
         ok(window[r].toString() === "\nfunction " + r + "() {\n    [native code]\n}\n", r + ".toString() = " + window[r].toString());
+
+        ok(window[r].hasOwnProperty("arguments"), "arguments not a prop of " + r);
+        ok(window[r].hasOwnProperty("caller"), "caller not a prop of " + r);
+        ok(window[r].hasOwnProperty("prototype"), "prototype not a prop of " + r);
+        ok(!window[r].hasOwnProperty("length"), "length is a prop of " + r);
     }
     ok(window.Image.prototype === window.HTMLImageElement.prototype, "Image.prototype != HTMLImageElement.prototype");
     ok(window.Option.prototype === window.HTMLOptionElement.prototype, "Option.prototype != HTMLOptionElement.prototype");
@@ -4042,7 +4047,7 @@ sync_test("constructors", function() {
     }catch(e) {
         ok(e.number === 0x0ffff - 0x80000000, "new XMLHttpRequest.create() threw " + e.number);
     }
-    test_own_props(XMLHttpRequest.create, "XMLHttpRequest.create", [ "arguments", "caller", "prototype" ], [ "arguments", "caller", "prototype" ]);
+    test_own_props(XMLHttpRequest.create, "XMLHttpRequest.create", [ "arguments", "caller", "prototype" ], [ "prototype" ]);
 
     r = Object.getOwnPropertyDescriptor(HTMLMetaElement, "prototype");
     ok(r.value === HTMLMetaElement.prototype, "HTMLMetaElement.prototype value = " + r.value);
