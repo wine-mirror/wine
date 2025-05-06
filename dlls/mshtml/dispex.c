@@ -803,6 +803,14 @@ HRESULT dispex_define_property(DispatchEx *dispex, const WCHAR *name, DWORD flag
     dynamic_prop_t *prop;
     HRESULT hres;
 
+    if(flags & PROPF_CONFIGURABLE) {
+        prop = NULL;
+        hres = get_dynamic_prop(dispex, name, 0, &prop);
+        assert(FAILED(hres));
+        if(prop)
+            return hres;
+    }
+
     hres = alloc_dynamic_prop(dispex, name, NULL, &prop);
     if(FAILED(hres))
         return hres;

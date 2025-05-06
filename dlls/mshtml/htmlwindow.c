@@ -3816,7 +3816,9 @@ static HRESULT HTMLWindow_find_dispid(DispatchEx *dispex, const WCHAR *name, DWO
 
                 V_VT(&v) = VT_DISPATCH;
                 V_DISPATCH(&v) = (IDispatch *)&constr->IWineJSDispatchHost_iface;
-                return dispex_define_property(&This->event_target.dispex, name, PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+                hres = dispex_define_property(&This->event_target.dispex, name, PROPF_WRITABLE | PROPF_CONFIGURABLE, &v, dispid);
+                if(hres != DISP_E_UNKNOWNNAME)
+                    return hres;
             }
         }
     }

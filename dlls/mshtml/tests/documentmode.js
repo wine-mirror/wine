@@ -4058,14 +4058,12 @@ sync_test("constructors", function() {
     old = window.HTMLMetaElement;
     r = (delete window.HTMLMetaElement);
     ok(r === true, "delete HTMLMetaElement returned " + r);
-    todo_wine.
     ok(!window.hasOwnProperty("HTMLMetaElement"), "HTMLMetaElement still a property of window");
     window.HTMLMetaElement = old;
 
     old = HTMLMetaElement.prototype.constructor;
     r = (delete HTMLMetaElement.prototype.constructor);
     ok(r === true, "delete HTMLMetaElement.prototype.constructor returned " + r);
-    todo_wine.
     ok(!HTMLMetaElement.prototype.hasOwnProperty("constructor"), "constructor still a property of HTMLMetaElement.prototype");
     HTMLMetaElement.prototype.constructor = old;
 });
