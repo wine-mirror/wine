@@ -15718,6 +15718,8 @@ static void test_get_dxgi_device(BOOL d3d11)
 static void test_no_target(BOOL d3d11)
 {
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    IDWriteFactory *dwrite_factory;
+    IDWriteTextFormat *text_format;
     ID2D1SolidColorBrush *brush;
     ID2D1DeviceContext *context;
     D2D1_MATRIX_3X2_F matrix;
@@ -15821,6 +15823,28 @@ static void test_no_target(BOOL d3d11)
     hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
     ok(t1 == 0x40 && t2 == 0x10, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    /* DrawText method */
+    hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = IDWriteFactory_CreateTextFormat(dwrite_factory, L"Tahoma", NULL, DWRITE_FONT_WEIGHT_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 10.0f, L"", &text_format);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DeviceContext_BeginDraw(context);
+
+    ID2D1DeviceContext_SetTags(context, 0x50, 0x10);
+    ID2D1DeviceContext_DrawText(context, L"Wine", 4, text_format, &rect, (ID2D1Brush *)brush, D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL);
+
+    ID2D1DeviceContext_SetTags(context, 0x50, 0x20);
+    ID2D1DeviceContext_DrawText(context, L"Wine", 4, text_format, &rect, (ID2D1Brush *)brush, D2D1_DRAW_TEXT_OPTIONS_NONE, DWRITE_MEASURING_MODE_NATURAL);
+
+    hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(t1 == 0x50 && t2 == 0x10, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    IDWriteTextFormat_Release(text_format);
+    IDWriteFactory_Release(dwrite_factory);
 
     ID2D1SolidColorBrush_Release(brush);
 

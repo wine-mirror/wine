@@ -1549,6 +1549,12 @@ static void d2d_device_context_draw_glyph_run(struct d2d_device_context *context
     if (FAILED(context->error.code))
         return;
 
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_draw_glyph_run(context->target.command_list, context, baseline_origin, glyph_run,
