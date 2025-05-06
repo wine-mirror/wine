@@ -147,9 +147,18 @@ async_test("iframe_location", function() {
     iframe.onload = function() {
         ok(iframe.contentWindow.location.pathname === "/emptyfile",
            "path = " + iframe.contentWindow.location.pathname);
+        ok(iframe.contentWindow.Image !== undefined, "Image is undefined");
+        ok(iframe.contentWindow.VBArray !== undefined, "VBArray is undefined");
+        iframe.contentWindow.Image = undefined;
+        iframe.contentWindow.VBArray = undefined;
+        iframe.contentWindow.foobar = 1234;
         iframe.onload = function () {
             ok(iframe.contentWindow.location.pathname === "/empty/file",
                "path = " + iframe.contentWindow.location.pathname);
+            ok(iframe.contentWindow.Image !== undefined, "Image is undefined (2)");
+            ok(iframe.contentWindow.VBArray !== undefined, "VBArray is undefined (2)");
+            ok(!Object.prototype.hasOwnProperty.call(iframe.contentWindow, "foobar"),
+               "contentWindow has foobar");
             next_test();
         }
         iframe.src = "empty/file";
