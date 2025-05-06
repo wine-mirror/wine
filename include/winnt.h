@@ -7100,14 +7100,14 @@ void _ReadWriteBarrier(void);
 
 static void __wine_memory_barrier_acq_rel(void)
 {
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__aarch64__) || defined(__arm64ec__)
+    __dmb(_ARM64_BARRIER_ISH);
+#elif defined(__i386__) || defined(__x86_64__)
 #pragma warning(suppress:4996)
     _ReadWriteBarrier();
 #elif defined(__arm__)
     __dmb(_ARM_BARRIER_ISH);
-#elif defined(__aarch64__)
-    __dmb(_ARM64_BARRIER_ISH);
-#endif  /* defined(__i386__) || defined(__x86_64__) */
+#endif
 }
 
 static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
