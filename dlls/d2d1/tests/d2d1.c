@@ -15809,6 +15809,19 @@ static void test_no_target(BOOL d3d11)
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
     ok(t1 == 0x30 && t2 == 0x10, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
 
+    /* FillRectangle method */
+    ID2D1DeviceContext_BeginDraw(context);
+
+    ID2D1DeviceContext_SetTags(context, 0x40, 0x10);
+    ID2D1DeviceContext_FillRectangle(context, &rect, (ID2D1Brush *)brush);
+
+    ID2D1DeviceContext_SetTags(context, 0x40, 0x20);
+    ID2D1DeviceContext_FillRectangle(context, &rect, (ID2D1Brush *)brush);
+
+    hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(t1 == 0x40 && t2 == 0x10, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
     ID2D1SolidColorBrush_Release(brush);
 
     ID2D1DeviceContext_Release(context);

@@ -657,6 +657,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRectangle(ID2D1DeviceContex
 
     TRACE("iface %p, rect %s, brush %p.\n", iface, debug_d2d_rect_f(rect), brush);
 
+    if (FAILED(context->error.code))
+        return;
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_fill_rectangle(context->target.command_list, context, rect, brush);
@@ -705,6 +708,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillRoundedRectangle(ID2D1Devic
 
     TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
 
+    if (FAILED(render_target->error.code))
+        return;
+
     if (FAILED(hr = ID2D1Factory_CreateRoundedRectangleGeometry(render_target->factory, rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#lx.\n", hr);
@@ -746,6 +752,9 @@ static void STDMETHODCALLTYPE d2d_device_context_FillEllipse(ID2D1DeviceContext6
     HRESULT hr;
 
     TRACE("iface %p, ellipse %p, brush %p.\n", iface, ellipse, brush);
+
+    if (FAILED(render_target->error.code))
+        return;
 
     if (FAILED(hr = ID2D1Factory_CreateEllipseGeometry(render_target->factory, ellipse, &geometry)))
     {
@@ -1108,6 +1117,12 @@ static void STDMETHODCALLTYPE d2d_device_context_FillGeometry(ID2D1DeviceContext
 
     if (FAILED(context->error.code))
         return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
 
     if (opacity_brush && brush_impl->type != D2D_BRUSH_TYPE_BITMAP)
     {
