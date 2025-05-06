@@ -1356,7 +1356,6 @@ sync_test("getOwnPropertyNames", function() {
     ok(names === "defined,test", "names = " + names);
 
     names = Object.getOwnPropertyNames([]).sort().join();
-    todo_wine.
     ok(names === "length", "names = " + names);
 
     ok(Object.getOwnPropertyNames.length === 1, "Object.getOwnPropertyNames.length = " + Object.getOwnPropertyNames.length);

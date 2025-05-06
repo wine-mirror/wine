@@ -750,6 +750,13 @@ static HRESULT fill_props(jsdisp_t *obj)
 {
     dispex_prop_t *prop;
     HRESULT hres;
+    DWORD i;
+
+    for(i = 0; i < obj->builtin_info->props_cnt; i++) {
+        hres = find_prop_name(obj, string_hash(obj->builtin_info->props[i].name), obj->builtin_info->props[i].name, FALSE, NULL, &prop);
+        if(FAILED(hres))
+            return hres;
+    }
 
     if(obj->builtin_info->next_prop) {
         struct property_info desc;
