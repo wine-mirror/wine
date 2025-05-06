@@ -395,7 +395,7 @@ sync_test("builtin_obj", function() {
         e = window.toString.call(external.nullDisp);
         ok(e === "[object Window]", "window.toString with nullDisp context = " + e);
 
-        test_own_props(f, "createElement", [ "arguments", "caller", "prototype" ], [ "caller", "prototype" ]);
+        test_own_props(f, "createElement", [ "arguments", "caller", "prototype" ], [ "prototype" ]);
         ok(f.arguments === null, "createElement arguments = " + f.arguments);
     }
 

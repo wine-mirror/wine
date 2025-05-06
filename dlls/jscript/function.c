@@ -978,6 +978,7 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
 
 static const builtin_prop_t HostFunction_props[] = {
     {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"caller",              NULL, 0,                        Function_get_caller},
 };
 
 static const builtin_info_t HostFunction_info = {
