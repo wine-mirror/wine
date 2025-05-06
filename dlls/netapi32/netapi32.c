@@ -439,8 +439,28 @@ NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserve
 NET_API_STATUS WINAPI NetShareGetInfo(LMSTR servername, LMSTR netname,
     DWORD level, LPBYTE *bufptr)
 {
-    FIXME("Stub (%s %s %ld %p)\n", debugstr_w(servername),
-        debugstr_w(netname),level, bufptr);
+    BOOL local = NETAPI_IsLocalComputer( servername );
+
+    if (!bufptr) return ERROR_INVALID_PARAMETER;
+    if (!local && samba_init())
+    {
+        ULONG size = 1024;
+        struct share_getinfo_params params = { servername, netname, level, NULL, &size };
+        NET_API_STATUS ret;
+
+        TRACE("%s %s %ld %p\n", debugstr_w(servername), debugstr_w(netname), level, bufptr);
+
+        for (;;)
+        {
+            if ((ret = NetApiBufferAllocate( size, &params.buffer ))) return ret;
+            ret = SAMBA_CALL( share_getinfo, &params );
+            if (!ret) *bufptr = params.buffer;
+            else NetApiBufferFree( params.buffer );
+            if (ret != ERROR_INSUFFICIENT_BUFFER) return ret;
+        }
+    }
+
+    FIXME("%s %s %ld %p\n", debugstr_w(servername), debugstr_w(netname), level, bufptr);
     return NERR_NetNameNotFound;
 }
 

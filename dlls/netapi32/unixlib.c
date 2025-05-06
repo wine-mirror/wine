@@ -62,6 +62,7 @@ static NET_API_STATUS (*pNetApiBufferFree)( void * );
 static NET_API_STATUS (*pNetServerGetInfo)( const char *, unsigned int, unsigned char ** );
 static NET_API_STATUS (*pNetShareAdd)( const char *, unsigned int, unsigned char *, unsigned int * );
 static NET_API_STATUS (*pNetShareDel)( const char *, const char *, unsigned int );
+static NET_API_STATUS (*pNetShareGetInfo)( const char *, const char *, unsigned int, unsigned char ** );
 static NET_API_STATUS (*pNetWkstaGetInfo)( const char *, unsigned int, unsigned char ** );
 
 static DWORD netapi_wcstoumbs( const WCHAR *src, char *dst, DWORD dstlen )
@@ -747,6 +748,97 @@ static NTSTATUS share_del( void *args )
     return status;
 }
 
+static NET_API_STATUS share_info_2_from_samba( const unsigned char *buf, void *buffer, ULONG *size )
+{
+    SHARE_INFO_2 *ret = (SHARE_INFO_2 *)buffer;
+    const struct share_info_2 *info = (const struct share_info_2 *)buf;
+    DWORD len = 0;
+    WCHAR *ptr;
+
+    if (info->shi2_netname)
+        len += netapi_umbstowcs( info->shi2_netname, NULL, 0 );
+    if (info->shi2_remark)
+        len += netapi_umbstowcs( info->shi2_remark, NULL, 0 );
+    if (info->shi2_path)
+        len += netapi_umbstowcs( info->shi2_path, NULL, 0 );
+    if (info->shi2_passwd)
+        len += netapi_umbstowcs( info->shi2_passwd, NULL, 0 );
+    if (*size < sizeof(*ret) + (len * sizeof(WCHAR) ))
+    {
+        *size = sizeof(*ret) + (len * sizeof(WCHAR) );
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    ptr = (WCHAR *)(ret + 1);
+    if (!info->shi2_netname) ret->shi2_netname = NULL;
+    else
+    {
+        ret->shi2_netname = ptr;
+        ptr += netapi_umbstowcs( info->shi2_netname, ptr, len );
+    }
+    ret->shi2_type = info->shi2_type;
+    if (!info->shi2_remark) ret->shi2_remark = NULL;
+    else
+    {
+        ret->shi2_remark = ptr;
+        ptr += netapi_umbstowcs( info->shi2_remark, ptr, len );
+    }
+    ret->shi2_permissions = info->shi2_permissions;
+    ret->shi2_max_uses = info->shi2_max_uses;
+    ret->shi2_current_uses = info->shi2_current_uses;
+    if (!info->shi2_path) ret->shi2_path = NULL;
+    else
+    {
+        ret->shi2_path = ptr;
+        ptr += netapi_umbstowcs( info->shi2_path, ptr, len );
+    }
+    if (!info->shi2_passwd) ret->shi2_passwd = NULL;
+    else
+    {
+        ret->shi2_passwd = ptr;
+        ptr += netapi_umbstowcs( info->shi2_passwd, ptr, len );
+    }
+    *size = (char *)ptr - (char *)buffer;
+    return NERR_Success;
+}
+
+static NET_API_STATUS share_info_from_samba( unsigned int level, const unsigned char *buf, void *buffer, ULONG *size )
+{
+    switch (level)
+    {
+    case 2: return share_info_2_from_samba( buf, buffer, size );
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
+static NTSTATUS share_getinfo( void *args )
+{
+    const struct share_getinfo_params *params = args;
+    char *samba_server = NULL, *samba_share;
+    unsigned char *samba_buffer = NULL;
+    NET_API_STATUS status;
+
+    if (!libnetapi_ctx) return ERROR_NOT_SUPPORTED;
+
+    if (params->server && !(samba_server = strdup_unixcp( params->server ))) return ERROR_OUTOFMEMORY;
+    if (!(samba_share = strdup_unixcp( params->share )))
+    {
+        free( samba_server );
+        return ERROR_OUTOFMEMORY;
+    }
+    status = pNetShareGetInfo( samba_server, samba_share, params->level, &samba_buffer );
+    free( samba_server );
+    free( samba_share );
+    if (!status)
+    {
+        status = share_info_from_samba( params->level, samba_buffer, params->buffer, params->size );
+        pNetApiBufferFree( samba_buffer );
+    }
+    return status;
+}
+
 struct wksta_info_100
 {
     unsigned int wki100_platform_id;
@@ -853,6 +945,7 @@ static NTSTATUS netapi_init( void *args )
     LOAD_FUNCPTR(NetServerGetInfo)
     LOAD_FUNCPTR(NetShareAdd)
     LOAD_FUNCPTR(NetShareDel)
+    LOAD_FUNCPTR(NetShareGetInfo)
     LOAD_FUNCPTR(NetWkstaGetInfo)
 #undef LOAD_FUNCPTR
 
@@ -981,6 +1074,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     server_getinfo,
     share_add,
     share_del,
+    share_getinfo,
     wksta_getinfo,
     change_password,
 };
@@ -1212,6 +1306,57 @@ static NTSTATUS wow64_share_del( void *args )
     return share_del( &params );
 }
 
+static NTSTATUS create_share_info32( unsigned int level, void *buffer )
+{
+    switch (level)
+    {
+    case 2:
+    {
+        struct share_info_2_32 *si32 = buffer;
+        struct share_info_2 *si = buffer;
+
+        si32->shi2_netname = PtrToUlong( si->shi2_netname );
+        si32->shi2_type = si->shi2_type;
+        si32->shi2_remark = PtrToUlong( si->shi2_remark );
+        si32->shi2_permissions = si->shi2_permissions;
+        si32->shi2_max_uses = si->shi2_max_uses;
+        si32->shi2_current_uses = si->shi2_current_uses;
+        si32->shi2_path = PtrToUlong( si->shi2_path );
+        si32->shi2_passwd = PtrToUlong( si->shi2_passwd );
+        return STATUS_SUCCESS;
+    }
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
+static NTSTATUS wow64_share_getinfo( void *args )
+{
+    struct
+    {
+        PTR32 server;
+        PTR32 share;
+        DWORD level;
+        PTR32 buffer;
+        PTR32 size;
+    } const *params32 = args;
+
+    struct share_getinfo_params params =
+    {
+        ULongToPtr(params32->server),
+        ULongToPtr(params32->share),
+        params32->level,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->size)
+    };
+    NTSTATUS status;
+
+    status = share_getinfo( &params );
+    if (!status) status = create_share_info32( params.level, params.buffer );
+    return status;
+}
+
 struct wksta_info_100_32
 {
     unsigned int wki100_platform_id;
@@ -1294,6 +1439,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_server_getinfo,
     wow64_share_add,
     wow64_share_del,
+    wow64_share_getinfo,
     wow64_wksta_getinfo,
     wow64_change_password,
 };
