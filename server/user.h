@@ -90,7 +90,7 @@ struct desktop
 
 /* user handles functions */
 
-extern user_handle_t alloc_user_handle( void *ptr, unsigned short type );
+extern user_handle_t alloc_user_handle( void *ptr, volatile void *shared, unsigned short type );
 extern void *get_user_object( user_handle_t handle, unsigned short type );
 extern void *get_user_object_handle( user_handle_t *handle, unsigned short type );
 extern user_handle_t get_user_full_handle( user_handle_t handle );

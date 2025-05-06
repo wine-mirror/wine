@@ -1009,11 +1009,17 @@ typedef volatile struct
     int                  keystate_lock;    /* keystate is locked */
 } input_shm_t;
 
+typedef volatile struct
+{
+    int placeholder;
+} window_shm_t;
+
 typedef volatile union
 {
     desktop_shm_t        desktop;
     queue_shm_t          queue;
     input_shm_t          input;
+    window_shm_t         window;
 } object_shm_t;
 
 typedef volatile struct

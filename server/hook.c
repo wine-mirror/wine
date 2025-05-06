@@ -153,7 +153,7 @@ static struct hook *add_hook( struct desktop *desktop, struct process *process, 
     }
     if (!(hook = mem_alloc( sizeof(*hook) ))) return NULL;
 
-    if (!(hook->handle = alloc_user_handle( hook, NTUSER_OBJ_HOOK )))
+    if (!(hook->handle = alloc_user_handle( hook, NULL, NTUSER_OBJ_HOOK )))
     {
         free( hook );
         return NULL;

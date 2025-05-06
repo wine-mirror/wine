@@ -97,7 +97,7 @@ static BOOL read_acquire_user_entry( HANDLE handle, unsigned short type, const v
     dst->offset = src->offset;
     dst->tid = src->tid;
     dst->pid = src->pid;
-    dst->padding = src->padding;
+    dst->id = src->id;
     __SHARED_READ_FENCE;
     dst->uniq = ReadNoFence64( &src->uniq );
     return dst->uniq == uniq;

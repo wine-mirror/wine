@@ -51,7 +51,7 @@ struct user_entry
     ULONG64 offset;   /* shared user object offset */
     ULONG   tid;      /* owner thread id */
     ULONG   pid;      /* owner process id */
-    ULONG64 padding;
+    ULONG64 id;       /* shared user object id */
     union
     {
         struct

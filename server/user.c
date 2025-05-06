@@ -73,7 +73,7 @@ static user_handle_t entry_to_handle( const user_entry_t *entry )
     return (index << 1) + FIRST_USER_HANDLE + (entry->generation << 16);
 }
 
-static const user_entry_t *alloc_user_entry( unsigned short type )
+static const user_entry_t *alloc_user_entry( struct obj_locator locator, unsigned short type )
 {
     user_entry_t *entry, *handles = shared_session->user_entries;
     unsigned short generation;
@@ -93,10 +93,10 @@ static const user_entry_t *alloc_user_entry( unsigned short type )
 
     if (generation == 0 || generation == 0xffff) generation = 1;
 
-    entry->offset = -1;
+    entry->offset = locator.offset;
     entry->tid = get_thread_id( current );
     entry->pid = get_process_id( current->process );
-    entry->padding = -1;
+    entry->id = locator.id;
     WriteRelease64( &entry->uniq, MAKELONG(type, generation) );
     return entry;
 }
@@ -112,11 +112,13 @@ static void free_user_entry( user_entry_t *entry )
 }
 
 /* allocate a user handle for a given object */
-user_handle_t alloc_user_handle( void *ptr, unsigned short type )
+user_handle_t alloc_user_handle( void *ptr, volatile void *shared, unsigned short type )
 {
+    struct obj_locator locator = {0};
     const user_entry_t *entry;
 
-    if (!(entry = alloc_user_entry( type ))) return 0;
+    if (shared) locator = get_shared_object_locator( shared );
+    if (!(entry = alloc_user_entry( locator, type ))) return 0;
     set_server_object( entry, ptr );
     return entry_to_handle( entry );
 }
@@ -220,7 +222,7 @@ void free_process_user_handles( struct process *process )
 /* allocate an arbitrary user handle */
 DECL_HANDLER(alloc_user_handle)
 {
-    reply->handle = alloc_user_handle( (void *)-1 /* never used */, req->type );
+    reply->handle = alloc_user_handle( (void *)-1 /* never used */, NULL, req->type );
 }
 
 

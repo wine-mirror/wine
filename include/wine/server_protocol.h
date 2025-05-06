@@ -993,11 +993,17 @@ typedef volatile struct
     int                  keystate_lock;
 } input_shm_t;
 
+typedef volatile struct
+{
+    int placeholder;
+} window_shm_t;
+
 typedef volatile union
 {
     desktop_shm_t        desktop;
     queue_shm_t          queue;
     input_shm_t          input;
+    window_shm_t         window;
 } object_shm_t;
 
 typedef volatile struct
@@ -6806,6 +6812,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 871
+#define SERVER_PROTOCOL_VERSION 872
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
