@@ -375,6 +375,7 @@ sync_test("builtin_obj", function() {
         ok(!(f.apply instanceof Function), "f.apply instance of Function");
         ok(!(f.call instanceof Function), "f.call instance of Function");
         ok(!("arguments" in f), "arguments in f");
+        ok(!("caller" in f), "caller in f");
         ok(!("length" in f), "length in f");
         e = 0;
         try {
@@ -393,6 +394,9 @@ sync_test("builtin_obj", function() {
         ok(e === "[object Window]", "window.toString with null context = " + e);
         e = window.toString.call(external.nullDisp);
         ok(e === "[object Window]", "window.toString with nullDisp context = " + e);
+
+        test_own_props(f, "createElement", [ "arguments", "caller", "prototype" ], [ "caller", "prototype" ]);
+        ok(f.arguments === null, "createElement arguments = " + f.arguments);
     }
 
     e = 0;
@@ -4038,6 +4042,7 @@ sync_test("constructors", function() {
     }catch(e) {
         ok(e.number === 0x0ffff - 0x80000000, "new XMLHttpRequest.create() threw " + e.number);
     }
+    test_own_props(XMLHttpRequest.create, "XMLHttpRequest.create", [ "arguments", "caller", "prototype" ], [ "arguments", "caller", "prototype" ]);
 
     r = Object.getOwnPropertyDescriptor(HTMLMetaElement, "prototype");
     ok(r.value === HTMLMetaElement.prototype, "HTMLMetaElement.prototype value = " + r.value);

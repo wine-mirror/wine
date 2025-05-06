@@ -976,10 +976,16 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
     return S_OK;
 }
 
+static const builtin_prop_t HostFunction_props[] = {
+    {L"arguments",           NULL, 0,                        Function_get_arguments},
+};
+
 static const builtin_info_t HostFunction_info = {
     .class       = JSCLASS_FUNCTION,
     .call        = Function_value,
     .destructor  = Function_destructor,
+    .props_cnt   = ARRAY_SIZE(HostFunction_props),
+    .props       = HostFunction_props,
     .gc_traverse = Function_gc_traverse
 };
 
