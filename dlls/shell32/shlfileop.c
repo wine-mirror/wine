@@ -921,7 +921,6 @@ typedef struct
     LPWSTR szFilename;
     LPWSTR szFullPath;
     BOOL bFromWildcard;
-    BOOL bFromRelative;
     BOOL bExists;
 } FILE_ENTRY;
 
@@ -945,7 +944,7 @@ static inline void grow_list(FILE_LIST *list)
 }
 
 static void file_entry_init(FILE_ENTRY *file_entry,
-        const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
+        const WCHAR *file_name, DWORD attributes, BOOL from_wildcard)
 {
     size_t file_name_len = wcslen(file_name) + 1;
     const WCHAR *ptr;
@@ -966,7 +965,6 @@ static void file_entry_init(FILE_ENTRY *file_entry,
     }
 
     file_entry->attributes = attributes;
-    file_entry->bFromRelative = from_relative;
     file_entry->bFromWildcard = from_wildcard;
     file_entry->bExists = (attributes != INVALID_FILE_ATTRIBUTES);
 }
@@ -984,7 +982,7 @@ static void file_entry_destroy(FILE_ENTRY *file_entry)
 }
 
 static void file_list_add_entry(FILE_LIST *file_list,
-        const WCHAR *file_name, DWORD attributes, BOOL from_relative, BOOL from_wildcard)
+        const WCHAR *file_name, DWORD attributes, BOOL from_wildcard)
 {
     FILE_ENTRY *file_entry;
 
@@ -992,7 +990,7 @@ static void file_list_add_entry(FILE_LIST *file_list,
         grow_list(file_list);
     file_entry = &file_list->feFiles[file_list->dwNumFiles++];
 
-    file_entry_init(file_entry, file_name, attributes, from_relative, from_wildcard);
+    file_entry_init(file_entry, file_name, attributes, from_wildcard);
 
     if (IsAttribDir(attributes))
         file_list->bAnyDirectories = TRUE;
@@ -1032,7 +1030,7 @@ static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
     return szFullPath;
 }
 
-static void parse_wildcard_files(FILE_LIST *file_list, LPCWSTR szFile, BOOL from_relative)
+static void parse_wildcard_files(FILE_LIST *file_list, LPCWSTR szFile)
 {
     WIN32_FIND_DATAW wfd;
     HANDLE hFile = FindFirstFileW(szFile, &wfd);
@@ -1045,7 +1043,7 @@ static void parse_wildcard_files(FILE_LIST *file_list, LPCWSTR szFile, BOOL from
     {
         if (IsDotDir(wfd.cFileName)) continue;
         szFullPath = wildcard_to_file(szFile, wfd.cFileName);
-        file_list_add_entry(file_list, szFullPath, wfd.dwFileAttributes, from_relative, TRUE);
+        file_list_add_entry(file_list, szFullPath, wfd.dwFileAttributes, TRUE);
         free(szFullPath);
     }
 
@@ -1076,10 +1074,10 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
 
     while (*ptr)
     {
-        BOOL from_relative = PathIsRelativeW(ptr), from_wildcard = !!wcspbrk(ptr, L"*?");
+        BOOL from_wildcard = !!wcspbrk(ptr, L"*?");
 
         /* change relative to absolute path */
-        if (from_relative)
+        if (PathIsRelativeW(ptr))
         {
             GetCurrentDirectoryW(MAX_PATH, szCurFile);
             PathCombineW(szCurFile, szCurFile, ptr);
@@ -1093,9 +1091,9 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
 
         /* parse wildcard files if they are in the filename */
         if (from_wildcard && parse_wildcard)
-            parse_wildcard_files(flList, szCurFile, from_relative);
+            parse_wildcard_files(flList, szCurFile);
         else
-            file_list_add_entry(flList, szCurFile, GetFileAttributesW(szCurFile), from_relative, from_wildcard);
+            file_list_add_entry(flList, szCurFile, GetFileAttributesW(szCurFile), from_wildcard);
 
         /* advance to the next string */
         ptr += lstrlenW(ptr) + 1;
@@ -1153,8 +1151,8 @@ static DWORD copy_dir(FILE_OPERATION *op, const WCHAR *dir, const WCHAR *target)
         return ERROR_SUCCESS;
 
     PathCombineW(buffer, dir, L"*.*");
-    file_entry_init(&from_dir, buffer, INVALID_FILE_ATTRIBUTES, FALSE, TRUE);
-    file_entry_init(&to_dir, target, GetFileAttributesW(target), FALSE, FALSE);
+    file_entry_init(&from_dir, buffer, INVALID_FILE_ATTRIBUTES, TRUE);
+    file_entry_init(&to_dir, target, GetFileAttributesW(target), FALSE);
 
     ret = do_copy(op, &from_dir, &to_dir, TRUE);
 
@@ -1236,7 +1234,7 @@ static DWORD copy_files(FILE_OPERATION *op, const FILE_LIST *from, FILE_LIST *to
             {
                 WCHAR buffer[MAX_PATH];
                 GetCurrentDirectoryW(MAX_PATH, buffer);
-                file_entry_init(&current, buffer, GetFileAttributesW(buffer), FALSE, FALSE);
+                file_entry_init(&current, buffer, GetFileAttributesW(buffer), FALSE);
             }
             target = &current;
         }
