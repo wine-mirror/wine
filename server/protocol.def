@@ -1023,6 +1023,11 @@ typedef volatile struct
     object_shm_t         shm;              /* object shared data */
 } shared_object_t;
 
+typedef volatile struct
+{
+    unsigned __int64 placeholder;
+} session_shm_t;
+
 struct obj_locator
 {
     object_id_t          id;               /* object unique id, object data is valid if != 0 */

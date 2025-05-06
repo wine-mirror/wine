@@ -249,6 +249,7 @@ struct session
     object_id_t last_object_id;
 };
 
+session_shm_t *shared_session;
 static struct mapping *session_mapping;
 static struct session session =
 {
@@ -1303,7 +1304,7 @@ struct mapping *create_session_mapping( struct object *root, const struct unicod
                                         unsigned int attr, const struct security_descriptor *sd )
 {
     static const unsigned int access = FILE_READ_DATA | FILE_WRITE_DATA;
-    size_t size = max( sizeof(shared_object_t) * 512, 0x10000 );
+    size_t size = max( sizeof(*shared_session) + sizeof(object_shm_t) * 512, 0x10000 );
 
     size = round_size( size, host_page_mask );
     return create_mapping( root, name, attr, size, SEC_COMMIT, 0, access, sd );
@@ -1325,9 +1326,10 @@ void set_session_mapping( struct mapping *mapping )
 
     block->data = tmp;
     block->offset = 0;
-    block->used_size = 0;
+    block->used_size = sizeof(*shared_session);
     block->block_size = size;
 
+    shared_session = tmp;
     session_mapping = mapping;
     list_add_tail( &session.blocks, &block->entry );
 }

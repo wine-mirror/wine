@@ -36,6 +36,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(class);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 
+SYSTEM_BASIC_INFORMATION system_info;
+
 #define MAX_WINPROCS  4096
 #define WINPROC_PROC16  ((void *)1)  /* placeholder for 16-bit window procs */
 
@@ -248,6 +250,9 @@ DLGPROC get_dialog_proc( DLGPROC ret, BOOL ansi )
 
 static void init_user(void)
 {
+    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
+
+    shared_session_init();
     gdi_init();
     sysparams_init();
     winstation_init();

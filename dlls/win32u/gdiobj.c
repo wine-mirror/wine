@@ -48,7 +48,6 @@ static GDI_SHARED_MEMORY *gdi_shared;
 static GDI_HANDLE_ENTRY *next_free;
 static GDI_HANDLE_ENTRY *next_unused;
 static LONG debug_count;
-SYSTEM_BASIC_INFORMATION system_info;
 
 static inline HGDIOBJ entry_to_handle( GDI_HANDLE_ENTRY *entry )
 {
@@ -1040,7 +1039,6 @@ void gdi_init(void)
     pthread_mutex_init( &gdi_lock, &attr );
     pthread_mutexattr_destroy( &attr );
 
-    NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
     init_gdi_shared();
     if (!gdi_shared) return;
 

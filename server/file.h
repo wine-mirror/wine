@@ -193,6 +193,7 @@ extern struct mapping *create_session_mapping( struct object *root, const struct
                                                unsigned int attr, const struct security_descriptor *sd );
 extern void set_session_mapping( struct mapping *mapping );
 
+extern session_shm_t *shared_session;
 extern volatile void *alloc_shared_object(void);
 extern void free_shared_object( volatile void *object_shm );
 extern void invalidate_shared_object( volatile void *object_shm );

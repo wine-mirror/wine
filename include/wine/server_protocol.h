@@ -1007,6 +1007,11 @@ typedef volatile struct
     object_shm_t         shm;
 } shared_object_t;
 
+typedef volatile struct
+{
+    unsigned __int64 placeholder;
+} session_shm_t;
+
 struct obj_locator
 {
     object_id_t          id;
@@ -6805,6 +6810,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 866
+#define SERVER_PROTOCOL_VERSION 867
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

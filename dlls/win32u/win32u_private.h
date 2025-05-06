@@ -218,6 +218,7 @@ struct object_lock
  * The data read from the objects may be transient and no logic should be executed based
  * on it, within the loop, or after, unless the function has returned STATUS_SUCCESS.
  */
+extern const session_shm_t *shared_session;
 extern NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **desktop_shm );
 extern NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_shm );
 extern NTSTATUS get_shared_input( UINT tid, struct object_lock *lock, const input_shm_t **input_shm );
@@ -279,6 +280,8 @@ static inline void release_win_ptr( struct tagWND *ptr )
     user_unlock();
 }
 
+extern SYSTEM_BASIC_INFORMATION system_info;
+extern void shared_session_init(void);
 extern void gdi_init(void);
 extern void winstation_init(void);
 extern void sysparams_init(void);
