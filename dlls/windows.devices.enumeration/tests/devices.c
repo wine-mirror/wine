@@ -462,7 +462,7 @@ static void test_DeviceInformation( void )
     IDeviceWatcher_Release( device_watcher );
 
     hr = IDeviceInformationStatics_CreateWatcher( device_info_statics, &device_watcher );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
 
     if (device_watcher)
     {

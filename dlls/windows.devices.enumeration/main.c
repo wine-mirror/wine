@@ -439,8 +439,8 @@ static HRESULT WINAPI device_statics_FindAllAsyncAqsFilterAndAdditionalPropertie
 
 static HRESULT WINAPI device_statics_CreateWatcher( IDeviceInformationStatics *iface, IDeviceWatcher **watcher )
 {
-    FIXME( "iface %p, watcher %p stub!\n", iface, watcher );
-    return E_NOTIMPL;
+    TRACE( "iface %p, watcher %p\n", iface, watcher );
+    return IDeviceInformationStatics_CreateWatcherAqsFilter( iface, NULL, watcher );
 }
 
 static HRESULT WINAPI device_statics_CreateWatcherDeviceClass( IDeviceInformationStatics *iface, DeviceClass class, IDeviceWatcher **watcher )
