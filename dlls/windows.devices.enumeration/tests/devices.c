@@ -470,11 +470,11 @@ static void test_DeviceInformation( void )
         hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
         ok( hr == S_OK, "got hr %#lx\n", hr );
         hr = IDeviceWatcher_add_EnumerationCompleted( device_watcher, (void *)&enumerated_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &enumerated_token );
-        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
 
         hr = IDeviceWatcher_Start( device_watcher );
         ok( hr == S_OK, "got hr %#lx\n", hr );
-        todo_wine ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
+        ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
         todo_wine ok( added_handler.devices_added > 0, "devices_added should be greater than 0\n" );
         hr = IDeviceWatcher_get_Status( device_watcher, &status );
         ok( hr == S_OK, "got hr %#lx\n", hr );
