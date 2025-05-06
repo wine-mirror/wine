@@ -40,6 +40,7 @@
 #include "xdg-toplevel-icon-v1-client-protocol.h"
 #include "pointer-warp-v1-client-protocol.h"
 #include "alpha-modifier-v1-client-protocol.h"
+#include "fractional-scale-v1-client-protocol.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -173,6 +174,7 @@ struct wayland
     struct wl_shm *wl_shm;
     struct wp_viewporter *wp_viewporter;
     struct wl_subcompositor *wl_subcompositor;
+    struct wp_fractional_scale_manager_v1 *wp_fractional_scale_manager_v1;
     struct zwp_pointer_constraints_v1 *zwp_pointer_constraints_v1;
     struct zwp_relative_pointer_manager_v1 *zwp_relative_pointer_manager_v1;
     struct zwp_text_input_manager_v3 *zwp_text_input_manager_v3;
@@ -271,6 +273,7 @@ struct wayland_surface
 
     struct wl_surface *wl_surface;
     struct wp_viewport *wp_viewport;
+    struct wp_fractional_scale_v1 *wp_fractional_scale_v1;
     struct wayland_shm_buffer *small_icon_buffer;
     struct wayland_shm_buffer *big_icon_buffer;
 

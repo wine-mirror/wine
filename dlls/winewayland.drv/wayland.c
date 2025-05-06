@@ -210,6 +210,11 @@ static void registry_handle_global(void *data, struct wl_registry *registry,
         process_wayland.wp_alpha_modifier_v1 =
             wl_registry_bind(registry, id, &wp_alpha_modifier_v1_interface, 1);
     }
+    else if (strcmp(interface, "wp_fractional_scale_manager_v1") == 0)
+    {
+        process_wayland.wp_fractional_scale_manager_v1 =
+            wl_registry_bind(registry, id, &wp_fractional_scale_manager_v1_interface, 1);
+    }
 }
 
 static void registry_handle_global_remove(void *data, struct wl_registry *registry,
@@ -342,6 +347,9 @@ BOOL wayland_process_init(void)
 
     if (!process_wayland.xdg_toplevel_icon_manager_v1)
         ERR("Wayland compositor doesn't support xdg_toplevel_icon_manager_v1 (window icons will not be supported)\n");
+
+    if (!process_wayland.wp_fractional_scale_manager_v1)
+        ERR("Wayland compositor doesn't support wp_fractional_scale_manager_v1 (fractional scaling will be broken)\n");
 
     process_wayland.initialized = TRUE;
 
