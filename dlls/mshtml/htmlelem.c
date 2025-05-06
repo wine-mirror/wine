@@ -7761,7 +7761,6 @@ typedef struct {
 
     LONG ref;
 
-    ULONG iter;
     DISPID iter_dispid;
     HTMLAttributeCollection *col;
 } HTMLAttributeCollectionEnum;
@@ -7846,7 +7845,6 @@ static HRESULT WINAPI HTMLAttributeCollectionEnum_Next(IEnumVARIANT *iface, ULON
         V_DISPATCH(&rgVar[i]) = (IDispatch*)&attr->IHTMLDOMAttribute_iface;
     }
 
-    This->iter += i;
     This->iter_dispid = dispid;
     if(pCeltFetched)
         *pCeltFetched = i;
@@ -7876,7 +7874,6 @@ static HRESULT WINAPI HTMLAttributeCollectionEnum_Skip(IEnumVARIANT *iface, ULON
         hres = get_attr_dispid_by_relative_idx(This->col, &rel_index, This->iter_dispid, &dispid);
         if(FAILED(hres))
             return hres;
-        This->iter += remaining;
         This->iter_dispid = dispid;
     }
     return celt > remaining ? S_FALSE : S_OK;
@@ -7888,7 +7885,6 @@ static HRESULT WINAPI HTMLAttributeCollectionEnum_Reset(IEnumVARIANT *iface)
 
     TRACE("(%p)->()\n", This);
 
-    This->iter = 0;
     This->iter_dispid = DISPID_STARTENUM;
     return S_OK;
 }
@@ -7944,7 +7940,6 @@ static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection 
 
     ret->IEnumVARIANT_iface.lpVtbl = &HTMLAttributeCollectionEnumVtbl;
     ret->ref = 1;
-    ret->iter = 0;
     ret->iter_dispid = DISPID_STARTENUM;
 
     HTMLAttributeCollection_AddRef(&This->IHTMLAttributeCollection_iface);
