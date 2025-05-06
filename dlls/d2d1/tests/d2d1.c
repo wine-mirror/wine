@@ -15715,6 +15715,52 @@ static void test_get_dxgi_device(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_no_target(BOOL d3d11)
+{
+    ID2D1DeviceContext *context;
+    D2D1_MATRIX_3X2_F matrix;
+    IDXGIDevice *dxgi_device;
+    ID2D1Device *device;
+    D2D1_TAG t1, t2;
+    HRESULT hr;
+
+    if (!pD2D1CreateDevice)
+    {
+        win_skip("D2D1CreateDevice() is unavailable.\n");
+        return;
+    }
+
+    dxgi_device = create_device(d3d11);
+    ok(!!dxgi_device, "Failed to create device.\n");
+
+    hr = pD2D1CreateDevice(dxgi_device, NULL, &device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Device_CreateDeviceContext(device, D2D1_DEVICE_CONTEXT_OPTIONS_NONE, &context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Clear method */
+    ID2D1DeviceContext_BeginDraw(context);
+
+    set_matrix_identity(&matrix);
+    ID2D1DeviceContext_SetTags(context, 0x10, 0x10);
+    ID2D1DeviceContext_SetTransform(context, &matrix);
+
+    ID2D1DeviceContext_SetTags(context, 0x10, 0x20);
+    ID2D1DeviceContext_Clear(context, 0);
+
+    ID2D1DeviceContext_SetTags(context, 0x10, 0x30);
+    ID2D1DeviceContext_Clear(context, 0);
+
+    hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(t1 == 0x10 && t2 == 0x20, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    ID2D1DeviceContext_Release(context);
+    ID2D1Device_Release(device);
+    IDXGIDevice_Release(dxgi_device);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -15812,6 +15858,7 @@ START_TEST(d2d1)
     queue_test(test_wic_target_format);
     queue_test(test_effect_blob_property);
     queue_test(test_get_dxgi_device);
+    queue_test(test_no_target);
 
     run_queued_tests();
 }

@@ -1858,6 +1858,15 @@ static void STDMETHODCALLTYPE d2d_device_context_Clear(ID2D1DeviceContext6 *ifac
 
     TRACE("iface %p, colour %p.\n", iface, colour);
 
+    if (FAILED(context->error.code))
+        return;
+
+    if (context->target.type == D2D_TARGET_UNKNOWN)
+    {
+        d2d_device_context_set_error(context, D2DERR_WRONG_STATE);
+        return;
+    }
+
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         d2d_command_list_clear(context->target.command_list, colour);
