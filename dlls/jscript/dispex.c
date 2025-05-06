@@ -659,6 +659,8 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
             TRACE("no prop_put\n");
             return S_OK;
         }
+        if(!(prop->flags & PROPF_WRITABLE))
+            return S_OK;
         hres = This->builtin_info->prop_put(This, prop->u.id, val);
         if(hres != S_FALSE)
             return hres;

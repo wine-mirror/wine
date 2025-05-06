@@ -4012,7 +4012,7 @@ sync_test("prototype props", function() {
 });
 
 sync_test("constructors", function() {
-    var v = document.documentMode, i, r;
+    var v = document.documentMode, i, r, old;
     if(v < 9)
         return;
 
@@ -4038,4 +4038,34 @@ sync_test("constructors", function() {
     }catch(e) {
         ok(e.number === 0x0ffff - 0x80000000, "new XMLHttpRequest.create() threw " + e.number);
     }
+
+    r = Object.getOwnPropertyDescriptor(HTMLMetaElement, "prototype");
+    ok(r.value === HTMLMetaElement.prototype, "HTMLMetaElement.prototype value = " + r.value);
+    ok(!("get" in r), "HTMLMetaElement.prototype has getter");
+    ok(!("set" in r), "HTMLMetaElement.prototype has setter");
+    ok(r.writable === false, "HTMLMetaElement.prototype writable = " + r.writable);
+    ok(r.enumerable === false, "HTMLMetaElement.prototype enumerable = " + r.enumerable);
+    ok(r.configurable === false, "HTMLMetaElement.prototype configurable = " + r.configurable);
+
+    old = HTMLMetaElement.prototype;
+    HTMLMetaElement.prototype = Object.prototype;
+    ok(HTMLMetaElement.prototype === old, "HTMLMetaElement.prototype = " + HTMLMetaElement.prototype);
+
+    r = (delete HTMLMetaElement.prototype);
+    ok(r === false, "delete HTMLMetaElement.prototype returned " + r);
+    ok(HTMLMetaElement.hasOwnProperty("prototype"), "prototype not a prop anymore of HTMLMetaElement");
+
+    old = window.HTMLMetaElement;
+    r = (delete window.HTMLMetaElement);
+    ok(r === true, "delete HTMLMetaElement returned " + r);
+    todo_wine.
+    ok(!window.hasOwnProperty("HTMLMetaElement"), "HTMLMetaElement still a property of window");
+    window.HTMLMetaElement = old;
+
+    old = HTMLMetaElement.prototype.constructor;
+    r = (delete HTMLMetaElement.prototype.constructor);
+    ok(r === true, "delete HTMLMetaElement.prototype.constructor returned " + r);
+    todo_wine.
+    ok(!HTMLMetaElement.prototype.hasOwnProperty("constructor"), "constructor still a property of HTMLMetaElement.prototype");
+    HTMLMetaElement.prototype.constructor = old;
 });
