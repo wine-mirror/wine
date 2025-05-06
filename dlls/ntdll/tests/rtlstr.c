@@ -2548,6 +2548,7 @@ static void test_RtlUTF8ToUnicodeN(void)
     truncate_expect( 8, 4, STATUS_BUFFER_TOO_SMALL);
     truncate_expect( 9, 4, STATUS_BUFFER_TOO_SMALL);
     truncate_expect(10, 5, STATUS_SUCCESS);
+    unicode_expect(special_expected, 6, 3, special_string, 7, STATUS_BUFFER_TOO_SMALL);
 #undef truncate_expect
 
     /* conversion behavior with varying input length */
