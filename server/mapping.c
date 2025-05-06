@@ -1375,7 +1375,7 @@ static struct session_block *find_free_session_block( mem_size_t size )
     return grow_session_mapping( size );
 }
 
-const volatile void *alloc_shared_object(void)
+volatile void *alloc_shared_object(void)
 {
     struct session_object *object;
     struct list *ptr;
@@ -1407,7 +1407,7 @@ const volatile void *alloc_shared_object(void)
     return &object->obj.shm;
 }
 
-void free_shared_object( const volatile void *object_shm )
+void free_shared_object( volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
 
@@ -1422,7 +1422,7 @@ void free_shared_object( const volatile void *object_shm )
 }
 
 /* invalidate client caches for a shared object by giving it a new id */
-void invalidate_shared_object( const volatile void *object_shm )
+void invalidate_shared_object( volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
 
@@ -1433,7 +1433,7 @@ void invalidate_shared_object( const volatile void *object_shm )
     SHARED_WRITE_END;
 }
 
-struct obj_locator get_shared_object_locator( const volatile void *object_shm )
+struct obj_locator get_shared_object_locator( volatile void *object_shm )
 {
     struct session_object *object = CONTAINING_RECORD( object_shm, struct session_object, obj.shm );
     struct obj_locator locator = {.offset = object->offset, .id = object->obj.id};

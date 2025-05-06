@@ -193,15 +193,14 @@ extern struct mapping *create_session_mapping( struct object *root, const struct
                                                unsigned int attr, const struct security_descriptor *sd );
 extern void set_session_mapping( struct mapping *mapping );
 
-extern const volatile void *alloc_shared_object(void);
-extern void free_shared_object( const volatile void *object_shm );
-extern void invalidate_shared_object( const volatile void *object_shm );
-extern struct obj_locator get_shared_object_locator( const volatile void *object_shm );
+extern volatile void *alloc_shared_object(void);
+extern void free_shared_object( volatile void *object_shm );
+extern void invalidate_shared_object( volatile void *object_shm );
+extern struct obj_locator get_shared_object_locator( volatile void *object_shm );
 
 #define SHARED_WRITE_BEGIN( object_shm, type )                          \
     do {                                                                \
-        const type *__shared = (object_shm);                            \
-        type *shared = (type *)__shared;                                \
+        type *shared = (object_shm);                                    \
         shared_object_t *__obj = CONTAINING_RECORD( shared, shared_object_t, shm );  \
         LONG64 __seq = __obj->seq + 1, __end = __seq + 1;               \
         assert( (__seq & 1) != 0 );                                     \
