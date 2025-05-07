@@ -15717,10 +15717,13 @@ static void test_get_dxgi_device(BOOL d3d11)
 
 static void test_no_target(BOOL d3d11)
 {
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     ID2D1DeviceContext *context;
     D2D1_MATRIX_3X2_F matrix;
     IDXGIDevice *dxgi_device;
+    ID2D1Bitmap1 *bitmap;
     ID2D1Device *device;
+    D2D1_SIZE_U size;
     D2D1_TAG t1, t2;
     HRESULT hr;
 
@@ -15755,6 +15758,34 @@ static void test_no_target(BOOL d3d11)
     hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
     ok(t1 == 0x10 && t2 == 0x20, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    /* DrawBitmap method */
+    set_size_u(&size, 4, 4);
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+    bitmap_desc.colorContext = NULL;
+    hr = ID2D1DeviceContext_CreateBitmap(context, size, NULL, 0, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1DeviceContext_BeginDraw(context);
+
+    ID2D1DeviceContext_SetTags(context, 0x20, 0x10);
+    ID2D1DeviceContext_SetPrimitiveBlend(context, D2D1_PRIMITIVE_BLEND_SOURCE_OVER);
+
+    ID2D1DeviceContext_SetTags(context, 0x20, 0x20);
+    ID2D1DeviceContext_DrawBitmap(context, (ID2D1Bitmap *)bitmap, NULL, 1.0f, D2D1_INTERPOLATION_MODE_LINEAR, NULL, NULL);
+
+    ID2D1DeviceContext_SetTags(context, 0x20, 0x30);
+    ID2D1DeviceContext_DrawBitmap(context, (ID2D1Bitmap *)bitmap, NULL, 1.0f, D2D1_INTERPOLATION_MODE_LINEAR, NULL, NULL);
+
+    hr = ID2D1DeviceContext_EndDraw(context, &t1, &t2);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+    ok(t1 == 0x20 && t2 == 0x20, "Unexpected tags %s:%s.\n", wine_dbgstr_longlong(t1), wine_dbgstr_longlong(t2));
+
+    ID2D1Bitmap1_Release(bitmap);
 
     ID2D1DeviceContext_Release(context);
     ID2D1Device_Release(device);
