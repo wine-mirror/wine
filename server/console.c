@@ -211,6 +211,7 @@ struct font_info
 struct screen_buffer
 {
     struct object         obj;           /* object header */
+    struct event_sync    *sync;          /* sync object for wait/signal */
     struct list           entry;         /* entry in list of all screen buffers */
     struct console       *input;         /* associated console input */
     unsigned int          id;            /* buffer id */
@@ -220,8 +221,8 @@ struct screen_buffer
 
 static void screen_buffer_dump( struct object *obj, int verbose );
 static void screen_buffer_destroy( struct object *obj );
-static int screen_buffer_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *screen_buffer_get_fd( struct object *obj );
+static struct object *screen_buffer_get_sync( struct object *obj );
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
 
@@ -230,13 +231,13 @@ static const struct object_ops screen_buffer_ops =
     sizeof(struct screen_buffer),     /* size */
     &file_type,                       /* type */
     screen_buffer_dump,               /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    screen_buffer_signaled,           /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     screen_buffer_get_fd,             /* get_fd */
-    default_get_sync,                 /* get_sync */
+    screen_buffer_get_sync,           /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -644,9 +645,8 @@ static struct object *create_screen_buffer( struct console *console )
         return NULL;
     }
 
-    if (!(screen_buffer = alloc_object( &screen_buffer_ops )))
-        return NULL;
-
+    if (!(screen_buffer = alloc_object( &screen_buffer_ops ))) return NULL;
+    screen_buffer->sync  = (struct event_sync *)grab_object( console->sync );
     screen_buffer->id    = ++console->last_id;
     screen_buffer->input = console;
     init_async_queue( &screen_buffer->ioctl_q );
@@ -777,7 +777,11 @@ static void console_destroy( struct object *obj )
     LIST_FOR_EACH_ENTRY( output, &console->outputs, struct console_output, entry )
         output->console = NULL;
 
-    if (console->sync) release_object( console->sync );
+    if (console->sync)
+    {
+        reset_sync( console->sync );
+        release_object( console->sync );
+    }
 
     free_async_queue( &console->ioctl_q );
     free_async_queue( &console->read_q );
@@ -857,16 +861,9 @@ static void screen_buffer_destroy( struct object *obj )
             queue_host_ioctl( screen_buffer->input->server, IOCTL_CONDRV_CLOSE_OUTPUT,
                               screen_buffer->id, NULL, NULL );
     }
+    if (screen_buffer->sync) release_object( screen_buffer->sync );
     if (screen_buffer->fd) release_object( screen_buffer->fd );
     free_async_queue( &screen_buffer->ioctl_q );
-}
-
-static int screen_buffer_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct screen_buffer *screen_buffer = (struct screen_buffer *)obj;
-    assert( obj->ops == &screen_buffer_ops );
-    if (!screen_buffer->input) return 0;
-    return screen_buffer->input->signaled;
 }
 
 static struct object *screen_buffer_open_file( struct object *obj, unsigned int access,
@@ -883,6 +880,13 @@ static struct fd *screen_buffer_get_fd( struct object *obj )
         return (struct fd*)grab_object( screen_buffer->fd );
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return NULL;
+}
+
+static struct object *screen_buffer_get_sync( struct object *obj )
+{
+    struct screen_buffer *screen_buffer = (struct screen_buffer *)obj;
+    assert( obj->ops == &screen_buffer_ops );
+    return grab_object( screen_buffer->sync );
 }
 
 static void console_server_dump( struct object *obj, int verbose )
@@ -1567,7 +1571,6 @@ struct object *create_console_device( struct object *root, const struct unicode_
 DECL_HANDLER(get_next_console_request)
 {
     struct console_host_ioctl *ioctl = NULL, *next;
-    struct screen_buffer *screen_buffer;
     struct console_server *server;
     struct console_output *output;
     struct console_input *input;
@@ -1594,8 +1597,6 @@ DECL_HANDLER(get_next_console_request)
     {
         server->console->signaled = 1;
         signal_sync( server->console->sync );
-        LIST_FOR_EACH_ENTRY( screen_buffer, &server->console->screen_buffers, struct screen_buffer, entry )
-            wake_up( &screen_buffer->obj, 0 );
         LIST_FOR_EACH_ENTRY( input, &server->console->inputs, struct console_input, entry )
             wake_up( &input->obj, 0 );
         LIST_FOR_EACH_ENTRY( output, &server->console->outputs, struct console_output, entry )
