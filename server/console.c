@@ -54,7 +54,6 @@ struct console
 {
     struct object                obj;           /* object header */
     struct event_sync           *sync;          /* sync object for wait/signal */
-    int                          signaled;      /* is console signaled */
     struct thread               *renderer;      /* console renderer thread */
     struct screen_buffer        *active;        /* active screen buffer */
     struct console_server       *server;        /* console server object */
@@ -545,7 +544,6 @@ static struct object *create_console(void)
     if (!(console = alloc_object( &console_ops ))) return NULL;
     console->sync          = NULL;
     console->renderer      = NULL;
-    console->signaled      = 0;
     console->active        = NULL;
     console->server        = NULL;
     console->fd            = NULL;
@@ -1590,16 +1588,8 @@ DECL_HANDLER(get_next_console_request)
 
     if (!server->console->renderer) server->console->renderer = current;
 
-    if (!req->signal)
-    {
-        server->console->signaled = 0;
-        reset_sync( server->console->sync );
-    }
-    else if (!server->console->signaled)
-    {
-        server->console->signaled = 1;
-        signal_sync( server->console->sync );
-    }
+    if (!req->signal) reset_sync( server->console->sync );
+    else signal_sync( server->console->sync );
 
     if (req->read)
     {
