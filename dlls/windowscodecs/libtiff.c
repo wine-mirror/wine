@@ -215,6 +215,18 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
 
     TRACE("planar %u, photometric %u, samples %u, bps %u\n", planar, photometric, samples, bps);
 
+    if (photometric == PHOTOMETRIC_YCBCR)
+    {
+        uint16_t compress;
+
+        TIFFGetFieldDefaulted(tiff, TIFFTAG_COMPRESSION, &compress);
+        if (planar == PLANARCONFIG_CONTIG && compress == COMPRESSION_JPEG)
+        {
+            TIFFSetField(tiff, TIFFTAG_JPEGCOLORMODE, JPEGCOLORMODE_RGB);
+            photometric = PHOTOMETRIC_RGB;
+        }
+    }
+
     switch(photometric)
     {
     case 0: /* WhiteIsZero */
