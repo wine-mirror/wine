@@ -434,6 +434,11 @@ static BOOL is_hidraw_enabled(WORD vid, WORD pid, const USAGE_AND_PAGE *usages, 
         return FALSE;
     }
     if (usages->UsagePage != HID_USAGE_PAGE_GENERIC) return TRUE;
+    if (usages->Usage == HID_USAGE_GENERIC_MOUSE || usages->Usage == HID_USAGE_GENERIC_KEYBOARD)
+    {
+        WARN("Ignoring unsupported %04X:%04X hidraw mouse/keyboard\n", vid, pid);
+        return FALSE;
+    }
     if (usages->Usage != HID_USAGE_GENERIC_GAMEPAD && usages->Usage != HID_USAGE_GENERIC_JOYSTICK) return TRUE;
 
     if (!check_bus_option(L"Enable SDL", 1) && check_bus_option(L"DisableInput", 0))
