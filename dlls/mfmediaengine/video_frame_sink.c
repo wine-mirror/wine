@@ -1012,7 +1012,8 @@ static HRESULT video_frame_sink_set_state(struct video_frame_sink *sink, enum si
                 video_frame_sink_set_flag(sink, FLAGS_FIRST_FRAME, FALSE);
             }
 
-            if (state == SINK_STATE_RUNNING && sink->state != SINK_STATE_RUNNING)
+            if (state == SINK_STATE_RUNNING && (sink->state == SINK_STATE_STOPPED || sink->state == SINK_STATE_PAUSED ||
+                    (sink->state == SINK_STATE_RUNNING && offset != PRESENTATION_CURRENT_POSITION)))
                 video_frame_sink_stream_request_sample(sink);
 
             if (state != sink->state || state != SINK_STATE_PAUSED)
