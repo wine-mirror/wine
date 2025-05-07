@@ -2598,9 +2598,9 @@ HKLM,"System\CurrentControlSet\Services\Winsock2\Parameters\Protocol_Catalog9\Ca
 HKLM,%CurrentVersionNT%,"CurrentVersion",2,"6.3"
 HKLM,%CurrentVersionNT%,"CurrentMajorVersionNumber",0x10003,10
 HKLM,%CurrentVersionNT%,"CurrentMinorVersionNumber",0x10003,0
-HKLM,%CurrentVersionNT%,"CurrentBuild",2,"19043"
-HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"19043"
-HKLM,%CurrentVersionNT%,"UBR",0x10003,1165
+HKLM,%CurrentVersionNT%,"CurrentBuild",2,"19045"
+HKLM,%CurrentVersionNT%,"CurrentBuildNumber",2,"19045"
+HKLM,%CurrentVersionNT%,"UBR",0x10003,5796
 HKLM,%CurrentVersionNT%,"CurrentType",2,"Multiprocessor Free"
 HKLM,%CurrentVersionNT%,"DigitalProductId",1,00,00,00,00,00,00,00,00,00,00,00,\
 00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,\
