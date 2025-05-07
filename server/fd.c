@@ -157,6 +157,7 @@ struct fd
 };
 
 static void fd_dump( struct object *obj, int verbose );
+static int fd_signaled( struct object *obj, struct wait_queue_entry *entry );
 static void fd_destroy( struct object *obj );
 
 static const struct object_ops fd_ops =
@@ -164,10 +165,10 @@ static const struct object_ops fd_ops =
     sizeof(struct fd),        /* size */
     &no_type,                 /* type */
     fd_dump,                  /* dump */
-    no_add_queue,             /* add_queue */
-    NULL,                     /* remove_queue */
-    NULL,                     /* signaled */
-    NULL,                     /* satisfied */
+    add_queue,                /* add_queue */
+    remove_queue,             /* remove_queue */
+    fd_signaled,              /* signaled */
+    no_satisfied,             /* satisfied */
     no_signal,                /* signal */
     no_get_fd,                /* get_fd */
     default_get_sync,         /* get_sync */
@@ -2156,7 +2157,7 @@ void set_fd_signaled( struct fd *fd, int signaled )
 {
     if (fd->comp_flags & FILE_SKIP_SET_EVENT_ON_HANDLE) return;
     fd->signaled = signaled;
-    if (signaled) wake_up( fd->user, 0 );
+    if (signaled) wake_up( &fd->obj, 0 );
 }
 
 /* check if events are pending and if yes return which one(s) */
@@ -2173,13 +2174,20 @@ int check_fd_events( struct fd *fd, int events )
     return pfd.revents;
 }
 
-/* default signaled() routine for objects that poll() on an fd */
-int default_fd_signaled( struct object *obj, struct wait_queue_entry *entry )
+static int fd_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct fd *fd = (struct fd *)obj;
+    assert( obj->ops == &fd_ops );
+    return fd->signaled;
+}
+
+/* default get_sync() routine for objects that poll() on an fd */
+struct object *default_fd_get_sync( struct object *obj )
 {
     struct fd *fd = get_obj_fd( obj );
-    int ret = fd->signaled;
+    struct object *sync = get_obj_sync( &fd->obj );
     release_object( fd );
-    return ret;
+    return sync;
 }
 
 /* default get_full_name() routine for objects with an fd */
