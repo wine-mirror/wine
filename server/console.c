@@ -304,16 +304,17 @@ static const struct object_ops console_device_ops =
 struct console_input
 {
     struct object         obj;         /* object header */
+    struct event_sync    *sync;        /* sync object for wait/signal */
     struct fd            *fd;          /* pseudo-fd */
     struct list           entry;       /* entry in console->inputs */
     struct console       *console;     /* associated console at creation time */
 };
 
 static void console_input_dump( struct object *obj, int verbose );
-static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
                                                unsigned int sharing, unsigned int options );
 static struct fd *console_input_get_fd( struct object *obj );
+static struct object *console_input_get_sync( struct object *obj );
 static void console_input_destroy( struct object *obj );
 
 static const struct object_ops console_input_ops =
@@ -321,13 +322,13 @@ static const struct object_ops console_input_ops =
     sizeof(struct console_input),     /* size */
     &device_type,                     /* type */
     console_input_dump,               /* dump */
-    add_queue,                        /* add_queue */
-    remove_queue,                     /* remove_queue */
-    console_input_signaled,           /* signaled */
-    no_satisfied,                     /* satisfied */
+    NULL,                             /* add_queue */
+    NULL,                             /* remove_queue */
+    NULL,                             /* signaled */
+    NULL,                             /* satisfied */
     no_signal,                        /* signal */
     console_input_get_fd,             /* get_fd */
-    default_get_sync,                 /* get_sync */
+    console_input_get_sync,           /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -1350,6 +1351,7 @@ static struct object *console_device_lookup_name( struct object *obj, struct uni
 
         name->len = 0;
         if (!(console_input = alloc_object( &console_input_ops ))) return NULL;
+        console_input->sync = (struct event_sync *)grab_object( current->process->console->sync );
         console_input->fd = alloc_pseudo_fd( &console_input_fd_ops, &console_input->obj,
                                              FILE_SYNCHRONOUS_IO_NONALERT );
         if (!console_input->fd)
@@ -1436,19 +1438,18 @@ static void console_input_dump( struct object *obj, int verbose )
     fputs( "console Input device\n", stderr );
 }
 
-static int console_input_signaled( struct object *obj, struct wait_queue_entry *entry )
-{
-    struct console_input *console_input = (struct console_input *)obj;
-    assert( obj->ops == &console_input_ops );
-    if (!console_input->console) return 0;
-    return console_input->console->signaled;
-}
-
 static struct fd *console_input_get_fd( struct object *obj )
 {
     struct console_input *console_input = (struct console_input *)obj;
     assert( obj->ops == &console_input_ops );
     return (struct fd *)grab_object( console_input->fd );
+}
+
+static struct object *console_input_get_sync( struct object *obj )
+{
+    struct console_input *console_input = (struct console_input *)obj;
+    assert( obj->ops == &console_input_ops );
+    return grab_object( console_input->sync );
 }
 
 static struct object *console_input_open_file( struct object *obj, unsigned int access,
@@ -1464,6 +1465,7 @@ static void console_input_destroy( struct object *obj )
     assert( obj->ops == &console_input_ops );
     if (console_input->fd) release_object( console_input->fd );
     if (console_input->console) list_remove( &console_input->entry );
+    if (console_input->sync) release_object( console_input->sync );
 }
 
 static void console_input_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
@@ -1573,7 +1575,6 @@ DECL_HANDLER(get_next_console_request)
     struct console_host_ioctl *ioctl = NULL, *next;
     struct console_server *server;
     struct console_output *output;
-    struct console_input *input;
     struct iosb *iosb = NULL;
 
     server = (struct console_server *)get_handle_obj( current->process, req->handle, 0, &console_server_ops );
@@ -1597,8 +1598,6 @@ DECL_HANDLER(get_next_console_request)
     {
         server->console->signaled = 1;
         signal_sync( server->console->sync );
-        LIST_FOR_EACH_ENTRY( input, &server->console->inputs, struct console_input, entry )
-            wake_up( &input->obj, 0 );
         LIST_FOR_EACH_ENTRY( output, &server->console->outputs, struct console_output, entry )
             wake_up( &output->obj, 0 );
     }
