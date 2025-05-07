@@ -7656,7 +7656,6 @@ static HRESULT WINAPI test_transform_ProcessMessage(IMFTransform *iface, MFT_MES
         return S_OK;
 
     case MFT_MESSAGE_NOTIFY_START_OF_STREAM:
-        todo_wine_if(!expect_test_transform_ProcessMessage_START_OF_STREAM)
         CHECK_EXPECT(test_transform_ProcessMessage_START_OF_STREAM);
         add_object_state(&actual_object_state_record, MFT_START);
         return S_OK;
@@ -7960,7 +7959,6 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_stream_sink_Flush);
     CHECK_CALLED(test_transform_ProcessMessage_FLUSH);
 
-    todo_wine
     compare_object_states(&actual_object_state_record, &expected_seek_start_no_pending_request_records);
 
     /* Test a sample request only (i.e. with no sample delivery), then pause and then start with a seek */
@@ -8023,7 +8021,6 @@ static void test_media_session_seek(void)
     CHECK_CALLED(test_transform_ProcessOutput);
     CHECK_CALLED(test_media_stream_RequestSample);
 
-    todo_wine
     compare_object_states(&actual_object_state_record, &expected_seek_start_pending_request_records);
 
     IMFPresentationClock_RemoveClockStateSink(presentation_clock, &test_seek_clock_sink);
