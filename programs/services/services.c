@@ -172,7 +172,7 @@ static DWORD load_service_config(HKEY hKey, struct service_entry *entry)
     return ERROR_SUCCESS;
 }
 
-static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
+static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string, BOOL expand)
 {
     if (!string)
     {
@@ -184,7 +184,8 @@ static DWORD reg_set_string_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
         return ERROR_SUCCESS;
     }
 
-    return RegSetValueExW(hKey, value_name, 0, REG_SZ, (const BYTE*)string, sizeof(WCHAR)*(lstrlenW(string) + 1));
+    return RegSetValueExW(hKey, value_name, 0, expand ? REG_EXPAND_SZ : REG_SZ,
+            (const BYTE*)string, sizeof(WCHAR)*(lstrlenW(string) + 1));
 }
 
 static DWORD reg_set_multisz_value(HKEY hKey, LPCWSTR value_name, LPCWSTR string)
@@ -220,11 +221,11 @@ DWORD save_service_config(struct service_entry *entry)
     if (err != ERROR_SUCCESS)
         goto cleanup;
 
-    if ((err = reg_set_string_value(hKey, L"DisplayName", entry->config.lpDisplayName))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"ImagePath", entry->config.lpBinaryPathName))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"Group", entry->config.lpLoadOrderGroup))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"ObjectName", entry->config.lpServiceStartName))) goto cleanup;
-    if ((err = reg_set_string_value(hKey, L"Description", entry->description))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"DisplayName", entry->config.lpDisplayName, FALSE))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ImagePath", entry->config.lpBinaryPathName, TRUE))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Group", entry->config.lpLoadOrderGroup, FALSE))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"ObjectName", entry->config.lpServiceStartName, FALSE))) goto cleanup;
+    if ((err = reg_set_string_value(hKey, L"Description", entry->description, FALSE))) goto cleanup;
     if ((err = reg_set_multisz_value(hKey, L"DependOnService", entry->dependOnServices))) goto cleanup;
     if ((err = reg_set_multisz_value(hKey, L"DependOnGroup", entry->dependOnGroups))) goto cleanup;
     if ((err = reg_set_dword_value(hKey, L"Start", entry->config.dwStartType))) goto cleanup;
