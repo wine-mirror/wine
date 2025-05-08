@@ -105,7 +105,7 @@ msgstr "Подршка"
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
-#: programs/notepad/notepad.rc:124 programs/oleview/oleview.rc:161
+#: programs/notepad/notepad.rc:125 programs/oleview/oleview.rc:161
 #: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
 #: programs/progman/progman.rc:124 programs/progman/progman.rc:142
 #: programs/progman/progman.rc:158 programs/progman/progman.rc:180
@@ -210,7 +210,7 @@ msgstr "&Инсталирај"
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
-#: programs/notepad/notepad.rc:125 programs/notepad/notepad.rc:138
+#: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
 #: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
 #: programs/progman/progman.rc:143 programs/progman/progman.rc:159
@@ -308,7 +308,7 @@ msgstr "Извршне датотеке (*.exe)"
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
 #: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:199
-#: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
+#: programs/notepad/notepad.rc:82 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
 msgid "All files (*.*)"
@@ -476,7 +476,7 @@ msgstr "&Поништи"
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
 #: dlls/shell32/shell32.rc:125 programs/clock/clock.rc:44
-#: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:126
+#: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:127
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
 #: programs/progman/progman.rc:144 programs/progman/progman.rc:160
@@ -941,7 +941,7 @@ msgstr "&Усправно"
 msgid "L&eft:"
 msgstr "&Лево:"
 
-#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:119
+#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:120
 msgid "&Right:"
 msgstr "&Десно:"
 
@@ -949,7 +949,7 @@ msgstr "&Десно:"
 msgid "T&op:"
 msgstr "&Врх:"
 
-#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:121
+#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:122
 msgid "&Bottom:"
 msgstr "&Дно:"
 
@@ -3492,7 +3492,7 @@ msgstr ""
 msgid "I&ndex"
 msgstr "&Попис"
 
-#: dlls/hhctrl.ocx/hhctrl.rc:33 programs/notepad/notepad.rc:55
+#: dlls/hhctrl.ocx/hhctrl.rc:33
 msgid "&Search"
 msgstr "&Претрага"
 
@@ -3582,8 +3582,7 @@ msgstr "&Прозор"
 msgid "&Open..."
 msgstr "&Отвори..."
 
-#: dlls/ieframe/ieframe.rc:36 programs/notepad/notepad.rc:33
-#: programs/wordpad/wordpad.rc:34
+#: dlls/ieframe/ieframe.rc:36 programs/wordpad/wordpad.rc:34
 msgid "Save &as..."
 msgstr "Сачувај &као..."
 
@@ -14621,7 +14620,7 @@ msgstr "&Аналогни"
 msgid "Digi&tal"
 msgstr "&Дигитални"
 
-#: programs/clock/clock.rc:35 programs/notepad/notepad.rc:53
+#: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
 #: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
@@ -15927,6 +15926,12 @@ msgstr "&Отвори...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Сачувај\tCtrl+S"
 
+#: programs/notepad/notepad.rc:33
+#, fuzzy
+#| msgid "Save As..."
+msgid "Save &As..."
+msgstr "Сачувај као..."
+
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
 msgid "&Print...\tCtrl+P"
@@ -15956,40 +15961,53 @@ msgstr "&Умножи\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "&Налепи\tCtrl+V"
 
-#: programs/notepad/notepad.rc:47 programs/progman/progman.rc:37
-#: programs/regedit/regedit.rc:57 programs/regedit/regedit.rc:111
-#: programs/regedit/regedit.rc:139 programs/winefile/winefile.rc:32
-msgid "&Delete\tDel"
+#: programs/notepad/notepad.rc:47
+#, fuzzy
+#| msgid "&Delete\tDel"
+msgid "De&lete\tDel"
 msgstr "&Избриши\tDel"
 
-#: programs/notepad/notepad.rc:49
-msgid "Select &all\tCtrl+A"
-msgstr "Изабери &све\tCtrl+A"
+#: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
+#: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
+#, fuzzy
+msgid "&Find...\tCtrl+F"
+msgstr "&Штампај...\tCtrl+P"
 
 #: programs/notepad/notepad.rc:50
-msgid "&Time/Date\tF5"
-msgstr "&Време/датум\tF5"
+#, fuzzy
+#| msgid "&Find Next"
+msgid "Find &Next\tF3"
+msgstr "&Пронађи следеће"
 
-#: programs/notepad/notepad.rc:52
-msgid "&Wrap long lines"
-msgstr "&Преломи дуге линије"
-
-#: programs/notepad/notepad.rc:56
-msgid "&Search...\tCtrl+F"
-msgstr "&Пронађи...\tCtrl+F"
-
-#: programs/notepad/notepad.rc:57
-msgid "&Search next\tF3"
-msgstr "&Пронађи следеће\tF3"
-
-#: programs/notepad/notepad.rc:58 programs/wordpad/wordpad.rc:55
+#: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
 msgstr "&Замени...\tCtrl+H"
 
-#: programs/notepad/notepad.rc:59
+#: programs/notepad/notepad.rc:52
 #, fuzzy
 msgid "&Go To...\tCtrl+G"
 msgstr "&Ново\tCtrl+N"
+
+#: programs/notepad/notepad.rc:54
+#, fuzzy
+#| msgid "Select &all\tCtrl+A"
+msgid "Select &All\tCtrl+A"
+msgstr "Изабери &све\tCtrl+A"
+
+#: programs/notepad/notepad.rc:55
+#, fuzzy
+#| msgid "&Time/Date\tF5"
+msgid "Time/&Date\tF5"
+msgstr "&Време/датум\tF5"
+
+#: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
+#, fuzzy
+msgid "F&ormat"
+msgstr "Н&апред"
+
+#: programs/notepad/notepad.rc:58
+msgid "&Word Wrap"
+msgstr ""
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -16007,135 +16025,135 @@ msgstr ""
 "#-#-#-#-#  sr_RS@cyrillic.po (Wine)  #-#-#-#-#\n"
 "&Садржаји"
 
-#: programs/notepad/notepad.rc:67
+#: programs/notepad/notepad.rc:68
 msgid "&About Notepad"
 msgstr "&О Бележници"
 
-#: programs/notepad/notepad.rc:107
+#: programs/notepad/notepad.rc:108
 msgid "Page Setup"
 msgstr "Поставке стране"
 
-#: programs/notepad/notepad.rc:109
+#: programs/notepad/notepad.rc:110
 msgid "&Header:"
 msgstr "&Заглавље:"
 
-#: programs/notepad/notepad.rc:111
+#: programs/notepad/notepad.rc:112
 msgid "&Footer:"
 msgstr "&Поглавље:"
 
-#: programs/notepad/notepad.rc:114
+#: programs/notepad/notepad.rc:115
 #, fuzzy
 msgid "Margins (millimeters)"
 msgstr "&Маргине (у милиметрима):"
 
-#: programs/notepad/notepad.rc:115
+#: programs/notepad/notepad.rc:116
 msgid "&Left:"
 msgstr "&Лево:"
 
-#: programs/notepad/notepad.rc:117
+#: programs/notepad/notepad.rc:118
 msgid "&Top:"
 msgstr "&Врх:"
 
-#: programs/notepad/notepad.rc:132
+#: programs/notepad/notepad.rc:133
 msgid "Go To Line"
 msgstr ""
 
-#: programs/notepad/notepad.rc:134
+#: programs/notepad/notepad.rc:135
 msgid "&Line Number:"
 msgstr ""
 
-#: programs/notepad/notepad.rc:137
+#: programs/notepad/notepad.rc:138
 msgid "Go To"
 msgstr ""
 
-#: programs/notepad/notepad.rc:145
+#: programs/notepad/notepad.rc:146
 msgid "Encoding:"
 msgstr "Кодни распоред:"
 
-#: programs/notepad/notepad.rc:151 programs/wordpad/wordpad.rc:289
+#: programs/notepad/notepad.rc:152 programs/wordpad/wordpad.rc:289
 msgctxt "accelerator Select All"
 msgid "A"
 msgstr ""
 
-#: programs/notepad/notepad.rc:152 programs/wordpad/wordpad.rc:291
+#: programs/notepad/notepad.rc:153 programs/wordpad/wordpad.rc:291
 msgctxt "accelerator Copy"
 msgid "C"
 msgstr ""
 
-#: programs/notepad/notepad.rc:153 programs/regedit/regedit.rc:377
+#: programs/notepad/notepad.rc:154 programs/regedit/regedit.rc:377
 #: programs/wordpad/wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr "F"
 
-#: programs/notepad/notepad.rc:154 programs/wordpad/wordpad.rc:288
+#: programs/notepad/notepad.rc:155 programs/wordpad/wordpad.rc:288
 msgctxt "accelerator Replace"
 msgid "H"
 msgstr ""
 
-#: programs/notepad/notepad.rc:155 programs/wordpad/wordpad.rc:297
+#: programs/notepad/notepad.rc:156 programs/wordpad/wordpad.rc:297
 msgctxt "accelerator New"
 msgid "N"
 msgstr "N"
 
-#: programs/notepad/notepad.rc:156 programs/wordpad/wordpad.rc:298
+#: programs/notepad/notepad.rc:157 programs/wordpad/wordpad.rc:298
 msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: programs/notepad/notepad.rc:157 programs/regedit/regedit.rc:378
+#: programs/notepad/notepad.rc:158 programs/regedit/regedit.rc:378
 #: programs/wordpad/wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr ""
 
-#: programs/notepad/notepad.rc:158 programs/wordpad/wordpad.rc:299
+#: programs/notepad/notepad.rc:159 programs/wordpad/wordpad.rc:299
 msgctxt "accelerator Save"
 msgid "S"
 msgstr ""
 
-#: programs/notepad/notepad.rc:159
+#: programs/notepad/notepad.rc:160
 msgctxt "accelerator Paste"
 msgid "V"
 msgstr ""
 
-#: programs/notepad/notepad.rc:160 programs/wordpad/wordpad.rc:290
+#: programs/notepad/notepad.rc:161 programs/wordpad/wordpad.rc:290
 msgctxt "accelerator Cut"
 msgid "X"
 msgstr ""
 
-#: programs/notepad/notepad.rc:161 programs/wordpad/wordpad.rc:292
+#: programs/notepad/notepad.rc:162 programs/wordpad/wordpad.rc:292
 msgctxt "accelerator Undo"
 msgid "Z"
 msgstr ""
 
-#: programs/notepad/notepad.rc:162
+#: programs/notepad/notepad.rc:163
 msgctxt "accelerator GoTo"
 msgid "G"
 msgstr ""
 
-#: programs/notepad/notepad.rc:74
+#: programs/notepad/notepad.rc:75
 msgid "Page &p"
 msgstr "Страна &p"
 
-#: programs/notepad/notepad.rc:76
+#: programs/notepad/notepad.rc:77
 msgid "Notepad"
 msgstr "Бележница"
 
-#: programs/notepad/notepad.rc:77 programs/progman/progman.rc:64
+#: programs/notepad/notepad.rc:78 programs/progman/progman.rc:64
 #: programs/winhlp32/winhlp32.rc:82
 msgid "ERROR"
 msgstr "Грешка"
 
-#: programs/notepad/notepad.rc:79
+#: programs/notepad/notepad.rc:80
 msgid "Untitled"
 msgstr "Неименовано"
 
-#: programs/notepad/notepad.rc:82 programs/winedbg/winedbg.rc:42
+#: programs/notepad/notepad.rc:83 programs/winedbg/winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Текстуалне датотеке (*.txt)"
 
-#: programs/notepad/notepad.rc:85
+#: programs/notepad/notepad.rc:86
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
@@ -16145,7 +16163,7 @@ msgstr ""
 "\n"
 "Желите ли да направите нову датотеку?"
 
-#: programs/notepad/notepad.rc:87
+#: programs/notepad/notepad.rc:88
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -16155,24 +16173,24 @@ msgstr ""
 "\n"
 "Желите ли да сачувате измене?"
 
-#: programs/notepad/notepad.rc:88
+#: programs/notepad/notepad.rc:89
 msgid "'%s' could not be found."
 msgstr "Датотека „%s“ није пронађена."
 
-#: programs/notepad/notepad.rc:92
+#: programs/notepad/notepad.rc:93
 msgid "Unicode (UTF-16)"
 msgstr "Уникод (UTF-16)"
 
-#: programs/notepad/notepad.rc:93
+#: programs/notepad/notepad.rc:94
 msgid "Unicode (UTF-16 big-endian)"
 msgstr "Уникод (UTF-16 big-endian)"
 
-#: programs/notepad/notepad.rc:94
+#: programs/notepad/notepad.rc:95
 #, fuzzy
 msgid "Unicode (UTF-8)"
 msgstr "Уникод (UTF-16)"
 
-#: programs/notepad/notepad.rc:101
+#: programs/notepad/notepad.rc:102
 #, fuzzy
 msgid ""
 "%1\n"
@@ -16189,7 +16207,7 @@ msgstr ""
 "и изаберите једну од уникод опција у падајућем менију.\n"
 "Желите ли да наставите?"
 
-#: programs/notepad/notepad.rc:90
+#: programs/notepad/notepad.rc:91
 msgid "Ln %ld, Col %ld"
 msgstr ""
 
@@ -16562,6 +16580,12 @@ msgstr ""
 #, fuzzy
 msgid "&Copy...\tF8"
 msgstr "&Умножи"
+
+#: programs/progman/progman.rc:37 programs/regedit/regedit.rc:57
+#: programs/regedit/regedit.rc:111 programs/regedit/regedit.rc:139
+#: programs/winefile/winefile.rc:32
+msgid "&Delete\tDel"
+msgstr "&Избриши\tDel"
 
 #: programs/progman/progman.rc:38
 #, fuzzy
@@ -17221,12 +17245,6 @@ msgstr "Пр&еименуј"
 #: programs/regedit/regedit.rc:60 programs/regedit/regedit.rc:116
 msgid "&Copy Key Name"
 msgstr ""
-
-#: programs/regedit/regedit.rc:62 programs/regedit/regedit.rc:109
-#: programs/wordpad/wordpad.rc:53
-#, fuzzy
-msgid "&Find...\tCtrl+F"
-msgstr "&Штампај...\tCtrl+P"
 
 #: programs/regedit/regedit.rc:63
 msgid "Find Ne&xt\tF3"
@@ -20170,11 +20188,6 @@ msgstr ""
 #: programs/wordpad/wordpad.rc:80
 msgid "&Date and time..."
 msgstr ""
-
-#: programs/wordpad/wordpad.rc:82
-#, fuzzy
-msgid "F&ormat"
-msgstr "Н&апред"
 
 #: programs/wordpad/wordpad.rc:85
 #, fuzzy

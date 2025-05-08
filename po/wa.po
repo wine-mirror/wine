@@ -101,7 +101,7 @@ msgstr "Informåcion"
 #: dlls/user32/user32.rc:94 dlls/user32/user32.rc:109 dlls/user32/user32.rc:73
 #: dlls/wininet/wininet.rc:62 dlls/wininet/wininet.rc:82
 #: dlls/winspool.drv/winspool.rc:42 programs/net/net.rc:48
-#: programs/notepad/notepad.rc:124 programs/oleview/oleview.rc:161
+#: programs/notepad/notepad.rc:125 programs/oleview/oleview.rc:161
 #: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
 #: programs/progman/progman.rc:124 programs/progman/progman.rc:142
 #: programs/progman/progman.rc:158 programs/progman/progman.rc:180
@@ -203,7 +203,7 @@ msgstr "&Sicrîre..."
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:95 dlls/user32/user32.rc:110
 #: dlls/user32/user32.rc:74 dlls/wininet/wininet.rc:63
 #: dlls/wininet/wininet.rc:83 dlls/winspool.drv/winspool.rc:43
-#: programs/notepad/notepad.rc:125 programs/notepad/notepad.rc:138
+#: programs/notepad/notepad.rc:126 programs/notepad/notepad.rc:139
 #: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
 #: programs/progman/progman.rc:107 programs/progman/progman.rc:125
 #: programs/progman/progman.rc:143 programs/progman/progman.rc:159
@@ -285,7 +285,7 @@ msgstr ""
 
 #: dlls/appwiz.cpl/appwiz.rc:43 dlls/avifil32/avifil32.rc:33
 #: dlls/cryptui/cryptui.rc:83 dlls/shell32/shell32.rc:199
-#: programs/notepad/notepad.rc:81 programs/oleview/oleview.rc:103
+#: programs/notepad/notepad.rc:82 programs/oleview/oleview.rc:103
 #: programs/progman/progman.rc:82 programs/regedit/regedit.rc:230
 #: programs/winedbg/winedbg.rc:43 programs/winhlp32/winhlp32.rc:90
 msgid "All files (*.*)"
@@ -455,7 +455,7 @@ msgstr ""
 #: dlls/comdlg32/comdlg32.rc:531 dlls/ieframe/ieframe.rc:58
 #: dlls/msacm32/msacm32.rc:52 dlls/oledlg/oledlg.rc:96
 #: dlls/shell32/shell32.rc:125 programs/clock/clock.rc:44
-#: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:126
+#: programs/notepad/notepad.rc:65 programs/notepad/notepad.rc:127
 #: programs/oleview/oleview.rc:72 programs/progman/progman.rc:55
 #: programs/progman/progman.rc:108 programs/progman/progman.rc:126
 #: programs/progman/progman.rc:144 programs/progman/progman.rc:160
@@ -927,7 +927,7 @@ msgstr ""
 msgid "L&eft:"
 msgstr "&Hintche:"
 
-#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:119
+#: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:120
 msgid "&Right:"
 msgstr "&Droete:"
 
@@ -935,7 +935,7 @@ msgstr "&Droete:"
 msgid "T&op:"
 msgstr ""
 
-#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:121
+#: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:122
 msgid "&Bottom:"
 msgstr "&Bas:"
 
@@ -3434,7 +3434,7 @@ msgstr "Å&dvins"
 msgid "I&ndex"
 msgstr ""
 
-#: dlls/hhctrl.ocx/hhctrl.rc:33 programs/notepad/notepad.rc:55
+#: dlls/hhctrl.ocx/hhctrl.rc:33
 msgid "&Search"
 msgstr "C&werî"
 
@@ -3518,8 +3518,7 @@ msgstr ""
 msgid "&Open..."
 msgstr "&Drovî..."
 
-#: dlls/ieframe/ieframe.rc:36 programs/notepad/notepad.rc:33
-#: programs/wordpad/wordpad.rc:34
+#: dlls/ieframe/ieframe.rc:36 programs/wordpad/wordpad.rc:34
 msgid "Save &as..."
 msgstr "Schaper èt r&lomer..."
 
@@ -13993,7 +13992,7 @@ msgstr "&Analodjike"
 msgid "Digi&tal"
 msgstr "&Limerike"
 
-#: programs/clock/clock.rc:35 programs/notepad/notepad.rc:53
+#: programs/clock/clock.rc:35 programs/notepad/notepad.rc:59
 #: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 #, fuzzy
@@ -15238,6 +15237,12 @@ msgstr "&Drovî...\tCtrl+O"
 msgid "&Save\tCtrl+S"
 msgstr "&Schaper\tCtrl+S"
 
+#: programs/notepad/notepad.rc:33
+#, fuzzy
+#| msgid "Save As..."
+msgid "Save &As..."
+msgstr "Schaper èt rlomer..."
+
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
 msgid "&Print...\tCtrl+P"
@@ -15267,41 +15272,52 @@ msgstr "&Copyî\tCtrl+C"
 msgid "&Paste\tCtrl+V"
 msgstr "C&laper\tCtrl+V"
 
-#: programs/notepad/notepad.rc:47 programs/progman/progman.rc:37
-#: programs/regedit/regedit.rc:57 programs/regedit/regedit.rc:111
-#: programs/regedit/regedit.rc:139 programs/winefile/winefile.rc:32
-msgid "&Delete\tDel"
+#: programs/notepad/notepad.rc:47
+#, fuzzy
+#| msgid "&Delete\tDel"
+msgid "De&lete\tDel"
 msgstr "&Rafacer\tDel"
 
-#: programs/notepad/notepad.rc:49
-msgid "Select &all\tCtrl+A"
-msgstr "&Tchwezi totafwait\tCtrl+A"
+#: programs/notepad/notepad.rc:49 programs/regedit/regedit.rc:62
+#: programs/regedit/regedit.rc:109 programs/wordpad/wordpad.rc:53
+#, fuzzy
+msgid "&Find...\tCtrl+F"
+msgstr "&Rexhe...\tCtrl+P"
 
 #: programs/notepad/notepad.rc:50
-msgid "&Time/Date\tF5"
-msgstr "&Eure/Date\tF5"
-
-#: programs/notepad/notepad.rc:52
-msgid "&Wrap long lines"
-msgstr "Côper les ro&yes"
-
-#: programs/notepad/notepad.rc:56
 #, fuzzy
-msgid "&Search...\tCtrl+F"
-msgstr "&Cwerî...\tCtrl+F"
+#| msgid "&Find Next"
+msgid "Find &Next\tF3"
+msgstr "&Shûvant"
 
-#: programs/notepad/notepad.rc:57
-msgid "&Search next\tF3"
-msgstr "&Shûvant\tF3"
-
-#: programs/notepad/notepad.rc:58 programs/wordpad/wordpad.rc:55
+#: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
 msgstr "&Replaecî...\tCtrl+H"
 
-#: programs/notepad/notepad.rc:59
+#: programs/notepad/notepad.rc:52
 #, fuzzy
 msgid "&Go To...\tCtrl+G"
 msgstr "&Novea...\tCtrl+N"
+
+#: programs/notepad/notepad.rc:54
+#, fuzzy
+#| msgid "Select &all\tCtrl+A"
+msgid "Select &All\tCtrl+A"
+msgstr "&Tchwezi totafwait\tCtrl+A"
+
+#: programs/notepad/notepad.rc:55
+#, fuzzy
+#| msgid "&Time/Date\tF5"
+msgid "Time/&Date\tF5"
+msgstr "&Eure/Date\tF5"
+
+#: programs/notepad/notepad.rc:57 programs/wordpad/wordpad.rc:82
+msgid "F&ormat"
+msgstr ""
+
+#: programs/notepad/notepad.rc:58
+msgid "&Word Wrap"
+msgstr ""
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15315,142 +15331,142 @@ msgstr ""
 msgid "&Contents\tF1"
 msgstr "Å&dvins"
 
-#: programs/notepad/notepad.rc:67
+#: programs/notepad/notepad.rc:68
 msgid "&About Notepad"
 msgstr ""
 
-#: programs/notepad/notepad.rc:107
+#: programs/notepad/notepad.rc:108
 msgid "Page Setup"
 msgstr "Arindjmint del Pådje"
 
-#: programs/notepad/notepad.rc:109
+#: programs/notepad/notepad.rc:110
 msgid "&Header:"
 msgstr "&Tite:"
 
-#: programs/notepad/notepad.rc:111
+#: programs/notepad/notepad.rc:112
 msgid "&Footer:"
 msgstr "&Pînote:"
 
-#: programs/notepad/notepad.rc:114
+#: programs/notepad/notepad.rc:115
 #, fuzzy
 msgid "Margins (millimeters)"
 msgstr "&Mardjes:"
 
-#: programs/notepad/notepad.rc:115
+#: programs/notepad/notepad.rc:116
 msgid "&Left:"
 msgstr "&Hintche:"
 
-#: programs/notepad/notepad.rc:117
+#: programs/notepad/notepad.rc:118
 msgid "&Top:"
 msgstr "&Copete:"
 
-#: programs/notepad/notepad.rc:132
+#: programs/notepad/notepad.rc:133
 msgid "Go To Line"
 msgstr ""
 
-#: programs/notepad/notepad.rc:134
+#: programs/notepad/notepad.rc:135
 msgid "&Line Number:"
 msgstr ""
 
-#: programs/notepad/notepad.rc:137
+#: programs/notepad/notepad.rc:138
 msgid "Go To"
 msgstr ""
 
-#: programs/notepad/notepad.rc:145
+#: programs/notepad/notepad.rc:146
 msgid "Encoding:"
 msgstr ""
 
-#: programs/notepad/notepad.rc:151 programs/wordpad/wordpad.rc:289
+#: programs/notepad/notepad.rc:152 programs/wordpad/wordpad.rc:289
 msgctxt "accelerator Select All"
 msgid "A"
 msgstr ""
 
-#: programs/notepad/notepad.rc:152 programs/wordpad/wordpad.rc:291
+#: programs/notepad/notepad.rc:153 programs/wordpad/wordpad.rc:291
 msgctxt "accelerator Copy"
 msgid "C"
 msgstr ""
 
-#: programs/notepad/notepad.rc:153 programs/regedit/regedit.rc:377
+#: programs/notepad/notepad.rc:154 programs/regedit/regedit.rc:377
 #: programs/wordpad/wordpad.rc:287
 msgctxt "accelerator Find"
 msgid "F"
 msgstr ""
 
-#: programs/notepad/notepad.rc:154 programs/wordpad/wordpad.rc:288
+#: programs/notepad/notepad.rc:155 programs/wordpad/wordpad.rc:288
 msgctxt "accelerator Replace"
 msgid "H"
 msgstr ""
 
-#: programs/notepad/notepad.rc:155 programs/wordpad/wordpad.rc:297
+#: programs/notepad/notepad.rc:156 programs/wordpad/wordpad.rc:297
 msgctxt "accelerator New"
 msgid "N"
 msgstr ""
 
-#: programs/notepad/notepad.rc:156 programs/wordpad/wordpad.rc:298
+#: programs/notepad/notepad.rc:157 programs/wordpad/wordpad.rc:298
 msgctxt "accelerator Open"
 msgid "O"
 msgstr "O"
 
-#: programs/notepad/notepad.rc:157 programs/regedit/regedit.rc:378
+#: programs/notepad/notepad.rc:158 programs/regedit/regedit.rc:378
 #: programs/wordpad/wordpad.rc:300
 msgctxt "accelerator Print"
 msgid "P"
 msgstr ""
 
-#: programs/notepad/notepad.rc:158 programs/wordpad/wordpad.rc:299
+#: programs/notepad/notepad.rc:159 programs/wordpad/wordpad.rc:299
 msgctxt "accelerator Save"
 msgid "S"
 msgstr ""
 
-#: programs/notepad/notepad.rc:159
+#: programs/notepad/notepad.rc:160
 msgctxt "accelerator Paste"
 msgid "V"
 msgstr ""
 
-#: programs/notepad/notepad.rc:160 programs/wordpad/wordpad.rc:290
+#: programs/notepad/notepad.rc:161 programs/wordpad/wordpad.rc:290
 msgctxt "accelerator Cut"
 msgid "X"
 msgstr ""
 
-#: programs/notepad/notepad.rc:161 programs/wordpad/wordpad.rc:292
+#: programs/notepad/notepad.rc:162 programs/wordpad/wordpad.rc:292
 msgctxt "accelerator Undo"
 msgid "Z"
 msgstr ""
 
-#: programs/notepad/notepad.rc:162
+#: programs/notepad/notepad.rc:163
 msgctxt "accelerator GoTo"
 msgid "G"
 msgstr ""
 
-#: programs/notepad/notepad.rc:74
+#: programs/notepad/notepad.rc:75
 msgid "Page &p"
 msgstr "Pådje &p"
 
-#: programs/notepad/notepad.rc:76
+#: programs/notepad/notepad.rc:77
 msgid "Notepad"
 msgstr "Notepad"
 
-#: programs/notepad/notepad.rc:77 programs/progman/progman.rc:64
+#: programs/notepad/notepad.rc:78 programs/progman/progman.rc:64
 #: programs/winhlp32/winhlp32.rc:82
 msgid "ERROR"
 msgstr "AROKE"
 
-#: programs/notepad/notepad.rc:79
+#: programs/notepad/notepad.rc:80
 msgid "Untitled"
 msgstr "(sin tite)"
 
-#: programs/notepad/notepad.rc:82 programs/winedbg/winedbg.rc:42
+#: programs/notepad/notepad.rc:83 programs/winedbg/winedbg.rc:42
 msgid "Text files (*.txt)"
 msgstr "Fitchîs tekse (*.txt)"
 
-#: programs/notepad/notepad.rc:85
+#: programs/notepad/notepad.rc:86
 msgid ""
 "File '%s' does not exist.\n"
 "\n"
 "Do you want to create a new file?"
 msgstr ""
 
-#: programs/notepad/notepad.rc:87
+#: programs/notepad/notepad.rc:88
 msgid ""
 "File '%s' has been modified.\n"
 "\n"
@@ -15460,23 +15476,23 @@ msgstr ""
 "\n"
 "El voloz schaper?"
 
-#: programs/notepad/notepad.rc:88
+#: programs/notepad/notepad.rc:89
 msgid "'%s' could not be found."
 msgstr "'%s' pout nén esse trové."
 
-#: programs/notepad/notepad.rc:92
+#: programs/notepad/notepad.rc:93
 msgid "Unicode (UTF-16)"
 msgstr ""
 
-#: programs/notepad/notepad.rc:93
+#: programs/notepad/notepad.rc:94
 msgid "Unicode (UTF-16 big-endian)"
 msgstr ""
 
-#: programs/notepad/notepad.rc:94
+#: programs/notepad/notepad.rc:95
 msgid "Unicode (UTF-8)"
 msgstr ""
 
-#: programs/notepad/notepad.rc:101
+#: programs/notepad/notepad.rc:102
 msgid ""
 "%1\n"
 "This file contains Unicode characters which will be lost if\n"
@@ -15486,7 +15502,7 @@ msgid ""
 "Continue?"
 msgstr ""
 
-#: programs/notepad/notepad.rc:90
+#: programs/notepad/notepad.rc:91
 msgid "Ln %ld, Col %ld"
 msgstr ""
 
@@ -15840,6 +15856,12 @@ msgstr ""
 #: programs/progman/progman.rc:36 programs/winefile/winefile.rc:31
 msgid "&Copy...\tF8"
 msgstr ""
+
+#: programs/progman/progman.rc:37 programs/regedit/regedit.rc:57
+#: programs/regedit/regedit.rc:111 programs/regedit/regedit.rc:139
+#: programs/winefile/winefile.rc:32
+msgid "&Delete\tDel"
+msgstr "&Rafacer\tDel"
 
 #: programs/progman/progman.rc:38
 #, fuzzy
@@ -16461,12 +16483,6 @@ msgstr ""
 #: programs/regedit/regedit.rc:60 programs/regedit/regedit.rc:116
 msgid "&Copy Key Name"
 msgstr ""
-
-#: programs/regedit/regedit.rc:62 programs/regedit/regedit.rc:109
-#: programs/wordpad/wordpad.rc:53
-#, fuzzy
-msgid "&Find...\tCtrl+F"
-msgstr "&Rexhe...\tCtrl+P"
 
 #: programs/regedit/regedit.rc:63
 msgid "Find Ne&xt\tF3"
@@ -19252,10 +19268,6 @@ msgstr ""
 
 #: programs/wordpad/wordpad.rc:80
 msgid "&Date and time..."
-msgstr ""
-
-#: programs/wordpad/wordpad.rc:82
-msgid "F&ormat"
 msgstr ""
 
 #: programs/wordpad/wordpad.rc:85
