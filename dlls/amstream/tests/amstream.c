@@ -8535,6 +8535,70 @@ static void test_ddrawstream_mem_allocator(void)
     hr = IMediaStream_QueryInterface(stream, &IID_IMemAllocator, (void **)&ddraw_allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    /* Check default properties. */
+    hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(props.cbBuffer == 10000, "Got size %ld.\n", props.cbBuffer);
+    todo_wine ok(props.cBuffers == 1, "Got %ld buffers\n", props.cBuffers);
+    todo_wine ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+
+    /* Try changing allocator properties. */
+    props.cbAlign = 1;
+    props.cbBuffer = 1000;
+    props.cBuffers = 4;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(ret_props.cbBuffer == 10000, "Got size %ld.\n", ret_props.cbBuffer);
+    ok(ret_props.cBuffers == 4, "Got %ld buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
+
+    /* Check how allocator properties change when setting a new format. */
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb32_format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(props.cbBuffer == 40000, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+
+    props.cbAlign = 1;
+    props.cbBuffer = 1000;
+    props.cBuffers = 0;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
+    todo_wine ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
+
+    /* Try setting a larger buffer size. */
+    props.cbAlign = 1;
+    props.cbBuffer = 50000;
+    props.cBuffers = 1;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
+    ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
+
+    hr = IMemAllocator_Commit(ddraw_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(ret_props.cbBuffer == 20000, "Got size %ld.\n", ret_props.cbBuffer);
+    ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
+
+    hr = IMemAllocator_Decommit(ddraw_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
     mem_allocator = NULL;
     hr = IMemInputPin_GetAllocator(mem_input, &mem_allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -8586,6 +8650,25 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IAMMultiMediaStream_SetState(mmstream, STREAMSTATE_RUN);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    props.cbAlign = 1;
+    props.cbBuffer = 50000;
+    props.cBuffers = 1;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
+    ok(hr == VFW_E_ALREADY_COMMITTED, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb32_format, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(props.cbBuffer == 333 * 444 * 4, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cBuffers == 2, "Got %ld buffers.\n", props.cBuffers);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+
+    hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample1);
