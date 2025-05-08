@@ -104,6 +104,14 @@ struct pdb_dbi_hash_entry
     struct pdb_dbi_hash_entry *next;
 };
 
+struct pdb_compiland
+{
+    pdbsize_t stream_offset; /* in DBI stream for compiland description */
+    unsigned short are_symbols_loaded;
+    unsigned short stream_id; /* for all symbols of given compiland */
+    struct symt_compiland* compiland;
+};
+
 struct pdb_reader
 {
     struct module *module;
@@ -138,6 +146,10 @@ struct pdb_reader
     unsigned num_action_entries;
     struct pdb_action_entry *action_store;
     struct pdb_dbi_hash_entry *dbi_symbols_hash;
+
+    /* compilands */
+    unsigned num_compilands;
+    struct pdb_compiland *compilands;
 
     /* cache PE module sections for mapping...
      * we should rather use pe_module information
@@ -828,16 +840,15 @@ static enum pdb_result pdb_reader_contrib_range_cmp(unsigned idx, int *cmp, void
     return R_PDB_SUCCESS;
 }
 
-static enum pdb_result pdb_reader_lookup_compiland_by_address(struct pdb_reader *pdb, DWORD_PTR address, unsigned *compiland)
+static enum pdb_result pdb_reader_lookup_compiland_by_segment_offset(struct pdb_reader *pdb, unsigned segment, unsigned offset, unsigned *compiland)
 {
     enum pdb_result result;
-    struct pdb_compiland_lookup lookup = {.pdb = pdb};
+    struct pdb_compiland_lookup lookup = {.pdb = pdb, .segment = segment, .offset = offset};
     UINT32 version;
     PDB_SYMBOLS dbi_header;
     size_t found;
     unsigned num_ranges;
 
-    if ((result = pdb_reader_get_segment_offset_from_address(pdb, address, &lookup.segment, &lookup.offset))) return result;
     if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_DBI, &lookup.walker))) return result;
     if ((result = pdb_reader_read_DBI_header(pdb, &dbi_header, &lookup.walker))) return result;
     if ((result = pdb_reader_walker_narrow(&lookup.walker, lookup.walker.offset + dbi_header.module_size, dbi_header.sectcontrib_size))) return result;
@@ -870,6 +881,14 @@ static enum pdb_result pdb_reader_lookup_compiland_by_address(struct pdb_reader 
     }
     *compiland = lookup.range.index;
     return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_lookup_compiland_by_address(struct pdb_reader *pdb, DWORD_PTR address, unsigned *compiland)
+{
+    enum pdb_result result;
+    unsigned segment, offset;
+    if ((result = pdb_reader_get_segment_offset_from_address(pdb, address, &segment, &offset))) return result;
+    return pdb_reader_lookup_compiland_by_segment_offset(pdb, segment, offset, compiland);
 }
 
 static enum pdb_result pdb_reader_subsection_next(struct pdb_reader *pdb, struct pdb_reader_walker *in_walker,
@@ -1758,11 +1777,33 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
+    struct pdb_reader_compiland_iterator compiland_iter;
     struct pdb_reader_walker walker;
     union codeview_symbol cv_symbol;
     symref_t symref;
+    unsigned i;
 
     if ((result = pdb_reader_read_DBI_header(pdb, &pdb->dbi_header, &walker))) return result;
+
+    /* count number of compilands */
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
+    do
+    {
+        pdb->num_compilands++;
+    } while ((result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter)) == R_PDB_SUCCESS);
+    if ((result = pdb_reader_alloc(pdb, pdb->num_compilands * sizeof(pdb->compilands[0]), (void **)&pdb->compilands))) return result;
+    memset(pdb->compilands, 0, pdb->num_compilands * sizeof(pdb->compilands[0]));
+    /* fill-in compiland information */
+    if ((result = pdb_reader_compiland_iterator_init(pdb, &compiland_iter))) return result;
+    for (i = 0; i < pdb->num_compilands; i++)
+    {
+        pdb->compilands[i].stream_offset = compiland_iter.dbi_walker.offset;
+        pdb->compilands[i].are_symbols_loaded = FALSE;
+        pdb->compilands[i].compiland = NULL;
+        pdb->compilands[i].stream_id = compiland_iter.dbi_cu_header.stream;
+        result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter);
+        if ((result == R_PDB_SUCCESS) != (i + 1 < pdb->num_compilands)) return result ? result : R_PDB_INVALID_PDB_FILE;
+    }
 
     if ((result = pdb_reader_load_DBI_hash_table(pdb))) return result;
 
@@ -2194,6 +2235,7 @@ invalid_file:
     }
     pdb_reader_free(pdb, pdb->tpi_typemap);
     pdb->TPI_types_invalid = 1;
+
     return result;
 }
 
