@@ -3929,6 +3929,7 @@ static BOOL pdb_process_internal(const struct process *pcs,
 
         /* Read per-module symbols' tables */
         file = symbols_image + header_size;
+        if (pdb_file->pdb_reader) file += symbols.module_size; /* skip it */
         while (file - symbols_image < header_size + symbols.module_size)
         {
             PDB_SYMBOL_FILE_EX          sfile;

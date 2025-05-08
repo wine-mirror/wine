@@ -132,13 +132,17 @@ struct pdb_reader
     char *stream_names;
 
     unsigned source_listed : 1,
-        TPI_types_invalid;
+        TPI_types_invalid : 1,
+        IPI_types_invalid : 1;
 
     /* types management */
     PDB_TYPES tpi_header;
     struct pdb_reader_walker tpi_types_walker;
     struct pdb_type_details *tpi_typemap; /* from first to last */
     struct pdb_type_hash_entry *tpi_types_hash;
+
+    PDB_TYPES ipi_header;
+    struct pdb_reader_walker ipi_walker;
 
     /* symbol (and types) management */
     PDB_SYMBOLS dbi_header;
@@ -184,6 +188,7 @@ static enum pdb_result pdb_reader_report_unexpected(const char *kind, const char
 
 static const unsigned short  PDB_STREAM_TPI = 2;
 static const unsigned short  PDB_STREAM_DBI = 3;
+static const unsigned short  PDB_STREAM_IPI = 4;
 
 static enum pdb_result pdb_reader_fetch_file_no_cache(struct pdb_reader *pdb, void *buffer, pdboff_t offset, pdbsize_t size)
 {
@@ -1774,6 +1779,9 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
     return R_PDB_NOT_FOUND;
 }
 
+/* FIXME temp forward */
+static enum pdb_result pdb_reader_ensure_symbols_loaded_from_compiland(struct pdb_reader *pdb, unsigned compiland_index);
+
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
@@ -1804,7 +1812,11 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
         result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter);
         if ((result == R_PDB_SUCCESS) != (i + 1 < pdb->num_compilands)) return result ? result : R_PDB_INVALID_PDB_FILE;
     }
-
+    /* TEMP force loading of all compilands */
+    for (i = 0; i < pdb->num_compilands; i++)
+    {
+        if ((result = pdb_reader_ensure_symbols_loaded_from_compiland(pdb, i))) return result;
+    }
     if ((result = pdb_reader_load_DBI_hash_table(pdb))) return result;
 
     /* register the globals entries not bound to a compiland */
@@ -3537,6 +3549,89 @@ static enum pdb_result pdb_reader_walker_from_compiland_index(struct pdb_reader 
     return R_PDB_NOT_FOUND;
 }
 
+static enum pdb_result pdb_reader_init_IPI(struct pdb_reader *pdb)
+{
+    enum pdb_result result;
+
+    if (pdb->IPI_types_invalid) return R_PDB_INVALID_PDB_FILE;
+    if (pdb->ipi_walker.stream_id == 0) /* load basic types information and hash table */
+    {
+        if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_IPI, &pdb->ipi_walker))) goto invalid_file;
+        /* assuming stream is always big enough go hold a full PDB_TYPES */
+        if ((result = pdb_reader_READ(pdb, &pdb->ipi_walker, &pdb->ipi_header))) goto invalid_file;
+        result = R_PDB_INVALID_PDB_FILE;
+        if (pdb->ipi_header.version < 19960000 || pdb->ipi_header.type_offset < sizeof(PDB_TYPES))
+        {
+            /* not supported yet... */
+            FIXME("Old PDB_TYPES header, skipping\n");
+            goto invalid_file;
+        }
+        /* validate some bits */
+        if (pdb->ipi_header.hash_size != (pdb->ipi_header.last_index - pdb->ipi_header.first_index) * pdb->ipi_header.hash_value_size ||
+            pdb->ipi_header.search_size % sizeof(uint32_t[2]))
+            goto invalid_file;
+        if (pdb->ipi_header.hash_value_size > sizeof(unsigned))
+        {
+            FIXME("Unexpected hash value size %u\n", pdb->ipi_header.hash_value_size);
+            goto invalid_file;
+        }
+        pdb->ipi_walker.offset = pdb->ipi_header.type_offset;
+    }
+    return R_PDB_SUCCESS;
+invalid_file:
+    memset(&pdb->ipi_walker, 0, sizeof(pdb->ipi_walker));
+    pdb->IPI_types_invalid = 1;
+    return result;
+}
+
+static enum pdb_result pdb_reader_IPI_offset_from_cv_itemid(struct pdb_reader *pdb, cv_itemid_t cv_itemid, pdbsize_t *found_type_offset)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    struct type_offset type_offset;
+    size_t found;
+    unsigned short int cv_type_len;
+
+    if ((result = pdb_reader_init_IPI(pdb))) return result;
+    walker = pdb->ipi_walker;
+
+    type_offset.pdb = pdb;
+    if ((result = pdb_reader_walker_init(pdb, pdb->ipi_header.hash_stream, &type_offset.walker))) return result;
+    type_offset.to_search = cv_itemid;
+    if ((result = pdb_reader_walker_narrow(&type_offset.walker, pdb->ipi_header.search_offset, pdb->ipi_header.search_size))) return result;
+    result = pdb_reader_internal_binary_search(pdb->ipi_header.search_size / sizeof(uint32_t[2]),
+                                               pdb_reader_type_offset_cmp, &found, &type_offset);
+
+    if (result)
+    {
+        if (result != R_PDB_NOT_FOUND) return result;
+
+        if (type_offset.values[0] > cv_itemid) {WARN("Out of bounds\n"); return R_PDB_INVALID_PDB_FILE;}
+        walker.offset += type_offset.values[1];
+
+        for ( ; type_offset.values[0] < cv_itemid; type_offset.values[0]++)
+        {
+            if ((result = pdb_reader_READ(pdb, &walker, &cv_type_len))) return result;
+            walker.offset += cv_type_len;
+        }
+    }
+    else walker.offset += type_offset.values[1];
+    *found_type_offset = walker.offset;
+
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_IPI_alloc_and_read_full_codeview_type(struct pdb_reader *pdb, cv_itemid_t cv_itemid, union codeview_type **cv_type)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+
+    if ((result = pdb_reader_init_IPI(pdb))) return result;
+    walker = pdb->ipi_walker;
+    if ((result = pdb_reader_IPI_offset_from_cv_itemid(pdb, cv_itemid, &walker.offset))) return result;
+    return pdb_reader_alloc_and_read_full_blob(pdb, &walker, (void **)cv_type);
+}
+
 /* walk the top level global symbols to find matching address */
 static enum pdb_result pdb_reader_search_codeview_symbol_by_address(struct pdb_reader *pdb, struct pdb_reader_walker *walker,
                                                                     DWORD_PTR address, union codeview_symbol *cv_symbol, pdbsize_t *end_stream_offset)
@@ -3869,6 +3964,587 @@ static enum method_result pdb_method_get_line_from_inlined_address(struct module
     if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
 
     return pdb_method_result(pdb_method_get_line_from_inlined_address_internal(pdb, inlined, address, line_info));
+}
+
+static enum pdb_result pdb_reader_symbol_skip_defranges(struct pdb_reader *pdb, struct pdb_reader_walker *walker)
+{
+    enum pdb_result result;
+    union codeview_symbol cv_symbol;
+
+    while ((result = pdb_reader_read_partial_codeview_symbol(pdb, walker, &cv_symbol)) == R_PDB_SUCCESS)
+    {
+        if (cv_symbol.generic.id < S_DEFRANGE || cv_symbol.generic.id > S_DEFRANGE_REGISTER_REL)
+        {
+            walker->offset -= sizeof(cv_symbol.generic.len);
+            break;
+        }
+        walker->offset += cv_symbol.generic.len;
+    }
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_symbol_count_range_annotations(struct pdb_reader *pdb, struct pdb_reader_walker annotation_walker,
+                                                                 unsigned *pnum_ranges)
+{
+    enum pdb_result result;
+    unsigned num_ranges = 0, opcode, arg1, arg2;
+
+    while ((result = pdb_reader_read_inlinesite_annotation(pdb, &annotation_walker, &opcode, &arg1, &arg2)) == R_PDB_SUCCESS)
+    {
+        if (opcode == BA_OP_Invalid) break;
+        switch (opcode)
+        {
+        case BA_OP_CodeOffset:
+        case BA_OP_ChangeCodeLength:
+        case BA_OP_ChangeFile:
+        case BA_OP_ChangeLineOffset:
+            break;
+        case BA_OP_ChangeCodeOffset:
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            num_ranges++;
+            break;
+        default:
+            WARN("Unsupported op %d\n", opcode);
+            break;
+        }
+    }
+    *pnum_ranges = num_ranges;
+    return R_PDB_SUCCESS;
+}
+
+static enum pdb_result pdb_reader_symbol_skip_if(struct pdb_reader *pdb, struct pdb_reader_walker *walker, unsigned id)
+{
+    enum pdb_result result;
+    union codeview_symbol cv_symbol;
+
+    if ((result = pdb_reader_read_partial_codeview_symbol(pdb, walker, &cv_symbol))) return result;
+    if (cv_symbol.generic.id != id)
+    {
+        walker->offset -= sizeof(cv_symbol.generic.len);
+        return R_PDB_NOT_FOUND;
+    }
+    walker->offset += cv_symbol.generic.len;
+    return R_PDB_SUCCESS;
+}
+
+static inline void inline_site_update_last_range(struct symt_function* inlined, unsigned index, ULONG_PTR hi)
+{
+    if (index && index <= inlined->num_ranges)
+    {
+        struct addr_range* range = &inlined->ranges[index - 1];
+        /* only change range if it has no span (code start without code end) */
+        if (range->low == range->high)
+            range->high = hi;
+    }
+}
+
+static enum pdb_result pdb_reader_create_inline_site(struct pdb_reader *pdb, struct symt_function *top_func,
+                                                     struct symt *container,
+                                                     cv_itemid_t cv_inlinee_id,
+                                                     pdbsize_t symbol_start_offset,
+                                                     struct pdb_reader_walker *annotation_walker,
+                                                     struct symt_function **pinlined)
+{
+    enum pdb_result result;
+    union codeview_type *cv_type;
+    struct symt_function *inlined;
+    unsigned num_ranges;
+    unsigned offset, index;
+    symref_t type_symref;
+    unsigned opcode, arg1, arg2;
+
+    if ((result = pdb_reader_IPI_alloc_and_read_full_codeview_type(pdb, cv_inlinee_id, &cv_type)))
+    {
+        WARN("Couldn't find type %x in IPI stream\n", cv_inlinee_id);
+        return result;
+    }
+    if ((result = pdb_reader_symbol_count_range_annotations(pdb, *annotation_walker, &num_ranges))) return result;
+    if (!num_ranges) return R_PDB_INVALID_PDB_FILE;
+
+    switch (cv_type->generic.id)
+    {
+    case LF_FUNC_ID:
+        if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_type->func_id_v3.type, &type_symref))) return result;
+        inlined = symt_new_inlinesite(pdb->module, top_func, container, cv_type->func_id_v3.name,
+                                      type_symref, symbol_start_offset, num_ranges);
+        break;
+    case LF_MFUNC_ID:
+        /* FIXME we just declare a function, not a method */
+        if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_type->mfunc_id_v3.type, &type_symref))) return result;
+        inlined = symt_new_inlinesite(pdb->module, top_func, container, cv_type->mfunc_id_v3.name,
+                                      type_symref, symbol_start_offset, num_ranges);
+        break;
+    default:
+        result = PDB_REPORT_UNEXPECTED("inlinee kind", cv_type->generic.id);
+        pdb_reader_free(pdb, cv_type);
+        return result;
+    }
+    pdb_reader_free(pdb, cv_type);
+
+    /* rescan all annotations and store ranges & line information */
+    offset = 0;
+    index = 0;
+
+    while (pdb_reader_read_inlinesite_annotation(pdb, annotation_walker, &opcode, &arg1, &arg2) == R_PDB_SUCCESS)
+    {
+        switch (opcode)
+        {
+        case BA_OP_CodeOffset:
+            offset = arg1;
+            break;
+        case BA_OP_ChangeCodeOffset:
+            offset += arg1;
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset;
+            break;
+        case BA_OP_ChangeCodeLength:
+            /* this op isn't widely used by MSVC, but clang uses it a lot... */
+            offset += arg1;
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
+            break;
+        case BA_OP_ChangeFile:
+            break;
+        case BA_OP_ChangeLineOffset:
+            break;
+        case BA_OP_ChangeCodeOffsetAndLineOffset:
+            offset += arg1;
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset;
+            break;
+        case BA_OP_ChangeCodeLengthAndCodeOffset:
+            offset += arg2;
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
+            inlined->ranges[index  ].low = top_func->ranges[0].low + offset;
+            inlined->ranges[index++].high = top_func->ranges[0].low + offset + arg1;
+            break;
+        default:
+            WARN("Unsupported op %d\n", opcode);
+            break;
+        }
+    }
+    if (index != num_ranges) /* sanity check */
+        return PDB_REPORT_UNEXPECTED("Internal logic error", 0);
+    if (inlined->num_ranges)
+    {
+        struct addr_range* range = &inlined->ranges[inlined->num_ranges - 1];
+        if (range->low == range->high) WARN("pending empty range at end of %s inside %s\n",
+                                            debugstr_a(inlined->hash_elt.name),
+                                            debugstr_a(top_func->hash_elt.name));
+    }
+    *pinlined = inlined;
+    return R_PDB_SUCCESS;
+}
+
+/* likely to review */
+static enum pdb_result pdb_reader_create_variable(struct pdb_reader *pdb,
+                                                  struct symt_compiland *compiland,
+                                                  struct symt_function* func,
+                                                  struct symt_block* block,
+                                                  const char* name,
+                                                  struct location *loc,
+                                                  cv_typ_t cv_typeid, BOOL is_local)
+{
+    if (name && *name)
+    {
+        enum pdb_result result;
+        symref_t symref;
+
+        if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_typeid, &symref))) return result;
+        if (func)
+        {
+            if (!is_local || loc->kind == loc_tlsrel) WARN("Unsupported construct\n");
+            symt_add_func_local(pdb->module, func, DataIsStaticLocal, loc, block, symref, name);
+            return R_PDB_SUCCESS;
+        }
+
+        if (is_local ^ (compiland != 0)) FIXME("Unsupported construct\n");
+        symt_new_global_variable(pdb->module, compiland, name, is_local, *loc, 0, symref);
+    }
+    return R_PDB_SUCCESS;
+}
+
+static BOOL symt_function_has_local_variable(struct symt_function* func, const char* name)
+{
+    int i;
+
+    for (i = 0; i < vector_length(&func->vchildren); ++i)
+    {
+        struct symt* p = *(struct symt**)vector_at(&func->vchildren, i);
+        if (symt_check_tag(p, SymTagData) && !strcmp(((struct symt_data*)p)->hash_elt.name, name))
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static enum pdb_result pdb_reader_load_compiland_symbols(struct pdb_reader *pdb, struct symt_compiland *compiland, struct pdb_reader_walker *walker)
+{
+    enum pdb_result result;
+    union codeview_symbol *cv_symbol;
+    struct symt_function *top_func = NULL;
+    struct symt_function *curr_func = NULL;
+    struct symt_block *block = NULL;
+    struct location loc;
+    unsigned top_frame_size = -1;
+    DWORD64 address;
+    symref_t type_symref;
+    /*
+     * Loop over the different types of records and whenever we
+     * find something we are interested in, record it and move on.
+     */
+    while ((result = pdb_reader_alloc_and_read_full_codeview_symbol(pdb, walker, &cv_symbol)) == R_PDB_SUCCESS)
+    {
+        pdbsize_t symbol_start_offset = walker->offset - (sizeof(cv_symbol->generic.len) + cv_symbol->generic.len);
+        if (!cv_symbol->generic.id || cv_symbol->generic.len < 2) break;
+        if ((cv_symbol->generic.len + 2) & 3) WARN("unpadded len %u\n", cv_symbol->generic.len + 2);
+
+        switch (cv_symbol->generic.id)
+        {
+        case S_LDATA32:
+            loc.kind = loc_absolute;
+            loc.reg = 0;
+            if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->data_v3.segment, cv_symbol->data_v3.offset, &address)))
+                goto failure;
+            loc.offset = address;
+
+            if ((result = pdb_reader_create_variable(pdb, compiland, curr_func, block, cv_symbol->data_v3.name, &loc,
+                                                     cv_symbol->data_v3.symtype, TRUE))) goto failure;
+            break;
+
+        /* variables with thread storage */
+        case S_GTHREAD32:
+        case S_LTHREAD32:
+            loc.kind = loc_tlsrel;
+            loc.reg = 0;
+            loc.offset = cv_symbol->thread_v3.offset;
+
+            if ((result = pdb_reader_create_variable(pdb, compiland, curr_func, block, cv_symbol->thread_v3.name,
+                                                     &loc, cv_symbol->thread_v3.symtype,
+                                                     cv_symbol->generic.id == S_LTHREAD32))) goto failure;
+            break;
+
+        case S_THUNK32:
+            if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->thunk_v3.segment, cv_symbol->thunk_v3.offset, &address))) goto failure;
+            symt_new_thunk(pdb->module, compiland,
+                           cv_symbol->thunk_v3.name, cv_symbol->thunk_v3.thtype,
+                           address, cv_symbol->thunk_v3.thunk_len);
+            break;
+
+        /*
+         * Global and static functions.
+         */
+        case S_GPROC32:
+        case S_LPROC32:
+            if (top_func) WARN("nested function\n");
+            if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->proc_v3.segment, cv_symbol->proc_v3.offset, &address))) goto failure;
+            if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_symbol->proc_v3.proctype, &type_symref))) goto failure;
+            if ((top_func = symt_new_function(pdb->module, compiland,
+                                              cv_symbol->proc_v3.name,
+                                              address, cv_symbol->proc_v3.proc_len,
+                                              type_symref, symbol_start_offset)))
+            {
+                curr_func = top_func;
+                loc.kind = loc_absolute;
+                loc.offset = cv_symbol->proc_v3.debug_start;
+                symt_add_function_point(pdb->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+                loc.offset = cv_symbol->proc_v3.debug_end;
+                symt_add_function_point(pdb->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
+            }
+            break;
+        /*
+         * Function parameters and stack variables.
+         */
+        case S_BPREL32:
+            /* S_BPREL32 can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (symt_function_has_local_variable(curr_func, cv_symbol->stack_v3.name)) break;
+            if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_symbol->stack_v3.symtype, &type_symref))) goto failure;
+            loc.kind = loc_regrel;
+            /* Yes, it's i386 dependent, but that's the symbol purpose. S_REGREL is used on other CPUs */
+            loc.reg = CV_REG_EBP;
+            loc.offset = cv_symbol->stack_v3.offset;
+            symt_add_func_local(pdb->module, curr_func,
+                                cv_symbol->stack_v3.offset > 0 ? DataIsParam : DataIsLocal,
+                                &loc, block, type_symref, cv_symbol->stack_v3.name);
+            break;
+        case S_REGREL32:
+            /* S_REGREL32 can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (symt_function_has_local_variable(curr_func, cv_symbol->regrel_v3.name)) break;
+            if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_symbol->regrel_v3.symtype, &type_symref))) goto failure;
+            loc.kind = loc_regrel;
+            loc.reg = cv_symbol->regrel_v3.reg;
+            loc.offset = cv_symbol->regrel_v3.offset;
+            if (top_frame_size == -1) WARN("S_REGREL32 without frameproc\n");
+            symt_add_func_local(pdb->module, curr_func,
+                                cv_symbol->regrel_v3.offset >= top_frame_size ? DataIsParam : DataIsLocal,
+                                &loc, block, type_symref, cv_symbol->regrel_v3.name);
+            break;
+
+        case S_REGISTER:
+            /* S_REGISTER can be present after S_LOCAL; prefer S_LOCAL when present */
+            if (symt_function_has_local_variable(curr_func, cv_symbol->register_v3.name)) break;
+            if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_symbol->register_v3.type, &type_symref))) goto failure;
+            loc.kind = loc_register;
+            loc.reg = cv_symbol->register_v3.reg;
+            loc.offset = 0;
+            symt_add_func_local(pdb->module, curr_func,
+                                DataIsLocal, &loc, block, type_symref, cv_symbol->register_v3.name);
+            break;
+
+        case S_BLOCK32:
+            if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->block_v3.segment, cv_symbol->block_v3.offset, &address))) goto failure;
+            block = symt_open_func_block(pdb->module, curr_func, block, 1);
+            block->ranges[0].low = address;
+            block->ranges[0].high = block->ranges[0].low + cv_symbol->block_v3.length;
+            break;
+
+        case S_END:
+            if (block)
+            {
+                block = symt_close_func_block(pdb->module, curr_func, block);
+            }
+            else if (top_func)
+            {
+                if (curr_func != top_func) {FIXME("shouldn't close a top function with an opened inlined function\n"); result = R_PDB_INVALID_PDB_FILE; goto failure;}
+                top_func = curr_func = NULL;
+                top_frame_size = -1;
+            }
+            break;
+
+        case S_COMPILE2:
+            TRACE("S-Compile-V3 machine:%x language:%x %s\n",
+                  cv_symbol->compile2_v3.machine, cv_symbol->compile2_v3.flags.iLanguage, debugstr_a(cv_symbol->compile2_v3.name));
+            break;
+        case S_COMPILE3:
+            TRACE("S-Compile3-V3 machine:%x language:%x %s\n",
+                  cv_symbol->compile3_v3.machine, cv_symbol->compile3_v3.flags.iLanguage, debugstr_a(cv_symbol->compile3_v3.name));
+            break;
+
+        case S_ENVBLOCK:
+            break;
+
+        case S_OBJNAME:
+            TRACE("S-ObjName-V3 %s\n", debugstr_a(cv_symbol->objname_v3.name));
+            break;
+
+        case S_LABEL32:
+            if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->label_v3.segment, cv_symbol->label_v3.offset, &address))) goto failure;
+            if (curr_func)
+            {
+                loc.kind = loc_absolute;
+                loc.offset = address - curr_func->ranges[0].low;
+                symt_add_function_point(pdb->module, curr_func, SymTagLabel, &loc, cv_symbol->label_v3.name);
+            }
+            else symt_new_label(pdb->module, compiland, cv_symbol->label_v3.name, address);
+            break;
+
+        case S_LOCAL:
+            /* FIXME: don't store global/static variables accessed through registers... we don't support that
+             * in locals... anyway, global data record should be present as well (so the variable will be available
+             * through the global definition, but potentially not updated)
+             */
+            if (!cv_symbol->local_v3.varflags.enreg_global && !cv_symbol->local_v3.varflags.enreg_static)
+            {
+                loc.kind = loc_cv_defrange;
+                loc.reg = walker->stream_id;
+                loc.offset = symbol_start_offset;
+
+                if ((result = pdb_reader_symref_from_cv_typeid(pdb, cv_symbol->local_v3.symtype, &type_symref))) goto failure;
+                symt_add_func_local(pdb->module, curr_func,
+                                    cv_symbol->local_v3.varflags.is_param ? DataIsParam : DataIsLocal,
+                                    &loc, block, type_symref, cv_symbol->local_v3.name);
+            }
+            if ((result = pdb_reader_symbol_skip_defranges(pdb, walker))) goto failure;
+            break;
+        case S_INLINESITE:
+            {
+                struct pdb_reader_walker annotation_walker;
+                struct symt_function* inlined;
+
+                annotation_walker.stream_id = walker->stream_id;
+                annotation_walker.offset = symbol_start_offset + offsetof(union codeview_symbol, inline_site_v3.binaryAnnotations);
+                annotation_walker.last = symbol_start_offset + sizeof(cv_symbol->generic.len) + cv_symbol->generic.len;
+
+                if ((result = pdb_reader_create_inline_site(pdb, top_func, block ? &block->symt : &curr_func->symt,
+                                                            cv_symbol->inline_site_v3.inlinee, symbol_start_offset, &annotation_walker, &inlined)))
+                {
+                    /* skip whole inlined block */
+                    walker->offset = cv_symbol->inline_site_v3.pEnd;
+                    if ((result = pdb_reader_symbol_skip_if(pdb, walker, S_INLINESITE_END))) goto failure;
+                }
+                else
+                {
+                    curr_func = inlined;
+                    block = NULL;
+                }
+            }
+            break;
+        case S_INLINESITE2:
+            {
+                struct pdb_reader_walker annotation_walker = *walker;
+                struct symt_function* inlined;
+
+                annotation_walker.stream_id = walker->stream_id;
+                annotation_walker.offset = symbol_start_offset + offsetof(union codeview_symbol, inline_site2_v3.binaryAnnotations);
+                annotation_walker.last = symbol_start_offset + sizeof(cv_symbol->generic.len) + cv_symbol->generic.len;
+
+                if ((result = pdb_reader_create_inline_site(pdb, top_func, block ? &block->symt : &curr_func->symt,
+                                                            cv_symbol->inline_site2_v3.inlinee, symbol_start_offset, &annotation_walker, &inlined)))
+                {
+                    /* skip whole inlined block */
+                    walker->offset = cv_symbol->inline_site2_v3.pEnd;
+                    if ((result = pdb_reader_symbol_skip_if(pdb, walker, S_INLINESITE_END))) goto failure;
+                }
+                else
+                {
+                    curr_func = inlined;
+                    block = NULL;
+                }
+            }
+            break;
+
+        case S_INLINESITE_END:
+            block = symt_is_symref_ptr(curr_func->container) && symt_check_tag(SYMT_SYMREF_TO_PTR(curr_func->container), SymTagBlock) ?
+                (struct symt_block*)curr_func->container : NULL;
+            curr_func = (struct symt_function*)symt_get_upper_inlined(curr_func);
+            break;
+
+        case S_SSEARCH:
+            TRACE("Start search: seg=0x%x at offset 0x%08x\n",
+                  cv_symbol->ssearch_v1.segment, cv_symbol->ssearch_v1.offset);
+            break;
+
+        case S_ALIGN:
+            TRACE("S-Align V1\n");
+            break;
+        case S_HEAPALLOCSITE:
+            TRACE("S-heap site V3: offset=0x%08x at sect_idx 0x%04x, inst_len 0x%08x, index 0x%08x\n",
+                  cv_symbol->heap_alloc_site_v3.offset, cv_symbol->heap_alloc_site_v3.sect_idx,
+                  cv_symbol->heap_alloc_site_v3.inst_len, cv_symbol->heap_alloc_site_v3.index);
+            break;
+
+        case S_SEPCODE:
+            if (!top_func)
+            {
+                struct symt_ht* parent;
+                if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->sepcode_v3.sectParent, cv_symbol->sepcode_v3.offParent, &address))) goto failure;
+                parent = symt_find_symbol_at(pdb->module, address);
+                if (symt_check_tag(&parent->symt, SymTagFunction))
+                {
+                    struct symt_function* pfunc = (struct symt_function*)parent;
+                    if ((result = pdb_reader_get_segment_address(pdb, cv_symbol->sepcode_v3.sect, cv_symbol->sepcode_v3.off, &address))) goto failure;
+                    top_func = symt_new_function(pdb->module, compiland, pfunc->hash_elt.name,
+                                                 address, cv_symbol->sepcode_v3.length, pfunc->type, symbol_start_offset);
+                    curr_func = top_func;
+                }
+                else
+                    WARN("Couldn't find function referenced by S_SEPCODE at %04x:%08x\n",
+                         cv_symbol->sepcode_v3.sectParent, cv_symbol->sepcode_v3.offParent);
+            }
+            else
+            {
+                FIXME("S_SEPCODE inside top-level function %s\n", debugstr_a(top_func->hash_elt.name));
+                result = R_PDB_INVALID_PDB_FILE;
+                goto failure;
+            }
+            break;
+
+        case S_FRAMEPROC:
+            /* expecting only S_FRAMEPROC once for top level functions */
+            if (top_frame_size == -1 && curr_func && curr_func == top_func)
+                top_frame_size = cv_symbol->frame_info_v2.sz_frame;
+            else
+            {
+                FIXME("Unexpected S_FRAMEPROC %d (%p %p) %x\n", top_frame_size, top_func, curr_func, walker->offset);
+                result = R_PDB_INVALID_PDB_FILE;
+                goto failure;
+            }
+            break;
+
+        case S_GMANPROC:
+        case S_LMANPROC:
+            walker->offset = cv_symbol->managed_proc_v3.pend;
+            if ((result = pdb_reader_symbol_skip_if(pdb, walker, S_END))) goto failure;
+            break;
+
+        /* symbols only expected in globals' DBI stream */
+        case S_PUB32:
+        case S_PROCREF:
+        case S_LPROCREF:
+        case S_TOKENREF:
+        case S_GDATA32:
+        case S_UDT:
+            PDB_REPORT_UNEXPECTED("(compiland stream) symbol id", cv_symbol->generic.id);
+            break;
+
+        /* the symbols we can safely ignore for now */
+        case S_SKIP:
+        case S_TRAMPOLINE:
+        case S_FRAMECOOKIE:
+        case S_SECTION:
+        case S_COFFGROUP:
+        case S_EXPORT:
+        case S_CALLSITEINFO:
+        case S_ARMSWITCHTABLE:
+        case S_CONSTANT:
+        case S_MANSLOT:
+        case S_OEM:
+            /* even if S_LOCAL groks all the S_DEFRANGE* records following itself,
+             * those kinds of records can also be present after a S_FILESTATIC record
+             * so silence them until (at least) S_FILESTATIC is supported
+             */
+        case S_DEFRANGE_REGISTER:
+        case S_DEFRANGE_FRAMEPOINTER_REL:
+        case S_DEFRANGE_SUBFIELD_REGISTER:
+        case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
+        case S_DEFRANGE_REGISTER_REL:
+        case S_BUILDINFO:
+        case S_FILESTATIC:
+        case S_CALLEES:
+        case S_CALLERS:
+        case S_UNAMESPACE:
+        case S_INLINEES:
+        case S_POGODATA:
+            TRACE("Unsupported symbol id %x\n", cv_symbol->generic.id);
+            break;
+
+        default:
+            PDB_REPORT_UNEXPECTED("symbol id", cv_symbol->generic.id);
+            break;
+        }
+        pdb_reader_free(pdb, cv_symbol);
+    }
+    return R_PDB_SUCCESS;
+
+failure:
+    pdb_reader_free(pdb, cv_symbol);
+    return result;
+}
+
+static enum pdb_result pdb_reader_ensure_symbols_loaded_from_compiland(struct pdb_reader *pdb, unsigned compiland_index)
+{
+    enum pdb_result result;
+    struct pdb_compiland *compiland = &pdb->compilands[compiland_index];
+
+    if (compiland_index >= pdb->num_compilands) return R_PDB_INVALID_ARGUMENT;
+    if (!compiland->are_symbols_loaded)
+    {
+        struct pdb_reader_walker walker;
+        char *obj_name;
+
+        if ((result = pdb_reader_walker_init(pdb, PDB_STREAM_DBI, &walker))) return result;
+        walker.offset = compiland->stream_offset;
+        if ((result = pdb_reader_alloc_and_fetch_string(pdb, &walker, &obj_name))) return result;
+        compiland->compiland = symt_new_compiland(pdb->module, obj_name);
+        pdb_reader_free(pdb, obj_name);
+
+        if ((result = pdb_reader_walker_init(pdb, compiland->stream_id, &walker))) return result;
+        walker.offset = sizeof(UINT32);
+        if ((result = pdb_reader_load_compiland_symbols(pdb, (struct symt_compiland *)compiland->compiland, &walker))) return result;
+        compiland->are_symbols_loaded = TRUE;
+    }
+    return R_PDB_SUCCESS;
 }
 
 static struct module_format_vtable pdb_module_format_vtable =
