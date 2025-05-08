@@ -796,6 +796,14 @@ static enum pdb_result pdb_reader_compiland_iterator_next(struct pdb_reader *pdb
     return pdb_reader_read_DBI_cu_header(pdb, iter->dbi_header.version, &iter->dbi_walker, &iter->dbi_cu_header);
 }
 
+static enum pdb_result pdb_reader_compiland_iterator_alloc_and_read_compiland_name(struct pdb_reader *pdb, const struct pdb_reader_compiland_iterator *iter,
+                                                                                   char **obj_name)
+{
+    struct pdb_reader_walker walker = iter->dbi_walker;
+
+    return pdb_reader_alloc_and_fetch_string(pdb, &walker, obj_name);
+}
+
 struct pdb_compiland_lookup
 {
     struct pdb_reader *pdb;
@@ -3464,7 +3472,10 @@ BOOL cv_hack_ptr_to_symref(struct pdb_reader *pdb, cv_typ_t cv_typeid, symref_t 
     return pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), symref) == R_PDB_SUCCESS;
 }
 
-static enum pdb_result pdb_reader_walker_from_compiland_index(struct pdb_reader *pdb, unsigned compiland, PDB_SYMBOL_FILE_EX *dbi_cu_header)
+static enum pdb_result pdb_reader_walker_from_compiland_index(struct pdb_reader *pdb, unsigned compiland,
+                                                              struct pdb_reader_walker *compiland_walker,
+                                                              /* optional */
+                                                              PDB_SYMBOL_FILE_EX *dbi_cu_header, char **obj_name)
 {
     enum pdb_result result;
     struct pdb_reader_compiland_iterator compiland_iter;
@@ -3474,7 +3485,10 @@ static enum pdb_result pdb_reader_walker_from_compiland_index(struct pdb_reader 
     {
         if (!compiland--)
         {
-            *dbi_cu_header = compiland_iter.dbi_cu_header;
+            if ((result = pdb_reader_walker_init(pdb, compiland_iter.dbi_cu_header.stream, compiland_walker))) return result;
+            if (obj_name && (result = pdb_reader_compiland_iterator_alloc_and_read_compiland_name(pdb, &compiland_iter, obj_name))) return result;
+            if (dbi_cu_header) *dbi_cu_header = compiland_iter.dbi_cu_header;
+            compiland_walker->offset += sizeof(UINT32);
             return R_PDB_SUCCESS;
         }
     } while (pdb_reader_compiland_iterator_next(pdb, &compiland_iter) == R_PDB_SUCCESS);
@@ -3710,9 +3724,7 @@ static enum pdb_result pdb_method_get_line_from_inlined_address_internal(struct 
 
     if (!symt_get_info(pdb->module, &function->symt, TI_GET_ADDRESS, &top_function_address)) return R_PDB_INVALID_ARGUMENT;
     if ((result = pdb_reader_lookup_compiland_by_address(pdb, top_function_address, &compiland))) return result;
-    if ((result = pdb_reader_walker_from_compiland_index(pdb, compiland, &dbi_cu_header))) return result;
-    if ((result = pdb_reader_walker_init(pdb, dbi_cu_header.stream, &cu_walker))) return result;
-    cu_walker.offset += sizeof(UINT32);
+    if ((result = pdb_reader_walker_from_compiland_index(pdb, compiland, &cu_walker, &dbi_cu_header, NULL))) return result;
 
     if ((result = pdb_reader_search_codeview_symbol_by_address(pdb, &cu_walker, top_function_address, &cv_top_function_symbol, &end_stream_offset))) return result;
     if (inlined->user < cu_walker.offset || inlined->user >= end_stream_offset) return R_PDB_INVALID_ARGUMENT;
