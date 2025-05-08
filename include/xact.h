@@ -553,7 +553,7 @@ DECLARE_INTERFACE(IXACTCue)
 #undef INTERFACE
 
 #ifndef __cplusplus
-#define IXACTCue_Play(p)                        (p)->lpVtbl->Destroy(p)
+#define IXACTCue_Play(p)                        (p)->lpVtbl->Play(p)
 #define IXACTCue_Stop(p,a)                      (p)->lpVtbl->Stop(p,a)
 #define IXACTCue_GetState(p,a)                  (p)->lpVtbl->GetState(p,a)
 #define IXACTCue_Destroy(p)                     (p)->lpVtbl->Destroy(p)
@@ -570,9 +570,9 @@ DECLARE_INTERFACE(IXACTCue)
 #define IXACTCue_GetProperties(p,a)             (p)->lpVtbl->GetProperties(p,a)
 #endif
 #else
-#define IXACTCue_Play(p)                        (p)->Destroy()
+#define IXACTCue_Play(p)                        (p)->Play()
 #define IXACTCue_Stop(p,a)                      (p)->Stop(a)
-#define IXACTCue_GetState(p,a)                  (p)->Stop(a)
+#define IXACTCue_GetState(p,a)                  (p)->GetState(a)
 #define IXACTCue_Destroy(p)                     (p)->Destroy()
 #define IXACTCue_GetChannelMap(p,a,b,c)         (p)->GetChannelMap(a,b,c)
 #define IXACTCue_SetChannelMap(p,a)             (p)->SetChannelMap(a)
@@ -605,7 +605,7 @@ DECLARE_INTERFACE(IXACTWave)
 
 #ifndef __cplusplus
 #define IXACTWave_Destroy(p)                        (p)->lpVtbl->Destroy(p)
-#define IXACTWave_Play(p)                           (p)->lpVtbl->Destroy(p)
+#define IXACTWave_Play(p)                           (p)->lpVtbl->Play(p)
 #define IXACTWave_Stop(p,a)                         (p)->lpVtbl->Stop(p,a)
 #define IXACTWave_Pause(p,a)                        (p)->lpVtbl->Pause(p,a)
 #define IXACTWave_GetState(p,a)                     (p)->lpVtbl->GetState(p,a)
@@ -615,11 +615,11 @@ DECLARE_INTERFACE(IXACTWave)
 #define IXACTWave_GetProperties(p,a)                (p)->lpVtbl->GetProperties(p,a)
 #else
 #define IXACTWave_Destroy(p)                        (p)->Destroy()
-#define IXACTWave_Play(p)                           (p)->Destroy()
+#define IXACTWave_Play(p)                           (p)->Play()
 #define IXACTWave_Stop(p,a)                         (p)->Stop(a)
 #define IXACTWave_Pause(p,a)                        (p)->Pause(a)
-#define IXACTWave_GetState(p,a)                     (p)->Stop(a)
-#define IXACTWave_SetPitch(p,a)                     (p)->SetVariable(a)
+#define IXACTWave_GetState(p,a)                     (p)->GetState(a)
+#define IXACTWave_SetPitch(p,a)                     (p)->SetPitch(a)
 #define IXACTWave_SetVolume(p,a)                    (p)->SetVolume(a)
 #define IXACTWave_SetMatrixCoefficients(p,a,b,c)    (p)->SetMatrixCoefficients(a,b,c)
 #define IXACTWave_GetProperties(p,a)                (p)->GetProperties(a)
@@ -684,7 +684,7 @@ DECLARE_INTERFACE(IXACTWaveBank)
 #ifndef __cplusplus
 #define IXACTWaveBank_Destroy(p)                (p)->lpVtbl->Destroy(p)
 #if XACT3_VER >= 0x0205
-#define IXACTWaveBank_GetNumWaves(p,a)          (p)->lpVtbl->GetNumCues(p,a)
+#define IXACTWaveBank_GetNumWaves(p,a)          (p)->lpVtbl->GetNumWaves(p,a)
 #define IXACTWaveBank_GetWaveIndex(p,a)         (p)->lpVtbl->GetWaveIndex(p,a)
 #define IXACTWaveBank_GetWaveProperties(p,a,b)  (p)->lpVtbl->GetWaveProperties(p,a,b)
 #define IXACTWaveBank_Prepare(p,a,b,c,d,e)      (p)->lpVtbl->Prepare(p,a,b,c,d,e)
