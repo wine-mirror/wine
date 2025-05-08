@@ -24,6 +24,10 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "ntdsapi.h"
+#include "winternl.h"
+#include "inaddr.h"
+#include "in6addr.h"
+#include "ip2string.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdsapi);
@@ -95,6 +99,20 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
     }
     if (inst_name)
         new_spn_length += 1 /* for '/' */ + lstrlenW(svc_name);
+    if (ref)
+    {
+        ULONG scope_id;
+        IN6_ADDR ip6;
+        IN_ADDR ip4;
+        USHORT port;
+
+        if (RtlIpv4StringToAddressExW(svc_name, TRUE, &ip4, &port) &&
+                RtlIpv6StringToAddressExW(svc_name, &ip6, &scope_id, &port))
+            ref = NULL;
+
+        if (ref)
+            new_spn_length += 1 + lstrlenW(ref);
+    }
 
     if (*spn_length < new_spn_length)
     {
@@ -138,6 +156,16 @@ DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
         p++;
         len = lstrlenW(svc_name);
         memcpy(p, svc_name, len * sizeof(WCHAR));
+        p += len;
+        *p = '\0';
+    }
+
+    if (ref)
+    {
+        *p = '/';
+        p++;
+        len = lstrlenW(ref);
+        memcpy(p, ref, len * sizeof(WCHAR));
         p += len;
         *p = '\0';
     }

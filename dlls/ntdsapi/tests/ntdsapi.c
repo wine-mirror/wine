@@ -122,6 +122,30 @@ static void test_DsMakeSpn(void)
     ok(!ret, "got %ld\n", ret);
     ok(!strcmp(spnA, "class/host:555"), "got %s\n", spnA);
     ok(spn_length == 15, "spn_length = %ld\n", spn_length);
+
+    spn_length = ARRAY_SIZE(spnA);
+    ret = DsMakeSpnA("class", "127.0.0.1", NULL, 555, "referrer", &spn_length, spnA);
+    ok(!ret, "got %ld\n", ret);
+    ok(!strcmp(spnA, "class/127.0.0.1:555/referrer"), "got %s\n", spnA);
+    ok(spn_length == 29, "spn_length = %ld\n", spn_length);
+
+    spn_length = ARRAY_SIZE(spnA);
+    ret = DsMakeSpnA("class", "127.0.0.1:22", NULL, 555, "referrer", &spn_length, spnA);
+    ok(!ret, "got %ld\n", ret);
+    ok(!strcmp(spnA, "class/127.0.0.1:22:555/referrer"), "got %s\n", spnA);
+    ok(spn_length == 32, "spn_length = %ld\n", spn_length);
+
+    spn_length = ARRAY_SIZE(spnA);
+    ret = DsMakeSpnA("class", "127.0.0.1garbage", NULL, 555, "referrer", &spn_length, spnA);
+    ok(!ret, "got %ld\n", ret);
+    ok(!strcmp(spnA, "class/127.0.0.1garbage:555"), "got %s\n", spnA);
+    ok(spn_length == 27, "spn_length = %ld\n", spn_length);
+
+    spn_length = ARRAY_SIZE(spnA);
+    ret = DsMakeSpnA("class", "21DA:00D3:0000:2F3B:02AA:00FF:FE28:9C5A%2", NULL, 555, "referrer", &spn_length, spnA);
+    ok(!ret, "got %ld\n", ret);
+    ok(!strcmp(spnA, "class/21DA:00D3:0000:2F3B:02AA:00FF:FE28:9C5A%2:555/referrer"), "got %s\n", spnA);
+    ok(spn_length == 61, "spn_length = %ld\n", spn_length);
 }
 
 static void test_DsClientMakeSpnForTargetServer(void)
