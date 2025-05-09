@@ -675,7 +675,7 @@ static void test_delete(void)
     /* Empty filename. */
     init_shfo_tests();
     check_file_operation(FO_DELETE, FOF_NO_UI, "\0", NULL,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* NULL filename. */
@@ -692,7 +692,7 @@ static void test_delete(void)
     /* Empty filename, only one null terminator */
     init_shfo_tests();
     check_file_operation(FO_DELETE, FOF_NO_UI, "", NULL,
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* Nonexistent file. */
@@ -840,13 +840,13 @@ static void test_rename(void)
     init_shfo_tests();
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "\0", "test1.txt",
-            DE_MANYSRC1DEST, FALSE, TRUE, TRUE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "\0", "testdir2",
-            DE_MANYSRC1DEST, FALSE, TRUE, TRUE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "\0", "nonexistence",
-            DE_MANYSRC1DEST, FALSE, TRUE, TRUE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist\n");
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "testdir2\0", "\0",
@@ -861,7 +861,7 @@ static void test_rename(void)
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "\0", "\0",
-            DE_MANYSRC1DEST, FALSE, TRUE, TRUE);
+            DE_MANYSRC1DEST, FALSE, FALSE, FALSE);
 
     /* NULL source or target. */
     clean_after_shfo_tests();
@@ -877,13 +877,13 @@ static void test_rename(void)
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "test1.txt\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "testdir2\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             "nonexistence\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_RENAME, FOF_NO_UI,
             NULL, NULL,
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
@@ -1502,16 +1502,16 @@ static void test_copy(void)
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "testdir2\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "testfile.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "nonexistence",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "\0", "\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     /* NULL source or target. */
     clean_after_shfo_tests();
@@ -1527,13 +1527,13 @@ static void test_copy(void)
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "test1.txt\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "testdir2\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             "nonexistence\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_COPY, FOF_NO_UI,
             NULL, NULL,
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
@@ -1847,13 +1847,13 @@ static void test_move(void)
     init_shfo_tests();
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "\0", "test1.txt\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "\0", "testdir2\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "\0", "nonexistence\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(!file_exists("nonexistence"), "Expected nonexistence to not exist.\n");
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test1.txt", "\0",
@@ -1866,7 +1866,7 @@ static void test_move(void)
             ERROR_FILE_NOT_FOUND, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "\0", "\0",
-            ERROR_SUCCESS, FALSE, TRUE, TRUE);
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
 
     /* NULL source or target. */
     clean_after_shfo_tests();
@@ -1882,13 +1882,13 @@ static void test_move(void)
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "test1.txt\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "testdir2\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             "nonexistent\0", NULL,
-            ERROR_ACCESS_DENIED, FALSE, TRUE, FALSE);
+            ERROR_ACCESS_DENIED, FALSE, FALSE, FALSE);
     check_file_operation(FO_MOVE, FOF_NO_UI,
             NULL, NULL,
             ERROR_INVALID_PARAMETER, 0xdeadbeef, FALSE, FALSE);

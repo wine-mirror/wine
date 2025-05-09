@@ -1056,25 +1056,17 @@ static void parse_wildcard_files(FILE_LIST *file_list, LPCWSTR szFile)
 }
 
 /* takes the null-separated file list and fills out the FILE_LIST */
-static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wildcard)
+static void parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wildcard)
 {
     LPCWSTR ptr = szFiles;
     WCHAR szCurFile[MAX_PATH];
     WCHAR *p;
-
-    if (!szFiles)
-        return ERROR_INVALID_PARAMETER;
 
     flList->bAnyFromWildcard = FALSE;
     flList->bAnyDirectories = FALSE;
     flList->bAnyDontExist = FALSE;
     flList->num_alloc = 32;
     flList->dwNumFiles = 0;
-
-    /* empty list */
-    if (!szFiles[0])
-        return ERROR_ACCESS_DENIED;
-
     flList->feFiles = calloc(flList->num_alloc, sizeof(FILE_ENTRY));
 
     while (*ptr)
@@ -1103,8 +1095,6 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
         /* advance to the next string */
         ptr += lstrlenW(ptr) + 1;
     }
-
-    return S_OK;
 }
 
 static void create_dest_dirs(LPCWSTR szDestDir)
@@ -1133,8 +1123,7 @@ static DWORD copy_wildcard(FILE_OPERATION *op, const FILE_ENTRY *from, const FIL
     DWORD i, ret;
 
     wcscpy(buffer, from->szFullPath);
-    if ((ret = parse_file_list(&from_files, buffer, TRUE)) != ERROR_SUCCESS)
-        return ret;
+    parse_file_list(&from_files, buffer, TRUE);
 
     for (i = 0; i < from_files.dwNumFiles; ++i)
     {
@@ -1524,24 +1513,32 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     FILE_LIST flFrom, flTo;
     int ret = 0;
 
-    if (!lpFileOp)
+    if (!lpFileOp || !lpFileOp->pFrom)
         return ERROR_INVALID_PARAMETER;
 
     check_flags(lpFileOp->fFlags);
 
     ZeroMemory(&flFrom, sizeof(FILE_LIST));
     ZeroMemory(&flTo, sizeof(FILE_LIST));
-
-    if ((ret = parse_file_list(&flFrom, lpFileOp->pFrom, parse_wildcard)))
-        return ret;
-
-    if (lpFileOp->wFunc != FO_DELETE)
-        parse_file_list(&flTo, lpFileOp->pTo, FALSE);
-
     ZeroMemory(&op, sizeof(op));
     op.req = lpFileOp;
-    op.bManyItems = (flFrom.dwNumFiles > 1);
     lpFileOp->fAnyOperationsAborted = FALSE;
+
+    if (lpFileOp->wFunc != FO_MOVE
+            && lpFileOp->wFunc != FO_COPY
+            && lpFileOp->wFunc != FO_DELETE
+            && lpFileOp->wFunc != FO_RENAME)
+        return ERROR_INVALID_PARAMETER;
+
+    parse_file_list(&flFrom, lpFileOp->pFrom, parse_wildcard);
+    op.bManyItems = (flFrom.dwNumFiles > 1);
+
+    if (lpFileOp->wFunc != FO_DELETE)
+    {
+        if (!lpFileOp->pTo)
+            return ERROR_ACCESS_DENIED;
+        parse_file_list(&flTo, lpFileOp->pTo, FALSE);
+    }
 
     if (flTo.bAnyFromWildcard)
         return ERROR_INVALID_NAME;
@@ -1561,8 +1558,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
             ret = rename_files(lpFileOp, &flFrom, &flTo);
             break;
         default:
-            ret = ERROR_INVALID_PARAMETER;
-            break;
+            assert(0); /* Should never be here. */
     }
 
     file_list_destroy(&flFrom);
