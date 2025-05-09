@@ -4302,6 +4302,7 @@ static const struct module_format_vtable dwarf2_module_format_vtable =
     NULL,
     NULL,
     NULL,
+    NULL,
     dwarf2_location_compute,
 };
 

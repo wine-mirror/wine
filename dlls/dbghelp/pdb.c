@@ -4545,10 +4545,45 @@ static enum pdb_result pdb_reader_ensure_symbols_loaded_from_compiland(struct pd
     return R_PDB_SUCCESS;
 }
 
+static enum pdb_result pdb_reader_lookup_top_symbol_by_segment_offset(struct pdb_reader *pdb, unsigned segment, unsigned offset, symref_t *symref)
+{
+    enum pdb_result result;
+    unsigned compiland_index;
+    DWORD64 in_address;
+    struct symt_ht *symbol;
+
+    if ((result = pdb_reader_get_segment_address(pdb, segment, offset, &in_address))) return result;
+    result = pdb_reader_lookup_compiland_by_segment_offset(pdb, segment, offset, &compiland_index);
+    if (result == R_PDB_SUCCESS)
+    {
+        if ((result = pdb_reader_ensure_symbols_loaded_from_compiland(pdb, compiland_index)))
+            return result;
+    }
+    /* don't fail if not found as some symbols are only present in DBI, but not in compiland */
+    else if (result != R_PDB_NOT_FOUND) return result;
+    /* fallback to ptr symbols lookup (as ptr should be loaded by now) */
+    symbol = symt_find_symbol_at(pdb->module, in_address);
+    if (!symbol) return R_PDB_NOT_FOUND;
+    *symref = symt_ptr_to_symref(&symbol->symt);
+    return R_PDB_SUCCESS;
+}
+
+static enum method_result pdb_method_lookup_symbol_by_address(struct module_format *modfmt, DWORD_PTR address, symref_t *symref)
+{
+    enum pdb_result result;
+    struct pdb_reader *pdb;
+    unsigned segment, offset;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+    if ((result = pdb_reader_get_segment_offset_from_address(pdb, address, &segment, &offset))) return MR_FAILURE;
+    return pdb_method_result(pdb_reader_lookup_top_symbol_by_segment_offset(pdb, segment, offset, symref));
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
     pdb_method_request_symref_t,
+    pdb_method_lookup_symbol_by_address,
     pdb_method_find_type,
     pdb_method_enumerate_types,
     pdb_method_location_compute,

@@ -1034,7 +1034,7 @@ static int symt_get_best_at(struct module* module, int idx_sorttab)
 }
 
 /* assume addr is in module */
-struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
+static struct symt_ht* symt_find_nearest_internal(struct module* module, DWORD_PTR addr)
 {
     int         mid, high, low;
     ULONG64     ref_addr, ref_size;
@@ -1078,6 +1078,33 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
     low = symt_get_best_at(module, low);
 
     return module->addr_sorttab[low];
+}
+
+struct symt_ht *symt_find_nearest(struct module *module, DWORD_PTR addr)
+{
+    static int recursive;
+    struct module_format_vtable_iterator iter = {};
+
+    /* prevent recursive lookup inside backend */
+    if (!recursive++)
+    {
+        while ((module_format_vtable_iterator_next(module, &iter,
+                                                   MODULE_FORMAT_VTABLE_INDEX(lookup_by_address))))
+        {
+            symref_t symref;
+            enum method_result result = iter.modfmt->vtable->lookup_by_address(iter.modfmt, addr, &symref);
+            if (result == MR_SUCCESS)
+            {
+                recursive--;
+                if (symt_is_symref_ptr(symref)) return (struct symt_ht*)SYMT_SYMREF_TO_PTR(symref);
+                FIXME("No support for this case yet\n");
+                return NULL;
+            }
+            /* fall back in all the other cases */
+        }
+    }
+    recursive--;
+    return symt_find_nearest_internal(module, addr);
 }
 
 struct symt_ht* symt_find_symbol_at(struct module* module, DWORD_PTR addr)
