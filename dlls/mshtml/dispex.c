@@ -3046,9 +3046,19 @@ static HRESULT prototype_find_dispid(DispatchEx *dispex, const WCHAR *name, DWOR
     return hres;
 }
 
+static HRESULT prototype_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+{
+    if(id == DISPID_STARTENUM) {
+        HRESULT hres = dispex_get_id(dispex, L"constructor", 0, &id);
+        if(hres != S_OK) return hres;
+    }
+    return S_FALSE;
+}
+
 static const dispex_static_data_vtbl_t prototype_dispex_vtbl = {
     .destructor  = prototype_destructor,
     .find_dispid = prototype_find_dispid,
+    .next_dispid = prototype_next_dispid,
 };
 
 HRESULT get_prototype(HTMLInnerWindow *script_global, object_id_t id, DispatchEx **ret)
