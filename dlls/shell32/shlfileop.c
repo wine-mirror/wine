@@ -1012,6 +1012,11 @@ static void file_list_destroy(FILE_LIST *flList)
     free(flList->feFiles);
 }
 
+static BOOL has_wildcard(const WCHAR *str)
+{
+    return !!wcspbrk(str, L"*?");
+}
+
 static LPWSTR wildcard_to_file(LPCWSTR szWildCard, LPCWSTR szFileName)
 {
     LPCWSTR ptr;
@@ -1074,7 +1079,7 @@ static HRESULT parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wi
 
     while (*ptr)
     {
-        BOOL from_wildcard = !!wcspbrk(ptr, L"*?");
+        BOOL from_wildcard = has_wildcard(ptr);
 
         /* change relative to absolute path */
         if (PathIsRelativeW(ptr))
@@ -1198,7 +1203,7 @@ static DWORD do_copy(FILE_OPERATION *op, const FILE_ENTRY *from, const FILE_ENTR
         SHCreateDirectoryExW(NULL, target_dir, NULL);
 
     /* Source contains wildcard. */
-    if (!!wcspbrk(from->szFullPath, L"*?"))
+    if (has_wildcard(from->szFullPath))
         return copy_wildcard(op, from, to);
 
     /* Source is a dir. */
