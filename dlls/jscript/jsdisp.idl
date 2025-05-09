@@ -53,6 +53,7 @@ interface IWineJSDispatch : IDispatchEx
     void Free();
     HRESULT GetPropertyFlags(DISPID id, UINT32 *ret);
     HRESULT DefineProperty(const WCHAR *name, unsigned int flags, VARIANT *v);
+    HRESULT UpdateProperty(struct property_info *desc);
     HRESULT GetScriptGlobal(IWineJSDispatchHost **ret);
 }
 
@@ -65,13 +66,13 @@ interface IWineJSDispatchHost : IDispatchEx
 {
     HRESULT GetJSDispatch(IWineJSDispatch **ret);
     HRESULT LookupProperty(const WCHAR *name, DWORD flags, struct property_info *desc);
-    HRESULT NextProperty(DISPID id, struct property_info *desc);
     HRESULT GetProperty(DISPID id, LCID lcid, VARIANT *r, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT SetProperty(DISPID id, LCID lcid, VARIANT *v, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT DeleteProperty(DISPID id);
     HRESULT ConfigureProperty(DISPID id, UINT32 flags);
     HRESULT CallFunction(DISPID id, UINT32 iid, DWORD flags, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
     HRESULT Construct(LCID lcid, DWORD flags, DISPPARAMS *dp, VARIANT *ret, EXCEPINFO *ei, IServiceProvider *caller);
+    HRESULT FillProperties();
     HRESULT GetOuterDispatch(IWineJSDispatchHost **ret);
     HRESULT ToString(BSTR *str);
 }

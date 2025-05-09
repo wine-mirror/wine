@@ -137,12 +137,6 @@ static HRESULT Arguments_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsign
     return jsdisp_index_lookup(&arguments->jsdisp, name, arguments->argc, desc);
 }
 
-static HRESULT Arguments_next_prop(jsdisp_t *jsdisp, unsigned id, struct property_info *desc)
-{
-    ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
-    return jsdisp_next_index(&arguments->jsdisp, arguments->argc, id, desc);
-}
-
 static jsval_t *get_argument_ref(ArgumentsInstance *arguments, unsigned idx)
 {
     if(arguments->buf)
@@ -177,6 +171,12 @@ static HRESULT Arguments_prop_put(jsdisp_t *jsdisp, unsigned idx, jsval_t val)
     jsval_release(*ref);
     *ref = copy;
     return S_OK;
+}
+
+static HRESULT Arguments_fill_props(jsdisp_t *jsdisp)
+{
+    ArgumentsInstance *arguments = arguments_from_jsdisp(jsdisp);
+    return jsdisp_fill_indices(&arguments->jsdisp, arguments->argc);
 }
 
 static HRESULT Arguments_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *jsdisp)
@@ -240,9 +240,9 @@ static const builtin_info_t Arguments_info = {
     .props       = Arguments_props,
     .destructor  = Arguments_destructor,
     .lookup_prop = Arguments_lookup_prop,
-    .next_prop   = Arguments_next_prop,
     .prop_get    = Arguments_prop_get,
     .prop_put    = Arguments_prop_put,
+    .fill_props  = Arguments_fill_props,
     .gc_traverse = Arguments_gc_traverse
 };
 
@@ -251,9 +251,9 @@ static const builtin_info_t Arguments_ES5_info = {
     .call        = Arguments_value,
     .destructor  = Arguments_destructor,
     .lookup_prop = Arguments_lookup_prop,
-    .next_prop   = Arguments_next_prop,
     .prop_get    = Arguments_prop_get,
     .prop_put    = Arguments_prop_put,
+    .fill_props  = Arguments_fill_props,
     .gc_traverse = Arguments_gc_traverse
 };
 

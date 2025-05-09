@@ -2670,21 +2670,6 @@ static HRESULT WINAPI JSDispatchHost_LookupProperty(IWineJSDispatchHost *iface, 
     return get_host_property_descriptor(This, id, desc);
 }
 
-static HRESULT WINAPI JSDispatchHost_NextProperty(IWineJSDispatchHost *iface, DISPID id, struct property_info *desc)
-{
-    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
-    DISPID next;
-    HRESULT hres;
-
-    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
-
-    hres = dispex_next_id(This, id, TRUE, &next);
-    if(hres != S_OK)
-        return hres;
-
-    return get_host_property_descriptor(This, next, desc);
-}
-
 static HRESULT WINAPI JSDispatchHost_GetProperty(IWineJSDispatchHost *iface, DISPID id, LCID lcid, VARIANT *r,
                                                  EXCEPINFO *ei, IServiceProvider *caller)
 {
@@ -2772,6 +2757,34 @@ static HRESULT WINAPI JSDispatchHost_Construct(IWineJSDispatchHost *iface, LCID 
     return dispex_prop_call(This, DISPID_VALUE, lcid, flags, dp, ret, ei, caller);
 }
 
+static HRESULT WINAPI JSDispatchHost_FillProperties(IWineJSDispatchHost *iface)
+{
+    DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
+    DISPID id = DISPID_STARTENUM;
+    struct property_info desc;
+    HRESULT hres;
+
+    TRACE("%s (%p)->(%lx)\n", This->info->name, This, id);
+
+    for(;;) {
+        hres = dispex_next_id(This, id, TRUE, &id);
+        if(FAILED(hres))
+            return hres;
+        if(hres == S_FALSE)
+            break;
+
+        hres = get_host_property_descriptor(This, id, &desc);
+        if(FAILED(hres))
+            return hres;
+
+        hres = IWineJSDispatch_UpdateProperty(This->jsdisp, &desc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI JSDispatchHost_GetOuterDispatch(IWineJSDispatchHost *iface, IWineJSDispatchHost **ret)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);
@@ -2807,13 +2820,13 @@ static IWineJSDispatchHostVtbl JSDispatchHostVtbl = {
     DispatchEx_GetNameSpaceParent,
     JSDispatchHost_GetJSDispatch,
     JSDispatchHost_LookupProperty,
-    JSDispatchHost_NextProperty,
     JSDispatchHost_GetProperty,
     JSDispatchHost_SetProperty,
     JSDispatchHost_DeleteProperty,
     JSDispatchHost_ConfigureProperty,
     JSDispatchHost_CallFunction,
     JSDispatchHost_Construct,
+    JSDispatchHost_FillProperties,
     JSDispatchHost_GetOuterDispatch,
     JSDispatchHost_ToString,
 };

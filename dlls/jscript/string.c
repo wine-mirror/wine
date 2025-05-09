@@ -1517,16 +1517,6 @@ static HRESULT String_lookup_prop(jsdisp_t *jsdisp, const WCHAR *name, unsigned 
     return jsdisp_index_lookup(&string->dispex, name, jsstr_length(string->str), desc);
 }
 
-static HRESULT String_next_prop(jsdisp_t *jsdisp, unsigned id, struct property_info *desc)
-{
-    StringInstance *string = string_from_jsdisp(jsdisp);
-
-    if(string->dispex.ctx->version < 2)
-        return S_FALSE;
-
-    return jsdisp_next_index(&string->dispex, jsstr_length(string->str), id, desc);
-}
-
 static HRESULT String_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 {
     StringInstance *string = string_from_jsdisp(jsdisp);
@@ -1540,6 +1530,16 @@ static HRESULT String_prop_get(jsdisp_t *jsdisp, unsigned idx, jsval_t *r)
 
     *r = jsval_string(ret);
     return S_OK;
+}
+
+static HRESULT String_fill_props(jsdisp_t *jsdisp)
+{
+    StringInstance *string = string_from_jsdisp(jsdisp);
+
+    if(string->dispex.ctx->version < 2)
+        return S_OK;
+
+    return jsdisp_fill_indices(&string->dispex, jsstr_length(string->str));
 }
 
 static const builtin_prop_t String_props[] = {
@@ -1596,8 +1596,8 @@ static const builtin_info_t StringInst_info = {
     .props       = StringInst_props,
     .destructor  = String_destructor,
     .lookup_prop = String_lookup_prop,
-    .next_prop   = String_next_prop,
     .prop_get    = String_prop_get,
+    .fill_props  = String_fill_props,
 };
 
 /* ECMA-262 3rd Edition    15.5.3.2 */

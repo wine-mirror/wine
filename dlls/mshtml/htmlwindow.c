@@ -3439,12 +3439,11 @@ static HRESULT WINAPI WindowDispEx_LookupProperty(IWineJSDispatchHost *iface, co
                                               name, flags, desc);
 }
 
-static HRESULT WINAPI WindowDispEx_NextProperty(IWineJSDispatchHost *iface, DISPID id, struct property_info *desc)
+static HRESULT WINAPI WindowDispEx_FillProperties(IWineJSDispatchHost *iface)
 {
     HTMLOuterWindow *This = impl_from_IWineJSDispatchHost(iface);
 
-    return IWineJSDispatchHost_NextProperty(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface,
-                                            id, desc);
+    return IWineJSDispatchHost_FillProperties(&This->base.inner_window->event_target.dispex.IWineJSDispatchHost_iface);
 }
 
 static HRESULT WINAPI WindowDispEx_GetProperty(IWineJSDispatchHost *iface, DISPID id, LCID lcid, VARIANT *r,
@@ -3531,13 +3530,13 @@ static const IWineJSDispatchHostVtbl WindowDispExVtbl = {
     WindowDispEx_GetNameSpaceParent,
     WindowDispEx_GetJSDispatch,
     WindowDispEx_LookupProperty,
-    WindowDispEx_NextProperty,
     WindowDispEx_GetProperty,
     WindowDispEx_SetProperty,
     WindowDispEx_DeleteProperty,
     WindowDispEx_ConfigureProperty,
     WindowDispEx_CallFunction,
     WindowDispEx_Construct,
+    WindowDispEx_FillProperties,
     WindowDispEx_GetOuterDispatch,
     WindowDispEx_ToString,
 };
