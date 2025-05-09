@@ -4007,6 +4007,10 @@ static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_a
 
             This->static_props_filled = TRUE;
         }
+
+        hres = IWineJScript_FillGlobals(This->jscript, &This->event_target.dispex.IWineJSDispatchHost_iface);
+        if(FAILED(hres))
+            return hres;
     }
 
     while(idx < This->global_prop_cnt && This->global_props[idx].type != GLOBAL_DISPEXVAR)

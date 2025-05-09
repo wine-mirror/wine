@@ -319,11 +319,15 @@ fail:
 
 static void test_sp_caller(IServiceProvider *sp)
 {
+    BOOL seen_doc, seen_undefined;
     IOleCommandTarget *cmdtarget;
     IServiceProvider *caller;
     IHTMLWindow2 *window;
+    IDispatchEx *dispex;
     HRESULT hres;
     VARIANT var;
+    DISPID id;
+    BSTR str;
 
     hres = IServiceProvider_QueryService(sp, &SID_GetCaller, &IID_IServiceProvider, (void**)&caller);
     ok(hres == S_OK, "QueryService(SID_GetCaller) returned: %08lx\n", hres);
@@ -343,8 +347,27 @@ static void test_sp_caller(IServiceProvider *sp)
     hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IHTMLWindow2, (void**)&window);
     ok(hres == S_OK, "QueryInterface(IHTMLWindow2) failed: %08lx\n", hres);
     ok(window != NULL, "window is NULL\n");
-    IHTMLWindow2_Release(window);
     VariantClear(&var);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    for(id = DISPID_STARTENUM, seen_doc = FALSE, seen_undefined = FALSE;;) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        if(hres == S_FALSE) break;
+        ok(hres == S_OK, "GetNextDispID failed: %08lx\n", hres);
+
+        hres = IDispatchEx_GetMemberName(dispex, id, &str);
+        ok(hres == S_OK, "GetMemberName failed: %08lx\n", hres);
+        if(!wcscmp(str, L"document")) seen_doc = TRUE;
+        if(!wcscmp(str, L"undefined")) seen_undefined = TRUE;
+        SysFreeString(str);
+    }
+    ok(seen_doc, "document was not enumerated from window\n");
+    ok(!seen_undefined, "undefined was enumerated from window\n");
+
+    IDispatchEx_Release(dispex);
 }
 
 static void test_script_vars(unsigned argc, VARIANTARG *argv)

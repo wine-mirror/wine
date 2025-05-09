@@ -3720,6 +3720,49 @@ static void test_members(void)
     IActiveScript_Release(script);
 }
 
+static void test_enum(void)
+{
+    DISPID id = DISPID_STARTENUM;
+    IActiveScriptParse *parser;
+    IActiveScript *engine;
+    IDispatchEx *dispex;
+    IDispatch *disp;
+    HRESULT hres;
+
+    engine = create_script();
+
+    hres = IActiveScript_QueryInterface(engine, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    hres = IActiveScriptParse_InitNew(parser);
+    ok(hres == S_OK, "InitNew failed: %08lx\n", hres);
+    IActiveScriptParse_Release(parser);
+
+    hres = IActiveScript_SetScriptSite(engine, &ActiveScriptSite);
+    ok(hres == S_OK, "SetScriptSite failed: %08lx\n", hres);
+
+    hres = IActiveScript_SetScriptState(engine, SCRIPTSTATE_STARTED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08lx\n", hres);
+
+    hres = IActiveScript_GetScriptDispatch(engine, NULL, &disp);
+    ok(hres == S_OK, "GetScriptDispatch failed: %08lx\n", hres);
+    ok(disp != NULL, "script disp == NULL\n");
+
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    IDispatch_Release(disp);
+
+    hres = IDispatchEx_GetNextDispID(dispex, 0, id, &id);
+    ok(hres == S_FALSE, "GetNextDispID returned: %08lx\n", hres);
+
+    id = DISPID_STARTENUM;
+    hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+    ok(hres == S_FALSE, "GetNextDispID returned: %08lx\n", hres);
+
+    IDispatchEx_Release(dispex);
+    close_script(engine);
+}
+
 static void test_destructors(void)
 {
     static const WCHAR cyclic_refs[] = L"(function() {\n"
@@ -4379,6 +4422,7 @@ static BOOL run_tests(void)
     test_script_exprs();
     test_invokeex();
     test_members();
+    test_enum();
     test_destructors();
     test_eval();
     test_error_reports();

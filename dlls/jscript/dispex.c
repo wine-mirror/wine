@@ -3632,3 +3632,25 @@ IWineJSDispatchHost *get_host_dispatch(IDispatch *disp)
     IWineJSDispatchHost_GetOuterDispatch(host_obj->host_iface, &ret);
     return ret;
 }
+
+HRESULT fill_globals(script_ctx_t *ctx, IWineJSDispatchHost *script_global)
+{
+    jsdisp_t *global = ctx->global;
+    DISPID id = DISPID_STARTENUM;
+    struct property_info desc;
+    HRESULT hres;
+
+    for(;;) {
+        hres = jsdisp_next_prop(global, id, JSDISP_ENUM_OWN, &id);
+        if(hres == S_FALSE)
+            break;
+        if(FAILED(hres))
+            return hres;
+
+        hres = IWineJSDispatchHost_LookupProperty(script_global, get_prop(global, id)->name, fdexNameCaseSensitive, &desc);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
+}
