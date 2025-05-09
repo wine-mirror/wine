@@ -1610,6 +1610,7 @@ BOOL WINAPI SymGetSymFromAddr64(HANDLE hProcess, DWORD64 Address,
 static BOOL find_name(struct process* pcs, struct module* module, const char* name,
                       SYMBOL_INFO* symbol)
 {
+    struct module_format_vtable_iterator iter = {};
     struct hash_table_iter      hti;
     void*                       ptr;
     struct symt_ht*             sym = NULL;
@@ -1618,6 +1619,24 @@ static BOOL find_name(struct process* pcs, struct module* module, const char* na
     pair.pcs = pcs;
     if (!(pair.requested = module)) return FALSE;
     if (!module_get_debug(&pair)) return FALSE;
+
+    while ((module_format_vtable_iterator_next(pair.effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(lookup_by_name))))
+    {
+        symref_t symref;
+        enum method_result result = iter.modfmt->vtable->lookup_by_name(iter.modfmt, name, &symref);
+        if (result == MR_SUCCESS)
+        {
+            if (symt_is_symref_ptr(symref))
+            {
+                symt_fill_sym_info(&pair, NULL, SYMT_SYMREF_TO_PTR(symref), symbol);
+                return TRUE;
+            }
+            FIXME("Not expected case\n");
+            return FALSE;
+        }
+        if (result != MR_NOT_FOUND) return FALSE;
+    }
 
     hash_table_iter_init(&pair.effective->ht_symbols, &hti, name);
     while ((ptr = hash_table_iter_up(&hti)))

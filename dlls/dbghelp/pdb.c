@@ -3570,7 +3570,7 @@ static enum pdb_result pdb_reader_init_IPI(struct pdb_reader *pdb)
             goto invalid_file;
         if (pdb->ipi_header.hash_value_size > sizeof(unsigned))
         {
-            FIXME("Unexpected hash value size %u\n", pdb->ipi_header.hash_value_size);
+            PDB_REPORT_UNEXPECTED("IPI hash value size", pdb->ipi_header.hash_value_size);
             goto invalid_file;
         }
         pdb->ipi_walker.offset = pdb->ipi_header.type_offset;
@@ -4579,11 +4579,91 @@ static enum method_result pdb_method_lookup_symbol_by_address(struct module_form
     return pdb_method_result(pdb_reader_lookup_top_symbol_by_segment_offset(pdb, segment, offset, symref));
 }
 
+static enum pdb_result pdb_reader_dereference_procedure(struct pdb_reader *pdb, unsigned compiland_id, pdbsize_t stream_offset,
+                                                        unsigned *segment, unsigned *offset)
+{
+    enum pdb_result result;
+    struct pdb_reader_walker walker;
+    union codeview_symbol cv_symbol;
+    unsigned stream_id;
+
+    if (!compiland_id || compiland_id > pdb->num_compilands) return R_PDB_INVALID_ARGUMENT;
+    compiland_id--;
+    stream_id = pdb->compilands[compiland_id].stream_id;
+
+    if ((result = pdb_reader_walker_init(pdb, stream_id, &walker))) return result;
+    walker.offset = stream_offset;
+    if ((result = pdb_reader_read_partial_codeview_symbol(pdb, &walker, &cv_symbol))) return result;
+    switch (cv_symbol.generic.id)
+    {
+        case S_GPROC32:
+        case S_LPROC32:
+            *segment = cv_symbol.proc_v3.segment;
+            *offset = cv_symbol.proc_v3.offset;
+            break;
+
+        default:
+            PDB_REPORT_UNEXPECTED("codeview symbol-id", cv_symbol.generic.id);
+            /* fall through */
+        case S_OBJNAME:
+        case S_COMPILE:
+        case S_COMPILE2:
+        case S_COMPILE3:
+        case S_BUILDINFO:
+        case S_UDT:
+        case S_UNAMESPACE:
+        case S_GMANPROC:
+        case S_LMANPROC:
+            return R_PDB_NOT_FOUND;
+    }
+
+    return result;
+}
+
+static enum method_result pdb_method_lookup_symbol_by_name(struct module_format *modfmt, const char *name, symref_t *symref)
+{
+    enum pdb_result result;
+    struct pdb_reader *pdb;
+    union codeview_symbol cv_symbol;
+    pdbsize_t globals_offset;
+    unsigned segment;
+    unsigned offset;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+
+    if ((result = pdb_reader_read_DBI_codeview_symbol_by_name(pdb, name, &globals_offset, &cv_symbol)))
+        return pdb_method_result(result);
+
+    switch (cv_symbol.generic.id)
+    {
+    case S_GDATA32:
+    case S_LDATA32:
+        segment = cv_symbol.data_v3.segment;
+        offset = cv_symbol.data_v3.offset;
+        break;
+    case S_PROCREF:
+    case S_LPROCREF:
+        if ((result = pdb_reader_dereference_procedure(pdb, cv_symbol.refsym2_v3.imod, cv_symbol.refsym2_v3.ibSym,
+                                                       &segment, &offset)))
+        {
+            return MR_FAILURE;
+        }
+        break;
+    default:
+        return MR_FAILURE;
+    }
+    result = pdb_reader_lookup_top_symbol_by_segment_offset(pdb, segment, offset, symref);
+    if (result == R_PDB_SUCCESS) return MR_SUCCESS;
+    TRACE("No symbol %s found...\n", name);
+    return MR_NOT_FOUND;
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
     pdb_method_request_symref_t,
     pdb_method_lookup_symbol_by_address,
+    pdb_method_lookup_symbol_by_name,
     pdb_method_find_type,
     pdb_method_enumerate_types,
     pdb_method_location_compute,
