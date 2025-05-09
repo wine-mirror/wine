@@ -442,6 +442,7 @@ struct module_format_vtable
     enum method_result          (*request_symref_t)(struct module_format *modfmt, symref_t ref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
     enum method_result          (*lookup_by_address)(struct module_format *modfmt, DWORD_PTR address, symref_t *symref);
     enum method_result          (*lookup_by_name)(struct module_format *modfmt, const char *name, symref_t *symref);
+    enum method_result          (*enumerate_symbols)(struct module_format *modfmt, const WCHAR *match, BOOL (*cb)(symref_t, const char *, void *), void *user);
 
     /* types management */
     enum method_result          (*find_type)(struct module_format *modfmt, const char *name, symref_t *ref);

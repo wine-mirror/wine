@@ -4658,12 +4658,80 @@ static enum method_result pdb_method_lookup_symbol_by_name(struct module_format 
     return MR_NOT_FOUND;
 }
 
+static enum method_result pdb_method_enumerate_symbols(struct module_format *modfmt, const WCHAR *match, BOOL (*cb)(symref_t, const char *, void *), void *user)
+{
+    enum pdb_result result;
+    struct pdb_reader *pdb;
+    struct pdb_reader_walker walker, symbol_walker;
+    union codeview_symbol cv_symbol;
+    unsigned segment;
+    unsigned offset;
+    char *symbol_name;
+
+    if (!pdb_hack_get_main_info(modfmt, &pdb, NULL)) return MR_FAILURE;
+
+    /* FIXME could be optimized if match doesn't contain wild cards */
+    /* this is currently ugly, but basically we just ensure that all the compilands which contain matching symbols
+     * are actually loaded, and fall back to generic mode...
+     */
+    if ((result = pdb_reader_walker_init(pdb, pdb->dbi_header.gsym_stream, &walker))) return pdb_method_result(result);
+    while (pdb_reader_read_partial_codeview_symbol(pdb, &walker, &cv_symbol) == R_PDB_SUCCESS)
+    {
+        symbol_name = NULL;
+        symbol_walker = walker;
+        symbol_walker.offset -= sizeof(cv_symbol.generic.len);
+        switch (cv_symbol.generic.id)
+        {
+        case S_GDATA32:
+        case S_LDATA32:
+            segment = cv_symbol.data_v3.segment;
+            offset = cv_symbol.data_v3.offset;
+            symbol_walker.offset += offsetof(union codeview_symbol, data_v3.name);
+            if ((result = pdb_reader_alloc_and_fetch_string(pdb, &symbol_walker, &symbol_name))) return pdb_method_result(result);
+            break;
+        case S_PROCREF:
+        case S_LPROCREF:
+            if ((result = pdb_reader_dereference_procedure(pdb, cv_symbol.refsym2_v3.imod, cv_symbol.refsym2_v3.ibSym,
+                                                           &segment, &offset)))
+            {
+                return pdb_method_result(result);
+            }
+            symbol_walker.offset += offsetof(union codeview_symbol, refsym2_v3.name);
+            if ((result = pdb_reader_alloc_and_fetch_string(pdb, &symbol_walker, &symbol_name))) return pdb_method_result(result);
+            break;
+        case S_UDT:
+        case S_CONSTANT:
+        case S_PUB32:
+            break;
+        default:
+            PDB_REPORT_UNEXPECTED("codeview symbol-id", cv_symbol.generic.id);
+            break;
+        }
+        if (symbol_name)
+        {
+            BOOL do_continue = TRUE;
+            symref_t symref;
+
+            if (symt_match_stringAW(symbol_name, match, TRUE) &&
+                pdb_reader_lookup_top_symbol_by_segment_offset(pdb, segment, offset, &symref) == R_PDB_SUCCESS)
+            {
+                do_continue = cb(symref, symbol_name, user);
+            }
+            pdb_reader_free(pdb, symbol_name);
+            if (!do_continue) return MR_SUCCESS;
+        }
+        walker.offset += cv_symbol.generic.len;
+    }
+    return MR_FAILURE;
+}
+
 static struct module_format_vtable pdb_module_format_vtable =
 {
     NULL,/*pdb_module_remove*/
     pdb_method_request_symref_t,
     pdb_method_lookup_symbol_by_address,
     pdb_method_lookup_symbol_by_name,
+    pdb_method_enumerate_symbols,
     pdb_method_find_type,
     pdb_method_enumerate_types,
     pdb_method_location_compute,

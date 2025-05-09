@@ -4021,6 +4021,7 @@ static const struct module_format_vtable old_pdb_module_format_vtable =
     NULL,
     NULL,
     NULL,
+    NULL,
     pdb_location_compute,
 };
 

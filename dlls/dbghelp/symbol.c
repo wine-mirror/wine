@@ -892,14 +892,47 @@ static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
     return !se->cb(se->sym_info, se->sym_info->Size, se->user);
 }
 
+struct symbol_enum_method
+{
+    struct module_pair *pair;
+    const struct sym_enum *se;
+};
+
+static BOOL symbol_enum_method_cb(symref_t symref, const char *name, void *user)
+{
+    struct symbol_enum_method *sem = user;
+
+    sem->se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
+    sem->se->sym_info->MaxNameLen = sizeof(sem->se->buffer) - sizeof(SYMBOL_INFO);
+
+    if (symt_is_symref_ptr(symref))
+    {
+        if (send_symbol(sem->se, sem->pair, NULL, (struct symt*)symref)) return TRUE;
+    }
+    else FIXME("No support for this case yet %Ix\n", symref);
+    return TRUE;
+}
+
 static BOOL symt_enum_module(struct module_pair* pair, const WCHAR* match,
                              const struct sym_enum* se)
 {
+    struct module_format_vtable_iterator iter = {};
     void*                       ptr;
     struct symt_ht*             sym = NULL;
     struct hash_table_iter      hti;
     WCHAR*                      nameW;
     BOOL                        ret;
+
+    while ((module_format_vtable_iterator_next(pair->effective, &iter,
+                                               MODULE_FORMAT_VTABLE_INDEX(enumerate_symbols))))
+    {
+        struct symbol_enum_method sem = {pair, se};
+        enum method_result result = iter.modfmt->vtable->enumerate_symbols(iter.modfmt, match, symbol_enum_method_cb, &sem);
+
+        if (result == MR_SUCCESS) return TRUE;
+        if (result == MR_FAILURE) return FALSE;
+        /* fall back in all the other cases */
+    }
 
     hash_table_iter_init(&pair->effective->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
