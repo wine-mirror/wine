@@ -1779,9 +1779,6 @@ static enum pdb_result pdb_reader_read_DBI_codeview_symbol_by_name(struct pdb_re
     return R_PDB_NOT_FOUND;
 }
 
-/* FIXME temp forward */
-static enum pdb_result pdb_reader_ensure_symbols_loaded_from_compiland(struct pdb_reader *pdb, unsigned compiland_index);
-
 static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
 {
     enum pdb_result result;
@@ -1811,11 +1808,6 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
         pdb->compilands[i].are_symbols_loaded = pdb->compilands[i].stream_id == 0xffff;
         result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter);
         if ((result == R_PDB_SUCCESS) != (i + 1 < pdb->num_compilands)) return result ? result : R_PDB_INVALID_PDB_FILE;
-    }
-    /* TEMP force loading of all compilands */
-    for (i = 0; i < pdb->num_compilands; i++)
-    {
-        if ((result = pdb_reader_ensure_symbols_loaded_from_compiland(pdb, i))) return result;
     }
     if ((result = pdb_reader_load_DBI_hash_table(pdb))) return result;
 
