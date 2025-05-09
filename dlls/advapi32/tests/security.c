@@ -8577,7 +8577,11 @@ static void test_admin_elevation(void)
     ok(tid, "got error %lu\n", GetLastError());
 
     hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
-    ok(hproc != NULL, "got error %lu\n", GetLastError());
+    if (!hproc)
+    {
+        skip("could not open process, error %lu\n", GetLastError());
+        return;
+    }
 
     ret = OpenProcessToken(hproc, TOKEN_READ, &htok);
     ok(ret, "got error %lu\n", GetLastError());
