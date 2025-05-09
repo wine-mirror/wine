@@ -3173,6 +3173,15 @@ static HRESULT stub_constructor_find_dispid(DispatchEx *dispex, const WCHAR *nam
     return hres;
 }
 
+static HRESULT stub_constructor_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+{
+    if(id == DISPID_STARTENUM) {
+        HRESULT hres = dispex_get_id(dispex, L"prototype", 0, &id);
+        if(hres != S_OK) return hres;
+    }
+    return S_FALSE;
+}
+
 static const char *stub_constructor_get_name(DispatchEx *dispex)
 {
     struct stub_constructor *constr = stub_constructor_from_DispatchEx(dispex);
@@ -3182,6 +3191,7 @@ static const char *stub_constructor_get_name(DispatchEx *dispex)
 static const dispex_static_data_vtbl_t stub_constructor_dispex_vtbl = {
     .destructor  = stub_constructor_destructor,
     .find_dispid = stub_constructor_find_dispid,
+    .next_dispid = stub_constructor_next_dispid,
     .get_name    = stub_constructor_get_name,
 };
 
