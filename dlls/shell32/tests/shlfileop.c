@@ -1459,17 +1459,14 @@ static void test_copy(void)
 
     check_file_operation(FO_COPY, FOF_NO_UI | FOF_MULTIDESTFILES,
             "aa.txt\0", "one\0tw?\0",
-            ERROR_SUCCESS, FALSE, TRUE, FALSE);
-    todo_wine
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two\\aa.txt"), "Expected file to not exist\n");
 
     check_file_operation(FO_COPY, FOF_NO_UI,
             "aa.txt\0bb.txt\0", "one\0tw?\0",
-            ERROR_SUCCESS, FALSE, TRUE, FALSE);
-    todo_wine
+            ERROR_SUCCESS, FALSE, FALSE, FALSE);
     ok(DeleteFileA("one\\aa.txt"), "Expected file to exist\n");
-    todo_wine
     ok(DeleteFileA("one\\bb.txt"), "Expected file to exist\n");
     ok(!DeleteFileA("two\\bb.txt"), "Expected file to not exist\n");
 

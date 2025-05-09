@@ -1097,6 +1097,32 @@ static void parse_file_list(FILE_LIST *flList, LPCWSTR szFiles, BOOL parse_wildc
     }
 }
 
+static DWORD parse_target_file_list(const SHFILEOPSTRUCTW *op, DWORD source_file_count, FILE_LIST *out)
+{
+    DWORD i, check_count = 1;
+
+    if (op->wFunc == FO_DELETE)
+        return ERROR_SUCCESS;
+    if (!op->pTo)
+        return ERROR_ACCESS_DENIED;
+
+    parse_file_list(out, op->pTo, FALSE);
+
+    if (op->fFlags & FOF_MULTIDESTFILES)
+        check_count = min(source_file_count, out->dwNumFiles);
+
+    for (i = 0; i < check_count; ++i)
+    {
+        if (out->feFiles[i].bFromWildcard)
+        {
+            file_list_destroy(out);
+            return ERROR_INVALID_NAME;
+        }
+    }
+
+    return ERROR_SUCCESS;
+}
+
 static void create_dest_dirs(LPCWSTR szDestDir)
 {
     WCHAR dir[MAX_PATH];
@@ -1518,8 +1544,6 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 
     check_flags(lpFileOp->fFlags);
 
-    ZeroMemory(&flFrom, sizeof(FILE_LIST));
-    ZeroMemory(&flTo, sizeof(FILE_LIST));
     ZeroMemory(&op, sizeof(op));
     op.req = lpFileOp;
     lpFileOp->fAnyOperationsAborted = FALSE;
@@ -1530,18 +1554,17 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
             && lpFileOp->wFunc != FO_RENAME)
         return ERROR_INVALID_PARAMETER;
 
+    /* Parse source file list. */
+    memset(&flFrom, 0, sizeof(flFrom));
     parse_file_list(&flFrom, lpFileOp->pFrom, parse_wildcard);
     op.bManyItems = (flFrom.dwNumFiles > 1);
 
-    if (lpFileOp->wFunc != FO_DELETE)
+    memset(&flTo, 0, sizeof(flTo));
+    if ((ret = parse_target_file_list(lpFileOp, flFrom.dwNumFiles, &flTo)) != ERROR_SUCCESS)
     {
-        if (!lpFileOp->pTo)
-            return ERROR_ACCESS_DENIED;
-        parse_file_list(&flTo, lpFileOp->pTo, FALSE);
+        file_list_destroy(&flFrom);
+        return ret;
     }
-
-    if (flTo.bAnyFromWildcard)
-        return ERROR_INVALID_NAME;
 
     switch (lpFileOp->wFunc)
     {
@@ -1562,9 +1585,7 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     }
 
     file_list_destroy(&flFrom);
-
-    if (lpFileOp->wFunc != FO_DELETE)
-        file_list_destroy(&flTo);
+    file_list_destroy(&flTo);
 
     if (ret == ERROR_CANCELLED)
         lpFileOp->fAnyOperationsAborted = TRUE;
