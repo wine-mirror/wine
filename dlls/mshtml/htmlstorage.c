@@ -1298,6 +1298,7 @@ dispex_static_data_t Storage_dispex = {
     .vtbl       = &Storage_dispex_vtbl,
     .disp_tid   = IHTMLStorage_tid,
     .iface_tids = HTMLStorage_iface_tids,
+    .js_flags   = HOSTOBJ_VOLATILE_FILL,
 };
 
 static HRESULT build_session_origin(IUri *uri, BSTR hostname, BSTR *ret)

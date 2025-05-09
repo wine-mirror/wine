@@ -737,11 +737,15 @@ static HRESULT fill_props(jsdisp_t *obj)
     HRESULT hres;
     DWORD i;
 
+    if(obj->props_filled)
+        return S_OK;
+
     for(i = 0; i < obj->builtin_info->props_cnt; i++) {
         hres = find_prop_name(obj, string_hash(obj->builtin_info->props[i].name), obj->builtin_info->props[i].name, FALSE, NULL, &prop);
         if(FAILED(hres))
             return hres;
     }
+    hres = S_OK;
 
     if(obj->builtin_info->fill_props) {
         hres = obj->builtin_info->fill_props(obj);
@@ -749,6 +753,8 @@ static HRESULT fill_props(jsdisp_t *obj)
             return hres;
     }
 
+    if(hres == S_OK)
+        obj->props_filled = TRUE;
     return S_OK;
 }
 

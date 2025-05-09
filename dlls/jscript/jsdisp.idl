@@ -39,7 +39,8 @@ const unsigned int PROPF_CONFIGURABLE = 0x1000;
 
 const unsigned int PROPF_PUBLIC_MASK = PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE;
 
-const unsigned int HOSTOBJ_CONSTRUCTOR = 0x0001;
+const unsigned int HOSTOBJ_CONSTRUCTOR    = 0x0001;
+const unsigned int HOSTOBJ_VOLATILE_FILL  = 0x0002;
 
 interface IWineJSDispatchHost;
 

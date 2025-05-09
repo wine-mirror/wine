@@ -5764,6 +5764,7 @@ dispex_static_data_t Document_dispex = {
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
     .init_info    = HTMLDocumentNode_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_FILL,
 };
 
 dispex_static_data_t HTMLDocument_dispex = {
@@ -5773,6 +5774,7 @@ dispex_static_data_t HTMLDocument_dispex = {
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = HTMLDocumentNode_iface_tids,
     .init_info    = HTMLDocumentNode_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_FILL,
     .min_compat_mode = COMPAT_MODE_IE11,
 };
 
@@ -5906,6 +5908,7 @@ dispex_static_data_t DocumentFragment_dispex = {
     .disp_tid     = DispHTMLDocument_tid,
     .iface_tids   = DocumentFragment_iface_tids,
     .init_info    = DocumentFragment_init_dispex_info,
+    .js_flags     = HOSTOBJ_VOLATILE_FILL,
 };
 
 static HRESULT create_document_fragment(nsIDOMNode *nsnode, HTMLDocumentNode *doc_node, HTMLDocumentNode **ret)

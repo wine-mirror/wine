@@ -2782,7 +2782,7 @@ static HRESULT WINAPI JSDispatchHost_FillProperties(IWineJSDispatchHost *iface)
             return hres;
     }
 
-    return S_OK;
+    return (This->info->desc->js_flags & HOSTOBJ_VOLATILE_FILL) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI JSDispatchHost_GetOuterDispatch(IWineJSDispatchHost *iface, IWineJSDispatchHost **ret)

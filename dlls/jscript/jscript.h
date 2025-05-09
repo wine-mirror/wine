@@ -198,10 +198,11 @@ struct jsdisp_t {
 
     LONG ref;
 
-    BOOLEAN has_weak_refs;
-    BOOLEAN extensible;
-    BOOLEAN gc_marked;
-    BOOLEAN is_constructor;
+    BOOLEAN is_constructor : 1;
+    BOOLEAN has_weak_refs : 1;
+    BOOLEAN props_filled : 1;
+    BOOLEAN extensible : 1;
+    BOOLEAN gc_marked : 1;
 
     DWORD buf_size;
     DWORD prop_cnt;
