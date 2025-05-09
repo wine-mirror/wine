@@ -149,6 +149,13 @@ static void test_acquire_context(void)
     result = CryptReleaseContext(hProv, 0);
     ok(result, "Expected release of the provider.\n");
 
+    result = CryptAcquireContextA(&hProv, NULL, MS_ENH_DSS_DH_PROV_A, PROV_DSS_DH,
+        CRYPT_VERIFYCONTEXT | CRYPT_NEWKEYSET);
+    ok(result, "Expected no errors.\n");
+
+    result = CryptReleaseContext(hProv, 0);
+    ok(result, "Expected release of the provider.\n");
+
     /* test DSS Schannel provider (PROV_DH_SCHANNEL) */
 
     result = CryptAcquireContextA(
