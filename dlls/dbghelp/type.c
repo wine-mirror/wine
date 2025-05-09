@@ -708,7 +708,7 @@ BOOL symt_get_info(struct module* module, const struct symt* type,
             for (i = 0; i < tifp->Count; i++)
             {
                 if (!(symref = (symref_t *)vector_at(v, tifp->Start + i))) return FALSE;
-                tifp->ChildId[i] = symt_symref_to_index(module, *symref);
+                tifp->ChildId[tifp->Start + i] = symt_symref_to_index(module, *symref);
             }
         }
         break;

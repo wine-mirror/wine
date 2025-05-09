@@ -2635,7 +2635,7 @@ static enum method_result pdb_reader_TPI_array_request(struct pdb_reader *pdb, c
 }
 
 static enum pdb_result pdb_reader_TPI_fillin_arglist(struct pdb_reader *pdb, unsigned num_ids, unsigned id_size, pdbsize_t tpi_offset,
-                                                     DWORD *indexes)
+                                                     TI_FINDCHILDREN_PARAMS *tfp)
 {
     enum pdb_result result;
     symref_t symref;
@@ -2643,8 +2643,12 @@ static enum pdb_result pdb_reader_TPI_fillin_arglist(struct pdb_reader *pdb, uns
 
     for (i = 0; i < num_ids; i++, tpi_offset += id_size)
     {
-        if ((result = pdb_reader_push_action(pdb, action_type_cv_typ_t, tpi_offset, id_size, 0, &symref))) return result;
-        indexes[i] = symt_symref_to_index(pdb->module, symref);
+        if (i >= tfp->Start + tfp->Count) return R_PDB_BUFFER_TOO_SMALL;
+        if (i >= tfp->Start)
+        {
+            if ((result = pdb_reader_push_action(pdb, action_type_cv_typ_t, tpi_offset, id_size, 0, &symref))) return result;
+            tfp->ChildId[i] = symt_symref_to_index(pdb->module, symref);
+        }
     }
     return R_PDB_SUCCESS;
 }
@@ -2691,14 +2695,14 @@ static enum method_result pdb_reader_TPI_procsignature_request(struct pdb_reader
             /* sigh... the codeview format doesn't have an explicit storage for the arg list item
              * so we have to fake one using the 'action' field in storage
              */
-            if (p->Start != 0) return MR_FAILURE;
             if ((result = pdb_reader_TPI_read_partial_reftype(pdb, arglist_cv_typeid, &cv_reftype, &tpi_arglist_offset)))
                 return MR_FAILURE;
             tpi_arglist_offset += offsetof(union codeview_reftype, arglist_v2.args[0]);
-            if (p->Count != cv_reftype.arglist_v2.num || num_args > cv_reftype.arglist_v2.num)
+            if (num_args > cv_reftype.arglist_v2.num)
                 return MR_FAILURE;
-            result = pdb_reader_TPI_fillin_arglist(pdb, cv_reftype.arglist_v2.num, sizeof(cv_typ_t), tpi_arglist_offset, p->ChildId);
-            if (result) return MR_FAILURE;
+            result = pdb_reader_TPI_fillin_arglist(pdb, cv_reftype.arglist_v2.num, sizeof(cv_typ_t), tpi_arglist_offset, p);
+            if (result && result != R_PDB_BUFFER_TOO_SMALL) return MR_FAILURE;
+            if (p->Start + p->Count > cv_reftype.arglist_v2.num) return MR_FAILURE;
         }
         return MR_SUCCESS;
     case TI_GET_CHILDRENCOUNT:
@@ -2727,37 +2731,28 @@ static enum method_result pdb_reader_TPI_procsignature_request(struct pdb_reader
     }
 }
 
-struct pdb_children_filler
-{
-    DWORD *indexes;
-    unsigned count; /* max allowed indexes */
-    unsigned actual; /* actual index in indexes when filling */
-};
-
-static enum pdb_result pdb_reader_push_children_filler(struct pdb_reader *pdb, struct pdb_children_filler *children, symref_t symref)
-{
-    if (children->actual >= children->count) return R_PDB_BUFFER_TOO_SMALL;
-    if (children->indexes)
-        children->indexes[children->actual] = symt_symref_to_index(pdb->module, symref);
-    children->actual++;
-    return R_PDB_SUCCESS;
-}
-
 static enum pdb_result pdb_reader_push_action_and_filler(struct pdb_reader *pdb, enum pdb_action_type action, pdbsize_t stream_offset,
-                                                         unsigned id_size, symref_t container_symref, struct pdb_children_filler *children)
+                                                         unsigned id_size, symref_t container_symref, unsigned *where, TI_FINDCHILDREN_PARAMS *tfp)
 {
     enum pdb_result result;
     symref_t symref;
 
-    if (!children->indexes)
-        symref = 0;
-    else
-        if ((result = pdb_reader_push_action(pdb, action, stream_offset, id_size, container_symref, &symref))) return result;
-    return pdb_reader_push_children_filler(pdb, children, symref);
+    if (tfp)
+    {
+        if (*where >= tfp->Start + tfp->Count) return R_PDB_BUFFER_TOO_SMALL;
+        if (*where >= tfp->Start)
+        {
+            if ((result = pdb_reader_push_action(pdb, action, stream_offset, id_size, container_symref, &symref))) return result;
+            tfp->ChildId[*where] = symt_symref_to_index(pdb->module, symref);
+        }
+    }
+    (*where)++;
+    return R_PDB_SUCCESS;
 }
 
 static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, symref_t container_symref,
-                                                      cv_typ_t enumlist_cv_typeid, unsigned count, DWORD *index)
+                                                      cv_typ_t enumlist_cv_typeid, unsigned *where,
+                                                      TI_FINDCHILDREN_PARAMS *tfp)
  {
     enum pdb_result result;
     union codeview_reftype *cv_reftype;
@@ -2786,23 +2781,30 @@ static enum pdb_result pdb_reader_TPI_fillin_enumlist(struct pdb_reader *pdb, sy
         switch (cv_field->generic.id)
         {
         case LF_ENUMERATE_V3:
-            if (!count) return R_PDB_INVALID_ARGUMENT;
             length = offsetof(union codeview_fieldtype, enumerate_v3.data);
             length += codeview_leaf_as_variant(ptr + length, &v);
             length += strlen((const char *)ptr + length) + 1;
-            if ((result = pdb_reader_push_action(pdb, action_type_field, tpi_offset + (ptr - start), length, container_symref, &symref)))
+            if (*where >= tfp->Start + tfp->Count)
             {
                 pdb_reader_free(pdb, cv_reftype);
-                return result;
+                return R_PDB_BUFFER_TOO_SMALL;
             }
-            *index = symt_symref_to_index(pdb->module, symref);
-            index++;
-            count--;
+            if (*where >= tfp->Start)
+            {
+                if ((result = pdb_reader_push_action(pdb, action_type_field, tpi_offset + (ptr - start), length, container_symref, &symref)))
+                {
+                    pdb_reader_free(pdb, cv_reftype);
+                    return result;
+                }
+                tfp->ChildId[*where] = symt_symref_to_index(pdb->module, symref);
+            }
+            (*where)++;
             ptr += length;
             break;
 
         case LF_INDEX_V2:
-            if ((result = pdb_reader_TPI_fillin_enumlist(pdb, container_symref, cv_field->index_v2.ref, count, index))) return result;
+            if ((result = pdb_reader_TPI_fillin_enumlist(pdb, container_symref, cv_field->index_v2.ref,
+                                                         where, tfp))) return result;
             ptr += sizeof(cv_field->index_v2);
             break;
 
@@ -2823,8 +2825,11 @@ static enum method_result pdb_reader_TPI_enum_request(struct pdb_reader *pdb, sy
     case TI_FINDCHILDREN:
         {
             TI_FINDCHILDREN_PARAMS *p = data;
-            if (p->Start != 0 || p->Count != cv_type->enumeration_v3.count) return MR_FAILURE;
-            if (pdb_reader_TPI_fillin_enumlist(pdb, symref, cv_type->enumeration_v3.fieldlist, cv_type->enumeration_v3.count, p->ChildId)) return MR_FAILURE;
+            unsigned where = 0;
+            enum pdb_result result;
+            result = pdb_reader_TPI_fillin_enumlist(pdb, symref, cv_type->enumeration_v3.fieldlist, &where, p);
+            if (result && result != R_PDB_BUFFER_TOO_SMALL) return MR_FAILURE;
+            if (p->Start + p->Count > where) return MR_FAILURE;
         }
         return MR_SUCCESS;
     case TI_GET_CHILDRENCOUNT:
@@ -2862,7 +2867,7 @@ static enum method_result pdb_reader_TPI_enum_request(struct pdb_reader *pdb, sy
 }
 
 static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, symref_t container_symref,
-                                                     cv_typ_t udtlist_cv_typeid, struct pdb_children_filler *children)
+                                                     cv_typ_t udtlist_cv_typeid, unsigned *where, TI_FINDCHILDREN_PARAMS *tfp)
 {
     enum pdb_result result;
     union codeview_reftype *cv_reftype;
@@ -2908,7 +2913,7 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
             length = offsetof(union codeview_fieldtype, member_v3.data);
             length += codeview_leaf_as_variant(ptr + length, &v);
             length += strlen((const char *)ptr + length) + 1;
-            result = pdb_reader_push_action_and_filler(pdb, action_type_field, tpi_offset + (ptr - start), length, container_symref, children);
+            result = pdb_reader_push_action_and_filler(pdb, action_type_field, tpi_offset + (ptr - start), length, container_symref, where, tfp);
             break;
 
         case LF_STMEMBER_V3:
@@ -2946,7 +2951,7 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
             break;
 
         case LF_INDEX_V2:
-            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, children))) return result;
+            if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, cv_field->index_v2.ref, where, tfp))) return result;
             length = sizeof(cv_field->index_v2);
             break;
 
@@ -2965,10 +2970,10 @@ static enum pdb_result pdb_reader_count_advertized_in_UDT_fieldlist(struct pdb_r
                                                                     cv_typ_t fieldlist_cv_typeid, DWORD *count)
 {
     enum pdb_result result;
-    struct pdb_children_filler filler = {.actual = 0, .count = ~0u, .indexes = NULL};
+    unsigned where = 0;
 
-    if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, fieldlist_cv_typeid, &filler))) return result;
-    *count = filler.actual;
+    if ((result = pdb_reader_TPI_fillin_UDTlist(pdb, container_symref, fieldlist_cv_typeid, &where, NULL))) return result;
+    *count = where;
     return R_PDB_SUCCESS;
 }
 
@@ -2976,24 +2981,22 @@ static enum method_result pdb_reader_TPI_UDT_request(struct pdb_reader *pdb, sym
                                                      const struct pdb_reader_walker *walker, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
     enum UdtKind kind;
-    unsigned count;
     const unsigned char *var;
     cv_typ_t fieldlist_cv_typeid;
     cv_property_t property;
+    enum pdb_result result;
 
     switch (cv_type->generic.id)
     {
     case LF_CLASS_V3:
     case LF_STRUCTURE_V3:
         kind = cv_type->generic.id == LF_CLASS_V3 ? UdtClass : UdtStruct;
-        count = cv_type->struct_v3.n_element;
         fieldlist_cv_typeid = cv_type->struct_v3.fieldlist;
         property = cv_type->struct_v3.property;
         var = cv_type->struct_v3.data;
         break;
     case LF_UNION_V3:
         kind = UdtUnion;
-        count = cv_type->union_v3.count;
         fieldlist_cv_typeid = cv_type->union_v3.fieldlist;
         property = cv_type->union_v3.property;
         var = cv_type->union_v3.data;
@@ -3010,13 +3013,13 @@ static enum method_result pdb_reader_TPI_UDT_request(struct pdb_reader *pdb, sym
         return MR_SUCCESS;
     case TI_FINDCHILDREN:
         {
-            TI_FINDCHILDREN_PARAMS *p = data;
-            struct pdb_children_filler filler = {.actual = 0, .count = p->Count, .indexes = p->ChildId};
+            TI_FINDCHILDREN_PARAMS *tfp = data;
+            unsigned where = 0;
 
-            if (p->Start != 0) return MR_FAILURE;
-            if (property.is_forward_defn && !p->Count) return MR_SUCCESS;
-            if (pdb_reader_TPI_fillin_UDTlist(pdb, symref, fieldlist_cv_typeid, &filler)) return MR_FAILURE;
-            if (filler.actual != filler.count) {WARN("Count mismatch %u^%u %u\n", filler.actual, filler.count, count); return MR_FAILURE;}
+            if (property.is_forward_defn) return !tfp->Count ? MR_SUCCESS : MR_FAILURE;
+            result = pdb_reader_TPI_fillin_UDTlist(pdb, symref, fieldlist_cv_typeid, &where, tfp);
+            if (result && result != R_PDB_BUFFER_TOO_SMALL) return MR_FAILURE;
+            if (tfp->Start + tfp->Count > where) return MR_FAILURE;
         }
         return MR_SUCCESS;
     case TI_GET_CHILDRENCOUNT:
