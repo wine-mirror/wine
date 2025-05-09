@@ -398,7 +398,7 @@ typedef struct {
     /* These are called when the object implements GetMemberName, InvokeEx, DeleteMemberByDispID and GetNextDispID for custom props */
     HRESULT (*invoke)(DispatchEx*,DISPID,LCID,WORD,DISPPARAMS*,VARIANT*,EXCEPINFO*,IServiceProvider*);
     HRESULT (*delete)(DispatchEx*,DISPID);
-    HRESULT (*next_dispid)(DispatchEx*,DISPID,DISPID*);
+    HRESULT (*next_dispid)(DispatchEx*,DISPID,BOOL,DISPID*);
     HRESULT (*get_prop_desc)(DispatchEx*,DISPID,struct property_info*);
 
     /* Similar to invoke, but allows overriding all dispids */
@@ -782,6 +782,7 @@ struct HTMLInnerWindow {
     IHTMLStorage *local_storage;
     IWineMSHTMLConsole *console;
 
+    BOOL static_props_filled;
     BOOL performance_initialized;
     VARIANT performance;
 

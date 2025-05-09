@@ -3990,10 +3990,24 @@ static HRESULT HTMLWindow_delete(DispatchEx *dispex, DISPID id)
     return hres;
 }
 
-static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
     HTMLInnerWindow *This = impl_from_DispatchEx(dispex);
+    HRESULT hres;
+    unsigned i;
+
+    if(id == DISPID_STARTENUM && enum_all_own_props) {
+        if(!This->static_props_filled) {
+            for(i = 0; i < ARRAYSIZE(constructor_names); i++) {
+                hres = dispex_get_id(&This->event_target.dispex, constructor_names[i], 0, &id);
+                if(FAILED(hres) && hres != DISP_E_UNKNOWNNAME)
+                    return hres;
+            }
+
+            This->static_props_filled = TRUE;
+        }
+    }
 
     while(idx < This->global_prop_cnt && This->global_props[idx].type != GLOBAL_DISPEXVAR)
         idx++;

@@ -5446,7 +5446,7 @@ static HRESULT HTMLDocumentNode_disp_invoke(DispatchEx *dispex, DISPID id, LCID 
     return S_FALSE;
 }
 
-static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+static HRESULT HTMLDocumentNode_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
     HTMLDocumentNode *This = impl_from_DispatchEx(dispex);

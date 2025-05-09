@@ -1179,7 +1179,7 @@ static HRESULT HTMLStorage_delete(DispatchEx *dispex, DISPID id)
     return HTMLStorage_removeItem(&This->IHTMLStorage_iface, This->props[idx]);
 }
 
-static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+static HRESULT HTMLStorage_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
 {
     DWORD idx = (id == DISPID_STARTENUM) ? 0 : id - MSHTML_DISPID_CUSTOM_MIN + 1;
     HTMLStorage *This = impl_from_DispatchEx(dispex);

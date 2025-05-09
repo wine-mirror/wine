@@ -2553,7 +2553,7 @@ HRESULT dispex_next_id(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, D
     }
 
     if(dispex->info->vtbl->next_dispid) {
-        hres = dispex->info->vtbl->next_dispid(dispex, id, ret);
+        hres = dispex->info->vtbl->next_dispid(dispex, id, enum_all_own_props, ret);
         if(hres != S_FALSE)
             return hres;
     }
@@ -3046,7 +3046,7 @@ static HRESULT prototype_find_dispid(DispatchEx *dispex, const WCHAR *name, DWOR
     return hres;
 }
 
-static HRESULT prototype_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+static HRESULT prototype_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
 {
     if(id == DISPID_STARTENUM) {
         HRESULT hres = dispex_get_id(dispex, L"constructor", 0, &id);
@@ -3173,7 +3173,7 @@ static HRESULT stub_constructor_find_dispid(DispatchEx *dispex, const WCHAR *nam
     return hres;
 }
 
-static HRESULT stub_constructor_next_dispid(DispatchEx *dispex, DISPID id, DISPID *pid)
+static HRESULT stub_constructor_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_all_own_props, DISPID *pid)
 {
     if(id == DISPID_STARTENUM) {
         HRESULT hres = dispex_get_id(dispex, L"prototype", 0, &id);
