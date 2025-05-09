@@ -58,6 +58,8 @@ struct device_watcher_handler
     ITypedEventHandler_DeviceWatcher_IInspectable ITypedEventHandler_DeviceWatcher_IInspectable_iface;
     LONG ref;
 
+    unsigned int test_deviceinformation : 1;
+    LONG devices_added;
     HANDLE event;
     BOOL invoked;
     IInspectable *args;
@@ -75,7 +77,8 @@ static HRESULT WINAPI device_watcher_handler_QueryInterface(
     struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
 
     if (IsEqualGUID( iid, &IID_IUnknown ) ||
-        IsEqualGUID( iid, &IID_ITypedEventHandler_DeviceWatcher_IInspectable ))
+        IsEqualGUID( iid, &IID_ITypedEventHandler_DeviceWatcher_IInspectable ) ||
+        (impl->test_deviceinformation && IsEqualGUID( iid, &IID_ITypedEventHandler_DeviceWatcher_DeviceInformation )))
     {
         IUnknown_AddRef( &impl->ITypedEventHandler_DeviceWatcher_IInspectable_iface );
         *out = &impl->ITypedEventHandler_DeviceWatcher_IInspectable_iface;
@@ -101,19 +104,26 @@ static ULONG WINAPI device_watcher_handler_Release( ITypedEventHandler_DeviceWat
     return ref;
 }
 
+static void test_DeviceInformation_obj( int line, IDeviceInformation *info );
 static HRESULT WINAPI device_watcher_handler_Invoke( ITypedEventHandler_DeviceWatcher_IInspectable *iface,
                                                      IDeviceWatcher *sender, IInspectable *args )
 {
     struct device_watcher_handler *impl = impl_from_ITypedEventHandler_DeviceWatcher_IInspectable( iface );
-    ULONG ref;
-    trace( "iface %p, sender %p, args %p\n", iface, sender, args );
 
     impl->invoked = TRUE;
     impl->args = args;
 
-    IDeviceWatcher_AddRef( sender );
-    ref = IDeviceWatcher_Release( sender );
-    ok( ref == 3, "got ref %lu\n", ref );
+    if (impl->test_deviceinformation)
+    {
+        IDeviceInformation *info;
+        HRESULT hr;
+
+        hr = IInspectable_QueryInterface( args, &IID_IDeviceInformation, (void *)&info );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        test_DeviceInformation_obj( __LINE__, info );
+        InterlockedIncrement( &impl->devices_added );
+        IDeviceInformation_Release( info );
+    }
 
     SetEvent( impl->event );
 
@@ -318,8 +328,8 @@ static void test_DeviceInformation( void )
 {
     static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
 
-    static struct device_watcher_handler stopped_handler, added_handler;
-    EventRegistrationToken stopped_token, added_token;
+    static struct device_watcher_handler stopped_handler, added_handler, enumerated_handler;
+    EventRegistrationToken stopped_token, added_token, enumerated_token;
     IInspectable *inspectable, *inspectable2;
     IActivationFactory *factory;
     IDeviceInformationStatics2 *device_info_statics2;
@@ -336,8 +346,12 @@ static void test_DeviceInformation( void )
 
     device_watcher_handler_create( &added_handler );
     device_watcher_handler_create( &stopped_handler );
+    device_watcher_handler_create( &enumerated_handler );
+
     stopped_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!stopped_handler.event, "failed to create event, got error %lu\n", GetLastError() );
+    enumerated_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!enumerated_handler.event, "failed to create event, got error %lu\n", GetLastError() );
 
     hr = WindowsCreateString( device_info_name, wcslen( device_info_name ), &str );
     ok( hr == S_OK, "got hr %#lx\n", hr );
@@ -410,7 +424,7 @@ static void test_DeviceInformation( void )
         goto skip_device_statics;
     }
 
-    IDeviceInformationStatics_CreateWatcherAqsFilter( device_info_statics, NULL, &device_watcher );
+    hr = IDeviceInformationStatics_CreateWatcherAqsFilter( device_info_statics, NULL, &device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     check_interface( device_watcher, &IID_IUnknown, TRUE );
@@ -447,6 +461,31 @@ static void test_DeviceInformation( void )
 
     IDeviceWatcher_Release( device_watcher );
 
+    hr = IDeviceInformationStatics_CreateWatcher( device_info_statics, &device_watcher );
+    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+
+    if (device_watcher)
+    {
+        added_handler.test_deviceinformation = 1;
+        hr = IDeviceWatcher_add_Added( device_watcher, (void *)&added_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &added_token );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        hr = IDeviceWatcher_add_EnumerationCompleted( device_watcher, (void *)&enumerated_handler.ITypedEventHandler_DeviceWatcher_IInspectable_iface, &enumerated_token );
+        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+
+        hr = IDeviceWatcher_Start( device_watcher );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
+        todo_wine ok( added_handler.devices_added > 0, "devices_added should be greater than 0\n" );
+        hr = IDeviceWatcher_get_Status( device_watcher, &status );
+        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+        todo_wine ok( status == DeviceWatcherStatus_EnumerationCompleted, "got status %u\n", status );
+
+        hr = IDeviceWatcher_Start( device_watcher );
+        todo_wine ok( hr == E_ILLEGAL_METHOD_CALL, "Start returned %#lx\n", hr );
+
+        IDeviceWatcher_Release( device_watcher );
+    }
+
     hr = IDeviceInformationStatics_FindAllAsync( device_info_statics, &info_collection_async );
     ok( hr == S_OK, "got %#lx\n", hr );
 
@@ -477,6 +516,7 @@ skip_device_statics:
 done:
     WindowsDeleteString( str );
     CloseHandle( stopped_handler.event );
+    CloseHandle( enumerated_handler.event );
 }
 
 static void test_DeviceAccessInformation( void )
