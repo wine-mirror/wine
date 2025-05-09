@@ -4013,7 +4013,8 @@ static HRESULT HTMLWindow_next_dispid(DispatchEx *dispex, DISPID id, BOOL enum_a
             return hres;
     }
 
-    while(idx < This->global_prop_cnt && This->global_props[idx].type != GLOBAL_DISPEXVAR)
+    while(idx < This->global_prop_cnt && This->global_props[idx].type != GLOBAL_DISPEXVAR &&
+          (!enum_all_own_props || This->global_props[idx].type != GLOBAL_SCRIPTVAR || global_prop_still_exists(This, &This->global_props[idx]) != S_OK))
         idx++;
     if(idx >= This->global_prop_cnt)
         return S_FALSE;
