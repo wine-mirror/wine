@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-04-29 00:44+0300\n"
+"PO-Revision-Date: 2025-05-11 01:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.4.2\n"
+"X-Generator: Poedit 3.6\n"
 "X-Project-Style: default\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
@@ -15319,10 +15319,8 @@ msgid "&Save\tCtrl+S"
 msgstr "&Išsaugoti\tVald+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "Išsaugoti kaip..."
+msgstr "Išsaugoti &kaip..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15331,7 +15329,7 @@ msgstr "S&pausdinti...\tVald+P"
 
 #: programs/notepad/notepad.rc:36 programs/wordpad/wordpad.rc:38
 msgid "Page Se&tup..."
-msgstr "Puslapio &nuostatos..."
+msgstr "P&uslapio nuostatos..."
 
 #: programs/notepad/notepad.rc:37
 msgid "P&rinter Setup..."
@@ -15354,8 +15352,6 @@ msgid "&Paste\tCtrl+V"
 msgstr "Į&dėti\tVald+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
 msgstr "&Šalinti\tDel"
 
@@ -15365,10 +15361,8 @@ msgid "&Find...\tCtrl+F"
 msgstr "I&eškoti...\tVald+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
-msgstr "Iešk&oti kito\tF3"
+msgstr "Ieško&ti kito\tF3"
 
 #: programs/notepad/notepad.rc:51 programs/wordpad/wordpad.rc:55
 msgid "&Replace...\tCtrl+H"
@@ -15379,14 +15373,10 @@ msgid "&Go To...\tCtrl+G"
 msgstr "&Eiti į...\tVald+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "&Pažymėti viską\tVald+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
 msgstr "&Laikas/Data\tF5"
 
@@ -15396,7 +15386,7 @@ msgstr "F&ormatas"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "&Skaidyti ilgas eilutes"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
