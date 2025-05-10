@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <stdio.h>
+#include <math.h>
 
 #include "wine/test.h"
 #include "uuids.h"
@@ -619,6 +620,79 @@ static void test_COM_synthsink(void)
     IDirectMusicSynthSink_Release(dmss);
 }
 
+struct test_clock
+{
+    IReferenceClock IReferenceClock_iface;
+
+    LONG refcount;
+};
+
+static HRESULT WINAPI test_clock_QueryInterface(IReferenceClock *iface, REFIID iid, void **out)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI test_clock_AddRef(IReferenceClock *iface)
+{
+    struct test_clock *clock = CONTAINING_RECORD(iface, struct test_clock, IReferenceClock_iface);
+    return InterlockedIncrement(&clock->refcount);
+}
+
+static ULONG WINAPI test_clock_Release(IReferenceClock *iface)
+{
+    struct test_clock *clock = CONTAINING_RECORD(iface, struct test_clock, IReferenceClock_iface);
+    return InterlockedDecrement(&clock->refcount);
+}
+
+static HRESULT WINAPI test_clock_GetTime(IReferenceClock *iface, REFERENCE_TIME *time)
+{
+    *time = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI test_clock_AdviseTime(IReferenceClock *iface, REFERENCE_TIME base_time, REFERENCE_TIME stream_time, HEVENT event, DWORD_PTR *cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_AdvisePeriodic(IReferenceClock *iface, REFERENCE_TIME start_time, REFERENCE_TIME period, HSEMAPHORE semaphore, DWORD_PTR *cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI test_clock_Unadvise(IReferenceClock *iface, DWORD_PTR cookie)
+{
+    ok(0, "unexpected %s\n", __func__);
+    return E_NOTIMPL;
+}
+
+static const IReferenceClockVtbl test_clock_vtbl =
+{
+    test_clock_QueryInterface,
+    test_clock_AddRef,
+    test_clock_Release,
+    test_clock_GetTime,
+    test_clock_AdviseTime,
+    test_clock_AdvisePeriodic,
+    test_clock_Unadvise,
+};
+
+static HRESULT test_clock_create(IReferenceClock **out)
+{
+    struct test_clock *clock;
+
+    *out = NULL;
+    if (!(clock = calloc(1, sizeof(*clock)))) return E_OUTOFMEMORY;
+    clock->IReferenceClock_iface.lpVtbl = &test_clock_vtbl;
+    clock->refcount = 1;
+
+    *out = &clock->IReferenceClock_iface;
+    return S_OK;
+}
+
 struct test_sink
 {
     IDirectMusicSynthSink IDirectMusicSynthSink_iface;
@@ -1194,6 +1268,564 @@ static void test_IDirectMusicSynth(void)
     IDirectMusic_Release(music);
 }
 
+#define PI 3.14159265358979323846264
+
+struct phase
+{
+    double duration;
+    double start_value;
+    double end_value;
+    BOOL linear;
+};
+
+struct envelope
+{
+    double gain;
+    double channel_gain[2];
+    struct phase delay;
+    struct phase attack;
+    struct phase hold;
+    struct phase decay;
+    struct phase sustain;
+    struct phase release;
+};
+
+static double lerp(double start_value, double end_value, double factor)
+{
+    return start_value + (end_value - start_value) * factor;
+}
+
+static double get_phase_value(const struct phase *phase, double time)
+{
+    double start_value_pow;
+    double end_value_pow;
+    double value_pow;
+
+    if (phase->linear)
+        return lerp(phase->start_value, phase->end_value, time / phase->duration);
+
+    start_value_pow = pow(10., phase->start_value / 200.);
+    end_value_pow = pow(10., phase->end_value / 200.);
+    value_pow = lerp(start_value_pow, end_value_pow, time / phase->duration);
+    return log10(value_pow) * 200.;
+}
+
+static void get_phase_min_max(const struct phase *phase, double start_time, double end_time, double *min_value,
+        double *max_value)
+{
+    double start_value;
+    double end_value;
+
+    if (end_time < 0. || start_time > phase->duration)
+        return;
+
+    start_value = start_time <= 0. ? phase->start_value : get_phase_value(phase, start_time);
+    end_value = end_time >= phase->duration ? phase->end_value : get_phase_value(phase, end_time);
+
+    *min_value = min(*min_value, min(start_value, end_value));
+    *max_value = max(*max_value, max(start_value, end_value));
+}
+
+static void get_envelope_min_max(const struct envelope *envelope, double start_time, double end_time, double *min_value,
+        double *max_value)
+{
+    double time = 0.;
+
+    get_phase_min_max(&envelope->delay, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->delay.duration;
+    get_phase_min_max(&envelope->attack, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->attack.duration;
+    get_phase_min_max(&envelope->hold, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->hold.duration;
+    get_phase_min_max(&envelope->decay, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->decay.duration;
+    get_phase_min_max(&envelope->sustain, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->sustain.duration;
+    get_phase_min_max(&envelope->release, start_time - time, end_time - time, min_value, max_value);
+    time += envelope->release.duration;
+
+    if (start_time <= 0.)
+    {
+        *min_value = min(*min_value, envelope->delay.start_value);
+        *max_value = max(*max_value, envelope->delay.start_value);
+    }
+
+    if (end_time >= time)
+    {
+        *min_value = min(*min_value, envelope->release.end_value);
+        *max_value = max(*max_value, envelope->release.end_value);
+    }
+}
+
+#define SINE_AMPLITUDE 0.5
+#define SINE_LENGTH 256
+
+struct DECLSPEC_ALIGN(8) instrument_download
+{
+    DMUS_DOWNLOADINFO info;
+    ULONG offsets[4];
+    DMUS_INSTRUMENT instrument;
+    DMUS_REGION region;
+    DMUS_ARTICULATION2 articulation;
+    CONNECTIONLIST connection_list;
+    CONNECTION connections[64];
+};
+
+static void render_sine(IDirectMusicSynth *synth, const struct instrument_download *download,
+        void *midi, double phase_offset, short (*buffer)[2], DWORD length)
+{
+    struct instrument_download instrument_download = *download;
+    struct DECLSPEC_ALIGN(8) wave_download
+    {
+        DMUS_DOWNLOADINFO info;
+        ULONG offsets[2];
+        DMUS_WAVE wave;
+        union
+        {
+            DMUS_WAVEDATA wave_data;
+            struct
+            {
+                ULONG size;
+                short samples[SINE_LENGTH];
+            };
+        };
+    } wave_download =
+    {
+        .info =
+        {
+            .dwDLType = DMUS_DOWNLOADINFO_WAVE,
+            .dwDLId = 1,
+            .dwNumOffsetTableEntries = 2,
+            .cbSize = sizeof(struct wave_download),
+        },
+        .offsets =
+        {
+            offsetof(struct wave_download, wave),
+            offsetof(struct wave_download, wave_data),
+        },
+        .wave =
+        {
+            .ulWaveDataIdx = 1,
+            .WaveformatEx =
+            {
+                .wFormatTag = WAVE_FORMAT_PCM,
+                .nChannels = 1,
+                .wBitsPerSample = 16,
+                .nSamplesPerSec = 44100,
+                .nAvgBytesPerSec = 88200,
+                .nBlockAlign = 2,
+            },
+        },
+        .wave_data =
+        {
+            .cbSize = sizeof(wave_download.samples),
+        },
+    };
+    DMUS_PORTPARAMS params =
+    {
+        .dwSize = sizeof(DMUS_PORTPARAMS),
+        .dwValidParams = DMUS_PORTPARAMS_SAMPLERATE | DMUS_PORTPARAMS_EFFECTS,
+        .dwSampleRate = 44100,
+        .dwEffectFlags = 0,
+    };
+    HANDLE instrument_handle;
+    HANDLE wave_handle;
+    DWORD midi_size;
+    BOOL can_free;
+    HRESULT hr;
+    int i;
+
+    for (i = 0; i < ARRAYSIZE(wave_download.samples); ++i)
+    {
+        double phase = (double)i * (2. * PI / (double)SINE_LENGTH) + phase_offset;
+        double value = cos(phase) * SINE_AMPLITUDE;
+        wave_download.samples[i] = (short)floor(value * (double)SHRT_MAX + 0.5);
+    }
+
+    hr = IDirectMusicSynth_Open(synth, &params);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_Download(synth, &wave_handle, &wave_download, &can_free);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IDirectMusicSynth_Download(synth, &instrument_handle, &instrument_download, &can_free);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_Activate(synth, TRUE);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    midi_size = 0;
+    for (;;)
+    {
+        DMUS_EVENTHEADER *event = (DMUS_EVENTHEADER *)&((char *)midi)[midi_size];
+        if (!event->cbEvent)
+            break;
+        midi_size += (sizeof(DMUS_EVENTHEADER) + event->cbEvent + 7) & ~7;
+    }
+
+    hr = IDirectMusicSynth_PlayBuffer(synth, 0, midi, midi_size);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    memset(buffer, 0, length * sizeof(buffer[0]));
+    hr = IDirectMusicSynth_Render(synth, buffer[0], length, 0);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_Activate(synth, FALSE);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_Unload(synth, instrument_handle, NULL, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    hr = IDirectMusicSynth_Unload(synth, wave_handle, NULL, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_Close(synth);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+}
+
+typedef double check_value_fn(int line, double time, short i0, short q0, double min_expected_value,
+        double max_expected_value);
+
+static void check_envelope(int line, IDirectMusicSynth *synth, const struct instrument_download *download,
+        void *midi, check_value_fn *check_value, const struct envelope *envelope, BOOL todo)
+{
+    short buffer_i[44100 * 2][2];
+    short buffer_q[44100 * 2][2];
+    IDirectMusicSynthSink *sink;
+    IReferenceClock *clock;
+    HRESULT hr;
+    int i;
+    int j;
+
+    hr = test_sink_create(&sink);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = test_clock_create(&clock);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynthSink_SetMasterClock(sink, clock);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    hr = IDirectMusicSynth_SetSynthSink(synth, sink);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* Render two sine waves 90° out of phase. This will allow us to measure
+     * amplitude and frequency at any given point. */
+    render_sine(synth, download, midi, 0., buffer_i, ARRAYSIZE(buffer_i));
+    render_sine(synth, download, midi, -0.5 * PI, buffer_q, ARRAYSIZE(buffer_q));
+
+    for (j = 0; j < 2; ++j)
+    {
+        double first_deviation_time = DBL_MAX;
+        double last_deviation_time = -DBL_MIN;
+        double max_deviation_time = 0.;
+        double max_deviation = 0.;
+
+        for (i = 0; i < ARRAYSIZE(buffer_i) - 1; ++i)
+        {
+            double time, start_time, end_time, min_expected_value, max_expected_value, deviation;
+            double min_envelope_value, max_envelope_value;
+            short i0, q0;
+
+            time = (double)i / 44100.;
+            /* Both FluidSynth and native use a piecewise-linear approximation
+             * for envelopes. FluidSynth uses fixed 64-sample segments, while
+             * native uses variable length segments up to 2048 samples. Also
+             * sometimes native starts an envelope phase 256 samples early for
+             * some reason. */
+            start_time = time - 2048. / 44100.;
+            end_time = time + (2048. + 256.) / 44100.;
+            min_envelope_value = DBL_MAX;
+            max_envelope_value = -DBL_MAX;
+            get_envelope_min_max(envelope, start_time, end_time, &min_envelope_value, &max_envelope_value);
+            min_expected_value = min_envelope_value + envelope->gain + envelope->channel_gain[j];
+            max_expected_value = max_envelope_value + envelope->gain + envelope->channel_gain[j];
+
+            i0 = buffer_i[i][j];
+            q0 = buffer_q[i][j];
+
+            deviation = check_value(line, time, i0, q0, min_expected_value, max_expected_value);
+            if (deviation)
+            {
+                first_deviation_time = min(first_deviation_time, time);
+                last_deviation_time = max(last_deviation_time, time);
+                if (fabs(deviation) > fabs(max_deviation))
+                {
+                    max_deviation_time = time;
+                    max_deviation = deviation;
+                }
+            }
+        }
+
+        todo_wine_if(todo) ok_(__FILE__, line)(!max_deviation,
+                "got %s channel max deviation %g at %gms, start time %gms, end time %gms.\n", j ? "right" : "left",
+                max_deviation, max_deviation_time * 1e3, first_deviation_time * 1e3, last_deviation_time * 1e3);
+    }
+
+    hr = IDirectMusicSynth_SetSynthSink(synth, NULL);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    IReferenceClock_Release(clock);
+    IDirectMusicSynthSink_Release(sink);
+}
+
+static double check_volume(int line, double time, short i0, short q0, double min_expected_value,
+        double max_expected_value)
+{
+    double amplitude = hypot((double)i0, (double)q0) * (1. / SINE_AMPLITUDE / (double)SHRT_MAX);
+    double min_expected_amplitude;
+    double max_expected_amplitude;
+    double eps = 5e-2;
+
+    min_expected_amplitude = pow(10., min_expected_value / 200.) - eps;
+    max_expected_amplitude = pow(10., max_expected_value / 200.) + eps;
+
+    if (amplitude < min_expected_amplitude)
+        return amplitude - min_expected_amplitude;
+    if (amplitude > max_expected_amplitude)
+        return amplitude - max_expected_amplitude;
+
+    return 0.;
+}
+
+#define check_volume_envelope(synth, download, midi, envelope, todo) \
+        check_envelope(__LINE__, synth, download, midi, check_volume, envelope, todo)
+
+static const struct instrument_download default_instrument_download =
+{
+    .info =
+    {
+        .dwDLType = DMUS_DOWNLOADINFO_INSTRUMENT2,
+        .dwDLId = 2,
+        .dwNumOffsetTableEntries = 4,
+        .cbSize = sizeof(struct instrument_download),
+    },
+    .offsets =
+    {
+        offsetof(struct instrument_download, instrument),
+        offsetof(struct instrument_download, region),
+        offsetof(struct instrument_download, articulation),
+        offsetof(struct instrument_download, connection_list),
+    },
+    .instrument =
+    {
+        .ulPatch = 0,
+        .ulFirstRegionIdx = 1,
+        .ulGlobalArtIdx = 2,
+    },
+    .region =
+    {
+        .RangeKey = {.usLow = 0, .usHigh = 127},
+        .RangeVelocity = {.usLow = 0, .usHigh = 127},
+        .fusOptions = F_RGN_OPTION_SELFNONEXCLUSIVE,
+        .WaveLink = {.ulChannel = 1, .ulTableIndex = 1},
+        .WSMP = {.cbSize = sizeof(WSMPL), .usUnityNote = 60, .fulOptions = F_WSMP_NO_TRUNCATION, .cSampleLoops = 1},
+        .WLOOP[0] = {.cbSize = sizeof(WLOOP), .ulType = WLOOP_TYPE_FORWARD, .ulLength = SINE_LENGTH},
+    },
+    .articulation = {.ulArtIdx = 3},
+    .connection_list =
+    {
+        .cbSize = sizeof(CONNECTIONLIST),
+        .cConnections = 0,
+    },
+};
+
+struct DECLSPEC_ALIGN(8) midi_message
+{
+    DMUS_EVENTHEADER header;
+    DWORD message;
+};
+
+static const struct midi_message default_note_on =
+{
+    .header =
+    {
+        .cbEvent = 3,
+        .dwFlags = DMUS_EVENT_STRUCTURED,
+    },
+    .message = 0x7f3c90,
+};
+
+static const struct midi_message default_note_off =
+{
+    .header =
+    {
+        .cbEvent = 3,
+        .rtDelta = 10000000,
+        .dwFlags = DMUS_EVENT_STRUCTURED,
+    },
+    .message = 0x7f3c80,
+};
+
+struct midi
+{
+    struct midi_message messages[15];
+    struct midi_message null;
+};
+
+struct midi default_midi =
+{
+    .messages =
+    {
+        default_note_on,
+        default_note_off,
+    },
+};
+
+static const struct envelope default_volume_envelope =
+{
+    .gain = 60. /* base gain */ + 60. /* default GUID_DMUS_PROP_Volume */ - 41.52 /* default CC7 */,
+    /* center pan gain */
+    .channel_gain =
+    {
+        -30.10,
+        -30.10,
+    },
+    .delay =
+    {
+        .duration = 0.,
+        .start_value = -960.,
+        .end_value = -960.,
+        .linear = TRUE,
+    },
+    .attack =
+    {
+        .duration = 0.,
+        .start_value = -960.,
+        .end_value = 0.,
+        .linear = FALSE,
+    },
+    .hold =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .decay =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .sustain =
+    {
+        .duration = 1000e-3,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .release =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = -960.,
+        .linear = TRUE,
+    },
+};
+
+static void test_IKsControl(void)
+{
+    IDirectMusicSynth *synth;
+    struct envelope envelope;
+    IKsControl *control;
+    KSPROPERTY property;
+    DWORD volume_size;
+    LONG volume;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void **)&synth);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    IDirectMusicSynth_QueryInterface(synth, &IID_IKsControl, (void **)&control);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* getting volume is unsupported */
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_GET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 1;
+    property.Flags = KSPROPERTY_TYPE_GET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+
+    /* out of range id results in DMUS_E_UNKNOWN_PROPERTY */
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 2;
+    property.Flags = KSPROPERTY_TYPE_GET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+
+    volume = 0;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 2;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+
+    /* default value for volume 0 is 0 */
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
+
+    volume = 0;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, TRUE);
+
+    /* total voice gain is limited to 6 dB */
+    volume = 600;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    envelope = default_volume_envelope;
+    envelope.gain = 60.;
+    envelope.channel_gain[0] = 0.;
+    envelope.channel_gain[1] = 0.;
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+
+    /* setting volume 0 changes voice gain */
+    volume = -600;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    envelope = default_volume_envelope;
+    envelope.gain -= 60.;
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+
+    /* default value for volume 1 is 600 */
+    volume = 600;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 1;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    envelope = default_volume_envelope;
+    envelope.gain -= 60.;
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+
+    /* gain from volume 0 and 1 is added together */
+    volume = 0;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 1;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+    envelope = default_volume_envelope;
+    envelope.gain -= 120.;
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, TRUE);
+
+    IKsControl_Release(control);
+    IDirectMusicSynth_Release(synth);
+}
+
 static void test_IDirectMusicSynthSink(void)
 {
     IReferenceClock *latency_clock;
@@ -1383,6 +2015,7 @@ START_TEST(dmsynth)
     test_COM();
     test_COM_synthsink();
     test_IDirectMusicSynth();
+    test_IKsControl();
     test_IDirectMusicSynthSink();
 
     CoUninitialize();
