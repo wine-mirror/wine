@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2025-05-01 04:15+0200\n"
+"PO-Revision-Date: 2025-05-11 00:27+0200\n"
 "Last-Translator: Adam Markowski <wbcwknvstb@proton.me>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
@@ -2562,24 +2562,23 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Pomocnik ten pomaga tobie eksportować certyfikaty, listy odwołania "
-"certyfikatów, i listy zaufania certyfikatów z magazynu certyfikatów do "
-"pliku.\n"
+"Ten kreator pomaga eksportować certyfikaty, listy odwołanych certyfikatów i "
+"listy zaufanych certyfikatów z magazynu certyfikatów do pliku.\n"
 "\n"
-"Certyfikat może zostać użyty do identyfikacji ciebie lub komputer, z którym "
-"się komunikujesz. Może on również zostać wykorzystany do uwierzytelnienia i "
-"do podpisywania wiadomości. Magazyny certyfikatów są zbiorem certyfikatów, "
-"list odwołań certyfikatów oraz list zaufań certyfikatów.\n"
+"Certyfikat może służyć do identyfikacji użytkownika lub komputera, z którym "
+"się komunikuje. Może być również używany do uwierzytelniania i podpisywania "
+"wiadomości. Magazyny certyfikatów to zbiory certyfikatów, list odwołanych "
+"certyfikatów i list zaufanych certyfikatów.\n"
 "\n"
-"Aby kontynuować, naciśnij Dalej."
+"Aby kontynuować, kliknij Dalej."
 
 #: dlls/cryptui/cryptui.rc:389
 msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
-"Jeżeli wybierzesz wyeksportowanie klucza prywatnego to w kolejnym kroku "
-"będziesz zapytany o hasło chroniące klucz prywatny."
+"Jeśli zdecydujesz się wyeksportować klucz prywatny, na dalszej stronie "
+"zostaniesz poproszony o podanie hasła w celu ochrony klucza prywatnego."
 
 #: dlls/cryptui/cryptui.rc:390
 msgid "Do you wish to export the private key?"
@@ -2599,7 +2598,7 @@ msgstr "&Potwierdź hasło:"
 
 #: dlls/cryptui/cryptui.rc:412
 msgid "Select the format you want to use:"
-msgstr "Wybierz format, którego chcesz użyć:"
+msgstr "Wybierz format, który chcesz użyć:"
 
 #: dlls/cryptui/cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
@@ -15362,10 +15361,8 @@ msgid "&Save\tCtrl+S"
 msgstr "Zapi&sz\tCtrl+S"
 
 #: programs/notepad/notepad.rc:33
-#, fuzzy
-#| msgid "Save As..."
 msgid "Save &As..."
-msgstr "Zapisz jako..."
+msgstr "Zapisz j&ako..."
 
 #: programs/notepad/notepad.rc:35 programs/regedit/regedit.rc:39
 #: programs/wordpad/wordpad.rc:36
@@ -15397,8 +15394,6 @@ msgid "&Paste\tCtrl+V"
 msgstr "Wkl&ej\tCtrl+V"
 
 #: programs/notepad/notepad.rc:47
-#, fuzzy
-#| msgid "&Delete\tDel"
 msgid "De&lete\tDel"
 msgstr "&Usuń\tDel"
 
@@ -15408,8 +15403,6 @@ msgid "&Find...\tCtrl+F"
 msgstr "Znaj&dź...\tCtrl+F"
 
 #: programs/notepad/notepad.rc:50
-#, fuzzy
-#| msgid "Find &next\tF3"
 msgid "Find &Next\tF3"
 msgstr "Znajdź &następny\tF3"
 
@@ -15422,14 +15415,10 @@ msgid "&Go To...\tCtrl+G"
 msgstr "&Idź do...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:54
-#, fuzzy
-#| msgid "Select &all\tCtrl+A"
 msgid "Select &All\tCtrl+A"
 msgstr "Zaznacz w&szystko\tCtrl+A"
 
 #: programs/notepad/notepad.rc:55
-#, fuzzy
-#| msgid "&Time/Date\tF5"
 msgid "Time/&Date\tF5"
 msgstr "Godzina/&data\tF5"
 
@@ -15439,7 +15428,7 @@ msgstr "For&mat"
 
 #: programs/notepad/notepad.rc:58
 msgid "&Word Wrap"
-msgstr ""
+msgstr "Zawijanie &wierszy"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -16009,7 +15998,7 @@ msgstr "&Ustawienia"
 
 #: programs/progman/progman.rc:45
 msgid "&Arrange automatically"
-msgstr "S&am rozmieszczaj"
+msgstr "Rozmieszcz&aj automatycznie"
 
 #: programs/progman/progman.rc:46
 msgid "&Minimize on run"
@@ -17636,7 +17625,7 @@ msgstr "&Minimalizuj podczas użytkowania"
 
 #: programs/taskmgr/taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "&Ukryj kiedy jest zminimalizowany"
+msgstr "&Ukryj po zminimalizowaniu"
 
 #: programs/taskmgr/taskmgr.rc:49 programs/taskmgr/taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -18427,7 +18416,7 @@ msgstr ""
 
 #: programs/timeout/timeout.rc:30
 msgid "waiting since %d sec. "
-msgstr "oczekiwanie od %d sek."
+msgstr "oczekiwanie od %d sek. "
 
 #: programs/timeout/timeout.rc:31
 msgid "press CTRL+C..."
