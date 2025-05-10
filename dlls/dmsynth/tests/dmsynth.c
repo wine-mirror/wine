@@ -30,6 +30,7 @@
 #include "dmusics.h"
 #include "dmusici.h"
 #include "dmksctrl.h"
+#include "dls2.h"
 
 static BOOL missing_dmsynth(void)
 {
@@ -1270,6 +1271,13 @@ static void test_IDirectMusicSynth(void)
 
 #define PI 3.14159265358979323846264
 
+struct lfo
+{
+    double freq;
+    double start_delay;
+    double scale;
+};
+
 struct phase
 {
     double duration;
@@ -1282,6 +1290,7 @@ struct envelope
 {
     double gain;
     double channel_gain[2];
+    struct lfo lfo;
     struct phase delay;
     struct phase attack;
     struct phase hold;
@@ -1289,6 +1298,34 @@ struct envelope
     struct phase sustain;
     struct phase release;
 };
+
+static void get_lfo_min_max(const struct lfo *lfo, double start_time, double end_time, double *min_value,
+        double *max_value)
+{
+    double start_phase = max(0., start_time - lfo->start_delay) * lfo->freq * (2. * PI);
+    double end_phase = max(0., end_time - lfo->start_delay) * lfo->freq * (2. * PI);
+    double peak1_phase_delta = 2. * PI - fmod(start_phase + 1.5 * PI, 2. * PI);
+    double peak2_phase_delta = 2. * PI - fmod(start_phase + 0.5 * PI, 2. * PI);
+    double start_value = sin(start_phase) * lfo->scale;
+    double end_value = sin(end_phase) * lfo->scale;
+    double phase_delta = end_phase - start_phase;
+
+    *min_value = min(*min_value, start_value);
+    *max_value = max(*max_value, start_value);
+    *min_value = min(*min_value, end_value);
+    *max_value = max(*max_value, end_value);
+
+    if (phase_delta >= peak1_phase_delta)
+    {
+        *min_value = min(*min_value, lfo->scale);
+        *max_value = max(*max_value, lfo->scale);
+    }
+    if (phase_delta >= peak2_phase_delta)
+    {
+        *min_value = min(*min_value, -lfo->scale);
+        *max_value = max(*max_value, -lfo->scale);
+    }
+}
 
 static double lerp(double start_value, double end_value, double factor)
 {
@@ -1359,6 +1396,7 @@ static void get_envelope_min_max(const struct envelope *envelope, double start_t
 
 #define SINE_AMPLITUDE 0.5
 #define SINE_LENGTH 256
+#define PHASE_DELTA 2
 
 struct DECLSPEC_ALIGN(8) instrument_download
 {
@@ -1481,7 +1519,7 @@ static void render_sine(IDirectMusicSynth *synth, const struct instrument_downlo
     ok(hr == S_OK, "got hr %#lx.\n", hr);
 }
 
-typedef double check_value_fn(int line, double time, short i0, short q0, double min_expected_value,
+typedef double check_value_fn(int line, double time, short i0, short q0, short i1, short q1, double min_expected_value,
         double max_expected_value);
 
 static void check_envelope(int line, IDirectMusicSynth *synth, const struct instrument_download *download,
@@ -1519,30 +1557,35 @@ static void check_envelope(int line, IDirectMusicSynth *synth, const struct inst
         double max_deviation_time = 0.;
         double max_deviation = 0.;
 
-        for (i = 0; i < ARRAYSIZE(buffer_i) - 1; ++i)
+        for (i = 0; i < ARRAYSIZE(buffer_i) - PHASE_DELTA; ++i)
         {
             double time, start_time, end_time, min_expected_value, max_expected_value, deviation;
-            double min_envelope_value, max_envelope_value;
-            short i0, q0;
+            double min_envelope_value, max_envelope_value, min_lfo_value, max_lfo_value;
+            short i0, q0, i1, q1;
 
             time = (double)i / 44100.;
             /* Both FluidSynth and native use a piecewise-linear approximation
              * for envelopes. FluidSynth uses fixed 64-sample segments, while
              * native uses variable length segments up to 2048 samples. Also
              * sometimes native starts an envelope phase 256 samples early for
-             * some reason. */
-            start_time = time - 2048. / 44100.;
+             * some reason and the envelopes seem to lag by 64 samples. */
+            start_time = time - (2048. + 64.) / 44100.;
             end_time = time + (2048. + 256.) / 44100.;
             min_envelope_value = DBL_MAX;
             max_envelope_value = -DBL_MAX;
             get_envelope_min_max(envelope, start_time, end_time, &min_envelope_value, &max_envelope_value);
-            min_expected_value = min_envelope_value + envelope->gain + envelope->channel_gain[j];
-            max_expected_value = max_envelope_value + envelope->gain + envelope->channel_gain[j];
+            min_lfo_value = DBL_MAX;
+            max_lfo_value = -DBL_MAX;
+            get_lfo_min_max(&envelope->lfo, start_time, end_time, &min_lfo_value, &max_lfo_value);
+            min_expected_value = min_envelope_value + min_lfo_value + envelope->gain + envelope->channel_gain[j];
+            max_expected_value = max_envelope_value + max_lfo_value + envelope->gain + envelope->channel_gain[j];
 
             i0 = buffer_i[i][j];
             q0 = buffer_q[i][j];
+            i1 = buffer_i[i + PHASE_DELTA][j];
+            q1 = buffer_q[i + PHASE_DELTA][j];
 
-            deviation = check_value(line, time, i0, q0, min_expected_value, max_expected_value);
+            deviation = check_value(line, time, i0, q0, i1, q1, min_expected_value, max_expected_value);
             if (deviation)
             {
                 first_deviation_time = min(first_deviation_time, time);
@@ -1567,7 +1610,7 @@ static void check_envelope(int line, IDirectMusicSynth *synth, const struct inst
     IDirectMusicSynthSink_Release(sink);
 }
 
-static double check_volume(int line, double time, short i0, short q0, double min_expected_value,
+static double check_volume(int line, double time, short i0, short q0, short i1, short q1, double min_expected_value,
         double max_expected_value)
 {
     double amplitude = hypot((double)i0, (double)q0) * (1. / SINE_AMPLITUDE / (double)SHRT_MAX);
@@ -1588,6 +1631,39 @@ static double check_volume(int line, double time, short i0, short q0, double min
 
 #define check_volume_envelope(synth, download, midi, envelope, todo) \
         check_envelope(__LINE__, synth, download, midi, check_volume, envelope, todo)
+
+static double check_pitch(int line, double time, short i0, short q0, short i1, short q1, double min_expected_value,
+        double max_expected_value)
+{
+    /* do a complex number multiplication to calculate the phase difference */
+    double i = i0 * i1 + q0 * q1;
+    double q = i0 * q1 - q0 * i1;
+    double min_expected_pitch;
+    double max_expected_pitch;
+    double eps = 5e-2;
+    double magnitude;
+    double pitch;
+
+    magnitude = hypot(i, q);
+    /* when the magnitude is too low we can't measure the frequency precisely */
+    if (magnitude < (double)SHRT_MAX * (double)SHRT_MAX * 1e-1 * 1e-1)
+        return 0.;
+
+    pitch = atan2(q, i) * ((double)SINE_LENGTH / PHASE_DELTA / PI / 2.);
+
+    min_expected_pitch = pow(2., min_expected_value / 1200.) - eps;
+    max_expected_pitch = pow(2., max_expected_value / 1200.) + eps;
+
+    if (pitch < min_expected_pitch)
+        return pitch - min_expected_pitch;
+    if (pitch > max_expected_pitch)
+        return pitch - max_expected_pitch;
+
+    return 0.;
+}
+
+#define check_pitch_envelope(synth, download, midi, envelope, todo) \
+        check_envelope(__LINE__, synth, download, midi, check_pitch, envelope, todo)
 
 static const struct instrument_download default_instrument_download =
 {
@@ -1690,6 +1766,16 @@ static struct midi_message make_program_change(REFERENCE_TIME delta, int chan, i
     return make_midi_message(delta, 0x0000c0 | (patch << 8) | chan);
 }
 
+static struct midi_message make_channel_pressure(REFERENCE_TIME delta, int chan, int pressure)
+{
+    return make_midi_message(delta, 0x0000d0 | (pressure << 8) | chan);
+}
+
+static struct midi_message make_pitch_bend(REFERENCE_TIME delta, int chan, int bend)
+{
+    return make_midi_message(delta, 0x0000e0 | (((bend & 0x3f80) + bend) << 8) | chan);
+}
+
 struct midi
 {
     struct midi_message messages[15];
@@ -1713,6 +1799,12 @@ static const struct envelope default_volume_envelope =
     {
         -30.10,
         -30.10,
+    },
+    .lfo =
+    {
+        .freq = 5.,
+        .start_delay = 10e-3,
+        .scale = 0.,
     },
     .delay =
     {
@@ -1754,6 +1846,110 @@ static const struct envelope default_volume_envelope =
         .duration = 0.,
         .start_value = 0.,
         .end_value = -960.,
+        .linear = TRUE,
+    },
+};
+
+static const struct envelope default_pitch_envelope =
+{
+    .lfo =
+    {
+        .freq = 5.,
+        .start_delay = 10e-3,
+        .scale = 0.,
+    },
+    .delay =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .attack =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .hold =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .decay =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .sustain =
+    {
+        .duration = 1000e-3,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .release =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+};
+
+static const struct envelope pitch_envelope1200 =
+{
+    .lfo =
+    {
+        .freq = 5.,
+        .start_delay = 10e-3,
+        .scale = 0.,
+    },
+    .delay =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 0.,
+        .linear = TRUE,
+    },
+    .attack =
+    {
+        .duration = 0.,
+        .start_value = 0.,
+        .end_value = 1200.,
+        .linear = TRUE,
+    },
+    .hold =
+    {
+        .duration = 0.,
+        .start_value = 1200.,
+        .end_value = 1200.,
+        .linear = TRUE,
+    },
+    .decay =
+    {
+        .duration = 0.,
+        .start_value = 1200.,
+        .end_value = 1200.,
+        .linear = TRUE,
+    },
+    .sustain =
+    {
+        .duration = 1000e-3,
+        .start_value = 1200.,
+        .end_value = 1200.,
+        .linear = TRUE,
+    },
+    .release =
+    {
+        .duration = 0.,
+        .start_value = 1200.,
+        .end_value = 0.,
         .linear = TRUE,
     },
 };
@@ -1858,6 +2054,1021 @@ static void test_IKsControl(void)
     check_volume_envelope(synth, &default_instrument_download, &default_midi, &envelope, FALSE);
 
     IKsControl_Release(control);
+    IDirectMusicSynth_Release(synth);
+}
+
+#define ABS_PITCH_HZ(f) (LONG)((1200 * log((f) / 440.) / log(2.) + 6900) * 65536)
+#define ABS_TIME_MS(x) ((x) ? (LONG)(1200 * log((x) / 1000.) / log(2.) * 65536) : 0x80000000)
+
+#define CONN_SRC_RPN0 0x0100
+#define CONN_SRC_RPN1 0x0101
+#define CONN_SRC_RPN2 0x0102
+
+#define CONN_TRN_BIPOLAR (1<<4)
+#define CONN_TRN_INVERT  (1<<5)
+
+#define CONN_TRANSFORM(src, ctrl, dst) (((src) & 0x3f) << 10) | (((ctrl) & 0x3f) << 4) | ((dst) & 0xf)
+
+static void test_dls(void)
+{
+    struct instrument_download download;
+    IDirectMusicSynth *synth;
+    struct envelope envelope;
+    struct midi midi;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSynth, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicSynth, (void **)&synth);
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    /* default connections */
+
+    check_volume_envelope(synth, &default_instrument_download, &default_midi, &default_volume_envelope, FALSE);
+    check_pitch_envelope(synth, &default_instrument_download, &default_midi, &default_pitch_envelope, FALSE);
+
+    /* unity note */
+
+    download = default_instrument_download;
+    download.region.WSMP.usUnityNote = 48;
+    envelope = default_pitch_envelope;
+    envelope.gain += 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* fine tune */
+
+    download = default_instrument_download;
+    download.region.WSMP.sFineTune = 1200;
+    envelope = default_pitch_envelope;
+    envelope.gain += 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* attenuation */
+
+    download = default_instrument_download;
+    download.region.WSMP.lAttenuation = -120 * 65536;
+    envelope = default_volume_envelope;
+    envelope.gain -= 120.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* lfo frequency */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usSource = CONN_SRC_LFO;
+    download.connections[0].usDestination = CONN_DST_PITCH;
+    download.connections[0].lScale = 1200 * 65536;
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* LFO start delay */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usSource = CONN_SRC_LFO;
+    download.connections[0].usDestination = CONN_DST_PITCH;
+    download.connections[0].lScale = 1200 * 65536;
+    download.connections[1].usDestination = CONN_DST_LFO_STARTDELAY;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    envelope = default_pitch_envelope;
+    envelope.lfo.start_delay = 100e-3;
+    envelope.lfo.scale = 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* vibrato LFO frequency */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usSource = CONN_SRC_VIBRATO;
+    download.connections[0].usDestination = CONN_DST_PITCH;
+    download.connections[0].lScale = 1200 * 65536;
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* vibrato LFO start delay */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usSource = CONN_SRC_VIBRATO;
+    download.connections[0].usDestination = CONN_DST_PITCH;
+    download.connections[0].lScale = 1200 * 65536;
+    download.connections[1].usDestination = CONN_DST_VIB_STARTDELAY;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    envelope = default_pitch_envelope;
+    envelope.lfo.start_delay = 100e-3;
+    envelope.lfo.scale = 1200.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 delay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_DELAYTIME;
+    download.connections[0].lScale = ABS_TIME_MS(100);
+    envelope = default_volume_envelope;
+    envelope.delay.duration = 100e-3;
+    envelope.sustain.duration -= 100e-3;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 attack time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_ATTACKTIME;
+    download.connections[0].lScale = ABS_TIME_MS(100);
+    envelope = default_volume_envelope;
+    envelope.attack.duration = 100e-3;
+    envelope.sustain.duration -= 100e-3;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 sustain level */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 900 * 65536;
+    envelope = default_volume_envelope;
+    envelope.decay.end_value = -96.;
+    envelope.sustain.start_value = -96.;
+    envelope.sustain.end_value = -96.;
+    envelope.release.start_value = -96.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* EG1 decay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_DECAYTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    envelope = default_volume_envelope;
+    envelope.decay.duration = 100e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 hold time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_HOLDTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    envelope = default_volume_envelope;
+    envelope.hold.duration = 100e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 release time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(100);
+    envelope = default_volume_envelope;
+    envelope.release.duration = 100e-3;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG1 shutdown time */
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = default_note_on;
+    midi.messages[1] = make_note_on(10000000, 0, 61, 1);
+    download = default_instrument_download;
+    download.region.usKeyGroup = 1;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(200);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = default_note_on;
+    midi.messages[1] = make_note_on(10000000, 0, 61, 1);
+    download = default_instrument_download;
+    download.region.usKeyGroup = 1;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(200);
+    download.connections[1].usDestination = CONN_DST_EG1_SHUTDOWNTIME;
+    download.connections[1].lScale = ABS_TIME_MS(200);
+    check_volume_envelope(synth, &download, &midi, &default_volume_envelope, TRUE);
+
+    /* velocity -> EG1 attack time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_ATTACKTIME;
+    download.connections[0].lScale = ABS_TIME_MS(100);
+    download.connections[1].usSource = CONN_SRC_KEYONVELOCITY;
+    download.connections[1].usDestination = CONN_DST_EG1_ATTACKTIME;
+    download.connections[1].lScale = 2400 * 65536;
+    envelope = default_volume_envelope;
+    envelope.attack.duration = 400e-3;
+    envelope.sustain.duration -= 400e-3;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* key number -> EG1 attack time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_ATTACKTIME;
+    download.connections[0].lScale = ABS_TIME_MS(100);
+    download.connections[1].usSource = CONN_SRC_KEYONVELOCITY;
+    download.connections[1].usDestination = CONN_DST_EG1_ATTACKTIME;
+    download.connections[1].lScale = 2400 * 65536;
+    midi = default_midi;
+    midi.messages[0] = make_note_on(0, 0, 60, 63);
+    envelope = default_volume_envelope;
+    envelope.gain -= 121.79;
+    envelope.attack.duration = 200e-3;
+    envelope.sustain.duration -= 200e-3;
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* key number -> EG1 decay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_DECAYTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    download.connections[2].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[2].usDestination = CONN_DST_EG1_DECAYTIME;
+    download.connections[2].lScale = 2400 * 65536;
+    envelope = default_volume_envelope;
+    envelope.decay.duration = 192.5e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 192.5e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_DECAYTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    download.connections[2].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[2].usDestination = CONN_DST_EG1_DECAYTIME;
+    download.connections[2].lScale = 2400 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 0, 0, 127);
+    midi.messages[1] = make_note_off(10000000, 0, 0, 127);
+    envelope = default_volume_envelope;
+    envelope.decay.duration = 100e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* key number -> EG1 hold time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_HOLDTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    download.connections[2].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[2].usDestination = CONN_DST_EG1_HOLDTIME;
+    download.connections[2].lScale = 2400 * 65536;
+    envelope = default_volume_envelope;
+    envelope.hold.duration = 100e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_SUSTAINLEVEL;
+    download.connections[0].lScale = 0;
+    download.connections[1].usDestination = CONN_DST_EG1_HOLDTIME;
+    download.connections[1].lScale = ABS_TIME_MS(100);
+    download.connections[2].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[2].usDestination = CONN_DST_EG1_HOLDTIME;
+    download.connections[2].lScale = 2400 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 0, 0, 127);
+    midi.messages[1] = make_note_off(10000000, 0, 0, 127);
+    envelope = default_volume_envelope;
+    envelope.hold.duration = 100e-3;
+    envelope.decay.end_value = -960.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = -960.;
+    envelope.sustain.end_value = -960.;
+    envelope.release.start_value = -960.;
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* EG2 delay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_DELAYTIME;
+    download.connections[2].lScale = ABS_TIME_MS(100);
+    envelope = pitch_envelope1200;
+    envelope.delay.duration = 100e-3;
+    envelope.sustain.duration -= 100e-3;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG2 attack time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_ATTACKTIME;
+    download.connections[2].lScale = ABS_TIME_MS(100);
+    envelope = pitch_envelope1200;
+    envelope.attack.duration = 100e-3;
+    envelope.sustain.duration -= 100e-3;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG2 sustain level */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 500 * 65536;
+    envelope = pitch_envelope1200;
+    envelope.decay.end_value = 600.;
+    envelope.sustain.start_value = 600.;
+    envelope.sustain.end_value = 600.;
+    envelope.release.start_value = 600.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* EG2 decay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 4;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 0;
+    download.connections[3].usDestination = CONN_DST_EG2_DECAYTIME;
+    download.connections[3].lScale = ABS_TIME_MS(100);
+    envelope = pitch_envelope1200;
+    envelope.decay.duration = 100e-3;
+    envelope.decay.end_value = 0.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = 0.;
+    envelope.sustain.end_value = 0.;
+    envelope.release.start_value = 0.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* EG2 release time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_RELEASETIME;
+    download.connections[2].lScale = ABS_TIME_MS(100);
+    envelope = pitch_envelope1200;
+    envelope.release.duration = 100e-3;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    /* key number -> EG2 decay time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 5;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 0;
+    download.connections[3].usDestination = CONN_DST_EG2_DECAYTIME;
+    download.connections[3].lScale = ABS_TIME_MS(100);
+    download.connections[4].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[4].usDestination = CONN_DST_EG2_DECAYTIME;
+    download.connections[4].lScale = 2400 * 65536;
+    envelope = pitch_envelope1200;
+    envelope.decay.duration = 192.5e-3;
+    envelope.decay.end_value = 0.;
+    envelope.sustain.duration -= 192.5e-3;
+    envelope.sustain.start_value = 0.;
+    envelope.sustain.end_value = 0.;
+    envelope.release.start_value = 0.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    download = default_instrument_download;
+    download.region.WSMP.usUnityNote = 0;
+    download.connection_list.cConnections = 5;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 0;
+    download.connections[3].usDestination = CONN_DST_EG2_DECAYTIME;
+    download.connections[3].lScale = ABS_TIME_MS(100);
+    download.connections[4].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[4].usDestination = CONN_DST_EG2_DECAYTIME;
+    download.connections[4].lScale = 2400 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 0, 0, 127);
+    midi.messages[1] = make_note_off(10000000, 0, 0, 127);
+    envelope = pitch_envelope1200;
+    envelope.decay.duration = 100e-3;
+    envelope.decay.end_value = 0.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = 0.;
+    envelope.sustain.end_value = 0.;
+    envelope.release.start_value = 0.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* key number -> EG2 hold time */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 5;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 0;
+    download.connections[3].usDestination = CONN_DST_EG2_HOLDTIME;
+    download.connections[3].lScale = ABS_TIME_MS(100);
+    download.connections[4].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[4].usDestination = CONN_DST_EG2_HOLDTIME;
+    download.connections[4].lScale = 2400 * 65536;
+    envelope = pitch_envelope1200;
+    envelope.hold.duration = 192.5e-3;
+    envelope.decay.end_value = 0.;
+    envelope.sustain.duration -= 192.5e-3;
+    envelope.sustain.start_value = 0.;
+    envelope.sustain.end_value = 0.;
+    envelope.release.start_value = 0.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, FALSE);
+
+    download = default_instrument_download;
+    download.region.WSMP.usUnityNote = 0;
+    download.connection_list.cConnections = 5;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    download.connections[2].usDestination = CONN_DST_EG2_SUSTAINLEVEL;
+    download.connections[2].lScale = 0;
+    download.connections[3].usDestination = CONN_DST_EG2_HOLDTIME;
+    download.connections[3].lScale = ABS_TIME_MS(100);
+    download.connections[4].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[4].usDestination = CONN_DST_EG2_HOLDTIME;
+    download.connections[4].lScale = 2400 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_note_on(0, 0, 0, 127);
+    midi.messages[1] = make_note_off(10000000, 0, 0, 127);
+    envelope = pitch_envelope1200;
+    envelope.hold.duration = 100e-3;
+    envelope.decay.end_value = 0.;
+    envelope.sustain.duration -= 100e-3;
+    envelope.sustain.start_value = 0.;
+    envelope.sustain.end_value = 0.;
+    envelope.release.start_value = 0.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* RPN2 -> key number */
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 101, 0);
+    midi.messages[1] = make_cc(0, 0, 100, 2);
+    midi.messages[2] = make_cc(0, 0, 6, 76);
+    midi.messages[3] = default_note_on;
+    midi.messages[4] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.gain += 1200.;
+    check_pitch_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usSource = CONN_SRC_RPN2;
+    download.connections[0].usDestination = CONN_DST_KEYNUMBER;
+    download.connections[0].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[0].lScale = 0;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 101, 0);
+    midi.messages[1] = make_cc(0, 0, 100, 2);
+    midi.messages[2] = make_cc(0, 0, 6, 76);
+    midi.messages[3] = default_note_on;
+    midi.messages[4] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.gain += 1200.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* LFO -> gain */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[0].lScale = ABS_PITCH_HZ(2);
+    download.connections[1].usSource = CONN_SRC_LFO;
+    download.connections[1].usDestination = CONN_DST_GAIN;
+    download.connections[1].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[1].lScale = 10 * 65536;
+    envelope = default_volume_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 10.;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* LFO x CC1 -> gain */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[0].lScale = ABS_PITCH_HZ(2);
+    download.connections[1].usSource = CONN_SRC_LFO;
+    download.connections[1].usControl = CONN_SRC_CC1;
+    download.connections[1].usDestination = CONN_DST_GAIN;
+    download.connections[1].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[1].lScale = 10 * 65536;
+    check_volume_envelope(synth, &download, &default_midi, &default_volume_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[0].lScale = ABS_PITCH_HZ(2);
+    download.connections[1].usSource = CONN_SRC_LFO;
+    download.connections[1].usControl = CONN_SRC_CC1;
+    download.connections[1].usDestination = CONN_DST_GAIN;
+    download.connections[1].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[1].lScale = 10 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 1, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 10.;
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* LFO x channel pressure -> gain */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[0].lScale = ABS_PITCH_HZ(2);
+    download.connections[1].usSource = CONN_SRC_LFO;
+    download.connections[1].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[1].usDestination = CONN_DST_GAIN;
+    download.connections[1].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[1].lScale = 100 * 65536;
+    check_volume_envelope(synth, &download, &default_midi, &default_volume_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[0].lScale = ABS_PITCH_HZ(2);
+    download.connections[1].usSource = CONN_SRC_LFO;
+    download.connections[1].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[1].usDestination = CONN_DST_GAIN;
+    download.connections[1].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[1].lScale = 100 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_channel_pressure(0, 0, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 10.;
+    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* velocity -> gain */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usSource = CONN_SRC_KEYONVELOCITY;
+    download.connections[0].usDestination = CONN_DST_GAIN;
+    download.connections[0].usTransform = CONN_TRANSFORM(CONN_TRN_INVERT | CONN_TRN_CONCAVE, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[0].lScale = 0;
+    midi = default_midi;
+    midi.messages[0] = make_note_on(0, 0, 60, 64);
+    envelope = default_volume_envelope;
+    envelope.gain -= 119.;
+    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* CC7 -> gain */
+
+    midi = default_midi;
+    midi.messages[0] = make_cc(0, 0, 7, 64);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.gain = 120. - 119.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    /* CC11 -> gain */
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 11, 64);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.gain -= 119.;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &envelope, FALSE);
+
+    /* pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    /* pitch wheel x RPN0 -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_pitch_bend(0, 0, 16383);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.gain += 200.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 101, 0);
+    midi.messages[1] = make_cc(0, 0, 100, 0);
+    midi.messages[2] = make_cc(0, 0, 6, 0);
+    midi.messages[3] = make_pitch_bend(0, 0, 16383);
+    midi.messages[4] = default_note_on;
+    midi.messages[5] = default_note_off;
+    check_pitch_envelope(synth, &download, &midi, &default_pitch_envelope, FALSE);
+
+    /* key number -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_KEYNUMBER;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 0;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    /* RPN1 -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_RPN1;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 0;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 101, 0);
+    midi.messages[1] = make_cc(0, 0, 100, 1);
+    midi.messages[2] = make_cc(0, 0, 6, 127);
+    midi.messages[3] = default_note_on;
+    midi.messages[4] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.gain += 100.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* vibrato LFO -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_VIBRATO;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* vibrato LFO x CC1 -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 1, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_pitch_envelope(synth, &download, &midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_VIBRATO;
+    download.connections[2].usControl = CONN_SRC_CC1;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_VIBRATO;
+    download.connections[2].usControl = CONN_SRC_CC1;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 1, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* vibrato LFO x channel pressure -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_VIBRATO;
+    download.connections[2].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_VIB_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_VIBRATO;
+    download.connections[2].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_channel_pressure(0, 0, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* LFO -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_LFO;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* LFO x CC1 -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 1, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_pitch_envelope(synth, &download, &midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_LFO;
+    download.connections[2].usControl = CONN_SRC_CC1;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_LFO;
+    download.connections[2].usControl = CONN_SRC_CC1;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 1, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
+
+    /* LFO x channel pressure -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_LFO;
+    download.connections[2].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &default_pitch_envelope, FALSE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 3;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usDestination = CONN_DST_LFO_FREQUENCY;
+    download.connections[1].lScale = ABS_PITCH_HZ(2);
+    download.connections[2].usSource = CONN_SRC_LFO;
+    download.connections[2].usControl = CONN_SRC_CHANNELPRESSURE;
+    download.connections[2].usDestination = CONN_DST_PITCH;
+    download.connections[2].usTransform = CONN_TRANSFORM(CONN_TRN_BIPOLAR, CONN_TRN_NONE, CONN_TRN_NONE);
+    download.connections[2].lScale = 100 * 65536;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_channel_pressure(0, 0, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_pitch_envelope;
+    envelope.lfo.freq = 2.;
+    envelope.lfo.scale = 100.;
+    check_pitch_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* EG2 -> pitch */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 2;
+    download.connections[0].usDestination = CONN_DST_EG1_RELEASETIME;
+    download.connections[0].lScale = ABS_TIME_MS(10000);
+    download.connections[1].usSource = CONN_SRC_EG2;
+    download.connections[1].usDestination = CONN_DST_PITCH;
+    download.connections[1].lScale = 1200 * 65536;
+    check_pitch_envelope(synth, &download, &default_midi, &pitch_envelope1200, FALSE);
+
+    /* pan */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_PAN;
+    download.connections[0].lScale = -100 * 65536;
+    envelope = default_volume_envelope;
+    envelope.channel_gain[0] = -22.18;
+    envelope.channel_gain[1] = -39.79;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_PAN;
+    download.connections[0].lScale = 100 * 65536;
+    envelope = default_volume_envelope;
+    envelope.channel_gain[0] = -39.79;
+    envelope.channel_gain[1] = -22.18;
+    check_volume_envelope(synth, &download, &default_midi, &envelope, TRUE);
+
+    /* CC10 -> pan */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usSource = CONN_SRC_CC10;
+    download.connections[0].usDestination = CONN_DST_PAN;
+    download.connections[0].lScale = 0;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 10, 51);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.channel_gain[0] = -22.30;
+    envelope.channel_gain[1] = -39.62;
+    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usSource = CONN_SRC_CC10;
+    download.connections[0].usDestination = CONN_DST_PAN;
+    download.connections[0].lScale = 0;
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 10, 76);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    envelope = default_volume_envelope;
+    envelope.channel_gain[0] = -39.62;
+    envelope.channel_gain[1] = -22.30;
+    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+
+    /* CC91 -> reverb send */
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 91, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, FALSE);
+
+    /* reverb send */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_REVERB;
+    download.connections[0].lScale = 1000 * 65536;
+    check_volume_envelope(synth, &download, &default_midi, &default_volume_envelope, FALSE);
+
+    /* CC93 -> chorus send */
+
+    memset(&midi, 0, sizeof(midi));
+    midi.messages[0] = make_cc(0, 0, 93, 127);
+    midi.messages[1] = default_note_on;
+    midi.messages[2] = default_note_off;
+    check_volume_envelope(synth, &default_instrument_download, &midi, &default_volume_envelope, FALSE);
+
+    /* chorus send */
+
+    download = default_instrument_download;
+    download.connection_list.cConnections = 1;
+    download.connections[0].usDestination = CONN_DST_CHORUS;
+    download.connections[0].lScale = 1000 * 65536;
+    check_volume_envelope(synth, &download, &default_midi, &default_volume_envelope, FALSE);
+
     IDirectMusicSynth_Release(synth);
 }
 
@@ -2214,6 +3425,7 @@ START_TEST(dmsynth)
     test_COM_synthsink();
     test_IDirectMusicSynth();
     test_IKsControl();
+    test_dls();
     test_instrument_selection();
     test_IDirectMusicSynthSink();
 
