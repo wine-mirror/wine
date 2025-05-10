@@ -46,6 +46,7 @@ static void test_DXCoreCreateAdapterFactory(void)
     IDXCoreAdapterFactory *factory = (void *)0xdeadbeef;
     IDXCoreAdapterList *list2 = (void *)0xdeadbeef;
     IDXCoreAdapterList *list = (void *)0xdeadbeef;
+    uint32_t adapter_count = 0;
     LONG refcount;
     HRESULT hr;
 
@@ -96,6 +97,9 @@ static void test_DXCoreCreateAdapterFactory(void)
     check_interface(list, &IID_IAgileObject, FALSE);
     check_interface(list, &IID_IDXCoreAdapter, FALSE);
     check_interface(list, &IID_IDXCoreAdapterFactory, FALSE);
+
+    adapter_count = IDXCoreAdapterList_GetAdapterCount(list);
+    ok(adapter_count != 0, "got adapter_count 0.\n");
 
     refcount = IDXCoreAdapterList_Release(list);
     ok(refcount == 0, "got refcount %ld.\n", refcount);

@@ -31,6 +31,8 @@ struct dxcore_adapter_list
 {
     IDXCoreAdapterList IDXCoreAdapterList_iface;
     LONG refcount;
+
+    uint32_t adapter_count;
 };
 
 static inline struct dxcore_adapter_list *impl_from_IDXCoreAdapterList(IDXCoreAdapterList *iface)
@@ -89,8 +91,11 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_list_GetAdapter(IDXCoreAdapterLi
 
 static uint32_t STDMETHODCALLTYPE dxcore_adapter_list_GetAdapterCount(IDXCoreAdapterList *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return 0;
+    struct dxcore_adapter_list *list = impl_from_IDXCoreAdapterList(iface);
+
+    TRACE("iface %p\n", iface);
+
+    return list->adapter_count;
 }
 
 static BOOL STDMETHODCALLTYPE dxcore_adapter_list_IsStale(IDXCoreAdapterList *iface)
@@ -187,6 +192,20 @@ static ULONG STDMETHODCALLTYPE dxcore_adapter_factory_Release(IDXCoreAdapterFact
     return refcount;
 }
 
+static HRESULT get_adapters(struct dxcore_adapter_list *list)
+{
+    struct wined3d *wined3d = wined3d_create(0);
+    HRESULT hr = S_OK;
+
+    if (!wined3d)
+        return E_FAIL;
+
+    list->adapter_count = wined3d_get_adapter_count(wined3d);
+
+    wined3d_decref(wined3d);
+    return hr;
+}
+
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_CreateAdapterList(IDXCoreAdapterFactory *iface, uint32_t num_attributes,
         const GUID *filter_attributes, REFIID riid, void **out)
 {
@@ -209,6 +228,11 @@ static HRESULT STDMETHODCALLTYPE dxcore_adapter_factory_CreateAdapterList(IDXCor
 
     list->IDXCoreAdapterList_iface.lpVtbl = &dxcore_adapter_list_vtbl;
     list->refcount = 1;
+    if (FAILED(hr = get_adapters(list)))
+    {
+        IDXCoreAdapterList_Release(&list->IDXCoreAdapterList_iface);
+        return hr;
+    }
 
     hr = IDXCoreAdapterList_QueryInterface(&list->IDXCoreAdapterList_iface, riid, out);
     IDXCoreAdapterList_Release(&list->IDXCoreAdapterList_iface);
