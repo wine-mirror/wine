@@ -56,7 +56,6 @@ extern struct env_stack *pushd_directories;
 struct batch_context *context = NULL;
 int errorlevel;
 WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
-BOOL  interactive;
 FOR_CONTEXT *forloopcontext; /* The 'for' loop context */
 BOOL delayedsubst = FALSE; /* The current delayed substitution setting */
 
@@ -1010,7 +1009,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     endOfVar = wcschr(start + 1, *start);
     if (!endOfVar)
         /* no corresponding closing char... either skip startchar in batch, or leave untouched otherwise */
-        return context ? WCMD_strsubstW(start, start + 1, NULL, 0) : start + 1;
+        return WCMD_is_in_context(NULL) ? WCMD_strsubstW(start, start + 1, NULL, 0) : start + 1;
 
     memcpy(thisVar, start + 1, (endOfVar - start - 1) * sizeof(WCHAR));
     thisVar[endOfVar - start - 1] = L'\0';
@@ -1051,7 +1050,7 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start)
     if (!len)
     {
         /* Command line - just ignore this */
-        if (context == NULL) return endOfVar + 1;
+        if (!WCMD_is_in_context(NULL)) return endOfVar + 1;
 
         /* Batch - replace unknown env var with nothing */
         if (colonpos == NULL)
@@ -1207,23 +1206,23 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
 
     /* handle consecutive % or ! */
     if ((!atExecute || startchar == L'!') && p[1] == startchar) {
-        if (context) WCMD_strsubstW(p, p + 1, NULL, 0);
-        if (!context || startchar == L'%') p++;
+        if (WCMD_is_in_context(NULL)) WCMD_strsubstW(p, p + 1, NULL, 0);
+        if (!WCMD_is_in_context(NULL) || startchar == L'%') p++;
     /* Replace %~ modifications if in batch program */
     } else if (p[1] == L'~' && p[2] && !iswspace(p[2])) {
       WCMD_HandleTildeModifiers(&p, atExecute);
       p++;
 
     /* Replace use of %0...%9 if in batch program*/
-    } else if (!atExecute && context && (i >= 0) && (i <= 9) && startchar == '%') {
-      t = WCMD_parameter(context -> command, i + context -> shift_count[i],
+    } else if (!atExecute && WCMD_is_in_context(NULL) && (i >= 0) && (i <= 9) && startchar == L'%') {
+      t = WCMD_parameter(context->command, i + context->shift_count[i],
                          NULL, TRUE, TRUE);
       p = WCMD_strsubstW(p, p+2, t, -1);
 
     /* Replace use of %* if in batch program*/
-    } else if (!atExecute && context && *(p+1)=='*' && startchar == '%') {
+    } else if (!atExecute && WCMD_is_in_context(NULL) && p[1] == L'*' && startchar == L'%') {
       WCHAR *startOfParms = NULL;
-      WCHAR *thisParm = WCMD_parameter(context -> command, 0, &startOfParms, TRUE, TRUE);
+      WCHAR *thisParm = WCMD_parameter(context->command, 0, &startOfParms, TRUE, TRUE);
       if (startOfParms != NULL) {
         startOfParms += lstrlenW(thisParm);
         while (*startOfParms==' ' || *startOfParms == '\t') startOfParms++;
@@ -1239,7 +1238,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute) {
         BOOL first = p == cmd;
         p = WCMD_expand_envvar(p);
         /* FIXME: maybe this more likely calls for a specific handling of first arg? */
-        if (context && startchar == L'!' && first)
+        if (WCMD_is_in_context(NULL) && startchar == L'!' && first)
         {
             WCHAR *last;
             for (last = p; *last == startchar; last++) {}
@@ -1779,12 +1778,15 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
     if (ext && (!wcsicmp(ext, L".bat") || !wcsicmp(ext, L".cmd")))
     {
         RETURN_CODE return_code;
-        BOOL prev_interactive = interactive;
         BOOL prev_echo_mode = echo_mode;
 
-        interactive = FALSE;
         return_code = WCMD_call_batch(file, full_cmdline);
-        if ((interactive = prev_interactive))
+        if (return_code == RETURN_CODE_ABORTED)
+            return_code = errorlevel;
+        else if (return_code != NO_ERROR)
+            errorlevel = return_code;
+
+        if (!context)
             echo_mode = prev_echo_mode;
         if (context && !called)
         {
@@ -1837,7 +1839,7 @@ static RETURN_CODE run_full_path(const WCHAR *file, WCHAR *full_cmdline, BOOL ca
         }
     }
 
-    if (!interactive || (console && !HIWORD(console)))
+    if (context || (console && !HIWORD(console)))
         WaitForSingleObject(handle, INFINITE);
     GetExitCodeProcess(handle, &exit_code);
     errorlevel = (exit_code == STILL_ACTIVE) ? NO_ERROR : exit_code;
@@ -3092,48 +3094,53 @@ static void lexer_push_command(struct node_builder *builder,
     *copyTo       = command;
 }
 
-static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
+static WCHAR *fetch_next_line(BOOL first_line, WCHAR* buffer)
 {
-    /* display prompt */
-    if (interactive && !context)
+    BOOL ret;
+
+    if (!context) /* interactive mode */
     {
         /* native does is this way... not symmetrical wrt. echo_mode */
         if (!first_line)
             WCMD_output_asis(WCMD_LoadMessage(WCMD_MOREPROMPT));
         else if (echo_mode)
             WCMD_show_prompt();
+        ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));
     }
-
-    if (feed)
+    else if (context->batch_file) /* command file */
     {
-        BOOL ret;
-        if (context)
+        LARGE_INTEGER zeroli = {.QuadPart = 0};
+        HANDLE h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+                               NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h == INVALID_HANDLE_VALUE)
         {
-            LARGE_INTEGER zeroli = {.QuadPart = 0};
-            HANDLE h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
-                                   NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (h == INVALID_HANDLE_VALUE)
-            {
-                SetLastError(ERROR_FILE_NOT_FOUND);
-                WCMD_print_error();
-                ret = FALSE;
-            }
-            else
-            {
-                ret = SetFilePointerEx(h, context->file_position, NULL, FILE_BEGIN) &&
-                    !!WCMD_fgets(buffer, MAXSTRING, h) &&
-                    SetFilePointerEx(h, zeroli, &context->file_position, FILE_CURRENT);
-                CloseHandle(h);
-            }
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            WCMD_print_error();
+            ret = FALSE;
         }
         else
-            ret = !!WCMD_fgets(buffer, MAXSTRING, GetStdHandle(STD_INPUT_HANDLE));
-        if (!ret)
         {
-            buffer[0] = L'\0';
-            return NULL;
+            ret = SetFilePointerEx(h, context->file_position, NULL, FILE_BEGIN) &&
+                !!WCMD_fgets(buffer, MAXSTRING, h) &&
+                SetFilePointerEx(h, zeroli, &context->file_position, FILE_CURRENT);
+            CloseHandle(h);
         }
     }
+    else  /* /c or /k string from command line */
+    {
+        if ((ret = (context->file_position.QuadPart == 0)))
+        {
+            wcscpy(buffer, context->command);
+            context->file_position.QuadPart += wcslen(context->command) + 1;
+        }
+    }
+
+    if (!ret)
+    {
+        buffer[0] = L'\0';
+        return NULL;
+    }
+
     /* Handle truncated input - issue warning */
     if (wcslen(buffer) == MAXSTRING - 1)
     {
@@ -3146,7 +3153,7 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
 
     buffer = WCMD_skip_leading_spaces(buffer);
     /* Show prompt before batch line IF echo is on and in batch program */
-    if (context && echo_mode && *buffer && *buffer != '@')
+    if (WCMD_is_in_context(NULL) && echo_mode && *buffer && *buffer != '@')
     {
         if (first_line)
         {
@@ -3228,7 +3235,7 @@ static BOOL lexer_white_space_only(const WCHAR *string, int len)
  *     - Anything else gets put into the command string (including
  *            redirects)
  */
-enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **output)
+enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output)
 {
     WCHAR    *curPos;
     WCHAR     curString[MAXSTRING];
@@ -3246,10 +3253,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
     if (!extraSpace)
         extraSpace = xalloc((MAXSTRING + 1) * sizeof(WCHAR));
 
-    /* If initial command read in, use that, otherwise get input from handle */
-    if (optionalcmd)
-        wcscpy(extraSpace, optionalcmd);
-    if (!(curPos = fetch_next_line(optionalcmd == NULL, TRUE, extraSpace)))
+    if (!(curPos = fetch_next_line(TRUE, extraSpace)))
         return RPL_EOF;
 
     TRACE("About to parse line (%ls)\n", extraSpace);
@@ -3285,8 +3289,7 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           node_builder_push_token(&builder, TKN_EOL);
 
           /* If we have reached the end of the string, see if bracketing is outstanding */
-          if (builder.opened_parenthesis > 0 && optionalcmd == NULL &&
-              (curPos = fetch_next_line(TRUE, FALSE, extraSpace)))
+          if (builder.opened_parenthesis > 0 && (curPos = fetch_next_line(FALSE, extraSpace)))
           {
               TRACE("Need to read more data as outstanding brackets or carets\n");
           }
@@ -3470,13 +3473,12 @@ enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_NODE **
           if (curPos[1] == L'\0') {
               TRACE("Caret found at end of line\n");
               extraSpace[0] = L'^';
-              if (optionalcmd) break;
-              if (!fetch_next_line(TRUE, FALSE, extraSpace + 1))
+              if (!fetch_next_line(FALSE, extraSpace + 1))
                   break;
               if (!extraSpace[1]) /* empty line */
               {
                   extraSpace[1] = L'\r';
-                  if (!fetch_next_line(TRUE, FALSE, extraSpace + 2))
+                  if (!fetch_next_line(FALSE, extraSpace + 2))
                       break;
               }
               curPos = extraSpace;
@@ -4328,9 +4330,6 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
     WCMD_echo(L"OFF");
   }
 
-  /* Until we start to read from the keyboard, stay as non-interactive */
-  interactive = FALSE;
-
   SetEnvironmentVariableW(L"PROMPT", L"$P$G");
 
   if (opt_c || opt_k) {
@@ -4487,25 +4486,13 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
     WINE_TRACE("Set %s to %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(string));
   }
 
-  if (opt_c) {
-      RETURN_CODE return_code = NO_ERROR;
-      /* If we do a "cmd /c command", we don't want to allocate a new
-       * console since the command returns immediately. Rather, we use
-       * the currently allocated input and output handles. This allows
-       * us to pipe to and read from the command interpreter.
-       */
-      /* Parse the command string, without reading any more input */
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          return_code = node_execute(toExecute);
-          node_dispose_tree(toExecute);
-      }
-      else if (rpl_status == RPL_SYNTAXERROR)
-          return_code = ERROR_INVALID_FUNCTION;
-      return return_code;
+  if (opt_c)
+  {
+      RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
+      if (return_code != RETURN_CODE_ABORTED && return_code != NO_ERROR)
+          return return_code;
+      return errorlevel;
   }
-
   GetStartupInfoW(&startupInfo);
   if (startupInfo.lpTitle != NULL)
       SetConsoleTitleW(startupInfo.lpTitle);
@@ -4578,29 +4565,19 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
 
   if (opt_k)
   {
-      RETURN_CODE return_code = NO_ERROR;
-      rpl_status = WCMD_ReadAndParseLine(cmd, &toExecute);
-      /* Parse the command string, without reading any more input */
-      if (rpl_status == RPL_SUCCESS && toExecute)
-      {
-          return_code = node_execute(toExecute);
-          node_dispose_tree(toExecute);
-      }
-      else if (rpl_status == RPL_SYNTAXERROR)
-          errorlevel = RETURN_CODE_SYNTAX_ERROR;
-      free(cmd);
+      RETURN_CODE return_code = WCMD_call_batch(NULL, cmd);
       if (return_code == RETURN_CODE_ABORTED) return errorlevel;
+      free(cmd);
   }
 
 /*
  *	Loop forever getting commands and executing them.
  */
 
-  interactive = TRUE;
   if (!opt_k) WCMD_output_asis(version_string);
   if (echo_mode) WCMD_output_asis(L"\r\n");
   /* Read until EOF (which for std input is never, but if redirect in place, may occur */
-  while ((rpl_status = WCMD_ReadAndParseLine(NULL, &toExecute)) != RPL_EOF)
+  while ((rpl_status = WCMD_ReadAndParseLine(&toExecute)) != RPL_EOF)
   {
       if (rpl_status == RPL_SUCCESS && toExecute)
       {

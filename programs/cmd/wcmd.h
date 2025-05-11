@@ -215,7 +215,7 @@ BOOL WCMD_ReadFile(const HANDLE hIn, WCHAR *intoBuf, const DWORD maxChars, LPDWO
 BOOL WCMD_read_console(const HANDLE hInput, WCHAR *inputBuffer, const DWORD inputBufferLength, LPDWORD numRead);
 
 enum read_parse_line {RPL_SUCCESS, RPL_EOF, RPL_SYNTAXERROR};
-enum read_parse_line WCMD_ReadAndParseLine(const WCHAR *initialcmd, CMD_NODE **output);
+enum read_parse_line WCMD_ReadAndParseLine(CMD_NODE **output);
 void      node_dispose_tree(CMD_NODE *cmds);
 RETURN_CODE node_execute(CMD_NODE *node);
 
@@ -344,14 +344,14 @@ extern BOOL delayedsubst;
 static inline BOOL WCMD_is_in_context(const WCHAR *ext)
 {
     size_t c_len, e_len;
-    if (!context) return FALSE;
+    if (!context || !context->batch_file) return FALSE;
     if (!ext) return TRUE;
     c_len = wcslen(context->batch_file->path_name);
     e_len = wcslen(ext);
     return (c_len > e_len) && !wcsicmp(&context->batch_file->path_name[c_len - e_len], ext);
 }
 
- #endif /* !RC_INVOKED */
+#endif /* !RC_INVOKED */
 
 /*
  *	Serial nos of builtin commands. These constants must be in step with
