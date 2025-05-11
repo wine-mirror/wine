@@ -539,6 +539,7 @@ HKLM,%Control%\Session Manager\KnownDLLs,"xtajit",,"xtajit.dll"
 HKLM,%Control%\Session Manager\KnownDLLs,"xtajit64",,"xtajit64.dll"
 HKLM,%Control%\Session Manager\Memory Management,PagingFiles,,"%24%\pagefile.sys 27 77"
 HKLM,%Control%\Session Manager\Memory Management,WriteWatch,0x00040002,1
+HKLM,%Control%\Session Manager\Memory Management\PrefetchParameters,BootId,0x10003,1
 
 [Fonts]
 HKLM,%FontSubStr%,"Arial Baltic,186",,"Arial,186"
