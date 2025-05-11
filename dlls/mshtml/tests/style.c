@@ -726,7 +726,7 @@ static void test_style5(IHTMLStyle5 *style5)
     VariantClear(&vdefault);
 }
 
-static void test_style6(IHTMLStyle6 *style)
+static void test_style6(IHTMLStyle6 *style, IHTMLCSSStyleDeclaration *css_style)
 {
     BSTR str;
     HRESULT hres;
@@ -782,6 +782,48 @@ static void test_style6(IHTMLStyle6 *style)
     ok(hres == S_OK, "get_borderSpacing failed: %08lx\n", hres);
     ok(!lstrcmpW(str, L"10px"), "borderSpacing = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    hres = IHTMLStyle6_get_content(style, &str);
+    ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+    ok(!str, "content = %s\n", debugstr_w(str));
+
+    if(css_style) {
+        hres = IHTMLCSSStyleDeclaration_get_content(css_style, &str);
+        ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+        ok(!str, "content = %s\n", debugstr_w(str));
+    }
+
+    str = SysAllocString(L"normal");
+    hres = IHTMLStyle6_put_content(style, str);
+    ok(hres == S_OK, "put_content failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle6_get_content(style, &str);
+    ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+    ok(!wcscmp(str, L"normal"), "content = %s\n", debugstr_w(str));
+    SysFreeString(str);
+
+    if(css_style) {
+        hres = IHTMLCSSStyleDeclaration_get_content(css_style, &str);
+        ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+        ok(!wcscmp(str, L"normal"), "content = %s\n", debugstr_w(str));
+        SysFreeString(str);
+
+        str = SysAllocString(L"none");
+        hres = IHTMLCSSStyleDeclaration_put_content(css_style, str);
+        ok(hres == S_OK, "put_content failed: %08lx\n", hres);
+        SysFreeString(str);
+
+        hres = IHTMLCSSStyleDeclaration_get_content(css_style, &str);
+        ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+        ok(!wcscmp(str, L"none"), "content = %s\n", debugstr_w(str));
+        SysFreeString(str);
+
+        hres = IHTMLStyle6_get_content(style, &str);
+        ok(hres == S_OK, "get_content failed: %08lx\n", hres);
+        ok(!wcscmp(str, L"none"), "content = %s\n", debugstr_w(str));
+        SysFreeString(str);
+    }
 }
 
 static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
@@ -3343,7 +3385,7 @@ static void test_body_style(IHTMLStyle *style)
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle6, (void**)&style6);
     if(SUCCEEDED(hres)) {
-        test_style6(style6);
+        test_style6(style6, css_style);
         IHTMLStyle6_Release(style6);
     }else {
         win_skip("IHTMLStyle6 not available\n");
