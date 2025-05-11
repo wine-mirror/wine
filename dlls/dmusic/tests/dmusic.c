@@ -1035,6 +1035,51 @@ static void test_synthport(void)
     IDirectMusic_Release(dmusic);
 }
 
+static void test_port_kscontrol(void)
+{
+    IDirectMusicPort *port;
+    IDirectMusic *dmusic;
+    IKsControl *control;
+    KSPROPERTY property;
+    DWORD volume_size;
+    LONG volume;
+    HRESULT hr;
+
+    port = create_synth_port(&dmusic);
+    hr = IDirectMusicPort_QueryInterface(port, &IID_IKsControl, (void **)&control);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IDirectMusicPort_Release(port);
+
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_GET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_GET_UNSUPPORTED, "got hr %#lx.\n", hr);
+
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 1;
+    property.Flags = KSPROPERTY_TYPE_GET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+
+    volume = 0;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 0;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == S_OK, "got hr %#lx.\n", hr);
+
+    volume = 0;
+    property.Set = GUID_DMUS_PROP_Volume;
+    property.Id = 1;
+    property.Flags = KSPROPERTY_TYPE_SET;
+    hr = IKsControl_KsProperty(control, &property, sizeof(property), &volume, sizeof(volume), &volume_size);
+    todo_wine ok(hr == DMUS_E_UNKNOWN_PROPERTY, "got hr %#lx.\n", hr);
+
+    IDirectMusicPort_Release(port);
+    IDirectMusic_Release(dmusic);
+}
+
 static void test_port_download(void)
 {
     struct wave_download
@@ -1665,6 +1710,7 @@ START_TEST(dmusic)
     test_parsedescriptor();
     test_master_clock();
     test_synthport();
+    test_port_kscontrol();
     test_port_download();
     test_download_instrument();
     test_default_gm_collection();
