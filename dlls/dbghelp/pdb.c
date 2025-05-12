@@ -3519,7 +3519,7 @@ static enum pdb_result pdb_reader_alloc_and_fetch_from_checksum_subsection(struc
         case CV_INLINEE_SOURCE_LINE_SIGNATURE_EX:
             while (!pdb_reader_READ(pdb, &inlineelines_walker, &inlsrcex))
             {
-                if (inlsrc.inlinee == cv_inlinee)
+                if (inlsrcex.inlinee == cv_inlinee)
                 {
                     if ((result = pdb_reader_alloc_and_fetch_from_checksum(pdb, checksum_walker, inlsrcex.fileId, string))) return result;
                     *line_number = inlsrcex.sourceLineNum;
