@@ -5064,6 +5064,10 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		result = EDIT_WM_VScroll(es, LOWORD(wParam), (short)HIWORD(wParam));
 		break;
 
+        case WM_CAPTURECHANGED:
+            es->bCaptureState = FALSE;
+            break;
+
         case WM_MOUSEWHEEL:
                 {
                     int wheelDelta;
