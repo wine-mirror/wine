@@ -2675,7 +2675,7 @@ static void test_dls(void)
     envelope = default_volume_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 10.;
-    check_volume_envelope(synth, &download, &midi, &envelope, TRUE);
+    check_volume_envelope(synth, &download, &midi, &envelope, FALSE);
 
     /* velocity -> gain */
 

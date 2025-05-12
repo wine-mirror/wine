@@ -1726,6 +1726,7 @@ static void add_mod_from_connection(fluid_voice_t *fluid_voice, const CONNECTION
      * whereas DLS2 uses (1200 * log2(f / 440.) + 6900) * 65536. The values
      * are very close but not strictly identical and we may need a conversion.
      */
+    else if (gen == GEN_MODLFOTOVOL && src1 == FLUID_MOD_CHANNELPRESSURE) value = conn->lScale / 655360.;
     else if (conn->lScale == 0x80000000) value = -32768;
     else value = conn->lScale / 65536.;
     fluid_mod_set_amount(mod, value);
