@@ -2875,7 +2875,7 @@ static void test_dls(void)
     envelope = default_pitch_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 100.;
-    check_pitch_envelope(synth, &download, &midi, &envelope, TRUE);
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
 
     /* LFO -> pitch */
 
@@ -2974,7 +2974,7 @@ static void test_dls(void)
     envelope = default_pitch_envelope;
     envelope.lfo.freq = 2.;
     envelope.lfo.scale = 100.;
-    check_pitch_envelope(synth, &download, &midi, &envelope, TRUE);
+    check_pitch_envelope(synth, &download, &midi, &envelope, FALSE);
 
     /* EG2 -> pitch */
 

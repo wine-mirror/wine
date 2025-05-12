@@ -1178,6 +1178,9 @@ static HRESULT WINAPI synth_Render(IDirectMusicSynth8 *iface, short *buffer,
             fluid_synth_get_program(This->fluid_synth, chan, &sfont_id, &bank_num, &preset_num);
             fluid_synth_program_select(This->fluid_synth, chan, sfont_id, bank_num, event->midi[1]);
             break;
+        case MIDI_CHANNEL_PRESSURE:
+            fluid_synth_channel_pressure(This->fluid_synth, chan, event->midi[1]);
+            break;
         case MIDI_PITCH_BEND_CHANGE:
             fluid_synth_pitch_bend(This->fluid_synth, chan, event->midi[1] | (event->midi[2] << 7));
             break;
