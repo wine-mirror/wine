@@ -140,7 +140,7 @@
     SYSCALL_ENTRY( 0x0088, NtQueryInformationAtom, 20 ) \
     SYSCALL_ENTRY( 0x0089, NtQueryInformationFile, 20 ) \
     SYSCALL_ENTRY( 0x008a, NtQueryInformationJobObject, 20 ) \
-    SYSCALL_ENTRY( 0x008b, NtQueryInformationProcess, 20 ) \
+    SYSCALL_ENTRY_NtQueryInformationProcess( 0x008b, NtQueryInformationProcess, 20 ) \
     SYSCALL_ENTRY( 0x008c, NtQueryInformationThread, 20 ) \
     SYSCALL_ENTRY( 0x008d, NtQueryInformationToken, 20 ) \
     SYSCALL_ENTRY( 0x008e, NtQueryInstallUILanguage, 4 ) \
@@ -159,7 +159,7 @@
     SYSCALL_ENTRY( 0x009b, NtQuerySystemEnvironmentValueEx, 20 ) \
     SYSCALL_ENTRY( 0x009c, NtQuerySystemInformation, 16 ) \
     SYSCALL_ENTRY( 0x009d, NtQuerySystemInformationEx, 24 ) \
-    SYSCALL_ENTRY( 0x009e, NtQuerySystemTime, 4 ) \
+    SYSCALL_ENTRY_NtQuerySystemTime( 0x009e, NtQuerySystemTime, 4 ) \
     SYSCALL_ENTRY( 0x009f, NtQueryTimer, 20 ) \
     SYSCALL_ENTRY( 0x00a0, NtQueryTimerResolution, 12 ) \
     SYSCALL_ENTRY( 0x00a1, NtQueryValueKey, 24 ) \
@@ -251,7 +251,6 @@
     SYSCALL_ENTRY( 0x00f7, NtYieldExecution, 0 ) \
     SYSCALL_ENTRY( 0x00f8, wine_nt_to_unix_file_name, 16 ) \
     SYSCALL_ENTRY( 0x00f9, wine_unix_to_nt_file_name, 12 )
-
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x0000, NtAcceptConnectPort, 48 ) \
@@ -393,7 +392,7 @@
     SYSCALL_ENTRY( 0x0088, NtQueryInformationAtom, 40 ) \
     SYSCALL_ENTRY( 0x0089, NtQueryInformationFile, 40 ) \
     SYSCALL_ENTRY( 0x008a, NtQueryInformationJobObject, 40 ) \
-    SYSCALL_ENTRY( 0x008b, NtQueryInformationProcess, 40 ) \
+    SYSCALL_ENTRY_NtQueryInformationProcess( 0x008b, NtQueryInformationProcess, 40 ) \
     SYSCALL_ENTRY( 0x008c, NtQueryInformationThread, 40 ) \
     SYSCALL_ENTRY( 0x008d, NtQueryInformationToken, 40 ) \
     SYSCALL_ENTRY( 0x008e, NtQueryInstallUILanguage, 8 ) \
@@ -412,7 +411,7 @@
     SYSCALL_ENTRY( 0x009b, NtQuerySystemEnvironmentValueEx, 40 ) \
     SYSCALL_ENTRY( 0x009c, NtQuerySystemInformation, 32 ) \
     SYSCALL_ENTRY( 0x009d, NtQuerySystemInformationEx, 48 ) \
-    SYSCALL_ENTRY( 0x009e, NtQuerySystemTime, 8 ) \
+    SYSCALL_ENTRY_NtQuerySystemTime( 0x009e, NtQuerySystemTime, 8 ) \
     SYSCALL_ENTRY( 0x009f, NtQueryTimer, 40 ) \
     SYSCALL_ENTRY( 0x00a0, NtQueryTimerResolution, 24 ) \
     SYSCALL_ENTRY( 0x00a1, NtQueryValueKey, 48 ) \
@@ -498,7 +497,8 @@
     SYSCALL_ENTRY( 0x00f1, NtYieldExecution, 0 ) \
     SYSCALL_ENTRY( 0x00f2, wine_nt_to_unix_file_name, 32 ) \
     SYSCALL_ENTRY( 0x00f3, wine_unix_to_nt_file_name, 24 )
-
 #else
 #define ALL_SYSCALLS ALL_SYSCALLS32
 #endif
+#define SYSCALL_ENTRY_NtQueryInformationProcess(id,name,args) SYSCALL_ENTRY(id,name,args)
+#define SYSCALL_ENTRY_NtQuerySystemTime(id,name,args) SYSCALL_ENTRY(id,name,args)

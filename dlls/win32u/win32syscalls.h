@@ -463,7 +463,6 @@
     SYSCALL_ENTRY( 0x11cb, NtUserWindowFromDC, 4 ) \
     SYSCALL_ENTRY( 0x11cc, NtUserWindowFromPoint, 8 ) \
     SYSCALL_ENTRY( 0x11cd, __wine_get_icm_profile, 16 )
-
 #ifdef _WIN64
 #define ALL_SYSCALLS \
     SYSCALL_ENTRY( 0x1000, NtGdiAbortDoc, 8 ) \
@@ -928,7 +927,6 @@
     SYSCALL_ENTRY( 0x11cb, NtUserWindowFromDC, 8 ) \
     SYSCALL_ENTRY( 0x11cc, NtUserWindowFromPoint, 16 ) \
     SYSCALL_ENTRY( 0x11cd, __wine_get_icm_profile, 32 )
-
 #else
 #define ALL_SYSCALLS ALL_SYSCALLS32
 #endif
