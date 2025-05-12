@@ -4914,6 +4914,10 @@ static LRESULT CALLBACK EDIT_WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
         result = EDIT_WM_VScroll(es, LOWORD(wParam), (short)HIWORD(wParam));
         break;
 
+    case WM_CAPTURECHANGED:
+        es->bCaptureState = FALSE;
+        break;
+
     case WM_MOUSEWHEEL:
     {
         int wheelDelta;
