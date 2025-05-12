@@ -4,7 +4,7 @@ IMPORTS = advapi32 combase setupapi uuid
 SOURCES = \
 	access.c \
 	async.c \
-	async.idl \
+	async_private.idl \
 	classes.idl \
 	event_handlers.c \
 	information.c \

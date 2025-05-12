@@ -1,4 +1,6 @@
-/* Copyright 2022 Bernhard Kölbl for CodeWeavers
+/* WinRT IAsync* implementation
+ *
+ * Copyright 2022 Bernhard Kölbl for CodeWeavers
  * Copyright 2022 Rémi Bernon for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -16,20 +18,21 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define WIDL_using_Wine_Internal
 #include "private.h"
-#include <initguid.h>
-#include "async.h"
+#include "initguid.h"
+#include "async_private.h"
 
-#include <wine/debug.h>
+#include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
+WINE_DEFAULT_DEBUG_CHANNEL(combase);
 
 #define Closed 4
 #define HANDLER_NOT_SET ((void *)~(ULONG_PTR)0)
 
 struct async_info
 {
-    IWineAsyncInfoImpl IWineAsyncInfoImpl_iface;
+    IAsyncInfoImpl IAsyncInfoImpl_iface;
     IAsyncInfo IAsyncInfo_iface;
     IInspectable *IInspectable_outer;
     LONG ref;
@@ -40,29 +43,29 @@ struct async_info
     IUnknown *param;
 
     CRITICAL_SECTION cs;
-    IWineAsyncOperationCompletedHandler *handler;
+    IAsyncOperationCompletedHandlerImpl *handler;
     PROPVARIANT result;
     AsyncStatus status;
     HRESULT hr;
 };
 
-static inline struct async_info *impl_from_IWineAsyncInfoImpl( IWineAsyncInfoImpl *iface )
+static inline struct async_info *impl_from_IAsyncInfoImpl( IAsyncInfoImpl *iface )
 {
-    return CONTAINING_RECORD( iface, struct async_info, IWineAsyncInfoImpl_iface );
+    return CONTAINING_RECORD( iface, struct async_info, IAsyncInfoImpl_iface );
 }
 
-static HRESULT WINAPI async_impl_QueryInterface( IWineAsyncInfoImpl *iface, REFIID iid, void **out )
+static HRESULT WINAPI async_impl_QueryInterface( IAsyncInfoImpl *iface, REFIID iid, void **out )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
 
     TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
 
     if (IsEqualGUID( iid, &IID_IUnknown ) ||
         IsEqualGUID( iid, &IID_IInspectable ) ||
         IsEqualGUID( iid, &IID_IAgileObject ) ||
-        IsEqualGUID( iid, &IID_IWineAsyncInfoImpl ))
+        IsEqualGUID( iid, &IID_IAsyncInfoImpl ))
     {
-        IInspectable_AddRef( (*out = &impl->IWineAsyncInfoImpl_iface) );
+        IInspectable_AddRef( (*out = &impl->IAsyncInfoImpl_iface) );
         return S_OK;
     }
 
@@ -77,26 +80,27 @@ static HRESULT WINAPI async_impl_QueryInterface( IWineAsyncInfoImpl *iface, REFI
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI async_impl_AddRef( IWineAsyncInfoImpl *iface )
+static ULONG WINAPI async_impl_AddRef( IAsyncInfoImpl *iface )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     ULONG ref = InterlockedIncrement( &impl->ref );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
     return ref;
 }
 
-static ULONG WINAPI async_impl_Release( IWineAsyncInfoImpl *iface )
+static ULONG WINAPI async_impl_Release( IAsyncInfoImpl *iface )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
     if (!ref)
     {
-        if (impl->handler && impl->handler != HANDLER_NOT_SET) IWineAsyncOperationCompletedHandler_Release( impl->handler );
+        if (impl->handler && impl->handler != HANDLER_NOT_SET) IAsyncOperationCompletedHandlerImpl_Release( impl->handler );
         IAsyncInfo_Close( &impl->IAsyncInfo_iface );
         if (impl->param) IUnknown_Release( impl->param );
         if (impl->invoker) IUnknown_Release( impl->invoker );
+        PropVariantClear( &impl->result );
         impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &impl->cs );
         free( impl );
@@ -105,9 +109,9 @@ static ULONG WINAPI async_impl_Release( IWineAsyncInfoImpl *iface )
     return ref;
 }
 
-static HRESULT WINAPI async_impl_put_Completed( IWineAsyncInfoImpl *iface, IWineAsyncOperationCompletedHandler *handler )
+static HRESULT WINAPI async_impl_put_Completed( IAsyncInfoImpl *iface, IAsyncOperationCompletedHandlerImpl *handler )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     HRESULT hr = S_OK;
 
     TRACE( "iface %p, handler %p.\n", iface, handler );
@@ -117,7 +121,7 @@ static HRESULT WINAPI async_impl_put_Completed( IWineAsyncInfoImpl *iface, IWine
     else if (impl->handler != HANDLER_NOT_SET) hr = E_ILLEGAL_DELEGATE_ASSIGNMENT;
     else if ((impl->handler = handler))
     {
-        IWineAsyncOperationCompletedHandler_AddRef( impl->handler );
+        IAsyncOperationCompletedHandlerImpl_AddRef( impl->handler );
 
         if (impl->status > Started)
         {
@@ -126,8 +130,8 @@ static HRESULT WINAPI async_impl_put_Completed( IWineAsyncInfoImpl *iface, IWine
             impl->handler = NULL; /* Prevent concurrent invoke. */
             LeaveCriticalSection( &impl->cs );
 
-            IWineAsyncOperationCompletedHandler_Invoke( handler, operation, status );
-            IWineAsyncOperationCompletedHandler_Release( handler );
+            IAsyncOperationCompletedHandlerImpl_Invoke( handler, operation, status );
+            IAsyncOperationCompletedHandlerImpl_Release( handler );
 
             return S_OK;
         }
@@ -137,9 +141,9 @@ static HRESULT WINAPI async_impl_put_Completed( IWineAsyncInfoImpl *iface, IWine
     return hr;
 }
 
-static HRESULT WINAPI async_impl_get_Completed( IWineAsyncInfoImpl *iface, IWineAsyncOperationCompletedHandler **handler )
+static HRESULT WINAPI async_impl_get_Completed( IAsyncInfoImpl *iface, IAsyncOperationCompletedHandlerImpl **handler )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     HRESULT hr = S_OK;
 
     TRACE( "iface %p, handler %p.\n", iface, handler );
@@ -147,15 +151,15 @@ static HRESULT WINAPI async_impl_get_Completed( IWineAsyncInfoImpl *iface, IWine
     EnterCriticalSection( &impl->cs );
     if (impl->status == Closed) hr = E_ILLEGAL_METHOD_CALL;
     if (impl->handler == NULL || impl->handler == HANDLER_NOT_SET) *handler = NULL;
-    else IWineAsyncOperationCompletedHandler_AddRef( (*handler = impl->handler) );
+    else IAsyncOperationCompletedHandlerImpl_AddRef( (*handler = impl->handler) );
     LeaveCriticalSection( &impl->cs );
 
     return hr;
 }
 
-static HRESULT WINAPI async_impl_get_Result( IWineAsyncInfoImpl *iface, PROPVARIANT *result )
+static HRESULT WINAPI async_impl_get_Result( IAsyncInfoImpl *iface, PROPVARIANT *result )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     HRESULT hr = E_ILLEGAL_METHOD_CALL;
 
     TRACE( "iface %p, result %p.\n", iface, result );
@@ -171,9 +175,9 @@ static HRESULT WINAPI async_impl_get_Result( IWineAsyncInfoImpl *iface, PROPVARI
     return hr;
 }
 
-static HRESULT WINAPI async_impl_Start( IWineAsyncInfoImpl *iface )
+static HRESULT WINAPI async_impl_Start( IAsyncInfoImpl *iface )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
 
     TRACE( "iface %p.\n", iface );
 
@@ -184,13 +188,13 @@ static HRESULT WINAPI async_impl_Start( IWineAsyncInfoImpl *iface )
     return S_OK;
 }
 
-static const struct IWineAsyncInfoImplVtbl async_impl_vtbl =
+static const struct IAsyncInfoImplVtbl async_impl_vtbl =
 {
     /* IUnknown methods */
     async_impl_QueryInterface,
     async_impl_AddRef,
     async_impl_Release,
-    /* IWineAsyncInfoImpl */
+    /* IAsyncInfoImpl */
     async_impl_put_Completed,
     async_impl_get_Completed,
     async_impl_get_Result,
@@ -300,9 +304,9 @@ static const struct IAsyncInfoVtbl async_info_vtbl =
 
 static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *iface, TP_WORK *work )
 {
-    struct async_info *impl = impl_from_IWineAsyncInfoImpl( iface );
+    struct async_info *impl = impl_from_IAsyncInfoImpl( iface );
     IInspectable *operation = impl->IInspectable_outer;
-    PROPVARIANT result;
+    PROPVARIANT result = {0};
     HRESULT hr;
 
     hr = impl->callback( impl->invoker, impl->param, &result );
@@ -314,13 +318,13 @@ static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *
 
     if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
     {
-        IWineAsyncOperationCompletedHandler *handler = impl->handler;
+        IAsyncOperationCompletedHandlerImpl *handler = impl->handler;
         AsyncStatus status = impl->status;
         impl->handler = NULL; /* Prevent concurrent invoke. */
         LeaveCriticalSection( &impl->cs );
 
-        IWineAsyncOperationCompletedHandler_Invoke( handler, operation, status );
-        IWineAsyncOperationCompletedHandler_Release( handler );
+        IAsyncOperationCompletedHandlerImpl_Invoke( handler, operation, status );
+        IAsyncOperationCompletedHandlerImpl_Release( handler );
     }
     else LeaveCriticalSection( &impl->cs );
 
@@ -331,13 +335,13 @@ static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *
 }
 
 static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
-                                  IInspectable *outer, IWineAsyncInfoImpl **out )
+                                  IInspectable *outer, IAsyncInfoImpl **out )
 {
     struct async_info *impl;
     HRESULT hr;
 
     if (!(impl = calloc( 1, sizeof(struct async_info) ))) return E_OUTOFMEMORY;
-    impl->IWineAsyncInfoImpl_iface.lpVtbl = &async_impl_vtbl;
+    impl->IAsyncInfoImpl_iface.lpVtbl = &async_impl_vtbl;
     impl->IAsyncInfo_iface.lpVtbl = &async_info_vtbl;
     impl->IInspectable_outer = outer;
     impl->ref = 1;
@@ -345,7 +349,7 @@ static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_oper
     impl->callback = callback;
     impl->handler = HANDLER_NOT_SET;
     impl->status = Started;
-    if (!(impl->async_run_work = CreateThreadpoolWork( async_info_callback, &impl->IWineAsyncInfoImpl_iface, NULL )))
+    if (!(impl->async_run_work = CreateThreadpoolWork( async_info_callback, &impl->IAsyncInfoImpl_iface, NULL )))
     {
         hr = HRESULT_FROM_WIN32( GetLastError() );
         free( impl );
@@ -358,51 +362,52 @@ static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_oper
     InitializeCriticalSectionEx( &impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": async_info.cs" );
 
-    *out = &impl->IWineAsyncInfoImpl_iface;
+    *out = &impl->IAsyncInfoImpl_iface;
     return S_OK;
 }
 
-struct async_result
+struct async_inspectable
 {
-    IAsyncOperation_DeviceInformationCollection IAsyncOperation_DeviceInformationCollection_iface;
-    IWineAsyncInfoImpl *IWineAsyncInfoImpl_inner;
+    IAsyncOperation_IInspectable IAsyncOperation_IInspectable_iface;
+    IAsyncInfoImpl *IAsyncInfoImpl_inner;
     LONG ref;
+    const GUID *iid;
 };
 
-static inline struct async_result *impl_from_IAsyncOperation_DeviceInformationCollection( IAsyncOperation_DeviceInformationCollection *iface )
+static inline struct async_inspectable *impl_from_IAsyncOperation_IInspectable( IAsyncOperation_IInspectable *iface )
 {
-    return CONTAINING_RECORD( iface, struct async_result, IAsyncOperation_DeviceInformationCollection_iface );
+    return CONTAINING_RECORD( iface, struct async_inspectable, IAsyncOperation_IInspectable_iface );
 }
 
-static HRESULT WINAPI async_result_QueryInterface( IAsyncOperation_DeviceInformationCollection *iface, REFIID iid, void **out )
+static HRESULT WINAPI async_inspectable_QueryInterface( IAsyncOperation_IInspectable *iface, REFIID iid, void **out )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
 
     TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
 
     if (IsEqualGUID( iid, &IID_IUnknown ) ||
         IsEqualGUID( iid, &IID_IInspectable ) ||
         IsEqualGUID( iid, &IID_IAgileObject ) ||
-        IsEqualGUID( iid, &IID_IAsyncOperation_DeviceInformationCollection ))
+        IsEqualGUID( iid, impl->iid ))
     {
-        IInspectable_AddRef( (*out = &impl->IAsyncOperation_DeviceInformationCollection_iface) );
+        IInspectable_AddRef( (*out = &impl->IAsyncOperation_IInspectable_iface) );
         return S_OK;
     }
 
-    return IWineAsyncInfoImpl_QueryInterface( impl->IWineAsyncInfoImpl_inner, iid, out );
+    return IAsyncInfoImpl_QueryInterface( impl->IAsyncInfoImpl_inner, iid, out );
 }
 
-static ULONG WINAPI async_result_AddRef( IAsyncOperation_DeviceInformationCollection *iface )
+static ULONG WINAPI async_inspectable_AddRef( IAsyncOperation_IInspectable *iface )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
     ULONG ref = InterlockedIncrement( &impl->ref );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
     return ref;
 }
 
-static ULONG WINAPI async_result_Release( IAsyncOperation_DeviceInformationCollection *iface )
+static ULONG WINAPI async_inspectable_Release( IAsyncOperation_IInspectable *iface )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
     ULONG ref = InterlockedDecrement( &impl->ref );
     TRACE( "iface %p, ref %lu.\n", iface, ref );
 
@@ -410,97 +415,102 @@ static ULONG WINAPI async_result_Release( IAsyncOperation_DeviceInformationColle
     {
         /* guard against re-entry if inner releases an outer iface */
         InterlockedIncrement( &impl->ref );
-        IWineAsyncInfoImpl_Release( impl->IWineAsyncInfoImpl_inner );
+        IAsyncInfoImpl_Release( impl->IAsyncInfoImpl_inner );
         free( impl );
     }
 
     return ref;
 }
 
-static HRESULT WINAPI async_result_GetIids( IAsyncOperation_DeviceInformationCollection *iface, ULONG *iid_count, IID **iids )
+static HRESULT WINAPI async_inspectable_GetIids( IAsyncOperation_IInspectable *iface, ULONG *iid_count, IID **iids )
 {
     FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI async_result_GetRuntimeClassName( IAsyncOperation_DeviceInformationCollection *iface, HSTRING *class_name )
+static HRESULT WINAPI async_inspectable_GetRuntimeClassName( IAsyncOperation_IInspectable *iface, HSTRING *class_name )
 {
-    return WindowsCreateString( L"Windows.Foundation.IAsyncOperation`1<Windows.Devices.Enumeration.DeviceInformationCollection>",
-                                ARRAY_SIZE(L"Windows.Foundation.IAsyncOperation`1<Windows.Devices.Enumeration.DeviceInformationCollection>"),
+    return WindowsCreateString( L"Windows.Foundation.IAsyncOperation`1<IInspectable>",
+                                ARRAY_SIZE(L"Windows.Foundation.IAsyncOperation`1<IInspectable>"),
                                 class_name );
 }
 
-static HRESULT WINAPI async_result_GetTrustLevel( IAsyncOperation_DeviceInformationCollection *iface, TrustLevel *trust_level )
+static HRESULT WINAPI async_inspectable_GetTrustLevel( IAsyncOperation_IInspectable *iface, TrustLevel *trust_level )
 {
     FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI async_result_put_Completed( IAsyncOperation_DeviceInformationCollection *iface, IAsyncOperationCompletedHandler_DeviceInformationCollection *handler )
+static HRESULT WINAPI async_inspectable_put_Completed( IAsyncOperation_IInspectable *iface, IAsyncOperationCompletedHandler_IInspectable *bool_handler )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    IAsyncOperationCompletedHandlerImpl *handler = (IAsyncOperationCompletedHandlerImpl *)bool_handler;
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
     TRACE( "iface %p, handler %p.\n", iface, handler );
-    return IWineAsyncInfoImpl_put_Completed( impl->IWineAsyncInfoImpl_inner, (IWineAsyncOperationCompletedHandler *)handler );
+    return IAsyncInfoImpl_put_Completed( impl->IAsyncInfoImpl_inner, handler );
 }
 
-static HRESULT WINAPI async_result_get_Completed( IAsyncOperation_DeviceInformationCollection *iface, IAsyncOperationCompletedHandler_DeviceInformationCollection **handler )
+static HRESULT WINAPI async_inspectable_get_Completed( IAsyncOperation_IInspectable *iface, IAsyncOperationCompletedHandler_IInspectable **bool_handler )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    IAsyncOperationCompletedHandlerImpl **handler = (IAsyncOperationCompletedHandlerImpl **)bool_handler;
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
     TRACE( "iface %p, handler %p.\n", iface, handler );
-    return IWineAsyncInfoImpl_get_Completed( impl->IWineAsyncInfoImpl_inner, (IWineAsyncOperationCompletedHandler **)handler );
+    return IAsyncInfoImpl_get_Completed( impl->IAsyncInfoImpl_inner, handler );
 }
 
-static HRESULT WINAPI async_result_GetResults( IAsyncOperation_DeviceInformationCollection *iface, IVectorView_DeviceInformation **results )
+static HRESULT WINAPI async_inspectable_GetResults( IAsyncOperation_IInspectable *iface, IInspectable **results )
 {
-    struct async_result *impl = impl_from_IAsyncOperation_DeviceInformationCollection( iface );
+    struct async_inspectable *impl = impl_from_IAsyncOperation_IInspectable( iface );
     PROPVARIANT result = {.vt = VT_UNKNOWN};
     HRESULT hr;
 
     TRACE( "iface %p, results %p.\n", iface, results );
 
-    hr = IWineAsyncInfoImpl_get_Result( impl->IWineAsyncInfoImpl_inner, &result );
-    if (SUCCEEDED( hr ))
-        hr = IUnknown_QueryInterface( result.punkVal, &IID_IVectorView_DeviceInformation, (void **)results );
-    PropVariantClear( &result );
+    if (SUCCEEDED(hr = IAsyncInfoImpl_get_Result( impl->IAsyncInfoImpl_inner, &result )))
+    {
+        if ((*results = (IInspectable *)result.punkVal)) IInspectable_AddRef( *results );
+        PropVariantClear( &result );
+    }
+
     return hr;
 }
 
-static const struct IAsyncOperation_DeviceInformationCollectionVtbl async_result_vtbl =
+static const struct IAsyncOperation_IInspectableVtbl async_inspectable_vtbl =
 {
     /* IUnknown methods */
-    async_result_QueryInterface,
-    async_result_AddRef,
-    async_result_Release,
+    async_inspectable_QueryInterface,
+    async_inspectable_AddRef,
+    async_inspectable_Release,
     /* IInspectable methods */
-    async_result_GetIids,
-    async_result_GetRuntimeClassName,
-    async_result_GetTrustLevel,
-    /* IAsyncOperation<DeviceInformationCollection> */
-    async_result_put_Completed,
-    async_result_get_Completed,
-    async_result_GetResults,
+    async_inspectable_GetIids,
+    async_inspectable_GetRuntimeClassName,
+    async_inspectable_GetTrustLevel,
+    /* IAsyncOperation<IInspectable> */
+    async_inspectable_put_Completed,
+    async_inspectable_get_Completed,
+    async_inspectable_GetResults,
 };
 
-HRESULT async_operation_device_info_collection_result_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
-                                                              IAsyncOperation_DeviceInformationCollection **out )
+HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+                                            IAsyncOperation_IInspectable **out )
 {
-    struct async_result *impl;
+    struct async_inspectable *impl;
     HRESULT hr;
 
     *out = NULL;
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
-    impl->IAsyncOperation_DeviceInformationCollection_iface.lpVtbl = &async_result_vtbl;
+    impl->IAsyncOperation_IInspectable_iface.lpVtbl = &async_inspectable_vtbl;
     impl->ref = 1;
+    impl->iid = iid;
 
-    if (FAILED(hr = async_info_create( invoker, param, callback, (IInspectable *)&impl->IAsyncOperation_DeviceInformationCollection_iface, &impl->IWineAsyncInfoImpl_inner )) ||
-        FAILED(hr = IWineAsyncInfoImpl_Start( impl->IWineAsyncInfoImpl_inner )))
+    if (FAILED(hr = async_info_create( invoker, param, callback, (IInspectable *)&impl->IAsyncOperation_IInspectable_iface, &impl->IAsyncInfoImpl_inner )) ||
+        FAILED(hr = IAsyncInfoImpl_Start( impl->IAsyncInfoImpl_inner )))
     {
-        if (impl->IWineAsyncInfoImpl_inner) IWineAsyncInfoImpl_Release( impl->IWineAsyncInfoImpl_inner );
+        if (impl->IAsyncInfoImpl_inner) IAsyncInfoImpl_Release( impl->IAsyncInfoImpl_inner );
         free( impl );
         return hr;
     }
 
-    *out = &impl->IAsyncOperation_DeviceInformationCollection_iface;
-    TRACE( "created IAsyncOperation_DeviceInformationCollection %p\n", *out );
+    *out = &impl->IAsyncOperation_IInspectable_iface;
+    TRACE( "created IAsyncOperation_IInspectable %p\n", *out );
     return S_OK;
 }

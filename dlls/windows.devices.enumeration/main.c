@@ -334,7 +334,7 @@ static HRESULT WINAPI device_statics_CreateFromIdAsyncAdditionalProperties( IDev
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     static const struct vector_iids iids =
     {
@@ -411,7 +411,8 @@ static HRESULT WINAPI device_statics_FindAllAsync( IDeviceInformationStatics *if
                                                    IAsyncOperation_DeviceInformationCollection **op )
 {
     TRACE( "iface %p, op %p\n", iface, op );
-    return async_operation_device_info_collection_result_create( (IUnknown *)iface, NULL, find_all_async, op );
+    return async_operation_inspectable_create( &IID_IAsyncOperation_DeviceInformationCollection, (IUnknown *)iface, NULL,
+                                               find_all_async, (IAsyncOperation_IInspectable **)op );
 }
 
 static HRESULT WINAPI device_statics_FindAllAsyncDeviceClass( IDeviceInformationStatics *iface, DeviceClass class,

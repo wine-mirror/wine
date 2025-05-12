@@ -39,6 +39,8 @@
 
 #include "wine/list.h"
 
+#include "async_private.h"
+
 struct vector_iids
 {
     const GUID *vector;
@@ -54,9 +56,8 @@ HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
 HRESULT typed_event_handlers_clear( struct list *list );
 
-typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
-extern HRESULT async_operation_device_info_collection_result_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
-                                                                     IAsyncOperation_DeviceInformationCollection **out );
+extern HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
+                                                   IAsyncOperation_IInspectable **out );
 extern HRESULT vector_create( const struct vector_iids *iids, void **out );
 extern HRESULT device_information_create( const WCHAR *path, IDeviceInformation **info );
 
