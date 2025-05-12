@@ -684,6 +684,13 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
 
     if (stream->peer && !is_format_compatible(stream, old_format.width, old_format.height, &old_format.pf))
     {
+        if (stream->sample_refs > 0)
+        {
+            stream->format = old_format;
+            LeaveCriticalSection(&stream->cs);
+            return MS_E_SAMPLEALLOC;
+        }
+
         if (FAILED(hr = CopyMediaType(&old_media_type, &stream->mt)))
         {
             stream->format = old_format;

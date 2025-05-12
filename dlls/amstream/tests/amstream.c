@@ -8712,7 +8712,7 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb32_format, NULL);
-    todo_wine ok(hr == MS_E_SAMPLEALLOC, "Got hr %#lx.\n", hr);
+    ok(hr == MS_E_SAMPLEALLOC, "Got hr %#lx.\n", hr);
 
     /* We cannot retrieve the sample from GetBuffer() without calling Update().
      * Otherwise GetBuffer() will hang as there are no samples to return. */
@@ -8733,7 +8733,7 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(IsEqualGUID(&sample_mt->majortype, &MEDIATYPE_Video),
             "Got major type %s.\n", debugstr_guid(&sample_mt->majortype));
-    todo_wine ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555),
+    ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555),
             "Got subtype %s.\n", debugstr_guid(&sample_mt->subtype));
     todo_wine ok(sample_mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", sample_mt->bFixedSizeSamples);
     ok(!sample_mt->bTemporalCompression, "Got temporal compression %d.\n", sample_mt->bTemporalCompression);
@@ -8769,7 +8769,7 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_GetMediaType(media_sample2, &sample_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555),
+    ok(IsEqualGUID(&sample_mt->subtype, &MEDIASUBTYPE_RGB555),
             "Got subtype %s.\n", wine_dbgstr_guid(&sample_mt->subtype));
     DeleteMediaType(sample_mt);
 
