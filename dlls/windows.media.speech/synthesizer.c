@@ -375,29 +375,45 @@ static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, Trus
     return E_NOTIMPL;
 }
 
-static HRESULT synthesizer_synthesize_text_to_stream_async( IInspectable *invoker, IInspectable **result )
+static HRESULT synthesizer_synthesize_text_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
-    return synthesis_stream_create((ISpeechSynthesisStream **)result);
+    ISpeechSynthesisStream *stream;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = synthesis_stream_create(&stream)))
+    {
+        result->vt = VT_UNKNOWN;
+        result->punkVal = (IUnknown *)stream;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesizer *iface, HSTRING text,
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
     TRACE("iface %p, text %p, operation %p.\n", iface, text, operation);
-    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
+    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL, NULL,
                                               synthesizer_synthesize_text_to_stream_async, (IAsyncOperation_IInspectable **)operation);
 }
 
-static HRESULT synthesizer_synthesize_ssml_to_stream_async( IInspectable *invoker, IInspectable **result )
+static HRESULT synthesizer_synthesize_ssml_to_stream_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
-    return synthesis_stream_create((ISpeechSynthesisStream **)result);
+    ISpeechSynthesisStream *stream;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = synthesis_stream_create(&stream)))
+    {
+        result->vt = VT_UNKNOWN;
+        result->punkVal = (IUnknown *)stream;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesizer *iface, HSTRING ssml,
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
     TRACE("iface %p, ssml %p, operation %p.\n", iface, ssml, operation);
-    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
+    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL, NULL,
                                               synthesizer_synthesize_ssml_to_stream_async, (IAsyncOperation_IInspectable **)operation);
 }
 

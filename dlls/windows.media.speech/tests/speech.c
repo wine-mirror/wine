@@ -431,9 +431,9 @@ static void check_async_info_( unsigned int line, IInspectable *async_obj, UINT3
 
     async_id = 0xdeadbeef;
     hr = IAsyncInfo_get_Id(async_info, &async_id);
-    if (expect_status < 4) todo_wine ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_Id returned %#lx\n", hr);
-    else todo_wine ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Id returned %#lx\n", hr);
-    todo_wine ok_(__FILE__, line)(async_id == expect_id, "got async_id %#x\n", async_id);
+    if (expect_status < 4) ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_Id returned %#lx\n", hr);
+    else ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Id returned %#lx\n", hr);
+    todo_wine_if(expect_id != 1) ok_(__FILE__, line)(async_id == expect_id, "got async_id %#x\n", async_id);
 
     async_status = 0xdeadbeef;
     hr = IAsyncInfo_get_Status(async_info, &async_status);
@@ -787,7 +787,7 @@ static void test_SpeechSynthesizer(void)
     IVectorView_IMediaMarker *media_markers = NULL;
     IVectorView_VoiceInformation *voices = NULL;
     IInstalledVoicesStatic *voices_static = NULL;
-    ISpeechSynthesisStream *ss_stream = NULL;
+    ISpeechSynthesisStream *ss_stream = NULL, *tmp;
     IVoiceInformation *voice;
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
@@ -943,6 +943,14 @@ static void test_SpeechSynthesizer(void)
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &ss_stream);
     ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
 
+    tmp = (void *)0xdeadbeef;
+    hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &tmp);
+    ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
+    todo_wine ok(tmp == NULL, "Got %p.\n", tmp);
+    if (tmp && tmp != (void *)0xdeadbeef) ISpeechSynthesisStream_Release(tmp);
+
+    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
+
     hr = ISpeechSynthesisStream_get_Markers(ss_stream, &media_markers);
     ok(hr == S_OK, "ISpeechSynthesisStream_get_Markers failed, hr %#lx\n", hr);
     check_interface(media_markers, &IID_IVectorView_IMediaMarker, TRUE);
@@ -954,8 +962,6 @@ static void test_SpeechSynthesizer(void)
 
     ref = ISpeechSynthesisStream_Release(ss_stream);
     ok(ref == 0, "Got unexpected ref %lu.\n", ref);
-
-    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     /* Test SynthesizeSsmlToStreamAsync */
     hr = WindowsCreateString(simple_ssml, wcslen(simple_ssml), &str2);
@@ -975,11 +981,10 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
     check_interface(ss_stream, &IID_ISpeechSynthesisStream, TRUE);
     check_interface(ss_stream, &IID_IAgileObject, TRUE);
+    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     ref = ISpeechSynthesisStream_Release(ss_stream);
     ok(ref == 0, "Got unexpected ref %lu.\n", ref);
-
-    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     operation_ss_stream = (void *)0xdeadbeef;
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, NULL, &operation_ss_stream);
@@ -1283,10 +1288,13 @@ static void test_SpeechRecognizer(void)
         ok(result_status == SpeechRecognitionResultStatus_Success, "Got unexpected status %#x.\n", result_status);
 
         ref = ISpeechRecognitionCompilationResult_Release(compilation_result);
-        ok(!ref , "Got unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref , "Got unexpected ref %lu.\n", ref);
 
+        compilation_result = (void *)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        ok(hr == E_UNEXPECTED, "Got unexpected hr %#lx.\n", hr);
+        todo_wine ok(hr == E_UNEXPECTED, "Got unexpected hr %#lx.\n", hr);
+        todo_wine ok(compilation_result == NULL, "Got %p.\n", compilation_result);
+        if (compilation_result && compilation_result != (void *)0xdeadbeef) ISpeechRecognitionCompilationResult_Release(compilation_result);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

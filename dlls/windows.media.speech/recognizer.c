@@ -382,7 +382,7 @@ static HRESULT WINAPI session_set_AutoStopSilenceTimeout( ISpeechContinuousRecog
     return E_NOTIMPL;
 }
 
-static HRESULT session_start_async( IInspectable *invoker )
+static HRESULT session_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     return S_OK;
 }
@@ -431,7 +431,7 @@ static HRESULT WINAPI session_StartWithModeAsync( ISpeechContinuousRecognitionSe
     return E_NOTIMPL;
 }
 
-static HRESULT session_stop_async( IInspectable *invoker )
+static HRESULT session_stop_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     return S_OK;
 }
@@ -487,7 +487,7 @@ static HRESULT WINAPI session_CancelAsync( ISpeechContinuousRecognitionSession *
     return E_NOTIMPL;
 }
 
-static HRESULT session_pause_async( IInspectable *invoker )
+static HRESULT session_pause_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     return S_OK;
 }
@@ -725,9 +725,17 @@ static HRESULT WINAPI recognizer_get_UIOptions( ISpeechRecognizer *iface, ISpeec
     return E_NOTIMPL;
 }
 
-static HRESULT recognizer_compile_constraints_async( IInspectable *invoker, IInspectable **result )
+static HRESULT recognizer_compile_constraints_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
-    return compilation_result_create(SpeechRecognitionResultStatus_Success, (ISpeechRecognitionCompilationResult **) result);
+    ISpeechRecognitionCompilationResult *compilation;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = compilation_result_create(SpeechRecognitionResultStatus_Success, &compilation)))
+    {
+        result->vt = VT_UNKNOWN;
+        result->punkVal = (IUnknown *)compilation;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI recognizer_CompileConstraintsAsync( ISpeechRecognizer *iface,
@@ -735,7 +743,7 @@ static HRESULT WINAPI recognizer_CompileConstraintsAsync( ISpeechRecognizer *ifa
 {
     IAsyncOperation_IInspectable **value = (IAsyncOperation_IInspectable **)operation;
     FIXME("iface %p, operation %p semi-stub!\n", iface, operation);
-    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechRecognitionCompilationResult, NULL, recognizer_compile_constraints_async, value);
+    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechRecognitionCompilationResult, NULL, NULL, recognizer_compile_constraints_async, value);
 }
 
 static HRESULT WINAPI recognizer_RecognizeAsync( ISpeechRecognizer *iface,

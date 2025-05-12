@@ -43,6 +43,8 @@
 
 #include "wine/list.h"
 
+#include "async_private.h"
+
 /*
  *
  * Windows.Media.SpeechRecognition
@@ -70,11 +72,8 @@ struct vector_iids
     const GUID *view;
 };
 
-typedef HRESULT (*async_action_callback)( IInspectable *invoker );
-typedef HRESULT (*async_operation_inspectable_callback)( IInspectable *invoker, IInspectable **result );
-
-HRESULT async_action_create( IInspectable *invoker, async_action_callback callback, IAsyncAction **out );
-HRESULT async_operation_inspectable_create( const GUID *iid, IInspectable *invoker, async_operation_inspectable_callback callback,
+HRESULT async_action_create( IUnknown *invoker, async_operation_callback callback, IAsyncAction **out );
+HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                             IAsyncOperation_IInspectable **out );
 
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
