@@ -3,6 +3,7 @@ IMPORTS = combase uuid user32 dinput8 setupapi hid
 
 SOURCES = \
 	async.c \
+	async_private.idl \
 	classes.idl \
 	condition_effect.c \
 	constant_effect.c \
