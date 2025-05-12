@@ -25,6 +25,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(find);
 
+static int flag_case_sensitive = 1;
+
 static BOOL read_char_from_handle(HANDLE handle, char *char_out)
 {
     static char buffer[4096];
@@ -120,7 +122,7 @@ static BOOL run_find_for_line(const WCHAR *line, const WCHAR *tofind)
     if (lstrlenW(line) == 0 || lstrlenW(tofind) == 0)
         return FALSE;
 
-    found = wcsstr(line, tofind);
+    found = flag_case_sensitive ? wcsstr(line, tofind) : StrStrIW(line, tofind);
 
     if (found)
     {
@@ -160,8 +162,17 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     {
         if (argv[i][0] == '/')
         {
-            output_resource_message(IDS_INVALID_SWITCH);
-            return 2;
+            switch (argv[i][1])
+            {
+            case 'i':
+            case 'I':
+                flag_case_sensitive = 0;
+                break;
+
+            default:
+                output_resource_message(IDS_INVALID_SWITCH);
+                return 2;
+            }
         }
         else if (tofind == NULL)
         {
