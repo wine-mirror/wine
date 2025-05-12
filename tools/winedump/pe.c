@@ -2740,6 +2740,12 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
+static struct
+{
+    const BYTE *data;
+    UINT size;
+} strings, userstrings, blobs, guids, tables;
+
 static void print_clr_flags( const char *title, UINT value )
 {
     printf("  %-34s 0x%X\n", title, value);
@@ -2757,18 +2763,36 @@ static void print_clr_directory( const char *title, const IMAGE_DATA_DIRECTORY *
     printf("  %-23s rva: 0x%-8x  size: 0x%-8x\n", title, (UINT)dir->VirtualAddress, (UINT)dir->Size);
 }
 
-static void print_clr_strings( const BYTE *strings, UINT size )
+static UINT clr_indent = 4;
+
+static void print_clr_indent( void )
 {
-    const char *beg = (const char *)strings, *end;
+    UINT i;
+    for (i = 0; i < clr_indent; i++) printf( " " );
+}
+
+static void print_clr( const char *str )
+{
+    print_clr_indent();
+    printf( "%s", str );
+}
+
+static void print_clr_strings( const BYTE *data, UINT data_size )
+{
+    const char *beg = (const char *)data, *end;
     UINT count = 0;
 
+    if (!data_size) return;
+    clr_indent += 4;
     for (;;)
     {
-        if (!(end = memchr( beg, '\0', size - (beg - (const char *)strings) ))) break;
-        printf( "           %-10u\"%s\"\n", count, beg );
+        if (!(end = memchr( beg, '\0', data_size - (beg - (const char *)data) ))) break;
+        print_clr_indent();
+        printf( "%-10u\"%s\"\n", count, beg );
         beg = end + 1;
         count++;
     }
+    clr_indent -= 4;
 }
 
 static UINT clr_blob_size( const BYTE *data, UINT data_size, UINT *skip )
@@ -2797,24 +2821,33 @@ static UINT clr_blob_size( const BYTE *data, UINT data_size, UINT *skip )
 static void print_clr_blobs( const BYTE *data, UINT data_size )
 {
     const BYTE *blob = data + 1;
-    UINT i, size, skip, count = 1;
+    UINT i, size, skip;
 
     if (!data_size) return;
-    printf( "            0         %02x\n", data[0] );
+
+    clr_indent += 4;
+    print_clr_indent();
+    printf( "%-10u %02x\n", 0, data[0] );
     data_size--;
     for (;;)
     {
         if (!(size = clr_blob_size( blob, data_size, &skip ))) break;
-        printf( "            %-10u", count++ );
+        print_clr_indent();
+        printf( "%-10u ", (UINT)(blob - data) );
         for (i = 0; i < size; i++)
         {
             printf( "%02x ",  blob[i + skip] );
-            if (i && i < size - 1 && !((i + 1) % 30)) printf( "\n                      " );
+            if (i && i < size - 1 && !((i + 1) % 30))
+            {
+                printf( "\n" );
+                print_clr( "           " );
+            }
         }
         printf( "\n" );
         data_size -= size - skip;
         blob += size + skip;
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_guids( const BYTE *data, UINT data_size )
@@ -2822,9 +2855,11 @@ static void print_clr_guids( const BYTE *data, UINT data_size )
     const BYTE *guid = data;
     UINT i, j, count = data_size / 16;
 
+    clr_indent += 4;
     for (i = 0; i < count; i++)
     {
-        printf( "            %-10u", count );
+        print_clr_indent();
+        printf( "%-10u ", count );
         printf( "%08x", *(UINT *)guid );
         printf( " %04x", *(UINT *)guid + 4 );
         printf( " %04x", *(USHORT *)guid + 6 );
@@ -2832,61 +2867,86 @@ static void print_clr_guids( const BYTE *data, UINT data_size )
         printf( "\n" );
         guid += 16;
     }
+    clr_indent -= 4;
 }
 
 static UINT str_idx_size = 2;
 static UINT guid_idx_size = 2;
 static UINT blob_idx_size = 2;
 
-static void print_clr_byte( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+static void print_clr_byte( const BYTE **ptr, UINT *size, BOOL flags )
 {
     if (*size < 1) return;
-    printf( flags ? "%s0x%02x" : "%s%-3u", prefix, **ptr );
+    printf( flags ? "0x%02x            " : "%-16u", **ptr );
     (*ptr)++; (*size)--;
 }
 
-static void print_clr_ushort( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+static void print_clr_ushort( const BYTE **ptr, UINT *size, BOOL flags )
 {
     if (*size < sizeof(USHORT)) return;
-    printf( flags ? "%s0x%04x" : "%s%-5u", prefix, *(const USHORT *)*ptr );
+    printf( flags ? "0x%04x          " : "%-16u", *(const USHORT *)*ptr );
     *ptr += sizeof(USHORT); *size -= sizeof(USHORT);
 }
 
-static void print_clr_uint( const char *prefix, const BYTE **ptr, UINT *size, BOOL flags )
+static void print_clr_uint( const BYTE **ptr, UINT *size, BOOL flags )
 {
     if (*size < sizeof(UINT)) return;
-    printf( flags ? "%s0x%08x" : "%s%-10u", prefix, *(const UINT *)*ptr );
+    printf( flags ? "0x%08x      " : "%-16u", *(const UINT *)*ptr );
     *ptr += sizeof(UINT); *size -= sizeof(UINT);
 }
 
-static void print_clr_uint64( const char *prefix, const BYTE **ptr, UINT *size )
+static void print_clr_uint64( const BYTE **ptr, UINT *size )
 {
     if (*size < sizeof(UINT64)) return;
-    printf( "%s0x%08x%08x", prefix, (UINT)(*(const UINT64 *)*ptr >> 32), (UINT)*(const UINT64 *)*ptr );
+    printf( "0x%08x%08x", (UINT)(*(const UINT64 *)*ptr >> 32), (UINT)*(const UINT64 *)*ptr );
     *ptr += sizeof(UINT64); *size -= sizeof(UINT64);
 }
 
-static void print_clr_string_idx( const char *prefix, const BYTE **ptr, UINT *size )
+static void print_clr_string_idx( const BYTE **ptr, UINT *size )
 {
     if (*size < str_idx_size) return;
-    if (str_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
-    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    if (str_idx_size == 2)
+    {
+        USHORT idx = *(const USHORT *)*ptr;
+        printf( "%-16u", idx );
+    }
+    else
+    {
+        UINT idx = *(const UINT *)*ptr;
+        printf( "%-16u", idx );
+    }
     *ptr += str_idx_size; *size -= str_idx_size;
 }
 
-static void print_clr_blob_idx( const char *prefix, const BYTE **ptr, UINT *size )
+static void print_clr_blob_idx( const BYTE **ptr, UINT *size )
 {
     if (*size < blob_idx_size) return;
-    if (blob_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
-    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    if (blob_idx_size == 2)
+    {
+        USHORT idx = *(const USHORT *)*ptr;
+        printf( "%-16u", idx );
+    }
+    else
+    {
+        UINT idx = *(const UINT *)*ptr;
+        printf( "%-16u", idx );
+    }
     *ptr += blob_idx_size; *size -= blob_idx_size;
 }
 
-static void print_clr_guid_idx( const char *prefix, const BYTE **ptr, UINT *size )
+static void print_clr_guid_idx( const BYTE **ptr, UINT *size )
 {
     if (*size < guid_idx_size) return;
-    if (guid_idx_size == 2) printf( "%s%-5u", prefix, *(const USHORT *)*ptr );
-    else printf( "%s%-10u", prefix, *(const UINT *)*ptr );
+    if (guid_idx_size == 2)
+    {
+        USHORT idx = *(const USHORT *)*ptr;
+        printf( "%-16u", idx );
+    }
+    else
+    {
+        UINT idx = *(const UINT *)*ptr;
+        printf( "%-16u", idx );
+    }
     *ptr += guid_idx_size; *size -= guid_idx_size;
 }
 
@@ -2933,590 +2993,762 @@ enum
     CLR_TABLE_MAX                       = 0x2d,
 };
 
-static void print_clr_table_idx( const char *prefix, const BYTE **ptr, UINT *size )
+static void print_clr_table_idx( const BYTE **ptr, UINT *size )
 {
+    USHORT idx;
     if (*size < sizeof(USHORT)) return; /* FIXME should be 4 bytes if the number of rows exceeds 2^16 */
-    printf( "%s0x%04x", prefix, *(const USHORT *)*ptr );
+    idx = *(const USHORT *)*ptr;
+    printf( "0x%04x          ", idx );
     *ptr += sizeof(USHORT); *size -= sizeof(USHORT);
+}
+
+static void print_clr_row( UINT row )
+{
+    print_clr_indent();
+    printf( "%-10u ", row );
+}
+
+static void print_clr_table_header( const char * const *header )
+{
+    const char *str;
+
+    print_clr_indent();
+    printf( "%-11s", "#" );
+    while ((str = *header++)) printf( "%-16s", str );
+    printf( "\n" );
 }
 
 static void print_clr_table_module( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Generation", "Name", "Mvid", "EncId", "EncBaseId", NULL };
+    UINT i, row = 1;
 
-    printf( "                Module table\n" );
-    printf( "                   Generation  Name   Mvid   EncId  EncBaseId\n" );
+    print_clr( "Module table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, FALSE );
-        print_clr_string_idx( "       ", ptr, size );
-        print_clr_guid_idx( "  ", ptr, size );
-        print_clr_guid_idx( "  ", ptr, size );
-        print_clr_guid_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_string_idx( ptr, size );
+        print_clr_guid_idx( ptr, size );
+        print_clr_guid_idx( ptr, size );
+        print_clr_guid_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_typeref( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "ResolutionScope", "TypeName", "TypeNamespace", NULL };
+    UINT i, row = 1;
 
-    printf( "                TypeRef table\n" );
-    printf( "                   ResolutionScope  TypeName   TypeNamsespace\n" );
+    print_clr( "TypeRef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_string_idx( "           ", ptr, size );
-        print_clr_string_idx( "      ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_typedef( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "TypeName", "TypeNamespace", "Extends", "FieldList",
+                                           "MethodList", NULL };
+    UINT i, row = 1;
 
-    printf( "                TypeDef table\n" );
-    printf( "                   Flags       TypeName TypeNamsespace Extends   FieldList MethodList\n" );
+    print_clr( "TypeDef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_string_idx( "    ", ptr, size );
-        print_clr_table_idx( "          ", ptr, size );
-        print_clr_table_idx( "    ", ptr, size );
-        print_clr_table_idx( "    ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_field( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "Name", "Signature", NULL };
+    UINT i, row = 1;
 
-    printf( "                Field table\n" );
-    printf( "                   Flags    Name   Signature\n" );
+    print_clr( "Field table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_string_idx( "   ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_methoddef( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "RVA", "ImplFlags", "Flags", "Name", "Signature", "ParamList", NULL };
+    UINT i, row = 1;
 
-    printf( "                MethodDef table\n" );
-    printf( "                   RVA          ImplFlags   Flags   Name   Signature ParamList\n" );
+    print_clr( "MethodDef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_ushort( "   ", ptr, size, TRUE );
-        print_clr_ushort( "      ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
-        print_clr_table_idx( "     ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_param( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "Sequence", "Name", NULL };
+    UINT i, row = 1;
 
-    printf( "                Param table\n" );
-    printf( "                   Flags    Sequence Name\n" );
+    print_clr( "Param table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_ushort( "   ", ptr, size, FALSE );
-        print_clr_string_idx( "    ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_interfaceimpl( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Class", "Interface", NULL };
+    UINT i, row = 1;
 
-    printf( "                InterfaceImpl table\n" );
-    printf( "                   Class    Interface\n" );
+    print_clr( "InterfaceImpl table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_table_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_memberref( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Class", "Name", "Signature", NULL };
+    UINT i, row = 1;
 
-    printf( "                MemberRef table\n" );
-    printf( "                   Class    Name    Signature\n" );
+    print_clr( "MemberRef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_string_idx( "   ", ptr, size );
-        print_clr_blob_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_constant( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Type", "Padding", "Parent", "Value", NULL };
+    UINT i, row = 1;
 
-    printf( "                Constant table\n" );
-    printf( "                   Type  Padding  Parent  Value\n" );
+    print_clr( "Constant table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_byte( "                   ", ptr, size, FALSE );
-        print_clr_byte( "   ", ptr, size, FALSE );
-        print_clr_table_idx( "      ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_byte( ptr, size, FALSE );
+        print_clr_byte( ptr, size, FALSE );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_customattribute( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Parent", "Type", "Value", NULL };
+    UINT i, row = 1;
 
-    printf( "                CustomAttribute table\n" );
-    printf( "                   Parent  Type    Value\n" );
+    print_clr( "CustomAttribute table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_table_idx( "  ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_fieldmarshal( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Parent", "NativeType", NULL };
+    UINT i, row = 1;
 
-    printf( "                FieldMarshal table\n" );
-    printf( "                   Parent  NativeType\n" );
+    print_clr( "FieldMarshal table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_declsecurity( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Action", "Parent", "PermissionSet", NULL };
+    UINT i, row = 1;
 
-    printf( "                DeclSecurity table\n" );
-    printf( "                   Action  Parent  PermissionSet\n" );
+    print_clr( "DeclSecurity table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_table_idx( "  ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_classlayout( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "PackingSize", "ClassSize", "Parent", NULL };
+    UINT i, row = 1;
 
-    printf( "                ClassLayout table\n" );
-    printf( "                   PackingSize  ClassSize  Parent\n" );
+    print_clr( "ClassLayout table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, FALSE );
-        print_clr_uint( "        ", ptr, size, FALSE );
-        print_clr_table_idx( " ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_fieldlayout( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Offset", "Field", NULL };
+    UINT i, row = 1;
 
-    printf( "                FieldLayout table\n" );
-    printf( "                   Offset   Field\n" );
+    print_clr( "FieldLayout table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, FALSE );
-        print_clr_table_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_standalonesig( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Signature", NULL };
+    UINT i, row = 1;
 
-    printf( "                StandAloneSig table\n" );
-    printf( "                   Signature\n" );
+    print_clr( "StandAloneSig table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_blob_idx( "                   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_eventmap( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Parent", "EventList", NULL };
+    UINT i, row = 1;
 
-    printf( "                EventMap table\n" );
-    printf( "                   Parent  EvenList\n" );
+    print_clr( "EventMap table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_blob_idx( "                   ", ptr, size );
-        print_clr_blob_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_event( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "EventFlags", "Name", "EventType", NULL };
+    UINT i, row = 1;
 
-    printf( "                Event table\n" );
-    printf( "                   EventFlags  Name    EventType\n" );
+    print_clr( "Event table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_string_idx( "      ", ptr, size );
-        print_clr_table_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_propertymap( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Parent", "PropertyList", NULL };
+    UINT i, row = 1;
 
-    printf( "                PropertyMap table\n" );
-    printf( "                   Parent  PropertyList\n" );
+    print_clr( "PropertyMap table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_table_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_property( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "Name", "Type", NULL };
+    UINT i, row = 1;
 
-    printf( "                Property table\n" );
-    printf( "                   Flags   Name   Type\n" );
+    print_clr( "Property table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_methodsemantics( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Semantics", "Method", "Association", NULL };
+    UINT i, row = 1;
 
-    printf( "                MethodSemantics table\n" );
-    printf( "                   Semantics   Method   Association\n" );
+    print_clr( "MethodSemantics table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_table_idx( "      ", ptr, size );
-        print_clr_table_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_methodimpl( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Class", "Body", "Declaration", NULL };
+    UINT i, row = 1;
 
-    printf( "                MethodImpl table\n" );
-    printf( "                   Class   MethodBody  MethodDeclaration\n" );
+    print_clr( "MethodImpl table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_table_idx( "  ", ptr, size );
-        print_clr_table_idx( "      ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_moduleref( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Name", NULL };
+    UINT i, row = 1;
 
-    printf( "                ModuleRef table\n" );
-    printf( "                   Name\n" );
+    print_clr( "ModuleRef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_string_idx( "                   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_typespec( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Signature", NULL };
+    UINT i, row = 1;
 
-    printf( "                TypeSpec table\n" );
-    printf( "                   Signature\n" );
+    print_clr( "TypeSpec table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_blob_idx( "                   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_implmap( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "MappingFlags", "MemberForwarded", "ImportName", "ImportScope", NULL };
+    UINT i, row = 1;
 
-    printf( "                ImplMap table\n" );
-    printf( "                   MappingFlags  MemberForwarded  ImportName  ImportScope\n" );
+    print_clr( "ImplMap table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_table_idx( "        ", ptr, size );
-        print_clr_string_idx( "           ", ptr, size );
-        print_clr_table_idx( "       ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_fieldrva( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "RVA", "Field", NULL };
+    UINT i, row = 1;
 
-    printf( "                FieldRVA table\n" );
-    printf( "                   RVA         Field\n" );
+    print_clr( "FieldRVA table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_table_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assembly( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "HashAlgId", "MajorVersion", "MinorVersion", "BuildNumber",
+                                           "RevisionNumber", "Flags", "PublicKey", "Name", NULL };
+    UINT i, row = 1;
 
-    printf( "                Assembly table\n" );
-    printf( "                   HashAlgId  MajorVersion  MinorVersion  BuildNumber  RevisionNumber  Flags       "
-            "PublicKey  Name\n" );
+    print_clr( "Assembly table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, TRUE );
-        print_clr_ushort( "     ", ptr, size, FALSE );
-        print_clr_ushort( "         ", ptr, size, FALSE );
-        print_clr_ushort( "         ", ptr, size, FALSE );
-        print_clr_ushort( "        ", ptr, size, FALSE );
-        print_clr_uint( "           ", ptr, size, TRUE );
-        print_clr_blob_idx( "  ", ptr, size );
-        print_clr_string_idx( "      ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_blob_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assemblyprocessor( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Processor", NULL };
+    UINT i, row = 1;
 
-    printf( "                AssemblyProcessor table\n" );
-    printf( "                   Processor\n" );
+    print_clr( "AssemblyProcessor table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assemblyos( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "OSPlatformID", "OSMajorVersion", "OSMinorVersion", NULL };
+    UINT i, row = 1;
 
-    printf( "                AssemblyOS table\n" );
-    printf( "                   OSPlatformID  OSMajorVersion  OSMinorVersion\n" );
+    print_clr( "AssemblyOS table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_uint( "    ", ptr, size, FALSE );
-        print_clr_uint( "      ", ptr, size, FALSE );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_uint( ptr, size, FALSE );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assemblyref( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "MajorVersion", "MinorVersion", "BuildNumber", "RevisionNumber", "Flags",
+                                           "PublicKeyOrToken", "Name", "Culture", "HashValue", NULL };
+    UINT i, row = 1;
 
-    printf( "                AssemblyRef table\n" );
-    printf( "                   MajorVersion  MinorVersion  BuildNumber  RevisionNumber PublicKeyOrToken  "
-            "Name   Culture  HashValue\n" );
+    print_clr( "AssemblyRef table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, FALSE );
-        print_clr_ushort( "         ", ptr, size, FALSE );
-        print_clr_ushort( "         ", ptr, size, FALSE );
-        print_clr_ushort( "        ", ptr, size, FALSE );
-        print_clr_blob_idx( "          ", ptr, size );
-        print_clr_string_idx( "             ", ptr, size );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_blob_idx( "    ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_blob_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assemblyrefprocessor( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Processor", "AssemblyRef", NULL };
+    UINT i, row = 1;
 
-    printf( "                AssemblyRefProcessor table\n" );
-    printf( "                   Processor  AssemblyRef\n" );
+    print_clr( "AssemblyRefProcessor table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_table_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_assemblyrefos( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "OSPlatformId", "OSMajorVersion", "OSMinorVersion", "AssemblyRef", NULL };
+    UINT i, row = 1;
 
-    printf( "                AssemblyRefOS table\n" );
-    printf( "                   OSPlatformId  OSMajorVersion  OSMinorVersion  AssemblyRef\n" );
+    print_clr( "AssemblyRefOS table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_uint( "    ", ptr, size, FALSE );
-        print_clr_uint( "      ", ptr, size, FALSE );
-        print_clr_table_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_file( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "Name", "HashValue", NULL };
+    UINT i, row = 1;
 
-    printf( "                File table\n" );
-    printf( "                   Flags       Name    HashValue\n" );
+    print_clr( "File table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_exportedtype( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Flags", "TypeDefId", "TypeName", "TypeNamespace", "Implementation", NULL };
+    UINT i, row = 1;
 
-    printf( "                ExportedType table\n" );
-    printf( "                   Flags       TypeDefId   TypeName  TypeNamespace  Implementation\n" );
+    print_clr( "ExportedType table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, TRUE );
-        print_clr_uint( "  ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_string_idx( "    ", ptr, size );
-        print_clr_table_idx( "         ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_manifestresource( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Offset", "Flags", "Name", "Implementation", NULL };
+    UINT i, row = 1;
 
-    printf( "                ManifestResource table\n" );
-    printf( "                   Offset      Flags       Name    Implementation\n" );
+    print_clr( "ManifestResource table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_uint( "                   ", ptr, size, FALSE );
-        print_clr_uint( "  ", ptr, size, TRUE );
-        print_clr_string_idx( "  ", ptr, size );
-        print_clr_table_idx( "   ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_uint( ptr, size, FALSE );
+        print_clr_uint( ptr, size, TRUE );
+        print_clr_string_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_nestedclass( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "NestedClass", "EnclosingClass", NULL };
+    UINT i, row = 1;
 
-    printf( "                NestedClass table\n" );
-    printf( "                   NestedClass  EnclosingClass\n" );
+    print_clr( "NestedClass table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_table_idx( "       ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_table_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_genericparam( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Number", "Flags", "Owner", "Name", NULL };
+    UINT i, row = 1;
 
-    printf( "                GenericParam table\n" );
-    printf( "                   Number  Flags   Owner   Name\n" );
+    print_clr( "GenericParam table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_ushort( "                   ", ptr, size, FALSE );
-        print_clr_ushort( "   ", ptr, size, TRUE );
-        print_clr_table_idx( "  ", ptr, size );
-        print_clr_string_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_ushort( ptr, size, FALSE );
+        print_clr_ushort( ptr, size, TRUE );
+        print_clr_table_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_methodspec( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Method", "Instantiation", NULL };
+    UINT i, row = 1;
 
-    printf( "                MethodSpec table\n" );
-    printf( "                   Method  Instantiation\n" );
+    print_clr( "MethodSpec table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 static void print_clr_table_genericparamconstraint( const BYTE **ptr, UINT *size, UINT row_count )
 {
-    UINT i;
+    static const char * const header[] = { "Owner", "Constraint", NULL };
+    UINT i, row = 1;
 
-    printf( "                GenericParamConstraint table\n" );
-    printf( "                   Owner   Constraint\n" );
+    print_clr( "GenericParamConstraint table\n" );
+    clr_indent += 4;
+    print_clr_table_header( header );
     for (i = 0; i < row_count; i++)
     {
-        print_clr_table_idx( "                   ", ptr, size );
-        print_clr_blob_idx( "  ", ptr, size );
+        print_clr_row( row++ );
+        print_clr_table_idx( ptr, size );
+        print_clr_blob_idx( ptr, size );
         printf( "\n" );
     }
+    clr_indent -= 4;
 }
 
 enum
@@ -3534,39 +3766,52 @@ static void print_clr_tables( const BYTE *data, UINT data_size )
     const UINT *row_count;
     UINT64 valid, j;
 
-    print_clr_uint( "            Reserved        ", &ptr, &size, FALSE );
+    if (!data_size) return;
+
+    clr_indent += 4;
+    print_clr( "Reserved     " );
+    print_clr_uint( &ptr, &size, FALSE );
     printf( "\n" );
-    print_clr_byte( "            MajorVersion    ", &ptr, &size, FALSE );
+    print_clr( "MajorVersion " );
+    print_clr_byte( &ptr, &size, FALSE );
     printf( "\n" );
-    print_clr_byte( "            MinorVersion    ", &ptr, &size, FALSE );
+    print_clr( "MinorVersion " );
+    print_clr_byte( &ptr, &size, FALSE );
     printf( "\n" );
 
     if (size < 1) return;
     heap_sizes = *ptr;
-    print_clr_byte( "            HeapSizes       ", &ptr, &size, TRUE );
+    print_clr( "HeapSizes    " );
+    print_clr_byte( &ptr, &size, TRUE );
     printf( "\n" );
     if (heap_sizes & HEAP_SIZE_FLAG_STRING) str_idx_size = 4;
     if (heap_sizes & HEAP_SIZE_FLAG_GUID) guid_idx_size = 4;
     if (heap_sizes & HEAP_SIZE_FLAG_BLOB) blob_idx_size = 4;
 
-    print_clr_byte( "            Reserved        ", &ptr, &size, FALSE );
+    print_clr( "Reserved     " );
+    print_clr_byte( &ptr, &size, FALSE );
     printf( "\n" );
 
     if (size < sizeof(UINT64)) return;
     valid = *(UINT64 *)ptr;
-    print_clr_uint64( "            Valid           ", &ptr, &size );
+    print_clr( "Valid        " );
+    print_clr_uint64( &ptr, &size );
     printf( "\n" );
     for (j = 0; j < sizeof(valid) * 8; j++) if (valid & (1ul << j)) count++;
 
-    print_clr_uint64( "            Sorted          ", &ptr, &size );
+    print_clr( "Sorted       " );
+    print_clr_uint64( &ptr, &size );
     printf( "\n" );
+    clr_indent -= 4;
 
     row_count = (const UINT *)ptr;
-    if (count) printf( "                Row counts\n" );
+    if (count) print_clr( "Row counts\n" );
     for (i = 0; i < count; i++)
     {
-        printf( "                %-10u", i );
-        print_clr_uint( "   ", &ptr, &size, FALSE );
+        clr_indent += 4;
+        print_clr_indent();
+        print_clr_uint( &ptr, &size, FALSE );
+        clr_indent -= 4;
         printf( "\n" );
     }
 
@@ -3710,25 +3955,52 @@ static void print_clr_stream( const BYTE *base, const BYTE **ptr, UINT *size )
 
     if (*size < sizeof(UINT)) return;
     stream_offset = *(const UINT *)*ptr;
-    print_clr_uint( "        Offset    ", ptr, size, FALSE );
+    print_clr( "Offset " );
+    print_clr_uint( ptr, size, FALSE );
     printf( "\n" );
 
     if (*size < sizeof(UINT)) return;
     stream_size = *(const UINT *)*ptr;
-    print_clr_uint( "        Size      ", ptr, size, FALSE );
+    print_clr( "Size   " );
+    print_clr_uint( ptr, size, FALSE );
     printf( "\n" );
 
     if (!memchr( *ptr, '\0', *size )) return;
     name = (const char *)*ptr;
-    printf( "        Name      %s\n", name );
+    print_clr( "Name   " );
+    printf( "%s\n", name );
     len = ((strlen( name ) + 1) + 3) & ~3;
     if (*size < len) return;
     *ptr += len; *size -= len;
 
-    if (!strcmp( name, "#Strings" )) print_clr_strings( base + stream_offset, stream_size );
-    else if (!strcmp( name, "#US" ) || !strcmp( name, "#Blob" )) print_clr_blobs( base + stream_offset, stream_size );
-    else if (!strcmp( name, "#GUID" )) print_clr_guids( base + stream_offset, stream_size );
-    else if (!strcmp( name, "#~" )) print_clr_tables( base + stream_offset, stream_size );
+    if (!strcmp( name, "#Strings" ))
+    {
+        strings.data = base + stream_offset;
+        strings.size = stream_size;
+        /* remove padding */
+        while (strings.size > 1 && !strings.data[strings.size -2] && !strings.data[strings.size - 1])
+            strings.size--;
+    }
+    else if (!strcmp( name, "#US" ))
+    {
+        userstrings.data = base + stream_offset;
+        userstrings.size = stream_size;
+    }
+    else if (!strcmp( name, "#Blob" ))
+    {
+        blobs.data = base + stream_offset;
+        blobs.size = stream_size;
+    }
+    else if (!strcmp( name, "#GUID" ))
+    {
+        guids.data = base + stream_offset;
+        guids.size = stream_size;
+    }
+    else if (!strcmp( name, "#~" ))
+    {
+        tables.data = base + stream_offset;
+        tables.size = stream_size;
+    }
 }
 
 static void print_clr_metadata( const BYTE *data, UINT data_size )
@@ -3737,36 +4009,57 @@ static void print_clr_metadata( const BYTE *data, UINT data_size )
     UINT size = data_size, len, nb_streams, i;
     const char *version;
 
-    print_clr_uint( "    Signature    ", &ptr, &size, TRUE );
+    print_clr( "Signature    " );
+    print_clr_uint( &ptr, &size, TRUE );
     printf( "\n" );
-    print_clr_ushort( "    MajorVersion ", &ptr, &size, FALSE );
+    print_clr( "MajorVersion " );
+    print_clr_ushort(  &ptr, &size, FALSE );
     printf( "\n" );
-    print_clr_ushort( "    MinorVersion ", &ptr, &size, FALSE );
+    print_clr( "MinorVersion " );
+    print_clr_ushort( &ptr, &size, FALSE );
     printf( "\n" );
-    print_clr_uint( "    Reserved     ", &ptr, &size, FALSE );
+    print_clr( "Reserved     " );
+    print_clr_uint( &ptr, &size, FALSE );
     printf( "\n" );
 
     if (size < sizeof(UINT)) return;
     len = *(const UINT *)ptr;
-    print_clr_uint( "    Length       ", &ptr, &size, FALSE );
+    print_clr( "Length       " );
+    print_clr_uint( &ptr, &size, FALSE );
     printf( "\n" );
 
     if (size < len || !memchr( ptr, '\0', len )) return;
     version = (const char *)ptr;
-    printf( "    Version      %s\n", version );
+    print_clr( "Version      " );
+    printf( "%s\n", version );
     len = ((strlen( version ) + 1) + 3) & ~3;
     if (size < len) return;
     ptr += len; size -= len;
 
-    print_clr_ushort( "    Flags        ", &ptr, &size, TRUE );
+    print_clr( "Flags        " );
+    print_clr_ushort( &ptr, &size, TRUE );
     printf( "\n" );
 
     if (size < sizeof(USHORT)) return;
     nb_streams = *(const USHORT *)ptr;
-    print_clr_ushort( "    Streams      ", &ptr, &size, FALSE );
+    print_clr( "Streams      " );
+    print_clr_ushort( &ptr, &size, FALSE );
     printf( "\n" );
 
+    clr_indent += 4;
     for (i = 0; i < nb_streams; i++) print_clr_stream( data, &ptr, &size );
+    clr_indent -= 4;
+
+    print_clr( "Tables\n" );
+    print_clr_tables( tables.data, tables.size );
+    print_clr( "Strings\n" );
+    print_clr_strings( strings.data, strings.size );
+    print_clr( "Userstrings\n" );
+    print_clr_blobs( userstrings.data, userstrings.size );
+    print_clr( "GUIDs\n" );
+    print_clr_guids( guids.data, guids.size );
+    print_clr( "Blobs\n" );
+    print_clr_blobs( blobs.data, blobs.size );
 }
 
 static void dump_dir_clr_header(void)
