@@ -361,7 +361,6 @@ sub read_syscalls($)
     {
         my $descr = $funcs{$func};
         next unless $descr->{flags} =~ /-syscall/;
-        next if $descr->{target} ne $func && defined $funcs{$descr->{target}};
         my ($args32, $args64) = get_args_size( $funcs{$func}->{args} );
         push @syscalls32, [ $func, $args32 ] unless $descr->{flags} =~ /-arch=win64/;
         push @syscalls64, [ $func, $args64 ] unless $descr->{flags} =~ /-arch=win32/;
