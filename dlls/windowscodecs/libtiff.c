@@ -161,6 +161,7 @@ struct tiff_decoder
     IStream *stream;
     TIFF *tiff;
     DWORD frame_count;
+    unsigned int *frame_map;
     DWORD cached_frame;
     tiff_decode_info cached_decode_info;
     INT cached_tile_x, cached_tile_y;
@@ -576,6 +577,56 @@ static HRESULT tiff_get_decode_info(TIFF *tiff, tiff_decode_info *decode_info)
     return S_OK;
 }
 
+static bool tiff_decoder_should_skip_directory(TIFF *tiff)
+{
+    unsigned int value;
+
+    if (TIFFGetField(tiff, TIFFTAG_SUBFILETYPE, &value))
+        return value & FILETYPE_REDUCEDIMAGE;
+
+    return false;
+}
+
+static HRESULT tiff_decoder_collect_frames(struct tiff_decoder *decoder)
+{
+    unsigned int dir_count = TIFFNumberOfDirectories(decoder->tiff), frame_count, dir;
+    unsigned int *map;
+
+    if (!dir_count)
+        return S_OK;
+
+    if (!(map = calloc(dir_count, sizeof(*map))))
+        return E_OUTOFMEMORY;
+
+    frame_count = 0;
+    for (dir = 0; dir < dir_count; ++dir)
+    {
+        if (!TIFFSetDirectory(decoder->tiff, dir))
+        {
+            free(map);
+            return E_FAIL;
+        }
+
+        if (tiff_decoder_should_skip_directory(decoder->tiff)) continue;
+
+        map[frame_count++] = dir;
+    }
+
+    if (!frame_count)
+    {
+        free(map);
+        return WINCODEC_ERR_BADIMAGE;
+    }
+
+    /* Back to the first useful directory. */
+    TIFFSetDirectory(decoder->tiff, map[0]);
+
+    decoder->frame_count = frame_count;
+    decoder->frame_map = map;
+
+    return S_OK;
+}
+
 static HRESULT CDECL tiff_decoder_initialize(struct decoder* iface, IStream *stream, struct decoder_stat *st)
 {
     struct tiff_decoder *This = impl_from_decoder(iface);
@@ -585,7 +636,9 @@ static HRESULT CDECL tiff_decoder_initialize(struct decoder* iface, IStream *str
     if (!This->tiff)
         return E_FAIL;
 
-    This->frame_count = TIFFNumberOfDirectories(This->tiff);
+    if (FAILED(hr = tiff_decoder_collect_frames(This)))
+        goto fail;
+
     This->cached_frame = 0;
     hr = tiff_get_decode_info(This->tiff, &This->cached_decode_info);
     if (FAILED(hr))
@@ -617,7 +670,7 @@ static HRESULT tiff_decoder_select_frame(struct tiff_decoder* This, DWORD frame)
 
     prev_tile_size = This->cached_tile ? This->cached_decode_info.tile_size : 0;
 
-    res = TIFFSetDirectory(This->tiff, frame);
+    res = TIFFSetDirectory(This->tiff, This->frame_map[frame]);
     if (!res)
         return E_INVALIDARG;
 
@@ -1143,6 +1196,7 @@ static void CDECL tiff_decoder_destroy(struct decoder* iface)
     struct tiff_decoder *This = impl_from_decoder(iface);
     if (This->tiff) TIFFClose(This->tiff);
     free(This->cached_tile);
+    free(This->frame_map);
     free(This);
 }
 

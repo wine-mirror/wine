@@ -791,13 +791,7 @@ static void test_tiff_1bpp_palette(void)
 
         hr = IWICBitmapDecoder_GetFrameCount(decoder, &count);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        todo_wine
         ok(count == test_data[i].count, "Unexpected count %u.\n", count);
-        if (count != test_data[i].count)
-        {
-            IWICBitmapDecoder_Release(decoder);
-            continue;
-        }
 
         for (int j = 0; j < count; ++j)
         {
@@ -825,10 +819,7 @@ static void test_tiff_1bpp_palette(void)
     tiff_set_field(&tiff, 2, TIFF_SUBFILETYPE, 0x1);
 
     hr = create_decoder(&tiff, sizeof(tiff), &decoder);
-    todo_wine
     ok(FAILED(hr), "Unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        IWICBitmapDecoder_Release(decoder);
 }
 
 static void test_QueryCapability(void)
