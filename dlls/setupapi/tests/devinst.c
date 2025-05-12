@@ -4732,6 +4732,77 @@ static void test_driver_store(struct testsign_context *ctx)
     ok(ret, "Failed to destroy device list.\n");
 }
 
+static void test_device_enum(void)
+{
+    SP_DEVINFO_DATA devinfodata;
+    LARGE_INTEGER filetime;
+    DEVPROPTYPE proptype;
+    HDEVINFO set;
+    WCHAR buf[2048];
+    BOOL next, ret;
+    DWORD i, len;
+
+    set = SetupDiGetClassDevsExW(&GUID_DEVCLASS_DISPLAY, NULL, 0, DIGCF_PRESENT, 0, NULL, 0);
+    ok(set != INVALID_HANDLE_VALUE, "SetupDiGetClassDevsExW failed with %lu.\n", GetLastError());
+
+    ZeroMemory(&devinfodata, sizeof(SP_DEVINFO_DATA));
+    devinfodata.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    i = 0;
+    next = SetupDiEnumDeviceInfo(set, i, &devinfodata);
+    ok(next, "Failed getting at least one element from SetupDiEnumDeviceInfo with error %lu.\n", GetLastError());
+
+    while (next)
+    {
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDate,  &proptype, (BYTE *)&filetime, sizeof(LARGE_INTEGER), &len, 0);
+        todo_wine ok(ret, "getting DEVPKEY_Device_DriverDate failed with error %lu.\n", GetLastError());
+        todo_wine ok(proptype == DEVPROP_TYPE_FILETIME, "got unexpected proptype %#lx.\n", proptype);
+        todo_wine ok(len == sizeof(LARGE_INTEGER), "got unexpected length.\n");
+        todo_wine ok((filetime.QuadPart % 864000000000) == 0, "returned value should not contain a time.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverVersion,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        todo_wine ok(ret, "getting DEVPKEY_Device_DriverVersion failed with error %lu.\n", GetLastError());
+        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        todo_wine ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDesc,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        todo_wine ok(ret, "getting DEVPKEY_Device_DriverDesc failed with error %lu.\n", GetLastError());
+        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        todo_wine ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverProvider,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        todo_wine ok(ret, "getting DEVPKEY_Device_DriverProvider failed with error %lu.\n", GetLastError());
+        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        todo_wine ok(len > 0, "got unexpected length.\n");
+
+        ZeroMemory(buf, sizeof(buf));
+        len = 0;
+        proptype = DEVPROP_TYPE_EMPTY;
+        ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverCoInstallers,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
+        ok(!ret, "getting DEVPKEY_Device_DriverCoInstallers failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_EMPTY, "got unexpected proptype %#lx.\n", proptype);
+        ok(len == 0, "got unexpected length.\n");
+
+        i++;
+        next = SetupDiEnumDeviceInfo(set, i, &devinfodata);
+    }
+
+    if (set)
+        SetupDiDestroyDeviceInfoList(set);
+}
+
 START_TEST(devinst)
 {
     static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
@@ -4779,6 +4850,7 @@ START_TEST(devinst)
     test_call_class_installer();
     test_get_class_devs();
     test_SetupDiOpenDeviceInterface();
+    test_device_enum();
 
     if (!testsign_create_cert(&ctx))
         return;
