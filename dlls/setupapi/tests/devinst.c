@@ -4758,34 +4758,34 @@ static void test_device_enum(void)
         len = 0;
         proptype = DEVPROP_TYPE_EMPTY;
         ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDate,  &proptype, (BYTE *)&filetime, sizeof(LARGE_INTEGER), &len, 0);
-        todo_wine ok(ret, "getting DEVPKEY_Device_DriverDate failed with error %lu.\n", GetLastError());
-        todo_wine ok(proptype == DEVPROP_TYPE_FILETIME, "got unexpected proptype %#lx.\n", proptype);
-        todo_wine ok(len == sizeof(LARGE_INTEGER), "got unexpected length.\n");
-        todo_wine ok((filetime.QuadPart % 864000000000) == 0, "returned value should not contain a time.\n");
+        ok(ret, "getting DEVPKEY_Device_DriverDate failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_FILETIME, "got unexpected proptype %#lx.\n", proptype);
+        ok(len == sizeof(LARGE_INTEGER), "got unexpected length.\n");
+        ok((filetime.QuadPart % 864000000000) == 0, "returned value should not contain a time.\n");
 
         ZeroMemory(buf, sizeof(buf));
         len = 0;
         proptype = DEVPROP_TYPE_EMPTY;
         ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverVersion,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
-        todo_wine ok(ret, "getting DEVPKEY_Device_DriverVersion failed with error %lu.\n", GetLastError());
-        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
-        todo_wine ok(len > 0, "got unexpected length.\n");
+        ok(ret, "getting DEVPKEY_Device_DriverVersion failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
 
         ZeroMemory(buf, sizeof(buf));
         len = 0;
         proptype = DEVPROP_TYPE_EMPTY;
         ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverDesc,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
-        todo_wine ok(ret, "getting DEVPKEY_Device_DriverDesc failed with error %lu.\n", GetLastError());
-        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
-        todo_wine ok(len > 0, "got unexpected length.\n");
+        ok(ret, "getting DEVPKEY_Device_DriverDesc failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
 
         ZeroMemory(buf, sizeof(buf));
         len = 0;
         proptype = DEVPROP_TYPE_EMPTY;
         ret = SetupDiGetDevicePropertyW(set, &devinfodata, &DEVPKEY_Device_DriverProvider,  &proptype, (BYTE *)buf, sizeof(buf), &len, 0);
-        todo_wine ok(ret, "getting DEVPKEY_Device_DriverProvider failed with error %lu.\n", GetLastError());
-        todo_wine ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
-        todo_wine ok(len > 0, "got unexpected length.\n");
+        ok(ret, "getting DEVPKEY_Device_DriverProvider failed with error %lu.\n", GetLastError());
+        ok(proptype == DEVPROP_TYPE_STRING, "got unexpected proptype %#lx.\n", proptype);
+        ok(len > 0, "got unexpected length.\n");
 
         ZeroMemory(buf, sizeof(buf));
         len = 0;

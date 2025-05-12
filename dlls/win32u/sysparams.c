@@ -52,7 +52,11 @@ static const char config_keyA[] = "\\Registry\\Machine\\System\\CurrentControlSe
 
 static const char devpropkey_gpu_vulkan_uuidA[] = "Properties\\{233A9EF3-AFC4-4ABD-B564-C32F21F1535C}\\0002";
 static const char devpropkey_gpu_luidA[] = "Properties\\{60B193CB-5276-4D0F-96FC-F173ABAD3EC6}\\0002";
+static const char devpkey_device_driver_date[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0002";
+static const char devpkey_device_driver_version[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0003";
+static const char devpkey_device_driver_desc[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0004";
 static const char devpkey_device_matching_device_id[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0008";
+static const char devpkey_device_driver_provider[] = "Properties\\{A8B865DD-2E3D-4094-AD97-E593A70C75D6}\\0009";
 static const char devpkey_device_bus_number[] = "Properties\\{A45C254E-DF1C-4EFD-8020-67D146A850E0}\\0017";
 static const char devpkey_device_removal_policy[] = "Properties\\{A45C254E-DF1C-4EFD-8020-67D146A850E0}\\0021";
 static const char devpropkey_device_ispresentA[] = "Properties\\{540B947E-8B40-45BC-A8A2-6A0B894CBDA2}\\0005";
@@ -1083,6 +1087,29 @@ static BOOL read_gpu_from_registry( struct gpu *gpu )
     return TRUE;
 }
 
+static const char* driver_vendor_to_version( UINT16 vendor )
+{
+    /* The last seven digits are the driver number. */
+    switch (vendor)
+    {
+    case 0x8086: /* Intel */    return "32.0.101.6314";
+    case 0x1002: /* AMD */      return "31.0.21921.1000";
+    case 0x10de: /* Nvidia */   return "32.0.15.6094";
+    default:                    return "31.0.10.1000";
+    }
+}
+
+static const char* driver_vendor_to_name( UINT16 vendor )
+{
+    switch (vendor)
+    {
+    case 0x8086: return "Intel Corporation";
+    case 0x1002: return "Advanced Micro Devices, Inc.";
+    case 0x10de: return "NVIDIA";
+    default:     return "";
+    }
+}
+
 static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *pci,
                                    ULONGLONG memory_size )
 {
@@ -1145,6 +1172,34 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
         NtClose( subkey );
     }
 
+    NtQuerySystemTime( &ft );
+    ft.QuadPart -= ft.QuadPart % 864000000000;
+    if ((subkey = reg_create_ascii_key( hkey, devpkey_device_driver_date, 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_FILETIME, &ft, sizeof(LARGE_INTEGER));
+        NtClose( subkey );
+    }
+
+    if ((subkey = reg_create_ascii_key( hkey, devpkey_device_driver_version, 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
+                       asciiz_to_unicode( bufferW, driver_vendor_to_version( pci->vendor ) ));
+        NtClose( subkey );
+    }
+
+    if ((subkey = reg_create_ascii_key( hkey, devpkey_device_driver_desc, 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, gpu->name, (wcslen( gpu->name ) + 1) * sizeof(WCHAR) );
+        NtClose( subkey );
+    }
+
+    if ((subkey = reg_create_ascii_key( hkey, devpkey_device_driver_provider, 0, NULL )))
+    {
+        set_reg_value( subkey, NULL, 0xffff0000 | DEVPROP_TYPE_STRING, bufferW,
+                       asciiz_to_unicode( bufferW, driver_vendor_to_name( pci->vendor ) ));
+        NtClose( subkey );
+    }
+
     if (pci->vendor && pci->device)
     {
         if ((subkey = reg_create_ascii_key( hkey, devpkey_device_bus_number, 0, NULL )))
@@ -1201,7 +1256,6 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     snprintf( buffer, sizeof(buffer), "Class\\%s\\%04X", guid_devclass_displayA, gpu->index );
     if (!(hkey = reg_create_ascii_key( control_key, buffer, 0, NULL ))) return FALSE;
 
-    NtQuerySystemTime( &ft );
     set_reg_value( hkey, driver_dateW, REG_SZ, bufferW, format_date( bufferW, ft.QuadPart ));
 
     set_reg_value( hkey, driver_date_dataW, REG_BINARY, &ft, sizeof(ft) );
@@ -1220,28 +1274,7 @@ static BOOL write_gpu_to_registry( const struct gpu *gpu, const struct pci_id *p
     value = (ULONG)min( memory_size, (ULONGLONG)ULONG_MAX );
     set_reg_value( hkey, memory_sizeW, REG_DWORD, &value, sizeof(value) );
 
-    /* The last seven digits are the driver number. */
-    switch (pci->vendor)
-    {
-    /* Intel */
-    case 0x8086:
-        strcpy( buffer, "31.0.101.4576" );
-        break;
-    /* AMD */
-    case 0x1002:
-        strcpy( buffer, "31.0.14051.5006" );
-        break;
-    /* Nvidia */
-    case 0x10de:
-        strcpy( buffer, "31.0.15.3625" );
-        break;
-    /* Default value for any other vendor. */
-    default:
-        strcpy( buffer, "31.0.10.1000" );
-        break;
-    }
-    set_reg_ascii_value( hkey, "DriverVersion", buffer );
-
+    set_reg_ascii_value( hkey, "DriverVersion", driver_vendor_to_version( pci->vendor ) );
     NtClose( hkey );
 
 
