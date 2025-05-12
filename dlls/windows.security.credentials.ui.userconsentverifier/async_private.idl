@@ -25,22 +25,22 @@
 import "propidl.idl";
 import "inspectable.idl";
 import "asyncinfo.idl";
-import "eventtoken.idl";
 import "windowscontracts.idl";
-import "windows.foundation.idl";
 
-namespace Windows.Security.Credentials.UI {
-    /* type-pruning version of AsyncOperationCompletedHandler<T> */
-    delegate HRESULT WineAsyncOperationCompletedHandler([in] IInspectable *async, [in] AsyncStatus status);
+namespace Wine.Internal {
+    /* type-pruning version of AsyncOperationCompletedHandlerImpl<T> */
+    delegate HRESULT AsyncOperationCompletedHandlerImpl([in] IInspectable *async, [in] AsyncStatus status);
 
     [
-        uuid(83f377ee-c799-11ec-9d64-0242ac120002)
+        uuid(d81ab70d-82e0-481c-983d-401225d98a2c)
     ]
-    interface IWineAsyncInfoImpl : IUnknown
+    interface IAsyncInfoImpl : IUnknown
     {
-        [propput] HRESULT Completed([in] WineAsyncOperationCompletedHandler *handler);
-        [propget] HRESULT Completed([out, retval] WineAsyncOperationCompletedHandler **handler);
+        [propput] HRESULT Completed([in] AsyncOperationCompletedHandlerImpl *handler);
+        [propget] HRESULT Completed([out, retval] AsyncOperationCompletedHandlerImpl **handler);
         [propget] HRESULT Result([out, retval] PROPVARIANT *result);
         HRESULT Start();
     }
+
+    typedef HRESULT (*async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
 }

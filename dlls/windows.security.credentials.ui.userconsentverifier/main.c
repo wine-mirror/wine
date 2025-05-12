@@ -118,7 +118,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( user_consent_verifier_statics, IUserConsentVerifierStatics, struct user_consent_verifier_statics, IActivationFactory_iface )
 
-static HRESULT WINAPI check_availability_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+static HRESULT check_availability_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     result->vt = VT_UI4;
     result->ulVal = UserConsentVerifierAvailability_DeviceNotPresent;
