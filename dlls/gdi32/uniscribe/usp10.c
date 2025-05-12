@@ -1905,9 +1905,10 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
     StringAnalysis *analysis = NULL;
     SCRIPT_CONTROL sControl;
     SCRIPT_STATE sState;
-    int i, num_items = 255;
+    int i, num_items = cString + 1;
     BYTE   *BidiLevel;
     WCHAR *iString = NULL;
+    SCRIPT_ITEM *items;
 
     TRACE("(%p,%p,%d,%d,%d,0x%lx,%d,%p,%p,%p,%p,%p,%p)\n",
           hdc, pString, cString, cGlyphs, iCharset, dwFlags, iReqWidth,
@@ -1923,7 +1924,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
 
     if (!(analysis = heap_alloc_zero(sizeof(*analysis))))
         return E_OUTOFMEMORY;
-    if (!(analysis->pItem = heap_calloc(num_items + 1, sizeof(*analysis->pItem))))
+    if (!(analysis->pItem = heap_calloc(num_items, sizeof(*analysis->pItem))))
         goto error;
 
     /* FIXME: handle clipping */
@@ -1955,13 +1956,12 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
 
     hr = ScriptItemize(pString, cString, num_items, &sControl, &sState, analysis->pItem,
                        &analysis->numItems);
-
     if (FAILED(hr))
-    {
-        if (hr == E_OUTOFMEMORY)
-            hr = E_INVALIDARG;
         goto error;
-    }
+
+    /* Having as many items as codepoints is the worst case scenario, try to reclaim some memory. */
+    if ((items = heap_realloc(analysis->pItem, (analysis->numItems + 1) * sizeof(*analysis->pItem))))
+        analysis->pItem = items;
 
     /* set back to out of memory for default goto error behaviour */
     hr = E_OUTOFMEMORY;
