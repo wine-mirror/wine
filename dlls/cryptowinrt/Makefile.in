@@ -3,7 +3,7 @@ IMPORTS = combase bcrypt uuid
 
 SOURCES = \
 	async.c \
+	async_private.idl \
 	classes.idl \
 	credentials.c \
-	main.c \
-	provider.idl
+	main.c
