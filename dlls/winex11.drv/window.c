@@ -2987,7 +2987,7 @@ BOOL X11DRV_GetWindowStyleMasks( HWND hwnd, UINT style, UINT ex_style, UINT *sty
         release_win_data( data );
     }
 
-    *style_mask = ex_style = 0;
+    *style_mask = *ex_style_mask = 0;
     if (decor & MWM_DECOR_TITLE) *style_mask |= WS_CAPTION;
     if (decor & MWM_DECOR_BORDER)
     {
