@@ -33,6 +33,9 @@ struct device_watcher
 
     struct list stopped_handlers;
     HSTRING filter;
+
+    CRITICAL_SECTION cs;
+    DeviceWatcherStatus status;
 };
 
 static inline struct device_watcher *impl_from_IDeviceWatcher( IDeviceWatcher *iface )
@@ -78,6 +81,8 @@ static ULONG WINAPI device_watcher_Release( IDeviceWatcher *iface )
     {
         typed_event_handlers_clear( &impl->stopped_handlers );
         WindowsDeleteString( impl->filter );
+        impl->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &impl->cs );
         free( impl );
     }
 
@@ -170,10 +175,17 @@ static HRESULT WINAPI device_watcher_remove_Stopped( IDeviceWatcher *iface, Even
     return typed_event_handlers_remove( &impl->stopped_handlers, &token );
 }
 
-static HRESULT WINAPI device_watcher_Status( IDeviceWatcher *iface, DeviceWatcherStatus *status )
+static HRESULT WINAPI device_watcher_get_Status( IDeviceWatcher *iface, DeviceWatcherStatus *status )
 {
-    FIXME( "iface %p, status %p stub!\n", iface, status );
-    return E_NOTIMPL;
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+
+    TRACE( "iface %p, status %p\n", iface, status );
+
+    EnterCriticalSection( &impl->cs );
+    *status = impl->status;
+    LeaveCriticalSection( &impl->cs );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
@@ -215,7 +227,7 @@ static const struct IDeviceWatcherVtbl device_watcher_vtbl =
     device_watcher_remove_EnumerationCompleted,
     device_watcher_add_Stopped,
     device_watcher_remove_Stopped,
-    device_watcher_Status,
+    device_watcher_get_Status,
     device_watcher_Start,
     device_watcher_Stop,
 };
@@ -236,6 +248,10 @@ static HRESULT device_watcher_create( HSTRING filter, IDeviceWatcher **out )
     }
 
     list_init( &impl->stopped_handlers );
+
+    InitializeCriticalSectionEx( &impl->cs, 0, RTL_CRITICAL_SECTION_FLAG_FORCE_DEBUG_INFO );
+    impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": device_watcher.cs");
+    impl->status = DeviceWatcherStatus_Created;
 
     *out = &impl->IDeviceWatcher_iface;
     TRACE( "created DeviceWatcher %p\n", *out );

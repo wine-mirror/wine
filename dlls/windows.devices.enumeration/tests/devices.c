@@ -391,13 +391,13 @@ static void test_DeviceInformation( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
 
     hr = IDeviceWatcher_Start( device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     todo_wine ok( status == DeviceWatcherStatus_Started, "got status %u\n", status );
 
     ref = IDeviceWatcher_AddRef( device_watcher );
@@ -407,7 +407,7 @@ static void test_DeviceInformation( void )
     ok( !WaitForSingleObject( stopped_handler.event, 1000 ), "wait for stopped_handler.event failed\n" );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     todo_wine ok( status == DeviceWatcherStatus_Stopped, "got status %u\n", status );
     ok( stopped_handler.invoked, "stopped_handler not invoked\n" );
     ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
@@ -438,13 +438,13 @@ static void test_DeviceInformation( void )
     ok( hr == S_OK, "got hr %#lx\n", hr );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
-    todo_wine ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( status == DeviceWatcherStatus_Created, "got status %u\n", status );
 
     hr = IDeviceWatcher_Start( device_watcher );
     ok( hr == S_OK, "got hr %#lx\n", hr );
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     todo_wine ok( status == DeviceWatcherStatus_Started, "got status %u\n", status );
 
     ref = IDeviceWatcher_AddRef( device_watcher );
@@ -454,7 +454,7 @@ static void test_DeviceInformation( void )
     ok( !WaitForSingleObject( stopped_handler.event, 1000 ), "wait for stopped_handler.event failed\n" );
 
     hr = IDeviceWatcher_get_Status( device_watcher, &status );
-    todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+    ok( hr == S_OK, "got hr %#lx\n", hr );
     todo_wine ok( status == DeviceWatcherStatus_Stopped, "got status %u\n", status );
     ok( stopped_handler.invoked, "stopped_handler not invoked\n" );
     ok( stopped_handler.args == NULL, "stopped_handler not invoked\n" );
@@ -477,7 +477,7 @@ static void test_DeviceInformation( void )
         todo_wine ok( !WaitForSingleObject( enumerated_handler.event, 5000 ), "wait for enumerated_handler.event failed\n" );
         todo_wine ok( added_handler.devices_added > 0, "devices_added should be greater than 0\n" );
         hr = IDeviceWatcher_get_Status( device_watcher, &status );
-        todo_wine ok( hr == S_OK, "got hr %#lx\n", hr );
+        ok( hr == S_OK, "got hr %#lx\n", hr );
         todo_wine ok( status == DeviceWatcherStatus_EnumerationCompleted, "got status %u\n", status );
 
         hr = IDeviceWatcher_Start( device_watcher );
