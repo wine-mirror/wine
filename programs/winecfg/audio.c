@@ -184,12 +184,15 @@ static BOOL get_driver_name(IMMDeviceEnumerator *devenum, PROPVARIANT *pv)
     IPropertyStore *ps;
     HRESULT hr;
 
-    hr = IMMDeviceEnumerator_GetDevice(devenum, L"Wine info device", &device);
-    if(FAILED(hr))
+    hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(devenum, eRender, eConsole, &device);
+    if(FAILED(hr)) {
+        ERR("Could not get default audio endpoint.\n");
         return FALSE;
+    }
 
     hr = IMMDevice_OpenPropertyStore(device, STGM_READ, &ps);
     if(FAILED(hr)){
+        ERR("Could not get property store for default audio endpoint (0x%p).\n", device);
         IMMDevice_Release(device);
         return FALSE;
     }
@@ -198,8 +201,10 @@ static BOOL get_driver_name(IMMDeviceEnumerator *devenum, PROPVARIANT *pv)
             (const PROPERTYKEY *)&DEVPKEY_Device_Driver, pv);
     IPropertyStore_Release(ps);
     IMMDevice_Release(device);
-    if(FAILED(hr))
+    if(FAILED(hr) || pv == NULL || pv->pwszVal == NULL) {
+        ERR("Could not get device driver property value.\n");
         return FALSE;
+    }
 
     return TRUE;
 }
