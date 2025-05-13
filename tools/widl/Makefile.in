@@ -7,6 +7,7 @@ SOURCES = \
 	expr.c \
 	hash.c \
 	header.c \
+	metadata.c \
 	parser.l \
 	parser.y \
 	ppl.l \

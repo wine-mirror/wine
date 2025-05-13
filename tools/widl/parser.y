@@ -379,6 +379,7 @@ input: gbl_statements m_acf			{ $1 = append_parameterized_type_stmts($1);
 						  write_typelib_regscript($1);
 						  write_dlldata($1);
 						  write_local_stubs($1);
+						  write_metadata($1);
                                                   (void)parser_nerrs;  /* avoid unused variable warning */
 						}
 	;
