@@ -99,6 +99,45 @@ static void test_BluetoothAdapterStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_BluetoothDeviceStatics( void )
+{
+    static const WCHAR *class_name = RuntimeClass_Windows_Devices_Bluetooth_BluetoothDevice;
+    IBluetoothDeviceStatics *statics;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+
+    WindowsCreateString( class_name, wcslen( class_name ), &str );
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void *)&factory );
+    WindowsDeleteString( str );
+    todo_wine ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr != S_OK)
+    {
+        todo_wine win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        return;
+    }
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IBluetoothDeviceStatics, (void **)&statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IActivationFactory_Release( factory );
+    if (FAILED( hr ))
+    {
+        skip( "BluetoothDeviceStatics not available.\n" );
+        return;
+    }
+
+    str = NULL;
+    hr = IBluetoothDeviceStatics_GetDeviceSelector( statics, &str );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !WindowsIsStringEmpty( str ), "got empty device selector string.\n" );
+    WindowsDeleteString( str );
+
+    IBluetoothDeviceStatics_Release( statics );
+}
+
 START_TEST(bluetooth)
 {
     HRESULT hr;
@@ -107,6 +146,7 @@ START_TEST(bluetooth)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_BluetoothAdapterStatics();
+    test_BluetoothDeviceStatics();
 
     RoUninitialize();
 }
