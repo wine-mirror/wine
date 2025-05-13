@@ -173,17 +173,17 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
     return status;
 }
 
-static const shared_object_t *find_shared_session_object( struct obj_locator locator )
+static const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t offset )
 {
     struct session_block *block = NULL;
     const shared_object_t *object;
     NTSTATUS status;
 
-    if (locator.id && !(status = find_shared_session_block( locator.offset, sizeof(*object), &block )))
+    if (id && !(status = find_shared_session_block( offset, sizeof(*object), &block )))
     {
-        object = (const shared_object_t *)(block->data + locator.offset - block->offset);
-        if (locator.id == shared_object_get_id( object )) return object;
-        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(locator.id) );
+        object = (const shared_object_t *)(block->data + offset - block->offset);
+        if (id == shared_object_get_id( object )) return object;
+        WARN( "Session object id doesn't match expected id %s\n", wine_dbgstr_longlong(id) );
     }
 
     return NULL;
@@ -219,7 +219,7 @@ NTSTATUS get_shared_desktop( struct object_lock *lock, const desktop_shm_t **des
         }
         SERVER_END_REQ;
 
-        data->shared_desktop = find_shared_session_object( locator );
+        data->shared_desktop = find_shared_session_object( locator.id, locator.offset );
         if (!(object = data->shared_desktop)) return STATUS_INVALID_HANDLE;
     }
 
@@ -252,7 +252,7 @@ NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **queue_s
         }
         SERVER_END_REQ;
 
-        data->shared_queue = find_shared_session_object( locator );
+        data->shared_queue = find_shared_session_object( locator.id, locator.offset );
         if (!(object = data->shared_queue)) return STATUS_INVALID_HANDLE;
     }
 
@@ -286,7 +286,7 @@ static NTSTATUS try_get_shared_input( UINT tid, struct object_lock *lock, const 
         SERVER_END_REQ;
 
         cache->id = locator.id;
-        cache->object = find_shared_session_object( locator );
+        cache->object = find_shared_session_object( locator.id, locator.offset );
         if (!(object = cache->object)) return STATUS_INVALID_HANDLE;
     }
 
@@ -577,7 +577,7 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     {
         struct user_thread_info *thread_info = get_user_thread_info();
         struct session_thread_data *data = get_session_thread_data();
-        data->shared_desktop = find_shared_session_object( locator );
+        data->shared_desktop = find_shared_session_object( locator.id, locator.offset );
         memset( &data->shared_foreground, 0, sizeof(data->shared_foreground) );
         thread_info->client_info.top_window = 0;
         thread_info->client_info.msg_window = 0;
