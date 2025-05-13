@@ -26,6 +26,58 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(enumeration);
 
+typedef HRESULT (*enum_device_information_cb)( IDeviceInformation *info, void *context );
+
+static HRESULT enum_device_information( enum_device_information_cb callback, void *context )
+{
+    HKEY iface_key;
+    HRESULT hr;
+    DWORD i;
+
+    if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
+        return HRESULT_FROM_WIN32( GetLastError() );
+
+    for (i = 0, hr = S_OK; SUCCEEDED(hr); i++)
+    {
+        char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
+        SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
+        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
+        HDEVINFO set = INVALID_HANDLE_VALUE;
+        GUID iface_class;
+        WCHAR name[40];
+        DWORD j, len;
+        LSTATUS ret;
+
+        len = ARRAY_SIZE(name);
+        ret = RegEnumKeyExW( iface_key, i, name, &len, NULL, NULL, NULL, NULL );
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+        if (ret) hr = HRESULT_FROM_WIN32( ret );
+
+        if (SUCCEEDED(hr) && SUCCEEDED(hr = CLSIDFromString( name, &iface_class )))
+        {
+            set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
+            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
+        }
+
+        for (j = 0; SUCCEEDED(hr) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
+        {
+            IDeviceInformation *info;
+
+            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
+            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, NULL )) continue;
+
+            if (SUCCEEDED(hr = device_information_create( detail->DevicePath, &info )))
+            {
+                hr = callback( info, context );
+                IDeviceInformation_Release( info );
+            }
+        }
+    }
+
+    RegCloseKey( iface_key );
+    return hr;
+}
+
 struct device_watcher
 {
     IDeviceWatcher IDeviceWatcher_iface;
@@ -451,6 +503,12 @@ static HRESULT WINAPI device_statics_CreateFromIdAsyncAdditionalProperties( IDev
     return E_NOTIMPL;
 }
 
+static HRESULT append_device_information( IDeviceInformation *info, void *context )
+{
+    IVector_IInspectable *vector = context;
+    return IVector_IInspectable_Append( vector, (IInspectable *)info );
+}
+
 static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
 {
     static const struct vector_iids iids =
@@ -462,58 +520,12 @@ static HRESULT find_all_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *
     };
     IVectorView_DeviceInformation *view;
     IVector_IInspectable *vector;
-    HKEY iface_key;
     HRESULT hr;
-    DWORD i;
 
     TRACE( "invoker %p, param %p, result %p\n", invoker, param, result );
 
     if (FAILED(hr = vector_create( &iids, (void *)&vector ))) return hr;
-
-    if (!(iface_key = SetupDiOpenClassRegKeyExW( NULL, KEY_ENUMERATE_SUB_KEYS, DIOCR_INTERFACE, NULL, NULL )))
-    {
-        IVector_IInspectable_Release( vector );
-        return HRESULT_FROM_WIN32( GetLastError() );
-    }
-
-    for (i = 0; SUCCEEDED(hr); i++)
-    {
-        char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
-        SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
-        SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
-        HDEVINFO set = INVALID_HANDLE_VALUE;
-        GUID iface_class;
-        WCHAR name[40];
-        DWORD j, len;
-        LSTATUS ret;
-
-        len = ARRAY_SIZE(name);
-        ret = RegEnumKeyExW( iface_key, i, name, &len, NULL, NULL, NULL, NULL );
-        if (ret == ERROR_NO_MORE_ITEMS) break;
-        if (ret) hr = HRESULT_FROM_WIN32( ret );
-
-        if (SUCCEEDED(hr) && SUCCEEDED(hr = CLSIDFromString( name, &iface_class )))
-        {
-            set = SetupDiGetClassDevsW( &iface_class, NULL, NULL, DIGCF_DEVICEINTERFACE );
-            if (set == INVALID_HANDLE_VALUE) hr = HRESULT_FROM_WIN32( GetLastError() );
-        }
-
-        for (j = 0; SUCCEEDED(hr) && SetupDiEnumDeviceInterfaces( set, NULL, &iface_class, j, &iface ); j++)
-        {
-            IDeviceInformation *info;
-
-            detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
-            if (!SetupDiGetDeviceInterfaceDetailW( set, &iface, detail, sizeof(buffer), NULL, NULL )) continue;
-
-            if (SUCCEEDED(hr = device_information_create( detail->DevicePath, &info )))
-            {
-                hr = IVector_IInspectable_Append( vector, (IInspectable *)info );
-                IDeviceInformation_Release( info );
-            }
-        }
-    }
-
-    RegCloseKey( iface_key );
+    hr = enum_device_information( append_device_information, vector );
 
     if (SUCCEEDED(hr)) hr = IVector_IInspectable_GetView( vector, (void *)&view );
     IVector_IInspectable_Release( vector );
