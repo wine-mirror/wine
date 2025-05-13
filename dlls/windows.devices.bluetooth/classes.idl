@@ -20,4 +20,21 @@
 
 #pragma makedep register
 
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.devices.enumeration.idl";
+import "windows.devices.radios.idl";
+import "windows.networking.idl";
+import "windows.networking.sockets.idl";
+import "windows.storage.streams.idl";
+
+#define DO_NO_IMPORTS
+#include "windows.devices.bluetooth.rfcomm.idl"
 #include "windows.devices.bluetooth.idl"
