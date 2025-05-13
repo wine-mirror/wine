@@ -65,7 +65,6 @@ typedef struct tagWND
     HICON              hIconSmall;    /* window's small icon */
     HICON              hIconSmall2;   /* window's secondary small icon, derived from hIcon */
     HIMC               imc;           /* window's input context */
-    UINT               dpi_context;   /* window DPI awareness context */
     struct window_surface *surface;   /* Window surface if any */
     struct list        vulkan_surfaces; /* list of vulkan surfaces created for this window */
     struct tagDIALOGINFO *dlgInfo;    /* Dialog additional info (dialogs only) */

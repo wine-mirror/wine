@@ -3416,8 +3416,6 @@ struct create_window_reply
     user_handle_t  owner;
     int            extra;
     client_ptr_t   class_ptr;
-    unsigned int   dpi_context;
-    char __pad_36[4];
 };
 
 
@@ -3474,8 +3472,6 @@ struct get_window_info_reply
     struct reply_header __header;
     user_handle_t  last_active;
     int            is_unicode;
-    unsigned int   dpi_context;
-    char __pad_20[4];
 };
 
 
@@ -3527,8 +3523,6 @@ struct set_parent_reply
     struct reply_header __header;
     user_handle_t  old_parent;
     user_handle_t  full_parent;
-    unsigned int   dpi_context;
-    char __pad_20[4];
 };
 
 
@@ -6812,6 +6806,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 873
+#define SERVER_PROTOCOL_VERSION 874
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

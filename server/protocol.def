@@ -2555,7 +2555,6 @@ enum message_type
     user_handle_t  owner;       /* full handle of owner */
     int            extra;       /* number of extra bytes */
     client_ptr_t   class_ptr;   /* pointer to class in client address space */
-    unsigned int   dpi_context; /* window DPI context */
 @END
 
 
@@ -2590,7 +2589,6 @@ enum message_type
 @REPLY
     user_handle_t  last_active; /* last active popup */
     int            is_unicode;  /* ANSI or unicode */
-    unsigned int   dpi_context; /* window DPI context */
 @END
 
 
@@ -2630,7 +2628,6 @@ enum message_type
 @REPLY
     user_handle_t  old_parent;  /* old parent window */
     user_handle_t  full_parent; /* full handle of new parent */
-    unsigned int   dpi_context; /* new DPI context */
 @END
 
 

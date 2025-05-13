@@ -80,13 +80,13 @@ static struct session_thread_data *get_session_thread_data(void)
     return thread_info->session_data;
 }
 
-static void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
+void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq )
 {
     while ((*seq = ReadNoFence64( &object->seq )) & 1) YieldProcessor();
     __SHARED_READ_FENCE;
 }
 
-static BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq )
+BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq )
 {
     __SHARED_READ_FENCE;
     return ReadNoFence64( &object->seq ) == seq;
@@ -173,7 +173,7 @@ static NTSTATUS find_shared_session_block( SIZE_T offset, SIZE_T size, struct se
     return status;
 }
 
-static const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t offset )
+const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t offset )
 {
     struct session_block *block = NULL;
     const shared_object_t *object;

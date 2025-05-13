@@ -219,6 +219,10 @@ struct object_lock
 #define __SHARED_READ_FENCE __atomic_thread_fence( __ATOMIC_ACQUIRE )
 #endif
 
+extern const shared_object_t *find_shared_session_object( object_id_t id, mem_size_t offset );
+extern void shared_object_acquire_seqlock( const shared_object_t *object, UINT64 *seq );
+extern BOOL shared_object_release_seqlock( const shared_object_t *object, UINT64 seq );
+
 /* Get shared session object's data pointer, must be called in a loop while STATUS_PENDING
  * is returned, lock must be initialized with OBJECT_LOCK_INIT.
  *
