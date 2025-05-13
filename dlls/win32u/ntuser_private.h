@@ -38,17 +38,11 @@ enum system_timer_id
     SYSTEM_TIMER_CARET = 0xffff,
 };
 
-struct user_object
-{
-    HANDLE       handle;
-    unsigned int type;
-};
-
 #define OBJ_OTHER_PROCESS ((void *)1)  /* returned by get_user_handle_ptr on unknown handles */
 
 typedef struct tagWND
 {
-    struct user_object obj;           /* object header */
+    HWND               handle;        /* window full handle */
     HWND               parent;        /* Window parent */
     HWND               owner;         /* Window owner */
     struct tagCLASS   *class;         /* Window class */
@@ -230,7 +224,7 @@ extern BOOL vulkan_init(void);
 extern void vulkan_detach_surfaces( struct list *surfaces );
 
 /* window.c */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type );
+HANDLE alloc_user_handle( void *ptr, unsigned short type );
 void *free_user_handle( HANDLE handle, unsigned short type );
 void *get_user_handle_ptr( HANDLE handle, unsigned short type );
 void release_user_handle_ptr( void *ptr );

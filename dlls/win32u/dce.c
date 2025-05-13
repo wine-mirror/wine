@@ -1153,9 +1153,9 @@ void invalidate_dce( WND *win, const RECT *old_rect )
 
     if (!win->parent) return;
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( win->obj.handle ));
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( win->handle ) );
 
-    TRACE("%p parent %p, old_rect %s\n", win->obj.handle, win->parent, wine_dbgstr_rect(old_rect) );
+    TRACE( "%p parent %p, old_rect %s\n", win->handle, win->parent, wine_dbgstr_rect( old_rect ) );
 
     /* walk all DCEs and fixup non-empty entries */
 
@@ -1170,7 +1170,7 @@ void invalidate_dce( WND *win, const RECT *old_rect )
             continue;  /* child window positions don't bother us */
 
         /* if DCE window is a child of hwnd, it has to be invalidated */
-        if (dce->hwnd == win->obj.handle || is_child( win->obj.handle, dce->hwnd ))
+        if (dce->hwnd == win->handle || is_child( win->handle, dce->hwnd ))
         {
             make_dc_dirty( dce );
             continue;
@@ -1183,7 +1183,7 @@ void invalidate_dce( WND *win, const RECT *old_rect )
             struct window_rects rects;
 
             /* get the parent client-relative old/new window rects */
-            get_window_rects( win->obj.handle, COORDS_PARENT, &rects, get_thread_dpi() );
+            get_window_rects( win->handle, COORDS_PARENT, &rects, get_thread_dpi() );
             old_window_rect = old_rect ? *old_rect : rects.window;
             new_window_rect = rects.window;
 

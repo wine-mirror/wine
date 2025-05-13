@@ -54,7 +54,7 @@ struct menu_item
 /* menu user object */
 struct menu
 {
-    struct user_object obj;
+    HMENU       handle;         /* menu full handle */
     struct menu_item  *items;   /* array of menu items */
     WORD        wFlags;         /* menu flags (MF_POPUP, MF_SYSMENU) */
     WORD        Width;          /* width of the whole menu */
@@ -80,7 +80,6 @@ struct menu
 /* the accelerator user object */
 struct accelerator
 {
-    struct user_object obj;
     unsigned int       count;
     ACCEL              table[1];
 };
@@ -208,7 +207,7 @@ HACCEL WINAPI NtUserCreateAcceleratorTable( ACCEL *table, INT count )
     accel->count = count;
     memcpy( accel->table, table, count * sizeof(*table) );
 
-    if (!(handle = alloc_user_handle( &accel->obj, NTUSER_OBJ_ACCEL ))) free( accel );
+    if (!(handle = alloc_user_handle( accel, NTUSER_OBJ_ACCEL ))) free( accel );
     TRACE_(accel)("returning %p\n", handle );
     return handle;
 }
@@ -606,7 +605,8 @@ static HMENU create_menu( BOOL is_popup )
     menu->refcount = 1;
     if (is_popup) menu->wFlags |= MF_POPUP;
 
-    if (!(handle = alloc_user_handle( &menu->obj, NTUSER_OBJ_MENU ))) free( menu );
+    if (!(handle = alloc_user_handle( menu, NTUSER_OBJ_MENU ))) free( menu );
+    else menu->handle = handle;
 
     TRACE( "return %p\n", handle );
     return handle;
@@ -1184,7 +1184,7 @@ static BOOL check_menu_radio_item( HMENU handle, UINT first, UINT last, UINT che
         struct menu_item *item;
 
         if (!(check_menu = find_menu_item( handle, i, flags, &check_pos ))) continue;
-        if (!first_menu) first_menu = grab_menu_ptr( check_menu->obj.handle );
+        if (!first_menu) first_menu = grab_menu_ptr( check_menu->handle );
 
         if (first_menu != check_menu)
         {
@@ -1422,7 +1422,7 @@ BOOL WINAPI NtUserDeleteMenu( HMENU handle, UINT id, UINT flags )
     if (menu->items[pos].fType & MF_POPUP)
         NtUserDestroyMenu( menu->items[pos].hSubMenu );
 
-    NtUserRemoveMenu( menu->obj.handle, pos, flags | MF_BYPOSITION );
+    NtUserRemoveMenu( menu->handle, pos, flags | MF_BYPOSITION );
     release_menu_ptr( menu );
     return TRUE;
 }
@@ -1760,7 +1760,7 @@ found:
         /* 1. in the system menu */
         if ((menu = find_menu_item( sys_menu, cmd, MF_BYCOMMAND, NULL )))
         {
-            submenu = menu->obj.handle;
+            submenu = menu->handle;
             release_menu_ptr( menu );
 
             if (get_capture())
@@ -1784,7 +1784,7 @@ found:
         {
             if ((menu = find_menu_item( menu_handle, cmd, MF_BYCOMMAND, NULL )))
             {
-                submenu = menu->obj.handle;
+                submenu = menu->handle;
                 release_menu_ptr( menu );
 
                 if (get_capture())
@@ -2313,7 +2313,7 @@ static void draw_bitmap_item( HWND hwnd, HDC hdc, struct menu_item *item, const 
                 if (item->fState & MF_DISABLED) drawItem.itemState |= ODS_DISABLED;
                 if (item->fState & MF_GRAYED)   drawItem.itemState |= ODS_GRAYED|ODS_DISABLED;
                 if (item->fState & MF_HILITE)   drawItem.itemState |= ODS_SELECTED;
-                drawItem.hwndItem = (HWND)menu->obj.handle;
+                drawItem.hwndItem = (HWND)menu->handle;
                 drawItem.hDC = hdc;
                 drawItem.itemData = item->dwItemData;
                 drawItem.rcItem = *rect;
@@ -2475,7 +2475,7 @@ static void draw_menu_item( HWND hwnd, struct menu *menu, HWND owner, HDC hdc,
         if (item->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED|ODS_DISABLED;
         if (item->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
         dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
-        dis.hwndItem   = (HWND)menu->obj.handle;
+        dis.hwndItem   = (HWND)menu->handle;
         dis.hDC        = hdc;
         dis.rcItem     = rect;
         TRACE( "Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
@@ -4561,7 +4561,7 @@ BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilit
     TRACE( "(%p, %p, %04x, %04x);\n", hwnd, handle, item, hilite );
 
     if (!(menu = find_menu_item(handle, item, hilite, &pos))) return FALSE;
-    handle_menu = menu->obj.handle;
+    handle_menu = menu->handle;
     focused_item = menu->FocusedItem;
     release_menu_ptr(menu);
 

@@ -39,7 +39,7 @@ WINE_DECLARE_DEBUG_CHANNEL(icon);
 
 struct cursoricon_object
 {
-    struct user_object      obj;        /* object header */
+    HICON                   handle;     /* cursor full handle */
     struct list             entry;      /* entry in shared icons list */
     struct free_icon_params params;     /* opaque params used by 16-bit code */
     UNICODE_STRING          module;     /* module for icons loaded from resources */
@@ -152,7 +152,8 @@ HICON alloc_cursoricon_handle( BOOL is_icon )
 
     if (!(obj = calloc( 1, sizeof(*obj) ))) return NULL;
     obj->is_icon = is_icon;
-    if (!(handle = alloc_user_handle( &obj->obj, NTUSER_OBJ_ICON ))) free( obj );
+    if (!(handle = alloc_user_handle( obj, NTUSER_OBJ_ICON ))) free( obj );
+    else obj->handle = handle;
     return handle;
 }
 
@@ -358,7 +359,7 @@ HICON WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRIN
         if (memcmp( ptr->module.Buffer, module->Buffer, module->Length )) continue;
         /* We pass rsrc as desc argument, this is not compatible with Windows */
         if (ptr->rsrc != desc) continue;
-        ret = ptr->obj.handle;
+        ret = ptr->handle;
         break;
     }
     user_unlock();

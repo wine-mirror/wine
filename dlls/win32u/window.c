@@ -55,7 +55,7 @@ static void *client_objects[MAX_USER_HANDLES];
 /***********************************************************************
  *           alloc_user_handle
  */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
+HANDLE alloc_user_handle( void *ptr, unsigned short type )
 {
     HANDLE handle = 0;
 
@@ -71,8 +71,6 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned short type )
         UINT index = USER_HANDLE_TO_INDEX( handle );
 
         assert( index < MAX_USER_HANDLES );
-        ptr->handle = handle;
-        ptr->type = type;
         InterlockedExchangePointer( &client_objects[index], ptr );
     }
     return handle;
@@ -131,7 +129,7 @@ static BOOL get_user_entry_at( WORD index, unsigned short type, struct user_entr
 void *get_user_handle_ptr( HANDLE handle, unsigned short type )
 {
     WORD index = USER_HANDLE_TO_INDEX( handle );
-    struct user_object *ptr = NULL;
+    void *ptr = NULL;
     struct user_entry entry;
 
     if (index >= MAX_USER_HANDLES) return NULL;
@@ -171,7 +169,7 @@ void *next_thread_user_object( UINT tid, HANDLE *handle, unsigned short type )
 /***********************************************************************
  *           set_user_handle_ptr
  */
-static void set_user_handle_ptr( HANDLE handle, struct user_object *ptr )
+static void set_user_handle_ptr( HANDLE handle, void *ptr )
 {
     WORD index = USER_HANDLE_TO_INDEX(handle);
     assert( index < MAX_USER_HANDLES );
@@ -192,7 +190,7 @@ void release_user_handle_ptr( void *ptr )
  */
 void *free_user_handle( HANDLE handle, unsigned short type )
 {
-    struct user_object *ptr;
+    void *ptr;
     WORD index = USER_HANDLE_TO_INDEX( handle );
 
     if ((ptr = get_user_handle_ptr( handle, type )) && ptr != OBJ_OTHER_PROCESS)
@@ -2680,7 +2678,7 @@ static void update_maximized_pos( WND *wnd )
     {
         if (!(wnd->dwStyle & WS_MINIMIZE))
         {
-            mon_info = monitor_info_from_window( wnd->obj.handle, MONITOR_DEFAULTTOPRIMARY );
+            mon_info = monitor_info_from_window( wnd->handle, MONITOR_DEFAULTTOPRIMARY );
             work_rect = mon_info.rcWork;
         }
 
@@ -3531,7 +3529,7 @@ static BOOL fixup_swp_flags( WINDOWPOS *winpos, const RECT *old_window_rect, int
         RtlSetLastWin32Error( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
-    winpos->hwnd = win->obj.handle;  /* make it a full handle */
+    winpos->hwnd = win->handle;  /* make it a full handle */
 
     /* Finally make sure that all coordinates are valid */
     if (winpos->x < -32768) winpos->x = -32768;
@@ -3874,7 +3872,6 @@ BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT
 
 typedef struct
 {
-    struct user_object obj;
     INT        count;
     INT        suggested_count;
     HWND       parent;
@@ -3906,7 +3903,7 @@ HDWP WINAPI NtUserBeginDeferWindowPos( INT count )
     dwp->suggested_count = count;
 
     if (!(dwp->winpos = malloc( count * sizeof(WINDOWPOS) )) ||
-        !(handle = alloc_user_handle( &dwp->obj, NTUSER_OBJ_WINPOS )))
+        !(handle = alloc_user_handle( dwp, NTUSER_OBJ_WINPOS )))
     {
         free( dwp->winpos );
         free( dwp );
@@ -4875,7 +4872,7 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 
         win = get_win_ptr( hwnd );
         if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
-        hwnd = win->obj.handle;  /* make it a full handle */
+        hwnd = win->handle;  /* make it a full handle */
 
         if (info->dwFlags) wparam = !(win->flags & WIN_NCACTIVATED);
         else wparam = (hwnd == NtUserGetForegroundWindow());
@@ -5213,7 +5210,7 @@ void destroy_thread_windows(void)
     user_lock();
     while ((win = next_thread_user_object( GetCurrentThreadId(), &handle, NTUSER_OBJ_WINDOW )))
     {
-        free_dce( win->dce, win->obj.handle );
+        free_dce( win->dce, win->handle );
         set_user_handle_ptr( handle, NULL );
         win->userdata = (UINT_PTR)free_list;
         free_list = win;
@@ -5234,7 +5231,7 @@ void destroy_thread_windows(void)
         free_list = (WND *)win->userdata;
         TRACE( "destroying %p\n", win );
 
-        user_driver->pDestroyWindow( win->obj.handle );
+        user_driver->pDestroyWindow( win->handle );
         vulkan_detach_surfaces( &win->vulkan_surfaces );
 
         if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && win->wIDmenu)
@@ -5327,8 +5324,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     user_lock();
 
-    win->obj.handle = handle;
-    win->obj.type   = NTUSER_OBJ_WINDOW;
+    win->handle     = handle;
     win->parent     = full_parent;
     win->owner      = full_owner;
     win->class      = class;
@@ -5336,7 +5332,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
     win->cbWndExtra = extra_bytes;
     win->dpi_context = dpi_context;
     list_init( &win->vulkan_surfaces );
-    set_user_handle_ptr( handle, &win->obj );
+    set_user_handle_ptr( handle, win );
     if (is_winproc_unicode( win->winproc, !ansi )) win->flags |= WIN_ISUNICODE;
     return win;
 }
@@ -5503,7 +5499,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     ex_style = cs.dwExStyle & ~WS_EX_LAYERED;
     if (!(win = create_window_handle( parent, owner, class_name, instance, ansi, style, ex_style )))
         return 0;
-    hwnd = win->obj.handle;
+    hwnd = win->handle;
 
     /* Fill the window structure */
 

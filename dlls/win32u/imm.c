@@ -48,7 +48,6 @@ struct ime_update
 
 struct imc
 {
-    struct user_object obj;
     DWORD    thread_id;
     UINT_PTR client_ptr;
 };
@@ -95,7 +94,7 @@ HIMC WINAPI NtUserCreateInputContext( UINT_PTR client_ptr )
     if (!(imc = malloc( sizeof(*imc) ))) return 0;
     imc->client_ptr = client_ptr;
     imc->thread_id = GetCurrentThreadId();
-    if (!(handle = alloc_user_handle( &imc->obj, NTUSER_OBJ_IMC )))
+    if (!(handle = alloc_user_handle( imc, NTUSER_OBJ_IMC )))
     {
         free( imc );
         return 0;
