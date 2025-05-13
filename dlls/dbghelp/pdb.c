@@ -2957,6 +2957,7 @@ static enum pdb_result pdb_reader_TPI_fillin_UDTlist(struct pdb_reader *pdb, sym
 
         default:
             result = PDB_REPORT_UNEXPECTED("UDT field list", cv_field->generic.id);
+            length = 0; /* keep SAST happy */
         }
         ptr += length;
         if (result) break;
