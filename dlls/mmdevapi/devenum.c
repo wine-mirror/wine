@@ -543,6 +543,11 @@ static MMDevice *MMDevice_Create(const WCHAR *name, GUID *id, EDataFlow flow, DW
                 PropVariantClear(&pv2);
             }
 
+            pv.vt = VT_LPWSTR;
+            pv.pwszVal = drvs.module_name;
+
+            MMDevice_SetPropValue(id, flow, (const PROPERTYKEY*)&DEVPKEY_Device_Driver, &pv);
+
             RegCloseKey(keyprop);
         }
         RegCloseKey(key);
