@@ -457,6 +457,8 @@ static DWORD WINAPI request_thread_proc( void *arg )
 {
     LIST_ENTRY *entry;
 
+    SetThreadDescription( GetCurrentThread(), L"wine_nsi_request" );
+
     while (WaitForSingleObject( request_event, INFINITE ) == WAIT_OBJECT_0)
     {
         TRACE( "request_event triggered\n" );
@@ -485,6 +487,8 @@ static DWORD WINAPI notification_thread_proc( void *arg )
     struct nsi_get_notification_params params;
     LIST_ENTRY *entry, *next;
     NTSTATUS status;
+
+    SetThreadDescription( GetCurrentThread(), L"wine_nsi_notification" );
 
     while (!(status = nsiproxy_call( nsi_get_notification, &params )))
     {
