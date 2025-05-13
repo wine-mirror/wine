@@ -802,7 +802,7 @@
 @ stdcall IsValidDpiAwarenessContext(long)
 @ stdcall IsWinEventHookInstalled(long)
 @ stdcall IsWindow(long)
-# @ stub IsWindowArranged
+@ stdcall IsWindowArranged(long)
 @ stdcall IsWindowEnabled(long)
 # @ stub IsWindowInDestroy
 @ stdcall IsWindowRedirectedForPrint(long)
