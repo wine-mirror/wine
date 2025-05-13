@@ -2041,8 +2041,8 @@ static void test_tp_io(void)
     OVERLAPPED ovl = {}, ovl2 = {};
     HANDLE client, server, thread;
     struct io_cb_ctx userdata;
+    const char out[1] = "";
     char in[1], in2[1];
-    const char out[1];
     NTSTATUS status;
     DWORD ret_size;
     TP_POOL *pool;
@@ -2261,8 +2261,8 @@ static void test_kernel32_tp_io(void)
     OVERLAPPED ovl = {}, ovl2 = {};
     HANDLE client, server, thread;
     struct io_cb_ctx userdata;
+    const char out[1] = "";
     char in[1], in2[1];
-    const char out[1];
     NTSTATUS status;
     DWORD ret_size;
     TP_POOL *pool;
