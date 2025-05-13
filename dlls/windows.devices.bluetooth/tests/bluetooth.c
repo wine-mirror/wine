@@ -110,10 +110,10 @@ static void test_BluetoothDeviceStatics( void )
     WindowsCreateString( class_name, wcslen( class_name ), &str );
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void *)&factory );
     WindowsDeleteString( str );
-    todo_wine ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
     if (hr != S_OK)
     {
-        todo_wine win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( class_name ) );
         return;
     }
     check_interface( factory, &IID_IUnknown );

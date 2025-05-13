@@ -40,6 +40,7 @@
 #include "windows.devices.bluetooth.h"
 
 extern IActivationFactory *bluetoothadapter_factory;
+extern IActivationFactory *bluetoothdevice_statics_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

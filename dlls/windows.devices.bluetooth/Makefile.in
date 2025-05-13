@@ -3,5 +3,6 @@ IMPORTS = combase
 
 SOURCES = \
 	bluetoothadapter.c \
+	bluetoothdevice.c \
 	classes.idl \
 	main.c
