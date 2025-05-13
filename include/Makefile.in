@@ -858,6 +858,7 @@ SOURCES = \
 	windows.data.json.idl \
 	windows.data.xml.dom.idl \
 	windows.devices.bluetooth.idl \
+	windows.devices.bluetooth.rfcomm.idl \
 	windows.devices.enumeration.idl \
 	windows.devices.geolocation.idl \
 	windows.devices.haptics.idl \

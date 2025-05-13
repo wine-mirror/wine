@@ -33,6 +33,8 @@ import "windows.devices.radios.idl";
 import "windows.storage.streams.idl";
 
 namespace Windows.Devices.Bluetooth {
+    typedef enum BluetoothCacheMode BluetoothCacheMode;
+
     interface IBluetoothAdapter;
     interface IBluetoothAdapter2;
     interface IBluetoothAdapter3;
@@ -44,6 +46,15 @@ namespace Windows.Devices.Bluetooth {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Devices.Bluetooth.BluetoothAdapter *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Devices.Bluetooth.BluetoothAdapter *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum BluetoothCacheMode
+    {
+        Cached = 0,
+        Uncached = 1,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
