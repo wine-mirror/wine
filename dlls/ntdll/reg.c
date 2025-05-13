@@ -312,11 +312,18 @@ static NTSTATUS RTL_ReportRegistryValue(PKEY_VALUE_FULL_INFORMATION pInfo,
                 res = 0;
                 dst.MaximumLength = 0;
                 RtlExpandEnvironmentStrings_U(pEnvironment, &src, &dst, &res);
-                if (str->MaximumLength < res)
+                if (str->Buffer == NULL)
+                {
+                    str->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, res);
+                    str->MaximumLength = res;
+                }
+                else if (str->MaximumLength < res)
                     return STATUS_BUFFER_TOO_SMALL;
                 RtlExpandEnvironmentStrings_U(pEnvironment, &src, str, &res);
+                str->Length = (res >= sizeof(WCHAR) ? res - sizeof(WCHAR) : res);
                 break;
             }
+            /* fallthrough */
 
         case REG_SZ:
         case REG_LINK:

@@ -2900,6 +2900,8 @@ static struct query_reg_values_test query_reg_values_tests[] =
 
 static void test_RtlQueryRegistryValues(void)
 {
+    RTL_QUERY_REGISTRY_TABLE query_table[2];
+    UNICODE_STRING str;
     NTSTATUS status;
     unsigned int i;
 
@@ -2922,6 +2924,20 @@ static void test_RtlQueryRegistryValues(void)
     status = RegSetKeyValueW(HKEY_CURRENT_USER, L"WineTest\\subkey", L"Color", REG_SZ,
                              L"Yellow", sizeof(L"Yellow"));
     ok(status == ERROR_SUCCESS, "Failed to create registry value Color: %lu\n", status);
+
+    RtlInitUnicodeString(&str, NULL);
+    memset(query_table, 0, sizeof(query_table));
+    query_table[0].QueryRoutine = NULL;
+    query_table[0].Name = (WCHAR *)L"WindowsDrive";
+    query_table[0].EntryContext = &str;
+    query_table[0].Flags = RTL_QUERY_REGISTRY_DIRECT | RTL_QUERY_REGISTRY_TYPECHECK;
+    query_table[0].DefaultType = REG_EXPAND_SZ << RTL_QUERY_REGISTRY_TYPECHECK_SHIFT;
+    status = pRtlQueryRegistryValues(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer, query_table, NULL, NULL);
+    ok(!status, "got %#lx.\n", status);
+    ok(!wcsicmp(str.Buffer, L"C:"), "got %s.\n", debugstr_w(str.Buffer));
+    ok(str.Length == 4, "got %d.\n", str.Length);
+    ok(str.MaximumLength == 6, "got %d.\n", str.Length);
+    RtlFreeHeap(GetProcessHeap(), 0, str.Buffer);
 
     for (i = 0; i < ARRAY_SIZE(query_reg_values_tests); i++)
     {
