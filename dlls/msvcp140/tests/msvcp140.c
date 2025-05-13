@@ -21,6 +21,7 @@
 #include <locale.h>
 #include <share.h>
 #include <uchar.h>
+#include <process.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -28,6 +29,8 @@
 
 #include "wine/test.h"
 #include "winbase.h"
+
+#include "threaddll.h"
 
 #define SECSPERDAY        86400
 /* 1601 to 1970 is 369 years plus 89 leap days */
@@ -160,7 +163,7 @@ typedef struct {
 typedef struct
 {
     HANDLE hnd;
-    DWORD  id;
+    unsigned int id;
 } _Thrd_t;
 
 typedef struct cs_queue
@@ -247,6 +250,7 @@ static int (__cdecl *p__Cnd_timedwait)(_Cnd_t, _Mtx_t, const xtime*);
 static int (__cdecl *p__Cnd_broadcast)(_Cnd_t);
 static int (__cdecl *p__Cnd_signal)(_Cnd_t);
 static int (__cdecl *p__Thrd_create)(_Thrd_t*, _Thrd_start_t, void*);
+static int (__cdecl *p__Thrd_start)(_Thrd_t*, _beginthreadex_start_routine_t, void *);
 static int (__cdecl *p__Thrd_join)(_Thrd_t, int*);
 static int (__cdecl *p__Xtime_diff_to_millis2)(const xtime*, const xtime*);
 static int (__cdecl *p_xtime_get)(xtime*, int);
@@ -455,6 +459,7 @@ static BOOL init(void)
     SET(p__Cnd_broadcast, "_Cnd_broadcast");
     SET(p__Cnd_signal, "_Cnd_signal");
     SET(p__Thrd_create, "_Thrd_create");
+    SET(p__Thrd_start, "_Thrd_start");
     SET(p__Thrd_join, "_Thrd_join");
     SET(p__Xtime_diff_to_millis2, "_Xtime_diff_to_millis2");
     SET(p_xtime_get, "xtime_get");
@@ -2375,6 +2380,88 @@ void test_codecvt_char16(void)
     }
 }
 
+static char *get_thread_dll_path(void)
+{
+    static char path[MAX_PATH];
+    const char dll_name[] = "threaddll.dll";
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathA(ARRAY_SIZE(path), path);
+    strcat(path, dll_name);
+
+    file = CreateFileA(path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "Failed to create file %s: %lu.\n",
+            debugstr_a(path), GetLastError());
+
+    res = FindResourceA(NULL, dll_name, "TESTDLL");
+    ok(!!res, "Failed to load resource: %lu\n", GetLastError());
+    ptr = LockResource(LoadResource(GetModuleHandleA(NULL), res));
+    WriteFile(file, ptr, SizeofResource( GetModuleHandleA(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleA(NULL), res), "Failed to write resource\n");
+    CloseHandle(file);
+
+    return path;
+}
+
+static void set_thead_dll_detach_event(HANDLE dll, HANDLE event)
+{
+    void (WINAPI *_set_detach_event)(HANDLE event);
+    _set_detach_event = (void*) GetProcAddress(dll, "set_detach_event");
+    ok(_set_detach_event != NULL, "Failed to get set_detach_event: %lu\n", GetLastError());
+    _set_detach_event(event);
+}
+
+static void test_thread_library_reference(void)
+{
+    _beginthreadex_start_routine_t thread_proc;
+    HANDLE detach_event;
+    _Thrd_t thread;
+    HMODULE dll;
+    DWORD ret;
+
+    struct threaddll_args args;
+
+    detach_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(detach_event != NULL, "Failed to create an event: %lu\n", GetLastError());
+    args.confirm_running = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(args.confirm_running != NULL, "Failed to create an event: %lu\n", GetLastError());
+    args.past_free = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ok(args.past_free != NULL, "Failed to create an event: %lu\n", GetLastError());
+
+    dll = LoadLibraryA(get_thread_dll_path());
+    ok(!!dll, "Failed to load the test dll: %lu\n", GetLastError());
+
+    set_thead_dll_detach_event(dll, detach_event);
+
+    thread_proc = (void *)GetProcAddress(dll, "thread_proc");
+    ok(!!thread_proc, "Failed to get thread_proc: %lu\n", GetLastError());
+    p__Thrd_start(&thread, thread_proc, &args);
+
+    ret = WaitForSingleObject(args.confirm_running, 200);
+    ok(ret == WAIT_OBJECT_0, "Event was not signaled, ret: %lu, err: %lu\n", ret, GetLastError());
+
+    ret = FreeLibrary(dll);
+    ok(ret, "Failed to free the library: %lu\n", GetLastError());
+
+    ret = WaitForSingleObject(detach_event, 0);
+    ok(ret == WAIT_TIMEOUT, "Thread detach happened unexpectedly signaling an event, ret: %ld, err: %lu\n", ret, GetLastError());
+
+    ret = SetEvent(args.past_free);
+    ok(ret, "Failed to signal event: %ld\n", GetLastError());
+
+    ret = WaitForSingleObject(detach_event, 1000);
+    ok(ret == WAIT_OBJECT_0, "Detach event was not signaled, ret: %ld, err: %lu\n", ret, GetLastError());
+
+    p__Thrd_join(thread, NULL);
+
+    CloseHandle(args.past_free);
+    CloseHandle(args.confirm_running);
+    CloseHandle(detach_event);
+}
+
 START_TEST(msvcp140)
 {
     if(!init()) return;
@@ -2405,5 +2492,6 @@ START_TEST(msvcp140)
     test__Mtx();
     test__Fiopen();
     test_codecvt_char16();
+    test_thread_library_reference();
     FreeLibrary(msvcp);
 }

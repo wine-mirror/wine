@@ -1,4 +1,6 @@
 TESTDLL   = msvcp140.dll
 
 SOURCES = \
-	msvcp140.c
+	msvcp140.c \
+	threaddll.c \
+	threaddll.spec
