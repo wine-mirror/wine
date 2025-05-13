@@ -1319,7 +1319,8 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
 {
     struct wined3d_dc_info *front, *back;
     HBITMAP bitmap;
-    void *data;
+    void *heap_pointer;
+    void *heap_memory;
     HDC dc;
 
     front = &swapchain->front_buffer->dc_info[0];
@@ -1328,15 +1329,18 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
     /* Flip the surface data. */
     dc = front->dc;
     bitmap = front->bitmap;
-    data = swapchain->front_buffer->resource.heap_memory;
+    heap_pointer = swapchain->front_buffer->resource.heap_pointer;
+    heap_memory = swapchain->front_buffer->resource.heap_memory;
 
     front->dc = back->dc;
     front->bitmap = back->bitmap;
+    swapchain->front_buffer->resource.heap_pointer = swapchain->back_buffers[0]->resource.heap_pointer;
     swapchain->front_buffer->resource.heap_memory = swapchain->back_buffers[0]->resource.heap_memory;
 
     back->dc = dc;
     back->bitmap = bitmap;
-    swapchain->back_buffers[0]->resource.heap_memory = data;
+    swapchain->back_buffers[0]->resource.heap_pointer = heap_pointer;
+    swapchain->back_buffers[0]->resource.heap_memory = heap_memory;
 
     SetRect(&swapchain->front_buffer_update, 0, 0,
             swapchain->front_buffer->resource.width,
