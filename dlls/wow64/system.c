@@ -177,6 +177,7 @@ static NTSTATUS put_system_proc_info( SYSTEM_PROCESS_INFORMATION32 *info32,
             prev = proc32;
         }
         outpos += proc_len + proc->ProcessName.MaximumLength;
+        outpos = (outpos + 7) & ~(ULONG_PTR)7;
         inpos += proc->NextEntryOffset;
         if (!proc->NextEntryOffset) break;
     }

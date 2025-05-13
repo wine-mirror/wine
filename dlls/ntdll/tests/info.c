@@ -662,6 +662,8 @@ static void test_query_process( BOOL extended )
             }
         }
 
+        ok(((ULONG_PTR)spi & 7) == 0, "Record is not aligned at 8 byte boundary. %p\n", spi);
+
         if (!spi->NextEntryOffset)
         {
             winetest_pop_context();

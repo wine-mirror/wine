@@ -3036,6 +3036,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
 
         proc_len = sizeof(*nt_process) + server_process->thread_count * thread_info_size
                      + (name_len + 1) * sizeof(WCHAR);
+        proc_len = (proc_len + 7) & ~(ULONG_PTR)7;
         *len += proc_len;
 
         if (*len <= size)
