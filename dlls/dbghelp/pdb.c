@@ -1885,26 +1885,26 @@ static struct {enum BasicType bt; unsigned char size;} supported_basic[T_MAXBASI
     [T_REAL64]   = {btFloat, 8},
     [T_REAL80]   = {btFloat, 10},
     [T_REAL128]  = {btFloat, 16},
-    [T_RCHAR]   = {btChar, 1},
-    [T_WCHAR]   = {btWChar, 2},
-    [T_CHAR16]  = {btChar16, 2},
-    [T_CHAR32]  = {btChar32, 4},
-    [T_CHAR8]   = {btChar8, 1},
-    [T_INT2]    = {btInt, 2},
-    [T_UINT2]   = {btUInt, 2},
-    [T_INT4]    = {btInt, 4},
-    [T_UINT4]   = {btUInt, 4},
-    [T_INT8]    = {btInt, 8},
-    [T_UINT8]   = {btUInt, 8},
-    [T_HRESULT] = {btUInt, 4},
-    [T_CPLX32]  = {btComplex, 8},
-    [T_CPLX64]  = {btComplex, 16},
-    [T_CPLX128] = {btComplex, 32},
+    [T_RCHAR]    = {btChar, 1},
+    [T_WCHAR]    = {btWChar, 2},
+    [T_CHAR16]   = {btChar16, 2},
+    [T_CHAR32]   = {btChar32, 4},
+    [T_CHAR8]    = {btChar8, 1},
+    [T_INT2]     = {btInt, 2},
+    [T_UINT2]    = {btUInt, 2},
+    [T_INT4]     = {btInt, 4},
+    [T_UINT4]    = {btUInt, 4},
+    [T_INT8]     = {btInt, 8},
+    [T_UINT8]    = {btUInt, 8},
+    [T_HRESULT]  = {btUInt, 4},
+    [T_CPLX32]   = {btComplex, 8},
+    [T_CPLX64]   = {btComplex, 16},
+    [T_CPLX128]  = {btComplex, 32},
 };
 
 static inline BOOL is_basic_supported(unsigned basic)
 {
-    return basic <= T_MAXBASICTYPE && supported_basic[basic].bt != btNoType;
+    return basic < T_MAXBASICTYPE && supported_basic[basic].bt != btNoType;
 }
 
 static enum method_result pdb_reader_default_request(struct pdb_reader *pdb, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
@@ -1940,12 +1940,12 @@ static enum method_result pdb_reader_basic_request(struct pdb_reader *pdb, unsig
     {
     case TI_GET_BASETYPE:
         if (basic >= T_MAXBASICTYPE) return MR_FAILURE;
-        *((DWORD*)data) = supported_basic[basic].bt;
+        *((DWORD*)data) = supported_basic[basic & T_BASICTYPE_MASK].bt;
         break;
     case TI_GET_LENGTH:
         switch (basic & T_MODE_MASK)
         {
-        case 0:                *((DWORD64*)data) = supported_basic[basic].size; break;
+        case 0:                *((DWORD64*)data) = supported_basic[basic & T_BASICTYPE_MASK].size; break;
         /* pointer type */
         case T_NEARPTR_BITS:   *((DWORD64*)data) = pdb->module->cpu->word_size; break;
         case T_NEAR32PTR_BITS: *((DWORD64*)data) = 4; break;
@@ -2566,13 +2566,15 @@ static enum pdb_result pdb_reader_index_from_cv_typeid(struct pdb_reader *pdb, c
 
 static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, symref_t symref, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data);
 
-static BOOL pdb_reader_request_cv_typeid(struct pdb_reader *pdb, cv_typ_t cv_typeid, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
+static enum method_result pdb_reader_request_cv_typeid(struct pdb_reader *pdb, cv_typ_t cv_typeid, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
+    enum pdb_result result;
     struct symref_code code;
     symref_t target_symref;
 
-    if ((pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &target_symref))) return MR_FAILURE;
-    return pdb_reader_request_symref_t(pdb, target_symref, req, data) == MR_SUCCESS;
+    if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &target_symref)) != R_PDB_SUCCESS)
+        return pdb_method_result(result);
+    return pdb_reader_request_symref_t(pdb, target_symref, req, data);
 }
 
 static enum method_result pdb_reader_TPI_pointer_request(struct pdb_reader *pdb, const union codeview_type *cv_type, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
@@ -2601,6 +2603,7 @@ static enum method_result pdb_reader_TPI_pointer_request(struct pdb_reader *pdb,
 
 static enum method_result pdb_reader_TPI_array_request(struct pdb_reader *pdb, const union codeview_type *cv_type, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
+    enum method_result mr;
     DWORD64 element_length;
     int array_size;
 
@@ -2610,7 +2613,7 @@ static enum method_result pdb_reader_TPI_array_request(struct pdb_reader *pdb, c
         *((DWORD*)data) = SymTagArrayType;
         return MR_SUCCESS;
     case TI_GET_COUNT:
-        if (!pdb_reader_request_cv_typeid(pdb, cv_type->array_v3.elemtype, TI_GET_LENGTH, &element_length)) return MR_FAILURE;
+        if ((mr = pdb_reader_request_cv_typeid(pdb, cv_type->array_v3.elemtype, TI_GET_LENGTH, &element_length)) != MR_SUCCESS) return mr;
         if (codeview_fetch_leaf_as_int(cv_type, cv_type->array_v3.data, &array_size)) return MR_FAILURE;
         if (!element_length || (array_size % element_length))
             WARN("Incorrect array %u %I64u\n", array_size, element_length);
@@ -3067,7 +3070,7 @@ static enum method_result pdb_reader_TPI_UDT_request(struct pdb_reader *pdb, sym
 static enum method_result pdb_reader_TPI_modifier_request(struct pdb_reader *pdb, symref_t symref, const union codeview_type *cv_type,
                                                           IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
-    return pdb_reader_request_cv_typeid(pdb, cv_type->modifier_v2.type, req, data) ? MR_SUCCESS : MR_FAILURE;
+    return pdb_reader_request_cv_typeid(pdb, cv_type->modifier_v2.type, req, data);
 }
 
 static enum method_result pdb_reader_TPI_argtype_request(struct pdb_reader *pdb, struct pdb_action_entry *entry, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
@@ -3242,7 +3245,7 @@ static enum method_result pdb_reader_DBI_typedef_request(struct pdb_reader *pdb,
         *((WCHAR **)data) = heap_allocate_symname(cv_symbol->udt_v3.name);
         return *((WCHAR **)data) != NULL ? MR_SUCCESS : MR_FAILURE;
     case TI_GET_LENGTH:
-        return pdb_reader_request_cv_typeid(pdb, cv_symbol->udt_v3.type, req, data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
+        return pdb_reader_request_cv_typeid(pdb, cv_symbol->udt_v3.type, req, data);
     case TI_GET_TYPE:
     case TI_GET_TYPEID:
         return pdb_reader_index_from_cv_typeid(pdb, cv_symbol->udt_v3.type, (DWORD*)data) == R_PDB_SUCCESS ? MR_SUCCESS : MR_FAILURE;
