@@ -188,22 +188,97 @@ static HRESULT WINAPI device_watcher_get_Status( IDeviceWatcher *iface, DeviceWa
     return S_OK;
 }
 
+static HRESULT device_watcher_start_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
+    DeviceWatcherStatus status;
+
+    EnterCriticalSection( &impl->cs );
+    if (impl->status == DeviceWatcherStatus_Stopping) status = DeviceWatcherStatus_Stopped;
+    else status = DeviceWatcherStatus_EnumerationCompleted;
+    impl->status = status;
+    LeaveCriticalSection( &impl->cs );
+
+    if (status == DeviceWatcherStatus_Stopped) typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)invoker, NULL );
+    return S_OK;
+}
+
 static HRESULT WINAPI device_watcher_Start( IDeviceWatcher *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
+    struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
+    IAsyncAction *async;
+    HRESULT hr = S_OK;
+
+    FIXME( "iface %p: semi-stub!\n", iface );
+
+    if (!WindowsIsStringEmpty( impl->filter ))
+    {
+        FIXME( "Unsupported filter: %s\n", debugstr_hstring( impl->filter ) );
+        return E_NOTIMPL;
+    }
+
+    EnterCriticalSection( &impl->cs );
+    switch (impl->status)
+    {
+    case DeviceWatcherStatus_EnumerationCompleted: hr = E_ILLEGAL_METHOD_CALL; break;
+    case DeviceWatcherStatus_Started: hr = E_ILLEGAL_METHOD_CALL; break;
+    case DeviceWatcherStatus_Stopping: hr = E_ILLEGAL_METHOD_CALL; break;
+    default: hr = E_ILLEGAL_METHOD_CALL;
+
+    case DeviceWatcherStatus_Aborted:
+    case DeviceWatcherStatus_Created:
+    case DeviceWatcherStatus_Stopped:
+        impl->status = DeviceWatcherStatus_Started;
+        hr = async_action_create( (IUnknown *)iface, device_watcher_start_async, &async );
+        if (SUCCEEDED(hr)) IAsyncAction_Release( async );
+        break;
+    }
+    LeaveCriticalSection( &impl->cs );
+
+    return hr;
+}
+
+static HRESULT device_watcher_stop_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    struct device_watcher *impl = impl_from_IDeviceWatcher( (IDeviceWatcher *)invoker );
+
+    EnterCriticalSection( &impl->cs );
+    impl->status = DeviceWatcherStatus_Stopped;
+    LeaveCriticalSection( &impl->cs );
+
+    typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)invoker, NULL );
     return S_OK;
 }
 
 static HRESULT WINAPI device_watcher_Stop( IDeviceWatcher *iface )
 {
     struct device_watcher *impl = impl_from_IDeviceWatcher( iface );
-    HRESULT hr;
+    IAsyncAction *async;
+    HRESULT hr = S_OK;
 
-    FIXME( "iface %p semi-stub!\n", iface );
+    TRACE( "iface %p\n", iface );
 
-    IDeviceWatcher_AddRef( &impl->IDeviceWatcher_iface );
-    hr = typed_event_handlers_notify( &impl->stopped_handlers, (IInspectable *)iface, NULL );
-    IDeviceWatcher_Release( &impl->IDeviceWatcher_iface );
+    EnterCriticalSection( &impl->cs );
+    switch (impl->status)
+    {
+    case DeviceWatcherStatus_Aborted: break;
+    case DeviceWatcherStatus_Created: hr = E_ILLEGAL_METHOD_CALL; break;
+    case DeviceWatcherStatus_Stopped: hr = E_ILLEGAL_METHOD_CALL; break;
+    case DeviceWatcherStatus_Stopping: hr = E_ILLEGAL_METHOD_CALL; break;
+    default: hr = E_ILLEGAL_METHOD_CALL;
+
+    case DeviceWatcherStatus_EnumerationCompleted:
+        impl->status = DeviceWatcherStatus_Stopping;
+        hr = async_action_create( (IUnknown *)iface, device_watcher_stop_async, &async );
+        if (SUCCEEDED(hr)) IAsyncAction_Release( async );
+        break;
+    case DeviceWatcherStatus_Started:
+        impl->status = DeviceWatcherStatus_Stopping;
+        /* an async start is in progress, let it handle stopped state change */
+        break;
+    }
+    LeaveCriticalSection( &impl->cs );
+
     return hr;
 }
 

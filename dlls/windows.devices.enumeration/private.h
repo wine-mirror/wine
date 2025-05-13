@@ -58,6 +58,8 @@ HRESULT typed_event_handlers_clear( struct list *list );
 
 extern HRESULT async_operation_inspectable_create( const GUID *iid, IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                                    IAsyncOperation_IInspectable **out );
+extern HRESULT async_action_create( IUnknown *invoker, async_operation_callback callback, IAsyncAction **out );
+
 extern HRESULT vector_create( const struct vector_iids *iids, void **out );
 extern HRESULT device_information_create( const WCHAR *path, IDeviceInformation **info );
 
