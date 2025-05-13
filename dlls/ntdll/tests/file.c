@@ -6063,6 +6063,16 @@ static void test_file_readonly_access(void)
     status = pNtOpenFile(&handle, GENERIC_WRITE, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
     ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#lx.\n", status);
 
+    /* NtOpenFile FILE_READ_ATTRIBUTES with FILE_WRITE_DATA */
+    status = pNtOpenFile(&handle, FILE_READ_ATTRIBUTES | FILE_WRITE_DATA, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#lx.\n", status);
+    CloseHandle(handle);
+
+    /* NtOpenFile FILE_READ_ATTRIBUTES with FILE_APPEND_DATA */
+    status = pNtOpenFile(&handle, FILE_READ_ATTRIBUTES | FILE_APPEND_DATA, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
+    ok(status == STATUS_ACCESS_DENIED, "expected STATUS_ACCESS_DENIED, got %#lx.\n", status);
+    CloseHandle(handle);
+
     /* NtOpenFile FILE_{READ,WRITE}_ATTRIBUTES */
     status = pNtOpenFile(&handle, FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES, &attr, &io, default_sharing, FILE_NON_DIRECTORY_FILE);
     todo_wine ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#lx.\n", status);
