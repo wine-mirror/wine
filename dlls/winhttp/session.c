@@ -1546,7 +1546,7 @@ static WCHAR *detect_autoproxyconfig_url_dhcp(void)
         if (err == ERROR_SUCCESS && param.nBytesData)
         {
             int len = MultiByteToWideChar( CP_ACP, 0, (const char *)param.Data, param.nBytesData, NULL, 0 );
-            if ((ret = malloc( (len + 1) * sizeof(WCHAR) )))
+            if ((ret = GlobalAlloc( 0, (len + 1) * sizeof(WCHAR) )))
             {
                 MultiByteToWideChar( CP_ACP, 0,  (const char *)param.Data, param.nBytesData, ret, len );
                 ret[len] = 0;
