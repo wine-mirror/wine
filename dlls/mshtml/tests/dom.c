@@ -10008,6 +10008,10 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     ok(hres == S_OK, "hasChildNodes failed: %08lx\n", hres);
     ok(vbool == VARIANT_FALSE, "hasChildNodes returned %d\n", vbool);
 
+    hres = IHTMLDOMAttribute2_get_childNodes(attr, &disp);
+    ok(hres == S_OK, "get_childNodes failed: %08lx\n", hres);
+    ok(!disp, "childNodes != NULL\n");
+
     bstr = SysAllocString(L"div");
     hres = IHTMLDocument2_createElement(doc, bstr, &elem);
     ok(hres == S_OK, "createElement failed: %08lx\n", hres);
