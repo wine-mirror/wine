@@ -1237,6 +1237,8 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
     {
         TRACKBAR_UpdateThumb(infoPtr);
         TRACKBAR_InvalidateThumbMove(infoPtr, oldPos, lPosition);
+
+        NotifyWinEvent( EVENT_OBJECT_VALUECHANGE, infoPtr->hwndSelf, OBJID_CLIENT, CHILDID_SELF );
     }
 
     return 0;
