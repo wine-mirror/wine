@@ -32,7 +32,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msado15);
 
-struct fields;
+struct fields
+{
+    Fields              Fields_iface;
+    ISupportErrorInfo   ISupportErrorInfo_iface;
+    LONG                refs;
+    Field             **field;
+    ULONG               count;
+    ULONG               allocated;
+};
+
 struct recordset
 {
     _Recordset         Recordset_iface;
@@ -41,7 +50,7 @@ struct recordset
     LONG               refs;
     VARIANT            active_connection;
     LONG               state;
-    struct fields     *fields;
+    struct fields      fields;
     LONG               count;
     LONG               allocated;
     LONG               index;
@@ -56,17 +65,6 @@ struct recordset
 
     DBTYPE            *columntypes;
     HACCESSOR         *haccessors;
-};
-
-struct fields
-{
-    Fields              Fields_iface;
-    ISupportErrorInfo   ISupportErrorInfo_iface;
-    LONG                refs;
-    Field             **field;
-    ULONG               count;
-    ULONG               allocated;
-    struct recordset   *recordset;
 };
 
 struct field
@@ -258,7 +256,7 @@ static HRESULT WINAPI field_get_Type( Field *iface, DataTypeEnum *type )
 
 static LONG get_column_count( struct recordset *recordset )
 {
-    return recordset->fields->count;
+    return recordset->fields.count;
 }
 
 static HRESULT WINAPI field_get_Value( Field *iface, VARIANT *val )
@@ -813,11 +811,19 @@ static inline struct fields *impl_from_Fields( Fields *iface )
     return CONTAINING_RECORD( iface, struct fields, Fields_iface );
 }
 
+static inline struct recordset *fields_get_recordset( struct fields *fields )
+{
+    return CONTAINING_RECORD( fields, struct recordset, fields );
+}
+
 static ULONG WINAPI fields_AddRef( Fields *iface )
 {
     struct fields *fields = impl_from_Fields( iface );
     LONG refs = InterlockedIncrement( &fields->refs );
+
     TRACE( "%p new refcount %ld\n", fields, refs );
+
+    if (refs == 1) _Recordset_AddRef( &fields_get_recordset(fields)->Recordset_iface );
     return refs;
 }
 
@@ -825,15 +831,11 @@ static ULONG WINAPI fields_Release( Fields *iface )
 {
     struct fields *fields = impl_from_Fields( iface );
     LONG refs = InterlockedDecrement( &fields->refs );
+
     TRACE( "%p new refcount %ld\n", fields, refs );
-    if (!refs)
-    {
-        if (fields->recordset) _Recordset_Release( &fields->recordset->Recordset_iface );
-        fields->recordset = NULL;
-        WARN( "not destroying %p\n", fields );
-        return InterlockedIncrement( &fields->refs );
-    }
-    return refs;
+
+    if (!refs) _Recordset_Release( &fields_get_recordset(fields)->Recordset_iface );
+    return refs < 1 ? 1 : refs;
 }
 
 static HRESULT WINAPI fields_QueryInterface( Fields *iface, REFIID riid, void **obj )
@@ -1029,7 +1031,7 @@ static HRESULT append_field( struct fields *fields, BSTR name, DataTypeEnum type
     Field *field;
     HRESULT hr;
 
-    if ((hr = Field_create( name, fields->count, fields->recordset, &field )) != S_OK) return hr;
+    if ((hr = Field_create( name, fields->count, fields_get_recordset(fields), &field )) != S_OK) return hr;
     Field_put_Type( field, type );
     Field_put_DefinedSize( field, size );
     if (attr != adFldUnspecified) Field_put_Attributes( field, attr );
@@ -1187,23 +1189,11 @@ static void map_rowset_fields(struct recordset *recordset, struct fields *fields
     IColumnsInfo_Release(columninfo);
 }
 
-static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
+static void fields_init( struct recordset *recordset )
 {
-    struct fields *fields;
-
-    if (!(fields = calloc( 1, sizeof(*fields) ))) return E_OUTOFMEMORY;
-    fields->Fields_iface.lpVtbl = &fields_vtbl;
-    fields->ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
-    fields->refs = 1;
-    fields->recordset = recordset;
-    _Recordset_AddRef( &fields->recordset->Recordset_iface );
-
-    if ( recordset->row_set )
-        map_rowset_fields(recordset, fields);
-
-    *ret = fields;
-    TRACE( "returning %p\n", *ret );
-    return S_OK;
+    memset( &recordset->fields, 0, sizeof(recordset->fields) );
+    recordset->fields.Fields_iface.lpVtbl = &fields_vtbl;
+    recordset->fields.ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
 }
 
 static inline struct recordset *impl_from_Recordset( _Recordset *iface )
@@ -1238,14 +1228,13 @@ static void close_recordset( struct recordset *recordset )
 
     VariantClear( &recordset->filter );
 
-    if (!recordset->fields) return;
     col_count = get_column_count( recordset );
 
     free(recordset->columntypes);
 
     for (i = 0; i < col_count; i++)
     {
-        struct field *field = impl_from_Field( recordset->fields->field[i] );
+        struct field *field = impl_from_Field( recordset->fields.field[i] );
         field->recordset = NULL;
         Field_Release(&field->Field_iface);
 
@@ -1259,9 +1248,7 @@ static void close_recordset( struct recordset *recordset )
         free(recordset->haccessors);
         recordset->haccessors = NULL;
     }
-    recordset->fields->count = 0;
-    Fields_Release( &recordset->fields->Fields_iface );
-    recordset->fields = NULL;
+    recordset->fields.count = 0;
 
     for (row = 0; row < recordset->count; row++)
         for (col = 0; col < col_count; col++) VariantClear( &recordset->data[row * col_count + col] );
@@ -1280,6 +1267,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
     {
         TRACE( "destroying %p\n", recordset );
         close_recordset( recordset );
+        free( recordset->fields.field );
         free( recordset );
     }
     return refs;
@@ -1500,22 +1488,11 @@ static HRESULT WINAPI recordset_get_EOF( _Recordset *iface, VARIANT_BOOL *eof )
 static HRESULT WINAPI recordset_get_Fields( _Recordset *iface, Fields **obj )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
-    HRESULT hr;
 
     TRACE( "%p, %p\n", recordset, obj );
 
-    if (recordset->fields)
-    {
-        /* yes, this adds a reference to the recordset instead of the fields object */
-        _Recordset_AddRef( &recordset->Recordset_iface );
-        recordset->fields->recordset = recordset;
-        *obj = &recordset->fields->Fields_iface;
-        return S_OK;
-    }
-
-    if ((hr = fields_create( recordset, &recordset->fields )) != S_OK) return hr;
-
-    *obj = &recordset->fields->Fields_iface;
+    *obj = &recordset->fields.Fields_iface;
+    Fields_AddRef(*obj);
     return S_OK;
 }
 
@@ -1789,7 +1766,7 @@ static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DB
                   colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
                   colinfo[i].bPrecision, colinfo[i].bScale);
 
-            hr = append_field(recordset->fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
+            hr = append_field(&recordset->fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
                      colinfo[i].dwFlags, NULL);
 
             bindings[i].iOrdinal = colinfo[i].iOrdinal;
@@ -2077,7 +2054,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
-    if (recordset->fields && get_column_count( recordset ))
+    if (get_column_count( recordset ))
     {
         recordset->state = adStateOpen;
         return S_OK;
@@ -2118,17 +2095,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     ICommandText_Release(command_text);
     if (FAILED(hr) || !rowset)
         return hr;
-
-    /* We want to create the field member variable without mapping the rowset fields, this will
-     * save querying the fields twice. Fields will be added while we create the bindings.
-     */
-    if (!recordset->fields)
-        hr = fields_create( recordset, &recordset->fields );
-    if (FAILED(hr))
-    {
-        IUnknown_Release(rowset);
-        return hr;
-    }
 
     hr = create_bindings(rowset, recordset, &bindings, &datasize);
     if (FAILED(hr))
@@ -2744,8 +2710,8 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
 
-    if ( recordset->fields && !get_column_count(recordset) )
-        map_rowset_fields(recordset, recordset->fields);
+    if ( !get_column_count(recordset) )
+        map_rowset_fields(recordset, &recordset->fields);
 
     return S_OK;
 }
@@ -2816,6 +2782,7 @@ HRESULT Recordset_create( void **obj )
     VariantInit( &recordset->filter );
     recordset->columntypes = NULL;
     recordset->haccessors = NULL;
+    fields_init( recordset );
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
