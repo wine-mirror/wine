@@ -324,8 +324,11 @@ static HRESULT WINAPI HTMLDOMAttribute2_appendChild(IHTMLDOMAttribute2 *iface, I
 static HRESULT WINAPI HTMLDOMAttribute2_hasChildNodes(IHTMLDOMAttribute2 *iface, VARIANT_BOOL *fChildren)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%p)\n", This, fChildren);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, fChildren);
+
+    *fChildren = VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute2_cloneNode(IHTMLDOMAttribute2 *iface, VARIANT_BOOL fDeep,

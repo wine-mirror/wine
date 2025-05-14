@@ -9952,6 +9952,7 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     IHTMLDocument2 *doc_node;
     IHTMLWindow2 *window;
     IHTMLElement *elem;
+    VARIANT_BOOL vbool;
     VARIANT v, v_clone;
     IDispatch *disp;
     HRESULT hres;
@@ -10003,6 +10004,10 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     VariantClear(&v_clone);
     VariantClear(&v);
 
+    hres = IHTMLDOMAttribute2_hasChildNodes(attr, &vbool);
+    ok(hres == S_OK, "hasChildNodes failed: %08lx\n", hres);
+    ok(vbool == VARIANT_FALSE, "hasChildNodes returned %d\n", vbool);
+
     bstr = SysAllocString(L"div");
     hres = IHTMLDocument2_createElement(doc, bstr, &elem);
     ok(hres == S_OK, "createElement failed: %08lx\n", hres);
@@ -10019,6 +10024,10 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     hres = IHTMLDOMAttribute2_insertBefore(attr, elem_node, v, &node);
     ok(hres == S_OK, "insertBefore failed: %08lx\n", hres);
     ok(!node, "inserted node != NULL\n");
+
+    hres = IHTMLDOMAttribute2_hasChildNodes(attr, &vbool);
+    ok(hres == S_OK, "hasChildNodes failed: %08lx\n", hres);
+    ok(vbool == VARIANT_FALSE, "hasChildNodes returned %d\n", vbool);
 
     IHTMLDOMNode_Release(elem_node);
     IHTMLDOMAttribute2_Release(attr);
