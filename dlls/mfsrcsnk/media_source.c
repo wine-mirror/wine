@@ -235,6 +235,7 @@ struct media_stream
 {
     IMFMediaStream IMFMediaStream_iface;
     IMFAsyncCallback async_request_iface;
+    IMFAsyncCallback async_request_thin_iface;
     LONG refcount;
 
     IMFMediaSource *source;
@@ -245,6 +246,8 @@ struct media_stream
 
     BOOL active;
     BOOL eos;
+    BOOL thin;
+    BOOL pending_thin;
 };
 
 struct media_source
@@ -266,6 +269,7 @@ struct media_source
     IMFByteStream *stream;
     WCHAR *url;
     float rate;
+    BOOL thin;
 
     struct winedmo_demuxer winedmo_demuxer;
     struct winedmo_stream winedmo_stream;
@@ -292,13 +296,34 @@ static struct media_source *media_source_from_IMFMediaSource(IMFMediaSource *ifa
     return CONTAINING_RECORD(iface, struct media_source, IMFMediaSource_iface);
 }
 
+static void queue_media_event_value(IMFMediaEventQueue *queue, MediaEventType type, const PROPVARIANT *value)
+{
+    HRESULT hr;
+    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(queue, type, &GUID_NULL, S_OK, value)))
+        ERR("Failed to queue event of type %#lx to queue %p, hr %#lx\n", type, queue, hr);
+}
+
+static void media_stream_set_thin(struct media_stream *stream, BOOL thin)
+{
+    if (stream->thin != thin)
+    {
+        PROPVARIANT param = {.vt = VT_INT, .iVal = thin};
+        stream->thin = thin;
+        queue_media_event_value(stream->queue, MEStreamThinMode, &param);
+    }
+}
+
 static void media_stream_send_sample(struct media_stream *stream, IMFSample *sample, IUnknown *token)
 {
     HRESULT hr = S_OK;
 
     if (!token || SUCCEEDED(hr = IMFSample_SetUnknown(sample, &MFSampleExtension_Token, token)))
+    {
+        /* thinning stays enabled until a sample is sent, always a keyframe as it was enabled */
+        if (!stream->pending_thin) media_stream_set_thin(stream, FALSE);
         hr = IMFMediaEventQueue_QueueEventParamUnk(stream->queue, MEMediaSample,
                 &GUID_NULL, S_OK, (IUnknown *)sample);
+    }
 
     if (FAILED(hr)) ERR("Failed to send stream %p sample, hr %#lx\n", stream, hr);
 }
@@ -313,6 +338,17 @@ static struct media_stream *media_stream_from_index(struct media_source *source,
 
     WARN("Failed to find stream with index %u\n", index);
     return NULL;
+}
+
+static BOOL media_stream_accepts_sample(struct media_stream *stream, IMFSample *sample, BOOL thin)
+{
+    BOOL thinning = thin || stream->thin;
+    UINT32 keyframe;
+
+    if (thinning && SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &keyframe)))
+        return keyframe;
+
+    return !thinning;
 }
 
 static HRESULT media_source_send_sample(struct media_source *source, UINT index, IMFSample *sample)
@@ -331,6 +367,13 @@ static HRESULT media_source_send_sample(struct media_source *source, UINT index,
         return S_FALSE;
     }
 
+    if (!media_stream_accepts_sample(stream, sample, stream->pending_thin))
+    {
+        /* thinning stays disabled until a sample is skipped */
+        if (stream->pending_thin) media_stream_set_thin(stream, TRUE);
+        return S_FALSE;
+    }
+
     object_queue_pop(&stream->tokens, &token);
     media_stream_send_sample(stream, sample, token);
     if (token) IUnknown_Release(token);
@@ -341,13 +384,6 @@ static void queue_media_event_object(IMFMediaEventQueue *queue, MediaEventType t
 {
     HRESULT hr;
     if (FAILED(hr = IMFMediaEventQueue_QueueEventParamUnk(queue, type, &GUID_NULL, S_OK, object)))
-        ERR("Failed to queue event of type %#lx to queue %p, hr %#lx\n", type, queue, hr);
-}
-
-static void queue_media_event_value(IMFMediaEventQueue *queue, MediaEventType type, const PROPVARIANT *value)
-{
-    HRESULT hr;
-    if (FAILED(hr = IMFMediaEventQueue_QueueEventParamVar(queue, type, &GUID_NULL, S_OK, value)))
         ERR("Failed to queue event of type %#lx to queue %p, hr %#lx\n", type, queue, hr);
 }
 
@@ -826,6 +862,21 @@ static HRESULT WINAPI media_stream_GetStreamDescriptor(IMFMediaStream* iface, IM
     return hr;
 }
 
+static HRESULT media_stream_pop_sample(struct media_stream *stream, IMFSample **pSample)
+{
+    HRESULT hr;
+
+    while (SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)pSample))
+            && !media_stream_accepts_sample(stream, *pSample, stream->pending_thin))
+    {
+        /* thinning stays disabled until a sample is skipped */
+        if (stream->pending_thin) media_stream_set_thin(stream, TRUE);
+        IMFSample_Release(*pSample);
+    }
+
+    return hr;
+}
+
 static HRESULT media_source_request_stream_sample(struct media_source *source, struct media_stream *stream, IUnknown *token)
 {
     IMFSample *sample;
@@ -834,7 +885,7 @@ static HRESULT media_source_request_stream_sample(struct media_source *source, s
     if (source->state == SOURCE_SHUTDOWN)
         return MF_E_SHUTDOWN;
 
-    if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = object_queue_pop(&stream->samples, (IUnknown **)&sample)))
+    if (source->state == SOURCE_RUNNING && SUCCEEDED(hr = media_stream_pop_sample(stream, &sample)))
     {
         media_stream_send_sample(stream, sample, token);
         IMFSample_Release(sample);
@@ -853,6 +904,7 @@ static HRESULT media_stream_async_request(struct media_stream *stream, IMFAsyncR
     HRESULT hr = S_OK;
 
     EnterCriticalSection(&source->cs);
+    stream->pending_thin = FALSE;
     hr = media_source_request_stream_sample(source, stream, token);
     LeaveCriticalSection(&source->cs);
 
@@ -860,6 +912,22 @@ static HRESULT media_stream_async_request(struct media_stream *stream, IMFAsyncR
 }
 
 DEFINE_MF_ASYNC_CALLBACK(media_stream, async_request, IMFMediaStream_iface)
+
+static HRESULT media_stream_async_request_thin(struct media_stream *stream, IMFAsyncResult *result)
+{
+    struct media_source *source = media_source_from_IMFMediaSource(stream->source);
+    IUnknown *token = IMFAsyncResult_GetStateNoAddRef(result);
+    HRESULT hr = S_OK;
+
+    EnterCriticalSection(&source->cs);
+    stream->pending_thin = TRUE;
+    hr = media_source_request_stream_sample(source, stream, token);
+    LeaveCriticalSection(&source->cs);
+
+    return hr;
+}
+
+DEFINE_MF_ASYNC_CALLBACK(media_stream, async_request_thin, IMFMediaStream_iface)
 
 static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown *token)
 {
@@ -877,6 +945,8 @@ static HRESULT WINAPI media_stream_RequestSample(IMFMediaStream *iface, IUnknown
         hr = MF_E_MEDIA_SOURCE_WRONGSTATE;
     else if (stream->eos)
         hr = MF_E_END_OF_STREAM;
+    else if (source->thin)
+        hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &stream->async_request_thin_iface, token);
     else
         hr = MFPutWorkItem(MFASYNC_CALLBACK_QUEUE_STANDARD, &stream->async_request_iface, token);
 
@@ -911,6 +981,7 @@ static HRESULT media_stream_create(IMFMediaSource *source, IMFStreamDescriptor *
 
     object->IMFMediaStream_iface.lpVtbl = &media_stream_vtbl;
     object->async_request_iface.lpVtbl = &media_stream_async_request_vtbl;
+    object->async_request_thin_iface.lpVtbl = &media_stream_async_request_thin_vtbl;
     object->refcount = 1;
 
     if (FAILED(hr = MFCreateEventQueue(&object->queue)))
@@ -1083,6 +1154,7 @@ static HRESULT media_source_async_set_rate(struct media_source *source, IMFAsync
 
     EnterCriticalSection(&source->cs);
     source->rate = params->rate;
+    source->thin = params->thin;
     LeaveCriticalSection(&source->cs);
 
     queue_media_event_value(source->queue, MESourceRateChanged, NULL);
@@ -1101,8 +1173,6 @@ static HRESULT WINAPI media_source_IMFRateControl_SetRate(IMFRateControl *iface,
 
     if (rate < 0.0f)
         return MF_E_REVERSE_UNSUPPORTED;
-    if (thin)
-        return MF_E_THINNING_UNSUPPORTED;
 
     if (FAILED(hr = IMFRateSupport_IsRateSupported(&source->IMFRateSupport_iface, thin, rate, NULL)))
         return hr;
@@ -1122,11 +1192,10 @@ static HRESULT WINAPI media_source_IMFRateControl_GetRate(IMFRateControl *iface,
 
     TRACE("source %p, thin %p, rate %p\n", source, thin, rate);
 
-    if (thin)
-        *thin = FALSE;
-
     EnterCriticalSection(&source->cs);
     *rate = source->rate;
+    if (thin)
+        *thin = source->thin;
     LeaveCriticalSection(&source->cs);
 
     return S_OK;
