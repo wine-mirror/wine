@@ -324,8 +324,12 @@ static HRESULT WINAPI HTMLDOMAttribute2_removeChild(IHTMLDOMAttribute2 *iface, I
         IHTMLDOMNode **node)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%p %p)\n", This, oldChild, node);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, oldChild, node);
+
+    /* mostly a stub, doesn't really remove anything on native either */
+    *node = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute2_appendChild(IHTMLDOMAttribute2 *iface, IHTMLDOMNode *newChild,

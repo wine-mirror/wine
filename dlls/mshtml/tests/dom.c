@@ -10061,6 +10061,14 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     ok(hres == S_OK, "replaceChild failed: %08lx\n", hres);
     ok(!node, "replaced node != NULL\n");
 
+    hres = IHTMLDOMAttribute2_removeChild(attr, NULL, &node);
+    ok(hres == S_OK, "removeChild failed: %08lx\n", hres);
+    ok(!node, "removed node != NULL\n");
+
+    hres = IHTMLDOMAttribute2_removeChild(attr, elem_node, &node);
+    ok(hres == S_OK, "removeChild failed: %08lx\n", hres);
+    ok(!node, "removed node != NULL\n");
+
     IHTMLDOMNode_Release(elem_node);
     IHTMLDOMAttribute2_Release(attr);
 }
