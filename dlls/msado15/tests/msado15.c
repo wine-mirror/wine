@@ -186,6 +186,11 @@ static void test_Recordset(void)
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08lx\n", hr );
 
+    V_VT( &missing ) = VT_ERROR;
+    V_ERROR( &missing ) = DISP_E_PARAMNOTFOUND;
+    hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
+    ok( hr == MAKE_ADO_HRESULT( adErrInvalidConnection ), "got %08lx\n", hr );
+
     name = SysAllocString( L"field" );
     hr = Fields__Append( fields, name, adInteger, 4, adFldUnspecified );
     ok( hr == S_OK, "got %08lx\n", hr );

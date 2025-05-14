@@ -2077,7 +2077,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
 
     if (recordset->state == adStateOpen) return MAKE_ADO_HRESULT( adErrObjectOpen );
 
-    if (recordset->fields)
+    if (recordset->fields && get_column_count( recordset ))
     {
         recordset->state = adStateOpen;
         return S_OK;
@@ -2122,7 +2122,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     /* We want to create the field member variable without mapping the rowset fields, this will
      * save querying the fields twice. Fields will be added while we create the bindings.
      */
-    hr = fields_create( recordset, &recordset->fields );
+    if (!recordset->fields)
+        hr = fields_create( recordset, &recordset->fields );
     if (FAILED(hr))
     {
         IUnknown_Release(rowset);
