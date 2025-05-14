@@ -9944,6 +9944,22 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
+static void test_attr_node(IHTMLDOMAttribute *test_attr)
+{
+    IHTMLDOMAttribute2 *attr;
+    HRESULT hres;
+    LONG type;
+
+    hres = IHTMLDOMAttribute_QueryInterface(test_attr, &IID_IHTMLDOMAttribute2, (void**)&attr);
+    ok(hres == S_OK, "Could not get IHTMLDOMAttribute2 iface: %08lx\n", hres);
+
+    hres = IHTMLDOMAttribute2_get_nodeType(attr, &type);
+    ok(hres == S_OK, "get_nodeType failed: %08lx\n", hres);
+    ok(type == 2, "nodeType = %ld\n", type);
+
+    IHTMLDOMAttribute2_Release(attr);
+}
+
 static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
 {
     IHTMLDOMAttribute *attr, *attr2, *attr3;
@@ -9985,6 +10001,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(!lstrcmpW(V_BSTR(&v), L"divid3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    test_attr_node(attr);
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
@@ -10004,6 +10021,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     VariantClear(&v);
 
     test_attr_specified(attr, VARIANT_TRUE);
+    test_attr_node(attr);
     IHTMLDOMAttribute_Release(attr);
 
     V_VT(&v) = VT_I4;
@@ -10026,11 +10044,13 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(!lstrcmpW(V_BSTR(&v), L"160"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    test_attr_node(attr);
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, L"tabIndex", TRUE);
     test_attr_specified(attr, VARIANT_FALSE);
     test_attr_expando(attr, VARIANT_FALSE);
+    test_attr_node(attr);
     IHTMLDOMAttribute_Release(attr);
 
     /* Test created, detached attribute. */
@@ -10102,6 +10122,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     test_elem_attr(elem, L"Test", L"new replace value");
     test_attr_value(attr, L"new value2");
     test_attr_value(attr3, L"new replace value");
+    test_attr_node(attr);
 
     /* Attached attributes cause errors. */
     hres = IHTMLElement4_setAttributeNode(elem4, attr3, &attr2);
