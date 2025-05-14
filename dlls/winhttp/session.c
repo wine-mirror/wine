@@ -1666,6 +1666,13 @@ static WCHAR *detect_autoproxyconfig_url_dns(void)
  */
 BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, WCHAR **url )
 {
+    static SRWLOCK apc_cache_lock = SRWLOCK_INIT;
+    static BOOL dhcp_cache_valid, dns_cache_valid;
+    static WCHAR *dhcp_apc_url, *dns_apc_url;
+    static HANDLE notifyaddr_handle = INVALID_HANDLE_VALUE;
+    static OVERLAPPED notifyaddr_ol;
+    DWORD bytes;
+
     TRACE( "%#lx, %p\n", flags, url );
 
     if (!flags || !url)
@@ -1674,14 +1681,53 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, WCHAR **url )
         return FALSE;
     }
     *url = NULL;
+
+    AcquireSRWLockExclusive( &apc_cache_lock );
+    /* FIXME: use NotifyIpInterfaceChange once that's implemented */
+    if (notifyaddr_handle == INVALID_HANDLE_VALUE)
+        NotifyAddrChange( &notifyaddr_handle, &notifyaddr_ol );
+
+    if ((notifyaddr_handle != INVALID_HANDLE_VALUE) &&
+        GetOverlappedResult( notifyaddr_handle, &notifyaddr_ol, &bytes, FALSE ))
+    {
+        TRACE( "network config changed, invalidating cache\n" );
+        dhcp_cache_valid = dns_cache_valid = FALSE;
+        notifyaddr_handle = INVALID_HANDLE_VALUE;
+        NotifyAddrChange( &notifyaddr_handle, &notifyaddr_ol );
+    }
+
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP)
     {
-        *url = detect_autoproxyconfig_url_dhcp();
+        if (!dhcp_cache_valid)
+        {
+            GlobalFree( dhcp_apc_url );
+            dhcp_apc_url = detect_autoproxyconfig_url_dhcp();
+            dhcp_cache_valid = TRUE;
+        }
+
+        if (dhcp_apc_url)
+        {
+            *url = GlobalAlloc( 0, (wcslen( dhcp_apc_url ) + 1) * sizeof(WCHAR) );
+            if (*url) wcscpy( *url, dhcp_apc_url );
+        }
     }
-    if (flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A)
+    if ((flags & WINHTTP_AUTO_DETECT_TYPE_DNS_A) && !*url)
     {
-        if (!*url) *url = detect_autoproxyconfig_url_dns();
+        if (!dns_cache_valid)
+        {
+            GlobalFree( dns_apc_url );
+            dns_apc_url = detect_autoproxyconfig_url_dns();
+            dns_cache_valid = TRUE;
+        }
+
+        if (dns_apc_url)
+        {
+            *url = GlobalAlloc( 0, (wcslen( dns_apc_url ) + 1) * sizeof(WCHAR) );
+            if (*url) wcscpy( *url, dns_apc_url );
+        }
     }
+    ReleaseSRWLockExclusive( &apc_cache_lock );
+
     if (!*url)
     {
         SetLastError( ERROR_WINHTTP_AUTODETECTION_FAILED );
