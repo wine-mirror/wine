@@ -9947,6 +9947,7 @@ static void test_elems(IHTMLDocument2 *doc)
 static void test_attr_node(IHTMLDOMAttribute *test_attr)
 {
     IHTMLDOMAttribute2 *attr;
+    IDispatch *disp;
     HRESULT hres;
     LONG type;
 
@@ -9956,6 +9957,10 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr)
     hres = IHTMLDOMAttribute2_get_nodeType(attr, &type);
     ok(hres == S_OK, "get_nodeType failed: %08lx\n", hres);
     ok(type == 2, "nodeType = %ld\n", type);
+
+    hres = IHTMLDOMAttribute2_get_attributes(attr, &disp);
+    ok(hres == S_OK, "get_attributes failed: %08lx\n", hres);
+    ok(!disp, "attributes != NULL\n");
 
     IHTMLDOMAttribute2_Release(attr);
 }
