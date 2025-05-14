@@ -720,6 +720,10 @@ static void test_ADORecordsetConstruction(void)
         goto done;
     }
 
+    hr = _Recordset_get_Fields( recordset, &fields );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( fields != NULL, "NULL value\n");
+
     testrowset.IRowset_iface.lpVtbl = &rowset_vtbl;
     testrowset.IRowsetInfo_iface.lpVtbl = &rowset_info;
     testrowset.IColumnsInfo_iface.lpVtbl = &column_info;
@@ -734,10 +738,6 @@ static void test_ADORecordsetConstruction(void)
 
     ref = get_refcount( rowset );
     ok( ref == 2, "got %ld\n", ref );
-
-    hr = _Recordset_get_Fields( recordset, &fields );
-    ok( hr == S_OK, "got %08lx\n", hr );
-    ok( fields != NULL, "NULL value\n");
 
     ref = get_refcount( rowset );
     ok( ref == 2, "got %ld\n", ref );

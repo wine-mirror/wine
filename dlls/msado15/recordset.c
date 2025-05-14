@@ -2744,6 +2744,9 @@ static HRESULT WINAPI rsconstruction_put_Rowset(ADORecordsetConstruction *iface,
     if ( recordset->row_set ) IRowset_Release( recordset->row_set );
     recordset->row_set = rowset;
 
+    if ( recordset->fields && !get_column_count(recordset) )
+        map_rowset_fields(recordset, recordset->fields);
+
     return S_OK;
 }
 
