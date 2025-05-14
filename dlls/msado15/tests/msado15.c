@@ -83,6 +83,7 @@ static void test_Recordset(void)
     hr = _Recordset_get_Fields( recordset, &fields2 );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( fields2 == fields, "expected same object\n" );
+    Fields_Release( fields );
 
     count = -1;
     hr = Fields_get_Count( fields2, &count );
@@ -93,6 +94,7 @@ static void test_Recordset(void)
     ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08lx\n", hr );
 
     Fields_Release( fields2 );
+    ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -434,9 +436,9 @@ if (0)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( state == adStateClosed, "got %ld\n", state );
 
-    Field_Release( field );
+    ok (!Field_Release( field ), "Field not released\n" );
     Fields_Release( fields );
-    _Recordset_Release( recordset );
+    ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
 }
 
 /* This interface is queried for but is not documented anywhere. */
@@ -715,10 +717,6 @@ static void test_ADORecordsetConstruction(void)
 
     hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
     ok( hr == S_OK, "got %08lx\n", hr );
-    if (FAILED(hr))
-    {
-        goto done;
-    }
 
     hr = _Recordset_get_Fields( recordset, &fields );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -777,8 +775,7 @@ static void test_ADORecordsetConstruction(void)
 
     ADORecordsetConstruction_Release(construct);
 
-done:
-    _Recordset_Release( recordset );
+    ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
 }
 
 static void test_Fields(void)
@@ -873,7 +870,7 @@ static void test_Fields(void)
 
     Field_Release( field );
     Fields_Release( fields );
-    _Recordset_Release( recordset );
+    ok( !_Recordset_Release( recordset ), "_Recordset not released\n" );
 }
 
 static HRESULT str_to_byte_array( const char *data, VARIANT *ret )
@@ -1253,6 +1250,7 @@ if (0)   /* Crashes on windows */
     hr = _Connection_get_Provider(connection, &str);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     ok(!wcscmp(str, L"MSDASQL.1"), "wrong string %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     /* Restore default */
     str = SysAllocString(L"MSDASQL");
@@ -1262,7 +1260,6 @@ if (0)   /* Crashes on windows */
 
     hr = _Connection_put_Provider(connection, NULL);
     ok(hr == MAKE_ADO_HRESULT(adErrInvalidArgument), "got 0x%08lx\n", hr);
-    SysFreeString(str);
 
     str = (BSTR)0xdeadbeef;
     hr = _Connection_get_ConnectionString(connection, &str);
@@ -1291,6 +1288,7 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str2);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     ok(!wcscmp(str, str2), "wrong string %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str2);
 
     hr = _Connection_Open(connection, NULL, NULL, NULL, 0);
     ok(hr == E_FAIL, "Failed, hr 0x%08lx\n", hr);
@@ -1304,15 +1302,16 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str2);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str2);
 
     hr = _Connection_Open(connection, str, NULL, NULL, adConnectUnspecified);
     ok(hr == E_FAIL, "Failed, hr 0x%08lx\n", hr);
-    SysFreeString(str);
 
     str2 = NULL;
     hr = _Connection_get_ConnectionString(connection, &str2);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     todo_wine ok(!wcscmp(str3, str2) || broken(!wcscmp(str, str2)) /* XP */, "wrong string %s\n", wine_dbgstr_w(str2));
+    SysFreeString(str);
     SysFreeString(str2);
     SysFreeString(str3);
 
@@ -1323,7 +1322,7 @@ if (0) /* Crashes on windows */
     hr = _Connection_get_ConnectionString(connection, &str);
     ok(hr == S_OK, "Failed, hr 0x%08lx\n", hr);
     ok(str == NULL, "got %p\n", str);
-    _Connection_Release(connection);
+    ok(!_Connection_Release(connection), "_Connection not released\n");
 }
 
 static void test_Command(void)
@@ -1435,7 +1434,7 @@ static void test_Command(void)
     Parameters_Release(parameters);
     Parameters_Release(parameters2);
 
-    _Command_Release( command );
+    ok( !_Command_Release( command ), "_Command not released\n" );
 }
 
 struct conn_event {
@@ -1644,7 +1643,7 @@ static void test_ConnectionPoint(void)
     refs = IConnectionPoint_Release( point );
     ok( refs == 1, "got %lu", refs );
 
-    IConnectionPointContainer_Release( pointcontainer );
+    ok( !IConnectionPointContainer_Release( pointcontainer ), "IConnectionPointContainer not released\n" );
 
     ok( !conn_event.refs, "got %ld\n", conn_event.refs );
 }
