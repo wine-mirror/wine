@@ -949,8 +949,6 @@ static void test_SpeechSynthesizer(void)
     todo_wine ok(tmp == NULL, "Got %p.\n", tmp);
     if (tmp && tmp != (void *)0xdeadbeef) ISpeechSynthesisStream_Release(tmp);
 
-    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
-
     hr = ISpeechSynthesisStream_get_Markers(ss_stream, &media_markers);
     ok(hr == S_OK, "ISpeechSynthesisStream_get_Markers failed, hr %#lx\n", hr);
     check_interface(media_markers, &IID_IVectorView_IMediaMarker, TRUE);
@@ -961,7 +959,9 @@ static void test_SpeechSynthesizer(void)
     ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     ref = ISpeechSynthesisStream_Release(ss_stream);
-    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+
+    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     /* Test SynthesizeSsmlToStreamAsync */
     hr = WindowsCreateString(simple_ssml, wcslen(simple_ssml), &str2);
@@ -981,10 +981,11 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
     check_interface(ss_stream, &IID_ISpeechSynthesisStream, TRUE);
     check_interface(ss_stream, &IID_IAgileObject, TRUE);
-    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     ref = ISpeechSynthesisStream_Release(ss_stream);
-    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+
+    IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     operation_ss_stream = (void *)0xdeadbeef;
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, NULL, &operation_ss_stream);
