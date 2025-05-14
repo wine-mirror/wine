@@ -9944,9 +9944,11 @@ static void test_elems(IHTMLDocument2 *doc)
     IHTMLWindow2_Release(window);
 }
 
-static void test_attr_node(IHTMLDOMAttribute *test_attr)
+static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
 {
     IHTMLDOMAttribute2 *attr;
+    IHTMLDocument2 *doc_node;
+    IHTMLWindow2 *window;
     IDispatch *disp;
     HRESULT hres;
     LONG type;
@@ -9961,6 +9963,20 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr)
     hres = IHTMLDOMAttribute2_get_attributes(attr, &disp);
     ok(hres == S_OK, "get_attributes failed: %08lx\n", hres);
     ok(!disp, "attributes != NULL\n");
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    hres = IHTMLWindow2_get_document(window, &doc_node);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    hres = IHTMLDOMAttribute2_get_ownerDocument(attr, &disp);
+    ok(hres == S_OK, "get_ownerDocument failed: %08lx\n", hres);
+    ok(disp != NULL, "ownerDocument == NULL\n");
+    ok(!iface_cmp((IUnknown*)disp, (IUnknown*)doc), "ownerDocument == doc\n");
+    ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc_node), "ownerDocument != doc_node\n");
+    IHTMLDocument2_Release(doc_node);
+    IDispatch_Release(disp);
 
     IHTMLDOMAttribute2_Release(attr);
 }
@@ -10006,7 +10022,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(!lstrcmpW(V_BSTR(&v), L"divid3"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-    test_attr_node(attr);
+    test_attr_node(attr, doc);
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, L"emptyattr", TRUE);
@@ -10026,7 +10042,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     VariantClear(&v);
 
     test_attr_specified(attr, VARIANT_TRUE);
-    test_attr_node(attr);
+    test_attr_node(attr, doc);
     IHTMLDOMAttribute_Release(attr);
 
     V_VT(&v) = VT_I4;
@@ -10049,13 +10065,13 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     ok(!lstrcmpW(V_BSTR(&v), L"160"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-    test_attr_node(attr);
+    test_attr_node(attr, doc);
     IHTMLDOMAttribute_Release(attr);
 
     attr = get_elem_attr_node((IUnknown*)elem, L"tabIndex", TRUE);
     test_attr_specified(attr, VARIANT_FALSE);
     test_attr_expando(attr, VARIANT_FALSE);
-    test_attr_node(attr);
+    test_attr_node(attr, doc);
     IHTMLDOMAttribute_Release(attr);
 
     /* Test created, detached attribute. */
@@ -10127,7 +10143,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     test_elem_attr(elem, L"Test", L"new replace value");
     test_attr_value(attr, L"new value2");
     test_attr_value(attr3, L"new replace value");
-    test_attr_node(attr);
+    test_attr_node(attr, doc);
 
     /* Attached attributes cause errors. */
     hres = IHTMLElement4_setAttributeNode(elem4, attr3, &attr2);

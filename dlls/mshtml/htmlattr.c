@@ -273,8 +273,12 @@ static HRESULT WINAPI HTMLDOMAttribute2_get_attributes(IHTMLDOMAttribute2 *iface
 static HRESULT WINAPI HTMLDOMAttribute2_get_ownerDocument(IHTMLDOMAttribute2 *iface, IDispatch **p)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = (IDispatch*)&This->doc->IHTMLDocument2_iface;
+    IDispatch_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute2_insertBefore(IHTMLDOMAttribute2 *iface, IHTMLDOMNode *newChild,
@@ -374,6 +378,8 @@ static void HTMLDOMAttribute_traverse(DispatchEx *dispex, nsCycleCollectionTrave
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
 
+    if(This->doc)
+        note_cc_edge((nsISupports*)&This->doc->node.IHTMLDOMNode_iface, "doc", cb);
     if(This->elem)
         note_cc_edge((nsISupports*)&This->elem->node.IHTMLDOMNode_iface, "elem", cb);
     traverse_variant(&This->value, "value", cb);
@@ -383,6 +389,11 @@ static void HTMLDOMAttribute_unlink(DispatchEx *dispex)
 {
     HTMLDOMAttribute *This = impl_from_DispatchEx(dispex);
 
+    if(This->doc) {
+        HTMLDocumentNode *doc = This->doc;
+        This->doc = NULL;
+        IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
+    }
     if(This->elem) {
         HTMLElement *elem = This->elem;
         This->elem = NULL;
@@ -465,6 +476,9 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
             return E_OUTOFMEMORY;
         }
     }
+
+    ret->doc = doc;
+    IHTMLDOMNode_AddRef(&doc->node.IHTMLDOMNode_iface);
 
     *attr = ret;
     return S_OK;

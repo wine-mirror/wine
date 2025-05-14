@@ -1340,6 +1340,7 @@ typedef struct {
     /* name must be valid for detached attributes */
     WCHAR *name;
 
+    HTMLDocumentNode *doc;
     HTMLElement *elem;
     DISPID dispid;
     struct list entry;
