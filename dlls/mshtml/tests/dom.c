@@ -9947,8 +9947,10 @@ static void test_elems(IHTMLDocument2 *doc)
 static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
 {
     IHTMLDOMAttribute2 *attr;
+    IHTMLDOMAttribute *clone;
     IHTMLDocument2 *doc_node;
     IHTMLWindow2 *window;
+    VARIANT v, v_clone;
     IDispatch *disp;
     HRESULT hres;
     LONG type;
@@ -9977,6 +9979,26 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)doc_node), "ownerDocument != doc_node\n");
     IHTMLDocument2_Release(doc_node);
     IDispatch_Release(disp);
+
+    hres = IHTMLDOMAttribute2_cloneNode(attr, VARIANT_TRUE, &clone);
+    ok(hres == S_OK, "cloneNode failed: %08lx\n", hres);
+    ok(!iface_cmp((IUnknown*)attr, (IUnknown*)clone), "attr == cloned attr\n");
+
+    V_VT(&v) = VT_EMPTY;
+    V_VT(&v_clone) = VT_EMPTY;
+    hres = IHTMLDOMAttribute_get_nodeValue(test_attr, &v);
+    ok(hres == S_OK, "get_nodeValue failed: %08lx\n", hres);
+    hres = IHTMLDOMAttribute_get_nodeValue(clone, &v_clone);
+    ok(hres == S_OK, "get_nodeValue failed: %08lx\n", hres);
+    if(V_VT(&v) == VT_BSTR)
+        ok(VarCmp(&v, &v_clone, 0, 0) == VARCMP_EQ, "attr value %s != cloned attr value %s\n", wine_dbgstr_variant(&v), wine_dbgstr_variant(&v_clone));
+    else {
+        todo_wine
+        ok(V_VT(&v_clone) == VT_BSTR, "unexpected cloned attr value %s for non-string attr value %s\n", wine_dbgstr_variant(&v), wine_dbgstr_variant(&v_clone));
+    }
+    IHTMLDOMAttribute_Release(clone);
+    VariantClear(&v_clone);
+    VariantClear(&v);
 
     IHTMLDOMAttribute2_Release(attr);
 }

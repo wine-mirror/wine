@@ -324,8 +324,26 @@ static HRESULT WINAPI HTMLDOMAttribute2_cloneNode(IHTMLDOMAttribute2 *iface, VAR
         IHTMLDOMAttribute **clonedNode)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%x %p)\n", This, fDeep, clonedNode);
-    return E_NOTIMPL;
+    HTMLDOMAttribute *new_attr;
+    HRESULT hres;
+
+    TRACE("(%p)->(%x %p)\n", This, fDeep, clonedNode);
+
+    hres = HTMLDOMAttribute_Create(This->name, NULL, 0, This->doc, &new_attr);
+    if(FAILED(hres))
+        return hres;
+
+    if(This->elem)
+        hres = get_elem_attr_value_by_dispid(This->elem, This->dispid, &new_attr->value);
+    else
+        hres = VariantCopy(&new_attr->value, &This->value);
+    if(FAILED(hres)) {
+        IHTMLDOMAttribute_Release(&new_attr->IHTMLDOMAttribute_iface);
+        return hres;
+    }
+
+    *clonedNode = &new_attr->IHTMLDOMAttribute_iface;
+    return hres;
 }
 
 static const IHTMLDOMAttribute2Vtbl HTMLDOMAttribute2Vtbl = {
