@@ -10024,6 +10024,10 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_previousSibling failed: %08lx\n", hres);
     ok(!node, "previousSibling != NULL\n");
 
+    hres = IHTMLDOMAttribute2_get_nextSibling(attr, &node);
+    ok(hres == S_OK, "get_nextSibling failed: %08lx\n", hres);
+    ok(!node, "nextSibling != NULL\n");
+
     bstr = SysAllocString(L"div");
     hres = IHTMLDocument2_createElement(doc, bstr, &elem);
     ok(hres == S_OK, "createElement failed: %08lx\n", hres);
