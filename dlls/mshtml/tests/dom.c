@@ -10015,6 +10015,11 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     ok(hres == S_OK, "appendChild failed: %08lx\n", hres);
     ok(!node, "appended child != NULL\n");
 
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLDOMAttribute2_insertBefore(attr, elem_node, v, &node);
+    ok(hres == S_OK, "insertBefore failed: %08lx\n", hres);
+    ok(!node, "inserted node != NULL\n");
+
     IHTMLDOMNode_Release(elem_node);
     IHTMLDOMAttribute2_Release(attr);
 }

@@ -285,8 +285,12 @@ static HRESULT WINAPI HTMLDOMAttribute2_insertBefore(IHTMLDOMAttribute2 *iface, 
         VARIANT refChild, IHTMLDOMNode **node)
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute2(iface);
-    FIXME("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %s %p)\n", This, newChild, debugstr_variant(&refChild), node);
+
+    /* mostly a stub, doesn't really insert anything on native either */
+    *node = NULL;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDOMAttribute2_replaceChild(IHTMLDOMAttribute2 *iface, IHTMLDOMNode *newChild,
