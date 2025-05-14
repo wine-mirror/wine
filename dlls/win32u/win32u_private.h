@@ -231,6 +231,7 @@ extern NTSTATUS get_shared_queue( struct object_lock *lock, const queue_shm_t **
 extern NTSTATUS get_shared_input( UINT tid, struct object_lock *lock, const input_shm_t **input_shm );
 
 extern BOOL is_virtual_desktop(void);
+extern BOOL is_service_process(void);
 
 /* window.c */
 struct tagWND;

@@ -1011,7 +1011,7 @@ static void load_display_driver(void)
     USEROBJECTFLAGS flags;
     HWINSTA winstation;
 
-    if (!load_desktop_driver( get_desktop_window() ) || user_driver == &lazy_load_driver)
+    if (is_service_process() || !load_desktop_driver( get_desktop_window() ) || user_driver == &lazy_load_driver)
     {
         winstation = NtUserGetProcessWindowStation();
         if (!NtUserGetObjectInformation( winstation, UOI_FLAGS, &flags, sizeof(flags), NULL )
