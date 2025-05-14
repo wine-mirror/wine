@@ -1658,7 +1658,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
             {
                 HeapFree( GetProcessHeap(), 0, list );
                 NtUserShowScrollBar( hwnd, SB_BOTH, FALSE );
-                return;
+                goto done;
             }
             if (style & WS_VISIBLE)
             {
@@ -1700,6 +1700,8 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
                         }
 			break;
     }
+
+done:
     SetThreadDpiAwarenessContext( context );
 }
 
