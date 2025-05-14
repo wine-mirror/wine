@@ -9946,13 +9946,16 @@ static void test_elems(IHTMLDocument2 *doc)
 
 static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
 {
+    IHTMLDOMNode *node, *elem_node;
     IHTMLDOMAttribute2 *attr;
     IHTMLDOMAttribute *clone;
     IHTMLDocument2 *doc_node;
     IHTMLWindow2 *window;
+    IHTMLElement *elem;
     VARIANT v, v_clone;
     IDispatch *disp;
     HRESULT hres;
+    BSTR bstr;
     LONG type;
 
     hres = IHTMLDOMAttribute_QueryInterface(test_attr, &IID_IHTMLDOMAttribute2, (void**)&attr);
@@ -10000,6 +10003,19 @@ static void test_attr_node(IHTMLDOMAttribute *test_attr, IHTMLDocument2 *doc)
     VariantClear(&v_clone);
     VariantClear(&v);
 
+    bstr = SysAllocString(L"div");
+    hres = IHTMLDocument2_createElement(doc, bstr, &elem);
+    ok(hres == S_OK, "createElement failed: %08lx\n", hres);
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLDOMNode, (void**)&elem_node);
+    ok(hres == S_OK, "Could not get IHTMLDOMNode iface: %08lx\n", hres);
+    IHTMLElement_Release(elem);
+    SysFreeString(bstr);
+
+    hres = IHTMLDOMAttribute2_appendChild(attr, elem_node, &node);
+    ok(hres == S_OK, "appendChild failed: %08lx\n", hres);
+    ok(!node, "appended child != NULL\n");
+
+    IHTMLDOMNode_Release(elem_node);
     IHTMLDOMAttribute2_Release(attr);
 }
 
