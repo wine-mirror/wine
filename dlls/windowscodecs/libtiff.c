@@ -1214,12 +1214,10 @@ HRESULT CDECL tiff_decoder_create(struct decoder_info *info, struct decoder **re
 {
     struct tiff_decoder *This;
 
-    This = malloc(sizeof(*This));
+    This = calloc(1, sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->decoder.vtable = &tiff_decoder_vtable;
-    This->tiff = NULL;
-    This->cached_tile = NULL;
     This->cached_tile_x = -1;
     *result = &This->decoder;
 
