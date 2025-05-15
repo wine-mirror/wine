@@ -270,6 +270,70 @@ skip_uisettings3:
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_UISettings_weak_ref(void)
+{
+    static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
+    IWeakReferenceSource *weak_reference_source;
+    IInspectable *inspectable, *inspectable2;
+    IWeakReference *weak_reference;
+    IActivationFactory *factory;
+    IUISettings *uisettings;
+    IUnknown *unknown;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( uisettings_name, wcslen( uisettings_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( uisettings_name ) );
+        return;
+    }
+
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IWeakReferenceSource, (void **)&weak_reference_source );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    hr = IWeakReferenceSource_GetWeakReference( weak_reference_source, &weak_reference );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    IWeakReferenceSource_Release( weak_reference_source );
+
+    check_interface( weak_reference, &IID_IUnknown, TRUE );
+    check_interface( weak_reference, &IID_IWeakReference, TRUE );
+    check_interface( weak_reference, &IID_IInspectable, FALSE );
+    check_interface( weak_reference, &IID_IAgileObject, FALSE );
+    check_interface( weak_reference, &IID_IUISettings, FALSE );
+
+    hr = IWeakReference_Resolve( weak_reference, &IID_IUnknown, (IInspectable **)&unknown );
+    ok( hr == S_OK && unknown, "got hr %#lx.\n", hr );
+    hr = IWeakReference_Resolve( weak_reference, &IID_IInspectable, &inspectable2 );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( (void *)inspectable2 == (void *)unknown, "Interfaces are not the same.\n" );
+    IInspectable_Release( inspectable2 );
+    hr = IWeakReference_Resolve( weak_reference, &IID_IUISettings, (IInspectable **)&uisettings );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( (void *)uisettings == (void *)unknown, "Interfaces are not the same.\n" );
+    IUISettings_Release( uisettings );
+    IUnknown_Release( unknown );
+
+    /* Free inspectable, weak reference should fail to resolve now */
+    IInspectable_Release( inspectable );
+
+    inspectable2 = (void *)0xdeadbeef;
+    hr = IWeakReference_Resolve( weak_reference, &IID_IInspectable, &inspectable2 );
+    ok( hr == S_OK && !inspectable2, "got hr %#lx.\n", hr );
+
+    IWeakReference_Release( weak_reference );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(uisettings)
 {
     HRESULT hr;
@@ -278,6 +342,7 @@ START_TEST(uisettings)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_UISettings();
+    test_UISettings_weak_ref();
 
     RoUninitialize();
 }
