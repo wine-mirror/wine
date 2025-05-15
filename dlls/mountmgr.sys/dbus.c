@@ -824,7 +824,7 @@ NTSTATUS dhcp_request( void *args )
         break;
     }
     default:
-        FIXME( "option %u not supported\n", (unsigned int)params->req->id );
+        FIXME( "option %u not supported\n", params->req->id );
         break;
     }
 
