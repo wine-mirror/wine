@@ -5285,11 +5285,9 @@ static void test_h264_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(i)
             ok(time == exp_nofps[i].time, "got time %I64d, expected %I64d\n", time, exp_nofps[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_nofps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_nofps[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);
@@ -5335,11 +5333,9 @@ static void test_h264_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(i)
             ok(time == exp_24fps[i].time, "got time %I64d, expected %I64d\n", time, exp_24fps[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine
             ok(duration == exp_24fps[i].duration, "got duration %I64d, expected %I64d\n", duration, exp_24fps[i].duration);
             ret = IMFSample_Release(output_sample);
             ok(ret == 0, "Release returned %lu\n", ret);

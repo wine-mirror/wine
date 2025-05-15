@@ -999,7 +999,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
             if (FAILED(IMFMediaType_GetUINT64(decoder->input_type, &MF_MT_FRAME_RATE, &frame_rate)))
                 frame_rate = (UINT64)30000 << 32 | 1001;
 
-            duration = (UINT64)10000000 * (UINT32)frame_rate / (frame_rate >> 32);
+            duration = MulDiv(10000000, (UINT32)frame_rate, frame_rate >> 32);
             if (FAILED(IMFSample_SetSampleTime(sample, decoder->sample_time)))
                 WARN("Failed to set sample time\n");
             if (FAILED(IMFSample_SetSampleDuration(sample, duration)))
