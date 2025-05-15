@@ -150,6 +150,22 @@ typedef struct _D3D11_SIGNATURE_PARAMETER_DESC
 #endif
 } D3D11_SIGNATURE_PARAMETER_DESC;
 
+typedef struct _D3D11_PARAMETER_DESC
+{
+    LPCSTR Name;
+    LPCSTR SemanticName;
+    D3D_SHADER_VARIABLE_TYPE Type;
+    D3D_SHADER_VARIABLE_CLASS Class;
+    UINT Rows;
+    UINT Columns;
+    D3D_INTERPOLATION_MODE InterpolationMode;
+    D3D_PARAMETER_FLAGS Flags;
+    UINT FirstInRegister;
+    UINT FirstInComponent;
+    UINT FirstOutRegister;
+    UINT FirstOutComponent;
+} D3D11_PARAMETER_DESC;
+
 DEFINE_GUID(IID_ID3D11ShaderReflectionType, 0x6e6ffa6a, 0x9bae, 0x4613, 0xa5, 0x1e, 0x91, 0x65, 0x2d, 0x50, 0x8c, 0x21);
 
 #define INTERFACE ID3D11ShaderReflectionType
@@ -284,6 +300,38 @@ DECLARE_INTERFACE_(ID3D11Linker, IUnknown)
     STDMETHOD(Link)(THIS_ ID3D11ModuleInstance *instance, LPCSTR instname, LPCSTR targetname, UINT flags, ID3DBlob **shader, ID3DBlob **error) PURE;
     STDMETHOD(UseLibrary)(THIS_ ID3D11ModuleInstance *libinstance) PURE;
     STDMETHOD(AddClipPlaneFromCBuffer)(THIS_ UINT bufferslot, UINT bufferentry) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D11LinkingNode, 0xd80dd70c, 0x8d2f, 0x4751, 0x94, 0xa1, 0x3, 0xc7, 0x9b, 0x35, 0x56, 0xdb);
+
+#define INTERFACE ID3D11LinkingNode
+DECLARE_INTERFACE_(ID3D11LinkingNode, IUnknown)
+{
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+};
+#undef INTERFACE
+
+DEFINE_GUID(IID_ID3D11FunctionLinkingGraph, 0x54133220, 0x1ce8, 0x43d3, 0x82, 0x36, 0x98, 0x55, 0xc5, 0xce, 0xec, 0xff);
+
+#define INTERFACE ID3D11FunctionLinkingGraph
+DECLARE_INTERFACE_(ID3D11FunctionLinkingGraph, IUnknown)
+{
+    STDMETHOD(QueryInterface)(THIS_ REFIID iid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+
+    /* ID3D11FunctionLinkingGraph methods */
+    STDMETHOD(CreateModuleInstance)(THIS_ ID3D11ModuleInstance **instance, ID3DBlob **error) PURE;
+    STDMETHOD(SetInputSignature)(THIS_ const D3D11_PARAMETER_DESC *parameter_desc, UINT parameter_count, ID3D11LinkingNode **input_node) PURE;
+    STDMETHOD(SetOutputSignature)(THIS_ const D3D11_PARAMETER_DESC *parameter_desc, UINT parameter_count, ID3D11LinkingNode **output_node) PURE;
+    STDMETHOD(CallFunction)(THIS_ LPCSTR namespace, ID3D11Module *module, LPCSTR function_name, ID3D11LinkingNode **call_node) PURE;
+    STDMETHOD(PassValue)(THIS_ ID3D11LinkingNode *src_node, INT src_parameter_index, ID3D11LinkingNode *dst_node, INT dst_parameter_index) PURE;
+    STDMETHOD(PassValueWithSwizzle)(THIS_ ID3D11LinkingNode *src_node, INT src_parameter_index, LPCSTR src_swizzle, ID3D11LinkingNode *dst_node, INT dst_parameter_index,LPCSTR dst_swizzle) PURE;
+    STDMETHOD(GetLastError)(THIS_ ID3DBlob **error) PURE;
+    STDMETHOD(GenerateHlsl)(THIS_ UINT flags, ID3DBlob **buffer) PURE;
 };
 #undef INTERFACE
 
