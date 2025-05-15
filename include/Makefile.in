@@ -920,6 +920,7 @@ SOURCES = \
 	windows.ui.idl \
 	windows.ui.input.idl \
 	windows.ui.notifications.idl \
+	windows.ui.viewmanagement.core.idl \
 	windows.ui.viewmanagement.idl \
 	windows.ui.xaml.hosting.desktopwindowxamlsource.idl \
 	windows.ui.xaml.idl \
