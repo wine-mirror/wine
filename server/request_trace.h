@@ -1704,12 +1704,15 @@ static void dump_set_window_owner_reply( const struct set_window_owner_reply *re
 static void dump_get_window_info_request( const struct get_window_info_request *req )
 {
     fprintf( stderr, " handle=%08x", req->handle );
+    fprintf( stderr, ", offset=%d", req->offset );
+    fprintf( stderr, ", size=%u", req->size );
 }
 
 static void dump_get_window_info_reply( const struct get_window_info_reply *req )
 {
     fprintf( stderr, " last_active=%08x", req->last_active );
     fprintf( stderr, ", is_unicode=%d", req->is_unicode );
+    dump_uint64( ", info=", &req->info );
 }
 
 static void dump_init_window_info_request( const struct init_window_info_request *req )
@@ -1722,26 +1725,15 @@ static void dump_init_window_info_request( const struct init_window_info_request
 
 static void dump_set_window_info_request( const struct set_window_info_request *req )
 {
-    fprintf( stderr, " flags=%04x", req->flags );
-    fprintf( stderr, ", is_unicode=%d", req->is_unicode );
-    fprintf( stderr, ", handle=%08x", req->handle );
-    fprintf( stderr, ", style=%08x", req->style );
-    fprintf( stderr, ", ex_style=%08x", req->ex_style );
-    fprintf( stderr, ", extra_size=%u", req->extra_size );
-    dump_uint64( ", instance=", &req->instance );
-    dump_uint64( ", user_data=", &req->user_data );
-    dump_uint64( ", extra_value=", &req->extra_value );
-    fprintf( stderr, ", extra_offset=%d", req->extra_offset );
+    fprintf( stderr, " handle=%08x", req->handle );
+    fprintf( stderr, ", offset=%d", req->offset );
+    fprintf( stderr, ", size=%u", req->size );
+    dump_uint64( ", new_info=", &req->new_info );
 }
 
 static void dump_set_window_info_reply( const struct set_window_info_reply *req )
 {
-    fprintf( stderr, " old_style=%08x", req->old_style );
-    fprintf( stderr, ", old_ex_style=%08x", req->old_ex_style );
-    dump_uint64( ", old_instance=", &req->old_instance );
-    dump_uint64( ", old_user_data=", &req->old_user_data );
-    dump_uint64( ", old_extra_value=", &req->old_extra_value );
-    dump_uint64( ", old_id=", &req->old_id );
+    dump_uint64( " old_info=", &req->old_info );
 }
 
 static void dump_set_parent_request( const struct set_parent_request *req )

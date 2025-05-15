@@ -2587,9 +2587,12 @@ enum message_type
 /* Get information from a window handle */
 @REQ(get_window_info)
     user_handle_t  handle;      /* handle to the window */
+    int            offset;      /* offset of the info */
+    data_size_t    size;        /* size of the info value to read */
 @REPLY
     user_handle_t  last_active; /* last active popup */
     int            is_unicode;  /* ANSI or unicode */
+    lparam_t       info;        /* current window info value */
 @END
 
 
@@ -2605,31 +2608,13 @@ enum message_type
 
 /* Set some information in a window */
 @REQ(set_window_info)
-    unsigned short flags;         /* flags for fields to set (see below) */
-    short int      is_unicode;    /* ANSI or unicode */
     user_handle_t  handle;        /* handle to the window */
-    unsigned int   style;         /* window style */
-    unsigned int   ex_style;      /* window extended style */
-    data_size_t    extra_size;    /* size to set in extra bytes */
-    mod_handle_t   instance;      /* creator instance */
-    lparam_t       user_data;     /* user-specific data */
-    lparam_t       extra_value;   /* value to set in extra bytes or window id */
-    int            extra_offset;  /* offset to set in extra bytes */
+    int            offset;        /* offset of the info */
+    data_size_t    size;          /* size of the info value to write */
+    lparam_t       new_info;      /* new window info value */
 @REPLY
-    unsigned int   old_style;     /* old window style */
-    unsigned int   old_ex_style;  /* old window extended style */
-    mod_handle_t   old_instance;  /* old creator instance */
-    lparam_t       old_user_data; /* old user-specific data */
-    lparam_t       old_extra_value; /* old value in extra bytes */
-    lparam_t       old_id;        /* old window id */
+    lparam_t       old_info;      /* previous window info value */
 @END
-#define SET_WIN_STYLE     0x01
-#define SET_WIN_EXSTYLE   0x02
-#define SET_WIN_ID        0x04
-#define SET_WIN_INSTANCE  0x08
-#define SET_WIN_USERDATA  0x10
-#define SET_WIN_EXTRA     0x20
-#define SET_WIN_UNICODE   0x40
 
 
 /* Set the parent of a window */

@@ -3467,12 +3467,15 @@ struct get_window_info_request
 {
     struct request_header __header;
     user_handle_t  handle;
+    int            offset;
+    data_size_t    size;
 };
 struct get_window_info_reply
 {
     struct reply_header __header;
     user_handle_t  last_active;
     int            is_unicode;
+    lparam_t       info;
 };
 
 
@@ -3496,35 +3499,16 @@ struct init_window_info_reply
 struct set_window_info_request
 {
     struct request_header __header;
-    unsigned short flags;
-    short int      is_unicode;
     user_handle_t  handle;
-    unsigned int   style;
-    unsigned int   ex_style;
-    data_size_t    extra_size;
-    mod_handle_t   instance;
-    lparam_t       user_data;
-    lparam_t       extra_value;
-    int            extra_offset;
-    char __pad_60[4];
+    int            offset;
+    data_size_t    size;
+    lparam_t       new_info;
 };
 struct set_window_info_reply
 {
     struct reply_header __header;
-    unsigned int   old_style;
-    unsigned int   old_ex_style;
-    mod_handle_t   old_instance;
-    lparam_t       old_user_data;
-    lparam_t       old_extra_value;
-    lparam_t       old_id;
+    lparam_t       old_info;
 };
-#define SET_WIN_STYLE     0x01
-#define SET_WIN_EXSTYLE   0x02
-#define SET_WIN_ID        0x04
-#define SET_WIN_INSTANCE  0x08
-#define SET_WIN_USERDATA  0x10
-#define SET_WIN_EXTRA     0x20
-#define SET_WIN_UNICODE   0x40
 
 
 
@@ -6826,6 +6810,6 @@ union generic_reply
     struct set_keyboard_repeat_reply set_keyboard_repeat_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 876
+#define SERVER_PROTOCOL_VERSION 877
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2177,6 +2177,22 @@ void free_window_handle( struct window *win )
     release_object( win );
 }
 
+static void fix_window_ex_style( struct window *win )
+{
+    if (win->ex_style & WS_EX_DLGMODALFRAME) win->ex_style |= WS_EX_WINDOWEDGE;
+    else if (win->ex_style & WS_EX_STATICEDGE) win->ex_style &= ~WS_EX_WINDOWEDGE;
+    else if (win->style & (WS_DLGFRAME | WS_THICKFRAME)) win->ex_style |= WS_EX_WINDOWEDGE;
+    else win->ex_style &= ~WS_EX_WINDOWEDGE;
+}
+
+static void set_window_ex_style( struct window *win, unsigned int ex_style )
+{
+    /* WS_EX_TOPMOST can only be changed for unlinked windows */
+    if (!win->is_linked) win->ex_style = ex_style;
+    else win->ex_style = (ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
+    if (!(win->ex_style & WS_EX_LAYERED)) win->is_layered = 0;
+}
+
 
 /* create a window */
 DECL_HANDLER(create_window)
@@ -2343,14 +2359,32 @@ DECL_HANDLER(set_window_owner)
 /* get information from a window handle */
 DECL_HANDLER(get_window_info)
 {
-    struct window *win = get_window( req->handle );
+    struct window *win;
 
-    if (!win) return;
+    if (!(win = get_window( req->handle ))) return;
 
     reply->last_active = win->handle;
     reply->is_unicode  = win->is_unicode;
-
     if (get_user_object( win->last_active, NTUSER_OBJ_WINDOW )) reply->last_active = win->last_active;
+
+    switch (req->offset)
+    {
+    case GWL_STYLE:       reply->info = win->style;  break;
+    case GWL_EXSTYLE:     reply->info = win->ex_style;  break;
+    case GWLP_ID:         reply->info = win->id;  break;
+    case GWLP_HINSTANCE:  reply->info = win->instance;  break;
+    case GWLP_WNDPROC:    reply->info = win->is_unicode;  break;
+    case GWLP_USERDATA:   reply->info = win->user_data;  break;
+    default:
+        if (req->size > sizeof(reply->info) || req->offset < 0 ||
+            req->offset > win->nb_extra_bytes - (int)req->size)
+        {
+            set_win32_error( ERROR_INVALID_INDEX );
+            break;
+        }
+        memcpy( &reply->info, win->extra_bytes + req->offset, req->size );
+        break;
+    }
 }
 
 
@@ -2372,52 +2406,55 @@ DECL_HANDLER(init_window_info)
 /* set some information in a window */
 DECL_HANDLER(set_window_info)
 {
-    struct window *win = get_window( req->handle );
+    struct window *win;
 
-    if (!win) return;
-    if (req->flags && is_desktop_window(win) && win->thread != current)
+    if (!(win = get_window( req->handle ))) return;
+    if (is_desktop_window( win ) && win->thread != current)
     {
         set_error( STATUS_ACCESS_DENIED );
         return;
     }
-    if (req->extra_size > sizeof(req->extra_value) ||
-        req->extra_offset < -1 ||
-        req->extra_offset > win->nb_extra_bytes - (int)req->extra_size)
-    {
-        set_win32_error( ERROR_INVALID_INDEX );
-        return;
-    }
-    if (req->extra_offset != -1)
-    {
-        memcpy( &reply->old_extra_value, win->extra_bytes + req->extra_offset, req->extra_size );
-    }
-    else if (req->flags & SET_WIN_EXTRA)
-    {
-        set_win32_error( ERROR_INVALID_INDEX );
-        return;
-    }
-    reply->old_style     = win->style;
-    reply->old_ex_style  = win->ex_style;
-    reply->old_id        = win->id;
-    reply->old_instance  = win->instance;
-    reply->old_user_data = win->user_data;
-    if (req->flags & SET_WIN_STYLE) win->style = req->style;
-    if (req->flags & SET_WIN_EXSTYLE)
-    {
-        /* WS_EX_TOPMOST can only be changed for unlinked windows */
-        if (!win->is_linked) win->ex_style = req->ex_style;
-        else win->ex_style = (req->ex_style & ~WS_EX_TOPMOST) | (win->ex_style & WS_EX_TOPMOST);
-        if (!(win->ex_style & WS_EX_LAYERED)) win->is_layered = 0;
-    }
-    if (req->flags & SET_WIN_ID) win->id = req->extra_value;
-    if (req->flags & SET_WIN_INSTANCE) win->instance = req->instance;
-    if (req->flags & SET_WIN_UNICODE) win->is_unicode = req->is_unicode;
-    if (req->flags & SET_WIN_USERDATA) win->user_data = req->user_data;
-    if (req->flags & SET_WIN_EXTRA) memcpy( win->extra_bytes + req->extra_offset,
-                                            &req->extra_value, req->extra_size );
 
-    /* changing window style triggers a non-client paint */
-    if (req->flags & SET_WIN_STYLE) win->paint_flags |= PAINT_NONCLIENT;
+    switch (req->offset)
+    {
+    case GWL_STYLE:
+        reply->old_info = win->style;
+        win->style = req->new_info;
+        fix_window_ex_style( win );
+        /* changing window style triggers a non-client paint */
+        win->paint_flags |= PAINT_NONCLIENT;
+        break;
+    case GWL_EXSTYLE:
+        reply->old_info = win->ex_style;
+        set_window_ex_style( win, req->new_info );
+        break;
+    case GWLP_ID:
+        reply->old_info = win->id;
+        win->id = req->new_info;
+        break;
+    case GWLP_HINSTANCE:
+        reply->old_info = win->instance;
+        win->instance = req->new_info;
+        break;
+    case GWLP_WNDPROC:
+        reply->old_info = win->is_unicode;
+        win->is_unicode = req->new_info;
+        break;
+    case GWLP_USERDATA:
+        reply->old_info = win->user_data;
+        win->user_data = req->new_info;
+        break;
+    default:
+        if (req->size > sizeof(req->new_info) || req->offset < 0 ||
+            req->offset > win->nb_extra_bytes - (int)req->size)
+        {
+            set_win32_error( ERROR_INVALID_INDEX );
+            break;
+        }
+        memcpy( &reply->old_info, win->extra_bytes + req->offset, req->size );
+        memcpy( win->extra_bytes + req->offset, &req->new_info, req->size );
+        break;
+    }
 }
 
 

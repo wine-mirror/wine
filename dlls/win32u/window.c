@@ -1013,27 +1013,12 @@ static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ans
             RtlSetLastWin32Error( ERROR_ACCESS_DENIED );
             return 0;
         }
-        SERVER_START_REQ( set_window_info )
+        SERVER_START_REQ( get_window_info )
         {
             req->handle = wine_server_user_handle( hwnd );
-            req->flags  = 0;  /* don't set anything, just retrieve */
-            req->extra_offset = (offset >= 0) ? offset : -1;
-            req->extra_size = (offset >= 0) ? size : 0;
-            if (!wine_server_call_err( req ))
-            {
-                switch(offset)
-                {
-                case GWL_STYLE:      retval = reply->old_style; break;
-                case GWL_EXSTYLE:    retval = reply->old_ex_style; break;
-                case GWLP_ID:        retval = reply->old_id; break;
-                case GWLP_HINSTANCE: retval = (ULONG_PTR)wine_server_get_ptr( reply->old_instance ); break;
-                case GWLP_USERDATA:  retval = reply->old_user_data; break;
-                default:
-                    if (offset >= 0) retval = get_win_data( &reply->old_extra_value, size );
-                    else RtlSetLastWin32Error( ERROR_INVALID_INDEX );
-                    break;
-                }
-            }
+            req->offset = offset;
+            req->size = size;
+            if (!wine_server_call_err( req )) retval = reply->info;
         }
         SERVER_END_REQ;
         return retval;
@@ -1127,12 +1112,11 @@ UINT set_window_style_bits( HWND hwnd, UINT set_bits, UINT clear_bits )
     SERVER_START_REQ( set_window_info )
     {
         req->handle = wine_server_user_handle( hwnd );
-        req->flags  = SET_WIN_STYLE;
-        req->style  = style.styleNew;
-        req->extra_offset = -1;
+        req->offset = GWL_STYLE;
+        req->new_info = style.styleNew;
         if ((ok = !wine_server_call( req )))
         {
-            style.styleOld = reply->old_style;
+            style.styleOld = reply->old_info;
             win->dwStyle = style.styleNew;
         }
     }
@@ -1317,74 +1301,45 @@ LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newval, BOO
         break;
     }
 
+    if (offset == GWLP_WNDPROC) newval = !!(win->flags & WIN_ISUNICODE);
+    if (offset == GWLP_USERDATA && size == sizeof(WORD)) newval = MAKELONG( newval, win->userdata >> 16 );
+
     SERVER_START_REQ( set_window_info )
     {
         req->handle = wine_server_user_handle( hwnd );
-        req->extra_offset = -1;
-        switch(offset)
-        {
-        case GWL_STYLE:
-            req->flags = SET_WIN_STYLE | SET_WIN_EXSTYLE;
-            req->style = newval;
-            req->ex_style = fix_exstyle(newval, win->dwExStyle);
-            break;
-        case GWL_EXSTYLE:
-            req->flags = SET_WIN_EXSTYLE;
-            req->ex_style = newval;
-            break;
-        case GWLP_ID:
-            req->flags = SET_WIN_ID;
-            req->extra_value = newval;
-            break;
-        case GWLP_HINSTANCE:
-            req->flags = SET_WIN_INSTANCE;
-            req->instance = wine_server_client_ptr( (void *)newval );
-            break;
-        case GWLP_WNDPROC:
-            req->flags = SET_WIN_UNICODE;
-            req->is_unicode = (win->flags & WIN_ISUNICODE) != 0;
-            break;
-        case GWLP_USERDATA:
-            if (size == sizeof(WORD)) newval = MAKELONG( newval, win->userdata >> 16 );
-            req->flags = SET_WIN_USERDATA;
-            req->user_data = newval;
-            break;
-        default:
-            req->flags = SET_WIN_EXTRA;
-            req->extra_offset = offset;
-            req->extra_size = size;
-            set_win_data( &req->extra_value, newval, size );
-        }
+        req->offset = offset;
+        req->new_info = newval;
+        req->size = size;
         if ((ok = !wine_server_call_err( req )))
         {
-            switch(offset)
+            switch (offset)
             {
             case GWL_STYLE:
                 win->dwStyle = newval;
                 win->dwExStyle = fix_exstyle(win->dwStyle, win->dwExStyle);
-                retval = reply->old_style;
+                retval = reply->old_info;
                 break;
             case GWL_EXSTYLE:
                 win->dwExStyle = newval;
-                retval = reply->old_ex_style;
+                retval = reply->old_info;
                 break;
             case GWLP_ID:
                 win->wIDmenu = newval;
-                retval = reply->old_id;
+                retval = reply->old_info;
                 break;
             case GWLP_HINSTANCE:
                 win->hInstance = (HINSTANCE)newval;
-                retval = (ULONG_PTR)wine_server_get_ptr( reply->old_instance );
+                retval = reply->old_info;
                 break;
             case GWLP_WNDPROC:
                 break;
             case GWLP_USERDATA:
                 win->userdata = newval;
-                retval = reply->old_user_data;
+                retval = reply->old_info;
                 break;
             default:
-                retval = get_win_data( (char *)win->wExtra + offset, size );
                 set_win_data( (char *)win->wExtra + offset, newval, size );
+                retval = reply->old_info;
                 break;
             }
         }
