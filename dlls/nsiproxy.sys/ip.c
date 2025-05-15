@@ -1215,7 +1215,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
             for (j = 0; j < ARRAY_SIZE(ipv4_multicast_addresses); ++j)
             {
                 if (iface_static[i].unk & (1 << j)) continue;
-                if (num <= *count)
+                if (num < *count)
                 {
                     entry.addr.s_addr = ipv4_multicast_addresses[j];
                     ipv4_neighbour_fill_entry( &entry, key_data, rw_data, dynamic_data, static_data );
