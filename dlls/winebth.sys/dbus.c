@@ -1659,7 +1659,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                 if (status != STATUS_SUCCESS)
                 {
                     ERR( "Failed to create async call to get adapter properties: %#x\n",
-                         (int)status );
+                         status );
                     unix_name_free( radio );
                     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
                 }
@@ -1741,7 +1741,7 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                 status = bluez_device_get_props_by_path_async( conn, device->str, &pending_call );
                 if (status)
                 {
-                    ERR( "Failed to create async call to get device properties: %#x\n", (int)status );
+                    ERR( "Failed to create async call to get device properties: %#x\n", status );
                     unix_name_free( device );
                     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
                 }
@@ -1846,7 +1846,7 @@ NTSTATUS bluez_watcher_init( void *connection, void **ctx )
     if (status != STATUS_SUCCESS)
     {
         free( watcher_ctx );
-        ERR( "could not create async GetManagedObjects call: %#x\n", (int)status);
+        ERR( "could not create async GetManagedObjects call: %#x\n", status);
         return status;
     }
     watcher_ctx->init_device_list_call = call;
@@ -2147,7 +2147,7 @@ NTSTATUS bluez_dbus_loop( void *c, void *watcher, void *auth_agent,
             p_dbus_message_unref( reply );
             if (status != STATUS_SUCCESS)
             {
-                WARN( "Error building initial bluetooth devices list: %#x\n", (int)status );
+                WARN( "Error building initial bluetooth devices list: %#x\n", status );
                 p_dbus_connection_unref( connection );
                 bluez_auth_agent_ctx_decref( auth_agent );
                 return status;
