@@ -1806,9 +1806,9 @@ static enum pdb_result pdb_reader_init_DBI(struct pdb_reader *pdb)
     for (i = 0; i < pdb->num_compilands; i++)
     {
         pdb->compilands[i].stream_offset = compiland_iter.dbi_walker.offset;
-        pdb->compilands[i].are_symbols_loaded = FALSE;
         pdb->compilands[i].compiland = NULL;
         pdb->compilands[i].stream_id = compiland_iter.dbi_cu_header.stream;
+        pdb->compilands[i].are_symbols_loaded = pdb->compilands[i].stream_id == 0xffff;
         result = pdb_reader_compiland_iterator_next(pdb, &compiland_iter);
         if ((result == R_PDB_SUCCESS) != (i + 1 < pdb->num_compilands)) return result ? result : R_PDB_INVALID_PDB_FILE;
     }
