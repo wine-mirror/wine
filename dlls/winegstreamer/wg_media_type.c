@@ -43,16 +43,16 @@
 #include "unix_private.h"
 
 #define WG_GUID_FORMAT "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}"
-#define WG_GUID_ARGS(guid) (int)(guid).Data1, (guid).Data2, (guid).Data3, (guid).Data4[0], \
+#define WG_GUID_ARGS(guid) (guid).Data1, (guid).Data2, (guid).Data3, (guid).Data4[0], \
             (guid).Data4[1], (guid).Data4[2], (guid).Data4[3], (guid).Data4[4], \
             (guid).Data4[5], (guid).Data4[6], (guid).Data4[7]
 
 #define WG_RATIO_FORMAT "%d:%d"
-#define WG_RATIO_ARGS(ratio) (int)(ratio).Numerator, (int)(ratio).Denominator
+#define WG_RATIO_ARGS(ratio) (ratio).Numerator, (ratio).Denominator
 
 #define WG_APERTURE_FORMAT "(%d,%d)-(%d,%d)"
-#define WG_APERTURE_ARGS(aperture) (int)(aperture).OffsetX.value, (int)(aperture).OffsetY.value, \
-            (int)(aperture).Area.cx, (int)(aperture).Area.cy
+#define WG_APERTURE_ARGS(aperture) (aperture).OffsetX.value, (aperture).OffsetY.value, \
+            (aperture).Area.cx, (aperture).Area.cy
 
 static const GUID GUID_NULL;
 
@@ -244,9 +244,9 @@ static GstCaps *caps_from_wave_format_extensible(const WAVEFORMATEXTENSIBLE *for
 
     GST_TRACE("tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, "
             "%u valid bps, channel mask %#x, subtype " WG_GUID_FORMAT ".",
-            format->Format.wFormatTag, format->Format.nChannels, (int)format->Format.nSamplesPerSec,
-            (int)format->Format.nAvgBytesPerSec, format->Format.nBlockAlign, format->Format.wBitsPerSample,
-            format->Samples.wValidBitsPerSample, (int)format->dwChannelMask, WG_GUID_ARGS(format->SubFormat));
+            format->Format.wFormatTag, format->Format.nChannels, format->Format.nSamplesPerSec,
+            format->Format.nAvgBytesPerSec, format->Format.nBlockAlign, format->Format.wBitsPerSample,
+            format->Samples.wValidBitsPerSample, format->dwChannelMask, WG_GUID_ARGS(format->SubFormat));
     if (format->Format.cbSize)
     {
         guint extra_size = sizeof(WAVEFORMATEX) + format->Format.cbSize - sizeof(WAVEFORMATEXTENSIBLE);
@@ -272,8 +272,8 @@ static GstCaps *caps_from_wave_format(const void *format, UINT32 format_size)
         return caps_from_wave_format_extensible(format, format_size);
 
     GST_TRACE("tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample.",
-            wfx->wFormatTag, wfx->nChannels, (int)wfx->nSamplesPerSec,
-            (int)wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
+            wfx->wFormatTag, wfx->nChannels, wfx->nSamplesPerSec,
+            wfx->nAvgBytesPerSec, wfx->nBlockAlign, wfx->wBitsPerSample);
     if (wfx->cbSize) GST_MEMDUMP("extra bytes:", (guint8 *)(wfx + 1), wfx->cbSize);
 
     subtype.Data1 = wfx->wFormatTag;
@@ -397,7 +397,7 @@ static GstCaps *caps_from_video_format(const MFVIDEOFORMAT *format, UINT32 forma
 
     GST_TRACE("subtype " WG_GUID_FORMAT " %ux%u, FPS " WG_RATIO_FORMAT ", aperture " WG_APERTURE_FORMAT ", "
             "PAR " WG_RATIO_FORMAT ", videoFlags %#x.",
-            WG_GUID_ARGS(format->guidFormat), (int)format->videoInfo.dwWidth, (int)format->videoInfo.dwHeight,
+            WG_GUID_ARGS(format->guidFormat), format->videoInfo.dwWidth, format->videoInfo.dwHeight,
             WG_RATIO_ARGS(format->videoInfo.FramesPerSecond), WG_APERTURE_ARGS(format->videoInfo.MinimumDisplayAperture),
             WG_RATIO_ARGS(format->videoInfo.PixelAspectRatio), (int)format->videoInfo.VideoFlags );
     if (format->dwSize > sizeof(*format)) GST_MEMDUMP("extra bytes:", (guint8 *)(format + 1), format->dwSize - sizeof(*format));
@@ -535,9 +535,9 @@ static NTSTATUS wave_format_extensible_from_gst_caps(const GstCaps *caps, const 
 
     GST_TRACE("tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample, "
             "%u valid bps, channel mask %#x, subtype " WG_GUID_FORMAT ".",
-            format->Format.wFormatTag, format->Format.nChannels, (int)format->Format.nSamplesPerSec,
-            (int)format->Format.nAvgBytesPerSec, format->Format.nBlockAlign, format->Format.wBitsPerSample,
-            format->Samples.wValidBitsPerSample, (int)format->dwChannelMask, WG_GUID_ARGS(format->SubFormat));
+            format->Format.wFormatTag, format->Format.nChannels, format->Format.nSamplesPerSec,
+            format->Format.nAvgBytesPerSec, format->Format.nBlockAlign, format->Format.wBitsPerSample,
+            format->Samples.wValidBitsPerSample, format->dwChannelMask, WG_GUID_ARGS(format->SubFormat));
     if (format->Format.cbSize)
     {
         guint extra_size = sizeof(WAVEFORMATEX) + format->Format.cbSize - sizeof(WAVEFORMATEXTENSIBLE);
@@ -563,8 +563,8 @@ static NTSTATUS wave_format_ex_from_gst_caps(const GstCaps *caps, WORD format_ta
         gst_buffer_extract(codec_data, 0, format + 1, codec_data_size);
 
     GST_TRACE("tag %#x, %u channels, sample rate %u, %u bytes/sec, alignment %u, %u bits/sample.",
-            format->wFormatTag, format->nChannels, (int)format->nSamplesPerSec,
-            (int)format->nAvgBytesPerSec, format->nBlockAlign, format->wBitsPerSample);
+            format->wFormatTag, format->nChannels, format->nSamplesPerSec,
+            format->nAvgBytesPerSec, format->nBlockAlign, format->wBitsPerSample);
     if (format->cbSize) GST_MEMDUMP("extra bytes:", (guint8 *)(format + 1), format->cbSize);
 
     return STATUS_SUCCESS;
@@ -720,7 +720,7 @@ static NTSTATUS video_format_from_gst_caps(const GstCaps *caps, const GUID *subt
 
     GST_TRACE("subtype " WG_GUID_FORMAT " %ux%u, FPS " WG_RATIO_FORMAT ", aperture " WG_APERTURE_FORMAT ", "
             "PAR " WG_RATIO_FORMAT ", videoFlags %#x.",
-            WG_GUID_ARGS(format->guidFormat), (int)format->videoInfo.dwWidth, (int)format->videoInfo.dwHeight,
+            WG_GUID_ARGS(format->guidFormat), format->videoInfo.dwWidth, format->videoInfo.dwHeight,
             WG_RATIO_ARGS(format->videoInfo.FramesPerSecond), WG_APERTURE_ARGS(format->videoInfo.MinimumDisplayAperture),
             WG_RATIO_ARGS(format->videoInfo.PixelAspectRatio), (int)format->videoInfo.VideoFlags );
     if (format->dwSize > sizeof(*format)) GST_MEMDUMP("extra bytes:", (guint8 *)(format + 1), format->dwSize - sizeof(*format));
@@ -784,7 +784,7 @@ static NTSTATUS mpeg_video_format_from_gst_caps(const GstCaps *caps, struct mpeg
 
     GST_TRACE("subtype " WG_GUID_FORMAT " %ux%u, FPS " WG_RATIO_FORMAT ", aperture " WG_APERTURE_FORMAT ", "
             "PAR " WG_RATIO_FORMAT ", videoFlags %#x, start_time_code %u, profile %u, level %u, flags %#x.",
-            WG_GUID_ARGS(format->hdr.guidFormat), (int)format->hdr.videoInfo.dwWidth, (int)format->hdr.videoInfo.dwHeight,
+            WG_GUID_ARGS(format->hdr.guidFormat), format->hdr.videoInfo.dwWidth, format->hdr.videoInfo.dwHeight,
             WG_RATIO_ARGS(format->hdr.videoInfo.FramesPerSecond), WG_APERTURE_ARGS(format->hdr.videoInfo.MinimumDisplayAperture),
             WG_RATIO_ARGS(format->hdr.videoInfo.PixelAspectRatio), (int)format->hdr.videoInfo.VideoFlags, format->start_time_code,
             format->profile, format->level, format->flags );
