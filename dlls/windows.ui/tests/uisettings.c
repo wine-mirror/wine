@@ -22,6 +22,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winstring.h"
+#include "weakreference.h"
 
 #include "roapi.h"
 
@@ -213,7 +214,13 @@ static void test_UISettings(void)
         goto skip_uisettings3;
     }
 
+    check_interface( inspectable, &IID_IInspectable, TRUE );
     check_interface( inspectable, &IID_IAgileObject, TRUE );
+    check_interface( inspectable, &IID_IUISettings, TRUE );
+    check_interface( inspectable, &IID_IUISettings2, TRUE );
+    check_interface( inspectable, &IID_IUISettings3, TRUE );
+    check_interface( inspectable, &IID_IWeakReferenceSource, TRUE );
+    check_interface( inspectable, &IID_IWeakReference, FALSE );
 
     test_AccentColor( uisettings3 );
 

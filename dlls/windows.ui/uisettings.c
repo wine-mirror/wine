@@ -18,6 +18,8 @@
  */
 
 #include "private.h"
+#include "initguid.h"
+#include "weakreference.h"
 
 #include "wine/debug.h"
 
@@ -32,6 +34,7 @@ struct uisettings
     IUISettings3 IUISettings3_iface;
     IUISettings4 IUISettings4_iface;
     IUISettings5 IUISettings5_iface;
+    IWeakReferenceSource IWeakReferenceSource_iface;
     LONG ref;
 };
 
@@ -70,6 +73,10 @@ static HRESULT WINAPI uisettings_QueryInterface( IUISettings *iface, REFIID iid,
     else if (IsEqualGUID( iid, &IID_IUISettings5 ))
     {
         *out = &impl->IUISettings5_iface;
+    }
+    else if (IsEqualGUID( iid, &IID_IWeakReferenceSource ))
+    {
+        *out = &impl->IWeakReferenceSource_iface;
     }
 
     if (!*out)
@@ -469,6 +476,44 @@ static const struct IUISettings5Vtbl uisettings5_vtbl =
     uisettings5_remove_AutoHideScrollBarsChanged,
 };
 
+static inline struct uisettings *impl_from_IWeakReferenceSource( IWeakReferenceSource *iface )
+{
+    return CONTAINING_RECORD( iface, struct uisettings, IWeakReferenceSource_iface );
+}
+
+static HRESULT WINAPI weak_reference_source_QueryInterface( IWeakReferenceSource *iface, REFIID iid, void **out )
+{
+    struct uisettings *impl = impl_from_IWeakReferenceSource( iface );
+    return uisettings_QueryInterface( &impl->IUISettings_iface, iid, out );
+}
+
+static ULONG WINAPI weak_reference_source_AddRef( IWeakReferenceSource *iface )
+{
+    struct uisettings *impl = impl_from_IWeakReferenceSource( iface );
+    return uisettings_AddRef( &impl->IUISettings_iface );
+}
+
+static ULONG WINAPI weak_reference_source_Release( IWeakReferenceSource *iface )
+{
+    struct uisettings *impl = impl_from_IWeakReferenceSource( iface );
+    return uisettings_Release( &impl->IUISettings_iface );
+}
+
+static HRESULT WINAPI weak_reference_source_GetWeakReference( IWeakReferenceSource *iface, IWeakReference **ref )
+{
+    FIXME( "iface %p, ref %p stub.\n", iface, ref );
+    return E_NOTIMPL;
+}
+
+static const struct IWeakReferenceSourceVtbl weak_reference_source_vtbl =
+{
+    weak_reference_source_QueryInterface,
+    weak_reference_source_AddRef,
+    weak_reference_source_Release,
+    /* IWeakReferenceSource methods */
+    weak_reference_source_GetWeakReference,
+};
+
 struct uisettings_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -551,6 +596,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     impl->IUISettings3_iface.lpVtbl = &uisettings3_vtbl;
     impl->IUISettings4_iface.lpVtbl = &uisettings4_vtbl;
     impl->IUISettings5_iface.lpVtbl = &uisettings5_vtbl;
+    impl->IWeakReferenceSource_iface.lpVtbl = &weak_reference_source_vtbl;
     impl->ref = 1;
 
     *instance = (IInspectable *)&impl->IUISettings3_iface;
