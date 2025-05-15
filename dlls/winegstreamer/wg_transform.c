@@ -96,6 +96,7 @@ struct wg_transform
     GstCaps *input_caps;
 
     bool draining;
+    INT64 ts_offset;
 };
 
 static struct wg_transform *get_transform(wg_transform_t trans)
@@ -862,7 +863,19 @@ NTSTATUS wg_transform_push_data(void *args)
     }
 
     if (sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
-        GST_BUFFER_PTS(buffer) = sample->pts * 100;
+    {
+        if (sample->pts < transform->ts_offset)
+        {
+            if (transform->ts_offset)
+                GST_FIXME("ts_offset is already set to %"GST_TIME_FORMAT", overwriting",
+                        GST_TIME_ARGS(-transform->ts_offset));
+
+            GST_TRACE("Setting ts_offset to %"GST_TIME_FORMAT, GST_TIME_ARGS(-sample->pts));
+            transform->ts_offset = sample->pts;
+        }
+
+        GST_BUFFER_PTS(buffer) = (sample->pts - transform->ts_offset) * 100;
+    }
     if (sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
         GST_BUFFER_DURATION(buffer) = sample->duration * 100;
     if (!(sample->flags & WG_SAMPLE_FLAG_SYNC_POINT))
@@ -1195,6 +1208,10 @@ NTSTATUS wg_transform_read_data(void *args)
                 &src_video_info, &dst_video_info);
     else
         status = read_transform_output(sample, output_buffer);
+
+    if ((sample->flags & (WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS | WG_SAMPLE_FLAG_HAS_PTS)) ==
+            (WG_SAMPLE_FLAG_PRESERVE_TIMESTAMPS | WG_SAMPLE_FLAG_HAS_PTS))
+        sample->pts += transform->ts_offset;
 
     if (status)
     {

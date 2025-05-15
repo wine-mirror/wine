@@ -5446,7 +5446,6 @@ static void test_h264_decoder_timestamps(void)
         {
             hr = IMFSample_GetSampleTime(output_sample, &time);
             ok(hr == S_OK, "Got %#lx\n", hr);
-            todo_wine_if(exp_sample_neg_ts[i].time < 0)
             ok(time == exp_sample_neg_ts[i].time, "got time %I64d, expected %I64d\n", time, exp_sample_neg_ts[i].time);
             hr = IMFSample_GetSampleDuration(output_sample, &duration);
             ok(hr == S_OK, "Got %#lx\n", hr);

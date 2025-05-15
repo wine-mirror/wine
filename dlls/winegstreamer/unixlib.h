@@ -185,7 +185,7 @@ enum wg_sample_flag
 struct wg_sample
 {
     /* timestamp and duration are in 100-nanosecond units. */
-    UINT64 pts;
+    INT64 pts;
     UINT64 duration;
     LONG refcount; /* unix refcount */
     UINT32 flags;
