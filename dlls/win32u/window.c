@@ -5153,16 +5153,43 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
  */
 void destroy_thread_windows(void)
 {
-    WND *win, *entry, *free_list = NULL;
+    struct destroy_entry
+    {
+        HWND handle;
+        HMENU menu;
+        HMENU sys_menu;
+        struct list vulkan_surfaces;
+        struct window_surface *surface;
+        struct destroy_entry *next;
+    } *entry, *free_list = NULL;
     HANDLE handle = 0;
+    WND *win;
+
+    /* recycle WND structs as destroy_entry structs */
+    C_ASSERT( sizeof(struct destroy_entry) <= sizeof(WND) );
 
     user_lock();
     while ((win = next_thread_user_object( GetCurrentThreadId(), &handle, NTUSER_OBJ_WINDOW )))
     {
+        BOOL is_child = (win->dwStyle & (WS_CHILD | WS_POPUP)) == WS_CHILD;
+        struct destroy_entry tmp = {0};
+
         free_dce( win->dce, win->handle );
         set_user_handle_ptr( handle, NULL );
-        win->userdata = (UINT_PTR)free_list;
-        free_list = win;
+        free( win->pScroll );
+        free( win->text );
+
+        /* recycle the WND struct as a destroy_entry struct */
+        entry = (struct destroy_entry *)win;
+        tmp.handle = win->handle;
+        tmp.vulkan_surfaces = win->vulkan_surfaces;
+        if (!is_child) tmp.menu = (HMENU)win->wIDmenu;
+        tmp.sys_menu = win->hSysMenu;
+        tmp.surface = win->surface;
+        *entry = tmp;
+
+        entry->next = free_list;
+        free_list = entry;
     }
     if (free_list)
     {
@@ -5177,22 +5204,19 @@ void destroy_thread_windows(void)
 
     while ((entry = free_list))
     {
-        free_list = (WND *)entry->userdata;
+        free_list = entry->next;
         TRACE( "destroying %p\n", entry );
 
         user_driver->pDestroyWindow( entry->handle );
         vulkan_detach_surfaces( &entry->vulkan_surfaces );
 
-        if ((entry->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD && entry->wIDmenu)
-            NtUserDestroyMenu( UlongToHandle(entry->wIDmenu) );
-        if (entry->hSysMenu) NtUserDestroyMenu( entry->hSysMenu );
+        NtUserDestroyMenu( entry->menu );
+        NtUserDestroyMenu( entry->sys_menu );
         if (entry->surface)
         {
             register_window_surface( entry->surface, NULL );
             window_surface_release( entry->surface );
         }
-        free( entry->pScroll );
-        free( entry->text );
         free( entry );
     }
 }
