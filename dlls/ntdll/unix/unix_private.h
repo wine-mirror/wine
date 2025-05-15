@@ -239,8 +239,8 @@ static inline void set_context_exception_reporting_flags( DWORD *context_flags, 
 }
 
 extern BOOL xstate_compaction_enabled;
+extern UINT xstate_features_size;
 extern UINT64 xstate_supported_features_mask;
-extern UINT64 xstate_features_size;
 extern unsigned int xstate_get_size( UINT64 compaction_mask, UINT64 mask );
 extern void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask );
 

@@ -269,8 +269,8 @@ static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
 #if defined(__i386__) || defined(__x86_64__)
 
 BOOL xstate_compaction_enabled = FALSE;
-UINT64 xstate_supported_features_mask;
-UINT64 xstate_features_size;
+UINT xstate_features_size = 0;
+UINT64 xstate_supported_features_mask = 0;
 
 static int xstate_feature_offset[64];
 static int xstate_feature_size[64];
@@ -508,7 +508,7 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
                                    | xstate_supported_features_mask : 0, xstate_supported_features_mask )
                                    - sizeof(XSAVE_AREA_HEADER);
             xstate_features_size = (xstate_features_size + 15) & ~15;
-            TRACE("xstate_features_size %lld.\n", (long long)xstate_features_size);
+            TRACE("xstate_features_size %u.\n", xstate_features_size);
         }
 
         if (!strcmp( cpu_vendor, "AuthenticAMD" ))
