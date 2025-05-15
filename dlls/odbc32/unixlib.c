@@ -325,10 +325,10 @@ static HANDLE create_hkcu_key( const WCHAR *path, ULONG path_size )
 
     sid = ((TOKEN_USER *)sid_data)->User.Sid;
     len = snprintf( buffer, sizeof(buffer), "\\Registry\\User\\S-%u-%u", sid->Revision,
-                   (int)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
-                                  MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+                   MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                             MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", (int)sid->SubAuthority[i] );
+        len += snprintf( buffer + len, sizeof(buffer) - len, "-%u", sid->SubAuthority[i] );
     buffer[len++] = '\\';
 
     ascii_to_unicode( bufferW, buffer, len );
@@ -687,7 +687,7 @@ static void replicate_to_registry(void)
     }
     else
     {
-        TRACE( "error %d opening an SQL environment\n", (int)ret );
+        TRACE( "error %d opening an SQL environment\n", ret );
         WARN( "external ODBC settings have not been replicated to the Wine registry\n" );
     }
 }
