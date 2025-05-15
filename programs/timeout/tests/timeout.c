@@ -125,20 +125,51 @@ static void _run_timeout_ctrlc(const char *file, int line, const char *option, D
     CloseHandle(process_info.hProcess);
     CloseHandle(process_info.hThread);
 
-    flaky_wine_if(exitcode_expected == STATUS_CONTROL_C_EXIT)
     ok_(file, line)(exitcode == exitcode_expected, "Expected exitcode %ld, got %lx\n",
                     exitcode_expected, exitcode);
 }
 
-static void test_ctrlc(void)
+static void test_ctrlc(int argc, char** argv)
 {
-    run_timeout_ctrlc("", STATUS_CONTROL_C_EXIT);
-    run_timeout_ctrlc("/nobreak", 1);
+    if (!strcmp(argv[3], "normal"))
+        run_timeout_ctrlc("", STATUS_CONTROL_C_EXIT);
+    else if (!strcmp(argv[3], "nobreak"))
+        run_timeout_ctrlc("/nobreak", 1);
+    else
+        ok(0, "Unknown test %s.\n", argv[3]);
+}
+
+static void test_ctrlc_intermediate(int argc, char** argv, const char* name)
+{
+    char path_name[MAX_PATH];
+    STARTUPINFOA startup;
+    PROCESS_INFORMATION info;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    sprintf(path_name, "%s %s %s %s", argv[0], argv[1], "ctrlc_intermediate", name);
+    ok(CreateProcessA(NULL, path_name, NULL, NULL, FALSE,
+                      CREATE_NEW_PROCESS_GROUP | CREATE_NEW_CONSOLE,
+                      NULL, NULL, &startup, &info),
+        "CreateProcess failed.\n");
+    wait_child_process(info.hProcess);
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
 }
 
 START_TEST(timeout)
 {
+    int argc;
+    char** argv;
     BOOL ret;
+
+    argc = winetest_get_mainargs(&argv);
+    if(argc == 4 && !strcmp(argv[2], "ctrlc_intermediate"))
+    {
+        test_ctrlc(argc, argv);
+        return;
+    }
+
     /* always run on a separate console, so that:
      * - we're sure to have a valid console input handle (no Wine unix console...)
      * - we can send ctrl-c events without interfering with parent (winetest...)
@@ -158,5 +189,6 @@ START_TEST(timeout)
     }
 
     test_basic();
-    test_ctrlc();
+    test_ctrlc_intermediate(argc, argv, "normal");
+    test_ctrlc_intermediate(argc, argv, "nobreak");
 }
