@@ -153,6 +153,7 @@ DECL_HANDLER(destroy_window);
 DECL_HANDLER(get_desktop_window);
 DECL_HANDLER(set_window_owner);
 DECL_HANDLER(get_window_info);
+DECL_HANDLER(init_window_info);
 DECL_HANDLER(set_window_info);
 DECL_HANDLER(set_parent);
 DECL_HANDLER(get_window_parents);
@@ -450,6 +451,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_desktop_window,
     (req_handler)req_set_window_owner,
     (req_handler)req_get_window_info,
+    (req_handler)req_init_window_info,
     (req_handler)req_set_window_info,
     (req_handler)req_set_parent,
     (req_handler)req_get_window_parents,
@@ -1469,6 +1471,12 @@ C_ASSERT( sizeof(struct get_window_info_request) == 16 );
 C_ASSERT( offsetof(struct get_window_info_reply, last_active) == 8 );
 C_ASSERT( offsetof(struct get_window_info_reply, is_unicode) == 12 );
 C_ASSERT( sizeof(struct get_window_info_reply) == 16 );
+C_ASSERT( offsetof(struct init_window_info_request, handle) == 12 );
+C_ASSERT( offsetof(struct init_window_info_request, style) == 16 );
+C_ASSERT( offsetof(struct init_window_info_request, ex_style) == 20 );
+C_ASSERT( offsetof(struct init_window_info_request, is_unicode) == 24 );
+C_ASSERT( sizeof(struct init_window_info_request) == 32 );
+C_ASSERT( sizeof(struct init_window_info_reply) == 8 );
 C_ASSERT( offsetof(struct set_window_info_request, flags) == 12 );
 C_ASSERT( offsetof(struct set_window_info_request, is_unicode) == 14 );
 C_ASSERT( offsetof(struct set_window_info_request, handle) == 16 );

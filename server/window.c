@@ -2354,6 +2354,21 @@ DECL_HANDLER(get_window_info)
 }
 
 
+/* initialize some window information */
+DECL_HANDLER(init_window_info)
+{
+    struct window *win;
+
+    if (!(win = get_window( req->handle ))) return;
+    win->style = req->style;
+    win->ex_style = req->ex_style;
+    win->is_unicode = req->is_unicode;
+
+    /* changing window style triggers a non-client paint */
+    win->paint_flags |= PAINT_NONCLIENT;
+}
+
+
 /* set some information in a window */
 DECL_HANDLER(set_window_info)
 {

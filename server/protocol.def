@@ -2593,6 +2593,16 @@ enum message_type
 @END
 
 
+/* Initialize some window information */
+@REQ(init_window_info)
+    user_handle_t  handle;        /* handle to the window */
+    unsigned int   style;         /* window style */
+    unsigned int   ex_style;      /* window extended style */
+    short int      is_unicode;    /* ANSI or unicode */
+@REPLY
+@END
+
+
 /* Set some information in a window */
 @REQ(set_window_info)
     unsigned short flags;         /* flags for fields to set (see below) */

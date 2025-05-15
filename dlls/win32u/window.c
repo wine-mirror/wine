@@ -5550,14 +5550,12 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (!(win->dwStyle & (WS_CHILD | WS_POPUP))) win->flags |= WIN_NEED_SIZE;
 
-    SERVER_START_REQ( set_window_info )
+    SERVER_START_REQ( init_window_info )
     {
         req->handle     = wine_server_user_handle( hwnd );
-        req->flags      = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_UNICODE;
         req->style      = win->dwStyle;
         req->ex_style   = win->dwExStyle;
         req->is_unicode = (win->flags & WIN_ISUNICODE) != 0;
-        req->extra_offset = -1;
         wine_server_call( req );
     }
     SERVER_END_REQ;
