@@ -438,7 +438,6 @@ static NTSTATUS macdrv_init(void *arg)
     setup_options();
     load_strings(params->strings);
 
-    macdrv_err_on = ERR_ON(macdrv);
     if (macdrv_start_cocoa_app(NtGetTickCount()))
     {
         ERR("Failed to start Cocoa app main loop\n");

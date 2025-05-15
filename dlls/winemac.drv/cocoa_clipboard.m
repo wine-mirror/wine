@@ -135,7 +135,7 @@ CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
         }
         @catch (id e)
         {
-            ERR("Exception discarded while copying pasteboard types: %@\n", e);
+            ERR("Exception discarded while copying pasteboard types: %s\n", debugstr_cf(e));
         }
     });
 
@@ -178,7 +178,7 @@ CFDataRef macdrv_copy_pasteboard_data(CFTypeRef pasteboard, CFStringRef type)
         }
         @catch (id e)
         {
-            ERR("Exception discarded while copying pasteboard types: %@\n", e);
+            ERR("Exception discarded while copying pasteboard types: %s\n", debugstr_cf(e));
         }
     });
 
@@ -204,7 +204,7 @@ void macdrv_clear_pasteboard(WineWindow *window)
         }
         @catch (id e)
         {
-            ERR("Exception discarded while clearing pasteboard: %@\n", e);
+            ERR("Exception discarded while clearing pasteboard: %s\n", debugstr_cf(e));
         }
     });
 }
@@ -240,7 +240,7 @@ bool macdrv_set_pasteboard_data(CFStringRef type, CFDataRef data, WineWindow *wi
         }
         @catch (id e)
         {
-            ERR("Exception discarded while copying pasteboard types: %@\n", e);
+            ERR("Exception discarded while copying pasteboard types: %s\n", debugstr_cf(e));
         }
     });
 

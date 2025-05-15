@@ -77,11 +77,6 @@
 #include <OpenGL/glu.h>
 #include <OpenGL/CGLRenderers.h>
 
-#ifdef __OBJC__
-#undef ERR
-#define ERR(...) do { if (macdrv_err_on) LogError(__func__, __VA_ARGS__); } while (false)
-#endif
-
 
 extern bool allow_vsync;
 extern bool allow_set_gamma;

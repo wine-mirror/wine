@@ -121,7 +121,6 @@ struct macdrv_event;
 struct macdrv_query;
 
 /* main */
-extern bool macdrv_err_on;
 extern int topmost_float_inactive;
 extern bool capture_displays_for_fullscreen;
 extern bool left_option_is_alt;
@@ -217,8 +216,6 @@ extern bool macdrv_using_input_method(void);
 extern void macdrv_set_mouse_capture_window(WineWindow *window);
 extern void macdrv_set_cocoa_retina_mode(bool new_mode);
 
-extern void LogError(const char* func, const char* format, ...);
-extern void LogErrorv(const char* func, const char* format, va_list args);
 
 /* cursor */
 extern void macdrv_set_cursor(CFStringRef name, CFArrayRef frames);

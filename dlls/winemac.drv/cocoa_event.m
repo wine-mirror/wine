@@ -193,7 +193,7 @@ static const OSType WineHotKeySignature = 'Wine';
         } while (rc < 0 && errno == EINTR);
 
         if (rc < 0 && errno != EAGAIN)
-            ERR("%@: got error writing to event queue signaling pipe: %s\n", self, strerror(errno));
+            ERR("%s: got error writing to event queue signaling pipe: %s\n", debugstr_cf(self), strerror(errno));
     }
 
     - (void) postEventObject:(MacDrvEvent*)event
@@ -262,9 +262,9 @@ static const OSType WineHotKeySignature = 'Wine';
         if (rc == 0 || (rc < 0 && errno != EAGAIN))
         {
             if (rc == 0)
-                ERR("%@: event queue signaling pipe unexpectedly closed\n", self);
+                ERR("%s: event queue signaling pipe unexpectedly closed\n", debugstr_cf(self));
             else
-                ERR("%@: got error reading from event queue signaling pipe: %s\n", self, strerror(errno));
+                ERR("%s: got error reading from event queue signaling pipe: %s\n", debugstr_cf(self), strerror(errno));
             return nil;
         }
 

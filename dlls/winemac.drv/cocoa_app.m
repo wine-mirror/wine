@@ -44,9 +44,6 @@ static NSString* const WineActivatingAppPrefixKey = @"ActivatingAppPrefix";
 static NSString* const WineActivatingAppConfigDirKey = @"ActivatingAppConfigDir";
 
 
-bool macdrv_err_on;
-
-
 #if !defined(MAC_OS_VERSION_14_0) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_VERSION_14_0
 @interface NSApplication (CooperativeActivationSelectorsForOldSDKs)
 
@@ -2387,30 +2384,6 @@ void OnMainThreadAsync(dispatch_block_t block)
 }
 
 @end
-
-/***********************************************************************
- *              LogError
- */
-void LogError(const char* func, const char* format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    LogErrorv(func, format, args);
-    va_end(args);
-}
-
-/***********************************************************************
- *              LogErrorv
- */
-void LogErrorv(const char* func, const char* format, va_list args)
-{
-@autoreleasepool
-{
-    NSString* message = [[NSString alloc] initWithFormat:[NSString stringWithUTF8String:format] arguments:args];
-    fprintf(stderr, "err:%s:%s", func, [message UTF8String]);
-    [message release];
-}
-}
 
 /***********************************************************************
  *              macdrv_window_rejected_focus
