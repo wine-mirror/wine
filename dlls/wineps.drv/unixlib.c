@@ -199,7 +199,7 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmDriverVersion: 0x%04x\n", dm->dmDriverVersion);
     TRACE("dmSize: 0x%04x\n", dm->dmSize);
     TRACE("dmDriverExtra: 0x%04x\n", dm->dmDriverExtra);
-    TRACE("dmFields: 0x%04x\n", (int)dm->dmFields);
+    TRACE("dmFields: 0x%04x\n", dm->dmFields);
     dump_fields(dm->dmFields);
     TRACE("dmOrientation: %d\n", dm->dmOrientation);
     TRACE("dmPaperSize: %d\n", dm->dmPaperSize);
@@ -216,9 +216,9 @@ static void dump_devmode(const DEVMODEW *dm)
     TRACE("dmCollate: %d\n", dm->dmCollate);
     TRACE("dmFormName: %s\n", debugstr_w(dm->dmFormName));
     TRACE("dmLogPixels %u\n", dm->dmLogPixels);
-    TRACE("dmBitsPerPel %u\n", (unsigned int)dm->dmBitsPerPel);
-    TRACE("dmPelsWidth %u\n", (unsigned int)dm->dmPelsWidth);
-    TRACE("dmPelsHeight %u\n", (unsigned int)dm->dmPelsHeight);
+    TRACE("dmBitsPerPel %u\n", dm->dmBitsPerPel);
+    TRACE("dmPelsWidth %u\n", dm->dmPelsWidth);
+    TRACE("dmPelsHeight %u\n", dm->dmPelsHeight);
 }
 
 static INT get_device_caps(PHYSDEV dev, INT cap)
@@ -540,14 +540,14 @@ static void update_dev_caps(PSDRV_PDEVICE *pdev)
         pdev->imageable_area.top = pdev->page_size.cy =
             pdev->devmode->dmPublic.dmPaperLength * pdev->log_pixels_y / 254;
     } else {
-        FIXME("Odd dmFields %x\n", (int)pdev->devmode->dmPublic.dmFields);
+        FIXME("Odd dmFields %x\n", pdev->devmode->dmPublic.dmFields);
         SetRectEmpty(&pdev->imageable_area);
         pdev->page_size.cx = 0;
         pdev->page_size.cy = 0;
     }
 
     TRACE("imageable_area = %s: page_size = %dx%d\n", wine_dbgstr_rect(&pdev->imageable_area),
-            (int)pdev->page_size.cx, (int)pdev->page_size.cy);
+            pdev->page_size.cx, pdev->page_size.cy);
 
     /* these are in device units */
     width = pdev->imageable_area.right - pdev->imageable_area.left;
@@ -629,7 +629,7 @@ static int ext_escape(PHYSDEV dev, int escape, int input_size, const void *input
         else
         {
             DWORD num = (input_size < sizeof(DWORD)) ? *(const USHORT *)input : *(const DWORD *)input;
-            TRACE("QUERYESCSUPPORT for %d\n", (int)num);
+            TRACE("QUERYESCSUPPORT for %d\n", num);
 
             switch (num)
             {
@@ -673,7 +673,7 @@ static int ext_escape(PHYSDEV dev, int escape, int input_size, const void *input
                 return FALSE; /* suppress the FIXME below */
 
             default:
-                FIXME("QUERYESCSUPPORT(%d) - not supported.\n", (int)num);
+                FIXME("QUERYESCSUPPORT(%d) - not supported.\n", num);
                 return FALSE;
             }
         }
@@ -711,8 +711,8 @@ static int ext_escape(PHYSDEV dev, int escape, int input_size, const void *input
         DRAWPATRECT     *dpr = (DRAWPATRECT*)input;
 
         FIXME("DRAWPATTERNRECT(pos (%d,%d), size %dx%d, style %d, pattern %x), stub!\n",
-                (int)dpr->ptPosition.x, (int)dpr->ptPosition.y,
-                (int)dpr->ptSize.x, (int)dpr->ptSize.y,
+                dpr->ptPosition.x, dpr->ptPosition.y,
+                dpr->ptSize.x, dpr->ptSize.y,
                 dpr->wStyle, dpr->wPattern);
         return 1;
     }
@@ -909,7 +909,7 @@ static void scale_font(PSDRV_PDEVICE *pdev, const struct font_data *font, LONG h
     float scale;
     SIZE size;
 
-    TRACE("'%s' %i\n", font->name, (int)height);
+    TRACE("'%s' %i\n", font->name, height);
 
     if (height < 0) /* match em height */
         scale = -(height / (float)m->fwdUnitsPerEm);
@@ -978,10 +978,10 @@ static void scale_font(PSDRV_PDEVICE *pdev, const struct font_data *font, LONG h
     }
 
     TRACE("Selected PS font '%s' size %d weight %d.\n", font->name,
-            (int)size.cx, (int)tm->tmWeight);
-    TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", (int)tm->tmHeight,
-            (int)tm->tmAscent, (int)tm->tmDescent, (int)tm->tmInternalLeading,
-            (int)tm->tmExternalLeading);
+            size.cx, tm->tmWeight);
+    TRACE("H = %d As = %d Des = %d IL = %d EL = %d\n", tm->tmHeight,
+            tm->tmAscent, tm->tmDescent, tm->tmInternalLeading,
+            tm->tmExternalLeading);
 }
 
 static inline BOOL is_stock_font(HFONT font)
@@ -1121,8 +1121,7 @@ static HFONT select_font(PHYSDEV dev, HFONT hfont, UINT *aa_flags)
     *aa_flags = GGO_BITMAP; /* no anti-aliasing on printer devices */
 
     TRACE("FaceName = %s Height = %d Italic = %d Weight = %d\n",
-            debugstr_w(lf.lfFaceName), (int)lf.lfHeight, lf.lfItalic,
-            (int)lf.lfWeight);
+            debugstr_w(lf.lfFaceName), lf.lfHeight, lf.lfItalic, lf.lfWeight);
 
     if (lf.lfFaceName[0] == '\0')
     {
