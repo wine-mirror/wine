@@ -2703,12 +2703,10 @@ static enum method_result pdb_reader_request_symref_t(struct pdb_reader *pdb, sy
 
 static enum method_result pdb_reader_request_cv_typeid(struct pdb_reader *pdb, cv_typ_t cv_typeid, IMAGEHLP_SYMBOL_TYPE_INFO req, void *data)
 {
-    enum pdb_result result;
     struct symref_code code;
     symref_t target_symref;
 
-    if ((result = pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &target_symref)) != R_PDB_SUCCESS)
-        return pdb_method_result(result);
+    if (pdb_reader_encode_symref(pdb, symref_code_init_from_cv_typeid(&code, cv_typeid), &target_symref)) return MR_FAILURE;
     return pdb_reader_request_symref_t(pdb, target_symref, req, data);
 }
 
