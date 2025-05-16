@@ -69,6 +69,7 @@ enum unix_call
     unix_vkCmdBindPipelineShaderGroupNV,
     unix_vkCmdBindShadersEXT,
     unix_vkCmdBindShadingRateImageNV,
+    unix_vkCmdBindTileMemoryQCOM,
     unix_vkCmdBindTransformFeedbackBuffersEXT,
     unix_vkCmdBindVertexBuffers,
     unix_vkCmdBindVertexBuffers2,
@@ -1016,6 +1017,12 @@ struct vkCmdBindShadingRateImageNV_params
     VkCommandBuffer commandBuffer;
     VkImageView DECLSPEC_ALIGN(8) imageView;
     VkImageLayout imageLayout;
+};
+
+struct vkCmdBindTileMemoryQCOM_params
+{
+    VkCommandBuffer commandBuffer;
+    const VkTileMemoryBindInfoQCOM *pTileMemoryBindInfo;
 };
 
 struct vkCmdBindTransformFeedbackBuffersEXT_params

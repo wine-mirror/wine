@@ -498,6 +498,14 @@ void WINAPI vkCmdBindShadingRateImageNV(VkCommandBuffer commandBuffer, VkImageVi
     UNIX_CALL(vkCmdBindShadingRateImageNV, &params);
 }
 
+void WINAPI vkCmdBindTileMemoryQCOM(VkCommandBuffer commandBuffer, const VkTileMemoryBindInfoQCOM *pTileMemoryBindInfo)
+{
+    struct vkCmdBindTileMemoryQCOM_params params;
+    params.commandBuffer = commandBuffer;
+    params.pTileMemoryBindInfo = pTileMemoryBindInfo;
+    UNIX_CALL(vkCmdBindTileMemoryQCOM, &params);
+}
+
 void WINAPI vkCmdBindTransformFeedbackBuffersEXT(VkCommandBuffer commandBuffer, uint32_t firstBinding, uint32_t bindingCount, const VkBuffer *pBuffers, const VkDeviceSize *pOffsets, const VkDeviceSize *pSizes)
 {
     struct vkCmdBindTransformFeedbackBuffersEXT_params params;
@@ -6812,6 +6820,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdBindPipelineShaderGroupNV", vkCmdBindPipelineShaderGroupNV},
     {"vkCmdBindShadersEXT", vkCmdBindShadersEXT},
     {"vkCmdBindShadingRateImageNV", vkCmdBindShadingRateImageNV},
+    {"vkCmdBindTileMemoryQCOM", vkCmdBindTileMemoryQCOM},
     {"vkCmdBindTransformFeedbackBuffersEXT", vkCmdBindTransformFeedbackBuffersEXT},
     {"vkCmdBindVertexBuffers", vkCmdBindVertexBuffers},
     {"vkCmdBindVertexBuffers2", vkCmdBindVertexBuffers2},

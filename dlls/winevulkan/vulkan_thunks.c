@@ -228,6 +228,13 @@ typedef struct VkAttachmentSampleCountInfoAMD32
 } VkAttachmentSampleCountInfoAMD32;
 typedef VkAttachmentSampleCountInfoAMD32 VkAttachmentSampleCountInfoNV32;
 
+typedef struct VkTileMemoryBindInfoQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceMemory DECLSPEC_ALIGN(8) memory;
+} VkTileMemoryBindInfoQCOM32;
+
 typedef struct VkRenderingAttachmentLocationInfo32
 {
     VkStructureType sType;
@@ -661,6 +668,13 @@ typedef struct VkRenderingFragmentDensityMapAttachmentInfoEXT32
     VkImageView DECLSPEC_ALIGN(8) imageView;
     VkImageLayout imageLayout;
 } VkRenderingFragmentDensityMapAttachmentInfoEXT32;
+
+typedef struct VkTileMemorySizeInfoQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+} VkTileMemorySizeInfoQCOM32;
 
 typedef struct VkRenderingInfo32
 {
@@ -3799,14 +3813,15 @@ typedef struct VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR32
     VkBool32 shaderSubgroupUniformControlFlow;
 } VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR32;
 
-typedef struct VkPhysicalDeviceRobustness2FeaturesEXT32
+typedef struct VkPhysicalDeviceRobustness2FeaturesKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
     VkBool32 robustBufferAccess2;
     VkBool32 robustImageAccess2;
     VkBool32 nullDescriptor;
-} VkPhysicalDeviceRobustness2FeaturesEXT32;
+} VkPhysicalDeviceRobustness2FeaturesKHR32;
+typedef VkPhysicalDeviceRobustness2FeaturesKHR32 VkPhysicalDeviceRobustness2FeaturesEXT32;
 
 typedef struct VkPhysicalDeviceImageRobustnessFeatures32
 {
@@ -3926,6 +3941,13 @@ typedef struct VkPhysicalDeviceDepthClipControlFeaturesEXT32
     PTR32 pNext;
     VkBool32 depthClipControl;
 } VkPhysicalDeviceDepthClipControlFeaturesEXT32;
+
+typedef struct VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 zeroInitializeDeviceMemory;
+} VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32;
 
 typedef struct VkPhysicalDeviceDeviceGeneratedCommandsFeaturesEXT32
 {
@@ -4406,6 +4428,13 @@ typedef struct VkPhysicalDeviceAntiLagFeaturesAMD32
     PTR32 pNext;
     VkBool32 antiLag;
 } VkPhysicalDeviceAntiLagFeaturesAMD32;
+
+typedef struct VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 tileMemoryHeap;
+} VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32;
 
 typedef struct VkPhysicalDeviceCubicClampFeaturesQCOM32
 {
@@ -6290,6 +6319,14 @@ typedef struct VkMemoryDedicatedRequirements32
 } VkMemoryDedicatedRequirements32;
 typedef VkMemoryDedicatedRequirements32 VkMemoryDedicatedRequirementsKHR32;
 
+typedef struct VkTileMemoryRequirementsQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceSize DECLSPEC_ALIGN(8) size;
+    VkDeviceSize DECLSPEC_ALIGN(8) alignment;
+} VkTileMemoryRequirementsQCOM32;
+
 typedef struct VkMemoryRequirements232
 {
     VkStructureType sType;
@@ -7887,13 +7924,14 @@ typedef struct VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV32
     uint32_t maxPartitionCount;
 } VkPhysicalDevicePartitionedAccelerationStructurePropertiesNV32;
 
-typedef struct VkPhysicalDeviceRobustness2PropertiesEXT32
+typedef struct VkPhysicalDeviceRobustness2PropertiesKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
     VkDeviceSize DECLSPEC_ALIGN(8) robustStorageBufferAccessSizeAlignment;
     VkDeviceSize DECLSPEC_ALIGN(8) robustUniformBufferAccessSizeAlignment;
-} VkPhysicalDeviceRobustness2PropertiesEXT32;
+} VkPhysicalDeviceRobustness2PropertiesKHR32;
+typedef VkPhysicalDeviceRobustness2PropertiesKHR32 VkPhysicalDeviceRobustness2PropertiesEXT32;
 
 typedef struct VkPhysicalDeviceFragmentShadingRatePropertiesKHR32
 {
@@ -8197,6 +8235,14 @@ typedef struct VkPhysicalDeviceCooperativeMatrixPropertiesKHR32
     PTR32 pNext;
     VkShaderStageFlags cooperativeMatrixSupportedStages;
 } VkPhysicalDeviceCooperativeMatrixPropertiesKHR32;
+
+typedef struct VkPhysicalDeviceTileMemoryHeapPropertiesQCOM32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 queueSubmitBoundary;
+    VkBool32 tileBufferTransfers;
+} VkPhysicalDeviceTileMemoryHeapPropertiesQCOM32;
 
 typedef struct VkPhysicalDeviceImageProcessing2PropertiesQCOM32
 {
@@ -9569,6 +9615,150 @@ static inline void convert_VkAntiLagDataAMD_win32_to_host(struct conversion_cont
         FIXME("Unexpected pNext\n");
 }
 
+#ifdef _WIN64
+static inline void convert_VkCommandBufferInheritanceInfo_win64_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo *in, VkCommandBufferInheritanceInfo *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->renderPass = in->renderPass;
+    out->subpass = in->subpass;
+    out->framebuffer = in->framebuffer;
+    out->occlusionQueryEnable = in->occlusionQueryEnable;
+    out->queryFlags = in->queryFlags;
+    out->pipelineStatistics = in->pipelineStatistics;
+
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT:
+        {
+            VkCommandBufferInheritanceConditionalRenderingInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkCommandBufferInheritanceConditionalRenderingInfoEXT *in_ext = (const VkCommandBufferInheritanceConditionalRenderingInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_CONDITIONAL_RENDERING_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->conditionalRenderingEnable = in_ext->conditionalRenderingEnable;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDER_PASS_TRANSFORM_INFO_QCOM:
+        {
+            VkCommandBufferInheritanceRenderPassTransformInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkCommandBufferInheritanceRenderPassTransformInfoQCOM *in_ext = (const VkCommandBufferInheritanceRenderPassTransformInfoQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDER_PASS_TRANSFORM_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->transform = in_ext->transform;
+            out_ext->renderArea = in_ext->renderArea;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_VIEWPORT_SCISSOR_INFO_NV:
+        {
+            VkCommandBufferInheritanceViewportScissorInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkCommandBufferInheritanceViewportScissorInfoNV *in_ext = (const VkCommandBufferInheritanceViewportScissorInfoNV *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_VIEWPORT_SCISSOR_INFO_NV;
+            out_ext->pNext = NULL;
+            out_ext->viewportScissor2D = in_ext->viewportScissor2D;
+            out_ext->viewportDepthCount = in_ext->viewportDepthCount;
+            out_ext->pViewportDepths = in_ext->pViewportDepths;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO:
+        {
+            VkCommandBufferInheritanceRenderingInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkCommandBufferInheritanceRenderingInfo *in_ext = (const VkCommandBufferInheritanceRenderingInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_RENDERING_INFO;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->viewMask = in_ext->viewMask;
+            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
+            out_ext->pColorAttachmentFormats = in_ext->pColorAttachmentFormats;
+            out_ext->depthAttachmentFormat = in_ext->depthAttachmentFormat;
+            out_ext->stencilAttachmentFormat = in_ext->stencilAttachmentFormat;
+            out_ext->rasterizationSamples = in_ext->rasterizationSamples;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD:
+        {
+            VkAttachmentSampleCountInfoAMD *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkAttachmentSampleCountInfoAMD *in_ext = (const VkAttachmentSampleCountInfoAMD *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_ATTACHMENT_SAMPLE_COUNT_INFO_AMD;
+            out_ext->pNext = NULL;
+            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
+            out_ext->pColorAttachmentSamples = in_ext->pColorAttachmentSamples;
+            out_ext->depthStencilAttachmentSamples = in_ext->depthStencilAttachmentSamples;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM:
+        {
+            VkTileMemoryBindInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemoryBindInfoQCOM *in_ext = (const VkTileMemoryBindInfoQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->memory = wine_device_memory_from_handle(in_ext->memory)->host.device_memory;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO:
+        {
+            VkRenderingAttachmentLocationInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderingAttachmentLocationInfo *in_ext = (const VkRenderingAttachmentLocationInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO;
+            out_ext->pNext = NULL;
+            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
+            out_ext->pColorAttachmentLocations = in_ext->pColorAttachmentLocations;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO:
+        {
+            VkRenderingInputAttachmentIndexInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderingInputAttachmentIndexInfo *in_ext = (const VkRenderingInputAttachmentIndexInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_INPUT_ATTACHMENT_INDEX_INFO;
+            out_ext->pNext = NULL;
+            out_ext->colorAttachmentCount = in_ext->colorAttachmentCount;
+            out_ext->pColorAttachmentInputIndices = in_ext->pColorAttachmentInputIndices;
+            out_ext->pDepthInputAttachmentIndex = in_ext->pDepthInputAttachmentIndex;
+            out_ext->pStencilInputAttachmentIndex = in_ext->pStencilInputAttachmentIndex;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_RENDER_PASS_TILE_SHADING_CREATE_INFO_QCOM:
+        {
+            VkRenderPassTileShadingCreateInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkRenderPassTileShadingCreateInfoQCOM *in_ext = (const VkRenderPassTileShadingCreateInfoQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_TILE_SHADING_CREATE_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->flags = in_ext->flags;
+            out_ext->tileApronSize = in_ext->tileApronSize;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.\n", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo32 *in, VkCommandBufferInheritanceInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -9655,6 +9845,17 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM:
+        {
+            VkTileMemoryBindInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemoryBindInfoQCOM32 *in_ext = (const VkTileMemoryBindInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_BIND_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->memory = wine_device_memory_from_handle(in_ext->memory)->host.device_memory;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_LOCATION_INFO:
         {
             VkRenderingAttachmentLocationInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -9700,6 +9901,24 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
     }
 }
 
+#ifdef _WIN64
+static inline const VkCommandBufferInheritanceInfo *convert_VkCommandBufferInheritanceInfo_array_win64_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo *in, uint32_t count)
+{
+    VkCommandBufferInheritanceInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCommandBufferInheritanceInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
 static inline const VkCommandBufferInheritanceInfo *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo32 *in, uint32_t count)
 {
     VkCommandBufferInheritanceInfo *out;
@@ -9715,6 +9934,18 @@ static inline const VkCommandBufferInheritanceInfo *convert_VkCommandBufferInher
 
     return out;
 }
+
+#ifdef _WIN64
+static inline void convert_VkCommandBufferBeginInfo_win64_to_host(struct conversion_context *ctx, const VkCommandBufferBeginInfo *in, VkCommandBufferBeginInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->flags = in->flags;
+    out->pInheritanceInfo = convert_VkCommandBufferInheritanceInfo_array_win64_to_host(ctx, in->pInheritanceInfo, 1);
+}
+#endif /* _WIN64 */
 
 static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferBeginInfo32 *in, VkCommandBufferBeginInfo *out)
 {
@@ -10802,6 +11033,17 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM:
+        {
+            VkTileMemorySizeInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemorySizeInfoQCOM32 *in_ext = (const VkTileMemorySizeInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->size = in_ext->size;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_RENDER_PASS_STRIPE_BEGIN_INFO_ARM:
         {
             VkRenderPassStripeBeginInfoARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -11355,6 +11597,28 @@ static inline void convert_VkBindDescriptorSetsInfo_win32_to_host(struct convers
             break;
         }
     }
+}
+
+#ifdef _WIN64
+static inline void convert_VkTileMemoryBindInfoQCOM_win64_to_host(const VkTileMemoryBindInfoQCOM *in, VkTileMemoryBindInfoQCOM *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+}
+#endif /* _WIN64 */
+
+static inline void convert_VkTileMemoryBindInfoQCOM_win32_to_host(const VkTileMemoryBindInfoQCOM32 *in, VkTileMemoryBindInfoQCOM *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->memory = wine_device_memory_from_handle(in->memory)->host.device_memory;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkImageBlit2_win32_to_host(struct conversion_context *ctx, const VkImageBlit232 *in, VkImageBlit2 *out)
@@ -17162,11 +17426,11 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR:
         {
-            VkPhysicalDeviceRobustness2FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceRobustness2FeaturesEXT *in_ext = (const VkPhysicalDeviceRobustness2FeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+            VkPhysicalDeviceRobustness2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRobustness2FeaturesKHR *in_ext = (const VkPhysicalDeviceRobustness2FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->robustBufferAccess2 = in_ext->robustBufferAccess2;
             out_ext->robustImageAccess2 = in_ext->robustImageAccess2;
@@ -17347,6 +17611,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->depthClipControl = in_ext->depthClipControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT:
+        {
+            VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *in_ext = (const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->zeroInitializeDeviceMemory = in_ext->zeroInitializeDeviceMemory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -18075,6 +18350,17 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ANTI_LAG_FEATURES_AMD;
             out_ext->pNext = NULL;
             out_ext->antiLag = in_ext->antiLag;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *in_ext = (const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->tileMemoryHeap = in_ext->tileMemoryHeap;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -19797,11 +20083,11 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR:
         {
-            VkPhysicalDeviceRobustness2FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceRobustness2FeaturesEXT32 *in_ext = (const VkPhysicalDeviceRobustness2FeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+            VkPhysicalDeviceRobustness2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRobustness2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceRobustness2FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->robustBufferAccess2 = in_ext->robustBufferAccess2;
             out_ext->robustImageAccess2 = in_ext->robustImageAccess2;
@@ -19982,6 +20268,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->depthClipControl = in_ext->depthClipControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT:
+        {
+            VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32 *in_ext = (const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->zeroInitializeDeviceMemory = in_ext->zeroInitializeDeviceMemory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -20710,6 +21007,17 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ANTI_LAG_FEATURES_AMD;
             out_ext->pNext = NULL;
             out_ext->antiLag = in_ext->antiLag;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32 *in_ext = (const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->tileMemoryHeap = in_ext->tileMemoryHeap;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -24334,6 +24642,17 @@ static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversio
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM:
+        {
+            VkTileMemorySizeInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemorySizeInfoQCOM32 *in_ext = (const VkTileMemorySizeInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->size = in_ext->size;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         case VK_STRUCTURE_TYPE_RENDER_PASS_TILE_SHADING_CREATE_INFO_QCOM:
         {
             VkRenderPassTileShadingCreateInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
@@ -24692,6 +25011,17 @@ static inline void convert_VkRenderPassCreateInfo2_win32_to_host(struct conversi
             out_ext->sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->pRenderPassFeedback = UlongToPtr(in_ext->pRenderPassFeedback);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM:
+        {
+            VkTileMemorySizeInfoQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemorySizeInfoQCOM32 *in_ext = (const VkTileMemorySizeInfoQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_SIZE_INFO_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->size = in_ext->size;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -25909,6 +26239,18 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion
             out_header = (void *)out_ext;
             break;
         }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_REQUIREMENTS_QCOM:
+        {
+            VkTileMemoryRequirementsQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkTileMemoryRequirementsQCOM32 *in_ext = (const VkTileMemoryRequirementsQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_REQUIREMENTS_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->size = in_ext->size;
+            out_ext->alignment = in_ext->alignment;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
         default:
             FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
@@ -25936,6 +26278,16 @@ static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryReq
             out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
             out_ext->prefersDedicatedAllocation = in_ext->prefersDedicatedAllocation;
             out_ext->requiresDedicatedAllocation = in_ext->requiresDedicatedAllocation;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_TILE_MEMORY_REQUIREMENTS_QCOM:
+        {
+            VkTileMemoryRequirementsQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_TILE_MEMORY_REQUIREMENTS_QCOM);
+            const VkTileMemoryRequirementsQCOM *in_ext = (const VkTileMemoryRequirementsQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_TILE_MEMORY_REQUIREMENTS_QCOM;
+            out_ext->size = in_ext->size;
+            out_ext->alignment = in_ext->alignment;
             out_header = (void *)out_ext;
             break;
         }
@@ -28766,11 +29118,11 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR:
         {
-            VkPhysicalDeviceRobustness2FeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            const VkPhysicalDeviceRobustness2FeaturesEXT32 *in_ext = (const VkPhysicalDeviceRobustness2FeaturesEXT32 *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+            VkPhysicalDeviceRobustness2FeaturesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceRobustness2FeaturesKHR32 *in_ext = (const VkPhysicalDeviceRobustness2FeaturesKHR32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
             out_ext->pNext = NULL;
             out_ext->robustBufferAccess2 = in_ext->robustBufferAccess2;
             out_ext->robustImageAccess2 = in_ext->robustImageAccess2;
@@ -28951,6 +29303,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
             out_ext->pNext = NULL;
             out_ext->depthClipControl = in_ext->depthClipControl;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT:
+        {
+            VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32 *in_ext = (const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT;
+            out_ext->pNext = NULL;
+            out_ext->zeroInitializeDeviceMemory = in_ext->zeroInitializeDeviceMemory;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -29668,6 +30031,17 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ANTI_LAG_FEATURES_AMD;
             out_ext->pNext = NULL;
             out_ext->antiLag = in_ext->antiLag;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32 *in_ext = (const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->tileMemoryHeap = in_ext->tileMemoryHeap;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -31112,11 +31486,11 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR:
         {
-            VkPhysicalDeviceRobustness2FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT);
-            const VkPhysicalDeviceRobustness2FeaturesEXT *in_ext = (const VkPhysicalDeviceRobustness2FeaturesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
+            VkPhysicalDeviceRobustness2FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR);
+            const VkPhysicalDeviceRobustness2FeaturesKHR *in_ext = (const VkPhysicalDeviceRobustness2FeaturesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_KHR;
             out_ext->robustBufferAccess2 = in_ext->robustBufferAccess2;
             out_ext->robustImageAccess2 = in_ext->robustImageAccess2;
             out_ext->nullDescriptor = in_ext->nullDescriptor;
@@ -31266,6 +31640,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceDepthClipControlFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClipControlFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
             out_ext->depthClipControl = in_ext->depthClipControl;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT:
+        {
+            VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT);
+            const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *in_ext = (const VkPhysicalDeviceZeroInitializeDeviceMemoryFeaturesEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_DEVICE_MEMORY_FEATURES_EXT;
+            out_ext->zeroInitializeDeviceMemory = in_ext->zeroInitializeDeviceMemory;
             out_header = (void *)out_ext;
             break;
         }
@@ -31857,6 +32240,15 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
             const VkPhysicalDeviceAntiLagFeaturesAMD *in_ext = (const VkPhysicalDeviceAntiLagFeaturesAMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ANTI_LAG_FEATURES_AMD;
             out_ext->antiLag = in_ext->antiLag;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapFeaturesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM);
+            const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *in_ext = (const VkPhysicalDeviceTileMemoryHeapFeaturesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_FEATURES_QCOM;
+            out_ext->tileMemoryHeap = in_ext->tileMemoryHeap;
             out_header = (void *)out_ext;
             break;
         }
@@ -33380,10 +33772,10 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceRobustness2PropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT;
+            VkPhysicalDeviceRobustness2PropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
@@ -33617,6 +34009,18 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             VkPhysicalDeviceCooperativeMatrixPropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
             out_ext->pNext = NULL;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM32 *in_ext = (const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM;
+            out_ext->pNext = NULL;
+            out_ext->queueSubmitBoundary = in_ext->queueSubmitBoundary;
+            out_ext->tileBufferTransfers = in_ext->tileBufferTransfers;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -34579,11 +34983,11 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             out_header = (void *)out_ext;
             break;
         }
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceRobustness2PropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
-            const VkPhysicalDeviceRobustness2PropertiesEXT *in_ext = (const VkPhysicalDeviceRobustness2PropertiesEXT *)in_header;
-            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT;
+            VkPhysicalDeviceRobustness2PropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR);
+            const VkPhysicalDeviceRobustness2PropertiesKHR *in_ext = (const VkPhysicalDeviceRobustness2PropertiesKHR *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_KHR;
             out_ext->robustStorageBufferAccessSizeAlignment = in_ext->robustStorageBufferAccessSizeAlignment;
             out_ext->robustUniformBufferAccessSizeAlignment = in_ext->robustUniformBufferAccessSizeAlignment;
             out_header = (void *)out_ext;
@@ -34936,6 +35340,16 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
             const VkPhysicalDeviceCooperativeMatrixPropertiesKHR *in_ext = (const VkPhysicalDeviceCooperativeMatrixPropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_KHR;
             out_ext->cooperativeMatrixSupportedStages = in_ext->cooperativeMatrixSupportedStages;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM:
+        {
+            VkPhysicalDeviceTileMemoryHeapPropertiesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM);
+            const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *in_ext = (const VkPhysicalDeviceTileMemoryHeapPropertiesQCOM *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_MEMORY_HEAP_PROPERTIES_QCOM;
+            out_ext->queueSubmitBoundary = in_ext->queueSubmitBoundary;
+            out_ext->tileBufferTransfers = in_ext->tileBufferTransfers;
             out_header = (void *)out_ext;
             break;
         }
@@ -38536,10 +38950,16 @@ static NTSTATUS thunk32_vkAntiLagUpdateAMD(void *args)
 static NTSTATUS thunk64_vkBeginCommandBuffer(void *args)
 {
     struct vkBeginCommandBuffer_params *params = args;
+    VkCommandBufferBeginInfo pBeginInfo_host;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBeginInfo);
 
-    params->result = wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkBeginCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, params->pBeginInfo);
+    init_conversion_context(ctx);
+    convert_VkCommandBufferBeginInfo_win64_to_host(ctx, params->pBeginInfo, &pBeginInfo_host);
+    params->result = wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkBeginCommandBuffer(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, &pBeginInfo_host);
+    free_conversion_context(ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -39598,6 +40018,46 @@ static void thunk32_vkCmdBindShadingRateImageNV(void *args)
     } *params = args;
 
     wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdBindShadingRateImageNV(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, params->imageView, params->imageLayout);
+}
+
+#ifdef _WIN64
+static void thunk64_vkCmdBindTileMemoryQCOM(void *args)
+{
+    struct vkCmdBindTileMemoryQCOM_params *params = args;
+    VkTileMemoryBindInfoQCOM *pTileMemoryBindInfo_host = NULL;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    init_conversion_context(ctx);
+    if (params->pTileMemoryBindInfo)
+    {
+        pTileMemoryBindInfo_host = conversion_context_alloc(ctx, sizeof(*pTileMemoryBindInfo_host));
+        convert_VkTileMemoryBindInfoQCOM_win64_to_host(params->pTileMemoryBindInfo, pTileMemoryBindInfo_host);
+    }
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->p_vkCmdBindTileMemoryQCOM(wine_cmd_buffer_from_handle(params->commandBuffer)->host.command_buffer, pTileMemoryBindInfo_host);
+    free_conversion_context(ctx);
+}
+#endif /* _WIN64 */
+
+static void thunk32_vkCmdBindTileMemoryQCOM(void *args)
+{
+    struct
+    {
+        PTR32 commandBuffer;
+        PTR32 pTileMemoryBindInfo;
+    } *params = args;
+    VkTileMemoryBindInfoQCOM *pTileMemoryBindInfo_host = NULL;
+    struct conversion_context local_ctx;
+    struct conversion_context *ctx = &local_ctx;
+
+    init_conversion_context(ctx);
+    if (params->pTileMemoryBindInfo)
+    {
+        pTileMemoryBindInfo_host = conversion_context_alloc(ctx, sizeof(*pTileMemoryBindInfo_host));
+        convert_VkTileMemoryBindInfoQCOM_win32_to_host((const VkTileMemoryBindInfoQCOM32 *)UlongToPtr(params->pTileMemoryBindInfo), pTileMemoryBindInfo_host);
+    }
+    wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->device->p_vkCmdBindTileMemoryQCOM(wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(params->commandBuffer))->host.command_buffer, pTileMemoryBindInfo_host);
+    free_conversion_context(ctx);
 }
 
 #ifdef _WIN64
@@ -56416,6 +56876,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_vertex_input_dynamic_state",
     "VK_EXT_ycbcr_2plane_444_formats",
     "VK_EXT_ycbcr_image_arrays",
+    "VK_EXT_zero_initialize_device_memory",
     "VK_GOOGLE_decorate_string",
     "VK_GOOGLE_hlsl_functionality1",
     "VK_GOOGLE_user_type",
@@ -56483,6 +56944,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_ray_tracing_pipeline",
     "VK_KHR_ray_tracing_position_fetch",
     "VK_KHR_relaxed_block_layout",
+    "VK_KHR_robustness2",
     "VK_KHR_sampler_mirror_clamp_to_edge",
     "VK_KHR_sampler_ycbcr_conversion",
     "VK_KHR_separate_depth_stencil_layouts",
@@ -56593,6 +57055,7 @@ static const char * const vk_device_extensions[] =
     "VK_QCOM_render_pass_store_ops",
     "VK_QCOM_render_pass_transform",
     "VK_QCOM_rotated_copy_commands",
+    "VK_QCOM_tile_memory_heap",
     "VK_QCOM_tile_properties",
     "VK_QCOM_tile_shading",
     "VK_QCOM_ycbcr_degamma",
@@ -56740,6 +57203,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk64_vkCmdBindPipelineShaderGroupNV,
     (void *)thunk64_vkCmdBindShadersEXT,
     (void *)thunk64_vkCmdBindShadingRateImageNV,
+    (void *)thunk64_vkCmdBindTileMemoryQCOM,
     (void *)thunk64_vkCmdBindTransformFeedbackBuffersEXT,
     (void *)thunk64_vkCmdBindVertexBuffers,
     (void *)thunk64_vkCmdBindVertexBuffers2,
@@ -57387,6 +57851,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     (void *)thunk32_vkCmdBindPipelineShaderGroupNV,
     (void *)thunk32_vkCmdBindShadersEXT,
     (void *)thunk32_vkCmdBindShadingRateImageNV,
+    (void *)thunk32_vkCmdBindTileMemoryQCOM,
     (void *)thunk32_vkCmdBindTransformFeedbackBuffersEXT,
     (void *)thunk32_vkCmdBindVertexBuffers,
     (void *)thunk32_vkCmdBindVertexBuffers2,
