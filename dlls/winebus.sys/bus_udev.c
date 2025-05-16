@@ -105,6 +105,7 @@ struct base_device
 {
     struct unix_device unix_device;
     void (*read_report)(struct unix_device *iface);
+    BOOL started;
 
     struct udev_device *udev_device;
     char devnode[MAX_PATH];
@@ -212,6 +213,8 @@ static void stop_polling_device(struct unix_device *iface)
     int i;
 
     if (impl->device_fd == -1) return; /* already removed */
+    if (!impl->started) return; /* not started */
+    impl->started = FALSE;
 
     for (i = 2; i < poll_count; ++i)
         if (poll_fds[i].fd == impl->device_fd) break;
@@ -243,6 +246,7 @@ static void start_polling_device(struct unix_device *iface)
         poll_count++;
 
         write(deviceloop_control[1], "u", 1);
+        impl->started = TRUE;
     }
 }
 
