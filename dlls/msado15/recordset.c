@@ -1384,8 +1384,11 @@ static HRESULT WINAPI recordset_put_AbsolutePosition( _Recordset *iface, Positio
 
 static HRESULT WINAPI recordset_putref_ActiveConnection( _Recordset *iface, IDispatch *connection )
 {
-    FIXME( "%p, %p\n", iface, connection );
-    return E_NOTIMPL;
+    VARIANT v;
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = connection;
+    return _Recordset_put_ActiveConnection( iface, v );
 }
 
 static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT connection )
