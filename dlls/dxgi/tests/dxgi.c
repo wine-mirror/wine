@@ -7997,6 +7997,274 @@ static void run_on_d3d12(void (*test_func)(IUnknown *device, BOOL is_d3d12))
     ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
+static void test_subresource_surface(void)
+{
+    unsigned int expected_width, expected_height, expected_pitch;
+    unsigned int i, j, subresource_index, subresource_count;
+    IDXGIResource1 *resource, *parent_resource;
+    DXGI_SURFACE_DESC surface_desc;
+    DXGI_MAPPED_RECT mapped_rect;
+    ID3D10Device *d3d10_device;
+    IDXGIDevice *dxgi_device;
+    IDXGISurface2 *surface;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct
+    {
+        unsigned int resource_type; /* 0 -> ID3D10Buffer, 1~3 -> ID3D10Texture1/2/3D */
+        unsigned int width;
+        unsigned int height;
+        unsigned int expected_pitch;
+        unsigned int mip_levels;
+        unsigned int array_size;
+        HRESULT hr;
+    }
+    tests[] =
+    {
+        {0, 512, 1, 512, 1, 1, S_OK},
+        {1, 512, 1, 2048, 1, 1, S_OK},
+        {1, 512, 1, 2048, 4, 4, S_OK},
+        {2, 512, 512, 2048, 1, 1, S_OK},
+        {2, 512, 512, 2048, 4, 4, S_OK},
+        {3, 512, 512, 2048, 1, 1, S_OK},
+        {3, 512, 512, 2048, 2, 1, S_OK},
+        {3, 512, 512, 2048, 1, 2, E_INVALIDARG},
+    };
+
+    if (!(dxgi_device = create_device(0)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)&d3d10_device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        winetest_push_context("%d", i);
+
+        /* ID3D10Buffer */
+        if (tests[i].resource_type == 0)
+        {
+            D3D10_BUFFER_DESC buffer_desc;
+            ID3D10Buffer *buffer;
+
+            buffer_desc.ByteWidth = tests[i].width;
+            buffer_desc.Usage = D3D10_USAGE_STAGING;
+            buffer_desc.BindFlags = 0;
+            buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+            buffer_desc.MiscFlags = 0;
+            hr = ID3D10Device_CreateBuffer(d3d10_device, &buffer_desc, NULL, &buffer);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = ID3D10Buffer_QueryInterface(buffer, &IID_IDXGIResource1, (void **)&resource);
+            ID3D10Buffer_Release(buffer);
+        }
+        /* ID3D10Texture1D */
+        else if (tests[i].resource_type == 1)
+        {
+            D3D10_TEXTURE1D_DESC texture_desc;
+            ID3D10Texture1D *texture;
+
+            texture_desc.Width = tests[i].width;
+            texture_desc.MipLevels = tests[i].mip_levels;
+            texture_desc.ArraySize = tests[i].array_size;
+            texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            texture_desc.Usage = D3D10_USAGE_STAGING;
+            texture_desc.BindFlags = 0;
+            texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+            texture_desc.MiscFlags = 0;
+            hr = ID3D10Device_CreateTexture1D(d3d10_device, &texture_desc, NULL, &texture);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = ID3D10Texture1D_QueryInterface(texture, &IID_IDXGIResource1, (void **)&resource);
+            ID3D10Texture1D_Release(texture);
+        }
+        /* ID3D10Texture2D */
+        else if (tests[i].resource_type == 2)
+        {
+            D3D10_TEXTURE2D_DESC texture_desc;
+            ID3D10Texture2D *texture;
+
+            texture_desc.Width = tests[i].width;
+            texture_desc.Height = tests[i].height;
+            texture_desc.MipLevels = tests[i].mip_levels;
+            texture_desc.ArraySize = tests[i].array_size;
+            texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            texture_desc.SampleDesc.Count = 1;
+            texture_desc.SampleDesc.Quality = 0;
+            texture_desc.Usage = D3D10_USAGE_STAGING;
+            texture_desc.BindFlags = 0;
+            texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+            texture_desc.MiscFlags = 0;
+            hr = ID3D10Device_CreateTexture2D(d3d10_device, &texture_desc, NULL, &texture);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGIResource1, (void **)&resource);
+            ID3D10Texture2D_Release(texture);
+        }
+        /* ID3D10Texture3D */
+        else if (tests[i].resource_type == 3)
+        {
+            D3D10_TEXTURE3D_DESC texture_desc;
+            ID3D10Texture3D *texture;
+
+            texture_desc.Width = tests[i].width;
+            texture_desc.Height = tests[i].height;
+            texture_desc.Depth = tests[i].array_size;
+            texture_desc.MipLevels = tests[i].mip_levels;
+            texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            texture_desc.Usage = D3D10_USAGE_STAGING;
+            texture_desc.BindFlags = 0;
+            texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
+            texture_desc.MiscFlags = 0;
+            hr = ID3D10Device_CreateTexture3D(d3d10_device, &texture_desc, NULL, &texture);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = ID3D10Texture3D_QueryInterface(texture, &IID_IDXGIResource1, (void **)&resource);
+            ID3D10Texture3D_Release(texture);
+        }
+        else
+        {
+            ok(0, "Unexpected resource type %u.\n", tests[i].resource_type);
+            winetest_pop_context();
+            continue;
+        }
+
+        if (FAILED(hr))
+        {
+            win_skip("Failed to query IDXGIResource1.\n");
+            ID3D10Device_Release(d3d10_device);
+            refcount = IDXGIDevice_Release(dxgi_device);
+            ok(!refcount, "Device has %lu references left.\n", refcount);
+            winetest_pop_context();
+            return;
+        }
+
+        subresource_count = tests[i].mip_levels * tests[i].array_size;
+
+        /* IDXGISurface2::GetResource() for non-subresource surfaces */
+        hr = IDXGIResource1_QueryInterface(resource, &IID_IDXGISurface2, (void **)&surface);
+        /* IDXGISurface2 might be unavailable because Windows version is too old or the resource
+         * have multiple mipmap levels or an array of textures */
+        if (hr == S_OK)
+        {
+            /* NULL parent resource pointer */
+            hr = IDXGISurface2_GetResource(surface, &IID_IDXGIResource1, NULL, &subresource_index);
+            ok(hr == E_POINTER, "Got unexpected hr %#lx.\n", hr);
+
+            /* Invalid IID */
+            parent_resource = (void *)0xdeadbeef;
+            subresource_index = 1234;
+            hr = IDXGISurface2_GetResource(surface, &IID_IDXGIFactory, (void **)&parent_resource,
+                    &subresource_index);
+            ok(hr == E_NOINTERFACE, "Got unexpected hr %#lx.\n", hr);
+            ok(parent_resource == NULL, "Got unexpected parent_resource %p.\n", parent_resource);
+            ok(subresource_index == 1234, "Got unexpected subresource_index %u.\n", subresource_index);
+
+            /* Normal */
+            hr = IDXGISurface2_GetResource(surface, &IID_IDXGIResource1, (void **)&parent_resource,
+                    &subresource_index);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(parent_resource == resource, "Got unexpected parent resource.\n");
+            ok(subresource_index == 0, "Got unexpected subresource index %u.\n", subresource_index);
+
+            IDXGIResource1_Release(parent_resource);
+            IDXGISurface2_Release(surface);
+        }
+
+        /* Tests for subresource surfaces */
+        for (j = 0; j < subresource_count; j++)
+        {
+            winetest_push_context("%d", j);
+
+            refcount = get_refcount(resource);
+            ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
+            hr = IDXGIResource1_CreateSubresourceSurface(resource, j, &surface);
+            todo_wine
+            ok(hr == tests[i].hr, "Got unexpected hr %#lx.\n", hr);
+            if (FAILED(hr))
+            {
+                winetest_pop_context();
+                continue;
+            }
+            refcount = get_refcount(resource);
+            ok(refcount == 2, "Got unexpected refcount %lu.\n", refcount);
+
+            check_interface(surface, &IID_IDXGISurface, TRUE, FALSE);
+            check_interface(surface, &IID_IDXGISurface1, TRUE, FALSE);
+            check_interface(surface, &IID_IDXGIDeviceSubObject, TRUE, FALSE);
+            check_interface(surface, &IID_IDXGIObject, TRUE, FALSE);
+            check_interface(surface, &IID_IUnknown, TRUE, FALSE);
+            /* No outer interfaces */
+            check_interface(surface, &IID_ID3D10Buffer, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D10Texture1D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D10Texture2D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D10Texture3D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D11Buffer, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D11Texture1D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D11Texture2D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D11Texture3D, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D10Resource, FALSE, FALSE);
+            check_interface(surface, &IID_ID3D11Resource, FALSE, FALSE);
+            /* Note that IDXGIResource and IDXGIResource1 are not supported for subresource surfaces */
+            check_interface(surface, &IID_IDXGIResource, FALSE, FALSE);
+            check_interface(surface, &IID_IDXGIResource1, FALSE, FALSE);
+
+            /* IDXGISurface::GetDesc() */
+            hr = IDXGISurface2_GetDesc(surface, &surface_desc);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            expected_width = tests[i].width >> (j % tests[i].mip_levels);
+            if (tests[i].resource_type <= 1)
+                expected_height = 1;
+            else
+                expected_height = tests[i].height >> (j % tests[i].mip_levels);
+            expected_pitch = tests[i].expected_pitch >> (j % tests[i].mip_levels);
+
+            ok(surface_desc.Width == expected_width, "Expected width %u, got %u.\n", expected_width,
+                    surface_desc.Width);
+            ok(surface_desc.Height == expected_height, "Expected height %u, got height %u.\n",
+                    expected_height, surface_desc.Height);
+            ok(surface_desc.Format == (tests[i].resource_type ? DXGI_FORMAT_B8G8R8A8_UNORM : DXGI_FORMAT_UNKNOWN),
+                    "Got unexpected format %#x.\n", surface_desc.Format);
+            ok(surface_desc.SampleDesc.Count == 1, "Got unexpected sample count %u.\n",
+                    surface_desc.SampleDesc.Count);
+            ok(surface_desc.SampleDesc.Quality == 0, "Got unexpected sample quality %u.\n",
+                    surface_desc.SampleDesc.Quality);
+
+            /* IDXGISurface::Map() */
+            hr = IDXGISurface2_Map(surface, &mapped_rect, DXGI_MAP_READ);
+            ok(mapped_rect.Pitch == expected_pitch, "Expected pitch %u, got %u.\n",
+                    expected_pitch, mapped_rect.Pitch);
+            hr = IDXGISurface2_Unmap(surface);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+            /* IDXGISurface2::GetResource() */
+            hr = IDXGISurface2_GetResource(surface, &IID_IDXGIResource1, (void **)&parent_resource,
+                    &subresource_index);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            ok(parent_resource == resource, "Got unexpected parent resource.\n");
+            ok(subresource_index == j, "Got unexpected subresource index %u.\n", subresource_index);
+            IDXGIResource1_Release(parent_resource);
+
+            IDXGISurface2_Release(surface);
+            winetest_pop_context();
+        }
+
+        /* Out of range subresource index */
+        surface = (IDXGISurface2 *)0xdeadbeef;
+        hr = IDXGIResource1_CreateSubresourceSurface(resource, j, &surface);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        ok(surface == (IDXGISurface2 *)0xdeadbeef, "Got unexpected surface %p.\n", surface);
+        IDXGIResource1_Release(resource);
+        winetest_pop_context();
+    }
+
+    ID3D10Device_Release(d3d10_device);
+    refcount = IDXGIDevice_Release(dxgi_device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+}
+
 START_TEST(dxgi)
 {
     HMODULE dxgi_module, d3d11_module, d3d12_module, gdi32_module;
@@ -8045,6 +8313,7 @@ START_TEST(dxgi)
     queue_test(test_query_video_memory_info);
     queue_test(test_check_interface_support);
     queue_test(test_create_surface);
+    queue_test(test_subresource_surface);
     queue_test(test_parents);
     queue_test(test_output);
     queue_test(test_find_closest_matching_mode);
