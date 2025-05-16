@@ -1398,6 +1398,7 @@ static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT
 {
     struct recordset *recordset = impl_from_Recordset( iface );
     TRACE( "%p, %p\n", iface, connection );
+    VariantInit( connection );
     return VariantCopy(connection, &recordset->active_connection);
 }
 

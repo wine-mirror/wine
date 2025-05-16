@@ -265,7 +265,8 @@ if (0)
     hr = _Recordset_get_ActiveConnection( recordset, NULL );
 }
 
-    VariantInit(&active);
+    V_VT(&active) = VT_UNKNOWN;
+    V_UNKNOWN(&active) = (IUnknown *)0xdeadbeef;
     hr = _Recordset_get_ActiveConnection( recordset, &active );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( V_VT(&active) == VT_DISPATCH, "got %d\n", V_VT(&active) );
