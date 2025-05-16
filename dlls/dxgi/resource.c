@@ -42,12 +42,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_inner_QueryInterface(IUnknown *if
         return S_OK;
     }
     else if (IsEqualGUID(riid, &IID_IDXGIResource)
+            || IsEqualGUID(riid, &IID_IDXGIResource1)
             || IsEqualGUID(riid, &IID_IDXGIDeviceSubObject)
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        IDXGIResource_AddRef(&resource->IDXGIResource_iface);
-        *out = &resource->IDXGIResource_iface;
+        IDXGIResource1_AddRef(&resource->IDXGIResource1_iface);
+        *out = &resource->IDXGIResource1_iface;
         return S_OK;
     }
 
@@ -94,19 +95,19 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_QueryInterface(IDXGISurface1 *ifac
         void **object)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_QueryInterface(&resource->IDXGIResource_iface, riid, object);
+    return IDXGIResource1_QueryInterface(&resource->IDXGIResource1_iface, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_surface_AddRef(IDXGISurface1 *iface)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_AddRef(&resource->IDXGIResource_iface);
+    return IDXGIResource1_AddRef(&resource->IDXGIResource1_iface);
 }
 
 static ULONG STDMETHODCALLTYPE dxgi_surface_Release(IDXGISurface1 *iface)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_Release(&resource->IDXGIResource_iface);
+    return IDXGIResource1_Release(&resource->IDXGIResource1_iface);
 }
 
 /* IDXGIObject methods */
@@ -115,27 +116,27 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_SetPrivateData(IDXGISurface1 *ifac
         REFGUID guid, UINT data_size, const void *data)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_SetPrivateData(&resource->IDXGIResource_iface, guid, data_size, data);
+    return IDXGIResource1_SetPrivateData(&resource->IDXGIResource1_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_SetPrivateDataInterface(IDXGISurface1 *iface,
         REFGUID guid, const IUnknown *object)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_SetPrivateDataInterface(&resource->IDXGIResource_iface, guid, object);
+    return IDXGIResource1_SetPrivateDataInterface(&resource->IDXGIResource1_iface, guid, object);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetPrivateData(IDXGISurface1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_GetPrivateData(&resource->IDXGIResource_iface, guid, data_size, data);
+    return IDXGIResource1_GetPrivateData(&resource->IDXGIResource1_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface1 *iface, REFIID riid, void **parent)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_GetParent(&resource->IDXGIResource_iface, riid, parent);
+    return IDXGIResource1_GetParent(&resource->IDXGIResource1_iface, riid, parent);
 }
 
 /* IDXGIDeviceSubObject methods */
@@ -143,7 +144,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetParent(IDXGISurface1 *iface, RE
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDevice(IDXGISurface1 *iface, REFIID riid, void **device)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface1(iface);
-    return IDXGIResource_GetDevice(&resource->IDXGIResource_iface, riid, device);
+    return IDXGIResource1_GetDevice(&resource->IDXGIResource1_iface, riid, device);
 }
 
 /* IDXGISurface methods */
@@ -259,70 +260,70 @@ static const struct IDXGISurface1Vtbl dxgi_surface_vtbl =
     dxgi_surface_ReleaseDC,
 };
 
-static inline struct dxgi_resource *impl_from_IDXGIResource(IDXGIResource *iface)
+static inline struct dxgi_resource *impl_from_IDXGIResource1(IDXGIResource1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dxgi_resource, IDXGIResource_iface);
+    return CONTAINING_RECORD(iface, struct dxgi_resource, IDXGIResource1_iface);
 }
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_QueryInterface(IDXGIResource *iface, REFIID riid,
+static HRESULT STDMETHODCALLTYPE dxgi_resource_QueryInterface(IDXGIResource1 *iface, REFIID riid,
         void **object)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_QueryInterface(resource->outer_unknown, riid, object);
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_resource_AddRef(IDXGIResource *iface)
+static ULONG STDMETHODCALLTYPE dxgi_resource_AddRef(IDXGIResource1 *iface)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_AddRef(resource->outer_unknown);
 }
 
-static ULONG STDMETHODCALLTYPE dxgi_resource_Release(IDXGIResource *iface)
+static ULONG STDMETHODCALLTYPE dxgi_resource_Release(IDXGIResource1 *iface)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
     TRACE("Forwarding to outer IUnknown\n");
     return IUnknown_Release(resource->outer_unknown);
 }
 
 /* IDXGIObject methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_SetPrivateData(IDXGIResource *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_resource_SetPrivateData(IDXGIResource1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return dxgi_set_private_data(&resource->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_SetPrivateDataInterface(IDXGIResource *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_resource_SetPrivateDataInterface(IDXGIResource1 *iface,
         REFGUID guid, const IUnknown *object)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
 
     TRACE("iface %p, guid %s, object %p.\n", iface, debugstr_guid(guid), object);
 
     return dxgi_set_private_data_interface(&resource->private_store, guid, object);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetPrivateData(IDXGIResource *iface,
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetPrivateData(IDXGIResource1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
     return dxgi_get_private_data(&resource->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetParent(IDXGIResource *iface, REFIID riid, void **parent)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetParent(IDXGIResource1 *iface, REFIID riid, void **parent)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
 
     TRACE("iface %p, riid %s, parent %p.\n", iface, debugstr_guid(riid), parent);
 
@@ -331,9 +332,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_GetParent(IDXGIResource *iface, R
 
 /* IDXGIDeviceSubObject methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetDevice(IDXGIResource *iface, REFIID riid, void **device)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetDevice(IDXGIResource1 *iface, REFIID riid, void **device)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
 
     TRACE("iface %p, riid %s, device %p.\n", iface, debugstr_guid(riid), device);
 
@@ -341,16 +342,16 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_GetDevice(IDXGIResource *iface, R
 }
 
 /* IDXGIResource methods */
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetSharedHandle(IDXGIResource *iface, HANDLE *shared_handle)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetSharedHandle(IDXGIResource1 *iface, HANDLE *shared_handle)
 {
     FIXME("iface %p, shared_handle %p stub!\n", iface, shared_handle);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetUsage(IDXGIResource *iface, DXGI_USAGE *usage)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetUsage(IDXGIResource1 *iface, DXGI_USAGE *usage)
 {
-    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface);
     struct wined3d_resource_desc resource_desc;
 
     TRACE("iface %p, usage %p.\n", iface, usage);
@@ -381,21 +382,39 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_GetUsage(IDXGIResource *iface, DX
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_SetEvictionPriority(IDXGIResource *iface, UINT eviction_priority)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_SetEvictionPriority(IDXGIResource1 *iface, UINT eviction_priority)
 {
     FIXME("iface %p, eviction_priority %u stub!\n", iface, eviction_priority);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_resource_GetEvictionPriority(IDXGIResource *iface, UINT *eviction_priority)
+static HRESULT STDMETHODCALLTYPE dxgi_resource_GetEvictionPriority(IDXGIResource1 *iface, UINT *eviction_priority)
 {
     FIXME("iface %p, eviction_priority %p stub!\n", iface, eviction_priority);
 
     return E_NOTIMPL;
 }
 
-static const struct IDXGIResourceVtbl dxgi_resource_vtbl =
+/* IDXGIResource1 methods */
+static HRESULT STDMETHODCALLTYPE dxgi_resource_CreateSubresourceSurface(IDXGIResource1 *iface,
+        UINT index, IDXGISurface2 **surface)
+{
+    FIXME("iface %p, index %u, surface %p stub!\n", iface, index, surface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_resource_CreateSharedHandle(IDXGIResource1 *iface,
+        const SECURITY_ATTRIBUTES *attributes, DWORD access, const WCHAR *name, HANDLE *handle)
+{
+    FIXME("iface %p, attributes %p, access %#lx, name %s, handle %p stub!\n", iface, attributes,
+            access, wine_dbgstr_w(name), handle);
+
+    return E_NOTIMPL;
+}
+
+static const struct IDXGIResource1Vtbl dxgi_resource_vtbl =
 {
     /* IUnknown methods */
     dxgi_resource_QueryInterface,
@@ -413,6 +432,9 @@ static const struct IDXGIResourceVtbl dxgi_resource_vtbl =
     dxgi_resource_GetUsage,
     dxgi_resource_SetEvictionPriority,
     dxgi_resource_GetEvictionPriority,
+    /* IDXGIResource1 methods */
+    dxgi_resource_CreateSubresourceSurface,
+    dxgi_resource_CreateSharedHandle,
 };
 
 static const struct IUnknownVtbl dxgi_resource_inner_unknown_vtbl =
@@ -436,7 +458,7 @@ HRESULT dxgi_resource_init(struct dxgi_resource *resource, IDXGIDevice *device,
     }
     else
         resource->IDXGISurface1_iface.lpVtbl = NULL;
-    resource->IDXGIResource_iface.lpVtbl = &dxgi_resource_vtbl;
+    resource->IDXGIResource1_iface.lpVtbl = &dxgi_resource_vtbl;
     resource->IUnknown_iface.lpVtbl = &dxgi_resource_inner_unknown_vtbl;
     resource->refcount = 1;
     wined3d_private_store_init(&resource->private_store);

@@ -35167,7 +35167,7 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
         hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource, (void **)&res);
         ok(hr == S_OK, "got %#lx.\n", hr);
         hr = ID3D11Texture2D_QueryInterface(tex, &IID_IDXGIResource1, (void **)&res1);
-        todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+        ok(hr == S_OK, "got %#lx.\n", hr);
         if (FAILED(hr))
             goto test_done;
 
@@ -35175,20 +35175,23 @@ static void test_shared_resource(D3D_FEATURE_LEVEL feature_level)
         hr = IDXGIResource_GetSharedHandle(res, &h);
         if (nthandle)
         {
-            ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
+            todo_wine ok(hr == E_INVALIDARG, "got %#lx.\n", hr);
             ok(h == (HANDLE)0xdeadbeef, "got %p.\n", h);
         }
         else if (desc.MiscFlags)
         {
-            ok(hr == S_OK, "got %#lx.\n", hr);
+            todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
             ok(is_kmt_handle(h), "wrong handle %p.\n", h);
             handle = h;
         }
         else
         {
-            ok(hr == S_OK, "got %#lx.\n", hr);
-            ok(!h, "got %p.\n", h);
+            todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+            todo_wine ok(!h, "got %p.\n", h);
         }
+
+        if (FAILED(hr))
+            goto test_done;
 
         h = (HANDLE)0xdeadbeef;
         hr = IDXGIResource1_CreateSharedHandle(res1, NULL, GENERIC_ALL | DXGI_SHARED_RESOURCE_READ

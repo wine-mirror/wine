@@ -355,7 +355,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *if
     }
 
     TRACE("Created resource %p.\n", object);
-    *resource = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGIResource_iface;
+    *resource = outer ? &object->IUnknown_iface : (IUnknown *)&object->IDXGIResource1_iface;
 
     return S_OK;
 }
