@@ -210,6 +210,12 @@ static void test_dos_devices(void)
     ret = QueryDosDeviceA( drivestr, buf, sizeof(buf) );
     ok(!ret, "expected failure\n");
     ok(GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError());
+
+    ret = DefineDosDeviceW ( DDD_RAW_TARGET_PATH, L"C:/windows/", L"\\Device\\C:/windows/" );
+    ok(ret, "got error %lu\n", GetLastError());
+
+    ret = DefineDosDeviceW(DDD_REMOVE_DEFINITION, L"C:/windows/", NULL);
+    ok(ret, "failed to remove C:/windows/, error %lu\n", GetLastError());
 }
 
 static void test_FindFirstVolume(void)
