@@ -2587,7 +2587,7 @@ static void test_nt_wow64(void)
 
         if (native_machine == IMAGE_FILE_MACHINE_ARM64)
         {
-            KSHARED_USER_DATA *user_shared_data = ULongToPtr( 0x7ffe0000 );
+            KUSER_SHARED_DATA *user_shared_data = ULongToPtr( 0x7ffe0000 );
 
             ok( user_shared_data->ProcessorFeatures[PF_ARM_V8_INSTRUCTIONS_AVAILABLE], "no ARM_V8\n" );
             ok( user_shared_data->ProcessorFeatures[PF_MMX_INSTRUCTIONS_AVAILABLE], "no MMX\n" );

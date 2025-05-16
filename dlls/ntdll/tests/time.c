@@ -156,7 +156,7 @@ static UINT64 multiply_tsc(UINT64 a, UINT64 b)
 static void test_RtlQueryPerformanceCounter(void)
 {
     struct hypervisor_shared_data *hsd;
-    KSHARED_USER_DATA *usd = (void *)0x7ffe0000;
+    KUSER_SHARED_DATA *usd = (void *)0x7ffe0000;
     LARGE_INTEGER frequency, counter;
     NTSTATUS status;
     UINT64 tsc0, tsc1;
@@ -418,7 +418,7 @@ static ULONGLONG read_ksystem_time(volatile KSYSTEM_TIME *time)
 
 static void test_user_shared_data_time(void)
 {
-    KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
+    KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
     SYSTEM_TIMEOFDAY_INFORMATION timeofday;
     ULONGLONG t1, t2, t3;
     NTSTATUS status;

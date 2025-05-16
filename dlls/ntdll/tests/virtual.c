@@ -1986,7 +1986,7 @@ static void test_user_shared_data(void)
             256, /*sizeof(M128A) * 16 */
             sizeof(YMMCONTEXT),
     };
-    const KSHARED_USER_DATA *user_shared_data = (void *)0x7ffe0000;
+    const KUSER_SHARED_DATA *user_shared_data = (void *)0x7ffe0000;
     XSTATE_CONFIGURATION xstate = user_shared_data->XState;
     ULONG64 feature_mask;
     unsigned int i;
