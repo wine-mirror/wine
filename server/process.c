@@ -1947,7 +1947,15 @@ DECL_HANDLER(set_job_completion_port)
 
     if (!job) return;
 
-    if (!job->completion_port)
+    if (!req->port)
+    {
+        if (job->completion_port)
+        {
+            release_object( job->completion_port );
+            job->completion_port = NULL;
+        }
+    }
+    else if (!job->completion_port)
     {
         job->completion_port = get_completion_obj( current->process, req->port, IO_COMPLETION_MODIFY_STATE );
         job->completion_key = req->key;

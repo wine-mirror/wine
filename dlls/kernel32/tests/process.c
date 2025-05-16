@@ -2936,7 +2936,7 @@ static void test_CompletionPort(void)
     port_info.CompletionKey = job;
     port_info.CompletionPort = NULL;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
             "got ret %d, error %lu\n", ret, GetLastError());
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
@@ -2952,7 +2952,7 @@ static void test_CompletionPort(void)
     port_info.CompletionKey = NULL;
     port_info.CompletionPort = NULL;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
             "got ret %d, error %lu\n", ret, GetLastError());
 
     create_process("wait", &pi2);
@@ -2962,7 +2962,7 @@ static void test_CompletionPort(void)
     port_info.CompletionKey = job;
     port_info.CompletionPort = port;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
-    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER),
+    ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER),
             "got ret %d, error %lu\n" /* Before Win8 */, ret, GetLastError());
 
     create_process("wait", &pi);
