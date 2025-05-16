@@ -48,7 +48,7 @@ struct recordset
     ADORecordsetConstruction ADORecordsetConstruction_iface;
     ISupportErrorInfo  ISupportErrorInfo_iface;
     LONG               refs;
-    VARIANT            active_connection;
+    _Connection       *active_connection;
     LONG               state;
     struct fields      fields;
     LONG               count;
@@ -1397,9 +1397,13 @@ static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT
 static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT *connection )
 {
     struct recordset *recordset = impl_from_Recordset( iface );
+
     TRACE( "%p, %p\n", iface, connection );
-    VariantInit( connection );
-    return VariantCopy(connection, &recordset->active_connection);
+
+    V_VT(connection) = VT_DISPATCH;
+    V_DISPATCH(connection) = (IDispatch *)recordset->active_connection;
+    if (recordset->active_connection) _Connection_AddRef( recordset->active_connection );
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_BOF( _Recordset *iface, VARIANT_BOOL *bof )
@@ -1595,7 +1599,7 @@ static HRESULT WINAPI recordset_CancelUpdate( _Recordset *iface )
 
     FIXME( "%p\n", iface );
 
-    if (V_DISPATCH(&recordset->active_connection) == NULL)
+    if (recordset->active_connection == NULL)
         return S_OK;
 
     recordset->editmode = adEditNone;
@@ -2049,6 +2053,7 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     HRESULT hr;
     DBBINDING *bindings;
     DBBYTEOFFSET datasize;
+    _Connection *conn;
 
     TRACE( "%p, %s, %s, %d, %d, %ld\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
@@ -2076,9 +2081,15 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr))
         return E_FAIL;
 
-    hr = VariantCopy(&recordset->active_connection, &active_connection);
+    hr = IDispatch_QueryInterface( V_DISPATCH(&active_connection), &IID__Connection, (void**)&conn );
     if (FAILED(hr))
-        return E_FAIL;
+    {
+        IUnknown_Release(session);
+        return hr;
+    }
+
+    if (recordset->active_connection) _Connection_Release( recordset->active_connection );
+    recordset->active_connection = conn;
 
     if (V_VT(&source) != VT_BSTR)
     {
@@ -2152,7 +2163,7 @@ static HRESULT WINAPI recordset_Update( _Recordset *iface, VARIANT fields, VARIA
 
     FIXME( "%p, %s, %s\n", iface, debugstr_variant(&fields), debugstr_variant(&values) );
 
-    if (V_DISPATCH(&recordset->active_connection) == NULL)
+    if (recordset->active_connection == NULL)
         return S_OK;
 
     recordset->editmode = adEditNone;
@@ -2276,7 +2287,7 @@ static HRESULT WINAPI recordset_UpdateBatch( _Recordset *iface, AffectEnum affec
 
     FIXME( "%p, %u\n", iface, affect_records );
 
-    if (V_DISPATCH(&recordset->active_connection) == NULL)
+    if (recordset->active_connection == NULL)
         return S_OK;
 
     recordset->editmode = adEditNone;
@@ -2289,7 +2300,7 @@ static HRESULT WINAPI recordset_CancelBatch( _Recordset *iface, AffectEnum affec
 
     FIXME( "%p, %u\n", iface, affect_records );
 
-    if (V_DISPATCH(&recordset->active_connection) == NULL)
+    if (recordset->active_connection == NULL)
         return S_OK;
 
     recordset->editmode = adEditNone;
@@ -2371,7 +2382,7 @@ static HRESULT WINAPI recordset_Cancel( _Recordset *iface )
 
     FIXME( "%p\n", iface );
 
-    if (V_DISPATCH(&recordset->active_connection) == NULL)
+    if (recordset->active_connection == NULL)
         return S_OK;
 
     recordset->editmode = adEditNone;
@@ -2770,8 +2781,7 @@ HRESULT Recordset_create( void **obj )
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
     recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
     recordset->ADORecordsetConstruction_iface.lpVtbl = &rsconstruction_vtbl;
-    V_VT(&recordset->active_connection) = VT_DISPATCH;
-    V_DISPATCH(&recordset->active_connection) = NULL;
+    recordset->active_connection = NULL;
     recordset->refs = 1;
     recordset->index = -1;
     recordset->cursor_location = adUseServer;
