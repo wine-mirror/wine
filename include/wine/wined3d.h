@@ -2738,6 +2738,9 @@ void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
         struct wined3d_resource_desc *desc);
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
 unsigned int __cdecl wined3d_resource_get_priority(const struct wined3d_resource *resource);
+unsigned int __cdecl wined3d_resource_get_sub_resource_count(struct wined3d_resource *resource);
+HRESULT __cdecl wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
 HRESULT __cdecl wined3d_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, uint32_t flags);
 void __cdecl wined3d_resource_preload(struct wined3d_resource *resource);

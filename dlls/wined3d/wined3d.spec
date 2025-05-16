@@ -209,6 +209,8 @@
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 @ cdecl wined3d_resource_get_priority(ptr)
+@ cdecl wined3d_resource_get_sub_resource_count(ptr)
+@ cdecl wined3d_resource_get_sub_resource_desc(ptr long ptr)
 @ cdecl wined3d_resource_map(ptr long ptr ptr long)
 @ cdecl wined3d_resource_preload(ptr)
 @ cdecl wined3d_resource_set_parent(ptr ptr ptr)

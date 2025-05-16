@@ -8179,7 +8179,6 @@ static void test_subresource_surface(void)
             refcount = get_refcount(resource);
             ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
             hr = IDXGIResource1_CreateSubresourceSurface(resource, j, &surface);
-            todo_wine
             ok(hr == tests[i].hr, "Got unexpected hr %#lx.\n", hr);
             if (FAILED(hr))
             {
@@ -8253,7 +8252,6 @@ static void test_subresource_surface(void)
         /* Out of range subresource index */
         surface = (IDXGISurface2 *)0xdeadbeef;
         hr = IDXGIResource1_CreateSubresourceSurface(resource, j, &surface);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         ok(surface == (IDXGISurface2 *)0xdeadbeef, "Got unexpected surface %p.\n", surface);
         IDXGIResource1_Release(resource);

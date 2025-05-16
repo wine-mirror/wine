@@ -266,6 +266,21 @@ unsigned int CDECL wined3d_resource_get_priority(const struct wined3d_resource *
     return resource->priority;
 }
 
+unsigned int CDECL wined3d_resource_get_sub_resource_count(struct wined3d_resource *resource)
+{
+    TRACE("resource %p.\n", resource);
+
+    return resource->resource_ops->resource_get_sub_resource_count(resource);
+}
+
+HRESULT CDECL wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
+{
+    TRACE("resource %p, sub_resource_idx %u, desc %p.\n", resource, sub_resource_idx, desc);
+
+    return resource->resource_ops->resource_sub_resource_get_desc(resource, sub_resource_idx, desc);
+}
+
 void * CDECL wined3d_resource_get_parent(const struct wined3d_resource *resource)
 {
     return resource->parent;

@@ -347,7 +347,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_resource(IWineDXGIDevice *if
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_resource_init(object, (IDXGIDevice *)iface, outer, needs_surface, wined3d_resource)))
+    if (FAILED(hr = dxgi_resource_init(object, (IDXGIDevice *)iface, outer, needs_surface,
+            wined3d_resource, NULL, 0)))
     {
         WARN("Failed to initialize resource, hr %#lx.\n", hr);
         free(object);

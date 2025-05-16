@@ -31,6 +31,7 @@ static inline struct dxgi_resource *impl_from_IUnknown(IUnknown *iface)
 static HRESULT STDMETHODCALLTYPE dxgi_resource_inner_QueryInterface(IUnknown *iface, REFIID riid, void **out)
 {
     struct dxgi_resource *resource = impl_from_IUnknown(iface);
+    bool is_subresource = !!resource->parent_resource;
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
@@ -42,8 +43,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_inner_QueryInterface(IUnknown *if
         *out = &resource->IDXGISurface2_iface;
         return S_OK;
     }
-    else if (IsEqualGUID(riid, &IID_IDXGIResource)
-            || IsEqualGUID(riid, &IID_IDXGIResource1)
+    else if ((!is_subresource && (IsEqualGUID(riid, &IID_IDXGIResource)
+            || IsEqualGUID(riid, &IID_IDXGIResource1)))
             || IsEqualGUID(riid, &IID_IDXGIDeviceSubObject)
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IUnknown))
@@ -78,6 +79,8 @@ static ULONG STDMETHODCALLTYPE dxgi_resource_inner_Release(IUnknown *iface)
 
     if (!refcount)
     {
+        if (resource->parent_resource)
+            IDXGIResource1_Release(resource->parent_resource);
         wined3d_private_store_cleanup(&resource->private_store);
         free(resource);
     }
@@ -152,17 +155,24 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDevice(IDXGISurface2 *iface, RE
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDesc(IDXGISurface2 *iface, DXGI_SURFACE_DESC *desc)
 {
     struct dxgi_resource *resource = impl_from_IDXGISurface2(iface);
-    struct wined3d_resource_desc wined3d_desc;
+    bool is_subresource = !!resource->parent_resource, is_buffer = false;
+    struct wined3d_sub_resource_desc subresource_desc;
+    struct wined3d_resource_desc resource_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_resource_get_desc(resource->wined3d_resource, &wined3d_desc);
+    wined3d_resource_get_sub_resource_desc(resource->wined3d_resource, resource->subresource_idx, &subresource_desc);
+    if (is_subresource)
+    {
+        wined3d_resource_get_desc(resource->wined3d_resource, &resource_desc);
+        is_buffer = resource_desc.resource_type == WINED3D_RTYPE_BUFFER;
+    }
     wined3d_mutex_unlock();
-    desc->Width = wined3d_desc.width;
-    desc->Height = wined3d_desc.height;
-    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
-    dxgi_sample_desc_from_wined3d(&desc->SampleDesc, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    desc->Width = subresource_desc.width;
+    desc->Height = subresource_desc.height;
+    desc->Format = is_buffer ? DXGI_FORMAT_UNKNOWN : dxgi_format_from_wined3dformat(subresource_desc.format);
+    dxgi_sample_desc_from_wined3d(&desc->SampleDesc, subresource_desc.multisample_type, subresource_desc.multisample_quality);
 
     return S_OK;
 }
@@ -183,7 +193,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_Map(IDXGISurface2 *iface, DXGI_MAP
     if (flags & DXGI_MAP_DISCARD)
         wined3d_map_flags |= WINED3D_MAP_DISCARD;
 
-    if (SUCCEEDED(hr = wined3d_resource_map(resource->wined3d_resource, 0, &wined3d_map_desc, NULL, wined3d_map_flags)))
+    if (SUCCEEDED(hr = wined3d_resource_map(resource->wined3d_resource, resource->subresource_idx,
+            &wined3d_map_desc, NULL, wined3d_map_flags)))
     {
         mapped_rect->Pitch = wined3d_map_desc.row_pitch;
         mapped_rect->pBits = wined3d_map_desc.data;
@@ -197,7 +208,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_Unmap(IDXGISurface2 *iface)
     struct dxgi_resource *resource = impl_from_IDXGISurface2(iface);
 
     TRACE("iface %p.\n", iface);
-    wined3d_resource_unmap(resource->wined3d_resource, 0);
+    wined3d_resource_unmap(resource->wined3d_resource, resource->subresource_idx);
     return S_OK;
 }
 
@@ -213,7 +224,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDC(IDXGISurface2 *iface, BOOL d
         return E_INVALIDARG;
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_get_dc(wined3d_texture_from_resource(resource->wined3d_resource), 0, hdc);
+    hr = wined3d_texture_get_dc(wined3d_texture_from_resource(resource->wined3d_resource),
+            resource->subresource_idx, hdc);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
@@ -233,7 +245,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_ReleaseDC(IDXGISurface2 *iface, RE
         FIXME("dirty rectangle is ignored.\n");
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_release_dc(wined3d_texture_from_resource(resource->wined3d_resource), 0, resource->dc);
+    hr = wined3d_texture_release_dc(wined3d_texture_from_resource(resource->wined3d_resource),
+            resource->subresource_idx, resource->dc);
     wined3d_mutex_unlock();
 
     return hr;
@@ -243,10 +256,25 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_ReleaseDC(IDXGISurface2 *iface, RE
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetResource(IDXGISurface2 *iface, REFIID iid,
         void **parent_resource, UINT *subresource_idx)
 {
-    FIXME("iface %p, iid %s, parent_resource %p, subresource_idx %p stub!\n", iface,
+    struct dxgi_resource *resource = impl_from_IDXGISurface2(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, iid %s, parent_resource %p, subresource_idx %p stub!\n", iface,
             wine_dbgstr_guid(iid), parent_resource, subresource_idx);
 
-    return E_NOTIMPL;
+    if (!parent_resource)
+        return E_POINTER;
+
+    if (resource->parent_resource)
+        hr = IDXGIResource1_QueryInterface(resource->parent_resource, iid, parent_resource);
+    else
+        hr = IDXGIResource1_QueryInterface(&resource->IDXGIResource1_iface, iid, parent_resource);
+
+    if (SUCCEEDED(hr))
+        *subresource_idx = resource->subresource_idx;
+    else
+        parent_resource = NULL;
+    return hr;
 }
 
 static const struct IDXGISurface2Vtbl dxgi_surface_vtbl =
@@ -413,9 +441,38 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_GetEvictionPriority(IDXGIResource
 static HRESULT STDMETHODCALLTYPE dxgi_resource_CreateSubresourceSurface(IDXGIResource1 *iface,
         UINT index, IDXGISurface2 **surface)
 {
-    FIXME("iface %p, index %u, surface %p stub!\n", iface, index, surface);
+    struct dxgi_resource *resource = impl_from_IDXGIResource1(iface), *subresource;
+    struct wined3d_resource_desc desc;
+    unsigned int subresource_count;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, index %u, surface %p.\n", iface, index, surface);
+
+    wined3d_mutex_lock();
+    wined3d_resource_get_desc(resource->wined3d_resource, &desc);
+    subresource_count = wined3d_resource_get_sub_resource_count(resource->wined3d_resource);
+    wined3d_mutex_unlock();
+
+    if ((desc.resource_type == WINED3D_RTYPE_TEXTURE_3D && desc.depth > 1)
+            || index >= subresource_count)
+        return E_INVALIDARG;
+
+    if (!(subresource = calloc(1, sizeof(*subresource))))
+    {
+        ERR("Failed to allocate DXGI subresource surface object memory.\n");
+        return E_OUTOFMEMORY;
+    }
+
+    if (FAILED(hr = dxgi_resource_init(subresource, resource->device, NULL, TRUE,
+            resource->wined3d_resource, iface, index)))
+    {
+        WARN("Failed to initialise resource, hr %#lx.\n", hr);
+        free(subresource);
+        return hr;
+    }
+
+    *surface = &subresource->IDXGISurface2_iface;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_resource_CreateSharedHandle(IDXGIResource1 *iface,
@@ -459,13 +516,16 @@ static const struct IUnknownVtbl dxgi_resource_inner_unknown_vtbl =
 };
 
 HRESULT dxgi_resource_init(struct dxgi_resource *resource, IDXGIDevice *device,
-        IUnknown *outer, BOOL needs_surface, struct wined3d_resource *wined3d_resource)
+        IUnknown *outer, BOOL needs_surface, struct wined3d_resource *wined3d_resource,
+        IDXGIResource1 *parent_resource, unsigned int subresource_index)
 {
     struct wined3d_resource_desc desc;
+    bool is_subresource;
 
+    is_subresource = !!parent_resource;
     wined3d_resource_get_desc(wined3d_resource, &desc);
-    if ((desc.resource_type == WINED3D_RTYPE_TEXTURE_1D || desc.resource_type == WINED3D_RTYPE_TEXTURE_2D)
-            && needs_surface)
+    if (((desc.resource_type == WINED3D_RTYPE_TEXTURE_1D || desc.resource_type == WINED3D_RTYPE_TEXTURE_2D)
+            && needs_surface) || is_subresource)
     {
         resource->IDXGISurface2_iface.lpVtbl = &dxgi_surface_vtbl;
     }
@@ -479,6 +539,17 @@ HRESULT dxgi_resource_init(struct dxgi_resource *resource, IDXGIDevice *device,
     resource->device = device;
     resource->wined3d_resource = wined3d_resource;
     resource->dc = NULL;
+    if (is_subresource)
+    {
+        resource->parent_resource = parent_resource;
+        IDXGIResource1_AddRef(parent_resource);
+        resource->subresource_idx = subresource_index;
+    }
+    else
+    {
+        resource->parent_resource = NULL;
+        resource->subresource_idx = 0;
+    }
 
     return S_OK;
 }

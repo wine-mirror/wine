@@ -524,6 +524,11 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
     return &buffer->resource;
 }
 
+unsigned int buffer_resource_get_sub_resource_count(struct wined3d_resource *resource)
+{
+    return 1;
+}
+
 static HRESULT buffer_resource_sub_resource_get_desc(struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
 {
@@ -922,6 +927,7 @@ static const struct wined3d_resource_ops buffer_resource_ops =
     buffer_resource_decref,
     buffer_resource_preload,
     buffer_resource_unload,
+    buffer_resource_get_sub_resource_count,
     buffer_resource_sub_resource_get_desc,
     buffer_resource_sub_resource_get_map_pitch,
     buffer_resource_sub_resource_map,

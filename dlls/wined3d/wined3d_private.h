@@ -3262,6 +3262,7 @@ struct wined3d_resource_ops
     ULONG (*resource_decref)(struct wined3d_resource *resource);
     void (*resource_preload)(struct wined3d_resource *resource);
     void (*resource_unload)(struct wined3d_resource *resource);
+    unsigned int (*resource_get_sub_resource_count)(struct wined3d_resource *resource);
     HRESULT (*resource_sub_resource_get_desc)(struct wined3d_resource *resource,
             unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
     void (*resource_sub_resource_get_map_pitch)(struct wined3d_resource *resource,
@@ -3320,12 +3321,6 @@ static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
 static inline ULONG wined3d_resource_decref(struct wined3d_resource *resource)
 {
     return resource->resource_ops->resource_decref(resource);
-}
-
-static inline HRESULT wined3d_resource_get_sub_resource_desc(struct wined3d_resource *resource,
-        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
-{
-    return resource->resource_ops->resource_sub_resource_get_desc(resource, sub_resource_idx, desc);
 }
 
 static inline void wined3d_resource_get_sub_resource_map_pitch(struct wined3d_resource *resource,

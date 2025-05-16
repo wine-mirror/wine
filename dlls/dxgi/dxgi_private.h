@@ -204,11 +204,14 @@ struct dxgi_resource
     LONG refcount;
     struct wined3d_private_store private_store;
     IDXGIDevice *device;
+    IDXGIResource1 *parent_resource;
     struct wined3d_resource *wined3d_resource;
+    unsigned int subresource_idx;
     HDC dc;
 };
 
 HRESULT dxgi_resource_init(struct dxgi_resource *resource, IDXGIDevice *device,
-        IUnknown *outer, BOOL needs_surface, struct wined3d_resource *wined3d_resource);
+        IUnknown *outer, BOOL needs_surface, struct wined3d_resource *wined3d_resource,
+        IDXGIResource1 *parent_resource, unsigned int subresource_index);
 
 #endif /* __WINE_DXGI_PRIVATE_H */

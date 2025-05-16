@@ -3422,6 +3422,13 @@ static void texture_resource_unload(struct wined3d_resource *resource)
     resource_unload(&texture->resource);
 }
 
+static unsigned int texture_resource_get_sub_resource_count(struct wined3d_resource *resource)
+{
+    const struct wined3d_texture *texture = texture_from_resource(resource);
+
+    return texture->level_count * texture->layer_count;
+}
+
 static HRESULT texture_resource_sub_resource_get_desc(struct wined3d_resource *resource,
         unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
 {
@@ -3611,6 +3618,7 @@ static const struct wined3d_resource_ops texture_resource_ops =
     texture_resource_decref,
     texture_resource_preload,
     texture_resource_unload,
+    texture_resource_get_sub_resource_count,
     texture_resource_sub_resource_get_desc,
     texture_resource_sub_resource_get_map_pitch,
     texture_resource_sub_resource_map,
