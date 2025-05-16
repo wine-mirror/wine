@@ -197,7 +197,7 @@ BOOL dxgi_validate_swapchain_desc(const DXGI_SWAP_CHAIN_DESC1 *desc);
 /* IDXGISurface/IDXGIResource */
 struct dxgi_resource
 {
-    IDXGISurface1 IDXGISurface1_iface;
+    IDXGISurface2 IDXGISurface2_iface;
     IDXGIResource1 IDXGIResource1_iface;
     IUnknown IUnknown_iface;
     IUnknown *outer_unknown;

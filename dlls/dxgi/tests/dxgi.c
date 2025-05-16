@@ -1270,6 +1270,8 @@ static void test_create_surface(void)
     check_interface(surface, &IID_ID3D11Texture2D, TRUE, TRUE);
     /* Not available on all Windows versions. */
     check_interface(surface, &IID_IDXGISurface1, TRUE, TRUE);
+    /* Not available on all Windows versions. */
+    check_interface(surface, &IID_IDXGISurface2, TRUE, TRUE);
 
     IDXGISurface_Release(surface);
     refcount = IDXGIDevice_Release(device);
