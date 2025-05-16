@@ -2097,7 +2097,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     HRESULT hr;
     DBBINDING *bindings;
     DBBYTEOFFSET datasize;
-    _Connection *conn;
 
     TRACE( "%p, %s, %s, %d, %d, %ld\n", recordset, debugstr_variant(&source), debugstr_variant(&active_connection),
            cursor_type, lock_type, options );
@@ -2110,13 +2109,16 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         return S_OK;
     }
 
-    if (V_VT(&active_connection) != VT_DISPATCH)
+    if (V_VT(&active_connection) != VT_ERROR || V_ERROR(&active_connection) != DISP_E_PARAMNOTFOUND)
     {
-        FIXME("Unsupported Active connection type %d\n", V_VT(&active_connection));
-        return MAKE_ADO_HRESULT( adErrInvalidConnection );
+        hr = _Recordset_put_ActiveConnection( iface, active_connection );
+        if (FAILED(hr))
+            return hr;
     }
+    else if (!recordset->active_connection)
+        return MAKE_ADO_HRESULT( adErrInvalidConnection );
 
-    hr = IDispatch_QueryInterface(V_DISPATCH(&active_connection), &IID_ADOConnectionConstruction15, (void**)&construct);
+    hr = _Connection_QueryInterface(recordset->active_connection, &IID_ADOConnectionConstruction15, (void**)&construct);
     if (FAILED(hr))
         return E_FAIL;
 
@@ -2124,16 +2126,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     ADOConnectionConstruction15_Release(construct);
     if (FAILED(hr))
         return E_FAIL;
-
-    hr = IDispatch_QueryInterface( V_DISPATCH(&active_connection), &IID__Connection, (void**)&conn );
-    if (FAILED(hr))
-    {
-        IUnknown_Release(session);
-        return hr;
-    }
-
-    if (recordset->active_connection) _Connection_Release( recordset->active_connection );
-    recordset->active_connection = conn;
 
     if (V_VT(&source) != VT_BSTR)
     {
