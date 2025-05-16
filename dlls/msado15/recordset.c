@@ -1393,8 +1393,49 @@ static HRESULT WINAPI recordset_putref_ActiveConnection( _Recordset *iface, IDis
 
 static HRESULT WINAPI recordset_put_ActiveConnection( _Recordset *iface, VARIANT connection )
 {
-    FIXME( "%p, %s\n", iface, debugstr_variant(&connection) );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    _Connection *conn;
+    LONG state;
+    HRESULT hr;
+
+    TRACE( "%p, %s\n", iface, debugstr_variant(&connection) );
+
+    switch( V_VT(&connection) )
+    {
+    case VT_BSTR:
+        hr = Connection_create( (void **)&conn );
+        if (FAILED(hr)) return hr;
+        hr = _Connection_Open( conn, V_BSTR(&connection), NULL, NULL, adConnectUnspecified );
+        if (FAILED(hr))
+        {
+            _Connection_Release( conn );
+            return hr;
+        }
+        break;
+
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+        if (!V_UNKNOWN(&connection)) return MAKE_ADO_HRESULT( adErrInvalidConnection );
+        hr = IUnknown_QueryInterface( V_UNKNOWN(&connection), &IID__Connection, (void **)&conn );
+        if (FAILED(hr)) return hr;
+        hr = _Connection_get_State( conn, &state );
+        if (SUCCEEDED(hr) && state != adStateOpen)
+            hr = MAKE_ADO_HRESULT( adErrInvalidConnection );
+        if (FAILED(hr))
+        {
+            _Connection_Release( conn );
+            return hr;
+        }
+        break;
+
+    default:
+        FIXME( "unsupported connection %s\n", debugstr_variant(&connection) );
+        return E_NOTIMPL;
+    }
+
+    if (recordset->active_connection) _Connection_Release( recordset->active_connection );
+    recordset->active_connection = conn;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_ActiveConnection( _Recordset *iface, VARIANT *connection )
