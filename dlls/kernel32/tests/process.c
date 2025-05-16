@@ -2933,17 +2933,37 @@ static void test_CompletionPort(void)
     job = pCreateJobObjectW(NULL, NULL);
     ok(job != NULL, "CreateJobObject error %lu\n", GetLastError());
 
-    create_process("wait", &pi2);
-    ret = pAssignProcessToJobObject(job, pi2.hProcess);
-    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+    port_info.CompletionKey = job;
+    port_info.CompletionPort = NULL;
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
+            "got ret %d, error %lu\n", ret, GetLastError());
 
     port = pCreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 1);
     ok(port != NULL, "CreateIoCompletionPort error %lu\n", GetLastError());
 
-    port_info.CompletionKey = job;
     port_info.CompletionPort = port;
     ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
     ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
+
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got ret %d, error %lu\n", ret, GetLastError());
+
+    port_info.CompletionKey = NULL;
+    port_info.CompletionPort = NULL;
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER) /* Before Win8 */,
+            "got ret %d, error %lu\n", ret, GetLastError());
+
+    create_process("wait", &pi2);
+    ret = pAssignProcessToJobObject(job, pi2.hProcess);
+    ok(ret, "AssignProcessToJobObject error %lu\n", GetLastError());
+
+    port_info.CompletionKey = job;
+    port_info.CompletionPort = port;
+    ret = pSetInformationJobObject(job, JobObjectAssociateCompletionPortInformation, &port_info, sizeof(port_info));
+    todo_wine ok(ret || broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER),
+            "got ret %d, error %lu\n" /* Before Win8 */, ret, GetLastError());
 
     create_process("wait", &pi);
 
