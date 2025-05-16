@@ -1486,15 +1486,25 @@ typedef struct _XSTATE_CONFIGURATION
     ULONG64 EnabledFeatures;
     ULONG64 EnabledVolatileFeatures;
     ULONG Size;
-    ULONG OptimizedSave:1;
-    ULONG CompactionEnabled:1;
+    union
+    {
+        ULONG ControlFlags;
+        struct
+        {
+            ULONG OptimizedSave : 1;
+            ULONG CompactionEnabled : 1;
+            ULONG ExtendedFeatureDisable : 1;
+        };
+    };
     XSTATE_FEATURE Features[MAXIMUM_XSTATE_FEATURES];
-
     ULONG64 EnabledSupervisorFeatures;
     ULONG64 AlignedFeatures;
     ULONG AllFeatureSize;
     ULONG AllFeatures[MAXIMUM_XSTATE_FEATURES];
     ULONG64 EnabledUserVisibleSupervisorFeatures;
+    ULONG64 ExtendedFeatureDisableFeatures;
+    ULONG AllNonLargeFeatureSize;
+    ULONG Spare;
 } XSTATE_CONFIGURATION, *PXSTATE_CONFIGURATION;
 
 typedef struct _XSAVE_AREA_HEADER
