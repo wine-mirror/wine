@@ -79,7 +79,7 @@ typedef void* I_RPC_HANDLE;
 #define RpcTryFinally
 #define RpcFinally
 #define RpcEndFinally
-#define RpcExceptionCode() 0
+#define RpcExceptionCode() ((ULONG)0)
 /* #define RpcAbnormalTermination() abort() */
 
 #endif /* USE_COMPILER_EXCEPTIONS */
