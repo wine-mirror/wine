@@ -2605,6 +2605,60 @@ GpStatus widen_flat_path_anchors(GpPath *flat_path, GpPen *pen, REAL pen_width, 
     return stat;
 }
 
+static BOOL points_equal(const PointF* points, int index1, int index2)
+{
+    return !memcmp(&points[index1], &points[index2], sizeof(*points));
+}
+
+static void remove_repeated_points(GpPath *path)
+{
+    int i, j=0, subpath_start=0, subpath_end=0, path_size = 0;
+
+    for (i = 0; i < path->pathdata.Count; i++)
+    {
+        BYTE t = path->pathdata.Types[i];
+
+        path->pathdata.Types[j] = path->pathdata.Types[i];
+        path->pathdata.Points[j] = path->pathdata.Points[i];
+
+        if ((t & PathPointTypePathTypeMask) == PathPointTypeStart)
+        {
+            subpath_start = j;
+            subpath_end = j;
+        }
+        else if ((t & PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
+        {
+            if (i > 0 && !points_equal(path->pathdata.Points, i - 1, i) &&
+                !points_equal(path->pathdata.Points, subpath_start, i))
+                subpath_end = j;
+
+            if (subpath_end == subpath_start)
+            {
+                j = subpath_start;
+                continue;
+            }
+
+            path->pathdata.Types[subpath_end] |= PathPointTypeCloseSubpath;
+            j = path_size = subpath_end + 1;
+            continue;
+        }
+        else
+        {
+            if (i > 0 && points_equal(path->pathdata.Points, i - 1, i))
+                continue;
+
+            if (!points_equal(path->pathdata.Points, subpath_start, j))
+                subpath_end = j;
+
+            path_size = j + 1;
+        }
+
+        j++;
+    }
+
+    path->pathdata.Count = path_size;
+}
+
 GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     REAL flatness)
 {
@@ -2633,6 +2687,8 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     {
         REAL pen_width = (pen->unit == UnitWorld) ? max(pen->width, 1.0) : pen->width;
         BYTE *types = flat_path->pathdata.Types;
+
+        remove_repeated_points(flat_path);
 
         last_point = points;
 
