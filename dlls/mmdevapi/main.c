@@ -307,6 +307,7 @@ static IClassFactoryImpl MMDEVAPI_CF[] = {
 };
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+static HANDLE notify_thread_handle;
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
@@ -384,11 +385,14 @@ LRESULT WINAPI DriverProc( DWORD_PTR id, HANDLE driver, UINT msg, LPARAM param1,
 
         params.err = &err;
         MIDI_CALL( midi_init, &params );
-        if (err == DRV_SUCCESS) CloseHandle( CreateThread( NULL, 0, notify_thread, NULL, 0, NULL ));
+        if (err == DRV_SUCCESS) notify_thread_handle = CreateThread( NULL, 0, notify_thread, NULL, 0, NULL );
         return err;
     }
     case DRV_FREE:
         MIDI_CALL( midi_release, NULL );
+        WaitForSingleObject( notify_thread_handle, INFINITE );
+        CloseHandle( notify_thread_handle );
+        notify_thread_handle = NULL;
         return 1;
     case DRV_OPEN:
     case DRV_CLOSE:
