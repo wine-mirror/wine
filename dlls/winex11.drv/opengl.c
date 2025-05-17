@@ -179,7 +179,7 @@ typedef XID GLXPbuffer;
 #define GLX_FLOAT_COMPONENTS_NV           0x20B0
 
 
-static char *glExtensions;
+static const char *glExtensions;
 static const char *glxExtensions;
 static char wglExtensions[4096];
 static int glxVersion[2];
@@ -355,7 +355,6 @@ static INT64 (*pglXSwapBuffersMscOML)( Display *dpy, GLXDrawable drawable,
 static void (*pglFinish)(void);
 static void (*pglFlush)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
-static const GLubyte *wglGetString(GLenum name);
 
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext )
@@ -381,13 +380,10 @@ static int GLXErrorHandler(Display *dpy, XErrorEvent *event, void *arg)
 
 static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
-    static const char legacy_extensions[] = " WGL_EXT_extensions_string WGL_EXT_swap_control";
-
     int screen = DefaultScreen(gdi_display);
     Window win = 0, root = 0;
     const char *gl_version;
     const char *gl_renderer;
-    const char* str;
     BOOL glx_direct;
     XVisualInfo *vis;
     GLXContext ctx = NULL;
@@ -437,10 +433,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     }
     gl_renderer = (const char *)pglGetString(GL_RENDERER);
     gl_version  = (const char *)pglGetString(GL_VERSION);
-    str = (const char *) pglGetString(GL_EXTENSIONS);
-    glExtensions = malloc( strlen(str) + sizeof(legacy_extensions) );
-    strcpy(glExtensions, str);
-    strcat(glExtensions, legacy_extensions);
+    glExtensions = (const char *) pglGetString(GL_EXTENSIONS);
 
     /* Get the common GLX version supported by GLX client and server ( major/minor) */
     pglXQueryVersion(gdi_display, &glxVersion[0], &glxVersion[1]);
@@ -1555,10 +1548,6 @@ static BOOL x11drv_context_destroy(void *private)
 static void *x11drv_get_proc_address( const char *name )
 {
     void *ptr;
-
-    /* redirect some standard OpenGL functions */
-    if (!strcmp( name, "glGetString" )) return wglGetString;
-
     if ((ptr = dlsym( opengl_handle, name ))) return ptr;
     return pglXGetProcAddressARB( (const GLubyte *)name );
 }
@@ -1729,12 +1718,6 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
     present_gl_drawable( hwnd, ctx->hdc, gl, TRUE, !finish );
     release_gl_drawable( gl );
     return TRUE;
-}
-
-static const GLubyte *wglGetString(GLenum name)
-{
-    if (name == GL_EXTENSIONS && glExtensions) return (const GLubyte *)glExtensions;
-    return pglGetString(name);
 }
 
 /***********************************************************************

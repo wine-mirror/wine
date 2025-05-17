@@ -176,20 +176,29 @@ static BOOL has_extension( const char *list, const char *ext, size_t len )
     return FALSE;
 }
 
+static const char *legacy_extensions[] =
+{
+    "WGL_EXT_extensions_string",
+    "WGL_EXT_swap_control",
+    NULL,
+};
+
 static GLubyte *filter_extensions_list( const char *extensions, const char *disabled )
 {
-    const char *end;
+    const char *end, **extra;
     char *p, *str;
+    size_t size;
 
-    p = str = malloc( strlen( extensions ) + 2 );
-    if (!str) return NULL;
+    size = strlen( extensions ) + 2;
+    for (extra = legacy_extensions; *extra; extra++) size += strlen( *extra ) + 1;
+    if (!(p = str = malloc( size ))) return NULL;
 
     TRACE( "GL_EXTENSIONS:\n" );
 
-    for (;;)
+    for (extra = legacy_extensions;;)
     {
         while (*extensions == ' ') extensions++;
-        if (!*extensions) break;
+        if (!*extensions && !(extensions = *extra++)) break;
 
         if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
         memcpy( p, extensions, end - extensions );
@@ -463,8 +472,12 @@ static void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
 
     funcs->p_glGetIntegerv( pname, data );
 
-    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index( teb )))
-        while (*disabled++ != ~0u) (*data)--;
+    if (pname == GL_NUM_EXTENSIONS)
+    {
+        if ((disabled = disabled_extensions_index( teb )))
+            while (*disabled++ != ~0u) (*data)--;
+        *data += ARRAY_SIZE(legacy_extensions) - 1;
+    }
 
     if (is_win64 && is_wow64())
     {
@@ -521,6 +534,7 @@ static const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
+    GLint count;
 
     if (!funcs->p_glGetStringi)
     {
@@ -528,8 +542,16 @@ static const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
         *func_ptr = funcs->p_wglGetProcAddress( "glGetStringi" );
     }
 
-    if (name == GL_EXTENSIONS && (disabled = disabled_extensions_index( teb )))
-        while (index >= *disabled++) index++;
+    if (name == GL_EXTENSIONS)
+    {
+        funcs->p_glGetIntegerv( GL_NUM_EXTENSIONS, &count );
+
+        if ((disabled = disabled_extensions_index( teb )))
+            while (index >= *disabled++) index++;
+
+        if (index >= count && index - count < ARRAY_SIZE(legacy_extensions))
+            return (const GLubyte *)legacy_extensions[index - count];
+    }
 
     return funcs->p_glGetStringi( name, index );
 }
