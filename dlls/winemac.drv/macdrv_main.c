@@ -72,25 +72,18 @@ const char* debugstr_cf(CFTypeRef t)
     if (!t) return "(null)";
 
     if (CFGetTypeID(t) == CFStringGetTypeID())
-        s = t;
+        s = CFStringCreateWithFormat(NULL, NULL, CFSTR("\"%@\""), t);
     else
         s = CFCopyDescription(t);
     ret = CFStringGetCStringPtr(s, kCFStringEncodingUTF8);
-    if (ret) ret = debugstr_a(ret);
+    if (ret) ret = __wine_dbg_strdup(ret);
     if (!ret)
     {
-        const UniChar* u = CFStringGetCharactersPtr(s);
-        if (u)
-            ret = debugstr_wn((const WCHAR*)u, CFStringGetLength(s));
+        char buf[300];
+        CFStringGetCString(s, buf, sizeof(buf), kCFStringEncodingUTF8);
+        ret = __wine_dbg_strdup(buf);
     }
-    if (!ret)
-    {
-        UniChar buf[200];
-        int len = min(CFStringGetLength(s), ARRAY_SIZE(buf));
-        CFStringGetCharacters(s, CFRangeMake(0, len), buf);
-        ret = debugstr_wn(buf, len);
-    }
-    if (s != t) CFRelease(s);
+    CFRelease(s);
     return ret;
 }
 
