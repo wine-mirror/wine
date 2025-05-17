@@ -626,6 +626,7 @@ case $HOST_ARCH in
     test "x$PE_ARCHS" != x || AC_MSG_ERROR([PE cross-compilation is required for $HOST_ARCH, please install clang/llvm-dlltool/lld, or llvm-mingw.])
     DLLEXT="" ;;
   *)
+    AC_SUBST(DLLEXT,".so")
     WINE_WARNING_WITH(mingw,[test "x$PE_ARCHS" = "x"],
                       [Suitable PE cross-compiler not found, you should install mingw-w64 or llvm-mingw.]) ;;
 esac
@@ -883,7 +884,6 @@ AC_SUBST(TOP_INSTALL_LIB,"")
 AC_SUBST(TOP_INSTALL_DEV,"")
 AC_SUBST(WINELOADER_LDFLAGS,"")
 AC_SUBST(WINEPRELOADER_LDFLAGS,"")
-AC_SUBST(DLLEXT,".so")
 LIBEXT="so"
 WINE_PATH_SONAME_TOOLS
 WINE_CONFIG_HELPERS
