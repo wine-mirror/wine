@@ -937,6 +937,8 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
         }
     }
     __EXCEPT_PAGE_FAULT
+    {
+    }
     __ENDTRY
 
     if(ret == -1)
