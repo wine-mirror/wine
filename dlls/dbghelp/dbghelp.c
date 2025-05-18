@@ -764,6 +764,7 @@ BOOL WINAPI SymSetScopeFromInlineContext(HANDLE hProcess, ULONG64 addr, DWORD in
     }
 }
 
+#ifndef _WIN64
 /******************************************************************
  *		reg_cb64to32 (internal)
  *
@@ -809,6 +810,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     }
     return pcs->reg_cb32(hProcess, action, data32, (PVOID)(DWORD_PTR)user);
 }
+#endif
 
 /******************************************************************
  *		pcs_callback (internal)
@@ -877,17 +879,19 @@ static BOOL sym_register_cb(HANDLE hProcess,
     return TRUE;
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *		SymRegisterCallback (DBGHELP.@)
  */
-BOOL WINAPI SymRegisterCallback(HANDLE hProcess, 
+BOOL WINAPI SymRegisterCallback(HANDLE hProcess,
                                 PSYMBOL_REGISTERED_CALLBACK CallbackFunction,
                                 PVOID UserContext)
 {
-    TRACE("(%p, %p, %p)\n", 
+    TRACE("(%p, %p, %p)\n",
           hProcess, CallbackFunction, UserContext);
     return sym_register_cb(hProcess, reg_cb64to32, CallbackFunction, (DWORD_PTR)UserContext, FALSE);
 }
+#endif
 
 /***********************************************************************
  *		SymRegisterCallback64 (DBGHELP.@)

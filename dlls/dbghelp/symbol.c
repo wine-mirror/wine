@@ -1486,6 +1486,7 @@ BOOL WINAPI SymEnumSymbolsW(HANDLE hProcess, ULONG64 BaseOfDll, PCWSTR Mask,
     return doSymEnumSymbols(hProcess, BaseOfDll, Mask, sym_enumW, &sew);
 }
 
+#ifndef _WIN64
 struct sym_enumerate
 {
     void*                       ctx;
@@ -1512,6 +1513,7 @@ BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
     
     return SymEnumSymbols(hProcess, BaseOfDll, NULL, sym_enumerate_cb, &se);
 }
+#endif
 
 struct sym_enumerate64
 {
@@ -1856,6 +1858,7 @@ static void init_lineinfo(struct lineinfo_t* line_info, BOOL unicode)
     line_info->address = 0;
 }
 
+#ifndef _WIN64
 static BOOL lineinfo_copy_toA32(const struct lineinfo_t* line_info, IMAGEHLP_LINE* l32)
 {
     if (line_info->unicode) return FALSE;
@@ -1865,6 +1868,7 @@ static BOOL lineinfo_copy_toA32(const struct lineinfo_t* line_info, IMAGEHLP_LIN
     l32->Address = line_info->address;
     return TRUE;
 }
+#endif
 
 static BOOL lineinfo_copy_toA64(const struct lineinfo_t* line_info, IMAGEHLP_LINE64* l64)
 {
@@ -2011,6 +2015,7 @@ BOOL WINAPI SymGetSymNext64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
     return FALSE;
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *		SymGetSymNext (DBGHELP.@)
  */
@@ -2020,6 +2025,7 @@ BOOL WINAPI SymGetSymNext(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+#endif
 
 /***********************************************************************
  *		SymGetSymPrev64 (DBGHELP.@)
@@ -2031,6 +2037,7 @@ BOOL WINAPI SymGetSymPrev64(HANDLE hProcess, PIMAGEHLP_SYMBOL64 Symbol)
     return FALSE;
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *		SymGetSymPrev (DBGHELP.@)
  */
@@ -2040,7 +2047,9 @@ BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+#endif
 
+#ifndef _WIN64
 /******************************************************************
  *		SymGetLineFromAddr (DBGHELP.@)
  *
@@ -2057,6 +2066,7 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     if (!get_line_from_addr(hProcess, dwAddr, pdwDisplacement, &line_info)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
+#endif
 
 /******************************************************************
  *		SymGetLineFromAddr64 (DBGHELP.@)
@@ -2154,6 +2164,7 @@ BOOL WINAPI SymGetLinePrev64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
     return lineinfo_copy_toA64(&line_info, Line);
 }
 
+#ifndef _WIN64
 /******************************************************************
  *             SymGetLinePrev (DBGHELP.@)
  *
@@ -2169,6 +2180,7 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
     if (!symt_get_func_line_prev(hProcess, &line_info, Line->Key, Line->Address)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
+#endif
 
 /******************************************************************
  *             SymGetLinePrevW64 (DBGHELP.@)
@@ -2244,6 +2256,7 @@ BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
     return lineinfo_copy_toA64(&line_info, Line);
 }
 
+#ifndef _WIN64
 /******************************************************************
  *		SymGetLineNext (DBGHELP.@)
  *
@@ -2259,6 +2272,7 @@ BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
     if (!symt_get_func_line_next(hProcess, &line_info, Line->Key, Line->Address)) return FALSE;
     return lineinfo_copy_toA32(&line_info, Line);
 }
+#endif
 
 /******************************************************************
  *		SymGetLineNextW64 (DBGHELP.@)
@@ -2276,6 +2290,7 @@ BOOL WINAPI SymGetLineNextW64(HANDLE hProcess, PIMAGEHLP_LINEW64 Line)
     return lineinfo_copy_toW64(&line_info, Line);
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *		SymUnDName (DBGHELP.@)
  */
@@ -2284,6 +2299,7 @@ BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, PSTR UnDecName, DWORD UnDecNameLeng
     return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
                                 UNDNAME_COMPLETE) != 0;
 }
+#endif
 
 /***********************************************************************
  *		SymUnDName64 (DBGHELP.@)
