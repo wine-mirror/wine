@@ -2494,12 +2494,12 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           call_init_thunk
+ *           init_syscall_frame
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
-                      struct syscall_frame *frame, void *syscall_cfa )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct x86_thread_data *thread_data = (struct x86_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
     DWORD *stack;
 
@@ -2534,10 +2534,10 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     ctx = (CONTEXT *)((ULONG_PTR)context.Esp & ~3) - 1;
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
-    memset( frame, 0, sizeof(*frame) );
+    memset( &frame->xstate, 0, sizeof(frame->xstate) );
     if (xstate_compaction_enabled)
         frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
-    NtSetContextThread( GetCurrentThread(), ctx );
+    signal_set_full_context( ctx );
 
     stack = (DWORD *)ctx;
     *(--stack) = 0;
@@ -2547,13 +2547,9 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     *(--stack) = 0xdeadbabe;
     frame->esp = (DWORD)stack;
     frame->eip = (DWORD)pLdrInitializeThunk;
-    frame->prev_frame    = NULL;
     frame->syscall_flags = syscall_flags;
-    frame->syscall_cfa   = syscall_cfa;
-    frame->restore_flags |= LOWORD(CONTEXT_INTEGER);
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -2582,15 +2578,18 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "subl 0x204(%ecx),%eax\n\t"  /* x86_thread_data()->xstate_features_size */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x1f8(%ecx)\n"    /* x86_thread_data()->syscall_frame */
+                   "1:\tmovl $0,(%eax)\n\t"     /* frame->syscall_flags/restore_flags */
+                   "movl %edx,0x38(%eax)\n\t"   /* frame->syscall_cfa */
+                   "movl $0,0x3c(%eax)\n\t"     /* frame->prev_frame */
                    /* switch to kernel stack */
-                   "1:\tleal -8(%eax),%esp\n\t"
-                   "pushl %edx\n\t"             /* syscall_cfa */
-                   "pushl %eax\n\t"             /* syscall_frame */
+                   "movl %eax,%esp\n\t"
                    "pushl %ecx\n\t"             /* teb */
                    "pushl 16(%ebp)\n\t"         /* suspend */
                    "pushl 12(%ebp)\n\t"         /* arg */
                    "pushl 8(%ebp)\n\t"          /* entry */
-                   "call " __ASM_NAME("call_init_thunk") )
+                   "call " __ASM_NAME("init_syscall_frame") "\n\t"
+                   "addl $16,%esp\n\t"
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************

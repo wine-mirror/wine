@@ -2580,12 +2580,12 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           call_init_thunk
+ *           init_syscall_frame
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
-                      struct syscall_frame *frame, void *syscall_cfa )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { 0 };
     I386_CONTEXT *wow_context;
     void *callback;
@@ -2647,20 +2647,17 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     ctx = (CONTEXT *)((ULONG_PTR)context.Rsp & ~15) - 1;
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
-    memset( frame, 0, sizeof(*frame) );
+    memset( &frame->xstate, 0, sizeof(frame->xstate) );
     if (xstate_compaction_enabled)
         frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
-    NtSetContextThread( GetCurrentThread(), ctx );
+    signal_set_full_context( ctx );
 
     frame->cs  = cs64_sel;
     frame->ss  = ds64_sel;
     frame->rsp = (ULONG64)ctx - 8;
     frame->rip = (ULONG64)pLdrInitializeThunk;
     frame->rcx = (ULONG64)ctx;
-    frame->prev_frame = NULL;
-    frame->restore_flags |= CONTEXT_INTEGER;
     frame->syscall_flags = syscall_flags;
-    frame->syscall_cfa   = syscall_cfa;
     frame->teb = (ULONG64)teb;
     if ((callback = instrumentation_callback))
     {
@@ -2669,7 +2666,6 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     }
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -2703,9 +2699,15 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "subq %rax,%r8\n\t"
                    "andq $~63,%r8\n\t"
                    "movq %r8,0x328(%rcx)\n"        /* amd64_thread_data()->syscall_frame */
+                   "1:\tmovq $0,0xa0(%r8)\n\t"     /* frame->prev_frame */
+                   "movq %r9,0xa8(%r8)\n\t"        /* frame->syscall_cfa */
+                   "movl $0,0xb4(%r8)\n\t"         /* frame->restore_flags */
                    /* switch to kernel stack */
-                   "1:\tmovq %r8,%rsp\n\t"
-                   "call " __ASM_NAME("call_init_thunk"))
+                   "movq %r8,%rsp\n\t"
+                   "call " __ASM_NAME("init_syscall_frame") "\n\t"
+                   "movq %rsp,%rcx\n\t"            /* frame */
+                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************

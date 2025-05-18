@@ -1110,12 +1110,12 @@ void signal_init_process(void)
 
 
 /***********************************************************************
- *           call_init_thunk
+ *           init_syscall_frame
  */
-void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb,
-                      struct syscall_frame *frame, void *syscall_cfa )
+void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct arm_thread_data *thread_data = (struct arm_thread_data *)&teb->GdiTebBatch;
+    struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
 
     thread_data->syscall_table = KeServiceDescriptorTable;
@@ -1136,17 +1136,13 @@ void call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB
     ctx = (CONTEXT *)((ULONG_PTR)context.Sp & ~15) - 1;
     *ctx = context;
     ctx->ContextFlags = CONTEXT_FULL;
-    memset( frame, 0, sizeof(*frame) );
-    NtSetContextThread( GetCurrentThread(), ctx );
+    signal_set_full_context( ctx );
 
     frame->sp = (DWORD)ctx;
     frame->pc = (DWORD)pLdrInitializeThunk;
     frame->r0 = (DWORD)ctx;
-    frame->restore_flags |= CONTEXT_INTEGER;
-    frame->syscall_cfa    = syscall_cfa;
 
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-    __wine_syscall_dispatcher_return( frame, 0 );
 }
 
 
@@ -1163,10 +1159,15 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "cbnz r6, 1f\n\t"
                    "sub r6, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) */
                    "str r6, [r3, #0x1d8]\n\t" /* arm_thread_data()->syscall_frame */
+                   "1:\tmov r4, #0\n\t"
+                   "str r4, [r6, #0x44]\n\t"  /* frame->restore_flags */
+                   "str r4, [r6, #0x4c]\n\t"  /* frame->prev_frame */
+                   "str r7, [r6, #0x50]\n\t"  /* frame->syscall_cfa */
                    /* switch to kernel stack */
-                   "1:\tmov sp, r6\n\t"
-                   "push {r6,r7}\n\t"
-                   "bl " __ASM_NAME("call_init_thunk") )
+                   "mov sp, r6\n\t"
+                   "mov r8, r6\n\t"
+                   "bl init_syscall_frame\n\t"
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
