@@ -464,6 +464,7 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         WCHAR *delim, quote;
         BSTR value, name;
 
+        while (iswspace(*start)) start++;
         name = SysAllocStringLen(start, eq - start);
         /* skip equal sign to get value */
         eq++;

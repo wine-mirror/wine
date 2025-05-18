@@ -163,7 +163,6 @@ static HRESULT WINAPI dbprops_SetProperties(IDBProperties *iface, ULONG set_coun
     ok(IsEqualIID(&propsets->guidPropertySet, &DBPROPSET_DBINIT), "set guid %s\n", wine_dbgstr_guid(&propsets->guidPropertySet));
     ok(propsets->cProperties == 2, "got propcount %lu\n", propsets->cProperties);
 
-if (propsets->cProperties == 2) {
     ok(propsets->rgProperties[0].dwPropertyID == DBPROP_INIT_DATASOURCE, "got propid[0] %lu\n", propsets->rgProperties[0].dwPropertyID);
     ok(propsets->rgProperties[0].dwOptions == DBPROPOPTIONS_REQUIRED, "got options[0] %lu\n", propsets->rgProperties[0].dwOptions);
     ok(propsets->rgProperties[0].dwStatus == 0, "got status[0] %lu\n", propsets->rgProperties[0].dwStatus);
@@ -194,7 +193,6 @@ if (propsets->cProperties == 2) {
         ok(!wcscmp(V_BSTR(&propsets->rgProperties[1].vValue), L"a=1;b=2;c=3"), "got provider string %s\n",
            wine_dbgstr_variant(&propsets->rgProperties[1].vValue));
     }
-}
     return S_OK;
 }
 
@@ -324,7 +322,7 @@ static void test_database(void)
     static const WCHAR *initial_catalog_prop = L"Data Source=initial_catalog_test;Initial Catalog=dummy_catalog";
     static const WCHAR *extended_prop = L"data source=dummy;Extended Properties=\"DRIVER=A Wine ODBC driver;UID=wine;\";";
     static const WCHAR *extended_prop2 = L"data source=\'dummy\';customprop=\'123.4\';";
-    static const WCHAR *multi_provider_prop_test = L"Data Source=provider_prop_test;a=1;b=2;c=3;";
+    static const WCHAR *multi_provider_prop_test = L"Data Source=provider_prop_test; a=1; b=2;c=3;";
     IDataInitialize *datainit = NULL;
     HRESULT hr;
 
