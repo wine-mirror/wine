@@ -193,7 +193,7 @@ static void test_swprintf (void)
         const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
-        WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
+        WideCharToMultiByte (CP_ACP, 0, buffer, valid, narrow, sizeof(narrow), NULL, NULL);
         WideCharToMultiByte (CP_ACP, 0, fmt, -1, narrow_fmt, sizeof(narrow_fmt), NULL, NULL);
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
             narrow_fmt, expect, n);
@@ -208,7 +208,7 @@ static void test_swprintf (void)
         const int n        = vswprintf_wrapper (_CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
-        WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
+        WideCharToMultiByte (CP_ACP, 0, buffer, valid, narrow, sizeof(narrow), NULL, NULL);
         WideCharToMultiByte (CP_ACP, 0, fmt, -1, narrow_fmt, sizeof(narrow_fmt), NULL, NULL);
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
             narrow_fmt, expect, n);
@@ -225,7 +225,7 @@ static void test_swprintf (void)
         const int n        = vswprintf_wrapper (0, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz - 1 : n;
 
-        WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
+        WideCharToMultiByte (CP_ACP, 0, buffer, valid, narrow, sizeof(narrow), NULL, NULL);
         WideCharToMultiByte (CP_ACP, 0, fmt, -1, narrow_fmt, sizeof(narrow_fmt), NULL, NULL);
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
             narrow_fmt, expect, n);
