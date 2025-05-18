@@ -3116,11 +3116,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "pushq 0x70(%rcx)\n\t"          /* frame->rip */
                    "ret" )
 
-asm( ".data\n\t"
-     __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_prolog_end_ptr")) "\n\t"
-     ".quad " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_prolog_end") "\n\t"
-     __ASM_GLOBL(__ASM_NAME("__wine_unix_call_dispatcher_prolog_end_ptr")) "\n\t"
-     ".quad " __ASM_LOCAL_LABEL("__wine_unix_call_dispatcher_prolog_end") "\n\t"
-     ".text\n\t" );
+__ASM_GLOBAL_POINTER( __ASM_NAME("__wine_syscall_dispatcher_prolog_end_ptr"),
+                      __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_prolog_end") )
+__ASM_GLOBAL_POINTER( __ASM_NAME("__wine_unix_call_dispatcher_prolog_end_ptr"),
+                      __ASM_LOCAL_LABEL("__wine_unix_call_dispatcher_prolog_end") )
 
 #endif  /* __x86_64__ */
