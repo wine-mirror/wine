@@ -1910,6 +1910,15 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
         return hr;
     }
 
+    hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
+    if (hr != S_OK)
+    {
+        recordset->index = -1;
+        IRowset_Release(rowset2);
+        return FAILED(hr) ? hr : S_OK;
+    }
+    recordset->index = 0;
+
     data = malloc (datasize);
     if (!data)
     {
@@ -1918,8 +1927,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
         return E_OUTOFMEMORY;
     }
 
-    hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
-    while (hr == S_OK)
+    do
     {
         VARIANT *v;
 
@@ -2070,7 +2078,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
             ERR("Failed to ReleaseRows 0x%08lx\n", hr);
 
         hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
-    }
+    } while(hr == S_OK);
 
     free(data);
     IRowset_Release(rowset2);
@@ -2146,21 +2154,14 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     }
 
     recordset->count = affected > 0 ? affected : 0;
-    recordset->index = affected > 0 ? 0 : -1;
 
-    /*
-     * We can safely just return with an empty recordset here
-     */
-    if (affected > 0)
+    hr = load_all_recordset_data(recordset, rowset, bindings, datasize);
+    if (FAILED(hr))
     {
-        hr = load_all_recordset_data(recordset, rowset, bindings, datasize);
-        if (FAILED(hr))
-        {
-            WARN("Failed to load all recordset data (%lx)\n", hr);
-            CoTaskMemFree(bindings);
-            IUnknown_Release(rowset);
-            return hr;
-        }
+        WARN("Failed to load all recordset data (%lx)\n", hr);
+        CoTaskMemFree(bindings);
+        IUnknown_Release(rowset);
+        return hr;
     }
 
     CoTaskMemFree(bindings);
