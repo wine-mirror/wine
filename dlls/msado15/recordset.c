@@ -1896,13 +1896,6 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
 
     columns = get_column_count(recordset);
 
-    /* Create the data array */
-    if (!resize_recordset( recordset, recordset->count ))
-    {
-        WARN("Failed to resize recordset\n");
-        return E_OUTOFMEMORY;
-    }
-
     hr = IUnknown_QueryInterface(rowset, &IID_IRowset, (void**)&rowset2);
     if (FAILED(hr))
     {
@@ -1913,6 +1906,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
     hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
     if (hr != S_OK)
     {
+        recordset->count = 0;
         recordset->index = -1;
         IRowset_Release(rowset2);
         return FAILED(hr) ? hr : S_OK;
@@ -1930,6 +1924,15 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
     do
     {
         VARIANT *v;
+
+        if (!resize_recordset(recordset, datarow+1))
+        {
+            IRowset_ReleaseRows(rowset2, 1, row, NULL, NULL, NULL);
+            free(data);
+            IRowset_Release(rowset2);
+            WARN("Failed to resize recordset\n");
+            return E_OUTOFMEMORY;
+        }
 
         for (datacol = 0; datacol < columns; datacol++)
         {
@@ -2152,8 +2155,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         IUnknown_Release(rowset);
         return hr;
     }
-
     recordset->count = affected > 0 ? affected : 0;
+    resize_recordset(recordset, recordset->count);
 
     hr = load_all_recordset_data(recordset, rowset, bindings, datasize);
     if (FAILED(hr))
