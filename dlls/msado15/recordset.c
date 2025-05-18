@@ -1721,17 +1721,28 @@ static HRESULT WINAPI recordset_MoveLast( _Recordset *iface )
     return S_OK;
 }
 
-static HRESULT create_command_text(IUnknown *session, BSTR command, ICommandText **cmd_text)
+static HRESULT get_rowset(struct recordset *recordset, IUnknown *session, BSTR source, IUnknown **rowset)
 {
-    HRESULT hr;
-    IOpenRowset *openrowset;
-    ICommandText *command_text;
-    ICommand *cmd;
     IDBCreateCommand *create_command;
+    ICommandText *command_text;
+    IOpenRowset *openrowset;
+    DBROWCOUNT affected;
+    ICommand *cmd;
+    DBID table;
+    HRESULT hr;
 
     hr = IUnknown_QueryInterface(session, &IID_IOpenRowset, (void**)&openrowset);
     if (FAILED(hr))
         return hr;
+
+    table.eKind = DBKIND_NAME;
+    table.uName.pwszName = source;
+    hr = IOpenRowset_OpenRowset(openrowset, NULL, &table, NULL, &IID_IUnknown, 0, NULL, rowset);
+    if (SUCCEEDED(hr))
+    {
+        IOpenRowset_Release(openrowset);
+        return hr;
+    }
 
     hr = IOpenRowset_QueryInterface(openrowset, &IID_IDBCreateCommand, (void**)&create_command);
     IOpenRowset_Release(openrowset);
@@ -1751,15 +1762,19 @@ static HRESULT create_command_text(IUnknown *session, BSTR command, ICommandText
         return hr;
     }
 
-    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, command);
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, source);
     if (FAILED(hr))
     {
         ICommandText_Release(command_text);
         return hr;
     }
 
-    *cmd_text = command_text;
+    hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, rowset);
+    ICommandText_Release(command_text);
+    if (FAILED(hr))
+        return hr;
 
+    recordset->count = affected > 0 ? affected : 0;
     return S_OK;
 }
 
@@ -2095,8 +2110,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     struct recordset *recordset = impl_from_Recordset( iface );
     ADOConnectionConstruction15 *construct;
     IUnknown *session;
-    ICommandText *command_text;
-    DBROWCOUNT affected;
     IUnknown *rowset;
     HRESULT hr;
     DBBINDING *bindings;
@@ -2122,6 +2135,12 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     else if (!recordset->active_connection)
         return MAKE_ADO_HRESULT( adErrInvalidConnection );
 
+    if (V_VT(&source) != VT_BSTR)
+    {
+        FIXME("Unsupported source type!\n");
+        return E_FAIL;
+    }
+
     hr = _Connection_QueryInterface(recordset->active_connection, &IID_ADOConnectionConstruction15, (void**)&construct);
     if (FAILED(hr))
         return E_FAIL;
@@ -2131,20 +2150,8 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
     if (FAILED(hr))
         return E_FAIL;
 
-    if (V_VT(&source) != VT_BSTR)
-    {
-        FIXME("Unsupported source type!\n");
-        IUnknown_Release(session);
-        return E_FAIL;
-    }
-
-    hr = create_command_text(session, V_BSTR(&source), &command_text);
+    hr = get_rowset(recordset, session, V_BSTR(&source), &rowset);
     IUnknown_Release(session);
-    if (FAILED(hr))
-        return hr;
-
-    hr = ICommandText_Execute(command_text, NULL, &IID_IUnknown, NULL, &affected, &rowset);
-    ICommandText_Release(command_text);
     if (FAILED(hr) || !rowset)
         return hr;
 
@@ -2155,7 +2162,6 @@ static HRESULT WINAPI recordset_Open( _Recordset *iface, VARIANT source, VARIANT
         IUnknown_Release(rowset);
         return hr;
     }
-    recordset->count = affected > 0 ? affected : 0;
     resize_recordset(recordset, recordset->count);
 
     hr = load_all_recordset_data(recordset, rowset, bindings, datasize);
