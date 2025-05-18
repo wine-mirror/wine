@@ -64,13 +64,13 @@
 #endif
 
 #ifdef __WINE_PE_BUILD
-# define __ASM_GLOBL(name) ".globl " name
+# define __ASM_GLOBL(name) ".globl " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ""
 #elif defined(__APPLE__)
-# define __ASM_GLOBL(name) ".globl " name "\n\t.private_extern " name
+# define __ASM_GLOBL(name) ".globl " name "\n\t.private_extern " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ""
 #else
-# define __ASM_GLOBL(name) ".globl " name "\n\t.hidden " name
+# define __ASM_GLOBL(name) ".globl " name "\n\t.hidden " name "\n" name ":"
 # define __ASM_FUNC_SIZE(name) ".size " name ",.-" name
 #endif
 
@@ -96,7 +96,6 @@
          __ASM_FUNC_ALIGN "\n\t" \
          __ASM_FUNC_TYPE(name) "\n" \
          __ASM_GLOBL(name) "\n\t" \
-         name ":\n\t" \
          __ASM_SEH(".seh_proc " name "\n\t") \
          __ASM_CFI(".cfi_startproc\n\t") \
          __ASM_EHABI(".fnstart\n\t") \

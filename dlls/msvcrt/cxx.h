@@ -35,8 +35,7 @@
     __asm__(".data\n" \
             "\t.balign 8\n" \
             "\t.quad " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME(#name "_vtable") "\n" \
-            __ASM_NAME(#name "_vtable") ":\n" \
+            __ASM_GLOBL(__ASM_NAME(#name "_vtable")) "\n" \
             funcs "\n\t.text")
 
 #else
@@ -47,8 +46,7 @@
     __asm__(".data\n" \
             "\t.balign 4\n" \
             "\t.long " __ASM_NAME(#name "_rtti") "\n" \
-            "\t.globl " __ASM_NAME(#name "_vtable") "\n" \
-            __ASM_NAME(#name "_vtable") ":\n" \
+            __ASM_GLOBL(__ASM_NAME(#name "_vtable")) "\n" \
             funcs "\n\t.text")
 
 #endif /* _WIN64 */
