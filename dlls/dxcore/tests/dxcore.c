@@ -46,6 +46,8 @@ static void test_DXCoreCreateAdapterFactory(void)
     IDXCoreAdapterFactory *factory = (void *)0xdeadbeef;
     IDXCoreAdapterList *list2 = (void *)0xdeadbeef;
     IDXCoreAdapterList *list = (void *)0xdeadbeef;
+    IDXCoreAdapter *adapter2 = (void *)0xdeadbeef;
+    IDXCoreAdapter *adapter = (void *)0xdeadbeef;
     uint32_t adapter_count = 0;
     LONG refcount;
     HRESULT hr;
@@ -101,6 +103,39 @@ static void test_DXCoreCreateAdapterFactory(void)
     adapter_count = IDXCoreAdapterList_GetAdapterCount(list);
     ok(adapter_count != 0, "got adapter_count 0.\n");
 
+    hr = IDXCoreAdapterList_GetAdapter(list, 0xdeadbeef, &IID_IDXCoreAdapter, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "got hr %#lx.\n", hr);
+    hr = IDXCoreAdapterList_GetAdapter(list, adapter_count, &IID_IDXCoreAdapter, (void **)&adapter);
+    todo_wine
+    ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
+    todo_wine
+    ok(adapter == NULL, "got adapter %p.\n", adapter);
+    hr = IDXCoreAdapterList_GetAdapter(list, 0, &IID_IDXCoreAdapterList, (void **)&adapter);
+    todo_wine
+    ok(hr == E_NOINTERFACE, "got hr %#lx.\n", hr);
+
+    hr = IDXCoreAdapterList_GetAdapter(list, 0, &IID_IDXCoreAdapter, (void **)&adapter);
+    todo_wine
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+    hr = IDXCoreAdapterList_GetAdapter(list, 0, &IID_IDXCoreAdapter, (void **)&adapter2);
+    todo_wine
+    ok(hr == S_OK, "got hr %#lx.\n", hr);
+    ok(adapter == adapter2, "got adapter %p, adapter2 %p.\n", adapter, adapter2);
+    refcount = IDXCoreAdapter_Release(adapter2);
+    todo_wine
+    ok(refcount == 3, "got refcount %ld.\n", refcount);
+
+    check_interface(adapter, &IID_IAgileObject, FALSE);
+    check_interface(adapter, &IID_IDXCoreAdapterList, FALSE);
+    check_interface(adapter, &IID_IDXCoreAdapterFactory, FALSE);
+
+    refcount = IDXCoreAdapter_Release(adapter);
+    todo_wine
+    ok(refcount == 2, "got refcount %ld.\n", refcount);
+    }
     refcount = IDXCoreAdapterList_Release(list);
     ok(refcount == 0, "got refcount %ld.\n", refcount);
     refcount = IDXCoreAdapterFactory_Release(factory);
