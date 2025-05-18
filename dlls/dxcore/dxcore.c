@@ -31,6 +31,8 @@ struct dxcore_adapter
 {
     IDXCoreAdapter IDXCoreAdapter_iface;
     LONG refcount;
+
+    struct wined3d_adapter_identifier identifier;
 };
 
 static inline struct dxcore_adapter *impl_from_IDXCoreAdapter(IDXCoreAdapter *iface)
@@ -101,8 +103,36 @@ static BOOL STDMETHODCALLTYPE dxcore_adapter_IsPropertySupported(IDXCoreAdapter 
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetProperty(IDXCoreAdapter *iface, DXCoreAdapterProperty property,
         size_t buffer_size, void *buffer)
 {
-    FIXME("iface %p, property %u, buffer_size %Iu, buffer stub!%p\n", iface, property, buffer_size, buffer);
-    return E_NOTIMPL;
+    struct dxcore_adapter *adapter = impl_from_IDXCoreAdapter(iface);
+
+    TRACE("iface %p, property %u, buffer_size %Iu, buffer %p\n", iface, property, buffer_size, buffer);
+
+    if (!buffer)
+        return E_POINTER;
+
+    switch (property)
+    {
+        case HardwareID:
+        {
+            struct DXCoreHardwareID *hardware_id = buffer;
+
+            if (buffer_size != sizeof(DXCoreHardwareID))
+                return E_INVALIDARG;
+
+            hardware_id->vendorID = adapter->identifier.vendor_id;
+            hardware_id->deviceID = adapter->identifier.device_id;
+            hardware_id->subSysID = adapter->identifier.subsystem_id;
+            hardware_id->revision = adapter->identifier.revision;
+            break;
+        }
+        default:
+        {
+            FIXME("property %u not implemented.\n", property);
+            return DXGI_ERROR_INVALID_CALL;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxcore_adapter_GetPropertySize(IDXCoreAdapter *iface, DXCoreAdapterProperty property,
@@ -373,10 +403,18 @@ static HRESULT get_adapters(struct dxcore_adapter_list *list)
     for (UINT i = 0; i < list->adapter_count; i++)
     {
         struct dxcore_adapter *dxcore_adapter = calloc(1, sizeof(*dxcore_adapter));
+        const struct wined3d_adapter *wined3d_adapter;
 
         if (!dxcore_adapter)
         {
             hr = E_OUTOFMEMORY;
+            goto done;
+        }
+
+        wined3d_adapter = wined3d_get_adapter(wined3d, i);
+        if (FAILED(hr = wined3d_adapter_get_identifier(wined3d_adapter, 0, &dxcore_adapter->identifier)))
+        {
+            free(dxcore_adapter);
             goto done;
         }
 

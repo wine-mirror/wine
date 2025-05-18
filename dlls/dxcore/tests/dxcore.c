@@ -127,39 +127,30 @@ static void test_DXCoreCreateAdapterFactory(void)
     check_interface(adapter, &IID_IDXCoreAdapterFactory, FALSE);
 
     hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, NULL);
-    todo_wine
     ok(hr == E_POINTER, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, 0, buffer);
-    todo_wine
     ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
     hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, 0, buffer);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "got hr %#lx.\n", hr);
 
     buffer = calloc(1, sizeof(HardwareID));
     ok(buffer != NULL, "failed to allocate memory for buffer.\n");
     hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(HardwareID), buffer);
-    todo_wine
     ok(hr == E_INVALIDARG, "got hr %#lx.\n", hr);
     free(buffer);
     buffer = calloc(1, sizeof(DXCoreHardwareID));
     ok(buffer != NULL, "failed to allocate memory for buffer.\n");
     hr = IDXCoreAdapter_GetProperty(adapter, 0xdeadbeef, sizeof(DXCoreHardwareID), buffer);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "got hr %#lx.\n", hr);
     free(buffer);
 
     buffer = calloc(1, sizeof(DXCoreHardwareID));
     ok(buffer != NULL, "failed to allocate memory for buffer.\n");
     hr = IDXCoreAdapter_GetProperty(adapter, HardwareID, sizeof(DXCoreHardwareID), buffer);
-    todo_wine
     ok(hr == S_OK, "got hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
     hardware_id = buffer;
     ok(hardware_id->vendorID != 0, "failed to get vendorID\n");
     ok(hardware_id->deviceID != 0, "failed to get deviceID\n");
-    }
     free(buffer);
 
     refcount = IDXCoreAdapter_Release(adapter);
