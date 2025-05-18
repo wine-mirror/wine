@@ -1921,7 +1921,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
     hr = IRowset_GetNextRows(rowset2, 0, 0, 1, &obtained, &row);
     while (hr == S_OK)
     {
-        VARIANT copy;
+        VARIANT *v;
 
         for (datacol = 0; datacol < columns; datacol++)
         {
@@ -1933,16 +1933,17 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                 break;
             }
 
-            VariantInit(&copy);
+            v = &recordset->data[datarow * columns + datacol];
+            VariantInit(v);
 
             if ( *(DBBYTEOFFSET*)(data + bindings[datacol].obStatus) == DBSTATUS_S_ISNULL)
             {
-                V_VT(&copy) = VT_NULL;
-                goto writedata;
+                V_VT(v) = VT_NULL;
+                continue;
             }
 
             /* For most cases DBTYPE_* = VT_* type */
-            V_VT(&copy) = bindings[datacol].wType;
+            V_VT(v) = bindings[datacol].wType;
             switch(bindings[datacol].wType)
             {
                 case DBTYPE_IUNKNOWN:
@@ -1980,8 +1981,8 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
 
                     if (recordset->columntypes[datacol] == DBTYPE_WSTR)
                     {
-                        V_VT(&copy) = VT_BSTR;
-                        V_BSTR(&copy) = SysAllocStringLen( (WCHAR*)buffer, total / sizeof(WCHAR) );
+                        V_VT(v) = VT_BSTR;
+                        V_BSTR(v) = SysAllocStringLen( (WCHAR*)buffer, total / sizeof(WCHAR) );
                     }
                     else if (recordset->columntypes[datacol] == DBTYPE_BYTES)
                     {
@@ -1990,15 +1991,15 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                         sab.lLbound = 0;
                         sab.cElements = total;
 
-                        V_VT(&copy) = (VT_ARRAY|VT_UI1);
-                        V_ARRAY(&copy) = SafeArrayCreate(VT_UI1, 1, &sab);
+                        V_VT(v) = (VT_ARRAY|VT_UI1);
+                        V_ARRAY(v) = SafeArrayCreate(VT_UI1, 1, &sab);
 
-                        memcpy( (BYTE*)V_ARRAY(&copy)->pvData, buffer, total);
+                        memcpy( (BYTE*)V_ARRAY(v)->pvData, buffer, total);
                     }
                     else
                     {
                         FIXME("Unsupported conversion (%d)\n", recordset->columntypes[datacol]);
-                        V_VT(&copy) = VT_NULL;
+                        V_VT(v) = VT_NULL;
                     }
 
                     free(buffer);
@@ -2007,31 +2008,31 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                     break;
                 }
                 case DBTYPE_R4:
-                    V_R4(&copy) = *(float*)(data + bindings[datacol].obValue);
+                    V_R4(v) = *(float*)(data + bindings[datacol].obValue);
                     break;
                 case DBTYPE_R8:
-                    V_R8(&copy) = *(DOUBLE*)(data + bindings[datacol].obValue);
+                    V_R8(v) = *(DOUBLE*)(data + bindings[datacol].obValue);
                     break;
                 case DBTYPE_I8:
-                    V_VT(&copy) = VT_I8;
-                    V_I8(&copy) = *(LONGLONG*)(data + bindings[datacol].obValue);
+                    V_VT(v) = VT_I8;
+                    V_I8(v) = *(LONGLONG*)(data + bindings[datacol].obValue);
                     break;
                 case DBTYPE_I4:
-                    V_I4(&copy) = *(LONG*)(data + bindings[datacol].obValue);
+                    V_I4(v) = *(LONG*)(data + bindings[datacol].obValue);
                     break;
                 case DBTYPE_STR:
                 {
                     WCHAR *str = heap_strdupAtoW( (char*)(data + bindings[datacol].obValue) );
 
-                    V_VT(&copy) = VT_BSTR;
-                    V_BSTR(&copy) = SysAllocString(str);
+                    V_VT(v) = VT_BSTR;
+                    V_BSTR(v) = SysAllocString(str);
                     free(str);
                     break;
                 }
                 case DBTYPE_WSTR:
                 {
-                    V_VT(&copy) = VT_BSTR;
-                    V_BSTR(&copy) = SysAllocString( (WCHAR*)(data + bindings[datacol].obValue) );
+                    V_VT(v) = VT_BSTR;
+                    V_BSTR(v) = SysAllocString( (WCHAR*)(data + bindings[datacol].obValue) );
                     break;
                 }
                 case DBTYPE_DBTIMESTAMP:
@@ -2040,7 +2041,7 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                     DBTIMESTAMP *ts = (DBTIMESTAMP *)(data + bindings[datacol].obValue);
                     DATE d;
 
-                    V_VT(&copy) = VT_DATE;
+                    V_VT(v) = VT_DATE;
 
                     st.wYear = ts->year;
                     st.wMonth = ts->month;
@@ -2052,22 +2053,14 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                     st.wDayOfWeek = 0;
                     hr = (SystemTimeToVariantTime(&st, &d) ? S_OK : E_FAIL);
 
-                    V_DATE(&copy) = d;
+                    V_DATE(v) = d;
                     break;
                 }
                 default:
-                    V_I2(&copy) = 0;
+                    V_VT(v) = VT_I2;
+                    V_I2(v) = 0;
                     FIXME("Unknown Type %d\n", bindings[datacol].wType);
             }
-
-writedata:
-            VariantInit( &recordset->data[datarow * columns + datacol] );
-            if ((hr = VariantCopy( &recordset->data[datarow * columns + datacol] , &copy)) != S_OK)
-            {
-                ERR("Column %d copy failed. Data %s\n", datacol, debugstr_variant(&copy));
-            }
-
-            VariantClear(&copy);
         }
 
         datarow++;
