@@ -183,7 +183,7 @@ static struct buffer
     UINT  allocated;     /* allocated size in bytes */
     UINT  count;         /* number of entries written */
     BYTE *ptr;
-} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx;
+} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx, guids;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -370,6 +370,14 @@ static UINT add_blob( const BYTE *blob, UINT size )
     return offset;
 }
 
+static UINT add_guid( const GUID *guid )
+{
+    grow_buffer( &guids, sizeof(*guid) );
+    memcpy( guids.ptr + guids.offset, guid, sizeof(*guid) );
+    guids.offset += sizeof(*guid);
+    return ++guids.count;
+}
+
 static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 {
     grow_buffer( buf, size );
@@ -379,12 +387,14 @@ static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 
 static void build_table_stream( const statement_list_t *stmts )
 {
+    static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
     static const USHORT space = 0x20;
 
     add_string( "" );
     add_userstring( NULL, 0 );
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
+    add_guid( &guid );
 }
 
 static void build_streams( const statement_list_t *stmts )
@@ -411,6 +421,9 @@ static void build_streams( const statement_list_t *stmts )
 
     streams[STREAM_BLOB].data_size = blobs.offset;
     streams[STREAM_BLOB].data = blobs.ptr;
+
+    streams[STREAM_GUID].data_size = guids.offset;
+    streams[STREAM_GUID].data = guids.ptr;
 
     for (i = 0; i < STREAM_MAX; i++)
     {
