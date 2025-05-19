@@ -1304,7 +1304,7 @@ static INT_PTR CALLBACK taskdialog_proc(HWND hwnd, UINT msg, WPARAM wParam, LPAR
             taskdialog_check_default_radio_buttons(dialog_info);
             return FALSE;
         case WM_COMMAND:
-            if (HIWORD(wParam) == BN_CLICKED)
+            if (dialog_info && HIWORD(wParam) == BN_CLICKED)
             {
                 taskdialog_on_button_click(dialog_info, (HWND)lParam, LOWORD(wParam));
                 break;
