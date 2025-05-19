@@ -1811,7 +1811,7 @@ static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DB
     hr = IColumnsInfo_GetColumnInfo(columninfo, &columns, &colinfo, &stringsbuffer);
     if (SUCCEEDED(hr))
     {
-        ULONG i;
+        ULONG i, j;
         DBOBJECT *dbobj;
         offset = 1;
 
@@ -1824,7 +1824,7 @@ static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DB
         bindings = CoTaskMemAlloc( (sizeof(DBBINDING) + sizeof(DBOBJECT)) * columns);
         dbobj = (DBOBJECT *)((char*)bindings + (sizeof(DBBINDING) * columns));
 
-        for (i=0; i < columns; i++)
+        for (i=0, j=0; i < columns; i++)
         {
             TRACE("Column %lu, pwszName: %s, pTypeInfo %p, iOrdinal %Iu, dwFlags 0x%08lx, "
                   "ulColumnSize %Iu, wType %d, bPrecision %d, bScale %d\n",
@@ -1832,58 +1832,70 @@ static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DB
                   colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
                   colinfo[i].bPrecision, colinfo[i].bScale);
 
-            hr = append_field(&recordset->fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
-                     colinfo[i].dwFlags, NULL);
+            if (!colinfo[i].pwszName)
+            {
+                FIXME("skipping implicit column\n");
+                continue;
+            }
 
-            bindings[i].iOrdinal = colinfo[i].iOrdinal;
-            bindings[i].obValue = offset;
-            bindings[i].pTypeInfo = NULL;
+            hr = append_field(&recordset->fields, colinfo[i].pwszName, colinfo[i].wType,
+                    colinfo[i].ulColumnSize, colinfo[i].dwFlags, NULL);
+            if (FAILED(hr)) WARN("append_field failed: %lx\n", hr);
+
+            bindings[j].iOrdinal = colinfo[i].iOrdinal;
+            bindings[j].obValue = offset;
+            bindings[j].pTypeInfo = NULL;
             /* Always assigned the pObject even if it's not used. */
-            bindings[i].pObject = &dbobj[i];
-            bindings[i].pObject->dwFlags = 0;
-            bindings[i].pObject->iid = IID_ISequentialStream;
-            bindings[i].pBindExt = NULL;
-            bindings[i].dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
-            bindings[i].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
-            bindings[i].eParamIO = 0;
+            bindings[j].pObject = &dbobj[i];
+            bindings[j].pObject->dwFlags = 0;
+            bindings[j].pObject->iid = IID_ISequentialStream;
+            bindings[j].pBindExt = NULL;
+            bindings[j].dwPart = DBPART_VALUE | DBPART_LENGTH | DBPART_STATUS;
+            bindings[j].dwMemOwner = DBMEMOWNER_CLIENTOWNED;
+            bindings[j].eParamIO = 0;
 
-            recordset->columntypes[i] = colinfo[i].wType;
+            recordset->columntypes[j] = colinfo[i].wType;
             if (colinfo[i].dwFlags & DBCOLUMNFLAGS_ISLONG)
             {
                 colinfo[i].wType = DBTYPE_IUNKNOWN;
 
-                bindings[i].cbMaxLen = (colinfo[i].ulColumnSize + 1) * sizeof(WCHAR);
+                bindings[j].cbMaxLen = (colinfo[i].ulColumnSize + 1) * sizeof(WCHAR);
                 offset += sizeof(ISequentialStream*);
             }
             else if(colinfo[i].wType == DBTYPE_WSTR)
             {
                 /* ulColumnSize is the number of characters in the string not the actual buffer size */
-                bindings[i].cbMaxLen = colinfo[i].ulColumnSize * sizeof(WCHAR);
-                offset += bindings[i].cbMaxLen;
+                bindings[j].cbMaxLen = colinfo[i].ulColumnSize * sizeof(WCHAR);
+                offset += bindings[j].cbMaxLen;
             }
             else
             {
-                bindings[i].cbMaxLen = colinfo[i].ulColumnSize;
-                offset += bindings[i].cbMaxLen;
+                bindings[j].cbMaxLen = colinfo[i].ulColumnSize;
+                offset += bindings[j].cbMaxLen;
             }
 
-            bindings[i].dwFlags = 0;
-            bindings[i].wType = colinfo[i].wType;
-            bindings[i].bPrecision = colinfo[i].bPrecision;
-            bindings[i].bScale = colinfo[i].bScale;
+            bindings[j].dwFlags = 0;
+            bindings[j].wType = colinfo[i].wType;
+            bindings[j].bPrecision = colinfo[i].bPrecision;
+            bindings[j].bScale = colinfo[i].bScale;
+            j++;
         }
 
         offset = ROUND_SIZE(offset);
-        for (i=0; i < columns; i++)
+        for (i=0, j=0; i < columns; i++)
         {
-            bindings[i].obLength = offset;
-            bindings[i].obStatus = offset + sizeof(DBBYTEOFFSET);
+            if (!colinfo[i].pwszName)
+                continue;
+
+            bindings[j].obLength = offset;
+            bindings[j].obStatus = offset + sizeof(DBBYTEOFFSET);
 
             offset += sizeof(DBBYTEOFFSET) + sizeof(DBBYTEOFFSET);
 
-            hr = IAccessor_CreateAccessor(accessor, DBACCESSOR_ROWDATA, 1, &bindings[i], 0, &recordset->haccessors[i], NULL);
+            hr = IAccessor_CreateAccessor(accessor, DBACCESSOR_ROWDATA, 1, &bindings[j], 0, &recordset->haccessors[j], NULL);
             if (FAILED(hr))
                 FIXME("IAccessor_CreateAccessor Failed 0x%0lx\n", hr);
+            j++;
         }
 
         *size = offset;
