@@ -231,7 +231,7 @@ failed:
     return NULL;
 }
 
-static const char *osmesa_init_wgl_extensions(void)
+static const char *osmesa_init_wgl_extensions( struct opengl_funcs *funcs )
 {
     return "";
 }
@@ -426,7 +426,7 @@ static BOOL nulldrv_describe_pixel_format( int format, struct wgl_pixel_format *
     return TRUE;
 }
 
-static const char *nulldrv_init_wgl_extensions(void)
+static const char *nulldrv_init_wgl_extensions( struct opengl_funcs *funcs )
 {
     return "";
 }
@@ -1366,7 +1366,7 @@ static void display_funcs_init(void)
     display_funcs->p_wglGetProcAddress = win32u_display_wglGetProcAddress;
     display_funcs->p_get_pixel_formats = win32u_display_get_pixel_formats;
 
-    strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions() );
+    strcpy( wgl_extensions, display_driver_funcs->p_init_wgl_extensions( display_funcs ) );
     display_funcs->p_wglGetPixelFormat = win32u_wglGetPixelFormat;
     display_funcs->p_wglSetPixelFormat = win32u_wglSetPixelFormat;
 

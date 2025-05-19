@@ -61,7 +61,7 @@ struct wgl_pixel_format
 #ifdef WINE_UNIX_LIB
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 31
+#define WINE_OPENGL_DRIVER_VERSION 32
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -116,7 +116,7 @@ struct opengl_driver_funcs
     void *(*p_get_proc_address)(const char *);
     UINT (*p_init_pixel_formats)(UINT*);
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);
-    const char *(*p_init_wgl_extensions)(void);
+    const char *(*p_init_wgl_extensions)(struct opengl_funcs *funcs);
     BOOL (*p_set_pixel_format)(HWND,int,int,BOOL);
     BOOL (*p_swap_buffers)(void*,HWND,HDC,int);
     BOOL (*p_context_create)(HDC,int,void*,const int*,void**);

@@ -811,7 +811,7 @@ static BOOL init_opengl_funcs(void)
     return TRUE;
 }
 
-static const char *wayland_init_wgl_extensions(void)
+static const char *wayland_init_wgl_extensions(struct opengl_funcs *funcs)
 {
     if (has_egl_ext_pixel_format_float)
     {

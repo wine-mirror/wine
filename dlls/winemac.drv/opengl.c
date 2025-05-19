@@ -2729,7 +2729,7 @@ static void register_extension(const char *ext)
     TRACE("'%s'\n", ext);
 }
 
-static const char *macdrv_init_wgl_extensions(void)
+static const char *macdrv_init_wgl_extensions(struct opengl_funcs *funcs)
 {
     /*
      * ARB Extensions
@@ -2767,10 +2767,10 @@ static const char *macdrv_init_wgl_extensions(void)
      */
 
     register_extension("WGL_WINE_query_renderer");
-    opengl_funcs.p_wglQueryCurrentRendererIntegerWINE = macdrv_wglQueryCurrentRendererIntegerWINE;
-    opengl_funcs.p_wglQueryCurrentRendererStringWINE = macdrv_wglQueryCurrentRendererStringWINE;
-    opengl_funcs.p_wglQueryRendererIntegerWINE = macdrv_wglQueryRendererIntegerWINE;
-    opengl_funcs.p_wglQueryRendererStringWINE = macdrv_wglQueryRendererStringWINE;
+    funcs->p_wglQueryCurrentRendererIntegerWINE = macdrv_wglQueryCurrentRendererIntegerWINE;
+    funcs->p_wglQueryCurrentRendererStringWINE = macdrv_wglQueryCurrentRendererStringWINE;
+    funcs->p_wglQueryRendererIntegerWINE = macdrv_wglQueryRendererIntegerWINE;
+    funcs->p_wglQueryRendererStringWINE = macdrv_wglQueryRendererStringWINE;
 
     return gl_info.wglExtensions;
 }

@@ -1930,7 +1930,7 @@ static void register_extension(const char *ext)
     TRACE("'%s'\n", ext);
 }
 
-static const char *x11drv_init_wgl_extensions(void)
+static const char *x11drv_init_wgl_extensions( struct opengl_funcs *funcs )
 {
     wglExtensions[0] = 0;
 
@@ -1982,8 +1982,8 @@ static const char *x11drv_init_wgl_extensions(void)
     if (has_extension(glExtensions, "GL_NV_vertex_array_range"))
     {
         register_extension( "WGL_NV_vertex_array_range" );
-        opengl_funcs.p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
-        opengl_funcs.p_wglFreeMemoryNV = pglXFreeMemoryNV;
+        funcs->p_wglAllocateMemoryNV = pglXAllocateMemoryNV;
+        funcs->p_wglFreeMemoryNV = pglXFreeMemoryNV;
     }
 
     if (has_extension(glxExtensions, "GLX_OML_swap_method"))
@@ -1994,10 +1994,10 @@ static const char *x11drv_init_wgl_extensions(void)
     if (has_extension( glxExtensions, "GLX_MESA_query_renderer" ))
     {
         register_extension( "WGL_WINE_query_renderer" );
-        opengl_funcs.p_wglQueryCurrentRendererIntegerWINE = X11DRV_wglQueryCurrentRendererIntegerWINE;
-        opengl_funcs.p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
-        opengl_funcs.p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
-        opengl_funcs.p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
+        funcs->p_wglQueryCurrentRendererIntegerWINE = X11DRV_wglQueryCurrentRendererIntegerWINE;
+        funcs->p_wglQueryCurrentRendererStringWINE = X11DRV_wglQueryCurrentRendererStringWINE;
+        funcs->p_wglQueryRendererIntegerWINE = X11DRV_wglQueryRendererIntegerWINE;
+        funcs->p_wglQueryRendererStringWINE = X11DRV_wglQueryRendererStringWINE;
     }
 
     return wglExtensions;

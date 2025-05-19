@@ -440,7 +440,7 @@ static void register_extension( const char *ext )
     TRACE( "%s\n", ext );
 }
 
-static const char *android_init_wgl_extensions(void)
+static const char *android_init_wgl_extensions( struct opengl_funcs *funcs )
 {
     register_extension("WGL_EXT_framebuffer_sRGB");
     return wgl_extensions;
