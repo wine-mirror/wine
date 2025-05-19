@@ -1687,6 +1687,8 @@ static HRESULT WINAPI recordset_MoveNext( _Recordset *iface )
 
     TRACE( "%p\n", recordset );
 
+    if (recordset->index >= recordset->count)
+        return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
     if (recordset->index < recordset->count) recordset->index++;
     return S_OK;
 }
