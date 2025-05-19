@@ -75,7 +75,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture1d_AddRef(ID3D11Texture1D *iface)
 
     if (refcount == 1)
     {
-        ID3D11Device4_AddRef(texture->device);
+        ID3D11Device5_AddRef(texture->device);
         wined3d_texture_incref(texture->wined3d_texture);
     }
 
@@ -91,11 +91,11 @@ static ULONG STDMETHODCALLTYPE d3d11_texture1d_Release(ID3D11Texture1D *iface)
 
     if (!refcount)
     {
-        ID3D11Device4 *device = texture->device;
+        ID3D11Device5 *device = texture->device;
         wined3d_texture_decref(texture->wined3d_texture);
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
-        ID3D11Device4_Release(device);
+        ID3D11Device5_Release(device);
     }
 
     return refcount;
@@ -272,7 +272,7 @@ static void STDMETHODCALLTYPE d3d10_texture1d_GetDevice(ID3D10Texture1D *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device4_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device5_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture1d_GetPrivateData(ID3D10Texture1D *iface,
@@ -501,7 +501,7 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
     }
     wined3d_mutex_unlock();
 
-    ID3D11Device4_AddRef(texture->device = &device->ID3D11Device4_iface);
+    ID3D11Device5_AddRef(texture->device = &device->ID3D11Device5_iface);
 
     TRACE("Created texture %p.\n", texture);
     *out = texture;
@@ -556,7 +556,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_AddRef(ID3D11Texture2D *iface)
 
     if (refcount == 1)
     {
-        ID3D11Device4_AddRef(texture->device);
+        ID3D11Device5_AddRef(texture->device);
         wined3d_texture_incref(texture->wined3d_texture);
         if (texture->swapchain)
             wined3d_swapchain_incref(texture->swapchain);
@@ -574,7 +574,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_Release(ID3D11Texture2D *iface)
 
     if (!refcount)
     {
-        ID3D11Device4 *device = texture->device;
+        ID3D11Device5 *device = texture->device;
         if (texture->swapchain)
             wined3d_swapchain_decref(texture->swapchain);
         /* Releasing the texture may free the d3d11 object, so do not access it
@@ -582,7 +582,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture2d_Release(ID3D11Texture2D *iface)
         wined3d_texture_decref(texture->wined3d_texture);
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
-        ID3D11Device4_Release(device);
+        ID3D11Device5_Release(device);
     }
 
     return refcount;
@@ -773,7 +773,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_GetDevice(ID3D10Texture2D *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device4_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device5_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_GetPrivateData(ID3D10Texture2D *iface,
@@ -1046,7 +1046,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     }
     wined3d_mutex_unlock();
 
-    ID3D11Device4_AddRef(texture->device = &device->ID3D11Device4_iface);
+    ID3D11Device5_AddRef(texture->device = &device->ID3D11Device5_iface);
 
     TRACE("Created texture %p.\n", texture);
     *out = texture;
@@ -1106,7 +1106,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_AddRef(ID3D11Texture3D *iface)
 
     if (refcount == 1)
     {
-        ID3D11Device4_AddRef(texture->device);
+        ID3D11Device5_AddRef(texture->device);
         wined3d_texture_incref(texture->wined3d_texture);
     }
 
@@ -1131,12 +1131,12 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
 
     if (!refcount)
     {
-        ID3D11Device4 *device = texture->device;
+        ID3D11Device5 *device = texture->device;
 
         wined3d_texture_decref(texture->wined3d_texture);
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
-        ID3D11Device4_Release(device);
+        ID3D11Device5_Release(device);
     }
 
     return refcount;
@@ -1294,7 +1294,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device4_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device5_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D *iface,
@@ -1506,7 +1506,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     wined3d_mutex_unlock();
     texture->desc.MipLevels = levels;
 
-    ID3D11Device4_AddRef(texture->device = &device->ID3D11Device4_iface);
+    ID3D11Device5_AddRef(texture->device = &device->ID3D11Device5_iface);
 
     return S_OK;
 }
