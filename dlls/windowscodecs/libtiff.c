@@ -976,7 +976,7 @@ static HRESULT tiff_decoder_read_tile(struct tiff_decoder *This, UINT tile_x, UI
     else if (info->source_bpp == 16 && info->samples == 4 && info->frame.bpp == 32)
     {
         BYTE *srcdata, *src, *dst;
-        DWORD x, y, count, width_bytes = (info->tile_width * 12 + 7) / 8;
+        DWORD x, y, count, width_bytes = (info->tile_width * 16 + 7) / 8;
 
         count = width_bytes * info->tile_height;
 
