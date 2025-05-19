@@ -510,6 +510,8 @@ static void sync_window_style( struct x11drv_win_data *data )
         XSetWindowAttributes attr;
         int mask = get_window_attributes( data, &attr );
 
+        TRACE( "window %p/%lx changing attributes mask %#x, serial %lu\n", data->hwnd,
+               data->whole_window, mask, NextRequest( data->display ) );
         XChangeWindowAttributes( data->display, data->whole_window, mask, &attr );
         x11drv_xinput2_enable( data->display, data->whole_window );
     }
@@ -897,6 +899,9 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
             size_hints->flags |= PMinSize | PMaxSize;
         }
     }
+
+    TRACE( "window %p/%lx requesting WM_NORMAL_HINTS flags %#lx, serial %lu\n", data->hwnd,
+           data->whole_window, size_hints->flags, NextRequest( data->display ) );
     XSetWMNormalHints( data->display, data->whole_window, size_hints );
     XFree( size_hints );
 }
@@ -995,6 +1000,8 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
     else
         window_type = x11drv_atom(_NET_WM_WINDOW_TYPE_NORMAL);
 
+    TRACE( "window %p/%lx requesting _NET_WM_WINDOW_TYPE %#lx, serial %lu\n", data->hwnd,
+           data->whole_window, window_type, NextRequest( data->display ) );
     XChangeProperty(data->display, data->whole_window, x11drv_atom(_NET_WM_WINDOW_TYPE),
 		    XA_ATOM, 32, PropModeReplace, (unsigned char*)&window_type, 1);
 
@@ -1010,16 +1017,27 @@ static void set_style_hints( struct x11drv_win_data *data, DWORD style, DWORD ex
             wm_hints->icon_mask = data->icon_mask;
             wm_hints->flags |= IconPixmapHint | IconMaskHint;
         }
+
+        TRACE( "window %p/%lx requesting WM_HINTS flags %#lx, serial %lu\n", data->hwnd,
+               data->whole_window, wm_hints->flags, NextRequest( data->display ) );
         XSetWMHints( data->display, data->whole_window, wm_hints );
         XFree( wm_hints );
     }
 
     if (data->icon_bits)
+    {
+        TRACE( "window %p/%lx requesting _NET_WM_ICON, serial %lu\n", data->hwnd,
+               data->whole_window, NextRequest( data->display ) );
         XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON),
                          XA_CARDINAL, 32, PropModeReplace,
                          (unsigned char *)data->icon_bits, data->icon_size );
+    }
     else
+    {
+        TRACE( "window %p/%lx deleting _NET_WM_ICON, serial %lu\n", data->hwnd,
+               data->whole_window, NextRequest( data->display ) );
         XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_ICON) );
+    }
 
 }
 
