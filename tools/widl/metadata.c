@@ -183,7 +183,7 @@ static struct buffer
     UINT  allocated;     /* allocated size in bytes */
     UINT  count;         /* number of entries written */
     BYTE *ptr;
-} strings, strings_idx;
+} strings, strings_idx, userstrings, userstrings_idx;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -195,6 +195,52 @@ static void *grow_buffer( struct buffer *buf, UINT size )
     buf->ptr = xrealloc( buf->ptr, new_size );
     buf->allocated = new_size;
     return buf->ptr;
+}
+
+static UINT encode_int( UINT value, BYTE *encoded )
+{
+    if (value < 0x80)
+    {
+        encoded[0] = value;
+        return 1;
+    }
+    if (value < 0x4000)
+    {
+        encoded[0] = value >> 8 | 0x80;
+        encoded[1] = value & 0xff;
+        return 2;
+    }
+    if (value < 0x20000000)
+    {
+        encoded[0] = value >> 24 | 0xc0;
+        encoded[1] = value >> 16 & 0xff;
+        encoded[2] = value >> 8 & 0xff;
+        encoded[3] = value & 0xff;
+        return 4;
+    }
+    fprintf( stderr, "Value too large to encode.\n" );
+    exit( 1 );
+}
+
+static UINT decode_int( const BYTE *encoded, UINT *len )
+{
+    if (!(encoded[0] & 0x80))
+    {
+        *len = 1;
+        return encoded[0];
+    }
+    if (!(encoded[0] & 0x40))
+    {
+        *len = 2;
+        return ((encoded[0] & ~0xc0) << 8) + encoded[1];
+    }
+    if (!(encoded[0] & 0x20))
+    {
+        *len = 4;
+        return ((encoded[0] & ~0xe0) << 24) + (encoded[1] << 16) + (encoded[2] << 8) + encoded[3];
+    }
+    fprintf( stderr, "Invalid encoding.\n" );
+    exit( 1 );
 }
 
 struct index
@@ -212,17 +258,21 @@ static inline int cmp_data( const BYTE *data, UINT size, const BYTE *data2, UINT
 
 /* return index struct if found, NULL and insert index if not found */
 static const struct index *find_index( const struct buffer *buf_idx, const struct buffer *buf_data, const BYTE *data,
-                                       UINT size, UINT *insert_idx )
+                                       UINT data_size, BOOL is_blob, UINT *insert_idx )
 {
-    int i, c, min = 0, max = buf_idx->count - 1, len = 0;
+    int i, c, min = 0, max = buf_idx->count - 1;
     const struct index *idx, *base = (const struct index *)buf_idx->ptr;
+    UINT size, len = 0;
 
     while (min <= max)
     {
         i = (min + max) / 2;
         idx = &base[i];
 
-        c = cmp_data( data, size, buf_data->ptr + idx->offset + len, idx->size );
+        if (is_blob) size = decode_int( buf_data->ptr + idx->offset, &len );
+        else size = idx->size;
+
+        c = cmp_data( data, data_size, buf_data->ptr + idx->offset + len, size );
 
         if (c < 0) max = i - 1;
         else if (c > 0) min = i + 1;
@@ -250,7 +300,7 @@ static UINT add_string( const char *str )
 
     if (!str) return 0;
     size = strlen( str ) + 1;
-    if ((idx = find_index( &strings_idx, &strings, (const BYTE *)str, size, &insert_idx )))
+    if ((idx = find_index( &strings_idx, &strings, (const BYTE *)str, size, FALSE, &insert_idx )))
         return idx->offset;
 
     grow_buffer( &strings, size );
@@ -259,6 +309,41 @@ static UINT add_string( const char *str )
     strings.count++;
 
     insert_index( &strings_idx, insert_idx, offset, size );
+    return offset;
+}
+
+static inline int is_special_char( USHORT c )
+{
+    return (c >= 0x100 || (c >= 0x01 && c <= 0x08) || (c >= 0x0e && c <= 0x1f) || c == 0x27 || c == 0x2d || c == 0x7f);
+}
+
+static UINT add_userstring( const USHORT *str, UINT size )
+{
+    BYTE encoded[4], terminal = 0;
+    UINT i, insert_idx, offset = userstrings.offset, len = encode_int( size + (str ? 1 : 0), encoded );
+    const struct index *idx;
+
+    if (!str && offset) return 0;
+
+    if ((idx = find_index( &userstrings_idx, &userstrings, (const BYTE *)str, size, TRUE, &insert_idx )))
+        return idx->offset;
+
+    grow_buffer( &userstrings, len + size + 1 );
+    memcpy( userstrings.ptr + userstrings.offset, encoded, len );
+    userstrings.offset += len;
+    if (str)
+    {
+        for (i = 0; i < size / sizeof(USHORT); i++)
+        {
+            *(USHORT *)(userstrings.ptr + userstrings.offset) = str[i];
+            userstrings.offset += sizeof(USHORT);
+            if (is_special_char( str[i] )) terminal = 1;
+        }
+        userstrings.ptr[userstrings.offset++] = terminal;
+    }
+    userstrings.count++;
+
+    insert_index( &userstrings_idx, insert_idx, offset, size );
     return offset;
 }
 
@@ -271,7 +356,11 @@ static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 
 static void build_table_stream( const statement_list_t *stmts )
 {
+    static const USHORT space = 0x20;
+
     add_string( "" );
+    add_userstring( NULL, 0 );
+    add_userstring( &space, sizeof(space) );
 }
 
 static void build_streams( const statement_list_t *stmts )
@@ -286,6 +375,12 @@ static void build_streams( const statement_list_t *stmts )
 
     streams[STREAM_STRING].data_size = strings.offset;
     streams[STREAM_STRING].data = strings.ptr;
+
+    len = (userstrings.offset + 3) & ~3;
+    add_bytes( &userstrings, pad, len - userstrings.offset );
+
+    streams[STREAM_USERSTRING].data_size = userstrings.offset;
+    streams[STREAM_USERSTRING].data = userstrings.ptr;
 
     for (i = 0; i < STREAM_MAX; i++)
     {
