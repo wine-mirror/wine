@@ -1223,7 +1223,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 
     new_state &= x11drv_thread_data()->net_wm_state_mask;
     data->desired_state.net_wm_state = new_state;
-    if (!data->whole_window) return; /* no window, nothing to update */
+    if (!data->whole_window || !data->managed) return; /* no window or not managed, nothing to update */
     if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
     /* we ignore and override previous _NET_WM_STATE update requests */
     if (old_state == new_state) return; /* states are the same, nothing to update */
@@ -1351,7 +1351,7 @@ static void update_net_wm_states( struct x11drv_win_data *data )
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     UINT style, ex_style, new_state = 0;
 
-    if (!data->managed || data->embedded) return;
+    if (data->embedded) return;
     if (data->whole_window == root_window)
     {
         if (is_virtual_desktop()) window_set_net_wm_state( data, is_desktop_fullscreen() ? (1 << NET_WM_STATE_FULLSCREEN) : 0 );
