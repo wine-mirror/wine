@@ -1612,7 +1612,7 @@ static BOOL resize_recordset( struct recordset *recordset, ULONG row_count )
         VARIANT *tmp;
         ULONG count = max( row_count, recordset->allocated * 2 );
         if (!(tmp = realloc( recordset->data, count * row_size ))) return FALSE;
-        memset( tmp + recordset->allocated, 0, (count - recordset->allocated) * row_size );
+        memset( (BYTE*)tmp + recordset->allocated * row_size, 0, (count - recordset->allocated) * row_size );
         recordset->data = tmp;
         recordset->allocated = count;
     }
