@@ -177,6 +177,129 @@ static void write_headers( UINT image_size )
     }
 }
 
+static struct buffer
+{
+    UINT  offset;        /* write position */
+    UINT  allocated;     /* allocated size in bytes */
+    UINT  count;         /* number of entries written */
+    BYTE *ptr;
+} strings, strings_idx;
+
+static void *grow_buffer( struct buffer *buf, UINT size )
+{
+    UINT new_size;
+
+    if (buf->allocated - buf->offset >= size) return buf->ptr;
+
+    new_size = max( buf->offset + size, buf->allocated * 2 );
+    buf->ptr = xrealloc( buf->ptr, new_size );
+    buf->allocated = new_size;
+    return buf->ptr;
+}
+
+struct index
+{
+    UINT offset;    /* offset into corresponding data buffer */
+    UINT size;      /* size of data entry */
+};
+
+static inline int cmp_data( const BYTE *data, UINT size, const BYTE *data2, UINT size2 )
+{
+    if (size < size2) return -1;
+    else if (size > size2) return 1;
+    return memcmp( data, data2, size );
+}
+
+/* return index struct if found, NULL and insert index if not found */
+static const struct index *find_index( const struct buffer *buf_idx, const struct buffer *buf_data, const BYTE *data,
+                                       UINT size, UINT *insert_idx )
+{
+    int i, c, min = 0, max = buf_idx->count - 1, len = 0;
+    const struct index *idx, *base = (const struct index *)buf_idx->ptr;
+
+    while (min <= max)
+    {
+        i = (min + max) / 2;
+        idx = &base[i];
+
+        c = cmp_data( data, size, buf_data->ptr + idx->offset + len, idx->size );
+
+        if (c < 0) max = i - 1;
+        else if (c > 0) min = i + 1;
+        else return idx;
+    }
+
+    if (insert_idx) *insert_idx = max + 1;
+    return NULL;
+}
+
+static void insert_index( struct buffer *buf_idx, UINT idx, UINT offset, UINT size )
+{
+    struct index new = { offset, size }, *base = grow_buffer( buf_idx, sizeof(new) );
+
+    memmove( &base[idx] + 1, &base[idx], (buf_idx->count - idx) * sizeof(new) );
+    base[idx] = new;
+    buf_idx->offset += sizeof(new);
+    buf_idx->count++;
+}
+
+static UINT add_string( const char *str )
+{
+    UINT insert_idx, size, offset = strings.offset;
+    const struct index *idx;
+
+    if (!str) return 0;
+    size = strlen( str ) + 1;
+    if ((idx = find_index( &strings_idx, &strings, (const BYTE *)str, size, &insert_idx )))
+        return idx->offset;
+
+    grow_buffer( &strings, size );
+    memcpy( strings.ptr + offset, str, size );
+    strings.offset += size;
+    strings.count++;
+
+    insert_index( &strings_idx, insert_idx, offset, size );
+    return offset;
+}
+
+static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
+{
+    grow_buffer( buf, size );
+    memcpy( buf->ptr + buf->offset, data, size );
+    buf->offset += size;
+}
+
+static void build_table_stream( const statement_list_t *stmts )
+{
+    add_string( "" );
+}
+
+static void build_streams( const statement_list_t *stmts )
+{
+    static const BYTE pad[4];
+    UINT i, len, offset = sizeof(metadata_header);
+
+    build_table_stream( stmts );
+
+    len = (strings.offset + 3) & ~3;
+    add_bytes( &strings, pad, len - strings.offset );
+
+    streams[STREAM_STRING].data_size = strings.offset;
+    streams[STREAM_STRING].data = strings.ptr;
+
+    for (i = 0; i < STREAM_MAX; i++)
+    {
+        if (!streams[i].data_size) continue;
+        offset += streams[i].header_size;
+    }
+    for (i = 0; i < STREAM_MAX; i++)
+    {
+        if (!streams[i].data_size) continue;
+        streams[i].data_offset = offset;
+        offset += streams[i].data_size;
+    }
+}
+
 static void write_streams( void )
 {
     UINT i;
@@ -193,6 +316,8 @@ void write_metadata( const statement_list_t *stmts )
     UINT image_size, file_size, i;
 
     if (!do_metadata) return;
+
+    build_streams( stmts );
 
     image_size = FILE_ALIGNMENT + sizeof(cor_header) + 8 + sizeof(metadata_header);
     for (i = 0; i < STREAM_MAX; i++) image_size += streams[i].header_size + streams[i].data_size;
