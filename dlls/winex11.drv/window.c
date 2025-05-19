@@ -1270,6 +1270,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 
         for (i = 0; i < NB_NET_WM_STATES; i++)
         {
+            if (data->net_wm_state_serial) break; /* another _NET_WM_STATE update is pending, wait for it to complete */
             if (!((old_state ^ new_state) & (1 << i))) continue;
 
             xev.xclient.data.l[0] = (new_state & (1 << i)) ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
@@ -1277,7 +1278,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
             xev.xclient.data.l[2] = ((net_wm_state_atoms[i] == XATOM__NET_WM_STATE_MAXIMIZED_VERT) ?
                                      x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ) : 0);
 
-            data->pending_state.net_wm_state = new_state;
+            data->pending_state.net_wm_state ^= (1 << i);
             data->net_wm_state_serial = NextRequest( data->display );
             TRACE( "window %p/%lx, requesting _NET_WM_STATE %#x serial %lu\n", data->hwnd, data->whole_window,
                    data->pending_state.net_wm_state, data->net_wm_state_serial );
