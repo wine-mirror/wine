@@ -327,7 +327,7 @@ DECLARE_INTERFACE_(ID3D11FunctionLinkingGraph, IUnknown)
     STDMETHOD(CreateModuleInstance)(THIS_ ID3D11ModuleInstance **instance, ID3DBlob **error) PURE;
     STDMETHOD(SetInputSignature)(THIS_ const D3D11_PARAMETER_DESC *parameter_desc, UINT parameter_count, ID3D11LinkingNode **input_node) PURE;
     STDMETHOD(SetOutputSignature)(THIS_ const D3D11_PARAMETER_DESC *parameter_desc, UINT parameter_count, ID3D11LinkingNode **output_node) PURE;
-    STDMETHOD(CallFunction)(THIS_ LPCSTR namespace, ID3D11Module *module, LPCSTR function_name, ID3D11LinkingNode **call_node) PURE;
+    STDMETHOD(CallFunction)(THIS_ LPCSTR _namespace, ID3D11Module *module, LPCSTR function_name, ID3D11LinkingNode **call_node) PURE;
     STDMETHOD(PassValue)(THIS_ ID3D11LinkingNode *src_node, INT src_parameter_index, ID3D11LinkingNode *dst_node, INT dst_parameter_index) PURE;
     STDMETHOD(PassValueWithSwizzle)(THIS_ ID3D11LinkingNode *src_node, INT src_parameter_index, LPCSTR src_swizzle, ID3D11LinkingNode *dst_node, INT dst_parameter_index,LPCSTR dst_swizzle) PURE;
     STDMETHOD(GetLastError)(THIS_ ID3DBlob **error) PURE;
