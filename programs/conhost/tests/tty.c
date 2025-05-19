@@ -1681,11 +1681,11 @@ static void child_process(HANDLE pipe)
                 crc.nLength = sizeof(crc);
                 crc.dwCtrlWakeupMask = req->u.control.mask;
                 crc.nInitialChars = wcslen(req->u.control.initial);
-                crc.dwConsoleKeyState = 0xa5;
+                crc.dwControlKeyState = 0xa5;
                 memcpy(ptr, req->u.control.initial, crc.nInitialChars * sizeof(WCHAR));
                 ret = ReadConsoleW(input, ptr, count, &count, &crc);
                 ok(ret, "ReadConsoleW failed: %lu\n", GetLastError());
-                *(DWORD *)result = crc.dwConsoleKeyState;
+                *(DWORD *)result = crc.dwControlKeyState;
                 ret = WriteFile(pipe, result, sizeof(DWORD) + count * sizeof(WCHAR), NULL, NULL);
                 ok(ret, "WriteFile failed: %lu\n", GetLastError());
             }

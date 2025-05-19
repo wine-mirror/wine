@@ -2112,7 +2112,7 @@ BOOL WINAPI ReadConsoleW( HANDLE handle, void *buffer, DWORD length, DWORD *coun
                              tmp, sizeof(DWORD) + length * sizeof(WCHAR), count );
         if (ret)
         {
-            memcpy( &crc->dwConsoleKeyState, tmp, sizeof(DWORD) );
+            memcpy( &crc->dwControlKeyState, tmp, sizeof(DWORD) );
             *count -= sizeof(DWORD);
             memcpy( buffer, tmp + sizeof(DWORD), *count );
         }
