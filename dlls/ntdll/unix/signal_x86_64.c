@@ -1945,8 +1945,9 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     else
     {
         TRACE_(seh)( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
-        RDI_sig(sigcontext) = (ULONG_PTR)frame;
-        RSI_sig(sigcontext) = rec->ExceptionCode;
+        RAX_sig(sigcontext) = rec->ExceptionCode;
+        RCX_sig(sigcontext) = (ULONG_PTR)frame;
+        R14_sig(sigcontext) = frame->syscall_flags;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -2984,9 +2985,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
-                   "movq %rdi,%rcx\n\t"
-                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
-                   "movq %rsi,%rax\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 

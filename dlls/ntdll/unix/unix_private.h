@@ -318,7 +318,7 @@ extern void DECLSPEC_NORETURN signal_start_thread( PRTL_THREAD_START_ROUTINE ent
                                                    BOOL suspend, TEB *teb );
 extern SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4];
 extern void __wine_syscall_dispatcher(void);
-extern void DECLSPEC_NORETURN __wine_syscall_dispatcher_return( void *frame, ULONG_PTR retval );
+extern void __wine_syscall_dispatcher_return(void);
 extern void __wine_unix_call_dispatcher(void);
 extern NTSTATUS signal_set_full_context( CONTEXT *context );
 extern NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size );

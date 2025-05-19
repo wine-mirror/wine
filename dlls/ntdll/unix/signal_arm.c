@@ -802,8 +802,8 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     else
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->pc, rec->ExceptionCode );
-        REGn_sig(0, context) = (DWORD)frame;
-        REGn_sig(1, context) = rec->ExceptionCode;
+        REGn_sig(0, context) = rec->ExceptionCode;
+        REGn_sig(8, context) = (DWORD)frame;
         PC_sig(context)      = (DWORD)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -1167,7 +1167,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mov sp, r6\n\t"
                    "mov r8, r6\n\t"
                    "bl init_syscall_frame\n\t"
-                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "b __wine_syscall_dispatcher_return" )
 
 
 /***********************************************************************
@@ -1227,9 +1227,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "pop {r0-r3}\n\t"                /* first 4 args are in registers */
                    "ldr r5, [r4]\n\t"               /* table->ServiceTable */
                    "ldr ip, [r5, ip, lsl #2]\n\t"
-                   "blx ip\n"
-                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
-                   "ldr ip, [r8, #0x44]\n\t"    /* frame->restore_flags */
+                   "blx ip\n\t"
+                   __ASM_GLOBL("__wine_syscall_dispatcher_return") "\n\t"
+                   "ldr ip, [r8, #0x44]\n\t"        /* frame->restore_flags */
                    "tst ip, #4\n\t"                 /* CONTEXT_FLOATING_POINT */
                    "beq 3f\n\t"
                    "ldr r4, [r8, #0x48]\n\t"
@@ -1248,12 +1248,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    "5:\tmovw r0, #0x001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movt r0, #0xc000\n\t"
-                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
-
-__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
-                   "mov r8, r0\n\t"
-                   "mov r0, r1\n\t"
-                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "b __wine_syscall_dispatcher_return" )
 
 
 /***********************************************************************
@@ -1299,6 +1294,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ldr sp, [r8, #0x38]\n\t"
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n\t"
-                   "1:\tb " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "1:\tb __wine_syscall_dispatcher_return" )
 
 #endif  /* __arm__ */

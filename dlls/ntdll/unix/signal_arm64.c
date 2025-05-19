@@ -1051,8 +1051,8 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     else
     {
         TRACE( "returning to user mode ip=%p ret=%08x\n", (void *)frame->pc, rec->ExceptionCode );
-        REGn_sig(0, context) = (ULONG_PTR)frame;
-        REGn_sig(1, context) = rec->ExceptionCode;
+        REGn_sig(0, context) = rec->ExceptionCode;
+        SP_sig(context)      = (ULONG_PTR)frame;
         PC_sig(context)      = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -1671,8 +1671,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
-                   "mov sp, x0\n\t"
-                   "mov x0, x1\n\t"
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 

@@ -1840,11 +1840,8 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     else
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
-        stack = (UINT *)frame;
-        *(--stack) = rec->ExceptionCode;
-        *(--stack) = (UINT)frame;
-        *(--stack) = 0xdeadbabe;  /* return address */
-        ESP_sig(sigcontext) = (DWORD)stack;
+        EAX_sig(sigcontext) = rec->ExceptionCode;
+        ESP_sig(sigcontext) = (DWORD)frame;
         EIP_sig(sigcontext) = (DWORD)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -2589,7 +2586,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl 8(%ebp)\n\t"          /* entry */
                    "call " __ASM_NAME("init_syscall_frame") "\n\t"
                    "addl $16,%esp\n\t"
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "jmp " __ASM_NAME("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2694,9 +2691,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "cld\n\t"
                    "rep; movsl\n\t"
                    "call *(%eax,%edx,4)\n\t"
-                   "leal -0x34(%ebp),%esp\n"
+                   "leal -0x34(%ebp),%esp\n\t"
 
-                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
+                   __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_return")) "\n\t"
                    "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
                    "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
                    "jz 3f\n\t"
@@ -2776,12 +2773,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI("\t.cfi_restore_state\n")
 
                    "6:\tmovl $0xc000001c,%eax\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
-
-__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
-                   "movl 8(%esp),%eax\n\t"
-                   "movl 4(%esp),%esp\n\t"
-                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+                   "jmp " __ASM_NAME("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2827,7 +2819,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
                    "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
-                   "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
+                   "jnz " __ASM_NAME("__wine_syscall_dispatcher_return") "\n\t"
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
