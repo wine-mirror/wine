@@ -183,7 +183,7 @@ static struct buffer
     UINT  allocated;     /* allocated size in bytes */
     UINT  count;         /* number of entries written */
     BYTE *ptr;
-} strings, strings_idx, userstrings, userstrings_idx;
+} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -347,6 +347,29 @@ static UINT add_userstring( const USHORT *str, UINT size )
     return offset;
 }
 
+static UINT add_blob( const BYTE *blob, UINT size )
+{
+    BYTE encoded[4];
+    UINT insert_idx, offset = blobs.offset, len = encode_int( size, encoded );
+    const struct index *idx;
+
+    if (!blob && offset) return 0;
+    if ((idx = find_index( &blobs_idx, &blobs, blob, size, TRUE, &insert_idx ))) return idx->offset;
+
+    grow_buffer( &blobs, len + size );
+    memcpy( blobs.ptr + blobs.offset, encoded, len );
+    blobs.offset += len;
+    if (blob)
+    {
+        memcpy( blobs.ptr + blobs.offset, blob, size );
+        blobs.offset += size;
+    }
+    blobs.count++;
+
+    insert_index( &blobs_idx, insert_idx, offset, size );
+    return offset;
+}
+
 static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 {
     grow_buffer( buf, size );
@@ -361,6 +384,7 @@ static void build_table_stream( const statement_list_t *stmts )
     add_string( "" );
     add_userstring( NULL, 0 );
     add_userstring( &space, sizeof(space) );
+    add_blob( NULL, 0 );
 }
 
 static void build_streams( const statement_list_t *stmts )
@@ -381,6 +405,12 @@ static void build_streams( const statement_list_t *stmts )
 
     streams[STREAM_USERSTRING].data_size = userstrings.offset;
     streams[STREAM_USERSTRING].data = userstrings.ptr;
+
+    len = (blobs.offset + 3) & ~3;
+    add_bytes( &blobs, pad, len - blobs.offset );
+
+    streams[STREAM_BLOB].data_size = blobs.offset;
+    streams[STREAM_BLOB].data = blobs.ptr;
 
     for (i = 0; i < STREAM_MAX; i++)
     {
