@@ -2367,7 +2367,6 @@ static void test_device_interfaces(const D3D_FEATURE_LEVEL feature_level)
     check_interface(device, &IID_IUnknown, TRUE, FALSE);
     check_interface(device, &IID_ID3D11Device, TRUE, FALSE);
     check_interface(device, &IID_ID3D11Device2, TRUE, TRUE); /* Not available on all Windows versions. */
-    todo_wine
     check_interface(device, &IID_ID3D11Device3, TRUE, TRUE); /* Not available on all Windows versions. */
     todo_wine
     check_interface(device, &IID_ID3D11Device4, TRUE, TRUE); /* Not available on all Windows versions. */

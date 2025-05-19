@@ -64,7 +64,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_AddRef(ID3D11BlendState1 *iface
 
     if (refcount == 1)
     {
-        ID3D11Device2_AddRef(state->device);
+        ID3D11Device3_AddRef(state->device);
         wined3d_blend_state_incref(state->wined3d_state);
     }
 
@@ -80,9 +80,9 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState1 *ifac
 
     if (!refcount)
     {
-        ID3D11Device2 *device = state->device;
+        ID3D11Device3 *device = state->device;
         wined3d_blend_state_decref(state->wined3d_state);
-        ID3D11Device2_Release(device);
+        ID3D11Device3_Release(device);
     }
 
     return refcount;
@@ -223,7 +223,7 @@ static void STDMETHODCALLTYPE d3d10_blend_state_GetDevice(ID3D10BlendState1 *ifa
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device2_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device3_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_blend_state_GetPrivateData(ID3D10BlendState1 *iface,
@@ -321,7 +321,7 @@ static const struct ID3D10BlendState1Vtbl d3d10_blend_state_vtbl =
 static void STDMETHODCALLTYPE d3d_blend_state_wined3d_object_destroyed(void *parent)
 {
     struct d3d_blend_state *state = parent;
-    struct d3d_device *device = impl_from_ID3D11Device2(state->device);
+    struct d3d_device *device = impl_from_ID3D11Device3(state->device);
 
     wine_rb_remove(&device->blend_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
@@ -458,7 +458,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     }
     wined3d_mutex_unlock();
 
-    ID3D11Device2_AddRef(object->device = &device->ID3D11Device2_iface);
+    ID3D11Device3_AddRef(object->device = &device->ID3D11Device3_iface);
 
     TRACE("Created blend state %p.\n", object);
     *state = object;
@@ -525,7 +525,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_AddRef(ID3D11DepthStenci
 
     if (refcount == 1)
     {
-        ID3D11Device2_AddRef(state->device);
+        ID3D11Device3_AddRef(state->device);
         wined3d_depth_stencil_state_incref(state->wined3d_state);
     }
 
@@ -541,10 +541,10 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
 
     if (!refcount)
     {
-        ID3D11Device2 *device = state->device;
+        ID3D11Device3 *device = state->device;
 
         wined3d_depth_stencil_state_decref(state->wined3d_state);
-        ID3D11Device2_Release(device);
+        ID3D11Device3_Release(device);
     }
 
     return refcount;
@@ -661,7 +661,7 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDevice(ID3D10DepthSten
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device2_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device3_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_GetPrivateData(ID3D10DepthStencilState *iface,
@@ -726,7 +726,7 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
 static void STDMETHODCALLTYPE d3d_depthstencil_state_wined3d_object_destroyed(void *parent)
 {
     struct d3d_depthstencil_state *state = parent;
-    struct d3d_device *device = impl_from_ID3D11Device2(state->device);
+    struct d3d_device *device = impl_from_ID3D11Device3(state->device);
 
     wine_rb_remove(&device->depthstencil_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
@@ -859,7 +859,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     }
     wined3d_mutex_unlock();
 
-    ID3D11Device2_AddRef(object->device = &device->ID3D11Device2_iface);
+    ID3D11Device3_AddRef(object->device = &device->ID3D11Device3_iface);
 
     TRACE("Created depth/stencil state %p.\n", object);
     *state = object;
@@ -932,7 +932,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_AddRef(ID3D11RasterizerSta
 
     if (refcount == 1)
     {
-        ID3D11Device2_AddRef(state->device);
+        ID3D11Device3_AddRef(state->device);
         wined3d_rasterizer_state_incref(state->wined3d_state);
     }
 
@@ -948,9 +948,9 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
 
     if (!refcount)
     {
-        ID3D11Device2 *device = state->device;
+        ID3D11Device3 *device = state->device;
         wined3d_rasterizer_state_decref(state->wined3d_state);
-        ID3D11Device2_Release(device);
+        ID3D11Device3_Release(device);
     }
 
     return refcount;
@@ -1079,7 +1079,7 @@ static void STDMETHODCALLTYPE d3d10_rasterizer_state_GetDevice(ID3D10RasterizerS
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device2_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device3_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rasterizer_state_GetPrivateData(ID3D10RasterizerState *iface,
@@ -1144,7 +1144,7 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
 static void STDMETHODCALLTYPE d3d_rasterizer_state_wined3d_object_destroyed(void *parent)
 {
     struct d3d_rasterizer_state *state = parent;
-    struct d3d_device *device = impl_from_ID3D11Device2(state->device);
+    struct d3d_device *device = impl_from_ID3D11Device3(state->device);
 
     wine_rb_remove(&device->rasterizer_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
@@ -1220,7 +1220,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
         return hr;
     }
 
-    ID3D11Device2_AddRef(state->device = &device->ID3D11Device2_iface);
+    ID3D11Device3_AddRef(state->device = &device->ID3D11Device3_iface);
 
     return S_OK;
 }
@@ -1330,7 +1330,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_AddRef(ID3D11SamplerState *if
 
     if (refcount == 1)
     {
-        ID3D11Device2_AddRef(state->device);
+        ID3D11Device3_AddRef(state->device);
         wined3d_sampler_incref(state->wined3d_sampler);
     }
 
@@ -1346,9 +1346,9 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_Release(ID3D11SamplerState *i
 
     if (!refcount)
     {
-        ID3D11Device2 *device = state->device;
+        ID3D11Device3 *device = state->device;
         wined3d_sampler_decref(state->wined3d_sampler);
-        ID3D11Device2_Release(device);
+        ID3D11Device3_Release(device);
     }
 
     return refcount;
@@ -1465,7 +1465,7 @@ static void STDMETHODCALLTYPE d3d10_sampler_state_GetDevice(ID3D10SamplerState *
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    ID3D11Device2_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
+    ID3D11Device3_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_GetPrivateData(ID3D10SamplerState *iface,
@@ -1530,7 +1530,7 @@ static const struct ID3D10SamplerStateVtbl d3d10_sampler_state_vtbl =
 static void STDMETHODCALLTYPE d3d_sampler_wined3d_object_destroyed(void *parent)
 {
     struct d3d_sampler_state *state = parent;
-    struct d3d_device *device = impl_from_ID3D11Device2(state->device);
+    struct d3d_device *device = impl_from_ID3D11Device3(state->device);
 
     wine_rb_remove(&device->sampler_states, &state->entry);
     wined3d_private_store_cleanup(&state->private_store);
@@ -1619,7 +1619,7 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
         return hr;
     }
 
-    ID3D11Device2_AddRef(state->device = &device->ID3D11Device2_iface);
+    ID3D11Device3_AddRef(state->device = &device->ID3D11Device3_iface);
 
     return S_OK;
 }
