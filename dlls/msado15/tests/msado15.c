@@ -746,7 +746,7 @@ static void test_ADORecordsetConstruction(void)
     ok( count == 1, "got %ld\n", count );
     if (count > 0)
     {
-        unsigned char prec;
+        unsigned char prec, scale;
         VARIANT index;
         ADO_LONGPTR size;
         DataTypeEnum type;
@@ -768,6 +768,9 @@ static void test_ADORecordsetConstruction(void)
         hr = Field_get_Precision( field, &prec );
         ok( hr == S_OK, "got %08lx\n", hr );
         ok( prec == 1, "got %u\n", prec );
+        hr = Field_get_NumericScale( field, &scale );
+        ok( hr == S_OK, "got %08lx\n", hr );
+        ok( scale == 1, "got %u\n", scale );
 
         Field_Release(field);
     }
@@ -786,10 +789,10 @@ static void test_Fields(void)
 {
     _Recordset *recordset;
     ISupportErrorInfo *errorinfo;
+    unsigned char prec, scale;
     Fields *fields;
     Field *field, *field2;
     VARIANT val, index;
-    unsigned char prec;
     BSTR name;
     LONG count;
     ADO_LONGPTR size;
@@ -876,12 +879,21 @@ static void test_Fields(void)
     hr = Field_get_Precision( field, &prec );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( !prec, "got %u\n", prec );
+    hr = Field_get_NumericScale( field, &scale );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( !scale, "got %u\n", scale );
 
     hr = Field_put_Precision( field, 7 );
     ok( hr == S_OK, "got %08lx\n", hr );
     hr = Field_get_Precision( field, &prec );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( prec == 7, "got %u\n", prec );
+
+    hr = Field_put_NumericScale( field, 12 );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    hr = Field_get_NumericScale( field, &scale );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    ok( scale == 12, "got %u\n", scale );
 
     Field_Release( field );
     Fields_Release( fields );
