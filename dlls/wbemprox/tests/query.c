@@ -2520,7 +2520,7 @@ static void test_MSSMBios_RawSMBiosTables( IWbemLocator *locator )
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, L"SMBiosData", 0, &val, &type, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
-    todo_wine ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %#x\n", V_VT(&val) );
+    ok( V_VT( &val ) == (VT_UI1 | VT_ARRAY), "got %#x\n", V_VT(&val) );
     ok( type == (CIM_UINT8 | CIM_FLAG_ARRAY), "got %#lx\n", type );
 
     IWbemClassObject_Release( obj );
