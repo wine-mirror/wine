@@ -222,6 +222,7 @@ enum glx_swap_control_method
 
 static struct glx_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
+static const struct egl_platform *egl;
 
 /* Selects the preferred GLX swap control method for use by wglSwapIntervalEXT */
 static enum glx_swap_control_method swap_control_method = GLX_SWAP_CONTROL_NONE;
@@ -324,9 +325,10 @@ static const GLubyte *(*pglGetString)(GLenum name);
 
 static void *opengl_handle;
 static const struct opengl_funcs *funcs;
-static const struct opengl_driver_funcs x11drv_driver_funcs;
+static struct opengl_driver_funcs x11drv_driver_funcs;
 static const struct opengl_drawable_funcs x11drv_surface_funcs;
 static const struct opengl_drawable_funcs x11drv_pbuffer_funcs;
+static const struct opengl_drawable_funcs x11drv_egl_surface_funcs;
 
 /* check if the extension is present in the list */
 static BOOL has_extension( const char *list, const char *ext )
@@ -468,6 +470,50 @@ done:
     return ret;
 }
 
+static EGLenum x11drv_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
+{
+    egl = platform;
+    *platform_display = gdi_display;
+    return EGL_PLATFORM_X11_KHR;
+}
+
+static inline EGLConfig egl_config_for_format(int format)
+{
+    assert(format > 0 && format <= 2 * egl->config_count);
+    if (format <= egl->config_count) return egl->configs[format - 1];
+    return egl->configs[format - egl->config_count - 1];
+}
+
+static BOOL x11drv_egl_surface_create( HWND hwnd, HDC hdc, int format, struct opengl_drawable **drawable )
+{
+    struct opengl_drawable *previous;
+    struct gl_drawable *gl;
+    RECT rect;
+
+    if ((previous = *drawable) && previous->format == format) return TRUE;
+    NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
+
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_egl_surface_funcs, format, hwnd, hdc ))) return FALSE;
+    gl->rect = rect;
+
+    gl->window = create_client_window( hwnd, &default_visual, default_colormap );
+    gl->base.surface = funcs->p_eglCreateWindowSurface( egl->display, egl_config_for_format(format),
+                                                        (void *)gl->window, NULL );
+    if (!gl->base.surface)
+    {
+        destroy_client_window( hwnd, gl->window );
+        free( gl );
+        return FALSE;
+    }
+
+    TRACE( "Created drawable %s with client window %lx\n", debugstr_opengl_drawable( &gl->base ), gl->window );
+    XFlush( gdi_display );
+
+    if (previous) opengl_drawable_release( previous );
+    *drawable = &gl->base;
+    return TRUE;
+}
+
 /**********************************************************************
  *           X11DRV_OpenglInit
  */
@@ -481,6 +527,17 @@ UINT X11DRV_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, c
         return STATUS_INVALID_PARAMETER;
     }
     funcs = opengl_funcs;
+
+    if (use_egl)
+    {
+        if (!opengl_funcs->egl_handle) return STATUS_NOT_SUPPORTED;
+        WARN( "Using experimental EGL OpenGL backend\n" );
+        x11drv_driver_funcs = **driver_funcs;
+        x11drv_driver_funcs.p_init_egl_platform = x11drv_init_egl_platform;
+        x11drv_driver_funcs.p_surface_create = x11drv_egl_surface_create;
+        *driver_funcs = &x11drv_driver_funcs;
+        return STATUS_SUCCESS;
+    }
 
     /* No need to load any other libraries as according to the ABI, libGL should be self-sufficient
        and include all dependencies */
@@ -1530,7 +1587,62 @@ static BOOL x11drv_surface_swap( struct opengl_drawable *base )
     return TRUE;
 }
 
-static const struct opengl_driver_funcs x11drv_driver_funcs =
+static void x11drv_egl_surface_destroy( struct opengl_drawable *base )
+{
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
+
+    TRACE( "drawable %s\n", debugstr_opengl_drawable( base ) );
+
+    destroy_client_window( gl->base.hwnd, gl->window );
+}
+
+static void x11drv_egl_surface_detach( struct opengl_drawable *base )
+{
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+}
+
+static void x11drv_egl_surface_update( struct opengl_drawable *base )
+{
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
+
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+
+    update_gl_drawable_size( gl );
+    update_gl_drawable_offscreen( gl );
+}
+
+static void x11drv_egl_surface_flush( struct opengl_drawable *base, UINT flags )
+{
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
+
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+
+    if (flags & GL_FLUSH_INTERVAL) funcs->p_eglSwapInterval( egl->display, abs( base->interval ) );
+    if (flags & GL_FLUSH_UPDATED)
+    {
+        update_gl_drawable_size( gl );
+        update_gl_drawable_offscreen( gl );
+    }
+
+    present_gl_drawable( gl, TRUE, !(flags & GL_FLUSH_FINISHED) );
+}
+
+static BOOL x11drv_egl_surface_swap( struct opengl_drawable *base )
+{
+    struct gl_drawable *gl = impl_from_opengl_drawable( base );
+
+    TRACE( "%s\n", debugstr_opengl_drawable( base ) );
+
+    funcs->p_eglSwapBuffers( egl->display, gl->base.surface );
+
+    update_gl_drawable_size( gl );
+    update_gl_drawable_offscreen( gl );
+
+    present_gl_drawable( gl, TRUE, FALSE );
+    return TRUE;
+}
+
+static struct opengl_driver_funcs x11drv_driver_funcs =
 {
     .p_get_proc_address = x11drv_get_proc_address,
     .p_init_pixel_formats = x11drv_init_pixel_formats,
@@ -1560,6 +1672,15 @@ static const struct opengl_drawable_funcs x11drv_pbuffer_funcs =
     .detach = x11drv_pbuffer_detach,
     .flush = x11drv_pbuffer_flush,
     .swap = x11drv_pbuffer_swap,
+};
+
+static const struct opengl_drawable_funcs x11drv_egl_surface_funcs =
+{
+    .destroy = x11drv_egl_surface_destroy,
+    .detach = x11drv_egl_surface_detach,
+    .update = x11drv_egl_surface_update,
+    .flush = x11drv_egl_surface_flush,
+    .swap = x11drv_egl_surface_swap,
 };
 
 #else  /* no OpenGL includes */
