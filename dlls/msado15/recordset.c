@@ -78,6 +78,7 @@ struct field
     LONG                defined_size;
     LONG                attrs;
     LONG                index;
+    unsigned char       prec;
     struct recordset   *recordset;
 
     /* Field Properties */
@@ -355,8 +356,14 @@ static HRESULT WINAPI field_putref_DataFormat( Field *iface, IUnknown *format )
 
 static HRESULT WINAPI field_put_Precision( Field *iface, unsigned char precision )
 {
-    FIXME( "%p, %c\n", iface, precision );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %u\n", iface, precision );
+
+    if (field->recordset->state != adStateClosed) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
+    field->prec = precision;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_put_NumericScale( Field *iface, unsigned char scale )
@@ -1035,6 +1042,7 @@ static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
     Field_put_Type( field, info->wType );
     Field_put_DefinedSize( field, info->ulColumnSize );
     if (info->dwFlags != adFldUnspecified) Field_put_Attributes( field, info->dwFlags );
+    Field_put_Precision( field, info->bPrecision );
 
     if (!(resize_fields( fields, fields->count + 1 )))
     {
