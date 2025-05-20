@@ -902,7 +902,8 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
             }
             TRACE( "unwinding to target %Ix\n", base + table->ScopeRecord[i].JumpTarget );
             RtlUnwindEx( frame, (char *)base + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, (CONTEXT *)dispatch->ContextRecord, dispatch->HistoryTable );
+                         rec, ULongToPtr(rec->ExceptionCode), (CONTEXT *)dispatch->ContextRecord,
+                         dispatch->HistoryTable );
         }
     }
     return ExceptionContinueSearch;
@@ -1593,7 +1594,8 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
             }
             TRACE( "unwinding to target %lx\n", base + table->ScopeRecord[i].JumpTarget );
             RtlUnwindEx( frame, (char *)base + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
+                         rec, ULongToPtr(rec->ExceptionCode), dispatch->ContextRecord,
+                         dispatch->HistoryTable );
         }
     }
     return ExceptionContinueSearch;
@@ -2261,7 +2263,8 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec, void *
             }
             TRACE( "unwinding to target %Ix\n", base + table->ScopeRecord[i].JumpTarget );
             RtlUnwindEx( frame, (char *)base + table->ScopeRecord[i].JumpTarget,
-                         rec, 0, dispatch->ContextRecord, dispatch->HistoryTable );
+                         rec, ULongToPtr(rec->ExceptionCode), dispatch->ContextRecord,
+                         dispatch->HistoryTable );
         }
     }
     return ExceptionContinueSearch;
