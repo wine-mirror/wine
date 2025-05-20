@@ -1622,7 +1622,7 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd,
     *foreground = 0;
 
     if (!(old_foreground = NtUserGetForegroundWindow())) old_foreground = NtUserGetDesktopWindow();
-    if (NtUserGetWindowThread( old_foreground, NULL ) == GetCurrentThreadId() &&
+    if (!is_virtual_desktop() && NtUserGetWindowThread( old_foreground, NULL ) == GetCurrentThreadId() &&
         !window_has_pending_wm_state( old_foreground, NormalState ) &&
         !thread_data->net_active_window_serial)
     {

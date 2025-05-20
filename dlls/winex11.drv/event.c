@@ -1302,7 +1302,7 @@ void X11DRV_ActivateWindow( HWND hwnd, HWND previous )
 {
     struct x11drv_win_data *data;
 
-    set_net_active_window( hwnd, previous );
+    if (!is_virtual_desktop()) set_net_active_window( hwnd, previous );
 
     if (!(data = get_win_data( hwnd ))) return;
     if (!data->managed || data->embedder) set_input_focus( data );
