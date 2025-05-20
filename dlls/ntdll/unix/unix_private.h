@@ -101,24 +101,38 @@ static inline BOOL is_arm64ec(void)
 /* thread private data, stored in NtCurrentTeb()->GdiTebBatch */
 struct ntdll_thread_data
 {
-    void              *cpu_data[16];  /* reserved for CPU-specific data */
-    void              *kernel_stack;  /* stack for thread startup and kernel syscalls */
-    int                request_fd;    /* fd for sending server requests */
-    int                reply_fd;      /* fd for receiving server replies */
-    int                wait_fd[2];    /* fd for sleeping server requests */
-    BOOL               allow_writes;  /* ThreadAllowWrites flags */
-    pthread_t          pthread_id;    /* pthread thread id */
-    struct list        entry;         /* entry in TEB list */
-    PRTL_THREAD_START_ROUTINE start;  /* thread entry point */
-    void              *param;         /* thread entry point parameter */
-    void              *jmp_buf;       /* setjmp buffer for exception handling */
+    void                     *cpu_data[16];  /* 1d4/02f0 reserved for CPU-specific data */
+    SYSTEM_SERVICE_TABLE     *syscall_table; /* 214/0370 syscall table */
+    struct syscall_frame     *syscall_frame; /* 218/0378 current syscall frame */
+    int                       request_fd;    /* fd for sending server requests */
+    int                       reply_fd;      /* fd for receiving server replies */
+    int                       wait_fd[2];    /* fd for sleeping server requests */
+    BOOL                      allow_writes;  /* ThreadAllowWrites flags */
+    pthread_t                 pthread_id;    /* pthread thread id */
+    void                     *kernel_stack;  /* stack for thread startup and kernel syscalls */
+    struct list               entry;         /* entry in TEB list */
+    PRTL_THREAD_START_ROUTINE start;         /* thread entry point */
+    void                     *param;         /* thread entry point parameter */
+    void                     *jmp_buf;       /* setjmp buffer for exception handling */
 };
 
 C_ASSERT( sizeof(struct ntdll_thread_data) <= sizeof(((TEB *)0)->GdiTebBatch) );
+#ifdef _WIN64
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_table ) == 0x370 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_frame ) == 0x378 );
+#else
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_table ) == 0x214 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct ntdll_thread_data, syscall_frame ) == 0x218 );
+#endif
 
 static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 {
     return (struct ntdll_thread_data *)&NtCurrentTeb()->GdiTebBatch;
+}
+
+static inline struct syscall_frame *get_syscall_frame(void)
+{
+    return ntdll_get_thread_data()->syscall_frame;
 }
 
 /* returns TRUE if the async is complete; FALSE if it should be restarted */

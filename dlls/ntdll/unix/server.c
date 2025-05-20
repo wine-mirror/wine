@@ -1700,6 +1700,7 @@ void server_init_process_done(void)
     unsigned int status;
     int suspend;
     FILE_FS_DEVICE_INFORMATION info;
+    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
 
     if (!get_device_info( initial_cwd, &info ) && (info.Characteristics & FILE_REMOVABLE_MEDIA))
         chdir( "/" );
@@ -1713,6 +1714,7 @@ void server_init_process_done(void)
      * send exceptions to the debugger before the create process event that
      * is sent by init_process_done */
     signal_init_process();
+    thread_data->syscall_table = KeServiceDescriptorTable;
 
     /* always send the native TEB */
     if (!(teb = NtCurrentTeb64())) teb = NtCurrentTeb();

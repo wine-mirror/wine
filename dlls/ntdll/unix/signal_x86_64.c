@@ -449,8 +449,7 @@ struct amd64_thread_data
     DWORD_PTR             dr6;           /* 0310 */
     DWORD_PTR             dr7;           /* 0318 */
     void                 *pthread_teb;   /* 0320 thread data for pthread */
-    struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
-    SYSTEM_SERVICE_TABLE *syscall_table; /* 0330 syscall table */
+    void                 *unused[2];     /* 0328 */
     DWORD                 fs;            /* 0338 WOW TEB selector */
     DWORD                 xstate_features_size;  /* 033c */
     UINT64                xstate_features_mask;  /* 0340 */
@@ -459,11 +458,10 @@ struct amd64_thread_data
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x320 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_frame ) == 0x328 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, syscall_table ) == 0x330 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, xstate_features_size ) == 0x33c );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, xstate_features_mask ) == 0x340 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x348 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -482,7 +480,7 @@ static inline TEB *get_current_teb(void)
 static BOOL is_inside_syscall( const ucontext_t *sigcontext )
 {
     return ((char *)RSP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
-            (char *)RSP_sig(sigcontext) <= (char *)amd64_thread_data()->syscall_frame);
+            (char *)RSP_sig(sigcontext) <= (char *)get_syscall_frame());
 }
 
 
@@ -974,7 +972,7 @@ NTSTATUS signal_set_full_context( CONTEXT *context )
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
 
     if (!status && (context->ContextFlags & CONTEXT_INTEGER) == CONTEXT_INTEGER)
-        amd64_thread_data()->syscall_frame->restore_flags |= CONTEXT_INTEGER;
+        get_syscall_frame()->restore_flags |= CONTEXT_INTEGER;
     return status;
 }
 
@@ -1007,7 +1005,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     NTSTATUS ret = STATUS_SUCCESS;
     DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
     BOOL self = (handle == GetCurrentThread());
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
 
     if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
     {
@@ -1102,7 +1100,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
  */
 NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     DWORD needed_flags = context->ContextFlags & ~CONTEXT_AMD64;
     BOOL self = (handle == GetCurrentThread());
 
@@ -1231,7 +1229,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
 {
     BOOL self = (handle == GetCurrentThread());
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     I386_CONTEXT *wow_frame;
     const I386_CONTEXT *context = ctx;
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
@@ -1333,7 +1331,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
 NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
 {
     DWORD needed_flags;
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     I386_CONTEXT *wow_frame, *context = ctx;
     BOOL self = (handle == GetCurrentThread());
 
@@ -1530,7 +1528,7 @@ static void setup_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec )
 NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3,
                                    PNTAPCFUNC func, NTSTATUS status )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     ULONG64 rsp = context ? context->Rsp : frame->rsp;
     struct apc_stack_layout *stack;
 
@@ -1566,7 +1564,7 @@ NTSTATUS call_user_apc_dispatcher( CONTEXT *context, ULONG_PTR arg1, ULONG_PTR a
  */
 void call_raise_user_exception_dispatcher(void)
 {
-    amd64_thread_data()->syscall_frame->rip = (UINT64)pKiRaiseUserExceptionDispatcher;
+    get_syscall_frame()->rip = (UINT64)pKiRaiseUserExceptionDispatcher;
 }
 
 
@@ -1575,7 +1573,7 @@ void call_raise_user_exception_dispatcher(void)
  */
 NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     struct exc_stack_layout *stack;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
     unsigned int xstate_size;
@@ -1638,13 +1636,13 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
-                   "movq 0x328(%r8),%r10\n\t"  /* amd64_thread_data()->syscall_frame */
+                   "movq 0x378(%r8),%r10\n\t"  /* thread_data->syscall_frame */
                    "movq (%r8),%rax\n\t"       /* NtCurrentTeb()->Tib.ExceptionList */
                    "movq %rax,0x300(%rsp,%rsi)\n\t"
                    "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
                    "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
-                   "movq %rsp,0x328(%r8)\n\t"  /* amd64_thread_data()->syscall_frame */
+                   "movq %rsp,0x378(%r8)\n\t"  /* thread_data->syscall_frame */
                    /* switch to user stack */
                    "movq %rdi,%rsp\n\t"        /* user_rsp */
 #ifdef __linux__
@@ -1686,9 +1684,9 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movq %r9,%rdi\n\t"
                    "movq %r8,%rcx\n\t"
 #endif
-                   "movq 0x328(%rcx),%r10\n\t" /* amd64_thread_data()->syscall_frame */
+                   "movq 0x378(%rcx),%r10\n\t" /* thread_data->syscall_frame */
                    "movq 0xa0(%r10),%r11\n\t"  /* frame->prev_frame */
-                   "movq %r11,0x328(%rcx)\n\t" /* amd64_thread_data()->syscall_frame = prev_frame */
+                   "movq %r11,0x378(%rcx)\n\t" /* syscall_frame = prev_frame */
                    "movq 0xa8(%r10),%rbp\n\t"  /* frame->syscall_cfa */
                    "subq $0x10,%rbp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
@@ -1749,7 +1747,7 @@ __ASM_GLOBAL_FUNC( user_mode_abort_thread,
  */
 NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     ULONG64 rsp = (frame->rsp - offsetof( struct callback_stack_layout, args_data[len] )) & ~15;
     struct callback_stack_layout *stack = (struct callback_stack_layout *)rsp;
 
@@ -1771,7 +1769,7 @@ NTSTATUS KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_p
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    if (!amd64_thread_data()->syscall_frame->prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
+    if (!get_syscall_frame()->prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
     user_mode_callback_return( ret_ptr, ret_len, status, NtCurrentTeb() );
 }
 
@@ -1915,7 +1913,7 @@ static inline BOOL handle_interrupt( ucontext_t *sigcontext, EXCEPTION_RECORD *r
  */
 static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec, CONTEXT *context )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
     DWORD i;
 
     if (!is_inside_syscall( sigcontext )) return FALSE;
@@ -1962,7 +1960,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
  */
 static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
 {
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
 
     /* disallow single-stepping through a syscall */
 
@@ -2217,7 +2215,7 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
 
-    if (!is_inside_syscall( ucontext )) user_mode_abort_thread( 0, amd64_thread_data()->syscall_frame );
+    if (!is_inside_syscall( ucontext )) user_mode_abort_thread( 0, get_syscall_frame() );
     abort_thread( 0 );
 }
 
@@ -2233,7 +2231,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 
     if (is_inside_syscall( ucontext ))
     {
-        struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+        struct syscall_frame *frame = get_syscall_frame();
         ULONG64 saved_compaction = 0;
         I386_CONTEXT *wow_context;
         struct xcontext *context;
@@ -2293,7 +2291,7 @@ static void sigsys_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     extern const void *__wine_syscall_dispatcher_prolog_end_ptr;
     ucontext_t *ucontext = init_handler( sigcontext );
-    struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
+    struct syscall_frame *frame = get_syscall_frame();
 
     TRACE_(seh)("SIGSYS, rax %#llx, rip %#llx.\n", RAX_sig(ucontext), RIP_sig(ucontext));
 
@@ -2493,10 +2491,12 @@ void signal_init_process(void)
 {
     struct sigaction sig_act;
     WOW_TEB *wow_teb = get_wow_teb( NtCurrentTeb() );
-    void *ptr, *kernel_stack = (char *)ntdll_get_thread_data()->kernel_stack + kernel_stack_size;
+    struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
+    void *ptr, *kernel_stack = (char *)thread_data->kernel_stack + kernel_stack_size;
 
-    amd64_thread_data()->syscall_frame = (struct syscall_frame *)((ULONG_PTR)((char *)kernel_stack
-                                         - sizeof(struct syscall_frame) - xstate_features_size) & ~(ULONG_PTR)63);
+    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack
+                                                           - sizeof(struct syscall_frame)
+                                                           - xstate_features_size) & ~(ULONG_PTR)63);
     amd64_thread_data()->xstate_features_size = xstate_features_size;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
@@ -2587,12 +2587,11 @@ void signal_init_process(void)
 void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, TEB *teb )
 {
     struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
-    struct syscall_frame *frame = thread_data->syscall_frame;
+    struct syscall_frame *frame = ((struct ntdll_thread_data *)&teb->GdiTebBatch)->syscall_frame;
     CONTEXT *ctx, context = { 0 };
     I386_CONTEXT *wow_context;
     void *callback;
 
-    thread_data->syscall_table = KeServiceDescriptorTable;
     thread_data->xstate_features_mask = xstate_supported_features_mask;
     assert( thread_data->xstate_features_size == xstate_features_size );
     thread_data->instrumentation_callback = &instrumentation_callback;
@@ -2692,14 +2691,14 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
                    "leaq 0x10(%rbp),%r9\n\t"       /* syscall_cfa */
                    /* set syscall frame */
-                   "movq 0x328(%rcx),%r8\n\t"      /* amd64_thread_data()->syscall_frame */
+                   "movq 0x378(%rcx),%r8\n\t"      /* thread_data->syscall_frame */
                    "orq %r8,%r8\n\t"
                    "jnz 1f\n\t"
                    "leaq -0x300(%rsp),%r8\n\t"     /* sizeof(struct syscall_frame) */
                    "movl 0x33c(%rcx),%eax\n\t"     /* amd64_thread_data()->xstate_features_size */
                    "subq %rax,%r8\n\t"
                    "andq $~63,%r8\n\t"
-                   "movq %r8,0x328(%rcx)\n"        /* amd64_thread_data()->syscall_frame */
+                   "movq %r8,0x378(%rcx)\n"        /* thread_data->syscall_frame */
                    "1:\tmovq $0,0xa0(%r8)\n\t"     /* frame->prev_frame */
                    "movq %r9,0xa8(%r8)\n\t"        /* frame->syscall_cfa */
                    "movl $0,0xb4(%r8)\n\t"         /* frame->restore_flags */
@@ -2716,7 +2715,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
-                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+                   "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
@@ -2829,7 +2828,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
-                   "movq 0x330(%r13),%rcx\n\t"     /* amd64_thread_data()->syscall_table */
+                   "movq 0x370(%r13),%rcx\n\t"     /* thread_data->syscall_table */
                    "leaq (%rcx,%rbx,2),%rbx\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "cmpq 16(%rbx),%rax\n\t"        /* table->ServiceLimit */
@@ -2984,7 +2983,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
 
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_instrumentation,
-                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+                   "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
@@ -3001,7 +3000,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_instrumentation,
  */
 __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq %rcx,%r10\n\t"
-                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+                   "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
