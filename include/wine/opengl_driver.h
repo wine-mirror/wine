@@ -61,7 +61,7 @@ struct wgl_pixel_format
 #ifdef WINE_UNIX_LIB
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 33
+#define WINE_OPENGL_DRIVER_VERSION 34
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -113,9 +113,17 @@ struct opengl_funcs
     void       *egl_handle;
 };
 
+struct egl_platform
+{
+    EGLDisplay  display;
+    BOOL        has_EGL_EXT_present_opaque;
+    BOOL        has_EGL_EXT_pixel_format_float;
+};
+
 /* interface between win32u and the user drivers */
 struct opengl_driver_funcs
 {
+    GLenum (*p_init_egl_platform)(const struct egl_platform*,EGLNativeDisplayType*);
     void *(*p_get_proc_address)(const char *);
     UINT (*p_init_pixel_formats)(UINT*);
     BOOL (*p_describe_pixel_format)(int,struct wgl_pixel_format*);

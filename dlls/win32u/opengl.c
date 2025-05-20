@@ -70,6 +70,7 @@ struct wgl_pbuffer
 };
 
 static const struct opengl_funcs *default_funcs; /* default GL function table from opengl32 */
+static struct egl_platform display_egl;
 static struct opengl_funcs display_funcs;
 static struct opengl_funcs memory_funcs;
 
@@ -226,9 +227,51 @@ static BOOL egl_init(void)
     return TRUE;
 
 failed:
-    dlclose( display_funcs.egl_handle );
-    display_funcs.egl_handle = NULL;
+    dlclose( funcs->egl_handle );
+    funcs->egl_handle = NULL;
     return FALSE;
+}
+
+static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *funcs,
+                               const struct opengl_driver_funcs *driver_funcs )
+{
+    EGLNativeDisplayType platform_display;
+    const char *extensions;
+    EGLint major, minor;
+    EGLenum platform;
+
+    if (!funcs->egl_handle || !driver_funcs->p_init_egl_platform) return;
+
+    platform = driver_funcs->p_init_egl_platform( egl, &platform_display );
+    if (!platform) egl->display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
+    else egl->display = funcs->p_eglGetPlatformDisplay( platform, platform_display, NULL );
+
+    if (!egl->display)
+    {
+        ERR( "Failed to open EGL display\n" );
+        return;
+    }
+
+    if (!funcs->p_eglInitialize( egl->display, &major, &minor )) return;
+    TRACE( "Initialized EGL display %p, version %d.%d\n", egl->display, major, minor );
+
+    if (!(extensions = funcs->p_eglQueryString( egl->display, EGL_EXTENSIONS ))) return;
+    TRACE( "EGL display extensions:\n" );
+    dump_extensions( extensions );
+
+#define CHECK_EXTENSION( ext )                                                                     \
+    if (!has_extension( extensions, #ext ))                                                        \
+    {                                                                                              \
+        ERR( "Failed to find required extension %s\n", #ext );                                     \
+        return;                                                                                    \
+    }
+    CHECK_EXTENSION( EGL_KHR_create_context );
+    CHECK_EXTENSION( EGL_KHR_create_context_no_error );
+    CHECK_EXTENSION( EGL_KHR_no_config_context );
+#undef CHECK_EXTENSION
+
+    egl->has_EGL_EXT_present_opaque = has_extension( extensions, "EGL_EXT_present_opaque" );
+    egl->has_EGL_EXT_pixel_format_float = has_extension( extensions, "EGL_EXT_pixel_format_float" );
 }
 
 #else /* SONAME_LIBEGL */
@@ -237,6 +280,11 @@ static BOOL egl_init(void)
 {
     WARN( "EGL support not compiled in!\n" );
     return FALSE;
+}
+
+static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *funcs,
+                               const struct opengl_driver_funcs *driver_funcs )
+{
 }
 
 #endif /* SONAME_LIBEGL */
@@ -1422,6 +1470,7 @@ static void display_funcs_init(void)
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
+    init_egl_platform( &display_egl, &display_funcs, display_driver_funcs );
 
     display_formats_count = display_driver_funcs->p_init_pixel_formats( &display_onscreen_count );
     init_opengl_funcs( &display_funcs, display_driver_funcs );
