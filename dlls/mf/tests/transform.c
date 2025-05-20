@@ -8813,7 +8813,7 @@ static void test_video_processor(BOOL use_2d_buffer)
     };
 
     const MFVideoArea actual_aperture = {.Area={82,84}};
-    const DWORD actual_width = 96, actual_height = 96, nv12_aligned_width = 128;
+    const DWORD actual_width = 96, actual_height = 96, crop_width = 82, crop_height = 84, nv12_aligned_width = 128;
     const DWORD extra_width = actual_width + 0x30;
     const DWORD nv12_aligned_extra_width = 192;
     const struct attribute_desc rgb32_with_aperture[] =
@@ -8856,6 +8856,13 @@ static void test_video_processor(BOOL use_2d_buffer)
         ATTR_RATIO(MF_MT_FRAME_SIZE, extra_width, actual_height, .required = TRUE),
         {0},
     };
+    const struct attribute_desc nv12_crop[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, crop_width, crop_height, .required = TRUE),
+        {0},
+    };
     const struct attribute_desc rgb32_default_stride[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
@@ -8885,6 +8892,13 @@ static void test_video_processor(BOOL use_2d_buffer)
         ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
         ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .required = TRUE),
         ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 4),
+        {0},
+    };
+    const struct attribute_desc rgb32_crop[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32, .required = TRUE),
+        ATTR_RATIO(MF_MT_FRAME_SIZE, crop_width, crop_height, .required = TRUE),
         {0},
     };
     const struct attribute_desc rgb555_default_stride[] =
@@ -9066,6 +9080,30 @@ static void test_video_processor(BOOL use_2d_buffer)
         .attributes = output_sample_attributes,
         .sample_time = 0, .sample_duration = 10000000,
         .buffer_count = 1, .buffers = &nv12_extra_width_buffer_2d_desc,
+    };
+    const struct buffer_desc nv12_crop_buffer_desc =
+    {
+        .length = crop_width * crop_height * 3 / 2,
+        .compare = compare_nv12, .compare_rect = {.top = 12, .right = 82, .bottom = 84},
+        .dump = dump_nv12, .size = {.cx = crop_width, .cy = crop_height},
+    };
+    const struct sample_desc nv12_crop_sample_desc =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 10000000,
+        .buffer_count = 1, .buffers = &nv12_crop_buffer_desc,
+    };
+    const struct buffer_desc nv12_crop_buffer_2d_desc =
+    {
+        .length = nv12_aligned_width * crop_height * 3 / 2,
+        .compare = compare_nv12, .compare_rect = {.top = 12, .right = 82, .bottom = 84},
+        .dump = dump_nv12, .size = {.cx = nv12_aligned_width, .cy = crop_height},
+    };
+    const struct sample_desc nv12_crop_sample_2d_desc =
+    {
+        .attributes = output_sample_attributes,
+        .sample_time = 0, .sample_duration = 10000000,
+        .buffer_count = 1, .buffers = &nv12_crop_buffer_2d_desc,
     };
 
     const struct transform_desc
@@ -9287,6 +9325,15 @@ static void test_video_processor(BOOL use_2d_buffer)
             .output_buffer_desc = rgb32_default_stride,
             .output_sample_desc = &rgb32_sample_desc, .output_sample_2d_desc = &rgb32_sample_desc,
             .todo = TRUE,
+        },
+        { /* Test 25 */
+            .input_type_desc = rgb32_crop, .input_bitmap = L"rgb32frame-crop.bmp",
+            .input_buffer_desc = use_2d_buffer ? rgb32_crop : NULL,
+            .output_type_desc = nv12_crop, .output_bitmap = L"nv12frame-crop.bmp", .output_bitmap_1d = L"nv12frame-crop-1d.bmp", .output_bitmap_2d = L"nv12frame-crop-2d.bmp",
+            .output_buffer_desc = use_2d_buffer ? nv12_crop : NULL,
+            .output_sample_desc = &nv12_crop_sample_desc, .output_sample_2d_desc = &nv12_crop_sample_2d_desc,
+            .delta = 2, /* Windows returns 1, Wine needs 2 */
+            .todo = TRUE, /* Would need special handling to convert gstreamer NV12 buffer to Windows alignment */
         },
     };
 
@@ -9648,6 +9695,11 @@ static void test_video_processor(BOOL use_2d_buffer)
             output_info.cbSize = actual_width * actual_height * 3 / 2;
             check_mft_get_output_stream_info(transform, S_OK, &output_info);
         }
+        else if (test->output_sample_desc == &nv12_crop_sample_desc)
+        {
+            output_info.cbSize = crop_width * crop_height * 3 / 2;
+            check_mft_get_output_stream_info(transform, S_OK, &output_info);
+        }
         else if (test->output_sample_desc == &rgb555_sample_desc)
         {
             output_info.cbSize = actual_width * actual_height * 2;
@@ -9674,7 +9726,7 @@ static void test_video_processor(BOOL use_2d_buffer)
             input_info.cbSize = actual_width * actual_height * 2;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
         }
-        else if (test->input_type_desc == rgb32_no_aperture)
+        else if (test->input_type_desc == rgb32_no_aperture || test->input_type_desc == rgb32_crop)
         {
             input_info.cbSize = 82 * 84 * 4;
             check_mft_get_input_stream_info(transform, S_OK, &input_info);
@@ -9721,10 +9773,11 @@ static void test_video_processor(BOOL use_2d_buffer)
         output_sample = create_sample_(NULL, output_info.cbSize, test->output_buffer_desc);
         hr = check_mft_process_output(transform, output_sample, &output_status);
 
+        todo_wine_if(test->output_sample_desc == &nv12_crop_sample_desc)
         ok(hr == S_OK || broken(hr == MF_E_SHUTDOWN) /* w8 */, "ProcessOutput returned %#lx\n", hr);
         if (hr != S_OK)
         {
-            win_skip("ProcessOutput returned MF_E_SHUTDOWN, skipping tests.\n");
+            skip("ProcessOutput returned %#lx, skipping tests.\n", hr);
         }
         else
         {
@@ -9748,8 +9801,6 @@ static void test_video_processor(BOOL use_2d_buffer)
                 ok(ret <= test->delta || broken(test->broken), "2d got %lu%% diff\n", ret);
             }
 
-            IMFCollection_Release(output_samples);
-
             output_sample = create_sample_(NULL, output_info.cbSize, test->output_buffer_desc);
             hr = check_mft_process_output(transform, output_sample, &output_status);
             ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
@@ -9758,6 +9809,8 @@ static void test_video_processor(BOOL use_2d_buffer)
             ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
             ok(length == 0, "got length %lu\n", length);
         }
+        ret = IMFCollection_Release(output_samples);
+        ok(ret == 0, "Release returned %lu\n", ret);
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
