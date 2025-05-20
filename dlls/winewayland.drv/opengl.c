@@ -42,9 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 #include "wine/opengl_driver.h"
 
-static char wgl_extensions[4096];
-static EGLConfig *egl_configs;
-static int num_egl_configs;
 static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 
@@ -148,14 +145,14 @@ static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
 
 static inline BOOL is_onscreen_format(int format)
 {
-    return format > 0 && format <= num_egl_configs;
+    return format > 0 && format <= egl->config_count;
 }
 
 static inline EGLConfig egl_config_for_format(int format)
 {
-    assert(format > 0 && format <= 2 * num_egl_configs);
-    if (format <= num_egl_configs) return egl_configs[format - 1];
-    return egl_configs[format - num_egl_configs - 1];
+    assert(format > 0 && format <= 2 * egl->config_count);
+    if (format <= egl->config_count) return egl->configs[format - 1];
+    return egl->configs[format - egl->config_count - 1];
 }
 
 static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc, int format, int width, int height)
@@ -630,231 +627,16 @@ static UINT wayland_pbuffer_bind(HDC hdc, void *private, GLenum buffer)
     return -1; /* use default implementation */
 }
 
-static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt, BOOL pbuffer_single)
-{
-    EGLint value, surface_type;
-    PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
-
-    /* If we can't get basic information, there is no point continuing */
-    if (!funcs->p_eglGetConfigAttrib(egl->display, config, EGL_SURFACE_TYPE, &surface_type)) return FALSE;
-
-    memset(fmt, 0, sizeof(*fmt));
-    pfd->nSize = sizeof(*pfd);
-    pfd->nVersion = 1;
-    pfd->dwFlags = PFD_SUPPORT_OPENGL | PFD_SUPPORT_COMPOSITION;
-    if (!pbuffer_single)
-    {
-        pfd->dwFlags |= PFD_DOUBLEBUFFER;
-        if (surface_type & EGL_WINDOW_BIT) pfd->dwFlags |= PFD_DRAW_TO_WINDOW;
-    }
-    pfd->iPixelType = PFD_TYPE_RGBA;
-    pfd->iLayerType = PFD_MAIN_PLANE;
-
-#define SET_ATTRIB(field, attrib) \
-    value = 0; \
-    funcs->p_eglGetConfigAttrib(egl->display, config, attrib, &value); \
-    pfd->field = value;
-#define SET_ATTRIB_ARB(field, attrib) \
-    if (!funcs->p_eglGetConfigAttrib(egl->display, config, attrib, &value)) value = -1; \
-    fmt->field = value;
-
-    /* Although the documentation describes cColorBits as excluding alpha, real
-     * drivers tend to return the full pixel size, so do the same. */
-    SET_ATTRIB(cColorBits, EGL_BUFFER_SIZE);
-    SET_ATTRIB(cRedBits, EGL_RED_SIZE);
-    SET_ATTRIB(cGreenBits, EGL_GREEN_SIZE);
-    SET_ATTRIB(cBlueBits, EGL_BLUE_SIZE);
-    SET_ATTRIB(cAlphaBits, EGL_ALPHA_SIZE);
-    /* Although we don't get information from EGL about the component shifts
-     * or the native format, the 0xARGB order is the most common. */
-    pfd->cBlueShift = 0;
-    pfd->cGreenShift = pfd->cBlueBits;
-    pfd->cRedShift = pfd->cGreenBits + pfd->cBlueBits;
-    if (pfd->cAlphaBits)
-        pfd->cAlphaShift = pfd->cRedBits + pfd->cGreenBits + pfd->cBlueBits;
-    else
-        pfd->cAlphaShift = 0;
-
-    SET_ATTRIB(cDepthBits, EGL_DEPTH_SIZE);
-    SET_ATTRIB(cStencilBits, EGL_STENCIL_SIZE);
-
-    fmt->swap_method = WGL_SWAP_UNDEFINED_ARB;
-
-    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_TYPE, &value))
-    {
-        switch (value)
-        {
-        case EGL_TRANSPARENT_RGB: fmt->transparent = GL_TRUE; break;
-        case EGL_NONE: fmt->transparent = GL_FALSE; break;
-        default:
-            ERR("unexpected transparency type 0x%x\n", value);
-            fmt->transparent = -1;
-            break;
-        }
-    }
-    else fmt->transparent = -1;
-
-    if (!egl->has_EGL_EXT_pixel_format_float) fmt->pixel_type = WGL_TYPE_RGBA_ARB;
-    else if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_COLOR_COMPONENT_TYPE_EXT, &value))
-    {
-        switch (value)
-        {
-        case EGL_COLOR_COMPONENT_TYPE_FIXED_EXT:
-            fmt->pixel_type = WGL_TYPE_RGBA_ARB;
-            break;
-        case EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT:
-            fmt->pixel_type = WGL_TYPE_RGBA_FLOAT_ARB;
-            break;
-        default:
-            ERR("unexpected color component type 0x%x\n", value);
-            fmt->pixel_type = -1;
-            break;
-        }
-    }
-    else fmt->pixel_type = -1;
-
-    fmt->draw_to_pbuffer = TRUE;
-    /* Use some arbitrary but reasonable limits (4096 is also Mesa's default) */
-    fmt->max_pbuffer_width = 4096;
-    fmt->max_pbuffer_height = 4096;
-    fmt->max_pbuffer_pixels = fmt->max_pbuffer_width * fmt->max_pbuffer_height;
-
-    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_RED_VALUE, &value))
-    {
-        fmt->transparent_red_value_valid = GL_TRUE;
-        fmt->transparent_red_value = value;
-    }
-    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_GREEN_VALUE, &value))
-    {
-        fmt->transparent_green_value_valid = GL_TRUE;
-        fmt->transparent_green_value = value;
-    }
-    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_BLUE_VALUE, &value))
-    {
-        fmt->transparent_blue_value_valid = GL_TRUE;
-        fmt->transparent_blue_value = value;
-    }
-    fmt->transparent_alpha_value_valid = GL_TRUE;
-    fmt->transparent_alpha_value = 0;
-    fmt->transparent_index_value_valid = GL_TRUE;
-    fmt->transparent_index_value = 0;
-
-    SET_ATTRIB_ARB(sample_buffers, EGL_SAMPLE_BUFFERS);
-    SET_ATTRIB_ARB(samples, EGL_SAMPLES);
-
-    fmt->bind_to_texture_rgb = GL_TRUE;
-    fmt->bind_to_texture_rgba = GL_TRUE;
-    fmt->bind_to_texture_rectangle_rgb = GL_TRUE;
-    fmt->bind_to_texture_rectangle_rgba = GL_TRUE;
-
-    /* TODO: Support SRGB surfaces and enable the attribute */
-    fmt->framebuffer_srgb_capable = GL_FALSE;
-
-    fmt->float_components = GL_FALSE;
-
-#undef SET_ATTRIB
-#undef SET_ATTRIB_ARB
-    return TRUE;
-}
-
-static BOOL wayland_describe_pixel_format(int format, struct wgl_pixel_format *desc)
-{
-    if (format <= 0)
-        return FALSE;
-    if (format <= num_egl_configs)
-        return describe_pixel_format(egl_configs[format - 1], desc, FALSE);
-    /* Add single-buffered pbuffer capable configs. */
-    if (format <= 2 * num_egl_configs)
-        return describe_pixel_format(egl_configs[format - 1 - num_egl_configs], desc, TRUE);
-    return FALSE;
-}
-
-static void register_extension(const char *ext)
-{
-    if (wgl_extensions[0]) strcat(wgl_extensions, " ");
-    strcat(wgl_extensions, ext);
-    TRACE("%s\n", ext);
-}
-
 static BOOL init_opengl_funcs(void)
 {
     p_glClear = (void *)funcs->p_eglGetProcAddress("glClear");
     return TRUE;
 }
 
-static const char *wayland_init_wgl_extensions(struct opengl_funcs *funcs)
-{
-    if (egl->has_EGL_EXT_pixel_format_float)
-    {
-        register_extension("WGL_ARB_pixel_format_float");
-        register_extension("WGL_ATI_pixel_format_float");
-    }
-
-    return wgl_extensions;
-}
-
-static UINT wayland_init_pixel_formats(UINT *onscreen_count)
-{
-    EGLint i;
-    const EGLint attribs[] =
-    {
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_NONE
-    };
-
-    funcs->p_eglChooseConfig(egl->display, attribs, NULL, 0, &num_egl_configs);
-    if (!(egl_configs = malloc(num_egl_configs * sizeof(*egl_configs))))
-    {
-        ERR("Failed to allocate memory for EGL configs\n");
-        return 0;
-    }
-    if (!funcs->p_eglChooseConfig(egl->display, attribs, egl_configs, num_egl_configs,
-                                  &num_egl_configs) ||
-        !num_egl_configs)
-    {
-        free(egl_configs);
-        egl_configs = NULL;
-        num_egl_configs = 0;
-        ERR("Failed to get any configs from eglChooseConfig\n");
-        return 0;
-    }
-
-    if (TRACE_ON(waylanddrv))
-    {
-        for (i = 0; i < num_egl_configs; i++)
-        {
-            EGLint id, type, visual_id, native, render, color, r, g, b, a, d, s;
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_NATIVE_VISUAL_ID, &visual_id);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_SURFACE_TYPE, &type);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_RENDERABLE_TYPE, &render);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_CONFIG_ID, &id);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_NATIVE_RENDERABLE, &native);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_COLOR_BUFFER_TYPE, &color);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_RED_SIZE, &r);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_GREEN_SIZE, &g);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_BLUE_SIZE, &b);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_ALPHA_SIZE, &a);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_DEPTH_SIZE, &d);
-            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_STENCIL_SIZE, &s);
-            TRACE("%u: config %d id %d type %x visual %d native %d render %x "
-                  "colortype %d rgba %d,%d,%d,%d depth %u stencil %d\n",
-                  num_egl_configs, i, id, type, visual_id, native, render,
-                  color, r, g, b, a, d, s);
-        }
-    }
-
-    *onscreen_count = num_egl_configs;
-    return 2 * num_egl_configs;
-}
-
-static const struct opengl_driver_funcs wayland_driver_funcs =
+static struct opengl_driver_funcs wayland_driver_funcs =
 {
     .p_init_egl_platform = wayland_init_egl_platform,
     .p_get_proc_address = wayland_get_proc_address,
-    .p_init_pixel_formats = wayland_init_pixel_formats,
-    .p_describe_pixel_format = wayland_describe_pixel_format,
-    .p_init_wgl_extensions = wayland_init_wgl_extensions,
     .p_set_pixel_format = wayland_set_pixel_format,
     .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
@@ -885,6 +667,11 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
     funcs = opengl_funcs;
 
     if (!init_opengl_funcs()) goto err;
+
+    wayland_driver_funcs.p_init_pixel_formats = (*driver_funcs)->p_init_pixel_formats;
+    wayland_driver_funcs.p_describe_pixel_format = (*driver_funcs)->p_describe_pixel_format;
+    wayland_driver_funcs.p_init_wgl_extensions = (*driver_funcs)->p_init_wgl_extensions;
+
     *driver_funcs = &wayland_driver_funcs;
     return STATUS_SUCCESS;
 
