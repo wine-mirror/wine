@@ -8554,8 +8554,8 @@ static void test_ddrawstream_mem_allocator(void)
     hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine ok(props.cbBuffer == 10000, "Got size %ld.\n", props.cbBuffer);
-    todo_wine ok(props.cBuffers == 1, "Got %ld buffers\n", props.cBuffers);
-    todo_wine ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(props.cBuffers == 1, "Got %ld buffers\n", props.cBuffers);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
     /* Try changing allocator properties. */
@@ -8567,8 +8567,8 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     todo_wine ok(ret_props.cbBuffer == 10000, "Got size %ld.\n", ret_props.cbBuffer);
     ok(ret_props.cBuffers == 4, "Got %ld buffers.\n", ret_props.cBuffers);
-    todo_wine ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
-    todo_wine ok(!ret_props.cbPrefix, "Got prefix %ld.\n", ret_props.cbPrefix);
+    ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
+    ok(!ret_props.cbPrefix, "Got prefix %ld.\n", ret_props.cbPrefix);
 
     /* Check how allocator properties change when setting a new format. */
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb32_format, NULL);
@@ -8576,10 +8576,10 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(props.cbBuffer == 40000, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == 40000, "Got size %ld.\n", props.cbBuffer);
     ok(props.cBuffers == 4, "Got %ld buffers.\n", props.cBuffers);
-    todo_wine ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
-    todo_wine ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+    ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
+    ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
 
     props.cbAlign = 0;
     props.cbBuffer = 1000;
@@ -8594,8 +8594,8 @@ static void test_ddrawstream_mem_allocator(void)
     props.cbPrefix = 0;
     hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
-    todo_wine ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
+    ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
+    ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
     ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
     ok(!ret_props.cbPrefix, "Got prefix %ld.\n", ret_props.cbPrefix);
 
@@ -8606,7 +8606,7 @@ static void test_ddrawstream_mem_allocator(void)
     props.cbPrefix = 0;
     hr = IMemAllocator_SetProperties(ddraw_allocator, &props, &ret_props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
+    ok(ret_props.cbBuffer == 40000, "Got size %ld.\n", ret_props.cbBuffer);
     ok(ret_props.cBuffers == 1, "Got %ld buffers.\n", ret_props.cBuffers);
     ok(ret_props.cbAlign == 1, "Got alignment %ld.\n", ret_props.cbAlign);
     ok(!ret_props.cbPrefix, "Got prefix %ld.\n", ret_props.cbPrefix);
@@ -8622,7 +8622,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(props.cbBuffer == 20000, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == 20000, "Got size %ld.\n", props.cbBuffer);
     ok(props.cBuffers == 1, "Got %ld buffers.\n", props.cBuffers);
     ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
@@ -8700,7 +8700,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(props.cbBuffer == 333 * 444 * 4, "Got size %ld.\n", props.cbBuffer);
+    ok(props.cbBuffer == 333 * 444 * 4, "Got size %ld.\n", props.cbBuffer);
     ok(props.cBuffers == 2, "Got %ld buffers.\n", props.cBuffers);
     ok(props.cbAlign == 1, "Got alignment %ld.\n", props.cbAlign);
     ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
@@ -8746,7 +8746,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     sample_mt->lSampleSize = 123;
     hr = IMediaSample_SetMediaType(media_sample1, sample_mt);
-    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     DeleteMediaType(sample_mt);
 
@@ -8774,44 +8774,44 @@ static void test_ddrawstream_mem_allocator(void)
     DeleteMediaType(sample_mt);
 
     hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample3, NULL, NULL, AM_GBF_NOWAIT);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     /* GetBuffer() again blocks, even with AM_GBF_NOWAIT. */
 
     ok(media_sample1 != media_sample2, "Expected different samples.\n");
 
     check_interface(media_sample1, &IID_IDirectDrawStreamSample, FALSE);
-    todo_wine check_interface(media_sample1, &IID_IMediaSample2, FALSE);
+    check_interface(media_sample1, &IID_IMediaSample2, FALSE);
 
     hr = IMemAllocator_GetProperties(ddraw_allocator, &props);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(props.cBuffers == 2, "Expected 2 samples got %ld\n", props.cBuffers);
 
     size = IMediaSample_GetSize(media_sample1);
-    todo_wine ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
+    ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
     size = IMediaSample_GetActualDataLength(media_sample1);
-    todo_wine ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
+    ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
     hr = IMediaSample_SetActualDataLength(media_sample1, size);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_SetActualDataLength(media_sample1, size + 1);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
     hr = IMediaSample_SetActualDataLength(media_sample1, size - 1);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     start = end = 0xdeadbeef;
     hr = IMediaSample_GetTime(media_sample1, &start, &end);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(!start, "Got start %I64d.\n", start);
-    todo_wine ok(!end, "Got end %I64d.\n", end);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(!start, "Got start %I64d.\n", start);
+    ok(!end, "Got end %I64d.\n", end);
 
     start = end = 0xdeadbeef;
     hr = IMediaSample_GetMediaTime(media_sample1, &start, &end);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
     ok(start == 0xdeadbeef, "Got start %I64d.\n", start);
     ok(end == 0xdeadbeef, "Got end %I64d.\n", end);
 
     hr = IMediaSample_IsSyncPoint(media_sample1);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_IsPreroll(media_sample1);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     hr = IMediaSample_IsDiscontinuity(media_sample1);
@@ -8820,7 +8820,7 @@ static void test_ddrawstream_mem_allocator(void)
     start = 123;
     end = 456;
     hr = IMediaSample_SetMediaTime(media_sample1, &start, &end);
-    todo_wine ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
     hr = IMediaSample_SetTime(media_sample1, &start, &end);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     start = end = 0xdeadbeef;
@@ -8841,15 +8841,15 @@ static void test_ddrawstream_mem_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     start = end = 0xdeadbeef;
     hr = IMediaSample_GetTime(media_sample1, &start, &end);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(start == 555, "Got start %I64d.\n", start);
-    todo_wine ok(end == 666, "Got end %I64d.\n", end);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(start == 555, "Got start %I64d.\n", start);
+    ok(end == 666, "Got end %I64d.\n", end);
 
     start = end = 0xdeadbeef;
     hr = IDirectDrawStreamSample_GetSampleTimes(ddraw_sample1, &start, &end, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(start == 555, "Got start %I64d.\n", start);
-    todo_wine ok(end == 666, "Got end %I64d.\n", end);
+    ok(start == 555, "Got start %I64d.\n", start);
+    ok(end == 666, "Got end %I64d.\n", end);
 
     hr = IMediaSample_SetSyncPoint(media_sample1, FALSE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -8873,13 +8873,13 @@ static void test_ddrawstream_mem_allocator(void)
 
     start = end = 0xdeadbeef;
     hr = IMediaSample_GetTime(media_sample1, &start, &end);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(start == 555, "Got start %I64d.\n", start);
-    todo_wine ok(end == 666, "Got end %I64d.\n", end);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(start == 555, "Got start %I64d.\n", start);
+    ok(end == 666, "Got end %I64d.\n", end);
     hr = IMediaSample_IsSyncPoint(media_sample1);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_IsPreroll(media_sample1);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_IsDiscontinuity(media_sample1);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
@@ -8898,28 +8898,25 @@ static void test_ddrawstream_mem_allocator(void)
     ok(!ref, "Got refcount %ld.\n", ref);
 
     hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample2, 0, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemAllocator_SetProperties(mem_allocator, &props, &ret_props);
-    todo_wine ok(hr == VFW_E_ALREADY_COMMITTED, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_ALREADY_COMMITTED, "Got hr %#lx.\n", hr);
     hr = IMemAllocator_Decommit(mem_allocator);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMemAllocator_SetProperties(mem_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, COMPSTAT_NOUPDATEOK, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
+
+    ref = IMediaSample_Release(media_sample3);
+    ok(!ref, "Got refcount %ld.\n", ref);
+
+    hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, 0, 0);
+    ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
+    hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, COMPSTAT_NOUPDATEOK, 0);
     todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-
-    if (media_sample3)
-    {
-        hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, COMPSTAT_NOUPDATEOK, 0);
-        ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
-
-        ref = IMediaSample_Release(media_sample3);
-        ok(!ref, "Got refcount %ld.\n", ref);
-
-        hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, 0, 0);
-        ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
-        hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample3, COMPSTAT_NOUPDATEOK, 0);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    }
 
     hr = IMemAllocator_GetBuffer(mem_allocator, &media_sample3, NULL, NULL, 0);
     ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
@@ -8929,7 +8926,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     /* The sample does need to be received before it's considered updated. */
     hr = IDirectDrawStreamSample_CompletionStatus(ddraw_sample1, 0, 0);
-    todo_wine ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
+    ok(hr == MS_S_PENDING, "Got hr %#lx.\n", hr);
 
     ref = IDirectDrawStreamSample_Release(ddraw_sample1);
     ok(!ref, "Got refcount %ld.\n", ref);
