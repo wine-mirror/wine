@@ -122,6 +122,7 @@ static const struct object_ops named_pipe_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
+    default_get_sync,             /* get_sync */
     named_pipe_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
@@ -170,6 +171,7 @@ static const struct object_ops pipe_server_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
+    default_get_sync,             /* get_sync */
     default_map_access,           /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
@@ -214,6 +216,7 @@ static const struct object_ops pipe_client_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     pipe_end_get_fd,              /* get_fd */
+    default_get_sync,             /* get_sync */
     default_map_access,           /* map_access */
     pipe_end_get_sd,              /* get_sd */
     pipe_end_set_sd,              /* set_sd */
@@ -262,6 +265,7 @@ static const struct object_ops named_pipe_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -293,6 +297,7 @@ static const struct object_ops named_pipe_device_file_ops =
     no_satisfied,                            /* satisfied */
     no_signal,                               /* signal */
     named_pipe_device_file_get_fd,           /* get_fd */
+    default_get_sync,                        /* get_sync */
     default_map_access,                      /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */
@@ -343,6 +348,7 @@ static const struct object_ops named_pipe_dir_ops =
     no_satisfied,                            /* satisfied */
     no_signal,                               /* signal */
     named_pipe_dir_get_fd,                   /* get_fd */
+    default_get_sync,                        /* get_sync */
     default_map_access,                      /* map_access */
     default_get_sd,                          /* get_sd */
     default_set_sd,                          /* set_sd */

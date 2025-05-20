@@ -109,6 +109,7 @@ static const struct object_ops thread_apc_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
+    default_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -151,6 +152,7 @@ static const struct object_ops context_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
+    default_get_sync,           /* get_sync */
     default_map_access,         /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -200,6 +202,7 @@ static const struct object_ops thread_ops =
     no_satisfied,               /* satisfied */
     no_signal,                  /* signal */
     no_get_fd,                  /* get_fd */
+    default_get_sync,           /* get_sync */
     thread_map_access,          /* map_access */
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
@@ -949,6 +952,36 @@ void set_wait_status( struct wait_queue_entry *entry, int status )
     entry->wait->status = status;
 }
 
+static void object_sync_satisfied( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct object *sync = get_obj_sync( obj );
+    sync->ops->satisfied( sync, entry );
+    release_object( sync );
+}
+
+static void object_sync_remove_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct object *sync = get_obj_sync( obj );
+    sync->ops->remove_queue( sync, entry );
+    release_object( sync );
+}
+
+static int object_sync_add_queue( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct object *sync = get_obj_sync( obj );
+    int ret = sync->ops->add_queue( sync, entry );
+    release_object( sync );
+    return ret;
+}
+
+static int object_sync_signaled( struct object *obj, struct wait_queue_entry *entry )
+{
+    struct object *sync = get_obj_sync( obj );
+    int ret = sync->ops->signaled( sync, entry );
+    release_object( sync );
+    return ret;
+}
+
 /* finish waiting */
 static unsigned int end_wait( struct thread *thread, unsigned int status )
 {
@@ -965,19 +998,19 @@ static unsigned int end_wait( struct thread *thread, unsigned int status )
         if (wait->select == SELECT_WAIT_ALL)
         {
             for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-                entry->obj->ops->satisfied( entry->obj, entry );
+                object_sync_satisfied( entry->obj, entry );
         }
         else
         {
             entry = wait->queues + status;
-            entry->obj->ops->satisfied( entry->obj, entry );
+            object_sync_satisfied( entry->obj, entry );
         }
         status = wait->status;
         if (wait->abandoned) status += STATUS_ABANDONED_WAIT_0;
     }
     for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
     {
-        entry->obj->ops->remove_queue( entry->obj, entry );
+        object_sync_remove_queue( entry->obj, entry );
         release_object( entry->obj );
         entry->obj = NULL;
     }
@@ -1010,7 +1043,7 @@ static int wait_on( const union select_op *select_op, unsigned int count, struct
     {
         struct object *obj = objects[i];
         entry->wait = wait;
-        if (!obj->ops->add_queue( obj, entry ))
+        if (!object_sync_add_queue( obj, entry ))
         {
             wait->count = i;
             end_wait( current, get_error() );
@@ -1065,13 +1098,13 @@ static int check_wait( struct thread *thread )
         /* Note: we must check them all anyway, as some objects may
          * want to do something when signaled, even if others are not */
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            not_ok |= !entry->obj->ops->signaled( entry->obj, entry );
+            not_ok |= !object_sync_signaled( entry->obj, entry );
         if (!not_ok) return STATUS_WAIT_0;
     }
     else
     {
         for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
-            if (entry->obj->ops->signaled( entry->obj, entry )) return i;
+            if (object_sync_signaled( entry->obj, entry )) return i;
     }
 
     if ((wait->flags & SELECT_ALERTABLE) && !list_empty(&thread->user_apc)) return STATUS_USER_APC;

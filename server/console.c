@@ -87,6 +87,7 @@ static const struct object_ops console_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_get_fd,                   /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -164,6 +165,7 @@ static const struct object_ops console_server_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_server_get_fd,            /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -233,6 +235,7 @@ static const struct object_ops screen_buffer_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     screen_buffer_get_fd,             /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -282,6 +285,7 @@ static const struct object_ops console_device_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     no_get_fd,                        /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -321,6 +325,7 @@ static const struct object_ops console_input_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_input_get_fd,             /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -380,6 +385,7 @@ static const struct object_ops console_output_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_output_get_fd,            /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
@@ -438,6 +444,7 @@ static const struct object_ops console_connection_ops =
     no_satisfied,                     /* satisfied */
     no_signal,                        /* signal */
     console_connection_get_fd,        /* get_fd */
+    default_get_sync,                 /* get_sync */
     default_map_access,               /* map_access */
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */

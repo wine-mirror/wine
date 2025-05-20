@@ -97,6 +97,7 @@ static const struct object_ops file_ops =
     no_satisfied,                 /* satisfied */
     no_signal,                    /* signal */
     file_get_fd,                  /* get_fd */
+    default_get_sync,             /* get_sync */
     default_map_access,           /* map_access */
     file_get_sd,                  /* get_sd */
     file_set_sd,                  /* set_sd */
