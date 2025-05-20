@@ -595,6 +595,7 @@ static void test_disk_extents(void)
     DWORD size;
     HANDLE handle;
     static DWORD data[16];
+    VOLUME_DISK_EXTENTS *d;
 
     handle = CreateFileA( "\\\\.\\c:", GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
     if (handle == INVALID_HANDLE_VALUE)
@@ -611,8 +612,18 @@ static void test_disk_extents(void)
         CloseHandle( handle );
         return;
     }
+    size = 0xdeadbeef;
+    ret = DeviceIoControl( handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, data,
+                           sizeof(data), &data, sizeof(*d) - 4, &size, NULL );
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got ret %d, error %lu.\n", ret, GetLastError());
+    ok(size == 0xdeadbeef, "expected 32, got %lu\n", size);
+    ret = DeviceIoControl( handle, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, data,
+                           sizeof(data), &data, sizeof(*d), &size, NULL );
     ok(ret, "DeviceIoControl failed %lu\n", GetLastError());
     ok(size == 32, "expected 32, got %lu\n", size);
+    d = (VOLUME_DISK_EXTENTS *)data;
+    ok(d->NumberOfDiskExtents == 1, "got %lu.\n", d->NumberOfDiskExtents);
+    ok(d->Extents[0].ExtentLength.QuadPart > 0, "got %lu.\n", d->NumberOfDiskExtents);
     CloseHandle( handle );
 }
 

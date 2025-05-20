@@ -1848,11 +1848,30 @@ static NTSTATUS WINAPI harddisk_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
     case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:
     {
-        DWORD len = min( 32, irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+        struct size_info size_info = { 0, 0, 0, 0, 0 };
+        struct get_volume_size_info_params params = { dev->unix_mount, &size_info };
+        VOLUME_DISK_EXTENTS info = { 0 };
 
-        FIXME( "returning zero-filled buffer for IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS\n" );
-        memset( irp->AssociatedIrp.SystemBuffer, 0, len );
-        irp->IoStatus.Information = len;
+        if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(info))
+        {
+            TRACE( "len %lu is too small.\n", irpsp->Parameters.DeviceIoControl.OutputBufferLength );
+            status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        FIXME( "IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS semi-stub.\n" );
+
+        info.NumberOfDiskExtents = 1;
+        info.Extents[0].DiskNumber = dev->devnum.DeviceNumber;
+        info.Extents[0].StartingOffset.QuadPart = 0;
+
+        if ((status = MOUNTMGR_CALL( get_volume_size_info, &params )) == STATUS_SUCCESS)
+        {
+            info.Extents[0].ExtentLength.QuadPart = size_info.total_allocation_units
+                                                    * size_info.sectors_per_allocation_unit
+                                                    * size_info.bytes_per_sector;
+        }
+        memcpy( irp->AssociatedIrp.SystemBuffer, &info, sizeof(info) );
+        irp->IoStatus.Information = sizeof(info);
         status = STATUS_SUCCESS;
         break;
     }
