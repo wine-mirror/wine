@@ -2096,6 +2096,10 @@ static HRESULT load_all_recordset_data(struct recordset *recordset, IUnknown *ro
                     V_DATE(v) = d;
                     break;
                 }
+                case DBTYPE_VARIANT:
+                    VariantInit(v);
+                    VariantCopy(v, (VARIANT*)(data + bindings[datacol].obValue));
+                    break;
                 default:
                     V_VT(v) = VT_I2;
                     V_I2(v) = 0;
