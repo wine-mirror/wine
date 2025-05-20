@@ -5672,6 +5672,7 @@ image_size_tests[] =
     { &MFVideoFormat_NV12, 3, 2, 12, 9, 192, 9, 64 },
     { &MFVideoFormat_NV12, 4, 2, 12, 0, 192, 12, 64 },
     { &MFVideoFormat_NV12, 320, 240, 115200, 0, 115200, 115200, 320 },
+    { &MFVideoFormat_NV12, 650, 850, 828750, 0, 897600, 828750, 704 },
 
     /* YUV 4:2:0, 12 bpp, planar, half stride (the secondary plane has
      * the same height, half the width and half the stride of the
