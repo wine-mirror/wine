@@ -83,7 +83,7 @@ struct ddraw_sample
 
     struct list entry;
     HRESULT update_hr;
-    BOOL busy;
+    bool pending;
 };
 
 static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDrawSurface *surface,
@@ -91,7 +91,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
 
 static void remove_queued_update(struct ddraw_sample *sample)
 {
-    sample->busy = FALSE;
+    sample->pending = false;
     list_remove(&sample->entry);
     WakeConditionVariable(&sample->update_cv);
     if (sample->external_event)
@@ -1791,7 +1791,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         LeaveCriticalSection(&sample->parent->cs);
         return MS_S_ENDOFSTREAM;
     }
-    if (sample->busy)
+    if (sample->pending)
     {
         LeaveCriticalSection(&sample->parent->cs);
         return MS_E_BUSY;
@@ -1800,7 +1800,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
     sample->continuous_update = (flags & SSUPDATE_ASYNC) && (flags & SSUPDATE_CONTINUOUS);
 
     sample->update_hr = MS_S_NOUPDATE;
-    sample->busy = TRUE;
+    sample->pending = true;
     sample->external_event = event;
     list_add_tail(&sample->parent->update_queue, &sample->entry);
     WakeConditionVariable(&sample->parent->update_queued_cv);
@@ -1811,7 +1811,7 @@ static HRESULT WINAPI ddraw_sample_Update(IDirectDrawStreamSample *iface,
         return MS_S_PENDING;
     }
 
-    while (sample->busy)
+    while (sample->pending)
         SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, INFINITE);
 
     LeaveCriticalSection(&sample->parent->cs);
@@ -1828,7 +1828,7 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
 
     EnterCriticalSection(&sample->parent->cs);
 
-    if (sample->busy)
+    if (sample->pending)
     {
         if (flags & (COMPSTAT_NOUPDATEOK | COMPSTAT_ABORT))
         {
@@ -1839,7 +1839,7 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
             DWORD start_time = GetTickCount();
             DWORD elapsed = 0;
             sample->continuous_update = FALSE;
-            while (sample->busy && elapsed < milliseconds)
+            while (sample->pending && elapsed < milliseconds)
             {
                 DWORD sleep_time = milliseconds - elapsed;
                 if (!SleepConditionVariableCS(&sample->update_cv, &sample->parent->cs, sleep_time))
@@ -1849,7 +1849,7 @@ static HRESULT WINAPI ddraw_sample_CompletionStatus(IDirectDrawStreamSample *ifa
         }
     }
 
-    hr = sample->busy ? MS_S_PENDING : sample->update_hr;
+    hr = sample->pending ? MS_S_PENDING : sample->update_hr;
 
     LeaveCriticalSection(&sample->parent->cs);
 
