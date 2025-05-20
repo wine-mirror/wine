@@ -79,6 +79,7 @@ struct field
     LONG                attrs;
     LONG                index;
     unsigned char       prec;
+    unsigned char       scale;
     struct recordset   *recordset;
 
     /* Field Properties */
@@ -372,8 +373,14 @@ static HRESULT WINAPI field_put_Precision( Field *iface, unsigned char precision
 
 static HRESULT WINAPI field_put_NumericScale( Field *iface, unsigned char scale )
 {
-    FIXME( "%p, %c\n", iface, scale );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %u\n", iface, scale );
+
+    if (field->recordset->state != adStateClosed) return MAKE_ADO_HRESULT( adErrObjectOpen );
+
+    field->scale = scale;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_put_Type( Field *iface, DataTypeEnum type )
@@ -1047,6 +1054,7 @@ static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
     Field_put_DefinedSize( field, info->ulColumnSize );
     if (info->dwFlags != adFldUnspecified) Field_put_Attributes( field, info->dwFlags );
     Field_put_Precision( field, info->bPrecision );
+    Field_put_NumericScale( field, info->bScale );
 
     if (!(resize_fields( fields, fields->count + 1 )))
     {
