@@ -308,8 +308,12 @@ static HRESULT WINAPI field_put_Value( Field *iface, VARIANT val )
 
 static HRESULT WINAPI field_get_Precision( Field *iface, unsigned char *precision )
 {
-    FIXME( "%p, %p\n", iface, precision );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+
+    TRACE( "%p, %p\n", iface, precision );
+
+    *precision = field->prec;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_NumericScale( Field *iface, unsigned char *scale )
