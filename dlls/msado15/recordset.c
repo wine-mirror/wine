@@ -1025,17 +1025,16 @@ static BOOL resize_fields( struct fields *fields, ULONG count )
     return TRUE;
 }
 
-static HRESULT append_field( struct fields *fields, BSTR name, DataTypeEnum type, LONG size, FieldAttributeEnum attr,
-                             VARIANT *value )
+static HRESULT append_field( struct fields *fields, const DBCOLUMNINFO *info )
 {
     Field *field;
     HRESULT hr;
 
-    if ((hr = Field_create( name, fields->count, fields_get_recordset(fields), &field )) != S_OK) return hr;
-    Field_put_Type( field, type );
-    Field_put_DefinedSize( field, size );
-    if (attr != adFldUnspecified) Field_put_Attributes( field, attr );
-    if (value) FIXME( "ignoring value %s\n", debugstr_variant(value) );
+    hr = Field_create( info->pwszName, fields->count, fields_get_recordset(fields), &field );
+    if (hr != S_OK) return hr;
+    Field_put_Type( field, info->wType );
+    Field_put_DefinedSize( field, info->ulColumnSize );
+    if (info->dwFlags != adFldUnspecified) Field_put_Attributes( field, info->dwFlags );
 
     if (!(resize_fields( fields, fields->count + 1 )))
     {
@@ -1050,10 +1049,16 @@ static HRESULT append_field( struct fields *fields, BSTR name, DataTypeEnum type
 static HRESULT WINAPI fields__Append( Fields *iface, BSTR name, DataTypeEnum type, ADO_LONGPTR size, FieldAttributeEnum attr )
 {
     struct fields *fields = impl_from_Fields( iface );
+    DBCOLUMNINFO colinfo;
 
     TRACE( "%p, %s, %u, %Id, %d\n", fields, debugstr_w(name), type, size, attr );
 
-    return append_field( fields, name, type, size, attr, NULL );
+    memset( &colinfo, 0, sizeof(colinfo) );
+    colinfo.pwszName = name;
+    colinfo.wType = type;
+    colinfo.ulColumnSize = size;
+    colinfo.dwFlags = attr;
+    return append_field( fields, &colinfo );
 }
 
 static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
@@ -1065,11 +1070,8 @@ static HRESULT WINAPI fields_Delete( Fields *iface, VARIANT index )
 static HRESULT WINAPI fields_Append( Fields *iface, BSTR name, DataTypeEnum type, ADO_LONGPTR size, FieldAttributeEnum attr,
                                      VARIANT value )
 {
-    struct fields *fields = impl_from_Fields( iface );
-
-    TRACE( "%p, %s, %u, %Id, %d, %s\n", fields, debugstr_w(name), type, size, attr, debugstr_variant(&value) );
-
-    return append_field( fields, name, type, size, attr, &value );
+    FIXME( "ignoring value %s\n", debugstr_variant(&value) );
+    return Fields__Append( iface, name, type, size, attr );
 }
 
 static HRESULT WINAPI fields_Update( Fields *iface )
@@ -1173,8 +1175,7 @@ static void map_rowset_fields(struct recordset *recordset, struct fields *fields
                   colinfo[i].dwFlags, colinfo[i].ulColumnSize, colinfo[i].wType,
                   colinfo[i].bPrecision, colinfo[i].bScale);
 
-            hr = append_field(fields, colinfo[i].pwszName, colinfo[i].wType, colinfo[i].ulColumnSize,
-                     colinfo[i].dwFlags, NULL);
+            hr = append_field(fields, &colinfo[i]);
             if (FAILED(hr))
             {
                 ERR("Failed to add Field name - 0x%08lx\n", hr);
@@ -1838,8 +1839,7 @@ static HRESULT create_bindings(IUnknown *rowset, struct recordset *recordset, DB
                 continue;
             }
 
-            hr = append_field(&recordset->fields, colinfo[i].pwszName, colinfo[i].wType,
-                    colinfo[i].ulColumnSize, colinfo[i].dwFlags, NULL);
+            hr = append_field(&recordset->fields, &colinfo[i]);
             if (FAILED(hr)) WARN("append_field failed: %lx\n", hr);
 
             bindings[j].iOrdinal = colinfo[i].iOrdinal;
