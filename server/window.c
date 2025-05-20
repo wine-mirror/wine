@@ -1617,14 +1617,14 @@ static void validate_parents( struct window *child )
 
 
 /* add/subtract a region (in client coordinates) to the update region of the window */
-static void redraw_window( struct window *win, struct region *region, int frame, unsigned int flags, int nested )
+static void redraw_window( struct window *win, struct region *region, unsigned int flags, int nested )
 {
     struct region *child_rgn, *tmp;
     struct window *child;
 
     if (flags & RDW_INVALIDATE)
     {
-        assert( frame == !!(flags & RDW_FRAME) );
+        const int frame = !!(flags & RDW_FRAME);
         if (!(tmp = crop_region_to_win_rect( win, region, frame ))) return;
 
         if (!add_update_region( win, tmp )) return;
@@ -1640,7 +1640,7 @@ static void redraw_window( struct window *win, struct region *region, int frame,
         }
         else if (win->update_region)
         {
-            assert( frame == nested );  /* validating nested child; include frame */
+            const int frame = nested;  /* validating nested child; include frame */
             if ((tmp = crop_region_to_win_rect( win, region, frame )))
             {
                 if (!subtract_region( tmp, win->update_region, tmp ))
@@ -1690,7 +1690,7 @@ static void redraw_window( struct window *win, struct region *region, int frame,
             if (rect_in_region( child_rgn, &child->window_rect ))
             {
                 offset_region( child_rgn, -child->client_rect.left, -child->client_rect.top );
-                redraw_window( child, child_rgn, 1, flags, 1 );
+                redraw_window( child, child_rgn, flags, 1 );
             }
         }
         free_region( child_rgn );
@@ -1887,7 +1887,7 @@ static struct region *expose_window( struct window *win, const struct rectangle 
             {
                 /* make it relative to parent */
                 offset_region( new_vis_rgn, old_window_rect->left, old_window_rect->top );
-                redraw_window( win->parent, new_vis_rgn, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN, 0 );
+                redraw_window( win->parent, new_vis_rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN, 0 );
             }
         }
     }
@@ -2058,7 +2058,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     }
 
     if (exposed_rgn)
-        redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
+        redraw_window( win, exposed_rgn, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
 
 done:
     if (old_vis_rgn) free_region( old_vis_rgn );
@@ -2083,7 +2083,7 @@ static void set_window_region( struct window *win, struct region *region, int re
     /* expose anything revealed by the change */
     if (old_vis_rgn && ((exposed_rgn = expose_window( win, &win->window_rect, old_vis_rgn, 0 ))))
     {
-        redraw_window( win, exposed_rgn, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
+        redraw_window( win, exposed_rgn, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN, 0 );
         free_region( exposed_rgn );
     }
 
@@ -2987,7 +2987,7 @@ DECL_HANDLER(redraw_window)
         }
     }
 
-    redraw_window( win, region, (flags & RDW_INVALIDATE) && (flags & RDW_FRAME), flags, 0 );
+    redraw_window( win, region, flags, 0 );
     if (region) free_region( region );
 }
 
@@ -3163,7 +3163,7 @@ DECL_HANDLER(set_window_layered_info)
         win->layered_flags = req->flags;
         win->is_layered    = 1;
         /* repaint since we know now it's not going to use UpdateLayeredWindow */
-        if (!was_layered) redraw_window( win, 0, 1, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_ERASE | RDW_FRAME, 0 );
+        if (!was_layered) redraw_window( win, 0, RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_ERASE | RDW_FRAME, 0 );
     }
     else set_win32_error( ERROR_INVALID_WINDOW_HANDLE );
 }
