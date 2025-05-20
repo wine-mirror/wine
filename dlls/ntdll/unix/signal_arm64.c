@@ -185,11 +185,6 @@ struct syscall_frame
 
 C_ASSERT( sizeof( struct syscall_frame ) == 0x330 );
 
-static BOOL is_inside_syscall( ucontext_t *sigcontext )
-{
-    return ((char *)SP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
-            (char *)SP_sig(sigcontext) <= (char *)get_syscall_frame());
-}
 
 /***********************************************************************
  *           context_init_empty_xstate
@@ -992,7 +987,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     struct syscall_frame *frame = get_syscall_frame();
     DWORD i;
 
-    if (!is_inside_syscall( context )) return FALSE;
+    if (!is_inside_syscall( SP_sig(context) )) return FALSE;
 
     TRACE( "code=%x flags=%x addr=%p pc=%p tid=%04x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -1256,7 +1251,9 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    if (!is_inside_syscall( sigcontext )) user_mode_abort_thread( 0, get_syscall_frame() );
+    ucontext_t *context = sigcontext;
+
+    if (!is_inside_syscall( SP_sig(context) )) user_mode_abort_thread( 0, get_syscall_frame() );
     abort_thread(0);
 }
 
@@ -1268,9 +1265,10 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
+    ucontext_t *ucontext = sigcontext;
     CONTEXT context;
 
-    if (is_inside_syscall( sigcontext ))
+    if (is_inside_syscall( SP_sig(ucontext) ))
     {
         context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context );
@@ -1279,10 +1277,10 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     }
     else
     {
-        save_context( &context, sigcontext );
+        save_context( &context, ucontext );
         context.ContextFlags |= CONTEXT_EXCEPTION_REPORTING;
         wait_suspend( &context );
-        restore_context( &context, sigcontext );
+        restore_context( &context, ucontext );
     }
 }
 
@@ -1298,7 +1296,7 @@ static void usr2_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     ucontext_t *context = sigcontext;
     DWORD i;
 
-    if (!is_inside_syscall( sigcontext )) return;
+    if (!is_inside_syscall( SP_sig(context) )) return;
 
     FP_sig(context)     = frame->fp;
     LR_sig(context)     = frame->lr;

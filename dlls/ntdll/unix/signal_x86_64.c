@@ -477,13 +477,6 @@ static inline TEB *get_current_teb(void)
 }
 #endif
 
-static BOOL is_inside_syscall( const ucontext_t *sigcontext )
-{
-    return ((char *)RSP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
-            (char *)RSP_sig(sigcontext) <= (char *)get_syscall_frame());
-}
-
-
 extern void __wine_syscall_dispatcher_instrumentation(void);
 static void *instrumentation_callback;
 static pthread_mutex_t instrumentation_callback_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -866,10 +859,13 @@ static inline ucontext_t *init_handler( void *sigcontext )
 static inline void leave_handler( ucontext_t *sigcontext )
 {
 #ifdef __linux__
-    if (fs32_sel && !is_inside_signal_stack( (void *)RSP_sig(sigcontext )) && !is_inside_syscall(sigcontext))
+    if (fs32_sel &&
+        !is_inside_signal_stack( (void *)RSP_sig(sigcontext )) &&
+        !is_inside_syscall( RSP_sig(sigcontext) ))
         __asm__ volatile( "movw %0,%%fs" :: "r" (fs32_sel) );
 #elif defined __APPLE__
-    if (!is_inside_signal_stack( (void *)RSP_sig(sigcontext )) && !is_inside_syscall(sigcontext))
+    if (!is_inside_signal_stack( (void *)RSP_sig(sigcontext )) &&
+        !is_inside_syscall( RSP_sig(sigcontext )))
         _thread_set_tsd_base( (uint64_t)NtCurrentTeb() );
 #endif
 #ifdef DS_sig
@@ -1916,7 +1912,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     struct syscall_frame *frame = get_syscall_frame();
     DWORD i;
 
-    if (!is_inside_syscall( sigcontext )) return FALSE;
+    if (!is_inside_syscall( RSP_sig(sigcontext) )) return FALSE;
 
     TRACE_(seh)( "code=%x flags=%x addr=%p ip=%lx tid=%04x\n",
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
@@ -1978,7 +1974,7 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext, siginfo_t *siginfo )
         RIP_sig( sigcontext ) = (ULONG64)__wine_unix_call_dispatcher_prolog_end_ptr;
         R10_sig( sigcontext ) = RCX_sig( sigcontext );
     }
-    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ && is_inside_syscall( sigcontext ))
+    else if (siginfo->si_code == 4 /* TRAP_HWBKPT */ && is_inside_syscall( RSP_sig(sigcontext) ))
     {
         TRACE_(seh)( "ignoring HWBKPT in syscall rip=%p\n", (void *)RIP_sig(sigcontext) );
         return TRUE;
@@ -2215,7 +2211,7 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
 
-    if (!is_inside_syscall( ucontext )) user_mode_abort_thread( 0, get_syscall_frame() );
+    if (!is_inside_syscall( RSP_sig(ucontext) )) user_mode_abort_thread( 0, get_syscall_frame() );
     abort_thread( 0 );
 }
 
@@ -2229,7 +2225,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
     ucontext_t *ucontext = init_handler( sigcontext );
 
-    if (is_inside_syscall( ucontext ))
+    if (is_inside_syscall( RSP_sig(ucontext) ))
     {
         struct syscall_frame *frame = get_syscall_frame();
         ULONG64 saved_compaction = 0;

@@ -235,12 +235,6 @@ struct syscall_frame
 
 C_ASSERT( sizeof( struct syscall_frame ) == 0x160);
 
-static BOOL is_inside_syscall( ucontext_t *sigcontext )
-{
-    return ((char *)SP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
-            (char *)SP_sig(sigcontext) <= (char *)get_syscall_frame());
-}
-
 
 void set_process_instrumentation_callback( void *callback )
 {
@@ -759,7 +753,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     struct syscall_frame *frame = get_syscall_frame();
     UINT i;
 
-    if (!is_inside_syscall( context )) return FALSE;
+    if (!is_inside_syscall( SP_sig(context) )) return FALSE;
 
     TRACE( "code=%x flags=%x addr=%p pc=%08x\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (DWORD)PC_sig(context) );
@@ -981,7 +975,9 @@ static void abrt_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
-    if (!is_inside_syscall( sigcontext )) user_mode_abort_thread( 0, get_syscall_frame() );
+    ucontext_t *ucontext = sigcontext;
+
+    if (!is_inside_syscall( SP_sig(ucontext) )) user_mode_abort_thread( 0, get_syscall_frame() );
     abort_thread(0);
 }
 
@@ -993,9 +989,10 @@ static void quit_handler( int signal, siginfo_t *siginfo, void *sigcontext )
  */
 static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
 {
+    ucontext_t *ucontext = sigcontext;
     CONTEXT context;
 
-    if (is_inside_syscall( sigcontext ))
+    if (is_inside_syscall( SP_sig(ucontext) ))
     {
         context.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context );

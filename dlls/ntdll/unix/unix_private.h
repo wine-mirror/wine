@@ -433,6 +433,12 @@ static inline BOOL is_inside_signal_stack( void *ptr )
             (char *)ptr < (char *)get_signal_stack() + signal_stack_size);
 }
 
+static inline BOOL is_inside_syscall( ULONG_PTR sp )
+{
+    return ((char *)sp >= (char *)ntdll_get_thread_data()->kernel_stack &&
+            (char *)sp <= (char *)get_syscall_frame());
+}
+
 static inline BOOL is_ec_code( ULONG_PTR ptr )
 {
     const UINT64 *map = (const UINT64 *)peb->EcCodeBitMap;
