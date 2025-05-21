@@ -3001,6 +3001,14 @@ my %scripts =
     "Dives_Akuru"            => 154,
     "Khitan_Small_Script"    => 155,
     "Yezidi"                 => 156,
+    # Win11 24H2
+    "Cypro_Minoan"           => 157,
+    "Kawi"                   => 158,
+    "Nag_Mundari"            => 159,
+    "Old_Uyghur"             => 160,
+    "Tangsa"                 => 161,
+    "Toto"                   => 162,
+    "Vithkuqi"               => 163,
 );
 
 ################################################################

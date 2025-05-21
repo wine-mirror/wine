@@ -160,5 +160,12 @@ enum unicode_script_id {
     Script_Dives_Akuru = 154,
     Script_Khitan_Small_Script = 155,
     Script_Yezidi = 156,
-    Script_LastId = 156
+    Script_Cypro_Minoan = 157,
+    Script_Kawi = 158,
+    Script_Nag_Mundari = 159,
+    Script_Old_Uyghur = 160,
+    Script_Tangsa = 161,
+    Script_Toto = 162,
+    Script_Vithkuqi = 163,
+    Script_LastId = 163
 };
