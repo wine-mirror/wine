@@ -1668,18 +1668,6 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
-#ifdef __APPLE__
-                   "movq %rcx,%r8\n\t"
-                   "movq %rdi,%r9\n\t"
-                   "movq %rsi,%r10\n\t"
-                   "movq 0x320(%rcx),%rdi\n\t" /* amd64_thread_data()->pthread_teb */
-                   "xorl %esi,%esi\n\t"
-                   "movl $0x3000003,%eax\n\t"  /* _thread_set_tsd_base */
-                   "syscall\n\t"
-                   "movq %r10,%rsi\n\t"
-                   "movq %r9,%rdi\n\t"
-                   "movq %r8,%rcx\n\t"
-#endif
                    "movq 0x378(%rcx),%r10\n\t" /* thread_data->syscall_frame */
                    "movq 0xa0(%r10),%r11\n\t"  /* frame->prev_frame */
                    "movq %r11,0x378(%rcx)\n\t" /* syscall_frame = prev_frame */
