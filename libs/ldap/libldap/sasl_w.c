@@ -38,6 +38,7 @@ struct connection
     unsigned int max_token;
     unsigned int trailer_size;
     unsigned int flags;
+    unsigned int qop;
     unsigned short package_id;
     sasl_ssf_t ssf;
     char *buf;
@@ -132,7 +133,7 @@ int sasl_encode( sasl_conn_t *handle, const char *input, unsigned int inputlen, 
         bufs[1].pvBuffer = conn->buf + sizeof(len);
     }
 
-    status = EncryptMessage( &conn->ctxt_handle, 0, &buf_desc, 0 );
+    status = EncryptMessage( &conn->ctxt_handle, (conn->qop & ISC_RET_CONFIDENTIALITY) ? 0 : SECQOP_WRAP_NO_ENCRYPT, &buf_desc, 0 );
     if (status == SEC_E_OK)
     {
         len = htonl( bufs[0].cbBuffer + bufs[1].cbBuffer );
@@ -328,6 +329,7 @@ int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_
         {
             conn->ssf = get_key_size( &conn->ctxt_handle );
             conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
+            conn->qop = attrs;
             conn->package_id = get_package_id( &conn->ctxt_handle );
             return SASL_OK;
         }
