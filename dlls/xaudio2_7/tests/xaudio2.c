@@ -84,6 +84,16 @@ static IXAudio2 *create_xaudio2(void)
     return audio;
 }
 
+#define check_refcount(a, b) check_refcount_(__LINE__, a, b)
+static void check_refcount_(int line, IUnknown *unk, LONG expected)
+{
+    LONG ref;
+
+    IUnknown_AddRef(unk);
+    ref = IUnknown_Release(unk);
+    ok_(__FILE__, line)(ref == expected, "got refcount %ld, expected %ld.\n", ref, expected);
+}
+
 static void test_interfaces(IXAudio2 *audio)
 {
     const GUID *td[] =
@@ -841,6 +851,8 @@ static void test_submix(IXAudio2 *xa)
     XAUDIO2_SEND_DESCRIPTOR send_desc = { 0 };
     XAUDIO2_VOICE_SENDS sends = { 1, &send_desc };
 
+    check_refcount((IUnknown *)xa, 1);
+
     IXAudio2_StopEngine(xa);
 
     hr = create_mastering_voice(xa, 2, &master);
@@ -848,6 +860,8 @@ static void test_submix(IXAudio2 *xa)
 
     hr = IXAudio2_CreateSubmixVoice(xa, &sub, 2, 44100, 0, 0, NULL, NULL);
     ok(hr == S_OK, "CreateSubmixVoice failed: %08lx\n", hr);
+
+    check_refcount((IUnknown *)xa, 1);
 
     IXAudio2SubmixVoice_GetVoiceDetails(sub, &details);
     ok(details.CreationFlags == 0, "Got wrong creation flags: 0x%x\n", details.CreationFlags);
@@ -878,6 +892,14 @@ static void test_submix(IXAudio2 *xa)
     IXAudio2SubmixVoice_GetVoiceDetails(sub2, &details);
     ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
     ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+
+    IXAudio2MasteringVoice_DestroyVoice(master);
+    memset(&details, 0xcc, sizeof(details));
+    IXAudio2MasteringVoice_GetVoiceDetails(master, &details);
+    ok(details.InputChannels == 2, "Got wrong channel count: 0x%x\n", details.InputChannels);
+    ok(details.InputSampleRate == 44100, "Got wrong sample rate: 0x%x\n", details.InputSampleRate);
+
+    check_refcount((IUnknown *)xa, 1);
 
     sends.SendCount = 0;
     hr = IXAudio2SubmixVoice_SetOutputVoices(sub, &sends);
