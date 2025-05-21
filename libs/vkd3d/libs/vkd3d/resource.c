@@ -3094,7 +3094,7 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
     if (vk_image)
     {
         view_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view_desc.pNext = NULL;
+        view_desc.pNext = &usage_desc;
         view_desc.flags = 0;
         view_desc.image = vk_image;
         view_desc.viewType = desc->view_type;
@@ -3107,13 +3107,11 @@ bool vkd3d_create_texture_view(struct d3d12_device *device, uint32_t magic, VkIm
         view_desc.subresourceRange.levelCount = desc->miplevel_count;
         view_desc.subresourceRange.baseArrayLayer = desc->layer_idx;
         view_desc.subresourceRange.layerCount = desc->layer_count;
-        if (device->vk_info.KHR_maintenance2)
-        {
-            usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
-            usage_desc.pNext = NULL;
-            usage_desc.usage = desc->usage;
-            view_desc.pNext = &usage_desc;
-        }
+
+        usage_desc.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+        usage_desc.pNext = NULL;
+        usage_desc.usage = desc->usage;
+
         if ((vr = VK_CALL(vkCreateImageView(device->vk_device, &view_desc, NULL, &vk_view))) < 0)
         {
             WARN("Failed to create Vulkan image view, vr %d.\n", vr);

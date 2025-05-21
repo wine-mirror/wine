@@ -714,6 +714,22 @@ input_primitive_type_table[] =
     [VKD3D_SM4_INPUT_PT_TRIANGLEADJ]    = {6, VKD3D_PT_TRIANGLELIST_ADJ},
 };
 
+static const enum vkd3d_sm4_input_primitive_type sm4_input_primitive_type_table[] =
+{
+    [VKD3D_PT_POINTLIST]            = VKD3D_SM4_INPUT_PT_POINT,
+    [VKD3D_PT_LINELIST]             = VKD3D_SM4_INPUT_PT_LINE,
+    [VKD3D_PT_TRIANGLELIST]         = VKD3D_SM4_INPUT_PT_TRIANGLE,
+    [VKD3D_PT_LINELIST_ADJ]         = VKD3D_SM4_INPUT_PT_LINEADJ,
+    [VKD3D_PT_TRIANGLELIST_ADJ]     = VKD3D_SM4_INPUT_PT_TRIANGLEADJ,
+};
+
+static const enum vkd3d_sm4_output_primitive_type sm4_output_primitive_type_table[] =
+{
+    [VKD3D_PT_POINTLIST]            = VKD3D_SM4_OUTPUT_PT_POINTLIST,
+    [VKD3D_PT_LINESTRIP]            = VKD3D_SM4_OUTPUT_PT_LINESTRIP,
+    [VKD3D_PT_TRIANGLESTRIP]        = VKD3D_SM4_OUTPUT_PT_TRIANGLESTRIP,
+};
+
 static const enum vkd3d_shader_resource_type resource_type_table[] =
 {
     /* 0 */                                       VKD3D_SHADER_RESOURCE_NONE,
@@ -1051,7 +1067,8 @@ static void shader_sm4_read_dcl_index_range(struct vkd3d_shader_instruction *ins
                     register_idx, register_count, write_mask, e->sysval_semantic);
             return;
         }
-        if ((io_masks[register_idx + i] & write_mask) != write_mask)
+        if ((io_masks[register_idx + i] & write_mask) != write_mask
+                && (io_masks[register_idx + i] & write_mask) != 0)
         {
             WARN("No matching declaration for index range base %u, count %u, mask %#x.\n",
                     register_idx, register_count, write_mask);
@@ -1076,6 +1093,8 @@ static void shader_sm4_read_dcl_output_topology(struct vkd3d_shader_instruction 
 
     if (ins->declaration.primitive_type.type == VKD3D_PT_UNDEFINED)
         FIXME("Unhandled output primitive type %#x.\n", primitive_type);
+
+    priv->p.program->output_topology = ins->declaration.primitive_type.type;
 }
 
 static void shader_sm4_read_dcl_input_primitive(struct vkd3d_shader_instruction *ins, uint32_t opcode,
@@ -1103,6 +1122,8 @@ static void shader_sm4_read_dcl_input_primitive(struct vkd3d_shader_instruction 
 
     if (ins->declaration.primitive_type.type == VKD3D_PT_UNDEFINED)
         FIXME("Unhandled input primitive type %#x.\n", primitive_type);
+
+    program->input_primitive = ins->declaration.primitive_type.type;
 }
 
 static void shader_sm4_read_declaration_count(struct vkd3d_shader_instruction *ins, uint32_t opcode,
@@ -1113,6 +1134,8 @@ static void shader_sm4_read_declaration_count(struct vkd3d_shader_instruction *i
     ins->declaration.count = *tokens;
     if (opcode == VKD3D_SM4_OP_DCL_TEMPS)
         program->temp_count = max(program->temp_count, *tokens);
+    else if (opcode == VKD3D_SM4_OP_DCL_VERTICES_OUT)
+        program->vertices_out_count = *tokens;
 }
 
 static void shader_sm4_read_declaration_dst(struct vkd3d_shader_instruction *ins, uint32_t opcode,
@@ -1720,7 +1743,7 @@ static void init_sm4_lookup_tables(struct vkd3d_sm4_lookup_tables *lookup)
         {VKD3D_SM5_RT_LOCAL_THREAD_ID,         VKD3DSPR_LOCALTHREADID,   VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_COVERAGE,                VKD3DSPR_COVERAGE,        VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_LOCAL_THREAD_INDEX,      VKD3DSPR_LOCALTHREADINDEX,VKD3D_SM4_SWIZZLE_VEC4},
-        {VKD3D_SM5_RT_GS_INSTANCE_ID,          VKD3DSPR_GSINSTID,        VKD3D_SM4_SWIZZLE_VEC4},
+        {VKD3D_SM5_RT_GS_INSTANCE_ID,          VKD3DSPR_GSINSTID,        VKD3D_SM4_SWIZZLE_SCALAR},
         {VKD3D_SM5_RT_DEPTHOUT_GREATER_EQUAL,  VKD3DSPR_DEPTHOUTGE,      VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_DEPTHOUT_LESS_EQUAL,     VKD3DSPR_DEPTHOUTLE,      VKD3D_SM4_SWIZZLE_VEC4},
         {VKD3D_SM5_RT_OUTPUT_STENCIL_REF,      VKD3DSPR_OUTSTENCILREF,   VKD3D_SM4_SWIZZLE_VEC4},
@@ -2990,6 +3013,7 @@ bool sm4_register_from_semantic_name(const struct vkd3d_shader_version *version,
         {"sv_primitiveid",      false, VKD3D_SHADER_TYPE_DOMAIN,   VKD3DSPR_PRIMID,        false},
 
         {"sv_primitiveid",      false, VKD3D_SHADER_TYPE_GEOMETRY, VKD3DSPR_PRIMID,        false},
+        {"sv_gsinstanceid",     false, VKD3D_SHADER_TYPE_GEOMETRY, VKD3DSPR_GSINSTID,      false},
 
         {"sv_outputcontrolpointid", false, VKD3D_SHADER_TYPE_HULL, VKD3DSPR_OUTPOINTID,    false},
         {"sv_primitiveid",          false, VKD3D_SHADER_TYPE_HULL, VKD3DSPR_PRIMID,        false},
@@ -3070,7 +3094,8 @@ static bool get_insidetessfactor_sysval_semantic(enum vkd3d_shader_sysval_semant
 
 bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *sysval_semantic,
         const struct vkd3d_shader_version *version, bool semantic_compat_mapping, enum vkd3d_tessellator_domain domain,
-        const char *semantic_name, unsigned int semantic_idx, bool output, bool is_patch_constant_func, bool is_patch)
+        const char *semantic_name, unsigned int semantic_idx, bool output,
+        bool is_patch_constant_func, bool is_primitive)
 {
     unsigned int i;
 
@@ -3091,12 +3116,15 @@ bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *s
         {"sv_domainlocation",           false, VKD3D_SHADER_TYPE_DOMAIN,    ~0u},
         {"sv_position",                 false, VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_NONE},
         {"sv_primitiveid",              false, VKD3D_SHADER_TYPE_DOMAIN,    ~0u},
+        {"sv_rendertargetarrayindex",   false, VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_NONE},
+        {"sv_viewportarrayindex",       false, VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_NONE},
 
         {"sv_position",                 true,  VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_POSITION},
+        {"sv_rendertargetarrayindex",   true,  VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_RENDER_TARGET_ARRAY_INDEX},
+        {"sv_viewportarrayindex",       true,  VKD3D_SHADER_TYPE_DOMAIN,    VKD3D_SHADER_SV_VIEWPORT_ARRAY_INDEX},
 
-        {"position",                    false, VKD3D_SHADER_TYPE_GEOMETRY,  VKD3D_SHADER_SV_POSITION},
-        {"sv_position",                 false, VKD3D_SHADER_TYPE_GEOMETRY,  VKD3D_SHADER_SV_POSITION},
         {"sv_primitiveid",              false, VKD3D_SHADER_TYPE_GEOMETRY,  VKD3D_SHADER_SV_PRIMITIVE_ID},
+        {"sv_gsinstanceid",             false, VKD3D_SHADER_TYPE_GEOMETRY,  ~0u},
 
         {"position",                    true,  VKD3D_SHADER_TYPE_GEOMETRY,  VKD3D_SHADER_SV_POSITION},
         {"sv_position",                 true,  VKD3D_SHADER_TYPE_GEOMETRY,  VKD3D_SHADER_SV_POSITION},
@@ -3107,6 +3135,8 @@ bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *s
         {"sv_primitiveid",              false, VKD3D_SHADER_TYPE_HULL,      ~0u},
 
         {"sv_position",                 true,  VKD3D_SHADER_TYPE_HULL,      VKD3D_SHADER_SV_POSITION},
+        {"sv_rendertargetarrayindex",   true,  VKD3D_SHADER_TYPE_HULL,      VKD3D_SHADER_SV_RENDER_TARGET_ARRAY_INDEX},
+        {"sv_viewportarrayindex",       true,  VKD3D_SHADER_TYPE_HULL,      VKD3D_SHADER_SV_VIEWPORT_ARRAY_INDEX},
 
         {"position",                    false, VKD3D_SHADER_TYPE_PIXEL,     VKD3D_SHADER_SV_POSITION},
         {"sv_position",                 false, VKD3D_SHADER_TYPE_PIXEL,     VKD3D_SHADER_SV_POSITION},
@@ -3133,13 +3163,17 @@ bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *s
     };
     bool has_sv_prefix = !ascii_strncasecmp(semantic_name, "sv_", 3);
 
-    if (is_patch)
+    if (is_primitive)
     {
         VKD3D_ASSERT(!output);
 
         if (!ascii_strcasecmp(semantic_name, "sv_position")
                 || (semantic_compat_mapping && !ascii_strcasecmp(semantic_name, "position")))
             *sysval_semantic = VKD3D_SHADER_SV_POSITION;
+        else if (!ascii_strcasecmp(semantic_name, "sv_rendertargetarrayindex"))
+            *sysval_semantic = VKD3D_SHADER_SV_RENDER_TARGET_ARRAY_INDEX;
+        else if (!ascii_strcasecmp(semantic_name, "sv_viewportarrayindex"))
+            *sysval_semantic = VKD3D_SHADER_SV_VIEWPORT_ARRAY_INDEX;
         else if (has_sv_prefix)
             return false;
         else
@@ -3155,11 +3189,6 @@ bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *s
                 return get_tessfactor_sysval_semantic(sysval_semantic, domain, semantic_idx);
             if (!ascii_strcasecmp(semantic_name, "sv_insidetessfactor"))
                 return get_insidetessfactor_sysval_semantic(sysval_semantic, domain, semantic_idx);
-            if (!ascii_strcasecmp(semantic_name, "sv_position"))
-            {
-                *sysval_semantic = VKD3D_SHADER_SV_NONE;
-                return true;
-            }
         }
         else
         {
@@ -3190,12 +3219,17 @@ bool sm4_sysval_semantic_from_semantic_name(enum vkd3d_shader_sysval_semantic *s
                 && (semantic_compat_mapping || has_sv_prefix)
                 && version->type == semantics[i].shader_type)
         {
-            *sysval_semantic = semantics[i].semantic;
+            if (is_patch_constant_func && output && semantics[i].semantic != ~0u)
+                *sysval_semantic = VKD3D_SHADER_SV_NONE;
+            else
+                *sysval_semantic = semantics[i].semantic;
             return true;
         }
     }
 
     if (has_sv_prefix)
+        return false;
+    if (!output && version->type == VKD3D_SHADER_TYPE_GEOMETRY)
         return false;
 
     *sysval_semantic = VKD3D_SHADER_SV_NONE;
@@ -3228,6 +3262,7 @@ static int signature_element_pointer_compare(const void *x, const void *y)
 
 static void tpf_write_signature(struct tpf_compiler *tpf, const struct shader_signature *signature, uint32_t tag)
 {
+    bool has_minimum_precision = tpf->program->global_flags & VKD3DSGF_ENABLE_MINIMUM_PRECISION;
     bool output = tag == TAG_OSGN || (tag == TAG_PCSG
             && tpf->program->shader_version.type == VKD3D_SHADER_TYPE_HULL);
     const struct signature_element **sorted_elements;
@@ -3256,12 +3291,16 @@ static void tpf_write_signature(struct tpf_compiler *tpf, const struct shader_si
         if (sysval >= VKD3D_SHADER_SV_TARGET)
             sysval = VKD3D_SHADER_SV_NONE;
 
+        if (has_minimum_precision)
+            put_u32(&buffer, 0); /* FIXME: stream index */
         put_u32(&buffer, 0); /* name */
         put_u32(&buffer, element->semantic_index);
         put_u32(&buffer, sysval);
         put_u32(&buffer, element->component_type);
         put_u32(&buffer, element->register_index);
         put_u32(&buffer, vkd3d_make_u16(element->mask, used_mask));
+        if (has_minimum_precision)
+            put_u32(&buffer, element->min_precision);
     }
 
     for (i = 0; i < signature->element_count; ++i)
@@ -3270,9 +3309,21 @@ static void tpf_write_signature(struct tpf_compiler *tpf, const struct shader_si
         size_t string_offset;
 
         string_offset = put_string(&buffer, element->semantic_name);
-        set_u32(&buffer, (2 + i * 6) * sizeof(uint32_t), string_offset);
+        if (has_minimum_precision)
+            set_u32(&buffer, (2 + i * 8 + 1) * sizeof(uint32_t), string_offset);
+        else
+            set_u32(&buffer, (2 + i * 6) * sizeof(uint32_t), string_offset);
     }
 
+    if (has_minimum_precision)
+    {
+        if (tag == TAG_ISGN)
+            tag = TAG_ISG1;
+        else if (tag == TAG_OSGN || tag == TAG_OSG5)
+            tag = TAG_OSG1;
+        else if (tag == TAG_PCSG)
+            tag = TAG_PSG1;
+    }
     add_section(tpf, tag, &buffer);
     vkd3d_free(sorted_elements);
 }
@@ -3444,12 +3495,16 @@ static void sm4_write_register_index(const struct tpf_compiler *tpf, const struc
         unsigned int j)
 {
     unsigned int addressing = sm4_get_index_addressing_from_reg(reg, j);
+    const struct vkd3d_shader_register_index *idx = &reg->idx[j];
     struct vkd3d_bytecode_buffer *buffer = tpf->buffer;
     unsigned int k;
 
+    if (!addressing || (addressing & VKD3D_SM4_ADDRESSING_OFFSET))
+        put_u32(buffer, idx->offset);
+
     if (addressing & VKD3D_SM4_ADDRESSING_RELATIVE)
     {
-        const struct vkd3d_shader_src_param *idx_src = reg->idx[j].rel_addr;
+        const struct vkd3d_shader_src_param *idx_src = idx->rel_addr;
         uint32_t idx_src_token;
 
         VKD3D_ASSERT(idx_src);
@@ -3463,10 +3518,6 @@ static void sm4_write_register_index(const struct tpf_compiler *tpf, const struc
             put_u32(buffer, idx_src->reg.idx[k].offset);
             VKD3D_ASSERT(!idx_src->reg.idx[k].rel_addr);
         }
-    }
-    else
-    {
-        put_u32(tpf->buffer, reg->idx[j].offset);
     }
 }
 
@@ -3771,6 +3822,25 @@ static void tpf_dcl_sampler(const struct tpf_compiler *tpf, const struct vkd3d_s
     write_sm4_instruction(tpf, &instr);
 }
 
+static uint32_t pack_resource_data_type(const enum vkd3d_data_type *resource_data_type)
+{
+    unsigned int i, k, type = 0;
+
+    for (k = 0; k < 4; ++k)
+    {
+        for (i = ARRAY_SIZE(data_type_table) - 1; i < ARRAY_SIZE(data_type_table); --i)
+        {
+            if (resource_data_type[k] == data_type_table[i])
+            {
+                type |= i << (4 * k);
+                break;
+            }
+        }
+    }
+
+    return type;
+}
+
 static void tpf_dcl_texture(const struct tpf_compiler *tpf, const struct vkd3d_shader_instruction *ins)
 {
     const struct vkd3d_shader_structured_resource *structured_resource = &ins->declaration.structured_resource;
@@ -3778,7 +3848,6 @@ static void tpf_dcl_texture(const struct tpf_compiler *tpf, const struct vkd3d_s
     const struct vkd3d_shader_version *version = &tpf->program->shader_version;
     const struct vkd3d_sm4_opcode_info *info;
     struct sm4_instruction instr = {0};
-    unsigned int i, k;
     bool uav;
 
     info = get_info_from_vsir_opcode(&tpf->lookup, ins->opcode);
@@ -3793,18 +3862,11 @@ static void tpf_dcl_texture(const struct tpf_compiler *tpf, const struct vkd3d_s
     instr.dsts[0] = semantic->resource.reg;
     instr.dst_count = 1;
 
-    for (k = 0; k < 4; ++k)
+    if (ins->opcode == VKD3DSIH_DCL || ins->opcode == VKD3DSIH_DCL_UAV_TYPED)
     {
-        for (i = ARRAY_SIZE(data_type_table) - 1; i < ARRAY_SIZE(data_type_table); --i)
-        {
-            if (semantic->resource_data_type[k] == data_type_table[i])
-            {
-                instr.idx[0] |= i << (4 * k);
-                break;
-            }
-        }
+        instr.idx[0] = pack_resource_data_type(semantic->resource_data_type);
+        instr.idx_count = 1;
     }
-    instr.idx_count = 1;
 
     if (vkd3d_shader_ver_ge(version, 5, 1))
     {
@@ -3813,8 +3875,7 @@ static void tpf_dcl_texture(const struct tpf_compiler *tpf, const struct vkd3d_s
         instr.dsts[0].reg.idx[2].offset = semantic->resource.range.last;
         instr.dsts[0].reg.idx_count = 3;
 
-        instr.idx[1] = semantic->resource.range.space;
-        instr.idx_count = 2;
+        instr.idx[instr.idx_count++] = semantic->resource.range.space;
     }
     else
     {
@@ -3907,6 +3968,57 @@ static void tpf_write_dcl_tessellator_output_primitive(const struct tpf_compiler
     {
         .opcode = VKD3D_SM5_OP_DCL_TESSELLATOR_OUTPUT_PRIMITIVE,
         .extra_bits = output_primitive << VKD3D_SM5_TESSELLATOR_SHIFT,
+    };
+
+    write_sm4_instruction(tpf, &instr);
+}
+
+static void tpf_write_dcl_input_primitive(const struct tpf_compiler *tpf, enum vkd3d_primitive_type input_primitive,
+        unsigned int patch_vertex_count)
+{
+    enum vkd3d_sm4_input_primitive_type sm4_input_primitive;
+    struct sm4_instruction instr =
+    {
+        .opcode = VKD3D_SM4_OP_DCL_INPUT_PRIMITIVE,
+    };
+
+    if (input_primitive == VKD3D_PT_PATCH)
+    {
+        VKD3D_ASSERT(patch_vertex_count >= 1 && patch_vertex_count <= 32);
+        sm4_input_primitive = VKD3D_SM5_INPUT_PT_PATCH1 + patch_vertex_count - 1;
+    }
+    else
+    {
+        VKD3D_ASSERT(input_primitive < ARRAY_SIZE(sm4_input_primitive_type_table));
+        sm4_input_primitive = sm4_input_primitive_type_table[input_primitive];
+    }
+
+    instr.extra_bits = sm4_input_primitive << VKD3D_SM4_PRIMITIVE_TYPE_SHIFT;
+
+    write_sm4_instruction(tpf, &instr);
+}
+
+static void tpf_write_dcl_output_topology(const struct tpf_compiler *tpf, enum vkd3d_primitive_type output_topology)
+{
+    struct sm4_instruction instr =
+    {
+        .opcode = VKD3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,
+    };
+
+    VKD3D_ASSERT(output_topology < ARRAY_SIZE(sm4_output_primitive_type_table));
+    instr.extra_bits = sm4_output_primitive_type_table[output_topology] << VKD3D_SM4_PRIMITIVE_TYPE_SHIFT;
+
+    write_sm4_instruction(tpf, &instr);
+}
+
+static void tpf_write_dcl_vertices_out(const struct tpf_compiler *tpf, unsigned int count)
+{
+    struct sm4_instruction instr =
+    {
+        .opcode = VKD3D_SM4_OP_DCL_VERTICES_OUT,
+
+        .idx = {count},
+        .idx_count = 1,
     };
 
     write_sm4_instruction(tpf, &instr);
@@ -4053,6 +4165,7 @@ static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vkd3d_
         case VKD3DSIH_BREAK:
         case VKD3DSIH_CASE:
         case VKD3DSIH_CONTINUE:
+        case VKD3DSIH_CUT:
         case VKD3DSIH_DEFAULT:
         case VKD3DSIH_DISCARD:
         case VKD3DSIH_DIV:
@@ -4066,6 +4179,7 @@ static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vkd3d_
         case VKD3DSIH_DSY_COARSE:
         case VKD3DSIH_DSY_FINE:
         case VKD3DSIH_ELSE:
+        case VKD3DSIH_EMIT:
         case VKD3DSIH_ENDIF:
         case VKD3DSIH_ENDLOOP:
         case VKD3DSIH_ENDSWITCH:
@@ -4101,6 +4215,7 @@ static void tpf_handle_instruction(struct tpf_compiler *tpf, const struct vkd3d_
         case VKD3DSIH_IMM_ATOMIC_UMIN:
         case VKD3DSIH_IMM_ATOMIC_OR:
         case VKD3DSIH_IMM_ATOMIC_XOR:
+        case VKD3DSIH_SYNC:
         case VKD3DSIH_IMUL:
         case VKD3DSIH_INE:
         case VKD3DSIH_INEG:
@@ -4215,6 +4330,13 @@ static void tpf_write_shdr(struct tpf_compiler *tpf)
         tpf_write_dcl_input_control_point_count(tpf, program->input_control_point_count);
         tpf_write_dcl_tessellator_domain(tpf, program->tess_domain);
     }
+    else if (version->type == VKD3D_SHADER_TYPE_GEOMETRY)
+    {
+        tpf_write_dcl_input_primitive(tpf, program->input_primitive, program->input_control_point_count);
+        if (program->output_topology != VKD3D_PT_UNDEFINED)
+            tpf_write_dcl_output_topology(tpf, program->output_topology);
+        tpf_write_dcl_vertices_out(tpf, program->vertices_out_count);
+    }
 
     tpf_write_program(tpf, program);
 
@@ -4232,6 +4354,9 @@ static void tpf_write_sfi0(struct tpf_compiler *tpf)
 
     if (tpf->program->features.rovs)
         *flags |= DXBC_SFI0_REQUIRES_ROVS;
+
+    if (tpf->program->global_flags & VKD3DSGF_ENABLE_MINIMUM_PRECISION)
+        *flags |= DXBC_SFI0_REQUIRES_MINIMUM_PRECISION;
 
     /* FIXME: We also emit code that should require UAVS_AT_EVERY_STAGE,
      * STENCIL_REF, and TYPED_UAV_LOAD_ADDITIONAL_FORMATS. */

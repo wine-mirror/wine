@@ -31,6 +31,43 @@ static void d3d12_command_queue_submit_locked(struct d3d12_command_queue *queue)
 static HRESULT d3d12_command_queue_flush_ops(struct d3d12_command_queue *queue, bool *flushed_any);
 static HRESULT d3d12_command_queue_flush_ops_locked(struct d3d12_command_queue *queue, bool *flushed_any);
 
+static void vkd3d_null_event_signal(struct vkd3d_null_event *e)
+{
+    vkd3d_mutex_lock(&e->mutex);
+    e->signalled = true;
+    vkd3d_cond_signal(&e->cond);
+    vkd3d_mutex_unlock(&e->mutex);
+}
+
+void vkd3d_null_event_wait(struct vkd3d_null_event *e)
+{
+    vkd3d_mutex_lock(&e->mutex);
+    while (!e->signalled)
+        vkd3d_cond_wait(&e->cond, &e->mutex);
+    e->signalled = false;
+    vkd3d_mutex_unlock(&e->mutex);
+}
+
+void vkd3d_null_event_cleanup(struct vkd3d_null_event *e)
+{
+    vkd3d_cond_destroy(&e->cond);
+    vkd3d_mutex_destroy(&e->mutex);
+}
+
+void vkd3d_null_event_init(struct vkd3d_null_event *e)
+{
+    vkd3d_mutex_init(&e->mutex);
+    vkd3d_cond_init(&e->cond);
+    e->signalled = false;
+}
+
+HRESULT vkd3d_signal_null_event(HANDLE h)
+{
+    vkd3d_null_event_signal(h);
+
+    return S_OK;
+}
+
 HRESULT vkd3d_queue_create(struct d3d12_device *device,
         uint32_t family_index, const VkQueueFamilyProperties *properties, struct vkd3d_queue **queue)
 {
@@ -753,8 +790,6 @@ static HRESULT d3d12_fence_add_vk_semaphore(struct d3d12_fence *fence, VkSemapho
 
 static void d3d12_fence_signal_external_events_locked(struct d3d12_fence *fence)
 {
-    struct d3d12_device *device = fence->device;
-    bool signal_null_event_cond = false;
     unsigned int i, j;
 
     for (i = 0, j = 0; i < fence->event_count; ++i)
@@ -763,28 +798,16 @@ static void d3d12_fence_signal_external_events_locked(struct d3d12_fence *fence)
 
         if (current->value <= fence->value)
         {
-            if (current->event)
-            {
-                device->signal_event(current->event);
-            }
-            else
-            {
-                *current->latch = true;
-                signal_null_event_cond = true;
-            }
+            current->signal(current->event);
+            continue;
         }
-        else
-        {
-            if (i != j)
-                fence->events[j] = *current;
-            ++j;
-        }
+
+        if (i != j)
+            fence->events[j] = *current;
+        ++j;
     }
 
     fence->event_count = j;
-
-    if (signal_null_event_cond)
-        vkd3d_cond_broadcast(&fence->null_event_cond);
 }
 
 static HRESULT d3d12_fence_signal(struct d3d12_fence *fence, uint64_t value, VkFence vk_fence, bool on_cpu)
@@ -978,7 +1001,6 @@ static void d3d12_fence_decref(struct d3d12_fence *fence)
     vkd3d_free(fence->events);
     vkd3d_free(fence->semaphores);
     vkd3d_mutex_destroy(&fence->mutex);
-    vkd3d_cond_destroy(&fence->null_event_cond);
     vkd3d_free(fence);
 
     d3d12_device_release(device);
@@ -1047,12 +1069,30 @@ static UINT64 STDMETHODCALLTYPE d3d12_fence_GetCompletedValue(ID3D12Fence1 *ifac
     return completed_value;
 }
 
+bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence,
+        HANDLE event, PFN_vkd3d_signal_event signal, uint64_t value)
+{
+    struct vkd3d_waiting_event *e;
+
+    if (!vkd3d_array_reserve((void **)&fence->events, &fence->events_size,
+            fence->event_count + 1, sizeof(*fence->events)))
+        return false;
+
+    e = &fence->events[fence->event_count++];
+    e->event = event;
+    e->signal = signal;
+    e->value = value;
+
+    return true;
+}
+
 static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence1 *iface,
         UINT64 value, HANDLE event)
 {
     struct d3d12_fence *fence = impl_from_ID3D12Fence1(iface);
+    struct vkd3d_null_event null_event;
+    PFN_vkd3d_signal_event signal;
     unsigned int i;
-    bool latch = false;
 
     TRACE("iface %p, value %#"PRIx64", event %p.\n", iface, value, event);
 
@@ -1078,30 +1118,29 @@ static HRESULT STDMETHODCALLTYPE d3d12_fence_SetEventOnCompletion(ID3D12Fence1 *
         }
     }
 
-    if (!vkd3d_array_reserve((void **)&fence->events, &fence->events_size,
-            fence->event_count + 1, sizeof(*fence->events)))
+    signal = fence->device->signal_event;
+    if (!event)
+    {
+        vkd3d_null_event_init(&null_event);
+        event = &null_event;
+        signal = vkd3d_signal_null_event;
+    }
+
+    if (!d3d12_fence_add_waiting_event(fence, event, signal, value))
     {
         WARN("Failed to add event.\n");
         vkd3d_mutex_unlock(&fence->mutex);
         return E_OUTOFMEMORY;
     }
 
-    fence->events[fence->event_count].value = value;
-    fence->events[fence->event_count].event = event;
-    fence->events[fence->event_count].latch = &latch;
-    ++fence->event_count;
+    vkd3d_mutex_unlock(&fence->mutex);
 
-    /* If event is NULL, we need to block until the fence value completes.
-     * Implement this in a uniform way where we pretend we have a dummy event.
-     * A NULL fence->events[].event means that we should set latch to true
-     * and signal a condition variable instead of calling external signal_event callback. */
-    if (!event)
+    if (event == &null_event)
     {
-        while (!latch)
-            vkd3d_cond_wait(&fence->null_event_cond, &fence->mutex);
+        vkd3d_null_event_wait(&null_event);
+        vkd3d_null_event_cleanup(&null_event);
     }
 
-    vkd3d_mutex_unlock(&fence->mutex);
     return S_OK;
 }
 
@@ -1159,7 +1198,7 @@ static const struct ID3D12Fence1Vtbl d3d12_fence_vtbl =
     d3d12_fence_GetCreationFlags,
 };
 
-static struct d3d12_fence *unsafe_impl_from_ID3D12Fence(ID3D12Fence *iface)
+struct d3d12_fence *unsafe_impl_from_ID3D12Fence(ID3D12Fence *iface)
 {
     ID3D12Fence1 *iface1;
 
@@ -1185,8 +1224,6 @@ static HRESULT d3d12_fence_init(struct d3d12_fence *fence, struct d3d12_device *
 
     vkd3d_mutex_init(&fence->mutex);
 
-    vkd3d_cond_init(&fence->null_event_cond);
-
     if ((fence->flags = flags))
         FIXME("Ignoring flags %#x.\n", flags);
 
@@ -1201,8 +1238,8 @@ static HRESULT d3d12_fence_init(struct d3d12_fence *fence, struct d3d12_device *
             &fence->timeline_semaphore)) < 0)
     {
         WARN("Failed to create timeline semaphore, vr %d.\n", vr);
-        hr = hresult_from_vk_result(vr);
-        goto fail_destroy_null_cond;
+        vkd3d_mutex_destroy(&fence->mutex);
+        return hresult_from_vk_result(vr);
     }
 
     fence->semaphores = NULL;
@@ -1213,20 +1250,14 @@ static HRESULT d3d12_fence_init(struct d3d12_fence *fence, struct d3d12_device *
 
     if (FAILED(hr = vkd3d_private_store_init(&fence->private_store)))
     {
-        goto fail_destroy_timeline_semaphore;
+        VK_CALL(vkDestroySemaphore(device->vk_device, fence->timeline_semaphore, NULL));
+        vkd3d_mutex_destroy(&fence->mutex);
+        return hr;
     }
 
     d3d12_device_add_ref(fence->device = device);
 
     return S_OK;
-
-fail_destroy_timeline_semaphore:
-    VK_CALL(vkDestroySemaphore(device->vk_device, fence->timeline_semaphore, NULL));
-fail_destroy_null_cond:
-    vkd3d_cond_destroy(&fence->null_event_cond);
-    vkd3d_mutex_destroy(&fence->mutex);
-
-    return hr;
 }
 
 HRESULT d3d12_fence_create(struct d3d12_device *device,
@@ -1499,7 +1530,7 @@ static VkDescriptorPool d3d12_command_allocator_allocate_descriptor_pool(
     const struct vkd3d_vk_device_procs *vk_procs = &device->vk_procs;
     struct VkDescriptorPoolCreateInfo pool_desc;
     VkDevice vk_device = device->vk_device;
-    VkDescriptorPoolSize vk_pool_sizes[2];
+    VkDescriptorPoolSize vk_pool_sizes[4];
     unsigned int pool_size, pool_limit;
     VkDescriptorPool vk_pool;
     VkResult vr;
@@ -1530,20 +1561,42 @@ static VkDescriptorPool d3d12_command_allocator_allocate_descriptor_pool(
         }
         descriptor_count = pool_size;
 
-        vk_pool_sizes[0].type = vk_descriptor_type_from_vkd3d_descriptor_type(descriptor_type, true);
-        vk_pool_sizes[0].descriptorCount = descriptor_count;
-
-        vk_pool_sizes[1].type = vk_descriptor_type_from_vkd3d_descriptor_type(descriptor_type, false);
-        vk_pool_sizes[1].descriptorCount = descriptor_count;
-
         pool_desc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
         pool_desc.pNext = NULL;
         pool_desc.flags = 0;
         pool_desc.maxSets = 512;
-        pool_desc.poolSizeCount = 1;
-        if (vk_pool_sizes[1].type != vk_pool_sizes[0].type)
-            ++pool_desc.poolSizeCount;
         pool_desc.pPoolSizes = vk_pool_sizes;
+
+        if (allocator->device->use_vk_heaps)
+        {
+            /* SRV root descriptors. */
+            vk_pool_sizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER;
+            vk_pool_sizes[0].descriptorCount = descriptor_count;
+
+            /* UAV root descriptors and UAV counters. */
+            vk_pool_sizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER;
+            vk_pool_sizes[1].descriptorCount = descriptor_count;
+
+            /* CBV root descriptors. */
+            vk_pool_sizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            vk_pool_sizes[2].descriptorCount = descriptor_count;
+
+            /* Static samplers. */
+            vk_pool_sizes[3].type = VK_DESCRIPTOR_TYPE_SAMPLER;
+            vk_pool_sizes[3].descriptorCount = descriptor_count;
+
+            pool_desc.poolSizeCount = 4;
+        }
+        else
+        {
+            vk_pool_sizes[0].type = vk_descriptor_type_from_vkd3d_descriptor_type(descriptor_type, true);
+            vk_pool_sizes[0].descriptorCount = descriptor_count;
+
+            vk_pool_sizes[1].type = vk_descriptor_type_from_vkd3d_descriptor_type(descriptor_type, false);
+            vk_pool_sizes[1].descriptorCount = descriptor_count;
+
+            pool_desc.poolSizeCount = 1 + (vk_pool_sizes[0].type != vk_pool_sizes[1].type);
+        }
 
         if ((vr = VK_CALL(vkCreateDescriptorPool(vk_device, &pool_desc, NULL, &vk_pool))) < 0)
         {
@@ -1577,6 +1630,10 @@ static VkDescriptorSet d3d12_command_allocator_allocate_descriptor_set(struct d3
     VkDevice vk_device = device->vk_device;
     VkDescriptorSet vk_descriptor_set;
     VkResult vr;
+
+    /* With Vulkan heaps we use just one descriptor pool. */
+    if (device->use_vk_heaps)
+        descriptor_type = 0;
 
     if (!allocator->vk_descriptor_pools[descriptor_type])
         allocator->vk_descriptor_pools[descriptor_type] = d3d12_command_allocator_allocate_descriptor_pool(allocator,
@@ -2222,7 +2279,7 @@ static bool vk_barrier_parameters_from_d3d12_resource_state(unsigned int state, 
                 if (!stencil_state || (stencil_state & D3D12_RESOURCE_STATE_DEPTH_WRITE))
                     *image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 else
-                    *image_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL;
+                    *image_layout = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL_KHR;
             }
             return true;
 
@@ -2256,7 +2313,7 @@ static bool vk_barrier_parameters_from_d3d12_resource_state(unsigned int state, 
             {
                 if (stencil_state & D3D12_RESOURCE_STATE_DEPTH_WRITE)
                 {
-                    *image_layout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL;
+                    *image_layout = VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL_KHR;
                     *access_mask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
                 }
                 else

@@ -127,12 +127,12 @@ struct vkd3d_vulkan_info
     bool KHR_draw_indirect_count;
     bool KHR_get_memory_requirements2;
     bool KHR_image_format_list;
-    bool KHR_maintenance2;
     bool KHR_maintenance3;
     bool KHR_portability_subset;
     bool KHR_push_descriptor;
     bool KHR_sampler_mirror_clamp_to_edge;
     bool KHR_timeline_semaphore;
+    bool KHR_zero_initialize_workgroup_memory;
     /* EXT device extensions */
     bool EXT_4444_formats;
     bool EXT_calibrated_timestamps;
@@ -357,6 +357,18 @@ HRESULT vkd3d_set_private_data(struct vkd3d_private_store *store,
         const GUID *tag, unsigned int data_size, const void *data);
 HRESULT vkd3d_set_private_data_interface(struct vkd3d_private_store *store, const GUID *tag, const IUnknown *object);
 
+struct vkd3d_null_event
+{
+    struct vkd3d_mutex mutex;
+    struct vkd3d_cond cond;
+    bool signalled;
+};
+
+void vkd3d_null_event_cleanup(struct vkd3d_null_event *e);
+void vkd3d_null_event_init(struct vkd3d_null_event *e);
+void vkd3d_null_event_wait(struct vkd3d_null_event *e);
+HRESULT vkd3d_signal_null_event(HANDLE h);
+
 struct vkd3d_signaled_semaphore
 {
     uint64_t value;
@@ -385,13 +397,12 @@ struct d3d12_fence
     uint64_t value;
     uint64_t max_pending_value;
     struct vkd3d_mutex mutex;
-    struct vkd3d_cond null_event_cond;
 
     struct vkd3d_waiting_event
     {
-        uint64_t value;
         HANDLE event;
-        bool *latch;
+        PFN_vkd3d_signal_event signal;
+        uint64_t value;
     } *events;
     size_t events_size;
     size_t event_count;
@@ -411,8 +422,11 @@ struct d3d12_fence
     struct vkd3d_private_store private_store;
 };
 
+bool d3d12_fence_add_waiting_event(struct d3d12_fence *fence,
+        HANDLE event, PFN_vkd3d_signal_event signal, uint64_t value);
 HRESULT d3d12_fence_create(struct d3d12_device *device, uint64_t initial_value,
         D3D12_FENCE_FLAGS flags, struct d3d12_fence **fence);
+struct d3d12_fence *unsafe_impl_from_ID3D12Fence(ID3D12Fence *iface);
 
 VkResult vkd3d_create_timeline_semaphore(const struct d3d12_device *device, uint64_t initial_value,
         VkSemaphore *timeline_semaphore);

@@ -1215,6 +1215,7 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
     struct vkd3d_shader_src_param *src_params, *predicate;
     const struct vkd3d_sm1_opcode_info *opcode_info;
     struct vsir_program *program = sm1->p.program;
+    unsigned int vsir_dst_count, vsir_src_count;
     struct vkd3d_shader_dst_param *dst_param;
     const uint32_t **ptr = &sm1->ptr;
     uint32_t opcode_token;
@@ -1241,6 +1242,17 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
         goto fail;
     }
 
+    if (opcode_info->vkd3d_opcode == VKD3DSIH_TEXKILL)
+    {
+        vsir_src_count = 1;
+        vsir_dst_count = 0;
+    }
+    else
+    {
+        vsir_src_count = opcode_info->src_count;
+        vsir_dst_count = opcode_info->dst_count;
+    }
+
     vsir_instruction_init(ins, &sm1->p.location, opcode_info->vkd3d_opcode);
     ins->flags = (opcode_token & VKD3D_SM1_INSTRUCTION_FLAGS_MASK) >> VKD3D_SM1_INSTRUCTION_FLAGS_SHIFT;
     ins->coissue = opcode_token & VKD3D_SM1_COISSUE;
@@ -1248,9 +1260,9 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
     ins->structured = false;
     predicated = !!(opcode_token & VKD3D_SM1_INSTRUCTION_PREDICATED);
     ins->predicate = predicate = predicated ? vsir_program_get_src_params(program, 1) : NULL;
-    ins->dst_count = opcode_info->dst_count;
+    ins->dst_count = vsir_dst_count;
     ins->dst = dst_param = vsir_program_get_dst_params(program, ins->dst_count);
-    ins->src_count = opcode_info->src_count;
+    ins->src_count = vsir_src_count;
     ins->src = src_params = vsir_program_get_src_params(program, ins->src_count);
     if ((!predicate && predicated) || (!src_params && ins->src_count) || (!dst_param && ins->dst_count))
     {
@@ -1297,6 +1309,25 @@ static void shader_sm1_read_instruction(struct vkd3d_shader_sm1_parser *sm1, str
         shader_sm1_read_dst_param(sm1, &p, dst_param);
         shader_sm1_read_immconst(sm1, &p, &src_params[0], VSIR_DIMENSION_VEC4, VKD3D_DATA_INT);
         shader_sm1_scan_register(sm1, &dst_param->reg, dst_param->write_mask, true);
+    }
+    else if (ins->opcode == VKD3DSIH_TEXKILL)
+    {
+        /* TEXKILL, uniquely, encodes its argument as a destination, when it is
+         * semantically a source. Since we have multiple passes which operate
+         * generically on sources or destinations, normalize that. */
+        const struct vkd3d_shader_register *reg;
+        struct vkd3d_shader_dst_param tmp_dst;
+
+        reg = &tmp_dst.reg;
+        shader_sm1_read_dst_param(sm1, &p, &tmp_dst);
+        shader_sm1_scan_register(sm1, reg, tmp_dst.write_mask, false);
+
+        vsir_src_param_init(&src_params[0], reg->type, reg->data_type, reg->idx_count);
+        src_params[0].reg = *reg;
+        src_params[0].swizzle = vsir_swizzle_from_writemask(tmp_dst.write_mask);
+
+        if (ins->predicate)
+            shader_sm1_read_src_param(sm1, &p, predicate);
     }
     else
     {
@@ -1491,7 +1522,8 @@ int d3dbc_parse(const struct vkd3d_shader_compile_info *compile_info, uint64_t c
 }
 
 bool sm1_register_from_semantic_name(const struct vkd3d_shader_version *version, const char *semantic_name,
-        unsigned int semantic_index, bool output, enum vkd3d_shader_register_type *type, unsigned int *reg)
+        unsigned int semantic_index, bool output, enum vkd3d_shader_sysval_semantic *sysval,
+        enum vkd3d_shader_register_type *type, unsigned int *reg)
 {
     unsigned int i;
 
@@ -1501,42 +1533,43 @@ bool sm1_register_from_semantic_name(const struct vkd3d_shader_version *version,
         bool output;
         enum vkd3d_shader_type shader_type;
         unsigned int major_version;
+        enum vkd3d_shader_sysval_semantic sysval;
         enum vkd3d_shader_register_type type;
         unsigned int offset;
     }
     register_table[] =
     {
-        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3DSPR_INPUT},
-        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3DSPR_TEXTURE},
+        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3D_SHADER_SV_NONE,          VKD3DSPR_INPUT},
+        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 1, VKD3D_SHADER_SV_NONE,          VKD3DSPR_TEXTURE},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_COLOROUT},
-        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_DEPTHOUT},
-        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_DEPTHOUT},
-        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_COLOROUT},
-        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_INPUT},
-        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3DSPR_TEXTURE},
+        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_TARGET,        VKD3DSPR_COLOROUT},
+        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_DEPTH,         VKD3DSPR_DEPTHOUT},
+        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_DEPTH,         VKD3DSPR_DEPTHOUT},
+        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_TARGET,        VKD3DSPR_COLOROUT},
+        {"color",       false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_NONE,          VKD3DSPR_INPUT},
+        {"texcoord",    false, VKD3D_SHADER_TYPE_PIXEL, 2, VKD3D_SHADER_SV_NONE,          VKD3DSPR_TEXTURE},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_COLOROUT},
-        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_DEPTHOUT},
-        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_DEPTHOUT},
-        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_COLOROUT},
-        {"sv_position", false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_POSITION},
-        {"vface",       false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_FACE},
-        {"vpos",        false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3DSPR_MISCTYPE,     VKD3D_SM1_MISC_POSITION},
+        {"color",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_TARGET,        VKD3DSPR_COLOROUT},
+        {"depth",       true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_DEPTH,         VKD3DSPR_DEPTHOUT},
+        {"sv_depth",    true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_DEPTH,         VKD3DSPR_DEPTHOUT},
+        {"sv_target",   true,  VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_TARGET,        VKD3DSPR_COLOROUT},
+        {"sv_position", false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_POSITION,      VKD3DSPR_MISCTYPE, VKD3D_SM1_MISC_POSITION},
+        {"vface",       false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_IS_FRONT_FACE, VKD3DSPR_MISCTYPE, VKD3D_SM1_MISC_FACE},
+        {"vpos",        false, VKD3D_SHADER_TYPE_PIXEL, 3, VKD3D_SHADER_SV_POSITION,      VKD3DSPR_MISCTYPE, VKD3D_SM1_MISC_POSITION},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_ATTROUT},
-        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_FOG},
-        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
-        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POINT_SIZE},
-        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
-        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3DSPR_TEXCRDOUT},
+        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_NONE,         VKD3DSPR_ATTROUT},
+        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_NONE,         VKD3DSPR_RASTOUT, VSIR_RASTOUT_FOG},
+        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_POSITION,     VKD3DSPR_RASTOUT, VSIR_RASTOUT_POSITION},
+        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_NONE,         VKD3DSPR_RASTOUT, VSIR_RASTOUT_POINT_SIZE},
+        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_POSITION,     VKD3DSPR_RASTOUT, VSIR_RASTOUT_POSITION},
+        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 1, VKD3D_SHADER_SV_NONE,         VKD3DSPR_TEXCRDOUT},
 
-        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_ATTROUT},
-        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_FOG},
-        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
-        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POINT_SIZE},
-        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
-        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3DSPR_TEXCRDOUT},
+        {"color",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_NONE,         VKD3DSPR_ATTROUT},
+        {"fog",         true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_NONE,         VKD3DSPR_RASTOUT,     VSIR_RASTOUT_FOG},
+        {"position",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_POSITION,     VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"psize",       true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_NONE,         VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POINT_SIZE},
+        {"sv_position", true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_POSITION,     VKD3DSPR_RASTOUT,     VSIR_RASTOUT_POSITION},
+        {"texcoord",    true,  VKD3D_SHADER_TYPE_VERTEX, 2, VKD3D_SHADER_SV_NONE,         VKD3DSPR_TEXCRDOUT},
     };
 
     for (i = 0; i < ARRAY_SIZE(register_table); ++i)
@@ -1546,6 +1579,8 @@ bool sm1_register_from_semantic_name(const struct vkd3d_shader_version *version,
                 && version->type == register_table[i].shader_type
                 && version->major == register_table[i].major_version)
         {
+            if (sysval)
+                *sysval = register_table[i].sysval;
             *type = register_table[i].type;
             if (register_table[i].type == VKD3DSPR_MISCTYPE || register_table[i].type == VKD3DSPR_RASTOUT)
                 *reg = register_table[i].offset;
@@ -1759,27 +1794,40 @@ static bool is_inconsequential_instr(const struct vkd3d_shader_instruction *ins)
 
 static void write_sm1_dst_register(struct vkd3d_bytecode_buffer *buffer, const struct vkd3d_shader_dst_param *reg)
 {
+    uint32_t offset = reg->reg.idx_count ? reg->reg.idx[0].offset : 0;
+
     VKD3D_ASSERT(reg->write_mask);
     put_u32(buffer, VKD3D_SM1_INSTRUCTION_PARAMETER
             | sm1_encode_register_type(&reg->reg)
             | (reg->modifiers << VKD3D_SM1_DST_MODIFIER_SHIFT)
             | (reg->write_mask << VKD3D_SM1_WRITEMASK_SHIFT)
-            | (reg->reg.idx[0].offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
+            | (offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
 }
 
 static void write_sm1_src_register(struct vkd3d_bytecode_buffer *buffer, const struct vkd3d_shader_src_param *reg)
 {
+    uint32_t address_mode = VKD3D_SM1_ADDRESS_MODE_ABSOLUTE, offset = 0;
+
+    if (reg->reg.idx_count)
+    {
+        offset = reg->reg.idx[0].offset;
+        if (reg->reg.idx[0].rel_addr)
+            address_mode = VKD3D_SM1_ADDRESS_MODE_RELATIVE;
+    }
+
     put_u32(buffer, VKD3D_SM1_INSTRUCTION_PARAMETER
             | sm1_encode_register_type(&reg->reg)
+            | (address_mode << VKD3D_SM1_ADDRESS_MODE_SHIFT)
             | (reg->modifiers << VKD3D_SM1_SRC_MODIFIER_SHIFT)
             | (swizzle_from_vsir(reg->swizzle) << VKD3D_SM1_SWIZZLE_SHIFT)
-            | (reg->reg.idx[0].offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
+            | (offset & VKD3D_SM1_REGISTER_NUMBER_MASK));
 }
 
 static void d3dbc_write_instruction(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
 {
     const struct vkd3d_shader_version *version = &d3dbc->program->shader_version;
     struct vkd3d_bytecode_buffer *buffer = &d3dbc->buffer;
+    const struct vkd3d_shader_src_param *src;
     const struct vkd3d_sm1_opcode_info *info;
     unsigned int i;
     uint32_t token;
@@ -1810,15 +1858,33 @@ static void d3dbc_write_instruction(struct d3dbc_compiler *d3dbc, const struct v
 
     for (i = 0; i < ins->src_count; ++i)
     {
-        if (ins->src[i].reg.idx[0].rel_addr)
-        {
-            vkd3d_shader_error(d3dbc->message_context, &ins->location, VKD3D_SHADER_ERROR_D3DBC_NOT_IMPLEMENTED,
-                    "Unhandled relative addressing on source register.");
-            d3dbc->failed = true;
-        }
-        write_sm1_src_register(buffer, &ins->src[i]);
+        src = &ins->src[i];
+        write_sm1_src_register(buffer, src);
+        if (src->reg.idx_count && src->reg.idx[0].rel_addr)
+            write_sm1_src_register(buffer, src->reg.idx[0].rel_addr);
     }
 };
+
+static void d3dbc_write_texkill(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
+{
+    const struct vkd3d_shader_register *reg = &ins->src[0].reg;
+    struct vkd3d_shader_instruction tmp;
+    struct vkd3d_shader_dst_param dst;
+
+    /* TEXKILL, uniquely, encodes its argument as a destination, when it is
+     * semantically a source. We store it as a source in vsir, so convert it. */
+
+    vsir_dst_param_init(&dst, reg->type, reg->data_type, reg->idx_count);
+    dst.reg = *reg;
+    dst.write_mask = mask_from_swizzle(ins->src[0].swizzle);
+
+    tmp = *ins;
+    tmp.dst_count = 1;
+    tmp.dst = &dst;
+    tmp.src_count = 0;
+
+    d3dbc_write_instruction(d3dbc, &tmp);
+}
 
 static void d3dbc_write_vsir_def(struct d3dbc_compiler *d3dbc, const struct vkd3d_shader_instruction *ins)
 {
@@ -1831,6 +1897,7 @@ static void d3dbc_write_vsir_def(struct d3dbc_compiler *d3dbc, const struct vkd3
         .reg.type = VKD3DSPR_CONST,
         .write_mask = VKD3DSP_WRITEMASK_ALL,
         .reg.idx[0].offset = ins->dst[0].reg.idx[0].offset,
+        .reg.idx_count = 1,
     };
 
     token = VKD3D_SM1_OP_DEF;
@@ -1863,6 +1930,7 @@ static void d3dbc_write_vsir_sampler_dcl(struct d3dbc_compiler *d3dbc,
     reg.reg.type = VKD3DSPR_COMBINED_SAMPLER;
     reg.write_mask = VKD3DSP_WRITEMASK_ALL;
     reg.reg.idx[0].offset = reg_id;
+    reg.reg.idx_count = 1;
 
     write_sm1_dst_register(buffer, &reg);
 }
@@ -1922,6 +1990,10 @@ static void d3dbc_write_vsir_instruction(struct d3dbc_compiler *d3dbc, const str
             d3dbc_write_vsir_dcl(d3dbc, ins);
             break;
 
+        case VKD3DSIH_TEXKILL:
+            d3dbc_write_texkill(d3dbc, ins);
+            break;
+
         case VKD3DSIH_ABS:
         case VKD3DSIH_ADD:
         case VKD3DSIH_CMP:
@@ -1938,11 +2010,11 @@ static void d3dbc_write_vsir_instruction(struct d3dbc_compiler *d3dbc, const str
         case VKD3DSIH_MAX:
         case VKD3DSIH_MIN:
         case VKD3DSIH_MOV:
+        case VKD3DSIH_MOVA:
         case VKD3DSIH_MUL:
         case VKD3DSIH_SINCOS:
         case VKD3DSIH_SLT:
         case VKD3DSIH_TEX:
-        case VKD3DSIH_TEXKILL:
         case VKD3DSIH_TEXLDD:
             d3dbc_write_instruction(d3dbc, ins);
             break;
@@ -1982,8 +2054,9 @@ static void d3dbc_write_semantic_dcl(struct d3dbc_compiler *d3dbc,
     uint32_t token, usage_idx;
     bool ret;
 
+    reg.reg.idx_count = 1;
     if (sm1_register_from_semantic_name(version, element->semantic_name,
-            element->semantic_index, output, &reg.reg.type, &reg.reg.idx[0].offset))
+            element->semantic_index, output, NULL, &reg.reg.type, &reg.reg.idx[0].offset))
     {
         usage = 0;
         usage_idx = 0;

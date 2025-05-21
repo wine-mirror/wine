@@ -178,6 +178,16 @@ static int default_open_include(const char *filename, bool local,
     if (S_ISREG(st.st_mode))
         size = st.st_size;
 
+    if (!size)
+    {
+        fclose(f);
+
+        out->code = NULL;
+        out->size = 0;
+
+        return VKD3D_OK;
+    }
+
     if (!(data = vkd3d_malloc(size)))
     {
         fclose(f);

@@ -1125,14 +1125,8 @@ static void test_semantic_reflection(void)
     {
         winetest_push_context("Test %u", i);
 
-        todo_wine_if (i > 6) code = compile_shader_flags(tests[i].source, tests[i].target,
+        code = compile_shader_flags(tests[i].source, tests[i].target,
                 tests[i].legacy ? D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY : 0);
-        if (!code)
-        {
-            winetest_pop_context();
-            continue;
-        }
-
         hr = D3DReflect(ID3D10Blob_GetBufferPointer(code), ID3D10Blob_GetBufferSize(code),
                 &IID_ID3D11ShaderReflection, (void **)&reflection);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
