@@ -983,7 +983,6 @@ case $host_os in
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],[WINELOADER_LDFLAGS="-Wl,--export-dynamic"])
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    WINE_CHECK_SONAME(EGL,eglGetProcAddress)
     WINE_CHECK_SONAME(GLESv2,glFlush)
 
     if test "x$exec_prefix" = xNONE
@@ -1213,6 +1212,16 @@ WINE_ERROR_WITH(pthread,[test "x$ac_cv_func_pthread_create" != xyes -a "x$PTHREA
 [pthread ${notice_platform}development files not found.
 Wine cannot support threads without libpthread.])
 
+dnl **** Check for EGL ****
+
+if test "x$with_opengl" != "xno"
+then
+    WINE_PACKAGE_FLAGS(EGL,[egl],[-lEGL],,,
+        [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])
+fi
+WINE_NOTICE_WITH(opengl, [test -z "$ac_cv_lib_soname_EGL"],
+    [EGL ${notice_platform}development files not found])
+
 dnl **** Check for X11 ****
 
 AC_PATH_X
@@ -1401,8 +1410,6 @@ then
          AC_CHECK_LIB(xkbregistry,rxkb_context_new,[:],[XKBREGISTRY_LIBS=""],[$XKBREGISTRY_LIBS])])
     if test "x$with_opengl" != "xno"
     then
-        WINE_PACKAGE_FLAGS(EGL,[egl],[-lEGL],,,
-            [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])
         WINE_PACKAGE_FLAGS(WAYLAND_EGL,[wayland-egl],,,,
             [AC_CHECK_HEADER([wayland-egl.h],
                [AC_CHECK_LIB(wayland-egl,wl_egl_window_create,

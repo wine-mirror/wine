@@ -173,6 +173,74 @@ static void register_extension( char *list, size_t size, const char *name )
     }
 }
 
+#ifdef SONAME_LIBEGL
+
+static BOOL egl_init(void)
+{
+    struct opengl_funcs *funcs = &display_funcs;
+    const char *extensions;
+
+    if (!(funcs->egl_handle = dlopen( SONAME_LIBEGL, RTLD_NOW | RTLD_GLOBAL )))
+    {
+        ERR( "Failed to load %s: %s\n", SONAME_LIBEGL, dlerror() );
+        goto failed;
+    }
+
+#define LOAD_FUNCPTR( name )                                    \
+    if (!(funcs->p_##name = dlsym( funcs->egl_handle, #name ))) \
+    {                                                           \
+        ERR( "Failed to find EGL function %s\n", #name );       \
+        goto failed;                                            \
+    }
+    LOAD_FUNCPTR( eglGetProcAddress );
+    LOAD_FUNCPTR( eglQueryString );
+#undef LOAD_FUNCPTR
+
+    if (!(extensions = funcs->p_eglQueryString( EGL_NO_DISPLAY, EGL_EXTENSIONS )))
+    {
+        ERR( "Failed to find client extensions\n" );
+        goto failed;
+    }
+    TRACE( "EGL client extensions:\n" );
+    dump_extensions( extensions );
+
+#define CHECK_EXTENSION( ext )                                  \
+    if (!has_extension( extensions, #ext ))                     \
+    {                                                           \
+        ERR( "Failed to find required extension %s\n", #ext );  \
+        goto failed;                                            \
+    }
+    CHECK_EXTENSION( EGL_KHR_client_get_all_proc_addresses );
+    CHECK_EXTENSION( EGL_EXT_platform_base );
+#undef CHECK_EXTENSION
+
+#define USE_GL_FUNC( func )                                                                     \
+    if (!funcs->p_##func && !(funcs->p_##func = (void *)funcs->p_eglGetProcAddress( #func )))   \
+    {                                                                                           \
+        ERR( "Failed to load symbol %s\n", #func );                                             \
+        goto failed;                                                                            \
+    }
+    ALL_EGL_FUNCS
+#undef USE_GL_FUNC
+
+    return TRUE;
+
+failed:
+    dlclose( display_funcs.egl_handle );
+    display_funcs.egl_handle = NULL;
+    return FALSE;
+}
+
+#else /* SONAME_LIBEGL */
+
+static BOOL egl_init(void)
+{
+    WARN( "EGL support not compiled in!\n" );
+    return FALSE;
+}
+
+#endif /* SONAME_LIBEGL */
+
 #ifdef SONAME_LIBOSMESA
 
 #define OSMESA_COLOR_INDEX  GL_COLOR_INDEX
@@ -1349,6 +1417,8 @@ static void memory_funcs_init(void)
 static void display_funcs_init(void)
 {
     UINT status;
+
+    if (egl_init()) TRACE( "Initialized EGL library\n" );
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );

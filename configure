@@ -700,8 +700,6 @@ PCSCLITE_LIBS
 PCAP_LIBS
 WAYLAND_EGL_LIBS
 WAYLAND_EGL_CFLAGS
-EGL_LIBS
-EGL_CFLAGS
 XKBREGISTRY_LIBS
 XKBREGISTRY_CFLAGS
 XKBCOMMON_LIBS
@@ -713,6 +711,8 @@ X_LIBS
 X_CFLAGS
 CPP
 XMKMF
+EGL_LIBS
+EGL_CFLAGS
 PTHREAD_LIBS
 ZLIB_PE_LIBS
 ZLIB_PE_CFLAGS
@@ -1836,6 +1836,8 @@ XSLT_PE_CFLAGS
 XSLT_PE_LIBS
 ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS
+EGL_CFLAGS
+EGL_LIBS
 XMKMF
 CPP
 WAYLAND_CLIENT_CFLAGS
@@ -1844,8 +1846,6 @@ XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS
 XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS
-EGL_CFLAGS
-EGL_LIBS
 WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS
 INOTIFY_CFLAGS
@@ -2679,6 +2679,8 @@ Some influential environment variables:
               C compiler flags for the PE zlib, overriding the bundled version
   ZLIB_PE_LIBS
               Linker flags for the PE zlib, overriding the bundled version
+  EGL_CFLAGS  C compiler flags for egl, overriding pkg-config
+  EGL_LIBS    Linker flags for egl, overriding pkg-config
   XMKMF       Path to xmkmf, Makefile generator for X Window System
   CPP         C preprocessor
   WAYLAND_CLIENT_CFLAGS
@@ -2693,8 +2695,6 @@ Some influential environment variables:
               C compiler flags for xkbregistry, overriding pkg-config
   XKBREGISTRY_LIBS
               Linker flags for xkbregistry, overriding pkg-config
-  EGL_CFLAGS  C compiler flags for egl, overriding pkg-config
-  EGL_LIBS    Linker flags for egl, overriding pkg-config
   WAYLAND_EGL_CFLAGS
               C compiler flags for wayland-egl, overriding pkg-config
   WAYLAND_EGL_LIBS
@@ -11788,69 +11788,6 @@ then :
 fi
     WINEPRELOADER_LDFLAGS="-static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7d400000"
 
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
-printf %s "checking for -lEGL... " >&6; }
-if test ${ac_cv_lib_soname_EGL+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_soname_save_LIBS=$LIBS
-LIBS="-lEGL  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eglGetProcAddress (void);
-int
-main (void)
-{
-return eglGetProcAddress ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_EGL=`$ac_cv_path_LDD conftest.exe | grep "EGL" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_EGL=`$OTOOL -L conftest$ac_exeext | grep "libEGL\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libEGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_EGL=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libEGL\\.$LIBEXT" | sed -e "s/^.*\\[\\(libEGL\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_EGL:+false} :
-then :
-  ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else case e in #(
-  e) ac_cv_lib_soname_EGL= ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS ;;
-esac
-fi
-if ${ac_cv_lib_soname_EGL:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_EGL" >&5
-printf "%s\n" "$ac_cv_lib_soname_EGL" >&6; }
-
-printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
-
-        ;;
-esac
-fi
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lGLESv2" >&5
 printf %s "checking for -lGLESv2... " >&6; }
 if test ${ac_cv_lib_soname_GLESv2+y}
@@ -14170,6 +14107,113 @@ esac
 fi
 
 
+if test "x$with_opengl" != "xno"
+then
+    rm -f conftest.err
+if ${EGL_CFLAGS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  EGL_CFLAGS=`$PKG_CONFIG --cflags egl 2>conftest.err`
+fi
+fi
+
+if ${EGL_LIBS:+false} :
+then :
+  if test ${PKG_CONFIG+y}
+then :
+  EGL_LIBS=`$PKG_CONFIG --libs egl 2>/dev/null`
+fi
+fi
+
+EGL_LIBS=${EGL_LIBS:-"-lEGL"}
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl cflags: $EGL_CFLAGS" >&5
+printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl libs: $EGL_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: egl errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $EGL_CFLAGS"
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
+printf %s "checking for -lEGL... " >&6; }
+if test ${ac_cv_lib_soname_EGL+y}
+then :
+  printf %s "(cached) " >&6
+else case e in #(
+  e) ac_check_soname_save_LIBS=$LIBS
+LIBS="-lEGL $EGL_LIBS $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.
+   The 'extern "C"' is for builds by C++ compilers;
+   although this is not generally supported in C code supporting it here
+   has little cost and some practical benefit (sr 110532).  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char eglGetProcAddress (void);
+int
+main (void)
+{
+return eglGetProcAddress ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_EGL=`$ac_cv_path_LDD conftest.exe | grep "EGL" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_EGL=`$OTOOL -L conftest$ac_exeext | grep "libEGL\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libEGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_EGL=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libEGL\\.$LIBEXT" | sed -e "s/^.*\\[\\(libEGL\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if ${ac_cv_lib_soname_EGL:+false} :
+then :
+  ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+else case e in #(
+  e) ac_cv_lib_soname_EGL= ;;
+esac
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS ;;
+esac
+fi
+if ${ac_cv_lib_soname_EGL:+false} :
+then :
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+printf "%s\n" "not found" >&6; }
+
+else case e in #(
+  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_EGL" >&5
+printf "%s\n" "$ac_cv_lib_soname_EGL" >&6; }
+
+printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
+
+        ;;
+esac
+fi
+CPPFLAGS=$ac_save_CPPFLAGS
+
+fi
+if test -z "$ac_cv_lib_soname_EGL"
+then :
+  case "x$with_opengl" in
+  x)   as_fn_append wine_notices "|EGL ${notice_platform}development files not found" ;;
+  xno) ;;
+  *)   as_fn_error $? "EGL ${notice_platform}development files not found
+This is an error since --with-opengl was requested." "$LINENO" 5 ;;
+esac
+
+fi
+
+
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -16243,98 +16287,6 @@ CPPFLAGS=$ac_save_CPPFLAGS
 
     if test "x$with_opengl" != "xno"
     then
-        rm -f conftest.err
-if ${EGL_CFLAGS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  EGL_CFLAGS=`$PKG_CONFIG --cflags egl 2>conftest.err`
-fi
-fi
-
-if ${EGL_LIBS:+false} :
-then :
-  if test ${PKG_CONFIG+y}
-then :
-  EGL_LIBS=`$PKG_CONFIG --libs egl 2>/dev/null`
-fi
-fi
-
-EGL_LIBS=${EGL_LIBS:-"-lEGL"}
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl cflags: $EGL_CFLAGS" >&5
-printf "%s\n" "$as_me:${as_lineno-$LINENO}: egl libs: $EGL_LIBS" >&5
-if test -s conftest.err; then
-     printf %s "$as_me:${as_lineno-$LINENO}: egl errors: " >&5
-     cat conftest.err >&5
-fi
-rm -f conftest.err
-ac_save_CPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS $EGL_CFLAGS"
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
-printf %s "checking for -lEGL... " >&6; }
-if test ${ac_cv_lib_soname_EGL+y}
-then :
-  printf %s "(cached) " >&6
-else case e in #(
-  e) ac_check_soname_save_LIBS=$LIBS
-LIBS="-lEGL $EGL_LIBS $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.
-   The 'extern "C"' is for builds by C++ compilers;
-   although this is not generally supported in C code supporting it here
-   has little cost and some practical benefit (sr 110532).  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char eglGetProcAddress (void);
-int
-main (void)
-{
-return eglGetProcAddress ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_EGL=`$ac_cv_path_LDD conftest.exe | grep "EGL" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_EGL=`$OTOOL -L conftest$ac_exeext | grep "libEGL\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libEGL\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_EGL=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libEGL\\.$LIBEXT" | sed -e "s/^.*\\[\\(libEGL\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_EGL:+false} :
-then :
-  ac_cv_lib_soname_EGL=`$LDD conftest$ac_exeext | grep "libEGL\\.$LIBEXT" | sed -e "s/^.*\(libEGL\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else case e in #(
-  e) ac_cv_lib_soname_EGL= ;;
-esac
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS ;;
-esac
-fi
-if ${ac_cv_lib_soname_EGL:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else case e in #(
-  e) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_EGL" >&5
-printf "%s\n" "$ac_cv_lib_soname_EGL" >&6; }
-
-printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
-
-        ;;
-esac
-fi
-CPPFLAGS=$ac_save_CPPFLAGS
-
         rm -f conftest.err
 if ${WAYLAND_EGL_CFLAGS:+false} :
 then :
@@ -24280,6 +24232,8 @@ XSLT_PE_LIBS = $XSLT_PE_LIBS
 ZLIB_PE_CFLAGS = $ZLIB_PE_CFLAGS
 ZLIB_PE_LIBS = $ZLIB_PE_LIBS
 PTHREAD_LIBS = $PTHREAD_LIBS
+EGL_CFLAGS = $EGL_CFLAGS
+EGL_LIBS = $EGL_LIBS
 XMKMF = $XMKMF
 CPP = $CPP
 X_CFLAGS = $X_CFLAGS
@@ -24291,8 +24245,6 @@ XKBCOMMON_CFLAGS = $XKBCOMMON_CFLAGS
 XKBCOMMON_LIBS = $XKBCOMMON_LIBS
 XKBREGISTRY_CFLAGS = $XKBREGISTRY_CFLAGS
 XKBREGISTRY_LIBS = $XKBREGISTRY_LIBS
-EGL_CFLAGS = $EGL_CFLAGS
-EGL_LIBS = $EGL_LIBS
 WAYLAND_EGL_CFLAGS = $WAYLAND_EGL_CFLAGS
 WAYLAND_EGL_LIBS = $WAYLAND_EGL_LIBS
 PCAP_LIBS = $PCAP_LIBS

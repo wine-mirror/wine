@@ -61,7 +61,7 @@ struct wgl_pixel_format
 #ifdef WINE_UNIX_LIB
 
 /* Wine internal opengl driver version, needs to be bumped upon opengl_funcs changes. */
-#define WINE_OPENGL_DRIVER_VERSION 32
+#define WINE_OPENGL_DRIVER_VERSION 33
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -109,6 +109,8 @@ struct opengl_funcs
     ALL_GL_FUNCS
     ALL_GL_EXT_FUNCS
 #undef USE_GL_FUNC
+
+    void       *egl_handle;
 };
 
 /* interface between win32u and the user drivers */
