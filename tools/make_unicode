@@ -6113,6 +6113,7 @@ sub dump_psfonts($)
 
     foreach my $name (sort keys %fonts)
     {
+        my $count = scalar @{$fonts{$name}->{chars}};
         my %weights = ( Bold => "FW_BOLD",
                         Book => "FW_NORMAL",
                         Demi => "FW_BOLD",
