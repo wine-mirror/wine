@@ -2930,6 +2930,7 @@ static SQLRETURN get_info_win32_a( struct connection *con, SQLUSMALLINT type, SQ
     SQLRETURN ret = SQL_ERROR;
     WCHAR *strW = NULL;
     SQLPOINTER buf = value;
+    BOOL strvalue = FALSE;
 
     if (con->hdr.win32_funcs->SQLGetInfo)
         return con->hdr.win32_funcs->SQLGetInfo( con->hdr.win32_handle, type, value, buflen, retlen );
@@ -2976,18 +2977,30 @@ static SQLRETURN get_info_win32_a( struct connection *con, SQLUSMALLINT type, SQ
         case SQL_TABLE_TERM:
         case SQL_USER_NAME:
         case SQL_XOPEN_CLI_YEAR:
-            if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
-            buf = strW;
+            if (buf)
+            {
+                if (!(strW = malloc( buflen * sizeof(WCHAR) ))) return SQL_ERROR;
+                buf = strW;
+                buflen *= sizeof(WCHAR);
+            }
+            strvalue = TRUE;
             break;
 
         default: break;
         }
 
         ret = con->hdr.win32_funcs->SQLGetInfoW( con->hdr.win32_handle, type, buf, buflen, retlen );
-        if (SUCCESS( ret ) && strW)
+        if (SUCCESS( ret ))
         {
-            int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen, NULL, NULL );
-            if (retlen) *retlen = len - 1;
+            if (strW)
+            {
+                int len = WideCharToMultiByte( CP_ACP, 0, strW, -1, (char *)value, buflen / sizeof(WCHAR), NULL, NULL );
+                if (retlen) *retlen = len - 1;
+            }
+            else if (strvalue && retlen)
+            {
+                *retlen /= sizeof(WCHAR);
+            }
         }
         free( strW );
     }
