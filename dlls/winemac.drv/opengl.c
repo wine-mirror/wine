@@ -2803,9 +2803,6 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!init_gl_info())
-        goto failed;
-
 #define LOAD_FUNCPTR(func) \
         if (!(p##func = dlsym(opengl_handle, #func))) \
         { \
@@ -2819,6 +2816,10 @@ UINT macdrv_OpenGLInit(UINT version, struct opengl_funcs **funcs, const struct o
     LOAD_FUNCPTR(glViewport);
     LOAD_FUNCPTR(glCopyColorTable);
     LOAD_FUNCPTR(glFlush);
+
+    if (!init_gl_info())
+        goto failed;
+
     if (gluCheckExtension((GLubyte*)"GL_APPLE_flush_render", (GLubyte*)gl_info.glExtensions))
         LOAD_FUNCPTR(glFlushRenderAPPLE);
 #undef LOAD_FUNCPTR
