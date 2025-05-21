@@ -7519,6 +7519,65 @@ NTSTATUS WINAPI NtGdiDdDDIEnumAdapters( D3DKMT_ENUMADAPTERS *desc )
     return status;
 }
 
+/******************************************************************************
+ *           NtGdiDdDDIOpenAdapterFromDeviceName    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc )
+{
+    unsigned int status = STATUS_INVALID_PARAMETER;
+    D3DKMT_OPENADAPTERFROMLUID desc_luid;
+    unsigned int len, name_len = 0;
+    BOOL found = FALSE;
+    struct gpu *gpu;
+    char *name;
+
+    TRACE( "desc %p.\n", desc );
+
+    if (!desc || !desc->pDeviceName) return STATUS_INVALID_PARAMETER;
+
+    if (!(name = malloc( wcslen( desc->pDeviceName ) + 1 ))) return STATUS_NO_MEMORY;
+
+    for (len = 0; desc->pDeviceName[len]; ++len)
+    {
+        if (desc->pDeviceName[len] >> 8) goto done;
+        if ((name[len] = toupper( desc->pDeviceName[len] )) == '#')
+        {
+            name[len] = '\\';
+            name_len = len;
+        }
+    }
+    name[len] = 0;
+
+    if (!name_len || strncmp( name, "\\\\?\\", 4 )) goto done;
+    if (strcmp( name + name_len + 1, guid_display_device_arrivalA )) goto done;
+
+    name[name_len] = 0;
+    if (!lock_display_devices( FALSE ))
+    {
+        status = STATUS_UNSUCCESSFUL;
+        goto done;
+    }
+    LIST_FOR_EACH_ENTRY( gpu, &gpus, struct gpu, entry )
+    {
+        if (strcmp( name + 4, gpu->path )) continue;
+        found = TRUE;
+        desc_luid.AdapterLuid = gpu->luid;
+        break;
+    }
+    unlock_display_devices();
+
+    if (found && !(status = NtGdiDdDDIOpenAdapterFromLuid( &desc_luid )))
+    {
+        desc->AdapterLuid = desc_luid.AdapterLuid;
+        desc->hAdapter = desc_luid.hAdapter;
+    }
+
+done:
+    free( name );
+    TRACE( "%s -> %#x.\n", debugstr_w(desc->pDeviceName), status );
+    return status;
+}
+
 /* Find the Vulkan device UUID corresponding to a LUID */
 BOOL get_vulkan_uuid_from_luid( const LUID *luid, GUID *uuid )
 {
