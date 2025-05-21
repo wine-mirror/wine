@@ -229,7 +229,8 @@ struct syscall_frame
     UINT                  fpscr;          /* 048 */
     struct syscall_frame *prev_frame;     /* 04c */
     void                 *syscall_cfa;    /* 050 */
-    UINT                  align[3];       /* 054 */
+    UINT                  syscall_id;     /* 054 */
+    UINT                  align[2];       /* 058 */
     ULONGLONG             d[32];          /* 060 */
 };
 
@@ -782,9 +783,12 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->pc, rec->ExceptionCode );
         REGn_sig(0, context) = rec->ExceptionCode;
+        REGn_sig(1, context) = (DWORD)NtCurrentTeb();
         REGn_sig(8, context) = (DWORD)frame;
         PC_sig(context)      = (DWORD)__wine_syscall_dispatcher_return;
     }
+    if (PC_sig(context) & 1) CPSR_sig(context) |= 0x20;
+    else CPSR_sig(context) &= ~0x20;
     return TRUE;
 }
 
@@ -1147,7 +1151,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "mov sp, r6\n\t"
                    "mov r8, r6\n\t"
                    "bl init_syscall_frame\n\t"
-                   "b __wine_syscall_dispatcher_return" )
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -1168,6 +1172,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "str r0, [r1, #0x44]\n\t"        /* frame->restore_flags */
                    "vmrs r0, fpscr\n\t"
                    "str r0, [r1, #0x48]\n\t"
+                   "str ip, [r1, #0x54]\n\t"        /* frame->syscall_id */
                    "add r0, r1, #0x60\n\t"
                    "vstm r0, {d0-d15}\n\t"
                    "mov r6, sp\n\t"
@@ -1191,7 +1196,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "add r4, r5, r4, lsl #4\n\t"
                    "ldr r5, [r4, #8]\n\t"           /* table->ServiceLimit */
                    "cmp ip, r5\n\t"
-                   "bcs 5f\n\t"
+                   "bcs " __ASM_LOCAL_LABEL("bad_syscall") "\n\t"
                    "ldr r5, [r4, #12]\n\t"          /* table->ArgumentTable */
                    "ldrb r5, [r5, ip]\n\t"
                    "cmp r5, #16\n\t"
@@ -1204,11 +1209,13 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr r0, [r6, r5]\n\t"
                    "str r0, [sp, r5]\n\t"
                    "bgt 2b\n\t"
-                   "pop {r0-r3}\n\t"                /* first 4 args are in registers */
                    "ldr r5, [r4]\n\t"               /* table->ServiceTable */
-                   "ldr ip, [r5, ip, lsl #2]\n\t"
-                   "blx ip\n\t"
-                   __ASM_GLOBL("__wine_syscall_dispatcher_return") "\n\t"
+                   "ldr r5, [r5, ip, lsl #2]\n\t"
+                   "ldr r7, [r2, #0x21c]\n\t"       /* thread_data->syscall_trace */
+                   "cbnz r7, " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
+                   "pop {r0-r3}\n\t"                /* first 4 args are in registers */
+                   "blx r5\n"
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
                    "ldr ip, [r8, #0x44]\n\t"        /* frame->restore_flags */
                    "tst ip, #4\n\t"                 /* CONTEXT_FLOATING_POINT */
                    "beq 3f\n\t"
@@ -1226,9 +1233,35 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n"
 
-                   "5:\tmovw r0, #0x001c\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
+                   __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
+                   "ldr r0, [r8, #0x54]\n\t"        /* frame->syscall_id */
+                   "mov r1, sp\n\t"                 /* args */
+                   "ldr r2, [r4, #12]\n\t"          /* table->ArgumentTable */
+                   "ubfx ip, r0, #0, #12\n\t"       /* syscall number */
+                   "ldrb r2, [r2, ip]\n\t"          /* len */
+                   "bl " __ASM_NAME("trace_syscall") "\n\t"
+                   "pop {r0-r3}\n\t"
+                   "blx r5\n"
+
+                   __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
+                   "mov r6, r0\n\t"                 /* retval */
+                   "ldr r0, [r8, #0x54]\n\t"        /* frame->syscall_id */
+                   "mov r1, r6\n\t"                 /* retval */
+                   "bl " __ASM_NAME("trace_sysret") "\n\t"
+                   "mov r0, r6\n\t"                 /* status */
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
+
+                   __ASM_LOCAL_LABEL("bad_syscall") ":\n\t"
+                   "movw r0, #0x001c\n\t"           /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movt r0, #0xc000\n\t"
-                   "b __wine_syscall_dispatcher_return" )
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
+                   "mov sp, r8\n\t"
+                   "ldr r3, [r1, #0x21c]\n\t"       /* thread_data->syscall_trace */
+                   "cbnz r3, 1f\n\t"
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
+                   "1:\tb " __ASM_LOCAL_LABEL("trace_syscall_ret") )
 
 
 /***********************************************************************
@@ -1274,6 +1307,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ldr sp, [r8, #0x38]\n\t"
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n\t"
-                   "1:\tb __wine_syscall_dispatcher_return" )
+                   "1:\tb " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 #endif  /* __arm__ */

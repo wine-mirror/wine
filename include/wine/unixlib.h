@@ -72,6 +72,7 @@ NTSYSAPI void ntdll_set_exception_jmp_buf( jmp_buf jmp );
 
 NTSYSAPI BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG limit,
                                           BYTE *arguments, ULONG index );
+NTSYSAPI void ntdll_add_syscall_debug_info( UINT idx, const char **names );
 
 /* wide char string functions */
 

@@ -1829,7 +1829,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
         EAX_sig(sigcontext) = rec->ExceptionCode;
-        ESP_sig(sigcontext) = (DWORD)frame;
+        EBP_sig(sigcontext) = (DWORD)&frame->ebp;
         EIP_sig(sigcontext) = (DWORD)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -2577,7 +2577,7 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "pushl 8(%ebp)\n\t"          /* entry */
                    "call " __ASM_NAME("init_syscall_frame") "\n\t"
                    "addl $16,%esp\n\t"
-                   "jmp " __ASM_NAME("__wine_syscall_dispatcher_return") )
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2671,7 +2671,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 0x1c(%esp),%edx\n\t"      /* frame->eax */
                    "andl $0xfff,%edx\n\t"          /* syscall number */
                    "cmpl 8(%ebx),%edx\n\t"         /* table->ServiceLimit */
-                   "jae 6f\n\t"
+                   "jae "__ASM_LOCAL_LABEL("bad_syscall") "\n\t"
+                   "pushl 0x1c(%esp)\n\t"          /* frame->eax */
                    "movl 12(%ebx),%eax\n\t"        /* table->ArgumentTable */
                    "movzbl (%eax,%edx,1),%ecx\n\t"
                    "movl (%ebx),%eax\n\t"          /* table->ServiceTable */
@@ -2681,10 +2682,13 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %esp,%edi\n\t"
                    "cld\n\t"
                    "rep; movsl\n\t"
-                   "call *(%eax,%edx,4)\n\t"
-                   "leal -0x34(%ebp),%esp\n\t"
+                   "movl (%eax,%edx,4),%edi\n\t"
+                   "testl $1,%fs:0x21c\n\t"        /* thread_data->syscall_trace */
+                   "jnz " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
+                   "call *%edi\n\t"
+                   "leal -0x34(%ebp),%esp\n"
 
-                   __ASM_GLOBL(__ASM_NAME("__wine_syscall_dispatcher_return")) "\n\t"
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
                    "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
                    "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
                    "jz 3f\n\t"
@@ -2760,11 +2764,44 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "popl %ds\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
                    "iret\n"
+
                    /* pop ebp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
+                   __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
+                   "movl %esp,%eax\n\t"
+                   "subl $16,%esp\n\t"
+                   "movl -0x38(%ebp),%esi\n\t"     /* syscall_id */
+                   "movl %esi,(%esp)\n\t"          /* id */
+                   "movl %eax,4(%esp)\n\t"         /* args */
+                   "movl %esi,%edx\n\t"
+                   "andl $0xfff,%edx\n\t"          /* syscall number */
+                   "movl 12(%ebx),%eax\n\t"        /* table->ArgumentTable */
+                   "movzbl (%eax,%edx,1),%edx\n\t"
+                   "movl %edx,8(%esp)\n\t"         /* len */
+                   "call " __ASM_NAME("trace_syscall") "\n\t"
+                   "addl $16,%esp\n\t"
+                   "call *%edi\n"
 
-                   "6:\tmovl $0xc000001c,%eax\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
-                   "jmp " __ASM_NAME("__wine_syscall_dispatcher_return") )
+                   __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %eax\n\t"
+                   "pushl %eax\n\t"                /* retval */
+                   "pushl %esi\n\t"                /* id */
+                   "call " __ASM_NAME("trace_sysret") "\n\t"
+                   "movl 8(%esp),%eax\n\t"         /* retval */
+                   "leal -0x34(%ebp),%esp\n\t"     /* frame */
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
+
+                   __ASM_LOCAL_LABEL("bad_syscall") ":\n\t"
+                   "movl $0xc000001c,%eax\n\t"     /* STATUS_INVALID_SYSTEM_SERVICE */
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
+
+__ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
+                   "movl -0x38(%ebp),%esi\n\t"     /* syscall id */
+                   "leal -0x34(%ebp),%esp\n\t"     /* frame */
+                   "testl $1,%fs:0x21c\n\t"        /* thread_data->syscall_trace */
+                   "jnz " __ASM_LOCAL_LABEL("trace_syscall_ret") "\n\t"
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2810,7 +2847,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "call *(%eax,%edx,4)\n\t"
                    "leal 16(%esp),%esp\n\t"
                    "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
-                   "jnz " __ASM_NAME("__wine_syscall_dispatcher_return") "\n\t"
+                   "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    /* switch to user stack */
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */

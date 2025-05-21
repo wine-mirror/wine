@@ -177,7 +177,8 @@ struct syscall_frame
     ULONG                 restore_flags;  /* 10c */
     struct syscall_frame *prev_frame;     /* 110 */
     void                 *syscall_cfa;    /* 118 */
-    ULONG64               align;          /* 120 */
+    ULONG                 syscall_id;     /* 120 */
+    ULONG                 align;          /* 124 */
     ULONG                 fpcr;           /* 128 */
     ULONG                 fpsr;           /* 12c */
     NEON128               v[32];          /* 130 */
@@ -1031,9 +1032,10 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     else
     {
         TRACE( "returning to user mode ip=%p ret=%08x\n", (void *)frame->pc, rec->ExceptionCode );
-        REGn_sig(0, context) = rec->ExceptionCode;
-        SP_sig(context)      = (ULONG_PTR)frame;
-        PC_sig(context)      = (ULONG_PTR)__wine_syscall_dispatcher_return;
+        REGn_sig(0, context)  = rec->ExceptionCode;
+        REGn_sig(18, context) = (ULONG_PTR)NtCurrentTeb();
+        SP_sig(context)       = (ULONG_PTR)frame;
+        PC_sig(context)       = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
 }
@@ -1537,6 +1539,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "stp x9, x19, [x10, #0xf0]\n\t"
                    "mrs x9, NZCV\n\t"
                    "stp x30, x9, [x10, #0x100]\n\t"
+                   "str w8, [x10, #0x120]\n\t"
                    "mrs x9, FPCR\n\t"
                    "str w9, [x10, #0x128]\n\t"
                    "mrs x9, FPSR\n\t"
@@ -1580,7 +1583,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "add x21, x16, x21, lsl #5\n\t"
                    "ldr x16, [x21, #16]\n\t"    /* table->ServiceLimit */
                    "cmp x20, x16\n\t"
-                   "bcs 4f\n\t"
+                   "bcs " __ASM_LOCAL_LABEL("bad_syscall") "\n\t"
                    "ldr x16, [x21, #24]\n\t"    /* table->ArgumentTable */
                    "ldrb w9, [x16, x20]\n\t"
                    "subs x9, x9, #64\n\t"
@@ -1593,8 +1596,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "str x10, [sp, x9]\n\t"
                    "cbnz x9, 1b\n"
                    "2:\tldr x16, [x21]\n\t"     /* table->ServiceTable */
-                   "ldr x16, [x16, x20, lsl 3]\n\t"
-                   "blr x16\n\t"
+                   "ldr x23, [x16, x20, lsl 3]\n\t"
+                   "ldr w11, [x18, #0x380]\n\t" /* thread_data->syscall_trace */
+                   "cbnz x11, " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
+                   "blr x23\n\t"
                    "mov sp, x22\n"
                    __ASM_CFI_CFA_IS_AT2(sp, 0x98, 0x02) /* frame->syscall_cfa */
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
@@ -1647,11 +1652,40 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* switch to user stack */
                    "mov sp, x17\n\t"
                    "ret x16\n"
-                   "4:\tmov x0, #0xc0000000\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
+
+                   __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
+                   "stp x0, x1, [sp, #-0x40]!\n\t"
+                   "stp x2, x3, [sp, #0x10]\n\t"
+                   "stp x4, x5, [sp, #0x20]\n\t"
+                   "stp x6, x7, [sp, #0x30]\n\t"
+                   "mov x0, x8\n\t"             /* id */
+                   "mov x1, sp\n\t"             /* args */
+                   "ldr x16, [x21, #24]\n\t"    /* table->ArgumentTable */
+                   "ldrb w2, [x16, x20]\n\t"    /* len */
+                   "bl " __ASM_NAME("trace_syscall") "\n\t"
+                   "ldp x2, x3, [sp, #0x10]\n\t"
+                   "ldp x4, x5, [sp, #0x20]\n\t"
+                   "ldp x6, x7, [sp, #0x30]\n\t"
+                   "ldp x0, x1, [sp], #0x40\n\t"
+                   "blr x23\n"
+                   "mov sp, x22\n"
+
+                   __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
+                   "mov x21, x0\n\t"            /* retval */
+                   "ldr w0, [sp, #0x120]\n\t"   /* frame->syscall_id */
+                   "mov x1, x21\n\t"            /* retval */
+                   "bl " __ASM_NAME("trace_sysret") "\n\t"
+                   "mov x0, x21\n\t"            /* retval */
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
+
+                   __ASM_LOCAL_LABEL("bad_syscall") ":\n\t"
+                   "mov x0, #0xc0000000\n\t"    /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movk x0, #0x001c\n\t"
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
+                   "ldr w11, [x18, #0x380]\n\t" /* thread_data->syscall_trace */
+                   "cbnz x11, " __ASM_LOCAL_LABEL("trace_syscall_ret") "\n\t"
                    "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 

@@ -95,6 +95,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(module);
+WINE_DECLARE_DEBUG_CHANNEL(syscall);
 
 #if defined __i386__ || defined __x86_64__
 #define SO_DLLS_SUPPORTED
@@ -129,6 +130,20 @@ SYSTEM_SERVICE_TABLE KeServiceDescriptorTable[4] =
 {
     { (ULONG_PTR *)syscalls, NULL, ARRAY_SIZE(syscalls), syscall_args }
 };
+
+static const char *ntsyscall_names[] =
+{
+#define SYSCALL_ENTRY(id,name,args) #name,
+    ALL_SYSCALLS
+#undef SYSCALL_ENTRY
+};
+
+static const char **syscall_names[4] = { ntsyscall_names };
+
+void ntdll_add_syscall_debug_info( UINT idx, const char **names )
+{
+    syscall_names[idx] = names;
+}
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... ) __attribute__((noreturn, format(printf,1,2)));
@@ -607,6 +622,36 @@ BOOLEAN KeAddSystemServiceTable( ULONG_PTR *funcs, ULONG_PTR *counters, ULONG li
     KeServiceDescriptorTable[index].ServiceLimit  = limit;
     KeServiceDescriptorTable[index].ArgumentTable = arguments;
     return TRUE;
+}
+
+void trace_syscall( UINT id, ULONG_PTR *args, ULONG len )
+{
+    UINT idx = (id >> 12) & 3, num = id & 0xfff;
+    const char **names = syscall_names[idx];
+
+    if (names && names[num])
+        TRACE_(syscall)( "\1SysCall  %s(", names[num] );
+    else
+        TRACE_(syscall)( "\1SysCall  %04x(", id );
+
+    len /= sizeof(ULONG_PTR);
+    for (ULONG i = 0; i < len; i++)
+    {
+        TRACE_(syscall)( "%08lx", args[i] );
+        if (i < len - 1) TRACE_(syscall)( "," );
+    }
+    TRACE_(syscall)( ")\n" );
+}
+
+void trace_sysret( UINT id, ULONG_PTR retval )
+{
+    UINT idx = (id >> 12) & 3, num = id & 0xfff;
+    const char **names = syscall_names[idx];
+
+    if (names && names[num])
+        TRACE_(syscall)( "\1SysRet   %s() retval=%08lx\n", names[num], retval );
+    else
+        TRACE_(syscall)( "\1SysRet   %04x() retval=%08lx\n", id, retval );
 }
 
 

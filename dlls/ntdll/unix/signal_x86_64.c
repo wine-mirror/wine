@@ -431,7 +431,8 @@ struct syscall_frame
     void                 *syscall_cfa;   /* 00a8 */
     DWORD                 syscall_flags; /* 00b0 */
     DWORD                 restore_flags; /* 00b4 */
-    DWORD                 align[2];      /* 00b8 */
+    DWORD                 syscall_id;    /* 00b8 */
+    DWORD                 align[1];      /* 00bc */
     XMM_SAVE_AREA32       xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate;    /* 02c0 */
 };
@@ -1928,9 +1929,8 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
     {
         TRACE_(seh)( "returning to user mode ip=%016lx ret=%08x\n", frame->rip, rec->ExceptionCode );
         RAX_sig(sigcontext) = rec->ExceptionCode;
-        RCX_sig(sigcontext) = (ULONG_PTR)frame;
         R13_sig(sigcontext) = (ULONG_PTR)NtCurrentTeb();
-        R14_sig(sigcontext) = frame->syscall_flags;
+        RSP_sig(sigcontext) = (ULONG_PTR)frame;
         RIP_sig(sigcontext) = (ULONG_PTR)__wine_syscall_dispatcher_return;
     }
     return TRUE;
@@ -2709,7 +2709,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    "movl $0,0xb4(%rcx)\n\t"        /* frame->restore_flags */
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_prolog_end") ":\n\t"
-                   "movq %rax,0x00(%rcx)\n\t"
                    "movq %rbx,0x08(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT1(rbx, rcx, 0x08)
                    "movq %rdx,0x18(%rcx)\n\t"
@@ -2732,6 +2731,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    "movq %gs:0x30,%r13\n\t"        /* teb */
+                   "movq %rax,0xb8(%rcx)\n\t"      /* frame->syscall_id */
                    /* Legends of Runeterra hooks the first system call return instruction, and
                     * depends on us returning to it. Adjust the return address accordingly. */
                    "subq $0xb,0x70(%rcx)\n\t"
@@ -2807,7 +2807,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "syscall\n\t"
                    "leaq -0x98(%rbp),%rcx\n"
 #endif
-                   "movq 0x00(%rcx),%rax\n\t"
+                   "movq 0xb8(%rcx),%rax\n\t"      /* frame->syscall_id */
                    "movq 0x18(%rcx),%r11\n\t"      /* 2nd argument */
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
@@ -2816,7 +2816,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "leaq (%rcx,%rbx,2),%rbx\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "cmpq 16(%rbx),%rax\n\t"        /* table->ServiceLimit */
-                   "jae 5f\n\t"
+                   "jae " __ASM_LOCAL_LABEL("bad_syscall") "\n\t"
+                   "movq (%rbx),%rcx\n\t"          /* table->ServiceTable */
+                   "movq (%rcx,%rax,8),%r12\n\t"
                    "movq 24(%rbx),%rcx\n\t"        /* table->ArgumentTable */
                    "movzbl (%rcx,%rax),%ecx\n\t"
                    "subq $0x30,%rcx\n\t"
@@ -2828,14 +2830,15 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "leaq 16(%r15),%rsi\n\t"        /* 7th argument */
                    "cld\n\t"
                    "rep; movsq\n"
-                   "1:\tmovq %r10,%rdi\n\t"        /* 1st argument */
+                   "1:\ttestl $1,0x380(%r13)\n\t"  /* thread_data->syscall_trace */
+                   "jnz " __ASM_LOCAL_LABEL("trace_syscall") "\n\t"
+                   "movq %r10,%rdi\n\t"            /* 1st argument */
                    "movq %r11,%rsi\n\t"            /* 2nd argument */
                    "movq %r8,%rdx\n\t"             /* 3rd argument */
                    "movq %r9,%rcx\n\t"             /* 4th argument */
                    "movq (%r15),%r8\n\t"           /* 5th argument */
                    "movq 8(%r15),%r9\n\t"          /* 6th argument */
-                   "movq (%rbx),%r10\n\t"          /* table->ServiceTable */
-                   "callq *(%r10,%rax,8)\n\t"
+                   "callq *%r12\n\t"
                    "leaq -0x98(%rbp),%rcx\n\t"
                    __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
                    /* push rbp-based kernel stack cfi */
@@ -2954,17 +2957,53 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    /* make sure that if trap flag is set the trap happens on the first instruction after iret */
                    "andq $~0x4000,(%rsp)\n\t" /* make sure NT flag is not set, or iretq will fault */
                    "popfq\n\t"
-                   "iretq\n\t"
+                   "iretq\n"
 
                    /* pop rbp-based kernel stack cfi */
                    __ASM_CFI("\t.cfi_restore_state\n")
-                   "5:\tmovl $0xc000001c,%eax\n\t" /* STATUS_INVALID_SYSTEM_SERVICE */
+                   __ASM_LOCAL_LABEL("trace_syscall") ":\n\t"
+                   "pushq 8(%r15)\n\t"             /* 6th argument */
+                   "pushq (%r15)\n\t"              /* 5th argument */
+                   "pushq %r9\n\t"                 /* 4th argument */
+                   "pushq %r8\n\t"                 /* 3rd argument */
+                   "pushq %r11\n\t"                /* 2nd argument */
+                   "pushq %r10\n\t"                /* 1st argument */
+                   "movl 0x20(%rbp),%edi\n\t"      /* frame->syscall_id */
+                   "movl %edi,%eax\n\t"
+                   "andl $0xfff,%eax\n\t"          /* syscall number */
+                   "movq 24(%rbx),%rcx\n\t"        /* table->ArgumentTable */
+                   "movzbl (%rcx,%rax),%edx\n\t"   /* len */
+                   "movq %rsp,%rsi\n\t"            /* args */
+                   "call " __ASM_NAME("trace_syscall") "\n\t"
+                   "popq %rdi\n\t"                 /* 1st argument */
+                   "popq %rsi\n\t"                 /* 2nd argument */
+                   "popq %rdx\n\t"                 /* 3rd argument */
+                   "popq %rcx\n\t"                 /* 4th argument */
+                   "popq %r8\n\t"                  /* 5th argument */
+                   "popq %r9\n\t"                  /* 6th argument */
+                   "call *%r12\n"
+
+                   __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
+                   "movq %rax,%r12\n\t"            /* retval */
+                   "movl 0x20(%rbp),%edi\n\t"      /* frame->syscall_id */
+                   "movq %r12,%rsi\n\t"            /* retval */
+                   "call " __ASM_NAME("trace_sysret") "\n\t"
+                   "leaq -0x98(%rbp),%rcx\n\t"     /* syscall frame */
+                   "movq %r12,%rax\n\t"
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n"
+
+                   __ASM_LOCAL_LABEL("bad_syscall") ":\n\t"
+                   "movl $0xc000001c,%eax\n\t"     /* STATUS_INVALID_SYSTEM_SERVICE */
                    "movq %rsp,%rcx\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
+                   "movq %rsp,%rcx\n\t"
+                   "leaq 0x98(%rcx),%rbp\n\t"
+                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
+                   "testl $1,0x380(%r13)\n\t"      /* thread_data->syscall_trace */
+                   "jnz " __ASM_LOCAL_LABEL("trace_syscall_ret" ) "\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
-
 
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_instrumentation,
                    "movq %gs:0x378,%rcx\n\t"       /* thread_data->syscall_frame */

@@ -50,6 +50,13 @@ static BYTE arguments[ARRAY_SIZE(syscalls)] =
 #undef SYSCALL_ENTRY
 };
 
+static const char *syscall_names[] =
+{
+#define SYSCALL_ENTRY(id,name,args) #name,
+    ALL_SYSCALLS
+#undef SYSCALL_ENTRY
+};
+
 static NTSTATUS init( void *args )
 {
 #ifdef _WIN64
@@ -62,6 +69,7 @@ static NTSTATUS init( void *args )
     }
 #endif
     KeAddSystemServiceTable( syscalls, NULL, ARRAY_SIZE(syscalls), arguments, 1 );
+    ntdll_add_syscall_debug_info( 1, syscall_names );
     return STATUS_SUCCESS;
 }
 
