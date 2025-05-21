@@ -8510,28 +8510,38 @@ static void test_ddrawstream_mem_allocator(void)
     IMediaSample *media_sample1, *media_sample2, *media_sample3;
     ALLOCATOR_PROPERTIES props, ret_props;
     IDirectDrawMediaStream *ddraw_stream;
+    IDirectDrawSurface *surface;
     VIDEOINFOHEADER *video_info;
     REFERENCE_TIME start, end;
+    unsigned int expect_pitch;
     AM_MEDIA_TYPE *sample_mt;
     struct testfilter source;
     IMemInputPin *mem_input;
     IGraphBuilder *graph;
     IMediaStream *stream;
+    IDirectDraw *ddraw;
     HRESULT hr;
     ULONG ref;
     IPin *pin;
     LONG size;
 
-    static const VIDEOINFO expect_video_info =
+    DDSURFACEDESC surface_desc =
+    {
+        .dwSize = sizeof(DDSURFACEDESC),
+        .dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT,
+        .dwHeight = 444,
+        .dwWidth = 333,
+        .ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+    };
+
+    VIDEOINFO expect_video_info =
     {
         .rcSource = {0, 0, 333, 444},
         .rcTarget = {0, 0, 333, 444},
         .bmiHeader.biSize = sizeof(BITMAPINFOHEADER),
-        .bmiHeader.biWidth = 336,
         .bmiHeader.biHeight = -444,
         .bmiHeader.biPlanes = 1,
         .bmiHeader.biBitCount = 16,
-        .bmiHeader.biSizeImage = 336 * 444 * 2,
     };
 
     hr = IAMMultiMediaStream_Initialize(mmstream, STREAMTYPE_READ, 0, NULL);
@@ -8708,6 +8718,18 @@ static void test_ddrawstream_mem_allocator(void)
     hr = IDirectDrawMediaStream_SetFormat(ddraw_stream, &rgb555_format, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    IDirectDrawMediaStream_GetDirectDraw(ddraw_stream, &ddraw);
+    surface_desc.ddpfPixelFormat = rgb555_format.ddpfPixelFormat;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
+    ok(hr == S_OK, "got hr %#lx\n", hr);
+    expect_pitch = surface_desc.u1.lPitch;
+    expect_video_info.bmiHeader.biWidth = expect_pitch / 2;
+    expect_video_info.bmiHeader.biSizeImage = expect_pitch * 444;
+    IDirectDrawSurface_Release(surface);
+    IDirectDraw_Release(ddraw);
+
     hr = IDirectDrawMediaStream_CreateSample(ddraw_stream, NULL, NULL, 0, &ddraw_sample1);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -8737,7 +8759,8 @@ static void test_ddrawstream_mem_allocator(void)
             "Got subtype %s.\n", debugstr_guid(&sample_mt->subtype));
     todo_wine ok(sample_mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", sample_mt->bFixedSizeSamples);
     ok(!sample_mt->bTemporalCompression, "Got temporal compression %d.\n", sample_mt->bTemporalCompression);
-    todo_wine ok(sample_mt->lSampleSize == 336 * 444 * 2, "Got sample size %lu.\n", sample_mt->lSampleSize);
+    todo_wine ok(sample_mt->lSampleSize == expect_pitch * 444,
+            "Expected sample size %u, got %lu.\n", expect_pitch * 444, sample_mt->lSampleSize);
     ok(IsEqualGUID(&sample_mt->formattype, &FORMAT_VideoInfo),
             "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
     ok(!sample_mt->pUnk, "Got pUnk %p.\n", sample_mt->pUnk);
@@ -8752,7 +8775,8 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(sample_mt->lSampleSize == 336 * 444 * 2, "Got sample size %lu.\n", sample_mt->lSampleSize);
+    todo_wine ok(sample_mt->lSampleSize == expect_pitch * 444,
+            "Expected sample size %u, got %lu.\n", expect_pitch * 444, sample_mt->lSampleSize);
 
     video_info = (VIDEOINFOHEADER *)sample_mt->pbFormat;
     video_info->bmiHeader.biWidth = 400;
@@ -8788,9 +8812,9 @@ static void test_ddrawstream_mem_allocator(void)
     ok(props.cBuffers == 2, "Expected 2 samples got %ld\n", props.cBuffers);
 
     size = IMediaSample_GetSize(media_sample1);
-    ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
+    ok(size == expect_pitch * 444, "Expected size %u, got %ld.\n", expect_pitch * 444, size);
     size = IMediaSample_GetActualDataLength(media_sample1);
-    ok(size == 336 * 444 * 2, "Got size %ld.\n", size);
+    ok(size == expect_pitch * 444, "Expected size %u, got %ld.\n", expect_pitch * 444, size);
     hr = IMediaSample_SetActualDataLength(media_sample1, size);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaSample_SetActualDataLength(media_sample1, size + 1);
