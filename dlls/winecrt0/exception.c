@@ -19,6 +19,11 @@
  */
 
 #include <stdarg.h>
+#include "excpt.h"
+#undef USE_COMPILER_EXCEPTIONS
+#undef GetExceptionInformation
+#undef GetExceptionCode
+#undef AbnormalTermination
 #include "winternl.h"
 #include "wine/exception.h"
 #include "wine/asm.h"
