@@ -1603,7 +1603,9 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %esi,-8\n\t")
                    "pushl %edi\n\t"
                    __ASM_CFI(".cfi_rel_offset %edi,-12\n\t")
+                   "movl 8(%ebp),%ebx\n\t"     /* user_esp */
                    "movl 0x18(%ebp),%edx\n\t"  /* teb */
+                   "pushl 4(%ebx)\n\t"         /* id */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
                    "subl $0x280,%esp\n\t"      /* sizeof(struct syscall_frame) */
                    "subl 0x204(%edx),%esp\n\t" /* x86_thread_data()->xstate_features_size */
@@ -1615,9 +1617,16 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movl %eax,(%esp)\n\t"
                    "movl %ecx,0x3c(%esp)\n\t"  /* frame->prev_frame */
                    "movl %esp,0x218(%edx)\n\t" /* thread_data->syscall_frame */
-                   "movl 0x14(%ebp),%ecx\n\t"  /* func */
+                   "testl $1,0x21c(%edx)\n\t"  /* thread_data->syscall_trace */
+                   "jz 1f\n\t"
+                   "subl $4,%esp\n\t"
+                   "push 12(%ebx)\n\t"         /* len */
+                   "push 8(%ebx)\n\t"          /* args */
+                   "push 4(%ebx)\n\t"          /* id */
+                   "call " __ASM_NAME("trace_usercall") "\n"
+                   "1:\tmovl 0x14(%ebp),%ecx\n\t" /* func */
                    /* switch to user stack */
-                   "movl 8(%ebp),%esp\n\t"
+                   "movl %ebx,%esp\n\t"
                    "xorl %ebp,%ebp\n\t"
                    "jmpl *%ecx" )
 
@@ -1628,10 +1637,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
 extern void DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
                                                          NTSTATUS status, TEB *teb );
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
-                   "movl 16(%esp),%edx\n"      /* teb */
-                   "movl 0x218(%edx),%eax\n\t" /* thread_data->syscall_frame */
+                   "movl 16(%esp),%ebx\n"      /* teb */
+                   "movl 0x218(%ebx),%eax\n\t" /* thread_data->syscall_frame */
                    "movl 0x3c(%eax),%ecx\n\t"  /* frame->prev_frame */
-                   "movl %ecx,0x218(%edx)\n\t" /* thread_data->syscall_frame */
+                   "movl %ecx,0x218(%ebx)\n\t" /* thread_data->syscall_frame */
                    "movl 0x38(%eax),%ebp\n\t"  /* frame->syscall_cfa */
                    "subl $8,%ebp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
@@ -1643,13 +1652,25 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "movl 4(%esp),%esi\n\t"     /* ret_ptr */
                    "movl 8(%esp),%edi\n\t"     /* ret_len */
                    "movl 12(%esp),%eax\n\t"    /* status */
-                   "leal -16(%ebp),%esp\n\t"
+                   "leal -20(%ebp),%esp\n\t"
                    "movl 0x0c(%ebp),%ecx\n\t"  /* ret_ptr */
                    "movl %esi,(%ecx)\n\t"
                    "movl 0x10(%ebp),%ecx\n\t"  /* ret_len */
                    "movl %edi,(%ecx)\n\t"
-                   "popl 0(%edx)\n\t"          /* teb->Tib.ExceptionList */
-                   "popl %edi\n\t"
+                   "popl (%ebx)\n\t"           /* teb->Tib.ExceptionList */
+                   "popl %edx\n\t"             /* id */
+                   "testl $1,0x21c(%ebx)\n\t"  /* thread_data->syscall_trace */
+                   "jz 1f\n\t"
+                   "pushl %eax\n\t"            /* status */
+                   "subl $8,%esp\n\t"
+                   "pushl %edx\n\t"            /* id */
+                   "pushl %eax\n\t"            /* status */
+                   "pushl %edi\n\t"            /* ret_len */
+                   "pushl %esi\n\t"            /* ret_ptr */
+                   "call " __ASM_NAME("trace_userret") "\n\t"
+                   "addl $24,%esp\n\t"
+                   "popl %eax\n\t"             /* status */
+                   "1:\tpopl %edi\n\t"
                    __ASM_CFI(".cfi_same_value %edi\n\t")
                    "popl %esi\n\t"
                    __ASM_CFI(".cfi_same_value %esi\n\t")

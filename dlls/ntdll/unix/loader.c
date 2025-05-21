@@ -139,10 +139,12 @@ static const char *ntsyscall_names[] =
 };
 
 static const char **syscall_names[4] = { ntsyscall_names };
+static const char **usercall_names;
 
-void ntdll_add_syscall_debug_info( UINT idx, const char **names )
+void ntdll_add_syscall_debug_info( UINT idx, const char **names, const char **user_names )
 {
     syscall_names[idx] = names;
+    usercall_names = user_names;
 }
 
 #ifdef __GNUC__
@@ -654,6 +656,21 @@ void trace_sysret( UINT id, ULONG_PTR retval )
         TRACE_(syscall)( "\1SysRet   %04x() retval=%08lx\n", id, retval );
 }
 
+void trace_usercall( UINT id, ULONG_PTR *args, ULONG len )
+{
+    if (usercall_names)
+        TRACE_(syscall)("\1UserCall %s(%p,%u)\n", usercall_names[id], args, len );
+    else
+        TRACE_(syscall)("\1UserCall %04x(%p,%u)\n", id, args, len );
+}
+
+void trace_userret( void *ret_ptr, ULONG len, NTSTATUS status, UINT id )
+{
+    if (usercall_names)
+        TRACE_(syscall)("\1UserRet  %s(%p,%u) retval=%08x\n", usercall_names[id], ret_ptr, len, status );
+    else
+        TRACE_(syscall)("\1UserRet  %04x(%p,%u) retval=%08x\n", id, ret_ptr, len, status );
+}
 
 #ifdef SO_DLLS_SUPPORTED
 

@@ -655,13 +655,24 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "vstm r5, {d8-d15}\n\t"
                    "str r6, [r5, #0x80]\n\t"
                    "sub sp, sp, #0x160\n\t"   /* sizeof(struct syscall_frame) + registers */
-                   "ldr r5, [r4, #0x218]\n\t" /* thread_data->syscall_frame */
-                   "str r5, [sp, #0x4c]\n\t"  /* frame->prev_frame */
+                   "ldr ip, [r4, #0x218]\n\t" /* thread_data->syscall_frame */
+                   "str ip, [sp, #0x4c]\n\t"  /* frame->prev_frame */
                    "str r7, [sp, #0x50]\n\t"  /* frame->syscall_cfa */
                    "str sp, [r4, #0x218]\n\t" /* thread_data->syscall_frame */
+                   "ldr r7, [r4, #0x21c]\n\t" /* thread_data->syscall_trace */
+                   "cbnz r7, 1f\n\t"
                    /* switch to user stack */
                    "mov sp, r0\n\t"
-                   "bx r3" )
+                   "bx r3\n"
+                   "1:\tmov r6, r0\n\t"       /* user_sp */
+                   "ldr r1, [r6]\n\t"         /* args */
+                   "ldr r2, [r6, #4]\n\t"     /* len */
+                   "ldr r0, [r6, #8]\n\t"     /* id */
+                   "str r0, [r5, #0x84]\n\t"
+                   "mov r4, r3\n\t"           /* func */
+                   "bl " __ASM_NAME("trace_usercall") "\n\t"
+                   "mov sp, r6\n\t"
+                   "bx r4" )
 
 
 /***********************************************************************
@@ -677,7 +688,13 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "vldm r5, {d8-d15}\n\t"
                    "ldr r6, [r5, #0x80]\n\t"
                    "vmsr fpscr, r6\n\t"
-                   "add r5, r5, #0x90\n\t"
+                   "ldr r7, [r3, #0x21c]\n\t" /* thread_data->syscall_trace */
+                   "cbz r7, 1f\n\t"
+                   "stm r5, {r0-r3}\n\t"
+                   "ldr r3, [r5, #0x84]\n\t"  /* id */
+                   "bl " __ASM_NAME("trace_userret") "\n\t"
+                   "ldm r5, {r0-r3}\n"
+                   "1:\tadd r5, r5, #0x90\n\t"
                    "mov sp, r5\n\t"
                    "pop {r4-r7}\n\t"          /* ret_ptr, ret_len, teb, exception_list */
                    "str r7, [r3]\n\t"         /* teb->Tib.ExceptionList */

@@ -821,10 +821,10 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 extern NTSTATUS call_user_mode_callback( ULONG64 user_sp, void **ret_ptr, ULONG *ret_len,
                                          void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
-                   "stp x29, x30, [sp,#-0xc0]!\n\t"
-                   __ASM_CFI(".cfi_def_cfa_offset 0xc0\n\t")
-                   __ASM_CFI(".cfi_offset 29,-0xc0\n\t")
-                   __ASM_CFI(".cfi_offset 30,-0xb8\n\t")
+                   "stp x29, x30, [sp,#-0xd0]!\n\t"
+                   __ASM_CFI(".cfi_def_cfa_offset 0xd0\n\t")
+                   __ASM_CFI(".cfi_offset 29,-0xd0\n\t")
+                   __ASM_CFI(".cfi_offset 30,-0xc8\n\t")
                    "mov x29, sp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
                    "stp x19, x20, [x29, #0x10]\n\t"
@@ -857,11 +857,24 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "ldr x7, [x18, #0x378]\n\t"    /* thread_data->syscall_frame */
                    "sub x1, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
                    "str x1, [x18, #0x378]\n\t"    /* thread_data->syscall_frame */
-                   "add x8, x29, #0xc0\n\t"
+                   "add x8, x29, #0xd0\n\t"
                    "stp x7, x8, [x1, #0x110]\n\t" /* frame->prev_frame,syscall_cfa */
+                   "ldr w11, [x18, #0x380]\n\t"   /* thread_data->syscall_trace */
+                   "cbnz x11, 1f\n\t"
                    /* switch to user stack */
                    "mov sp, x0\n\t"               /* user_sp */
-                   "br x3" )
+                   "br x3\n"
+                   "1:\tmov x19, x18\n\t"         /* teb */
+                   "mov x20, x0\n\t"              /* user_sp */
+                   "mov x21, x3\n\t"              /* func */
+                   "mov sp, x1\n\t"
+                   "ldr x1, [x20]\n\t"            /* args */
+                   "ldp w2, w0, [x20, #8]\n\t"    /* len, id */
+                   "str x0, [x29, #0xc0]\n\t"     /* id */
+                   "bl " __ASM_NAME("trace_usercall") "\n\t"
+                   "mov x18, x19\n\t"             /* teb */
+                   "mov sp, x20\n\t"              /* user_sp */
+                   "br x21" )
 
 
 /***********************************************************************
@@ -873,7 +886,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr x4, [x3, #0x378]\n\t"     /* thread_data->syscall_frame */
                    "ldp x5, x29, [x4,#0x110]\n\t" /* prev_frame,syscall_cfa */
                    "str x5, [x3, #0x378]\n\t"     /* thread_data->syscall_frame */
-                   "sub x29, x29, #0xc0\n\t"
+                   "sub x29, x29, #0xd0\n\t"
                    __ASM_CFI(".cfi_def_cfa_register 29\n\t")
                    __ASM_CFI(".cfi_rel_offset 29,0x00\n\t")
                    __ASM_CFI(".cfi_rel_offset 30,0x08\n\t")
@@ -892,7 +905,16 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "msr fpcr, x5\n\t"
                    "lsr x5, x5, #32\n\t"
                    "msr fpsr, x5\n\t"
-                   "ldp x19, x20, [x29, #0x10]\n\t"
+                   "ldp x5, x6, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+                   "str x0, [x5]\n\t"             /* ret_ptr */
+                   "str w1, [x6]\n\t"             /* ret_len */
+                   "ldr w11, [x3, #0x380]\n\t"    /* thread_data->syscall_trace */
+                   "cbz x11, 1f\n\t"
+                   "ldr w3, [x29, #0xc0]\n\t"     /* id */
+                   "mov x19, x2\n\t"
+                   "bl " __ASM_NAME("trace_userret") "\n\t"
+                   "mov x2, x19\n"                /* status */
+                   "1:\tldp x19, x20, [x29, #0x10]\n\t"
                    __ASM_CFI(".cfi_same_value 19\n\t")
                    __ASM_CFI(".cfi_same_value 20\n\t")
                    "ldp x21, x22, [x29, #0x20]\n\t"
@@ -911,12 +933,9 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldp d10, d11, [x29, #0x70]\n\t"
                    "ldp d12, d13, [x29, #0x80]\n\t"
                    "ldp d14, d15, [x29, #0x90]\n\t"
-                   "ldp x5, x6, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
-                   "str x0, [x5]\n\t"             /* ret_ptr */
-                   "str w1, [x6]\n\t"             /* ret_len */
                    "mov x0, x2\n\t"               /* status */
                    "mov sp, x29\n\t"
-                   "ldp x29, x30, [sp], #0xc0\n\t"
+                   "ldp x29, x30, [sp], #0xd0\n\t"
                    "ret" )
 
 

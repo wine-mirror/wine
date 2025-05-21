@@ -1607,11 +1607,11 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  */
 extern NTSTATUS call_user_mode_callback( ULONG64 user_rsp, void **ret_ptr, ULONG *ret_len, void *func, TEB *teb );
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
-                   "subq $0x48,%rsp\n\t"
-                   __ASM_CFI(".cfi_adjust_cfa_offset 0x48\n\t")
-                   "movq %rbp,0x40(%rsp)\n\t"
-                   __ASM_CFI(".cfi_rel_offset %rbp,0x40\n\t")
-                   "leaq 0x40(%rsp),%rbp\n\t"
+                   "subq $0x58,%rsp\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 0x58\n\t")
+                   "movq %rbp,0x50(%rsp)\n\t"
+                   __ASM_CFI(".cfi_rel_offset %rbp,0x50\n\t")
+                   "leaq 0x50(%rsp),%rbp\n\t"
                    __ASM_CFI(".cfi_def_cfa_register %rbp\n\t")
                    "movq %rbx,-0x08(%rbp)\n\t"
                    __ASM_CFI(".cfi_rel_offset %rbx,-0x08\n\t")
@@ -1625,37 +1625,49 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
                    "stmxcsr -0x30(%rbp)\n\t"
                    "fnstcw -0x2c(%rbp)\n\t"
+                   "movq %r8,%r13\n\t"         /* teb */
                    "movq %rsi,-0x38(%rbp)\n\t" /* ret_ptr */
                    "movq %rdx,-0x40(%rbp)\n\t" /* ret_len */
-                   "subq $0x308,%rsp\n\t"      /* sizeof(struct syscall_frame) + exception */
-                   "movl 0x33c(%r8),%esi\n\t"  /* amd64_thread_data()->xstate_features_size */
+                   "movq (%r13),%rax\n\t"      /* NtCurrentTeb()->Tib.ExceptionList */
+                   "movq %rax,-0x48(%rbp)\n\t"
+                   "subq $0x300,%rsp\n\t"      /* sizeof(struct syscall_frame) */
+                   "movl 0x33c(%r13),%esi\n\t" /* amd64_thread_data()->xstate_features_size */
                    "subq %rsi,%rsp\n\t"
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
-                   "movq 0x378(%r8),%r10\n\t"  /* thread_data->syscall_frame */
-                   "movq (%r8),%rax\n\t"       /* NtCurrentTeb()->Tib.ExceptionList */
-                   "movq %rax,0x300(%rsp,%rsi)\n\t"
+                   "movq 0x378(%r13),%r10\n\t" /* thread_data->syscall_frame */
                    "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
                    "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
-                   "movq %rsp,0x378(%r8)\n\t"  /* thread_data->syscall_frame */
+                   "movq %rsp,0x378(%r13)\n\t" /* thread_data->syscall_frame */
+                   "testl $1,0x380(%r13)\n\t"  /* thread_data->syscall_trace */
+                   "jz 1f\n\t"
+                   "movq %rdi,%r12\n\t"        /* user_rsp */
+                   "movl 0x2c(%r12),%edi\n\t"  /* id */
+                   "movq %rdi,-0x50(%rbp)\n\t"
+                   "movq %rcx,%r15\n\t"        /* func */
+                   "movq 0x20(%r12),%rsi\n\t"  /* args */
+                   "movl 0x28(%r12),%edx\n\t"  /* len */
+                   "call " __ASM_NAME("trace_usercall") "\n\t"
+                   "movq %r12,%rdi\n\t"        /* user_rsp */
+                   "movq %r15,%rcx\n"          /* func */
                    /* switch to user stack */
-                   "movq %rdi,%rsp\n\t"        /* user_rsp */
+                   "1:\tmovq %rdi,%rsp\n\t"    /* user_rsp */
 #ifdef __linux__
                    "testl $4,%r14d\n\t"        /* SYSCALL_HAVE_PTHREAD_TEB */
                    "jz 1f\n\t"
-                   "movw 0x338(%r8),%fs\n"     /* amd64_thread_data()->fs */
+                   "movw 0x338(%r13),%fs\n"    /* amd64_thread_data()->fs */
                    "1:\n\t"
 #elif defined __APPLE__
                    "movq %rcx,%r10\n\t"
-                   "movq %r8,%rdi\n\t"
+                   "movq %r13,%rdi\n\t"
                    "xorl %esi,%esi\n\t"
                    "movl $0x3000003,%eax\n\t"  /* _thread_set_tsd_base */
                    "syscall\n\t"
                    "movq %r10,%rcx\n\t"
 #endif
-                   "movq 0x348(%r8),%r10\n\t"    /* amd64_thread_data()->instrumentation_callback */
+                   "movq 0x348(%r13),%r10\n\t" /* amd64_thread_data()->instrumentation_callback */
                    "movq (%r10),%r10\n\t"
                    "test %r10,%r10\n\t"
                    "jz 1f\n\t"
@@ -1680,14 +1692,20 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    __ASM_CFI(".cfi_rel_offset %r13,-0x18\n\t")
                    __ASM_CFI(".cfi_rel_offset %r14,-0x20\n\t")
                    __ASM_CFI(".cfi_rel_offset %r15,-0x28\n\t")
-                   "movl 0x33c(%rcx),%eax\n\t" /* amd64_thread_data()->xstate_features_size */
-                   "movq 0x300(%r10,%rax),%rax\n\t" /* exception list */
-                   "movq %rax,0(%rcx)\n\t"     /* teb->Tib.ExceptionList */
-                   "movq -0x38(%rbp),%r10\n\t"  /* ret_ptr */
-                   "movq -0x40(%rbp),%r11\n\t"  /* ret_len */
+                   "movq -0x48(%rbp),%rax\n\t"
+                   "movq %rax,(%rcx)\n\t"      /* teb->Tib.ExceptionList */
+                   "movq -0x38(%rbp),%r10\n\t" /* ret_ptr */
+                   "movq -0x40(%rbp),%r11\n\t" /* ret_len */
                    "movq %rdi,(%r10)\n\t"
                    "movl %esi,(%r11)\n\t"
-                   "ldmxcsr -0x30(%rbp)\n\t"
+                   "testl $1,0x380(%rcx)\n\t"  /* thread_data->syscall_trace */
+                   "jz 1f\n\t"
+                   "leaq -0x50(%rbp),%rsp\n\t"
+                   "movq %rdx,%r15\n\t"        /* status */
+                   "movq -0x50(%rbp),%rcx\n\t" /* id */
+                   "call " __ASM_NAME("trace_userret") "\n\t"
+                   "movq %r15,%rdx\n"
+                   "1:\tldmxcsr -0x30(%rbp)\n\t"
                    "fnclex\n\t"
                    "fldcw -0x2c(%rbp)\n\t"
                    "movq -0x28(%rbp),%r15\n\t"
