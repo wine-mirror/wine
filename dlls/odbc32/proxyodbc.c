@@ -3761,6 +3761,12 @@ SQLRETURN WINAPI SQLSetEnvAttr(SQLHENV EnvironmentHandle, SQLINTEGER Attribute, 
     TRACE("(EnvironmentHandle %p, Attribute %d, Value %p, StringLength %d)\n", EnvironmentHandle, Attribute, Value,
           StringLength);
 
+    if (!env && Attribute == SQL_ATTR_CONNECTION_POOLING)
+    {
+        FIXME("Ignoring SQL_ATTR_CONNECTION_POOLING attribute.\n");
+        return SQL_SUCCESS;
+    }
+
     if (env->hdr.unix_handle)
     {
         ret = set_env_attr_unix( env, Attribute, Value, StringLength );
