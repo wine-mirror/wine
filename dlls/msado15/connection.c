@@ -534,9 +534,95 @@ static HRESULT WINAPI connection_get_State( _Connection *iface, LONG *state )
 static HRESULT WINAPI connection_OpenSchema( _Connection *iface, SchemaEnum schema, VARIANT restrictions,
                                              VARIANT schema_id, _Recordset **record_set )
 {
-    FIXME( "%p, %d, %s, %s, %p\n", iface, schema, debugstr_variant(&restrictions),
+    struct connection *connection = impl_from_Connection( iface );
+    ADORecordsetConstruction *construct;
+    IDBSchemaRowset *schema_rowset;
+    _Recordset *recordset;
+    ULONG restr_count;
+    IUnknown *rowset;
+    const GUID *guid;
+    VARIANT *restr;
+    HRESULT hr;
+
+    TRACE( "%p, %d, %s, %s, %p\n", iface, schema, debugstr_variant(&restrictions),
            debugstr_variant(&schema_id), record_set );
-    return E_NOTIMPL;
+
+    if (connection->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (V_VT(&schema_id) != VT_ERROR || V_ERROR(&schema_id) != DISP_E_PARAMNOTFOUND)
+    {
+        FIXME( "schema_id = %s\n", debugstr_variant(&schema_id) );
+        return E_NOTIMPL;
+    }
+
+    if (V_VT(&restrictions) == (VT_VARIANT | VT_ARRAY))
+    {
+        SAFEARRAY *arr = V_ARRAY(&restrictions);
+        LONG ubound, lbound;
+
+        if (SafeArrayGetDim( arr ) != 1) return MAKE_ADO_HRESULT( adErrInvalidArgument );
+        if (FAILED((hr = SafeArrayGetUBound( arr, 1, &ubound )))) return hr;
+        if (FAILED((hr = SafeArrayGetLBound( arr, 1, &lbound )))) return hr;
+        if (FAILED((hr = SafeArrayAccessData( arr, (void **)&restr )))) return hr;
+        restr_count = ubound - lbound + 1;
+    }
+    else if (V_VT(&restrictions) != VT_ERROR || V_ERROR(&restrictions) != DISP_E_PARAMNOTFOUND)
+    {
+        FIXME( "restrictions = %s\n", debugstr_variant(&restrictions) );
+        return E_NOTIMPL;
+    }
+    else
+    {
+        restr_count = 0;
+        restr = NULL;
+    }
+
+    hr = IUnknown_QueryInterface( connection->session, &IID_IDBSchemaRowset, (void**)&schema_rowset );
+    if (FAILED(hr))
+    {
+        if (restr) SafeArrayUnaccessData( V_ARRAY(&restrictions) );
+        return MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+    }
+
+    switch(schema)
+    {
+    case adSchemaTables:
+        if (restr_count > CRESTRICTIONS_DBSCHEMA_TABLES)
+            hr = MAKE_ADO_HRESULT( adErrFeatureNotAvailable );
+        guid = &DBSCHEMA_TABLES;
+        break;
+    default:
+        FIXME( "unsupported schema: %d\n", schema );
+        hr = E_NOTIMPL;
+        break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IDBSchemaRowset_GetRowset( schema_rowset, NULL, guid,
+                    restr_count, restr, &IID_IRowset, 0, NULL, &rowset );
+    }
+    if (restr) SafeArrayUnaccessData( V_ARRAY(&restrictions) );
+    IDBSchemaRowset_Release( schema_rowset );
+    if (FAILED(hr)) return hr;
+
+    hr = Recordset_create( (void **)&recordset );
+    if (FAILED(hr))
+    {
+        IUnknown_Release( rowset );
+        return hr;
+    }
+
+    hr = _Recordset_QueryInterface( recordset, &IID_ADORecordsetConstruction, (void**)&construct );
+    if (SUCCEEDED(hr))
+    {
+        hr = ADORecordsetConstruction_put_Rowset( construct, rowset );
+        ADORecordsetConstruction_Release( construct );
+    }
+    IUnknown_Release( rowset );
+    if (FAILED(hr)) return hr;
+
+    *record_set = recordset;
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_Cancel( _Connection *iface )
