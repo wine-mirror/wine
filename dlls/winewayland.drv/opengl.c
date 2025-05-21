@@ -39,16 +39,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 #include <wayland-egl.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 
 #include "wine/opengl_driver.h"
-
-/* Support building on systems with older EGL headers, which may not include
- * the EGL_EXT_present_opaque extension. */
-#ifndef EGL_PRESENT_OPAQUE_EXT
-#define EGL_PRESENT_OPAQUE_EXT 0x31DF
-#endif
 
 static void *egl_handle;
 static EGLDisplay egl_display;
@@ -57,7 +49,7 @@ static EGLConfig *egl_configs;
 static int num_egl_configs;
 static BOOL has_egl_ext_pixel_format_float;
 
-#define DECL_FUNCPTR(f) static typeof(f) * p_##f
+#define DECL_FUNCPTR(f) static PFN_##f p_##f
 DECL_FUNCPTR(eglBindAPI);
 DECL_FUNCPTR(eglChooseConfig);
 DECL_FUNCPTR(eglCreateContext);

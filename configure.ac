@@ -647,7 +647,6 @@ m4_ifdef([AC_SYS_YEAR2038],
 
 AC_CHECK_HEADERS(\
 	CL/cl.h \
-	EGL/egl.h \
 	OpenCL/opencl.h \
 	arpa/inet.h \
 	arpa/nameser.h \
@@ -1403,8 +1402,7 @@ then
     if test "x$with_opengl" != "xno"
     then
         WINE_PACKAGE_FLAGS(EGL,[egl],[-lEGL],,,
-            [AC_CHECK_HEADER([EGL/egl.h],
-               [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])])
+            [WINE_CHECK_SONAME(EGL,eglGetProcAddress,,,[$EGL_LIBS])])
         WINE_PACKAGE_FLAGS(WAYLAND_EGL,[wayland-egl],,,,
             [AC_CHECK_HEADER([wayland-egl.h],
                [AC_CHECK_LIB(wayland-egl,wl_egl_window_create,

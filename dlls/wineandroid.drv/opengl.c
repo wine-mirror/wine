@@ -35,9 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dlfcn.h>
-#ifdef HAVE_EGL_EGL_H
-#include <EGL/egl.h>
-#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -49,7 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
-#define DECL_FUNCPTR(f) typeof(f) * p_##f = NULL
+#define DECL_FUNCPTR(f) static PFN_##f p_##f = NULL
 DECL_FUNCPTR( eglCreateContext );
 DECL_FUNCPTR( eglCreateWindowSurface );
 DECL_FUNCPTR( eglCreatePbufferSurface );

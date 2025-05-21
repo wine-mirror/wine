@@ -9720,12 +9720,6 @@ then :
   printf "%s\n" "#define HAVE_CL_CL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "EGL/egl.h" "ac_cv_header_EGL_egl_h" "$ac_includes_default"
-if test "x$ac_cv_header_EGL_egl_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_EGL_EGL_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "OpenCL/opencl.h" "ac_cv_header_OpenCL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_OpenCL_opencl_h" = xyes
 then :
@@ -16276,10 +16270,7 @@ fi
 rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $EGL_CFLAGS"
-ac_fn_c_check_header_compile "$LINENO" "EGL/egl.h" "ac_cv_header_EGL_egl_h" "$ac_includes_default"
-if test "x$ac_cv_header_EGL_egl_h" = xyes
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lEGL" >&5
 printf %s "checking for -lEGL... " >&6; }
 if test ${ac_cv_lib_soname_EGL+y}
 then :
@@ -16342,8 +16333,6 @@ printf "%s\n" "#define SONAME_LIBEGL \"$ac_cv_lib_soname_EGL\"" >>confdefs.h
         ;;
 esac
 fi
-fi
-
 CPPFLAGS=$ac_save_CPPFLAGS
 
         rm -f conftest.err

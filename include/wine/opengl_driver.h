@@ -105,6 +105,7 @@ struct opengl_funcs
     BOOL       (*p_wglSetPixelFormatWINE)( HDC hdc, int format );
     BOOL       (*p_wglSwapIntervalEXT)( int interval );
 #define USE_GL_FUNC(x) PFN_##x p_##x;
+    ALL_EGL_FUNCS
     ALL_GL_FUNCS
     ALL_GL_EXT_FUNCS
 #undef USE_GL_FUNC
