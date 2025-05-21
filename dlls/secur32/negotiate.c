@@ -238,8 +238,14 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
+            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+        else
+        {
+            ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
         }
     }
 
@@ -251,6 +257,7 @@ static NTSTATUS NTAPI nego_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
@@ -294,8 +301,14 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->ntlm = NULL;
+            ctxt->user_ntlm = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
+        }
+        else
+        {
+            ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
         }
     }
 
@@ -308,6 +321,7 @@ static NTSTATUS NTAPI nego_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential, LS
         if ((ret == SEC_E_OK || ret == SEC_I_CONTINUE_NEEDED) && new_context)
         {
             ctxt->krb = NULL;
+            ctxt->user_krb = NULL;
             *new_context = (LSA_SEC_HANDLE)ctxt;
             if (new_ctxt == ctxt) new_ctxt = NULL;
         }
