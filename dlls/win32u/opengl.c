@@ -787,12 +787,14 @@ static char wgl_extensions[4096];
 
 static const char *win32u_wglGetExtensionsStringARB( HDC hdc )
 {
+    TRACE( "hdc %p\n", hdc );
     if (TRACE_ON(wgl)) dump_extensions( wgl_extensions );
     return wgl_extensions;
 }
 
 static const char *win32u_wglGetExtensionsStringEXT(void)
 {
+    TRACE( "\n" );
     if (TRACE_ON(wgl)) dump_extensions( wgl_extensions );
     return wgl_extensions;
 }
