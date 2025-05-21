@@ -3940,14 +3940,22 @@ static SQLRETURN set_stmt_attr_win32_a( struct statement *stmt, SQLINTEGER attr,
 
     if (stmt->hdr.win32_funcs->SQLSetStmtAttrW)
     {
+        BOOL stringvalue = !(len < SQL_LEN_BINARY_ATTR_OFFSET /* Binary buffer */
+                || (len == SQL_IS_POINTER) /* Other pointer */
+                || (len == SQL_IS_INTEGER || len == SQL_IS_UINTEGER)); /* Fixed-length */
         WCHAR *strW;
 
-        if (len == SQL_IS_POINTER || len < SQL_LEN_BINARY_ATTR_OFFSET)
-            return stmt->hdr.win32_funcs->SQLSetStmtAttrW( stmt->hdr.win32_handle, attr, value, len );
-
-        if (!(strW = strnAtoW( value, len ))) return SQL_ERROR;
-        ret = stmt->hdr.win32_funcs->SQLSetStmtAttrW( stmt->hdr.win32_handle, attr, strW, len );
-        free( strW );
+        /* Driver-defined attribute range */
+        if (stringvalue && attr >= SQL_DRIVER_STMT_ATTR_BASE && attr <= 0x7fff)
+        {
+            if (!(strW = strnAtoW( value, len ))) return SQL_ERROR;
+            ret = stmt->hdr.win32_funcs->SQLSetStmtAttrW( stmt->hdr.win32_handle, attr, strW, len );
+            free( strW );
+        }
+        else
+        {
+            ret = stmt->hdr.win32_funcs->SQLSetStmtAttrW( stmt->hdr.win32_handle, attr, value, len );
+        }
     }
     return ret;
 }
