@@ -465,7 +465,7 @@ void __cdecl __wine_spec_unimplemented_stub( const char *module, const char *fun
  *
  * IsBadStringPtrA replacement for ntdll, to catch exception in debug traces.
  */
-BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
+BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
     __TRY
@@ -486,7 +486,7 @@ BOOL WINAPI IsBadStringPtrA( LPCSTR str, UINT_PTR max )
  *
  * IsBadStringPtrW replacement for ntdll, to catch exception in debug traces.
  */
-BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
+BOOL DECLSPEC_NOINLINE WINAPI IsBadStringPtrW( LPCWSTR str, UINT_PTR max )
 {
     if (!str) return TRUE;
     __TRY
