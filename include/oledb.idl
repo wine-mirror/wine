@@ -67,6 +67,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "sesprp.idl"
 #include "rstnot.idl"
 #include "opnrst.idl"
+#include "dbsrst.idl"
 #include "row.idl"
 #include "rowchg.idl"
 #include "rowpos.idl"

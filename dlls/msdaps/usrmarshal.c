@@ -1823,3 +1823,36 @@ HRESULT __RPC_STUB IRowsetIdentity_IsSameRow_Stub(IRowsetIdentity* This, HROW hT
     FIXME("(%p)->(%Id, %Id, %p): stub\n", This, hThisRow, hThatRow, error_info);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IDBSchemaRowset_GetRowset_Proxy(IDBSchemaRowset* This, IUnknown *pUnkOuter,
+    REFGUID rguidSchema, ULONG cRestrictions, const VARIANT rgRestrictions[], REFIID riid,
+    ULONG cPropertySets, DBPROPSET rgPropertySets[], IUnknown **ppRowset)
+{
+    FIXME("(%p)->(%p, %s, %lu, %p, %s, %lu, %p, %p): stub\n", This, pUnkOuter, debugstr_guid(rguidSchema),
+            cRestrictions, rgRestrictions, debugstr_guid(riid), cPropertySets, rgPropertySets, ppRowset);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBSchemaRowset_GetRowset_Stub(IDBSchemaRowset* This, IUnknown *pUnkOuter, REFGUID rguidSchema,
+    ULONG cRestrictions, const VARIANT *rgRestrictions, REFIID riid, ULONG cPropertySets, DBPROPSET *rgPropertySets,
+    IUnknown **ppRowset, ULONG cTotalProps, DBPROPSTATUS *rgPropStatus, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%p, %s, %lu, %p, %s, %lu, %p %p, %lu, %p, %p): stub\n", This, pUnkOuter,
+            debugstr_guid(rguidSchema), cRestrictions, rgRestrictions, debugstr_guid(riid),
+            cPropertySets, rgPropertySets, ppRowset, cTotalProps, rgPropStatus, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IDBSchemaRowset_GetSchemas_Proxy(IDBSchemaRowset* This,
+        ULONG *pcSchemas, GUID **prgSchemas, ULONG **prgRestrictionSupport)
+{
+    FIXME("(%p)->(%p, %p, %p): stub\n", This, pcSchemas, prgSchemas, prgRestrictionSupport);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IDBSchemaRowset_GetSchemas_Stub(IDBSchemaRowset* This, ULONG *pcSchemas,
+        GUID **prgSchemas, ULONG **prgRestrictionSupport, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%p, %p, %p, %p): stub\n", This, pcSchemas, prgSchemas, prgRestrictionSupport, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
