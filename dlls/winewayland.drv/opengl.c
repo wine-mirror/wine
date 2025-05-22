@@ -42,11 +42,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(waylanddrv);
 
 #include "wine/opengl_driver.h"
 
-static EGLDisplay egl_display;
 static char wgl_extensions[4096];
 static EGLConfig *egl_configs;
 static int num_egl_configs;
-static BOOL has_egl_ext_pixel_format_float;
+static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 
 #define DECL_FUNCPTR(f) static PFN_##f p_##f
@@ -131,7 +130,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_get(HWND hwnd, HDC hdc)
 static void wayland_gl_drawable_release(struct wayland_gl_drawable *gl)
 {
     if (InterlockedDecrement(&gl->ref)) return;
-    if (gl->surface) funcs->p_eglDestroySurface(egl_display, gl->surface);
+    if (gl->surface) funcs->p_eglDestroySurface(egl->display, gl->surface);
     if (gl->wl_egl_window) wl_egl_window_destroy(gl->wl_egl_window);
     if (gl->client)
     {
@@ -162,9 +161,18 @@ static inline EGLConfig egl_config_for_format(int format)
 static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc, int format, int width, int height)
 {
     struct wayland_gl_drawable *gl;
-    const EGLint attribs[] = {EGL_PRESENT_OPAQUE_EXT, EGL_TRUE, EGL_NONE};
+    EGLint attribs[4], *attrib = attribs;
 
     TRACE("hwnd=%p format=%d\n", hwnd, format);
+
+    if (!egl->has_EGL_EXT_present_opaque)
+        WARN("Missing EGL_EXT_present_opaque extension\n");
+    else
+    {
+        *attrib++ = EGL_PRESENT_OPAQUE_EXT;
+        *attrib++ = EGL_TRUE;
+    }
+    *attrib++ = EGL_NONE;
 
     gl = calloc(1, sizeof(*gl));
     if (!gl) return NULL;
@@ -186,7 +194,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
         goto err;
     }
 
-    gl->surface = funcs->p_eglCreateWindowSurface(egl_display, egl_config_for_format(format),
+    gl->surface = funcs->p_eglCreateWindowSurface(egl->display, egl_config_for_format(format),
                                                   gl->wl_egl_window, attribs);
     if (!gl->surface)
     {
@@ -259,7 +267,7 @@ static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *priva
 
     if (!private)
     {
-        funcs->p_eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        funcs->p_eglMakeCurrent(egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
         NtCurrentTeb()->glReserved2 = NULL;
         return TRUE;
     }
@@ -278,7 +286,7 @@ static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *priva
 
     pthread_mutex_lock(&gl_object_mutex);
 
-    ret = funcs->p_eglMakeCurrent(egl_display,
+    ret = funcs->p_eglMakeCurrent(egl->display,
                                   draw ? draw->surface : EGL_NO_SURFACE,
                                   read ? read->surface : EGL_NO_SURFACE,
                                   ctx->context);
@@ -389,7 +397,7 @@ static void wayland_context_refresh(struct wayland_context *ctx)
         ctx->new_read = NULL;
         refresh = TRUE;
     }
-    if (refresh) funcs->p_eglMakeCurrent(egl_display, ctx->draw, ctx->read, ctx->context);
+    if (refresh) funcs->p_eglMakeCurrent(egl->display, ctx->draw, ctx->read, ctx->context);
 
     pthread_mutex_unlock(&gl_object_mutex);
 
@@ -443,7 +451,7 @@ static BOOL wayland_context_create(HDC hdc, int format, void *share_private, con
      *    > purposes except eglCreateContext.
      */
     funcs->p_eglBindAPI(EGL_OPENGL_API);
-    ctx->context = funcs->p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR,
+    ctx->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
                                              share ? share->context : EGL_NO_CONTEXT,
                                              ctx->attribs);
 
@@ -479,11 +487,18 @@ static BOOL wayland_context_destroy(void *private)
     pthread_mutex_lock(&gl_object_mutex);
     list_remove(&ctx->entry);
     pthread_mutex_unlock(&gl_object_mutex);
-    funcs->p_eglDestroyContext(egl_display, ctx->context);
+    funcs->p_eglDestroyContext(egl->display, ctx->context);
     if (ctx->draw) wayland_gl_drawable_release(ctx->draw);
     if (ctx->read) wayland_gl_drawable_release(ctx->read);
     free(ctx);
     return TRUE;
+}
+
+static EGLenum wayland_init_egl_platform(const struct egl_platform *platform, EGLNativeDisplayType *platform_display)
+{
+    egl = platform;
+    *platform_display = process_wayland.wl_display;
+    return EGL_PLATFORM_WAYLAND_KHR;
 }
 
 static void *wayland_get_proc_address(const char *name)
@@ -524,8 +539,8 @@ static BOOL wayland_context_share(void *src_private, void *dst_private)
         return FALSE;
     }
 
-    funcs->p_eglDestroyContext(egl_display, clobber->context);
-    clobber->context = funcs->p_eglCreateContext(egl_display, EGL_NO_CONFIG_KHR,
+    funcs->p_eglDestroyContext(egl->display, clobber->context);
+    clobber->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
                                                  keep->context, clobber->attribs);
     TRACE("re-created context (%p) for Wine context %p (%p) "
           "sharing lists with ctx %p (%p)\n",
@@ -553,7 +568,7 @@ static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval
     if (interval < 0) interval = -interval;
     if (gl->swap_interval != interval)
     {
-        funcs->p_eglSwapInterval(egl_display, interval);
+        funcs->p_eglSwapInterval(egl->display, interval);
         gl->swap_interval = interval;
     }
 
@@ -561,7 +576,7 @@ static BOOL wayland_swap_buffers(void *private, HWND hwnd, HDC hdc, int interval
     ensure_window_surface_contents(toplevel);
     /* Although all the EGL surfaces we create are double-buffered, we want to
      * use some as single-buffered, so avoid swapping those. */
-    if (gl->double_buffered) funcs->p_eglSwapBuffers(egl_display, gl->surface);
+    if (gl->double_buffered) funcs->p_eglSwapBuffers(egl->display, gl->surface);
     wayland_gl_drawable_sync_size(gl);
 
     wayland_gl_drawable_release(gl);
@@ -621,7 +636,7 @@ static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     PIXELFORMATDESCRIPTOR *pfd = &fmt->pfd;
 
     /* If we can't get basic information, there is no point continuing */
-    if (!funcs->p_eglGetConfigAttrib(egl_display, config, EGL_SURFACE_TYPE, &surface_type)) return FALSE;
+    if (!funcs->p_eglGetConfigAttrib(egl->display, config, EGL_SURFACE_TYPE, &surface_type)) return FALSE;
 
     memset(fmt, 0, sizeof(*fmt));
     pfd->nSize = sizeof(*pfd);
@@ -637,10 +652,10 @@ static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
 
 #define SET_ATTRIB(field, attrib) \
     value = 0; \
-    funcs->p_eglGetConfigAttrib(egl_display, config, attrib, &value); \
+    funcs->p_eglGetConfigAttrib(egl->display, config, attrib, &value); \
     pfd->field = value;
 #define SET_ATTRIB_ARB(field, attrib) \
-    if (!funcs->p_eglGetConfigAttrib(egl_display, config, attrib, &value)) value = -1; \
+    if (!funcs->p_eglGetConfigAttrib(egl->display, config, attrib, &value)) value = -1; \
     fmt->field = value;
 
     /* Although the documentation describes cColorBits as excluding alpha, real
@@ -665,7 +680,7 @@ static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
 
     fmt->swap_method = WGL_SWAP_UNDEFINED_ARB;
 
-    if (funcs->p_eglGetConfigAttrib(egl_display, config, EGL_TRANSPARENT_TYPE, &value))
+    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_TYPE, &value))
     {
         switch (value)
         {
@@ -679,8 +694,8 @@ static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     }
     else fmt->transparent = -1;
 
-    if (!has_egl_ext_pixel_format_float) fmt->pixel_type = WGL_TYPE_RGBA_ARB;
-    else if (funcs->p_eglGetConfigAttrib(egl_display, config, EGL_COLOR_COMPONENT_TYPE_EXT, &value))
+    if (!egl->has_EGL_EXT_pixel_format_float) fmt->pixel_type = WGL_TYPE_RGBA_ARB;
+    else if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_COLOR_COMPONENT_TYPE_EXT, &value))
     {
         switch (value)
         {
@@ -704,17 +719,17 @@ static BOOL describe_pixel_format(EGLConfig config, struct wgl_pixel_format *fmt
     fmt->max_pbuffer_height = 4096;
     fmt->max_pbuffer_pixels = fmt->max_pbuffer_width * fmt->max_pbuffer_height;
 
-    if (funcs->p_eglGetConfigAttrib(egl_display, config, EGL_TRANSPARENT_RED_VALUE, &value))
+    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_RED_VALUE, &value))
     {
         fmt->transparent_red_value_valid = GL_TRUE;
         fmt->transparent_red_value = value;
     }
-    if (funcs->p_eglGetConfigAttrib(egl_display, config, EGL_TRANSPARENT_GREEN_VALUE, &value))
+    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_GREEN_VALUE, &value))
     {
         fmt->transparent_green_value_valid = GL_TRUE;
         fmt->transparent_green_value = value;
     }
-    if (funcs->p_eglGetConfigAttrib(egl_display, config, EGL_TRANSPARENT_BLUE_VALUE, &value))
+    if (funcs->p_eglGetConfigAttrib(egl->display, config, EGL_TRANSPARENT_BLUE_VALUE, &value))
     {
         fmt->transparent_blue_value_valid = GL_TRUE;
         fmt->transparent_blue_value = value;
@@ -754,21 +769,6 @@ static BOOL wayland_describe_pixel_format(int format, struct wgl_pixel_format *d
     return FALSE;
 }
 
-static BOOL has_extension(const char *list, const char *ext)
-{
-    size_t len = strlen(ext);
-    const char *cur = list;
-
-    while (cur && (cur = strstr(cur, ext)))
-    {
-        if ((!cur[len] || cur[len] == ' ') && (cur == list || cur[-1] == ' '))
-            return TRUE;
-        cur = strchr(cur, ' ');
-    }
-
-    return FALSE;
-}
-
 static void register_extension(const char *ext)
 {
     if (wgl_extensions[0]) strcat(wgl_extensions, " ");
@@ -784,7 +784,7 @@ static BOOL init_opengl_funcs(void)
 
 static const char *wayland_init_wgl_extensions(struct opengl_funcs *funcs)
 {
-    if (has_egl_ext_pixel_format_float)
+    if (egl->has_EGL_EXT_pixel_format_float)
     {
         register_extension("WGL_ARB_pixel_format_float");
         register_extension("WGL_ATI_pixel_format_float");
@@ -803,13 +803,13 @@ static UINT wayland_init_pixel_formats(UINT *onscreen_count)
         EGL_NONE
     };
 
-    funcs->p_eglChooseConfig(egl_display, attribs, NULL, 0, &num_egl_configs);
+    funcs->p_eglChooseConfig(egl->display, attribs, NULL, 0, &num_egl_configs);
     if (!(egl_configs = malloc(num_egl_configs * sizeof(*egl_configs))))
     {
         ERR("Failed to allocate memory for EGL configs\n");
         return 0;
     }
-    if (!funcs->p_eglChooseConfig(egl_display, attribs, egl_configs, num_egl_configs,
+    if (!funcs->p_eglChooseConfig(egl->display, attribs, egl_configs, num_egl_configs,
                                   &num_egl_configs) ||
         !num_egl_configs)
     {
@@ -825,18 +825,18 @@ static UINT wayland_init_pixel_formats(UINT *onscreen_count)
         for (i = 0; i < num_egl_configs; i++)
         {
             EGLint id, type, visual_id, native, render, color, r, g, b, a, d, s;
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_NATIVE_VISUAL_ID, &visual_id);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_SURFACE_TYPE, &type);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_RENDERABLE_TYPE, &render);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_CONFIG_ID, &id);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_NATIVE_RENDERABLE, &native);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_COLOR_BUFFER_TYPE, &color);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_RED_SIZE, &r);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_GREEN_SIZE, &g);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_BLUE_SIZE, &b);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_ALPHA_SIZE, &a);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_DEPTH_SIZE, &d);
-            funcs->p_eglGetConfigAttrib(egl_display, egl_configs[i], EGL_STENCIL_SIZE, &s);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_NATIVE_VISUAL_ID, &visual_id);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_SURFACE_TYPE, &type);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_RENDERABLE_TYPE, &render);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_CONFIG_ID, &id);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_NATIVE_RENDERABLE, &native);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_COLOR_BUFFER_TYPE, &color);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_RED_SIZE, &r);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_GREEN_SIZE, &g);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_BLUE_SIZE, &b);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_ALPHA_SIZE, &a);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_DEPTH_SIZE, &d);
+            funcs->p_eglGetConfigAttrib(egl->display, egl_configs[i], EGL_STENCIL_SIZE, &s);
             TRACE("%u: config %d id %d type %x visual %d native %d render %x "
                   "colortype %d rgba %d,%d,%d,%d depth %u stencil %d\n",
                   num_egl_configs, i, id, type, visual_id, native, render,
@@ -850,6 +850,7 @@ static UINT wayland_init_pixel_formats(UINT *onscreen_count)
 
 static const struct opengl_driver_funcs wayland_driver_funcs =
 {
+    .p_init_egl_platform = wayland_init_egl_platform,
     .p_get_proc_address = wayland_get_proc_address,
     .p_init_pixel_formats = wayland_init_pixel_formats,
     .p_describe_pixel_format = wayland_describe_pixel_format,
@@ -873,9 +874,6 @@ static const struct opengl_driver_funcs wayland_driver_funcs =
  */
 UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs)
 {
-    EGLint egl_version[2];
-    const char *egl_exts;
-
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR("Version mismatch, opengl32 wants %u but driver has %u\n",
@@ -885,35 +883,6 @@ UINT WAYLAND_OpenGLInit(UINT version, const struct opengl_funcs *opengl_funcs, c
 
     if (!opengl_funcs->egl_handle) return STATUS_NOT_SUPPORTED;
     funcs = opengl_funcs;
-
-    egl_display = funcs->p_eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_KHR,
-                                                 process_wayland.wl_display,
-                                                 NULL);
-    if (egl_display == EGL_NO_DISPLAY)
-    {
-        ERR("Failed to get EGLDisplay\n");
-        goto err;
-    }
-    if (!funcs->p_eglInitialize(egl_display, &egl_version[0], &egl_version[1]))
-    {
-        ERR("Failed to initialized EGLDisplay with error %d\n", funcs->p_eglGetError());
-        goto err;
-    }
-    TRACE("EGL version %u.%u\n", egl_version[0], egl_version[1]);
-
-    egl_exts = funcs->p_eglQueryString(egl_display, EGL_EXTENSIONS);
-#define REQUIRE_EXT(ext) \
-    do { \
-        if (!has_extension(egl_exts, #ext)) \
-            { ERR("Failed to find required extension %s\n", #ext); goto err; } \
-    } while(0)
-    REQUIRE_EXT(EGL_KHR_create_context);
-    REQUIRE_EXT(EGL_KHR_create_context_no_error);
-    REQUIRE_EXT(EGL_KHR_no_config_context);
-    REQUIRE_EXT(EGL_EXT_present_opaque);
-#undef REQUIRE_EXT
-
-    has_egl_ext_pixel_format_float = has_extension(egl_exts, "EGL_EXT_pixel_format_float");
 
     if (!init_opengl_funcs()) goto err;
     *driver_funcs = &wayland_driver_funcs;
