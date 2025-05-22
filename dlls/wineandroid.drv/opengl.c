@@ -46,6 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
+static const struct egl_platform *egl;
 static const struct opengl_funcs *funcs;
 static const int egl_client_version = 2;
 
@@ -79,7 +80,6 @@ struct gl_drawable
 static void *opengl_handle;
 static struct egl_pixel_format *pixel_formats;
 static int nb_pixel_formats, nb_onscreen_formats;
-static EGLDisplay display;
 static char wgl_extensions[4096];
 
 static struct list gl_contexts = LIST_INIT( gl_contexts );
@@ -97,7 +97,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     gl->format = format;
     gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     gl->surface = 0;
-    gl->pbuffer = funcs->p_eglCreatePbufferSurface( display, pixel_formats[gl->format - 1].config, attribs );
+    gl->pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, pixel_formats[gl->format - 1].config, attribs );
     pthread_mutex_lock( &drawable_mutex );
     list_add_head( &gl_drawables, &gl->entry );
     return gl;
@@ -131,8 +131,8 @@ void destroy_gl_drawable( HWND hwnd )
     {
         if (gl->hwnd != hwnd) continue;
         list_remove( &gl->entry );
-        if (gl->surface) funcs->p_eglDestroySurface( display, gl->surface );
-        if (gl->pbuffer) funcs->p_eglDestroySurface( display, gl->pbuffer );
+        if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
+        if (gl->pbuffer) funcs->p_eglDestroySurface( egl->display, gl->pbuffer );
         release_ioctl_window( gl->window );
         free( gl );
         break;
@@ -147,7 +147,7 @@ static BOOL refresh_context( struct android_context *ctx )
     if (ret)
     {
         TRACE( "refreshing hwnd %p context %p surface %p\n", ctx->hwnd, ctx->context, ctx->surface );
-        funcs->p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
+        funcs->p_eglMakeCurrent( egl->display, ctx->surface, ctx->surface, ctx->context );
         NtUserRedrawWindow( ctx->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
     }
     return ret;
@@ -161,7 +161,7 @@ void update_gl_drawable( HWND hwnd )
     if ((gl = get_gl_drawable( hwnd, 0 )))
     {
         if (!gl->surface &&
-            (gl->surface = funcs->p_eglCreateWindowSurface( display, pixel_formats[gl->format - 1].config,
+            (gl->surface = funcs->p_eglCreateWindowSurface( egl->display, pixel_formats[gl->format - 1].config,
                                                             gl->window, NULL )))
         {
             LIST_FOR_EACH_ENTRY( ctx, &gl_contexts, struct android_context, entry )
@@ -170,7 +170,7 @@ void update_gl_drawable( HWND hwnd )
                 TRACE( "hwnd %p refreshing %p %scurrent\n", hwnd, ctx, NtCurrentTeb()->glReserved2 == ctx ? "" : "not " );
                 ctx->surface = gl->surface;
                 if (NtCurrentTeb()->glReserved2 == ctx)
-                    funcs->p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
+                    funcs->p_eglMakeCurrent( egl->display, ctx->surface, ctx->surface, ctx->context );
                 else
                     InterlockedExchange( &ctx->refresh, TRUE );
             }
@@ -191,7 +191,7 @@ static BOOL android_set_pixel_format( HWND hwnd, int old_format, int new_format,
         if (internal)
         {
             EGLint pf;
-            funcs->p_eglGetConfigAttrib( display, pixel_formats[new_format - 1].config, EGL_NATIVE_VISUAL_ID, &pf );
+            funcs->p_eglGetConfigAttrib( egl->display, pixel_formats[new_format - 1].config, EGL_NATIVE_VISUAL_ID, &pf );
             gl->window->perform( gl->window, NATIVE_WINDOW_SET_BUFFERS_FORMAT, pf );
             gl->format = new_format;
         }
@@ -244,7 +244,7 @@ static BOOL android_context_create( HDC hdc, int format, void *share, const int 
     ctx->config  = pixel_formats[format - 1].config;
     ctx->surface = 0;
     ctx->refresh = FALSE;
-    ctx->context = funcs->p_eglCreateContext( display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
+    ctx->context = funcs->p_eglCreateContext( egl->display, ctx->config, shared_ctx ? shared_ctx->context : EGL_NO_CONTEXT, attribs );
     TRACE( "%p fmt %d ctx %p\n", hdc, format, ctx->context );
     list_add_head( &gl_contexts, &ctx->entry );
 
@@ -268,19 +268,19 @@ static BOOL android_describe_pixel_format( int format, struct wgl_pixel_format *
     pfd->iPixelType = PFD_TYPE_RGBA;
     pfd->iLayerType = PFD_MAIN_PLANE;
 
-    funcs->p_eglGetConfigAttrib( display, config, EGL_BUFFER_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_BUFFER_SIZE, &val );
     pfd->cColorBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_RED_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_RED_SIZE, &val );
     pfd->cRedBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_GREEN_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_GREEN_SIZE, &val );
     pfd->cGreenBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_BLUE_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_BLUE_SIZE, &val );
     pfd->cBlueBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_ALPHA_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_ALPHA_SIZE, &val );
     pfd->cAlphaBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_DEPTH_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_DEPTH_SIZE, &val );
     pfd->cDepthBits = val;
-    funcs->p_eglGetConfigAttrib( display, config, EGL_STENCIL_SIZE, &val );
+    funcs->p_eglGetConfigAttrib( egl->display, config, EGL_STENCIL_SIZE, &val );
     pfd->cStencilBits = val;
 
     pfd->cAlphaShift = 0;
@@ -302,7 +302,7 @@ static BOOL android_context_make_current( HDC draw_hdc, HDC read_hdc, void *priv
 
     if (!private)
     {
-        funcs->p_eglMakeCurrent( display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
+        funcs->p_eglMakeCurrent( egl->display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT );
         NtCurrentTeb()->glReserved2 = NULL;
         return TRUE;
     }
@@ -315,7 +315,7 @@ static BOOL android_context_make_current( HDC draw_hdc, HDC read_hdc, void *priv
         read_surface = read_gl->surface ? read_gl->surface : read_gl->pbuffer;
         TRACE( "%p/%p context %p surface %p/%p\n",
                draw_hdc, read_hdc, ctx->context, draw_surface, read_surface );
-        ret = funcs->p_eglMakeCurrent( display, draw_surface, read_surface, ctx->context );
+        ret = funcs->p_eglMakeCurrent( egl->display, draw_surface, read_surface, ctx->context );
         if (ret)
         {
             ctx->surface = draw_gl->surface;
@@ -351,9 +351,16 @@ static BOOL android_context_destroy( void *private )
     pthread_mutex_lock( &drawable_mutex );
     list_remove( &ctx->entry );
     pthread_mutex_unlock( &drawable_mutex );
-    funcs->p_eglDestroyContext( display, ctx->context );
+    funcs->p_eglDestroyContext( egl->display, ctx->context );
     free( ctx );
     return TRUE;
+}
+
+static EGLenum android_init_egl_platform( const struct egl_platform *platform, EGLNativeDisplayType *platform_display )
+{
+    egl = platform;
+    *platform_display = EGL_DEFAULT_DISPLAY;
+    return EGL_PLATFORM_ANDROID_KHR;
 }
 
 static void *android_get_proc_address( const char *name )
@@ -373,7 +380,7 @@ static void set_swap_interval( struct gl_drawable *gl, int interval )
 {
     if (interval < 0) interval = -interval;
     if (gl->swap_interval == interval) return;
-    funcs->p_eglSwapInterval( display, interval );
+    funcs->p_eglSwapInterval( egl->display, interval );
     gl->swap_interval = interval;
 }
 
@@ -394,7 +401,7 @@ static BOOL android_swap_buffers( void *private, HWND hwnd, HDC hdc, int interva
         release_gl_drawable( gl );
     }
 
-    if (ctx->surface) funcs->p_eglSwapBuffers( display, ctx->surface );
+    if (ctx->surface) funcs->p_eglSwapBuffers( egl->display, ctx->surface );
     return TRUE;
 }
 
@@ -432,10 +439,10 @@ static UINT android_init_pixel_formats( UINT *onscreen_count )
     EGLConfig *configs;
     EGLint count, i, pass;
 
-    funcs->p_eglGetConfigs( display, NULL, 0, &count );
+    funcs->p_eglGetConfigs( egl->display, NULL, 0, &count );
     configs = malloc( count * sizeof(*configs) );
     pixel_formats = malloc( count * sizeof(*pixel_formats) );
-    funcs->p_eglGetConfigs( display, configs, count, &count );
+    funcs->p_eglGetConfigs( egl->display, configs, count, &count );
     if (!count || !configs || !pixel_formats)
     {
         free( configs );
@@ -450,22 +457,22 @@ static UINT android_init_pixel_formats( UINT *onscreen_count )
         {
             EGLint id, type, visual_id, native, render, color, r, g, b, d, s;
 
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_SURFACE_TYPE, &type );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_SURFACE_TYPE, &type );
             if (!(type & EGL_WINDOW_BIT) == !pass) continue;
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_RENDERABLE_TYPE, &render );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_RENDERABLE_TYPE, &render );
             if (egl_client_version == 2 && !(render & EGL_OPENGL_ES2_BIT)) continue;
 
             pixel_formats[nb_pixel_formats++].config = configs[i];
 
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_CONFIG_ID, &id );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_NATIVE_VISUAL_ID, &visual_id );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_NATIVE_RENDERABLE, &native );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_COLOR_BUFFER_TYPE, &color );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_RED_SIZE, &r );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_GREEN_SIZE, &g );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_BLUE_SIZE, &b );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_DEPTH_SIZE, &d );
-            funcs->p_eglGetConfigAttrib( display, configs[i], EGL_STENCIL_SIZE, &s );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_CONFIG_ID, &id );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_NATIVE_VISUAL_ID, &visual_id );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_NATIVE_RENDERABLE, &native );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_COLOR_BUFFER_TYPE, &color );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_RED_SIZE, &r );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_GREEN_SIZE, &g );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_BLUE_SIZE, &b );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_DEPTH_SIZE, &d );
+            funcs->p_eglGetConfigAttrib( egl->display, configs[i], EGL_STENCIL_SIZE, &s );
             TRACE( "%u: config %u id %u type %x visual %u native %u render %x colortype %u rgb %u,%u,%u depth %u stencil %u\n",
                    nb_pixel_formats, i, id, type, visual_id, native, render, color, r, g, b, d, s );
         }
@@ -478,6 +485,7 @@ static UINT android_init_pixel_formats( UINT *onscreen_count )
 
 static const struct opengl_driver_funcs android_driver_funcs =
 {
+    .p_init_egl_platform = android_init_egl_platform,
     .p_get_proc_address = android_get_proc_address,
     .p_init_pixel_formats = android_init_pixel_formats,
     .p_describe_pixel_format = android_describe_pixel_format,
@@ -497,8 +505,6 @@ static const struct opengl_driver_funcs android_driver_funcs =
  */
 UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, const struct opengl_driver_funcs **driver_funcs )
 {
-    EGLint major, minor;
-
     if (version != WINE_OPENGL_DRIVER_VERSION)
     {
         ERR( "version mismatch, opengl32 wants %u but driver has %u\n", version, WINE_OPENGL_DRIVER_VERSION );
@@ -511,10 +517,6 @@ UINT ANDROID_OpenGLInit( UINT version, const struct opengl_funcs *opengl_funcs, 
         return STATUS_NOT_SUPPORTED;
     }
     funcs = opengl_funcs;
-
-    display = funcs->p_eglGetDisplay( EGL_DEFAULT_DISPLAY );
-    if (!funcs->p_eglInitialize( display, &major, &minor )) return 0;
-    TRACE( "display %p version %u.%u\n", display, major, minor );
 
     *driver_funcs = &android_driver_funcs;
     return STATUS_SUCCESS;
