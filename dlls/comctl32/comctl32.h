@@ -218,7 +218,7 @@ typedef struct
 
 /* WM_NOTIFY unicode to ansi conversion and forwarding stuff */
 
-BOOL COMCTL32_array_reserve(void **array, DWORD *size, DWORD count, DWORD item_size);
+LRESULT COMCTL32_forward_notify_to_ansi_window(HWND hwnd_notify, NMHDR *hdr, WCHAR **unicode_buffer, DWORD *unicode_buffer_size);
 
 /* undocumented functions */
 
