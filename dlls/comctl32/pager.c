@@ -85,7 +85,7 @@ typedef struct
     INT    BRbtnState; /* state of bottom or right btn */
     INT    direction;  /* direction of the scroll, (e.g. PGF_SCROLLUP) */
     WCHAR  *pwszBuffer;/* text buffer for converted notifications */
-    INT    nBufferSize;/* size of the above buffer */
+    DWORD  nBufferSize;/* size of the above buffer measured in bytes */
 } PAGER_INFO;
 
 #define TIMERID1         1
@@ -1096,19 +1096,6 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
     return code;
 }
 
-static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
-{
-    if (!infoPtr->pwszBuffer)
-        infoPtr->pwszBuffer = Alloc(size);
-    else if (infoPtr->nBufferSize < size)
-        infoPtr->pwszBuffer = ReAlloc(infoPtr->pwszBuffer, size);
-
-    if (!infoPtr->pwszBuffer) return FALSE;
-    if (infoPtr->nBufferSize < size) infoPtr->nBufferSize = size;
-
-    return TRUE;
-}
-
 /* Convert text to Unicode and return the original text address */
 static WCHAR *PAGER_ConvertText(WCHAR **text)
 {
@@ -1229,7 +1216,7 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
     {
         NMDATETIMEFORMATW *nmdtf = (NMDATETIMEFORMATW *)hdr;
         WCHAR *oldFormat;
-        INT textLength;
+        DWORD textLength;
 
         hdr->code = PAGER_GetAnsiNtfCode(hdr->code);
         oldFormat = PAGER_ConvertText((WCHAR **)&nmdtf->pszFormat);
@@ -1239,7 +1226,7 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
         if (nmdtf->pszDisplay)
         {
             textLength = MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmdtf->pszDisplay, -1, 0, 0);
-            if (!PAGER_AdjustBuffer(infoPtr, textLength * sizeof(WCHAR))) return ret;
+            if (!COMCTL32_array_reserve((void **)&infoPtr->pwszBuffer, &infoPtr->nBufferSize, textLength, sizeof(WCHAR))) return ret;
             MultiByteToWideChar(CP_ACP, 0, (LPCSTR)nmdtf->pszDisplay, -1, infoPtr->pwszBuffer, textLength);
             if (nmdtf->pszDisplay != nmdtf->szDisplay)
                 nmdtf->pszDisplay = infoPtr->pwszBuffer;
@@ -1346,7 +1333,7 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
     {
         NMTTDISPINFOW *nmttdiW = (NMTTDISPINFOW *)hdr;
         NMTTDISPINFOA nmttdiA = {{0}};
-        INT size;
+        DWORD size;
 
         nmttdiA.hdr.code = PAGER_GetAnsiNtfCode(nmttdiW->hdr.code);
         nmttdiA.hdr.hwndFrom = nmttdiW->hdr.hwndFrom;
@@ -1373,7 +1360,7 @@ static LRESULT PAGER_Notify(PAGER_INFO *infoPtr, NMHDR *hdr)
             size = MultiByteToWideChar(CP_ACP, 0, nmttdiA.lpszText, -1, 0, 0);
             if (size > ARRAY_SIZE(nmttdiW->szText))
             {
-                if (!PAGER_AdjustBuffer(infoPtr, size * sizeof(WCHAR))) return ret;
+                if (!COMCTL32_array_reserve((void **)&infoPtr->pwszBuffer, &infoPtr->nBufferSize, size, sizeof(WCHAR))) return ret;
                 MultiByteToWideChar(CP_ACP, 0, nmttdiA.lpszText, -1, infoPtr->pwszBuffer, size);
                 nmttdiW->lpszText = infoPtr->pwszBuffer;
                 /* Override content in szText */

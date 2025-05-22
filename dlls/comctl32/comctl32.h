@@ -216,6 +216,10 @@ typedef struct
    int running;
 } SUBCLASS_INFO, *LPSUBCLASS_INFO;
 
+/* WM_NOTIFY unicode to ansi conversion and forwarding stuff */
+
+BOOL COMCTL32_array_reserve(void **array, DWORD *size, DWORD count, DWORD item_size);
+
 /* undocumented functions */
 
 BOOL   WINAPI Free (LPVOID);

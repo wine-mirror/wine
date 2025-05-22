@@ -2691,3 +2691,25 @@ LRESULT WINAPI SendNotifyEx(HWND hwndTo, HWND hwndFrom, UINT code, NMHDR *hdr, D
 
     return DoNotify(&notify, code, hdr);
 }
+
+/* reallocate *array if needed so it can hold at least count items */
+/* *size measured in bytes, count measured in items */
+/* return FALSE means failed (*array still valid but too small) */
+/* return TRUE means successful */
+BOOL COMCTL32_array_reserve(void **array, DWORD *size, DWORD count, DWORD item_size)
+{
+    void *new_array;
+    DWORD needed_size;
+
+    if (count > (DWORD)-1 / item_size)
+        return FALSE;
+    needed_size = count * item_size;
+    if (*size >= needed_size)
+        return TRUE;
+    new_array = *array ? ReAlloc(*array, needed_size) : Alloc(needed_size);
+    if (!new_array)
+        return FALSE;
+    *array = new_array;
+    *size = needed_size;
+    return TRUE;
+}
