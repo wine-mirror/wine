@@ -1698,6 +1698,7 @@ static BOOL handle_state_change( unsigned long serial, unsigned long *expect_ser
     if (reason)
     {
         WARN( "Ignoring %s%s%s%s\n", prefix, reason, received, expected );
+        memcpy( current, value, size );
         return FALSE;
     }
 
