@@ -6,4 +6,5 @@ SOURCES = \
 	inputpane.c \
 	main.c \
 	uisettings.c \
-	uiviewsettings.c
+	uiviewsettings.c \
+	weakref.c
