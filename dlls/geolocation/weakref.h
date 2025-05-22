@@ -1,6 +1,6 @@
-/* WinRT Windows.Devices.Geolocation.Geolocator Implementation
+/* WinRT weak reference helpers
  *
- * Copyright 2023 Fabian Maurer
+ * Copyright 2025 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,22 +17,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_GEOLOCATION_PRIVATE_H
-#define __WINE_GEOLOCATION_PRIVATE_H
+#ifndef __WINE_WEAKREF_H
+#define __WINE_WEAKREF_H
 
-#include <stdarg.h>
+#include "weakreference.h"
 
-#define COBJMACROS
-#include "windef.h"
-#include "winbase.h"
-#include "winstring.h"
+struct weak_reference_source
+{
+    IWeakReferenceSource IWeakReferenceSource_iface;
+    IWeakReference *weak_reference;
+};
 
-#include "activation.h"
+/* Initialize a IWeakReferenceSource with the object to manage */
+HRESULT weak_reference_source_init( struct weak_reference_source *source, IUnknown *object );
+/* Add a strong reference to the managed object */
+ULONG weak_reference_strong_add_ref( struct weak_reference_source *source );
+/* Release a strong reference to the managed object */
+ULONG weak_reference_strong_release( struct weak_reference_source *source );
 
-#define WIDL_using_Windows_Foundation
-#define WIDL_using_Windows_Foundation_Collections
-#include "windows.foundation.h"
-#define WIDL_using_Windows_Devices_Geolocation
-#include "windows.devices.geolocation.h"
-
-#endif
+#endif /* __WINE_WEAKREF_H */
