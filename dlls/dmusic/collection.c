@@ -208,7 +208,14 @@ static HRESULT WINAPI collection_EnumInstrument(IDirectMusicCollection *iface,
     {
         if (index--) continue;
         *patch = entry->patch;
-        if (name) lstrcpynW(name, entry->desc.wszName, name_length);
+        if (name)
+        {
+            if (entry->desc.dwValidData & DMUS_OBJ_NAME)
+                lstrcpynW(name, entry->desc.wszName, name_length);
+            else
+                name[0] = 0;
+        }
+
         return S_OK;
     }
 
