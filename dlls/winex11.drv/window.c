@@ -354,7 +354,8 @@ static HWND hwnd_from_window( Display *display, Window window )
     HWND *list;
     UINT i;
 
-    if (!window || window == root_window) return desktop;
+    if (!window) return 0;
+    if (window == root_window) return desktop;
     if (!XFindContext( display, window, winContext, (char **)&hwnd )) return hwnd;
 
     if (!(list = build_hwnd_list())) return desktop;
