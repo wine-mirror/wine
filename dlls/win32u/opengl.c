@@ -176,7 +176,123 @@ static void register_extension( char *list, size_t size, const char *name )
 
 #ifdef SONAME_LIBEGL
 
-static BOOL egl_init(void)
+static void *egldrv_get_proc_address( const char *name )
+{
+    return display_funcs.p_eglGetProcAddress( name );
+}
+
+static UINT egldrv_init_pixel_formats( UINT *onscreen_count )
+{
+    FIXME( "stub!\n" );
+    return *onscreen_count = 0;
+}
+
+static BOOL egldrv_describe_pixel_format( int format, struct wgl_pixel_format *desc )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static const char *egldrv_init_wgl_extensions( struct opengl_funcs *funcs )
+{
+    FIXME( "stub!\n" );
+    return "";
+}
+
+static BOOL egldrv_set_pixel_format( HWND hwnd, int old_format, int new_format, BOOL internal )
+{
+    FIXME( "stub!\n" );
+    return TRUE;
+}
+
+static BOOL egldrv_swap_buffers( void *private, HWND hwnd, HDC hdc, int interval )
+{
+    FIXME( "stub!\n" );
+    return TRUE;
+}
+
+static BOOL egldrv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum texture_format, GLenum texture_target,
+                                   GLint max_level, GLsizei *width, GLsizei *height, void **private )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_pbuffer_destroy( HDC hdc, void *private )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_pbuffer_updated( HDC hdc, void *private, GLenum cube_face, GLint mipmap_level )
+{
+    FIXME( "stub!\n" );
+    return GL_TRUE;
+}
+
+static UINT egldrv_pbuffer_bind( HDC hdc, void *private, GLenum buffer )
+{
+    FIXME( "stub!\n" );
+    return -1; /* use default implementation */
+}
+
+static BOOL egldrv_context_create( HDC hdc, int format, void *share, const int *attribs, void **private )
+{
+    FIXME( "stub!\n" );
+    return TRUE;
+}
+
+static BOOL egldrv_context_destroy( void *private )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_context_copy( void *src_private, void *dst_private, UINT mask )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_context_share( void *src_private, void *dst_private )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static BOOL egldrv_context_make_current( HDC draw_hdc, HDC read_hdc, void *private )
+{
+    FIXME( "stub!\n" );
+    return FALSE;
+}
+
+static const struct opengl_driver_funcs egldrv_funcs =
+{
+    .p_get_proc_address = egldrv_get_proc_address,
+    .p_init_pixel_formats = egldrv_init_pixel_formats,
+    .p_describe_pixel_format = egldrv_describe_pixel_format,
+    .p_init_wgl_extensions = egldrv_init_wgl_extensions,
+    .p_set_pixel_format = egldrv_set_pixel_format,
+    .p_swap_buffers = egldrv_swap_buffers,
+    .p_pbuffer_create = egldrv_pbuffer_create,
+    .p_pbuffer_destroy = egldrv_pbuffer_destroy,
+    .p_pbuffer_updated = egldrv_pbuffer_updated,
+    .p_pbuffer_bind = egldrv_pbuffer_bind,
+    .p_context_create = egldrv_context_create,
+    .p_context_destroy = egldrv_context_destroy,
+    .p_context_copy = egldrv_context_copy,
+    .p_context_share = egldrv_context_share,
+    .p_context_flush = egldrv_context_flush,
+    .p_context_make_current = egldrv_context_make_current,
+};
+
+static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
 {
     struct opengl_funcs *funcs = &display_funcs;
     const char *extensions;
@@ -224,6 +340,7 @@ static BOOL egl_init(void)
     ALL_EGL_FUNCS
 #undef USE_GL_FUNC
 
+    *driver_funcs = &egldrv_funcs;
     return TRUE;
 
 failed:
@@ -276,7 +393,7 @@ static void init_egl_platform( struct egl_platform *egl, struct opengl_funcs *fu
 
 #else /* SONAME_LIBEGL */
 
-static BOOL egl_init(void)
+static BOOL egl_init( const struct opengl_driver_funcs **driver_funcs )
 {
     WARN( "EGL support not compiled in!\n" );
     return FALSE;
@@ -1466,7 +1583,7 @@ static void display_funcs_init(void)
 {
     UINT status;
 
-    if (egl_init()) TRACE( "Initialized EGL library\n" );
+    if (egl_init( &display_driver_funcs )) TRACE( "Initialized EGL library\n" );
 
     if ((status = user_driver->pOpenGLInit( WINE_OPENGL_DRIVER_VERSION, &display_funcs, &display_driver_funcs )))
         WARN( "Failed to initialize the driver OpenGL functions, status %#x\n", status );
