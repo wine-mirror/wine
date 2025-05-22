@@ -2913,14 +2913,14 @@ static void test_WM_NOTIFY(void)
 
     test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
     ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
-    todo_wine ok(ret == 0xabcd0006, "SendMessageW returned 0x%Ix.\n", ret);
-    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITW, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    ok(ret == 0xabcd0006, "SendMessageW returned 0x%Ix.\n", ret);
+    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITW, "Toolbar didn't forward WM_NOTIFY to parent.\n");
     test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_NO_FORWARD;
 
     test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
     ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
-    todo_wine ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
-    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
+    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
     test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
 
     parent_WM_NOTIFYFORMAT_return = NFR_ANSI;
@@ -2928,13 +2928,13 @@ static void test_WM_NOTIFY(void)
 
     test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_CONVERT;
     ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
-    todo_wine ok(ret == 0xabcd0007, "SendMessageW returned 0x%Ix.\n", ret);
-    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't convert and forward WM_NOTIFY to parent.\n");
+    ok(ret == 0xabcd0007, "SendMessageW returned 0x%Ix.\n", ret);
+    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't convert and forward WM_NOTIFY to parent.\n");
 
     test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
     ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
-    todo_wine ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
-    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
+    ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
     test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
 
     DestroyWindow(toolbar);
