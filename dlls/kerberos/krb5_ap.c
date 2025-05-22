@@ -867,16 +867,36 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     {
         struct context_handle *context_handle = (void *)context;
         struct unseal_message_params params;
-        int data_idx, token_idx;
+        int stream_idx, data_idx, token_idx = -1;
 
+        if ((stream_idx = get_buffer_index( message, SECBUFFER_STREAM )) == -1 &&
+            (token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
         if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-        if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
 
         params.context = context_handle->handle;
+
+        if (token_idx != -1)
+        {
+            params.stream_length = 0;
+            params.stream = NULL;
+            params.token_length = message->pBuffers[token_idx].cbBuffer;
+            params.token = message->pBuffers[token_idx].pvBuffer;
+        }
+        else
+        {
+            if (!message->pBuffers[data_idx].pvBuffer)
+            {
+                message->pBuffers[data_idx].pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, message->pBuffers[stream_idx].cbBuffer );
+                if (!message->pBuffers[data_idx].pvBuffer) return STATUS_NO_MEMORY;
+                message->pBuffers[data_idx].cbBuffer = message->pBuffers[stream_idx].cbBuffer;
+            }
+            params.stream_length = message->pBuffers[stream_idx].cbBuffer;
+            params.stream = message->pBuffers[stream_idx].pvBuffer;
+            params.token_length = 0;
+            params.token = NULL;
+        }
         params.data_length = message->pBuffers[data_idx].cbBuffer;
         params.data = message->pBuffers[data_idx].pvBuffer;
-        params.token_length = message->pBuffers[token_idx].cbBuffer;
-        params.token = message->pBuffers[token_idx].pvBuffer;
         params.qop = quality_of_protection;
 
         return KRB5_CALL( unseal_message, &params );

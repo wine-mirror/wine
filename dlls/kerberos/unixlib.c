@@ -982,6 +982,37 @@ static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_mes
     OM_uint32 ret, minor_status;
     int conf_state;
 
+    if (params->stream_length)
+    {
+        iov[0].type          = GSS_IOV_BUFFER_TYPE_STREAM;
+        iov[0].buffer.length = params->stream_length;
+        iov[0].buffer.value  = malloc( params->stream_length );
+        if (!iov[0].buffer.value) return STATUS_NO_MEMORY;
+        memcpy( iov[0].buffer.value, params->stream, params->stream_length );
+
+        iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
+        iov[1].buffer.length = 0;
+        iov[1].buffer.value  = NULL;
+
+        ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 2 );
+        TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
+        if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
+        if (ret == GSS_S_COMPLETE)
+        {
+            if (params->data_length < iov[1].buffer.length)
+            {
+                free( iov[0].buffer.value );
+                return SEC_E_BUFFER_TOO_SMALL;
+            }
+
+            memcpy( params->data, iov[1].buffer.value, iov[1].buffer.length );
+            if (params->qop)
+                *params->qop = conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT;
+        }
+        free( iov[0].buffer.value );
+        return status_gss_to_sspi( ret );
+    }
+
     iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[0].buffer.length = 0;
     iov[0].buffer.value  = NULL;
@@ -1012,25 +1043,33 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
-    DWORD len_data, len_token;
     int conf_state;
 
-    len_data = params->data_length;
-    len_token = params->token_length;
+    if (params->stream_length)
+    {
+        input.length = params->stream_length;
+        input.value = params->stream;
+    }
+    else
+    {
+        DWORD len_data, len_token;
 
-    input.length = len_data + len_token;
-    if (!(input.value = malloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
-    memcpy( input.value, params->data, len_data );
-    memcpy( (char *)input.value + len_data, params->token, len_token );
+        len_data = params->data_length;
+        len_token = params->token_length;
+        input.length = len_data + len_token;
+        if (!(input.value = malloc( input.length ))) return STATUS_NO_MEMORY;
+        memcpy( input.value, params->data, len_data );
+        memcpy( (char *)input.value + len_data, params->token, len_token );
+    }
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
-    free( input.value );
+    if (input.value != params->stream) free( input.value );
     TRACE( "gss_unwrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
         if (params->qop) *params->qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-        memcpy( params->data, output.value, len_data );
+        memcpy( params->data, output.value, output.length );
         pgss_release_buffer( &minor_status, &output );
     }
 
