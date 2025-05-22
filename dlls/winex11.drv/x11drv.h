@@ -625,6 +625,7 @@ struct window_state
     BOOL activate;
     UINT net_wm_state;
     MwmHints mwm_hints;
+    long monitors[4];
     RECT rect;
 };
 
