@@ -681,7 +681,7 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
     impl->ref_strong = 1;
     impl->ref_weak = 1;
 
-    *instance = (IInspectable *)&impl->IUISettings3_iface;
+    *instance = (IInspectable *)&impl->IUISettings5_iface;
     return S_OK;
 }
 
