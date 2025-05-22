@@ -179,13 +179,79 @@ static BOOL equal_dc(HDC hdc1, HDC hdc2, int width, int height)
 
 static void *alloced_str;
 
-static LRESULT parent_wnd_notify(LPARAM lParam)
+static const NMCBEENDEDITW test_WM_NOTIFY_NMCBEENDEDITW =
+{
+    .hdr.hwndFrom = (HWND)0xabcd0001,
+    .hdr.idFrom = 0xabcd0002,
+    .hdr.code = CBEN_ENDEDITW,
+    .fChanged = 0xabcd0003,
+    .iNewSelection = 0xabcd0004,
+    .szText = L"Lorem ipsum dolor sit amet",
+    .iWhy = 0xabcd0005
+};
+
+static const NMCBEENDEDITA test_WM_NOTIFY_NMCBEENDEDITA =
+{
+    .hdr.hwndFrom = (HWND)0xabcd0001,
+    .hdr.idFrom = 0xabcd0002,
+    .hdr.code = CBEN_ENDEDITA,
+    .fChanged = 0xabcd0003,
+    .iNewSelection = 0xabcd0004,
+    .szText = "Lorem ipsum dolor sit amet",
+    .iWhy = 0xabcd0005
+};
+
+static enum
+{
+    TEST_WM_NOTIFY_NO_FORWARD,
+    TEST_WM_NOTIFY_FORWARD_NO_CONVERT,
+    TEST_WM_NOTIFY_FORWARD_CONVERT
+} test_WM_NOTIFY_expect_CBEN_ENDEDITW, test_WM_NOTIFY_expect_CBEN_ENDEDITA;
+
+static LRESULT parent_wnd_notify(WPARAM wParam, LPARAM lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
     NMTBHOTITEM *nmhi;
     NMTBDISPINFOA *nmdisp;
     switch (hdr->code)
     {
+        case CBEN_ENDEDITW:
+            switch (test_WM_NOTIFY_expect_CBEN_ENDEDITW)
+            {
+            case TEST_WM_NOTIFY_NO_FORWARD:
+                ok(FALSE, "Got unexpected WM_NOTIFY.\n");
+                break;
+            case TEST_WM_NOTIFY_FORWARD_NO_CONVERT:
+                test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_NO_FORWARD;
+                ok(hdr == &test_WM_NOTIFY_NMCBEENDEDITW.hdr, "Got unexpected header.\n");
+                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
+                break;
+            default:
+                ok(FALSE, "This testing code is broken.\n");
+                break;
+            }
+            return 0xabcd0006;
+        case CBEN_ENDEDITA:
+            switch (test_WM_NOTIFY_expect_CBEN_ENDEDITA)
+            {
+            case TEST_WM_NOTIFY_NO_FORWARD:
+                ok(FALSE, "Got unexpected WM_NOTIFY.\n");
+                break;
+            case TEST_WM_NOTIFY_FORWARD_NO_CONVERT:
+                test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
+                ok(hdr == &test_WM_NOTIFY_NMCBEENDEDITA.hdr, "Got unexpected header.\n");
+                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
+                break;
+            case TEST_WM_NOTIFY_FORWARD_CONVERT:
+                test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
+                ok(!memcmp(hdr, &test_WM_NOTIFY_NMCBEENDEDITA, sizeof(NMCBEENDEDITA)), "Incorrectly converted NMCBEENDEDITW to NMCBEENDEDITA.\n");
+                ok(wParam == 0xabcd0002, "Got unexpected wParam 0x%Ix.\n", wParam);
+                break;
+            default:
+                ok(FALSE, "This testing code is broken.\n");
+                break;
+            }
+            return 0xabcd0007;
         case TBN_HOTITEMCHANGE:
             nmhi = (NMTBHOTITEM *)lParam;
             g_fReceivedHotItemChange = TRUE;
@@ -375,6 +441,8 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
     return 0;
 }
 
+static LRESULT parent_WM_NOTIFYFORMAT_return = NFR_ANSI;
+
 static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -428,7 +496,9 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     switch (message)
     {
         case WM_NOTIFY:
-            return parent_wnd_notify(lParam);
+            return parent_wnd_notify(wParam, lParam);
+        case WM_NOTIFYFORMAT:
+            return parent_WM_NOTIFYFORMAT_return;
     }
 
     defwndproc_counter++;
@@ -2833,6 +2903,43 @@ static void test_BTNS_SEP(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_NOTIFY(void)
+{
+    HWND toolbar = NULL;
+    LRESULT ret;
+
+    parent_WM_NOTIFYFORMAT_return = NFR_UNICODE;
+    rebuild_toolbar(&toolbar);
+
+    test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
+    ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
+    todo_wine ok(ret == 0xabcd0006, "SendMessageW returned 0x%Ix.\n", ret);
+    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITW, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    test_WM_NOTIFY_expect_CBEN_ENDEDITW = TEST_WM_NOTIFY_NO_FORWARD;
+
+    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
+    ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
+    todo_wine ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
+    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
+
+    parent_WM_NOTIFYFORMAT_return = NFR_ANSI;
+    rebuild_toolbar(&toolbar);
+
+    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_CONVERT;
+    ret = SendMessageW(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITW);
+    todo_wine ok(ret == 0xabcd0007, "SendMessageW returned 0x%Ix.\n", ret);
+    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't convert and forward WM_NOTIFY to parent.\n");
+
+    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_FORWARD_NO_CONVERT;
+    ret = SendMessageA(toolbar, WM_NOTIFY, 0, (LPARAM)&test_WM_NOTIFY_NMCBEENDEDITA);
+    todo_wine ok(ret == 0xabcd0007, "SendMessageA returned 0x%Ix.\n", ret);
+    todo_wine ok(!test_WM_NOTIFY_expect_CBEN_ENDEDITA, "Toolbar didn't forward WM_NOTIFY to parent.\n");
+    test_WM_NOTIFY_expect_CBEN_ENDEDITA = TEST_WM_NOTIFY_NO_FORWARD;
+
+    DestroyWindow(toolbar);
+}
+
 START_TEST(toolbar)
 {
     ULONG_PTR ctx_cookie;
@@ -2884,6 +2991,7 @@ START_TEST(toolbar)
     test_drawtext_flags();
     test_imagelist();
     test_BTNS_SEP();
+    test_WM_NOTIFY();
 
     if (!load_v6_module(&ctx_cookie, &ctx))
         return;
