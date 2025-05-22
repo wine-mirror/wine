@@ -368,6 +368,7 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
         {
             conn->ssf = get_key_size( &conn->ctxt_handle );
             conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
+            conn->qop = attrs;
             conn->package_id = get_package_id( &conn->ctxt_handle );
             return SASL_OK;
         }
