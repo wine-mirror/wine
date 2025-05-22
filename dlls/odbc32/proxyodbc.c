@@ -1642,6 +1642,24 @@ static SQLRETURN disconnect_win32( struct connection *con )
     return SQL_ERROR;
 }
 
+static void cleanup_object( struct object *obj );
+
+static void destroy_dependent_objects( struct connection *con )
+{
+    struct object *obj, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( obj, next, &con->hdr.children, struct object, entry)
+    {
+        EnterCriticalSection( &obj->cs );
+        cleanup_object( obj );
+        obj->closed = TRUE;
+        LeaveCriticalSection( &obj->cs );
+
+        /* Unlink from the parent object */
+        destroy_object( obj );
+    }
+}
+
 /*************************************************************************
  *				SQLDisconnect           [ODBC32.009]
  */
@@ -1662,6 +1680,11 @@ SQLRETURN WINAPI SQLDisconnect(SQLHDBC ConnectionHandle)
     {
         ret = disconnect_win32( con );
     }
+
+    /* Driver drops allocated statements automatically. After successful disconnect
+       it's possible to free connection handle right away. */
+    if (!ret)
+        destroy_dependent_objects( con );
 
     TRACE("Returning %d\n", ret);
     unlock_object( &con->hdr );
@@ -2140,6 +2163,31 @@ static void free_param_bindings( struct statement *stmt )
     }
 }
 
+static void cleanup_object( struct object *obj )
+{
+    switch (obj->type)
+    {
+    case SQL_HANDLE_ENV:
+    {
+        struct environment *env = (struct environment *)obj;
+        RegCloseKey( env->drivers_key );
+        RegCloseKey( env->sources_key );
+        env->drivers_key = env->sources_key = NULL;
+        env->drivers_idx = env->sources_idx = 0;
+        break;
+    }
+    case SQL_HANDLE_STMT:
+    {
+        struct statement *stmt = (struct statement *)obj;
+        free_col_bindings( stmt );
+        free_param_bindings( stmt );
+        free_descriptors( stmt );
+        break;
+    }
+    default: break;
+    }
+}
+
 /*************************************************************************
  *				SQLFreeHandle           [ODBC32.031]
  */
@@ -2158,27 +2206,7 @@ SQLRETURN WINAPI SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
         ret = free_handle( HandleType, obj );
         obj->closed = TRUE;
 
-        switch (HandleType)
-        {
-        case SQL_HANDLE_ENV:
-        {
-            struct environment *env = (struct environment *)obj;
-            RegCloseKey( env->drivers_key );
-            RegCloseKey( env->sources_key );
-            env->drivers_key = env->sources_key = NULL;
-            env->drivers_idx = env->sources_idx = 0;
-            break;
-        }
-        case SQL_HANDLE_STMT:
-        {
-            struct statement *stmt = (struct statement *)obj;
-            free_col_bindings( stmt );
-            free_param_bindings( stmt );
-            free_descriptors( stmt );
-            break;
-        }
-        default: break;
-        }
+        cleanup_object( obj );
     }
 
     TRACE("Returning %d\n", ret);
