@@ -53,6 +53,7 @@ static const struct subtype_info subtype_info_list[] =
     { &MFVideoFormat_UYVY,   16, MAKEFOURCC('U', 'Y', 'V', 'Y') },
     { &MFVideoFormat_YVYU,   16, MAKEFOURCC('Y', 'V', 'Y', 'U') },
     { &MFVideoFormat_NV11,   12, MAKEFOURCC('N', 'V', '1', '1') },
+    { &MFVideoFormat_P010,   24, MAKEFOURCC('P', '0', '1', '0') },
     { &MFVideoFormat_RGB8,   8,  BI_RGB },
     { &MFVideoFormat_RGB555, 16, BI_RGB },
     { &MFVideoFormat_RGB565, 16, BI_BITFIELDS },

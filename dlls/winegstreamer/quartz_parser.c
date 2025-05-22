@@ -488,6 +488,7 @@ static const GUID *wg_video_format_get_mediasubtype(enum wg_video_format format)
         case WG_VIDEO_FORMAT_AYUV: return &MEDIASUBTYPE_AYUV;
         case WG_VIDEO_FORMAT_I420: return &MEDIASUBTYPE_I420;
         case WG_VIDEO_FORMAT_NV12: return &MEDIASUBTYPE_NV12;
+        case WG_VIDEO_FORMAT_P010_10LE: return &MEDIASUBTYPE_P010;
         case WG_VIDEO_FORMAT_UYVY: return &MEDIASUBTYPE_UYVY;
         case WG_VIDEO_FORMAT_YUY2: return &MEDIASUBTYPE_YUY2;
         case WG_VIDEO_FORMAT_YV12: return &MEDIASUBTYPE_YV12;

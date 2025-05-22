@@ -183,6 +183,7 @@ video_formats[] =
     {&MFVideoFormat_I420,   WG_VIDEO_FORMAT_I420},
     {&MFVideoFormat_IYUV,   WG_VIDEO_FORMAT_I420},
     {&MFVideoFormat_NV12,   WG_VIDEO_FORMAT_NV12},
+    {&MFVideoFormat_P010,   WG_VIDEO_FORMAT_P010_10LE},
     {&MFVideoFormat_UYVY,   WG_VIDEO_FORMAT_UYVY},
     {&MFVideoFormat_YUY2,   WG_VIDEO_FORMAT_YUY2},
     {&MFVideoFormat_YV12,   WG_VIDEO_FORMAT_YV12},

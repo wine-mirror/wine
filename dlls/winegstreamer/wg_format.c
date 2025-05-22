@@ -153,6 +153,8 @@ static enum wg_video_format wg_video_format_from_gst(GstVideoFormat format)
             return WG_VIDEO_FORMAT_I420;
         case GST_VIDEO_FORMAT_NV12:
             return WG_VIDEO_FORMAT_NV12;
+        case GST_VIDEO_FORMAT_P010_10LE:
+            return WG_VIDEO_FORMAT_P010_10LE;
         case GST_VIDEO_FORMAT_UYVY:
             return WG_VIDEO_FORMAT_UYVY;
         case GST_VIDEO_FORMAT_YUY2:
@@ -771,6 +773,7 @@ static GstVideoFormat wg_video_format_to_gst(enum wg_video_format format)
         case WG_VIDEO_FORMAT_YUY2:  return GST_VIDEO_FORMAT_YUY2;
         case WG_VIDEO_FORMAT_YV12:  return GST_VIDEO_FORMAT_YV12;
         case WG_VIDEO_FORMAT_YVYU:  return GST_VIDEO_FORMAT_YVYU;
+        case WG_VIDEO_FORMAT_P010_10LE: return GST_VIDEO_FORMAT_P010_10LE;
         default: return GST_VIDEO_FORMAT_UNKNOWN;
     }
 }

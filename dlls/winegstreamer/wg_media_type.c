@@ -653,6 +653,7 @@ static GUID subtype_from_gst_video_format(GstVideoFormat video_format)
     case GST_VIDEO_FORMAT_AYUV:    return MFVideoFormat_AYUV;
     case GST_VIDEO_FORMAT_I420:    return MFVideoFormat_I420;
     case GST_VIDEO_FORMAT_NV12:    return MFVideoFormat_NV12;
+    case GST_VIDEO_FORMAT_P010_10LE: return MFVideoFormat_P010;
     case GST_VIDEO_FORMAT_UYVY:    return MFVideoFormat_UYVY;
     case GST_VIDEO_FORMAT_YUY2:    return MFVideoFormat_YUY2;
     case GST_VIDEO_FORMAT_YV12:    return MFVideoFormat_YV12;
