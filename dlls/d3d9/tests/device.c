@@ -3748,6 +3748,7 @@ static void test_multi_device(void)
 }
 
 static HWND filter_messages;
+static WINDOWPOS last_wp;
 
 enum message_window
 {
@@ -3837,7 +3838,10 @@ static LRESULT CALLBACK test_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
      * message. A WM_WINDOWPOSCHANGED message is not generated, so
      * just flag WM_WINDOWPOSCHANGED as bad. */
     if (message == WM_WINDOWPOSCHANGED)
+    {
         InterlockedIncrement(&windowposchanged_received);
+        last_wp = *(WINDOWPOS *)lparam;
+    }
     else if (message == WM_SYSCOMMAND)
         InterlockedIncrement(&syscommand_received);
     else if (message == WM_SIZE)
@@ -4458,13 +4462,18 @@ static void test_wndproc(void)
         flush_events();
 
         expect_messages = reactivate_messages_filtered;
+        memset(&last_wp, 0, sizeof(last_wp));
         windowposchanged_received = 0;
         SetForegroundWindow(focus_window);
         /* We shouldn't receive any of the messages that tell us that d3d9 changed our window size.
          * Unfortunately there are a lot of causes of WM_WINDOWPOSCHANGED messages. kwin likes to
-         * resize the window behind our back, but does so after SetForegroundWindow returns. */
-        ok(!windowposchanged_received || broken(1),
-                "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
+         * resize the window behind our back, but does so after SetForegroundWindow returns. On
+         * Windows Vista or newer the Z order might change, although that seems to be caused by
+         * SetForegroundWindow itself and not d3d9 (it also happens in the NOWINDOWCHANGES case). */
+        ok(!windowposchanged_received || broken(windowposchanged_received == 1
+                && (last_wp.flags & (SWP_NOSIZE | SWP_NOMOVE)) == (SWP_NOSIZE | SWP_NOMOVE)),
+                "Received %lu WM_WINDOWPOSCHANGED but did not expect it, i=%u, flags=%#x.\n",
+                windowposchanged_received, i, last_wp.flags);
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
