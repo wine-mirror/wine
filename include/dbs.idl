@@ -983,3 +983,11 @@ typedef struct tagDBPARAMINFO {
     BYTE         bPrecision;
     BYTE         bScale;
 } DBPARAMINFO;
+
+typedef enum tagDBBOOKMARK {
+    DBBMK_INVALID = 0,
+    DBBMK_FIRST,
+    DBBMK_LAST
+} DBBOOKMARK;
+
+cpp_quote("#define STD_BOOKMARKLENGTH 1")
