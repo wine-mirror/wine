@@ -20,10 +20,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "windef.h"
-#include "winnt.h"
-
 #include "widl.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wincrypt.h"
+#include "winnt.h"
 #include "utils.h"
 #include "typetree.h"
 
@@ -500,6 +501,12 @@ static void serialize_guid_idx( UINT idx )
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
 }
 
+static void serialize_blob_idx( UINT idx )
+{
+    UINT size = blobs.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    add_bytes( &tables_disk, (const BYTE *)&idx, size );
+}
+
 static void serialize_table_idx( UINT idx, enum table target )
 {
     UINT size = tables[target].count >> 16 ? sizeof(UINT) : sizeof(USHORT);
@@ -580,6 +587,40 @@ static void serialize_typedef_table( void )
     }
 }
 
+struct assembly_row
+{
+    UINT   hashalgid;
+    USHORT majorversion;
+    USHORT minorversion;
+    USHORT buildnumber;
+    USHORT revisionnumber;
+    UINT   flags;
+    UINT   publickey;
+    UINT   name;
+    UINT   culture;
+};
+
+static UINT add_assembly_row( UINT name )
+{
+    struct assembly_row row = { CALG_SHA, 255, 255, 255, 255, 0x200, 0, name, 0 };
+    return add_row( TABLE_ASSEMBLY, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_assembly_table( void )
+{
+    const struct assembly_row *row = (const struct assembly_row *)tables[TABLE_ASSEMBLY].ptr;
+
+    serialize_uint( row->hashalgid );
+    serialize_ushort( row->majorversion );
+    serialize_ushort( row->minorversion );
+    serialize_ushort( row->buildnumber );
+    serialize_ushort( row->revisionnumber );
+    serialize_uint( row->flags );
+    serialize_blob_idx( row->publickey );
+    serialize_string_idx( row->name );
+    serialize_string_idx( row->culture );
+}
+
 enum
 {
     LARGE_STRING_HEAP = 0x01,
@@ -587,10 +628,13 @@ enum
     LARGE_BLOB_HEAP   = 0x04
 };
 
+static char *assembly_name;
+
 static void build_table_stream( const statement_list_t *stmts )
 {
     static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
     static const USHORT space = 0x20;
+    char *ptr;
     UINT i;
 
     add_string( "" );
@@ -598,7 +642,11 @@ static void build_table_stream( const statement_list_t *stmts )
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
 
+    assembly_name = xstrdup( metadata_name );
+    if ((ptr = strrchr( assembly_name, '.' ))) *ptr = 0;
+
     add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
+    add_assembly_row( add_string(assembly_name) );
     add_module_row( add_string(metadata_name), add_guid(&guid) );
 
     for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
@@ -614,6 +662,7 @@ static void build_table_stream( const statement_list_t *stmts )
 
     serialize_module_table();
     serialize_typedef_table();
+    serialize_assembly_table();
 }
 
 static void build_streams( const statement_list_t *stmts )
