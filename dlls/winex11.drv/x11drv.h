@@ -633,6 +633,7 @@ struct window_state
     MwmHints mwm_hints;
     struct monitor_indices monitors;
     RECT rect;
+    BOOL above;
 };
 
 /* x11drv private window data */

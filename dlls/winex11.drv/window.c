@@ -1295,12 +1295,14 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
     UINT style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE ), mask = 0;
     const RECT *old_rect = &data->pending_state.rect;
+    BOOL old_above = data->pending_state.above;
     XWindowChanges changes;
     RECT *new_rect = &rect;
 
     data->desired_state.rect = *new_rect;
+    data->desired_state.above = above;
     if (!data->whole_window) return; /* no window, nothing to update */
-    if (EqualRect( old_rect, new_rect ) && !above) return; /* rects are the same, no need to be raised, nothing to update */
+    if (EqualRect( old_rect, new_rect ) && (old_above || !above)) return; /* rects are the same, no need to be raised, nothing to update */
 
     if (data->pending_state.wm_state == NormalState && data->net_wm_state_serial &&
         !(data->pending_state.net_wm_state & fullscreen_mask) &&
@@ -1354,6 +1356,7 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     }
 
     data->pending_state.rect = *new_rect;
+    data->pending_state.above = above;
     data->configure_serial = NextRequest( data->display );
     TRACE( "window %p/%lx, requesting config %s mask %#x above %u, serial %lu\n", data->hwnd, data->whole_window,
            wine_dbgstr_rect(new_rect), mask, above, data->configure_serial );
@@ -1803,8 +1806,10 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
     received = wine_dbg_sprintf( "config %s/%lu", wine_dbgstr_rect(value), serial );
     expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", wine_dbgstr_rect(pending), *expect_serial ) : "";
 
-    handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
-                         current, expected, prefix, received, NULL );
+    if (!handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
+                              current, expected, prefix, received, NULL ))
+        return;
+    data->pending_state.above = FALSE; /* allow requesting it again */
 }
 
 void net_active_window_notify( unsigned long serial, Window value, Time time )
