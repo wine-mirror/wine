@@ -911,12 +911,37 @@ static void set_size_hints( struct x11drv_win_data *data, DWORD style )
     XFree( size_hints );
 }
 
+/* bits that can trigger spurious ConfigureNotify events */
+static const UINT config_notify_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN) |
+                                       (1 << NET_WM_STATE_ABOVE);
+
+static BOOL window_needs_mwm_hints_change_delay( struct x11drv_win_data *data )
+{
+    if (data->pending_state.wm_state == WithdrawnState) return FALSE; /* window is unmapped, should be safe to make any change */
+    if (!data->configure_serial && !data->net_wm_state_serial) return FALSE; /* no other requests are pending, should be safe */
+    /* check whether we have a pending configure, either directly or because of a _NET_WM_STATE change which might trigger one  */
+    if (!data->configure_serial && !((data->pending_state.net_wm_state ^ data->current_state.net_wm_state) & config_notify_mask)) return FALSE;
+    /* delay any new _MOTIF_WM_HINTS change which might trigger a ConfigureNotify when a config/_NET_WM_STATE change is pending */
+    return (!data->desired_state.mwm_hints.decorations != !data->pending_state.mwm_hints.decorations);
+}
+
+static BOOL window_needs_net_wm_state_change_delay( struct x11drv_win_data *data )
+{
+    if (data->pending_state.wm_state == WithdrawnState) return FALSE; /* window is unmapped, should be safe to make any change */
+    if (!data->configure_serial && !data->mwm_hints_serial) return FALSE; /* no other requests are pending, should be safe */
+    /* check whether we have a pending configure, either directly or because _MOTIF_WM_HINTS decoration changed */
+    if (!data->configure_serial && !(!data->pending_state.mwm_hints.decorations != !data->current_state.mwm_hints.decorations)) return FALSE;
+    /* delay any new _NET_WM_STATE change which might trigger a ConfigureNotify when a config/_MOTIF_WM_HINTS change is pending */
+    return (data->desired_state.net_wm_state ^ data->pending_state.net_wm_state) & config_notify_mask;
+}
+
 static BOOL window_needs_config_change_delay( struct x11drv_win_data *data )
 {
-    static const UINT fullscreen_mask = (1 << NET_WM_STATE_MAXIMIZED) | (1 << NET_WM_STATE_FULLSCREEN);
-    if (data->pending_state.wm_state != NormalState) return FALSE;
+    if (data->pending_state.wm_state == WithdrawnState) return FALSE; /* window is unmapped, should be safe to make any change */
     if (data->configure_serial) return TRUE; /* another config update is pending, wait for it to complete */
-    return data->net_wm_state_serial && !(data->pending_state.net_wm_state & fullscreen_mask) && (data->current_state.net_wm_state & fullscreen_mask);
+    /* delay any config request when a _NET_WM_STATE or _MOTIF_WM_HINTS change which might trigger a ConfigureNotify is in flight */
+    return (data->net_wm_state_serial && (data->pending_state.net_wm_state ^ data->current_state.net_wm_state) & config_notify_mask) ||
+           (data->mwm_hints_serial && (!data->pending_state.mwm_hints.decorations != !data->current_state.mwm_hints.decorations));
 }
 
 static void window_set_mwm_hints( struct x11drv_win_data *data, const MwmHints *new_hints )
@@ -926,6 +951,14 @@ static void window_set_mwm_hints( struct x11drv_win_data *data, const MwmHints *
     data->desired_state.mwm_hints = *new_hints;
     if (!data->whole_window || !data->managed) return; /* no window or not managed, nothing to update */
     if (!memcmp( old_hints, new_hints, sizeof(*new_hints) )) return; /* hints are the same, nothing to update */
+
+    if (window_needs_mwm_hints_change_delay( data ))
+    {
+        TRACE( "window %p/%lx is updating _NET_WM_STATE/config, delaying request\n", data->hwnd, data->whole_window );
+        return;
+    }
+
+    if (data->pending_state.wm_state == IconicState) return; /* window is iconic and may be mapped or not, don't update its state now */
 
     data->pending_state.mwm_hints = *new_hints;
     data->mwm_hints_serial = NextRequest( data->display );
@@ -1241,7 +1274,13 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
     /* we ignore and override previous _NET_WM_STATE update requests */
     if (old_state == new_state) return; /* states are the same, nothing to update */
 
-    if (data->pending_state.wm_state == IconicState) return; /* window is iconic, don't update its state now */
+    if (window_needs_net_wm_state_change_delay( data ))
+    {
+        TRACE( "window %p/%lx is updating config/_MOTIF_WM_HINTS, delaying request\n", data->hwnd, data->whole_window );
+        return;
+    }
+
+    if (data->pending_state.wm_state == IconicState) return; /* window is iconic and may be mapped or not, don't update its state now */
     if (data->pending_state.wm_state == WithdrawnState)  /* set the _NET_WM_STATE atom directly */
     {
         Atom atoms[NB_NET_WM_STATES + 1];
@@ -1311,11 +1350,7 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     if (EqualRect( old_rect, new_rect ) && (old_above || !above)) return; /* rects are the same, no need to be raised, nothing to update */
     if (data->managed && window_needs_config_change_delay( data ))
     {
-        /* Some window managers are sending a ConfigureNotify event with the fullscreen size when
-         * exiting a fullscreen window, with a serial that we cannot predict. Handling that event
-         * will override the Win32 window size and make the window fullscreen again.
-         */
-        WARN( "window %p/%lx is exiting maximize/fullscreen, delaying request\n", data->hwnd, data->whole_window );
+        TRACE( "window %p/%lx is updating _NET_WM_STATE/_MOTIF_WM_HINTS, delaying request\n", data->hwnd, data->whole_window );
         return;
     }
 
@@ -1759,6 +1794,7 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
+    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
     window_set_config( data, data->desired_state.rect, FALSE );
 
     if (data->current_state.wm_state == NormalState) NtUserSetProp( data->hwnd, focus_time_prop, (HANDLE)time );
@@ -1782,6 +1818,7 @@ void window_net_wm_state_notify( struct x11drv_win_data *data, unsigned long ser
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
+    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
     window_set_config( data, data->desired_state.rect, FALSE );
 }
 
@@ -1795,8 +1832,15 @@ void window_mwm_hints_notify( struct x11drv_win_data *data, unsigned long serial
     received = wine_dbg_sprintf( "_MOTIF_WM_HINTS %s/%lu", debugstr_mwm_hints(value), serial );
     expected = *expect_serial ? wine_dbg_sprintf( ", expected %s/%lu", debugstr_mwm_hints(pending), *expect_serial ) : "";
 
-    handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
-                         current, expected, prefix, received, NULL );
+    if (!handle_state_change( serial, expect_serial, sizeof(*value), value, desired, pending,
+                              current, expected, prefix, received, NULL ))
+        return;
+
+    /* send any pending changes from the desired state */
+    window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
+    window_set_net_wm_state( data, data->desired_state.net_wm_state );
+    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
+    window_set_config( data, data->desired_state.rect, FALSE );
 }
 
 void window_configure_notify( struct x11drv_win_data *data, unsigned long serial, const RECT *value )
@@ -1825,6 +1869,7 @@ void window_configure_notify( struct x11drv_win_data *data, unsigned long serial
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
     window_set_net_wm_state( data, data->desired_state.net_wm_state );
+    window_set_mwm_hints( data, &data->desired_state.mwm_hints );
     window_set_config( data, data->desired_state.rect, FALSE );
 }
 
