@@ -111,6 +111,11 @@ static const char *debugstr_mwm_hints( const MwmHints *hints )
     return wine_dbg_sprintf( "%lx,%lx", hints->functions, hints->decorations );
 }
 
+static const char *debugstr_monitor_indices( const struct monitor_indices *monitors )
+{
+    return wine_dbg_sprintf( "%ld,%ld,%ld,%ld", monitors->indices[0], monitors->indices[1], monitors->indices[2], monitors->indices[3] );
+}
+
 static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void host_window_add_ref( struct host_window *win )
@@ -1168,7 +1173,7 @@ void window_set_user_time( struct x11drv_win_data *data, Time time, BOOL init )
  * windows spanning multiple monitors */
 static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
 {
-    long *old_monitors = data->pending_state.monitors, monitors[4];
+    struct monitor_indices *old_monitors = &data->pending_state.monitors, monitors;
     XEvent xev;
 
     if (!(data->pending_state.net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop()
@@ -1181,18 +1186,19 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     if (!X11DRV_DisplayDevices_SupportEventHandlers())
         return;
 
-    xinerama_get_fullscreen_monitors( &data->rects.visible, monitors );
-    memcpy( data->desired_state.monitors, monitors, sizeof(monitors) );
-    if (!memcmp( old_monitors, monitors, sizeof(monitors) )) return; /* states are the same, nothing to update */
+    xinerama_get_fullscreen_monitors( &data->rects.visible, &monitors.generation, monitors.indices );
+    data->desired_state.monitors = monitors;
+
+    if (!memcmp( old_monitors, &monitors, sizeof(monitors) )) return; /* states are the same, nothing to update */
 
     if (data->pending_state.wm_state == WithdrawnState)
     {
-        memcpy( data->pending_state.monitors, monitors, sizeof(monitors) );
-        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %ld,%ld,%ld,%ld serial %lu\n", data->hwnd, data->whole_window,
-               monitors[0], monitors[1], monitors[2], monitors[3], NextRequest( data->display ) );
-        if (monitors[0] == -1) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS) );
+        memcpy( &data->pending_state.monitors, &monitors, sizeof(monitors) );
+        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %s serial %lu\n", data->hwnd, data->whole_window,
+               debugstr_monitor_indices( &monitors ), NextRequest( data->display ) );
+        if (monitors.indices[0] == -1) XDeleteProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS) );
         else XChangeProperty( data->display, data->whole_window, x11drv_atom(_NET_WM_FULLSCREEN_MONITORS),
-                              XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors, 4 );
+                              XA_CARDINAL, 32, PropModeReplace, (unsigned char *)monitors.indices, 4 );
     }
     else
     {
@@ -1204,17 +1210,17 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
         xev.xclient.send_event = True;
         xev.xclient.format = 32;
         xev.xclient.data.l[4] = 1;
-        memcpy( xev.xclient.data.l, monitors, sizeof(monitors) );
+        memcpy( xev.xclient.data.l, monitors.indices, sizeof(monitors.indices) );
 
-        memcpy( data->pending_state.monitors, monitors, sizeof(monitors) );
-        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %ld,%ld,%ld,%ld serial %lu\n", data->hwnd, data->whole_window,
-               monitors[0], monitors[1], monitors[2], monitors[3], NextRequest( data->display ) );
+        memcpy( &data->pending_state.monitors, &monitors, sizeof(monitors) );
+        TRACE( "window %p/%lx, requesting _NET_WM_FULLSCREEN_MONITORS %s serial %lu\n", data->hwnd, data->whole_window,
+               debugstr_monitor_indices( &monitors ), NextRequest( data->display ) );
         XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                     SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     }
 
     /* assume it changes immediately, we don't track the property for now */
-    memcpy( data->current_state.monitors, monitors, sizeof(monitors) );
+    memcpy( &data->current_state.monitors, &monitors, sizeof(monitors) );
 }
 
 static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_state )
