@@ -1699,8 +1699,6 @@ static BOOL handle_state_change( unsigned long serial, unsigned long *expect_ser
                                  const char *prefix, const char *received, const char *reason )
 {
     if (serial < *expect_serial) reason = "old ";
-    else if (!*expect_serial && !memcmp( current, value, size )) reason = "no-op ";
-
     if (reason)
     {
         WARN( "Ignoring %s%s%s%s\n", prefix, reason, received, expected );
@@ -1708,9 +1706,8 @@ static BOOL handle_state_change( unsigned long serial, unsigned long *expect_ser
         return FALSE;
     }
 
-    if (!*expect_serial) reason = "unexpected ";
-    else if (memcmp( pending, value, size )) reason = "mismatch ";
-
+    if (!*expect_serial && memcmp( current, value, size )) reason = "unexpected ";
+    if (*expect_serial && memcmp( pending, value, size )) reason = "mismatch ";
     if (!reason) TRACE( "%s%s%s\n", prefix, received, expected );
     else
     {
