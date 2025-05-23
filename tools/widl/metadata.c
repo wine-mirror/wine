@@ -257,7 +257,7 @@ static struct buffer
     UINT  count;         /* number of entries written */
     BYTE *ptr;
 } strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx, guids, tables[TABLE_MAX],
-  tables_disk;
+  tables_idx[TABLE_MAX], tables_disk;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -452,11 +452,73 @@ static UINT add_guid( const GUID *guid )
     return ++guids.count;
 }
 
+/* returns row number */
+static UINT add_row( enum table table, const BYTE *row, UINT row_size )
+{
+    const struct index *idx;
+    UINT insert_idx, offset = tables[table].offset;
+    BOOL sort = (table != TABLE_PARAM && table != TABLE_FIELD);
+
+    if (sort && (idx = find_index( &tables_idx[table], &tables[table], row, row_size, FALSE, &insert_idx )))
+        return idx->offset / row_size + 1;
+
+    grow_buffer( &tables[table], row_size );
+    memcpy( tables[table].ptr + offset, row, row_size );
+    tables[table].offset += row_size;
+    tables[table].count++;
+
+    if (sort) insert_index( &tables_idx[table], insert_idx, offset, row_size );
+    return tables[table].count;
+}
+
 static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
 {
     grow_buffer( buf, size );
     memcpy( buf->ptr + buf->offset, data, size );
     buf->offset += size;
+}
+
+static void serialize_ushort( USHORT value )
+{
+    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
+}
+
+static void serialize_string_idx( UINT idx )
+{
+    UINT size = strings.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    add_bytes( &tables_disk, (const BYTE *)&idx, size );
+}
+
+static void serialize_guid_idx( UINT idx )
+{
+    UINT size = guids.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    add_bytes( &tables_disk, (const BYTE *)&idx, size );
+}
+
+struct module_row
+{
+    USHORT generation;
+    UINT   name;
+    UINT   mvid;
+    UINT   encid;
+    UINT   encbaseid;
+};
+
+static UINT add_module_row( UINT name, UINT mvid )
+{
+    struct module_row row = { 0, name, mvid, 0, 0 };
+    return add_row( TABLE_MODULE, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_module_table( void )
+{
+    const struct module_row *row = (const struct module_row *)tables[TABLE_MODULE].ptr;
+
+    serialize_ushort( row->generation );
+    serialize_string_idx( row->name );
+    serialize_guid_idx( row->mvid );
+    serialize_guid_idx( row->encid );
+    serialize_guid_idx( row->encbaseid );
 }
 
 enum
@@ -476,7 +538,8 @@ static void build_table_stream( const statement_list_t *stmts )
     add_userstring( NULL, 0 );
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
-    add_guid( &guid );
+
+    add_module_row( add_string(metadata_name), add_guid(&guid) );
 
     for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
 
@@ -488,6 +551,8 @@ static void build_table_stream( const statement_list_t *stmts )
 
     for (i = 0; i < TABLE_MAX; i++)
         if (tables[i].count) add_bytes( &tables_disk, (const BYTE *)&tables[i].count, sizeof(tables[i].count) );
+
+    serialize_module_table();
 }
 
 static void build_streams( const statement_list_t *stmts )
