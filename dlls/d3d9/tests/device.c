@@ -4460,12 +4460,14 @@ static void test_wndproc(void)
         expect_messages = reactivate_messages_filtered;
         windowposchanged_received = 0;
         SetForegroundWindow(focus_window);
+        /* We shouldn't receive any of the messages that tell us that d3d9 changed our window size.
+         * Unfortunately there are a lot of causes of WM_WINDOWPOSCHANGED messages. kwin likes to
+         * resize the window behind our back, but does so after SetForegroundWindow returns. */
+        ok(!windowposchanged_received || broken(1),
+                "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
         flush_events();
         ok(!expect_messages->message, "Expected message %#x for window %#x, but didn't receive it, i=%u.\n",
                 expect_messages->message, expect_messages->window, i);
-        /* About 1 in 8 test runs receives WM_WINDOWPOSCHANGED on Vista. */
-        ok(!windowposchanged_received || broken(1),
-                "Received WM_WINDOWPOSCHANGED but did not expect it, i=%u.\n", i);
         expect_messages = NULL;
 
         /* On Windows 10 style change messages are delivered both on reset and
