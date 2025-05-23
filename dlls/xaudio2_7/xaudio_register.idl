@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep header
+#pragma makedep register
 
 #include "xaudio2.idl"
 #include "xaudio2fx.idl"
