@@ -176,13 +176,13 @@ static const struct message position_test_seq[] = {
     { TBM_GETPOS, sent},
     { TBM_SETPOS, sent|wparam|lparam, TRUE, 5},
     { WM_PAINT, sent|defwinproc},
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 }, /* v6 only */
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 3 }, /* v6 only */
     { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { TBM_GETPOS, sent},
     { TBM_SETPOS, sent|wparam|lparam, TRUE, 5},
     { TBM_SETPOS, sent|wparam|lparam, TRUE, 1000},
     { WM_PAINT, sent|defwinproc},
-    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 0 }, /* v6 only */
+    { EVENT_OBJECT_STATECHANGE, winevent_hook|wparam|lparam|optional, OBJID_CLIENT, 3 }, /* v6 only */
     { EVENT_OBJECT_VALUECHANGE, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { TBM_GETPOS, sent},
     { TBM_SETPOS, sent|wparam|lparam, FALSE, 20},
