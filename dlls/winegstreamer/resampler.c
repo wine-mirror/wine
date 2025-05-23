@@ -519,7 +519,6 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct resampler *impl = impl_from_IMFTransform(iface);
-    MFT_OUTPUT_STREAM_INFO info;
     HRESULT hr;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
@@ -537,11 +536,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
     }
 
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
-        return hr;
-
-    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, samples->pSample,
-            info.cbSize, &samples->dwStatus, NULL)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(impl->wg_transform, samples->pSample, &samples->dwStatus, NULL)))
         wg_sample_queue_flush(impl->wg_sample_queue, false);
 
     return hr;

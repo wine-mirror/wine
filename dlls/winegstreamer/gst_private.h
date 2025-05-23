@@ -166,8 +166,7 @@ HRESULT wg_transform_push_quartz(wg_transform_t transform, struct wg_sample *sam
         struct wg_sample_queue *queue);
 HRESULT wg_transform_push_dmo(wg_transform_t transform, IMediaBuffer *media_buffer,
         DWORD flags, REFERENCE_TIME time_stamp, REFERENCE_TIME time_length, struct wg_sample_queue *queue);
-HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD sample_size, DWORD *flags, bool *preserve_timestamps);
+HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample, DWORD *flags, bool *preserve_timestamps);
 HRESULT wg_transform_read_quartz(wg_transform_t transform, struct wg_sample *sample);
 HRESULT wg_transform_read_dmo(wg_transform_t transform, DMO_OUTPUT_DATA_BUFFER *buffer);
 

@@ -338,8 +338,7 @@ HRESULT wg_transform_push_mf(wg_transform_t transform, IMFSample *sample,
     return hr;
 }
 
-HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample,
-        DWORD sample_size, DWORD *flags, bool *preserve_timestamps)
+HRESULT wg_transform_read_mf(wg_transform_t transform, IMFSample *sample, DWORD *flags, bool *preserve_timestamps)
 {
     struct wg_sample *wg_sample;
     IMFMediaBuffer *buffer;

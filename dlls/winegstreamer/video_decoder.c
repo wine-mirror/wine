@@ -994,8 +994,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         }
     }
 
-    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample,
-            sample_size, &samples->dwStatus, &preserve_timestamps)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, sample, &samples->dwStatus, &preserve_timestamps)))
     {
         wg_sample_queue_flush(decoder->wg_sample_queue, false);
 

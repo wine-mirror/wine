@@ -695,7 +695,6 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
     struct video_processor *impl = impl_from_IMFTransform(iface);
-    MFT_OUTPUT_STREAM_INFO info;
     IMFSample *output_sample;
     HRESULT hr;
     BOOL playback_mode, provide_samples;
@@ -709,8 +708,6 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
     samples->dwStatus = 0;
-    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
-        return hr;
 
     if (FAILED(IMFAttributes_GetUINT32(impl->attributes, &MF_XVP_PLAYBACK_MODE, (UINT32 *) &playback_mode)))
         playback_mode = FALSE;
@@ -731,7 +728,7 @@ static HRESULT WINAPI video_processor_ProcessOutput(IMFTransform *iface, DWORD f
         IMFSample_AddRef(output_sample);
     }
 
-    if (FAILED(hr = wg_transform_read_mf(impl->wg_transform, output_sample, info.cbSize, &samples->dwStatus, NULL)))
+    if (FAILED(hr = wg_transform_read_mf(impl->wg_transform, output_sample, &samples->dwStatus, NULL)))
         goto done;
     wg_sample_queue_flush(impl->wg_sample_queue, false);
 
