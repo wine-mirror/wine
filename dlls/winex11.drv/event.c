@@ -946,6 +946,12 @@ static BOOL X11DRV_FocusOut( HWND hwnd, XEvent *xev )
               hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
         return FALSE;
     }
+    if (!is_virtual_desktop() && window_is_reparenting( hwnd )) /* ignore FocusOut only if the window is being reparented */
+    {
+        WARN( "Ignoring window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p during reparenting\n",
+              hwnd, event->window, event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
+        return FALSE;
+    }
 
     TRACE( "window %p/%lx FocusOut serial %lu, detail %s, mode %s, foreground %p\n", hwnd, event->window,
            event->serial, focus_details[event->detail], focus_modes[event->mode], foreground );
@@ -1025,6 +1031,11 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
     if (event->xany.window == x11drv_thread_data()->clip_window) return TRUE;
 
     if (!(data = get_win_data( hwnd ))) return FALSE;
+    if (data->reparenting)
+    {
+        TRACE( "window %p/%lx has been reparented\n", data->hwnd, data->whole_window );
+        data->reparenting = 0;
+    }
 
     if (!data->managed && !data->embedded && data->desired_state.wm_state != WithdrawnState)
     {
@@ -1042,6 +1053,15 @@ static BOOL X11DRV_MapNotify( HWND hwnd, XEvent *event )
  */
 static BOOL X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
+    struct x11drv_win_data *data;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+    if (data->managed && !data->wm_state_serial && data->current_state.wm_state == NormalState)
+    {
+        WARN( "window %p/%lx unexpectedly unmapped, assuming reparenting\n", data->hwnd, data->whole_window );
+        data->reparenting = 1;
+    }
+    release_win_data( data );
     return TRUE;
 }
 

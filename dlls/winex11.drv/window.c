@@ -1737,7 +1737,7 @@ BOOL X11DRV_GetWindowStateUpdates( HWND hwnd, UINT *state_cmd, UINT *config_cmd,
 
     if (!(old_foreground = NtUserGetForegroundWindow())) old_foreground = NtUserGetDesktopWindow();
     if (!is_virtual_desktop() && NtUserGetWindowThread( old_foreground, NULL ) == GetCurrentThreadId() &&
-        !window_has_pending_wm_state( old_foreground, NormalState ) &&
+        !window_has_pending_wm_state( old_foreground, NormalState ) && !window_is_reparenting( old_foreground ) &&
         !thread_data->net_active_window_serial)
     {
         *foreground = hwnd_from_window( thread_data->display, thread_data->current_state.net_active_window );
@@ -1802,6 +1802,7 @@ void window_wm_state_notify( struct x11drv_win_data *data, unsigned long serial,
                               current, expected, prefix, received, reason ))
         return;
     data->current_state.activate = data->pending_state.activate;
+    data->reparenting = 0;
 
     /* send any pending changes from the desired state */
     window_set_wm_state( data, data->desired_state.wm_state, data->desired_state.activate );
@@ -1974,6 +1975,18 @@ void set_net_active_window( HWND hwnd, HWND previous )
     XSendEvent( data->display, DefaultRootWindow( data->display ), False,
                 SubstructureRedirectMask | SubstructureNotifyMask, &xev );
     XFlush( data->display );
+}
+
+BOOL window_is_reparenting( HWND hwnd )
+{
+    struct x11drv_win_data *data;
+    BOOL pending;
+
+    if (!(data = get_win_data( hwnd ))) return FALSE;
+    pending = !!data->reparenting;
+    release_win_data( data );
+
+    return pending;
 }
 
 BOOL window_has_pending_wm_state( HWND hwnd, UINT state )
@@ -2427,6 +2440,7 @@ static void destroy_whole_window( struct x11drv_win_data *data, BOOL already_des
     data->net_wm_state_serial = 0;
     data->mwm_hints_serial = 0;
     data->configure_serial = 0;
+    data->reparenting = 0;
 
     if (data->xic)
     {
