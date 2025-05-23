@@ -177,13 +177,87 @@ static void write_headers( UINT image_size )
     }
 }
 
+enum table
+{
+    TABLE_MODULE                 = 0x00,
+    TABLE_TYPEREF                = 0x01,
+    TABLE_TYPEDEF                = 0x02,
+    TABLE_FIELD                  = 0x04,
+    TABLE_METHODDEF              = 0x06,
+    TABLE_PARAM                  = 0x08,
+    TABLE_INTERFACEIMPL          = 0x09,
+    TABLE_MEMBERREF              = 0x0a,
+    TABLE_CONSTANT               = 0x0b,
+    TABLE_CUSTOMATTRIBUTE        = 0x0c,
+    TABLE_FIELDMARSHAL           = 0x0d,
+    TABLE_DECLSECURITY           = 0x0e,
+    TABLE_CLASSLAYOUT            = 0x0f,
+    TABLE_FIELDLAYOUT            = 0x10,
+    TABLE_STANDALONESIG          = 0x11,
+    TABLE_EVENTMAP               = 0x12,
+    TABLE_EVENT                  = 0x14,
+    TABLE_PROPERTYMAP            = 0x15,
+    TABLE_PROPERTY               = 0x17,
+    TABLE_METHODSEMANTICS        = 0x18,
+    TABLE_METHODIMPL             = 0x19,
+    TABLE_MODULEREF              = 0x1a,
+    TABLE_TYPESPEC               = 0x1b,
+    TABLE_IMPLMAP                = 0x1c,
+    TABLE_FIELDRVA               = 0x1d,
+    TABLE_ASSEMBLY               = 0x20,
+    TABLE_ASSEMBLYPROCESSOR      = 0x21,
+    TABLE_ASSEMBLYOS             = 0x22,
+    TABLE_ASSEMBLYREF            = 0x23,
+    TABLE_ASSEMBLYREFPROCESSOR   = 0x24,
+    TABLE_ASSEMBLYREFOS          = 0x25,
+    TABLE_FILE                   = 0x26,
+    TABLE_EXPORTEDTYPE           = 0x27,
+    TABLE_MANIFESTRESOURCE       = 0x28,
+    TABLE_NESTEDCLASS            = 0x29,
+    TABLE_GENERICPARAM           = 0x2a,
+    TABLE_METHODSPEC             = 0x2b,
+    TABLE_GENERICPARAMCONSTRAINT = 0x2c,
+    TABLE_MAX                    = 0x2d
+};
+
+#define SORTED_TABLES \
+    1ull << TABLE_INTERFACEIMPL |\
+    1ull << TABLE_CONSTANT |\
+    1ull << TABLE_CUSTOMATTRIBUTE |\
+    1ull << TABLE_FIELDMARSHAL |\
+    1ull << TABLE_DECLSECURITY |\
+    1ull << TABLE_CLASSLAYOUT |\
+    1ull << TABLE_FIELDLAYOUT |\
+    1ull << TABLE_EVENTMAP |\
+    1ull << TABLE_PROPERTYMAP |\
+    1ull << TABLE_METHODSEMANTICS |\
+    1ull << TABLE_METHODIMPL |\
+    1ull << TABLE_IMPLMAP |\
+    1ull << TABLE_FIELDRVA |\
+    1ull << TABLE_NESTEDCLASS |\
+    1ull << TABLE_GENERICPARAM |\
+    1ull << TABLE_GENERICPARAMCONSTRAINT
+
+static struct
+{
+    UINT   reserved;
+    BYTE   majorversion;
+    BYTE   minor_version;
+    BYTE   heap_sizes;
+    BYTE   reserved2;
+    UINT64 valid;
+    UINT64 sorted;
+}
+tables_header = { 0, 2, 0, 0, 1, 0, SORTED_TABLES };
+
 static struct buffer
 {
     UINT  offset;        /* write position */
     UINT  allocated;     /* allocated size in bytes */
     UINT  count;         /* number of entries written */
     BYTE *ptr;
-} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx, guids;
+} strings, strings_idx, userstrings, userstrings_idx, blobs, blobs_idx, guids, tables[TABLE_MAX],
+  tables_disk;
 
 static void *grow_buffer( struct buffer *buf, UINT size )
 {
@@ -385,16 +459,35 @@ static void add_bytes( struct buffer *buf, const BYTE *data, UINT size )
     buf->offset += size;
 }
 
+enum
+{
+    LARGE_STRING_HEAP = 0x01,
+    LARGE_GUID_HEAP   = 0x02,
+    LARGE_BLOB_HEAP   = 0x04
+};
+
 static void build_table_stream( const statement_list_t *stmts )
 {
     static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
     static const USHORT space = 0x20;
+    UINT i;
 
     add_string( "" );
     add_userstring( NULL, 0 );
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
     add_guid( &guid );
+
+    for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
+
+    if (strings.offset >> 16) tables_header.heap_sizes |= LARGE_STRING_HEAP;
+    if (guids.offset >> 16) tables_header.heap_sizes |= LARGE_GUID_HEAP;
+    if (blobs.offset >> 16) tables_header.heap_sizes |= LARGE_BLOB_HEAP;
+
+    add_bytes( &tables_disk, (const BYTE *)&tables_header, sizeof(tables_header) );
+
+    for (i = 0; i < TABLE_MAX; i++)
+        if (tables[i].count) add_bytes( &tables_disk, (const BYTE *)&tables[i].count, sizeof(tables[i].count) );
 }
 
 static void build_streams( const statement_list_t *stmts )
@@ -403,6 +496,12 @@ static void build_streams( const statement_list_t *stmts )
     UINT i, len, offset = sizeof(metadata_header);
 
     build_table_stream( stmts );
+
+    len = (tables_disk.offset + 3) & ~3;
+    add_bytes( &tables_disk, pad, len - tables_disk.offset );
+
+    streams[STREAM_TABLE].data_size = tables_disk.offset;
+    streams[STREAM_TABLE].data = tables_disk.ptr;
 
     len = (strings.offset + 3) & ~3;
     add_bytes( &strings, pad, len - strings.offset );
