@@ -3767,6 +3767,7 @@ static void test_SetFocus(HWND hwnd)
     DestroyWindow( child2 );
     DestroyWindow( child );
 
+    flush_events( TRUE );
     SetForegroundWindow( GetDesktopWindow() );
 
     other = CreateWindowExA( 0, "static", NULL, WS_OVERLAPPEDWINDOW, 100, 100, 200, 200, 0, 0, NULL, NULL );
