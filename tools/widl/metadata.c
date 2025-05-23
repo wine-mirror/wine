@@ -621,6 +621,45 @@ static void serialize_assembly_table( void )
     serialize_string_idx( row->culture );
 }
 
+struct assemblyref_row
+{
+    USHORT majorversion;
+    USHORT minorversion;
+    USHORT buildnumber;
+    USHORT revisionnumber;
+    UINT   flags;
+    UINT   publickey;
+    UINT   name;
+    UINT   culture;
+    UINT   hashvalue;
+};
+
+static UINT add_assemblyref_row( UINT flags, UINT publickey, UINT name )
+{
+    struct assemblyref_row row = { 255, 255, 255, 255, flags, publickey, name, 0, 0 };
+    return add_row( TABLE_ASSEMBLYREF, (const BYTE *)&row, sizeof(row) );
+}
+
+static void serialize_assemblyref_table( void )
+{
+    const struct assemblyref_row *row = (const struct assemblyref_row *)tables[TABLE_ASSEMBLYREF].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_ASSEMBLYREF].count; i++)
+    {
+        serialize_ushort( row->majorversion );
+        serialize_ushort( row->minorversion );
+        serialize_ushort( row->buildnumber );
+        serialize_ushort( row->revisionnumber );
+        serialize_uint( row->flags );
+        serialize_blob_idx( row->publickey );
+        serialize_string_idx( row->name );
+        serialize_string_idx( row->culture );
+        serialize_blob_idx( row->hashvalue );
+        row++;
+    }
+}
+
 enum
 {
     LARGE_STRING_HEAP = 0x01,
@@ -633,6 +672,7 @@ static char *assembly_name;
 static void build_table_stream( const statement_list_t *stmts )
 {
     static const GUID guid = { 0x9ddc04c6, 0x04ca, 0x04cc, { 0x52, 0x85, 0x4b, 0x50, 0xb2, 0x60, 0x1d, 0xa8 } };
+    static const BYTE token[] = { 0xb7, 0x7a, 0x5c, 0x56, 0x19, 0x34, 0xe0, 0x89 };
     static const USHORT space = 0x20;
     char *ptr;
     UINT i;
@@ -648,6 +688,7 @@ static void build_table_stream( const statement_list_t *stmts )
     add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
     add_assembly_row( add_string(assembly_name) );
     add_module_row( add_string(metadata_name), add_guid(&guid) );
+    add_assemblyref_row( 0, add_blob(token, sizeof(token)), add_string("mscorlib") );
 
     for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
 
@@ -663,6 +704,7 @@ static void build_table_stream( const statement_list_t *stmts )
     serialize_module_table();
     serialize_typedef_table();
     serialize_assembly_table();
+    serialize_assemblyref_table();
 }
 
 static void build_streams( const statement_list_t *stmts )
