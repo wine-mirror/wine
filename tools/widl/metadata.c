@@ -483,6 +483,11 @@ static void serialize_ushort( USHORT value )
     add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
 }
 
+static void serialize_uint( UINT value )
+{
+    add_bytes( &tables_disk, (const BYTE *)&value, sizeof(value) );
+}
+
 static void serialize_string_idx( UINT idx )
 {
     UINT size = strings.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
@@ -493,6 +498,23 @@ static void serialize_guid_idx( UINT idx )
 {
     UINT size = guids.offset >> 16 ? sizeof(UINT) : sizeof(USHORT);
     add_bytes( &tables_disk, (const BYTE *)&idx, size );
+}
+
+static void serialize_table_idx( UINT idx, enum table target )
+{
+    UINT size = tables[target].count >> 16 ? sizeof(UINT) : sizeof(USHORT);
+    add_bytes( &tables_disk, (const BYTE *)&idx, size );
+}
+
+static enum table typedef_or_ref_to_table( UINT token )
+{
+    switch (token & 0x3)
+    {
+    case 0: return TABLE_TYPEDEF;
+    case 1: return TABLE_TYPEREF;
+    case 2: return TABLE_TYPESPEC;
+    default: assert( 0 );
+    }
 }
 
 struct module_row
@@ -521,6 +543,43 @@ static void serialize_module_table( void )
     serialize_guid_idx( row->encbaseid );
 }
 
+struct typedef_row
+{
+    UINT flags;
+    UINT name;
+    UINT namespace;
+    UINT extends;
+    UINT fieldlist;
+    UINT methodlist;
+};
+
+static UINT add_typedef_row( UINT flags, UINT name, UINT namespace, UINT extends, UINT fieldlist, UINT methodlist )
+{
+    struct typedef_row row = { flags, name, namespace, extends, fieldlist, methodlist };
+
+    if (!row.fieldlist) row.fieldlist = tables[TABLE_FIELD].count + 1;
+    if (!row.methodlist) row.methodlist = tables[TABLE_METHODDEF].count + 1;
+    return add_row( TABLE_TYPEDEF, (const BYTE *)&row, sizeof(row) );
+}
+
+/* FIXME: enclosing classes should come before enclosed classes */
+static void serialize_typedef_table( void )
+{
+    const struct typedef_row *row = (const struct typedef_row *)tables[TABLE_TYPEDEF].ptr;
+    UINT i;
+
+    for (i = 0; i < tables[TABLE_TYPEDEF].count; i++)
+    {
+        serialize_uint( row->flags );
+        serialize_string_idx( row->name );
+        serialize_string_idx( row->namespace );
+        serialize_table_idx( row->extends, typedef_or_ref_to_table(row->extends) );
+        serialize_table_idx( row->fieldlist, TABLE_FIELD );
+        serialize_table_idx( row->methodlist, TABLE_METHODDEF );
+        row++;
+    }
+}
+
 enum
 {
     LARGE_STRING_HEAP = 0x01,
@@ -539,6 +598,7 @@ static void build_table_stream( const statement_list_t *stmts )
     add_userstring( &space, sizeof(space) );
     add_blob( NULL, 0 );
 
+    add_typedef_row( 0, add_string("<Module>"), 0, 0, 1, 1 );
     add_module_row( add_string(metadata_name), add_guid(&guid) );
 
     for (i = 0; i < TABLE_MAX; i++) if (tables[i].count) tables_header.valid |= (1ull << i);
@@ -553,6 +613,7 @@ static void build_table_stream( const statement_list_t *stmts )
         if (tables[i].count) add_bytes( &tables_disk, (const BYTE *)&tables[i].count, sizeof(tables[i].count) );
 
     serialize_module_table();
+    serialize_typedef_table();
 }
 
 static void build_streams( const statement_list_t *stmts )
