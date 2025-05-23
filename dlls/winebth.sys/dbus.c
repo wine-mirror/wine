@@ -1677,6 +1677,22 @@ static DBusHandlerResult bluez_filter( DBusConnection *conn, DBusMessage *msg, v
                                                        event ))
                     unix_name_free( device );
             }
+            else if (!strcmp( interfaces[i], BLUEZ_INTERFACE_GATT_SERVICE ))
+            {
+                struct unix_name *service;
+                union winebluetooth_watcher_event_data event;
+
+                service = unix_name_get_or_create( object_path );
+                if (!service)
+                {
+                    ERR( "Failed to allocate memory for GATT service path %s\n", debugstr_a( object_path ) );
+                    continue;
+                }
+                event.gatt_service_removed.handle = (UINT_PTR)service;
+                if (!bluez_event_list_queue_new_event( event_list, BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_REMOVED,
+                                                       event ))
+                    unix_name_free( service );
+            }
         }
         p_dbus_free_string_array( interfaces );
     }
@@ -1917,6 +1933,9 @@ static void bluez_watcher_free( struct bluez_watcher_ctx *watcher )
         case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_ADDED:
             unix_name_free( (struct unix_name *)event1->event.gatt_service_added.device.handle );
             unix_name_free( (struct unix_name *)event1->event.gatt_service_added.service.handle );
+            break;
+        case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_REMOVED:
+            unix_name_free( (struct unix_name *)event1->event.gatt_service_removed.handle );
             break;
         }
         free( event1 );

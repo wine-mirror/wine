@@ -1083,6 +1083,48 @@ static void bluetooth_device_add_gatt_service( struct winebluetooth_watcher_even
     winebluetooth_gatt_service_free( event.service );
 }
 
+static void bluetooth_gatt_service_remove( winebluetooth_gatt_service_t service )
+{
+    struct bluetooth_radio *radio;
+
+    EnterCriticalSection( &device_list_cs );
+    LIST_FOR_EACH_ENTRY( radio, &device_list, struct bluetooth_radio, entry )
+    {
+        struct bluetooth_remote_device *device;
+
+        EnterCriticalSection( &radio->remote_devices_cs );
+        LIST_FOR_EACH_ENTRY( device, &radio->remote_devices, struct bluetooth_remote_device, entry )
+        {
+            struct bluetooth_gatt_service *svc;
+
+            EnterCriticalSection( &device->props_cs );
+            if (!device->le)
+            {
+                LeaveCriticalSection( &device->props_cs );
+                continue;
+            }
+            LIST_FOR_EACH_ENTRY( svc, &device->gatt_services, struct bluetooth_gatt_service, entry )
+            {
+                if (winebluetooth_gatt_service_equal( svc->service, service ))
+                {
+                    list_remove( &svc->entry );
+                    LeaveCriticalSection( &device->props_cs );
+                    LeaveCriticalSection( &radio->remote_devices_cs );
+                    LeaveCriticalSection( &device_list_cs );
+                    winebluetooth_gatt_service_free( svc->service );
+                    free( svc );
+                    winebluetooth_gatt_service_free( service );
+                    return;
+                }
+            }
+            LeaveCriticalSection( &device->props_cs );
+        }
+        LeaveCriticalSection( &radio->remote_devices_cs );
+    }
+    LeaveCriticalSection( &device_list_cs );
+    winebluetooth_gatt_service_free( service );
+}
+
 static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
 {
     NTSTATUS status;
@@ -1124,6 +1166,9 @@ static DWORD CALLBACK bluetooth_event_loop_thread_proc( void *arg )
                         break;
                     case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_ADDED:
                         bluetooth_device_add_gatt_service( event->event_data.gatt_service_added );
+                        break;
+                    case BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_REMOVED:
+                        bluetooth_gatt_service_remove( event->event_data.gatt_service_removed );
                         break;
                     default:
                         FIXME( "Unknown bluetooth watcher event code: %#x\n", event->event_type );

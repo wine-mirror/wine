@@ -222,6 +222,10 @@ NTSTATUS winebluetooth_auth_send_response( winebluetooth_device_t device, BLUETO
 NTSTATUS winebluetooth_device_start_pairing( winebluetooth_device_t device, IRP *irp );
 
 void winebluetooth_gatt_service_free( winebluetooth_gatt_service_t service );
+static inline BOOL winebluetooth_gatt_service_equal( winebluetooth_gatt_service_t s1, winebluetooth_gatt_service_t s2)
+{
+    return s1.handle == s2.handle;
+}
 
 enum winebluetooth_watcher_event_type
 {
@@ -233,6 +237,7 @@ enum winebluetooth_watcher_event_type
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_PROPERTIES_CHANGED,
     BLUETOOTH_WATCHER_EVENT_TYPE_PAIRING_FINISHED,
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_ADDED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_REMOVED,
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -300,6 +305,7 @@ union winebluetooth_watcher_event_data
     struct winebluetooth_watcher_event_device_props_changed device_props_changed;
     struct winebluetooth_watcher_event_pairing_finished pairing_finished;
     struct winebluetooth_watcher_event_gatt_service_added gatt_service_added;
+    winebluetooth_gatt_service_t gatt_service_removed;
 };
 
 struct winebluetooth_watcher_event
