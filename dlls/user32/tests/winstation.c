@@ -858,30 +858,20 @@ static DWORD WINAPI create_window(LPVOID param)
     return 0;
 }
 
-static DWORD set_foreground(HWND hwnd)
+/* try to make sure pending X events have been processed before continuing */
+static void flush_events(void)
 {
-    HWND hwnd_fore;
-    DWORD set_id, fore_id, ret;
-    char win_text[1024];
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
 
-    hwnd_fore = GetForegroundWindow();
-    GetWindowTextA(hwnd_fore, win_text, 1024);
-    set_id = GetWindowThreadProcessId(hwnd, NULL);
-    fore_id = GetWindowThreadProcessId(hwnd_fore, NULL);
-    trace("\"%s\" %p %08lx hwnd %p %08lx\n", win_text, hwnd_fore, fore_id, hwnd, set_id);
-    ret = AttachThreadInput(set_id, fore_id, TRUE);
-    trace("AttachThreadInput returned %08lx\n", ret);
-    ret = ShowWindow(hwnd, SW_SHOWNORMAL);
-    trace("ShowWindow returned %08lx\n", ret);
-    ret = SetWindowPos(hwnd, HWND_TOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-    trace("set topmost returned %08lx\n", ret);
-    ret = SetWindowPos(hwnd, HWND_NOTOPMOST, 0,0,0,0, SWP_NOSIZE|SWP_NOMOVE);
-    trace("set notopmost returned %08lx\n", ret);
-    ret = SetForegroundWindow(hwnd);
-    trace("SetForegroundWindow returned %08lx\n", ret);
-    Sleep(250);
-    AttachThreadInput(set_id, fore_id, FALSE);
-    return ret;
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
 }
 
 static void test_foregroundwindow(void)
@@ -955,18 +945,21 @@ static void test_foregroundwindow(void)
         for (thread_desk_id = 0; thread_desk_id < DESKTOPS; thread_desk_id++)
             for (input_desk_id = 0; input_desk_id < DESKTOPS; input_desk_id++)
             {
-                trace("testing thread_desk %d input_desk %d hwnd %d\n",
+                winetest_push_context("thread %d input %d hwnd %d",
                         thread_desk_id, input_desk_id, hwnd_id);
                 hwnd_test = hwnds[hwnd_id];
                 ret = SetThreadDesktop(hdesks[thread_desk_id]);
                 ok(ret, "set thread desktop failed!\n");
                 ret = SwitchDesktop(hdesks[input_desk_id]);
                 ok(ret, "switch desktop failed!\n");
-                set_foreground(partners[0]);
-                set_foreground(partners[1]);
+                SetForegroundWindow(partners[0]);
+                flush_events();
+                SetForegroundWindow(partners[1]);
+                flush_events();
                 hwnd = GetForegroundWindow();
                 ok(hwnd != hwnd_test, "unexpected foreground window %p\n", hwnd);
-                ret = set_foreground(hwnd_test);
+                ret = SetForegroundWindow(hwnd_test);
+                flush_events();
                 hwnd = GetForegroundWindow();
                 GetWindowTextA(hwnd, win_text, 1024);
                 trace("hwnd %p name %s\n", hwnd, win_text);
@@ -975,8 +968,7 @@ static void test_foregroundwindow(void)
                     if (input_desk_id == thread_desk_id)
                     {
                         ok(ret, "SetForegroundWindow failed!\n");
-                        todo_wine_if (!hwnd)
-                            ok(hwnd == hwnd_test , "unexpected foreground window %p\n", hwnd);
+                        ok(hwnd == hwnd_test , "unexpected foreground window %p\n", hwnd);
                     }
                     else
                     {
@@ -989,16 +981,15 @@ static void test_foregroundwindow(void)
                     if (input_desk_id == thread_desk_id)
                     {
                         ok(!ret, "SetForegroundWindow should fail!\n");
-                        todo_wine_if (!hwnd)
-                            ok(hwnd == partners[input_desk_id] , "unexpected foreground window %p\n", hwnd);
+                        ok(hwnd == partners[input_desk_id] , "unexpected foreground window %p\n", hwnd);
                     }
                     else
                     {
                         todo_wine ok(!ret, "SetForegroundWindow should fail!\n");
-                        todo_wine_if (hwnd)
-                            ok(hwnd == 0, "unexpected foreground window %p\n", hwnd);
+                        todo_wine ok(hwnd == 0, "unexpected foreground window %p\n", hwnd);
                     }
                 }
+                winetest_pop_context();
             }
 
     /* Clean up */
