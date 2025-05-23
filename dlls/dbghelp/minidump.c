@@ -19,6 +19,7 @@
  */
 
 #include <time.h>
+#include <intrin.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -531,44 +532,6 @@ static  unsigned        dump_modules(struct dump_context* dc, BOOL dump_elf)
     return sz;
 }
 
-#ifdef __i386__
-extern void do_x86cpuid(unsigned int ax, unsigned int *p);
-__ASM_GLOBAL_FUNC( do_x86cpuid,
-                   "pushl %esi\n\t"
-                   "pushl %ebx\n\t"
-                   "movl 12(%esp),%eax\n\t"
-                   "movl 16(%esp),%esi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%esi)\n\t"
-                   "movl %ebx,4(%esi)\n\t"
-                   "movl %ecx,8(%esi)\n\t"
-                   "movl %edx,12(%esi)\n\t"
-                   "popl %ebx\n\t"
-                   "popl %esi\n\t"
-                   "ret" )
-extern int have_x86cpuid(void);
-__ASM_GLOBAL_FUNC( have_x86cpuid,
-                   "pushfl\n\t"
-                   "pushfl\n\t"
-                   "movl (%esp),%ecx\n\t"
-                   "xorl $0x00200000,(%esp)\n\t"
-                   "popfl\n\t"
-                   "pushfl\n\t"
-                   "popl %eax\n\t"
-                   "popfl\n\t"
-                   "xorl %ecx,%eax\n\t"
-                   "andl $0x00200000,%eax\n\t"
-                   "ret" )
-#else
-static void do_x86cpuid(unsigned int ax, unsigned int *p)
-{
-}
-
-static int have_x86cpuid(void)
-{
-    return 0;
-}
-#endif
 
 /******************************************************************
  *		dump_system_info
@@ -619,42 +582,31 @@ static  unsigned        dump_system_info(struct dump_context* dc)
     mdSysInfo.Reserved1 = 0;
     mdSysInfo.SuiteMask = VER_SUITE_TERMINAL;
 
-    if (have_x86cpuid())
+#if defined(__i386__) || (defined(__x86_64__) && !defined(__arm64ec__))
     {
-        unsigned        regs0[4], regs1[4];
+        int regs[4];
 
-        do_x86cpuid(0, regs0);
-        mdSysInfo.Cpu.X86CpuInfo.VendorId[0] = regs0[1];
-        mdSysInfo.Cpu.X86CpuInfo.VendorId[1] = regs0[3];
-        mdSysInfo.Cpu.X86CpuInfo.VendorId[2] = regs0[2];
-        do_x86cpuid(1, regs1);
-        mdSysInfo.Cpu.X86CpuInfo.VersionInformation = regs1[0];
-        mdSysInfo.Cpu.X86CpuInfo.FeatureInformation = regs1[3];
+        __cpuid(regs, 0);
+        mdSysInfo.Cpu.X86CpuInfo.VendorId[0] = regs[1];
+        mdSysInfo.Cpu.X86CpuInfo.VendorId[1] = regs[3];
+        mdSysInfo.Cpu.X86CpuInfo.VendorId[2] = regs[2];
+        __cpuid(regs, 1);
+        mdSysInfo.Cpu.X86CpuInfo.VersionInformation = regs[0];
+        mdSysInfo.Cpu.X86CpuInfo.FeatureInformation = regs[3];
         mdSysInfo.Cpu.X86CpuInfo.AMDExtendedCpuFeatures = 0;
-        if (regs0[1] == 0x68747541 /* "Auth" */ &&
-            regs0[3] == 0x69746e65 /* "enti" */ &&
-            regs0[2] == 0x444d4163 /* "cAMD" */)
+        if (!memcmp( mdSysInfo.Cpu.X86CpuInfo.VendorId, "AuthenticAMD", 12 ))
         {
-            do_x86cpuid(0x80000000, regs1);  /* get vendor cpuid level */
-            if (regs1[0] >= 0x80000001)
-            {
-                do_x86cpuid(0x80000001, regs1);  /* get vendor features */
-                mdSysInfo.Cpu.X86CpuInfo.AMDExtendedCpuFeatures = regs1[3];
-            }
+            __cpuid(regs, 0x80000001);  /* get vendor features */
+            mdSysInfo.Cpu.X86CpuInfo.AMDExtendedCpuFeatures = regs[3];
         }
     }
-    else
-    {
-        unsigned        i;
-        ULONG64         one = 1;
-
-        mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0] = 0;
-        mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[1] = 0;
-
-        for (i = 0; i < sizeof(mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0]) * 8; i++)
-            if (IsProcessorFeaturePresent(i))
-                mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0] |= one << i;
-    }
+#else
+    mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0] = 0;
+    mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[1] = 0;
+    for (unsigned int i = 0; i < sizeof(mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0]) * 8; i++)
+        if (IsProcessorFeaturePresent(i))
+            mdSysInfo.Cpu.OtherCpuInfo.ProcessorFeatures[0] |= (ULONG64)1 << i;
+#endif
     append(dc, &mdSysInfo, sizeof(mdSysInfo));
 
     /* write Wine specific system information just behind the structure, and before any string */
