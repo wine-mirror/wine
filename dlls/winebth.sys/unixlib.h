@@ -59,6 +59,11 @@ struct bluetooth_gatt_service_free_params
     unix_name_t service;
 };
 
+struct bluetooth_gatt_characteristic_free_params
+{
+    unix_name_t characteristic;
+};
+
 struct bluetooth_device_disconnect_params
 {
     unix_name_t device;
@@ -136,6 +141,8 @@ enum bluetoothapis_funcs
     unix_bluetooth_auth_send_response,
 
     unix_bluetooth_gatt_service_free,
+
+    unix_bluetooth_gatt_characteristic_free,
 
     unix_bluetooth_get_event,
 

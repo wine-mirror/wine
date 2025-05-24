@@ -255,6 +255,14 @@ static NTSTATUS bluetooth_gatt_service_free( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS bluetooth_gatt_characteristic_free( void *args )
+{
+    struct bluetooth_gatt_characteristic_free_params *params = args;
+    unix_name_free( params->characteristic );
+    return STATUS_SUCCESS;
+}
+
+
 static NTSTATUS bluetooth_get_event( void *args )
 {
     struct bluetooth_get_event_params *params = args;
@@ -283,6 +291,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] = {
     bluetooth_auth_send_response,
 
     bluetooth_gatt_service_free,
+
+    bluetooth_gatt_characteristic_free,
 
     bluetooth_get_event,
 };

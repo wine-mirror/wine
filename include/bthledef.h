@@ -34,6 +34,22 @@ typedef struct _BTH_LE_GATT_SERVICE
     USHORT AttributeHandle;
 } BTH_LE_GATT_SERVICE, *PBTH_LE_GATT_SERVICE;
 
+typedef struct _BTH_LE_GATT_CHARACTERISTIC
+{
+    USHORT ServiceHandle;
+    BTH_LE_UUID CharacteristicUuid;
+    USHORT AttributeHandle;
+    USHORT CharacteristicValueHandle;
+    BOOLEAN IsBroadcastable;
+    BOOLEAN IsReadable;
+    BOOLEAN IsWritable;
+    BOOLEAN IsWritableWithoutResponse;
+    BOOLEAN IsSignedWritable;
+    BOOLEAN IsNotifiable;
+    BOOLEAN IsIndicatable;
+    BOOLEAN HasExtendedProperties;
+} BTH_LE_GATT_CHARACTERISTIC, *PBTH_LE_GATT_CHARACTERISTIC;
+
 DEFINE_GUID( GUID_BLUETOOTHLE_DEVICE_INTERFACE, 0x781aee18, 0x7733, 0x4ce4, 0xad, 0xd0, 0x91, 0xf4, 0x1c, 0x67, 0xb5, 0x92 );
 DEFINE_GUID( BTH_LE_ATT_BLUETOOTH_BASE_GUID, 0, 0, 0x1000, 0x80, 0x00, 0x00, 0x80, 0x5f, 0x9b, 0x34, 0xfb );
 #endif
