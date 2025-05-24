@@ -25,12 +25,25 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wincon.h"
+#include "winternl.h"
 
 #include "wineconsole_res.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(console);
+
+static BOOL setup_target_console(void)
+{
+    if (!FreeConsole()) return FALSE;
+    /* Zero out std handles so that AllocConsole() sets the newly allocated handles as std,
+     * and will be inherited by child process.
+     */
+    SetStdHandle(STD_INPUT_HANDLE, NULL);
+    SetStdHandle(STD_OUTPUT_HANDLE, NULL);
+    SetStdHandle(STD_ERROR_HANDLE, NULL);
+    return AllocConsole();
+}
 
 int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
 {
@@ -43,9 +56,14 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
 
     if (!*cmd) cmd = default_cmd;
 
-    if (!CreateProcessW( NULL, cmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &startup, &info ))
+    if (!setup_target_console())
     {
-        HANDLE hStdInput, hStdOutput;
+        ERR( "failed to allocate console: %lu\n", GetLastError() );
+        return 1;
+    }
+
+    if (!CreateProcessW( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ))
+    {
         WCHAR format[256], *buf;
         INPUT_RECORD ir;
         DWORD len;
@@ -53,30 +71,19 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
         exit_code = GetLastError();
         WARN( "CreateProcess '%ls' failed: %lu\n", cmd, exit_code );
 
-        /* create a new console to display error messages in it */
-        FreeConsole(); /* make sure we're not connected to any console */
-        if (!AllocConsole())
-        {
-            ERR( "failed to allocate console: %lu\n", GetLastError() );
-            return 1;
-        }
-
-        hStdInput  = CreateFileW( L"CONIN$",  GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                                  OPEN_EXISTING, 0, 0 );
-        hStdOutput = CreateFileW( L"CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                                  OPEN_EXISTING, 0, 0 );
-
         LoadStringW( GetModuleHandleW( NULL ), IDS_CMD_LAUNCH_FAILED, format, ARRAY_SIZE(format) );
         len = wcslen( format ) + wcslen( cmd );
         if ((buf = malloc( len * sizeof(WCHAR) )))
         {
             swprintf( buf, len, format, cmd );
-            WriteConsoleW( hStdOutput, buf, wcslen(buf), &len, NULL);
-            while (ReadConsoleInputW( hStdInput, &ir, 1, &len ) && ir.EventType == MOUSE_EVENT);
+            WriteConsoleW( startup.hStdOutput, buf, wcslen(buf), &len, NULL);
+            while (ReadConsoleInputW( startup.hStdInput, &ir, 1, &len ) && ir.EventType == MOUSE_EVENT);
         }
         return exit_code;
     }
 
+    /* detach from created console */
+    FreeConsole();
     CloseHandle( info.hThread );
     WaitForSingleObject( info.hProcess, INFINITE );
     return GetExitCodeProcess( info.hProcess, &exit_code ) ? exit_code : GetLastError();
