@@ -702,7 +702,6 @@ static HGLRC wrap_wglCreateContext( HDC hdc )
 
 static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
-    BOOL ret = TRUE;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct opengl_context *ctx, *prev = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
@@ -710,38 +709,35 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     if (hglrc)
     {
         if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
-        if (!ctx->tid || ctx->tid == tid)
-        {
-            ret = funcs->p_wglMakeCurrent( hdc, ctx->drv_ctx );
-            if (ret)
-            {
-                if (prev) prev->tid = 0;
-                ctx->tid = tid;
-                teb->glReserved1[0] = hdc;
-                teb->glReserved1[1] = hdc;
-                teb->glCurrentRC = hglrc;
-                teb->glTable = (void *)funcs;
-            }
-        }
-        else
+        if (ctx->tid && ctx->tid != tid)
         {
             RtlSetLastWin32Error( ERROR_BUSY );
-            ret = FALSE;
+            return FALSE;
         }
+
+        if (!funcs->p_wglMakeCurrent( hdc, ctx->drv_ctx )) return FALSE;
+        if (prev) prev->tid = 0;
+        ctx->tid = tid;
+        teb->glReserved1[0] = hdc;
+        teb->glReserved1[1] = hdc;
+        teb->glCurrentRC = hglrc;
+        teb->glTable = (void *)funcs;
+        return TRUE;
     }
-    else if (prev)
+    if (prev)
     {
         if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
+        return TRUE;
     }
-    else if (!hdc)
+    if (!hdc)
     {
         RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-        ret = FALSE;
+        return FALSE;
     }
-    return ret;
+    return TRUE;
 }
 
 static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
@@ -869,7 +865,6 @@ static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
 
 static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
-    BOOL ret = TRUE;
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct opengl_context *ctx, *prev = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
@@ -877,34 +872,30 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
     if (hglrc)
     {
         if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
-        if (!ctx->tid || ctx->tid == tid)
-        {
-            ret = (funcs->p_wglMakeContextCurrentARB &&
-                   funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ctx->drv_ctx ));
-            if (ret)
-            {
-                if (prev) prev->tid = 0;
-                ctx->tid = tid;
-                teb->glReserved1[0] = draw_hdc;
-                teb->glReserved1[1] = read_hdc;
-                teb->glCurrentRC = hglrc;
-                teb->glTable = (void *)funcs;
-            }
-        }
-        else
+        if (ctx->tid && ctx->tid != tid)
         {
             RtlSetLastWin32Error( ERROR_BUSY );
-            ret = FALSE;
+            return FALSE;
         }
+
+        if (!funcs->p_wglMakeContextCurrentARB) return FALSE;
+        if (!funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ctx->drv_ctx )) return FALSE;
+        if (prev) prev->tid = 0;
+        ctx->tid = tid;
+        teb->glReserved1[0] = draw_hdc;
+        teb->glReserved1[1] = read_hdc;
+        teb->glCurrentRC = hglrc;
+        teb->glTable = (void *)funcs;
+        return TRUE;
     }
-    else if (prev)
+    if (prev)
     {
         if (!funcs->p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->tid = 0;
         teb->glCurrentRC = 0;
         teb->glTable = &null_opengl_funcs;
     }
-    return ret;
+    return TRUE;
 }
 
 static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
