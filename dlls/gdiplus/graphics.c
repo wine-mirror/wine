@@ -4763,6 +4763,79 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     return ret;
 }
 
+static GpStatus get_clipped_region_hrgn(GpGraphics* graphics, GpRegion* region, HRGN *hrgn)
+{
+    GpStatus status;
+    GpRegion *tmp_region, *device_region;
+    GpMatrix gdip_transform, gdi_transform;
+    BOOL gdip_identity, gdi_identity;
+    GpRectF device_bounds;
+
+    status = get_graphics_device_bounds(graphics, &device_bounds);
+
+    if (status == Ok)
+        status = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceWorld, &gdip_transform);
+
+    if (status == Ok)
+        status = GdipIsMatrixIdentity(&gdip_transform, &gdip_identity);
+
+    if (status == Ok)
+        status = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice, CoordinateSpaceDevice, &gdi_transform);
+
+    if (status == Ok)
+        status = GdipIsMatrixIdentity(&gdi_transform, &gdi_identity);
+
+    if (status == Ok)
+        status = GdipCreateRegionRect(&device_bounds, &device_region);
+
+    if (status == Ok)
+    {
+        if (gdip_identity)
+            status = GdipCombineRegionRegion(device_region, region, CombineModeIntersect);
+        else
+        {
+            status = GdipCloneRegion(region, &tmp_region);
+
+            if (status == Ok)
+            {
+                status = GdipTransformRegion(tmp_region, &gdip_transform);
+
+                if (status == Ok)
+                    GdipCombineRegionRegion(device_region, tmp_region, CombineModeIntersect);
+
+                GdipDeleteRegion(tmp_region);
+            }
+        }
+
+        if (status == Ok)
+        {
+            if (gdi_identity)
+                status = GdipCombineRegionRegion(device_region, graphics->clip, CombineModeIntersect);
+            else
+            {
+                status = GdipCloneRegion(graphics->clip, &tmp_region);
+
+                if (status == Ok)
+                {
+                    status = GdipTransformRegion(tmp_region, &gdi_transform);
+
+                    if (status == Ok)
+                        GdipCombineRegionRegion(device_region, tmp_region, CombineModeIntersect);
+
+                    GdipDeleteRegion(tmp_region);
+                }
+            }
+        }
+
+        if (status == Ok)
+            status = GdipGetRegionHRgn(device_region, NULL, hrgn);
+
+        GdipDeleteRegion(device_region);
+    }
+
+    return status;
+}
+
 static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     GpRegion* region)
 {
@@ -4783,18 +4856,11 @@ static GpStatus GDI32_GdipFillRegion(GpGraphics* graphics, GpBrush* brush,
     EndPath(hdc);
 
     hrgn = NULL;
-    status = get_clip_hrgn(graphics, &hrgn);
+    status = get_clipped_region_hrgn(graphics, region, &hrgn);
     if (status != Ok)
         goto end;
 
     ExtSelectClipRgn(hdc, hrgn, RGN_COPY);
-    DeleteObject(hrgn);
-
-    status = GdipGetRegionHRgn(region, graphics, &hrgn);
-    if (status != Ok)
-        goto end;
-
-    ExtSelectClipRgn(hdc, hrgn, RGN_AND);
     DeleteObject(hrgn);
 
     if (GetClipBox(hdc, &rc) != NULLREGION)
@@ -4817,9 +4883,6 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
     GpRegion* region)
 {
     GpStatus stat;
-    GpRegion *temp_region;
-    GpMatrix world_to_device;
-    GpRectF graphics_bounds;
     DWORD *pixel_data;
     HRGN hregion;
     RECT bound_rect;
@@ -4831,27 +4894,7 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
     stat = gdi_transform_acquire(graphics);
 
     if (stat == Ok)
-        stat = get_graphics_device_bounds(graphics, &graphics_bounds);
-
-    if (stat == Ok)
-        stat = GdipCloneRegion(region, &temp_region);
-
-    if (stat == Ok)
-    {
-        stat = get_graphics_transform(graphics, WineCoordinateSpaceGdiDevice,
-            CoordinateSpaceWorld, &world_to_device);
-
-        if (stat == Ok)
-            stat = GdipTransformRegion(temp_region, &world_to_device);
-
-        if (stat == Ok)
-            stat = GdipCombineRegionRect(temp_region, &graphics_bounds, CombineModeIntersect);
-
-        if (stat == Ok)
-            stat = GdipGetRegionHRgn(temp_region, NULL, &hregion);
-
-        GdipDeleteRegion(temp_region);
-    }
+        stat = get_clipped_region_hrgn(graphics, region, &hregion);
 
     if (stat == Ok && GetRgnBox(hregion, &bound_rect) == NULLREGION)
     {
