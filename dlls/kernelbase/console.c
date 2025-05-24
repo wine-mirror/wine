@@ -2372,6 +2372,7 @@ void init_console( void )
         if (params->ConsoleHandle && create_console_connection( params->ConsoleHandle ))
         {
             init_console_std_handles( FALSE );
+            console_flags = 0;
         }
     }
     else if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC ||
