@@ -38,6 +38,8 @@
 
 /* Get all primary GATT services for the LE device. */
 #define IOCTL_WINEBTH_LE_DEVICE_GET_GATT_SERVICES CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xc0, METHOD_BUFFERED, FILE_ANY_ACCESS)
+/* Get all characteristics for a GATT service */
+#define IOCTL_WINEBTH_LE_DEVICE_GET_GATT_CHARACTERISTICS CTL_CODE(FILE_DEVICE_BLUETOOTH, 0xc1, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
 DEFINE_GUID( GUID_WINEBTH_AUTHENTICATION_REQUEST, 0xca67235f, 0xf621, 0x4c27, 0x85, 0x65, 0xa4,
              0xd5, 0x5e, 0xa1, 0x26, 0xe8 );
@@ -82,6 +84,13 @@ struct winebth_le_device_get_gatt_services_params
 {
     ULONG count;
     BTH_LE_GATT_SERVICE services[0];
+};
+
+struct winebth_le_device_get_gatt_characteristics_params
+{
+    BTH_LE_GATT_SERVICE service;
+    ULONG count;
+    BTH_LE_GATT_CHARACTERISTIC characteristics[0];
 };
 
 #pragma pack(pop)
