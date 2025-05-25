@@ -146,6 +146,25 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
 
         switch (event->meta_type)
         {
+        case MIDI_META_TEXT_EVENT:
+        case MIDI_META_COPYRIGHT_NOTICE:
+        case MIDI_META_TRACK_NAME:
+        case MIDI_META_INSTRUMENT_NAME:
+        case MIDI_META_LYRIC:
+        case MIDI_META_MARKER:
+        case MIDI_META_CUE_POINT:
+        {
+            char *str = malloc(length);
+            if (FAILED(hr = stream_read_at_most(stream, str, length, bytes_left)))
+            {
+                free(str);
+                return hr;
+            }
+            TRACE("MIDI meta event type %#02x, text: %s\n", event->meta_type, debugstr_an(str, length));
+            free(str);
+            /* Skip over this event */
+            return read_midi_event(stream, event, last_status, bytes_left);
+        }
         case MIDI_META_SET_TEMPO:
             if (length != 3)
             {
