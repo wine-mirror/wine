@@ -387,8 +387,18 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
         while ((hr = read_midi_event(parser->stream, &event, &last_status, &length)) == S_OK)
         {
             parser->time += event.delta_time;
-            if (event.status == 0xff && event.meta_type == MIDI_META_SET_TEMPO)
-                hr = midi_parser_handle_set_tempo(parser, &event);
+            if (event.status == MIDI_META)
+            {
+                switch (event.meta_type)
+                {
+                case MIDI_META_SET_TEMPO:
+                    hr = midi_parser_handle_set_tempo(parser, &event);
+                    break;
+                default:
+                    FIXME("Unhandled MIDI meta event type %#02x at time +%lu\n", event.meta_type, parser->time);
+                    break;
+                }
+            }
             else
             {
                 switch (event.status & 0xf0)
