@@ -165,6 +165,13 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
             /* Skip over this event */
             return read_midi_event(stream, event, last_status, bytes_left);
         }
+        case MIDI_META_END_OF_TRACK:
+            if (length)
+            {
+                ERR("Invalid MIDI meta event length %lu for end of track event.\n", length);
+                return E_FAIL;
+            }
+            break;
         case MIDI_META_SET_TEMPO:
             if (length != 3)
             {
@@ -389,6 +396,8 @@ static HRESULT midi_parser_parse(struct midi_parser *parser, IDirectMusicSegment
             parser->time += event.delta_time;
             if (event.status == MIDI_META)
             {
+                if (event.meta_type == MIDI_META_END_OF_TRACK)
+                    break;
                 switch (event.meta_type)
                 {
                 case MIDI_META_SET_TEMPO:
