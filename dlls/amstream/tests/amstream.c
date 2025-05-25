@@ -9197,7 +9197,7 @@ static void test_ddrawstream_set_format_dynamic(void)
             "Got subtype %s.\n", wine_dbgstr_guid(&source.source.pin.mt.subtype));
     hr = IPin_ConnectionMediaType(pin, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_RGB8),
+    ok(IsEqualGUID(&mt.subtype, &MEDIASUBTYPE_RGB8),
             "Got subtype %s.\n", wine_dbgstr_guid(&mt.subtype));
     CoTaskMemFree(mt.pbFormat);
     hr = IDirectDrawMediaStream_GetFormat(ddraw_stream, &current_format, NULL, &desired_format, NULL);

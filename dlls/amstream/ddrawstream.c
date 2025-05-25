@@ -614,7 +614,6 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
         const DDSURFACEDESC *format, IDirectDrawPalette *palette)
 {
     struct ddraw_stream *stream = impl_from_IDirectDrawMediaStream(iface);
-    AM_MEDIA_TYPE old_media_type;
     struct format old_format;
     IPin *old_peer;
     HRESULT hr;
@@ -699,6 +698,8 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
 
     if (stream->peer && !is_format_compatible(stream, old_format.width, old_format.height, &old_format.pf))
     {
+        AM_MEDIA_TYPE new_mt;
+
         if (stream->sample_refs > 0)
         {
             stream->format = old_format;
@@ -706,31 +707,34 @@ static HRESULT WINAPI ddraw_IDirectDrawMediaStream_SetFormat(IDirectDrawMediaStr
             return MS_E_SAMPLEALLOC;
         }
 
-        old_media_type = stream->mt;
+        set_mt_from_desc(&new_mt, format);
 
-        set_mt_from_desc(&stream->mt, format);
-
-        if (!stream->using_private_allocator || IPin_QueryAccept(stream->peer, &stream->mt) != S_OK)
+        if (!stream->using_private_allocator || IPin_QueryAccept(stream->peer, &new_mt) != S_OK)
         {
+            AM_MEDIA_TYPE old_mt;
+
             /* Reconnect. */
             old_peer = stream->peer;
             IPin_AddRef(old_peer);
+            CopyMediaType(&old_mt, &stream->mt);
 
             IFilterGraph_Disconnect(stream->graph, stream->peer);
             IFilterGraph_Disconnect(stream->graph, &stream->IPin_iface);
             if (FAILED(hr = IFilterGraph_ConnectDirect(stream->graph, old_peer, &stream->IPin_iface, NULL)))
             {
                 stream->format = old_format;
-                IFilterGraph_ConnectDirect(stream->graph, old_peer, &stream->IPin_iface, &old_media_type);
+                IFilterGraph_ConnectDirect(stream->graph, old_peer, &stream->IPin_iface, &old_mt);
                 IPin_Release(old_peer);
-                FreeMediaType(&old_media_type);
+                FreeMediaType(&old_mt);
+                FreeMediaType(&new_mt);
                 LeaveCriticalSection(&stream->cs);
                 return DDERR_INVALIDSURFACETYPE;
             }
+            FreeMediaType(&old_mt);
             IPin_Release(old_peer);
         }
 
-        FreeMediaType(&old_media_type);
+        FreeMediaType(&new_mt);
     }
 
     LeaveCriticalSection(&stream->cs);
