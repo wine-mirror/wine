@@ -254,6 +254,11 @@ static inline BOOL winebluetooth_gatt_service_equal( winebluetooth_gatt_service_
 }
 
 void winebluetooth_gatt_characteristic_free( winebluetooth_gatt_characteristic_t characteristic );
+static inline BOOL winebluetooth_gatt_characteristic_equal( winebluetooth_gatt_characteristic_t c1,
+                                                            winebluetooth_gatt_characteristic_t c2)
+{
+    return c1.handle == c2.handle;
+}
 
 enum winebluetooth_watcher_event_type
 {
@@ -267,6 +272,7 @@ enum winebluetooth_watcher_event_type
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_ADDED,
     BLUETOOTH_WATCHER_EVENT_TYPE_DEVICE_GATT_SERVICE_REMOVED,
     BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_ADDED,
+    BLUETOOTH_WATCHER_EVENT_TYPE_GATT_CHARACTERISTIC_REMOVED,
 };
 
 struct winebluetooth_watcher_event_radio_added
@@ -352,6 +358,7 @@ union winebluetooth_watcher_event_data
     struct winebluetooth_watcher_event_gatt_service_added gatt_service_added;
     winebluetooth_gatt_service_t gatt_service_removed;
     struct winebluetooth_watcher_event_gatt_characteristic_added gatt_characteristic_added;
+    winebluetooth_gatt_characteristic_t gatt_characterisic_removed;
 };
 
 struct winebluetooth_watcher_event
