@@ -8857,7 +8857,7 @@ static void test_ddrawstream_mem_allocator(void)
             "Got subtype %s.\n", debugstr_guid(&sample_mt->subtype));
     ok(sample_mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", sample_mt->bFixedSizeSamples);
     ok(!sample_mt->bTemporalCompression, "Got temporal compression %d.\n", sample_mt->bTemporalCompression);
-    todo_wine ok(sample_mt->lSampleSize == expect_pitch * 444,
+    ok(sample_mt->lSampleSize == expect_pitch * 444,
             "Expected sample size %u, got %lu.\n", expect_pitch * 444, sample_mt->lSampleSize);
     ok(IsEqualGUID(&sample_mt->formattype, &FORMAT_VideoInfo),
             "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
@@ -8873,7 +8873,7 @@ static void test_ddrawstream_mem_allocator(void)
 
     hr = IMediaSample_GetMediaType(media_sample1, &sample_mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(sample_mt->lSampleSize == expect_pitch * 444,
+    ok(sample_mt->lSampleSize == expect_pitch * 444,
             "Expected sample size %u, got %lu.\n", expect_pitch * 444, sample_mt->lSampleSize);
 
     video_info = (VIDEOINFOHEADER *)sample_mt->pbFormat;
