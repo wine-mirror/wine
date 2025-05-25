@@ -1439,10 +1439,10 @@ static NTSTATUS NTAPI ntlm_SpMakeSignature( LSA_SEC_HANDLE handle, ULONG qop, Se
     return create_signature( ctx, ctx->flags, msg, &msg->pBuffers[idx], SIGN_SEND, TRUE );
 }
 
-static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg, int idx )
+static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecBufferDesc *msg, SecBuffer *sig_buf )
 {
     NTSTATUS status;
-    unsigned int i;
+    unsigned int i, sig_idx = 0;
     SecBufferDesc desc;
     SecBuffer *buf;
     char sig[16];
@@ -1459,6 +1459,7 @@ static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecB
             buf[i].BufferType = SECBUFFER_TOKEN;
             buf[i].cbBuffer   = 16;
             buf[i].pvBuffer   = sig;
+            sig_idx = i;
         }
         else
         {
@@ -1468,9 +1469,9 @@ static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecB
         }
     }
 
-    if ((status = create_signature( ctx, flags, &desc, &buf[idx], SIGN_RECV, TRUE )) == SEC_E_OK)
+    if ((status = create_signature( ctx, flags, &desc, &buf[sig_idx], SIGN_RECV, TRUE )) == SEC_E_OK)
     {
-        if (memcmp( (char *)buf[idx].pvBuffer + 8, (char *)msg->pBuffers[idx].pvBuffer + 8, 8 ))
+        if (memcmp( (char *)buf[sig_idx].pvBuffer + 8, (char *)sig_buf->pvBuffer + 8, 8 ))
             status = SEC_E_MESSAGE_ALTERED;
     }
 
@@ -1491,7 +1492,7 @@ static NTSTATUS NTAPI ntlm_SpVerifySignature( LSA_SEC_HANDLE handle, SecBufferDe
         return SEC_E_INVALID_TOKEN;
     if (msg->pBuffers[idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
 
-    return verify_signature( ctx, ctx->flags, msg, idx );
+    return verify_signature( ctx, ctx->flags, msg, &msg->pBuffers[idx] );
 }
 
 static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecBufferDesc *msg, ULONG msg_seq_no )
@@ -1562,7 +1563,7 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     /* make sure we use a session key for the signature check, SealMessage always does that,
        even in the dummy case */
-    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, token_idx );
+    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, &msg->pBuffers[token_idx] );
 }
 
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
