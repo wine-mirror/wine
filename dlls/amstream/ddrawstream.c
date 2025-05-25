@@ -568,7 +568,7 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format, uns
     SetRect(&videoinfo->rcTarget, 0, 0, format->dwWidth, format->dwHeight);
     videoinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     videoinfo->bmiHeader.biWidth = pitch * 8 / format->ddpfPixelFormat.dwRGBBitCount;
-    videoinfo->bmiHeader.biHeight = format->dwHeight;
+    videoinfo->bmiHeader.biHeight = -format->dwHeight;
     videoinfo->bmiHeader.biBitCount = format->ddpfPixelFormat.dwRGBBitCount;
     videoinfo->bmiHeader.biCompression = BI_RGB;
     videoinfo->bmiHeader.biPlanes = 1;

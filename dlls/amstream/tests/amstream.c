@@ -1212,7 +1212,7 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
                 "Got format type %s.\n", debugstr_guid(&mt->formattype));
         ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
         ok(mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", mt->cbFormat);
-        todo_wine_if (expect_video_info.bmiHeader.biSizeImage || filter->query_accept_rgb8_palette)
+        todo_wine_if (filter->query_accept_rgb8_palette)
             ok(!memcmp(mt->pbFormat, &expect_video_info, mt->cbFormat), "Format blocks didn't match.\n");
     }
 
@@ -8863,7 +8863,7 @@ static void test_ddrawstream_mem_allocator(void)
             "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
     ok(!sample_mt->pUnk, "Got pUnk %p.\n", sample_mt->pUnk);
     ok(sample_mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", sample_mt->cbFormat);
-    todo_wine ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
+    ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
 
     sample_mt->lSampleSize = 123;
     hr = IMediaSample_SetMediaType(media_sample1, sample_mt);
@@ -9114,7 +9114,7 @@ static void test_ddrawstream_mem_allocator(void)
             "Got format type %s.\n", debugstr_guid(&sample_mt->formattype));
     ok(!sample_mt->pUnk, "Got pUnk %p.\n", sample_mt->pUnk);
     ok(sample_mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", sample_mt->cbFormat);
-    todo_wine ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
+    ok(!memcmp(sample_mt->pbFormat, &expect_video_info, sizeof(VIDEOINFO)), "Format blocks didn't match.\n");
 
     ref = IMediaSample_Release(media_sample1);
     ok(!ref, "Got refcount %ld.\n", ref);
