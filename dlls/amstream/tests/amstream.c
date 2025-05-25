@@ -1202,9 +1202,8 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
         expect_video_info.bmiHeader.biSizeImage = filter->query_accept_width * filter->query_accept_height * depth / 8;
 
         ok(IsEqualGUID(&mt->majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&mt->majortype));
-        todo_wine_if (IsEqualGUID(&filter->query_accept_subtype, &MEDIASUBTYPE_RGB8))
-            ok(IsEqualGUID(&mt->subtype, &filter->query_accept_subtype), "Expected subtype %s, got %s.\n",
-                    debugstr_guid(&filter->query_accept_subtype), debugstr_guid(&mt->subtype));
+        ok(IsEqualGUID(&mt->subtype, &filter->query_accept_subtype), "Expected subtype %s, got %s.\n",
+                debugstr_guid(&filter->query_accept_subtype), debugstr_guid(&mt->subtype));
         todo_wine ok(mt->bFixedSizeSamples == TRUE, "Got fixed size %d.\n", mt->bFixedSizeSamples);
         ok(!mt->bTemporalCompression, "Got temporal compression %d.\n", mt->bTemporalCompression);
         todo_wine_if (expect_video_info.bmiHeader.biSizeImage)
@@ -1214,7 +1213,7 @@ static HRESULT testsource_query_accept(struct strmbase_pin *iface, const AM_MEDI
                 "Got format type %s.\n", debugstr_guid(&mt->formattype));
         ok(!mt->pUnk, "Got pUnk %p.\n", mt->pUnk);
         ok(mt->cbFormat == sizeof(VIDEOINFO), "Got format size %lu.\n", mt->cbFormat);
-        todo_wine_if (expect_video_info.bmiHeader.biSizeImage || IsEqualGUID(&filter->query_accept_subtype, &MEDIASUBTYPE_RGB8))
+        todo_wine_if (expect_video_info.bmiHeader.biSizeImage || filter->query_accept_rgb8_palette)
             ok(!memcmp(mt->pbFormat, &expect_video_info, mt->cbFormat), "Format blocks didn't match.\n");
     }
 

@@ -591,6 +591,12 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format)
     {
         mt->subtype = MEDIASUBTYPE_RGB32;
     }
+    else if (format->ddpfPixelFormat.dwRGBBitCount == 8 && (format->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8))
+    {
+        mt->subtype = MEDIASUBTYPE_RGB8;
+        videoinfo->bmiHeader.biClrUsed = 256;
+        /* FIXME: Translate the palette. */
+    }
     else
     {
         FIXME("Unknown flags %#lx, bit count %lu.\n",
