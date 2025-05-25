@@ -557,6 +557,9 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format)
 {
     VIDEOINFO *videoinfo = CoTaskMemAlloc(sizeof(VIDEOINFO));
 
+    memset(mt, 0, sizeof(*mt));
+    mt->majortype = MEDIATYPE_Video;
+    mt->formattype = FORMAT_VideoInfo;
     mt->cbFormat = sizeof(VIDEOINFO);
     mt->pbFormat = (BYTE *)videoinfo;
 
@@ -569,6 +572,9 @@ static void set_mt_from_desc(AM_MEDIA_TYPE *mt, const DDSURFACEDESC *format)
     videoinfo->bmiHeader.biPlanes = 1;
     videoinfo->bmiHeader.biSizeImage =
             align(format->dwWidth * format->dwHeight * format->ddpfPixelFormat.dwRGBBitCount / 8, 4);
+
+    mt->lSampleSize = videoinfo->bmiHeader.biSizeImage;
+    mt->bFixedSizeSamples = TRUE;
 
     if (format->ddpfPixelFormat.dwRGBBitCount == 16 && format->ddpfPixelFormat.dwRBitMask == 0x7c00)
     {
