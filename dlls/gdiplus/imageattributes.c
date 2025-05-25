@@ -27,6 +27,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+static inline int is_valid_ColorAdjustType(ColorAdjustType type)
+{
+    return (type >= ColorAdjustTypeDefault && type < ColorAdjustTypeCount);
+}
+
 GpStatus WINGDIPAPI GdipCloneImageAttributes(GDIPCONST GpImageAttributes *imageattr,
     GpImageAttributes **cloneImageattr)
 {
@@ -117,7 +122,7 @@ GpStatus WINGDIPAPI GdipGetImageAttributesAdjustedPalette(GpImageAttributes *ima
     TRACE("(%p,%p,%u)\n", imageattr, palette, type);
 
     if (!imageattr || !palette || !palette->Count ||
-        type >= ColorAdjustTypeCount || type == ColorAdjustTypeDefault)
+        !is_valid_ColorAdjustType(type) || type == ColorAdjustTypeDefault)
         return InvalidParameter;
 
     apply_image_attributes(imageattr, (LPBYTE)palette->Entries, palette->Count, 1, 0,
@@ -131,7 +136,7 @@ GpStatus WINGDIPAPI GdipSetImageAttributesColorKeys(GpImageAttributes *imageattr
 {
     TRACE("(%p,%u,%i,%08lx,%08lx)\n", imageattr, type, enableFlag, colorLow, colorHigh);
 
-    if(!imageattr || type >= ColorAdjustTypeCount)
+    if(!imageattr || !is_valid_ColorAdjustType(type))
         return InvalidParameter;
 
     imageattr->colorkeys[type].enabled = enableFlag;
@@ -148,7 +153,7 @@ GpStatus WINGDIPAPI GdipSetImageAttributesColorMatrix(GpImageAttributes *imageat
     TRACE("(%p,%u,%i,%p,%p,%u)\n", imageattr, type, enableFlag, colorMatrix,
         grayMatrix, flags);
 
-    if(!imageattr || type >= ColorAdjustTypeCount || flags > ColorMatrixFlagsAltGray)
+    if(!imageattr || !is_valid_ColorAdjustType(type) || flags > ColorMatrixFlagsAltGray)
         return InvalidParameter;
 
     if (enableFlag)
@@ -206,7 +211,7 @@ GpStatus WINGDIPAPI GdipSetImageAttributesGamma(GpImageAttributes *imageAttr,
 {
     TRACE("(%p,%u,%i,%0.2f)\n", imageAttr, type, enableFlag, gamma);
 
-    if (!imageAttr || (enableFlag && gamma <= 0.0) || type >= ColorAdjustTypeCount)
+    if (!imageAttr || (enableFlag && gamma <= 0.0) || !is_valid_ColorAdjustType(type))
         return InvalidParameter;
 
     imageAttr->gamma_enabled[type] = enableFlag;
@@ -220,7 +225,7 @@ GpStatus WINGDIPAPI GdipSetImageAttributesNoOp(GpImageAttributes *imageAttr,
 {
     TRACE("(%p,%u,%i)\n", imageAttr, type, enableFlag);
 
-    if (type >= ColorAdjustTypeCount)
+    if (!is_valid_ColorAdjustType(type))
         return InvalidParameter;
 
     imageAttr->noop[type] = enableFlag ? IMAGEATTR_NOOP_SET : IMAGEATTR_NOOP_CLEAR;
@@ -263,7 +268,7 @@ GpStatus WINGDIPAPI GdipSetImageAttributesRemapTable(GpImageAttributes *imageAtt
 
     TRACE("(%p,%u,%i,%u,%p)\n", imageAttr, type, enableFlag, mapSize, map);
 
-    if(!imageAttr || type >= ColorAdjustTypeCount)
+    if(!imageAttr || !is_valid_ColorAdjustType(type))
 	return InvalidParameter;
 
     if (enableFlag)
@@ -325,7 +330,7 @@ GpStatus WINGDIPAPI GdipResetImageAttributes(GpImageAttributes *imageAttr,
 {
     TRACE("(%p,%u)\n", imageAttr, type);
 
-    if(!imageAttr || type >= ColorAdjustTypeCount)
+    if(!imageAttr || !is_valid_ColorAdjustType(type))
         return InvalidParameter;
 
     memset(&imageAttr->colormatrices[type], 0, sizeof(imageAttr->colormatrices[type]));
