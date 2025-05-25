@@ -1413,7 +1413,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
             got_AllocateStreamingResources);
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(got_AllocateStreamingResources == 1, "Got %u calls to AllocateStreamingResources().\n",
+    ok(got_AllocateStreamingResources == 1, "Got %u calls to AllocateStreamingResources().\n",
             got_AllocateStreamingResources);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
@@ -1424,7 +1424,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
             got_FreeStreamingResources);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(got_FreeStreamingResources == 1, "Got %u calls to FreeStreamingResources().\n",
+    ok(got_FreeStreamingResources == 1, "Got %u calls to FreeStreamingResources().\n",
             got_FreeStreamingResources);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
