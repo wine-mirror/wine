@@ -2217,7 +2217,7 @@ static void test_uninitialized(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_Pause(filter);
-    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
+    ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == E_FAIL, "Got hr %#lx.\n", hr);

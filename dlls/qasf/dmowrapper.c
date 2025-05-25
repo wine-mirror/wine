@@ -684,6 +684,9 @@ static HRESULT dmo_wrapper_init_stream(struct strmbase_filter *iface)
     struct dmo_wrapper *filter = impl_from_strmbase_filter(iface);
     DWORD i;
 
+    if (!filter->dmo)
+        return E_FAIL;
+
     for (i = 0; i < filter->source_count; ++i)
     {
         if (filter->sources[i].pin.pin.peer)
