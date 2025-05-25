@@ -78,6 +78,7 @@ static DWORD testdmo_output_size = 123;
 static DWORD testdmo_output_alignment = 1;
 
 static unsigned int got_Flush, got_Discontinuity, got_ProcessInput, got_ProcessOutput, got_Receive;
+static unsigned int got_AllocateStreamingResources, got_FreeStreamingResources;
 
 static IMediaBuffer *testdmo_buffer;
 
@@ -271,12 +272,14 @@ static HRESULT WINAPI dmo_Discontinuity(IMediaObject *iface, DWORD index)
 static HRESULT WINAPI dmo_AllocateStreamingResources(IMediaObject *iface)
 {
     if (winetest_debug > 1) trace("AllocateStreamingResources()\n");
+    ++got_AllocateStreamingResources;
     return S_OK;
 }
 
 static HRESULT WINAPI dmo_FreeStreamingResources(IMediaObject *iface)
 {
     if (winetest_debug > 1) trace("FreeStreamingResources()\n");
+    ++got_FreeStreamingResources;
     return S_OK;
 }
 
@@ -1390,6 +1393,8 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     IMediaSample *sample;
     HRESULT hr;
 
+    got_AllocateStreamingResources = got_FreeStreamingResources = 0;
+
     hr = IFilterGraph2_ConnectDirect(graph, source, &testsink->sink.pin.IPin_iface, &mt2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -1404,15 +1409,23 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
     ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
 
+    ok(!got_AllocateStreamingResources, "Got %u calls to AllocateStreamingResources().\n",
+            got_AllocateStreamingResources);
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(got_AllocateStreamingResources == 1, "Got %u calls to AllocateStreamingResources().\n",
+            got_AllocateStreamingResources);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     IMediaSample_Release(sample);
 
+    ok(!got_FreeStreamingResources, "Got %u calls to FreeStreamingResources().\n",
+            got_FreeStreamingResources);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    todo_wine ok(got_FreeStreamingResources == 1, "Got %u calls to FreeStreamingResources().\n",
+            got_FreeStreamingResources);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
     ok(hr == VFW_E_NOT_COMMITTED, "Got hr %#lx.\n", hr);
@@ -2202,6 +2215,9 @@ static void test_uninitialized(void)
     hr = CoCreateInstance(&CLSID_DMOWrapperFilter, NULL,
             CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void **)&filter);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_Pause(filter);
+    todo_wine ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
 
     hr = IBaseFilter_Stop(filter);
     ok(hr == E_FAIL, "Got hr %#lx.\n", hr);
