@@ -32,10 +32,10 @@
 @ stub PdhEnumObjectItemsHA
 @ stub PdhEnumObjectItemsHW
 @ stdcall PdhEnumObjectItemsW(wstr wstr wstr ptr ptr ptr ptr long long)
-@ stub PdhEnumObjectsA
+@ stdcall PdhEnumObjectsA(str str ptr ptr long long)
 @ stub PdhEnumObjectsHA
 @ stub PdhEnumObjectsHW
-@ stub PdhEnumObjectsW
+@ stdcall PdhEnumObjectsW(wstr wstr ptr ptr long long)
 @ stdcall PdhExpandCounterPathA(str ptr ptr)
 @ stdcall PdhExpandCounterPathW(wstr ptr ptr)
 @ stdcall PdhExpandWildCardPathA(str str ptr ptr long)

@@ -1289,3 +1289,23 @@ PDH_STATUS WINAPI PdhConnectMachineA(const char *name)
     FIXME("%s: stub\n", debugstr_a(name));
     return PDH_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *              PdhEnumObjectsA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhEnumObjectsA(const char *source, const char *machine, char *list,
+                                  DWORD *size, DWORD detail, BOOL refresh)
+{
+    FIXME("%s %s %p %p %lu %d: stub\n", debugstr_a(source),debugstr_a(machine), list, size, detail, refresh);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhEnumObjectsW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhEnumObjectsW(const WCHAR *source, const WCHAR *machine, WCHAR *list,
+                                  DWORD *size, DWORD detail, BOOL refresh)
+{
+    FIXME("%s %s %p %p %lu %d: stub\n", debugstr_w(source),debugstr_w(machine), list, size, detail, refresh);
+    return PDH_NOT_IMPLEMENTED;
+}
