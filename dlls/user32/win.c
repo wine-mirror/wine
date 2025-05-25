@@ -1645,3 +1645,13 @@ BOOL WINAPI SetWindowCompositionAttribute(HWND hwnd, void *data)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/**********************************************************************
+ *              SetProcessLaunchForegroundPolicy (USER32.@)
+ */
+BOOL WINAPI SetProcessLaunchForegroundPolicy(DWORD pid, DWORD flags)
+{
+    FIXME("(%lu %lu): stub\n", pid, flags);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return FALSE;
+}

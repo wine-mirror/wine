@@ -1074,7 +1074,7 @@
 @ stdcall SetProcessDefaultLayout(long) NtUserSetProcessDefaultLayout
 @ stdcall SetProcessDpiAwarenessContext(long)
 @ stdcall SetProcessDpiAwarenessInternal(long)
-# @ stub SetProcessLaunchForegroundPolicy
+@ stdcall SetProcessLaunchForegroundPolicy(long long)
 # @ stub SetProcessRestrictionExemption
 @ stdcall SetProcessWindowStation(long) NtUserSetProcessWindowStation
 @ stdcall SetProgmanWindow(long) NtUserSetProgmanWindow

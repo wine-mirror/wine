@@ -61,6 +61,7 @@ static BOOL (WINAPI *pSetWindowDisplayAffinity)(HWND hwnd, DWORD affinity);
 static BOOL (WINAPI *pAdjustWindowRectExForDpi)(LPRECT,DWORD,BOOL,DWORD,UINT);
 static BOOL (WINAPI *pSystemParametersInfoForDpi)(UINT,UINT,void*,UINT,UINT);
 static HICON (WINAPI *pInternalGetWindowIcon)(HWND window, UINT type);
+static BOOL (WINAPI *pSetProcessLaunchForegroundPolicy)(DWORD,DWORD);
 
 static BOOL test_lbuttondown_flag;
 static DWORD num_gettext_msgs;
@@ -13563,6 +13564,22 @@ static void test_ReleaseCapture(void)
     UnregisterClassA(cls.lpszClassName, GetModuleHandleA(0));
 }
 
+static void test_SetProcessLaunchForegroundPolicy(void)
+{
+    BOOL ret;
+    DWORD pid = GetCurrentProcessId();
+
+    if (!pSetProcessLaunchForegroundPolicy)
+    {
+        win_skip("SetProcessLaunchForegroundPolicy is not available\n");
+        return;
+    }
+
+    SetLastError(0xcafecafe);
+    ret = pSetProcessLaunchForegroundPolicy(pid, 4);
+    ok(!ret && (GetLastError() == ERROR_ACCESS_DENIED), "SetProcessLaunchForegroundPolicy failed: %d error %lu\n", ret, GetLastError());
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -13587,6 +13604,7 @@ START_TEST(win)
     pAdjustWindowRectExForDpi = (void *)GetProcAddress( user32, "AdjustWindowRectExForDpi" );
     pSystemParametersInfoForDpi = (void *)GetProcAddress( user32, "SystemParametersInfoForDpi" );
     pInternalGetWindowIcon = (void *)GetProcAddress( user32, "InternalGetWindowIcon" );
+    pSetProcessLaunchForegroundPolicy = (void*)GetProcAddress( user32, "SetProcessLaunchForegroundPolicy" );
 
     if (argc == 4)
     {
@@ -13747,6 +13765,7 @@ START_TEST(win)
     test_DragDetect();
     test_WM_NCCALCSIZE();
     test_ReleaseCapture();
+    test_SetProcessLaunchForegroundPolicy();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
