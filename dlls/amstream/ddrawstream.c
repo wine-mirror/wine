@@ -2237,8 +2237,9 @@ static HRESULT WINAPI media_sample_GetMediaType(IMediaSample *iface, AM_MEDIA_TY
 
     TRACE("sample %p, ret_mt %p.\n", sample, ret_mt);
 
-    if (!(*ret_mt = CreateMediaType(&sample->parent->mt)))
+    if (!(*ret_mt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE))))
         return E_OUTOFMEMORY;
+    set_mt_from_desc(*ret_mt, &sample->surface_desc);
     return S_OK;
 }
 
