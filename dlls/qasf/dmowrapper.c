@@ -108,7 +108,9 @@ static HRESULT WINAPI buffer_GetBufferAndLength(IMediaBuffer *iface, BYTE **data
     TRACE("iface %p, data %p, len %p.\n", iface, data, len);
 
     *len = IMediaSample_GetActualDataLength(buffer->sample);
-    return IMediaSample_GetPointer(buffer->sample, data);
+    if (data)
+        return IMediaSample_GetPointer(buffer->sample, data);
+    return S_OK;
 }
 
 static const IMediaBufferVtbl buffer_vtbl =

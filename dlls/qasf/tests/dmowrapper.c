@@ -302,6 +302,12 @@ static HRESULT WINAPI dmo_ProcessInput(IMediaObject *iface, DWORD index,
 
     ++got_ProcessInput;
 
+    len = 0xdeadbeef;
+    hr = IMediaBuffer_GetBufferAndLength(buffer, NULL, &len);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(len == 200, "Got length %lu.\n", len);
+
+    len = 0xdeadbeef;
     hr = IMediaBuffer_GetBufferAndLength(buffer, &data, &len);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(len == 200, "Got length %lu.\n", len);
