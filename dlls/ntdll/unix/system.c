@@ -1370,6 +1370,33 @@ static void init_tsc_frequency(void)
 
 #endif
 
+static pthread_once_t logical_proc_init_once = PTHREAD_ONCE_INIT;
+
+static void init_logical_proc_info(void)
+{
+    NTSTATUS status;
+
+    if ((status = create_logical_proc_info()))
+    {
+        FIXME( "Failed to get logical processor information, status %#x.\n", status );
+        free( logical_proc_info );
+        logical_proc_info = NULL;
+        logical_proc_info_len = 0;
+
+        free( logical_proc_info_ex );
+        logical_proc_info_ex = NULL;
+        logical_proc_info_ex_size = 0;
+    }
+    else
+    {
+        logical_proc_info = realloc( logical_proc_info, logical_proc_info_len * sizeof(*logical_proc_info) );
+        logical_proc_info_alloc_len = logical_proc_info_len;
+        logical_proc_info_ex = realloc( logical_proc_info_ex, logical_proc_info_ex_size );
+        logical_proc_info_ex_alloc_size = logical_proc_info_ex_size;
+    }
+    init_tsc_frequency();
+}
+
 /******************************************************************
  *		init_cpu_info
  *
@@ -1380,7 +1407,6 @@ static void init_tsc_frequency(void)
  */
 void init_cpu_info(void)
 {
-    unsigned int status;
     long num;
 
 #ifdef _SC_NPROCESSORS_ONLN
@@ -1409,26 +1435,6 @@ void init_cpu_info(void)
     TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
            cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel,
            cpu_info.ProcessorRevision, cpu_info.ProcessorFeatureBits );
-
-    if ((status = create_logical_proc_info()))
-    {
-        FIXME( "Failed to get logical processor information, status %#x.\n", status );
-        free( logical_proc_info );
-        logical_proc_info = NULL;
-        logical_proc_info_len = 0;
-
-        free( logical_proc_info_ex );
-        logical_proc_info_ex = NULL;
-        logical_proc_info_ex_size = 0;
-    }
-    else
-    {
-        logical_proc_info = realloc( logical_proc_info, logical_proc_info_len * sizeof(*logical_proc_info) );
-        logical_proc_info_alloc_len = logical_proc_info_len;
-        logical_proc_info_ex = realloc( logical_proc_info_ex, logical_proc_info_ex_size );
-        logical_proc_info_ex_alloc_size = logical_proc_info_ex_size;
-    }
-    init_tsc_frequency();
 }
 
 static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
@@ -1802,17 +1808,20 @@ static void append_smbios_end( struct smbios_buffer *buf )
 static void create_smbios_processors( struct smbios_buffer *buf )
 {
     char socket[20], name[49];
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p = logical_proc_info_ex;
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *p;
     UINT i, family = 0, core_count = 0, thread_count = 0, pkg_count = 0;
 #ifdef __aarch64__
     UINT logical_thread_id = 0;
     WORD proc_handle;
 #endif
 
+    pthread_once( &logical_proc_init_once, init_logical_proc_info );
     strcpy( name, cpu_name );
     for (i = strlen(name); i > 0 && name[i - 1] == ' '; i--) name[i - 1] = 0;
 
-    while ((char *)p != (char *)logical_proc_info_ex + logical_proc_info_ex_size)
+    for (p = logical_proc_info_ex;
+         (char *)p != (char *)logical_proc_info_ex + logical_proc_info_ex_size;
+         p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size) )
     {
         switch (p->Relationship)
         {
@@ -1838,7 +1847,6 @@ static void create_smbios_processors( struct smbios_buffer *buf )
         default:
             break;
         }
-        p = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)((char *)p + p->Size);
     }
     snprintf( socket, sizeof(socket), "Socket #%u", pkg_count - 1 );
 #ifdef __aarch64__
@@ -3474,7 +3482,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemLogicalProcessorInformation:  /* 73 */
-    {
+        pthread_once( &logical_proc_init_once, init_logical_proc_info );
         if (!logical_proc_info)
         {
             ret = STATUS_NOT_IMPLEMENTED;
@@ -3488,7 +3496,6 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
         }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
-    }
 
     case SystemFirmwareTableInformation:  /* 76 */
     {
@@ -3719,6 +3726,8 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     unsigned int ret = STATUS_NOT_IMPLEMENTED;
 
     TRACE( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
+
+    pthread_once( &logical_proc_init_once, init_logical_proc_info );
 
     switch (class)
     {
