@@ -771,10 +771,58 @@ static void test_COM_editstream(void)
     while (IAVIEditStream_Release(edit));
 }
 
+static void test_avifile_write(void)
+{
+    WCHAR fn[MAX_PATH];
+    IPersistFile *persist;
+    AVISTREAMINFOW si;
+    PAVIFILE avifile;
+    PAVISTREAM stm;
+    HRESULT hr;
+    BOOL ret;
+
+    GetTempPathW(MAX_PATH, fn);
+    wcscat(fn, L"test.avi");
+
+    hr = CoCreateInstance(&CLSID_AVIFile, NULL, CLSCTX_INPROC, &IID_IAVIFile, (void **)&avifile);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIFile_QueryInterface(avifile, &IID_IPersistFile, (void **)&persist);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IPersistFile_Load(persist, fn, STGM_CREATE);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&si, 0, sizeof(si));
+    si.fccType = streamtypeAUDIO;
+    si.dwScale = 1;
+    si.dwRate = 48000;
+    si.dwLength = 4;
+    si.dwQuality = ~0u;
+    si.dwSampleSize = 4;
+    hr = IAVIFile_CreateStream(avifile, &stm, &si);
+    ok(hr == AVIERR_READONLY, "got %#lx.\n", hr);
+
+    IPersistFile_Release(persist);
+    IAVIFile_Release(avifile);
+
+    ret = DeleteFileW(fn);
+    ok(ret, "got error %lu.\n", GetLastError());
+
+    hr = AVIFileOpenW(&avifile, fn, OF_CREATE, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = AVIFileCreateStreamW(avifile, &stm, &si);
+    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
+    if (hr == S_OK)
+        IAVIStream_Release(stm);
+    IAVIFile_Release(avifile);
+    ret = DeleteFileW(fn);
+    ok(ret, "got error %lu.\n", GetLastError());
+}
+
 START_TEST(api)
 {
 
     AVIFileInit();
+
     test_EditStreamSetInfo();
     test_AVISaveOptions();
     test_default_data();
@@ -784,6 +832,7 @@ START_TEST(api)
     test_COM();
     test_COM_wavfile();
     test_COM_editstream();
+    test_avifile_write();
     AVIFileExit();
 
 }
