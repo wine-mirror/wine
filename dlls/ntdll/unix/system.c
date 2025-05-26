@@ -567,23 +567,69 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
 }
 
+void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
+{
+    BOOLEAN *features = data->ProcessorFeatures;
+    unsigned int regs[4];
+
+    features[PF_FASTFAIL_AVAILABLE]      = TRUE;
+    features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+
+    do_cpuid( 0x00000001, 0, regs ); /* get cpu features */
+    features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = !!(regs[3] & (1 << 4));
+    features[PF_PAE_ENABLED]                   = !!(regs[3] & (1 << 6));
+    features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = !!(regs[3] & (1 << 23));
+    features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = (regs[3] & (1 << 24)) && (regs[3] & (1 << 25));
+    features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = !!(regs[3] & (1 << 26));
+    features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = !!(regs[2] & (1 << 0));
+    features[PF_VIRT_FIRMWARE_ENABLED]         = !!(regs[2] & (1 << 5));
+    features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = !!(regs[2] & (1 << 9));
+    features[PF_COMPARE_EXCHANGE128]           = !!(regs[2] & (1 << 13));
+    features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = !!(regs[2] & (1 << 19));
+    features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = !!(regs[2] & (1 << 20));
+    features[PF_XSAVE_ENABLED]                 = !!(regs[2] & (1 << 27));
+    features[PF_AVX_INSTRUCTIONS_AVAILABLE]    = !!(regs[2] & (1 << 28));
+    features[PF_RDRAND_INSTRUCTION_AVAILABLE]  = !!(regs[2] & (1 << 30));
+    features[PF_SSE_DAZ_MODE_AVAILABLE] = (features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] && have_sse_daz_mode());
+
+    do_cpuid( 0x00000000, 0, regs );
+    if (regs[0] >= 0x00000007)
+    {
+        do_cpuid( 0x00000007, 0, regs ); /* get extended features */
+        features[PF_RDWRFSGSBASE_AVAILABLE]         = !!(regs[1] & (1 << 0));
+        features[PF_AVX2_INSTRUCTIONS_AVAILABLE]    = !!(regs[1] & (1 << 5));
+        features[PF_BMI2_INSTRUCTIONS_AVAILABLE]    = !!(regs[1] & (1 << 8));
+        features[PF_ERMS_AVAILABLE]                 = !!(regs[1] & (1 << 9));
+        features[PF_AVX512F_INSTRUCTIONS_AVAILABLE] = !!(regs[1] & (1 << 16));
+        features[PF_RDPID_INSTRUCTION_AVAILABLE]    = !!(regs[2] & (1 << 22));
+#if defined(__linux__) && defined(AT_HWCAP2)
+        features[PF_RDWRFSGSBASE_AVAILABLE] &= !!(getauxval( AT_HWCAP2 ) & 2);
+#endif
+    }
+
+    do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
+    if (regs[0] >= 0x80000001)
+    {
+        do_cpuid( 0x80000001, 0, regs );  /* get vendor features */
+        features[PF_MONITORX_INSTRUCTION_AVAILABLE] = !!(regs[2] & (1 << 29));
+        features[PF_NX_ENABLED]                     = !!(regs[3] & (1 << 20));
+        features[PF_RDTSCP_INSTRUCTION_AVAILABLE]   = !!(regs[3] & (1 << 27));
+        features[PF_VIRT_FIRMWARE_ENABLED]         |= !!(regs[2] & (1 << 2));
+        features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]   = !!(regs[3] & (1u << 31));
+    }
+}
+
 #elif defined(__arm__) || defined(__aarch64__)
 
 static int has_feature( const char *line, const char *feat )
 {
-    const char *linepos = line;
-    size_t featlen = strlen(feat);
-    while (1)
+    size_t len = strlen(feat);
+
+    while (*line)
     {
-        const char *ptr = strstr(linepos, feat);
-        if (!ptr)
-             return 0;
-        /* Check that the match is surrounded by whitespace, or at the
-           start/end of the string. */
-        if ((ptr == line || isspace(ptr[-1])) &&
-            (isspace(linepos[featlen]) || !linepos[featlen]))
-            return 1;
-        linepos += featlen;
+        while (*line == ' ' || *line == '\t') line++;
+        if (!strncmp( line, feat, len ) && (!line[len] || isspace(line[len]))) return 1;
+        while (*line && *line != ' ' && *line != '\t') line++;
     }
     return 0;
 }
@@ -671,6 +717,90 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     case 0x56: strcpy( cpu_vendor, "Marvell" ); break;
     case 0x66: strcpy( cpu_vendor, "Faraday" ); break;
     case 0x69: strcpy( cpu_vendor, "Intel" ); break;
+    }
+}
+
+void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
+{
+    BOOLEAN *features = data->ProcessorFeatures;
+
+#ifdef linux
+    FILE *f = fopen("/proc/cpuinfo", "r");
+    if (f)
+    {
+        char *s, *value, line[512];
+        while (fgets( line, sizeof(line), f ))
+        {
+            /* NOTE: the ':' is the only character we can rely on */
+            if (!(value = strchr(line,':'))) continue;
+            /* terminate the valuename */
+            s = value - 1;
+            while ((s >= line) && (*s == ' ' || *s == '\t')) s--;
+            s[1] = 0;
+            value++;
+            if ((s = strchr( value, '\n' ))) *s = 0;
+            if (strcmp( line, "Features" )) continue;
+            features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]          = has_feature( value, "vfpv3" );
+            features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]         = has_feature( value, "neon" );
+            features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE]        = has_feature( value, "idivt" );
+            if (native_machine == IMAGE_FILE_MACHINE_ARMNT) break;
+            features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "crc32" );
+            features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "aes" );
+            features[PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE]   = has_feature( value, "atomics" );
+            features[PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE]       = has_feature( value, "asimddp" );
+            features[PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "jscvt" );
+            features[PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "lrcpc" );
+            features[PF_ARM_SVE_INSTRUCTIONS_AVAILABLE]          = has_feature( value, "sve" );
+            features[PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE]         = has_feature( value, "sve2" );
+            features[PF_ARM_SVE2_1_INSTRUCTIONS_AVAILABLE]       = has_feature( value, "sve2p1" );
+            features[PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE]      = has_feature( value, "sveaes" );
+            features[PF_ARM_SVE_PMULL128_INSTRUCTIONS_AVAILABLE] = has_feature( value, "svepmull" );
+            features[PF_ARM_SVE_BITPERM_INSTRUCTIONS_AVAILABLE]  = has_feature( value, "svebitperm" );
+            features[PF_ARM_SVE_BF16_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svebf16" );
+            features[PF_ARM_SVE_EBF16_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "sveebf16" );
+            features[PF_ARM_SVE_B16B16_INSTRUCTIONS_AVAILABLE]   = has_feature( value, "sveb16b16" );
+            features[PF_ARM_SVE_SHA3_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svesha3" );
+            features[PF_ARM_SVE_SM4_INSTRUCTIONS_AVAILABLE]      = has_feature( value, "svesm4" );
+            features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]     = has_feature( value, "svei8mm" );
+            features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef32mm" );
+            features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE]    = has_feature( value, "svef64mm" );
+            break;
+        }
+        fclose( f );
+    }
+#endif
+
+    features[PF_FASTFAIL_AVAILABLE]      = TRUE;
+    features[PF_COMPARE_EXCHANGE_DOUBLE] = TRUE;
+
+    if (native_machine == IMAGE_FILE_MACHINE_ARMNT) return;
+
+    features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE] = TRUE;
+    features[PF_NX_ENABLED]                    = TRUE;
+
+    /* add features for other architectures supported by wow64 */
+    for (unsigned int i = 0; i < supported_machines_count; i++)
+    {
+        switch (supported_machines[i])
+        {
+        case IMAGE_FILE_MACHINE_ARMNT:
+            features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]   = TRUE;
+            features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]  = TRUE;
+            features[PF_ARM_DIVIDE_INSTRUCTION_AVAILABLE] = TRUE;
+            break;
+        case IMAGE_FILE_MACHINE_I386:
+            features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
+            features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
+            features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
+            features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
+            features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
+            features[PF_COMPARE_EXCHANGE128]           = TRUE;
+            features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
+            features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
+            features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
+            features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
+            break;
+        }
     }
 }
 

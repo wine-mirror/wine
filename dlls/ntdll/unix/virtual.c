@@ -4319,7 +4319,18 @@ void virtual_init_user_shared_data(void)
     data->SystemCall            = 1;
     data->NumberOfPhysicalPages = info.MmNumberOfPhysicalPages;
     data->NXSupportPolicy       = NX_SUPPORT_POLICY_OPTIN;
+    data->ActiveProcessorCount  = peb->NumberOfProcessors;
+    data->ActiveGroupCount      = 1;
 
+    switch (native_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386:  data->NativeProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL; break;
+    case IMAGE_FILE_MACHINE_AMD64: data->NativeProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64; break;
+    case IMAGE_FILE_MACHINE_ARMNT: data->NativeProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM; break;
+    case IMAGE_FILE_MACHINE_ARM64: data->NativeProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64; break;
+    }
+
+    init_shared_data_cpuinfo( data );
     munmap( data, sizeof(*data) );
 }
 

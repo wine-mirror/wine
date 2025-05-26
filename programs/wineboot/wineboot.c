@@ -389,13 +389,10 @@ static void create_user_shared_data(void)
 {
     struct _KUSER_SHARED_DATA *data;
     RTL_OSVERSIONINFOEXW version;
-    SYSTEM_CPU_INFORMATION sci;
-    BOOLEAN *features;
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wine_user_shared_data" );
     NTSTATUS status;
     HANDLE handle;
-    ULONG i;
 
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
@@ -413,101 +410,14 @@ static void create_user_shared_data(void)
 
     version.dwOSVersionInfoSize = sizeof(version);
     RtlGetVersion( &version );
-    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
     data->NtBuildNumber               = version.dwBuildNumber;
     data->NtProductType               = version.wProductType;
     data->ProductTypeIsValid          = TRUE;
-    data->NativeProcessorArchitecture = sci.ProcessorArchitecture;
     data->NtMajorVersion              = version.dwMajorVersion;
     data->NtMinorVersion              = version.dwMinorVersion;
     data->SuiteMask                   = version.wSuiteMask;
     wcscpy( data->NtSystemRoot, L"C:\\windows" );
-
-    features = data->ProcessorFeatures;
-    switch (sci.ProcessorArchitecture)
-    {
-    case PROCESSOR_ARCHITECTURE_INTEL:
-    case PROCESSOR_ARCHITECTURE_AMD64:
-        features[PF_COMPARE_EXCHANGE_DOUBLE]              = !!(sci.ProcessorFeatureBits & CPU_FEATURE_CX8);
-        features[PF_MMX_INSTRUCTIONS_AVAILABLE]           = !!(sci.ProcessorFeatureBits & CPU_FEATURE_MMX);
-        features[PF_XMMI_INSTRUCTIONS_AVAILABLE]          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSE);
-        features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]         = !!(sci.ProcessorFeatureBits & CPU_FEATURE_3DNOW);
-        features[PF_RDTSC_INSTRUCTION_AVAILABLE]          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_TSC);
-        features[PF_PAE_ENABLED]                          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_PAE);
-        features[PF_XMMI64_INSTRUCTIONS_AVAILABLE]        = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSE2);
-        features[PF_SSE3_INSTRUCTIONS_AVAILABLE]          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSE3);
-        features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]         = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSSE3);
-        features[PF_XSAVE_ENABLED]                        = !!(sci.ProcessorFeatureBits & CPU_FEATURE_XSAVE);
-        features[PF_COMPARE_EXCHANGE128]                  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_CX128);
-        features[PF_SSE_DAZ_MODE_AVAILABLE]               = !!(sci.ProcessorFeatureBits & CPU_FEATURE_DAZ);
-        features[PF_NX_ENABLED]                           = !!(sci.ProcessorFeatureBits & CPU_FEATURE_NX);
-        features[PF_SECOND_LEVEL_ADDRESS_TRANSLATION]     = !!(sci.ProcessorFeatureBits & CPU_FEATURE_2NDLEV);
-        features[PF_VIRT_FIRMWARE_ENABLED]                = !!(sci.ProcessorFeatureBits & CPU_FEATURE_VIRT);
-        features[PF_RDWRFSGSBASE_AVAILABLE]               = !!(sci.ProcessorFeatureBits & CPU_FEATURE_RDFS);
-        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
-        features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE]        = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSE41);
-        features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE]        = !!(sci.ProcessorFeatureBits & CPU_FEATURE_SSE42);
-        features[PF_AVX_INSTRUCTIONS_AVAILABLE]           = !!(sci.ProcessorFeatureBits & CPU_FEATURE_AVX);
-        features[PF_AVX2_INSTRUCTIONS_AVAILABLE]          = !!(sci.ProcessorFeatureBits & CPU_FEATURE_AVX2);
-        break;
-
-    case PROCESSOR_ARCHITECTURE_ARM:
-        features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]       = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_VFP_32);
-        features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE]      = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_NEON);
-        break;
-
-    case PROCESSOR_ARCHITECTURE_ARM64:
-        features[PF_ARM_V8_INSTRUCTIONS_AVAILABLE]        = TRUE;
-        features[PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE]  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V8_CRC32);
-        features[PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V8_CRYPTO);
-        features[PF_ARM_V81_ATOMIC_INSTRUCTIONS_AVAILABLE]= !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V81_ATOMIC);
-        features[PF_ARM_V82_DP_INSTRUCTIONS_AVAILABLE]    = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V82_DP);
-        features[PF_ARM_V83_JSCVT_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V83_JSCVT);
-        features[PF_ARM_V83_LRCPC_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_V83_LRCPC);
-        features[PF_ARM_SVE_INSTRUCTIONS_AVAILABLE]       = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE);
-        features[PF_ARM_SVE2_INSTRUCTIONS_AVAILABLE]      = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE2);
-        features[PF_ARM_SVE2_1_INSTRUCTIONS_AVAILABLE]    = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE2_1);
-        features[PF_ARM_SVE_AES_INSTRUCTIONS_AVAILABLE]   = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_AES);
-        features[PF_ARM_SVE_PMULL128_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_PMULL128);
-        features[PF_ARM_SVE_BITPERM_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_BITPERM);
-        features[PF_ARM_SVE_BF16_INSTRUCTIONS_AVAILABLE]  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_BF16);
-        features[PF_ARM_SVE_EBF16_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_EBF16);
-        features[PF_ARM_SVE_B16B16_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_B16B16);
-        features[PF_ARM_SVE_SHA3_INSTRUCTIONS_AVAILABLE]  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_SHA3);
-        features[PF_ARM_SVE_SM4_INSTRUCTIONS_AVAILABLE]   = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_SM4);
-        features[PF_ARM_SVE_I8MM_INSTRUCTIONS_AVAILABLE]  = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_I8MM);
-        features[PF_ARM_SVE_F32MM_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_F32MM);
-        features[PF_ARM_SVE_F64MM_INSTRUCTIONS_AVAILABLE] = !!(sci.ProcessorFeatureBits & CPU_FEATURE_ARM_SVE_F64MM);
-        features[PF_COMPARE_EXCHANGE_DOUBLE]              = TRUE;
-        features[PF_NX_ENABLED]                           = TRUE;
-        features[PF_FASTFAIL_AVAILABLE]                   = TRUE;
-        /* add features for other architectures supported by wow64 */
-        for (i = 0; machines[i].Machine; i++)
-        {
-            switch (machines[i].Machine)
-            {
-            case IMAGE_FILE_MACHINE_ARMNT:
-                features[PF_ARM_VFP_32_REGISTERS_AVAILABLE]  = TRUE;
-                features[PF_ARM_NEON_INSTRUCTIONS_AVAILABLE] = TRUE;
-                break;
-            case IMAGE_FILE_MACHINE_I386:
-                features[PF_MMX_INSTRUCTIONS_AVAILABLE]    = TRUE;
-                features[PF_XMMI_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                features[PF_RDTSC_INSTRUCTION_AVAILABLE]   = TRUE;
-                features[PF_XMMI64_INSTRUCTIONS_AVAILABLE] = TRUE;
-                features[PF_SSE3_INSTRUCTIONS_AVAILABLE]   = TRUE;
-                features[PF_RDTSCP_INSTRUCTION_AVAILABLE]  = TRUE;
-                features[PF_SSSE3_INSTRUCTIONS_AVAILABLE]  = TRUE;
-                features[PF_SSE4_1_INSTRUCTIONS_AVAILABLE] = TRUE;
-                features[PF_SSE4_2_INSTRUCTIONS_AVAILABLE] = TRUE;
-                break;
-            }
-        }
-        break;
-    }
-    data->ActiveProcessorCount = NtCurrentTeb()->Peb->NumberOfProcessors;
-    data->ActiveGroupCount = 1;
 
     initialize_xstate_features( data );
 
