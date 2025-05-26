@@ -409,6 +409,7 @@ struct property_value
         IReference_DOUBLE double_iface;
         IReference_DateTime datetime_iface;
         IReference_GUID guid_iface;
+        IReference_Point point_iface;
         IReference_HSTRING hstring_iface;
     } irefs;
     PropertyType type;
@@ -536,6 +537,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_GUID_AddRef(&impl->irefs.guid_iface);
         *out = &impl->irefs.guid_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_Point) && impl->type == PropertyType_Point)
+    {
+        IReference_Point_AddRef(&impl->irefs.point_iface);
+        *out = &impl->irefs.point_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_HSTRING) && impl->type == PropertyType_String)
@@ -1235,6 +1242,31 @@ static const struct IReference_GUIDVtbl iref_guid_vtbl =
     iref_guid_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_point, IReference_Point, struct property_value,
+                     impl_from_IReference_Point, irefs.point_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_point_get_Value(IReference_Point *iface, Point *value)
+{
+    struct property_value *impl = impl_from_IReference_Point(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetPoint(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_PointVtbl iref_point_vtbl =
+{
+    iref_point_QueryInterface,
+    iref_point_AddRef,
+    iref_point_Release,
+    /* IInspectable methods */
+    iref_point_GetIids,
+    iref_point_GetRuntimeClassName,
+    iref_point_GetTrustLevel,
+    /* IReference<Point> methods */
+    iref_point_get_Value,
+};
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct property_value_statics, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
@@ -1365,7 +1397,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreatePoint(IPropertyVal
         Point value, IInspectable **property_value)
 {
     TRACE("iface %p, value (%f, %f), property_value %p.\n", iface, value.X, value.Y, property_value);
-    return create_primitive_property_value(PropertyType_Point);
+    create_primitive_property_value_iref(PropertyType_Point, irefs.point_iface.lpVtbl, iref_point_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateSize(IPropertyValueStatics *iface,
