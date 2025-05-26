@@ -88,8 +88,6 @@ static void test_for_all_le_devices( int line, void (*func)( HANDLE, void * ), v
 
 static const char *debugstr_BTH_LE_UUID( const BTH_LE_UUID *uuid )
 {
-    if (!uuid)
-        return wine_dbg_sprintf( "(null)" );
     if (uuid->IsShortUuid)
         return wine_dbg_sprintf("{ IsShortUuid=1 {%#x} }", uuid->Value.ShortUuid );
     return wine_dbg_sprintf( "{ IsShortUuid=0 %s }", debugstr_guid( &uuid->Value.LongUuid ) );
@@ -97,9 +95,45 @@ static const char *debugstr_BTH_LE_UUID( const BTH_LE_UUID *uuid )
 
 static const char *debugstr_BTH_LE_GATT_SERVICE( const BTH_LE_GATT_SERVICE *svc )
 {
-    if (!svc)
-        return wine_dbg_sprintf( "(null)" );
     return wine_dbg_sprintf( "{ %s %#x }", debugstr_BTH_LE_UUID( &svc->ServiceUuid ), svc->AttributeHandle );
+}
+
+static const char *debugstr_BTH_LE_GATT_CHARACTERISTIC( const BTH_LE_GATT_CHARACTERISTIC *chrc )
+{
+    return wine_dbg_sprintf( "{ %#x %s %#x %#x %d %d %d %d %d %d %d %d }", chrc->ServiceHandle,
+                             debugstr_BTH_LE_UUID( &chrc->CharacteristicUuid ), chrc->AttributeHandle,
+                             chrc->CharacteristicValueHandle, chrc->IsBroadcastable, chrc->IsReadable, chrc->IsWritable,
+                             chrc->IsWritableWithoutResponse, chrc->IsSignedWritable, chrc->IsNotifiable,
+                             chrc->IsIndicatable, chrc->HasExtendedProperties );
+}
+
+static void test_service_BluetoothGATTGetCharacteristics( HANDLE device, BTH_LE_GATT_SERVICE *service )
+{
+    HRESULT ret;
+    USHORT actual = 0, actual2 = 0, i;
+    BTH_LE_GATT_CHARACTERISTIC *buf = NULL, dummy;
+
+    ret = BluetoothGATTGetCharacteristics( device, service, 0, &dummy, &actual, 0 );
+    ok( ret == E_INVALIDARG, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( device, NULL, 0, NULL, &actual, 0 );
+    ok( ret == E_INVALIDARG, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( device, service, 0, NULL, &actual, 0 );
+    ok( ret == HRESULT_FROM_WIN32( ERROR_MORE_DATA ), "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( device, service, actual, NULL, &actual2, 0 );
+    ok( ret == HRESULT_FROM_WIN32( ERROR_MORE_DATA ), "got ret %#lx\n", ret );
+    ok( actual == actual2, "%u != %u\n", actual, actual2 );
+
+    buf = calloc( actual, sizeof( *buf ) );
+    ret = BluetoothGATTGetCharacteristics( device, service, actual, buf, &actual, 0 );
+    ok( ret == S_OK, "BluetoothGATTGetCharacteristics failed: %#lx\n", ret );
+
+    for (i = 0; i < actual; i++)
+        trace( "characteristic %u: %s\n", i, debugstr_BTH_LE_GATT_CHARACTERISTIC( &buf[i] ) );
+
+    free( buf );
 }
 
 static void test_device_BluetoothGATTGetServices( HANDLE device, void *param )
@@ -141,7 +175,12 @@ static void test_device_BluetoothGATTGetServices( HANDLE device, void *param )
     }
 
     for (i = 0; i < actual; i++)
-        trace( "service %u: %s\n", i, debugstr_BTH_LE_GATT_SERVICE( &buf[i] ) );
+    {
+        winetest_push_context( "service %u", i );
+        trace( "%s\n", debugstr_BTH_LE_GATT_SERVICE( &buf[i] ) );
+        test_service_BluetoothGATTGetCharacteristics( device, &buf[i] );
+        winetest_pop_context();
+    }
 
     free( buf );
 }
@@ -156,7 +195,42 @@ static void test_BluetoothGATTGetServices( void )
     test_for_all_le_devices( __LINE__, test_device_BluetoothGATTGetServices, NULL );
 }
 
+static void test_device_BluetoothGATTGetCharacteristics( HANDLE device, void *data )
+{
+    HRESULT ret;
+    USHORT actual = 0;
+    BTH_LE_GATT_SERVICE svc = {.ServiceUuid = {TRUE, {.ShortUuid = 0xdead}}, 0xbeef};
+
+    ret = BluetoothGATTGetCharacteristics( device, NULL, 0, NULL, NULL, 0 );
+    ok( ret == E_POINTER, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( device, &svc, 0, NULL, NULL, 0 );
+    ok( ret == E_POINTER, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( device, &svc, 0, NULL, &actual, 0 );
+    ok( ret == E_INVALIDARG, "got ret %#lx\n", ret );
+}
+
+static void test_BluetoothGATTGetCharacteristic( void )
+{
+    HRESULT ret;
+    USHORT actual = 0;
+    BTH_LE_GATT_SERVICE svc;
+
+    ret = BluetoothGATTGetCharacteristics( NULL, NULL, 0, NULL, NULL, 0 );
+    ok( ret == E_POINTER, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( NULL, &svc, 0, NULL, &actual, 0 );
+    ok( ret == E_HANDLE, "got ret %#lx\n", ret );
+
+    ret = BluetoothGATTGetCharacteristics( INVALID_HANDLE_VALUE, &svc, 0, NULL, &actual, 0 );
+    ok( ret == E_HANDLE, "got ret %#lx\n", ret );
+
+    test_for_all_le_devices( __LINE__, test_device_BluetoothGATTGetCharacteristics, NULL );
+}
+
 START_TEST( gatt )
 {
     test_BluetoothGATTGetServices();
+    test_BluetoothGATTGetCharacteristic();
 }
