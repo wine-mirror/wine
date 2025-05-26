@@ -400,6 +400,7 @@ struct property_value
     {
         IReference_BYTE byte_iface;
         IReference_INT16 int16_iface;
+        IReference_INT32 int32_iface;
         IReference_UINT32 uint32_iface;
         IReference_boolean boolean_iface;
         IReference_FLOAT float_iface;
@@ -478,6 +479,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_INT16_AddRef(&impl->irefs.int16_iface);
         *out = &impl->irefs.int16_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_INT32) && impl->type == PropertyType_Int32)
+    {
+        IReference_INT32_AddRef(&impl->irefs.int32_iface);
+        *out = &impl->irefs.int32_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_UINT32) && impl->type == PropertyType_UInt32)
@@ -957,6 +964,31 @@ static const struct IReference_INT16Vtbl iref_int16_vtbl =
     iref_int16_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_int32, IReference_INT32, struct property_value,
+                     impl_from_IReference_INT32, irefs.int32_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_int32_get_Value(IReference_INT32 *iface, INT32 *value)
+{
+    struct property_value *impl = impl_from_IReference_INT32(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetInt32(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_INT32Vtbl iref_int32_vtbl =
+{
+    iref_int32_QueryInterface,
+    iref_int32_AddRef,
+    iref_int32_Release,
+    /* IInspectable methods */
+    iref_int32_GetIids,
+    iref_int32_GetRuntimeClassName,
+    iref_int32_GetTrustLevel,
+    /* IReference<INT32> methods */
+    iref_int32_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_uint32, IReference_UINT32, struct property_value,
                      impl_from_IReference_UINT32, irefs.uint32_iface, &impl->IPropertyValue_iface);
 
@@ -1146,7 +1178,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt32(IPropertyVal
         INT32 value, IInspectable **property_value)
 {
     TRACE("iface %p, value %d, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_Int32);
+    create_primitive_property_value_iref(PropertyType_Int32, irefs.int32_iface.lpVtbl, iref_int32_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt32(IPropertyValueStatics *iface,
