@@ -1620,6 +1620,7 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
         return;
     }
 
+    virtual_init_user_shared_data();
     env[size] = 0;
     params.Flags           = PROCESS_PARAMS_FLAG_NORMALIZED;
     params.Environment     = env;

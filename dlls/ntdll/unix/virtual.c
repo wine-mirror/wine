@@ -4253,14 +4253,15 @@ done:
 }
 
 
+static const WCHAR shared_data_nameW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
+                                          '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
+
 /***********************************************************************
  *           virtual_map_user_shared_data
  */
 void virtual_map_user_shared_data(void)
 {
-    static const WCHAR nameW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
-                                  '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
-    UNICODE_STRING name_str = RTL_CONSTANT_STRING( nameW );
+    UNICODE_STRING name_str = RTL_CONSTANT_STRING( shared_data_nameW );
     OBJECT_ATTRIBUTES attr = { sizeof(attr), 0, &name_str };
     unsigned int status;
     HANDLE section;
@@ -4279,6 +4280,47 @@ void virtual_map_user_shared_data(void)
     }
     if (needs_close) close( fd );
     NtClose( section );
+}
+
+
+/******************************************************************
+ *		virtual_init_user_shared_data
+ *
+ * Initialize user shared data before running wineboot.
+ */
+void virtual_init_user_shared_data(void)
+{
+    UNICODE_STRING name_str = RTL_CONSTANT_STRING( shared_data_nameW );
+    OBJECT_ATTRIBUTES attr = { sizeof(attr), 0, &name_str };
+    SYSTEM_BASIC_INFORMATION info;
+    KUSER_SHARED_DATA *data;
+    unsigned int status;
+    HANDLE section;
+    int res, fd, needs_close;
+
+    if ((status = NtOpenSection( &section, SECTION_ALL_ACCESS, &attr )))
+    {
+        ERR( "failed to open the USD section: %08x\n", status );
+        exit(1);
+    }
+    if ((res = server_get_unix_fd( section, 0, &fd, &needs_close, NULL, NULL )) ||
+        (data = mmap( NULL, sizeof(*data), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 )) == MAP_FAILED)
+    {
+        ERR( "failed to remap the process USD: %d\n", res );
+        exit(1);
+    }
+    if (needs_close) close( fd );
+    NtClose( section );
+
+    virtual_get_system_info( &info, FALSE );
+
+    data->TickCountMultiplier   = 1 << 24;
+    data->LargePageMinimum      = 2 * 1024 * 1024;
+    data->SystemCall            = 1;
+    data->NumberOfPhysicalPages = info.MmNumberOfPhysicalPages;
+    data->NXSupportPolicy       = NX_SUPPORT_POLICY_OPTIN;
+
+    munmap( data, sizeof(*data) );
 }
 
 

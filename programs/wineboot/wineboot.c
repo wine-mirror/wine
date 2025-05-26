@@ -390,7 +390,6 @@ static void create_user_shared_data(void)
     struct _KUSER_SHARED_DATA *data;
     RTL_OSVERSIONINFOEXW version;
     SYSTEM_CPU_INFORMATION sci;
-    SYSTEM_BASIC_INFORMATION sbi;
     BOOLEAN *features;
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wine_user_shared_data" );
@@ -414,11 +413,8 @@ static void create_user_shared_data(void)
 
     version.dwOSVersionInfoSize = sizeof(version);
     RtlGetVersion( &version );
-    NtQuerySystemInformation( SystemBasicInformation, &sbi, sizeof(sbi), NULL );
     NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
-    data->TickCountMultiplier         = 1 << 24;
-    data->LargePageMinimum            = 2 * 1024 * 1024;
     data->NtBuildNumber               = version.dwBuildNumber;
     data->NtProductType               = version.wProductType;
     data->ProductTypeIsValid          = TRUE;
@@ -426,8 +422,6 @@ static void create_user_shared_data(void)
     data->NtMajorVersion              = version.dwMajorVersion;
     data->NtMinorVersion              = version.dwMinorVersion;
     data->SuiteMask                   = version.wSuiteMask;
-    data->NumberOfPhysicalPages       = sbi.MmNumberOfPhysicalPages;
-    data->NXSupportPolicy             = NX_SUPPORT_POLICY_OPTIN;
     wcscpy( data->NtSystemRoot, L"C:\\windows" );
 
     features = data->ProcessorFeatures;
