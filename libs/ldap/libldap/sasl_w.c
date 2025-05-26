@@ -280,55 +280,6 @@ static unsigned short get_package_id( CtxtHandle *ctx )
     return id;
 }
 
-int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_t **prompts,
-                       const char **clientout, unsigned int *clientoutlen, const char **mech )
-{
-    struct connection *conn = (struct connection *)handle;
-    SEC_WINNT_AUTH_IDENTITY_W id;
-    SecBuffer out_bufs[] =
-    {
-        { conn->buf_size, SECBUFFER_TOKEN, conn->buf },
-        { 0, SECBUFFER_ALERT, NULL }
-    };
-    SecBufferDesc out_buf_desc = { SECBUFFER_VERSION, ARRAYSIZE(out_bufs), out_bufs };
-    ULONG attrs;
-    SECURITY_STATUS status;
-    int ret;
-
-    if (!*prompts)
-    {
-        *prompts = conn->prompts;
-        return SASL_INTERACT;
-    }
-    if ((ret = fill_auth_identity( conn->prompts, &id )) < 0) return ret;
-
-    status = AcquireCredentialsHandleA( NULL, (SEC_CHAR *)"Negotiate", SECPKG_CRED_OUTBOUND, NULL,
-                                        (SEC_WINNT_AUTH_IDENTITY_A *)&id, NULL, NULL, &conn->cred_handle, NULL );
-    if (status != SEC_E_OK) return SASL_FAIL;
-
-    /* FIXME: flags probably should depend on LDAP_OPT_SSPI_FLAGS */
-    conn->flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH | ISC_REQ_EXTENDED_ERROR;
-    status = InitializeSecurityContextA( &conn->cred_handle, NULL, conn->target, conn->flags,
-                                         0, 0, NULL, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
-    if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
-    {
-        *clientout = out_bufs[0].pvBuffer;
-        *clientoutlen = out_bufs[0].cbBuffer;
-        *mech = "GSS-SPNEGO";
-        if (status == SEC_I_CONTINUE_NEEDED) return SASL_CONTINUE;
-        else
-        {
-            conn->ssf = get_key_size( &conn->ctxt_handle );
-            conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
-            conn->qop = attrs;
-            conn->package_id = get_package_id( &conn->ctxt_handle );
-            return SASL_OK;
-        }
-    }
-
-    return SASL_FAIL;
-}
-
 int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int serverinlen,
                       sasl_interact_t **prompts, const char **clientout, unsigned int *clientoutlen )
 {
@@ -348,24 +299,55 @@ int sasl_client_step( sasl_conn_t *handle, const char *serverin, unsigned int se
     ULONG attrs;
     SECURITY_STATUS status;
 
-    status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, conn->target, conn->flags, 0, 0,
-                                         &in_buf_desc, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
+    if (!serverin) /* initial step */
+        status = InitializeSecurityContextA( &conn->cred_handle, NULL, conn->target, conn->flags, 0, 0,
+                                             NULL, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
+    else
+        status = InitializeSecurityContextA( NULL, &conn->ctxt_handle, conn->target, conn->flags, 0, 0,
+                                             &in_buf_desc, 0, &conn->ctxt_handle, &out_buf_desc, &attrs, NULL );
     if (status == SEC_E_OK || status == SEC_I_CONTINUE_NEEDED)
     {
         *clientout = out_bufs[0].pvBuffer;
         *clientoutlen = out_bufs[0].cbBuffer;
         if (status == SEC_I_CONTINUE_NEEDED) return SASL_CONTINUE;
-        else
-        {
-            conn->ssf = get_key_size( &conn->ctxt_handle );
-            conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
-            conn->qop = attrs;
-            conn->package_id = get_package_id( &conn->ctxt_handle );
-            return SASL_OK;
-        }
+
+        conn->ssf = get_key_size( &conn->ctxt_handle );
+        conn->trailer_size = get_trailer_size( &conn->ctxt_handle );
+        conn->qop = attrs;
+        conn->package_id = get_package_id( &conn->ctxt_handle );
+        return SASL_OK;
     }
 
     return SASL_FAIL;
+}
+
+int sasl_client_start( sasl_conn_t *handle, const char *mechlist, sasl_interact_t **prompts,
+                       const char **clientout, unsigned int *clientoutlen, const char **mech )
+{
+    struct connection *conn = (struct connection *)handle;
+    SEC_WINNT_AUTH_IDENTITY_W id;
+    SECURITY_STATUS status;
+    int ret;
+
+    if (!*prompts)
+    {
+        *prompts = conn->prompts;
+        return SASL_INTERACT;
+    }
+    if ((ret = fill_auth_identity( conn->prompts, &id )) < 0) return ret;
+
+    status = AcquireCredentialsHandleA( NULL, (SEC_CHAR *)"Negotiate", SECPKG_CRED_OUTBOUND, NULL,
+                                        (SEC_WINNT_AUTH_IDENTITY_A *)&id, NULL, NULL, &conn->cred_handle, NULL );
+    if (status != SEC_E_OK) return SASL_FAIL;
+
+    /* FIXME: flags probably should depend on LDAP_OPT_SSPI_FLAGS */
+    conn->flags = ISC_REQ_INTEGRITY | ISC_REQ_CONFIDENTIALITY | ISC_REQ_MUTUAL_AUTH | ISC_REQ_EXTENDED_ERROR;
+
+    ret = sasl_client_step( handle, NULL, 0, prompts, clientout, clientoutlen );
+    if (ret == SASL_OK || ret == SASL_CONTINUE)
+        *mech = "GSS-SPNEGO";
+
+    return ret;
 }
 
 int sasl_getprop( sasl_conn_t *handle, int propnum, const void **pvalue )
