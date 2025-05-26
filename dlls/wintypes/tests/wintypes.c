@@ -749,6 +749,7 @@ static void test_IPropertyValueStatics(void)
     IReference_DateTime *iref_datetime;
     IReference_GUID *iref_guid;
     IReference_Point *iref_point;
+    IReference_Size *iref_size;
     IReference_Rect *iref_rect;
     IPropertyValue *value = NULL;
     enum PropertyType type;
@@ -765,6 +766,7 @@ static void test_IPropertyValueStatics(void)
     struct DateTime ret_datetime;
     GUID ret_guid;
     struct Point ret_point;
+    struct Size ret_size;
     struct Rect ret_rect;
     boolean ret;
     HRESULT hr;
@@ -1030,6 +1032,7 @@ static void test_IPropertyValueStatics(void)
     TEST_PROPERTY_VALUE_IREFERENCE(DateTime, IReference_DateTime, datetime_value, iref_datetime, ret_datetime)
     TEST_PROPERTY_VALUE_IREFERENCE(Guid, IReference_GUID, IID_IPropertyValue, iref_guid, ret_guid)
     TEST_PROPERTY_VALUE_IREFERENCE(Point, IReference_Point, point_value, iref_point, ret_point)
+    TEST_PROPERTY_VALUE_IREFERENCE(Size, IReference_Size, size_value, iref_size, ret_size)
     TEST_PROPERTY_VALUE_IREFERENCE(Rect, IReference_Rect, rect_value, iref_rect, ret_rect)
 
 #undef TEST_PROPERTY_VALUE_IREFERENCE
