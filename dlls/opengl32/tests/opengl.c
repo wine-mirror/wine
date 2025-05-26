@@ -3010,7 +3010,7 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
 static void test_copy_context(HDC hdc)
 {
     HGLRC ctx, ctx2, old_ctx;
-    BOOL ret;
+    GLint ret;
 
     old_ctx = wglGetCurrentContext();
     ok(!!old_ctx, "wglGetCurrentContext failed, last error %#lx.\n", GetLastError());
@@ -3019,11 +3019,51 @@ static void test_copy_context(HDC hdc)
     ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
     ret = wglMakeCurrent(hdc, ctx);
     ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
+
+    ret = glIsEnabled(GL_DEPTH_TEST);
+    ok(ret == 0, "got %d\n", ret);
+    glGetIntegerv(GL_DEPTH_FUNC, &ret);
+    ok(ret == GL_LESS, "got %d\n", ret);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_GREATER);
+
     ctx2 = wglCreateContext(hdc);
     ok(!!ctx2, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
+    ret = wglCopyContext(ctx, ctx2, GL_ENABLE_BIT);
+    ok(ret, "Failed to copy GL context, last error %#lx.\n", GetLastError());
+    ret = glIsEnabled(GL_DEPTH_TEST);
+    ok(ret == 1, "got %d\n", ret);
+    glGetIntegerv(GL_DEPTH_FUNC, &ret);
+    ok(ret == GL_GREATER, "got %d\n", ret);
+
+    ret = wglMakeCurrent(hdc, ctx2);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
+    ret = glIsEnabled(GL_DEPTH_TEST);
+    ok(ret == 1, "got %d\n", ret);
+    glGetIntegerv(GL_DEPTH_FUNC, &ret);
+    ok(ret == GL_LESS, "got %d\n", ret);
+    glDepthFunc(GL_LEQUAL);
+
+    ret = wglCopyContext(ctx, ctx2, GL_ALL_ATTRIB_BITS);
+    ok(!ret, "succeeded to copy GL context.\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got error %#lx.\n", GetLastError());
+
+    ret = wglMakeCurrent(hdc, ctx);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
+    ret = glIsEnabled(GL_DEPTH_TEST);
+    ok(ret == 1, "got %d\n", ret);
+    glGetIntegerv(GL_DEPTH_FUNC, &ret);
+    ok(ret == GL_GREATER, "got %d\n", ret);
+
     ret = wglCopyContext(ctx, ctx2, GL_ALL_ATTRIB_BITS);
     ok(ret, "Failed to copy GL context, last error %#lx.\n", GetLastError());
+    ret = wglMakeCurrent(hdc, ctx2);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
+    ret = glIsEnabled(GL_DEPTH_TEST);
+    ok(ret == 1, "got %d\n", ret);
+    glGetIntegerv(GL_DEPTH_FUNC, &ret);
+    ok(ret == GL_GREATER, "got %d\n", ret);
 
     ret = wglMakeCurrent(NULL, NULL);
     ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
