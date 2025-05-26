@@ -742,6 +742,7 @@ static void test_IPropertyValueStatics(void)
     IReference_HSTRING *iref_hstring;
     IReference_FLOAT *iref_float;
     IReference_DOUBLE *iref_double;
+    IReference_GUID *iref_guid;
     IPropertyValue *value = NULL;
     enum PropertyType type;
     unsigned int i, count;
@@ -750,6 +751,7 @@ static void test_IPropertyValueStatics(void)
     UINT32 ret_uint32;
     FLOAT ret_float;
     DOUBLE ret_double;
+    GUID ret_guid;
     boolean ret;
     HRESULT hr;
 
@@ -994,7 +996,7 @@ static void test_IPropertyValueStatics(void)
                                                                                              \
         hr = IFACE_TYPE##_get_Value(RET_OBJ, &RET_VALUE);                                    \
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);                                     \
-        ok(RET_VALUE == VALUE, "Got unexpected value.\n");                                   \
+        ok(!memcmp(&RET_VALUE, &VALUE, sizeof(VALUE)), "Got unexpected value.\n");           \
                                                                                              \
         IFACE_TYPE##_Release(RET_OBJ);                                                       \
         IPropertyValue_Release(value);                                                       \
@@ -1007,6 +1009,7 @@ static void test_IPropertyValueStatics(void)
     TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
     TEST_PROPERTY_VALUE_IREFERENCE(Single, IReference_FLOAT, float_value, iref_float, ret_float)
     TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, double_value, iref_double, ret_double)
+    TEST_PROPERTY_VALUE_IREFERENCE(Guid, IReference_GUID, IID_IPropertyValue, iref_guid, ret_guid)
 
 #undef TEST_PROPERTY_VALUE_IREFERENCE
 

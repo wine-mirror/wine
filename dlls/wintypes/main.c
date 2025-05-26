@@ -403,6 +403,7 @@ struct property_value
         IReference_boolean boolean_iface;
         IReference_FLOAT float_iface;
         IReference_DOUBLE double_iface;
+        IReference_GUID guid_iface;
         IReference_HSTRING hstring_iface;
     } irefs;
     PropertyType type;
@@ -494,6 +495,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_DOUBLE_AddRef(&impl->irefs.double_iface);
         *out = &impl->irefs.double_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_GUID) && impl->type == PropertyType_Guid)
+    {
+        IReference_GUID_AddRef(&impl->irefs.guid_iface);
+        *out = &impl->irefs.guid_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_HSTRING) && impl->type == PropertyType_String)
@@ -1043,6 +1050,31 @@ static const struct IReference_DOUBLEVtbl iref_double_vtbl =
     iref_double_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_guid, IReference_GUID, struct property_value,
+                     impl_from_IReference_GUID, irefs.guid_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_guid_get_Value(IReference_GUID *iface, GUID *value)
+{
+    struct property_value *impl = impl_from_IReference_GUID(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetGuid(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_GUIDVtbl iref_guid_vtbl =
+{
+    iref_guid_QueryInterface,
+    iref_guid_AddRef,
+    iref_guid_Release,
+    /* IInspectable methods */
+    iref_guid_GetIids,
+    iref_guid_GetRuntimeClassName,
+    iref_guid_GetTrustLevel,
+    /* IReference<GUID> methods */
+    iref_guid_get_Value,
+};
+
 DEFINE_IINSPECTABLE(property_value_statics, IPropertyValueStatics, struct property_value_statics, IActivationFactory_iface)
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateEmpty(IPropertyValueStatics *iface,
@@ -1152,7 +1184,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateGuid(IPropertyValu
         GUID value, IInspectable **property_value)
 {
     TRACE("iface %p, value %s, property_value %p.\n", iface, wine_dbgstr_guid(&value), property_value);
-    return create_primitive_property_value(PropertyType_Guid);
+    create_primitive_property_value_iref(PropertyType_Guid, irefs.guid_iface.lpVtbl, iref_guid_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDateTime(IPropertyValueStatics *iface,
