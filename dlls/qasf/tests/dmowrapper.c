@@ -425,9 +425,9 @@ static HRESULT WINAPI dmo_ProcessOutput(IMediaObject *iface, DWORD flags,
     for (i = 0; i < 300; ++i)
         data[i] = 111 - i;
     hr = IMediaBuffer_SetLength(buffers[0].pBuffer, 2);
-    todo_wine_if (testmode == 100) ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMediaBuffer_SetLength(buffers[0].pBuffer, 300);
-    todo_wine_if (testmode == 100) ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (testdmo_buffer)
         IMediaBuffer_Release(testdmo_buffer);
     testdmo_buffer = NULL;
@@ -1434,8 +1434,7 @@ static HRESULT WINAPI sample_SetActualDataLength(IMediaSample *iface, LONG size)
 
     if (winetest_debug > 1) trace("SetActualDataLength(%ld)\n", size);
 
-    todo_wine_if (size != 300)
-        ok(size == 300, "Got size %ld.\n", size);
+    ok(size == 300, "Got size %ld.\n", size);
 
     IMediaSample_SetActualDataLength(filter->wrapped_sample, size);
     return E_FAIL;
