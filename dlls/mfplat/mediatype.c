@@ -2728,6 +2728,7 @@ static struct uncompressed_video_format video_formats[] =
     { &MFVideoFormat_IYUV,          12, 0, 0, 1, -1 },
     { &MFVideoFormat_NV11,          12, 0, 0, 1, -1 },
     { &MFVideoFormat_NV12,          12, 0, 0, 1, -1 },
+    { &MFVideoFormat_P010,          24, 0, 0, 1, -1 },
     { &MFVideoFormat_D16,           16, 3, 0, 0, -1 },
     { &MFVideoFormat_L16,           16, 3, 0, 0, -1 },
     { &MFVideoFormat_UYVY,          16, 0, 0, 1, -1 },
@@ -2762,6 +2763,7 @@ static struct uncompressed_video_format *mf_get_video_format(const GUID *subtype
 static unsigned int mf_get_stride_for_format(const struct uncompressed_video_format *format, unsigned int width)
 {
     if (format->bpp < 8) return (width * format->bpp) / 8;
+    else if (IsEqualGUID(format->subtype, &MFVideoFormat_P010)) return width * 2;
     return (width * (format->bpp / 8) + format->alignment) & ~format->alignment;
 }
 
@@ -2831,6 +2833,10 @@ HRESULT WINAPI MFCalculateImageSize(REFGUID subtype, UINT32 width, UINT32 height
             /* 2 x 2 block, interleaving UV for half the height */
             *size = ((width + 1) & ~1) * height * 3 / 2;
             break;
+        case MAKEFOURCC('P','0','1','0'):
+            /* width is rounded up to a multiple of two */
+            *size = ((width + 1) & ~1) * height * 3;
+            break;
         case MAKEFOURCC('N','V','1','1'):
             *size = ((width + 3) & ~3) * height * 3 / 2;
             break;
@@ -2875,6 +2881,7 @@ HRESULT WINAPI MFGetPlaneSize(DWORD fourcc, DWORD width, DWORD height, DWORD *si
         case MAKEFOURCC('I','4','2','0'):
         case MAKEFOURCC('I','Y','U','V'):
         case MAKEFOURCC('N','V','1','1'):
+        case MAKEFOURCC('P','0','1','0'):
             *size = stride * height * 3 / 2;
             break;
         default:
