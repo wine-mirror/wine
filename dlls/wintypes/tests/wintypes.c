@@ -996,9 +996,9 @@ static void test_IPropertyValueStatics(void)
         IInspectable_Release(inspectable);                                                   \
     } while (0);
 
-    TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, TRUE, iref_boolean, ret)
+    TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, boolean_value, iref_boolean, ret)
     TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
-    TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, 1.5, iref_double, ret_double)
+    TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, double_value, iref_double, ret_double)
 
 #undef TEST_PROPERTY_VALUE_IREFERENCE
 
