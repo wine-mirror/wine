@@ -1454,7 +1454,7 @@ static NTSTATUS verify_signature( struct ntlm_ctx *ctx, unsigned int flags, SecB
 
     for (i = 0; i < msg->cBuffers; i++)
     {
-        if (msg->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        if (msg->pBuffers[i].BufferType == SECBUFFER_TOKEN || msg->pBuffers[i].BufferType == SECBUFFER_STREAM)
         {
             buf[i].BufferType = SECBUFFER_TOKEN;
             buf[i].cbBuffer   = 16;
@@ -1539,7 +1539,10 @@ static NTSTATUS NTAPI ntlm_SpSealMessage( LSA_SEC_HANDLE handle, ULONG qop, SecB
 
 static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc *msg, ULONG msg_seq_no, ULONG *qop )
 {
-    int token_idx, data_idx;
+    int data_idx = get_buffer_index( msg, SECBUFFER_DATA );
+    int stream_idx = get_buffer_index( msg, SECBUFFER_STREAM );
+    int token_idx = get_buffer_index( msg, SECBUFFER_TOKEN );
+    SecBuffer token_buf;
     struct ntlm_ctx *ctx;
 
     TRACE( "%#Ix, %p, %lu, %p\n", handle, msg, msg_seq_no, qop );
@@ -1547,11 +1550,25 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     if (!handle) return SEC_E_INVALID_HANDLE;
 
-    if (!msg || !msg->pBuffers || msg->cBuffers < 2 ||
-        (token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1 ||
-        (data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+    if (!msg || !msg->pBuffers || msg->cBuffers < 2 || (token_idx == -1 && stream_idx == -1) ||
+        (stream_idx != -1 && token_idx != -1) || data_idx == -1) return SEC_E_INVALID_TOKEN;
 
-    if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+    if (stream_idx != -1)
+    {
+        if (msg->pBuffers[stream_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+        token_buf.BufferType = SECBUFFER_TOKEN;
+        token_buf.cbBuffer = 16;
+        token_buf.pvBuffer = msg->pBuffers[stream_idx].pvBuffer;
+
+        /* native decrypts in-place even when an appropriately sized data buffer is supplied */
+        msg->pBuffers[data_idx].pvBuffer = (char *)msg->pBuffers[stream_idx].pvBuffer + 16;
+        msg->pBuffers[data_idx].cbBuffer = msg->pBuffers[stream_idx].cbBuffer - 16;
+    }
+    else
+    {
+        if (msg->pBuffers[token_idx].cbBuffer < 16) return SEC_E_BUFFER_TOO_SMALL;
+        token_buf = msg->pBuffers[token_idx];
+    }
 
     ctx = (struct ntlm_ctx *)handle;
     if (ctx->flags & FLAG_NEGOTIATE_NTLM2 && ctx->flags & FLAG_NEGOTIATE_SEAL)
@@ -1563,7 +1580,7 @@ static NTSTATUS NTAPI ntlm_SpUnsealMessage( LSA_SEC_HANDLE handle, SecBufferDesc
 
     /* make sure we use a session key for the signature check, SealMessage always does that,
        even in the dummy case */
-    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, &msg->pBuffers[token_idx] );
+    return verify_signature( ctx, ctx->flags | FLAG_NEGOTIATE_SIGN, msg, &token_buf );
 }
 
 static SECPKG_USER_FUNCTION_TABLE ntlm_user_table =
