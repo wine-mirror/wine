@@ -181,6 +181,18 @@ static HRESULT read_midi_event(IStream *stream, struct midi_event *event, BYTE *
             if (FAILED(hr = stream_read_at_most(stream, data, 3, bytes_left))) return hr;
             event->tempo = (data[0] << 16) | (data[1] << 8) | data[2];
             break;
+        case MIDI_META_KEY_SIGNATURE:
+            if (length != 2)
+            {
+                ERR("Invalid MIDI meta event length %lu for key signature event.\n", length);
+                return E_FAIL;
+            }
+            if (FAILED(hr = stream_read_at_most(stream, data, 2, bytes_left))) return hr;
+            TRACE("MIDI key signature meta event: %d %s, %s key.\n", data[0],
+                    data[0] < 0 ? "flats" : (data[0] > 0 ? "sharps" : "no flats nor sharps"),
+                    data[1] == 0 ? "major" : "minor");
+            /* Skip over this event */
+            return read_midi_event(stream, event, last_status, bytes_left);
         default:
             if (*bytes_left < length) return S_FALSE;
             offset.QuadPart = length;
