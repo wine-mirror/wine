@@ -741,6 +741,7 @@ static void test_IPropertyValueStatics(void)
     IReference_INT32 *iref_int32;
     IReference_UINT32 *iref_uint32;
     IReference_INT64 *iref_int64;
+    IReference_UINT64 *iref_uint64;
     IReference_boolean *iref_boolean;
     IReference_HSTRING *iref_hstring;
     IReference_FLOAT *iref_float;
@@ -755,6 +756,7 @@ static void test_IPropertyValueStatics(void)
     INT32 ret_int32;
     UINT32 ret_uint32;
     INT64 ret_int64;
+    UINT64 ret_uint64;
     FLOAT ret_float;
     DOUBLE ret_double;
     GUID ret_guid;
@@ -1014,6 +1016,7 @@ static void test_IPropertyValueStatics(void)
     TEST_PROPERTY_VALUE_IREFERENCE(Int32, IReference_INT32, int32_value, iref_int32, ret_int32)
     TEST_PROPERTY_VALUE_IREFERENCE(UInt32, IReference_UINT32, uint32_value, iref_uint32, ret_uint32)
     TEST_PROPERTY_VALUE_IREFERENCE(Int64, IReference_INT64, int64_value, iref_int64, ret_int64)
+    TEST_PROPERTY_VALUE_IREFERENCE(UInt64, IReference_UINT64, uint64_value, iref_uint64, ret_uint64)
     TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, boolean_value, iref_boolean, ret)
     TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
     TEST_PROPERTY_VALUE_IREFERENCE(Single, IReference_FLOAT, float_value, iref_float, ret_float)
