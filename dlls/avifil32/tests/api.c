@@ -810,9 +810,8 @@ static void test_avifile_write(void)
     hr = AVIFileOpenW(&avifile, fn, OF_CREATE, NULL);
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = AVIFileCreateStreamW(avifile, &stm, &si);
-    todo_wine ok(hr == S_OK, "got %#lx.\n", hr);
-    if (hr == S_OK)
-        IAVIStream_Release(stm);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    IAVIStream_Release(stm);
     IAVIFile_Release(avifile);
     ret = DeleteFileW(fn);
     ok(ret, "got error %lu.\n", GetLastError());

@@ -260,6 +260,9 @@ HRESULT WINAPI AVIFileOpenW(PAVIFILE *ppfile, LPCWSTR szFile, UINT uMode,
     return hr;
   }
 
+  if (uMode & OF_CREATE)
+    uMode |= OF_WRITE;
+
   hr = IPersistFile_Load(ppersist, szFile, uMode);
   IPersistFile_Release(ppersist);
   if (FAILED(hr)) {
