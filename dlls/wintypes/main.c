@@ -398,6 +398,7 @@ struct property_value
     IPropertyValue IPropertyValue_iface;
     union
     {
+        IReference_BYTE byte_iface;
         IReference_UINT32 uint32_iface;
         IReference_boolean boolean_iface;
         IReference_DOUBLE double_iface;
@@ -462,6 +463,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IPropertyValue_AddRef(iface);
         *out = &impl->IPropertyValue_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_BYTE) && impl->type == PropertyType_UInt8)
+    {
+        IReference_BYTE_AddRef(&impl->irefs.byte_iface);
+        *out = &impl->irefs.byte_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_UINT32) && impl->type == PropertyType_UInt32)
@@ -879,6 +886,31 @@ static HRESULT _create_primitive_property_value(PropertyType type, void *value,
         return hr;                                                                       \
     } while (0)
 
+DEFINE_IINSPECTABLE_(iref_byte, IReference_BYTE, struct property_value,
+                     impl_from_IReference_BYTE, irefs.byte_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_byte_get_Value(IReference_BYTE *iface, UINT8 *value)
+{
+    struct property_value *impl = impl_from_IReference_BYTE(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetUInt8(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_BYTEVtbl iref_byte_vtbl =
+{
+    iref_byte_QueryInterface,
+    iref_byte_AddRef,
+    iref_byte_Release,
+    /* IInspectable methods */
+    iref_byte_GetIids,
+    iref_byte_GetRuntimeClassName,
+    iref_byte_GetTrustLevel,
+    /* IReference<BYTE> methods */
+    iref_byte_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_uint32, IReference_UINT32, struct property_value,
                      impl_from_IReference_UINT32, irefs.uint32_iface, &impl->IPropertyValue_iface);
 
@@ -997,7 +1029,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt8(IPropertyVal
         BYTE value, IInspectable **property_value)
 {
     TRACE("iface %p, value %#x, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_UInt8);
+    create_primitive_property_value_iref(PropertyType_UInt8, irefs.byte_iface.lpVtbl, iref_byte_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt16(IPropertyValueStatics *iface,
