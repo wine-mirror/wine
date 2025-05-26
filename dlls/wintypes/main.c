@@ -408,6 +408,7 @@ struct property_value
         IReference_FLOAT float_iface;
         IReference_DOUBLE double_iface;
         IReference_DateTime datetime_iface;
+        IReference_TimeSpan timespan_iface;
         IReference_GUID guid_iface;
         IReference_Point point_iface;
         IReference_Size size_iface;
@@ -533,6 +534,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_DateTime_AddRef(&impl->irefs.datetime_iface);
         *out = &impl->irefs.datetime_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_TimeSpan) && impl->type == PropertyType_TimeSpan)
+    {
+        IReference_TimeSpan_AddRef(&impl->irefs.timespan_iface);
+        *out = &impl->irefs.timespan_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_GUID) && impl->type == PropertyType_Guid)
@@ -1231,6 +1238,31 @@ static const struct IReference_DateTimeVtbl iref_datetime_vtbl =
     iref_datetime_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_timespan, IReference_TimeSpan, struct property_value,
+                     impl_from_IReference_TimeSpan, irefs.timespan_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_timespan_get_Value(IReference_TimeSpan *iface, TimeSpan *value)
+{
+    struct property_value *impl = impl_from_IReference_TimeSpan(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetTimeSpan(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_TimeSpanVtbl iref_timespan_vtbl =
+{
+    iref_timespan_QueryInterface,
+    iref_timespan_AddRef,
+    iref_timespan_Release,
+    /* IInspectable methods */
+    iref_timespan_GetIids,
+    iref_timespan_GetRuntimeClassName,
+    iref_timespan_GetTrustLevel,
+    /* IReference<TimeSpan> methods */
+    iref_timespan_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_guid, IReference_GUID, struct property_value,
                      impl_from_IReference_GUID, irefs.guid_iface, &impl->IPropertyValue_iface);
 
@@ -1454,7 +1486,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateTimeSpan(IProperty
         TimeSpan value, IInspectable **property_value)
 {
     TRACE("iface %p, value %I64d, property_value %p.\n", iface, value.Duration, property_value);
-    return create_primitive_property_value(PropertyType_TimeSpan);
+    create_primitive_property_value_iref(PropertyType_TimeSpan, irefs.timespan_iface.lpVtbl, iref_timespan_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreatePoint(IPropertyValueStatics *iface,

@@ -747,6 +747,7 @@ static void test_IPropertyValueStatics(void)
     IReference_FLOAT *iref_float;
     IReference_DOUBLE *iref_double;
     IReference_DateTime *iref_datetime;
+    IReference_TimeSpan *iref_timespan;
     IReference_GUID *iref_guid;
     IReference_Point *iref_point;
     IReference_Size *iref_size;
@@ -764,6 +765,7 @@ static void test_IPropertyValueStatics(void)
     FLOAT ret_float;
     DOUBLE ret_double;
     struct DateTime ret_datetime;
+    struct TimeSpan ret_timespan;
     GUID ret_guid;
     struct Point ret_point;
     struct Size ret_size;
@@ -1030,6 +1032,7 @@ static void test_IPropertyValueStatics(void)
     TEST_PROPERTY_VALUE_IREFERENCE(Single, IReference_FLOAT, float_value, iref_float, ret_float)
     TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, double_value, iref_double, ret_double)
     TEST_PROPERTY_VALUE_IREFERENCE(DateTime, IReference_DateTime, datetime_value, iref_datetime, ret_datetime)
+    TEST_PROPERTY_VALUE_IREFERENCE(TimeSpan, IReference_TimeSpan, timespan_value, iref_timespan, ret_timespan)
     TEST_PROPERTY_VALUE_IREFERENCE(Guid, IReference_GUID, IID_IPropertyValue, iref_guid, ret_guid)
     TEST_PROPERTY_VALUE_IREFERENCE(Point, IReference_Point, point_value, iref_point, ret_point)
     TEST_PROPERTY_VALUE_IREFERENCE(Size, IReference_Size, size_value, iref_size, ret_size)
