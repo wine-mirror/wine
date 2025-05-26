@@ -1129,8 +1129,24 @@ static void test_sharelists(HDC winhdc)
 
                     if (source_current)
                     {
+                        float floats[4] = {1.0f,0.0f,1.0f,0.0f};
+
                         res = wglMakeCurrent(winhdc, source);
                         ok(res, "Make source current failed\n");
+
+                        glViewport(0, 0, 256, 256);
+                        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, floats);
+                        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 0);
+                        glEnable(GL_NORMALIZE);
+                        glEnable(GL_DEPTH_TEST);
+                        glEnable(GL_CULL_FACE);
+                        glEnable(GL_LIGHTING);
+                        glDisable(GL_FOG);
+                        glDisable(GL_DITHER);
+                        glDepthFunc(GL_LESS);
+                        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+                        glShadeModel(GL_SMOOTH);
+                        glClearColor(0.1, 0.2, 0.3, 1.0);
                     }
                     if (source_sharing)
                     {
@@ -1139,8 +1155,24 @@ static void test_sharelists(HDC winhdc)
                     }
                     if (dest_current)
                     {
+                        float floats[4] = {0.0f,1.0f,0.0f,1.0f};
+
                         res = wglMakeCurrent(winhdc, dest);
                         ok(res, "Make dest current failed\n");
+
+                        glViewport(0, 0, 128, 128);
+                        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, floats);
+                        glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);
+                        glDisable(GL_NORMALIZE);
+                        glDisable(GL_DEPTH_TEST);
+                        glDisable(GL_CULL_FACE);
+                        glDisable(GL_LIGHTING);
+                        glEnable(GL_FOG);
+                        glEnable(GL_DITHER);
+                        glDepthFunc(GL_GREATER);
+                        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+                        glShadeModel(GL_FLAT);
+                        glClearColor(0.3, 0.2, 0.1, 1.0);
                     }
                     if (dest_sharing)
                     {
@@ -1153,6 +1185,91 @@ static void test_sharelists(HDC winhdc)
                     todo_wine_if((source_current || source_sharing) && (dest_current || dest_sharing))
                     ok(res || broken(nvidia && !source_sharing && dest_sharing),
                        "Sharing of display lists from source to dest failed\n");
+
+                    if (source_current)
+                    {
+                        float floats[4];
+                        int ints[4];
+
+                        res = wglMakeCurrent(winhdc, source);
+                        ok(res, "Make source current failed\n");
+
+                        glGetIntegerv(GL_VIEWPORT, ints);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ok(ints[1] == 0, "got %d\n", ints[1]);
+                        ok(ints[2] == 256, "got %d\n", ints[2]);
+                        ok(ints[3] == 256, "got %d\n", ints[3]);
+                        glGetFloatv(GL_LIGHT_MODEL_AMBIENT, floats);
+                        ok(floats[0] == 1.0f, "got %f\n", floats[0]);
+                        ok(floats[1] == 0.0f, "got %f\n", floats[1]);
+                        ok(floats[2] == 1.0f, "got %f\n", floats[2]);
+                        ok(floats[3] == 0.0f, "got %f\n", floats[3]);
+                        glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, ints);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_NORMALIZE);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_DEPTH_TEST);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_CULL_FACE);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_LIGHTING);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_FOG);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_DITHER);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        glGetIntegerv(GL_DEPTH_FUNC, ints);
+                        ok(ints[0] == GL_LESS, "got %d\n", ints[0]);
+                        glGetIntegerv(GL_SHADE_MODEL, ints);
+                        ok(ints[0] == GL_SMOOTH, "got %d\n", ints[0]);
+                        glGetFloatv(GL_COLOR_CLEAR_VALUE, floats);
+                        ok(floats[0] == 0.1f, "got %f\n", floats[0]);
+                        ok(floats[1] == 0.2f, "got %f\n", floats[1]);
+                        ok(floats[2] == 0.3f, "got %f\n", floats[2]);
+                        ok(floats[3] == 1.0f, "got %f\n", floats[3]);
+                    }
+                    if (dest_current)
+                    {
+                        float floats[4];
+                        int ints[4];
+
+                        res = wglMakeCurrent(winhdc, dest);
+                        ok(res, "Make dest current failed\n");
+
+                        glGetIntegerv(GL_VIEWPORT, ints);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ok(ints[1] == 0, "got %d\n", ints[1]);
+                        ok(ints[2] == 128, "got %d\n", ints[2]);
+                        ok(ints[3] == 128, "got %d\n", ints[3]);
+                        glGetFloatv(GL_LIGHT_MODEL_AMBIENT, floats);
+                        ok(floats[0] == 0.0f, "got %f\n", floats[0]);
+                        ok(floats[1] == 1.0f, "got %f\n", floats[1]);
+                        ok(floats[2] == 0.0f, "got %f\n", floats[2]);
+                        ok(floats[3] == 1.0f, "got %f\n", floats[3]);
+                        glGetIntegerv(GL_LIGHT_MODEL_TWO_SIDE, ints);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_NORMALIZE);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_DEPTH_TEST);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_CULL_FACE);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_LIGHTING);
+                        ok(ints[0] == 0, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_FOG);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        ints[0] = glIsEnabled(GL_DITHER);
+                        ok(ints[0] == 1, "got %d\n", ints[0]);
+                        glGetIntegerv(GL_DEPTH_FUNC, ints);
+                        ok(ints[0] == GL_GREATER, "got %d\n", ints[0]);
+                        glGetIntegerv(GL_SHADE_MODEL, ints);
+                        ok(ints[0] == GL_FLAT, "got %d\n", ints[0]);
+                        glGetFloatv(GL_COLOR_CLEAR_VALUE, floats);
+                        ok(floats[0] == 0.3f, "got %f\n", floats[0]);
+                        ok(floats[1] == 0.2f, "got %f\n", floats[1]);
+                        ok(floats[2] == 0.1f, "got %f\n", floats[2]);
+                        ok(floats[3] == 1.0f, "got %f\n", floats[3]);
+                    }
 
                     if (source_current || dest_current)
                     {
