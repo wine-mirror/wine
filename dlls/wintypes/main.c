@@ -401,6 +401,7 @@ struct property_value
         IReference_BYTE byte_iface;
         IReference_UINT32 uint32_iface;
         IReference_boolean boolean_iface;
+        IReference_FLOAT float_iface;
         IReference_DOUBLE double_iface;
         IReference_HSTRING hstring_iface;
     } irefs;
@@ -481,6 +482,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_boolean_AddRef(&impl->irefs.boolean_iface);
         *out = &impl->irefs.boolean_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_FLOAT) && impl->type == PropertyType_Single)
+    {
+        IReference_FLOAT_AddRef(&impl->irefs.float_iface);
+        *out = &impl->irefs.float_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_DOUBLE) && impl->type == PropertyType_Double)
@@ -986,6 +993,31 @@ static const struct IReference_HSTRINGVtbl iref_hstring_vtbl =
     iref_hstring_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_float, IReference_FLOAT, struct property_value,
+                     impl_from_IReference_FLOAT, irefs.float_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_float_get_Value(IReference_FLOAT *iface, FLOAT *value)
+{
+    struct property_value *impl = impl_from_IReference_FLOAT(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetSingle(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_FLOATVtbl iref_float_vtbl =
+{
+    iref_float_QueryInterface,
+    iref_float_AddRef,
+    iref_float_Release,
+    /* IInspectable methods */
+    iref_float_GetIids,
+    iref_float_GetRuntimeClassName,
+    iref_float_GetTrustLevel,
+    /* IReference<FLOAT> methods */
+    iref_float_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_double, IReference_DOUBLE, struct property_value,
                      impl_from_IReference_DOUBLE, irefs.double_iface, &impl->IPropertyValue_iface);
 
@@ -1078,7 +1110,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateSingle(IPropertyVa
         FLOAT value, IInspectable **property_value)
 {
     TRACE("iface %p, value %f, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_Single);
+    create_primitive_property_value_iref(PropertyType_Single, irefs.float_iface.lpVtbl, iref_float_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDouble(IPropertyValueStatics *iface,

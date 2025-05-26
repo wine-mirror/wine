@@ -740,6 +740,7 @@ static void test_IPropertyValueStatics(void)
     IReference_UINT32 *iref_uint32;
     IReference_boolean *iref_boolean;
     IReference_HSTRING *iref_hstring;
+    IReference_FLOAT *iref_float;
     IReference_DOUBLE *iref_double;
     IPropertyValue *value = NULL;
     enum PropertyType type;
@@ -747,6 +748,7 @@ static void test_IPropertyValueStatics(void)
     BYTE byte, *ptr_byte;
     HSTRING str, ret_str;
     UINT32 ret_uint32;
+    FLOAT ret_float;
     DOUBLE ret_double;
     boolean ret;
     HRESULT hr;
@@ -1003,6 +1005,7 @@ static void test_IPropertyValueStatics(void)
     TEST_PROPERTY_VALUE_IREFERENCE(UInt32, IReference_UINT32, uint32_value, iref_uint32, ret_uint32)
     TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, boolean_value, iref_boolean, ret)
     TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
+    TEST_PROPERTY_VALUE_IREFERENCE(Single, IReference_FLOAT, float_value, iref_float, ret_float)
     TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, double_value, iref_double, ret_double)
 
 #undef TEST_PROPERTY_VALUE_IREFERENCE
