@@ -349,28 +349,46 @@ sub get_func_ret($$)
 sub generate_unix_thunk($$$)
 {
     my ($name, $func, $prefix) = @_;
-    my $call_args = get_func_args( $func, 0, 1, "params->" );
     my $func_ret = get_func_ret( $func, 0 );
+    my $need_wrap = needs_wrapper( $name, $func );
+    my $need_lock = $func_ret =~ /HGLRC|HPBUFFERARB/;
     my $ret = "";
+
+    foreach my $arg (@{$func->[1]})
+    {
+        $need_lock = 1 if $arg->textContent() =~ /HGLRC|HPBUFFERARB/;
+    }
 
     $ret .= "NTSTATUS $prefix\_$name( void *args )\n";
     $ret .= "{\n";
     $ret .= "    struct $name\_params *params = args;\n";
     # special case for functions that take an HDC as first parameter
-    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
+    if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC" && $name !~ /wglMake(Context)?Current/)
     {
         my $pname = get_arg_name( ${$func->[1]}[0] );
         $ret .= "    const struct opengl_funcs *funcs = get_dc_funcs( params->$pname );\n";
         $ret .= "    if (!funcs || !funcs->p_$name) return STATUS_NOT_IMPLEMENTED;\n";
     }
-    else
+    elsif (!$need_wrap)
     {
         $ret .= "    const struct opengl_funcs *funcs = params->teb->glTable;\n";
     }
+    $ret .= "    pthread_mutex_lock( &wgl_lock );\n" if $need_lock;
     $ret .= "    ";
     $ret .= "params->ret = " unless is_void_func( $func );
     $ret .= "($func_ret)" if defined $remap_types{$func_ret};
-    $ret .= "funcs->p_$name($call_args);\n";
+    if ($need_wrap)
+    {
+        my $call_args = " params->teb," . get_func_args( $func, 0, 0, "params->" );
+        $call_args =~ s/,$/ /;
+        $ret .= "wrap_$name($call_args);\n";
+    }
+    else
+    {
+        my $call_args = get_func_args( $func, 0, 1, "params->" );
+        $ret .= "funcs->p_$name($call_args);\n";
+    }
+    $ret .= "    pthread_mutex_unlock( &wgl_lock );\n" if $need_lock;
     $ret .= "    return STATUS_SUCCESS;\n";
     $ret .= "}\n\n";
 
@@ -1237,44 +1255,17 @@ print OUT "#include \"unixlib.h\"\n";
 print OUT "#include \"unix_private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 
-print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
-
-print OUT "extern NTSTATUS process_attach( void *args );\n";
-print OUT "extern NTSTATUS thread_attach( void *args );\n";
-print OUT "extern NTSTATUS process_detach( void *args );\n";
-print OUT "extern NTSTATUS get_pixel_formats( void *args );\n";
-foreach (sort keys %wgl_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless needs_wrapper( $_, $wgl_functions{$_} );
-    print OUT "extern NTSTATUS wgl_$_( void *args );\n";
-}
-foreach (sort keys %norm_functions)
-{
-    next if defined $manual_win_functions{$_};
-    next unless needs_wrapper( $_, $norm_functions{$_} );
-    print OUT "extern NTSTATUS gl_$_( void *args );\n";
-}
-foreach (sort keys %ext_functions)
-{
-    next if $_ =~ /^egl/; # unix-side only API
-    next if defined $manual_win_functions{$_};
-    next unless needs_wrapper( $_, $ext_functions{$_} );
-    print OUT "extern NTSTATUS ext_$_( void *args );\n";
-}
-print OUT "\n";
+print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n\n";
 
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $wgl_functions{$_} );
     print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $norm_functions{$_} );
     print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
@@ -1282,7 +1273,6 @@ foreach (sort keys %ext_functions)
 {
     next if $_ =~ /^egl/; # unix-side only API
     next if defined $manual_win_functions{$_};
-    next if needs_wrapper( $_, $ext_functions{$_} );
     print OUT "static " unless defined $manual_wow64_thunks{$_};
     print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
 }

@@ -51,8 +51,7 @@ static BOOL is_wow64(void)
 }
 
 static UINT64 call_gl_debug_message_callback;
-
-static pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* handle management */
 
@@ -482,7 +481,7 @@ static BOOL check_extension_support( TEB *teb, const char *extension, const char
     return FALSE;
 }
 
-static void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
+void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
@@ -512,7 +511,7 @@ static void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
     }
 }
 
-static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
+const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const GLubyte *ret;
@@ -547,7 +546,7 @@ static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
     return ret;
 }
 
-static const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
+const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 {
     const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
@@ -628,7 +627,7 @@ static int registry_entry_cmp( const void *a, const void *b )
     return strcmp( entry_a->name, entry_b->name );
 }
 
-static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
+PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 {
     const struct registry_entry entry = {.name = name}, *found;
     struct opengl_funcs *funcs = teb->glTable;
@@ -690,7 +689,7 @@ static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
     return (void *)(UINT_PTR)(found - extension_registry);
 }
 
-static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
+BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
     const struct opengl_funcs *src_funcs, *dst_funcs;
     struct opengl_context *src, *dst;
@@ -703,7 +702,7 @@ static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     return ret;
 }
 
-static HGLRC wrap_wglCreateContext( HDC hdc )
+HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
@@ -722,7 +721,7 @@ static HGLRC wrap_wglCreateContext( HDC hdc )
     return ret;
 }
 
-static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
+BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct opengl_context *ctx, *prev = get_current_context( teb );
@@ -762,7 +761,7 @@ static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
     return TRUE;
 }
 
-static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
+BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
 {
     struct wgl_handle *ptr;
     struct opengl_context *ctx;
@@ -786,7 +785,7 @@ static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     return TRUE;
 }
 
-static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
+BOOL wrap_wglShareLists( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst )
 {
     const struct opengl_funcs *src_funcs, *dst_funcs;
     struct opengl_context *src, *dst;
@@ -799,7 +798,7 @@ static BOOL wrap_wglShareLists( HGLRC hglrcSrc, HGLRC hglrcDst )
     return ret;
 }
 
-static BOOL wrap_wglBindTexImageARB( HPBUFFERARB handle, int buffer )
+BOOL wrap_wglBindTexImageARB( TEB *teb, HPBUFFERARB handle, int buffer )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -807,7 +806,7 @@ static BOOL wrap_wglBindTexImageARB( HPBUFFERARB handle, int buffer )
     return funcs->p_wglBindTexImageARB( pbuffer, buffer );
 }
 
-static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *attribs )
+HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int *attribs )
 {
     HGLRC ret = 0;
     struct wgl_context *drv_ctx;
@@ -841,7 +840,7 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
     return ret;
 }
 
-static HPBUFFERARB wrap_wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
+HPBUFFERARB wrap_wglCreatePbufferARB( TEB *teb, HDC hdc, int format, int width, int height, const int *attribs )
 {
     HPBUFFERARB ret;
     struct wgl_pbuffer *pbuffer;
@@ -854,7 +853,7 @@ static HPBUFFERARB wrap_wglCreatePbufferARB( HDC hdc, int format, int width, int
     return ret;
 }
 
-static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
+BOOL wrap_wglDestroyPbufferARB( TEB *teb, HPBUFFERARB handle )
 {
     struct wgl_pbuffer *pbuffer;
     struct wgl_handle *ptr;
@@ -866,7 +865,7 @@ static BOOL wrap_wglDestroyPbufferARB( HPBUFFERARB handle )
     return TRUE;
 }
 
-static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
+HDC wrap_wglGetPbufferDCARB( TEB *teb, HPBUFFERARB handle )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -874,7 +873,7 @@ static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
     return funcs->p_wglGetPbufferDCARB( pbuffer );
 }
 
-static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
     struct opengl_context *ctx, *prev = get_current_context( teb );
@@ -909,7 +908,7 @@ static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc,
     return TRUE;
 }
 
-static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value )
+BOOL wrap_wglQueryPbufferARB( TEB *teb, HPBUFFERARB handle, int attrib, int *value )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -917,7 +916,7 @@ static BOOL wrap_wglQueryPbufferARB( HPBUFFERARB handle, int attrib, int *value 
     return funcs->p_wglQueryPbufferARB( pbuffer, attrib, value );
 }
 
-static int wrap_wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
+int wrap_wglReleasePbufferDCARB( TEB *teb, HPBUFFERARB handle, HDC hdc )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -925,7 +924,7 @@ static int wrap_wglReleasePbufferDCARB( HPBUFFERARB handle, HDC hdc )
     return funcs->p_wglReleasePbufferDCARB( pbuffer, hdc );
 }
 
-static BOOL wrap_wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
+BOOL wrap_wglReleaseTexImageARB( TEB *teb, HPBUFFERARB handle, int buffer )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -933,7 +932,7 @@ static BOOL wrap_wglReleaseTexImageARB( HPBUFFERARB handle, int buffer )
     return funcs->p_wglReleaseTexImageARB( pbuffer, buffer );
 }
 
-static BOOL wrap_wglSetPbufferAttribARB( HPBUFFERARB handle, const int *attribs )
+BOOL wrap_wglSetPbufferAttribARB( TEB *teb, HPBUFFERARB handle, const int *attribs )
 {
     const struct opengl_funcs *funcs;
     struct wgl_pbuffer *pbuffer;
@@ -974,7 +973,7 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
     free( params );
 }
 
-static void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user )
+void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *user )
 {
     struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
@@ -986,7 +985,7 @@ static void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const v
     funcs->p_glDebugMessageCallback( gl_debug_message_callback, ctx );
 }
 
-static void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user )
+void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *user )
 {
     struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
@@ -998,7 +997,7 @@ static void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, v
     funcs->p_glDebugMessageCallbackAMD( gl_debug_message_callback, ctx );
 }
 
-static void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *user )
+void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *user )
 {
     struct opengl_context *ctx = get_current_context( teb );
     const struct opengl_funcs *funcs = teb->glTable;
@@ -1008,190 +1007,6 @@ static void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, c
     ctx->debug_callback = (UINT_PTR)callback;
     ctx->debug_user     = (UINT_PTR)user;
     funcs->p_glDebugMessageCallbackARB( gl_debug_message_callback, ctx );
-}
-
-NTSTATUS wgl_wglCopyContext( void *args )
-{
-    struct wglCopyContext_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCopyContext( params->hglrcSrc, params->hglrcDst, params->mask );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS wgl_wglCreateContext( void *args )
-{
-    struct wglCreateContext_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCreateContext( params->hDc );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS wgl_wglDeleteContext( void *args )
-{
-    struct wglDeleteContext_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglDeleteContext( params->teb, params->oldContext );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS wgl_wglGetProcAddress( void *args )
-{
-    struct wglGetProcAddress_params *params = args;
-    params->ret = wrap_wglGetProcAddress( params->teb, params->lpszProc );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS wgl_wglMakeCurrent( void *args )
-{
-    struct wglMakeCurrent_params *params = args;
-    if (params->newContext) pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglMakeCurrent( params->teb, params->hDc, params->newContext );
-    if (params->newContext) pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS wgl_wglShareLists( void *args )
-{
-    struct wglShareLists_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglShareLists( params->hrcSrvShare, params->hrcSrvSource );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS gl_glGetIntegerv( void *args )
-{
-    struct glGetIntegerv_params *params = args;
-    wrap_glGetIntegerv( params->teb, params->pname, params->data );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS gl_glGetString( void *args )
-{
-    struct glGetString_params *params = args;
-    params->ret = wrap_glGetString( params->teb, params->name );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_glDebugMessageCallback( void *args )
-{
-    struct glDebugMessageCallback_params *params = args;
-    wrap_glDebugMessageCallback( params->teb, params->callback, params->userParam );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
-{
-    struct glDebugMessageCallbackAMD_params *params = args;
-    wrap_glDebugMessageCallbackAMD( params->teb, params->callback, params->userParam );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_glDebugMessageCallbackARB( void *args )
-{
-    struct glDebugMessageCallbackARB_params *params = args;
-    wrap_glDebugMessageCallbackARB( params->teb, params->callback, params->userParam );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_glGetStringi( void *args )
-{
-    struct glGetStringi_params *params = args;
-    params->ret = wrap_glGetStringi( params->teb, params->name, params->index );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglBindTexImageARB( void *args )
-{
-    struct wglBindTexImageARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglBindTexImageARB( params->hPbuffer, params->iBuffer );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglCreateContextAttribsARB( void *args )
-{
-    struct wglCreateContextAttribsARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCreateContextAttribsARB( params->hDC, params->hShareContext, params->attribList );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglCreatePbufferARB( void *args )
-{
-    struct wglCreatePbufferARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglCreatePbufferARB( params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglDestroyPbufferARB( void *args )
-{
-    struct wglDestroyPbufferARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglDestroyPbufferARB( params->hPbuffer );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglGetPbufferDCARB( void *args )
-{
-    struct wglGetPbufferDCARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglGetPbufferDCARB( params->hPbuffer );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglMakeContextCurrentARB( void *args )
-{
-    struct wglMakeContextCurrentARB_params *params = args;
-    if (params->hglrc) pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglMakeContextCurrentARB( params->teb, params->hDrawDC, params->hReadDC, params->hglrc );
-    if (params->hglrc) pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglQueryPbufferARB( void *args )
-{
-    struct wglQueryPbufferARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglQueryPbufferARB( params->hPbuffer, params->iAttribute, params->piValue );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglReleasePbufferDCARB( void *args )
-{
-    struct wglReleasePbufferDCARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglReleasePbufferDCARB( params->hPbuffer, params->hDC );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglReleaseTexImageARB( void *args )
-{
-    struct wglReleaseTexImageARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglReleaseTexImageARB( params->hPbuffer, params->iBuffer );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
-}
-
-NTSTATUS ext_wglSetPbufferAttribARB( void *args )
-{
-    struct wglSetPbufferAttribARB_params *params = args;
-    pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglSetPbufferAttribARB( params->hPbuffer, params->piAttribList );
-    pthread_mutex_unlock( &wgl_lock );
-    return STATUS_SUCCESS;
 }
 
 NTSTATUS process_attach( void *args )

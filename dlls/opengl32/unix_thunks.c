@@ -19,32 +19,35 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-extern NTSTATUS process_attach( void *args );
-extern NTSTATUS thread_attach( void *args );
-extern NTSTATUS process_detach( void *args );
-extern NTSTATUS get_pixel_formats( void *args );
-extern NTSTATUS wgl_wglCopyContext( void *args );
-extern NTSTATUS wgl_wglCreateContext( void *args );
-extern NTSTATUS wgl_wglDeleteContext( void *args );
-extern NTSTATUS wgl_wglGetProcAddress( void *args );
-extern NTSTATUS wgl_wglMakeCurrent( void *args );
-extern NTSTATUS wgl_wglShareLists( void *args );
-extern NTSTATUS gl_glGetIntegerv( void *args );
-extern NTSTATUS gl_glGetString( void *args );
-extern NTSTATUS ext_glDebugMessageCallback( void *args );
-extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args );
-extern NTSTATUS ext_glDebugMessageCallbackARB( void *args );
-extern NTSTATUS ext_glGetStringi( void *args );
-extern NTSTATUS ext_wglBindTexImageARB( void *args );
-extern NTSTATUS ext_wglCreateContextAttribsARB( void *args );
-extern NTSTATUS ext_wglCreatePbufferARB( void *args );
-extern NTSTATUS ext_wglDestroyPbufferARB( void *args );
-extern NTSTATUS ext_wglGetPbufferDCARB( void *args );
-extern NTSTATUS ext_wglMakeContextCurrentARB( void *args );
-extern NTSTATUS ext_wglQueryPbufferARB( void *args );
-extern NTSTATUS ext_wglReleasePbufferDCARB( void *args );
-extern NTSTATUS ext_wglReleaseTexImageARB( void *args );
-extern NTSTATUS ext_wglSetPbufferAttribARB( void *args );
+
+static NTSTATUS wgl_wglCopyContext( void *args )
+{
+    struct wglCopyContext_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglCopyContext( params->teb, params->hglrcSrc, params->hglrcDst, params->mask );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglCreateContext( void *args )
+{
+    struct wglCreateContext_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hDc );
+    if (!funcs || !funcs->p_wglCreateContext) return STATUS_NOT_IMPLEMENTED;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (HGLRC)wrap_wglCreateContext( params->teb, params->hDc );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglDeleteContext( void *args )
+{
+    struct wglDeleteContext_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglDeleteContext( params->teb, params->oldContext );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
 
 static NTSTATUS wgl_wglGetPixelFormat( void *args )
 {
@@ -55,12 +58,37 @@ static NTSTATUS wgl_wglGetPixelFormat( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS wgl_wglGetProcAddress( void *args )
+{
+    struct wglGetProcAddress_params *params = args;
+    params->ret = wrap_wglGetProcAddress( params->teb, params->lpszProc );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglMakeCurrent( void *args )
+{
+    struct wglMakeCurrent_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglMakeCurrent( params->teb, params->hDc, params->newContext );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wgl_wglSetPixelFormat( void *args )
 {
     struct wglSetPixelFormat_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->p_wglSetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglSetPixelFormat( params->hdc, params->ipfd, params->ppfd );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wgl_wglShareLists( void *args )
+{
+    struct wglShareLists_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglShareLists( params->teb, params->hrcSrvShare, params->hrcSrvSource );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -905,6 +933,13 @@ static NTSTATUS gl_glGetFloatv( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS gl_glGetIntegerv( void *args )
+{
+    struct glGetIntegerv_params *params = args;
+    wrap_glGetIntegerv( params->teb, params->pname, params->data );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS gl_glGetLightfv( void *args )
 {
     struct glGetLightfv_params *params = args;
@@ -998,6 +1033,13 @@ static NTSTATUS gl_glGetPolygonStipple( void *args )
     struct glGetPolygonStipple_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     funcs->p_glGetPolygonStipple( params->mask );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS gl_glGetString( void *args )
+{
+    struct glGetString_params *params = args;
+    params->ret = wrap_glGetString( params->teb, params->name );
     return STATUS_SUCCESS;
 }
 
@@ -5425,6 +5467,27 @@ static NTSTATUS ext_glCurrentPaletteMatrixARB( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_glDebugMessageCallback( void *args )
+{
+    struct glDebugMessageCallback_params *params = args;
+    wrap_glDebugMessageCallback( params->teb, params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
+{
+    struct glDebugMessageCallbackAMD_params *params = args;
+    wrap_glDebugMessageCallbackAMD( params->teb, params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_glDebugMessageCallbackARB( void *args )
+{
+    struct glDebugMessageCallbackARB_params *params = args;
+    wrap_glDebugMessageCallbackARB( params->teb, params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_glDebugMessageControl( void *args )
 {
     struct glDebugMessageControl_params *params = args;
@@ -9806,6 +9869,13 @@ static NTSTATUS ext_glGetStageIndexNV( void *args )
     struct glGetStageIndexNV_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_glGetStageIndexNV( params->shadertype );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_glGetStringi( void *args )
+{
+    struct glGetStringi_params *params = args;
+    params->ret = wrap_glGetStringi( params->teb, params->name, params->index );
     return STATUS_SUCCESS;
 }
 
@@ -24073,12 +24143,52 @@ static NTSTATUS ext_wglAllocateMemoryNV( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS ext_wglBindTexImageARB( void *args )
+{
+    struct wglBindTexImageARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglBindTexImageARB( params->teb, params->hPbuffer, params->iBuffer );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_wglChoosePixelFormatARB( void *args )
 {
     struct wglChoosePixelFormatARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->p_wglChoosePixelFormatARB) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglChoosePixelFormatARB( params->hdc, params->piAttribIList, params->pfAttribFList, params->nMaxFormats, params->piFormats, params->nNumFormats );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglCreateContextAttribsARB( void *args )
+{
+    struct wglCreateContextAttribsARB_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
+    if (!funcs || !funcs->p_wglCreateContextAttribsARB) return STATUS_NOT_IMPLEMENTED;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (HGLRC)wrap_wglCreateContextAttribsARB( params->teb, params->hDC, params->hShareContext, params->attribList );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_wglCreatePbufferARB( void *args )
+{
+    struct wglCreatePbufferARB_params *params = args;
+    const struct opengl_funcs *funcs = get_dc_funcs( params->hDC );
+    if (!funcs || !funcs->p_wglCreatePbufferARB) return STATUS_NOT_IMPLEMENTED;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = (HPBUFFERARB)wrap_wglCreatePbufferARB( params->teb, params->hDC, params->iPixelFormat, params->iWidth, params->iHeight, params->piAttribList );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_wglDestroyPbufferARB( void *args )
+{
+    struct wglDestroyPbufferARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglDestroyPbufferARB( params->teb, params->hPbuffer );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -24115,6 +24225,15 @@ NTSTATUS ext_wglGetExtensionsStringEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS ext_wglGetPbufferDCARB( void *args )
+{
+    struct wglGetPbufferDCARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglGetPbufferDCARB( params->teb, params->hPbuffer );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_wglGetPixelFormatAttribfvARB( void *args )
 {
     struct wglGetPixelFormatAttribfvARB_params *params = args;
@@ -24141,6 +24260,15 @@ static NTSTATUS ext_wglGetSwapIntervalEXT( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS ext_wglMakeContextCurrentARB( void *args )
+{
+    struct wglMakeContextCurrentARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglMakeContextCurrentARB( params->teb, params->hDrawDC, params->hReadDC, params->hglrc );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS ext_wglQueryCurrentRendererIntegerWINE( void *args )
 {
     struct wglQueryCurrentRendererIntegerWINE_params *params = args;
@@ -24154,6 +24282,15 @@ NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
     struct wglQueryCurrentRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = params->teb->glTable;
     params->ret = funcs->p_wglQueryCurrentRendererStringWINE( params->attribute );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_wglQueryPbufferARB( void *args )
+{
+    struct wglQueryPbufferARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglQueryPbufferARB( params->teb, params->hPbuffer, params->iAttribute, params->piValue );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
@@ -24172,6 +24309,33 @@ NTSTATUS ext_wglQueryRendererStringWINE( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->dc );
     if (!funcs || !funcs->p_wglQueryRendererStringWINE) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->p_wglQueryRendererStringWINE( params->dc, params->renderer, params->attribute );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_wglReleasePbufferDCARB( void *args )
+{
+    struct wglReleasePbufferDCARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglReleasePbufferDCARB( params->teb, params->hPbuffer, params->hDC );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_wglReleaseTexImageARB( void *args )
+{
+    struct wglReleaseTexImageARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglReleaseTexImageARB( params->teb, params->hPbuffer, params->iBuffer );
+    pthread_mutex_unlock( &wgl_lock );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS ext_wglSetPbufferAttribARB( void *args )
+{
+    struct wglSetPbufferAttribARB_params *params = args;
+    pthread_mutex_lock( &wgl_lock );
+    params->ret = wrap_wglSetPbufferAttribARB( params->teb, params->hPbuffer, params->piAttribList );
+    pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
 
