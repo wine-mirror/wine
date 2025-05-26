@@ -402,6 +402,7 @@ struct property_value
         IReference_INT16 int16_iface;
         IReference_INT32 int32_iface;
         IReference_UINT32 uint32_iface;
+        IReference_INT64 int64_iface;
         IReference_boolean boolean_iface;
         IReference_FLOAT float_iface;
         IReference_DOUBLE double_iface;
@@ -491,6 +492,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_UINT32_AddRef(&impl->irefs.uint32_iface);
         *out = &impl->irefs.uint32_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_INT64) && impl->type == PropertyType_Int64)
+    {
+        IReference_INT64_AddRef(&impl->irefs.int64_iface);
+        *out = &impl->irefs.int64_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_boolean) && impl->type == PropertyType_Boolean)
@@ -1014,6 +1021,31 @@ static const struct IReference_UINT32Vtbl iref_uint32_vtbl =
     iref_uint32_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_int64, IReference_INT64, struct property_value,
+                     impl_from_IReference_INT64, irefs.int64_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_int64_get_Value(IReference_INT64 *iface, INT64 *value)
+{
+    struct property_value *impl = impl_from_IReference_INT64(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetInt64(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_INT64Vtbl iref_int64_vtbl =
+{
+    iref_int64_QueryInterface,
+    iref_int64_AddRef,
+    iref_int64_Release,
+    /* IInspectable methods */
+    iref_int64_GetIids,
+    iref_int64_GetRuntimeClassName,
+    iref_int64_GetTrustLevel,
+    /* IReference<INT64> methods */
+    iref_int64_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_boolean, IReference_boolean, struct property_value,
                      impl_from_IReference_boolean, irefs.boolean_iface, &impl->IPropertyValue_iface);
 
@@ -1192,7 +1224,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt64(IPropertyVal
         INT64 value, IInspectable **property_value)
 {
     TRACE("iface %p, value %I64d, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_Int64);
+    create_primitive_property_value_iref(PropertyType_Int64, irefs.int64_iface.lpVtbl, iref_int64_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt64(IPropertyValueStatics *iface,
