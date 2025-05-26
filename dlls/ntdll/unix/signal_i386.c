@@ -503,9 +503,6 @@ struct syscall_frame
         XSAVE_FORMAT       xsave;
         FLOATING_SAVE_AREA fsave;
     } u;
-    /* Leave space for the whole set of YMM registers. They're not used in
-     * 32-bit mode, but some processors fault if they're not in writable memory.
-     */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate; /* 240 */
 };
 
@@ -521,15 +518,15 @@ struct x86_thread_data
     UINT               dr3;           /* 1e8 */
     UINT               dr6;           /* 1ec */
     UINT               dr7;           /* 1f0 */
-    void              *unused[2];     /* 1f4 */
+    UINT               frame_size;    /* 1f4 syscall frame size including xstate */
+    void              *unused[1];     /* 1f8 */
     UINT64             xstate_features_mask;   /* 1fc  */
-    UINT               xstate_features_size;   /* 204 */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame_size ) == 0x1f4 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstate_features_mask ) == 0x1fc );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstate_features_size ) == 0x204 );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
@@ -537,6 +534,8 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstat
 #define SYSCALL_HAVE_FXSAVE   4
 
 static unsigned int syscall_flags;
+static unsigned int frame_size;
+static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
@@ -621,7 +620,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 
     if (xstate_buffer)
     {
-        xctx->XState.Length = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+        xctx->XState.Length = xstate_size;
         xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
         context->ContextFlags |= CONTEXT_XSTATE;
 
@@ -918,7 +917,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
 
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
+            context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
         if ((xs->Mask & xstate_extended_features())
             && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
@@ -1120,7 +1119,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             UINT64 mask;
 
             if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-                context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
+                context_ex->XState.Length > xstate_size)
                 return STATUS_INVALID_PARAMETER;
 
             if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
@@ -1443,7 +1442,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
     XSAVE_AREA_HEADER *src_xs;
     struct exc_stack_layout *stack;
     size_t stack_size;
-    unsigned int xstate_size;
     NTSTATUS status = send_debug_event( rec, context, TRUE, TRUE );
 
     if (status == DBG_CONTINUE || status == DBG_EXCEPTION_HANDLED)
@@ -1455,7 +1453,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
     stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack = virtual_setup_exception( stack_ptr, stack_size, rec );
     stack->rec_ptr      = &stack->rec;
@@ -1554,11 +1551,9 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     ULONG esp = (frame->esp - sizeof(struct exc_stack_layout)) & ~3;
     struct exc_stack_layout *stack;
     XSAVE_AREA_HEADER *src_xs;
-    unsigned int xstate_size;
 
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Eip--;
 
-    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
     stack = (struct exc_stack_layout *)((esp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack->rec_ptr      = &stack->rec;
     stack->context_ptr  = &stack->context;
@@ -1607,8 +1602,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movl 0x18(%ebp),%edx\n\t"  /* teb */
                    "pushl 4(%ebx)\n\t"         /* id */
                    "pushl 0(%edx)\n\t"         /* teb->Tib.ExceptionList */
-                   "subl $0x280,%esp\n\t"      /* sizeof(struct syscall_frame) */
-                   "subl 0x204(%edx),%esp\n\t" /* x86_thread_data()->xstate_features_size */
+                   "subl 0x1f4(%edx),%esp\n\t" /* x86_thread_data()->frame_size */
                    "andl $~63,%esp\n\t"
                    "leal 8(%ebp),%eax\n\t"
                    "movl %eax,0x38(%esp)\n\t"  /* frame->syscall_cfa */
@@ -2434,7 +2428,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
     else thread_data->fs = gdt_fs_sel;
 
     teb->WOW32Reserved = __wine_syscall_dispatcher;
-    thread_data->xstate_features_size = xstate_features_size;
+    thread_data->frame_size = frame_size;
     return STATUS_SUCCESS;
 }
 
@@ -2464,10 +2458,11 @@ void signal_init_process(void)
     struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
     void *kernel_stack = (char *)thread_data->kernel_stack + kernel_stack_size;
 
-    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack
-                                                           - sizeof(struct syscall_frame)
-                                                           - xstate_features_size) & ~(ULONG_PTR)63);
-    x86_thread_data()->xstate_features_size = xstate_features_size;
+    if (xstate_features_size) xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+    frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
+
+    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
+    x86_thread_data()->frame_size = frame_size;
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
@@ -2516,7 +2511,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();
     thread_data->xstate_features_mask = xstate_supported_features_mask;
-    assert( thread_data->xstate_features_size == xstate_features_size );
+    assert( thread_data->frame_size == frame_size );
 
     context.SegCs  = get_cs();
     context.SegDs  = get_ds();
@@ -2583,8 +2578,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movl 0x218(%ecx),%eax\n\t"  /* thread_data->syscall_frame */
                    "orl %eax,%eax\n\t"
                    "jnz 1f\n\t"
-                   "leal -0x280(%esp),%eax\n\t" /* sizeof(struct syscall_frame) */
-                   "subl 0x204(%ecx),%eax\n\t"  /* x86_thread_data()->xstate_features_size */
+                   "movl %esp,%eax\n\t"
+                   "subl 0x1f4(%ecx),%eax\n\t"  /* x86_thread_data()->frame_size */
                    "andl $~63,%eax\n\t"
                    "movl %eax,0x218(%ecx)\n"    /* thread_data->syscall_frame */
                    "1:\tmovl $0,(%eax)\n\t"     /* frame->syscall_flags/restore_flags */

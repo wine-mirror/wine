@@ -433,7 +433,7 @@ struct syscall_frame
     DWORD                 restore_flags; /* 00b4 */
     DWORD                 syscall_id;    /* 00b8 */
     DWORD                 align[1];      /* 00bc */
-    XMM_SAVE_AREA32       xsave;         /* 00c0 */
+    XSAVE_FORMAT          xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate;    /* 02c0 */
 };
 
@@ -450,17 +450,18 @@ struct amd64_thread_data
     DWORD_PTR             dr6;           /* 0310 */
     DWORD_PTR             dr7;           /* 0318 */
     void                 *pthread_teb;   /* 0320 thread data for pthread */
-    void                 *unused[2];     /* 0328 */
+    DWORD_PTR             frame_size;    /* 0328 syscall frame size including xstate */
+    void                 *unused[1];     /* 0330 */
     DWORD                 fs;            /* 0338 WOW TEB selector */
-    DWORD                 xstate_features_size;  /* 033c */
+    DWORD                 unused2;       /* 033c */
     UINT64                xstate_features_mask;  /* 0340 */
     void                **instrumentation_callback; /* 0348 */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x320 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, frame_size ) == 0x328 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, xstate_features_size ) == 0x33c );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, xstate_features_mask ) == 0x340 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x348 );
 
@@ -468,6 +469,9 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
 {
     return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
+
+static unsigned int frame_size;
+static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
 
 #if defined(__linux__) || defined(__APPLE__)
 static inline TEB *get_current_teb(void)
@@ -519,7 +523,7 @@ static inline void context_init_xstate( CONTEXT *context, void *xstate_buffer )
 
     if (xstate_buffer)
     {
-        xctx->XState.Length = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+        xctx->XState.Length = xstate_size;
         xctx->XState.Offset = (BYTE *)xstate_buffer - (BYTE *)xctx;
         context->ContextFlags |= CONTEXT_XSTATE;
 
@@ -1010,7 +1014,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
 
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
+            context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
         if ((xs->Mask & xstate_extended_features())
             && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
@@ -1188,7 +1192,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         UINT64 mask;
 
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
+            context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
 
         if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
@@ -1403,7 +1407,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         UINT64 mask;
 
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
-            context_ex->XState.Length > sizeof(XSAVE_AREA_HEADER) + xstate_features_size)
+            context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
 
         if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
@@ -1436,7 +1440,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     size_t stack_size;
     NTSTATUS status;
     XSAVE_AREA_HEADER *src_xs;
-    unsigned int xstate_size;
     void *callback;
 
     if (rec->ExceptionCode == EXCEPTION_SINGLE_STEP)
@@ -1466,7 +1469,6 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
     /* fix up instruction pointer in context for EXCEPTION_BREAKPOINT */
     if (rec->ExceptionCode == EXCEPTION_BREAKPOINT) context->Rip--;
 
-    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
     stack_size = (ULONG_PTR)stack_ptr - (((ULONG_PTR)stack_ptr - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     stack = virtual_setup_exception( stack_ptr, stack_size, rec );
     stack->rec               = *rec;
@@ -1573,10 +1575,8 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
     struct syscall_frame *frame = get_syscall_frame();
     struct exc_stack_layout *stack;
     NTSTATUS status = NtSetContextThread( GetCurrentThread(), context );
-    unsigned int xstate_size;
 
     if (status) return status;
-    xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
     stack = (struct exc_stack_layout *)((context->Rsp - sizeof(*stack) - xstate_size) & ~(ULONG_PTR)63);
     memmove( &stack->context, context, sizeof(*context) );
 
@@ -1585,7 +1585,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
         XSAVE_AREA_HEADER *dst_xs = (XSAVE_AREA_HEADER *)(stack + 1);
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, dst_xs );
-        memcpy( dst_xs, &frame->xstate, sizeof(XSAVE_AREA_HEADER) + xstate_features_size );
+        memcpy( dst_xs, &frame->xstate, xstate_size );
     }
     else context_init_xstate( &stack->context, NULL );
 
@@ -1630,9 +1630,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "movq %rdx,-0x40(%rbp)\n\t" /* ret_len */
                    "movq (%r13),%rax\n\t"      /* NtCurrentTeb()->Tib.ExceptionList */
                    "movq %rax,-0x48(%rbp)\n\t"
-                   "subq $0x300,%rsp\n\t"      /* sizeof(struct syscall_frame) */
-                   "movl 0x33c(%r13),%esi\n\t" /* amd64_thread_data()->xstate_features_size */
-                   "subq %rsi,%rsp\n\t"
+                   "subq 0x328(%r13),%rsp\n\t" /* amd64_thread_data()->frame_size */
                    "andq $~63,%rsp\n\t"
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
@@ -2446,7 +2444,7 @@ NTSTATUS signal_alloc_thread( TEB *teb )
         }
         else thread_data->fs = fs32_sel;
     }
-    thread_data->xstate_features_size = xstate_features_size;
+    thread_data->frame_size = frame_size;
     return STATUS_SUCCESS;
 }
 
@@ -2496,10 +2494,11 @@ void signal_init_process(void)
     struct ntdll_thread_data *thread_data = ntdll_get_thread_data();
     void *ptr, *kernel_stack = (char *)thread_data->kernel_stack + kernel_stack_size;
 
-    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack
-                                                           - sizeof(struct syscall_frame)
-                                                           - xstate_features_size) & ~(ULONG_PTR)63);
-    amd64_thread_data()->xstate_features_size = xstate_features_size;
+    if (xstate_features_size) xstate_size = sizeof(XSAVE_AREA_HEADER) + xstate_features_size;
+    frame_size = offsetof( struct syscall_frame, xstate ) + xstate_size;
+
+    thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
+    amd64_thread_data()->frame_size = frame_size;
 
     /* sneak in a syscall dispatcher pointer at a fixed address (7ffe1000) */
     ptr = (char *)user_shared_data + page_size;
@@ -2595,7 +2594,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     void *callback;
 
     thread_data->xstate_features_mask = xstate_supported_features_mask;
-    assert( thread_data->xstate_features_size == xstate_features_size );
+    assert( thread_data->frame_size == frame_size );
     thread_data->instrumentation_callback = &instrumentation_callback;
 
 #if defined __linux__
@@ -2696,9 +2695,8 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq 0x378(%rcx),%r8\n\t"      /* thread_data->syscall_frame */
                    "orq %r8,%r8\n\t"
                    "jnz 1f\n\t"
-                   "leaq -0x300(%rsp),%r8\n\t"     /* sizeof(struct syscall_frame) */
-                   "movl 0x33c(%rcx),%eax\n\t"     /* amd64_thread_data()->xstate_features_size */
-                   "subq %rax,%r8\n\t"
+                   "movq %rsp,%r8\n\t"
+                   "subq 0x328(%rcx),%r8\n\t"      /* amd64_thread_data()->frame_size */
                    "andq $~63,%r8\n\t"
                    "movq %r8,0x378(%rcx)\n"        /* thread_data->syscall_frame */
                    "1:\tmovq $0,0xa0(%r8)\n\t"     /* frame->prev_frame */
