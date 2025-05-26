@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 HRESULT WINAPI BluetoothGATTGetServices( HANDLE, USHORT, BTH_LE_GATT_SERVICE *, USHORT *, ULONG );
+HRESULT WINAPI BluetoothGATTGetCharacteristics( HANDLE, BTH_LE_GATT_SERVICE *, USHORT, BTH_LE_GATT_CHARACTERISTIC *, USHORT *, ULONG );
 
 #ifdef __cplusplus
 }
