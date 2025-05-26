@@ -775,7 +775,9 @@ static void test_avifile_write(void)
 {
     WCHAR fn[MAX_PATH];
     IPersistFile *persist;
+    PCMWAVEFORMAT afmt;
     AVISTREAMINFOW si;
+    USHORT buffer[64];
     PAVIFILE avifile;
     PAVISTREAM stm;
     HRESULT hr;
@@ -811,6 +813,47 @@ static void test_avifile_write(void)
     ok(hr == S_OK, "got %#lx.\n", hr);
     hr = AVIFileCreateStreamW(avifile, &stm, &si);
     ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(&afmt, 0, sizeof(afmt));
+    afmt.wBitsPerSample = 16;
+    afmt.wf.wFormatTag = WAVE_FORMAT_PCM;
+    afmt.wf.nChannels = 2;
+    afmt.wf.nSamplesPerSec = 44800;
+    afmt.wf.nAvgBytesPerSec = afmt.wf.nSamplesPerSec * afmt.wf.nChannels;
+    afmt.wf.nBlockAlign = afmt.wf.nChannels * 2;
+    hr = AVIStreamSetFormat(stm, 0, &afmt, sizeof(afmt));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(!si.dwLength, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(!si.dwSuggestedBufferSize, "got %lu.\n", si.dwSuggestedBufferSize);
+    hr = AVIStreamWrite(stm, 0, 2, buffer, si.dwSampleSize * 2, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 2, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 8, "got %lu.\n", si.dwSuggestedBufferSize);
+    hr = AVIStreamWrite(stm, 2, 2, buffer, si.dwSampleSize * 2, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 4, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 8, "got %lu.\n", si.dwSuggestedBufferSize);
+
+    hr = AVIStreamWrite(stm, 4, 4, buffer, si.dwSampleSize * 4, 0, NULL, NULL);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    hr = IAVIStream_Info(stm, &si, sizeof(si));
+    ok(hr == S_OK, "got %#lx.\n", hr);
+    ok(si.dwLength == 8, "got %lu.\n", si.dwLength);
+    ok(!si.dwStart, "got %lu.\n", si.dwStart);
+    ok(si.dwSuggestedBufferSize == 16, "got %lu.\n", si.dwSuggestedBufferSize);
+
     IAVIStream_Release(stm);
     IAVIFile_Release(avifile);
     ret = DeleteFileW(fn);
