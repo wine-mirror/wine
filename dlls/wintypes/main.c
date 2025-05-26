@@ -407,6 +407,7 @@ struct property_value
         IReference_boolean boolean_iface;
         IReference_FLOAT float_iface;
         IReference_DOUBLE double_iface;
+        IReference_DateTime datetime_iface;
         IReference_GUID guid_iface;
         IReference_HSTRING hstring_iface;
     } irefs;
@@ -523,6 +524,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IReference_DOUBLE_AddRef(&impl->irefs.double_iface);
         *out = &impl->irefs.double_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_DateTime) && impl->type == PropertyType_DateTime)
+    {
+        IReference_DateTime_AddRef(&impl->irefs.datetime_iface);
+        *out = &impl->irefs.datetime_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_GUID) && impl->type == PropertyType_Guid)
@@ -1178,6 +1185,31 @@ static const struct IReference_DOUBLEVtbl iref_double_vtbl =
     iref_double_get_Value,
 };
 
+DEFINE_IINSPECTABLE_(iref_datetime, IReference_DateTime, struct property_value,
+                     impl_from_IReference_DateTime, irefs.datetime_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_datetime_get_Value(IReference_DateTime *iface, DateTime *value)
+{
+    struct property_value *impl = impl_from_IReference_DateTime(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetDateTime(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_DateTimeVtbl iref_datetime_vtbl =
+{
+    iref_datetime_QueryInterface,
+    iref_datetime_AddRef,
+    iref_datetime_Release,
+    /* IInspectable methods */
+    iref_datetime_GetIids,
+    iref_datetime_GetRuntimeClassName,
+    iref_datetime_GetTrustLevel,
+    /* IReference<DateTime> methods */
+    iref_datetime_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_guid, IReference_GUID, struct property_value,
                      impl_from_IReference_GUID, irefs.guid_iface, &impl->IPropertyValue_iface);
 
@@ -1319,7 +1351,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateDateTime(IProperty
         DateTime value, IInspectable **property_value)
 {
     TRACE("iface %p, value %I64d, property_value %p.\n", iface, value.UniversalTime, property_value);
-    return create_primitive_property_value(PropertyType_DateTime);
+    create_primitive_property_value_iref(PropertyType_DateTime, irefs.datetime_iface.lpVtbl, iref_datetime_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateTimeSpan(IPropertyValueStatics *iface,
