@@ -195,81 +195,6 @@ static DWORD set_reg_value_dword( HKEY hkey, const WCHAR *name, DWORD value )
 
 #if defined(__i386__) || defined(__x86_64__)
 
-extern UINT64 WINAPI do_xgetbv( unsigned int cx);
-#ifdef __i386__
-__ASM_STDCALL_FUNC( do_xgetbv, 4,
-                   "movl 4(%esp),%ecx\n\t"
-                   "xgetbv\n\t"
-                   "ret $4" )
-#else
-__ASM_GLOBAL_FUNC( do_xgetbv,
-                   "xgetbv\n\t"
-                   "shlq $32,%rdx\n\t"
-                   "orq %rdx,%rax\n\t"
-                   "ret" )
-#endif
-
-static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
-{
-    static const ULONG64 wine_xstate_supported_features = 0xfc; /* XSTATE_AVX, XSTATE_MPX_BNDREGS, XSTATE_MPX_BNDCSR,
-                                                                 * XSTATE_AVX512_KMASK, XSTATE_AVX512_ZMM_H, XSTATE_AVX512_ZMM */
-    XSTATE_CONFIGURATION *xstate = &data->XState;
-    ULONG64 supported_mask;
-    unsigned int i, off;
-    int regs[4];
-
-    if (!data->ProcessorFeatures[PF_AVX_INSTRUCTIONS_AVAILABLE])
-        return;
-
-    __cpuidex(regs, 0, 0);
-
-    TRACE("Max cpuid level %#x.\n", regs[0]);
-    if (regs[0] < 0xd)
-        return;
-
-    __cpuidex(regs, 1, 0);
-    TRACE("CPU features %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3]);
-    if (!(regs[2] & (0x1 << 27))) /* xsave OS enabled */
-        return;
-
-    __cpuidex(regs, 0xd, 0);
-    TRACE("XSAVE details %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3]);
-    supported_mask = ((ULONG64)regs[3] << 32) | regs[0];
-    supported_mask &= do_xgetbv(0) & wine_xstate_supported_features;
-    if (!(supported_mask >> 2))
-        return;
-
-    xstate->EnabledFeatures = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | supported_mask;
-    xstate->EnabledVolatileFeatures = xstate->EnabledFeatures;
-    xstate->AllFeatureSize = regs[1];
-
-    __cpuidex(regs, 0xd, 1);
-    xstate->OptimizedSave = regs[0] & 1;
-    xstate->CompactionEnabled = !!(regs[0] & 2);
-
-    xstate->Features[0].Size = xstate->AllFeatures[0] = offsetof(XSAVE_FORMAT, XmmRegisters);
-    xstate->Features[1].Size = xstate->AllFeatures[1] = sizeof(M128A) * 16;
-    xstate->Features[1].Offset = xstate->Features[0].Size;
-    off = sizeof(XSAVE_FORMAT) + sizeof(XSAVE_AREA_HEADER);
-    supported_mask >>= 2;
-    for (i = 2; supported_mask; ++i, supported_mask >>= 1)
-    {
-        if (!(supported_mask & 1)) continue;
-        __cpuidex( regs, 0xd, i );
-        xstate->Features[i].Offset = regs[1];
-        xstate->Features[i].Size = xstate->AllFeatures[i] = regs[0];
-        if (regs[2] & 2)
-        {
-            xstate->AlignedFeatures |= (ULONG64)1 << i;
-            off = (off + 63) & ~63;
-        }
-        off += xstate->Features[i].Size;
-        TRACE("xstate[%d] offset %lu, size %lu, aligned %d.\n", i, xstate->Features[i].Offset, xstate->Features[i].Size, !!(regs[2] & 2));
-    }
-    xstate->Size = xstate->CompactionEnabled ? off : xstate->Features[i - 1].Offset + xstate->Features[i - 1].Size;
-    TRACE("xstate size %lu, compacted %d, optimized %d.\n", xstate->Size, xstate->CompactionEnabled, xstate->OptimizedSave);
-}
-
 static BOOL is_tsc_trusted_by_the_kernel(void)
 {
     char buf[4] = {0};
@@ -374,10 +299,6 @@ static UINT64 read_tsc_frequency(void)
 
 #else
 
-static void initialize_xstate_features(struct _KUSER_SHARED_DATA *data)
-{
-}
-
 static UINT64 read_tsc_frequency(void)
 {
     return 0;
@@ -418,8 +339,6 @@ static void create_user_shared_data(void)
     data->NtMinorVersion              = version.dwMinorVersion;
     data->SuiteMask                   = version.wSuiteMask;
     wcscpy( data->NtSystemRoot, L"C:\\windows" );
-
-    initialize_xstate_features( data );
 
     UnmapViewOfFile( data );
 }

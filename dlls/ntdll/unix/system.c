@@ -567,6 +567,56 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
     info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
 }
 
+static void init_xstate_features( XSTATE_CONFIGURATION *xstate )
+{
+    static const ULONG64 supported_features = (1 << XSTATE_AVX) | (1 << XSTATE_MPX_BNDREGS) |
+                                              (1 << XSTATE_MPX_BNDCSR) | (1 << XSTATE_AVX512_KMASK) |
+                                              (1 << XSTATE_AVX512_ZMM_H) | (1 << XSTATE_AVX512_ZMM);
+    ULONG64 supported_mask;
+    unsigned int i, off, regs[4];
+
+    do_cpuid( 0x0000000d, 0, regs );
+    TRACE( "XSAVE details %#x, %#x, %#x, %#x.\n", regs[0], regs[1], regs[2], regs[3] );
+    supported_mask = ((ULONG64)regs[3] << 32) | regs[0];
+    supported_mask &= do_xgetbv(0) & supported_features;
+    if (!(supported_mask >> 2)) return;
+
+    xstate->EnabledFeatures = (1 << XSTATE_LEGACY_FLOATING_POINT) | (1 << XSTATE_LEGACY_SSE) | supported_mask;
+    xstate->EnabledVolatileFeatures = xstate->EnabledFeatures;
+    xstate->AllFeatureSize = regs[1];
+
+    do_cpuid( 0x0000000d, 1, regs );
+    xstate->OptimizedSave          = !!(regs[0] & (1 << 0));
+    xstate->CompactionEnabled      = !!(regs[0] & (1 << 1));
+    xstate->ExtendedFeatureDisable = !!(regs[0] & (1 << 4));
+
+    xstate->Features[0].Size = xstate->AllFeatures[0] = offsetof( XSAVE_FORMAT, XmmRegisters );
+    xstate->Features[1].Size = xstate->AllFeatures[1] = sizeof(M128A) * 16;
+    xstate->Features[1].Offset = xstate->Features[0].Size;
+    off = sizeof(XSAVE_FORMAT) + sizeof(XSAVE_AREA_HEADER);
+    supported_mask >>= 2;
+
+    for (i = 2; supported_mask; ++i, supported_mask >>= 1)
+    {
+        if (!(supported_mask & 1)) continue;
+        do_cpuid( 0x0000000d, i, regs );
+        xstate->Features[i].Offset = regs[1];
+        xstate->Features[i].Size = xstate->AllFeatures[i] = regs[0];
+        if (regs[2] & 2)
+        {
+            xstate->AlignedFeatures |= (ULONG64)1 << i;
+            off = (off + 63) & ~63;
+        }
+        off += xstate->Features[i].Size;
+        TRACE( "xstate[%d] offset %x, size %x, aligned %d.\n", i,
+               xstate->Features[i].Offset, xstate->Features[i].Size, !!(regs[2] & 2) );
+    }
+
+    xstate->Size = xstate->CompactionEnabled ? off : xstate->Features[i - 1].Offset + xstate->Features[i - 1].Size;
+    TRACE( "xstate size %x, compacted %d, optimized %d.\n",
+           xstate->Size, xstate->CompactionEnabled, xstate->OptimizedSave );
+}
+
 void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
 {
     BOOLEAN *features = data->ProcessorFeatures;
@@ -617,6 +667,9 @@ void init_shared_data_cpuinfo( KUSER_SHARED_DATA *data )
         features[PF_VIRT_FIRMWARE_ENABLED]         |= !!(regs[2] & (1 << 2));
         features[PF_3DNOW_INSTRUCTIONS_AVAILABLE]   = !!(regs[3] & (1u << 31));
     }
+
+    if (features[PF_AVX_INSTRUCTIONS_AVAILABLE] && features[PF_XSAVE_ENABLED])
+        init_xstate_features( &data->XState );
 }
 
 #elif defined(__arm__) || defined(__aarch64__)
