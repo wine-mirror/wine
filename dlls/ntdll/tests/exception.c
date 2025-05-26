@@ -2654,7 +2654,7 @@ static void invoke_c_handler(struct exception_code_context *ctx, ULONG_PTR frame
 
 static void check_exception_code(ULONG_PTR code)
 {
-    ok(code == 0x123, "code = %llx\n", code);
+    ok(code == 0x123, "code = %Ix\n", code);
 }
 
 static char call_invoke_c_handler_code[] = {
@@ -2674,6 +2674,7 @@ static char call_invoke_c_handler_code[] = {
 static void test___C_specific_handler(void)
 {
     void (*test_exception_code)(void *ctx) = code_mem;
+    IMAGE_AMD64_RUNTIME_FUNCTION_ENTRY rt_func;
     struct exception_code_context ctx;
     DISPATCHER_CONTEXT dispatch;
     EXCEPTION_RECORD rec;
@@ -2681,6 +2682,7 @@ static void test___C_specific_handler(void)
     ULONG64 frame;
     EXCEPTION_DISPOSITION ret;
     SCOPE_TABLE scope_table;
+    BOOLEAN res;
 
     if (!p__C_specific_handler)
     {
@@ -2718,13 +2720,16 @@ static void test___C_specific_handler(void)
 
     *(void **)&call_invoke_c_handler_code[9] = invoke_c_handler;
     *(void **)&call_invoke_c_handler_code[25] = check_exception_code;
-    memcpy(code_mem, call_invoke_c_handler_code, sizeof(call_invoke_c_handler_code));
+    test_exception_code = (void *)((char *)code_mem + 0x1000);
+    memset(code_mem, 0, 0x3000);
+    memcpy(test_exception_code, call_invoke_c_handler_code, sizeof(call_invoke_c_handler_code));
+
     memset(&rec, 0, sizeof(rec));
     memset(&dispatch, 0, sizeof(dispatch));
     memset(&context, 0, sizeof(context));
     rec.ExceptionCode = 0x123;
-    dispatch.ImageBase = (ULONG_PTR)code_mem - 0x1000;
-    dispatch.ControlPc = (ULONG_PTR)code_mem + 7;
+    dispatch.ImageBase = (ULONG_PTR)code_mem;
+    dispatch.ControlPc = (ULONG_PTR)test_exception_code + 7;
     dispatch.HandlerData = &scope_table;
     dispatch.ContextRecord = &context;
     scope_table.Count = 1;
@@ -2733,10 +2738,20 @@ static void test___C_specific_handler(void)
     scope_table.ScopeRecord[0].HandlerAddress = EXCEPTION_EXECUTE_HANDLER;
     scope_table.ScopeRecord[0].JumpTarget = 0x1014;
 
+    ((char *)code_mem)[0x2000] = 1;
+    rt_func.BeginAddress = 0x1000;
+    rt_func.EndAddress = 0x1000 + sizeof(call_invoke_c_handler_code);
+    rt_func.UnwindData = 0x2000;
+    res = RtlAddFunctionTable(&rt_func, 1, dispatch.ImageBase);
+    ok(res, "RtlAddFunctionTable failed\n");
+
     ctx.rec = &rec;
     ctx.context = &context;
     ctx.dispatch = &dispatch;
     test_exception_code(&ctx);
+
+    res = RtlDeleteFunctionTable(&rt_func);
+    ok(res, "RtlDeleteFunctionTable failed\n");
 }
 
 /* This is heavily based on the i386 exception tests. */
