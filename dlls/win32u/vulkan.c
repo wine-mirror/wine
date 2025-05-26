@@ -438,7 +438,7 @@ static VkResult win32u_vkQueuePresentKHR( VkQueue client_queue, const VkPresentI
         RECT client_rect;
 
         if (surface->hwnd)
-            driver_funcs->p_vulkan_surface_presented( surface->hwnd, surface->driver_private, swapchain_res );
+            driver_funcs->p_vulkan_surface_presented( surface->hwnd, surface->driver_private );
 
         if (swapchain_res < VK_SUCCESS) continue;
         if (!NtUserGetClientRect( surface->hwnd, &client_rect, NtUserGetDpiForWindow( surface->hwnd ) ))
@@ -525,7 +525,7 @@ static void nulldrv_vulkan_surface_update( HWND hwnd, void *private )
 {
 }
 
-static void nulldrv_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
+static void nulldrv_vulkan_surface_presented( HWND hwnd, void *private )
 {
 }
 
@@ -595,10 +595,10 @@ static void lazydrv_vulkan_surface_update( HWND hwnd, void *private )
     return driver_funcs->p_vulkan_surface_update( hwnd, private );
 }
 
-static void lazydrv_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
+static void lazydrv_vulkan_surface_presented( HWND hwnd, void *private )
 {
     vulkan_driver_load();
-    driver_funcs->p_vulkan_surface_presented( hwnd, private, result );
+    driver_funcs->p_vulkan_surface_presented( hwnd, private );
 }
 
 static VkBool32 lazydrv_vkGetPhysicalDeviceWin32PresentationSupportKHR( VkPhysicalDevice device, uint32_t queue )

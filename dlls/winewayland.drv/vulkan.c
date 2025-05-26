@@ -120,7 +120,7 @@ static void wayland_vulkan_surface_update(HWND hwnd, void *private)
 {
 }
 
-static void wayland_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
+static void wayland_vulkan_surface_presented(HWND hwnd, void *private)
 {
     struct wayland_client_surface *client = private;
     HWND toplevel = NtUserGetAncestor(hwnd, GA_ROOT);

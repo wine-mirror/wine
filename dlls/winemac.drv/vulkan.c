@@ -183,7 +183,7 @@ static void macdrv_vulkan_surface_update(HWND hwnd, void *private)
 {
 }
 
-static void macdrv_vulkan_surface_presented(HWND hwnd, void *private, VkResult result)
+static void macdrv_vulkan_surface_presented(HWND hwnd, void *private)
 {
 }
 

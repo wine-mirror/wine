@@ -218,7 +218,7 @@ static void X11DRV_vulkan_surface_update( HWND hwnd, void *private )
     vulkan_surface_update_offscreen( hwnd, surface );
 }
 
-static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private, VkResult result )
+static void X11DRV_vulkan_surface_presented( HWND hwnd, void *private )
 {
     struct x11drv_vulkan_surface *surface = private;
     HWND toplevel = NtUserGetAncestor( hwnd, GA_ROOT );
