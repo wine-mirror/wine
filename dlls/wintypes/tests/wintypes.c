@@ -736,6 +736,7 @@ static void test_IPropertyValueStatics(void)
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IPropertyValueStatics *statics = NULL;
     IActivationFactory *factory = NULL;
+    IReference_UINT32 *iref_uint32;
     IReference_boolean *iref_boolean;
     IReference_HSTRING *iref_hstring;
     IReference_DOUBLE *iref_double;
@@ -744,6 +745,7 @@ static void test_IPropertyValueStatics(void)
     unsigned int i, count;
     BYTE byte, *ptr_byte;
     HSTRING str, ret_str;
+    UINT32 ret_uint32;
     DOUBLE ret_double;
     boolean ret;
     HRESULT hr;
@@ -996,6 +998,7 @@ static void test_IPropertyValueStatics(void)
         IInspectable_Release(inspectable);                                                   \
     } while (0);
 
+    TEST_PROPERTY_VALUE_IREFERENCE(UInt32, IReference_UINT32, uint32_value, iref_uint32, ret_uint32)
     TEST_PROPERTY_VALUE_IREFERENCE(Boolean, IReference_boolean, boolean_value, iref_boolean, ret)
     TEST_PROPERTY_VALUE_IREFERENCE(String, IReference_HSTRING, str, iref_hstring, ret_str)
     TEST_PROPERTY_VALUE_IREFERENCE(Double, IReference_DOUBLE, double_value, iref_double, ret_double)

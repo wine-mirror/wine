@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Zhiyi Zhang for CodeWeavers
+ * Copyright 2022-2025 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -398,6 +398,7 @@ struct property_value
     IPropertyValue IPropertyValue_iface;
     union
     {
+        IReference_UINT32 uint32_iface;
         IReference_boolean boolean_iface;
         IReference_DOUBLE double_iface;
         IReference_HSTRING hstring_iface;
@@ -461,6 +462,12 @@ static HRESULT STDMETHODCALLTYPE property_value_QueryInterface(IPropertyValue *i
     {
         IPropertyValue_AddRef(iface);
         *out = &impl->IPropertyValue_iface;
+        return S_OK;
+    }
+    else if (IsEqualIID(riid, &IID_IReference_UINT32) && impl->type == PropertyType_UInt32)
+    {
+        IReference_UINT32_AddRef(&impl->irefs.uint32_iface);
+        *out = &impl->irefs.uint32_iface;
         return S_OK;
     }
     else if (IsEqualIID(riid, &IID_IReference_boolean) && impl->type == PropertyType_Boolean)
@@ -872,6 +879,31 @@ static HRESULT _create_primitive_property_value(PropertyType type, void *value,
         return hr;                                                                       \
     } while (0)
 
+DEFINE_IINSPECTABLE_(iref_uint32, IReference_UINT32, struct property_value,
+                     impl_from_IReference_UINT32, irefs.uint32_iface, &impl->IPropertyValue_iface);
+
+static HRESULT STDMETHODCALLTYPE iref_uint32_get_Value(IReference_UINT32 *iface, UINT32 *value)
+{
+    struct property_value *impl = impl_from_IReference_UINT32(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return property_value_GetUInt32(&impl->IPropertyValue_iface, value);
+}
+
+static const struct IReference_UINT32Vtbl iref_uint32_vtbl =
+{
+    iref_uint32_QueryInterface,
+    iref_uint32_AddRef,
+    iref_uint32_Release,
+    /* IInspectable methods */
+    iref_uint32_GetIids,
+    iref_uint32_GetRuntimeClassName,
+    iref_uint32_GetTrustLevel,
+    /* IReference<UINT32> methods */
+    iref_uint32_get_Value,
+};
+
 DEFINE_IINSPECTABLE_(iref_boolean, IReference_boolean, struct property_value,
                      impl_from_IReference_boolean, irefs.boolean_iface, &impl->IPropertyValue_iface);
 
@@ -993,7 +1025,7 @@ static HRESULT STDMETHODCALLTYPE property_value_statics_CreateUInt32(IPropertyVa
         UINT32 value, IInspectable **property_value)
 {
     TRACE("iface %p, value %u, property_value %p.\n", iface, value, property_value);
-    return create_primitive_property_value(PropertyType_UInt32);
+    create_primitive_property_value_iref(PropertyType_UInt32, irefs.uint32_iface.lpVtbl, iref_uint32_vtbl);
 }
 
 static HRESULT STDMETHODCALLTYPE property_value_statics_CreateInt64(IPropertyValueStatics *iface,
