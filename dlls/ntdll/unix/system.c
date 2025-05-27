@@ -268,7 +268,6 @@ static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
  */
 #if defined(__i386__) || defined(__x86_64__)
 
-BOOL xstate_compaction_enabled = FALSE;
 UINT64 xstate_supported_features_mask = 0;
 
 static int xstate_feature_offset[64];
@@ -488,9 +487,6 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
         if (features & CPU_FEATURE_XSAVE)
         {
-            do_cpuid( 0x0000000d, 1, regs3 ); /* get XSAVE details */
-            if (regs3[0] & 2) xstate_compaction_enabled = TRUE;
-
             do_cpuid( 0x0000000d, 0, regs3 ); /* get user xstate features */
             xstate_supported_features_mask = ((ULONG64)regs3[3] << 32) | regs3[0];
             xstate_supported_features_mask &= do_xgetbv( 0 ) & wine_xstate_supported_features;
