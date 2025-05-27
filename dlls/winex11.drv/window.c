@@ -1344,6 +1344,18 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     XWindowChanges changes;
     RECT *new_rect = &rect;
 
+    /* resizing a managed maximized window is not allowed */
+    if ((style & WS_MAXIMIZE) && data->managed)
+    {
+        new_rect->right = new_rect->left + old_rect->right - old_rect->left;
+        new_rect->bottom = new_rect->top + old_rect->bottom - old_rect->top;
+    }
+    /* only the size is allowed to change for the desktop window or systray docked windows */
+    if (data->whole_window == root_window || data->embedded)
+    {
+        OffsetRect( new_rect, old_rect->left - new_rect->left, old_rect->top - new_rect->top );
+    }
+
     data->desired_state.rect = *new_rect;
     data->desired_state.above = above;
     if (!data->whole_window) return; /* no window, nothing to update */
@@ -1354,10 +1366,8 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
         return;
     }
 
-    /* resizing a managed maximized window is not allowed */
-    if ((old_rect->right - old_rect->left != new_rect->right - new_rect->left ||
-         old_rect->bottom - old_rect->top != new_rect->bottom - new_rect->top) &&
-        (!(style & WS_MAXIMIZE) || !data->managed))
+    if (old_rect->right - old_rect->left != new_rect->right - new_rect->left ||
+        old_rect->bottom - old_rect->top != new_rect->bottom - new_rect->top)
     {
         changes.width = new_rect->right - new_rect->left;
         changes.height = new_rect->bottom - new_rect->top;
@@ -1373,9 +1383,7 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
         new_rect->bottom = new_rect->top + old_rect->bottom - old_rect->top;
     }
 
-    /* only the size is allowed to change for the desktop window or systray docked windows */
-    if ((old_rect->left != new_rect->left || old_rect->top != new_rect->top) &&
-        (data->whole_window != root_window && !data->embedded))
+    if (old_rect->left != new_rect->left || old_rect->top != new_rect->top)
     {
         POINT pt = virtual_screen_to_root( new_rect->left, new_rect->top );
         changes.x = pt.x;
