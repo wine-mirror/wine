@@ -212,6 +212,7 @@ static GUID subtype_from_pixel_format( enum AVPixelFormat fmt )
     case AV_PIX_FMT_BGR24: return MFVideoFormat_RGB24;
     case AV_PIX_FMT_NV12: return MFVideoFormat_NV12;
     case AV_PIX_FMT_NV21: return MFVideoFormat_NV21;
+    case AV_PIX_FMT_P010: return MFVideoFormat_P010;
     case AV_PIX_FMT_RGB565: return MFVideoFormat_RGB565;
     case AV_PIX_FMT_RGB555: return MFVideoFormat_RGB555;
     case AV_PIX_FMT_RGB8: return MFVideoFormat_RGB8;
