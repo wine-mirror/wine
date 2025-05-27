@@ -937,6 +937,7 @@ static BOOL window_needs_net_wm_state_change_delay( struct x11drv_win_data *data
 
 static BOOL window_needs_config_change_delay( struct x11drv_win_data *data )
 {
+    if (!data->managed || data->embedded) return FALSE; /* window is not managed or is embedded, safe to make changes */
     if (data->pending_state.wm_state == WithdrawnState) return FALSE; /* window is unmapped, should be safe to make any change */
     if (data->configure_serial) return TRUE; /* another config update is pending, wait for it to complete */
     /* delay any config request when a _NET_WM_STATE or _MOTIF_WM_HINTS change which might trigger a ConfigureNotify is in flight */
@@ -1360,7 +1361,7 @@ static void window_set_config( struct x11drv_win_data *data, RECT rect, BOOL abo
     data->desired_state.above = above;
     if (!data->whole_window) return; /* no window, nothing to update */
     if (EqualRect( old_rect, new_rect ) && (old_above || !above)) return; /* rects are the same, no need to be raised, nothing to update */
-    if (data->managed && window_needs_config_change_delay( data ))
+    if (window_needs_config_change_delay( data ))
     {
         TRACE( "window %p/%lx is updating _NET_WM_STATE/_MOTIF_WM_HINTS, delaying request\n", data->hwnd, data->whole_window );
         return;
