@@ -2489,6 +2489,17 @@ HRESULT dispex_prop_name(DispatchEx *dispex, DISPID id, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+const WCHAR *dispex_builtin_prop_name(DispatchEx *dispex, DISPID id)
+{
+    func_info_t *func;
+    HRESULT hres;
+
+    hres = get_builtin_func(dispex->info, id, &func);
+    assert(SUCCEEDED(hres));
+
+    return func->name;
+}
+
 static HRESULT WINAPI DispatchEx_GetMemberName(IWineJSDispatchHost *iface, DISPID id, BSTR *pbstrName)
 {
     DispatchEx *This = impl_from_IWineJSDispatchHost(iface);

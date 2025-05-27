@@ -89,9 +89,7 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
     nsIDOMAttr *nsattr;
     nsAString nsname;
-    BSTR name;
     nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
@@ -105,15 +103,10 @@ static HRESULT WINAPI HTMLDOMAttribute_get_specified(IHTMLDOMAttribute *iface, V
         return S_OK;
     }
 
-    hres = dispex_prop_name(&This->elem->node.event_target.dispex, This->dispid, &name);
-    if(FAILED(hres))
-        return hres;
-
     /* FIXME: This is not exactly right, we have some attributes that don't map directly to Gecko attributes. */
-    nsAString_InitDepend(&nsname, name);
+    nsAString_InitDepend(&nsname, dispex_builtin_prop_name(&This->elem->node.event_target.dispex, This->dispid));
     nsres = nsIDOMElement_GetAttributeNode(This->elem->dom_element, &nsname, &nsattr);
     nsAString_Finish(&nsname);
-    SysFreeString(name);
     if(NS_FAILED(nsres))
         return E_FAIL;
 
