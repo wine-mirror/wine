@@ -519,14 +519,11 @@ struct x86_thread_data
     UINT               dr6;           /* 1ec */
     UINT               dr7;           /* 1f0 */
     UINT               frame_size;    /* 1f4 syscall frame size including xstate */
-    void              *unused[1];     /* 1f8 */
-    UINT64             xstate_features_mask;   /* 1fc  */
 };
 
 C_ASSERT( sizeof(struct x86_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, gs ) == 0x1d8 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame_size ) == 0x1f4 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, xstate_features_mask ) == 0x1fc );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
@@ -2510,7 +2507,6 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
 
     ldt_set_fs( thread_data->fs, teb );
     thread_data->gs = get_gs();
-    thread_data->xstate_features_mask = xstate_supported_features_mask;
     assert( thread_data->frame_size == frame_size );
 
     context.SegCs  = get_cs();
@@ -2540,7 +2536,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     ctx->ContextFlags = CONTEXT_FULL | CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
     memset( &frame->xstate, 0, sizeof(frame->xstate) );
     if (xstate_compaction_enabled)
-        frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
+        frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
     signal_set_full_context( ctx );
 
     stack = (DWORD *)ctx;
@@ -2641,7 +2637,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "addl %fs:0x214,%ebx\n\t"       /* thread_data->syscall_table */
                    "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
                    "jz 2f\n\t"
-                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
+                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "xorl %edx,%edx\n\t"
                    "andl $7,%eax\n\t"
                    "xorl %edi,%edi\n\t"
@@ -2711,8 +2707,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 1f\n\t"
                    "movl %eax,%esi\n\t"
-                   "movl %fs:0x1fc,%eax\n\t"       /* x86_thread_data()->xstate_features_mask */
-                   "movl %fs:0x200,%edx\n\t"       /* x86_thread_data()->xstate_features_mask high dword */
+                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
+                   "movl 0x7ffe03dc,%edx\n\t"
                    "xrstor 0x40(%esp)\n\t"
                    "movl %esi,%eax\n\t"
                    "jmp 3f\n"

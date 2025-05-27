@@ -451,19 +451,15 @@ struct amd64_thread_data
     DWORD_PTR             dr7;           /* 0318 */
     void                 *pthread_teb;   /* 0320 thread data for pthread */
     DWORD_PTR             frame_size;    /* 0328 syscall frame size including xstate */
-    void                 *unused[1];     /* 0330 */
+    void                **instrumentation_callback; /* 0330 */
     DWORD                 fs;            /* 0338 WOW TEB selector */
-    DWORD                 unused2;       /* 033c */
-    UINT64                xstate_features_mask;  /* 0340 */
-    void                **instrumentation_callback; /* 0348 */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, pthread_teb ) == 0x320 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, frame_size ) == 0x328 );
+C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x330 );
 C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, fs ) == 0x338 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, xstate_features_mask ) == 0x340 );
-C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct amd64_thread_data, instrumentation_callback ) == 0x348 );
 
 static inline struct amd64_thread_data *amd64_thread_data(void)
 {
@@ -1665,7 +1661,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "syscall\n\t"
                    "movq %r10,%rcx\n\t"
 #endif
-                   "movq 0x348(%r13),%r10\n\t" /* amd64_thread_data()->instrumentation_callback */
+                   "movq 0x330(%r13),%r10\n\t" /* amd64_thread_data()->instrumentation_callback */
                    "movq (%r10),%r10\n\t"
                    "test %r10,%r10\n\t"
                    "jz 1f\n\t"
@@ -2593,7 +2589,6 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     I386_CONTEXT *wow_context;
     void *callback;
 
-    thread_data->xstate_features_mask = xstate_supported_features_mask;
     assert( thread_data->frame_size == frame_size );
     thread_data->instrumentation_callback = &instrumentation_callback;
 
@@ -2651,7 +2646,7 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     ctx->ContextFlags = CONTEXT_FULL;
     memset( &frame->xstate, 0, sizeof(frame->xstate) );
     if (xstate_compaction_enabled)
-        frame->xstate.CompactionMask = 0x8000000000000000 | xstate_supported_features_mask;
+        frame->xstate.CompactionMask = 0x8000000000000000 | user_shared_data->XState.EnabledFeatures;
     signal_set_full_context( ctx );
 
     frame->cs  = cs64_sel;
@@ -2754,7 +2749,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "testl $3,%r14d\n\t"            /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 2f\n\t"
-                   "movl 0x340(%r13),%eax\n\t"     /* amd64_thread_data()->xstate_features_mask */
+                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "xorl %edx,%edx\n\t"
                    "andl $7,%eax\n\t"
                    "xorq %rbp,%rbp\n\t"
@@ -2893,8 +2888,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "2:\ttestl $3,%r14d\n\t"        /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
                    "jz 3f\n\t"
                    "movq %rax,%r11\n\t"
-                   "movl 0x340(%r13),%eax\n\t"     /* amd64_thread_data()->xstate_features_mask */
-                   "movl 0x344(%r13),%edx\n\t"     /* amd64_thread_data()->xstate_features_mask high dword */
+                   "movl 0x7ffe03d8,%eax\n\t"     /* user_shared_data->XState.EnabledFeatures */
+                   "movl 0x7ffe03dc,%edx\n\t"
                    "xrstor64 0xc0(%rcx)\n\t"
                    "movq %r11,%rax\n\t"
                    "movl 0xb4(%rcx),%edx\n\t"      /* frame->restore_flags */
@@ -2962,7 +2957,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "popfq\n\t"
                    "iretq\n"
                    /* RESTORE_FLAGS_INSTRUMENTATION */
-                   "2:\tmovq %gs:0x348,%r10\n\t"  /* amd64_thread_data()->instrumentation_callback */
+                   "2:\tmovq %gs:0x330,%r10\n\t"  /* amd64_thread_data()->instrumentation_callback */
                    "movq (%r10),%r10\n\t"
                    "test %r10,%r10\n\t"
                    "jz 3b\n\t"
