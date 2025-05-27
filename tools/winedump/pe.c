@@ -3599,7 +3599,7 @@ static void print_clr_table_fieldrva( const BYTE **ptr, UINT *size, UINT row_cou
 static void print_clr_table_assembly( const BYTE **ptr, UINT *size, UINT row_count )
 {
     static const char * const header[] = { "HashAlgId", "MajorVersion", "MinorVersion", "BuildNumber",
-                                           "RevisionNumber", "Flags", "PublicKey", "Name", NULL };
+                                           "RevisionNumber", "Flags", "PublicKey", "Name", "Culture", NULL };
     UINT i, row = 1;
 
     print_clr( "Assembly table\n" );
@@ -3615,6 +3615,7 @@ static void print_clr_table_assembly( const BYTE **ptr, UINT *size, UINT row_cou
         print_clr_ushort( ptr, size, FALSE );
         print_clr_uint( ptr, size, TRUE );
         print_clr_blob_idx( ptr, size );
+        print_clr_string_idx( ptr, size );
         print_clr_string_idx( ptr, size );
         printf( "\n" );
     }
@@ -3660,7 +3661,7 @@ static void print_clr_table_assemblyos( const BYTE **ptr, UINT *size, UINT row_c
 static void print_clr_table_assemblyref( const BYTE **ptr, UINT *size, UINT row_count )
 {
     static const char * const header[] = { "MajorVersion", "MinorVersion", "BuildNumber", "RevisionNumber", "Flags",
-                                           "PublicKeyOrToken", "Name", "Culture", "HashValue", NULL };
+                                           "PublicKey", "Name", "Culture", "HashValue", NULL };
     UINT i, row = 1;
 
     print_clr( "AssemblyRef table\n" );
