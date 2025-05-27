@@ -533,6 +533,7 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame
 static unsigned int syscall_flags;
 static unsigned int frame_size;
 static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
+static UINT64 xstate_extended_features;
 
 static inline struct x86_thread_data *x86_thread_data(void)
 {
@@ -820,7 +821,7 @@ static inline void save_context( struct xcontext *xcontext, const ucontext_t *si
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
-        if (xstate_extended_features() && (xs = XState_sig(fpux))) context_init_xstate( context, xs );
+        if (xstate_extended_features && (xs = XState_sig(fpux))) context_init_xstate( context, xs );
     }
     if (!fpu && !fpux) save_fpu( context );
 }
@@ -908,7 +909,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     DWORD flags = context->ContextFlags & ~CONTEXT_i386;
     BOOL self = (handle == GetCurrentThread());
 
-    if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
+    if ((flags & CONTEXT_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
@@ -916,7 +917,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
             context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
-        if ((xs->Mask & xstate_extended_features())
+        if ((xs->Mask & xstate_extended_features)
             && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
             return STATUS_BUFFER_OVERFLOW;
     }
@@ -996,7 +997,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
         UINT64 mask = frame->xstate.Mask;
 
-        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
         copy_xstate( &frame->xstate, xs, xs->Mask );
         if (xs->CompactionMask) frame->xstate.Mask |= mask & ~xs->CompactionMask;
     }
@@ -1109,7 +1110,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
 
             context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
         }
-        if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features())
+        if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features)
         {
             CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
             XSAVE_AREA_HEADER *xstate = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
@@ -1119,8 +1120,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
                 context_ex->XState.Length > xstate_size)
                 return STATUS_INVALID_PARAMETER;
 
-            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
-            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
+            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
+            mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features;
             xstate->Mask = frame->xstate.Mask & mask;
             xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
             memset( xstate->Reserved2, 0, sizeof(xstate->Reserved2) );
@@ -1464,7 +1465,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, void *stack_ptr,
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, sizeof(*dst_xs) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features : 0;
         copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
@@ -1564,7 +1565,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
         context_init_xstate( &stack->context, dst_xs );
         assert( !((ULONG_PTR)dst_xs & 63) );
         memset( dst_xs, 0, sizeof(*dst_xs) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features : 0;
         copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
@@ -2141,14 +2142,14 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
         context->c.ContextFlags = CONTEXT_FULL | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context->c );
-        if (xstate_extended_features())
+        if (xstate_extended_features)
         {
-            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
             context_init_xstate( &context->c, &frame->xstate );
             saved_compaction = frame->xstate.CompactionMask;
         }
         wait_suspend( &context->c );
-        if (xstate_extended_features()) frame->xstate.CompactionMask = saved_compaction;
+        if (xstate_extended_features) frame->xstate.CompactionMask = saved_compaction;
         if (context->c.ContextFlags & 0x40)
         {
             /* xstate is updated directly in frame's xstate */
@@ -2460,6 +2461,8 @@ void signal_init_process(void)
 
     thread_data->syscall_frame = (struct syscall_frame *)(((ULONG_PTR)kernel_stack - frame_size) & ~(ULONG_PTR)63);
     x86_thread_data()->frame_size = frame_size;
+
+    xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;

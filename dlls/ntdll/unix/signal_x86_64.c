@@ -468,6 +468,7 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
 
 static unsigned int frame_size;
 static unsigned int xstate_size = sizeof(XSAVE_AREA_HEADER);
+static UINT64 xstate_extended_features;
 
 #if defined(__linux__) || defined(__APPLE__)
 static inline TEB *get_current_teb(void)
@@ -929,7 +930,7 @@ static void save_context( struct xcontext *xcontext, const ucontext_t *sigcontex
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
         context->FltSave = *FPU_sig(sigcontext);
         context->MxCsr = context->FltSave.MxCsr;
-        if (xstate_extended_features() && (xs = XState_sig(FPU_sig(sigcontext))))
+        if (xstate_extended_features && (xs = XState_sig(FPU_sig(sigcontext))))
         {
             /* xcontext and sigcontext are both on the signal stack, so we can
              * just reference sigcontext without overflowing 32 bit XState.Offset */
@@ -1004,7 +1005,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     BOOL self = (handle == GetCurrentThread());
     struct syscall_frame *frame = get_syscall_frame();
 
-    if ((flags & CONTEXT_XSTATE) && xstate_extended_features())
+    if ((flags & CONTEXT_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
@@ -1012,7 +1013,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         if (context_ex->XState.Length < sizeof(XSAVE_AREA_HEADER) ||
             context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
-        if ((xs->Mask & xstate_extended_features())
+        if ((xs->Mask & xstate_extended_features)
             && (context_ex->XState.Length < xstate_get_size( xs->CompactionMask, xs->Mask )))
             return STATUS_BUFFER_OVERFLOW;
     }
@@ -1081,7 +1082,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
         UINT64 mask = frame->xstate.Mask;
 
-        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
         copy_xstate( &frame->xstate, xs, xs->Mask );
         if (xs->CompactionMask) frame->xstate.Mask |= mask & ~xs->CompactionMask;
     }
@@ -1181,7 +1182,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         context->MxCsr = context->FltSave.MxCsr;
         context->ContextFlags |= CONTEXT_FLOATING_POINT;
     }
-    if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features())
+    if ((needed_flags & CONTEXT_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSAVE_AREA_HEADER *xstate = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
@@ -1191,8 +1192,8 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
             context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
 
-        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
-        mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
+        mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features;
         xstate->Mask = frame->xstate.Mask & mask;
         xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
         memset( xstate->Reserved2, 0, sizeof(xstate->Reserved2) );
@@ -1313,7 +1314,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
         XSAVE_AREA_HEADER *xs = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
         UINT64 mask = frame->xstate.Mask;
 
-        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
         copy_xstate( &frame->xstate, xs, xs->Mask );
         if (xs->CompactionMask) frame->xstate.Mask |= mask & ~xs->CompactionMask;
         frame->restore_flags |= CONTEXT_XSTATE;
@@ -1396,7 +1397,7 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
         fpux_to_fpu( &context->FloatSave, &frame->xsave );
         context->ContextFlags |= CONTEXT_I386_FLOATING_POINT;
     }
-    if ((needed_flags & CONTEXT_I386_XSTATE) && xstate_extended_features())
+    if ((needed_flags & CONTEXT_I386_XSTATE) && xstate_extended_features)
     {
         CONTEXT_EX *context_ex = (CONTEXT_EX *)(context + 1);
         XSAVE_AREA_HEADER *xstate = (XSAVE_AREA_HEADER *)((char *)context_ex + context_ex->XState.Offset);
@@ -1406,8 +1407,8 @@ NTSTATUS get_thread_wow64_context( HANDLE handle, void *ctx, ULONG size )
             context_ex->XState.Length > xstate_size)
             return STATUS_INVALID_PARAMETER;
 
-        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
-        mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features();
+        if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
+        mask = (xstate_compaction_enabled ? xstate->CompactionMask : xstate->Mask) & xstate_extended_features;
         xstate->Mask = frame->xstate.Mask & mask;
         xstate->CompactionMask = xstate_compaction_enabled ? (0x8000000000000000 | mask) : 0;
         memset( xstate->Reserved2, 0, sizeof(xstate->Reserved2) );
@@ -1478,7 +1479,7 @@ static void setup_raise_exception( ucontext_t *sigcontext, EXCEPTION_RECORD *rec
         assert( !((ULONG_PTR)dst_xs & 63) );
         context_init_xstate( &stack->context, dst_xs );
         memset( dst_xs, 0, sizeof(*dst_xs) );
-        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features() : 0;
+        dst_xs->CompactionMask = xstate_compaction_enabled ? 0x8000000000000000 | xstate_extended_features : 0;
         copy_xstate( dst_xs, src_xs, src_xs->Mask );
     }
     else
@@ -2240,14 +2241,14 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         }
         context->c.ContextFlags = CONTEXT_FULL | CONTEXT_SEGMENTS | CONTEXT_EXCEPTION_REQUEST;
         NtGetContextThread( GetCurrentThread(), &context->c );
-        if (xstate_extended_features())
+        if (xstate_extended_features)
         {
-            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features();
+            if (xstate_compaction_enabled) frame->xstate.CompactionMask |= xstate_extended_features;
             context_init_xstate( &context->c, &frame->xstate );
             saved_compaction = frame->xstate.CompactionMask;
         }
         wait_suspend( &context->c );
-        if (xstate_extended_features()) frame->xstate.CompactionMask = saved_compaction;
+        if (xstate_extended_features) frame->xstate.CompactionMask = saved_compaction;
         if (context->c.ContextFlags & 0x40)
         {
             /* xstate is updated directly in frame's xstate */
@@ -2500,6 +2501,8 @@ void signal_init_process(void)
     ptr = (char *)user_shared_data + page_size;
     anon_mmap_fixed( ptr, page_size, PROT_READ | PROT_WRITE, 0 );
     *(void **)ptr = __wine_syscall_dispatcher;
+
+    xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
     if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (xstate_compaction_enabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;

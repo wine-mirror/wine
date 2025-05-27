@@ -310,11 +310,12 @@ void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask )
 {
     unsigned int i;
     int src_off, dst_off;
+    UINT64 extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    mask &= xstate_extended_features() & src->Mask;
+    mask &= extended_features & src->Mask;
     if (src->CompactionMask) mask &= src->CompactionMask;
     if (dst->CompactionMask) mask &= dst->CompactionMask;
-    dst->Mask = (dst->Mask & ~xstate_extended_features()) | mask;
+    dst->Mask = (dst->Mask & ~extended_features) | mask;
     mask >>= 2;
     src_off = dst_off = sizeof(XSAVE_AREA_HEADER);
     i = 2;
