@@ -301,6 +301,7 @@ static VARIANT_BOOL element_has_attribute(HTMLElement *element, const WCHAR *nam
 
     nsAString_InitDepend(&name_str, name);
     nsres = nsIDOMElement_HasAttribute(element->dom_element, &name_str, &r);
+    nsAString_Finish(&name_str);
     return variant_bool(NS_SUCCEEDED(nsres) && r);
 }
 
