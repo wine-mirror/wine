@@ -1020,3 +1020,16 @@ sync_test("importNode", function() {
     ok(node2.hasChildNodes() === false, "node2 has child nodes");
     ok(node2.parentNode === null, "node2.parentNode = " + node2.parentNode);
 });
+
+sync_test("attributeNode", function() {
+    document.body.innerHTML = '<div id="test" attr="wine"></div>';
+    var elem = document.getElementById("test");
+    var attr = elem.attributes[0];
+
+    ok(attr.ownerDocument === document, "ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === elem, "ownerElement = " + attr.ownerElement);
+
+    attr = document.createAttribute("id");
+    ok(attr.ownerDocument === document, "detached attr ownerDocument = " + attr.ownerDocument);
+    ok(attr.ownerElement === null, "detached attr ownerElement = " + attr.ownerElement);
+});

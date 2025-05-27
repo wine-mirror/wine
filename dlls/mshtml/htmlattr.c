@@ -465,9 +465,16 @@ static HRESULT WINAPI HTMLDOMAttribute3_get_ownerElement(IHTMLDOMAttribute3 *ifa
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    if(!This->elem) {
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = &This->elem->IHTMLElement2_iface;
+    IHTMLElement2_AddRef(*p);
+    return S_OK;
 }
 
 static const IHTMLDOMAttribute3Vtbl HTMLDOMAttribute3Vtbl = {
