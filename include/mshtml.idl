@@ -8409,6 +8409,36 @@ interface IHTMLDOMAttribute2 : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLDOMAttribute3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510468-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLDOMAttribute3 : IDispatch
+{
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
+    HRESULT nodeValue([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_NODEVALUE)]
+    HRESULT nodeValue([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
+    HRESULT value([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_VALUE)]
+    HRESULT value([retval, out] BSTR *p);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_IE8_SPECIFIED)]
+    HRESULT specified([retval, out] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IHTMLDOMATTRIBUTE3_OWNERELEMENT)]
+    HRESULT ownerElement([retval, out] IHTMLElement2 **p);
+}
+
+/*****************************************************************************
  *    IHTMLDOMTextNode interface
  */
 [
