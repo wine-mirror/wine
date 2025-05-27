@@ -839,7 +839,6 @@ static void x11drv_surface_destroy( struct opengl_drawable *base )
     XFreeColormap( gdi_display, gl->colormap );
     if (gl->hdc_src) NtGdiDeleteObjectApp( gl->hdc_src );
     if (gl->hdc_dst) NtGdiDeleteObjectApp( gl->hdc_dst );
-    free( gl );
 }
 
 static BOOL set_swap_interval( struct gl_drawable *gl, int interval )
@@ -920,13 +919,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, int format )
 
     NtUserGetClientRect( hwnd, &rect, NtUserGetDpiForWindow( hwnd ) );
 
-    if (!(gl = calloc( 1, sizeof(*gl) ))) return NULL;
-    gl->base.funcs = &x11drv_surface_funcs;
-    gl->base.ref = 1;
-    gl->base.hwnd = hwnd;
-    gl->base.hdc = 0;
-    gl->base.format = format;
-
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_surface_funcs, format, hwnd, 0 ))) return NULL;
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI there is no way to query it. */
     gl->swap_interval = INT_MIN;
     gl->rect = rect;
@@ -1515,12 +1508,7 @@ static BOOL x11drv_pbuffer_create( HDC hdc, int format, BOOL largest, GLenum tex
     }
     glx_attribs[count++] = 0;
 
-    if (!(gl = calloc( 1, sizeof(*gl) ))) return FALSE;
-    gl->base.funcs = &x11drv_pbuffer_funcs;
-    gl->base.ref = 1;
-    gl->base.hwnd = 0;
-    gl->base.hdc = hdc;
-    gl->base.format = format;
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &x11drv_pbuffer_funcs, format, 0, hdc ))) return FALSE;
 
     gl->drawable = pglXCreatePbuffer( gdi_display, fmt->fbconfig, glx_attribs );
     TRACE( "new Pbuffer drawable as %p (%lx)\n", gl, gl->drawable );
@@ -1554,7 +1542,6 @@ static void x11drv_pbuffer_destroy( struct opengl_drawable *base )
     pthread_mutex_unlock( &context_mutex );
 
     pglXDestroyPbuffer( gdi_display, gl->drawable );
-    free( gl );
 }
 
 static BOOL x11drv_pbuffer_updated( HDC hdc, struct opengl_drawable *base, GLenum cube_face, GLint mipmap_level )

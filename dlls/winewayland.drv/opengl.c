@@ -143,8 +143,6 @@ static void wayland_drawable_destroy(struct opengl_drawable *base)
 
         if (data) wayland_win_data_release(data);
     }
-
-    free(gl);
 }
 
 static inline BOOL is_onscreen_format(int format)
@@ -175,13 +173,7 @@ static struct wayland_gl_drawable *wayland_gl_drawable_create(HWND hwnd, HDC hdc
     }
     *attrib++ = EGL_NONE;
 
-    if (!(gl = calloc(1, sizeof(*gl)))) return NULL;
-    gl->base.funcs = &wayland_drawable_funcs;
-    gl->base.ref = 1;
-    gl->base.hwnd = hwnd;
-    gl->base.hdc = hdc;
-    gl->base.format = format;
-
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &wayland_drawable_funcs, format, hwnd, hdc))) return NULL;
     gl->swap_interval = 1;
 
     /* Get the client surface for the HWND. If don't have a wayland surface

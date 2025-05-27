@@ -105,13 +105,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
     struct gl_drawable *gl;
 
-    if (!(gl = calloc( 1, sizeof(*gl) ))) return NULL;
-    gl->base.funcs  = &android_drawable_funcs;
-    gl->base.ref    = 1;
-    gl->base.hwnd   = hwnd;
-    gl->base.hdc    = hdc;
-    gl->base.format = format;
-
+    if (!(gl = opengl_drawable_create( sizeof(*gl), &android_drawable_funcs, format, hwnd, hdc ))) return NULL;
     gl->window = create_ioctl_window( hwnd, TRUE, 1.0f );
     gl->surface = 0;
     gl->pbuffer = funcs->p_eglCreatePbufferSurface( egl->display, egl_config_for_format(gl->base.format), attribs );
@@ -143,7 +137,6 @@ static void android_drawable_destroy( struct opengl_drawable *base )
     if (gl->surface) funcs->p_eglDestroySurface( egl->display, gl->surface );
     if (gl->pbuffer) funcs->p_eglDestroySurface( egl->display, gl->pbuffer );
     release_ioctl_window( gl->window );
-    free( gl );
 }
 
 static void release_gl_drawable( struct gl_drawable *gl )

@@ -2383,18 +2383,13 @@ static BOOL macdrv_pbuffer_create(HDC hdc, int format, BOOL largest, GLenum text
         texture_format = GL_RGB;
     }
 
-    if (!(gl = calloc(1, sizeof(*gl)))) return FALSE;
-    gl->base.funcs = &macdrv_pbuffer_funcs;
-    gl->base.ref = 1;
-    gl->base.hwnd = 0;
-    gl->base.hdc = hdc;
-    gl->base.format = format;
+    if (!(gl = opengl_drawable_create(sizeof(*gl), &macdrv_pbuffer_funcs, format, 0, hdc))) return FALSE;
 
     err = CGLCreatePBuffer(*width, *height, texture_target, texture_format, max_level, &gl->pbuffer);
     if (err != kCGLNoError)
     {
         WARN("CGLCreatePBuffer failed; err %d %s\n", err, CGLErrorString(err));
-        free(gl);
+        opengl_drawable_release(&gl->base);
         return FALSE;
     }
 
@@ -2418,7 +2413,6 @@ static void macdrv_pbuffer_destroy(struct opengl_drawable *base)
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
     CGLReleasePBuffer(gl->pbuffer);
-    free(gl);
 }
 
 

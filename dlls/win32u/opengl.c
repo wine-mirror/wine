@@ -163,6 +163,22 @@ static void register_extension( char *list, size_t size, const char *name )
     }
 }
 
+void *opengl_drawable_create( UINT size, const struct opengl_drawable_funcs *funcs, int format, HWND hwnd, HDC hdc )
+{
+    struct opengl_drawable *drawable;
+
+    if (!(drawable = calloc( 1, size ))) return NULL;
+    drawable->funcs = funcs;
+    drawable->ref = 1;
+
+    drawable->format = format;
+    drawable->hwnd = hwnd;
+    drawable->hdc = hdc;
+
+    TRACE( "created %s\n", debugstr_opengl_drawable( drawable ) );
+    return drawable;
+}
+
 void opengl_drawable_add_ref( struct opengl_drawable *drawable )
 {
     ULONG ref = InterlockedIncrement( &drawable->ref );
@@ -177,6 +193,7 @@ void opengl_drawable_release( struct opengl_drawable *drawable )
     if (!ref)
     {
         drawable->funcs->destroy( drawable );
+        free( drawable );
     }
 }
 
