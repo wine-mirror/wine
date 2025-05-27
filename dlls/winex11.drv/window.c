@@ -949,7 +949,7 @@ static void window_set_mwm_hints( struct x11drv_win_data *data, const MwmHints *
     const MwmHints *old_hints = &data->pending_state.mwm_hints;
 
     data->desired_state.mwm_hints = *new_hints;
-    if (!data->whole_window || !data->managed) return; /* no window or not managed, nothing to update */
+    if (!data->whole_window || !data->managed || data->embedded) return; /* no window or not managed, nothing to update */
     if (!memcmp( old_hints, new_hints, sizeof(*new_hints) )) return; /* hints are the same, nothing to update */
 
     if (window_needs_mwm_hints_change_delay( data ))
@@ -1269,7 +1269,7 @@ static void window_set_net_wm_state( struct x11drv_win_data *data, UINT new_stat
 
     new_state &= x11drv_thread_data()->net_wm_state_mask;
     data->desired_state.net_wm_state = new_state;
-    if (!data->whole_window || !data->managed) return; /* no window or not managed, nothing to update */
+    if (!data->whole_window || !data->managed || data->embedded) return; /* no window or not managed, nothing to update */
     if (data->wm_state_serial) return; /* another WM_STATE update is pending, wait for it to complete */
     /* we ignore and override previous _NET_WM_STATE update requests */
     if (old_state == new_state) return; /* states are the same, nothing to update */
