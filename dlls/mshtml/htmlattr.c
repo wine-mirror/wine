@@ -409,6 +409,83 @@ static const IHTMLDOMAttribute2Vtbl HTMLDOMAttribute2Vtbl = {
     HTMLDOMAttribute2_cloneNode
 };
 
+static inline HTMLDOMAttribute *impl_from_IHTMLDOMAttribute3(IHTMLDOMAttribute3 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDOMAttribute, IHTMLDOMAttribute3_iface);
+}
+
+DISPEX_IDISPATCH_IMPL(HTMLDOMAttribute3, IHTMLDOMAttribute3, impl_from_IHTMLDOMAttribute3(iface)->dispex)
+
+static HRESULT WINAPI HTMLDOMAttribute3_put_nodeValue(IHTMLDOMAttribute3 *iface, VARIANT v)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    return HTMLDOMAttribute_put_nodeValue(&This->IHTMLDOMAttribute_iface, v);
+}
+
+static HRESULT WINAPI HTMLDOMAttribute3_get_nodeValue(IHTMLDOMAttribute3 *iface, VARIANT *p)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return HTMLDOMAttribute_get_nodeValue(&This->IHTMLDOMAttribute_iface, p);
+}
+
+static HRESULT WINAPI HTMLDOMAttribute3_put_value(IHTMLDOMAttribute3 *iface, BSTR v)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return HTMLDOMAttribute2_put_value(&This->IHTMLDOMAttribute2_iface, v);
+}
+
+static HRESULT WINAPI HTMLDOMAttribute3_get_value(IHTMLDOMAttribute3 *iface, BSTR *p)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return HTMLDOMAttribute2_get_value(&This->IHTMLDOMAttribute2_iface, p);
+}
+
+static HRESULT WINAPI HTMLDOMAttribute3_get_specified(IHTMLDOMAttribute3 *iface, VARIANT_BOOL *p)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return HTMLDOMAttribute_get_specified(&This->IHTMLDOMAttribute_iface, p);
+}
+
+static HRESULT WINAPI HTMLDOMAttribute3_get_ownerElement(IHTMLDOMAttribute3 *iface, IHTMLElement2 **p)
+{
+    HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute3(iface);
+
+    FIXME("(%p)->(%p)\n", This, p);
+
+    return E_NOTIMPL;
+}
+
+static const IHTMLDOMAttribute3Vtbl HTMLDOMAttribute3Vtbl = {
+    HTMLDOMAttribute3_QueryInterface,
+    HTMLDOMAttribute3_AddRef,
+    HTMLDOMAttribute3_Release,
+    HTMLDOMAttribute3_GetTypeInfoCount,
+    HTMLDOMAttribute3_GetTypeInfo,
+    HTMLDOMAttribute3_GetIDsOfNames,
+    HTMLDOMAttribute3_Invoke,
+    HTMLDOMAttribute3_put_nodeValue,
+    HTMLDOMAttribute3_get_nodeValue,
+    HTMLDOMAttribute3_put_value,
+    HTMLDOMAttribute3_get_value,
+    HTMLDOMAttribute3_get_specified,
+    HTMLDOMAttribute3_get_ownerElement
+};
+
 static inline HTMLDOMAttribute *impl_from_DispatchEx(DispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDOMAttribute, dispex);
@@ -422,6 +499,8 @@ static void *HTMLDOMAttribute_query_interface(DispatchEx *dispex, REFIID riid)
         return &This->IHTMLDOMAttribute_iface;
     if(IsEqualGUID(&IID_IHTMLDOMAttribute2, riid))
         return &This->IHTMLDOMAttribute2_iface;
+    if(IsEqualGUID(&IID_IHTMLDOMAttribute3, riid))
+        return &This->IHTMLDOMAttribute3_iface;
 
     return NULL;
 }
@@ -469,6 +548,12 @@ static const dispex_static_data_vtbl_t HTMLDOMAttribute_dispex_vtbl = {
     .unlink           = HTMLDOMAttribute_unlink
 };
 
+static void HTMLDOMAttribute_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if(mode >= COMPAT_MODE_IE8)
+        dispex_info_add_interface(info, IHTMLDOMAttribute3_tid, NULL);
+}
+
 static const tid_t HTMLDOMAttribute_iface_tids[] = {
     IHTMLDOMAttribute_tid,
     IHTMLDOMAttribute2_tid,
@@ -480,6 +565,7 @@ dispex_static_data_t Attr_dispex = {
     .vtbl         = &HTMLDOMAttribute_dispex_vtbl,
     .disp_tid     = DispHTMLDOMAttribute_tid,
     .iface_tids   = HTMLDOMAttribute_iface_tids,
+    .init_info    = HTMLDOMAttribute_init_dispex_info,
 };
 
 HTMLDOMAttribute *unsafe_impl_from_IHTMLDOMAttribute(IHTMLDOMAttribute *iface)
@@ -500,6 +586,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
 
     ret->IHTMLDOMAttribute_iface.lpVtbl = &HTMLDOMAttributeVtbl;
     ret->IHTMLDOMAttribute2_iface.lpVtbl = &HTMLDOMAttribute2Vtbl;
+    ret->IHTMLDOMAttribute3_iface.lpVtbl = &HTMLDOMAttribute3Vtbl;
     ret->dispid = dispid;
     ret->elem = elem;
 

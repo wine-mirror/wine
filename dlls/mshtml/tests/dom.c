@@ -319,6 +319,7 @@ static const IID * const text_iids[] = {
 static const IID * const attr_iids[] = {
     &IID_IHTMLDOMAttribute,
     &IID_IHTMLDOMAttribute2,
+    &IID_IHTMLDOMAttribute3,
     &IID_IDispatchEx,
     NULL
 };

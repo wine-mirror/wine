@@ -575,6 +575,55 @@ sync_test("elem_props", function() {
     test_exposed("fileSize", v < 11);
 });
 
+sync_test("attr_props", function() {
+    var v = document.documentMode, elem = document.createElement("div"), attr;
+
+    elem.innerHTML = '<span id="test"></span>';
+    elem = elem.getElementsByTagName("span")[0];
+    attr = elem.attributes[0];
+
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in attr, prop + " not found in attribute.");
+        else
+            ok(!(prop in attr), prop + " found in attribute.");
+    }
+
+    test_exposed("appendChild", true);
+    test_exposed("attributes", true);
+    test_exposed("childNodes", true);
+    test_exposed("cloneNode", true);
+    test_exposed("compareDocumentPosition", v >= 9);
+    test_exposed("expando", true);
+    test_exposed("firstChild", true);
+    test_exposed("hasChildNodes", true);
+    test_exposed("insertBefore", true);
+    test_exposed("isDefaultNamespace", v >= 9);
+    test_exposed("isEqualNode", v >= 9);
+    test_exposed("isSameNode", v >= 9);
+    test_exposed("isSupported", v >= 9);
+    test_exposed("lastChild", true);
+    test_exposed("localName", v >= 9);
+    test_exposed("lookupNamespaceURI", v >= 9);
+    test_exposed("lookupPrefix", v >= 9);
+    test_exposed("name", true);
+    test_exposed("namespaceURI", v >= 9);
+    test_exposed("nextSibling", true);
+    test_exposed("nodeName", true);
+    test_exposed("nodeType", true);
+    test_exposed("nodeValue", true);
+    test_exposed("ownerDocument", true);
+    test_exposed("ownerElement", v >= 8);
+    test_exposed("parentNode", true);
+    test_exposed("prefix", v >= 9);
+    test_exposed("previousSibling", true);
+    test_exposed("removeChild", true);
+    test_exposed("replaceChild", true);
+    test_exposed("specified", true);
+    test_exposed("textContent", v >= 9);
+    test_exposed("value", true);
+});
+
 sync_test("doc_props", function() {
     function test_exposed(prop, expect, is_todo) {
         var ok_ = is_todo ? todo_wine.ok : ok;

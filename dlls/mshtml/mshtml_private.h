@@ -201,6 +201,7 @@ struct constructor;
     XIID(IHTMLDocument7) \
     XIID(IHTMLDOMAttribute) \
     XIID(IHTMLDOMAttribute2) \
+    XIID(IHTMLDOMAttribute3) \
     XIID(IHTMLDOMChildrenCollection) \
     XIID(IHTMLDOMImplementation) \
     XIID(IHTMLDOMImplementation2) \
@@ -1334,6 +1335,7 @@ typedef struct {
     DispatchEx dispex;
     IHTMLDOMAttribute IHTMLDOMAttribute_iface;
     IHTMLDOMAttribute2 IHTMLDOMAttribute2_iface;
+    IHTMLDOMAttribute3 IHTMLDOMAttribute3_iface;
 
     /* value is valid only for detached attributes (when elem == NULL). */
     VARIANT value;
