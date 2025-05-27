@@ -5703,6 +5703,13 @@ image_size_tests[] =
     { &MFVideoFormat_IYUV, 4, 2, 12, 0, 384, 12, 128 },
     { &MFVideoFormat_IYUV, 4, 3, 18, 0, 576, 18, 128 },
     { &MFVideoFormat_IYUV, 320, 240, 115200, 0, 138240, 115200, 384 },
+
+    { &MFVideoFormat_P010, 1, 2, 12, 6, 192, 6, 64 },
+    { &MFVideoFormat_P010, 2, 2, 12, 0, 192, 12, 64 },
+    { &MFVideoFormat_P010, 2, 4, 24, 0, 384, 24, 64 },
+    { &MFVideoFormat_P010, 3, 2, 24, 18, 192, 18, 64 },
+    { &MFVideoFormat_P010, 4, 2, 24, 0, 192, 24, 64 },
+    { &MFVideoFormat_P010, 320, 240, 230400, 0, 230400, 230400, 640 },
 };
 
 static void test_MFCalculateImageSize(void)
@@ -5726,6 +5733,7 @@ static void test_MFCalculateImageSize(void)
                 IsEqualGUID(ptr->subtype, &MFVideoFormat_ABGR32);
 
         hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
+        todo_wine_if(i >= 140)
         ok(hr == S_OK || broken(is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
         if (hr == S_OK)
         {
@@ -5761,6 +5769,7 @@ static void test_MFGetPlaneSize(void)
 
         hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
         ok(hr == S_OK, "%u: failed to get plane size, hr %#lx.\n", i, hr);
+        todo_wine_if(i >= 140)
         ok(size == plane_size, "%u: unexpected plane size %lu, expected %u. Size %u x %u, format %s.\n", i, size, plane_size,
                 ptr->width, ptr->height, wine_dbgstr_an((char*)&ptr->subtype->Data1, 4));
     }
@@ -7529,7 +7538,15 @@ static void test_MFCreate2DMediaBuffer(void)
         winetest_push_context("%u, %u x %u, format %s", i, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
 
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
+        todo_wine_if(i >= 140)
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+
+        if (hr != S_OK)
+        {
+            skip("P010 is not implemented in wine.\n");
+            winetest_pop_context();
+            continue;
+        }
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -7794,7 +7811,14 @@ static void test_MFCreate2DMediaBuffer(void)
             continue;
 
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
+        todo_wine_if(i >= 140)
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
+
+        if (hr != S_OK)
+        {
+            skip("P010 is not implemented in wine.\n");
+            continue;
+        }
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
         ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
