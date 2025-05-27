@@ -2525,13 +2525,11 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE]) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
+    if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (user_shared_data->XState.CompactionEnabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
 #ifdef __linux__
-#ifdef AT_HWCAP2
-    if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
-#endif
     if (wow_teb)
     {
         int sel;

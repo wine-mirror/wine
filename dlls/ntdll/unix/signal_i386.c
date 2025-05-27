@@ -981,7 +981,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
     }
     else if (flags & CONTEXT_FLOATING_POINT)
     {
-        if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR)
+        if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
         {
             fpu_to_fpux( &frame->u.xsave, &context->FloatSave );
         }
@@ -1062,7 +1062,7 @@ NTSTATUS WINAPI NtGetContextThread( HANDLE handle, CONTEXT *context )
         }
         if (needed_flags & CONTEXT_FLOATING_POINT)
         {
-            if (!(cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR))
+            if (!user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE])
             {
                 context->FloatSave = frame->u.fsave;
             }
@@ -2477,8 +2477,8 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_FXSR) syscall_flags |= SYSCALL_HAVE_FXSAVE;
-    if (cpu_info.ProcessorFeatureBits & CPU_FEATURE_XSAVE) syscall_flags |= SYSCALL_HAVE_XSAVE;
+    if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE]) syscall_flags |= SYSCALL_HAVE_FXSAVE;
+    if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (user_shared_data->XState.CompactionEnabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
     sig_act.sa_mask = server_block_set;
