@@ -74,8 +74,6 @@ struct macdrv_context
     macdrv_view             read_view;
     RECT                    read_rect;
     CGLPBufferObj           read_pbuffer;
-    BOOL                    has_been_current;
-    BOOL                    sharing;
     int                     swap_interval;
     LONG                    view_moved;
     unsigned int            last_flush_time;
@@ -2483,7 +2481,6 @@ static BOOL macdrv_context_make_current(HDC draw_hdc, HDC read_hdc, void *privat
           context->read_view, wine_dbgstr_rect(&context->read_rect), context->read_pbuffer, context->format);
 
     make_context_current(context, FALSE);
-    context->has_been_current = TRUE;
     NtCurrentTeb()->glReserved2 = context;
 
     return TRUE;
@@ -2960,57 +2957,6 @@ static BOOL macdrv_context_destroy(void *private)
     return TRUE;
 }
 
-static BOOL macdrv_context_share(void *src_private, void *dst_private)
-{
-    struct macdrv_context *org = src_private, *dest = dst_private;
-    macdrv_opengl_context saved_context;
-    CGLContextObj saved_cglcontext;
-
-    TRACE("org %p dest %p\n", org, dest);
-
-    /* Sharing of display lists works differently in Mac OpenGL and WGL.  In Mac OpenGL it is done
-     * at context creation time but in case of WGL it is done using wglShareLists.
-     *
-     * The approach is to create a Mac OpenGL context in wglCreateContext / wglCreateContextAttribsARB
-     * and when a program requests sharing we recreate the destination context if it hasn't been made
-     * current or when it hasn't shared display lists before.
-     */
-
-    if (dest->has_been_current)
-    {
-        WARN("could not share display lists, the destination context has been current already\n");
-        return FALSE;
-    }
-    else if (dest->sharing)
-    {
-        WARN("could not share display lists because dest has already shared lists before\n");
-        return FALSE;
-    }
-
-    /* Re-create the Mac context and share display lists */
-    saved_context = dest->context;
-    saved_cglcontext = dest->cglcontext;
-    dest->context = NULL;
-    dest->cglcontext = NULL;
-    if (!create_context(dest, org->cglcontext, dest->major))
-    {
-        dest->context = saved_context;
-        dest->cglcontext = saved_cglcontext;
-        return FALSE;
-    }
-
-    /* Implicitly disposes of saved_cglcontext. */
-    macdrv_dispose_opengl_context(saved_context);
-
-    TRACE("re-created OpenGL context %p/%p/%p sharing lists with context %p/%p/%p\n",
-          dest, dest->context, dest->cglcontext, org, org->context, org->cglcontext);
-
-    org->sharing = TRUE;
-    dest->sharing = TRUE;
-
-    return TRUE;
-}
-
 static void *macdrv_get_proc_address(const char *name)
 {
     /* redirect some standard OpenGL functions */
@@ -3091,7 +3037,6 @@ static const struct opengl_driver_funcs macdrv_driver_funcs =
     .p_swap_buffers = macdrv_swap_buffers,
     .p_context_create = macdrv_context_create,
     .p_context_destroy = macdrv_context_destroy,
-    .p_context_share = macdrv_context_share,
     .p_context_flush = macdrv_context_flush,
     .p_context_make_current = macdrv_context_make_current,
     .p_pbuffer_create = macdrv_pbuffer_create,

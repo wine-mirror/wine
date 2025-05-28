@@ -326,12 +326,6 @@ static void *android_get_proc_address( const char *name )
     return funcs->p_eglGetProcAddress( name );
 }
 
-static BOOL android_context_share( void *org, void *dest )
-{
-    FIXME( "%p %p\n", org, dest );
-    return FALSE;
-}
-
 static void set_swap_interval( struct gl_drawable *gl, int interval )
 {
     if (interval < 0) interval = -interval;
@@ -391,7 +385,6 @@ static struct opengl_driver_funcs android_driver_funcs =
     .p_swap_buffers = android_swap_buffers,
     .p_context_create = android_context_create,
     .p_context_destroy = android_context_destroy,
-    .p_context_share = android_context_share,
     .p_context_flush = android_context_flush,
     .p_context_make_current = android_context_make_current,
 };

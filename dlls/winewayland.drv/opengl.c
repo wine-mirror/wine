@@ -73,9 +73,6 @@ struct wayland_context
     EGLConfig config;
     EGLContext context;
     struct wayland_gl_drawable *draw, *read, *new_draw, *new_read;
-    EGLint attribs[16];
-    BOOL has_been_current;
-    BOOL sharing;
 };
 
 struct wgl_pbuffer
@@ -294,7 +291,6 @@ static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *priva
         ctx->draw = draw;
         ctx->read = read;
         ctx->new_draw = ctx->new_read = NULL;
-        ctx->has_been_current = TRUE;
         NtCurrentTeb()->glReserved2 = ctx;
     }
     else
@@ -310,68 +306,6 @@ static BOOL wayland_context_make_current(HDC draw_hdc, HDC read_hdc, void *priva
 
     return ret;
 }
-
-static BOOL wayland_context_populate_attribs(struct wayland_context *ctx, const int *wgl_attribs)
-{
-    EGLint *attribs_end = ctx->attribs;
-
-    if (!wgl_attribs) goto out;
-
-    for (; wgl_attribs[0] != 0; wgl_attribs += 2)
-    {
-        EGLint name;
-
-        TRACE("%#x %#x\n", wgl_attribs[0], wgl_attribs[1]);
-
-        /* Find the EGL attribute names corresponding to the WGL names.
-         * For all of the attributes below, the values match between the two
-         * systems, so we can use them directly. */
-        switch (wgl_attribs[0])
-        {
-        case WGL_CONTEXT_MAJOR_VERSION_ARB:
-            name = EGL_CONTEXT_MAJOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_MINOR_VERSION_ARB:
-            name = EGL_CONTEXT_MINOR_VERSION_KHR;
-            break;
-        case WGL_CONTEXT_FLAGS_ARB:
-            name = EGL_CONTEXT_FLAGS_KHR;
-            break;
-        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
-            name = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
-            break;
-        case WGL_CONTEXT_PROFILE_MASK_ARB:
-            if (wgl_attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-            {
-                ERR("OpenGL ES contexts are not supported\n");
-                return FALSE;
-            }
-            name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
-            break;
-        default:
-            name = EGL_NONE;
-            FIXME("Unhandled attributes: %#x %#x\n", wgl_attribs[0], wgl_attribs[1]);
-        }
-
-        if (name != EGL_NONE)
-        {
-            EGLint *dst = ctx->attribs;
-            /* Check if we have already set the same attribute and replace it. */
-            for (; dst != attribs_end && *dst != name; dst += 2) continue;
-            /* Our context attribute array should have enough space for all the
-             * attributes we support (we merge repetitions), plus EGL_NONE. */
-            assert(dst - ctx->attribs <= ARRAY_SIZE(ctx->attribs) - 3);
-            dst[0] = name;
-            dst[1] = wgl_attribs[1];
-            if (dst == attribs_end) attribs_end += 2;
-        }
-    }
-
-out:
-    *attribs_end = EGL_NONE;
-    return TRUE;
-}
-
 
 static void wayland_context_refresh(struct wayland_context *ctx)
 {
@@ -425,18 +359,64 @@ static BOOL wayland_set_pixel_format(HWND hwnd, int old_format, int new_format, 
 static BOOL wayland_context_create(HDC hdc, int format, void *share_private, const int *attribs, void **private)
 {
     struct wayland_context *share = share_private, *ctx;
+    EGLint egl_attribs[16], *attribs_end = egl_attribs;
 
     TRACE("hdc=%p format=%d share=%p attribs=%p\n", hdc, format, share, attribs);
+
+    for (; attribs && attribs[0] != 0; attribs += 2)
+    {
+        EGLint name;
+
+        TRACE("%#x %#x\n", attribs[0], attribs[1]);
+
+        /* Find the EGL attribute names corresponding to the WGL names.
+         * For all of the attributes below, the values match between the two
+         * systems, so we can use them directly. */
+        switch (attribs[0])
+        {
+        case WGL_CONTEXT_MAJOR_VERSION_ARB:
+            name = EGL_CONTEXT_MAJOR_VERSION_KHR;
+            break;
+        case WGL_CONTEXT_MINOR_VERSION_ARB:
+            name = EGL_CONTEXT_MINOR_VERSION_KHR;
+            break;
+        case WGL_CONTEXT_FLAGS_ARB:
+            name = EGL_CONTEXT_FLAGS_KHR;
+            break;
+        case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
+            name = EGL_CONTEXT_OPENGL_NO_ERROR_KHR;
+            break;
+        case WGL_CONTEXT_PROFILE_MASK_ARB:
+            if (attribs[1] & WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+            {
+                ERR("OpenGL ES contexts are not supported\n");
+                return FALSE;
+            }
+            name = EGL_CONTEXT_OPENGL_PROFILE_MASK_KHR;
+            break;
+        default:
+            name = EGL_NONE;
+            FIXME("Unhandled attributes: %#x %#x\n", attribs[0], attribs[1]);
+        }
+
+        if (name != EGL_NONE)
+        {
+            EGLint *dst = egl_attribs;
+            /* Check if we have already set the same attribute and replace it. */
+            for (; dst != attribs_end && *dst != name; dst += 2) continue;
+            /* Our context attribute array should have enough space for all the
+             * attributes we support (we merge repetitions), plus EGL_NONE. */
+            assert(dst - egl_attribs <= ARRAY_SIZE(egl_attribs) - 3);
+            dst[0] = name;
+            dst[1] = attribs[1];
+            if (dst == attribs_end) attribs_end += 2;
+        }
+    }
+    *attribs_end = EGL_NONE;
 
     if (!(ctx = calloc(1, sizeof(*ctx))))
     {
         ERR("Failed to allocate memory for GL context\n");
-        return FALSE;
-    }
-
-    if (!wayland_context_populate_attribs(ctx, attribs))
-    {
-        ctx->attribs[0] = EGL_NONE;
         return FALSE;
     }
 
@@ -450,7 +430,7 @@ static BOOL wayland_context_create(HDC hdc, int format, void *share_private, con
     funcs->p_eglBindAPI(EGL_OPENGL_API);
     ctx->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
                                              share ? share->context : EGL_NO_CONTEXT,
-                                             ctx->attribs);
+                                             attribs ? egl_attribs : NULL);
 
     pthread_mutex_lock(&gl_object_mutex);
     list_add_head(&gl_contexts, &ctx->entry);
@@ -497,50 +477,6 @@ static void *wayland_get_proc_address(const char *name)
     if (!strcmp(name, "glClear")) return wayland_glClear;
 
     return funcs->p_eglGetProcAddress(name);
-}
-
-static BOOL wayland_context_share(void *src_private, void *dst_private)
-{
-    struct wayland_context *orig = src_private, *dest = dst_private;
-    struct wayland_context *keep, *clobber;
-
-    TRACE("(%p, %p)\n", orig, dest);
-
-    /* Sharing of display lists works differently in EGL and WGL. In case of EGL
-     * it is done at context creation time but in case of WGL it is done using
-     * wglShareLists. We create an EGL context in wglCreateContext /
-     * wglCreateContextAttribsARB and when a program requests sharing we
-     * recreate the destination or source context if it hasn't been made current
-     * and it hasn't shared display lists before. */
-
-    if (!dest->has_been_current && !dest->sharing)
-    {
-        keep = orig;
-        clobber = dest;
-    }
-    else if (!orig->has_been_current && !orig->sharing)
-    {
-        keep = dest;
-        clobber = orig;
-    }
-    else
-    {
-        ERR("Could not share display lists because both of the contexts have "
-            "already been current or shared\n");
-        return FALSE;
-    }
-
-    funcs->p_eglDestroyContext(egl->display, clobber->context);
-    clobber->context = funcs->p_eglCreateContext(egl->display, EGL_NO_CONFIG_KHR,
-                                                 keep->context, clobber->attribs);
-    TRACE("re-created context (%p) for Wine context %p (%p) "
-          "sharing lists with ctx %p (%p)\n",
-          clobber->context, clobber, clobber->config,
-          keep->context, keep->config);
-
-    orig->sharing = TRUE;
-    dest->sharing = TRUE;
-    return TRUE;
 }
 
 static BOOL wayland_context_flush( void *private, HWND hwnd, HDC hdc, int interval, BOOL finish )
@@ -635,7 +571,6 @@ static struct opengl_driver_funcs wayland_driver_funcs =
     .p_swap_buffers = wayland_swap_buffers,
     .p_context_create = wayland_context_create,
     .p_context_destroy = wayland_context_destroy,
-    .p_context_share = wayland_context_share,
     .p_context_flush = wayland_context_flush,
     .p_context_make_current = wayland_context_make_current,
     .p_pbuffer_create = wayland_pbuffer_create,

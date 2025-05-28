@@ -197,12 +197,8 @@ struct glx_pixel_format
 struct x11drv_context
 {
     HDC hdc;
-    BOOL has_been_current;
-    BOOL sharing;
     BOOL gl3_context;
     const struct glx_pixel_format *fmt;
-    int numAttribs; /* This is needed for delaying wglCreateContextAttribsARB */
-    int attribList[16]; /* This is needed for delaying wglCreateContextAttribsARB */
     GLXContext ctx;
     struct gl_drawable *drawables[2];
     struct gl_drawable *new_drawables[2];
@@ -1025,17 +1021,12 @@ static struct gl_drawable *get_gl_drawable( HWND hwnd, HDC hdc )
     return gl;
 }
 
-static GLXContext create_glxcontext(Display *display, struct x11drv_context *context, GLXContext shareList)
+static GLXContext create_glxcontext(Display *display, struct x11drv_context *context, GLXContext shareList, const int *attribs)
 {
     GLXContext ctx;
 
     if(context->gl3_context)
-    {
-        if(context->numAttribs)
-            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, context->attribList);
-        else
-            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, NULL);
-    }
+        ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, attribs);
     else if(context->fmt->visual)
         ctx = pglXCreateContext(gdi_display, context->fmt->visual, shareList, GL_TRUE);
     else /* Create a GLX Context for a pbuffer */
@@ -1563,7 +1554,6 @@ static BOOL x11drv_context_make_current( HDC draw_hdc, HDC read_hdc, void *priva
         else ret = pglXMakeContextCurrent( gdi_display, draw_gl->drawable, read_gl ? read_gl->drawable : 0, ctx->ctx );
         if (ret)
         {
-            ctx->has_been_current = TRUE;
             ctx->hdc = draw_hdc;
             set_context_drawables( ctx, draw_gl, read_gl );
             NtCurrentTeb()->glReserved2 = ctx;
@@ -1578,55 +1568,6 @@ done:
     release_gl_drawable( draw_gl );
     TRACE( "%p,%p,%p returning %d\n", draw_hdc, read_hdc, ctx, ret );
     return ret;
-}
-
-/***********************************************************************
- *		glxdrv_wglShareLists
- */
-static BOOL x11drv_context_share(void *src_private, void *dst_private)
-{
-    struct x11drv_context *org = src_private, *dest = dst_private;
-    struct x11drv_context *keep, *clobber;
-
-    TRACE("(%p, %p)\n", org, dest);
-
-    /* Sharing of display lists works differently in GLX and WGL. In case of GLX it is done
-     * at context creation time but in case of WGL it is done using wglShareLists.
-     * In the past we tried to emulate wglShareLists by delaying GLX context creation until
-     * either a wglMakeCurrent or wglShareLists. This worked fine for most apps but it causes
-     * issues for OpenGL 3 because there wglCreateContextAttribsARB can fail in a lot of cases,
-     * so there delaying context creation doesn't work.
-     *
-     * The new approach is to create a GLX context in wglCreateContext / wglCreateContextAttribsARB
-     * and when a program requests sharing we recreate the destination or source context if it
-     * hasn't been made current and it hasn't shared display lists before.
-     */
-
-    if (!dest->has_been_current && !dest->sharing)
-    {
-        keep = org;
-        clobber = dest;
-    }
-    else if (!org->has_been_current && !org->sharing)
-    {
-        keep = dest;
-        clobber = org;
-    }
-    else
-    {
-        ERR("Could not share display lists because both of the contexts have already been current or shared\n");
-        return FALSE;
-    }
-
-    pglXDestroyContext(gdi_display, clobber->ctx);
-    clobber->ctx = create_glxcontext(gdi_display, clobber, keep->ctx);
-    TRACE("re-created context (%p) for Wine context %p (%s) sharing lists with ctx %p (%s)\n",
-          clobber->ctx, clobber, debugstr_fbconfig(clobber->fmt->fbconfig),
-          keep->ctx, debugstr_fbconfig(keep->fmt->fbconfig));
-
-    org->sharing = TRUE;
-    dest->sharing = TRUE;
-    return TRUE;
 }
 
 static void present_gl_drawable( HWND hwnd, HDC hdc, struct gl_drawable *gl, BOOL flush, BOOL gl_finish )
@@ -1697,6 +1638,7 @@ static BOOL x11drv_context_flush( void *private, HWND hwnd, HDC hdc, int interva
 static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, const int *attribList, void **private )
 {
     struct x11drv_context *ret, *hShareContext = share_private;
+    int glx_attribs[16] = {0}, *pContextAttribList = glx_attribs;
     int err = 0;
 
     TRACE("(%p %d %p %p)\n", hdc, format, hShareContext, attribList);
@@ -1707,7 +1649,6 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
         ret->fmt = &pixel_formats[format - 1];
         if (attribList)
         {
-            int *pContextAttribList = &ret->attribList[0];
             ret->gl3_context = TRUE;
             /* attribList consists of pairs {token, value] terminated with 0 */
             while(attribList[0] != 0)
@@ -1719,13 +1660,11 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
                     pContextAttribList[0] = GLX_CONTEXT_MAJOR_VERSION_ARB;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 case WGL_CONTEXT_MINOR_VERSION_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_MINOR_VERSION_ARB;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 case WGL_CONTEXT_LAYER_PLANE_ARB:
                     break;
@@ -1733,25 +1672,21 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
                     pContextAttribList[0] = GLX_CONTEXT_FLAGS_ARB;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 case WGL_CONTEXT_OPENGL_NO_ERROR_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_OPENGL_NO_ERROR_ARB;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 case WGL_CONTEXT_PROFILE_MASK_ARB:
                     pContextAttribList[0] = GLX_CONTEXT_PROFILE_MASK_ARB;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 case WGL_RENDERER_ID_WINE:
                     pContextAttribList[0] = GLX_RENDERER_ID_MESA;
                     pContextAttribList[1] = attribList[1];
                     pContextAttribList += 2;
-                    ret->numAttribs++;
                     break;
                 default:
                     ERR("Unhandled attribList pair: %#x %#x\n", attribList[0], attribList[1]);
@@ -1761,7 +1696,8 @@ static BOOL x11drv_context_create( HDC hdc, int format, void *share_private, con
         }
 
         X11DRV_expect_error(gdi_display, GLXErrorHandler, NULL);
-        ret->ctx = create_glxcontext(gdi_display, ret, hShareContext ? hShareContext->ctx : NULL);
+        ret->ctx = create_glxcontext( gdi_display, ret, hShareContext ? hShareContext->ctx : NULL,
+                                      attribList ? glx_attribs : NULL );
         XSync(gdi_display, False);
         if ((err = X11DRV_check_error()) || !ret->ctx)
         {
@@ -2055,7 +1991,6 @@ static const struct opengl_driver_funcs x11drv_driver_funcs =
     .p_swap_buffers = x11drv_swap_buffers,
     .p_context_create = x11drv_context_create,
     .p_context_destroy = x11drv_context_destroy,
-    .p_context_share = x11drv_context_share,
     .p_context_flush = x11drv_context_flush,
     .p_context_make_current = x11drv_context_make_current,
     .p_pbuffer_create = x11drv_pbuffer_create,
