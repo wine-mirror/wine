@@ -10345,7 +10345,6 @@ static LRESULT LISTVIEW_TrackMouse(const LISTVIEW_INFO *infoPtr, POINT pt)
 static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT y)
 {
   LVHITTESTINFO lvHitTestInfo;
-  static BOOL bGroupSelect = TRUE;
   POINT pt = { x, y };
   INT nItem;
 
@@ -10387,30 +10386,17 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
     {
       if ((wKey & MK_CONTROL) && (wKey & MK_SHIFT))
       {
-        if (bGroupSelect)
-	{
-          if (!LISTVIEW_AddGroupSelection(infoPtr, nItem)) return 0;
-    	  LISTVIEW_SetItemFocus(infoPtr, nItem);
-          infoPtr->nSelectionMark = nItem;
-	}
-        else
-	{
-          LVITEMW item;
-
-	  item.state = LVIS_SELECTED | LVIS_FOCUSED;
-	  item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
-
-	  LISTVIEW_SetItemState(infoPtr,nItem,&item);
-	  infoPtr->nSelectionMark = nItem;
-	}
+        if (!LISTVIEW_AddGroupSelection(infoPtr, nItem)) return 0;
+        LISTVIEW_SetItemFocus(infoPtr, nItem);
       }
       else if (wKey & MK_CONTROL)
       {
         LVITEMW item;
+        BOOL select;
 
-	bGroupSelect = (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) == 0);
+        select = (LISTVIEW_GetItemState(infoPtr, nItem, LVIS_SELECTED) == 0);
 	
-	item.state = (bGroupSelect ? LVIS_SELECTED : 0) | LVIS_FOCUSED;
+	item.state = (select ? LVIS_SELECTED : 0) | LVIS_FOCUSED;
         item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 	LISTVIEW_SetItemState(infoPtr, nItem, &item);
         infoPtr->nSelectionMark = nItem;
