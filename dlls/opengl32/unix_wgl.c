@@ -236,7 +236,7 @@ static BOOL copy_context_attributes( TEB *teb, const struct opengl_funcs *funcs,
 
     if (!mask) return TRUE;
     if (src->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", src_handle, src );
-    if (dst->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", dst_handle, dst );
+    if (src != dst && dst->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", dst_handle, dst );
 
     funcs->p_wglMakeCurrent( dst->hdc, dst->drv_ctx );
 
@@ -293,10 +293,38 @@ static BOOL copy_context_attributes( TEB *teb, const struct opengl_funcs *funcs,
     return dst->used != -1 && src->used != -1;
 }
 
-static struct opengl_context *opengl_context_from_handle( HGLRC handle, const struct opengl_funcs **funcs )
+static struct opengl_context *opengl_context_from_handle( TEB *teb, HGLRC handle, const struct opengl_funcs **funcs );
+
+/* update handle context if it has been re-shared with another one */
+static void update_handle_context( TEB *teb, HGLRC handle, struct wgl_handle *ptr )
+{
+    struct opengl_context *ctx = ptr->u.context, *shared;
+    const struct opengl_funcs *funcs = ptr->funcs, *share_funcs;
+    struct wgl_context *(*func)( HDC hDC, struct wgl_context * hShareContext, const int *attribList );
+    struct wgl_context *prev = ctx->drv_ctx, *drv_ctx;
+
+    if (ctx->tid) return; /* currently in use */
+    if (ctx->share == (HGLRC)-1) return; /* not re-shared */
+    if (!(func = funcs->p_wglCreateContextAttribsARB)) func = (void *)funcs->p_wglGetProcAddress( "wglCreateContextAttribsARB" );
+    if (!func) return; /* not supported */
+
+    shared = ctx->share ? opengl_context_from_handle( teb, ctx->share, &share_funcs ) : NULL;
+    if (!(drv_ctx = func( ctx->hdc, shared ? shared->drv_ctx : NULL, ctx->attribs )))
+    {
+        WARN( "Failed to re-create context for wglShareLists\n" );
+        return;
+    }
+    ctx->share = (HGLRC)-1; /* initial shared context */
+    ctx->drv_ctx = drv_ctx;
+    copy_context_attributes( teb, funcs, handle, ctx, handle, ctx, ctx->used );
+    funcs->p_wglDeleteContext( prev );
+}
+
+static struct opengl_context *opengl_context_from_handle( TEB *teb, HGLRC handle, const struct opengl_funcs **funcs )
 {
     struct wgl_handle *entry;
     if (!(entry = get_handle_ptr( handle ))) return NULL;
+    update_handle_context( teb, handle, entry );
     *funcs = entry->funcs;
     return entry->u.context;
 }
@@ -867,8 +895,8 @@ BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
     struct opengl_context *src, *dst;
     BOOL ret = FALSE;
 
-    if (!(src = opengl_context_from_handle( hglrcSrc, &src_funcs ))) return FALSE;
-    if (!(dst = opengl_context_from_handle( hglrcDst, &dst_funcs ))) return FALSE;
+    if (!(src = opengl_context_from_handle( teb, hglrcSrc, &src_funcs ))) return FALSE;
+    if (!(dst = opengl_context_from_handle( teb, hglrcDst, &dst_funcs ))) return FALSE;
     else ret = copy_context_attributes( teb, dst_funcs, hglrcDst, dst, hglrcSrc, src, mask );
 
     return ret;
@@ -886,6 +914,7 @@ HGLRC wrap_wglCreateContext( TEB *teb, HDC hdc )
     if ((context = calloc( 1, sizeof(*context) )))
     {
         context->hdc = hdc;
+        context->share = (HGLRC)-1; /* initial shared context */
         context->drv_ctx = drv_ctx;
         if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context ))) free( context );
     }
@@ -901,7 +930,7 @@ BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 
     if (hglrc)
     {
-        if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
+        if (!(ctx = opengl_context_from_handle( teb, hglrc, &funcs ))) return FALSE;
         if (ctx->tid && ctx->tid != tid)
         {
             RtlSetLastWin32Error( ERROR_BUSY );
@@ -963,10 +992,12 @@ BOOL wrap_wglShareLists( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst )
     struct opengl_context *src, *dst;
     BOOL ret = FALSE;
 
-    if (!(src = opengl_context_from_handle( hglrcSrc, &src_funcs ))) return FALSE;
-    if (!(dst = opengl_context_from_handle( hglrcDst, &dst_funcs ))) return FALSE;
+    if (!(src = opengl_context_from_handle( teb, hglrcSrc, &src_funcs ))) return FALSE;
+    if (!(dst = opengl_context_from_handle( teb, hglrcDst, &dst_funcs ))) return FALSE;
     if (src_funcs != dst_funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    else ret = src_funcs->p_wglShareLists( src->drv_ctx, dst->drv_ctx );
+    else if ((ret = dst->used != -1)) dst->share = hglrcSrc;
+    else FIXME( "Unsupported attributes on context %p/%p\n", hglrcDst, dst );
+
     return ret;
 }
 
@@ -991,7 +1022,7 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int
         return 0;
     }
     if (!funcs->p_wglCreateContextAttribsARB) return 0;
-    if (share && !(share_ctx = opengl_context_from_handle( share, &share_funcs )))
+    if (share && !(share_ctx = opengl_context_from_handle( teb, share, &share_funcs )))
     {
         RtlSetLastWin32Error( ERROR_INVALID_OPERATION );
         return 0;
@@ -1001,7 +1032,7 @@ HGLRC wrap_wglCreateContextAttribsARB( TEB *teb, HDC hdc, HGLRC share, const int
         if ((context = calloc( 1, sizeof(*context) )))
         {
             context->hdc = hdc;
-            context->share = share;
+            context->share = (HGLRC)-1; /* initial shared context */
             context->attribs = memdup_attribs( attribs );
             context->drv_ctx = drv_ctx;
             if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context ))) free( context );
@@ -1053,7 +1084,7 @@ BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC 
 
     if (hglrc)
     {
-        if (!(ctx = opengl_context_from_handle( hglrc, &funcs ))) return FALSE;
+        if (!(ctx = opengl_context_from_handle( teb, hglrc, &funcs ))) return FALSE;
         if (ctx->tid && ctx->tid != tid)
         {
             RtlSetLastWin32Error( ERROR_BUSY );
