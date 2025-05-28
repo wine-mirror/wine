@@ -398,7 +398,6 @@ C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
 #define SYSCALL_HAVE_XSAVEC      2
-#define SYSCALL_HAVE_WRFSGSBASE  8
 
 static unsigned int syscall_flags;
 
@@ -2525,7 +2524,6 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    if (user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE]) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
     if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
     if (user_shared_data->XState.CompactionEnabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
@@ -2823,7 +2821,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
                    "testq %rsi,%rsi\n\t"
                    "jz 2f\n\t"
-                   "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
+                   "cmpb $0,0x7ffe028a\n\t"        /* user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE] */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
                    "jmp 2f\n"
@@ -3110,7 +3108,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
                    "testq %rsi,%rsi\n\t"
                    "jz 2f\n\t"
-                   "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
+                   "cmpb $0,0x7ffe028a\n\t"        /* user_shared_data->ProcessorFeatures[PF_RDWRFSGSBASE_AVAILABLE] */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
                    "jmp 2f\n"
