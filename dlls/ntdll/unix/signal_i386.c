@@ -527,7 +527,6 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
-#define SYSCALL_HAVE_FXSAVE   4
 
 static unsigned int syscall_flags;
 static unsigned int frame_size;
@@ -2476,7 +2475,6 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE]) syscall_flags |= SYSCALL_HAVE_FXSAVE;
     if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
 
     sig_act.sa_mask = server_block_set;
@@ -2679,7 +2677,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "jmp 4f\n"
                    "1:\txsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
-                   "2:\ttestl $4,(%ecx)\n\t"       /* frame->syscall_flags & SYSCALL_HAVE_FXSAVE */
+                   "2:\tcmpb $0,0x7ffe027a\n\t"    /* user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] */
                    "jz 3f\n\t"
                    "fxsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
@@ -2726,7 +2724,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "xrstor 0x40(%esp)\n\t"
                    "movl %esi,%eax\n\t"
                    "jmp 3f\n"
-                   "1:\ttestl $4,%ecx\n\t"         /* SYSCALL_HAVE_FXSAVE */
+                   "1:\tcmpb $0,0x7ffe027a\n\t"    /* user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE] */
                    "jz 2f\n\t"
                    "fxrstor 0x40(%esp)\n\t"
                    "jmp 3f\n"
