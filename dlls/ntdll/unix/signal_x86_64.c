@@ -397,7 +397,6 @@ C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
-#define SYSCALL_HAVE_XSAVEC      2
 
 static unsigned int syscall_flags;
 
@@ -2525,7 +2524,6 @@ void signal_init_process(void)
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
     if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
-    if (user_shared_data->XState.CompactionEnabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
 #ifdef __linux__
     if (wow_teb)
@@ -2766,7 +2764,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     * depends on us returning to it. Adjust the return address accordingly. */
                    "subq $0xb,0x70(%rcx)\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
-                   "testl $3,%r14d\n\t"            /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+                   "testl $1,%r14d\n\t"            /* SYSCALL_HAVE_XSAVE */
                    "jz 2f\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "xorl %edx,%edx\n\t"
@@ -2775,7 +2773,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %rbp,0x2c0(%rcx)\n\t"
                    "movq %rbp,0x2c8(%rcx)\n\t"
                    "movq %rbp,0x2d0(%rcx)\n\t"
-                   "testl $2,%r14d\n\t"            /* SYSCALL_HAVE_XSAVEC */
+                   "testl $2,0x7ffe03ec\n\t"       /* user_shared_data->XState.CompactionEnabled */
                    "jz 1f\n\t"
                    "movq %rbp,0x2d8(%rcx)\n\t"
                    "movq %rbp,0x2e0(%rcx)\n\t"
@@ -2905,10 +2903,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movaps 0x240(%rcx),%xmm14\n\t"
                    "movaps 0x250(%rcx),%xmm15\n\t"
                    "jmp 4f\n"
-                   "2:\ttestl $3,%r14d\n\t"        /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+                   "2:\ttestl $1,%r14d\n\t"        /* SYSCALL_HAVE_XSAVE */
                    "jz 3f\n\t"
                    "movq %rax,%r11\n\t"
-                   "movl 0x7ffe03d8,%eax\n\t"     /* user_shared_data->XState.EnabledFeatures */
+                   "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "movl 0x7ffe03dc,%edx\n\t"
                    "xrstor64 0xc0(%rcx)\n\t"
                    "movq %r11,%rax\n\t"

@@ -527,7 +527,6 @@ C_ASSERT( offsetof( TEB, GdiTebBatch ) + offsetof( struct x86_thread_data, frame
 
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE    1
-#define SYSCALL_HAVE_XSAVEC   2
 #define SYSCALL_HAVE_FXSAVE   4
 
 static unsigned int syscall_flags;
@@ -2479,7 +2478,6 @@ void signal_init_process(void)
 
     if (user_shared_data->ProcessorFeatures[PF_XMMI_INSTRUCTIONS_AVAILABLE]) syscall_flags |= SYSCALL_HAVE_FXSAVE;
     if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
-    if (user_shared_data->XState.CompactionEnabled) syscall_flags |= SYSCALL_HAVE_XSAVEC;
 
     sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
@@ -2651,7 +2649,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "shrl $8,%ebx\n\t"
                    "andl $0x30,%ebx\n\t"           /* syscall table number */
                    "addl %fs:0x214,%ebx\n\t"       /* thread_data->syscall_table */
-                   "testl $3,(%ecx)\n\t"           /* frame->syscall_flags & (SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC) */
+                   "testl $1,(%ecx)\n\t"           /* frame->syscall_flags & SYSCALL_HAVE_XSAVE */
                    "jz 2f\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "xorl %edx,%edx\n\t"
@@ -2663,7 +2661,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %edi,0x24c(%ecx)\n\t"
                    "movl %edi,0x250(%ecx)\n\t"
                    "movl %edi,0x254(%ecx)\n\t"
-                   "testl $2,(%ecx)\n\t"           /* frame->syscall_flags & SYSCALL_HAVE_XSAVEC */
+                   "testl $2,0x7ffe03ec\n\t"       /* user_shared_data->XState.CompactionEnabled */
                    "jz 1f\n\t"
                    "movl %edi,0x258(%ecx)\n\t"
                    "movl %edi,0x25c(%ecx)\n\t"
@@ -2720,7 +2718,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 0(%esp),%ecx\n\t"         /* frame->syscall_flags + (frame->restore_flags << 16) */
                    "testl $0x68 << 16,%ecx\n\t"    /* CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS | CONTEXT_XSAVE */
                    "jz 3f\n\t"
-                   "testl $3,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE | SYSCALL_HAVE_XSAVEC */
+                   "testl $1,%ecx\n\t"             /* SYSCALL_HAVE_XSAVE */
                    "jz 1f\n\t"
                    "movl %eax,%esi\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
