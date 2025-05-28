@@ -398,7 +398,6 @@ C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
 /* flags to control the behavior of the syscall dispatcher */
 #define SYSCALL_HAVE_XSAVE       1
 #define SYSCALL_HAVE_XSAVEC      2
-#define SYSCALL_HAVE_PTHREAD_TEB 4
 #define SYSCALL_HAVE_WRFSGSBASE  8
 
 static unsigned int syscall_flags;
@@ -1670,9 +1669,10 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    /* switch to user stack */
                    "1:\tmovq %rdi,%rsp\n\t"    /* user_rsp */
 #ifdef __linux__
-                   "testl $4,%r14d\n\t"        /* SYSCALL_HAVE_PTHREAD_TEB */
+                   "movw 0x338(%r13),%ax\n"    /* amd64_thread_data()->fs */
+                   "testw %ax,%ax\n\t"
                    "jz 1f\n\t"
-                   "movw 0x338(%r13),%fs\n"    /* amd64_thread_data()->fs */
+                   "movw %ax,%fs\n"
                    "1:\n\t"
 #elif defined __APPLE__
                    "movq %rcx,%r10\n\t"
@@ -2532,14 +2532,10 @@ void signal_init_process(void)
 #ifdef __linux__
     if (wow_teb)
     {
-        int sel;
+        int sel = alloc_fs_sel( -1, wow_teb );
 
         cs32_sel = 0x23;
-        if ((sel = alloc_fs_sel( -1, wow_teb )) != -1)
-        {
-            amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
-            syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
-        }
+        if (sel != -1) amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
 #elif defined(__APPLE__)
@@ -2616,8 +2612,11 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
 
 #if defined __linux__
     arch_prctl( ARCH_SET_GS, teb );
-    arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
-    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
+    if (fs32_sel)
+    {
+        arch_prctl( ARCH_GET_FS, &thread_data->pthread_teb );
+        alloc_fs_sel( fs32_sel >> 3, get_wow_teb( teb ));
+    }
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
 #elif defined(__NetBSD__)
@@ -2821,9 +2820,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                     * (on macOS, signal handlers set gsbase to pthread_teb when on the kernel stack).
                     */
 #ifdef __linux__
-                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
-                   "jz 2f\n\t"
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
+                   "testq %rsi,%rsi\n\t"
+                   "jz 2f\n\t"
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
@@ -2879,9 +2878,10 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI_CFA_IS_AT2(rcx, 0xa8, 0x01) /* frame->syscall_cfa */
                    "leaq 0x70(%rcx),%rsp\n\t"      /* %rsp > frame means no longer inside syscall */
 #ifdef __linux__
-                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
+                   "movw 0x338(%r13),%dx\n"        /* amd64_thread_data()->fs */
+                   "testw %dx,%dx\n\t"
                    "jz 1f\n\t"
-                   "movw 0x338(%r13),%fs\n"        /* amd64_thread_data()->fs */
+                   "movw %dx,%fs\n"
                    "1:\n\t"
 #elif defined __APPLE__
                    "movq %rax,%r8\n\t"
@@ -3107,9 +3107,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_undefined %rdi\n\t")
                    __ASM_CFI(".cfi_undefined %rsi\n\t")
 #ifdef __linux__
-                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
-                   "jz 2f\n\t"
                    "movq 0x320(%r13),%rsi\n\t"     /* amd64_thread_data()->pthread_teb */
+                   "testq %rsi,%rsi\n\t"
+                   "jz 2f\n\t"
                    "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
                    "wrfsbase %rsi\n\t"
@@ -3143,9 +3143,10 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
 #ifdef __linux__
-                   "testl $4,%r14d\n\t"            /* SYSCALL_HAVE_PTHREAD_TEB */
+                   "movw 0x338(%r13),%dx\n"        /* amd64_thread_data()->fs */
+                   "testw %dx,%dx\n\t"
                    "jz 1f\n\t"
-                   "movw 0x338(%r13),%fs\n"        /* amd64_thread_data()->fs */
+                   "movw %dx,%fs\n"
                    "1:\n\t"
 #elif defined __APPLE__
                    "movq %rax,%rdx\n\t"
