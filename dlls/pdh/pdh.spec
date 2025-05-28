@@ -65,8 +65,8 @@
 @ stdcall PdhGetLogFileTypeA(str ptr)
 @ stdcall PdhGetLogFileTypeW(wstr ptr)
 @ stub PdhGetLogSetGUID
-@ stub PdhGetRawCounterArrayA
-@ stub PdhGetRawCounterArrayW
+@ stdcall PdhGetRawCounterArrayA(ptr ptr ptr ptr)
+@ stdcall PdhGetRawCounterArrayW(ptr ptr ptr ptr)
 @ stdcall PdhGetRawCounterValue(ptr ptr ptr)
 @ stub PdhIsRealTimeQuery
 @ stub PdhListLogFileHeaderA

@@ -1309,3 +1309,21 @@ PDH_STATUS WINAPI PdhEnumObjectsW(const WCHAR *source, const WCHAR *machine, WCH
     FIXME("%s %s %p %p %lu %d: stub\n", debugstr_w(source),debugstr_w(machine), list, size, detail, refresh);
     return PDH_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *              PdhGetRawCounterArrayA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetRawCounterArrayA(PDH_HCOUNTER counter, DWORD *size, DWORD *count, PDH_RAW_COUNTER_ITEM_A *buffer)
+{
+    FIXME("%p %p %p %p: stub\n", counter, size, count, buffer);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhGetRawCounterArrayW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetRawCounterArrayW(PDH_HCOUNTER counter, DWORD *size, DWORD *count, PDH_RAW_COUNTER_ITEM_W *buffer)
+{
+    FIXME("%p %p %p %p: stub\n", counter, size, count, buffer);
+    return PDH_NOT_IMPLEMENTED;
+}
