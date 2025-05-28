@@ -245,11 +245,11 @@ enum smbios_type
 #define FIRM 0x4649524D
 #define RSMB 0x52534D42
 
-SYSTEM_CPU_INFORMATION cpu_info = { 0 };
-static SYSTEM_PROCESSOR_FEATURES_INFORMATION cpu_features;
 static char cpu_name[49];
 static char cpu_vendor[13];
+static USHORT cpu_level, cpu_revision;
 static ULONGLONG cpu_id;
+static ULONGLONG cpu_features;
 static ULONG *performance_cores;
 static unsigned int performance_cores_capacity = 0;
 static SYSTEM_LOGICAL_PROCESSOR_INFORMATION *logical_proc_info;
@@ -263,8 +263,8 @@ static pthread_mutex_t timezone_mutex = PTHREAD_MUTEX_INITIALIZER;
 /*******************************************************************************
  * Architecture specific feature detection for CPUs
  *
- * This a set of mutually exclusive #if define()s each providing its own get_cpuinfo() to be called
- * from init_cpu_info();
+ * This a set of mutually exclusive #if define()s each providing its
+ * own functions to be called from init_cpu_info().
  */
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -424,20 +424,14 @@ static void get_cpuid_name( char *buffer )
     *buffer = 0;
 }
 
-static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
+static void init_cpu_model(void)
 {
     unsigned int regs[4], regs2[4], regs3[4];
     ULONGLONG features;
 
-#if defined(__i386__)
-    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
-#elif defined(__x86_64__)
-    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64;
-#endif
-
     /* We're at least a 386 */
     features = CPU_FEATURE_VME | CPU_FEATURE_X86 | CPU_FEATURE_PGE;
-    info->ProcessorLevel = 3;
+    cpu_level = 3;
 
     if (!have_cpuid()) return;
 
@@ -479,14 +473,14 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
         if (!strcmp( cpu_vendor, "AuthenticAMD" ))
         {
-            info->ProcessorLevel = (regs2[0] >> 8) & 0xf; /* family */
-            if (info->ProcessorLevel == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
-                info->ProcessorLevel += (regs2[0] >> 20) & 0xff;
+            cpu_level = (regs2[0] >> 8) & 0xf; /* family */
+            if (cpu_level == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
+                cpu_level += (regs2[0] >> 20) & 0xff;
 
             /* repack model and stepping to make a "revision" */
-            info->ProcessorRevision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            info->ProcessorRevision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            info->ProcessorRevision |= regs2[0] & 0xf;                 /* stepping       */
+            cpu_revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            cpu_revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            cpu_revision |= regs2[0] & 0xf;                 /* stepping       */
 
             do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
             if (regs[0] >= 0x80000001)
@@ -501,13 +495,13 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         }
         else if (!strcmp( cpu_vendor, "GenuineIntel" ))
         {
-            info->ProcessorLevel = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
-            if(info->ProcessorLevel == 15) info->ProcessorLevel = 6;
+            cpu_level = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
+            if(cpu_level == 15) cpu_level = 6;
 
             /* repack model and stepping to make a "revision" */
-            info->ProcessorRevision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            info->ProcessorRevision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            info->ProcessorRevision |= regs2[0] & 0xf;                 /* stepping       */
+            cpu_revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
+            cpu_revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
+            cpu_revision |= regs2[0] & 0xf;                 /* stepping       */
 
             if(regs2[2] & (1 << 5))  features |= CPU_FEATURE_VIRT;
             if(regs2[3] & (1 << 21)) features |= CPU_FEATURE_DS;
@@ -523,14 +517,14 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
         }
         else
         {
-            info->ProcessorLevel = (regs2[0] >> 8) & 0xf; /* family */
+            cpu_level = (regs2[0] >> 8) & 0xf; /* family */
 
             /* repack model and stepping to make a "revision" */
-            info->ProcessorRevision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
-            info->ProcessorRevision |= regs2[0] & 0xf;                /* stepping */
+            cpu_revision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
+            cpu_revision |= regs2[0] & 0xf;                /* stepping */
         }
     }
-    info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
+    cpu_features = features;
 }
 
 static void init_xstate_features( XSTATE_CONFIGURATION *xstate )
@@ -653,7 +647,7 @@ static int has_feature( const char *line, const char *feat )
     return 0;
 }
 
-static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
+static void init_cpu_model(void)
 {
     ULONGLONG features = 0;
     unsigned int implementer = 0x41, part = 0, variant = 0, revision = 0;
@@ -714,14 +708,8 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 #else
     FIXME("CPU Feature detection not implemented.\n");
 #endif
-#ifdef __arm__
-    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
-#else
-    info->ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64;
-#endif
-    info->ProcessorFeatureBits = cpu_features.ProcessorFeatureBits = features;
-    info->ProcessorLevel = part;
-    info->ProcessorRevision = (variant << 8) | revision;
+    cpu_level = part;
+    cpu_revision = (variant << 8) | revision;
     cpu_id = (implementer << 24) | (variant << 20) | (0x0f << 16) | (part << 4) | revision;
     switch (implementer)
     {
@@ -1549,10 +1537,7 @@ static void init_logical_proc_info(void)
 /******************************************************************
  *		init_cpu_info
  *
- * inits a couple of places with CPU related information:
- * - cpu_info in this file
- * - Peb->NumberOfProcessors
- * - SharedUserData->ProcessFeatures[] array
+ * Init a couple of places with CPU related information.
  */
 void init_cpu_info(void)
 {
@@ -1579,11 +1564,33 @@ void init_cpu_info(void)
     num = 1;
     FIXME("Detecting the number of processors is not supported.\n");
 #endif
-    peb->NumberOfProcessors = cpu_info.MaximumProcessors = num;
-    get_cpuinfo( &cpu_info );
-    TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel,
-           cpu_info.ProcessorRevision, cpu_info.ProcessorFeatureBits );
+    peb->NumberOfProcessors = num;
+    init_cpu_model();
+}
+
+static SYSTEM_CPU_INFORMATION get_cpuinfo(void)
+{
+    SYSTEM_CPU_INFORMATION info =
+    {
+        .ProcessorLevel        = cpu_level,
+        .ProcessorRevision     = cpu_revision,
+        .MaximumProcessors     = peb->NumberOfProcessors,
+        .ProcessorFeatureBits  = cpu_features,
+#ifdef __arm__
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM,
+#elif defined __aarch64__
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM64,
+#elif defined(__i386__)
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL,
+#elif defined(__x86_64__)
+        .ProcessorArchitecture = PROCESSOR_ARCHITECTURE_AMD64,
+#endif
+    };
+
+    TRACE( "CPU arch %d, level %d, rev %d, features 0x%x\n",
+           info.ProcessorArchitecture, info.ProcessorLevel,
+           info.ProcessorRevision, info.ProcessorFeatureBits );
+    return info;
 }
 
 static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
@@ -3129,7 +3136,11 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemCpuInformation:  /* 1 */
-        if (size >= (len = sizeof(cpu_info))) memcpy(info, &cpu_info, len);
+        if (size >= (len = sizeof(SYSTEM_CPU_INFORMATION)))
+        {
+            SYSTEM_CPU_INFORMATION cpu = get_cpuinfo();
+            memcpy( info, &cpu, len );
+        }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
@@ -3564,14 +3575,14 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemEmulationProcessorInformation:  /* 63 */
-        if (size >= (len = sizeof(cpu_info)))
+        if (size >= (len = sizeof(SYSTEM_CPU_INFORMATION)))
         {
-            SYSTEM_CPU_INFORMATION cpu = cpu_info;
+            SYSTEM_CPU_INFORMATION cpu = get_cpuinfo();
             if (is_win64)
             {
-                if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
+                if (cpu.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64)
                     cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_INTEL;
-                else if (cpu_info.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
+                else if (cpu.ProcessorArchitecture == PROCESSOR_ARCHITECTURE_ARM64)
                     cpu.ProcessorArchitecture = PROCESSOR_ARCHITECTURE_ARM;
             }
             memcpy(info, &cpu, len);
@@ -3813,8 +3824,12 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     case SystemProcessorFeaturesInformation:  /* 154 */
-        len = sizeof(cpu_features);
-        if (size >= len) memcpy( info, &cpu_features, len );
+        len = sizeof(SYSTEM_PROCESSOR_FEATURES_INFORMATION);
+        if (size >= len)
+        {
+            SYSTEM_PROCESSOR_FEATURES_INFORMATION features = { .ProcessorFeatureBits = cpu_features };
+            memcpy( info, &features, len );
+        }
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
 

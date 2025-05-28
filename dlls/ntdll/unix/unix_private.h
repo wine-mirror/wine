@@ -200,7 +200,6 @@ extern HANDLE keyed_event;
 extern timeout_t server_start_time;
 extern sigset_t server_block_set;
 extern struct _KUSER_SHARED_DATA *user_shared_data;
-extern SYSTEM_CPU_INFORMATION cpu_info;
 #ifdef __i386__
 extern struct ldt_copy __wine_ldt_copy;
 #endif
