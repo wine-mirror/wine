@@ -312,6 +312,7 @@ SOURCES = \
 	dyngraph.idl \
 	endpointvolume.idl \
 	errhandlingapi.h \
+	errlup.idl \
 	errorrep.h \
 	errors.h \
 	errrec.idl \

@@ -75,6 +75,7 @@ typedef LONG_PTR DB_LRESERVE;
 #include "binres.idl"
 #include "crtrow.idl"
 #include "errrec.idl"
+#include "errlup.idl"
 #include "getdts.idl"
 #include "cmdstrm.idl"
 #include "cmdprp.idl"

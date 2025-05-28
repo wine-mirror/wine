@@ -1,0 +1,74 @@
+/*
+ * Copyright (C) 2025 Piotr Caban
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#if 0
+#pragma makedep install
+#endif
+
+[
+    object,
+    uuid(0c733a66-2a1c-11ce-ade5-00aa0044773d),
+    pointer_default(unique)
+]
+interface IErrorLookup : IUnknown {
+    [local]
+    HRESULT GetErrorDescription(
+            [in] HRESULT hrError,
+            [in] DWORD dwLookupID,
+            [in] DISPPARAMS *pdispparams,
+            [in] LCID lcid,
+            [out] BSTR *pbstrSource,
+            [out] BSTR *pbstrDescription);
+
+    [call_as(GetErrorDescription)]
+    HRESULT RemoteGetErrorDescription(
+            [in] HRESULT hrError,
+            [in] DWORD dwLookupID,
+            [in] DISPPARAMS *pdispparams,
+            [in] LCID lcid,
+            [out] BSTR *pbstrSource,
+            [out] BSTR *pbstrDescription,
+            [out] IErrorInfo **ppErrorInfoRem);
+
+    [local]
+    HRESULT GetHelpInfo(
+            [in] HRESULT hrError,
+            [in] DWORD dwLookupID,
+            [in] LCID lcid,
+            [out] BSTR *pbstrHelpFile,
+            [out] DWORD *pdwHelpContext);
+
+    [call_as(GetHelpInfo)]
+    HRESULT RemoteGetHelpInfo(
+            [in] HRESULT hrError,
+            [in] DWORD dwLookupID,
+            [in] LCID lcid,
+            [out] BSTR *pbstrHelpFile,
+            [out] DWORD *pdwHelpContext,
+            [out] IErrorInfo **ppErrorInfoRem);
+
+    [local]
+    HRESULT ReleaseErrors(
+            [in] const DWORD dwDynamicErrorID);
+
+    [call_as(ReleaseErrors)]
+    HRESULT RemoteReleaseErrors(
+            [in] const DWORD dwDynamicErrorID,
+            [out] IErrorInfo **ppErrorInfoRem);
+
+}

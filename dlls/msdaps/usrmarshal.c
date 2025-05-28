@@ -1856,3 +1856,48 @@ HRESULT __RPC_STUB IDBSchemaRowset_GetSchemas_Stub(IDBSchemaRowset* This, ULONG 
     FIXME("(%p)->(%p, %p, %p, %p): stub\n", This, pcSchemas, prgSchemas, prgRestrictionSupport, ppErrorInfoRem);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IErrorLookup_GetErrorDescription_Proxy(IErrorLookup* This, HRESULT hrError, DWORD dwLookupID,
+        DISPPARAMS *pdispparams, LCID lcid, BSTR *pbstrSource, BSTR *pbstrDescription)
+{
+    FIXME("(%p)->(%#lx, %#lx, %p, %#lx, %p, %p): stub\n", This, hrError, dwLookupID, pdispparams, lcid,
+            pbstrSource, pbstrDescription);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IErrorLookup_GetErrorDescription_Stub(IErrorLookup* This, HRESULT hrError, DWORD dwLookupID,
+        DISPPARAMS *pdispparams, LCID lcid, BSTR *pbstrSource, BSTR *pbstrDescription, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%#lx, %#lx, %p, %#lx, %p, %p, %p): stub\n", This, hrError, dwLookupID, pdispparams, lcid,
+            pbstrSource, pbstrDescription, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IErrorLookup_GetHelpInfo_Proxy(IErrorLookup* This, HRESULT hrError,
+        DWORD dwLookupID, LCID lcid, BSTR *pbstrHelpFile, DWORD *pdwHelpContext)
+{
+    FIXME("(%p)->(%#lx, %#lx, %#lx, %p, %p): stub\n", This, hrError, dwLookupID, lcid,
+            pbstrHelpFile, pdwHelpContext);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IErrorLookup_GetHelpInfo_Stub(IErrorLookup* This, HRESULT hrError, DWORD dwLookupID,
+        LCID lcid, BSTR *pbstrHelpFile, DWORD *pdwHelpContext, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%#lx, %#lx, %#lx, %p, %p, %p): stub\n", This, hrError, dwLookupID, lcid,
+            pbstrHelpFile, pdwHelpContext, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IErrorLookup_ReleaseErrors_Proxy(IErrorLookup* This, const DWORD dwDynamicErrorID)
+{
+    FIXME("(%p)->(%#lx): stub\n", This, dwDynamicErrorID);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IErrorLookup_ReleaseErrors_Stub(IErrorLookup* This,
+        const DWORD dwDynamicErrorID, IErrorInfo **ppErrorInfoRem)
+{
+    FIXME("(%p)->(%#lx, %p): stub\n", This, dwDynamicErrorID, ppErrorInfoRem);
+    return E_NOTIMPL;
+}
