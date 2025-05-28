@@ -60,8 +60,7 @@ enum wgl_handle_type
 {
     HANDLE_PBUFFER = 0 << 12,
     HANDLE_CONTEXT = 1 << 12,
-    HANDLE_CONTEXT_V3 = 3 << 12,
-    HANDLE_GLSYNC = 4 << 12,
+    HANDLE_GLSYNC = 2 << 12,
     HANDLE_TYPE_MASK = 15 << 12,
 };
 
@@ -596,20 +595,24 @@ static char *build_extension_list( TEB *teb )
     return available_extensions;
 }
 
-static inline enum wgl_handle_type get_current_context_type( TEB *teb )
+static UINT get_context_major_version( TEB *teb )
 {
-    if (!teb->glCurrentRC) return HANDLE_CONTEXT;
-    return LOWORD(teb->glCurrentRC) & HANDLE_TYPE_MASK;
+    struct opengl_context *ctx;
+
+    if (!(ctx = get_current_context( teb ))) return TRUE;
+    for (const int *attr = ctx->attribs; attr && attr[0]; attr += 2)
+        if (attr[0] == WGL_CONTEXT_MAJOR_VERSION_ARB) return attr[1];
+
+    return 1;
 }
 
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported( TEB *teb, const char *extension )
 {
-    enum wgl_handle_type type = get_current_context_type( teb );
     char *available_extensions = NULL;
     BOOL ret = FALSE;
 
-    if (type == HANDLE_CONTEXT) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
+    if (get_context_major_version( teb ) < 3) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
     if (!available_extensions) available_extensions = build_extension_list( teb );
 
     if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
@@ -826,26 +829,11 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
     {
         if ((context = calloc( 1, sizeof(*context) )))
         {
-            enum wgl_handle_type type = HANDLE_CONTEXT;
-
-            if (attribs)
-            {
-                while (*attribs)
-                {
-                    if (attribs[0] == WGL_CONTEXT_MAJOR_VERSION_ARB)
-                    {
-                        if (attribs[1] >= 3) type = HANDLE_CONTEXT_V3;
-                        break;
-                    }
-                    attribs += 2;
-                }
-            }
-
             context->hdc = hdc;
             context->share = share;
             context->attribs = memdup_attribs( attribs );
             context->drv_ctx = drv_ctx;
-            if (!(ret = alloc_handle( type, funcs, context ))) free( context );
+            if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context ))) free( context );
         }
         if (!ret) funcs->p_wglDeleteContext( drv_ctx );
     }
