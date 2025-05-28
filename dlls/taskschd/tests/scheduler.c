@@ -1879,6 +1879,92 @@ static void test_TaskDefinition(void)
     ITaskService_Release(service);
 }
 
+static void test_get_Count_and_Item(void)
+{
+    HRESULT hr;
+    LONG num_tasks;
+    VARIANT v_null, index;
+    ITaskService *service;
+    ITaskFolder *folder, *root;
+    ITaskDefinition *task_def;
+    IRegistrationInfo *reg_info;
+    IActionCollection *actions;
+    IAction *action;
+    IExecAction *exec_action;
+    IRegisteredTask *task1, *ret_task1;
+    IRegisteredTaskCollection *tasks;
+    BSTR ret_task1_name = NULL;
+
+    V_VT(&v_null) = VT_NULL;
+
+    CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void**)&service);
+    ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+
+    ITaskService_GetFolder(service, (BSTR)L"\\", &root);
+    ITaskFolder_CreateFolder(root,(BSTR)L"\\Wine", v_null, &folder);
+
+    ITaskService_NewTask(service, 0, &task_def);
+    ITaskDefinition_get_RegistrationInfo(task_def, &reg_info);
+    IRegistrationInfo_put_Author(reg_info, (BSTR)L"Wine Test");
+
+    ITaskDefinition_get_Actions(task_def, &actions);
+    IActionCollection_Create(actions, TASK_ACTION_EXEC, &action);
+    IAction_QueryInterface(action, &IID_IExecAction, (void**)&exec_action);
+    IExecAction_put_Path(exec_action, (BSTR)L"task1.exe");
+
+    ITaskFolder_RegisterTaskDefinition(folder, (BSTR)L"Task1", task_def, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    ITaskFolder_GetTasks(folder, TASK_ENUM_HIDDEN, &tasks);
+
+    /* Test get_Count */
+    hr = IRegisteredTaskCollection_get_Count(tasks, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
+
+    hr = IRegisteredTaskCollection_get_Count(tasks, &num_tasks);
+    todo_wine
+    ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
+    todo_wine
+    ok(num_tasks == 1, "expected 1 task, got %ld\n", num_tasks);
+
+    /* Test get_Item */
+    VariantInit(&index);
+    index.vt = VT_UI4;
+    index.uiVal = 1;
+
+    hr = IRegisteredTaskCollection_get_Item(tasks, index, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
+
+    index.uiVal = 0;
+    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
+
+    index.uiVal = 2;
+    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
+    todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#lx\n", hr);
+
+    index.uiVal = 1;
+    hr = IRegisteredTaskCollection_get_Item(tasks, index, &ret_task1);
+    todo_wine
+    ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
+
+    IRegisteredTask_get_Name(ret_task1, &ret_task1_name);
+    todo_wine
+    ok(!lstrcmpW(L"Task1", ret_task1_name), "expected name \"Task1\", got %ls\n", ret_task1_name);
+
+    ITaskFolder_DeleteTask(folder, (BSTR)L"Task1", 0);
+    ITaskFolder_DeleteFolder(root, (BSTR)L"\\Wine", 0);
+    IRegisteredTask_Release(task1);
+    ITaskFolder_Release(folder);
+    ITaskFolder_Release(root);
+    IExecAction_Release(exec_action);
+    IRegistrationInfo_Release(reg_info);
+    ITaskDefinition_Release(task_def);
+    ITaskService_Release(service);
+}
+
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
@@ -1888,6 +1974,7 @@ START_TEST(scheduler)
     test_FolderCollection();
     test_GetTask();
     test_TaskDefinition();
+    test_get_Count_and_Item();
 
     OleUninitialize();
 }
