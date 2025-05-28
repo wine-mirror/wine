@@ -716,14 +716,13 @@ static void media_type_try_copy_attr(IMFMediaType *dst, IMFMediaType *src, const
 
 /* update a media type with additional attributes reported by upstream element */
 /* also present in mf/topology_loader.c pipeline */
-static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMediaType *upstream_type)
+static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMediaType *upstream_type, BOOL advanced)
 {
     HRESULT hr = S_OK;
 
     /* propagate common video attributes */
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_SIZE, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FRAME_RATE, &hr);
-    media_type_try_copy_attr(media_type, upstream_type, &MF_MT_DEFAULT_STRIDE, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_ROTATION, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_FIXED_SIZE_SAMPLES, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_PIXEL_ASPECT_RATIO, &hr);
@@ -737,6 +736,9 @@ static HRESULT update_media_type_from_upstream(IMFMediaType *media_type, IMFMedi
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_YUV_MATRIX, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_LIGHTING, &hr);
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_VIDEO_NOMINAL_RANGE, &hr);
+
+    if (!advanced)
+        media_type_try_copy_attr(media_type, upstream_type, &MF_MT_DEFAULT_STRIDE, &hr);
 
     /* propagate common audio attributes */
     media_type_try_copy_attr(media_type, upstream_type, &MF_MT_AUDIO_NUM_CHANNELS, &hr);
@@ -2030,6 +2032,52 @@ static BOOL source_reader_allow_video_processor(struct source_reader *reader, BO
     return *advanced;
 }
 
+static void mediatype_set_uint32(IMFMediaType *mediatype, const GUID *attr, unsigned int value, HRESULT *hr)
+{
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_SetUINT32(mediatype, attr, value);
+}
+
+static void mediatype_get_stride_and_sample_size(IMFMediaType *mediatype, LONG *stride, DWORD *sample_size, HRESULT *hr)
+{
+    UINT64 frame_size;
+    GUID subtype;
+
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_GetGUID(mediatype, &MF_MT_SUBTYPE, &subtype);
+
+    if (SUCCEEDED(*hr))
+        *hr = IMFMediaType_GetUINT64(mediatype, &MF_MT_FRAME_SIZE, &frame_size);
+
+    if (SUCCEEDED(*hr))
+        *hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, frame_size >> 32, stride);
+
+    if (SUCCEEDED(*hr))
+        *hr = MFGetPlaneSize(subtype.Data1, frame_size >> 32, frame_size & 0xffffffff, sample_size);
+}
+
+static HRESULT set_default_video_attributes(struct source_reader *reader, IMFMediaType *output_type)
+{
+    DWORD sample_size;
+    BOOL compressed;
+    LONG stride;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFMediaType_IsCompressedFormat(output_type, &compressed)))
+        return hr;
+
+    if (!compressed)
+    {
+        mediatype_get_stride_and_sample_size(output_type, &stride, &sample_size, &hr);
+
+        mediatype_set_uint32(output_type, &MF_MT_COMPRESSED, compressed, &hr);
+        mediatype_set_uint32(output_type, &MF_MT_DEFAULT_STRIDE, abs(stride), &hr);
+        mediatype_set_uint32(output_type, &MF_MT_SAMPLE_SIZE, sample_size, &hr);
+    }
+
+    return hr;
+}
+
 static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL decoder, BOOL allow_processor,
         IMFMediaType *input_type, IMFMediaType *output_type, struct transform_entry **out)
 {
@@ -2121,7 +2169,11 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
             if (SUCCEEDED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0))
                     && SUCCEEDED(hr = IMFTransform_GetInputCurrentType(transform, 0, &media_type)))
             {
-                if (SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                BOOL enable_advanced;
+
+                source_reader_allow_video_processor(reader, &enable_advanced);
+
+                if ((SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type, enable_advanced)))
                         && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0))
                         && FAILED(hr = set_matching_transform_output_type(transform, output_type)) && allow_processor
                         && SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type)))
@@ -2129,7 +2181,8 @@ static HRESULT source_reader_create_transform(struct source_reader *reader, BOOL
                     struct transform_entry *converter;
 
                     if (SUCCEEDED(hr = IMFTransform_SetOutputType(transform, 0, media_type, 0))
-                            && SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type))
+                            && SUCCEEDED(hr = update_media_type_from_upstream(output_type, media_type, enable_advanced))
+                            && (enable_advanced || SUCCEEDED(hr = set_default_video_attributes(reader, output_type)))
                             && SUCCEEDED(hr = source_reader_create_transform(reader, FALSE, FALSE, media_type, output_type, &converter)))
                         list_add_tail(&entry->entry, &converter->entry);
 
