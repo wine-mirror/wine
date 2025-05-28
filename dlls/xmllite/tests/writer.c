@@ -114,10 +114,10 @@ static void check_output(IStream *stream, const char *expected, BOOL todo, int l
         if (size != len)
         {
             ok_(__FILE__, line)(0, "data size mismatch, expected %u, got %u\n", len, size);
-            ok_(__FILE__, line)(0, "got |%s|, expected |%s|\n", ptr, expected);
+            ok_(__FILE__, line)(0, "got |%.*s|, expected |%s|\n", size, ptr, expected);
         }
         else
-            ok_(__FILE__, line)(!strncmp(ptr, expected, len), "got |%s|, expected |%s|\n", ptr, expected);
+            ok_(__FILE__, line)(!strncmp(ptr, expected, len), "got |%.*s|, expected |%s|\n", size, ptr, expected);
     }
     GlobalUnlock(hglobal);
 }
