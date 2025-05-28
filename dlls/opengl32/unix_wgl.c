@@ -67,6 +67,9 @@ enum wgl_handle_type
 
 struct opengl_context
 {
+    HDC hdc;                     /* context creation DC */
+    HGLRC share;                 /* context to be shared with */
+    int *attribs;                /* creation attributes */
     DWORD tid;                   /* thread that the context is current in */
     UINT64 debug_callback;       /* client pointer */
     UINT64 debug_user;           /* client pointer */
@@ -162,6 +165,21 @@ static void free_handle_ptr( struct wgl_handle *ptr )
     ptr->u.next = next_free;
     ptr->funcs = NULL;
     next_free = ptr;
+}
+
+static int *memdup_attribs( const int *attribs )
+{
+    const int *attr;
+    size_t size;
+    int *copy;
+
+    if (!(attr = attribs)) return NULL;
+    while (*attr++) { /* nothing */ }
+
+    size = (attr - attribs) * sizeof(*attr);
+    if (!(copy = malloc( size ))) return NULL;
+    memcpy( copy, attribs, size );
+    return copy;
 }
 
 /* check if the extension is present in the list */
@@ -693,6 +711,7 @@ static HGLRC wrap_wglCreateContext( HDC hdc )
     if (!(drv_ctx = funcs->p_wglCreateContext( hdc ))) return 0;
     if ((context = calloc( 1, sizeof(*context) )))
     {
+        context->hdc = hdc;
         context->drv_ctx = drv_ctx;
         if (!(ret = alloc_handle( HANDLE_CONTEXT, funcs, context ))) free( context );
     }
@@ -758,6 +777,7 @@ static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
     free( ctx->wow64_version );
     free( ctx->disabled_exts );
     free( ctx->extensions );
+    free( ctx->attribs );
     free( ctx );
     free_handle_ptr( ptr );
     return TRUE;
@@ -821,6 +841,9 @@ static HGLRC wrap_wglCreateContextAttribsARB( HDC hdc, HGLRC share, const int *a
                 }
             }
 
+            context->hdc = hdc;
+            context->share = share;
+            context->attribs = memdup_attribs( attribs );
             context->drv_ctx = drv_ctx;
             if (!(ret = alloc_handle( type, funcs, context ))) free( context );
         }
