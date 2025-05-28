@@ -464,9 +464,30 @@ static HRESULT WINAPI regtasks_Invoke(IRegisteredTaskCollection *iface, DISPID d
 
 static HRESULT WINAPI regtasks_get_Count(IRegisteredTaskCollection *iface, LONG *count)
 {
-    FIXME("%p,%p: stub\n", iface, count);
-    if (count) *count = 0;
-    return E_NOTIMPL;
+    HRESULT hr;
+    RegisteredTaskCollection *reg_tasks = NULL;
+    TASK_NAMES task_names = NULL;
+    DWORD start_index = 0, num_tasks;
+
+    reg_tasks = impl_from_IRegisteredTaskCollection(iface);
+
+    if (!count)
+        return E_POINTER;
+
+    hr = SchRpcEnumTasks(reg_tasks->path, 0, &start_index, 0, &num_tasks, &task_names);
+    if (FAILED(hr))
+    {
+        *count = 0;
+        return hr;
+    }
+
+    *count = num_tasks;
+
+    for (DWORD i = 0; i < num_tasks; i++)
+        MIDL_user_free(task_names[i]);
+    MIDL_user_free(task_names);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI regtasks_get_Item(IRegisteredTaskCollection *iface, VARIANT index, IRegisteredTask **regtask)

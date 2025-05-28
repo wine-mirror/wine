@@ -1917,13 +1917,10 @@ static void test_get_Count_and_Item(void)
 
     /* Test get_Count */
     hr = IRegisteredTaskCollection_get_Count(tasks, NULL);
-    todo_wine
     ok(hr == E_POINTER, "expected E_POINTER, got %#lx\n", hr);
 
     hr = IRegisteredTaskCollection_get_Count(tasks, &num_tasks);
-    todo_wine
     ok(hr == S_OK, "expected S_OK, got %#lx\n", hr);
-    todo_wine
     ok(num_tasks == 1, "expected 1 task, got %ld\n", num_tasks);
 
     /* Test get_Item */
