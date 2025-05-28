@@ -447,7 +447,8 @@ static ULONG WINAPI performance_Release(IDirectMusicPerformance8 *iface)
   TRACE("(%p): ref=%ld\n", This, ref);
   
   if (ref == 0) {
-    wine_rb_destroy(&This->channel_blocks, channel_block_free, NULL);
+    if (This->channel_blocks.root)
+      WARN("(%p): CloseDown was not called on this performance.\n", This);
     This->safe.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->safe);
     free(This);
@@ -1454,6 +1455,7 @@ static HRESULT WINAPI performance_CloseDown(IDirectMusicPerformance8 *iface)
 
     performance_set_primary_segment(This, NULL);
     performance_set_control_segment(This, NULL);
+    wine_rb_destroy(&This->channel_blocks, channel_block_free, NULL);
 
     if (This->master_clock)
     {
