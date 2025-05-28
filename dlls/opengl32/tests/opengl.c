@@ -3023,7 +3023,6 @@ static void test_copy_context(HDC hdc)
     ok(!!ctx2, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
     ret = wglCopyContext(ctx, ctx2, GL_ALL_ATTRIB_BITS);
-    todo_wine
     ok(ret, "Failed to copy GL context, last error %#lx.\n", GetLastError());
 
     ret = wglMakeCurrent(NULL, NULL);

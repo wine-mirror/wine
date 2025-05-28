@@ -221,6 +221,78 @@ void set_context_attribute( TEB *teb, GLenum name, const void *value, size_t siz
     ctx->used |= bit;
 }
 
+static BOOL copy_context_attributes( TEB *teb, const struct opengl_funcs *funcs, HGLRC dst_handle, struct opengl_context *dst,
+                                     HGLRC src_handle, struct opengl_context *src, GLbitfield mask )
+{
+    HDC draw_hdc = teb->glReserved1[0], read_hdc = teb->glReserved1[1];
+    struct opengl_context *old_ctx = get_current_context( teb );
+    const struct opengl_funcs *old_funcs = teb->glTable;
+
+    if (dst == old_ctx)
+    {
+        RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    if (!mask) return TRUE;
+    if (src->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", src_handle, src );
+    if (dst->used == -1) FIXME( "Unsupported attributes on context %p/%p\n", dst_handle, dst );
+
+    funcs->p_wglMakeCurrent( dst->hdc, dst->drv_ctx );
+
+    if (mask & GL_COLOR_BUFFER_BIT)
+    {
+        const GLfloat *floats = src->color_buffer.clear_color;
+        funcs->p_glClearColor( floats[0], floats[1], floats[2], floats[3] );
+        dst->color_buffer = src->color_buffer;
+    }
+    if (mask & GL_DEPTH_BUFFER_BIT)
+    {
+        funcs->p_glDepthFunc( src->depth_buffer.depth_func );
+        dst->depth_buffer = src->depth_buffer;
+    }
+    if (mask & GL_ENABLE_BIT)
+    {
+        if (src->enable.cull_face) funcs->p_glEnable( GL_CULL_FACE );
+        else funcs->p_glDisable( GL_CULL_FACE );
+        if (src->enable.depth_test) funcs->p_glEnable( GL_DEPTH_TEST );
+        else funcs->p_glDisable( GL_DEPTH_TEST );
+        if (src->enable.dither) funcs->p_glEnable( GL_DITHER );
+        else funcs->p_glDisable( GL_DITHER );
+        if (src->enable.fog) funcs->p_glEnable( GL_FOG );
+        else funcs->p_glDisable( GL_FOG );
+        if (src->enable.lighting) funcs->p_glEnable( GL_LIGHTING );
+        else funcs->p_glDisable( GL_LIGHTING );
+        if (src->enable.normalize) funcs->p_glEnable( GL_NORMALIZE );
+        else funcs->p_glDisable( GL_NORMALIZE );
+        dst->enable = src->enable;
+    }
+    if (mask & GL_HINT_BIT)
+    {
+        funcs->p_glHint( GL_PERSPECTIVE_CORRECTION_HINT, src->hint.perspective_correction );
+        dst->hint = src->hint;
+    }
+    if (mask & GL_LIGHTING_BIT)
+    {
+        funcs->p_glLightModelfv( GL_LIGHT_MODEL_AMBIENT, src->lighting.model.ambient );
+        funcs->p_glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, src->lighting.model.two_side );
+        funcs->p_glShadeModel( src->lighting.shade_model );
+        dst->lighting = src->lighting;
+    }
+    if (mask & GL_VIEWPORT_BIT)
+    {
+        funcs->p_glViewport( src->viewport.x, src->viewport.y, src->viewport.w, src->viewport.h );
+        dst->viewport = src->viewport;
+    }
+    dst->used |= (src->used & mask);
+
+    if (!old_ctx) funcs->p_wglMakeCurrent( NULL, NULL );
+    else if (!old_funcs->p_wglMakeContextCurrentARB) old_funcs->p_wglMakeCurrent( draw_hdc, old_ctx->drv_ctx );
+    else old_funcs->p_wglMakeContextCurrentARB( draw_hdc, read_hdc, old_ctx->drv_ctx );
+
+    return dst->used != -1 && src->used != -1;
+}
+
 static struct opengl_context *opengl_context_from_handle( HGLRC handle, const struct opengl_funcs **funcs )
 {
     struct wgl_handle *entry;
@@ -797,8 +869,8 @@ BOOL wrap_wglCopyContext( TEB *teb, HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 
     if (!(src = opengl_context_from_handle( hglrcSrc, &src_funcs ))) return FALSE;
     if (!(dst = opengl_context_from_handle( hglrcDst, &dst_funcs ))) return FALSE;
-    if (src_funcs != dst_funcs) RtlSetLastWin32Error( ERROR_INVALID_HANDLE );
-    else ret = src_funcs->p_wglCopyContext( src->drv_ctx, dst->drv_ctx, mask );
+    else ret = copy_context_attributes( teb, dst_funcs, hglrcDst, dst, hglrcSrc, src, mask );
+
     return ret;
 }
 
