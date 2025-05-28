@@ -395,11 +395,6 @@ struct callback_stack_layout
 C_ASSERT( offsetof(struct callback_stack_layout, machine_frame) == 0x30 );
 C_ASSERT( sizeof(struct callback_stack_layout) == 0x58 );
 
-/* flags to control the behavior of the syscall dispatcher */
-#define SYSCALL_HAVE_XSAVE       1
-
-static unsigned int syscall_flags;
-
 #define RESTORE_FLAGS_INSTRUMENTATION CONTEXT_i386
 
 struct syscall_frame
@@ -426,10 +421,9 @@ struct syscall_frame
     ULONG64               rbp;           /* 0098 */
     struct syscall_frame *prev_frame;    /* 00a0 */
     void                 *syscall_cfa;   /* 00a8 */
-    DWORD                 syscall_flags; /* 00b0 */
+    DWORD                 syscall_id;    /* 00b0 */
     DWORD                 restore_flags; /* 00b4 */
-    DWORD                 syscall_id;    /* 00b8 */
-    DWORD                 align[1];      /* 00bc */
+    DWORD                 align[2];      /* 00b8 */
     XSAVE_FORMAT          xsave;         /* 00c0 */
     DECLSPEC_ALIGN(64) XSAVE_AREA_HEADER xstate;    /* 02c0 */
 };
@@ -1649,8 +1643,6 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "leaq 0x10(%rbp),%rax\n\t"
                    "movq %rax,0xa8(%rsp)\n\t"  /* frame->syscall_cfa */
                    "movq 0x378(%r13),%r10\n\t" /* thread_data->syscall_frame */
-                   "movl 0xb0(%r10),%r14d\n\t" /* prev_frame->syscall_flags */
-                   "movl %r14d,0xb0(%rsp)\n\t" /* frame->syscall_flags */
                    "movq %r10,0xa0(%rsp)\n\t"  /* frame->prev_frame */
                    "movq %rsp,0x378(%r13)\n\t" /* thread_data->syscall_frame */
                    "testl $1,0x380(%r13)\n\t"  /* thread_data->syscall_trace */
@@ -2523,8 +2515,6 @@ void signal_init_process(void)
 
     xstate_extended_features = user_shared_data->XState.EnabledFeatures & ~(UINT64)3;
 
-    if (user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED]) syscall_flags |= SYSCALL_HAVE_XSAVE;
-
 #ifdef __linux__
     if (wow_teb)
     {
@@ -2671,7 +2661,6 @@ void init_syscall_frame( LPTHREAD_START_ROUTINE entry, void *arg, BOOL suspend, 
     frame->rsp = (ULONG64)ctx - 8;
     frame->rip = (ULONG64)pLdrInitializeThunk;
     frame->rcx = (ULONG64)ctx;
-    frame->syscall_flags = syscall_flags;
     if ((callback = instrumentation_callback))
     {
         frame->r10 = frame->rip;
@@ -2719,7 +2708,6 @@ __ASM_GLOBAL_FUNC( signal_start_thread,
                    "movq %rcx,%r13\n\t"            /* teb */
                    "call " __ASM_NAME("init_syscall_frame") "\n\t"
                    "movq %rsp,%rcx\n\t"            /* frame */
-                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
@@ -2759,12 +2747,11 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq %rbp,0x98(%rcx)\n\t"
                    __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
                    "movq %gs:0x30,%r13\n\t"        /* teb */
-                   "movq %rax,0xb8(%rcx)\n\t"      /* frame->syscall_id */
+                   "movl %eax,0xb0(%rcx)\n\t"      /* frame->syscall_id */
                    /* Legends of Runeterra hooks the first system call return instruction, and
                     * depends on us returning to it. Adjust the return address accordingly. */
                    "subq $0xb,0x70(%rcx)\n\t"
-                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
-                   "testl $1,%r14d\n\t"            /* SYSCALL_HAVE_XSAVE */
+                   "cmpb $0,0x7ffe0285\n\t"        /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
                    "jz 2f\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
                    "xorl %edx,%edx\n\t"
@@ -2835,7 +2822,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "syscall\n\t"
                    "leaq -0x98(%rbp),%rcx\n"
 #endif
-                   "movq 0xb8(%rcx),%rax\n\t"      /* frame->syscall_id */
+                   "movl 0xb0(%rcx),%eax\n\t"      /* frame->syscall_id */
                    "movq 0x18(%rcx),%r11\n\t"      /* 2nd argument */
                    "movl %eax,%ebx\n\t"
                    "shrl $8,%ebx\n\t"
@@ -2903,7 +2890,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movaps 0x240(%rcx),%xmm14\n\t"
                    "movaps 0x250(%rcx),%xmm15\n\t"
                    "jmp 4f\n"
-                   "2:\ttestl $1,%r14d\n\t"        /* SYSCALL_HAVE_XSAVE */
+                   "2:\tcmpb $0,0x7ffe0285\n\t"    /* user_shared_data->ProcessorFeatures[PF_XSAVE_ENABLED] */
                    "jz 3f\n\t"
                    "movq %rax,%r11\n\t"
                    "movl 0x7ffe03d8,%eax\n\t"      /* user_shared_data->XState.EnabledFeatures */
@@ -2915,6 +2902,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "3:\tfxrstor64 0xc0(%rcx)\n"
                    "4:\tmovq 0x98(%rcx),%rbp\n\t"
                    "movq 0x68(%rcx),%r15\n\t"
+                   "movq 0x60(%rcx),%r14\n\t"
                    "movq 0x58(%rcx),%r13\n\t"
                    "movq 0x50(%rcx),%r12\n\t"
                    "movq 0x80(%rcx),%r11\n\t"      /* frame->eflags */
@@ -2922,7 +2910,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movq 0x20(%rcx),%rsi\n\t"
                    "movq 0x08(%rcx),%rbx\n\t"
                    "testl $0x10000,%edx\n\t"       /* RESTORE_FLAGS_INSTRUMENTATION */
-                   "movq 0x60(%rcx),%r14\n\t"
                    "jnz 2f\n\t"
                    "3:\ttestl $0x3,%edx\n\t"       /* CONTEXT_CONTROL | CONTEXT_INTEGER */
                    "jnz 1f\n\t"
@@ -2997,7 +2984,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "pushq %r8\n\t"                 /* 3rd argument */
                    "pushq %r11\n\t"                /* 2nd argument */
                    "pushq %r10\n\t"                /* 1st argument */
-                   "movl 0x20(%rbp),%edi\n\t"      /* frame->syscall_id */
+                   "movl 0x18(%rbp),%edi\n\t"      /* frame->syscall_id */
                    "movl %edi,%eax\n\t"
                    "andl $0xfff,%eax\n\t"          /* syscall number */
                    "movq 24(%rbx),%rcx\n\t"        /* table->ArgumentTable */
@@ -3014,7 +3001,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 
                    __ASM_LOCAL_LABEL("trace_syscall_ret") ":\n\t"
                    "movq %rax,%r12\n\t"            /* retval */
-                   "movl 0x20(%rbp),%edi\n\t"      /* frame->syscall_id */
+                   "movl 0x18(%rbp),%edi\n\t"      /* frame->syscall_id */
                    "movq %r12,%rsi\n\t"            /* retval */
                    "call " __ASM_NAME("trace_sysret") "\n\t"
                    "leaq -0x98(%rbp),%rcx\n\t"     /* syscall frame */
@@ -3029,7 +3016,6 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher_return,
                    "movq %rsp,%rcx\n\t"
                    "leaq 0x98(%rcx),%rbp\n\t"
-                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "testl $1,0x380(%r13)\n\t"      /* thread_data->syscall_trace */
                    "jnz " __ASM_LOCAL_LABEL("trace_syscall_ret" ) "\n\t"
                    "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
@@ -3087,7 +3073,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movdqa %xmm13,0x230(%rcx)\n\t"
                    "movdqa %xmm14,0x240(%rcx)\n\t"
                    "movdqa %xmm15,0x250(%rcx)\n\t"
-                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    /* switch to kernel stack */
                    "movq %rcx,%rsp\n\t"
                    /* we're now on the kernel stack, stitch unwind info with previous frame */
@@ -3153,9 +3138,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "syscall\n\t"
                    "movq %r14,%rcx\n\t"
                    "movq %rdx,%rax\n\t"
+                   "movq 0x60(%rcx),%r14\n\t"
 #endif
                    "movq 0x58(%rcx),%r13\n\t"
-                   "movq 0x60(%rcx),%r14\n\t"
                    "movq 0x28(%rcx),%rdi\n\t"
                    "movq 0x20(%rcx),%rsi\n\t"
                    "pushq 0x70(%rcx)\n\t"          /* frame->rip */
