@@ -321,72 +321,17 @@ void copy_xstate( XSAVE_AREA_HEADER *dst, XSAVE_AREA_HEADER *src, UINT64 mask )
     }
 }
 
-extern void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p );
-#ifdef __i386__
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushl %esi\n\t"
-                   "pushl %ebx\n\t"
-                   "movl 12(%esp),%eax\n\t"
-                   "movl 16(%esp),%ecx\n\t"
-                   "movl 20(%esp),%esi\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%esi)\n\t"
-                   "movl %ebx,4(%esi)\n\t"
-                   "movl %ecx,8(%esi)\n\t"
-                   "movl %edx,12(%esi)\n\t"
-                   "popl %ebx\n\t"
-                   "popl %esi\n\t"
-                   "ret" )
-#else
-__ASM_GLOBAL_FUNC( do_cpuid,
-                   "pushq %rbx\n\t"
-                   "movl %edi,%eax\n\t"
-                   "movl %esi,%ecx\n\t"
-                   "movq %rdx,%r8\n\t"
-                   "cpuid\n\t"
-                   "movl %eax,(%r8)\n\t"
-                   "movl %ebx,4(%r8)\n\t"
-                   "movl %ecx,8(%r8)\n\t"
-                   "movl %edx,12(%r8)\n\t"
-                   "popq %rbx\n\t"
-                   "ret" )
-#endif
-
-extern UINT64 do_xgetbv( unsigned int cx);
-#ifdef __i386__
-__ASM_GLOBAL_FUNC( do_xgetbv,
-                   "movl 4(%esp),%ecx\n\t"
-                   "xgetbv\n\t"
-                   "ret" )
-#else
-__ASM_GLOBAL_FUNC( do_xgetbv,
-                   "movl %edi,%ecx\n\t"
-                   "xgetbv\n\t"
-                   "shlq $32,%rdx\n\t"
-                   "orq %rdx,%rax\n\t"
-                   "ret" )
-#endif
-
-#ifdef __i386__
-extern int have_cpuid(void);
-__ASM_GLOBAL_FUNC( have_cpuid,
-                   "pushfl\n\t"
-                   "pushfl\n\t"
-                   "movl (%esp),%ecx\n\t"
-                   "xorl $0x00200000,(%esp)\n\t"
-                   "popfl\n\t"
-                   "pushfl\n\t"
-                   "popl %eax\n\t"
-                   "popfl\n\t"
-                   "xorl %ecx,%eax\n\t"
-                   "andl $0x00200000,%eax\n\t"
-                   "ret" )
-#else
-static int have_cpuid(void)
+static inline void do_cpuid( unsigned int ax, unsigned int cx, unsigned int *p )
 {
-    return 1;
+    __asm__ ( "cpuid" : "=a" (p[0]), "=b" (p[1]), "=c" (p[2]), "=d" (p[3]) : "a" (ax), "c" (cx) );
 }
-#endif
+
+static inline UINT64 do_xgetbv( unsigned int cx )
+{
+    UINT low, high;
+    __asm__( "xgetbv" : "=a" (low), "=d" (high) : "c" (cx) );
+    return low | ((UINT64)high << 32);
+}
 
 /* Detect if a SSE2 processor is capable of Denormals Are Zero (DAZ) mode.
  *
@@ -407,74 +352,34 @@ static inline BOOL have_sse_daz_mode(void)
 #endif
 }
 
-static void get_cpuid_name( char *buffer )
-{
-    unsigned int regs[4];
-
-    do_cpuid( 0x80000002, 0, regs );
-    memcpy( buffer, regs, sizeof(regs) );
-    buffer += sizeof(regs);
-    do_cpuid( 0x80000003, 0, regs );
-    memcpy( buffer, regs, sizeof(regs) );
-    buffer += sizeof(regs);
-    do_cpuid( 0x80000004, 0, regs );
-    memcpy( buffer, regs, sizeof(regs) );
-    buffer += sizeof(regs);
-    *buffer = 0;
-}
-
 static void init_cpu_model(void)
 {
-    unsigned int regs[4], regs2[4];
-
-    cpu_level = 3;
-
-    if (!have_cpuid()) return;
+    unsigned int regs[4];
 
     do_cpuid( 0x00000000, 0, regs );  /* get standard cpuid level and vendor name */
     memcpy( cpu_vendor, &regs[1], sizeof(unsigned int) );
     memcpy( cpu_vendor + 4, &regs[3], sizeof(unsigned int) );
     memcpy( cpu_vendor + 8, &regs[2], sizeof(unsigned int) );
-    if (regs[0]>=0x00000001)   /* Check for supported cpuid version */
+
+    do_cpuid( 0x00000001, 0, regs ); /* get cpu features */
+    cpu_id = regs[0] | ((ULONGLONG)regs[3] << 32);
+    cpu_level = ((regs[0] >> 8) & 0xf) + ((regs[0] >> 20) & 0xff); /* family */
+    cpu_revision  = ((regs[0] >> 16) & 0xf) << 12; /* extended model */
+    cpu_revision |= ((regs[0] >> 4 ) & 0xf) << 8;  /* model    */
+    cpu_revision |= regs[0] & 0xf;                 /* stepping */
+
+    do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
+    if (regs[0] >= 0x80000004)
     {
-        do_cpuid( 0x00000001, 0, regs2 ); /* get cpu features */
-        cpu_id = regs2[0] | ((ULONGLONG)regs2[3] << 32);
+        char *p = cpu_name;
 
-        if (!strcmp( cpu_vendor, "AuthenticAMD" ))
-        {
-            cpu_level = (regs2[0] >> 8) & 0xf; /* family */
-            if (cpu_level == 0xf)  /* AMD says to add the extended family to the family if family is 0xf */
-                cpu_level += (regs2[0] >> 20) & 0xff;
-
-            /* repack model and stepping to make a "revision" */
-            cpu_revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            cpu_revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            cpu_revision |= regs2[0] & 0xf;                 /* stepping       */
-
-            do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
-            if (regs[0] >= 0x80000004) get_cpuid_name( cpu_name );
-        }
-        else if (!strcmp( cpu_vendor, "GenuineIntel" ))
-        {
-            cpu_level = ((regs2[0] >> 8) & 0xf) + ((regs2[0] >> 20) & 0xff); /* family + extended family */
-            if(cpu_level == 15) cpu_level = 6;
-
-            /* repack model and stepping to make a "revision" */
-            cpu_revision  = ((regs2[0] >> 16) & 0xf) << 12; /* extended model */
-            cpu_revision |= ((regs2[0] >> 4 ) & 0xf) << 8;  /* model          */
-            cpu_revision |= regs2[0] & 0xf;                 /* stepping       */
-
-            do_cpuid( 0x80000000, 0, regs );  /* get vendor cpuid level */
-            if (regs[0] >= 0x80000004) get_cpuid_name( cpu_name );
-        }
-        else
-        {
-            cpu_level = (regs2[0] >> 8) & 0xf; /* family */
-
-            /* repack model and stepping to make a "revision" */
-            cpu_revision = ((regs2[0] >> 4 ) & 0xf) << 8;  /* model    */
-            cpu_revision |= regs2[0] & 0xf;                /* stepping */
-        }
+        do_cpuid( 0x80000002, 0, (unsigned int *)p );
+        p += sizeof(regs);
+        do_cpuid( 0x80000003, 0, (unsigned int *)p );
+        p += sizeof(regs);
+        do_cpuid( 0x80000004, 0, (unsigned int *)p );
+        p += sizeof(regs);
+        *p = 0;
     }
 }
 
